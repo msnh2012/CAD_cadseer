@@ -15,12 +15,6 @@ find_package(Qt5Svg REQUIRED)
 SET(QT_LIBRARIES Qt5::Core Qt5::Widgets Qt5::OpenGL Qt5::X11Extras Qt5::Svg)
 add_definitions(${Qt5Widgets_DEFINITIONS})
 
-#need to add process to the components list. can't for my version of find_boost cmake.
-#process was added in boost 1.64, so that is the minimum
-#process is header only so don't need to be in find
-find_package(Boost REQUIRED COMPONENTS system graph timer filesystem)
-#message(${Boost_LIBRARIES})
-
 # OCCT_PROJECT_PATH lets user define cmake variables based on a locally built and
 # non-installed copy of the OCCT source code. assumes standard OCCT path
 # and a 'build' sub directory
@@ -163,6 +157,7 @@ find_package(XercesC REQUIRED)
 find_package(XSDCXX REQUIRED)
 
 #begin squash
+SET(CGAL_DO_NOT_WARN_ABOUT_CMAKE_BUILD_TYPE TRUE) #shutup! I know debug is slow.
 find_package(CGAL COMPONENTS CGAL_Core)
 if(CGAL_FOUND)
   message(STATUS "CGAL found. ${CGAL_INCLUDE_DIRS}")
@@ -245,6 +240,10 @@ else(IGL_INCLUDE_FOUND AND IGL_LIB_FOUND AND NETGEN_INCLUDE_FOUND AND NETGEN_LIB
   message(STATUS "squash is not being built.")
 endif(IGL_INCLUDE_FOUND AND IGL_LIB_FOUND AND NETGEN_INCLUDE_FOUND AND NETGEN_LIB_FOUND AND CGAL_FOUND)
 #end squash
+
+#cgal was corrupting boost libraries variable. so had to move it after the cgal find.
+find_package(Boost 1.62.0 REQUIRED COMPONENTS system graph timer filesystem)
+#message(${Boost_LIBRARIES})
 
 #begin spreadsheet
 find_package(ZLIB REQUIRED)

@@ -19,15 +19,6 @@
 
 #include <cassert>
 
-#include <BRepTools.hxx>
-#include <BRepBndLib.hxx>
-#include <Bnd_Box.hxx>
-#include <BRepBuilderAPI_MakeVertex.hxx>
-#include <BRepBuilderAPI_MakeEdge.hxx>
-#include <BRepBuilderAPI_MakeWire.hxx>
-#include <BRepBuilderAPI_MakeFace.hxx>
-#include <BRepExtrema_DistShapeShape.hxx>
-
 #include <igl/arap.h>
 #include <igl/boundary_loop.h>
 #include <igl/harmonic.h>
@@ -47,6 +38,15 @@
 #include <squash/netgen.h>
 #include <squash/igl.h>
 #include <squash/squash.h>
+
+#include <BRepTools.hxx>
+#include <BRepBndLib.hxx>
+#include <Bnd_Box.hxx>
+#include <BRepBuilderAPI_MakeVertex.hxx>
+#include <BRepBuilderAPI_MakeEdge.hxx>
+#include <BRepBuilderAPI_MakeWire.hxx>
+#include <BRepBuilderAPI_MakeFace.hxx>
+#include <BRepExtrema_DistShapeShape.hxx>
 
 using namespace sqs;
 
