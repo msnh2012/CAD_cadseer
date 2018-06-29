@@ -575,6 +575,9 @@ void Project::setupDispatcher()
   
   mask = msg::Request | msg::Feature | msg::Skipped | msg::Toggle;
   observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Project::toggleSkippedDispatched, this, _1)));
+  
+  mask = msg::Request | msg::Project | msg::Feature | msg::Dissolve;
+  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Project::dissolveFeatureDispatched, this, _1)));
 }
 
 void Project::featureStateChangedDispatched(const msg::Message &messageIn)
@@ -644,10 +647,9 @@ void Project::forceUpdateDispatched(const msg::Message&)
   debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
   msg::dispatch().dumpString(debug.str());
   
-  for (auto its = boost::vertices(stow->graph); its.first != its.second; ++its.first)
-  {
-    stow->graph[*its.first].feature->setModelDirty();
-  }
+  RemovedGraph rg = buildRemovedGraph(stow->graph);
+  for (auto its = boost::vertices(rg); its.first != its.second; ++its.first)
+    rg[*its.first].feature->setModelDirty();
   
   app::WaitCursor waitCursor;
   updateModel();
@@ -914,6 +916,182 @@ void Project::toggleSkippedDispatched(const msg::Message &mIn)
       f->setSkipped();
     gitMessage << f->getName().toStdString() << " " << gu::idToString(id) << "    ";
   }
+  gitManager->appendGitMessage(gitMessage.str());
+}
+
+class AlterParentsVisitor : public boost::default_dfs_visitor
+{
+public:
+  AlterParentsVisitor(Vertices &vsIn) : vs(vsIn){}
+  template<typename V, typename G>
+  void discover_vertex(V vertex, G &graph)
+  {
+    stack.push_back(vertex);
+    //understood vector has source added so we can ignore it
+    if (vertex == vs.front())
+      return;
+    if (firstCreateIndex != -1) //found first create so ignore rest
+      return;
+    vs.push_back(vertex);
+    if (graph[vertex].feature->getDescriptor() == ftr::Descriptor::Create)
+    {
+      firstCreateIndex = static_cast<int>(stack.size()) - 1;
+    }
+  }
+//       template<typename E, typename G>
+//       void examine_edge(E edge, G &graph)
+//       {
+// 
+//       }
+  template<typename V, typename G>
+  void finish_vertex(V, G)
+  {
+    stack.pop_back();
+    if ((static_cast<int>(stack.size()) == firstCreateIndex) && (firstCreateIndex != -1))
+    {
+      firstCreateIndex = -1;
+    }
+  }
+private:
+  Vertices &vs;
+  int firstCreateIndex = -1; // index into stack
+  Vertices stack;
+};
+    
+void Project::dissolveFeatureDispatched(const msg::Message &mIn)
+{
+  const prj::Message &pm = boost::get<prj::Message>(mIn.payload);
+  assert(pm.featureIds.size() == 1);
+  assert(hasFeature(pm.featureIds.front()));
+  if (!hasFeature(pm.featureIds.front()))
+    return;
+  
+  ftr::Base *fb = findFeature(pm.featureIds.front());
+  if (!fb->hasAnnex(ann::Type::SeerShape))
+    return; //for now we only care about features with shape.
+  //should dissolve be a virtual member of ftr::Base?
+    
+  const ann::SeerShape &oss = fb->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
+  if (oss.isNull())
+    return; //do we really care about this here?
+    
+  fb->setModelDirty(); //this will make all children dirty.
+  auto block = observer->createBlocker();
+  
+  observer->out
+  (
+    msg::Message(msg::Response | msg::Pre | msg::Project | msg::Feature | msg::Dissolve, pm)
+  );
+  
+  //create new feature and assign seershape and ids.
+  std::shared_ptr<ftr::Inert> nf(new ftr::Inert(oss.getRootOCCTShape()));
+  ann::SeerShape &nss = nf->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
+  occt::ShapeVector oshapes = oss.getAllShapes(); //original shapes
+  for (const auto &s : oshapes)
+  {
+    assert(nss.hasShapeIdRecord(s));
+    if (!nss.hasShapeIdRecord(s))
+    {
+      std::cerr << "WARNING: new dissolved inert feature doesn't have original shape in Project::dissolveFeatureDispatched" << std::endl;
+      continue;
+    }
+    auto id = oss.findShapeIdRecord(s).id;
+    nss.updateShapeIdRecord(s, id);
+    nss.insertEvolve(gu::createNilId(), id);
+  }
+  nss.setRootShapeId(oss.getRootShapeId());
+  Vertex nfv = stow->addFeature(nf); //new feature vertex.
+  msg::Message postMessage(msg::Response | msg::Post | msg::Add | msg::Feature);
+  prj::Message addPMessage;
+  addPMessage.feature = nf;
+  postMessage.payload = addPMessage;
+  observer->out(postMessage);
+  
+  //give new feature same visualization status as old.
+  if (fb->isHiddenOverlay())
+    observer->out(msg::buildHideOverlay(nf->getId()));
+  if (fb->isHidden3D())
+    observer->out(msg::buildHideThreeD(nf->getId()));
+  
+  //get children of original feature and setup graph edges from new inert feature.
+  Vertex ov = stow->findVertex(pm.featureIds.front());
+  RemovedGraph removedGraph = buildRemovedGraph(stow->graph);
+  for (auto its = boost::adjacent_vertices(ov, removedGraph); its.first != its.second; ++its.first)
+  {
+    auto e = boost::edge(ov, *its.first, removedGraph);
+    assert(e.second);
+    stow->connect(nfv, *its.first, removedGraph[e.first].inputType);
+  }
+  
+  //now we can remove original feature and applicable parents.
+  Vertices vertsToRemove;
+  vertsToRemove.push_back(ov);
+  ReversedGraph reversedGraph = boost::make_reverse_graph(removedGraph);
+  if (fb->getDescriptor() != ftr::Descriptor::Create)
+  {
+    //walk parent paths to first create.
+    Vertices vertexes;
+    gu::BFSLimitVisitor<Vertex> rVis(vertexes);
+    boost::breadth_first_search(reversedGraph, ov, visitor(rVis));
+  
+    //filter on the accumulated vertexes.
+    gu::SubsetFilter<ReversedGraph> vertexFilter(reversedGraph, vertexes);
+    typedef boost::filtered_graph<ReversedGraph, boost::keep_all, gu::SubsetFilter<ReversedGraph> > FilteredGraph;
+    FilteredGraph filteredGraph(reversedGraph, boost::keep_all(), vertexFilter);
+    
+    AlterParentsVisitor apv(vertsToRemove);
+    boost::depth_first_search(filteredGraph, visitor(apv).root_vertex(ov));
+  }
+  
+  //remove edges from vertices that are to be removed
+  Edges etr; //edges to remove
+  for (const auto &v : vertsToRemove)
+  {
+    for (auto its = boost::adjacent_vertices(v, reversedGraph); its.first != its.second; ++its.first)
+    {
+      //notice we are using the removedGraph with vertices reversed.
+      auto ce = boost::edge(*its.first, v, removedGraph);
+      assert(ce.second);
+      etr.push_back(ce.first);
+    }
+  }
+  for (auto its = boost::adjacent_vertices(ov, removedGraph); its.first != its.second; ++its.first)
+  {
+    auto ce = boost::edge(ov, *its.first, removedGraph);
+    assert(ce.second);
+    etr.push_back(ce.first);
+  }
+  stow->removeEdges(etr);
+  
+  //now finally remove the actual vertices.
+  for (const auto &v : vertsToRemove)
+  {
+    assert (boost::degree(v, stow->graph) == 0);
+    
+    msg::Message preMessage(msg::Response | msg::Pre | msg::Remove | msg::Feature);
+    prj::Message pMessage;
+    pMessage.feature = stow->graph[v].feature;
+    preMessage.payload = pMessage;
+    observer->out(preMessage);
+    
+    //remove file if exists.
+    QString fileName = QString::fromStdString(fb->getFileName());
+    QDir dir = QString::fromStdString(saveDirectory);
+    assert(dir.exists());
+    if (dir.exists(fileName))
+      dir.remove(fileName);
+    
+    boost::clear_vertex(v, stow->graph); //should be redundent.
+    stow->graph[v].alive = false;
+  }
+  
+  observer->out
+  (
+    msg::Message(msg::Response | msg::Post | msg::Project | msg::Feature | msg::Dissolve, pm)
+  );
+  
+  std::ostringstream gitMessage;
+  gitMessage << QObject::tr("Disolving feature: ").toStdString() << gu::idToString(fb->getId());
   gitManager->appendGitMessage(gitMessage.str());
 }
 

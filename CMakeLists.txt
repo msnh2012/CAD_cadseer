@@ -492,6 +492,7 @@ SET(COMMAND_SOURCES
     command/revision.cpp
     command/removefaces.cpp
     command/thread.cpp
+    command/dissolve.cpp
     )
     
 SET(LIBRARY_SOURCES

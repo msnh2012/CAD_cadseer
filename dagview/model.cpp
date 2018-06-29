@@ -1249,6 +1249,10 @@ void Model::contextMenuEvent(QGraphicsSceneContextMenuEvent* event)
     QAction* editFeatureAction = contextMenu.addAction(editFeatureIcon, tr("Edit Feature"));
     connect(editFeatureAction, SIGNAL(triggered()), this, SLOT(editFeatureSlot()));
     
+    static QIcon dissolveIcon(":/resources/images/dagViewDissolve.svg");
+    QAction* dissolveAction = contextMenu.addAction(dissolveIcon, tr("Dissolve Feature"));
+    connect(dissolveAction, SIGNAL(triggered()), this, SLOT(dissolveSlot()));
+    
     static QIcon editColorIcon(":/resources/images/dagViewEditColor.svg");
     QAction* editColorAction = contextMenu.addAction(editColorIcon, tr("Edit Color"));
     connect(editColorAction, SIGNAL(triggered()), this, SLOT(editColorSlot()));
@@ -1281,18 +1285,21 @@ void Model::contextMenuEvent(QGraphicsSceneContextMenuEvent* event)
       setCurrentLeafAction->setDisabled(true);
     }
     
-    //only show check geometry if all currently selected features have a seer shape.
-    bool showCheckGeometry = true;
+    //disable entries if no seer shape present.
+    bool hasSeerShape = true;
     for (const auto &v : selected)
     {
       if (!stow->graph[v].hasSeerShape)
       {
-        showCheckGeometry = false;
+        hasSeerShape = false;
         break;
       }
     }
-    if (!showCheckGeometry)
+    if (!hasSeerShape)
+    {
       checkGeometryAction->setDisabled(true);
+      dissolveAction->setDisabled(true);
+    }
     
     contextMenu.exec(event->screenPos());
   }
@@ -1373,6 +1380,11 @@ void Model::editRenameSlot()
 void Model::editFeatureSlot()
 {
   observer->out(msg::Message(msg::Request | msg::Edit | msg::Feature));
+}
+
+void Model::dissolveSlot()
+{
+  observer->out(msg::Message(msg::Request | msg::Feature | msg::Dissolve));
 }
 
 void Model::infoFeatureSlot()

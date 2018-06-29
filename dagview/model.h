@@ -79,6 +79,7 @@ namespace dag
     void editColorSlot();
     void editRenameSlot();
     void editFeatureSlot();
+    void dissolveSlot();
     void renameAcceptedSlot();
     void renameRejectedSlot();
     void infoFeatureSlot();

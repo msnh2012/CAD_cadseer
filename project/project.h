@@ -126,6 +126,7 @@ private:
     void shownThreeDDispatched(const msg::Message&);
     void reorderFeatureDispatched(const msg::Message&);
     void toggleSkippedDispatched(const msg::Message&);
+    void dissolveFeatureDispatched(const msg::Message&);
     
     std::unique_ptr<Stow> stow; //think pimpl
 };

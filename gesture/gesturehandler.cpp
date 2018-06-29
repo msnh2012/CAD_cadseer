@@ -885,6 +885,13 @@ void GestureHandler::constructMenu()
       (msg::Request | msg::Force | msg::Update).to_string(),
       editBase
     );
+    constructCommandNode
+    (
+      ":/resources/images/editFeatureDissolve.svg",
+      QObject::tr("Dissolve Feature Command").toStdString(),
+      (msg::Request | msg::Feature | msg::Dissolve).to_string(),
+      editBase
+    );
     osg::MatrixTransform *editSystemBase = constructMenuNode
     (
       ":/resources/images/systemBase.svg",
