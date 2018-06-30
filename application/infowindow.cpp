@@ -89,7 +89,7 @@ void InfoDialog::closeEvent(QCloseEvent *event)
 
 void InfoDialog::restoreSettings()
 {
-    QSettings &settings = static_cast<app::Application*>(qApp)->getUserSettings();
+    QSettings &settings = app::instance()->getUserSettings();
     settings.beginGroup("infoDialog");
     restoreGeometry(settings.value("dialogGeometry").toByteArray());
     settings.endGroup();
@@ -97,7 +97,7 @@ void InfoDialog::restoreSettings()
 
 void InfoDialog::saveSettings()
 {
-    QSettings &settings = static_cast<app::Application*>(qApp)->getUserSettings();
+    QSettings &settings = app::instance()->getUserSettings();
     settings.beginGroup("infoDialog");
     settings.setValue("dialogGeometry", saveGeometry());
     settings.endGroup();

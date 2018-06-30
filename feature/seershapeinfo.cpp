@@ -23,6 +23,16 @@
 #include <BRepAdaptor_Curve.hxx>
 #include <TopoDS.hxx>
 #include <BRep_Tool.hxx>
+#include <gp_Cylinder.hxx>
+#include <gp_Pln.hxx>
+#include <gp_Cone.hxx>
+#include <gp_Sphere.hxx>
+#include <gp_Torus.hxx>
+#include <gp_Lin.hxx>
+#include <gp_Circ.hxx>
+#include <gp_Elips.hxx>
+#include <gp_Hypr.hxx>
+#include <gp_Parab.hxx>
 
 #include <osg/Matrixd>
 
@@ -96,9 +106,13 @@ QTextStream& SeerShapeInfo::getShapeInfo(QTextStream &streamIn, const boost::uui
     return streamIn;
 }
 
-void SeerShapeInfo::compInfo(QTextStream &streamIn, const TopoDS_Shape&)
+void SeerShapeInfo::compInfo(QTextStream &streamIn, const TopoDS_Shape &s)
 {
-    streamIn << "    Shape type: compound" << endl;
+    occt::ShapeVector subShapes = occt::ShapeVectorCast(TopoDS::Compound(s));
+    streamIn << "    Shape type: compound" << endl
+             << "    Sub-Shapes:" << endl;
+    for (const auto &ss : subShapes)
+      streamIn << "        " << QString::fromStdString(occt::getShapeTypeString(ss)) << endl;
 }
 
 void SeerShapeInfo::compSolidInfo(QTextStream &streamIn, const TopoDS_Shape&)
@@ -117,6 +131,13 @@ void SeerShapeInfo::shellInfo(QTextStream &streamIn, const TopoDS_Shape &shapeIn
         << "    Closed is: " << ((shapeIn.Closed()) ? ("true") : ("false")) << endl;
 }
 
+template<typename T>
+static gp_Ax2 surfaceSystem(const T& surface)
+{
+  //possible conversion from left handed to right handed system.
+  return surface.Position().Ax2();
+}
+
 void SeerShapeInfo::faceInfo(QTextStream &streamIn, const TopoDS_Shape &shapeIn)
 {
     assert(shapeIn.ShapeType() == TopAbs_FACE);
@@ -124,8 +145,50 @@ void SeerShapeInfo::faceInfo(QTextStream &streamIn, const TopoDS_Shape &shapeIn)
     
     streamIn << qSetRealNumberPrecision(12) << fixed
     << "    Shape type: face" << endl
-    << "    Surface type: " << gu::surfaceTypeStrings.at(surfaceAdaptor.GetType()) << endl
-    << "    Tolerance: " << BRep_Tool::Tolerance(TopoDS::Face(shapeIn)) << endl;
+    << "    Tolerance: " << BRep_Tool::Tolerance(TopoDS::Face(shapeIn)) << endl
+    << "    Surface type: " << gu::surfaceTypeStrings.at(surfaceAdaptor.GetType()) << endl;
+    
+    if (surfaceAdaptor.GetType() == GeomAbs_Plane)
+    {
+      gp_Pln plane = surfaceAdaptor.Plane();
+      
+      streamIn
+      << "        Placement: "; gu::osgMatrixOut(streamIn, gu::toOsg(surfaceSystem(plane))) << endl;
+    }
+    else if (surfaceAdaptor.GetType() == GeomAbs_Cylinder)
+    {
+      gp_Cylinder cyl = surfaceAdaptor.Cylinder();
+      
+      streamIn
+      << "        Radius: " << cyl.Radius() << endl
+      << "        Placement: "; gu::osgMatrixOut(streamIn, gu::toOsg(surfaceSystem(cyl))) << endl;
+    }
+    else if (surfaceAdaptor.GetType() == GeomAbs_Cone)
+    {
+      gp_Cone cone = surfaceAdaptor.Cone();
+      
+      streamIn
+      << "        Radius: " << cone.RefRadius() << endl
+      << "        Semi Angle: " << cone.SemiAngle() << endl
+      << "        Placement: "; gu::osgMatrixOut(streamIn, gu::toOsg(surfaceSystem(cone))) << endl;
+    }
+    else if (surfaceAdaptor.GetType() == GeomAbs_Sphere)
+    {
+      gp_Sphere sphere = surfaceAdaptor.Sphere();
+      
+      streamIn
+      << "        Radius: " << sphere.Radius() << endl
+      << "        Placement: "; gu::osgMatrixOut(streamIn, gu::toOsg(surfaceSystem(sphere))) << endl;
+    }
+    else if (surfaceAdaptor.GetType() == GeomAbs_Torus)
+    {
+      gp_Torus torus = surfaceAdaptor.Torus();
+      
+      streamIn
+      << "        Major Radius: " << torus.MajorRadius() << endl
+      << "        Minor Radius: " << torus.MinorRadius() << endl
+      << "        Placement: "; gu::osgMatrixOut(streamIn, gu::toOsg(surfaceSystem(torus))) << endl;
+    }
 }
 
 void SeerShapeInfo::wireInfo(QTextStream &streamIn, const TopoDS_Shape&)
@@ -140,8 +203,67 @@ void SeerShapeInfo::edgeInfo(QTextStream &streamIn, const TopoDS_Shape &shapeIn)
     
     streamIn << qSetRealNumberPrecision(12) << fixed
     << "    Shape type: edge" << endl
-    << "    Curve type: " << gu::curveTypeStrings.at(curveAdaptor.GetType()) << endl
-    << "    Tolerance: " << BRep_Tool::Tolerance(TopoDS::Edge(shapeIn)) << endl;
+    << "    Tolerance Brep_Tool: " << BRep_Tool::Tolerance(TopoDS::Edge(shapeIn)) << endl
+    << "    Tolerance BRepAdaptor_Curve: " << curveAdaptor.Tolerance() << endl
+    << "    Curve type: " << gu::curveTypeStrings.at(curveAdaptor.GetType()) << endl;
+    
+    if (curveAdaptor.GetType() == GeomAbs_Line)
+    {
+      gp_Lin line = curveAdaptor.Line();
+      
+      streamIn
+      << "        Location: "; gu::gpPntOut(streamIn, line.Location()) << endl
+      << "        Direction: "; gu::gpDirOut(streamIn, line.Direction()) << endl
+      << "        Start Point: "; gu::gpPntOut(streamIn, curveAdaptor.Value(curveAdaptor.FirstParameter())) << endl
+      << "        End Point: "; gu::gpPntOut(streamIn, curveAdaptor.Value(curveAdaptor.LastParameter())) << endl;
+    }
+    else if (curveAdaptor.GetType() == GeomAbs_Circle)
+    {
+      gp_Circ circle = curveAdaptor.Circle();
+      
+      streamIn
+      << "        Radius: " << circle.Radius() << endl
+      << "        Placement: "; gu::osgMatrixOut(streamIn, gu::toOsg(circle.Position())) << endl
+      << "        Start Point: "; gu::gpPntOut(streamIn, curveAdaptor.Value(curveAdaptor.FirstParameter())) << endl
+      << "        End Point: "; gu::gpPntOut(streamIn, curveAdaptor.Value(curveAdaptor.LastParameter())) << endl;
+    }
+    else if (curveAdaptor.GetType() == GeomAbs_Ellipse)
+    {
+      gp_Elips ellipse = curveAdaptor.Ellipse();
+      
+      streamIn
+      << "        Major Radius: " << ellipse.MajorRadius() << endl
+      << "        Minor Radius: " << ellipse.MinorRadius() << endl
+      << "        Focus 1: "; gu::gpPntOut(streamIn, ellipse.Focus1()) << endl
+      << "        Focus 2: "; gu::gpPntOut(streamIn, ellipse.Focus2()) << endl
+      << "        Placement: "; gu::osgMatrixOut(streamIn, gu::toOsg(ellipse.Position())) << endl
+      << "        Start Point: "; gu::gpPntOut(streamIn, curveAdaptor.Value(curveAdaptor.FirstParameter())) << endl
+      << "        End Point: "; gu::gpPntOut(streamIn, curveAdaptor.Value(curveAdaptor.LastParameter())) << endl;
+    }
+    else if (curveAdaptor.GetType() == GeomAbs_Hyperbola)
+    {
+      gp_Hypr hyp = curveAdaptor.Hyperbola();
+      
+      streamIn
+      << "        Major Radius: " << hyp.MajorRadius() << endl
+      << "        Minor Radius: " << hyp.MinorRadius() << endl
+      << "        Focus 1: "; gu::gpPntOut(streamIn, hyp.Focus1()) << endl
+      << "        Focus 2: "; gu::gpPntOut(streamIn, hyp.Focus2()) << endl
+      << "        Placement: "; gu::osgMatrixOut(streamIn, gu::toOsg(hyp.Position())) << endl
+      << "        Start Point: "; gu::gpPntOut(streamIn, curveAdaptor.Value(curveAdaptor.FirstParameter())) << endl
+      << "        End Point: "; gu::gpPntOut(streamIn, curveAdaptor.Value(curveAdaptor.LastParameter())) << endl;
+    }
+    else if (curveAdaptor.GetType() == GeomAbs_Parabola)
+    {
+      //not sure about start and end points.
+      gp_Parab par = curveAdaptor.Parabola();
+      
+      streamIn
+      << "        Focus: "; gu::gpPntOut(streamIn, par.Focus()) << endl
+      << "        Placement: "; gu::osgMatrixOut(streamIn, gu::toOsg(par.Position())) << endl
+      << "        Start Point: "; gu::gpPntOut(streamIn, curveAdaptor.Value(curveAdaptor.FirstParameter())) << endl
+      << "        End Point: "; gu::gpPntOut(streamIn, curveAdaptor.Value(curveAdaptor.LastParameter())) << endl;
+    }
 }
 
 void SeerShapeInfo::vertexInfo(QTextStream &streamIn, const TopoDS_Shape &shapeIn)

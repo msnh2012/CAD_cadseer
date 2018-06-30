@@ -22,8 +22,6 @@
 
 #include <QImage>
 #include <QGLWidget>
-#include <QMetaObject>
-#include <QCoreApplication>
 
 #include <osgViewer/View>
 #include <osg/Texture2D>
@@ -32,6 +30,7 @@
 #include <osg/ValueObject>
 #include <osg/Depth>
 
+#include <application/application.h>
 #include <viewer/message.h>
 #include <gesture/gesturenode.h>
 #include <modelviz/nodemaskdefs.h>
@@ -89,7 +88,7 @@ bool GestureHandler::handle(const osgGA::GUIEventAdapter& eventAdapter,
             msg::Mask msgMask(maskString);
             msg::Message messageOut;
             messageOut.mask = msgMask;
-            QMetaObject::invokeMethod(qApp, "messageSlot", Qt::QueuedConnection, Q_ARG(msg::Message, messageOut));
+            app::instance()->queuedMessage(messageOut);
           }
         }
         else
@@ -133,7 +132,7 @@ bool GestureHandler::handle(const osgGA::GUIEventAdapter& eventAdapter,
         msg::Mask msgMask(maskString);
         msg::Message messageOut;
         messageOut.mask = msgMask;
-        QMetaObject::invokeMethod(qApp, "messageSlot", Qt::QueuedConnection, Q_ARG(msg::Message, messageOut));
+        app::instance()->queuedMessage(messageOut);
       }
       hotKey = -1;
     }
@@ -212,7 +211,7 @@ bool GestureHandler::handle(const osgGA::GUIEventAdapter& eventAdapter,
                     msg::Mask msgMask(msgMaskString);
                     msg::Message messageOut;
                     messageOut.mask = msgMask;
-                    QMetaObject::invokeMethod(qApp, "messageSlot", Qt::QueuedConnection, Q_ARG(msg::Message, messageOut));
+                    app::instance()->queuedMessage(messageOut);
                 }
                 else
                     assert(0); //gesture node doesn't have msgMask attribute;

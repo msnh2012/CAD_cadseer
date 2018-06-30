@@ -264,7 +264,7 @@ void Base::updateVisual()
   lod->setRadius(sBuilder.out->getBound().radius());
   
   boost::filesystem::path filePathBase;
-  filePathBase = static_cast<app::Application*>(qApp)->getProject()->getSaveDirectory();
+  filePathBase = app::instance()->getProject()->getSaveDirectory();
   filePathBase /= ".scratch";
   boost::filesystem::path filePath00 = filePathBase / (gu::idToString(id) + "_00.osgb");
   boost::filesystem::path filePath01 = filePathBase / (gu::idToString(id) + "_01.osgb");

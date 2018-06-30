@@ -118,7 +118,7 @@ void Quote::finishDialog()
   }
   
   msg::Message mOut(msg::Mask(msg::Request | msg::Command | msg::Done));
-  QMetaObject::invokeMethod(qApp, "messageSlot", Qt::QueuedConnection, Q_ARG(msg::Message, mOut));
+  app::instance()->queuedMessage(mOut);
 }
 
 void Quote::initGui()

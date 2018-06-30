@@ -643,7 +643,7 @@ bool SelectionProxyModel::filterAcceptsRow(int source_row, const QModelIndex&) c
     )
       continue;
   
-    ftr::Base *feature = static_cast<app::Application*>(qApp)->getProject()->findFeature(container.featureId);
+    ftr::Base *feature = app::instance()->getProject()->findFeature(container.featureId);
     for (const auto &linkedParameterId : linkedParameterIds)
     {
       if (feature->hasParameter(linkedParameterId))

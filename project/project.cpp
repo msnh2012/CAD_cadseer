@@ -358,8 +358,6 @@ void Project::removeFeature(const uuid& idIn)
 
 void Project::setCurrentLeaf(const uuid& idIn)
 {
-//   indexVerticesEdges();
-  
   //sometimes the visual of a feature is dirty and doesn't get updated 
   //until we try to show it. However it might be selected meaning that
   //we will destroy the old geometry that is highlighted. So clear the seleciton.
@@ -374,49 +372,36 @@ void Project::setCurrentLeaf(const uuid& idIn)
   RemovedGraph removedGraph = buildRemovedGraph(stow->graph); //children
   ReversedGraph reversedGraph = boost::make_reverse_graph(removedGraph); //parents
   
-//   GraphReversed rGraph = boost::make_reverse_graph(projectGraph);
-  
   //parents
   Vertices aVertices;
-  AccrueVisitor<Vertex> activeVisitor(aVertices);
+  gu::BFSLimitVisitor<Vertex> activeVisitor(aVertices);
   boost::breadth_first_search(reversedGraph, vertex, boost::visitor(activeVisitor));
-  for (const auto &v : aVertices)
+  
+  //filter on the accumulated vertexes.
+  gu::SubsetFilter<ReversedGraph> vertexFilter(reversedGraph, aVertices);
+  typedef boost::filtered_graph<ReversedGraph, boost::keep_all, gu::SubsetFilter<ReversedGraph> > FilteredGraph;
+  FilteredGraph fg(reversedGraph, boost::keep_all(), vertexFilter);
+  
+  for (auto its = boost::vertices(fg); its.first != its.second; ++its.first)
   {
-    stow->setFeatureActive(v);
-    observer->out(msg::buildHideThreeD(reversedGraph[v].feature->getId()));
+    stow->setFeatureActive(*its.first);
+    observer->out(msg::buildHideThreeD(stow->graph[*its.first].feature->getId()));
   }
-  //if this is a create feature we don't want to hide the immediate parents.
-  if (reversedGraph[vertex].feature->getDescriptor() == ftr::Descriptor::Create)
-  {
-    for (auto its = boost::adjacent_vertices(vertex, reversedGraph); its.first != its.second; ++its.first)
-    {
-      stow->setFeatureActive(*its.first);
-      
-      // view signals when feature is shown3d.
-      // project responds to make sure visual is up to date in Project::shownThreeDDispatched.
-      // so don't block for this.
-      block.unblock();
-      observer->out(msg::buildShowThreeD(reversedGraph[*its.first].feature->getId()));
-      block.block();
-    }
-  }
+  
+  stow->setFeatureActive(vertex);
+  observer->out(msg::buildShowThreeD(stow->graph[vertex].feature->getId()));
   
   //children
   Vertices iVertices;
-  AccrueVisitor<Vertex> inactiveVisitor(iVertices);
+  gu::BFSLimitVisitor<Vertex> inactiveVisitor(iVertices);
   boost::breadth_first_search(removedGraph, vertex, boost::visitor(inactiveVisitor));
   for (const auto &v : iVertices)
   {
+    if (v == vertex) //don't hide the new current.
+      continue;
     stow->setFeatureInactive(v);
     observer->out(msg::buildHideThreeD(removedGraph[v].feature->getId()));
   }
-  
-  //now we don't want the actual feature inactive just it's children so we
-  //turn it back on because the BFS and visitor turned it off.
-  stow->setFeatureActive(vertex);
-  block.unblock(); //see notes above.
-  observer->out(msg::buildShowThreeD(stow->graph[vertex].feature->getId()));
-  block.block();
   
   updateLeafStatus();
 }
@@ -425,7 +410,6 @@ void Project::updateLeafStatus()
 {
   //we end up in here twice when set current leaf from dag view.
   //once when make the change and once when we call an update.
-//   indexVerticesEdges(); //redundent for setCurrentLeaf call.
   
   RemovedGraph removedGraph = buildRemovedGraph(stow->graph);
   
@@ -600,7 +584,7 @@ void Project::featureStateChangedDispatched(const msg::Message &messageIn)
   
   Vertex vertex = stow->findVertex(fMessage.featureId);
   Vertices vertices;
-  AccrueVisitor<Vertex> visitor(vertices);
+  gu::BFSLimitVisitor<Vertex> visitor(vertices);
   boost::breadth_first_search(stow->graph, vertex, boost::visitor(visitor));
   for (const auto &v : vertices)
     stow->graph[v].feature->setModelDirty();
@@ -919,45 +903,6 @@ void Project::toggleSkippedDispatched(const msg::Message &mIn)
   gitManager->appendGitMessage(gitMessage.str());
 }
 
-class AlterParentsVisitor : public boost::default_dfs_visitor
-{
-public:
-  AlterParentsVisitor(Vertices &vsIn) : vs(vsIn){}
-  template<typename V, typename G>
-  void discover_vertex(V vertex, G &graph)
-  {
-    stack.push_back(vertex);
-    //understood vector has source added so we can ignore it
-    if (vertex == vs.front())
-      return;
-    if (firstCreateIndex != -1) //found first create so ignore rest
-      return;
-    vs.push_back(vertex);
-    if (graph[vertex].feature->getDescriptor() == ftr::Descriptor::Create)
-    {
-      firstCreateIndex = static_cast<int>(stack.size()) - 1;
-    }
-  }
-//       template<typename E, typename G>
-//       void examine_edge(E edge, G &graph)
-//       {
-// 
-//       }
-  template<typename V, typename G>
-  void finish_vertex(V, G)
-  {
-    stack.pop_back();
-    if ((static_cast<int>(stack.size()) == firstCreateIndex) && (firstCreateIndex != -1))
-    {
-      firstCreateIndex = -1;
-    }
-  }
-private:
-  Vertices &vs;
-  int firstCreateIndex = -1; // index into stack
-  Vertices stack;
-};
-    
 void Project::dissolveFeatureDispatched(const msg::Message &mIn)
 {
   const prj::Message &pm = boost::get<prj::Message>(mIn.payload);
@@ -1039,7 +984,7 @@ void Project::dissolveFeatureDispatched(const msg::Message &mIn)
     typedef boost::filtered_graph<ReversedGraph, boost::keep_all, gu::SubsetFilter<ReversedGraph> > FilteredGraph;
     FilteredGraph filteredGraph(reversedGraph, boost::keep_all(), vertexFilter);
     
-    AlterParentsVisitor apv(vertsToRemove);
+    AlterVisitor apv(vertsToRemove, AlterVisitor::Create::Inclusion);
     boost::depth_first_search(filteredGraph, visitor(apv).root_vertex(ov));
   }
   
@@ -1105,40 +1050,53 @@ void Project::setAllVisualDirty()
 
 void Project::setColor(const boost::uuids::uuid &featureIdIn, const osg::Vec4 &colorIn)
 {
-  //the following is a good example of accumulating history of 1 object.
+  //switching away from edge property 'target' to feature descriptors create and alter.
   
-  //first remove any non 'target' edges. this will limit the following searches.
-  TargetEdgeFilter<Graph> edgeFilter(stow->graph);
-  typedef boost::filtered_graph<Graph, TargetEdgeFilter<Graph>, boost::keep_all> TargetFilteredGraph;
-  TargetFilteredGraph tFilteredGraph(stow->graph, edgeFilter, boost::keep_all());
-  
-  //find forward connected vertices.
   Vertex baseVertex = stow->findVertex(featureIdIn);
-  Vertices vertexes; //note: name 'vertices' clashes with forall_vertices macro.
-  gu::BFSLimitVisitor<Vertex> vis(vertexes);
-  boost::breadth_first_search(tFilteredGraph, baseVertex, visitor(vis));
+  auto rmg = buildRemovedGraph(stow->graph); //removed graph
+  Vertices alters;
+  alters.push_back(baseVertex);
   
-  //find reverse connected vertices.
-  typedef boost::reverse_graph<TargetFilteredGraph, TargetFilteredGraph&> TFReversedGraph;
-  TFReversedGraph rGraph = boost::make_reverse_graph(tFilteredGraph);
-  gu::BFSLimitVisitor<Vertex> rVis(vertexes);
-  boost::breadth_first_search(rGraph, baseVertex, visitor(rVis));
+  //forward
+  {
+    Vertices fvs; //filter vertices.
+    gu::BFSLimitVisitor<Vertex> fvis(fvs);
+    boost::breadth_first_search(rmg, baseVertex, visitor(fvis));
+    
+    gu::SubsetFilter<RemovedGraph> ssf(rmg, fvs); //subset filter
+    typedef boost::filtered_graph<RemovedGraph, boost::keep_all, gu::SubsetFilter<RemovedGraph> > SubsetGraph;
+    SubsetGraph fg(rmg, boost::keep_all(), ssf);
+    
+    AlterVisitor apv(alters, AlterVisitor::Create::Exclusion);
+    boost::depth_first_search(fg, visitor(apv).root_vertex(baseVertex));
+  }
   
-  //filter on the accumulated vertexes.
-  gu::SubsetFilter<Graph> vertexFilter(stow->graph, vertexes);
-  typedef boost::filtered_graph<Graph, boost::keep_all, gu::SubsetFilter<Graph> > FilteredGraph;
-  FilteredGraph filteredGraph(stow->graph, boost::keep_all(), vertexFilter);
+  //reversed. don't walk up if feature is create.
+  if (stow->graph[baseVertex].feature->getDescriptor() != ftr::Descriptor::Create)
+  {
+    auto rvg = boost::make_reverse_graph((rmg));
+    Vertices fvs; //filter vertices.
+    gu::BFSLimitVisitor<Vertex> fvis(fvs);
+    boost::breadth_first_search(rvg, baseVertex, visitor(fvis));
+    
+    gu::SubsetFilter<decltype(rvg)> ssf(rvg, fvs); //subset filter
+    typedef boost::filtered_graph<decltype(rvg), boost::keep_all, decltype(ssf) > SubsetGraph;
+    SubsetGraph fg(rmg, boost::keep_all(), ssf);
+    
+    AlterVisitor apv(alters, AlterVisitor::Create::Inclusion);
+    boost::depth_first_search(fg, visitor(apv).root_vertex(baseVertex));
+  }
   
   //set color of all objects.
-  for (auto its = boost::vertices(filteredGraph); its.first != its.second; ++its.first)
+  for (auto v : alters)
   {
-    stow->graph[*its.first].feature->setColor(colorIn);
+    stow->graph[v].feature->setColor(colorIn);
     //this is a hack. Currently, in order for this color change to be serialized
     //at next update we would have to mark the feature dirty. Marking the feature dirty
     //and causing models to be recalculated seems excessive for such a minor change as
     //object color. So here we just serialize the changed features to 'sneak' the
     //color change into the git commit.
-    stow->graph[*its.first].feature->serialWrite(QDir(QString::fromStdString(saveDirectory)));
+    stow->graph[v].feature->serialWrite(QDir(QString::fromStdString(saveDirectory)));
   }
   
   //log action to git.

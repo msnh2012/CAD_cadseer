@@ -51,7 +51,7 @@ Manager::Manager()
 {
   ok = false;
   
-  appDirectory = static_cast<app::Application*>(qApp)->getApplicationDirectory();
+  appDirectory = app::instance()->getApplicationDirectory();
   fileNameXML = "preferences.xml";
   filePathXML = appDirectory.absolutePath() + QDir::separator() + fileNameXML;
   filePathXSD = appDirectory.absolutePath() + QDir::separator() + "preferences.xsd";

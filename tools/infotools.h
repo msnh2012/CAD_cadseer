@@ -25,6 +25,7 @@ class QString;
 
 namespace osg{class Matrixd; class Vec3d; class Quat;}
 class gp_Pnt;
+class gp_Dir;
 
 namespace gu
 {
@@ -32,11 +33,13 @@ namespace gu
     QTextStream& osgQuatOut(QTextStream&, const osg::Quat&);
     QTextStream& osgVectorOut(QTextStream&, const osg::Vec3d&);
     QTextStream& gpPntOut(QTextStream&, const gp_Pnt&);
+    QTextStream& gpDirOut(QTextStream&, const gp_Dir&);
     
     QString osgMatrixOut(const osg::Matrixd&);
     QString osgQuatOut(const osg::Quat&);
     QString osgVectorOut(const osg::Vec3d&);
     QString gpPntOut(const gp_Pnt&);
+    QString gpDirOut(const gp_Dir&);
     
     static const std::vector<QString> surfaceTypeStrings = 
     {

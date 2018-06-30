@@ -49,7 +49,7 @@ Project::Project(QWidget *parent) : QDialog(parent), ui(new Ui::projectDialog)
   dlg::WidgetGeometry *filter = new dlg::WidgetGeometry(this, "dlg::Project");
   this->installEventFilter(filter);
   
-  QSettings &settings = static_cast<app::Application*>(qApp)->getUserSettings();
+  QSettings &settings = app::instance()->getUserSettings();
   settings.beginGroup("dlg::Project");
   settings.beginGroup("RecentTable");
   ui->recentTableWidget->horizontalHeader()->restoreState(settings.value("header").toByteArray());
@@ -69,7 +69,7 @@ Project::Project(QWidget *parent) : QDialog(parent), ui(new Ui::projectDialog)
 
 Project::~Project()
 {
-  QSettings &settings = static_cast<app::Application*>(qApp)->getUserSettings();
+  QSettings &settings = app::instance()->getUserSettings();
   settings.beginGroup("dlg::Project");
   settings.beginGroup("RecentTable");
   settings.setValue("header", ui->recentTableWidget->horizontalHeader()->saveState());

@@ -69,7 +69,7 @@ Boolean::Boolean(ftr::Union *u, QWidget *parent) : QDialog(parent), observer(new
 
 Boolean::~Boolean()
 {
-  QSettings &settings = static_cast<app::Application*>(qApp)->getUserSettings();
+  QSettings &settings = app::instance()->getUserSettings();
   settings.beginGroup("dlg::Boolean");
 
   settings.endGroup();
@@ -81,7 +81,7 @@ void Boolean::init()
   
   buildGui();
   
-  QSettings &settings = static_cast<app::Application*>(qApp)->getUserSettings();
+  QSettings &settings = app::instance()->getUserSettings();
   settings.beginGroup("dlg::Boolean");
 
   settings.endGroup();
@@ -96,7 +96,7 @@ void Boolean::setEditDialog()
 {
   isEditDialog =  true;
   
-  prj::Project *project = static_cast<app::Application*>(qApp)->getProject();
+  prj::Project *project = app::instance()->getProject();
   assert(project);
   
   ftr::UpdatePayload::UpdateMap editMap = project->getParentMap(booleanId);
@@ -219,7 +219,7 @@ void Boolean::finishDialog()
   auto finishCommand = [&]()
   {
     msg::Message mOut(msg::Mask(msg::Request | msg::Command | msg::Done));
-    QMetaObject::invokeMethod(qApp, "messageSlot", Qt::QueuedConnection, Q_ARG(msg::Message, mOut));
+    app::instance()->queuedMessage(mOut);
   };
   
   prj::Project *p = static_cast<app::Application *>(qApp)->getProject();

@@ -51,7 +51,7 @@ QTextStream& gu::osgMatrixOut(QTextStream &streamIn, const osg::Matrixd &m)
     << ms(m.getTrans().y()) << ", "
     << ms(m.getTrans().z())
     << "]"
-    << "]" << endl;
+    << "]";
     
     return streamIn;
 }
@@ -71,7 +71,12 @@ QTextStream& gu::osgVectorOut(QTextStream &s, const osg::Vec3d &vIn)
 QTextStream& gu::gpPntOut(QTextStream &sIn, const gp_Pnt &pIn)
 {
   sIn << "[" << pIn.X() << ", " << pIn.Y() << ", " << pIn.Z() << "]";
-  
+  return sIn;
+}
+
+QTextStream& gu::gpDirOut(QTextStream &sIn, const gp_Dir &dIn)
+{
+  sIn << "[" << dIn.X() << ", " << dIn.Y() << ", " << dIn.Z() << "]";
   return sIn;
 }
 
@@ -107,6 +112,15 @@ QString gu::gpPntOut(const gp_Pnt &pIn)
   QString buffer;
   QTextStream stream(&buffer);
   gu::gpPntOut(stream, pIn);
+  
+  return buffer;
+}
+
+QString gu::gpDirOut(const gp_Dir &dIn)
+{
+  QString buffer;
+  QTextStream stream(&buffer);
+  gu::gpDirOut(stream, dIn);
   
   return buffer;
 }

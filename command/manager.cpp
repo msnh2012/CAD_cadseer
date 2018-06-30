@@ -513,7 +513,7 @@ void Manager::constructThreadDispatched(const msg::Message&)
 //editing commands and dispatching.
 void Manager::editFeatureDispatched(const msg::Message&)
 {
-  app::Application *application = static_cast<app::Application*>(qApp);
+  app::Application *application = app::instance();
   const slc::Containers &selections = application->
     getMainWindow()->getViewer()->getSelections();
     

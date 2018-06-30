@@ -48,7 +48,7 @@ bool WidgetGeometry::eventFilter(QObject *objectIn, QEvent *eventIn)
 
 void WidgetGeometry::restoreSettings(QWidget *widget)
 {
-  QSettings &settings = static_cast<app::Application*>(qApp)->getUserSettings();
+  QSettings &settings = app::instance()->getUserSettings();
   settings.beginGroup(uniqueName);
   widget->restoreGeometry(settings.value("geometry").toByteArray());
   settings.endGroup();
@@ -56,7 +56,7 @@ void WidgetGeometry::restoreSettings(QWidget *widget)
 
 void WidgetGeometry::saveSettings(QWidget *widget)
 {
-  QSettings &settings = static_cast<app::Application*>(qApp)->getUserSettings();
+  QSettings &settings = app::instance()->getUserSettings();
   settings.beginGroup(uniqueName);
   settings.setValue("geometry", widget->saveGeometry());
   settings.endGroup();

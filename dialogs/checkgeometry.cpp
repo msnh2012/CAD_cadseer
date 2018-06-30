@@ -229,7 +229,7 @@ BasicCheckPage::BasicCheckPage(const ftr::Base &featureIn, QWidget *parent) :
   
   buildGui();
   
-  QSettings &settings = static_cast<app::Application*>(qApp)->getUserSettings();
+  QSettings &settings = app::instance()->getUserSettings();
   settings.beginGroup("CheckGeometry");
   settings.beginGroup("BasicPage");
   treeWidget->header()->restoreState(settings.value("header").toByteArray());
@@ -241,7 +241,7 @@ BasicCheckPage::BasicCheckPage(const ftr::Base &featureIn, QWidget *parent) :
 
 BasicCheckPage::~BasicCheckPage()
 {
-  QSettings &settings = static_cast<app::Application*>(qApp)->getUserSettings();
+  QSettings &settings = app::instance()->getUserSettings();
   settings.beginGroup("CheckGeometry");
   settings.beginGroup("BasicPage");
   settings.setValue("header", treeWidget->header()->saveState());
@@ -468,7 +468,7 @@ BOPCheckPage::~BOPCheckPage()
 {
   if (tableWidget)
   {
-    QSettings &settings = static_cast<app::Application*>(qApp)->getUserSettings();
+    QSettings &settings = app::instance()->getUserSettings();
     settings.beginGroup("CheckGeometry");
     settings.beginGroup("BOPPage");
     settings.setValue("header", tableWidget->horizontalHeader()->saveState());
@@ -534,7 +534,7 @@ void BOPCheckPage::goSlot()
   vLayout->addWidget(tableWidget);
   this->setLayout(vLayout);
   
-  QSettings &settings = static_cast<app::Application*>(qApp)->getUserSettings();
+  QSettings &settings = app::instance()->getUserSettings();
   settings.beginGroup("CheckGeometry");
   settings.beginGroup("BOPPage");
   tableWidget->horizontalHeader()->restoreState(settings.value("header").toByteArray());
@@ -678,7 +678,7 @@ ToleranceCheckPage::ToleranceCheckPage(const ftr::Base &featureIn, QWidget *pare
   
   buildGui();
   
-  QSettings &settings = static_cast<app::Application*>(qApp)->getUserSettings();
+  QSettings &settings = app::instance()->getUserSettings();
   settings.beginGroup("CheckGeometry");
   settings.beginGroup("TolerancePage");
   tableWidget->horizontalHeader()->restoreState(settings.value("header").toByteArray());
@@ -690,7 +690,7 @@ ToleranceCheckPage::ToleranceCheckPage(const ftr::Base &featureIn, QWidget *pare
 
 ToleranceCheckPage::~ToleranceCheckPage()
 {
-  QSettings &settings = static_cast<app::Application*>(qApp)->getUserSettings();
+  QSettings &settings = app::instance()->getUserSettings();
   settings.beginGroup("CheckGeometry");
   settings.beginGroup("TolerancePage");
   settings.setValue("header", tableWidget->horizontalHeader()->saveState());

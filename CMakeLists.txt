@@ -278,10 +278,6 @@ SET(MODELVIZ_SOURCES
     modelviz/hiddenlinetechnique.cpp
     )
 
-SET(TESTING_SOURCES
-    testing/plotter.cpp
-    )
-
 SET(GESTURE_SOURCES
     gesture/gesturehandler.cpp
     gesture/gesturenode.cpp
@@ -541,7 +537,6 @@ SET(CADSEER_SOURCES
     dagview/rectitem.cpp
     globalutilities.cpp
     ${MODELVIZ_SOURCES}
-    ${TESTING_SOURCES}
     ${GESTURE_SOURCES}
     ${MESSAGE_SOURCES}
     ${FEATURE_SOURCES}

@@ -24,12 +24,11 @@
 #include <limits>
 
 #include <QObject>
-#include <QMetaObject>
-#include <QCoreApplication>
 
 #include <osg/Switch>
 #include <osg/AutoTransform>
 
+#include <application/application.h>
 #include <feature/parameter.h>
 #include <message/dispatch.h>
 #include <message/observer.h>
@@ -266,7 +265,7 @@ bool IPGroup::processMotion(const osgManipulator::MotionCommand &commandIn)
     if (prf::manager().rootPtr->dragger().triggerUpdateOnFinish())
     {
       msg::Message messageOut(msg::Request | msg::Project | msg::Update);
-      QMetaObject::invokeMethod(qApp, "messageSlot", Qt::QueuedConnection, Q_ARG(msg::Message, messageOut));
+      app::instance()->queuedMessage(messageOut);
       
 //       observer->out(msg::Mask(msg::Request | msg::Project | msg::Update));
     }

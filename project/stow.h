@@ -27,6 +27,7 @@
 #include <boost/graph/filtered_graph.hpp>
 #include <boost/graph/reverse_graph.hpp>
 #include <boost/graph/breadth_first_search.hpp>
+#include <boost/graph/depth_first_search.hpp>
 #include <boost/uuid/uuid.hpp>
 
 #include <feature/states.h>
@@ -138,22 +139,6 @@ namespace prj
   typedef boost::reverse_graph<RemovedGraph, RemovedGraph&> ReversedGraph;
   
   
-  //! simply collect connected vertices.
-  template <typename VertexTypeIn>
-  class AccrueVisitor : public boost::default_bfs_visitor
-  {
-  public:
-    AccrueVisitor() = delete;
-    AccrueVisitor(std::vector<VertexTypeIn> &vsIn) : vertices(vsIn){}
-    template <typename GraphTypeIn>
-    void discover_vertex(VertexTypeIn vertexIn, const GraphTypeIn &graphIn) const
-    {
-      vertices.push_back(vertexIn);
-    }
-    
-    std::vector<VertexTypeIn> &vertices;
-  };
-  
   template <typename GraphTypeIn>
   struct ActiveFilter
   {
@@ -215,6 +200,56 @@ namespace prj
     gu::PathSearch<FilteredGraph> ps(fg);
     return ps.getPaths();
   }
+  
+  class AlterVisitor : public boost::default_dfs_visitor
+  {
+  public:
+    enum class Create
+    {
+      Inclusion, //!< the output vertices will include the 1st create path vertex
+      Exclusion //!< the output vertices will NOT include the 1st create path vertex
+    };
+    
+    AlterVisitor(Vertices &vsIn, Create cIn) : vs(vsIn), create(cIn)
+    {
+      assert(!vs.empty()); //need at least root vertex in.
+    }
+    template<typename V, typename G>
+    void discover_vertex(V vertex, G &graph)
+    {
+      stack.push_back(vertex);
+      if (vertex == vs.front())// understood vector has source added so we can ignore it
+        return;
+      if (firstCreateIndex != -1) //found first create so ignore rest
+        return;
+      vs.push_back(vertex);
+      if (graph[vertex].feature->getDescriptor() == ftr::Descriptor::Create)
+      {
+        firstCreateIndex = static_cast<int>(stack.size()) - 1;
+        if (create == Create::Exclusion)
+          vs.pop_back();
+      }
+    }
+  //       template<typename E, typename G>
+  //       void examine_edge(E edge, G &graph)
+  //       {
+  // 
+  //       }
+    template<typename V, typename G>
+    void finish_vertex(V, G)
+    {
+      stack.pop_back();
+      if ((static_cast<int>(stack.size()) == firstCreateIndex) && (firstCreateIndex != -1))
+      {
+        firstCreateIndex = -1;
+      }
+    }
+  private:
+    Vertices &vs;
+    int firstCreateIndex = -1; // index into stack
+    Vertices stack;
+    Create create;
+  };
 }
 
 #endif // PRJ_STOW_H

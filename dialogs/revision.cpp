@@ -109,7 +109,7 @@ void UndoPage::buildGui()
 
 void UndoPage::fillInCommitList()
 {
-  prj::Project *p = static_cast<app::Application*>(qApp)->getProject();
+  prj::Project *p = app::instance()->getProject();
   assert(p);
   prj::GitManager &gm = p->getGitManager();
   data->commits = gm.getCommitsHeadToNamed("main");
@@ -131,7 +131,7 @@ void UndoPage::resetActionSlot()
   int r = commitList->currentRow();
   assert(static_cast<std::size_t>(r) < data->commits.size());
   
-  app::Application *application = static_cast<app::Application*>(qApp);
+  app::Application *application = app::instance();
   std::string pdir = application->getProject()->getSaveDirectory();
   observer->out(msg::Mask(msg::Request | msg::Close | msg::Project));
   
@@ -304,7 +304,7 @@ void AdvancedPage::createTagSlot()
     }
   }
   
-  prj::Project *p = static_cast<app::Application*>(qApp)->getProject();
+  prj::Project *p = app::instance()->getProject();
   assert(p);
   prj::GitManager &gm = p->getGitManager();
   gm.createTag(name, messageEdit->toPlainText().toStdString());
@@ -320,7 +320,7 @@ void AdvancedPage::destroyTagSlot()
   assert(row >= 0 && static_cast<std::size_t>(row) < data->tags.size());
   if (row < 0 || static_cast<std::size_t>(row) > data->tags.size())
     return;
-  prj::Project *p = static_cast<app::Application*>(qApp)->getProject();
+  prj::Project *p = app::instance()->getProject();
   assert(p);
   prj::GitManager &gm = p->getGitManager();
   gm.destroyTag(data->tags.at(static_cast<std::size_t>(row)).name());
@@ -366,7 +366,7 @@ void AdvancedPage::checkoutTagSlot()
    * 3) reopen the project
    * see not in UndoPage::resetActionSlot() why we dynamicly allocate a new git manager.
    */
-  app::Application *application = static_cast<app::Application*>(qApp);
+  app::Application *application = app::instance();
   std::string pdir = application->getProject()->getSaveDirectory();
   observer->out(msg::Mask(msg::Request | msg::Close | msg::Project));
   
@@ -388,7 +388,7 @@ void AdvancedPage::fillInTagList()
 {
   createTagAction->setEnabled(true);
   
-  prj::Project *p = static_cast<app::Application*>(qApp)->getProject();
+  prj::Project *p = app::instance()->getProject();
   assert(p);
   prj::GitManager &gm = p->getGitManager();
   data->tags = gm.getTags();
@@ -406,7 +406,7 @@ void AdvancedPage::fillInTagList()
 
 void AdvancedPage::setCurrentHead()
 {
-  prj::Project *p = static_cast<app::Application*>(qApp)->getProject();
+  prj::Project *p = app::instance()->getProject();
   assert(p);
   prj::GitManager &gm = p->getGitManager();
   data->currentHead = gm.getCurrentHead();

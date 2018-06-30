@@ -257,12 +257,12 @@ private:
 };
 
 Parameter::Parameter(ftr::prm::Parameter *parameterIn, const boost::uuids::uuid &idIn):
-  QDialog(static_cast<app::Application*>(qApp)->getMainWindow()),
+  QDialog(app::instance()->getMainWindow()),
   parameter(parameterIn)
 {
   assert(parameter);
   
-  feature = static_cast<app::Application*>(qApp)->getProject()->findFeature(idIn);
+  feature = app::instance()->getProject()->findFeature(idIn);
   assert(feature);
   buildGui();
   constantHasChanged();

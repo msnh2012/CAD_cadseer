@@ -37,7 +37,7 @@ SplitterDecorated::~SplitterDecorated()
 void SplitterDecorated::restoreSettings(const QString& nameIn)
 {
   setObjectName(nameIn);
-  QSettings &settings = static_cast<app::Application*>(qApp)->getUserSettings();
+  QSettings &settings = app::instance()->getUserSettings();
   settings.beginGroup(objectName());
   restoreState(settings.value("splitterSizes").toByteArray());
   settings.endGroup();
@@ -45,7 +45,7 @@ void SplitterDecorated::restoreSettings(const QString& nameIn)
 
 void SplitterDecorated::saveSettings()
 {
-  QSettings &settings = static_cast<app::Application*>(qApp)->getUserSettings();
+  QSettings &settings = app::instance()->getUserSettings();
   
   settings.beginGroup(objectName());
   settings.setValue("splitterSizes", saveState());

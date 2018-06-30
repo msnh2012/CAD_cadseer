@@ -292,7 +292,7 @@ protected:
 
 void Overlay::serialRead()
 {
-  boost::filesystem::path file = static_cast<app::Application*>(qApp)->getProject()->getSaveDirectory();
+  boost::filesystem::path file = app::instance()->getProject()->getSaveDirectory();
   file /= "overlay.xml";
   if (!boost::filesystem::exists(file))
     return;
@@ -326,7 +326,7 @@ void Overlay::serialWrite()
   this->accept(v);
   prj::srl::View svOut(states);
   
-  boost::filesystem::path file = static_cast<app::Application*>(qApp)->getProject()->getSaveDirectory();
+  boost::filesystem::path file = app::instance()->getProject()->getSaveDirectory();
   file /= "overlay.xml";
   xml_schema::NamespaceInfomap infoMap;
   std::ofstream stream(file.string());

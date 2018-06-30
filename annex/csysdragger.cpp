@@ -122,7 +122,7 @@ namespace ann
             if (prf::manager().rootPtr->dragger().triggerUpdateOnFinish())
             {
               msg::Message messageOut(msg::Request | msg::Project | msg::Update);
-              QMetaObject::invokeMethod(qApp, "messageSlot", Qt::QueuedConnection, Q_ARG(msg::Message, messageOut));
+              app::instance()->queuedMessage(messageOut);
             }
           }
         }

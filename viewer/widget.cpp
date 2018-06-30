@@ -52,7 +52,6 @@
 #include <modelviz/nodemaskdefs.h>
 #include <modelviz/hiddenlineeffect.h>
 #include <selection/definitions.h>
-#include <testing/plotter.h>
 #include <gesture/gesturehandler.h>
 #include <globalutilities.h>
 #include <tools/infotools.h>
@@ -512,7 +511,7 @@ void Widget::exportOSGDispatched(const msg::Message&)
   
   QString fileName = QFileDialog::getSaveFileName
   (
-    static_cast<app::Application*>(qApp)->getMainWindow(),
+    app::instance()->getMainWindow(),
     tr("Save File"),
     QString::fromStdString(prf::manager().rootPtr->project().lastDirectory().get()),
     tr("Scene (*.osgt *.osgx *.osgb *.osg *.ive)")
@@ -968,7 +967,7 @@ protected:
 
 void Widget::serialRead()
 {
-  boost::filesystem::path file = static_cast<app::Application*>(qApp)->getProject()->getSaveDirectory();
+  boost::filesystem::path file = app::instance()->getProject()->getSaveDirectory();
   file /= "view.xml";
   if (!boost::filesystem::exists(file))
     return;
@@ -1035,7 +1034,7 @@ void Widget::serialWrite()
   if (mainCamera->getProjectionMatrixAsOrtho(left, right, bottom, top, near, far))
     svOut.ortho() = prj::srl::Ortho(left, right, bottom, top, near, far);
   
-  boost::filesystem::path file = static_cast<app::Application*>(qApp)->getProject()->getSaveDirectory();
+  boost::filesystem::path file = app::instance()->getProject()->getSaveDirectory();
   file /= "view.xml";
   xml_schema::NamespaceInfomap infoMap;
   std::ofstream stream(file.string());

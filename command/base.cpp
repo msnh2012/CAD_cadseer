@@ -36,7 +36,7 @@ Base::Base()
 {
   observer = std::move(std::unique_ptr<msg::Observer>(new msg::Observer()));
   observer->name = "cmd::Base";
-  application = static_cast<app::Application*>(qApp); assert(application);
+  application = app::instance(); assert(application);
   mainWindow = application->getMainWindow(); assert(mainWindow);
   project = application->getProject(); assert(project);
   selectionManager = mainWindow->getSelectionManager(); assert(selectionManager);
@@ -53,6 +53,6 @@ Base::~Base()
 void Base::sendDone()
 {
   msg::Message mOut(msg::Mask(msg::Request | msg::Command | msg::Done));
-  QMetaObject::invokeMethod(qApp, "messageSlot", Qt::QueuedConnection, Q_ARG(msg::Message, mOut));
+  app::instance()->queuedMessage(mOut);
 }
 

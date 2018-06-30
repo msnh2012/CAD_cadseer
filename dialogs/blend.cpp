@@ -128,7 +128,7 @@ Blend::Blend(ftr::Blend *editBlendIn, QWidget *parent) : QDialog(parent), blend(
   isEditDialog = true;
   
   //smart pointer to remain inValid in edit 'mode'.
-  prj::Project *project = static_cast<app::Application*>(qApp)->getProject();
+  prj::Project *project = app::instance()->getProject();
   assert(project);
   
   //what if the established feature doesn't have parent??
@@ -218,7 +218,7 @@ void Blend::init()
   WidgetGeometry *filter = new WidgetGeometry(this, "dlg::Blend");
   this->installEventFilter(filter);
   
-  QSettings &settings = static_cast<app::Application*>(qApp)->getUserSettings();
+  QSettings &settings = app::instance()->getUserSettings();
   settings.beginGroup("dlg::Blend");
   settings.beginGroup("ConstantTable");
   constantTableWidget->horizontalHeader()->restoreState(settings.value("header").toByteArray());
@@ -233,7 +233,7 @@ void Blend::init()
 
 Blend::~Blend()
 {
-  QSettings &settings = static_cast<app::Application*>(qApp)->getUserSettings();
+  QSettings &settings = app::instance()->getUserSettings();
   settings.beginGroup("dlg::Blend");
   settings.beginGroup("ConstantTable");
   settings.setValue("header", constantTableWidget->horizontalHeader()->saveState());
@@ -417,7 +417,7 @@ void Blend::updateBlendFeature()
         (
           blendParent->getAnnex<ann::SeerShape>(ann::Type::SeerShape),
           fPick,
-          static_cast<app::Application*>(qApp)->getProject()->getShapeHistory()
+          app::instance()->getProject()->getShapeHistory()
         );
         
         for (const auto &constraint : vItem->constraints)
@@ -445,7 +445,7 @@ void Blend::updateBlendFeature()
             //not a match so build another one.
             ftr::VariableEntry entry;
             entry.pick.id = constraint.pickId;
-            entry.pick.shapeHistory = static_cast<app::Application*>(qApp)->getProject()->getShapeHistory().createDevolveHistory(entry.pick.id);
+            entry.pick.shapeHistory = app::instance()->getProject()->getShapeHistory().createDevolveHistory(entry.pick.id);
             entry.radius = ftr::Blend::buildRadiusParameter();
             entry.radius->setValue(constraint.radius);
             if (!constraint.expressionLinkId.is_nil())
@@ -504,7 +504,7 @@ void Blend::updateBlendFeature()
           {
             ftr::VariableEntry entry;
             entry.pick.id = itemEntry.pickId;
-            entry.pick.shapeHistory = static_cast<app::Application*>(qApp)->getProject()->getShapeHistory().createDevolveHistory(entry.pick.id);
+            entry.pick.shapeHistory = app::instance()->getProject()->getShapeHistory().createDevolveHistory(entry.pick.id);
             entry.radius = ftr::Blend::buildRadiusParameter();
             entry.radius->setValue(itemEntry.radius);
             entry.radius->connectValue(boost::bind(&ftr::Blend::setModelDirty, blend));
@@ -545,7 +545,7 @@ ftr::Pick Blend::convert(const BlendEntry &entryIn)
   
   ftr::Pick fPick;
   fPick.id = entryIn.pickId;
-  fPick.shapeHistory = static_cast<app::Application*>(qApp)->getProject()->getShapeHistory().createDevolveHistory(fPick.id);
+  fPick.shapeHistory = app::instance()->getProject()->getShapeHistory().createDevolveHistory(fPick.id);
   const ann::SeerShape &sShape = blendParent->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
   assert(sShape.hasShapeIdRecord(entryIn.pickId));
   const TopoDS_Shape &shape = sShape.getOCCTShape(entryIn.pickId);
@@ -925,7 +925,7 @@ void Blend::selectionAdditionDispatched(const msg::Message &messageIn)
   const slc::Message &sMessage = boost::get<slc::Message>(messageIn.payload);
   if (!blendParent)
   {
-    prj::Project *project = static_cast<app::Application*>(qApp)->getProject();
+    prj::Project *project = app::instance()->getProject();
     assert(project);
     blendParent = project->findFeature(sMessage.featureId);
     assert(blendParent);
@@ -1644,7 +1644,7 @@ void VariableDelegate::setModelData(QWidget*, QAbstractItemModel* model, const Q
     {
       QMessageBox::critical
       (
-        static_cast<app::Application*>(qApp)->getMainWindow(),
+        app::instance()->getMainWindow(),
        tr("Error:"), tr("No negative numbers for radius")
        
       );
@@ -1654,7 +1654,7 @@ void VariableDelegate::setModelData(QWidget*, QAbstractItemModel* model, const Q
     {
       QMessageBox::critical
       (
-        static_cast<app::Application*>(qApp)->getMainWindow(),
+        app::instance()->getMainWindow(),
        tr("Error:"), tr("Couldn't set model data.")
         
       );
@@ -1664,7 +1664,7 @@ void VariableDelegate::setModelData(QWidget*, QAbstractItemModel* model, const Q
   {
     QMessageBox::critical
     (
-      static_cast<app::Application*>(qApp)->getMainWindow(),
+      app::instance()->getMainWindow(),
      tr("Error:"), tr("Couldn't parse string.")
     );
   }

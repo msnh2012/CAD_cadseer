@@ -910,8 +910,7 @@ void Factory::debugShapeGraphDispatched(const msg::Message&)
     if (containers.empty())
         return;
     
-    QString fileNameBase = static_cast<app::Application*>(qApp)->
-        getApplicationDirectory().absolutePath() + QDir::separator();
+    QString fileNameBase = app::instance()->getApplicationDirectory().absolutePath() + QDir::separator();
     for (const auto &container : containers)
     {
         if (container.selectionType != slc::Type::Object)
@@ -937,7 +936,7 @@ void Factory::viewInfoDispatched(const msg::Message &)
   forcepoint(stream) << qSetRealNumberPrecision(12);
   stream << endl;
   
-  vwr::Widget *viewer = static_cast<app::Application*>(qApp)->getMainWindow()->getViewer();
+  vwr::Widget *viewer = app::instance()->getMainWindow()->getViewer();
   osg::Matrixd ics = osg::Matrixd::inverse(viewer->getCurrentSystem()); //inverted current system.
   
   auto streamPoint = [&](const osg::Vec3d &p)
@@ -974,7 +973,7 @@ void Factory::viewInfoDispatched(const msg::Message &)
       //nothing selected so get app and project information.
       //TODO get git hash for application version.
       project->getInfo(stream);
-      static_cast<app::Application*>(qApp)->getMainWindow()->getViewer()->getInfo(stream);
+      app::instance()->getMainWindow()->getViewer()->getInfo(stream);
     }
     else
     {

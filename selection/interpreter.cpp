@@ -100,7 +100,7 @@ void Interpreter::go()
       continue;
     }
     
-    ftr::Base *bf = static_cast<app::Application*>(qApp)->getProject()->findFeature(container.featureId);
+    ftr::Base *bf = app::instance()->getProject()->findFeature(container.featureId);
     assert(bf);
     assert(bf->hasAnnex(ann::Type::SeerShape));
     const ann::SeerShape &sShape = bf->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
