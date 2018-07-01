@@ -136,6 +136,7 @@
     <file>resources/images/inspectMeasureBase.svg</file>
     <file>resources/images/inspectMeasureClear.svg</file>
     <file>resources/images/inspectLinearMeasure.svg</file>
+    <file>resources/images/inspectAbout.svg</file>
     <file>preferences/preferences.xml</file>
     <file>preferences/preferencesXML.xsd</file>
   </qresource>

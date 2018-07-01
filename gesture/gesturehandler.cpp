@@ -1060,6 +1060,13 @@ void GestureHandler::constructMenu()
   {
     constructCommandNode
     (
+      ":/resources/images/inspectAbout.svg",
+      QObject::tr("About CadSeer").toStdString(),
+      (msg::Request | msg::About | msg::Dialog).to_string(),
+      inspectBase
+    );
+    constructCommandNode
+    (
       ":/resources/images/inspectInfo.svg",
       QObject::tr("View Info Command").toStdString(),
       (msg::Request | msg::Info).to_string(),

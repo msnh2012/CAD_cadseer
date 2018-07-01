@@ -43,6 +43,7 @@
 #include <command/manager.h>
 #include <lod/manager.h>
 #include <dialogs/project.h>
+#include <dialogs/about.h>
 
 #include <spnav.h>
 
@@ -352,6 +353,8 @@ void Application::setupDispatcher()
   observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Application::closeProjectRequestDispatched, this, _1)));
   mask = msg::Request | msg::Project | msg::Dialog;
   observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Application::ProjectDialogRequestDispatched, this, _1)));
+  mask = msg::Request | msg::About | msg::Dialog;
+  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Application::AboutDialogRequestDispatched, this, _1)));
 }
 
 void Application::ProjectDialogRequestDispatched(const msg::Message&)
@@ -415,6 +418,12 @@ void Application::closeProjectRequestDispatched(const msg::Message&)
 {
   if (project)
     closeProject();
+}
+
+void Application::AboutDialogRequestDispatched(const msg::Message &)
+{
+  std::unique_ptr<dlg::About> dialog(new dlg::About(mainWindow.get()));
+  dialog->exec();
 }
 
 

@@ -391,6 +391,7 @@ SET(DIALOG_SOURCES
     dialogs/revision.cpp
     dialogs/commitwidget.cpp
     dialogs/tagwidget.cpp
+    dialogs/about.cpp
     )
     
 SET(PREFERENCE_SOURCES
@@ -583,6 +584,7 @@ SET(CADSEER_MOC_HDRS
     dialogs/revision.h
     dialogs/commitwidget.h
     lod/manager.h
+    dialogs/about.h
     )
 
 SET(CADSEER_LIBRARIES
@@ -603,6 +605,7 @@ SET(CADSEER_UIS
     application/mainwindow.ui
     dialogs/preferences.ui
     dialogs/project.ui
+    dialogs/about.ui
     )
 
 SET(CADSEER_RESOURCES

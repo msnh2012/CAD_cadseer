@@ -80,6 +80,7 @@ private:
     void openProjectRequestDispatched(const msg::Message &);
     void closeProjectRequestDispatched(const msg::Message &);
     void ProjectDialogRequestDispatched(const msg::Message &);
+    void AboutDialogRequestDispatched(const msg::Message &);
 };
 
 static Application* instance(){return static_cast<Application*>(qApp);}
