@@ -23,6 +23,8 @@
 
 #include <osg/ComputeBoundsVisitor>
 
+#include <preferences/preferencesXML.h>
+#include <preferences/manager.h>
 #include <modelviz/nodemaskdefs.h>
 #include <viewer/spaceballosgevent.h>
 #include <viewer/spaceballmanipulator.h>
@@ -135,7 +137,7 @@ void SpaceballManipulator::computeHomePosition(const osg::Camera *, bool useBoun
     //when there is nothing in scene getBound returns -1 and the view is screwy.
     if (boundingSphere.radius() < 0)
       boundingSphere.radius() = 1.0;
-    camSphere = osg::BoundingSphere(boundingSphere.center(), boundingSphere.radius() * 2.0d);
+    camSphere = osg::BoundingSphere(boundingSphere.center(), boundingSphere.radius() * 2.0);
     getProjectionData();//this is needed to test camera type ortho vs perspective.
     getViewData();//this is needed to viewport width and height.
     if (projectionData.isCamOrtho)
@@ -424,6 +426,8 @@ void SpaceballManipulator::getViewData()
 
 void SpaceballManipulator::goOrtho(const vwr::SpaceballOSGEvent *event)
 {
+    const auto &sensi = prf::manager().rootPtr->visual().spaceballSensitivity().get();
+  
     osg::Vec3d newEye, newCenter, newUp;
     newEye = spaceEye;
     newCenter = spaceCenter;
@@ -434,24 +438,24 @@ void SpaceballManipulator::goOrtho(const vwr::SpaceballOSGEvent *event)
     rotationPoint = newCenter;
 
     //derive motion factor.
-    double gauge = std::min(projectionData.width(), projectionData.height()) / 512.0d;
+    double gauge = std::min(projectionData.width(), projectionData.height()) / 512.0;
 
-    double rotateFactor = .0002;
+    double rotateFactor = .0002 * sensi.overall() * sensi.rotations();
     osg::Quat rx, ry, rz;
     rx.makeRotate(event->rotationX * rotateFactor, viewData.x);
-    ry.makeRotate(event->rotationY * rotateFactor * -1.0d, viewData.y);
+    ry.makeRotate(event->rotationY * rotateFactor * -1.0, viewData.y);
     rz.makeRotate(event->rotationZ * rotateFactor, viewData.z);
     newUp = rx * ry * rz * newUp;
     osg::Vec3d tempEye = newEye - rotationPoint;
     tempEye = rx * ry * rz * tempEye;
     newEye = tempEye + rotationPoint;
 
-    double transFactor = gauge * .05;
+    double transFactor = gauge * .05 * sensi.overall() * sensi.translations();
     osg::Vec3d transVec = viewData.x * (event->translationX * transFactor) +
-            viewData.y * (event->translationY * transFactor * -1.0d);//don't move z
+            viewData.y * (event->translationY * transFactor * -1.0);//don't move z
     newEye = transVec + newEye;
     newCenter = transVec + newCenter;
-    scaleView(event->translationZ * -.0001);
+    scaleView(event->translationZ * -.0001 * sensi.overall() * sensi.translations());
 
     //ortho views want to stay outside of model boundary.
     double camDistance = (camSphere.center() - newEye).length();
@@ -462,7 +466,7 @@ void SpaceballManipulator::goOrtho(const vwr::SpaceballOSGEvent *event)
     //new and far clipping planes.
     osg::Vec3d lookVector = newCenter - newEye;
     lookVector.normalize();
-    lookVector *= (projectionData.far - projectionData.near) / 2.0d + projectionData.near;
+    lookVector *= (projectionData.far - projectionData.near) / 2.0 + projectionData.near;
     if (lookVector.length() > 0.0)
         newCenter = newEye + lookVector;
 
@@ -484,9 +488,9 @@ osg::Vec3d SpaceballManipulator::projectToBound(const osg::Vec3d &eye, osg::Vec3
 
     double leg = (boundCenter - corner).length();
     double hypotenuse = camSphere.radius();
-    double otherLeg = sqrt(pow(hypotenuse, 2.0d) - pow(leg, 2.0d));
+    double otherLeg = sqrt(pow(hypotenuse, 2.0) - pow(leg, 2.0));
 
-    osg::Vec3d projection = corner * -1.0d;
+    osg::Vec3d projection = corner * -1.0;
     projection.normalize();
     projection *= otherLeg;
     projection += corner;
@@ -499,6 +503,8 @@ osg::Vec3d SpaceballManipulator::projectToBound(const osg::Vec3d &eye, osg::Vec3
 
 void SpaceballManipulator::goPerspective(const vwr::SpaceballOSGEvent *event)
 {
+    const auto &sensi = prf::manager().rootPtr->visual().spaceballSensitivity().get();
+  
     osg::Vec3d newEye, newCenter, newUp;
     newEye = spaceEye;
     newCenter = spaceCenter;
@@ -513,19 +519,19 @@ void SpaceballManipulator::goPerspective(const vwr::SpaceballOSGEvent *event)
     if (projectionData.aspectRatio > 1)
         gauge *= projectionData.aspectRatio;
 
-    double rotateFactor = gauge * 0.000004;
+    double rotateFactor = gauge * 0.000004 * sensi.overall() * sensi.rotations();
     osg::Quat rx, ry, rz;
     rx.makeRotate(event->rotationX * rotateFactor, viewData.x);
-    ry.makeRotate(event->rotationY * rotateFactor * -1.0d, viewData.y);
+    ry.makeRotate(event->rotationY * rotateFactor * -1.0, viewData.y);
     rz.makeRotate(event->rotationZ * rotateFactor, viewData.z);
     newUp = rx * ry * rz * newUp;
     osg::Vec3d tempEye = newEye - rotationPoint;
     tempEye = rx * ry * rz * tempEye;
     newEye = tempEye + rotationPoint;
 
-    double transFactor = gauge * .0002;
+    double transFactor = gauge * .0002 * sensi.overall() * sensi.translations();
     osg::Vec3d transVec = viewData.x * (event->translationX * transFactor) +
-            viewData.y * (event->translationY * transFactor * -1.0d) +
+            viewData.y * (event->translationY * transFactor * -1.0) +
             viewData.z * (event->translationZ * transFactor);
     newEye = transVec + newEye;
     newCenter = transVec + newCenter;
@@ -534,7 +540,7 @@ void SpaceballManipulator::goPerspective(const vwr::SpaceballOSGEvent *event)
     //new and far clipping planes.
     osg::Vec3d lookVector = newCenter - newEye;
     lookVector.normalize();
-    lookVector *= (projectionData.far - projectionData.near) / 2.0d + projectionData.near;
+    lookVector *= (projectionData.far - projectionData.near) / 2.0 + projectionData.near;
     if (lookVector.length() > 0.0)
         newCenter = newEye + lookVector;
 
@@ -563,7 +569,7 @@ void SpaceballManipulator::scaleFit()
 
         if (aspectFactor > 1)
         {
-            projectionData.bottom = boundingSphere.radius() * -1.0d;
+            projectionData.bottom = boundingSphere.radius() * -1.0;
             projectionData.top = boundingSphere.radius();
             projectionData.left = projectionData.bottom * aspectFactor;
             projectionData.right = projectionData.top * aspectFactor;
@@ -572,7 +578,7 @@ void SpaceballManipulator::scaleFit()
         }
         else
         {
-            projectionData.left = boundingSphere.radius() * -1.0d;
+            projectionData.left = boundingSphere.radius() * -1.0;
             projectionData.right = boundingSphere.radius();
             projectionData.bottom = projectionData.left / aspectFactor;
             projectionData.top = projectionData.right / aspectFactor;

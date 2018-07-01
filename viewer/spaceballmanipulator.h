@@ -90,10 +90,10 @@ protected:
 
     struct ProjectionData
     {
-        double fovy, aspectRatio, left, right, top, bottom, near, far;
-        bool isCamOrtho;
-	double width(){return (right - left);}
-	double height(){return (top - bottom);}
+      double fovy, aspectRatio, left, right, top, bottom, near, far;
+      bool isCamOrtho;
+      double width(){return (right - left);}
+      double height(){return (top - bottom);}
     };
     ProjectionData projectionData;
 

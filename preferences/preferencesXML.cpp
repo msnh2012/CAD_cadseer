@@ -521,6 +521,82 @@ namespace prf
   }
 
 
+  // SpaceballSensitivity
+  // 
+
+  const SpaceballSensitivity::OverallType& SpaceballSensitivity::
+  overall () const
+  {
+    return this->overall_.get ();
+  }
+
+  SpaceballSensitivity::OverallType& SpaceballSensitivity::
+  overall ()
+  {
+    return this->overall_.get ();
+  }
+
+  void SpaceballSensitivity::
+  overall (const OverallType& x)
+  {
+    this->overall_.set (x);
+  }
+
+  SpaceballSensitivity::OverallType SpaceballSensitivity::
+  overall_default_value ()
+  {
+    return OverallType (1.0);
+  }
+
+  const SpaceballSensitivity::TranslationsType& SpaceballSensitivity::
+  translations () const
+  {
+    return this->translations_.get ();
+  }
+
+  SpaceballSensitivity::TranslationsType& SpaceballSensitivity::
+  translations ()
+  {
+    return this->translations_.get ();
+  }
+
+  void SpaceballSensitivity::
+  translations (const TranslationsType& x)
+  {
+    this->translations_.set (x);
+  }
+
+  SpaceballSensitivity::TranslationsType SpaceballSensitivity::
+  translations_default_value ()
+  {
+    return TranslationsType (1.0);
+  }
+
+  const SpaceballSensitivity::RotationsType& SpaceballSensitivity::
+  rotations () const
+  {
+    return this->rotations_.get ();
+  }
+
+  SpaceballSensitivity::RotationsType& SpaceballSensitivity::
+  rotations ()
+  {
+    return this->rotations_.get ();
+  }
+
+  void SpaceballSensitivity::
+  rotations (const RotationsType& x)
+  {
+    this->rotations_.set (x);
+  }
+
+  SpaceballSensitivity::RotationsType SpaceballSensitivity::
+  rotations_default_value ()
+  {
+    return RotationsType (1.0);
+  }
+
+
   // Visual
   // 
 
@@ -570,6 +646,36 @@ namespace prf
   display (::std::unique_ptr< DisplayType > x)
   {
     this->display_.set (std::move (x));
+  }
+
+  const Visual::SpaceballSensitivityOptional& Visual::
+  spaceballSensitivity () const
+  {
+    return this->spaceballSensitivity_;
+  }
+
+  Visual::SpaceballSensitivityOptional& Visual::
+  spaceballSensitivity ()
+  {
+    return this->spaceballSensitivity_;
+  }
+
+  void Visual::
+  spaceballSensitivity (const SpaceballSensitivityType& x)
+  {
+    this->spaceballSensitivity_.set (x);
+  }
+
+  void Visual::
+  spaceballSensitivity (const SpaceballSensitivityOptional& x)
+  {
+    this->spaceballSensitivity_ = x;
+  }
+
+  void Visual::
+  spaceballSensitivity (::std::unique_ptr< SpaceballSensitivityType > x)
+  {
+    this->spaceballSensitivity_.set (std::move (x));
   }
 
 
@@ -3561,6 +3667,141 @@ namespace prf
   {
   }
 
+  // SpaceballSensitivity
+  //
+
+  SpaceballSensitivity::
+  SpaceballSensitivity (const OverallType& overall,
+                        const TranslationsType& translations,
+                        const RotationsType& rotations)
+  : ::xml_schema::Type (),
+    overall_ (overall, this),
+    translations_ (translations, this),
+    rotations_ (rotations, this)
+  {
+  }
+
+  SpaceballSensitivity::
+  SpaceballSensitivity (const SpaceballSensitivity& x,
+                        ::xml_schema::Flags f,
+                        ::xml_schema::Container* c)
+  : ::xml_schema::Type (x, f, c),
+    overall_ (x.overall_, f, this),
+    translations_ (x.translations_, f, this),
+    rotations_ (x.rotations_, f, this)
+  {
+  }
+
+  SpaceballSensitivity::
+  SpaceballSensitivity (const ::xercesc::DOMElement& e,
+                        ::xml_schema::Flags f,
+                        ::xml_schema::Container* c)
+  : ::xml_schema::Type (e, f | ::xml_schema::Flags::base, c),
+    overall_ (this),
+    translations_ (this),
+    rotations_ (this)
+  {
+    if ((f & ::xml_schema::Flags::base) == 0)
+    {
+      ::xsd::cxx::xml::dom::parser< char > p (e, true, false, false);
+      this->parse (p, f);
+    }
+  }
+
+  void SpaceballSensitivity::
+  parse (::xsd::cxx::xml::dom::parser< char >& p,
+         ::xml_schema::Flags f)
+  {
+    for (; p.more_content (); p.next_content (false))
+    {
+      const ::xercesc::DOMElement& i (p.cur_element ());
+      const ::xsd::cxx::xml::qualified_name< char > n (
+        ::xsd::cxx::xml::dom::name< char > (i));
+
+      // overall
+      //
+      if (n.name () == "overall" && n.namespace_ ().empty ())
+      {
+        if (!overall_.present ())
+        {
+          this->overall_.set (OverallTraits::create (i, f, this));
+          continue;
+        }
+      }
+
+      // translations
+      //
+      if (n.name () == "translations" && n.namespace_ ().empty ())
+      {
+        if (!translations_.present ())
+        {
+          this->translations_.set (TranslationsTraits::create (i, f, this));
+          continue;
+        }
+      }
+
+      // rotations
+      //
+      if (n.name () == "rotations" && n.namespace_ ().empty ())
+      {
+        if (!rotations_.present ())
+        {
+          this->rotations_.set (RotationsTraits::create (i, f, this));
+          continue;
+        }
+      }
+
+      break;
+    }
+
+    if (!overall_.present ())
+    {
+      throw ::xsd::cxx::tree::expected_element< char > (
+        "overall",
+        "");
+    }
+
+    if (!translations_.present ())
+    {
+      throw ::xsd::cxx::tree::expected_element< char > (
+        "translations",
+        "");
+    }
+
+    if (!rotations_.present ())
+    {
+      throw ::xsd::cxx::tree::expected_element< char > (
+        "rotations",
+        "");
+    }
+  }
+
+  SpaceballSensitivity* SpaceballSensitivity::
+  _clone (::xml_schema::Flags f,
+          ::xml_schema::Container* c) const
+  {
+    return new class SpaceballSensitivity (*this, f, c);
+  }
+
+  SpaceballSensitivity& SpaceballSensitivity::
+  operator= (const SpaceballSensitivity& x)
+  {
+    if (this != &x)
+    {
+      static_cast< ::xml_schema::Type& > (*this) = x;
+      this->overall_ = x.overall_;
+      this->translations_ = x.translations_;
+      this->rotations_ = x.rotations_;
+    }
+
+    return *this;
+  }
+
+  SpaceballSensitivity::
+  ~SpaceballSensitivity ()
+  {
+  }
+
   // Visual
   //
 
@@ -3569,7 +3810,8 @@ namespace prf
           const DisplayType& display)
   : ::xml_schema::Type (),
     mesh_ (mesh, this),
-    display_ (display, this)
+    display_ (display, this),
+    spaceballSensitivity_ (this)
   {
   }
 
@@ -3578,7 +3820,8 @@ namespace prf
           ::std::unique_ptr< DisplayType > display)
   : ::xml_schema::Type (),
     mesh_ (std::move (mesh), this),
-    display_ (std::move (display), this)
+    display_ (std::move (display), this),
+    spaceballSensitivity_ (this)
   {
   }
 
@@ -3588,7 +3831,8 @@ namespace prf
           ::xml_schema::Container* c)
   : ::xml_schema::Type (x, f, c),
     mesh_ (x.mesh_, f, this),
-    display_ (x.display_, f, this)
+    display_ (x.display_, f, this),
+    spaceballSensitivity_ (x.spaceballSensitivity_, f, this)
   {
   }
 
@@ -3598,7 +3842,8 @@ namespace prf
           ::xml_schema::Container* c)
   : ::xml_schema::Type (e, f | ::xml_schema::Flags::base, c),
     mesh_ (this),
-    display_ (this)
+    display_ (this),
+    spaceballSensitivity_ (this)
   {
     if ((f & ::xml_schema::Flags::base) == 0)
     {
@@ -3645,6 +3890,20 @@ namespace prf
         }
       }
 
+      // spaceballSensitivity
+      //
+      if (n.name () == "spaceballSensitivity" && n.namespace_ ().empty ())
+      {
+        ::std::unique_ptr< SpaceballSensitivityType > r (
+          SpaceballSensitivityTraits::create (i, f, this));
+
+        if (!this->spaceballSensitivity_)
+        {
+          this->spaceballSensitivity_.set (::std::move (r));
+          continue;
+        }
+      }
+
       break;
     }
 
@@ -3678,6 +3937,7 @@ namespace prf
       static_cast< ::xml_schema::Type& > (*this) = x;
       this->mesh_ = x.mesh_;
       this->display_ = x.display_;
+      this->spaceballSensitivity_ = x.spaceballSensitivity_;
     }
 
     return *this;
@@ -7994,6 +8254,45 @@ namespace prf
   }
 
   void
+  operator<< (::xercesc::DOMElement& e, const SpaceballSensitivity& i)
+  {
+    e << static_cast< const ::xml_schema::Type& > (i);
+
+    // overall
+    //
+    {
+      ::xercesc::DOMElement& s (
+        ::xsd::cxx::xml::dom::create_element (
+          "overall",
+          e));
+
+      s << ::xml_schema::AsDouble(i.overall ());
+    }
+
+    // translations
+    //
+    {
+      ::xercesc::DOMElement& s (
+        ::xsd::cxx::xml::dom::create_element (
+          "translations",
+          e));
+
+      s << ::xml_schema::AsDouble(i.translations ());
+    }
+
+    // rotations
+    //
+    {
+      ::xercesc::DOMElement& s (
+        ::xsd::cxx::xml::dom::create_element (
+          "rotations",
+          e));
+
+      s << ::xml_schema::AsDouble(i.rotations ());
+    }
+  }
+
+  void
   operator<< (::xercesc::DOMElement& e, const Visual& i)
   {
     e << static_cast< const ::xml_schema::Type& > (i);
@@ -8018,6 +8317,18 @@ namespace prf
           e));
 
       s << i.display ();
+    }
+
+    // spaceballSensitivity
+    //
+    if (i.spaceballSensitivity ())
+    {
+      ::xercesc::DOMElement& s (
+        ::xsd::cxx::xml::dom::create_element (
+          "spaceballSensitivity",
+          e));
+
+      s << *i.spaceballSensitivity ();
     }
   }
 

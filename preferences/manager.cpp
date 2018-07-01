@@ -425,4 +425,26 @@ void Manager::ensureDefaults()
     );
     rootPtr->visual().mesh().lod() = level;
   }
+  
+  if (!rootPtr->visual().spaceballSensitivity().present())
+  {
+    prf::SpaceballSensitivity sbs
+    (
+      prf::SpaceballSensitivity::overall_default_value()
+      , prf::SpaceballSensitivity::translations_default_value()
+      , prf::SpaceballSensitivity::rotations_default_value()
+    );
+    rootPtr->visual().spaceballSensitivity() = sbs;
+  }
+  else
+  {
+    auto &sbs = rootPtr->visual().spaceballSensitivity().get();
+    
+    if (sbs.overall() < 0.1 || sbs.overall() > 10.0)
+      sbs.overall() = prf::SpaceballSensitivity::overall_default_value();
+    if (sbs.translations() < 0.1 || sbs.translations() > 10.0)
+      sbs.translations() = prf::SpaceballSensitivity::translations_default_value();
+    if (sbs.rotations() < 0.1 || sbs.rotations() > 10.0)
+      sbs.rotations() = prf::SpaceballSensitivity::rotations_default_value();
+  }
 }

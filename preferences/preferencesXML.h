@@ -76,6 +76,7 @@ namespace prf
   class Mesh;
   class RenderStyle;
   class Display;
+  class SpaceballSensitivity;
   class Visual;
   class Dragger;
   class InteractiveParameter;
@@ -1771,6 +1772,269 @@ namespace prf
   };
 
   /**
+   * @brief Class corresponding to the %SpaceballSensitivity schema type.
+   *
+   * @nosubgrouping
+   */
+  class SpaceballSensitivity: public ::xml_schema::Type
+  {
+    public:
+    /**
+     * @name overall
+     *
+     * @brief Accessor and modifier functions for the %overall
+     * required element.
+     */
+    //@{
+
+    /**
+     * @brief Element type.
+     */
+    typedef ::xml_schema::Double OverallType;
+
+    /**
+     * @brief Element traits type.
+     */
+    typedef ::xsd::cxx::tree::traits< OverallType, char, ::xsd::cxx::tree::schema_type::double_ > OverallTraits;
+
+    /**
+     * @brief Return a read-only (constant) reference to the element.
+     *
+     * @return A constant reference to the element.
+     */
+    const OverallType&
+    overall () const;
+
+    /**
+     * @brief Return a read-write reference to the element.
+     *
+     * @return A reference to the element.
+     */
+    OverallType&
+    overall ();
+
+    /**
+     * @brief Set the element value.
+     *
+     * @param x A new value to set.
+     *
+     * This function makes a copy of its argument and sets it as
+     * the new value of the element.
+     */
+    void
+    overall (const OverallType& x);
+
+    /**
+     * @brief Return the default value for the element.
+     *
+     * @return The element's default value.
+     */
+    static OverallType
+    overall_default_value ();
+
+    //@}
+
+    /**
+     * @name translations
+     *
+     * @brief Accessor and modifier functions for the %translations
+     * required element.
+     */
+    //@{
+
+    /**
+     * @brief Element type.
+     */
+    typedef ::xml_schema::Double TranslationsType;
+
+    /**
+     * @brief Element traits type.
+     */
+    typedef ::xsd::cxx::tree::traits< TranslationsType, char, ::xsd::cxx::tree::schema_type::double_ > TranslationsTraits;
+
+    /**
+     * @brief Return a read-only (constant) reference to the element.
+     *
+     * @return A constant reference to the element.
+     */
+    const TranslationsType&
+    translations () const;
+
+    /**
+     * @brief Return a read-write reference to the element.
+     *
+     * @return A reference to the element.
+     */
+    TranslationsType&
+    translations ();
+
+    /**
+     * @brief Set the element value.
+     *
+     * @param x A new value to set.
+     *
+     * This function makes a copy of its argument and sets it as
+     * the new value of the element.
+     */
+    void
+    translations (const TranslationsType& x);
+
+    /**
+     * @brief Return the default value for the element.
+     *
+     * @return The element's default value.
+     */
+    static TranslationsType
+    translations_default_value ();
+
+    //@}
+
+    /**
+     * @name rotations
+     *
+     * @brief Accessor and modifier functions for the %rotations
+     * required element.
+     */
+    //@{
+
+    /**
+     * @brief Element type.
+     */
+    typedef ::xml_schema::Double RotationsType;
+
+    /**
+     * @brief Element traits type.
+     */
+    typedef ::xsd::cxx::tree::traits< RotationsType, char, ::xsd::cxx::tree::schema_type::double_ > RotationsTraits;
+
+    /**
+     * @brief Return a read-only (constant) reference to the element.
+     *
+     * @return A constant reference to the element.
+     */
+    const RotationsType&
+    rotations () const;
+
+    /**
+     * @brief Return a read-write reference to the element.
+     *
+     * @return A reference to the element.
+     */
+    RotationsType&
+    rotations ();
+
+    /**
+     * @brief Set the element value.
+     *
+     * @param x A new value to set.
+     *
+     * This function makes a copy of its argument and sets it as
+     * the new value of the element.
+     */
+    void
+    rotations (const RotationsType& x);
+
+    /**
+     * @brief Return the default value for the element.
+     *
+     * @return The element's default value.
+     */
+    static RotationsType
+    rotations_default_value ();
+
+    //@}
+
+    /**
+     * @name Constructors
+     */
+    //@{
+
+    /**
+     * @brief Create an instance from the ultimate base and
+     * initializers for required elements and attributes.
+     */
+    SpaceballSensitivity (const OverallType&,
+                          const TranslationsType&,
+                          const RotationsType&);
+
+    /**
+     * @brief Create an instance from a DOM element.
+     *
+     * @param e A DOM element to extract the data from.
+     * @param f Flags to create the new instance with.
+     * @param c A pointer to the object that will contain the new
+     * instance.
+     */
+    SpaceballSensitivity (const ::xercesc::DOMElement& e,
+                          ::xml_schema::Flags f = 0,
+                          ::xml_schema::Container* c = 0);
+
+    /**
+     * @brief Copy constructor.
+     *
+     * @param x An instance to make a copy of.
+     * @param f Flags to create the copy with.
+     * @param c A pointer to the object that will contain the copy.
+     *
+     * For polymorphic object models use the @c _clone function instead.
+     */
+    SpaceballSensitivity (const SpaceballSensitivity& x,
+                          ::xml_schema::Flags f = 0,
+                          ::xml_schema::Container* c = 0);
+
+    /**
+     * @brief Copy the instance polymorphically.
+     *
+     * @param f Flags to create the copy with.
+     * @param c A pointer to the object that will contain the copy.
+     * @return A pointer to the dynamically allocated copy.
+     *
+     * This function ensures that the dynamic type of the instance is
+     * used for copying and should be used for polymorphic object
+     * models instead of the copy constructor.
+     */
+    virtual SpaceballSensitivity*
+    _clone (::xml_schema::Flags f = 0,
+            ::xml_schema::Container* c = 0) const;
+
+    /**
+     * @brief Copy assignment operator.
+     *
+     * @param x An instance to make a copy of.
+     * @return A reference to itself.
+     *
+     * For polymorphic object models use the @c _clone function instead.
+     */
+    SpaceballSensitivity&
+    operator= (const SpaceballSensitivity& x);
+
+    //@}
+
+    /**
+     * @brief Destructor.
+     */
+    virtual 
+    ~SpaceballSensitivity ();
+
+    // Implementation.
+    //
+
+    //@cond
+
+    protected:
+    void
+    parse (::xsd::cxx::xml::dom::parser< char >&,
+           ::xml_schema::Flags);
+
+    protected:
+    ::xsd::cxx::tree::one< OverallType > overall_;
+    ::xsd::cxx::tree::one< TranslationsType > translations_;
+    ::xsd::cxx::tree::one< RotationsType > rotations_;
+
+    //@endcond
+  };
+
+  /**
    * @brief Class corresponding to the %Visual schema type.
    *
    * @nosubgrouping
@@ -1895,6 +2159,82 @@ namespace prf
     //@}
 
     /**
+     * @name spaceballSensitivity
+     *
+     * @brief Accessor and modifier functions for the %spaceballSensitivity
+     * optional element.
+     */
+    //@{
+
+    /**
+     * @brief Element type.
+     */
+    typedef ::prf::SpaceballSensitivity SpaceballSensitivityType;
+
+    /**
+     * @brief Element optional container type.
+     */
+    typedef ::xsd::cxx::tree::optional< SpaceballSensitivityType > SpaceballSensitivityOptional;
+
+    /**
+     * @brief Element traits type.
+     */
+    typedef ::xsd::cxx::tree::traits< SpaceballSensitivityType, char > SpaceballSensitivityTraits;
+
+    /**
+     * @brief Return a read-only (constant) reference to the element
+     * container.
+     *
+     * @return A constant reference to the optional container.
+     */
+    const SpaceballSensitivityOptional&
+    spaceballSensitivity () const;
+
+    /**
+     * @brief Return a read-write reference to the element container.
+     *
+     * @return A reference to the optional container.
+     */
+    SpaceballSensitivityOptional&
+    spaceballSensitivity ();
+
+    /**
+     * @brief Set the element value.
+     *
+     * @param x A new value to set.
+     *
+     * This function makes a copy of its argument and sets it as
+     * the new value of the element.
+     */
+    void
+    spaceballSensitivity (const SpaceballSensitivityType& x);
+
+    /**
+     * @brief Set the element value.
+     *
+     * @param x An optional container with the new value to set.
+     *
+     * If the value is present in @a x then this function makes a copy 
+     * of this value and sets it as the new value of the element.
+     * Otherwise the element container is set the 'not present' state.
+     */
+    void
+    spaceballSensitivity (const SpaceballSensitivityOptional& x);
+
+    /**
+     * @brief Set the element value without copying.
+     *
+     * @param p A new value to use.
+     *
+     * This function will try to use the passed value directly instead
+     * of making a copy.
+     */
+    void
+    spaceballSensitivity (::std::unique_ptr< SpaceballSensitivityType > p);
+
+    //@}
+
+    /**
      * @name Constructors
      */
     //@{
@@ -1989,6 +2329,7 @@ namespace prf
     protected:
     ::xsd::cxx::tree::one< MeshType > mesh_;
     ::xsd::cxx::tree::one< DisplayType > display_;
+    SpaceballSensitivityOptional spaceballSensitivity_;
 
     //@endcond
   };
@@ -10140,6 +10481,9 @@ namespace prf
 
   void
   operator<< (::xercesc::DOMElement&, const Display&);
+
+  void
+  operator<< (::xercesc::DOMElement&, const SpaceballSensitivity&);
 
   void
   operator<< (::xercesc::DOMElement&, const Visual&);

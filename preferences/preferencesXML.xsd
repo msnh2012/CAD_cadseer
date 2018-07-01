@@ -53,10 +53,19 @@
   </xs:all>
 </xs:complexType>
 
+<xs:complexType name="SpaceballSensitivity">
+  <xs:all>
+    <xs:element name="overall" type="xs:double" default="1.0"/>
+    <xs:element name="translations" type="xs:double" default="1.0"/>
+    <xs:element name="rotations" type="xs:double" default="1.0"/>
+  </xs:all>
+</xs:complexType>
+
 <xs:complexType name="Visual">
   <xs:all>
     <xs:element name="mesh" type="Mesh"/>
     <xs:element name="display" type="Display"/>
+    <xs:element name="spaceballSensitivity" type="SpaceballSensitivity" minOccurs="0" maxOccurs="1"/>
   </xs:all>
 </xs:complexType>
 
