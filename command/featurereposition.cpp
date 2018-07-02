@@ -55,6 +55,7 @@ void FeatureReposition::deactivate()
 
 void FeatureReposition::go()
 {
+  bool moved = false;
   //only works with preselection for now.
   const osg::Matrixd& cs = mainWindow->getViewer()->getCurrentSystem();
   const slc::Containers &containers = eventHandler->getSelections();
@@ -71,5 +72,9 @@ void FeatureReposition::go()
     osg::Matrixd dm = osg::Matrixd::inverse(da.dragger->getMatrix()); //dragger matrix
     osg::Matrixd ns = static_cast<osg::Matrix>(*(da.parameter)) * dm * cs;
     da.setCSys(ns);
+    moved = true;
   }
+  
+  if (!moved)
+    shouldUpdate = false;
 }

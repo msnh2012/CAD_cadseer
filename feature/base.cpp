@@ -45,6 +45,7 @@
 
 #include <tools/idtools.h>
 #include <tools/infotools.h>
+#include <tools/occtools.h>
 #include <application/application.h> //need project directory for viz
 #include <project/project.h> //need project directory for viz
 #include <preferences/preferencesXML.h>
@@ -90,7 +91,7 @@ Base::Base()
   
   name = QObject::tr("Empty");
   
-  color = osg::Vec4(.1f, .7f, .1f, 1.0f);
+  color = osg::Vec4(0.0f, 0.6666666f, 0.0f, 1.0f);
   
   mainSwitch = new osg::Switch();
   mainSwitch->setName("feature");
@@ -219,15 +220,6 @@ void Base::setName(const QString &nameIn)
   msg::Message mMessage(msg::Response | msg::Edit | msg::Feature | msg::Name);
   mMessage.payload = fMessage;
   observer->out(mMessage);
-}
-
-TopoDS_Compound Base::compoundWrap(const TopoDS_Shape& shapeIn)
-{
-  TopoDS_Compound compound;
-  BRep_Builder builder;
-  builder.MakeCompound(compound);
-  builder.Add(compound, shapeIn);
-  return compound;
 }
 
 void Base::updateVisual()

@@ -87,6 +87,7 @@ void DieSet::go()
   if (stripId.is_nil())
   {
     observer->out(msg::buildStatusMessage("Couldn't infer strip id for DieSet feature"));
+    shouldUpdate = false;
     return;
   }
   

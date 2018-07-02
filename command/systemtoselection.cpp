@@ -63,7 +63,11 @@ boost::optional<osg::Matrixd> from3Points(const slc::Containers &csIn)
   return boost::optional<osg::Matrixd>(fm);
 }
 
-SystemToSelection::SystemToSelection() : Base() {}
+SystemToSelection::SystemToSelection() : Base()
+{
+  shouldUpdate = false;
+}
+
 SystemToSelection::~SystemToSelection() {}
 
 std::string SystemToSelection::getStatusMessage()

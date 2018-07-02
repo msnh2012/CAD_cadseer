@@ -147,6 +147,14 @@ namespace occt
    */
   TopoDS_Compound getLastUniqueCompound(const TopoDS_Compound &compoundIn);
   
+  /*! @brief Returns a compound of a shape
+   * 
+   * @param compoundIn shape to be contained in compound.
+   * @return A compound containing the shape passed in.
+   * @note If shapeIn is a compound the function does nothing and returns the same shape
+   */
+  TopoDS_Compound compoundWrap(const TopoDS_Shape &shapeIn);
+  
   /*! @brief Get the boundary wires of a shape.
    * 
    * @param shapeIn shape to be searched.

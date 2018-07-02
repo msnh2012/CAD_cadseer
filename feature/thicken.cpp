@@ -30,6 +30,7 @@
 #include <annex/seershape.h>
 #include <tools/featuretools.h>
 #include <project/serial/xsdcxxoutput/featurethicken.h>
+#include <feature/shapecheck.h>
 #include <feature/updatepayload.h>
 #include <feature/parameter.h>
 #include <feature/inputtype.h>
@@ -151,6 +152,10 @@ void Thicken::updateModel(const UpdatePayload &payloadIn)
     builder.MakeOffsetShape();
     if (!builder.IsDone())
       throw std::runtime_error(getErrorString(builder));
+    
+    ShapeCheck check(builder.Shape());
+    if (!check.isValid())
+      throw std::runtime_error("shapeCheck failed");
     
     sShape->setOCCTShape(builder.Shape());
     sShape->shapeMatch(tss);

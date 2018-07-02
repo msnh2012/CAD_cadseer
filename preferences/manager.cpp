@@ -426,6 +426,9 @@ void Manager::ensureDefaults()
     rootPtr->visual().mesh().lod() = level;
   }
   
+  if (!rootPtr->visual().mesh().logLOD().present())
+    rootPtr->visual().mesh().logLOD() = prf::Mesh::logLOD_default_value();
+  
   if (!rootPtr->visual().spaceballSensitivity().present())
   {
     prf::SpaceballSensitivity sbs

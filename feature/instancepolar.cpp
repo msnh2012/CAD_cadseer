@@ -36,6 +36,7 @@
 #include <feature/parameter.h>
 #include <project/serial/xsdcxxoutput/featureinstancepolar.h>
 #include <tools/featuretools.h>
+#include <feature/shapecheck.h>
 #include <feature/inputtype.h>
 #include <feature/updatepayload.h>
 #include <feature/instancepolar.h>
@@ -273,6 +274,11 @@ void InstancePolar::updateModel(const UpdatePayload &payloadIn)
     }
     
     TopoDS_Compound result = occt::ShapeVectorCast(out);
+    
+    ShapeCheck check(result);
+    if (!check.isValid())
+      throw std::runtime_error("shapeCheck failed");
+    
     sShape->setOCCTShape(result);
     
     for (const auto &s : tShapes)

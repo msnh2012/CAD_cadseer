@@ -61,6 +61,7 @@ void Nest::go()
   if (containers.size() != 1)
   {
     observer->out(msg::buildStatusMessage("Incorrect preselection for nest feature"));
+    shouldUpdate = false;
     return;
   }
   uuid bId = containers.at(0).featureId;

@@ -56,6 +56,7 @@ void RemoveFaces::go()
   if (containers.empty())
   {
     observer->outBlocked(msg::buildStatusMessage("Wrong pre selection for remove faces"));
+    shouldUpdate = false;
     return;
   }
   uuid fId = gu::createNilId();
@@ -93,6 +94,7 @@ void RemoveFaces::go()
   if (fId.is_nil())
   {
     observer->outBlocked(msg::buildStatusMessage("No feature id for remove face"));
+    shouldUpdate = false;
     return;
   }
     

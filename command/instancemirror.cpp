@@ -55,6 +55,7 @@ void InstanceMirror::go()
   if (containers.empty() || (containers.size() > 2))
   {
     observer->outBlocked(msg::buildStatusMessage("wrong selection for instance mirror"));
+    shouldUpdate = false;
     return;
   }
   
@@ -62,6 +63,7 @@ void InstanceMirror::go()
   if (!bf->hasAnnex(ann::Type::SeerShape))
   {
     observer->outBlocked(msg::buildStatusMessage("first selection should have shape for instance mirror"));
+    shouldUpdate = false;
     return;
   }
   std::shared_ptr<ftr::InstanceMirror> instance(new ftr::InstanceMirror());

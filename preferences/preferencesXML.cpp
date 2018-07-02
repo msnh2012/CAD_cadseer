@@ -357,6 +357,36 @@ namespace prf
     this->lod_.set (std::move (x));
   }
 
+  const Mesh::LogLODOptional& Mesh::
+  logLOD () const
+  {
+    return this->logLOD_;
+  }
+
+  Mesh::LogLODOptional& Mesh::
+  logLOD ()
+  {
+    return this->logLOD_;
+  }
+
+  void Mesh::
+  logLOD (const LogLODType& x)
+  {
+    this->logLOD_.set (x);
+  }
+
+  void Mesh::
+  logLOD (const LogLODOptional& x)
+  {
+    this->logLOD_ = x;
+  }
+
+  Mesh::LogLODType Mesh::
+  logLOD_default_value ()
+  {
+    return LogLODType (false);
+  }
+
 
   // RenderStyle
   // 
@@ -3320,7 +3350,8 @@ namespace prf
   : ::xml_schema::Type (),
     linearDeflection_ (linearDeflection, this),
     angularDeflection_ (angularDeflection, this),
-    lod_ (this)
+    lod_ (this),
+    logLOD_ (this)
   {
   }
 
@@ -3331,7 +3362,8 @@ namespace prf
   : ::xml_schema::Type (x, f, c),
     linearDeflection_ (x.linearDeflection_, f, this),
     angularDeflection_ (x.angularDeflection_, f, this),
-    lod_ (x.lod_, f, this)
+    lod_ (x.lod_, f, this),
+    logLOD_ (x.logLOD_, f, this)
   {
   }
 
@@ -3342,7 +3374,8 @@ namespace prf
   : ::xml_schema::Type (e, f | ::xml_schema::Flags::base, c),
     linearDeflection_ (this),
     angularDeflection_ (this),
-    lod_ (this)
+    lod_ (this),
+    logLOD_ (this)
   {
     if ((f & ::xml_schema::Flags::base) == 0)
     {
@@ -3403,6 +3436,17 @@ namespace prf
         }
       }
 
+      // logLOD
+      //
+      if (n.name () == "logLOD" && n.namespace_ ().empty ())
+      {
+        if (!this->logLOD_)
+        {
+          this->logLOD_.set (LogLODTraits::create (i, f, this));
+          continue;
+        }
+      }
+
       break;
     }
 
@@ -3437,6 +3481,7 @@ namespace prf
       this->linearDeflection_ = x.linearDeflection_;
       this->angularDeflection_ = x.angularDeflection_;
       this->lod_ = x.lod_;
+      this->logLOD_ = x.logLOD_;
     }
 
     return *this;
@@ -8179,6 +8224,18 @@ namespace prf
           e));
 
       s << *i.lod ();
+    }
+
+    // logLOD
+    //
+    if (i.logLOD ())
+    {
+      ::xercesc::DOMElement& s (
+        ::xsd::cxx::xml::dom::create_element (
+          "logLOD",
+          e));
+
+      s << *i.logLOD ();
     }
   }
 

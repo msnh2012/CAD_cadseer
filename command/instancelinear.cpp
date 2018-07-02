@@ -53,6 +53,8 @@ void InstanceLinear::deactivate()
 
 void InstanceLinear::go()
 {
+  bool created = false;
+  
   const slc::Containers &containers = eventHandler->getSelections();
   for (const auto &c : containers)
   {
@@ -72,6 +74,7 @@ void InstanceLinear::go()
     
     project->addFeature(instance);
     project->connect(c.featureId, instance->getId(), ftr::InputType{ftr::InputType::target});
+    created = true;
     
     observer->outBlocked(msg::buildHideThreeD(c.featureId));
     observer->outBlocked(msg::buildHideOverlay(c.featureId));
@@ -81,6 +84,9 @@ void InstanceLinear::go()
     break;
   }
   
-  observer->out(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  if (!created)
+    shouldUpdate = false;
+  else
+    observer->out(msg::Message(msg::Request | msg::Selection | msg::Clear));
 }
 

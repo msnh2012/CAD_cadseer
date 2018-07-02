@@ -33,6 +33,7 @@ using namespace cmd;
 CheckGeometry::CheckGeometry() : Base()
 {
   setupDispatcher();
+  shouldUpdate = false;
 }
 
 CheckGeometry::~CheckGeometry()

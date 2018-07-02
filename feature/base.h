@@ -109,7 +109,6 @@ public:
   virtual QTextStream& getInfo(QTextStream &) const;
   QTextStream&  getShapeInfo(QTextStream &, const boost::uuids::uuid&) const;
   boost::uuids::uuid getId() const {return id;}
-  static TopoDS_Compound compoundWrap(const TopoDS_Shape &shapeIn);
   osg::Switch* getMainSwitch() const {return mainSwitch.get();}
   osg::Switch* getOverlaySwitch() const {return overlaySwitch.get();}
   osg::MatrixTransform* getMainTransform() const {return mainTransform.get();}

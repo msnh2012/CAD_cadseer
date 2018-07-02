@@ -42,6 +42,7 @@ void FeatureToSystem::activate()
   
   const osg::Matrixd& currentSystem = mainWindow->getViewer()->getCurrentSystem();
   
+  bool moved = false;
   const slc::Containers &containers = eventHandler->getSelections();
   for (const auto &container : containers)
   {
@@ -53,7 +54,11 @@ void FeatureToSystem::activate()
       continue;
     ann::CSysDragger &da = baseFeature->getAnnex<ann::CSysDragger>(ann::Type::CSysDragger);
     da.setCSys(currentSystem);
+    moved = true;
   }
+  
+  if (!moved)
+    shouldUpdate = false;
   
   sendDone();
 }

@@ -32,6 +32,7 @@ using namespace cmd;
 
 EditColor::EditColor() : Base()
 {
+  shouldUpdate = false;
 }
 
 EditColor::~EditColor()

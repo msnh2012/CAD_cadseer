@@ -31,6 +31,7 @@ using namespace cmd;
 
 SystemToFeature::SystemToFeature() : Base()
 {
+  shouldUpdate = false;
 }
 
 SystemToFeature::~SystemToFeature(){}

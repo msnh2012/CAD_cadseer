@@ -63,6 +63,7 @@ void Sew::go()
   if (filtered.size() < 2)
   {
     observer->outBlocked(msg::buildStatusMessage("Wrong pre selection for sew"));
+    shouldUpdate = false;
     return;
   }
   

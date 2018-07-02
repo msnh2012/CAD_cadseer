@@ -60,10 +60,12 @@ void Offset::go()
   if (containers.empty())
   {
     observer->outBlocked(msg::buildStatusMessage("Wrong pre selection for offset"));
+    shouldUpdate = false;
     return;
   }
   uuid fId = gu::createNilId();
   ftr::Picks picks;
+  osg::Vec4 color;
   for (const auto &c : containers)
   {
     //make sure all selections belong to the same feature.
@@ -75,6 +77,7 @@ void Offset::go()
     ftr::Base *bf = project->findFeature(c.featureId);
     if (!bf->hasAnnex(ann::Type::SeerShape))
       continue;
+    color = bf->getColor();
     const ann::SeerShape &ss = bf->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
     if (!c.shapeId.is_nil())
     {
@@ -97,11 +100,13 @@ void Offset::go()
   if (fId.is_nil())
   {
     observer->outBlocked(msg::buildStatusMessage("No feature id for offset"));
+    shouldUpdate = false;
     return;
   }
     
   std::shared_ptr<ftr::Offset> offset(new ftr::Offset());
   offset->setPicks(picks);
+  offset->setColor(color);
   project->addFeature(offset);
   project->connectInsert(fId, offset->getId(), ftr::InputType{ftr::InputType::target});
   

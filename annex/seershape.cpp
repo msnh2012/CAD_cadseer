@@ -117,15 +117,7 @@ void SeerShape::setOCCTShape(const TopoDS_Shape& shapeIn)
     return;
   
   //make sure we have a compound as root of shape.
-  TopoDS_Shape workShape = shapeIn;
-  if (workShape.ShapeType() != TopAbs_COMPOUND)
-  {
-    TopoDS_Compound compound;
-    BRep_Builder builder;
-    builder.MakeCompound(compound);
-    builder.Add(compound, workShape);
-    workShape = compound;
-  }
+  TopoDS_Shape workShape = occt::compoundWrap(shapeIn);
   
   //fill in container with shapes and nil ids and new vertices.
   for (const auto &s : occt::mapShapes(workShape))

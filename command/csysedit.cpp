@@ -36,7 +36,7 @@
 
 using namespace cmd;
 
-CSysEdit::CSysEdit()
+CSysEdit::CSysEdit() : Base()
 {
   setupDispatcher();
 }

@@ -42,6 +42,7 @@ void FeatureToDragger::activate()
 {
   isActive = true;
   
+  bool moved = false;
   const slc::Containers &containers = eventHandler->getSelections();
   for (const auto &container : containers)
   {
@@ -56,7 +57,11 @@ void FeatureToDragger::activate()
     ann::CSysDragger &da = baseFeature->getAnnex<ann::CSysDragger>(ann::Type::CSysDragger);
     da.setCSys(da.dragger->getMatrix());
     da.draggerUpdate(); //setCSys moves the dragger, so move it back.
+    moved = true;
   }
+  
+  if (!moved)
+    shouldUpdate = false;
   
   sendDone();
 }

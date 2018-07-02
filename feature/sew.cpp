@@ -30,6 +30,7 @@
 #include <tools/idtools.h>
 #include <annex/seershape.h>
 #include <project/serial/xsdcxxoutput/featuresew.h>
+#include <feature/shapecheck.h>
 #include <feature/updatepayload.h>
 #include <feature/inputtype.h>
 #include <feature/sew.h>
@@ -138,6 +139,10 @@ void Sew::updateModel(const UpdatePayload &payloadIn)
           out = temp;
       }
     }
+    
+    ShapeCheck check(out);
+    if (!check.isValid())
+      throw std::runtime_error("shapeCheck failed");
     
     sShape->setOCCTShape(out);
     for (const auto &ss : seerShapes)

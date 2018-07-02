@@ -151,8 +151,7 @@ void Cone::updateIPGroup()
   freshMatrix.setRotate(osg::Quat(osg::PI_2, osg::Vec3d(-1.0, 0.0, 0.0)));
   freshMatrix.setTrans(osg::Vec3d (0.0, 0.0, static_cast<double>(*height)));
   radius2IP->setMatrixDragger(freshMatrix);
-  radius2IP->mainDim->setSqueeze(static_cast<double>(*height));
-  radius2IP->mainDim->setExtensionOffset(static_cast<double>(*height));
+  radius2IP->setMatrixDims(osg::Matrixd::translate(osg::Vec3d(0.0, 0.0, static_cast<double>(*height))));
   
   heightIP->setMatrix(static_cast<osg::Matrixd>(*csys));
   radius1IP->setMatrix(static_cast<osg::Matrixd>(*csys));

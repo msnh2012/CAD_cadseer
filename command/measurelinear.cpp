@@ -47,6 +47,8 @@ MeasureLinear::MeasureLinear() : Base()
   observer->name = "cmd::MeasureLinear";
   
   selectionMask = slc::AllEnabled;
+  
+  shouldUpdate = false;
 }
 
 MeasureLinear::~MeasureLinear(){}

@@ -63,6 +63,7 @@ void Extract::deactivate()
 
 void Extract::go()
 {
+  bool created = false;
   const slc::Containers &containers = eventHandler->getSelections();
   for (const auto &container : containers)
   {
@@ -89,6 +90,7 @@ void Extract::go()
       
       project->addFeature(extract);
       project->connect(baseFeature->getId(), extract->getId(), ftr::InputType{ftr::InputType::target});
+      created = true;
       
       observer->outBlocked(msg::buildHideThreeD(baseFeature->getId()));
       observer->outBlocked(msg::buildHideOverlay(baseFeature->getId()));
@@ -109,6 +111,7 @@ void Extract::go()
       
       project->addFeature(extract);
       project->connect(baseFeature->getId(), extract->getId(), ftr::InputType{ftr::InputType::target});
+      created = true;
       
       observer->outBlocked(msg::buildHideThreeD(baseFeature->getId()));
       observer->outBlocked(msg::buildHideOverlay(baseFeature->getId()));
@@ -116,5 +119,8 @@ void Extract::go()
       extract->setColor(baseFeature->getColor());
     }
   }
-  observer->out(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  if (!created)
+    shouldUpdate = false;
+  else
+    observer->out(msg::Message(msg::Request | msg::Selection | msg::Clear));
 }

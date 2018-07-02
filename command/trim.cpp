@@ -63,6 +63,7 @@ void Trim::go()
   if (filtered.size() < 2)
   {
     observer->outBlocked(msg::buildStatusMessage("Wrong pre selection for trim"));
+    shouldUpdate = false;
     return;
   }
   

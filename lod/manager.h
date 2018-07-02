@@ -21,6 +21,7 @@
 #define LOD_MANAGER_H
 
 #include <memory>
+#include <fstream>
 
 #include <boost/variant/variant.hpp>
 
@@ -61,6 +62,7 @@ namespace lod
     Message cMessage; //!< current message being processed by child.
     bool cmValid = false; //!< current Message valid
     bool logging = false; //!< enable logging see constructor.
+    std::ofstream logStream;
     bool childWorking = false;
     
     void send();

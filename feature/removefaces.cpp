@@ -29,6 +29,7 @@
 #include <project/serial/xsdcxxoutput/featureremovefaces.h>
 #include <feature/updatepayload.h>
 #include <feature/inputtype.h>
+#include <feature/shapecheck.h>
 #include <annex/seershape.h>
 #include <feature/removefaces.h>
 
@@ -125,6 +126,10 @@ void RemoveFaces::updateModel(const UpdatePayload &payloadIn)
       algo.DumpWarnings(stream);
       throw std::runtime_error(stream.str());
     }
+    
+    ShapeCheck check(algo.Shape());
+    if (!check.isValid())
+      throw std::runtime_error("shapeCheck failed");
     
     sShape->setOCCTShape(algo.Shape());
     sShape->shapeMatch(tss);

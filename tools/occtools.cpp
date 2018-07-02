@@ -471,6 +471,17 @@ TopoDS_Compound occt::getLastUniqueCompound(const TopoDS_Compound& compoundIn)
   return TopoDS_Compound();
 }
 
+TopoDS_Compound occt::compoundWrap(const TopoDS_Shape& shapeIn)
+{
+  if (shapeIn.ShapeType() == TopAbs_COMPOUND)
+    return TopoDS::Compound(shapeIn);
+  TopoDS_Compound compound;
+  BRep_Builder builder;
+  builder.MakeCompound(compound);
+  builder.Add(compound, shapeIn);
+  return compound;
+}
+
 std::pair<WireVector, WireVector> occt::getBoundaryWires(const TopoDS_Shape &shapeIn)
 {
   WireVector outClosed;

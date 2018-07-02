@@ -92,12 +92,14 @@ void Squash::go()
   {
     std::cout << "Squash: no feature found" << std::endl;
     observer->out(msg::buildStatusMessage("Squash: no feature found"));
+    shouldUpdate = false;
     return;
   }
   if(fps.empty())
   {
     std::cout << "Squash: no faces" << std::endl;
     observer->out(msg::buildStatusMessage("Squash: no faces"));
+    shouldUpdate = false;
     return;
   }
   std::shared_ptr<ftr::Squash> squash(new ftr::Squash());

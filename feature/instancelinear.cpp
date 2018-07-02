@@ -27,6 +27,7 @@
 #include <annex/instancemapper.h>
 #include <feature/datumplane.h>
 #include <feature/parameter.h>
+#include <feature/shapecheck.h>
 #include <project/serial/xsdcxxoutput/featureinstancelinear.h>
 #include <tools/featuretools.h>
 #include <feature/inputtype.h>
@@ -231,6 +232,11 @@ void InstanceLinear::updateModel(const UpdatePayload &payloadIn)
     }
     
     TopoDS_Compound result = occt::ShapeVectorCast(out);
+    
+    ShapeCheck check(result);
+    if (!check.isValid())
+      throw std::runtime_error("shapeCheck failed");
+    
     sShape->setOCCTShape(result);
     
     for (const auto &s : tShapes)

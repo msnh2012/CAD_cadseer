@@ -36,6 +36,8 @@ FeatureRename::FeatureRename() : Base(), id(gu::createNilId()), name()
 {
   setupDispatcher();
   observer->name = "cmd::FeatureRename";
+  
+  shouldUpdate = false;
 }
 
 FeatureRename::~FeatureRename() {}

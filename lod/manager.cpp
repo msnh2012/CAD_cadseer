@@ -25,6 +25,8 @@
 
 #include <tools/idtools.h>
 #include <application/application.h>
+#include <preferences/preferencesXML.h>
+#include <preferences/manager.h>
 #include <message/observer.h>
 #include <feature/states.h>
 #include <feature/base.h>
@@ -55,7 +57,14 @@ observer(new msg::Observer())
   connect(process, SIGNAL(finished(int, QProcess::ExitStatus)), this, SLOT(childFinishedSlot(int, QProcess::ExitStatus)));
   connect(process, SIGNAL(errorOccurred(QProcess::ProcessError)), this, SLOT(childErrorSlot(QProcess::ProcessError)));
   
-//   logging = true; //for debug.
+  logging = prf::manager().rootPtr->visual().mesh().logLOD().get();
+  if (logging)
+  {
+    boost::filesystem::path logFilePath(app::instance()->getApplicationDirectory().path().toStdString());
+    assert(bfs::exists(logFilePath));
+    logFilePath /= "LODLog.txt";
+    logStream.open(logFilePath.string(), std::ios_base::trunc | std::ios_base::out);
+  }
 }
 
 Manager::~Manager()
@@ -87,13 +96,13 @@ void Manager::send()
   process->write(temp.c_str());
   
   if (logging)
-    std::cout << "LOD Manager: sending to child process: " << cMessage.filePathOSG.string() << std::endl;
+    logStream << "LOD Manager: sending to child process: " << cMessage.filePathOSG.string() << std::endl;
 }
 
 void Manager::readyReadStdOutSlot()
 {
   if (logging)
-    std::cout << "LOD Manager: ready to read child process: " << std::endl;
+    logStream << "LOD Manager: ready to read child process: " << std::endl;
   
   QByteArray lineBuffer;
   while (process->canReadLine())
@@ -188,7 +197,7 @@ void Manager::cleanMessages(const boost::uuids::uuid &idIn)
   if (cmValid && (cMessage.featureId == idIn))
   {
     if (logging)
-      std::cout << "LOD Manager: setting current message to invalid for id: " << gu::idToString(idIn) << std::endl;
+      logStream << "LOD Manager: setting current message to invalid for id: " << gu::idToString(idIn) << std::endl;
     cmValid = false;
   }
   
@@ -198,7 +207,7 @@ void Manager::cleanMessages(const boost::uuids::uuid &idIn)
     {
       it = messages.erase(it);
       if (logging)
-        std::cout << "LOD Manager: cleaning message for id: " << gu::idToString(idIn) << std::endl;
+        logStream << "LOD Manager: cleaning message for id: " << gu::idToString(idIn) << std::endl;
     }
     else
       it++;

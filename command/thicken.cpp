@@ -56,6 +56,7 @@ void Thicken::go()
   if (containers.empty())
   {
     observer->outBlocked(msg::buildStatusMessage("Wrong pre selection for thicken"));
+    shouldUpdate = false;
     return;
   }
 
@@ -63,6 +64,7 @@ void Thicken::go()
   if (!bf->hasAnnex(ann::Type::SeerShape))
   {
     observer->outBlocked(msg::buildStatusMessage("Wrong pre selection for thicken"));
+    shouldUpdate = false;
     return;
   }
   

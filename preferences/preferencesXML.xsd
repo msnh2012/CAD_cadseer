@@ -33,6 +33,7 @@
     <xs:element name="linearDeflection" type="DecPositive" default="1.0"/>
     <xs:element name="angularDeflection" type="DecPositive" default="120.0"/>
     <xs:element name="lod" type="LOD" minOccurs="0" maxOccurs="1"/>
+    <xs:element name="logLOD" type="xs:boolean" minOccurs="0" maxOccurs="1" default="false"/>
   </xs:all>
 </xs:complexType>
 
