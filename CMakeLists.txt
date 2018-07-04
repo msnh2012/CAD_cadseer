@@ -392,6 +392,7 @@ SET(DIALOG_SOURCES
     dialogs/commitwidget.cpp
     dialogs/tagwidget.cpp
     dialogs/about.cpp
+    dialogs/splitterdecorated.cpp
     )
     
 SET(PREFERENCE_SOURCES
@@ -449,7 +450,6 @@ SET(APPLICATION_SOURCES
     application/factory.cpp
     application/message.cpp
     application/incrementwidget.cpp
-    application/splitterdecorated.cpp
     application/infowindow.cpp
     )
     
@@ -563,7 +563,6 @@ SET(CADSEER_MOC_HDRS
     dagview/view.h
     dagview/model.h
     application/application.h
-    application/splitterdecorated.h
     application/infowindow.h
     application/incrementwidget.h
     selection/manager.h
@@ -573,6 +572,7 @@ SET(CADSEER_MOC_HDRS
     dialogs/expressionedit.h
     dialogs/preferences.h
     dialogs/parameter.h
+    dialogs/splitterdecorated.h
     expressions/widget.h
     expressions/tablemodel.h
     expressions/tableview.h
