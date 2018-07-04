@@ -31,7 +31,7 @@
 
 #include <tools/idtools.h>
 #include <application/application.h>
-#include <application/splitterdecorated.h>
+#include <dialogs/splitterdecorated.h>
 #include <message/dispatch.h>
 #include <message/observer.h>
 #include <expressions/tablemodel.h>
@@ -72,7 +72,7 @@ void Widget::setupGui()
   
   tabWidget = new QTabWidget(this);
   
-  SplitterDecorated *splitter = new SplitterDecorated(this);
+  dlg::SplitterDecorated *splitter = new dlg::SplitterDecorated(this);
   splitter->setOrientation(Qt::Vertical);
   splitter->addWidget(toolbar);
   splitter->addWidget(tabWidget);

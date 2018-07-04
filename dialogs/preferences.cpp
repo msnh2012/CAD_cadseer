@@ -28,11 +28,11 @@
 #include <QHBoxLayout>
 
 #include <application/application.h>
-#include <application/splitterdecorated.h>
 #include <preferences/preferencesXML.h>
 #include <preferences/manager.h>
 #include <dialogs/widgetgeometry.h>
 #include <dialogs/preferences.h>
+#include <dialogs/splitterdecorated.h>
 #include <ui_preferences.h> //in build directory
 
 using namespace dlg;
@@ -65,7 +65,7 @@ Preferences::~Preferences()
 
 void Preferences::setupFeatureSplitter()
 {
-  fsSplitter = new SplitterDecorated(ui->featuresTab);
+  fsSplitter = new dlg::SplitterDecorated(ui->featuresTab);
   QHBoxLayout *mainLayout = new QHBoxLayout();
   mainLayout->addWidget(fsSplitter);
   ui->featuresTab->setLayout(mainLayout);

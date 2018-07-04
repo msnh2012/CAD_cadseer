@@ -29,7 +29,7 @@
 #include <dagview/view.h>
 #include <expressions/widget.h>
 #include <application/application.h>
-#include <application/splitterdecorated.h>
+#include <dialogs/splitterdecorated.h>
 #include <viewer/widget.h>
 #include <selection/manager.h>
 #include <message/dispatch.h>
@@ -56,7 +56,7 @@ MainWindow::MainWindow(QWidget *parent) :
     dagView = new dag::View(this);
     dagView->setScene(dagModel);
     expressionWidget = new expr::Widget(this);
-    SplitterDecorated *subSplitter = new SplitterDecorated(this);
+    dlg::SplitterDecorated *subSplitter = new dlg::SplitterDecorated(this);
     subSplitter->setOrientation(Qt::Vertical);
     subSplitter->addWidget(expressionWidget);
     subSplitter->addWidget(dagView);
@@ -66,7 +66,7 @@ MainWindow::MainWindow(QWidget *parent) :
     viewWidget->setGeometry( 100, 100, 800, 600 );
     viewWidget->setMinimumSize(QSize(100, 100)); //don't collapse view widget. osg nan erros.
     
-    SplitterDecorated *splitter = new SplitterDecorated(this);
+    dlg::SplitterDecorated *splitter = new dlg::SplitterDecorated(this);
     splitter->setOpaqueResize(Qt::Horizontal);
     splitter->addWidget(viewWidget);
     splitter->addWidget(subSplitter);

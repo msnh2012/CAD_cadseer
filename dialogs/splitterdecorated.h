@@ -17,11 +17,13 @@
  *
  */
 
-#ifndef APP_SPLITTERDECORATED_H
-#define APP_SPLITTERDECORATED_H
+#ifndef DLG_SPLITTERDECORATED_H
+#define DLG_SPLITTERDECORATED_H
 
 #include <QSplitter>
 
+namespace dlg
+{
 class SplitterDecorated : public QSplitter
 {
   Q_OBJECT
@@ -33,5 +35,6 @@ class SplitterDecorated : public QSplitter
   protected:
     virtual QSplitterHandle* createHandle() override;
 };
+}
 
-#endif // APP_SPLITTERDECORATED_H
+#endif // DLG_SPLITTERDECORATED_H

@@ -24,7 +24,7 @@
 
 namespace Ui{ class dialog; }
 namespace prf{class Manager;}
-class SplitterDecorated;
+namespace dlg{class SplitterDecorated;}
 
 namespace dlg
 {
@@ -54,7 +54,7 @@ namespace dlg
     prf::Manager *manager;
     bool visualDirty = false;
     bool hiddenLinesDirty = false;
-    SplitterDecorated *fsSplitter;
+    dlg::SplitterDecorated *fsSplitter;
   };
 }
 

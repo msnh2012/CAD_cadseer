@@ -40,7 +40,7 @@
 #include <dialogs/widgetgeometry.h>
 #include <dialogs/commitwidget.h>
 #include <dialogs/tagwidget.h>
-#include <application/splitterdecorated.h>
+#include <dialogs/splitterdecorated.h>
 #include <dialogs/revision.h>
 
 namespace dlg
@@ -82,7 +82,7 @@ void UndoPage::buildGui()
 {
   QVBoxLayout *mainLayout = new QVBoxLayout();
   
-  SplitterDecorated *splitter = new SplitterDecorated(this);
+  dlg::SplitterDecorated *splitter = new dlg::SplitterDecorated(this);
   splitter->setChildrenCollapsible(false);
   splitter->setOrientation(Qt::Horizontal);
   
@@ -216,7 +216,7 @@ void AdvancedPage::buildGui()
   
   tagWidget = new TagWidget(this);
   
-  SplitterDecorated *splitter = new SplitterDecorated(this);
+  dlg::SplitterDecorated *splitter = new dlg::SplitterDecorated(this);
   splitter->setChildrenCollapsible(false);
   splitter->setOrientation(Qt::Horizontal);
   splitter->addWidget(dummy);

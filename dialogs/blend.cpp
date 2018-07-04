@@ -46,7 +46,6 @@
 #include <tools/idtools.h>
 #include <application/application.h>
 #include <application/mainwindow.h>
-#include <application/splitterdecorated.h>
 #include <preferences/preferencesXML.h>
 #include <preferences/manager.h>
 #include <project/project.h>
@@ -59,6 +58,7 @@
 #include <annex/seershape.h>
 #include <feature/parameter.h>
 #include <feature/blend.h>
+#include <dialogs/splitterdecorated.h>
 #include <dialogs/widgetgeometry.h>
 #include <dialogs/expressionedit.h>
 #include <dialogs/blend.h>
@@ -1477,7 +1477,7 @@ void Blend::buildGui()
   //splitter.
   QWidget *rhsWidget = new QWidget(this);
   rhsWidget->setLayout(rhsLayout);
-  SplitterDecorated *splitter = new SplitterDecorated(this);
+  dlg::SplitterDecorated *splitter = new dlg::SplitterDecorated(this);
   splitter->setOrientation(Qt::Horizontal);
   splitter->addWidget(blendList);
   splitter->addWidget(rhsWidget);

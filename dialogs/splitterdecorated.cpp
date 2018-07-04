@@ -22,7 +22,9 @@
 #include <QVBoxLayout>
 
 #include <application/application.h>
-#include <application/splitterdecorated.h>
+#include <dialogs/splitterdecorated.h>
+
+using namespace dlg;
 
 SplitterDecorated::SplitterDecorated(QWidget *parent) : QSplitter(parent)
 {
