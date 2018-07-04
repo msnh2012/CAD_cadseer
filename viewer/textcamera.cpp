@@ -307,8 +307,8 @@ void TextCamera::preselectionAdditionDispatched(const msg::Message &messageIn)
   preselectStream << "Pre-Selection:" << std::endl;
   preselectStream << "object type: " << slc::getNameOfType(sMessage.type) << std::endl <<
     "Feature Type: " << ftr::toString(sMessage.featureType) << std::endl <<
-    "Feature id: " << gu::idToString(sMessage.featureId) << std::endl <<
-    "Shape id: " << gu::idToString(sMessage.shapeId) << std::endl;
+    "Feature id: " << gu::idToShortString(sMessage.featureId) << std::endl <<
+    "Shape id: " << gu::idToShortString(sMessage.shapeId) << std::endl;
   preselectionText = preselectStream.str();
   updateSelectionLabel();
 }
@@ -387,8 +387,8 @@ void TextCamera::updateSelectionLabel()
     labelStream << std::endl <<
       "object type: " << slc::getNameOfType(it->type) << std::endl <<
       "Feature Type: " << ftr::toString(it->featureType) << std::endl <<
-      "Feature id: " << gu::idToString(it->featureId) << std::endl <<
-      "Shape id: " << gu::idToString(it->shapeId) << std::endl;
+      "Feature id: " << gu::idToShortString(it->featureId) << std::endl <<
+      "Shape id: " << gu::idToShortString(it->shapeId) << std::endl;
   }
   
   selectionLabel->setText(labelStream.str());

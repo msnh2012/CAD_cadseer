@@ -135,7 +135,7 @@ void Project::updateModel()
     }
     
     std::ostringstream messageStream;
-    messageStream << "Updating: " << cFeature->getName().toStdString() << "    Id: " << gu::idToString(cFeature->getId());
+    messageStream << "Updating: " << cFeature->getName().toStdString() << "    Id: " << gu::idToShortString(cFeature->getId());
     observer->out(msg::buildStatusMessage(messageStream.str()));
     qApp->processEvents(); //need this or we won't see messages.
     
@@ -904,7 +904,7 @@ void Project::toggleSkippedDispatched(const msg::Message &mIn)
       f->setNotSkipped();
     else
       f->setSkipped();
-    gitMessage << f->getName().toStdString() << " " << gu::idToString(id) << "    ";
+    gitMessage << f->getName().toStdString() << " " << gu::idToShortString(id) << "    ";
   }
   gitManager->appendGitMessage(gitMessage.str());
 }
@@ -1042,7 +1042,7 @@ void Project::dissolveFeatureDispatched(const msg::Message &mIn)
   );
   
   std::ostringstream gitMessage;
-  gitMessage << QObject::tr("Disolving feature: ").toStdString() << gu::idToString(fb->getId());
+  gitMessage << QObject::tr("Disolving feature: ").toStdString() << gu::idToShortString(fb->getId());
   gitManager->appendGitMessage(gitMessage.str());
 }
 
@@ -1110,7 +1110,7 @@ void Project::setColor(const boost::uuids::uuid &featureIdIn, const osg::Vec4 &c
   gitMessage << QObject::tr("Changing color of feature: ").toStdString()
     << findFeature(featureIdIn)->getName().toStdString()
     << "    Id: "
-    << gu::idToString(featureIdIn);
+    << gu::idToShortString(featureIdIn);
   gitManager->appendGitMessage(gitMessage.str());
 }
 

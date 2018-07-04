@@ -116,7 +116,7 @@ namespace ann
             std::ostringstream gitStream;
             gitStream << QObject::tr("Reposition feature: ").toStdString()
               << feature->getName().toStdString()
-              << "    " << gu::idToString(feature->getId());
+              << "    " << gu::idToShortString(feature->getId());
             observer->out(msg::buildGitMessage(gitStream.str()));
             
             if (prf::manager().rootPtr->dragger().triggerUpdateOnFinish())

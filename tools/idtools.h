@@ -29,6 +29,7 @@ namespace gu
   boost::uuids::uuid createRandomId();
   boost::uuids::uuid createNilId();
   std::string idToString(const boost::uuids::uuid &idIn);
+  std::string idToShortString(const boost::uuids::uuid &idIn);
   boost::uuids::uuid stringToId(const std::string &stringIn);
 }
 

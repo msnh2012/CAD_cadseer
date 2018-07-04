@@ -44,6 +44,12 @@ std::string gu::idToString(const boost::uuids::uuid &idIn)
   return boost::uuids::to_string(idIn);
 }
 
+std::string gu::idToShortString(const boost::uuids::uuid &idIn)
+{
+  std::string full = boost::uuids::to_string(idIn);
+  return full.substr(0, 8);
+}
+
 boost::uuids::uuid gu::stringToId(const std::string &stringIn)
 {
   return sGen(stringIn);

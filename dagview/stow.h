@@ -126,7 +126,7 @@ namespace dag
       out <<
         "[label=\"" <<
         graphVW[vertexW].textShared->toPlainText().toUtf8().data() << "\\n" <<
-        gu::idToString(graphVW[vertexW].featureId) <<
+        gu::idToShortString(graphVW[vertexW].featureId) <<
         "\"]";
     }
   private:

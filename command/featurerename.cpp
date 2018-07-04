@@ -128,7 +128,7 @@ void FeatureRename::goRename()
   feature->serialWrite(QDir(QString::fromStdString(project->getSaveDirectory())));
   
   std::ostringstream gitStream;
-  gitStream << "Rename feature id: " << gu::idToString(feature->getId())
+  gitStream << "Rename feature id: " << gu::idToShortString(feature->getId())
   << "    From: " << oldName.toStdString()
   << "    To: " << name.toStdString();
   observer->out(msg::buildGitMessage(gitStream.str()));
