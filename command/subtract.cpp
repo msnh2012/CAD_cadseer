@@ -77,7 +77,7 @@ void Subtract::go()
     project->addFeature(subtract);
     observer->outBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
     dialog = new dlg::Boolean(subtract.get(), mainWindow);
-    observer->outBlocked(msg::buildStatusMessage("invalid pre selection"));
+    observer->outBlocked(msg::buildStatusMessage("invalid pre selection", 2.0));
   };
   
   

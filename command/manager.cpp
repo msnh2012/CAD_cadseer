@@ -520,13 +520,13 @@ void Manager::editFeatureDispatched(const msg::Message&)
   //edit feature only works with 1 object pre-selection.
   if (selections.size() != 1)
   {
-    observer->outBlocked(msg::buildStatusMessage("Select 1 object prior to edit feature command"));
+    observer->outBlocked(msg::buildStatusMessage("Select 1 object prior to edit feature command", 2.0));
     return;
   }
   
   if (selections.front().selectionType != slc::Type::Object)
   {
-    observer->outBlocked(msg::buildStatusMessage("Wrong selection type for edit feature command"));
+    observer->outBlocked(msg::buildStatusMessage("Wrong selection type for edit feature command", 2.0));
     return;
   }
   
@@ -535,7 +535,7 @@ void Manager::editFeatureDispatched(const msg::Message&)
   auto it = editFunctionMap.find(feature->getType());
   if (it == editFunctionMap.end())
   {
-    observer->outBlocked(msg::buildStatusMessage("Editing of feature type not implemented"));
+    observer->outBlocked(msg::buildStatusMessage("Editing of feature type not implemented", 2.0));
     return;
   }
   

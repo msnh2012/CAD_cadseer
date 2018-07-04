@@ -417,7 +417,10 @@ void Factory::newDraftDispatched(const msg::Message&)
   assert(project);
   
   if (containers.empty())
+  {
+    observer->out(msg::buildStatusMessage("Invalid Preselection For Draft", 2.0));
     return;
+  }
   uuid targetFeatureId = containers.at(0).featureId;
   
   ftr::DraftConvey convey;
@@ -439,7 +442,10 @@ void Factory::newDraftDispatched(const msg::Message&)
     convey.targets.push_back(pick);
   }
   if (convey.targets.empty())
+  {
+    observer->out(msg::buildStatusMessage("Invalid Preselection For Draft", 2.0));
     return;
+  }
   
   //for now last pick is the neutral plane.
   convey.neutralPlane = convey.targets.back();
@@ -469,11 +475,17 @@ void Factory::newDatumPlaneDispatched(const msg::Message&)
   assert(project);
   
   if (containers.empty())
+  {
+    observer->out(msg::buildStatusMessage("Invalid Preselection For Datum Plane", 2.0));
     return;
+  }
   
   std::vector<std::shared_ptr<ftr::DatumPlaneGenre> > solvers = ftr::DatumPlane::solversFromSelection(containers);
   if (solvers.empty()) //temp. really we should build the feature and go into edit mode.
+  {
+    observer->out(msg::buildStatusMessage("Invalid Preselection For Datum Plane", 2.0));
     return;
+  }
   
   std::shared_ptr<ftr::DatumPlane> dPlane(new ftr::DatumPlane());
   project->addFeature(dPlane);
@@ -499,7 +511,10 @@ void Factory::newHollowDispatched(const msg::Message&)
   assert(project);
   
   if (containers.empty())
+  {
+    observer->out(msg::buildStatusMessage("Invalid Preselection For Hollow", 2.0));
     return;
+  }
   
   uuid targetFeatureId = containers.at(0).featureId;
   ftr::Base *targetFeature = project->findFeature(targetFeatureId);
@@ -524,7 +539,10 @@ void Factory::newHollowDispatched(const msg::Message&)
     hollowPicks.push_back(hPick);
   }
   if (hollowPicks.empty())
+  {
+    observer->out(msg::buildStatusMessage("Invalid Preselection For Hollow", 2.0));
     return;
+  }
   
   std::shared_ptr<ftr::Hollow> hollow(new ftr::Hollow());
   hollow->setHollowPicks(hollowPicks);
@@ -580,7 +598,10 @@ void Factory::exportOCCDispatched(const msg::Message&)
     (containers.empty()) ||
     (containers.at(0).selectionType != slc::Type::Object)
   )
+  {
+    observer->out(msg::buildStatusMessage("Invalid Preselection For OCC export", 2.0));
     return;
+  }
   
   app::Application *application = dynamic_cast<app::Application *>(qApp);
   assert(application);
@@ -698,7 +719,7 @@ void Factory::exportStepDispatched(const msg::Message&)
     (containers.at(0).selectionType != slc::Type::Object)
   )
   {
-    observer->out(msg::buildStatusMessage("Incorrect selection"));
+    observer->out(msg::buildStatusMessage("Invalid Preselection For Step Export", 2.0));
     return;
   }
     
@@ -731,26 +752,26 @@ void Factory::exportStepDispatched(const msg::Message&)
   ftr::Base *feature = project->findFeature(containers.at(0).featureId);
   if (!feature->hasAnnex(ann::Type::SeerShape))
   {
-    observer->out(msg::buildStatusMessage("feature doesn't have SeerShape"));
+    observer->out(msg::buildStatusMessage("Feature Doesn't Have Shape To Export", 2.0));
     return;
   }
   const ann::SeerShape &sShape = feature->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
   if (sShape.isNull())
   {
-    observer->out(msg::buildStatusMessage("SeerShape is null"));
+    observer->out(msg::buildStatusMessage("Invalid Shape To Export", 2.0));
     return;
   }
   const TopoDS_Shape &shape = sShape.getRootOCCTShape();
   if (shape.IsNull())
   {
-    observer->out(msg::buildStatusMessage("OCCT Shape is null"));
+    observer->out(msg::buildStatusMessage("Invalid Shape To Export", 2.0));
     return;
   }
   
   STEPControl_Writer stepOut;
   if (stepOut.Transfer(shape, STEPControl_AsIs) != IFSelect_RetDone)
   {
-    observer->out(msg::buildStatusMessage("Step translation failed"));
+    observer->out(msg::buildStatusMessage("Step Translation Failed", 2.0));
     return;
   }
   
@@ -765,7 +786,7 @@ void Factory::exportStepDispatched(const msg::Message&)
   
   if (stepOut.Write(fileName.toStdString().c_str()) != IFSelect_RetDone)
   {
-    observer->out(msg::buildStatusMessage("Step write failed"));
+    observer->out(msg::buildStatusMessage("Step Write Failed", 2.0));
     return;
   }
   
@@ -811,6 +832,12 @@ void Factory::removeDispatched(const msg::Message&)
   //containers is wired up message so it will be changing as we delete(remove from selection)
   //so cache a copy to work with first.
   slc::Containers selection = containers;
+  
+  if (selection.empty())
+  {
+    observer->out(msg::buildStatusMessage("Invalid Preselection For Remove", 2.0));
+    return;
+  }
   
   observer->out(msg::Message(msg::Request | msg::Selection | msg::Clear));
   

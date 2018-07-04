@@ -92,7 +92,7 @@ void SystemToSelection::go()
   const slc::Containers &containers = eventHandler->getSelections();
   if (containers.empty())
   {
-    observer->outBlocked(msg::buildStatusMessage("No selection for system derivation"));
+    observer->outBlocked(msg::buildStatusMessage("No selection for system derivation", 2.0));
     return;
   }
   
@@ -100,10 +100,10 @@ void SystemToSelection::go()
   ocsys = from3Points(containers);
   if (ocsys)
   {
-    observer->outBlocked(msg::buildStatusMessage("Current system set to points"));
+    observer->outBlocked(msg::buildStatusMessage("Current system set to 3 points", 2.0));
     viewer->setCurrentSystem(*ocsys);
     return;
   }
   
-  observer->outBlocked(msg::buildStatusMessage("Selection not supported for system derivation"));
+  observer->outBlocked(msg::buildStatusMessage("Selection not supported for system derivation", 2.0));
 }

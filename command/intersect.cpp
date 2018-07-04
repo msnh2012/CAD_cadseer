@@ -80,7 +80,7 @@ void Intersect::go()
     project->addFeature(intersect);
     observer->outBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
     dialog = new dlg::Boolean(intersect.get(), mainWindow);
-    observer->outBlocked(msg::buildStatusMessage("invalid pre selection"));
+    observer->outBlocked(msg::buildStatusMessage("invalid pre selection", 2.0));
   };
   
   const slc::Containers &containers = eventHandler->getSelections();

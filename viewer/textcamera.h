@@ -22,29 +22,31 @@
 
 #include <osg/Camera>
 #include <osg/observer_ptr>
+#include <osg/NodeVisitor>
 #include <osgGA/GUIEventHandler>
 
 #include <selection/message.h>
 
 namespace osgViewer{class GraphicsWindow;}
-namespace osg{class Switch;}
+namespace osg{class Switch; class Group;}
 namespace osgText{class osgText;}
 
 namespace msg{class Message; class Observer;}
 namespace vwr
 {
+  class TextCamera;
+  
 class ResizeEventHandler : public osgGA::GUIEventHandler
 {
 public:
-  ResizeEventHandler(const osg::observer_ptr<osg::Camera> slaveCameraIn);
-  void positionSelection();
+  ResizeEventHandler(const osg::observer_ptr<TextCamera> slaveCameraIn);
   
 protected:
   virtual bool handle(const osgGA::GUIEventAdapter& eventAdapter,
                       osgGA::GUIActionAdapter& actionAdapter, osg::Object *object,
                       osg::NodeVisitor *nodeVistor);
   
-  osg::observer_ptr<osg::Camera> slaveCamera;
+  osg::observer_ptr<TextCamera> slaveCamera;
 };
 
 
@@ -53,6 +55,10 @@ class TextCamera : public osg::Camera
 public:
     TextCamera(osgViewer::GraphicsWindow *);
     virtual ~TextCamera() override;
+    bool cleanFade(); //return true if something was changed.
+    void layoutStatus(); //position the text on screen
+    void layoutSelection(); //position the text on screen
+    void layoutCommand(); //position the text on screen
 private:
   std::unique_ptr<msg::Observer> observer;
   void setupDispatcher();
@@ -64,9 +70,6 @@ private:
   void commandTextDispatched(const msg::Message &);
     
   osg::ref_ptr<osg::Switch> infoSwitch;
-  //indexes for children
-  static const unsigned int SelectionIndex = 0;
-  static const unsigned int StatusIndex = 1;
   
   osg::ref_ptr<osgText::Text> selectionLabel;
   void updateSelectionLabel();
@@ -74,7 +77,10 @@ private:
   
   std::vector<slc::Message> selections;
   
+  osg::ref_ptr<osg::Group> statusGroup;
+  std::vector<osg::ref_ptr<osgText::Text>> statusFades;
   osg::ref_ptr<osgText::Text> statusLabel;
+  
   osg::ref_ptr<osgText::Text> commandLabel;
 };
 }

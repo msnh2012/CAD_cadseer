@@ -60,7 +60,7 @@ void Nest::go()
   const slc::Containers &containers = eventHandler->getSelections();
   if (containers.size() != 1)
   {
-    observer->out(msg::buildStatusMessage("Incorrect preselection for nest feature"));
+    observer->out(msg::buildStatusMessage("Incorrect preselection for nest feature", 2.0));
     shouldUpdate = false;
     return;
   }

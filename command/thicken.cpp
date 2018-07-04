@@ -55,7 +55,7 @@ void Thicken::go()
   const slc::Containers &containers = eventHandler->getSelections();
   if (containers.empty())
   {
-    observer->outBlocked(msg::buildStatusMessage("Wrong pre selection for thicken"));
+    observer->outBlocked(msg::buildStatusMessage("Wrong pre selection for thicken", 2.0));
     shouldUpdate = false;
     return;
   }
@@ -63,7 +63,7 @@ void Thicken::go()
   ftr::Base *bf = project->findFeature(containers.front().featureId);
   if (!bf->hasAnnex(ann::Type::SeerShape))
   {
-    observer->outBlocked(msg::buildStatusMessage("Wrong pre selection for thicken"));
+    observer->outBlocked(msg::buildStatusMessage("Wrong pre selection for thicken", 2.0));
     shouldUpdate = false;
     return;
   }

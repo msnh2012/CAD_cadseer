@@ -120,7 +120,10 @@ void Extract::go()
     }
   }
   if (!created)
+  {
     shouldUpdate = false;
+    observer->out(msg::buildStatusMessage("Extract: Invalid Preselection", 2.0));
+  }
   else
     observer->out(msg::Message(msg::Request | msg::Selection | msg::Clear));
 }

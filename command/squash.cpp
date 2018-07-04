@@ -91,14 +91,14 @@ void Squash::go()
   if(!f)
   {
     std::cout << "Squash: no feature found" << std::endl;
-    observer->out(msg::buildStatusMessage("Squash: no feature found"));
+    observer->out(msg::buildStatusMessage("Squash: no feature found", 2.0));
     shouldUpdate = false;
     return;
   }
   if(fps.empty())
   {
     std::cout << "Squash: no faces" << std::endl;
-    observer->out(msg::buildStatusMessage("Squash: no faces"));
+    observer->out(msg::buildStatusMessage("Squash: no faces", 2.0));
     shouldUpdate = false;
     return;
   }

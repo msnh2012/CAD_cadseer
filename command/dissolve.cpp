@@ -56,7 +56,7 @@ void Dissolve::go()
   if (cs.size() != 1 || cs.front().selectionType != slc::Type::Object)
   {
     shouldUpdate = false;
-    observer->out(msg::buildStatusMessage(QObject::tr("Dissolve needs 1 object selected").toStdString()));
+    observer->out(msg::buildStatusMessage(QObject::tr("Dissolve needs 1 object selected").toStdString(), 2.0));
     return;
   }
   

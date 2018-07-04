@@ -55,7 +55,7 @@ void RemoveFaces::go()
   const slc::Containers &containers = eventHandler->getSelections();
   if (containers.empty())
   {
-    observer->outBlocked(msg::buildStatusMessage("Wrong pre selection for remove faces"));
+    observer->outBlocked(msg::buildStatusMessage("Wrong pre selection for remove faces", 2.0));
     shouldUpdate = false;
     return;
   }
@@ -93,7 +93,7 @@ void RemoveFaces::go()
   }
   if (fId.is_nil())
   {
-    observer->outBlocked(msg::buildStatusMessage("No feature id for remove face"));
+    observer->outBlocked(msg::buildStatusMessage("No feature id for remove face", 2.0));
     shouldUpdate = false;
     return;
   }

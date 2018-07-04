@@ -55,6 +55,16 @@ msg::Message msg::buildStatusMessage(const std::string &messageIn)
   return out;
 }
 
+msg::Message msg::buildStatusMessage(const std::string &messageIn, float timeIn)
+{
+  msg::Message out;
+  out.mask = msg::Request | msg::Status | msg::Text;
+  vwr::Message statusMessage(messageIn, timeIn);
+  out.payload = statusMessage;
+  
+  return out;
+}
+
 msg::Message msg::buildSelectionMask(slc::Mask maskIn)
 {
   slc::Message sMsg;

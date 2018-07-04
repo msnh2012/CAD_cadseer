@@ -164,7 +164,7 @@ void Project::updateModel()
   
 //   shapeHistory->writeGraphViz("/home/tanderson/.CadSeer/ShapeHistory.dot");
   
-  observer->out(msg::buildStatusMessage("Update Complete"));
+  observer->out(msg::buildStatusMessage("Model Update Complete", 2.0));
 }
 
 void Project::updateVisual()
@@ -194,6 +194,8 @@ void Project::updateVisual()
   }
   
   observer->out(msg::Message(msg::Response | msg::Post | msg::Project | msg::Update | msg::Visual));
+  
+  observer->out(msg::buildStatusMessage("Visual Update Complete", 2.0));
 }
 
 void Project::writeGraphViz(const std::string& fileName)
@@ -623,6 +625,8 @@ void Project::updateDispatched(const msg::Message&)
   app::WaitCursor waitCursor;
   updateModel();
   updateVisual();
+  
+  observer->outBlocked(msg::buildStatusMessage(std::string()));
 }
 
 void Project::forceUpdateDispatched(const msg::Message&)
@@ -638,6 +642,8 @@ void Project::forceUpdateDispatched(const msg::Message&)
   app::WaitCursor waitCursor;
   updateModel();
   updateVisual();
+  
+  observer->outBlocked(msg::buildStatusMessage(std::string()));
 }
 
 void Project::updateModelDispatched(const msg::Message&)
@@ -1372,7 +1378,8 @@ void Project::open()
       shapeHistory->serialIn(project->shapeHistory().get());
     
     observer->outBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
-    observer->outBlocked(msg::buildStatusMessage("Project Opened"));
+    observer->outBlocked(msg::buildStatusMessage(std::string()));
+    observer->outBlocked(msg::buildStatusMessage("Project Opened", 2.0));
   }
   catch (const xsd::cxx::xml::invalid_utf16_string&)
   {

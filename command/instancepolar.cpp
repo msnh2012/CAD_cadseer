@@ -54,7 +54,7 @@ void InstancePolar::go()
   const slc::Containers &containers = eventHandler->getSelections();
   if (containers.empty() || (containers.size() > 2))
   {
-    observer->outBlocked(msg::buildStatusMessage("wrong selection for instance polar"));
+    observer->outBlocked(msg::buildStatusMessage("wrong selection for instance polar", 2.0));
     shouldUpdate = false;
     return;
   }
@@ -62,7 +62,7 @@ void InstancePolar::go()
   ftr::Base *bf = project->findFeature(containers.front().featureId);
   if (!bf->hasAnnex(ann::Type::SeerShape))
   {
-    observer->outBlocked(msg::buildStatusMessage("first selection should have shape for instance polar"));
+    observer->outBlocked(msg::buildStatusMessage("first selection should have shape for instance polar", 2.0));
     shouldUpdate = false;
     return;
   }

@@ -59,7 +59,7 @@ void Offset::go()
   const slc::Containers &containers = eventHandler->getSelections();
   if (containers.empty())
   {
-    observer->outBlocked(msg::buildStatusMessage("Wrong pre selection for offset"));
+    observer->outBlocked(msg::buildStatusMessage("Wrong pre selection for offset", 2.0));
     shouldUpdate = false;
     return;
   }
@@ -99,7 +99,7 @@ void Offset::go()
   }
   if (fId.is_nil())
   {
-    observer->outBlocked(msg::buildStatusMessage("No feature id for offset"));
+    observer->outBlocked(msg::buildStatusMessage("No feature id for offset", 2.0));
     shouldUpdate = false;
     return;
   }

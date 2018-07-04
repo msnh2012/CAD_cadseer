@@ -182,6 +182,7 @@ namespace msg
     //! Some convenient functions for common messages
     msg::Message buildGitMessage(const std::string &);
     msg::Message buildStatusMessage(const std::string &);
+    msg::Message buildStatusMessage(const std::string&, float);
     msg::Message buildSelectionMask(slc::Mask);
     msg::Message buildShowThreeD(const boost::uuids::uuid&);
     msg::Message buildHideThreeD(const boost::uuids::uuid&);

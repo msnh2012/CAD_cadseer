@@ -34,11 +34,13 @@ namespace vwr
   {
     Message();
     Message(const std::string&);
+    Message(const std::string&, float);
     Message(const boost::uuids::uuid&);
     ~Message();
     std::string text;
     osg::ref_ptr<osg::Node> node;
     boost::uuids::uuid featureId;
+    float time;
   };
 }
 

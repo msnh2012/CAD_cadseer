@@ -30,6 +30,7 @@
 #include <osgViewer/GraphicsWindow>
 #include <osgText/Text>
 #include <osgQt/QFontImplementation>
+#include <osgAnimation/EaseMotion>
 
 #include <tools/idtools.h>
 #include <selection/definitions.h>
@@ -37,9 +38,67 @@
 #include <message/observer.h>
 #include <viewer/textcamera.h>
 
+
+namespace vwr
+{
+  class TextFadeCallback : public osg::Drawable::UpdateCallback
+  {
+  public:
+    TextFadeCallback(const float &timeSpanIn) :
+    timeSpan(timeSpanIn)
+    {
+      motion = new osgAnimation::InOutCubicMotion(0.0, timeSpanIn, 1.0, osgAnimation::Motion::CLAMP);
+    }
+    bool isFinished(){return finished;}
+    virtual void update(osg::NodeVisitor *visitor, osg::Drawable *drawable)
+    {
+      if (!finished)
+      {
+        osgText::Text *text = dynamic_cast<osgText::Text*>(drawable);
+        assert(text);
+        
+        double currentTime = visitor->getFrameStamp()->getSimulationTime();
+        if(lastTime < 0.0f)
+          lastTime = currentTime;
+        motion->update(currentTime - lastTime);
+        lastTime = currentTime;
+        
+        float motionValue = motion->getValue();
+        if (std::fabs(1.0 - motionValue) < 0.001)
+          finished = true;
+        motionValue = 1.0 - motionValue; //fading out.
+        osg::Vec4 color = text->getColor();
+        color.w() = motionValue;
+        text->setColor(color);
+      }
+      //no need to call traverse. 
+    }
+    
+  protected:
+    float timeSpan = 1.0;
+    bool finished = false;
+    float lastTime = -1.0;
+    osg::ref_ptr<osgAnimation::InOutCubicMotion> motion;
+  };
+  
+  class TextFinishedCallback : public osg::NodeCallback
+  {
+    virtual void operator()(osg::Node* node, osg::NodeVisitor* nv)
+    {
+      TextCamera *tc = dynamic_cast<TextCamera*>(node);
+      assert(tc); //attached to wrong node.
+      if (tc->cleanFade())
+        tc->layoutStatus();
+      
+      traverse(node,nv);
+    }
+  };
+}
+
+
 using namespace vwr;
 
-ResizeEventHandler::ResizeEventHandler(const osg::observer_ptr< osg::Camera > slaveCameraIn) :
+ResizeEventHandler::ResizeEventHandler(const osg::observer_ptr<TextCamera> slaveCameraIn) :
                                        osgGA::GUIEventHandler(), slaveCamera(slaveCameraIn)
 {
 
@@ -57,49 +116,12 @@ bool ResizeEventHandler::handle(const osgGA::GUIEventAdapter& eventAdapter, osgG
   osg::Viewport *viewPort = slaveCamera->getViewport();
   slaveCamera->setProjectionMatrix(osg::Matrixd::ortho2D(viewPort->x(), viewPort->width(), viewPort->y(), viewPort->height()));
   
-  positionSelection();
+  slaveCamera->layoutStatus();
+  slaveCamera->layoutSelection();
+  slaveCamera->layoutCommand();
   
   //other cameras, views etc.. might want to respond to this event.
   return false;
-}
-
-void ResizeEventHandler::positionSelection()
-{
-  //look for selection geode.
-  osg::Switch *infoSwitch = slaveCamera->getChild(0)->asSwitch();
-  osgText::Text *selectionLabel = nullptr;
-  osgText::Text *statusLabel = nullptr;
-  osgText::Text *commandLabel = nullptr;
-  for (unsigned int index = 0; index < infoSwitch->getNumChildren(); ++index)
-  {
-    osg::Node *child = infoSwitch->getChild(index);
-    if (child->getName() == "selection")
-      selectionLabel = dynamic_cast<osgText::Text*>(child);
-    if (child->getName() == "status")
-      statusLabel = dynamic_cast<osgText::Text*>(child);
-    if (child->getName() == "command")
-      commandLabel = dynamic_cast<osgText::Text*>(child);
-  }
-  
-  assert(selectionLabel);
-  assert(statusLabel);
-  assert(commandLabel);
-  
-  osg::Vec3 pos;
-  osg::BoundingBox::value_type padding = selectionLabel->getCharacterHeight() / 2.0;
-  pos.x() = slaveCamera->getViewport()->width() - padding;
-  pos.y() = slaveCamera->getViewport()->height() - padding;
-  selectionLabel->setPosition(pos);
-  
-  padding = statusLabel->getCharacterHeight() / 2.0; //redundent
-  pos.x() = padding;
-  pos.y() = slaveCamera->getViewport()->height() - padding; //redundent
-  statusLabel->setPosition(pos);
-  
-  padding = statusLabel->getCharacterHeight() / 2.0; //redundent
-  pos.x() = padding;
-  pos.y() = padding;
-  commandLabel->setPosition(pos);
 }
 
 TextCamera::TextCamera(osgViewer::GraphicsWindow *windowIn) : osg::Camera()
@@ -116,6 +138,7 @@ TextCamera::TextCamera(osgViewer::GraphicsWindow *windowIn) : osg::Camera()
   setViewMatrix(osg::Matrix::identity());
   setClearMask(0);
   setName("text");
+  this->addUpdateCallback(new TextFinishedCallback());
   
   infoSwitch = new osg::Switch();
   osg::StateSet* stateset = infoSwitch->getOrCreateStateSet();
@@ -144,6 +167,10 @@ TextCamera::TextCamera(osgViewer::GraphicsWindow *windowIn) : osg::Camera()
   selectionLabel->setText("Selection: ");
   infoSwitch->addChild(selectionLabel.get());
   
+  statusGroup = new osg::Group();
+  statusGroup->setName("statusGroup");
+  infoSwitch->addChild(statusGroup.get());
+  
   statusLabel = new osgText::Text();
   statusLabel->setName("status");
   statusLabel->setFont(textFont);
@@ -155,7 +182,7 @@ TextCamera::TextCamera(osgViewer::GraphicsWindow *windowIn) : osg::Camera()
   statusLabel->setPosition(pos);
   statusLabel->setAlignment(osgText::TextBase::LEFT_TOP);
   statusLabel->setText("Status: ");
-  infoSwitch->addChild(statusLabel.get());
+  statusGroup->addChild(statusLabel.get());
   
   commandLabel = new osgText::Text();
   commandLabel->setName("command");
@@ -178,6 +205,70 @@ TextCamera::TextCamera(osgViewer::GraphicsWindow *windowIn) : osg::Camera()
 TextCamera::~TextCamera() //for ref_ptr and forward declare.
 {
 
+}
+
+bool TextCamera::cleanFade()
+{
+  bool isDirty = false;
+  for (auto it = statusFades.begin(); it != statusFades.end();)
+  {
+    TextFadeCallback *cb = dynamic_cast<TextFadeCallback *>((*it)->getUpdateCallback());
+    assert(cb);
+    if (cb->isFinished())
+    {
+      statusGroup->removeChild(*it);
+      it = statusFades.erase(it);
+      isDirty = true;
+    }
+    else
+      it++;
+  }
+  
+  return isDirty;
+}
+
+//keep in mind the alignment of the text that was set in constructor.
+void TextCamera::layoutStatus()
+{
+  osg::Vec3 corner; //top left.
+  osg::BoundingBox::value_type padding = selectionLabel->getCharacterHeight() / 2.0;
+  corner.x() = padding;
+  corner.y() = getViewport()->height() - padding;
+  statusLabel->setPosition(corner);
+  
+  auto offsetBelow = [&](const osgText::Text *t) -> osg::Vec3
+  {
+    osg::Vec3 out;
+    out.x() = padding;
+    out.y() = t->getBoundingBox().yMin() - padding;
+    return out;
+  };
+  
+  corner = offsetBelow(statusLabel.get());
+  for (const auto &t : statusFades)
+  {
+    t->setPosition(corner);
+    corner = offsetBelow(t.get());
+  }
+}
+
+void TextCamera::layoutSelection()
+{
+  osg::Vec3 pos;
+  osg::BoundingBox::value_type padding = selectionLabel->getCharacterHeight() / 2.0;
+  pos.x() = getViewport()->width() - padding;
+  pos.y() = getViewport()->height() - padding;
+  selectionLabel->setPosition(pos);
+}
+
+void TextCamera::layoutCommand()
+{
+  osg::Vec3 pos;
+  osg::BoundingBox::value_type padding = commandLabel->getCharacterHeight() / 2.0;
+  padding = commandLabel->getCharacterHeight() / 2.0;
+  pos.x() = padding;
+  pos.y() = padding;
+  commandLabel->setPosition(pos);
 }
 
 void TextCamera::setupDispatcher()
@@ -264,10 +355,26 @@ void TextCamera::statusTextDispatched(const msg::Message &messageIn)
   msg::dispatch().dumpString(debug.str());
   
   vwr::Message sMessage = boost::get<vwr::Message>(messageIn.payload);
-  std::string display = "Status: ";
-  if (!sMessage.text.empty())
-    display = sMessage.text;
-  statusLabel->setText(display);
+  if (sMessage.time == 0.0)
+  {
+    std::string display = "What is thy bidding, my master?";
+    if (!sMessage.text.empty())
+      display = sMessage.text;
+    statusLabel->setText(display);
+  }
+  else if (!sMessage.text.empty())
+  {
+    //these will be fading messages.
+    osg::ref_ptr<osgText::Text> t = dynamic_cast<osgText::Text*>(statusLabel->clone(osg::CopyOp::SHALLOW_COPY));
+    t->setText(sMessage.text);
+    t->setColor(osg::Vec4(1.0f,0.0f,0.0f,1.0f));
+    t->addUpdateCallback(new TextFadeCallback(sMessage.time));
+    t->getOrCreateStateSet()->setRenderingHint(osg::StateSet::TRANSPARENT_BIN);
+    statusFades.push_back(t);
+    statusGroup->addChild(t.get());
+  }
+  
+  layoutStatus();
 }
 
 void TextCamera::updateSelectionLabel()

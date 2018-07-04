@@ -171,7 +171,7 @@ void MeasureLinear::build(const osg::Vec3d &point1, const osg::Vec3d &point2)
   if (xVector.isNaN())
   {
     observer->outBlocked(msg::buildStatusMessage(
-      QObject::tr("Can't make dimension with current view direction").toStdString()));
+      QObject::tr("Can't make dimension with current view direction").toStdString(), 2.0));
     return;
   }
   xVector.normalize();
