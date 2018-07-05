@@ -15,7 +15,7 @@
    height="64px"
    id="svg2943"
    sodipodi:version="0.32"
-   inkscape:version="0.91 r13725"
+   inkscape:version="0.92.3 (2405546, 2018-03-11)"
    sodipodi:docname="inspectCheckGeometry.svg"
    inkscape:output_extension="org.inkscape.output.svg.inkscape"
    version="1.1">
@@ -170,18 +170,20 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="7.3309305"
-     inkscape:cx="27.256979"
-     inkscape:cy="35.311505"
+     inkscape:zoom="4.8597663"
+     inkscape:cx="20.887029"
+     inkscape:cy="37.158021"
      inkscape:current-layer="g3629"
      showgrid="true"
      inkscape:document-units="px"
      inkscape:grid-bbox="true"
-     inkscape:window-width="1368"
-     inkscape:window-height="667"
+     inkscape:window-width="1360"
+     inkscape:window-height="681"
      inkscape:window-x="0"
      inkscape:window-y="0"
-     inkscape:window-maximized="1" />
+     inkscape:window-maximized="1"
+     inkscape:pagecheckerboard="true"
+     inkscape:showpageshadow="false" />
   <metadata
      id="metadata2948">
     <rdf:RDF>
@@ -190,6 +192,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -200,15 +203,9 @@
     <g
        id="g3629"
        transform="translate(-256.70919,-66.886588)">
-      <circle
-         style="fill:#a1a39d;fill-opacity:1;stroke:#000000;stroke-width:2.01122451;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-         id="path3820"
-         cx="288.7092"
-         cy="98.886589"
-         r="30.994389" />
       <g
          id="g3240"
-         transform="matrix(0.88086358,0,0,0.88086358,38.575288,9.5863061)">
+         transform="matrix(1.0641791,0,0,1.0641791,-16.278413,-7.257751)">
         <path
            inkscape:connector-curvature="0"
            style="display:inline;overflow:visible;visibility:visible;opacity:0.66523605;fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:1.07586193;marker:none;enable-background:accumulate"
@@ -218,13 +215,13 @@
         <path
            id="path3596"
            transform="translate(256.70919,66.886588)"
-           d="m 20.1875,24.09375 -15.15625,30.5625 0.40625,0 c -0.0261,0.1163 -0.03125,0.25695 -0.03125,0.375 0,3.1683 9.51874,5.71875 21.25,5.71875 11.73127,0 21.24999,-2.55045 21.25,-5.71875 0,-0.72901 -0.92425,-1.98039 -1.4375,-2.90625 L 33.3125,24.40625 c -1.823213,1.104013 -3.982134,1.75 -6.3125,1.75 -2.545003,0 -4.893095,-0.765221 -6.8125,-2.0625 z"
+           d="M 20.1875,24.09375 5.03125,54.65625 H 5.4375 c -0.0261,0.1163 -0.03125,0.25695 -0.03125,0.375 0,3.1683 9.51874,5.71875 21.25,5.71875 11.73127,0 21.24999,-2.55045 21.25,-5.71875 0,-0.72901 -0.92425,-1.98039 -1.4375,-2.90625 L 33.3125,24.40625 c -1.823213,1.104013 -3.982134,1.75 -6.3125,1.75 -2.545003,0 -4.893095,-0.765221 -6.8125,-2.0625 z"
            style="display:inline;overflow:visible;visibility:visible;fill:url(#radialGradient3845);fill-opacity:1;fill-rule:evenodd;stroke:url(#linearGradient4355);stroke-width:2.20000005;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker:none;enable-background:accumulate"
            inkscape:connector-curvature="0" />
         <path
            inkscape:connector-curvature="0"
            id="path3800"
-           d="m 283.56864,73.508963 -8.96997,18.127594 c 2.45967,1.993759 5.65411,3.190156 9.15763,3.190156 3.2436,0 6.21751,-1.041853 8.59466,-2.777313 l -8.78232,-18.540437 z"
+           d="m 283.56864,73.508963 -8.96997,18.127594 c 2.45967,1.993759 5.65411,3.190156 9.15763,3.190156 3.2436,0 6.21751,-1.041853 8.59466,-2.777313 z"
            style="display:inline;overflow:visible;visibility:visible;fill:url(#radialGradient3876);fill-opacity:1;fill-rule:evenodd;stroke:#7b5600;stroke-width:2.30599999;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker:none;enable-background:accumulate" />
         <ellipse
            style="fill:#ffffff;fill-opacity:0.58823529;fill-rule:nonzero;stroke:url(#linearGradient3858);stroke-width:3.50016975;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"

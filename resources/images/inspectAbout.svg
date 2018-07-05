@@ -49,7 +49,7 @@
        fx="288.7092"
        fy="105.93858"
        r="5.1814766"
-       gradientTransform="matrix(1,0,0,10.173852,0,-971.86488)"
+       gradientTransform="matrix(1.1268251,0,0,11.46415,-36.615553,-1107.6452)"
        gradientUnits="userSpaceOnUse" />
     <radialGradient
        inkscape:collect="always"
@@ -61,7 +61,7 @@
        fy="76.847588"
        r="5.4038992"
        gradientUnits="userSpaceOnUse"
-       gradientTransform="matrix(1,0,0,4.4333339,0,-263.84343)" />
+       gradientTransform="matrix(1.1268251,0,0,4.9955915,-36.615553,-309.829)" />
   </defs>
   <sodipodi:namedview
      id="base"
@@ -70,9 +70,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="5.5515463"
-     inkscape:cx="49.303455"
-     inkscape:cy="41.112152"
+     inkscape:zoom="5.2045747"
+     inkscape:cx="26.569371"
+     inkscape:cy="36.021617"
      inkscape:current-layer="g3629"
      showgrid="true"
      inkscape:document-units="px"
@@ -81,7 +81,9 @@
      inkscape:window-height="681"
      inkscape:window-x="0"
      inkscape:window-y="0"
-     inkscape:window-maximized="1" />
+     inkscape:window-maximized="1"
+     inkscape:pagecheckerboard="true"
+     inkscape:showpageshadow="false" />
   <metadata
      id="metadata2948">
     <rdf:RDF>
@@ -90,6 +92,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -100,24 +103,18 @@
     <g
        id="g3629"
        transform="translate(-256.70919,-66.886588)">
-      <circle
-         style="fill:#a1a39d;fill-opacity:1;stroke:#000000;stroke-width:2.01122451;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-         id="path3820"
-         cx="288.7092"
-         cy="98.886589"
-         r="30.994389" />
       <path
-         style="fill:none;stroke:url(#radialGradient863);stroke-width:10;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-         d="m 288.88933,90.89773 -0.36026,30.08171"
+         style="fill:none;stroke:url(#radialGradient863);stroke-width:11.26824951;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         d="m 288.91217,89.902225 -0.40594,33.896815"
          id="path849"
          inkscape:connector-curvature="0"
          sodipodi:nodetypes="cc" />
       <circle
-         style="opacity:1;fill:url(#radialGradient871);fill-opacity:1;stroke:none;stroke-width:8;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+         style="opacity:1;fill:url(#radialGradient871);fill-opacity:1;stroke:none;stroke-width:9.0145998;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
          id="path855"
          cx="288.7092"
-         cy="76.847588"
-         r="5.4038992" />
+         cy="74.070183"
+         r="6.0892491" />
     </g>
   </g>
 </svg>

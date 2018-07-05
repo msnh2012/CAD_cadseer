@@ -14,7 +14,7 @@
    height="64"
    id="svg5181"
    version="1.1"
-   inkscape:version="0.91 r13725"
+   inkscape:version="0.92.3 (2405546, 2018-03-11)"
    sodipodi:docname="linkIcon.svg">
   <defs
      id="defs5183">
@@ -58,18 +58,20 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="5.6568542"
-     inkscape:cx="24.641147"
-     inkscape:cy="29.871777"
+     inkscape:zoom="5.3033008"
+     inkscape:cx="33.865373"
+     inkscape:cy="25.768008"
      inkscape:current-layer="layer1"
      showgrid="true"
      inkscape:grid-bbox="true"
      inkscape:document-units="px"
-     inkscape:window-width="1368"
-     inkscape:window-height="667"
+     inkscape:window-width="1360"
+     inkscape:window-height="681"
      inkscape:window-x="0"
      inkscape:window-y="0"
-     inkscape:window-maximized="1" />
+     inkscape:window-maximized="1"
+     inkscape:showpageshadow="false"
+     inkscape:pagecheckerboard="true" />
   <metadata
      id="metadata5186">
     <rdf:RDF>
@@ -78,7 +80,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title />
+        <dc:title></dc:title>
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -88,12 +90,12 @@
      inkscape:groupmode="layer"
      transform="translate(0,16)">
     <rect
-       style="opacity:1;fill:#78eb82;fill-opacity:1;stroke:#3b3b3b;stroke-width:0.98074055;stroke-linecap:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       style="opacity:1;fill:#78eb82;fill-opacity:1;stroke:#3b3b3b;stroke-width:0.99969923;stroke-linecap:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
        id="rect4161"
-       width="63.019257"
-       height="63.01926"
-       x="0.49037027"
-       y="-15.50963" />
+       width="63.000298"
+       height="63.000301"
+       x="0.49984962"
+       y="-15.500153" />
     <g
        id="g4582"
        transform="translate(-1.4142136,-0.70710678)">
