@@ -53,7 +53,6 @@ namespace gsn
       osg::ref_ptr<osg::MatrixTransform> currentNode;
       osg::Matrixd aggregateMatrix;
       bool currentNodeLeft;
-      osg::Vec3 lastHitPoint;
       
       float time();
 

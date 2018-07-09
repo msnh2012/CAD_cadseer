@@ -301,7 +301,6 @@ bool Handler::handle(const osgGA::GUIEventAdapter& eventAdapter,
         return false;
       }
       
-      lastHitPoint = hPoint;
       if (node == currentNode)
       {
         if (currentNodeLeft == true)
@@ -345,7 +344,7 @@ bool Handler::handle(const osgGA::GUIEventAdapter& eventAdapter,
 void Handler::spraySubNodes(osg::Vec3 cursorLocation)
 {
     cursorLocation = cursorLocation * osg::Matrixd::inverse(aggregateMatrix);
-    osg::Vec3 direction = cursorLocation - lastHitPoint;
+    osg::Vec3 direction = cursorLocation;
 
     int childCount = currentNode->getNumChildren();
     assert(childCount > 1);//line, icon and sub items.
