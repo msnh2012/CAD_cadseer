@@ -1231,7 +1231,7 @@ void Model::contextMenuEvent(QGraphicsSceneContextMenuEvent* event)
     QAction* toggleOverlayAction = contextMenu.addAction(overlayIcon, tr("Toggle Overlay"));
     connect(toggleOverlayAction, SIGNAL(triggered()), this, SLOT(toggleOverlaySlot()));
     
-    static QIcon viewIsolateIcon(":/resources/images/dagViewIsolate.svg");
+    static QIcon viewIsolateIcon(":/resources/images/viewIsolate.svg");
     QAction* viewIsolateAction = contextMenu.addAction(viewIsolateIcon, tr("View Isolate"));
     connect(viewIsolateAction, SIGNAL(triggered()), this, SLOT(viewIsolateSlot()));
     
@@ -1245,19 +1245,19 @@ void Model::contextMenuEvent(QGraphicsSceneContextMenuEvent* event)
     QAction* checkGeometryAction = contextMenu.addAction(checkGeometryIcon, tr("Check Geometry"));
     connect(checkGeometryAction, SIGNAL(triggered()), this, SLOT(checkGeometrySlot()));
     
-    static QIcon editFeatureIcon(":/resources/images/dagViewEditFeature.svg");
+    static QIcon editFeatureIcon(":/resources/images/editFeature.svg");
     QAction* editFeatureAction = contextMenu.addAction(editFeatureIcon, tr("Edit Feature"));
     connect(editFeatureAction, SIGNAL(triggered()), this, SLOT(editFeatureSlot()));
     
-    static QIcon dissolveIcon(":/resources/images/dagViewDissolve.svg");
+    static QIcon dissolveIcon(":/resources/images/editFeatureDissolve.svg");
     QAction* dissolveAction = contextMenu.addAction(dissolveIcon, tr("Dissolve Feature"));
     connect(dissolveAction, SIGNAL(triggered()), this, SLOT(dissolveSlot()));
     
-    static QIcon editColorIcon(":/resources/images/dagViewEditColor.svg");
+    static QIcon editColorIcon(":/resources/images/editColor.svg");
     QAction* editColorAction = contextMenu.addAction(editColorIcon, tr("Edit Color"));
     connect(editColorAction, SIGNAL(triggered()), this, SLOT(editColorSlot()));
     
-    static QIcon editRenameIcon(":/resources/images/dagViewEditRename.svg");
+    static QIcon editRenameIcon(":/resources/images/editRename.svg");
     QAction* editRenameAction = contextMenu.addAction(editRenameIcon, tr("Rename"));
     connect(editRenameAction, SIGNAL(triggered()), this, SLOT(editRenameSlot()));
     
@@ -1271,7 +1271,7 @@ void Model::contextMenuEvent(QGraphicsSceneContextMenuEvent* event)
     QAction* toggleSkippedAction = contextMenu.addAction(skippedIcon, tr("Toggle Skipped"));
     connect(toggleSkippedAction, SIGNAL(triggered()), this, SLOT(toggleSkippedSlot()));
     
-    static QIcon removeIcon(":/resources/images/dagViewRemove.svg");
+    static QIcon removeIcon(":/resources/images/editRemove.svg");
     QAction* removeFeatureAction = contextMenu.addAction(removeIcon, tr("Remove Feature"));
     connect(removeFeatureAction, SIGNAL(triggered()), this, SLOT(removeFeatureSlot()));
     

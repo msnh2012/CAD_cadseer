@@ -96,13 +96,7 @@
     <file>resources/images/dagViewInactive.svg</file>
     <file>resources/images/dagViewSkipped.svg</file>
     <file>resources/images/dagViewLeaf.svg</file>
-    <file>resources/images/dagViewRemove.svg</file>
     <file>resources/images/dagViewOverlay.svg</file>
-    <file>resources/images/dagViewIsolate.svg</file>
-    <file>resources/images/dagViewEditColor.svg</file>
-    <file>resources/images/dagViewEditRename.svg</file>
-    <file>resources/images/dagViewEditFeature.svg</file>
-    <file>resources/images/dagViewDissolve.svg</file>
     <file>resources/images/cadSeer.svg</file>
     <file>resources/images/preferences.svg</file>
     <file>resources/images/linkIcon.svg</file>
