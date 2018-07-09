@@ -175,7 +175,7 @@ Widget::Widget(osgViewer::ViewerBase::ThreadingModel threadingModel) : QWidget()
     //not sure why it does, but it happens down inside librsvg and doesn't
     //come into play for application. I have proven out that our qactions
     //between gesture camera a mainwindlow slots are synchronized.
-    view->addEventHandler(new GestureHandler(gestureCamera));
+    view->addEventHandler(new gsn::Handler(gestureCamera));
     view->addEventHandler(new ResizeEventHandler(infoCamera));
     spaceballManipulator = new vwr::SpaceballManipulator(view->getCamera());
     view->setCameraManipulator(spaceballManipulator);

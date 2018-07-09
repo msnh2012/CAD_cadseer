@@ -43,6 +43,8 @@
 #include <viewer/spaceballosgevent.h>
 #include <gesture/handler.h>
 
+using namespace gsn;
+
 static const std::string attributeMask = "CommandAttributeTitle";
 static const std::string attributeStatus = "CommandAttributeStatus";
 
@@ -54,11 +56,22 @@ static const std::string attributeStatus = "CommandAttributeStatus";
 //   osgDB::writeNodeFile(root, fileName, options);
 // }
 
-GestureHandler::GestureHandler(osg::Camera *cameraIn) : osgGA::GUIEventHandler(), rightButtonDown(false),
+class GestureAllSwitchesOffVisitor : public osg::NodeVisitor
+{
+public:
+  GestureAllSwitchesOffVisitor() : osg::NodeVisitor(osg::NodeVisitor::TRAVERSE_ALL_CHILDREN) {}
+  virtual void apply(osg::Switch &aSwitch)
+  {
+    traverse(aSwitch);
+    aSwitch.setAllChildrenOff();
+  }
+};
+
+Handler::Handler(osg::Camera *cameraIn) : osgGA::GUIEventHandler(), rightButtonDown(false),
     dragStarted(false), currentNodeLeft(false), iconRadius(32.0), includedAngle(90.0)
 {
     observer = std::move(std::unique_ptr<msg::Observer>(new msg::Observer()));
-    observer->name = "GestureHandler";
+    observer->name = "Handler";
     setupDispatcher();
   
     gestureCamera = cameraIn;
@@ -73,7 +86,7 @@ GestureHandler::GestureHandler(osg::Camera *cameraIn) : osgGA::GUIEventHandler()
 //     dumpMenuGraphViz(*startNode, "SOMEPATH");
 }
 
-bool GestureHandler::handle(const osgGA::GUIEventAdapter& eventAdapter,
+bool Handler::handle(const osgGA::GUIEventAdapter& eventAdapter,
                             osgGA::GUIActionAdapter&, osg::Object *,
                             osg::NodeVisitor *)
 {
@@ -179,7 +192,7 @@ bool GestureHandler::handle(const osgGA::GUIEventAdapter& eventAdapter,
   
     if (!gestureSwitch.valid())
     {
-      std::cout << "gestureSwitch is invalid in GestureHandler::handle" << std::endl;
+      std::cout << "gestureSwitch is invalid in Handler::handle" << std::endl;
       return false;
     }
 
@@ -329,7 +342,7 @@ bool GestureHandler::handle(const osgGA::GUIEventAdapter& eventAdapter,
     return false;
 }
 
-void GestureHandler::spraySubNodes(osg::Vec3 cursorLocation)
+void Handler::spraySubNodes(osg::Vec3 cursorLocation)
 {
     cursorLocation = cursorLocation * osg::Matrixd::inverse(aggregateMatrix);
     osg::Vec3 direction = cursorLocation - lastHitPoint;
@@ -370,7 +383,7 @@ void GestureHandler::spraySubNodes(osg::Vec3 cursorLocation)
     }
 }
 
-void GestureHandler::contractSubNodes()
+void Handler::contractSubNodes()
 {
     int childCount = currentNode->getNumChildren();
     assert(childCount > 1);//line, icon and sub items.
@@ -395,12 +408,12 @@ void GestureHandler::contractSubNodes()
     }
 }
 
-float GestureHandler::time()
+float Handler::time()
 {
   return static_cast<float>(prf::manager().rootPtr->gesture().animationSeconds());
 }
 
-void GestureHandler::constructMenu()
+void Handler::constructMenu()
 {
   //should only be 2. the start object and the transparent quad
   gestureSwitch->removeChildren(0, gestureSwitch->getNumChildren() - 1);
@@ -1277,7 +1290,7 @@ void GestureHandler::constructMenu()
   }
 }
 
-std::vector<osg::Vec3> GestureHandler::buildNodeLocations(osg::Vec3 direction, int nodeCount)
+std::vector<osg::Vec3> Handler::buildNodeLocations(osg::Vec3 direction, int nodeCount)
 {
     double sprayRadius = calculateSprayRadius(nodeCount);
     
@@ -1311,7 +1324,7 @@ std::vector<osg::Vec3> GestureHandler::buildNodeLocations(osg::Vec3 direction, i
     return pointArray;
 }
 
-double GestureHandler::calculateSprayRadius(int nodeCount)
+double Handler::calculateSprayRadius(int nodeCount)
 {
     double segmentCount = nodeCount - 1;
     if (segmentCount < 1)
@@ -1331,7 +1344,7 @@ double GestureHandler::calculateSprayRadius(int nodeCount)
     return hypt;
 }
 
-void GestureHandler::startDrag(const osgGA::GUIEventAdapter& eventAdapter)
+void Handler::startDrag(const osgGA::GUIEventAdapter& eventAdapter)
 {
     //send status
     observer->out(msg::buildStatusMessage(QObject::tr("Start Menu").toStdString()));
@@ -1353,15 +1366,15 @@ void GestureHandler::startDrag(const osgGA::GUIEventAdapter& eventAdapter)
     aggregateMatrix = startNode->getMatrix();
 }
 
-void GestureHandler::setupDispatcher()
+void Handler::setupDispatcher()
 {
   msg::Mask mask;
   
   mask = msg::Response | msg::Preferences;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&GestureHandler::preferencesChangedDispatched, this, _1)));
+  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Handler::preferencesChangedDispatched, this, _1)));
 }
 
-void GestureHandler::updateVariables()
+void Handler::updateVariables()
 {
   iconRadius = prf::manager().rootPtr->gesture().iconRadius();
   iconRadius = std::max(iconRadius, 16.0);
@@ -1376,7 +1389,7 @@ void GestureHandler::updateVariables()
   minimumSprayRadius = iconDiameter + iconDiameter * prf::manager().rootPtr->gesture().sprayFactor();
 }
 
-void GestureHandler::preferencesChangedDispatched(const msg::Message&)
+void Handler::preferencesChangedDispatched(const msg::Message&)
 {
   
   if (iconRadius != prf::manager().rootPtr->gesture().iconRadius())
@@ -1386,15 +1399,4 @@ void GestureHandler::preferencesChangedDispatched(const msg::Message&)
   }
   else
     updateVariables();
-}
-
-GestureAllSwitchesOffVisitor::GestureAllSwitchesOffVisitor() :
-    osg::NodeVisitor(osg::NodeVisitor::TRAVERSE_ALL_CHILDREN)
-{
-}
-
-void GestureAllSwitchesOffVisitor::apply(osg::Switch &aSwitch)
-{
-    traverse(aSwitch);
-    aSwitch.setAllChildrenOff();
 }

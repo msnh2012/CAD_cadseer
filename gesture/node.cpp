@@ -37,6 +37,7 @@
 #include <gesture/node.h>
 #include <modelviz/nodemaskdefs.h>
 
+using namespace gsn;
 
 QString ensureFile(const char *resourceName)
 {
@@ -163,8 +164,6 @@ osg::MatrixTransform* gsn::buildNode(const char *resourceName, unsigned int mask
 
   return mainNode;
 }
-
-using namespace gsn;
 
 NodeCue::NodeCue(double radiusIn, int sidesIn) : radius(radiusIn)
 {
