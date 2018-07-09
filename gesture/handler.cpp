@@ -33,7 +33,7 @@
 
 #include <application/application.h>
 #include <viewer/message.h>
-#include <gesture/gesturenode.h>
+#include <gesture/node.h>
 #include <modelviz/nodemaskdefs.h>
 #include <message/dispatch.h>
 #include <message/observer.h>
@@ -41,7 +41,7 @@
 #include <preferences/manager.h>
 #include <gesture/animations.h>
 #include <viewer/spaceballosgevent.h>
-#include <gesture/gesturehandler.h>
+#include <gesture/handler.h>
 
 static const std::string attributeMask = "CommandAttributeTitle";
 static const std::string attributeStatus = "CommandAttributeStatus";

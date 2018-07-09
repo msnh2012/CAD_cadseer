@@ -52,7 +52,7 @@
 #include <modelviz/nodemaskdefs.h>
 #include <modelviz/hiddenlineeffect.h>
 #include <selection/definitions.h>
-#include <gesture/gesturehandler.h>
+#include <gesture/handler.h>
 #include <globalutilities.h>
 #include <tools/infotools.h>
 #include <library/csysdragger.h>

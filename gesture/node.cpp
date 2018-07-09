@@ -34,7 +34,7 @@
 #include <osg/Depth>
 #include <osg/TexEnv>
 
-#include <gesture/gesturenode.h>
+#include <gesture/node.h>
 #include <modelviz/nodemaskdefs.h>
 
 

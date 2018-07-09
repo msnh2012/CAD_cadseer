@@ -279,8 +279,8 @@ SET(MODELVIZ_SOURCES
     )
 
 SET(GESTURE_SOURCES
-    gesture/gesturehandler.cpp
-    gesture/gesturenode.cpp
+    gesture/handler.cpp
+    gesture/node.cpp
     gesture/animations.cpp
     )
     
