@@ -92,7 +92,7 @@ protected:
   osg::Vec3d target;
   osg::Vec3d direction;
   osg::Vec3d normal; //90 deg to direction
-  double lineWidth = 2.0; //pref? expose?
+  double lineWidth = 4.0; //pref? expose?
   float timeSpan;
   double length;
   bool finished;

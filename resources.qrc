@@ -1,7 +1,7 @@
 <RCC>
   <qresource prefix="/">
     <file>resources/images/background.png</file>
-    <file>resources/images/iconBackground.png</file>
+    <file>resources/images/iconBackground.svg</file>
     <file>resources/images/cursor.svg</file>
     <file>resources/images/selectFaces.svg</file>
     <file>resources/images/selectEdges.svg</file>

@@ -86,14 +86,14 @@ void gsn::NodeExpand::operator()(osg::Node* node, osg::NodeVisitor* nv)
     lastTime = currentTime;
     Switch *aSwitch = dynamic_cast<Switch*> (transform->getChild(transform->getNumChildren() - 1));
     assert(aSwitch);
-    aSwitch->setAllChildrenOn();
+    aSwitch->setValue(1, true);
   }
 
   motion->update(currentTime - lastTime);
   lastTime = currentTime;
   
   float motionValue = motion->getValue();
-  transform->setMatrix(Matrixd::translate((direction * motionValue * length) + source + osg::Vec3d(0.0, 0.0, -0.001)));
+  transform->setMatrix(Matrixd::translate((direction * motionValue * length) + source));
   
   if (isCloseEnough(motionValue, 1.0))
   {
@@ -136,7 +136,7 @@ void gsn::NodeCollapse::operator()(osg::Node* node, osg::NodeVisitor* nv)
   lastTime = currentTime;
   
   float motionValue = motion->getValue();
-  transform->setMatrix(Matrix::translate((direction * motionValue * length) + source + osg::Vec3d(0.0, 0.0, -0.001)));
+  transform->setMatrix(Matrix::translate((direction * motionValue * length) + source));
   
   if (isCloseEnough(motionValue, 1.0))
   {
@@ -144,7 +144,7 @@ void gsn::NodeCollapse::operator()(osg::Node* node, osg::NodeVisitor* nv)
     transform->setMatrix(Matrixd::translate(target));
     Switch *aSwitch = dynamic_cast<Switch*> (transform->getChild(transform->getNumChildren() - 1));
     assert(aSwitch);
-    aSwitch->setAllChildrenOff();
+    aSwitch->setValue(1, false);
     finished = true;
   }
   

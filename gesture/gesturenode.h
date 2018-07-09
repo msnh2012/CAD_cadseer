@@ -20,19 +20,37 @@
 #ifndef GSN_GESTURENODE_H
 #define GSN_GESTURENODE_H
 
+#include <osg/ref_ptr>
+
 namespace osg
 {
-class MatrixTransform;
-class Geode;
+  class MatrixTransform;
+  class Texture2D;
+  class TexEnv;
+  class Depth;
 }
 
 namespace gsn
 {
-osg::MatrixTransform* buildMenuNode(const char *, double);
-osg::MatrixTransform* buildCommandNode(const char *, double);
-osg::MatrixTransform* buildCommonNode(const char *, double);
-osg::Geode* buildIconGeode(const char *, double);
-osg::Geode* buildLineGeode();
+  //! used to cache common data during menu construction. all for icon.
+  struct NodeCue
+  {
+    NodeCue() = delete;
+    NodeCue(double radiusIn, int sidesIn = -1);
+    ~NodeCue();
+    double radius;
+    int sides;
+    osg::ref_ptr<osg::Vec3Array> vertices;
+    osg::ref_ptr<osg::Vec3Array> normals; //only 1 bind overall
+    osg::ref_ptr<osg::Vec4Array> colors; //only 1 bind overall
+    osg::ref_ptr<osg::Texture2D> backTexture;
+    osg::ref_ptr<osg::TexEnv> texenv;
+    osg::ref_ptr<osg::Vec2Array> tCoords0;
+    osg::ref_ptr<osg::Vec2Array> tCoords1;
+    osg::ref_ptr<osg::Depth> depth;
+  };
+  
+  osg::MatrixTransform* buildNode(const char*, unsigned int, const NodeCue&);
 }
 
 #endif // GSN_GESTURENODE_H

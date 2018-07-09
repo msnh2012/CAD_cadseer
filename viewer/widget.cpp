@@ -386,12 +386,13 @@ osg::Camera* Widget::createGestureCamera()
     osg::ref_ptr<osg::Geometry> quad = osg::createTexturedQuadGeometry
       (osg::Vec3(), osg::Vec3(quadSize, 0.0, 0.0), osg::Vec3(0.0, quadSize, 0.0));
     osg::Vec4Array *colorArray = new osg::Vec4Array();
-    colorArray->push_back(osg::Vec4(0.0, 0.0, 0.0, 0.6));
+    colorArray->push_back(osg::Vec4(0.0, 0.0, 0.0, 0.5));
     quad->setColorArray(colorArray);
     quad->setColorBinding(osg::Geometry::BIND_OVERALL);
-    quad->setNodeMask(mdv::gestureCamera);
-    quad->getOrCreateStateSet()->setMode(GL_BLEND, osg::StateAttribute::ON);
-    quad->getOrCreateStateSet()->setRenderingHint(osg::StateSet::TRANSPARENT_BIN);
+    quad->setNodeMask(mdv::noIntersect);
+    osg::Depth *depth = new osg::Depth;
+    depth->setRange(0.005, 1.005);
+    quad->getOrCreateStateSet()->setAttribute(depth);
 
     osg::Camera *fadeCamera = new osg::Camera();
     fadeCamera->setName("gesture");
@@ -400,12 +401,21 @@ osg::Camera* Widget::createGestureCamera()
     fadeCamera->setAllowEventFocus(false);
     fadeCamera->setReferenceFrame(osg::Transform::ABSOLUTE_RF);
     fadeCamera->setRenderOrder(osg::Camera::NESTED_RENDER, 4);
-    fadeCamera->setProjectionMatrix(osg::Matrix::ortho2D(0.0, 1000.0, 0.0, 1000.0));
-    fadeCamera->setViewMatrix(osg::Matrix::identity());
+    fadeCamera->setProjectionMatrixAsOrtho2D
+    (
+      0.0, static_cast<double>(glWidgetWidth),
+      0.0, static_cast<double>(glWidgetHeight)
+    );
+    fadeCamera->setViewMatrix(osg::Matrixd::identity());
     fadeCamera->setGraphicsContext(windowQt);
     fadeCamera->setNodeMask(mdv::gestureCamera);
     fadeCamera->getOrCreateStateSet()->setMode(GL_MULTISAMPLE_ARB, osg::StateAttribute::ON);
     fadeCamera->getOrCreateStateSet()->setMode(GL_LIGHTING, osg::StateAttribute::OFF);
+    fadeCamera->getOrCreateStateSet()->setRenderingHint(osg::StateSet::TRANSPARENT_BIN);
+    fadeCamera->getOrCreateStateSet()->setMode(GL_BLEND, osg::StateAttribute::ON);
+    osg::ref_ptr<osg::BlendFunc> blendFunc = new osg::BlendFunc;
+    blendFunc->setFunction(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    fadeCamera->getOrCreateStateSet()->setAttributeAndModes(blendFunc);
 
     osg::Switch *aSwitch = new osg::Switch();
     aSwitch->addChild(quad.get());
