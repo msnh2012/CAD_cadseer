@@ -442,7 +442,7 @@ void Box::updateResult(const BoxBuilder& boxMakerIn)
 //   std::cout << std::endl << "update result:" << std::endl << resultContainer << std::endl;
 }
 
-void Box::serialWrite(const QDir &dIn)
+void Box::serialWrite(const boost::filesystem::path &dIn)
 {
   prj::srl::FeatureBox boxOut
   (
@@ -455,7 +455,7 @@ void Box::serialWrite(const QDir &dIn)
   );
   
   xml_schema::NamespaceInfomap infoMap;
-  std::ofstream stream(buildFilePathName(dIn).toUtf8().constData());
+  std::ofstream stream(buildFilePathName(dIn).string());
   prj::srl::box(stream, boxOut, infoMap);
 }
 

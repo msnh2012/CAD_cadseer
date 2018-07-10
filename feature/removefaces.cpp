@@ -17,6 +17,8 @@
  *
  */
 
+#include <boost/filesystem/path.hpp>
+
 #include <BRepAlgoAPI_Defeaturing.hxx>
 
 #include <osg/Switch>
@@ -164,7 +166,7 @@ void RemoveFaces::updateModel(const UpdatePayload &payloadIn)
     std::cout << std::endl << lastUpdateLog;
 }
 
-void RemoveFaces::serialWrite(const QDir &dIn)
+void RemoveFaces::serialWrite(const boost::filesystem::path &dIn)
 {
   prj::srl::FeatureRemoveFaces srf
   (
@@ -173,7 +175,7 @@ void RemoveFaces::serialWrite(const QDir &dIn)
   );
   
   xml_schema::NamespaceInfomap infoMap;
-  std::ofstream stream(buildFilePathName(dIn).toUtf8().constData());
+  std::ofstream stream(buildFilePathName(dIn).string());
   prj::srl::removeFaces(stream, srf, infoMap);
 }
 

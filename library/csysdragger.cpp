@@ -23,6 +23,8 @@
 #include <cmath>
 #include <limits>
 
+#include <QObject>
+
 #include <osgManipulator/Constraint>
 #include <osgUtil/SmoothingVisitor>
 

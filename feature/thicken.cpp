@@ -350,7 +350,7 @@ void Thicken::thickenMatch(const BRepOffset_MakeOffset &offseter)
     sShape->insertEvolve(gu::createNilId(), shellId);
 }
 
-void Thicken::serialWrite(const QDir &dIn)
+void Thicken::serialWrite(const boost::filesystem::path &dIn)
 {
   auto serializeMap = [](const std::map<uuid, uuid> &map) -> prj::srl::EvolveContainer
   {
@@ -381,7 +381,7 @@ void Thicken::serialWrite(const QDir &dIn)
   );
   
   xml_schema::NamespaceInfomap infoMap;
-  std::ofstream stream(buildFilePathName(dIn).toUtf8().constData());
+  std::ofstream stream(buildFilePathName(dIn).string());
   prj::srl::thicken(stream, so, infoMap);
 }
 

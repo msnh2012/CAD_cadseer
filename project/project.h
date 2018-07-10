@@ -27,6 +27,7 @@
 #include <osg/Vec4>
 
 #include <boost/uuid/uuid.hpp>
+#include <boost/filesystem/path.hpp>
 
 #include <feature/updatepayload.h>
 
@@ -84,8 +85,8 @@ public:
     bool isFeatureLeaf(const boost::uuids::uuid&);
     bool isFeatureNonLeaf(const boost::uuids::uuid&);
     
-    void setSaveDirectory(const std::string &directoryIn);
-    std::string getSaveDirectory() const {return saveDirectory;}
+    void setSaveDirectory(const boost::filesystem::path &directoryIn);
+    boost::filesystem::path getSaveDirectory() const {return saveDirectory;}
     void save();
     void open(); //!< call setSaveDirectory prior.
     void initializeNew(); //!< call setSaveDirectory prior.
@@ -104,7 +105,7 @@ public:
 private:
     void updateLeafStatus();
     
-    std::string saveDirectory;
+    boost::filesystem::path saveDirectory;
     void serialWrite();
     std::unique_ptr<GitManager> gitManager;
     std::unique_ptr<expr::Manager> expressionManager;

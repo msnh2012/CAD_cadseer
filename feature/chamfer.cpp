@@ -283,7 +283,7 @@ void Chamfer::updateShapeMap(const boost::uuids::uuid &resolvedId, const ShapeHi
   }
 }
 
-void Chamfer::serialWrite(const QDir &dIn)
+void Chamfer::serialWrite(const boost::filesystem::path &dIn)
 {
   prj::srl::FeatureChamfer::ShapeMapType shapeMapOut;
   for (const auto &p : shapeMap)
@@ -326,7 +326,7 @@ void Chamfer::serialWrite(const QDir &dIn)
   );
   
   xml_schema::NamespaceInfomap infoMap;
-  std::ofstream stream(buildFilePathName(dIn).toUtf8().constData());
+  std::ofstream stream(buildFilePathName(dIn).string());
   prj::srl::chamfer(stream, chamferOut, infoMap);
 }
 

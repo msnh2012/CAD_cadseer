@@ -60,7 +60,7 @@ observer(new msg::Observer())
   logging = prf::manager().rootPtr->visual().mesh().logLOD().get();
   if (logging)
   {
-    boost::filesystem::path logFilePath(app::instance()->getApplicationDirectory().path().toStdString());
+    boost::filesystem::path logFilePath(app::instance()->getApplicationDirectory());
     assert(bfs::exists(logFilePath));
     logFilePath /= "LODLog.txt";
     logStream.open(logFilePath.string(), std::ios_base::trunc | std::ios_base::out);

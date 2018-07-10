@@ -17,6 +17,8 @@
  *
  */
 
+#include <boost/filesystem/path.hpp>
+
 #include <ShapeUpgrade_UnifySameDomain.hxx>
 #include <BRepTools_History.hxx>
 
@@ -145,7 +147,7 @@ void Refine::historyMatch(const BRepTools_History &hIn , const ann::SeerShape &t
   }
 }
 
-void Refine::serialWrite(const QDir &dIn)
+void Refine::serialWrite(const boost::filesystem::path &dIn)
 {
   prj::srl::FeatureRefine::ShapeMapType shapeMapOut;
   for (const auto &p : shapeMap)
@@ -165,7 +167,7 @@ void Refine::serialWrite(const QDir &dIn)
   );
   
   xml_schema::NamespaceInfomap infoMap;
-  std::ofstream stream(buildFilePathName(dIn).toUtf8().constData());
+  std::ofstream stream(buildFilePathName(dIn).string());
   prj::srl::refine(stream, ro, infoMap);
 }
 

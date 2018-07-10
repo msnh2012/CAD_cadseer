@@ -20,8 +20,9 @@
 #ifndef DLG_PROJECT_H
 #define DLG_PROJECT_H
 
+#include <boost/filesystem/path.hpp>
+
 #include <QDialog>
-#include <QDir>
 
 namespace Ui{ class projectDialog; }
 
@@ -42,15 +43,15 @@ namespace dlg
     Project(QWidget* = 0);
     ~Project();
     Result getResult(){return result;}
-    QDir getDirectory(){return directory;}
+    boost::filesystem::path getDirectory(){return directory;}
   private:
     Ui::projectDialog* ui;
     Result result;
-    QDir directory;
+    boost::filesystem::path directory;
     
     void addToRecentList();
     void populateRecentList();
-    bool validateDir(const QDir &dir);
+    bool validateDir(const boost::filesystem::path &dir);
     
   private Q_SLOTS:
     void goNewSlot();

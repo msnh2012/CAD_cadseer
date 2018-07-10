@@ -798,12 +798,11 @@ void Model::projectUpdatedDispatched(const msg::Message &)
 void Model::dumpDAGViewGraphDispatched(const msg::Message &)
 {
   //something here to check preferences about writing this out.
-  QString fileName = static_cast<app::Application *>(qApp)->getApplicationDirectory().path();
-  fileName += QDir::separator();
-  fileName += "dagView.dot";
-  stow->writeGraphViz(fileName.toStdString());
+  boost::filesystem::path path = app::instance()->getApplicationDirectory();
+  path /= "dagView.dot";
+  stow->writeGraphViz(path.string());
   
-  QDesktopServices::openUrl(QUrl(fileName));
+  QDesktopServices::openUrl(QUrl(QString::fromStdString(path.string())));
 }
 
 void Model::threeDShowDispatched(const msg::Message &msgIn)

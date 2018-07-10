@@ -19,7 +19,8 @@
 
 #include <iostream>
 
-#include <QDir>
+#include <boost/filesystem.hpp>
+
 #include <QFile>
 
 #include <osgDB/ReadFile>
@@ -212,12 +213,14 @@ osg::Geometry* lbr::csys::buildIconUnlink()
 
 std::string lbr::csys::fileNameFromResource(const std::string &resourceName)
 {
-  QString alteredFileName = QString::fromStdString(resourceName);
-  alteredFileName.remove(":");
-  alteredFileName.replace("/", "_");
-  QDir tempDirectory = QDir::temp();
-  QString resourceFileName(tempDirectory.absolutePath() + "/" + alteredFileName);
-  if (!tempDirectory.exists(alteredFileName))
+  std::string fileName(resourceName);
+  fileName.erase(fileName.begin(), fileName.begin()); //remove starting ':'
+  std::replace(fileName.begin(), fileName.end(), '/', '_');
+  
+  boost::filesystem::path filePath = boost::filesystem::temp_directory_path();
+  filePath /= fileName;
+
+  if (!boost::filesystem::exists(filePath))
   {
     QFile resourceFile(resourceName.c_str());
     if (!resourceFile.open(QIODevice::ReadOnly | QIODevice::Text))
@@ -225,13 +228,13 @@ std::string lbr::csys::fileNameFromResource(const std::string &resourceName)
     QByteArray buffer = resourceFile.readAll();
     resourceFile.close();
      
-    QFile newFile(resourceFileName);
+    QFile newFile(QString::fromStdString(filePath.string()));
     if (!newFile.open(QIODevice::WriteOnly | QIODevice::Text))
       std::cout << "couldn't open new temp file" << std::endl;
-    std::cout << "newfilename is: " << resourceFileName.toStdString() << std::endl;
+    std::cout << "newfilename is: " << filePath.string() << std::endl;
     newFile.write(buffer);
     newFile.close();
   }
-  return resourceFileName.toStdString();
+  return filePath.string();
 }
 

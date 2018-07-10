@@ -39,7 +39,7 @@ namespace ftr
     virtual const QIcon& getIcon() const override {return icon;}
     virtual Descriptor getDescriptor() const override {return Descriptor::Alter;}
     
-    virtual void serialWrite(const QDir&) override;
+    virtual void serialWrite(const boost::filesystem::path&) override;
     void serialRead(const prj::srl::FeatureIntersect &);
     
     void setTargetPicks(const Picks&);

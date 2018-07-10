@@ -335,7 +335,7 @@ void InstancePolar::updateModel(const UpdatePayload &payloadIn)
     std::cout << std::endl << lastUpdateLog;
 }
 
-void InstancePolar::serialWrite(const QDir &dIn)
+void InstancePolar::serialWrite(const boost::filesystem::path &dIn)
 {
   prj::srl::FeatureInstancePolar sip
   (
@@ -357,7 +357,7 @@ void InstancePolar::serialWrite(const QDir &dIn)
   );
   
   xml_schema::NamespaceInfomap infoMap;
-  std::ofstream stream(buildFilePathName(dIn).toUtf8().constData());
+  std::ofstream stream(buildFilePathName(dIn).string());
   prj::srl::instancePolar(stream, sip, infoMap);
 }
 

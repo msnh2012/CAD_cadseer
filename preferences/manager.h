@@ -22,7 +22,7 @@
 
 #include <memory>
 
-#include <QDir>
+#include <boost/filesystem/path.hpp>
 
 class Root;
 
@@ -48,10 +48,8 @@ namespace prf
     void setup();
     bool readConfig();
     void ensureDefaults();
-    QDir appDirectory;
-    QString fileNameXML;
-    QString filePathXML;
-    QString filePathXSD;
+    boost::filesystem::path xmlPath;
+    boost::filesystem::path xsdPath;
     bool ok;
   };
   Manager& manager();

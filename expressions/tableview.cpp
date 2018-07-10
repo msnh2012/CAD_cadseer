@@ -32,7 +32,6 @@
 #include <QInputDialog>
 #include <QFileDialog>
 #include <QMessageBox>
-#include <QDir>
 #include <QWidget>
 #include <QHBoxLayout>
 #include <QLabel>
@@ -50,8 +49,6 @@
 #include <expressions/stringtranslator.h>
 
 using namespace expr;
-
-static QString defaultDirectory = QDir::homePath();
 
 TableViewAll::TableViewAll(QWidget* parentIn): QTableView(parentIn)
 {

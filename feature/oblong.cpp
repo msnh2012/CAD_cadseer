@@ -428,7 +428,7 @@ void Oblong::updateIPGroup()
   heightIP->constantHasChanged();
 }
 
-void Oblong::serialWrite(const QDir &dIn)
+void Oblong::serialWrite(const boost::filesystem::path &dIn)
 {
   prj::srl::FeatureOblong oblongOut
   (
@@ -441,7 +441,7 @@ void Oblong::serialWrite(const QDir &dIn)
   );
   
   xml_schema::NamespaceInfomap infoMap;
-  std::ofstream stream(buildFilePathName(dIn).toUtf8().constData());
+  std::ofstream stream(buildFilePathName(dIn).string());
   prj::srl::oblong(stream, oblongOut, infoMap);
 }
 

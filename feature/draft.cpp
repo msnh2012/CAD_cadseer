@@ -244,7 +244,7 @@ void Draft::generatedMatch(BRepOffsetAPI_DraftAngle &dMaker, const ann::SeerShap
   }
 }
 
-void Draft::serialWrite(const QDir &dIn)
+void Draft::serialWrite(const boost::filesystem::path &dIn)
 {
   prj::srl::Picks targetPicksOut = ::ftr::serialOut(targetPicks);
   prj::srl::Pick neutralPickOut = neutralPick.serialOut();
@@ -258,7 +258,7 @@ void Draft::serialWrite(const QDir &dIn)
   );
   
   xml_schema::NamespaceInfomap infoMap;
-  std::ofstream stream(buildFilePathName(dIn).toUtf8().constData());
+  std::ofstream stream(buildFilePathName(dIn).string());
   prj::srl::draft(stream, draftOut, infoMap);
 }
 

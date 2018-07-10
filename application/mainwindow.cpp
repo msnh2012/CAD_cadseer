@@ -22,7 +22,6 @@
 #include <limits>
 
 #include <QHBoxLayout>
-#include <QDir>
 #include <QCloseEvent>
 
 #include <dagview/model.h>

@@ -57,8 +57,8 @@ Project::Project(QWidget *parent) : QDialog(parent), ui(new Ui::projectDialog)
   settings.endGroup();
   
   //test the default project directory.
-  boost::filesystem::path p = prf::manager().rootPtr->project().basePath();
-  if (!boost::filesystem::exists(p))
+  path p = prf::manager().rootPtr->project().basePath();
+  if (!exists(p))
   {
     ui->newNameEdit->setPlaceholderText(QObject::tr("Default project location doesn't exist"));
     ui->newNameEdit->setDisabled(true);
@@ -86,17 +86,17 @@ void Project::populateRecentList()
   std::size_t row = 0;
   for (const auto &entry : recent)
   {
-    QDir localDir(QString::fromStdString(entry));
-    if (!validateDir(localDir)) //only valid directories.
+    path p = entry;
+    if (!validateDir(p)) //only valid directories.
       continue;
     reconcile.push_back(entry);
-    QString name = localDir.dirName();
-    QString path = localDir.absolutePath();
+    QString name = QString::fromStdString(p.stem().string());
+    QString parentPath = QString::fromStdString(p.string());
     
     ui->recentTableWidget->insertRow(row);
     QTableWidgetItem *nameItem = new QTableWidgetItem(name);
     ui->recentTableWidget->setItem(row, 0, nameItem);
-    QTableWidgetItem *pathItem = new QTableWidgetItem(path);
+    QTableWidgetItem *pathItem = new QTableWidgetItem(parentPath);
     ui->recentTableWidget->setItem(row, 1, pathItem);
     
     row++;
@@ -106,17 +106,15 @@ void Project::populateRecentList()
   prf::manager().saveConfig();
 }
 
-bool Project::validateDir(const QDir& dir)
+bool Project::validateDir(const path& dir)
 {
-  if (!dir.exists())
+  if (!exists(dir))
     return false;
-  if (!dir.exists("project.prjt"))
+  if (!exists(dir / "project.prjt"))
     return false;
-  if (!dir.exists("project.brep"))
+  if (!exists(dir / "project.brep"))
     return false;
-  
-  QDir gitDir(dir.absolutePath() + QDir::separator() + ".git");
-  if (!gitDir.exists())
+  if (!exists(dir / ".git"))
     return false;
   
   return true;
@@ -140,7 +138,7 @@ void Project::goNewSlot()
       return;
     }
     result = Result::New;
-    directory = QDir(QString::fromStdString(newProjectPath.string()));
+    directory = newProjectPath.string();
     addToRecentList();
   }
   else
@@ -183,7 +181,7 @@ void Project::goNewSlot()
     prf::manager().rootPtr->project().lastDirectory() = browsePath.string();
     prf::manager().saveConfig();
     result = Result::New;
-    directory = QDir(freshDirectory);
+    directory = freshDirectory.toStdString();
     addToRecentList();
   }
   
@@ -192,20 +190,23 @@ void Project::goNewSlot()
 
 void Project::goOpenSlot()
 {
-  QString browseStart = QString::fromStdString(prf::manager().rootPtr->project().basePath());
-  QDir browseStartDir(browseStart);
-  if (!browseStartDir.exists() || browseStart.isEmpty())
-    browseStart = QString::fromStdString(prf::manager().rootPtr->project().lastDirectory().get());
-  QString freshDirectory = QFileDialog::getExistingDirectory(this, tr("Browse to existing project directory"), browseStart);
+  path p = prf::manager().rootPtr->project().basePath();
+  if (p.empty() || (!exists(p)))
+    p = prf::manager().rootPtr->project().lastDirectory().get();
+  QString freshDirectory = QFileDialog::getExistingDirectory
+  (
+    this,
+    tr("Browse to existing project directory"),
+    QString::fromStdString(p.string())
+  );
   if (freshDirectory.isEmpty())
     return;
   
-  boost::filesystem::path p = freshDirectory.toStdString();
-  prf::manager().rootPtr->project().lastDirectory() = p.string();
+  directory = freshDirectory.toStdString();
+  prf::manager().rootPtr->project().lastDirectory() = directory.string();
   prf::manager().saveConfig();
   
   result = Result::Open;
-  directory = QDir(freshDirectory);
   addToRecentList();
   
   this->accept();
@@ -215,7 +216,7 @@ void Project::goRecentSlot(int rowIn, int)
 {
   QTableWidgetItem *widget = ui->recentTableWidget->item(rowIn, 1);
   result = Result::Recent;
-  directory = QDir(widget->text());
+  directory = widget->text().toStdString();
   addToRecentList();
   
   this->accept();
@@ -223,7 +224,7 @@ void Project::goRecentSlot(int rowIn, int)
 
 void Project::addToRecentList()
 {
-  std::string freshEntry = directory.absolutePath().toStdString();
+  std::string freshEntry = directory.string();
   auto &recent = prf::manager().rootPtr->project().recentProjects().Entry();
   auto it = std::find(recent.begin(), recent.end(), freshEntry);
   if (it != recent.end())

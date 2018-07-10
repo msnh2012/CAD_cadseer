@@ -254,7 +254,7 @@ void Nest::updateModel(const UpdatePayload &payloadIn)
     std::cout << std::endl << lastUpdateLog;
 }
 
-void Nest::serialWrite(const QDir &dIn)
+void Nest::serialWrite(const boost::filesystem::path &dIn)
 {
   prj::srl::FeatureNest so
   (
@@ -267,7 +267,7 @@ void Nest::serialWrite(const QDir &dIn)
   );
   
   xml_schema::NamespaceInfomap infoMap;
-  std::ofstream stream(buildFilePathName(dIn).toUtf8().constData());
+  std::ofstream stream(buildFilePathName(dIn).string());
   prj::srl::nest(stream, so, infoMap);
 }
 

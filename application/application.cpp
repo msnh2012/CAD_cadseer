@@ -21,6 +21,7 @@
 #include <memory>
 
 #include <boost/variant.hpp>
+#include <boost/filesystem/operations.hpp>
 
 #include <QTimer>
 #include <QMessageBox>
@@ -104,11 +105,11 @@ void Application::appStartSlot()
       dlg::Project::Result r = dialog.getResult();
       if (r == dlg::Project::Result::Open || r == dlg::Project::Result::Recent)
       {
-        openProject(dialog.getDirectory().absolutePath().toStdString());
+        openProject(dialog.getDirectory().string());
       }
       if (r == dlg::Project::Result::New)
       {
-        createNewProject(dialog.getDirectory().absolutePath().toStdString());
+        createNewProject(dialog.getDirectory().string());
       }
     }
     else
@@ -250,15 +251,16 @@ void Application::spaceballPollSlot()
   }
 }
 
-QDir Application::getApplicationDirectory()
+boost::filesystem::path Application::getApplicationDirectory()
 {
   //if windows wants hidden, somebody else will have to do it.
-  QString appDirName = ".CadSeer";
-  QString homeDirName = QDir::homePath();
-  QDir appDir(homeDirName + QDir::separator() + appDirName);
-  if (!appDir.exists())
-    appDir.mkpath(homeDirName + QDir::separator() + appDirName);
-  return appDir;
+  boost::filesystem::path path = boost::filesystem::path(getenv("HOME"));
+  path /= ".CadSeer";
+  if (!boost::filesystem::exists(path))
+    if (!boost::filesystem::create_directory(path))
+      std::cout << "ERROR: couldn't create application directory in home directory" << std::endl;
+  
+  return path;
 }
 
 QSettings& Application::getUserSettings()
@@ -266,8 +268,9 @@ QSettings& Application::getUserSettings()
   static QSettings *out = nullptr;
   if (!out)
   {
-    QString fileName = getApplicationDirectory().absolutePath() + QDir::separator() + "QSettings.ini";
-    out = new QSettings(fileName, QSettings::IniFormat, this);
+    boost::filesystem::path path = getApplicationDirectory();
+    path /= "QSettings.ini";
+    out = new QSettings(QString::fromStdString(path.string()), QSettings::IniFormat, this);
   }
   return *out;
 }
@@ -336,9 +339,8 @@ void Application::updateTitle()
 {
   if (!project)
     return;
-  QDir directory(QString::fromStdString(project->getSaveDirectory()));
-  QString name = directory.dirName();
-  QString title = tr("CadSeer --") + name + "--";
+  boost::filesystem::path path = project->getSaveDirectory();
+  QString title = tr("CadSeer --") + QString::fromStdString(path.rbegin()->string()) + "--";
   mainWindow->setWindowTitle(title);
 }
 
@@ -366,12 +368,12 @@ void Application::ProjectDialogRequestDispatched(const msg::Message&)
     if (r == dlg::Project::Result::Open || r == dlg::Project::Result::Recent)
     {
       closeProject();
-      openProject(dialog.getDirectory().absolutePath().toStdString());
+      openProject(dialog.getDirectory().string());
     }
     if (r == dlg::Project::Result::New)
     {
       closeProject();
-      createNewProject(dialog.getDirectory().absolutePath().toStdString());
+      createNewProject(dialog.getDirectory().string());
     }
   }
 }
@@ -384,34 +386,34 @@ void Application::newProjectRequestDispatched(const msg::Message &messageIn)
   
   prj::Message pMessage = boost::get<prj::Message>(messageIn.payload);
   
-  QDir dir(QString::fromStdString(pMessage.directory));
-  if (!dir.mkpath(QString::fromStdString(pMessage.directory)))
+  boost::filesystem::path path = pMessage.directory;
+  if (!boost::filesystem::create_directory(path))
   {
-    QMessageBox::critical(this->getMainWindow(), tr("Failed building directory"), QString::fromStdString(pMessage.directory));
+    QMessageBox::critical(this->getMainWindow(), tr("Failed building directory: "), QString::fromStdString(path.string()));
     return;
   }
   
   if(project)
     closeProject();
   
-  createNewProject(pMessage.directory);
+  createNewProject(path.string());
 }
 
 void Application::openProjectRequestDispatched(const msg::Message &messageIn)
 {
   prj::Message pMessage = boost::get<prj::Message>(messageIn.payload);
   
-  QDir dir(QString::fromStdString(pMessage.directory));
-  if (!dir.exists())
+  boost::filesystem::path path = pMessage.directory;
+  if (!boost::filesystem::exists(path))
   {
-    QMessageBox::critical(this->getMainWindow(), tr("Failed finding directory"), QString::fromStdString(pMessage.directory));
+    QMessageBox::critical(this->getMainWindow(), tr("Failed finding directory: "), QString::fromStdString(path.string()));
     return;
   }
   
   if(project)
     closeProject();
   
-  openProject(pMessage.directory);
+  openProject(path.string());
 }
 
 void Application::closeProjectRequestDispatched(const msg::Message&)

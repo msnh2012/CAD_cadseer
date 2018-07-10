@@ -19,10 +19,12 @@
 
 #include <assert.h>
 
+#include <boost/filesystem.hpp>
+
 #include <QImage>
 #include <QGLWidget>
-#include <QDir>
 #include <QDebug>
+#include <QFile>
 
 #include <osg/Switch>
 #include <osg/MatrixTransform>
@@ -37,9 +39,11 @@
 #include <gesture/node.h>
 #include <modelviz/nodemaskdefs.h>
 
+using namespace boost::filesystem;
+
 using namespace gsn;
 
-QString ensureFile(const char *resourceName)
+path ensureFile(const char *resourceName)
 {
   //alright this sucks. getting svg icons onto geode is a pain.
   //I tried something I found on the web using qimage, but looks like ass.
@@ -47,47 +51,48 @@ QString ensureFile(const char *resourceName)
   //so we will write out the resource files to the temp directory
   //so we can pass a file name to the svg reader. I don't like it either.
   
-  QString alteredFileName(resourceName);
-  alteredFileName.remove(":");
-  alteredFileName.replace("/", "_");
-  QDir tempDirectory = QDir::temp();
-  QString resourceFileName(tempDirectory.absolutePath() + "/" + alteredFileName);
-  if (!tempDirectory.exists(alteredFileName))
+  std::string fileName(resourceName);
+  fileName.erase(fileName.begin(), fileName.begin() + 1); //remove starting ':'
+  std::replace(fileName.begin(), fileName.end(), '/', '_');
+  
+  path filePath = temp_directory_path();
+  filePath /= fileName;
+  if (!exists(filePath))
   {
     QFile resourceFile(resourceName);
     if (!resourceFile.open(QIODevice::ReadOnly | QIODevice::Text))
     {
       std::cout << "couldn't resource: " << resourceName << std::endl;
-      return QString();
+      return path();
     }
     QByteArray buffer = resourceFile.readAll();
     resourceFile.close();
      
-    QFile newFile(resourceFileName);
+    QFile newFile(QString::fromStdString(filePath.string()));
     if (!newFile.open(QIODevice::WriteOnly | QIODevice::Text))
     {
-      std::cout << "couldn't open new temp file in gsn::buildIconGeode" << std::endl;
-      return QString();
+      std::cout << "couldn't open new temp file in gsn::ensureFile" << std::endl;
+      return path();
     }
-//     std::cout << "newfilename is: " << resourceFileName << std::endl;
+    std::cout << "newfilename is: " << filePath.string() << std::endl;
     newFile.write(buffer);
     newFile.close();
   }
   
-  return resourceFileName;
+  return filePath;
 }
 
 static osg::ref_ptr<osg::Image> readImageFile(const char * resourceName, double radius)
 {
-  QString resourceFileName = ensureFile(resourceName);
-  if (resourceFileName.isEmpty())
+  path resourceFileName = ensureFile(resourceName);
+  if (resourceFileName.empty())
     return osg::ref_ptr<osg::Image>();
   
   int size = std::max(static_cast<int>(radius), 16);
   std::ostringstream opString;
   opString << size << 'x' << size;
   osg::ref_ptr<osgDB::Options> options = new osgDB::Options(opString.str());
-  osg::ref_ptr<osg::Image> image = osgDB::readImageFile(resourceFileName.toStdString(), options.get());
+  osg::ref_ptr<osg::Image> image = osgDB::readImageFile(resourceFileName.string(), options.get());
   return image;
 }
 

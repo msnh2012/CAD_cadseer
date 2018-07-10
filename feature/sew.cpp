@@ -17,6 +17,8 @@
  *
  */
 
+#include <boost/filesystem/path.hpp>
+
 #include <TopoDS.hxx>
 #include <BRepClass3d.hxx>
 #include <BRepLib.hxx>
@@ -250,7 +252,7 @@ void Sew::sewModifiedMatch(const BRepBuilderAPI_Sewing &builder, const ann::Seer
   }
 }
 
-void Sew::serialWrite(const QDir &dIn)
+void Sew::serialWrite(const boost::filesystem::path &dIn)
 {
   prj::srl::FeatureSew so
   (
@@ -260,7 +262,7 @@ void Sew::serialWrite(const QDir &dIn)
   );
   
   xml_schema::NamespaceInfomap infoMap;
-  std::ofstream stream(buildFilePathName(dIn).toUtf8().constData());
+  std::ofstream stream(buildFilePathName(dIn).string());
   prj::srl::sew(stream, so, infoMap);
 }
 

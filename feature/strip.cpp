@@ -418,7 +418,7 @@ void Strip::goAutoCalc(const TopoDS_Shape &sIn, occt::BoundingBox &bbbox)
   widthOffsetLabel->valueHasChanged();
 }
 
-void Strip::serialWrite(const QDir &dIn)
+void Strip::serialWrite(const boost::filesystem::path &dIn)
 {
   assert(stations.size() == stationLabels.size());
   prj::srl::FeatureStrip::StationsType so;
@@ -461,7 +461,7 @@ void Strip::serialWrite(const QDir &dIn)
   );
   
   xml_schema::NamespaceInfomap infoMap;
-  std::ofstream stream(buildFilePathName(dIn).toUtf8().constData());
+  std::ofstream stream(buildFilePathName(dIn).string());
   prj::srl::strip(stream, stripOut, infoMap);
 }
 

@@ -47,7 +47,7 @@ namespace ftr
     double getRadius2() const;
     osg::Matrixd getCSys() const;
     
-    virtual void serialWrite(const QDir&) override;
+    virtual void serialWrite(const boost::filesystem::path&) override;
     void serialRead(const prj::srl::FeatureTorus&);
     
     virtual void updateModel(const UpdatePayload&) override;

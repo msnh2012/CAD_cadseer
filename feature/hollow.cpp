@@ -277,7 +277,7 @@ void Hollow::generatedMatch(BRepOffsetAPI_MakeThickSolid &operationIn, const ann
   }
 }
 
-void Hollow::serialWrite(const QDir &dIn)
+void Hollow::serialWrite(const boost::filesystem::path &dIn)
 {
   prj::srl::Picks hPicksOut = ::ftr::serialOut(hollowPicks);
   prj::srl::FeatureHollow hollowOut
@@ -289,7 +289,7 @@ void Hollow::serialWrite(const QDir &dIn)
   );
   
   xml_schema::NamespaceInfomap infoMap;
-  std::ofstream stream(buildFilePathName(dIn).toUtf8().constData());
+  std::ofstream stream(buildFilePathName(dIn).string());
   prj::srl::hollow(stream, hollowOut, infoMap);
 }
 

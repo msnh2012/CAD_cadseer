@@ -26,6 +26,8 @@
 #include <string>
 #include <vector>
 
+#include <boost/filesystem/path.hpp>
+
 #include <Standard_StdAllocator.hxx>
 
 class TopoDS_Shape;
@@ -37,12 +39,11 @@ namespace prj
   class FeatureLoad
   {
   public:
-    FeatureLoad(const std::string &directoryIn, const TopoDS_Shape&);
+    FeatureLoad(const boost::filesystem::path &directoryIn, const TopoDS_Shape&);
     ~FeatureLoad();
     std::shared_ptr<ftr::Base> load(const std::string &idIn, const std::string &typeIn, std::size_t shapeOffsetIn);
   private:
-    std::string directory; //!< expects trailing directory separator '/'
-    std::string fileExtension;
+    boost::filesystem::path directory;
     std::vector<TopoDS_Shape, Standard_StdAllocator<TopoDS_Shape> > shapeVector;
     
     typedef std::function<std::shared_ptr<ftr::Base> (const std::string &, std::size_t)> LoadFunction;

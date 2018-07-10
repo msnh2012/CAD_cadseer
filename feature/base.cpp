@@ -19,7 +19,6 @@
 
 #include <limits.h>
 
-#include <QDir>
 #include <QTextStream>
 
 #include <boost/variant/variant.hpp>
@@ -404,7 +403,7 @@ void Base::setFailure()
   observer->out(mMessage);
 }
 
-void Base::serialWrite(const QDir&)
+void Base::serialWrite(const boost::filesystem::path&)
 {
   assert(0); //missing override in subclass?
 }
@@ -478,13 +477,9 @@ std::string Base::getFileName() const
   return gu::idToString(id) + ".fetr";
 }
 
-QString Base::buildFilePathName(const QDir &dIn) const
+boost::filesystem::path Base::buildFilePathName(const boost::filesystem::path &dIn) const
 {
-  QString out = dIn.absolutePath();
-  out += QDir::separator() + 
-    QString::fromStdString(getFileName());
-    
-  return out;
+  return dIn / getFileName();
 }
 
 bool Base::hasParameter(const QString &nameIn) const

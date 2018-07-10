@@ -125,7 +125,7 @@ void FeatureRename::goRename()
   //setting the name doesn't make the feature dirty and thus doesn't
   //serialize it. Here we force a serialization so rename is in sync
   //with git, but doesn't trigger an unneeded update.
-  feature->serialWrite(QDir(QString::fromStdString(project->getSaveDirectory())));
+  feature->serialWrite(project->getSaveDirectory());
   
   std::ostringstream gitStream;
   gitStream << "Rename feature id: " << gu::idToShortString(feature->getId())

@@ -20,7 +20,7 @@
 #include <assert.h>
 #include <stdexcept>
 
-#include <QDir>
+#include <boost/filesystem/path.hpp>
 
 #include <BRepAlgoAPI_Fuse.hxx>
 #include <TopExp.hxx>
@@ -237,7 +237,7 @@ void Union::updateModel(const UpdatePayload &payloadIn)
     std::cout << std::endl << lastUpdateLog;
 }
 
-void Union::serialWrite(const QDir &dIn)
+void Union::serialWrite(const boost::filesystem::path &dIn)
 {
   prj::srl::FeatureUnion unionOut
   (
@@ -248,7 +248,7 @@ void Union::serialWrite(const QDir &dIn)
   );
   
   xml_schema::NamespaceInfomap infoMap;
-  std::ofstream stream(buildFilePathName(dIn).toUtf8().constData());
+  std::ofstream stream(buildFilePathName(dIn).string());
   prj::srl::fUnion(stream, unionOut, infoMap);
 }
 

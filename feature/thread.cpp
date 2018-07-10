@@ -510,7 +510,7 @@ void Thread::updateLabels()
   leftHandedLabel->setMatrix(osg::Matrixd::translate(osg::Vec3d(-d / 2.0, 0.0, l *.375) * m));
 }
 
-void Thread::serialWrite(const QDir &dIn)
+void Thread::serialWrite(const boost::filesystem::path &dIn)
 {
   prj::srl::Ids idsOut;
   for (const auto &idOut : ids)
@@ -540,7 +540,7 @@ void Thread::serialWrite(const QDir &dIn)
   );
   
   xml_schema::NamespaceInfomap infoMap;
-  std::ofstream stream(buildFilePathName(dIn).toUtf8().constData());
+  std::ofstream stream(buildFilePathName(dIn).string());
   prj::srl::thread(stream, to, infoMap);
 }
 

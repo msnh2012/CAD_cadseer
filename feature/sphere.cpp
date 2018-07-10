@@ -245,7 +245,7 @@ void Sphere::updateResult(BRepPrimAPI_MakeSphere &sphereMaker)
   sShape->setRootShapeId(sShape->featureTagId(featureTagMap.at(FeatureTag::Root)));
 }
 
-void Sphere::serialWrite(const QDir &dIn)
+void Sphere::serialWrite(const boost::filesystem::path &dIn)
 {
   prj::srl::FeatureSphere sphereOut
   (
@@ -256,7 +256,7 @@ void Sphere::serialWrite(const QDir &dIn)
   );
   
   xml_schema::NamespaceInfomap infoMap;
-  std::ofstream stream(buildFilePathName(dIn).toUtf8().constData());
+  std::ofstream stream(buildFilePathName(dIn).string());
   prj::srl::sphere(stream, sphereOut, infoMap);
 }
 

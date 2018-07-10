@@ -365,7 +365,7 @@ void Offset::offsetMatch(const BRepOffset_MakeOffset &offseter, const ann::SeerS
   }
 }
 
-void Offset::serialWrite(const QDir &dIn)
+void Offset::serialWrite(const boost::filesystem::path &dIn)
 {
   prj::srl::FeatureOffset so
   (
@@ -376,7 +376,7 @@ void Offset::serialWrite(const QDir &dIn)
   );
   
   xml_schema::NamespaceInfomap infoMap;
-  std::ofstream stream(buildFilePathName(dIn).toUtf8().constData());
+  std::ofstream stream(buildFilePathName(dIn).string());
   prj::srl::offset(stream, so, infoMap);
 }
 

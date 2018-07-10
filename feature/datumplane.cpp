@@ -19,7 +19,6 @@
 
 #include <limits>
 
-#include <QDir>
 #include <QTextStream>
 
 #include <BRepAdaptor_Surface.hxx>
@@ -804,7 +803,7 @@ void DatumPlane::updateVisual()
 }
 
 //serial support for datum plane needs to be done.
-void DatumPlane::serialWrite(const QDir &dIn)
+void DatumPlane::serialWrite(const boost::filesystem::path &dIn)
 {
   osg::Matrixd m = transform->getMatrix();
   prj::srl::Matrixd matrixOut
@@ -828,7 +827,7 @@ void DatumPlane::serialWrite(const QDir &dIn)
   );
   
   xml_schema::NamespaceInfomap infoMap;
-  std::ofstream stream(buildFilePathName(dIn).toUtf8().constData());
+  std::ofstream stream(buildFilePathName(dIn).string());
   prj::srl::datumPlane(stream, datumPlaneOut, infoMap);
 }
 

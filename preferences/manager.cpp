@@ -20,8 +20,11 @@
 #include <iostream>
 #include <fstream>
 
+#include <QFile>
+
+#include <boost/filesystem.hpp>
+
 #include <application/application.h>
-#include <QDir>
 
 #include <preferences/preferencesXML.h>
 #include <preferences/manager.h>
@@ -38,6 +41,7 @@
 //the qt controlled resources. files will be copied into application
 //directory if needed.
 
+using namespace boost::filesystem;
 
 using namespace prf;
 
@@ -51,16 +55,15 @@ Manager::Manager()
 {
   ok = false;
   
-  appDirectory = app::instance()->getApplicationDirectory();
-  fileNameXML = "preferences.xml";
-  filePathXML = appDirectory.absolutePath() + QDir::separator() + fileNameXML;
-  filePathXSD = appDirectory.absolutePath() + QDir::separator() + "preferences.xsd";
+  path appDirectory = app::instance()->getApplicationDirectory();
+  xmlPath = appDirectory / "preferences.xml";
+  xsdPath = appDirectory / "preferences.xsd";
   
   //just overwrite the xsd for now so it is always current.
   if (!createDefaultXsd())
     return;
   
-  if (!appDirectory.exists(fileNameXML))
+  if (!exists(xmlPath))
   {
     if (!createDefaultXml())
       return;
@@ -69,10 +72,15 @@ Manager::Manager()
   if (!readConfig())
   {
     //config is bad. backup and copy default.
-    QString backUpPath = filePathXML + ".backup";
-    if (appDirectory.exists(backUpPath))
-      appDirectory.remove(backUpPath);
-    appDirectory.rename(filePathXML, backUpPath);
+    path backupPath = xmlPath;
+    backupPath.replace_extension(".xml0");
+    int index = 1;
+    while (exists(backupPath))
+    {
+      backupPath.replace_extension(std::string(".xml") + std::to_string(index));
+      index++;
+    }
+    copy_file(xmlPath, backupPath);
     if (!createDefaultXml())
       return;
     
@@ -99,10 +107,10 @@ bool Manager::createDefaultXml()
   }
   QByteArray bufferXML = resourceFileXML.readAll();
   resourceFileXML.close();
-  QFile newFileXML(filePathXML);
+  QFile newFileXML(QString::fromStdString(xmlPath.string()));
   if (!newFileXML.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate))
   {
-    std::cerr << "couldn't open new file: " << filePathXML.toStdString().c_str()  << std::endl;
+    std::cerr << "couldn't open new file: " << xmlPath.string() << std::endl;
     return false;
   }
   newFileXML.write(bufferXML);
@@ -124,10 +132,10 @@ bool Manager::createDefaultXsd()
   QByteArray bufferXSD = resourceFileXSD.readAll();
   resourceFileXSD.close();
   
-  QFile newFileXSD(filePathXSD);
+  QFile newFileXSD(QString::fromStdString(xsdPath.string()));
   if (!newFileXSD.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate))
   {
-    std::cerr << "couldn't open new file" << filePathXSD.toStdString().c_str()  << std::endl;
+    std::cerr << "couldn't open new file" << xsdPath.string() << std::endl;
     return false;
   }
   newFileXSD.write(bufferXSD);
@@ -140,7 +148,7 @@ void Manager::saveConfig()
 {
   //a very simple test has passed.
   xml_schema::NamespaceInfomap map;
-  std::ofstream stream(filePathXML.toStdString().c_str());
+  std::ofstream stream(xmlPath.string());
   root(stream, *rootPtr, map);
 }
 
@@ -149,10 +157,10 @@ bool Manager::readConfig()
   try
   {
     xml_schema::Properties props;
-    props.no_namespace_schema_location (filePathXSD.toStdString());
+    props.no_namespace_schema_location (xsdPath.string());
 //     props.schema_location ("http://www.w3.org/XML/1998/namespace", "xml.xsd");
     
-    auto tempPtr(root(filePathXML.toStdString(), 0, props));
+    auto tempPtr(root(xmlPath.string(), 0, props));
     rootPtr = std::move(tempPtr);
     
     return true;
@@ -237,17 +245,18 @@ std::string Manager::getHotKey(int number) const
 void Manager::ensureDefaults()
 {
   //project defaults.
-  QDir tbp(QString::fromStdString(rootPtr->project().basePath())); //temp base path.
-  if (!tbp.exists())
-    rootPtr->project().basePath() = QDir::home().path().toStdString();
-  QDir tld(QString::fromStdString(rootPtr->project().basePath())); //temp last directory.
+  path basePath = rootPtr->project().basePath();
+  if (!exists(basePath))
+    rootPtr->project().basePath() = path(getenv("HOME")).string();
+  
+  path lastPath = rootPtr->project().basePath();
   if (rootPtr->project().lastDirectory().present())
   {
-    QDir atld(QString::fromStdString(rootPtr->project().lastDirectory().get())); // another temp last directory
-    if (atld.exists())
-      tld = atld;
+    path configLastPath = rootPtr->project().lastDirectory().get();
+    if (exists(configLastPath))
+      lastPath = configLastPath;
   }
-  rootPtr->project().lastDirectory() = tld.absolutePath().toStdString();
+  rootPtr->project().lastDirectory() = lastPath.string();
   
   if (rootPtr->project().gitName().empty())
     rootPtr->project().gitName() = qgetenv("USER").constData();

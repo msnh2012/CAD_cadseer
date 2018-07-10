@@ -42,8 +42,6 @@
 
 using namespace expr;
 
-static QString defaultDirectory = QDir::homePath();
-
 Widget::Widget(QWidget* parent, Qt::WindowFlags f):
   QWidget(parent, f)
 {
@@ -82,9 +80,8 @@ void Widget::setupGui()
 
 void Widget::writeOutGraphSlot()
 {
-  QString filePath = static_cast<app::Application *>(qApp)->getApplicationDirectory().absolutePath() + 
-    QDir::separator() + "expressionGraph.dot";
-  eManager->writeOutGraph(filePath.toStdString().c_str());
+  boost::filesystem::path p = app::instance()->getApplicationDirectory() / "expressionGraph.dot";
+  eManager->writeOutGraph(p.string());
 }
 
 void Widget::groupRenamedSlot(QWidget *tab, const QString &newName)

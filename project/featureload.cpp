@@ -87,8 +87,8 @@
 
 using namespace prj;
 
-FeatureLoad::FeatureLoad(const std::string& directoryIn, const TopoDS_Shape &masterShapeIn):
-directory(directoryIn), fileExtension(".fetr")
+FeatureLoad::FeatureLoad(const boost::filesystem::path& directoryIn, const TopoDS_Shape &masterShapeIn):
+directory(directoryIn)
 {
   for (TopoDS_Iterator it(masterShapeIn); it.More(); it.Next())
     shapeVector.push_back(it.Value());
@@ -136,12 +136,10 @@ std::shared_ptr< ftr::Base > FeatureLoad::load(const std::string& idIn, const st
   auto it = functionMap.find(typeIn);
   assert(it != functionMap.end());
   
-  std::ostringstream nameStream;
-  nameStream << directory << idIn << fileExtension;
-  
+  boost::filesystem::path filePath = directory / (idIn + ".fetr");
   try
   {
-    return it->second(nameStream.str(), shapeOffsetIn);
+    return it->second(filePath.string(), shapeOffsetIn);
   }
   catch (const xsd::cxx::xml::invalid_utf16_string&)
   {

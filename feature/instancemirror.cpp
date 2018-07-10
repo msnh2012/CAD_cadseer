@@ -277,7 +277,7 @@ void InstanceMirror::updateModel(const UpdatePayload &payloadIn)
     std::cout << std::endl << lastUpdateLog;
 }
 
-void InstanceMirror::serialWrite(const QDir &dIn)
+void InstanceMirror::serialWrite(const boost::filesystem::path &dIn)
 {
   prj::srl::FeatureInstanceMirror so
   (
@@ -293,7 +293,7 @@ void InstanceMirror::serialWrite(const QDir &dIn)
   );
   
   xml_schema::NamespaceInfomap infoMap;
-  std::ofstream stream(buildFilePathName(dIn).toUtf8().constData());
+  std::ofstream stream(buildFilePathName(dIn).string());
   prj::srl::instanceMirror(stream, so, infoMap);
 }
 

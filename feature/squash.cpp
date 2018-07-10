@@ -227,7 +227,7 @@ void Squash::updateModel(const UpdatePayload &payloadIn)
     std::cout << std::endl << lastUpdateLog;
 }
 
-void Squash::serialWrite(const QDir &dIn)
+void Squash::serialWrite(const boost::filesystem::path &dIn)
 {
   prj::srl::FeatureSquash so
   (
@@ -240,7 +240,7 @@ void Squash::serialWrite(const QDir &dIn)
   );
   
   xml_schema::NamespaceInfomap infoMap;
-  std::ofstream stream(buildFilePathName(dIn).toUtf8().constData());
+  std::ofstream stream(buildFilePathName(dIn).string());
   prj::srl::squash(stream, so, infoMap);
 }
 

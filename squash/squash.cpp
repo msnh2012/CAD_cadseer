@@ -19,13 +19,13 @@
 
 #include <cassert>
 
+#include <boost/filesystem.hpp>
+
 #include <igl/arap.h>
 #include <igl/boundary_loop.h>
 #include <igl/harmonic.h>
 #include <igl/map_vertices_to_circle.h>
 #include <igl/massmatrix.h>
-
-#include <QDir>
 
 #include <tools/idtools.h>
 #include <squash/mesh.h>
@@ -48,13 +48,15 @@
 #include <BRepBuilderAPI_MakeFace.hxx>
 #include <BRepExtrema_DistShapeShape.hxx>
 
+using namespace boost::filesystem;
+
 using namespace sqs;
 
 std::string writeShellOut(const TopoDS_Shell& sIn)
 {
-  QString tp = QDir::tempPath() + QDir::separator() + QString::fromStdString(gu::idToString(gu::createRandomId())) + ".brep";
-  BRepTools::Write(sIn, tp.toStdString().c_str());
-  return tp.toStdString();
+  path sPath = temp_directory_path() / (gu::idToString(gu::createRandomId()) + ".brep");
+  BRepTools::Write(sIn, sPath.string().c_str());
+  return sPath.string();
 }
 
 std::pair<int, int> fillHoles(Mesh &mIn)

@@ -23,7 +23,7 @@
 #include <memory>
 
 #include <QApplication>
-#include <QDir>
+#include <boost/filesystem/path.hpp>
 
 #include <osg/Node> //for viewer message.
 
@@ -53,7 +53,7 @@ public:
     void initializeSpaceball();
     prj::Project* getProject(){return project.get();}
     MainWindow* getMainWindow(){return mainWindow.get();}
-    QDir getApplicationDirectory();
+    boost::filesystem::path getApplicationDirectory();
     QSettings& getUserSettings();
     void queuedMessage(msg::Message); //queue message into qt event loop
     

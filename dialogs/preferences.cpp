@@ -361,18 +361,23 @@ void Preferences::updateDragger()
 
 void Preferences::updateProject()
 {
-  QString pathString = ui->basePathEdit->text();
-  QDir baseDir(pathString);
-  if (!baseDir.mkpath(pathString))
+  boost::filesystem::path path = ui->basePathEdit->text().toStdString();
+  if (path.empty())
   {
-    QString defaultPath = QDir::homePath();
-    defaultPath += QString(QDir::separator()) + "CadseerProjects";
-    QDir defaultDir(defaultPath);
-    assert(defaultDir.mkpath(defaultPath));
-    ui->basePathEdit->setText(defaultDir.absolutePath());
-    
-    QString message(tr("Couldn't create base path. Default base path has been set"));
-    throw std::runtime_error(message.toStdString());
+    path = boost::filesystem::path(getenv("HOME")) / "CadseerProjects";
+    if (!boost::filesystem::create_directory(path))
+    {
+      QString message(tr("Couldn't create default base path in home directory."));
+      throw std::runtime_error(message.toUtf8().constData());
+    }
+  }
+  else if (!boost::filesystem::exists(path))
+  {
+    if (!boost::filesystem::create_directories(path))
+    {
+      QString message(tr("Couldn't create base path."));
+      throw std::runtime_error(message.toUtf8().constData());
+    }
   }
   
   manager->rootPtr->project().basePath() = ui->basePathEdit->text().toStdString();
@@ -572,20 +577,20 @@ void Preferences::updateFeature()
 
 void Preferences::basePathBrowseSlot()
 {
-  QString browseStart = ui->basePathEdit->text();
-  QDir browseStartDir(browseStart);
-  if (!browseStartDir.exists() || browseStart.isEmpty())
-    browseStart = QString::fromStdString(manager->rootPtr->project().lastDirectory().get());
+  boost::filesystem::path path = ui->basePathEdit->text().toUtf8().constData();
+  if (path.empty() || (!boost::filesystem::exists(path)))
+    path = boost::filesystem::path(getenv("HOME"));
+  
   QString freshDirectory = QFileDialog::getExistingDirectory
   (
     this,
     tr("Browse to projects base directory"),
-    browseStart
+    QString::fromStdString(path.string())
   );
   if (freshDirectory.isEmpty())
     return;
   
-  boost::filesystem::path p = freshDirectory.toStdString();
+  boost::filesystem::path p = freshDirectory.toUtf8().constData();
   manager->rootPtr->project().lastDirectory() = p.string();
   
   ui->basePathEdit->setText(freshDirectory);

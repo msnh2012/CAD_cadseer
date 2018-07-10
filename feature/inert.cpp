@@ -17,8 +17,6 @@
  *
  */
 
-#include <QDir>
-
 #include <TopExp.hxx>
 #include <TopTools_IndexedMapOfShape.hxx>
 #include <gp_Ax3.hxx>
@@ -161,7 +159,7 @@ void Inert::updateModel(const UpdatePayload&)
     std::cout << std::endl << lastUpdateLog;
 }
 
-void Inert::serialWrite(const QDir &dIn)
+void Inert::serialWrite(const boost::filesystem::path &dIn)
 {
   prj::srl::FeatureInert inertOut
   (
@@ -171,7 +169,7 @@ void Inert::serialWrite(const QDir &dIn)
   );
   
   xml_schema::NamespaceInfomap infoMap;
-  std::ofstream stream(buildFilePathName(dIn).toUtf8().constData());
+  std::ofstream stream(buildFilePathName(dIn).string());
   prj::srl::inert(stream, inertOut, infoMap);
 }
 

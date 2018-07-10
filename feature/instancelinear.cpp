@@ -294,7 +294,7 @@ void InstanceLinear::updateModel(const UpdatePayload &payloadIn)
     std::cout << std::endl << lastUpdateLog;
 }
 
-void InstanceLinear::serialWrite(const QDir &dIn)
+void InstanceLinear::serialWrite(const boost::filesystem::path &dIn)
 {
   prj::srl::FeatureInstanceLinear so
   (
@@ -320,7 +320,7 @@ void InstanceLinear::serialWrite(const QDir &dIn)
   );
   
   xml_schema::NamespaceInfomap infoMap;
-  std::ofstream stream(buildFilePathName(dIn).toUtf8().constData());
+  std::ofstream stream(buildFilePathName(dIn).string());
   prj::srl::instanceLinear(stream, so, infoMap);
 }
 

@@ -66,7 +66,7 @@ namespace ftr
     bool getLeftHanded() const;
     osg::Matrixd getCSys() const;
     
-    virtual void serialWrite(const QDir&) override;
+    virtual void serialWrite(const boost::filesystem::path&) override;
     void serialRead(const prj::srl::FeatureThread&);
     
     virtual void updateModel(const UpdatePayload&) override;

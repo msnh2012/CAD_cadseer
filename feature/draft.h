@@ -54,7 +54,7 @@ namespace ftr
       virtual const std::string& getTypeString() const override {return toString(Type::Draft);}
       virtual const QIcon& getIcon() const override {return icon;}
       virtual Descriptor getDescriptor() const override {return Descriptor::Alter;}
-      virtual void serialWrite(const QDir&) override;
+      virtual void serialWrite(const boost::filesystem::path&) override;
       void serialRead(const prj::srl::FeatureDraft &);
       
       void setDraft(const DraftConvey &);

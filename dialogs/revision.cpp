@@ -132,7 +132,7 @@ void UndoPage::resetActionSlot()
   assert(static_cast<std::size_t>(r) < data->commits.size());
   
   app::Application *application = app::instance();
-  std::string pdir = application->getProject()->getSaveDirectory();
+  std::string pdir = application->getProject()->getSaveDirectory().string();
   observer->out(msg::Mask(msg::Request | msg::Close | msg::Project));
   
   /* keep in mind the project is closed, so the git manager in the project is gone.
@@ -367,7 +367,7 @@ void AdvancedPage::checkoutTagSlot()
    * see not in UndoPage::resetActionSlot() why we dynamicly allocate a new git manager.
    */
   app::Application *application = app::instance();
-  std::string pdir = application->getProject()->getSaveDirectory();
+  std::string pdir = application->getProject()->getSaveDirectory().string();
   observer->out(msg::Mask(msg::Request | msg::Close | msg::Project));
   
   std::unique_ptr<prj::GitManager> localManager(new prj::GitManager());

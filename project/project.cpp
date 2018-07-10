@@ -61,6 +61,8 @@
 #include <project/stow.h>
 #include <project/project.h>
 
+using namespace boost::filesystem;
+
 using namespace prj;
 using boost::uuids::uuid;
 
@@ -82,7 +84,7 @@ Project::~Project()
 QTextStream& Project::getInfo(QTextStream &stream) const
 {
   stream
-  << QObject::tr("Project Directory: ") << QString::fromStdString(getSaveDirectory()) << endl;
+  << QObject::tr("Project Directory: ") << QString::fromStdString(getSaveDirectory().string()) << endl;
   //maybe some git stuff.
   
   expressionManager->getInfo(stream);
@@ -150,7 +152,7 @@ void Project::updateModel()
     
     ftr::UpdatePayload payload(updateMap, *shapeHistory);
     cFeature->updateModel(payload);
-    cFeature->serialWrite(QDir(QString::fromStdString(saveDirectory)));
+    cFeature->serialWrite(saveDirectory);
     cFeature->fillInHistory(*shapeHistory);
   }
   
@@ -341,18 +343,21 @@ void Project::removeFeature(const uuid& idIn)
   observer->out(preMessage);
   
   //remove file if exists.
-  QString fileName = QString::fromStdString(feature->getFileName());
-  QDir dir = QString::fromStdString(saveDirectory);
-  assert(dir.exists());
-  if (dir.exists(fileName))
-    dir.remove(fileName);
+  assert(exists(saveDirectory));
+  path filePath = saveDirectory / feature->getFileName();
+  if (exists(filePath))
+    remove(filePath);
   
   boost::clear_vertex(vertex, stow->graph);
   stow->graph[vertex].alive = false;
   
   //log action to git.
   std::ostringstream gitMessage;
-  gitMessage << QObject::tr("Removing feature ").toStdString() << feature->getTypeString();
+  gitMessage
+    << QObject::tr("Removing feature ").toStdString()
+    << feature->getName().toStdString()
+    << ". With id: "
+    << gu::idToShortString(feature->getId());
   gitManager->appendGitMessage(gitMessage.str());
   
   //no post message.
@@ -738,12 +743,10 @@ void Project::dumpProjectGraphDispatched(const msg::Message &)
 {
 //   indexVerticesEdges();
   
-  QString fileName = static_cast<app::Application *>(qApp)->getApplicationDirectory().path();
-  fileName += QDir::separator();
-  fileName += "project.dot";
-  stow->writeGraphViz(fileName.toStdString().c_str());
+  path filePath = app::instance()->getApplicationDirectory() / "project.dot";
+  stow->writeGraphViz(filePath.string());
   
-  QDesktopServices::openUrl(QUrl(fileName));
+  QDesktopServices::openUrl(QUrl(QString::fromStdString(filePath.string())));
 }
 
 void Project::shownThreeDDispatched(const msg::Message &mIn)
@@ -1026,11 +1029,10 @@ void Project::dissolveFeatureDispatched(const msg::Message &mIn)
     observer->out(preMessage);
     
     //remove file if exists.
-    QString fileName = QString::fromStdString(fb->getFileName());
-    QDir dir = QString::fromStdString(saveDirectory);
-    assert(dir.exists());
-    if (dir.exists(fileName))
-      dir.remove(fileName);
+    assert(exists(saveDirectory));
+    path filePath = saveDirectory / fb->getFileName();
+    if (exists(filePath))
+      remove(filePath);
     
     boost::clear_vertex(v, stow->graph); //should be redundent.
     stow->graph[v].alive = false;
@@ -1102,7 +1104,7 @@ void Project::setColor(const boost::uuids::uuid &featureIdIn, const osg::Vec4 &c
     //and causing models to be recalculated seems excessive for such a minor change as
     //object color. So here we just serialize the changed features to 'sneak' the
     //color change into the git commit.
-    stow->graph[v].feature->serialWrite(QDir(QString::fromStdString(saveDirectory)));
+    stow->graph[v].feature->serialWrite(saveDirectory);
   }
   
   //log action to git.
@@ -1128,7 +1130,7 @@ std::vector<boost::uuids::uuid> Project::getAllFeatureIds() const
   return out;
 }
 
-void Project::setSaveDirectory(const std::string& directoryIn)
+void Project::setSaveDirectory(const boost::filesystem::path& directoryIn)
 {
   saveDirectory = directoryIn;
 }
@@ -1177,10 +1179,9 @@ void Project::serialWrite()
   }
   
   //write out master compound
-  std::ostringstream masterName;
-  masterName << saveDirectory << QDir::separator().toLatin1() << "project.brep";
+  path cPath = saveDirectory / "project.brep";
   BRepTools::Clean(compound);
-  BRepTools::Write(compound, masterName.str().c_str());
+  BRepTools::Write(compound, cPath.string().c_str());
   
   prj::srl::Connections connections;
   for (auto its = boost::edges(removedGraph); its.first != its.second; ++its.first)
@@ -1221,7 +1222,7 @@ void Project::serialWrite()
   }
   
   prj::srl::AppVersion version(0, 0, 0);
-  std::string projectPath = saveDirectory + QDir::separator().toLatin1() + "project.prjt";
+  path pPath = saveDirectory / "project.prjt";
   srl::Project p
   (
     version,
@@ -1238,7 +1239,7 @@ void Project::serialWrite()
   p.shapeHistory().set(shapeHistory->serialOut());
   
   xml_schema::NamespaceInfomap infoMap;
-  std::ofstream stream(projectPath.c_str());
+  std::ofstream stream(pPath.string());
   srl::project(stream, p, infoMap);
 }
 
@@ -1254,7 +1255,7 @@ void Project::save()
 void Project::initializeNew()
 {
   serialWrite();
-  gitManager->create(saveDirectory);
+  gitManager->create(saveDirectory.string());
 }
 
 void Project::open()
@@ -1264,21 +1265,21 @@ void Project::open()
   isLoading = true;
   observer->out(msg::Message(msg::Request | msg::Git | msg::Freeze));
   
-  std::string projectPath = saveDirectory + QDir::separator().toLatin1() + "project.prjt";
-  std::string shapePath = saveDirectory + QDir::separator().toLatin1() + "project.brep";
+  path pPath = saveDirectory / "project.prjt";
+  path sPath = saveDirectory / "project.brep";
   
-  gitManager->open(saveDirectory + QDir::separator().toLatin1() +".git");
+  gitManager->open((saveDirectory / ".git").string());
   
   try
   {
     //read master shape.
     TopoDS_Shape masterShape;
     BRep_Builder junk;
-    std::fstream file(shapePath.c_str());
+    std::fstream file(sPath.string());
     BRepTools::Read(masterShape, file, junk);
     
-    auto project = srl::project(projectPath.c_str(), ::xml_schema::Flags::dont_validate);
-    FeatureLoad fLoader(saveDirectory + QDir::separator().toLatin1(), masterShape);
+    auto project = srl::project(pPath.string(), ::xml_schema::Flags::dont_validate);
+    FeatureLoad fLoader(saveDirectory, masterShape);
     for (const auto &feature : project->features().feature())
     {
       std::ostringstream messageStream;

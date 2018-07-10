@@ -450,7 +450,7 @@ void Blend::dumpInfo(BRepFilletAPI_MakeFillet &blendMakerIn, const ann::SeerShap
 //   }
 }
 
-void Blend::serialWrite(const QDir &dIn)
+void Blend::serialWrite(const boost::filesystem::path &dIn)
 {
   prj::srl::FeatureBlend::ShapeMapType shapeMapOut;
   for (const auto &p : shapeMap)
@@ -510,7 +510,7 @@ void Blend::serialWrite(const QDir &dIn)
   );
   
   xml_schema::NamespaceInfomap infoMap;
-  std::ofstream stream(buildFilePathName(dIn).toUtf8().constData());
+  std::ofstream stream(buildFilePathName(dIn).string());
   prj::srl::blend(stream, blendOut, infoMap);
 }
 

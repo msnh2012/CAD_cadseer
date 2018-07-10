@@ -17,6 +17,8 @@
  *
  */
 
+#include <boost/filesystem/path.hpp>
+
 #include <BOPAlgo_Builder.hxx>
 #include <BRepAlgoAPI_Cut.hxx>
 #include <TopExp.hxx>
@@ -235,7 +237,7 @@ void Subtract::updateModel(const UpdatePayload &payloadIn)
     std::cout << std::endl << lastUpdateLog;
 }
 
-void Subtract::serialWrite(const QDir &dIn)
+void Subtract::serialWrite(const boost::filesystem::path &dIn)
 {
   prj::srl::FeatureSubtract subtractOut
   (
@@ -246,7 +248,7 @@ void Subtract::serialWrite(const QDir &dIn)
   );
   
   xml_schema::NamespaceInfomap infoMap;
-  std::ofstream stream(buildFilePathName(dIn).toUtf8().constData());
+  std::ofstream stream(buildFilePathName(dIn).string());
   prj::srl::subtract(stream, subtractOut, infoMap);
 }
 

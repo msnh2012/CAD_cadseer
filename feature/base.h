@@ -35,9 +35,10 @@
 #include <feature/states.h>
 #include <annex/base.h>
 
+namespace boost {namespace filesystem {class path;}}
+
 class TopoDS_Compound;
 class TopoDS_Shape;
-class QDir;
 class QTextStream;
 
 namespace osg{class Switch; class MatrixTransform; class PagedLOD;}
@@ -135,9 +136,9 @@ public:
     return *out;
   }
   
-  virtual void serialWrite(const QDir &); //!< override in leaf classes only.
+  virtual void serialWrite(const boost::filesystem::path&); //!< override in leaf classes only.
   std::string getFileName() const; //!< used by git.
-  QString buildFilePathName(const QDir&) const; //!<generate complete path to file
+  boost::filesystem::path buildFilePathName(const boost::filesystem::path&) const; //!<generate complete path to file
   
   static std::size_t nextConstructionIndex;
   

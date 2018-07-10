@@ -25,7 +25,6 @@
 
 #include <QHBoxLayout>
 #include <QApplication>
-#include <QDir>
 #include <QString>
 #include <QFileDialog>
 #include <QTimer>
@@ -643,7 +642,7 @@ void Widget::featureAddedDispatched(const msg::Message &messageIn)
   prj::Message message = boost::get<prj::Message>(messageIn.payload);
   root->addChild(message.feature->getMainSwitch());
   
-  slc::PLODPathVisitor visitor(app::instance()->getProject()->getSaveDirectory());
+  slc::PLODPathVisitor visitor(app::instance()->getProject()->getSaveDirectory().string());
   message.feature->getMainSwitch()->accept(visitor);
 }
 

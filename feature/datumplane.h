@@ -29,7 +29,6 @@
 #include <feature/inputtype.h>
 #include <feature/base.h>
 
-class QDir;
 namespace osg{class MatrixTransform;}
 namespace mdv{class DatumPlane;}
 namespace lbr{class IPGroup;}
@@ -149,7 +148,7 @@ namespace ftr
     virtual const std::string& getTypeString() const override {return toString(Type::DatumPlane);}
     virtual const QIcon& getIcon() const override {return icon;}
     virtual Descriptor getDescriptor() const override {return Descriptor::Create;}
-    virtual void serialWrite(const QDir&) override;
+    virtual void serialWrite(const boost::filesystem::path&) override;
     void serialRead(const prj::srl::FeatureDatumPlane &);
     virtual QTextStream& getInfo(QTextStream &) const override;
     

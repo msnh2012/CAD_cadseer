@@ -937,7 +937,7 @@ void Factory::debugShapeGraphDispatched(const msg::Message&)
     if (containers.empty())
         return;
     
-    QString fileNameBase = app::instance()->getApplicationDirectory().absolutePath() + QDir::separator();
+    boost::filesystem::path path = app::instance()->getApplicationDirectory();
     for (const auto &container : containers)
     {
         if (container.selectionType != slc::Type::Object)
@@ -945,11 +945,11 @@ void Factory::debugShapeGraphDispatched(const msg::Message&)
         ftr::Base *feature = project->findFeature(container.featureId);
         if (!feature->hasAnnex(ann::Type::SeerShape))
             continue;
-        QString fileName = fileNameBase + QString::fromStdString(gu::idToString(feature->getId())) + ".dot";
+        path /= gu::idToString(feature->getId()) + ".dot";
         const ann::SeerShape &shape = feature->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
-        shape.dumpGraph(fileName.toStdString());
+        shape.dumpGraph(path.string());
         
-        QDesktopServices::openUrl(QUrl(fileName));
+        QDesktopServices::openUrl(QUrl(QString::fromStdString(path.string())));
     }
     
     observer->out(msg::Message(msg::Request | msg::Selection | msg::Clear));
@@ -1131,9 +1131,7 @@ void Factory::osgToDotTestDispatched(const msg::Message&)
   
   ftr::Base *feature = project->findFeature(containers.front().featureId);
   
-  QString fileName = static_cast<app::Application *>(qApp)->getApplicationDirectory().path();
-  fileName += QDir::separator();
-  fileName += "osg";
+  boost::filesystem::path base = app::instance()->getApplicationDirectory();
   osg::ref_ptr<osgDB::Options> options(new osgDB::Options());
   options->setOptionString("rankdir = TB;");
   
@@ -1144,8 +1142,9 @@ void Factory::osgToDotTestDispatched(const msg::Message&)
   
   for (unsigned int i = 0; i < dimensions.size(); ++i)
   {
-    QString cFileName = fileName + "_" + QString::number(i) + ".dot";
-    osgDB::writeNodeFile(*(dimensions.at(i)), cFileName.toStdString(), options);
+    boost::filesystem::path path = app::instance()->getApplicationDirectory();
+    path /= std::string("osg_") + std::to_string(i) + ".dot";
+    osgDB::writeNodeFile(*(dimensions.at(i)), path.string(), options);
   }
   
 //   QDesktopServices::openUrl(QUrl(fileName));

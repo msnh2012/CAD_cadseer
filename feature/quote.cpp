@@ -224,7 +224,7 @@ void Quote::updateModel(const UpdatePayload &payloadIn)
     std::cout << std::endl << lastUpdateLog;
 }
 
-void Quote::serialWrite(const QDir &dIn)
+void Quote::serialWrite(const boost::filesystem::path &dIn)
 {
   prj::srl::FeatureQuote qo
   (
@@ -248,7 +248,7 @@ void Quote::serialWrite(const QDir &dIn)
   );
   
   xml_schema::NamespaceInfomap infoMap;
-  std::ofstream stream(buildFilePathName(dIn).toUtf8().constData());
+  std::ofstream stream(buildFilePathName(dIn).string());
   prj::srl::quote(stream, qo, infoMap);
 }
 

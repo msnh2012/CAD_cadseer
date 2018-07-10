@@ -268,7 +268,7 @@ void Extract::updateModel(const UpdatePayload &payloadIn)
     std::cout << std::endl << lastUpdateLog;
 }
 
-void Extract::serialWrite(const QDir &dIn)
+void Extract::serialWrite(const boost::filesystem::path &dIn)
 {
   prj::srl::AccruePicks aPicksOut;
   for (const auto &ap : accruePicks)
@@ -294,7 +294,7 @@ void Extract::serialWrite(const QDir &dIn)
   );
   
   xml_schema::NamespaceInfomap infoMap;
-  std::ofstream stream(buildFilePathName(dIn).toUtf8().constData());
+  std::ofstream stream(buildFilePathName(dIn).string());
   prj::srl::extract(stream, extractOut, infoMap);
 }
 
