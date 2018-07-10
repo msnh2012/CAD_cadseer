@@ -22,6 +22,7 @@
 #include <assert.h>
 
 #include <boost/variant.hpp>
+#include <boost/current_function.hpp>
 
 #include <QApplication>
 
@@ -297,7 +298,7 @@ void TextCamera::setupDispatcher()
 void TextCamera::preselectionAdditionDispatched(const msg::Message &messageIn)
 {
   std::ostringstream debug;
-  debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
   msg::dispatch().dumpString(debug.str());
   
   slc::Message sMessage = boost::get<slc::Message>(messageIn.payload);
@@ -316,7 +317,7 @@ void TextCamera::preselectionAdditionDispatched(const msg::Message &messageIn)
 void TextCamera::preselectionSubtractionDispatched(const msg::Message &)
 {
   std::ostringstream debug;
-  debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
   msg::dispatch().dumpString(debug.str());
   
   preselectionText.clear();
@@ -326,7 +327,7 @@ void TextCamera::preselectionSubtractionDispatched(const msg::Message &)
 void TextCamera::selectionAdditionDispatched(const msg::Message &messageIn)
 {
   std::ostringstream debug;
-  debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
   msg::dispatch().dumpString(debug.str());
   
   slc::Message sMessage = boost::get<slc::Message>(messageIn.payload);
@@ -338,7 +339,7 @@ void TextCamera::selectionAdditionDispatched(const msg::Message &messageIn)
 void TextCamera::selectionSubtractionDispatched(const msg::Message &messageIn)
 {
   std::ostringstream debug;
-  debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
   msg::dispatch().dumpString(debug.str());
   
   slc::Message sMessage = boost::get<slc::Message>(messageIn.payload);
@@ -351,7 +352,7 @@ void TextCamera::selectionSubtractionDispatched(const msg::Message &messageIn)
 void TextCamera::statusTextDispatched(const msg::Message &messageIn)
 {
   std::ostringstream debug;
-  debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
   msg::dispatch().dumpString(debug.str());
   
   vwr::Message sMessage = boost::get<vwr::Message>(messageIn.payload);
@@ -397,7 +398,7 @@ void TextCamera::updateSelectionLabel()
 void TextCamera::commandTextDispatched(const msg::Message &messageIn)
 {
   std::ostringstream debug;
-  debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
   msg::dispatch().dumpString(debug.str());
   
   vwr::Message vMessage = boost::get<vwr::Message>(messageIn.payload);

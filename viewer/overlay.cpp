@@ -23,6 +23,7 @@
 
 #include <boost/variant.hpp>
 #include <boost/filesystem.hpp>
+#include <boost/current_function.hpp>
 
 #include <osgViewer/GraphicsWindow>
 
@@ -110,7 +111,7 @@ void Overlay::setupDispatcher()
 void Overlay::featureAddedDispatched(const msg::Message &messageIn)
 {
   std::ostringstream debug;
-  debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
   msg::dispatch().dumpString(debug.str());
   
   prj::Message message = boost::get<prj::Message>(messageIn.payload);
@@ -120,7 +121,7 @@ void Overlay::featureAddedDispatched(const msg::Message &messageIn)
 void Overlay::featureRemovedDispatched(const msg::Message &messageIn)
 {
   std::ostringstream debug;
-  debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
   msg::dispatch().dumpString(debug.str());
   
   prj::Message message = boost::get<prj::Message>(messageIn.payload);
@@ -130,7 +131,7 @@ void Overlay::featureRemovedDispatched(const msg::Message &messageIn)
 void Overlay::closeProjectDispatched(const msg::Message&)
 {
   std::ostringstream debug;
-  debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
   msg::dispatch().dumpString(debug.str());
   
     //this code assumes that the first child is the absolute csys switch.
@@ -141,7 +142,7 @@ void Overlay::closeProjectDispatched(const msg::Message&)
 void Overlay::addOverlayGeometryDispatched(const msg::Message &message)
 {
   std::ostringstream debug;
-  debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
   msg::dispatch().dumpString(debug.str());
   
     vwr::Message vMessage = boost::get<vwr::Message>(message.payload);
@@ -151,7 +152,7 @@ void Overlay::addOverlayGeometryDispatched(const msg::Message &message)
 void Overlay::clearOverlayGeometryDispatched(const msg::Message&)
 {
   std::ostringstream debug;
-  debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
   msg::dispatch().dumpString(debug.str());
   
     fleetingGeometry->removeChildren(0, fleetingGeometry->getNumChildren());
@@ -160,7 +161,7 @@ void Overlay::clearOverlayGeometryDispatched(const msg::Message&)
 void Overlay::showOverlayDispatched(const msg::Message &msgIn)
 {
   std::ostringstream debug;
-  debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
   msg::dispatch().dumpString(debug.str());
   
   slc::MainSwitchVisitor v(boost::get<vwr::Message>(msgIn.payload).featureId);
@@ -182,7 +183,7 @@ void Overlay::showOverlayDispatched(const msg::Message &msgIn)
 void Overlay::hideOverlayDispatched(const msg::Message &msgIn)
 {
   std::ostringstream debug;
-  debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
   msg::dispatch().dumpString(debug.str());
   
   slc::MainSwitchVisitor v(boost::get<vwr::Message>(msgIn.payload).featureId);
@@ -204,7 +205,7 @@ void Overlay::hideOverlayDispatched(const msg::Message &msgIn)
 void Overlay::overlayToggleDispatched(const msg::Message &msgIn)
 {
   std::ostringstream debug;
-  debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
   msg::dispatch().dumpString(debug.str());
   
   slc::MainSwitchVisitor v(boost::get<vwr::Message>(msgIn.payload).featureId);
@@ -233,7 +234,7 @@ void Overlay::overlayToggleDispatched(const msg::Message &msgIn)
 void Overlay::projectOpenedDispatched(const msg::Message &)
 {
   std::ostringstream debug;
-  debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
   msg::dispatch().dumpString(debug.str());
   
   serialRead();
@@ -242,7 +243,7 @@ void Overlay::projectOpenedDispatched(const msg::Message &)
 void Overlay::projectUpdatedDispatched(const msg::Message &)
 {
   std::ostringstream debug;
-  debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
   msg::dispatch().dumpString(debug.str());
   
   serialWrite();

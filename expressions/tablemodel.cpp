@@ -21,6 +21,8 @@
 #include <fstream>
 #include <iostream>
 
+#include <boost/current_function.hpp>
+
 #include <QCoreApplication>
 #include <QtCore/QTextStream>
 #include <QtCore/QStringList>
@@ -668,7 +670,7 @@ void SelectionProxyModel::setupDispatcher()
 void SelectionProxyModel::selectionAdditionDispatched(const msg::Message &messageIn)
 {
   std::ostringstream debug;
-  debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
   msg::dispatch().dumpString(debug.str());
   
   slc::Message sMessage = boost::get<slc::Message>(messageIn.payload);
@@ -687,7 +689,7 @@ void SelectionProxyModel::selectionAdditionDispatched(const msg::Message &messag
 void SelectionProxyModel::selectionSubtractionDispatched(const msg::Message &messageIn)
 {
   std::ostringstream debug;
-  debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
   msg::dispatch().dumpString(debug.str());
   
   slc::Message sMessage = boost::get<slc::Message>(messageIn.payload);

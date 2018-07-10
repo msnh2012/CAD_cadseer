@@ -22,6 +22,7 @@
 
 #include <boost/graph/iteration_macros.hpp>
 #include <boost/graph/graphviz.hpp>
+#include <boost/current_function.hpp>
 
 #include <gp_Circ.hxx>
 #include <gp_Elips.hxx>
@@ -422,7 +423,7 @@ void SeerShape::fillInHistory(ftr::ShapeHistory &historyIn, const BID::uuid &fea
       //in this case we have a valid shape with a valid id in the out column, but the
       //in column id doesn't exist in the graph. A prior feature didn't update the history graph correctly.
       if(!historyIn.hasShape(it->inId))
-        std::cout << "warning: shape id: " << gu::idToString(it->inId) << " should be in shape history in: " << __PRETTY_FUNCTION__ << std::endl;
+        std::cout << "warning: shape id: " << gu::idToString(it->inId) << " should be in shape history in: " << BOOST_CURRENT_FUNCTION << std::endl;
     }
     
     if (!historyIn.hasShape(it->outId)) //might be there already, like a 'merge' situation.
@@ -1023,7 +1024,7 @@ void SeerShape::derivedMatch()
         boost::uuids::uuid id = findShapeIdRecord(parent).id;
         if (id.is_nil())
         {
-            std::cout << "empty parent Id in: " << __PRETTY_FUNCTION__ << std::endl;
+            std::cout << "empty parent Id in: " << BOOST_CURRENT_FUNCTION << std::endl;
             bail = true;
             break;
         }

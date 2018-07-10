@@ -22,6 +22,7 @@
 
 #include <boost/variant.hpp>
 #include <boost/filesystem.hpp>
+#include <boost/current_function.hpp>
 
 #include <QHBoxLayout>
 #include <QApplication>
@@ -636,7 +637,7 @@ void Widget::setupDispatcher()
 void Widget::featureAddedDispatched(const msg::Message &messageIn)
 {
   std::ostringstream debug;
-  debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
   msg::dispatch().dumpString(debug.str());
   
   prj::Message message = boost::get<prj::Message>(messageIn.payload);
@@ -649,7 +650,7 @@ void Widget::featureAddedDispatched(const msg::Message &messageIn)
 void Widget::featureRemovedDispatched(const msg::Message &messageIn)
 {
   std::ostringstream debug;
-  debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
   msg::dispatch().dumpString(debug.str());
   
   prj::Message message = boost::get<prj::Message>(messageIn.payload);
@@ -659,7 +660,7 @@ void Widget::featureRemovedDispatched(const msg::Message &messageIn)
 void Widget::visualUpdatedDispatched(const msg::Message &)
 {
   std::ostringstream debug;
-  debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
   msg::dispatch().dumpString(debug.str());
   
   this->myUpdate();
@@ -668,7 +669,7 @@ void Widget::visualUpdatedDispatched(const msg::Message &)
 void Widget::closeProjectDispatched(const msg::Message&)
 {
   std::ostringstream debug;
-  debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
   msg::dispatch().dumpString(debug.str());
   
   //don't need to keep any children of the viewer.
@@ -678,7 +679,7 @@ void Widget::closeProjectDispatched(const msg::Message&)
 void Widget::systemResetDispatched(const msg::Message&)
 {
   std::ostringstream debug;
-  debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
   msg::dispatch().dumpString(debug.str());
   
   currentSystem->setMatrix(osg::Matrixd::identity());
@@ -687,7 +688,7 @@ void Widget::systemResetDispatched(const msg::Message&)
 void Widget::systemToggleDispatched(const msg::Message&)
 {
   std::ostringstream debug;
-  debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
   msg::dispatch().dumpString(debug.str());
   
   if (systemSwitch->getValue(0))
@@ -703,7 +704,7 @@ void Widget::systemToggleDispatched(const msg::Message&)
 void Widget::showHiddenLinesDispatched(const msg::Message&)
 {
   std::ostringstream debug;
-  debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
   msg::dispatch().dumpString(debug.str());
   
   HiddenLineVisitor v(true);
@@ -717,7 +718,7 @@ void Widget::showHiddenLinesDispatched(const msg::Message&)
 void Widget::hideHiddenLinesDispatched(const msg::Message&)
 {
   std::ostringstream debug;
-  debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
   msg::dispatch().dumpString(debug.str());
   
   HiddenLineVisitor v(false);
@@ -731,7 +732,7 @@ void Widget::hideHiddenLinesDispatched(const msg::Message&)
 void Widget::viewToggleHiddenLinesDispatched(const msg::Message&)
 {
   std::ostringstream debug;
-  debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
   msg::dispatch().dumpString(debug.str());
   
   prf::Manager &manager = prf::manager();
@@ -747,7 +748,7 @@ void Widget::viewToggleHiddenLinesDispatched(const msg::Message&)
 void Widget::showThreeDDispatched(const msg::Message &msgIn)
 {
   std::ostringstream debug;
-  debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
   msg::dispatch().dumpString(debug.str());
   
   slc::MainSwitchVisitor v(boost::get<vwr::Message>(msgIn.payload).featureId);
@@ -773,7 +774,7 @@ void Widget::showThreeDDispatched(const msg::Message &msgIn)
 void Widget::hideThreeDDispatched(const msg::Message &msgIn)
 {
   std::ostringstream debug;
-  debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
   msg::dispatch().dumpString(debug.str());
   
   slc::MainSwitchVisitor v(boost::get<vwr::Message>(msgIn.payload).featureId);
@@ -795,7 +796,7 @@ void Widget::hideThreeDDispatched(const msg::Message &msgIn)
 void Widget::threeDToggleDispatched(const msg::Message &msgIn)
 {
   std::ostringstream debug;
-  debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
   msg::dispatch().dumpString(debug.str());
   
   slc::MainSwitchVisitor v(boost::get<vwr::Message>(msgIn.payload).featureId);
@@ -830,7 +831,7 @@ void Widget::threeDToggleDispatched(const msg::Message &msgIn)
 void Widget::projectOpenedDispatched(const msg::Message &)
 {
   std::ostringstream debug;
-  debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
   msg::dispatch().dumpString(debug.str());
   
   serialRead();
@@ -839,7 +840,7 @@ void Widget::projectOpenedDispatched(const msg::Message &)
 void Widget::projectUpdatedDispatched(const msg::Message &)
 {
   std::ostringstream debug;
-  debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
   msg::dispatch().dumpString(debug.str());
   
   serialWrite();

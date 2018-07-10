@@ -25,7 +25,7 @@
 #include <QTextStream>
 
 #include <boost/graph/topological_sort.hpp>
-#include <boost/graph/adj_list_serialize.hpp>
+#include <boost/current_function.hpp>
 
 #include <application/application.h>
 #include <project/project.h>
@@ -462,7 +462,7 @@ void Manager::setupDispatcher()
 void Manager::featureRemovedDispatched(const msg::Message &messageIn)
 {
   std::ostringstream debug;
-  debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
   msg::dispatch().dumpString(debug.str());
   
   prj::Message message = boost::get<prj::Message>(messageIn.payload);

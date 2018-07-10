@@ -31,6 +31,7 @@
 #include <boost/signals2/shared_connection_block.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/optional.hpp>
+#include <boost/current_function.hpp>
 
 #include <BRep_Builder.hxx>
 #include <BRepTools.hxx>
@@ -600,7 +601,7 @@ void Project::featureStateChangedDispatched(const msg::Message &messageIn)
 void Project::setCurrentLeafDispatched(const msg::Message &messageIn)
 {
   std::ostringstream debug;
-  debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
   msg::dispatch().dumpString(debug.str());
   
   prj::Message message = boost::get<prj::Message>(messageIn.payload);
@@ -613,7 +614,7 @@ void Project::setCurrentLeafDispatched(const msg::Message &messageIn)
 void Project::removeFeatureDispatched(const msg::Message &messageIn)
 {
   std::ostringstream debug;
-  debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
   msg::dispatch().dumpString(debug.str());
   
   prj::Message message = boost::get<prj::Message>(messageIn.payload);
@@ -624,7 +625,7 @@ void Project::removeFeatureDispatched(const msg::Message &messageIn)
 void Project::updateDispatched(const msg::Message&)
 {
   std::ostringstream debug;
-  debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
   msg::dispatch().dumpString(debug.str());
   
   app::WaitCursor waitCursor;
@@ -637,7 +638,7 @@ void Project::updateDispatched(const msg::Message&)
 void Project::forceUpdateDispatched(const msg::Message&)
 {
   std::ostringstream debug;
-  debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
   msg::dispatch().dumpString(debug.str());
   
   RemovedGraph rg = buildRemovedGraph(stow->graph);
@@ -654,7 +655,7 @@ void Project::forceUpdateDispatched(const msg::Message&)
 void Project::updateModelDispatched(const msg::Message&)
 {
   std::ostringstream debug;
-  debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
   msg::dispatch().dumpString(debug.str());
   
   updateModel();
@@ -663,7 +664,7 @@ void Project::updateModelDispatched(const msg::Message&)
 void Project::updateVisualDispatched(const msg::Message&)
 {
   std::ostringstream debug;
-  debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
   msg::dispatch().dumpString(debug.str());
   
   updateVisual();
@@ -672,7 +673,7 @@ void Project::updateVisualDispatched(const msg::Message&)
 void Project::saveProjectRequestDispatched(const msg::Message&)
 {
   std::ostringstream debug;
-  debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
   msg::dispatch().dumpString(debug.str());
   
   save();

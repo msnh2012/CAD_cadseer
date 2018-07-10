@@ -31,6 +31,7 @@
 #include <QPushButton>
 
 #include <boost/variant.hpp>
+#include <boost/current_function.hpp>
 
 #include <BRepCheck_Analyzer.hxx>
 #include <BOPAlgo_ArgumentAnalyzer.hxx>
@@ -1044,7 +1045,7 @@ void CheckGeometry::setupDispatcher()
 void CheckGeometry::featureRemovedDispatched(const msg::Message &messageIn)
 {
   std::ostringstream debug;
-  debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
   msg::dispatch().dumpString(debug.str());
   
   prj::Message message = boost::get<prj::Message>(messageIn.payload);

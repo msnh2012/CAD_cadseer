@@ -22,6 +22,7 @@
 
 #include <boost/variant.hpp>
 #include <boost/filesystem/operations.hpp>
+#include <boost/current_function.hpp>
 
 #include <QTimer>
 #include <QMessageBox>
@@ -381,7 +382,7 @@ void Application::ProjectDialogRequestDispatched(const msg::Message&)
 void Application::newProjectRequestDispatched(const msg::Message &messageIn)
 {
   std::ostringstream debug;
-  debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
   msg::dispatch().dumpString(debug.str());
   
   prj::Message pMessage = boost::get<prj::Message>(messageIn.payload);

@@ -20,6 +20,7 @@
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/filtered_graph.hpp>
 #include <boost/graph/graphviz.hpp>
+#include <boost/current_function.hpp>
 
 #include <BOPAlgo_Builder.hxx>
 #include <BRepTools.hxx>
@@ -1133,7 +1134,7 @@ void IntersectionMapper::go(const ftr::UpdatePayload &payloadIn, BOPAlgo_Builder
     {
       if (!payloadIn.shapeHistory.hasShape(protoId))
       {
-        std::cout << "warning: shape id: " << gu::idToString(protoId) << " should be in shape history in: " << __PRETTY_FUNCTION__ << std::endl;
+        std::cout << "warning: shape id: " << gu::idToString(protoId) << " should be in shape history in: " << BOOST_CURRENT_FUNCTION << std::endl;
         continue;
       }
       FaceSplit nfs; //new face split

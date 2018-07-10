@@ -21,6 +21,7 @@
 #include <assert.h>
 
 #include <boost/variant.hpp>
+#include <boost/current_function.hpp>
 
 #include <osg/Geometry>
 #include <osg/View>
@@ -427,7 +428,7 @@ void EventHandler::selectionOperation
 void EventHandler::requestPreselectionAdditionDispatched(const msg::Message &messageIn)
 {
   std::ostringstream debug;
-  debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
   msg::dispatch().dumpString(debug.str());
   
   slc::Message sMessage = boost::get<slc::Message>(messageIn.payload);
@@ -447,7 +448,7 @@ void EventHandler::requestPreselectionAdditionDispatched(const msg::Message &mes
 void EventHandler::requestPreselectionSubtractionDispatched(const msg::Message &messageIn)
 {
   std::ostringstream debug;
-  debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
   msg::dispatch().dumpString(debug.str());
   
   slc::Message sMessage = boost::get<slc::Message>(messageIn.payload);
@@ -462,7 +463,7 @@ void EventHandler::requestPreselectionSubtractionDispatched(const msg::Message &
 void EventHandler::requestSelectionAdditionDispatched(const msg::Message &messageIn)
 {
   std::ostringstream debug;
-  debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
   msg::dispatch().dumpString(debug.str());
   
   clearPrehighlight();
@@ -497,7 +498,7 @@ void EventHandler::requestSelectionAdditionDispatched(const msg::Message &messag
 void EventHandler::requestSelectionSubtractionDispatched(const msg::Message &messageIn)
 {
   std::ostringstream debug;
-  debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
   msg::dispatch().dumpString(debug.str());
   
   slc::Message sMessage = boost::get<slc::Message>(messageIn.payload);
@@ -527,7 +528,7 @@ void EventHandler::requestSelectionSubtractionDispatched(const msg::Message &mes
 void EventHandler::requestSelectionClearDispatched(const msg::Message &)
 {
   std::ostringstream debug;
-  debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
   msg::dispatch().dumpString(debug.str());
   
   clearPrehighlight();

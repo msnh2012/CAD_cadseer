@@ -23,6 +23,7 @@
 #include <boost/graph/topological_sort.hpp>
 #include <boost/graph/breadth_first_search.hpp>
 #include <boost/variant.hpp>
+#include <boost/current_function.hpp>
 
 #include <QString>
 #include <QTextStream>
@@ -205,7 +206,7 @@ void Model::setupViewConstants()
 void Model::featureAddedDispatched(const msg::Message &messageIn)
 {
   std::ostringstream debug;
-  debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
   msg::dispatch().dumpString(debug.str());
   
   prj::Message message = boost::get<prj::Message>(messageIn.payload);
@@ -236,7 +237,7 @@ void Model::featureAddedDispatched(const msg::Message &messageIn)
 void Model::featureRemovedDispatched(const msg::Message &messageIn)
 {
   std::ostringstream debug;
-  debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
   msg::dispatch().dumpString(debug.str());
   
   prj::Message message = boost::get<prj::Message>(messageIn.payload);
@@ -255,7 +256,7 @@ void Model::featureRemovedDispatched(const msg::Message &messageIn)
 void Model::connectionAddedDispatched(const msg::Message &messageIn)
 {
   std::ostringstream debug;
-  debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
   msg::dispatch().dumpString(debug.str());
   
   prj::Message message = boost::get<prj::Message>(messageIn.payload);
@@ -295,7 +296,7 @@ void Model::connectionAddedDispatched(const msg::Message &messageIn)
 void Model::connectionRemovedDispatched(const msg::Message &messageIn)
 {
   std::ostringstream debug;
-  debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
   msg::dispatch().dumpString(debug.str());
   
   prj::Message message = boost::get<prj::Message>(messageIn.payload);
@@ -474,7 +475,7 @@ void Model::featureRenamedDispatched(const msg::Message &messageIn)
 void Model::preselectionAdditionDispatched(const msg::Message &messageIn)
 {
   std::ostringstream debug;
-  debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
   msg::dispatch().dumpString(debug.str());
   
   slc::Message sMessage = boost::get<slc::Message>(messageIn.payload);
@@ -495,7 +496,7 @@ void Model::preselectionAdditionDispatched(const msg::Message &messageIn)
 void Model::preselectionSubtractionDispatched(const msg::Message &messageIn)
 {
   std::ostringstream debug;
-  debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
   msg::dispatch().dumpString(debug.str());
   
   slc::Message sMessage = boost::get<slc::Message>(messageIn.payload);
@@ -516,7 +517,7 @@ void Model::preselectionSubtractionDispatched(const msg::Message &messageIn)
 void Model::selectionAdditionDispatched(const msg::Message &messageIn)
 {
   std::ostringstream debug;
-  debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
   msg::dispatch().dumpString(debug.str());
   
   slc::Message sMessage = boost::get<slc::Message>(messageIn.payload);
@@ -538,7 +539,7 @@ void Model::selectionAdditionDispatched(const msg::Message &messageIn)
 void Model::selectionSubtractionDispatched(const msg::Message &messageIn)
 {
   std::ostringstream debug;
-  debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
   msg::dispatch().dumpString(debug.str());
   
   slc::Message sMessage = boost::get<slc::Message>(messageIn.payload);
@@ -566,7 +567,7 @@ void Model::closeProjectDispatched(const msg::Message&)
 void Model::projectUpdatedDispatched(const msg::Message &)
 {
   std::ostringstream debug;
-  debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
   msg::dispatch().dumpString(debug.str());
   
 //   auto dumpMask = [] (const ColumnMask& columnMaskIn)

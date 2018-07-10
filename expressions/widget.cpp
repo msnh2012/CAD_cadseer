@@ -19,6 +19,8 @@
 
 #include <iostream>
 
+#include <boost/current_function.hpp>
+
 #include <QTabWidget>
 #include <QVBoxLayout>
 #include <QSortFilterProxyModel>
@@ -264,7 +266,7 @@ void Widget::setupDispatcher()
 void Widget::closeProjectDispatched(const msg::Message&)
 {
   std::ostringstream debug;
-  debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
   msg::dispatch().dumpString(debug.str());
   
   tabWidget->clear();
@@ -278,7 +280,7 @@ void Widget::closeProjectDispatched(const msg::Message&)
 void Widget::openNewProjectDispatched(const msg::Message&)
 {
   std::ostringstream debug;
-  debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
   msg::dispatch().dumpString(debug.str());
   
   assert(!eManager);

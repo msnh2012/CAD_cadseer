@@ -31,6 +31,7 @@
 #include <boost/timer/timer.hpp>
 #include <boost/variant.hpp>
 #include <boost/filesystem.hpp>
+#include <boost/current_function.hpp>
 
 #include <BRepTools.hxx>
 #include <TopoDS_Edge.hxx>
@@ -181,7 +182,7 @@ void Factory::setupDispatcher()
 void Factory::newProjectDispatched(const msg::Message& /*messageIn*/)
 {
   std::ostringstream debug;
-  debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
   msg::dispatch().dumpString(debug.str());
   
   app::Application *application = dynamic_cast<app::Application *>(qApp);
@@ -192,7 +193,7 @@ void Factory::newProjectDispatched(const msg::Message& /*messageIn*/)
 void Factory::openProjectDispatched(const msg::Message&)
 {
   std::ostringstream debug;
-  debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
   msg::dispatch().dumpString(debug.str());
   
   app::Application *application = dynamic_cast<app::Application *>(qApp);
@@ -203,7 +204,7 @@ void Factory::openProjectDispatched(const msg::Message&)
 void Factory::closeProjectDispatched(const msg::Message&)
 {
   std::ostringstream debug;
-  debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
   msg::dispatch().dumpString(debug.str());
   
   project = nullptr;
@@ -212,7 +213,7 @@ void Factory::closeProjectDispatched(const msg::Message&)
 void Factory::selectionAdditionDispatched(const msg::Message &messageIn)
 {
   std::ostringstream debug;
-  debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
   msg::dispatch().dumpString(debug.str());
   
   slc::Message sMessage = boost::get<slc::Message>(messageIn.payload);
@@ -228,7 +229,7 @@ void Factory::selectionAdditionDispatched(const msg::Message &messageIn)
 void Factory::selectionSubtractionDispatched(const msg::Message &messageIn)
 {
   std::ostringstream debug;
-  debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
   msg::dispatch().dumpString(debug.str());
   
   slc::Message sMessage = boost::get<slc::Message>(messageIn.payload);
@@ -247,7 +248,7 @@ void Factory::selectionSubtractionDispatched(const msg::Message &messageIn)
 void Factory::newBoxDispatched(const msg::Message &)
 {
   std::ostringstream debug;
-  debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
   msg::dispatch().dumpString(debug.str());
   
   assert(project);
@@ -266,7 +267,7 @@ void Factory::newBoxDispatched(const msg::Message &)
 void Factory::newOblongDispatched(const msg::Message &)
 {
   std::ostringstream debug;
-  debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
   msg::dispatch().dumpString(debug.str());
   
   assert(project);
@@ -285,7 +286,7 @@ void Factory::newOblongDispatched(const msg::Message &)
 void Factory::newTorusDispatched(const msg::Message &)
 {
   std::ostringstream debug;
-  debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
   msg::dispatch().dumpString(debug.str());
   
   assert(project);
@@ -304,7 +305,7 @@ void Factory::newTorusDispatched(const msg::Message &)
 void Factory::newCylinderDispatched(const msg::Message &)
 {
   std::ostringstream debug;
-  debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
   msg::dispatch().dumpString(debug.str());
   
   assert(project);
@@ -323,7 +324,7 @@ void Factory::newCylinderDispatched(const msg::Message &)
 void Factory::newSphereDispatched(const msg::Message&)
 {
   std::ostringstream debug;
-  debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
   msg::dispatch().dumpString(debug.str());
   
   assert(project);
@@ -342,7 +343,7 @@ void Factory::newSphereDispatched(const msg::Message&)
 void Factory::newConeDispatched(const msg::Message&)
 {
   std::ostringstream debug;
-  debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
   msg::dispatch().dumpString(debug.str());
   
   assert(project);
@@ -361,7 +362,7 @@ void Factory::newConeDispatched(const msg::Message&)
 void Factory::newChamferDispatched(const msg::Message&)
 {
   std::ostringstream debug;
-  debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
   msg::dispatch().dumpString(debug.str());
   
   assert(project);
@@ -411,7 +412,7 @@ void Factory::newChamferDispatched(const msg::Message&)
 void Factory::newDraftDispatched(const msg::Message&)
 {
   std::ostringstream debug;
-  debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
   msg::dispatch().dumpString(debug.str());
   
   assert(project);
@@ -469,7 +470,7 @@ void Factory::newDraftDispatched(const msg::Message&)
 void Factory::newDatumPlaneDispatched(const msg::Message&)
 {
   std::ostringstream debug;
-  debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
   msg::dispatch().dumpString(debug.str());
   
   assert(project);
@@ -505,7 +506,7 @@ void Factory::newDatumPlaneDispatched(const msg::Message&)
 void Factory::newHollowDispatched(const msg::Message&)
 {
   std::ostringstream debug;
-  debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
   msg::dispatch().dumpString(debug.str());
   
   assert(project);
@@ -560,7 +561,7 @@ void Factory::newHollowDispatched(const msg::Message&)
 void Factory::importOCCDispatched(const msg::Message&)
 {
   std::ostringstream debug;
-  debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
   msg::dispatch().dumpString(debug.str());
   
   app::Application *application = dynamic_cast<app::Application *>(qApp);
@@ -590,7 +591,7 @@ void Factory::importOCCDispatched(const msg::Message&)
 void Factory::exportOCCDispatched(const msg::Message&)
 {
   std::ostringstream debug;
-  debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
   msg::dispatch().dumpString(debug.str());
   
   if 
@@ -641,7 +642,7 @@ void Factory::exportOCCDispatched(const msg::Message&)
 void Factory::importStepDispatched(const msg::Message&)
 {
   std::ostringstream debug;
-  debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
   msg::dispatch().dumpString(debug.str());
   
   //get file name
@@ -710,7 +711,7 @@ void Factory::importStepDispatched(const msg::Message&)
 void Factory::exportStepDispatched(const msg::Message&)
 {
   std::ostringstream debug;
-  debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
   msg::dispatch().dumpString(debug.str());
   
   if 
@@ -796,7 +797,7 @@ void Factory::exportStepDispatched(const msg::Message&)
 void Factory::preferencesDispatched(const msg::Message&)
 {
   std::ostringstream debug;
-  debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
   msg::dispatch().dumpString(debug.str());
   
   app::Application *application = dynamic_cast<app::Application *>(qApp);
@@ -826,7 +827,7 @@ void Factory::preferencesDispatched(const msg::Message&)
 void Factory::removeDispatched(const msg::Message&)
 {
   std::ostringstream debug;
-  debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
   msg::dispatch().dumpString(debug.str());
   
   //containers is wired up message so it will be changing as we delete(remove from selection)
@@ -859,7 +860,7 @@ void Factory::removeDispatched(const msg::Message&)
 void Factory::debugDumpDispatched(const msg::Message&)
 {
   std::ostringstream debug;
-  debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
   msg::dispatch().dumpString(debug.str());
   
   assert(project);
@@ -890,7 +891,7 @@ void Factory::debugDumpDispatched(const msg::Message&)
 void Factory::debugShapeTrackUpDispatched(const msg::Message&)
 {
   std::ostringstream debug;
-  debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
   msg::dispatch().dumpString(debug.str());
   
   assert(project);
@@ -910,7 +911,7 @@ void Factory::debugShapeTrackUpDispatched(const msg::Message&)
 void Factory::debugShapeTrackDownDispatched(const msg::Message&)
 {
   std::ostringstream debug;
-  debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
   msg::dispatch().dumpString(debug.str());
   
   assert(project);
@@ -930,7 +931,7 @@ void Factory::debugShapeTrackDownDispatched(const msg::Message&)
 void Factory::debugShapeGraphDispatched(const msg::Message&)
 {
     std::ostringstream debug;
-    debug << "inside: " << __PRETTY_FUNCTION__ << std::endl;
+    debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
     msg::dispatch().dumpString(debug.str());
     
     assert(project);

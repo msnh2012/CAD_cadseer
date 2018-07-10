@@ -23,6 +23,7 @@
 
 #include <boost/graph/depth_first_search.hpp>
 #include <boost/graph/filtered_graph.hpp>
+#include <boost/current_function.hpp>
 
 #include <expressions/grammar.h>
 #include <expressions/stringtranslatorstow.h>
@@ -545,7 +546,7 @@ void StringTranslatorStow::buildFormulaNode(const std::string& stringIn, bool &c
     {
       std::ostringstream error;
       error << "wrong out degree of " << boost::out_degree(fVertex, graphWrapper.graph)
-        << " in " << __PRETTY_FUNCTION__ << std::endl;
+        << " in " << BOOST_CURRENT_FUNCTION << std::endl;
       failureMessage = error.str();
       
       carryOn = false;
@@ -602,7 +603,7 @@ void StringTranslatorStow::buildLinkNode(const std::string &stringIn, bool &carr
   if(!graphWrapper.hasFormula(stringIn))
   {
     std::ostringstream error;
-    error << "No formula for: " << stringIn << " in " << __PRETTY_FUNCTION__ << std::endl;
+    error << "No formula for: " << stringIn << " in " << BOOST_CURRENT_FUNCTION << std::endl;
     failureMessage = error.str();
     
     carryOn = false;
@@ -830,7 +831,7 @@ void StringTranslatorStow::setConditionLhs(bool &carryOn)
   if (graphWrapper.graph[lhs]->getOutputType() != ValueType::Scalar)
   {
     std::ostringstream error;
-    error << "Not scalar type in " << __PRETTY_FUNCTION__ << std::endl;
+    error << "Not scalar type in " << BOOST_CURRENT_FUNCTION << std::endl;
     failureMessage = error.str();
     
     carryOn = false;
@@ -850,7 +851,7 @@ void StringTranslatorStow::setConditionRhs(bool &carryOn)
   if (graphWrapper.graph[rhs]->getOutputType() != ValueType::Scalar)
   {
     std::ostringstream error;
-    error << "Not scalar type in " << __PRETTY_FUNCTION__ << std::endl;
+    error << "Not scalar type in " << BOOST_CURRENT_FUNCTION << std::endl;
     failureMessage = error.str();
     
     carryOn = false;
@@ -888,7 +889,7 @@ void StringTranslatorStow::setParameter1(bool &carryOn)
   if (graphWrapper.graph[p1Node]->getOutputType() != ValueType::Scalar)
   {
     std::ostringstream error;
-    error << "Not scalar type in " << __PRETTY_FUNCTION__ << std::endl;
+    error << "Not scalar type in " << BOOST_CURRENT_FUNCTION << std::endl;
     failureMessage = error.str();
     
     carryOn = false;
@@ -908,7 +909,7 @@ void StringTranslatorStow::setParameter2(bool &carryOn)
   if (graphWrapper.graph[p2Node]->getOutputType() != ValueType::Scalar)
   {
     std::ostringstream error;
-    error << "Not scalar type in " << __PRETTY_FUNCTION__ << std::endl;
+    error << "Not scalar type in " << BOOST_CURRENT_FUNCTION << std::endl;
     failureMessage = error.str();
     
     carryOn = false;
@@ -928,7 +929,7 @@ void StringTranslatorStow::finishFunction1(bool &carryOn)
   if (graphWrapper.graph[child]->getOutputType() != ValueType::Scalar)
   {
     std::ostringstream error;
-    error << "Not scalar type in " << __PRETTY_FUNCTION__ << std::endl;
+    error << "Not scalar type in " << BOOST_CURRENT_FUNCTION << std::endl;
     failureMessage = error.str();
     
     carryOn = false;
@@ -1033,7 +1034,7 @@ void StringTranslatorStow::makeCurrentRHS(bool &carryOn)
   if (graphWrapper.graph[lhs]->getOutputType() != graphWrapper.graph[rhs]->getOutputType())
   {
     std::ostringstream error;
-    error << "Type mismatch in " << __PRETTY_FUNCTION__
+    error << "Type mismatch in " << BOOST_CURRENT_FUNCTION
       << ". Lhs type is: " <<  static_cast<int>(graphWrapper.graph[lhs]->getOutputType())
       << ". Rhs type is: " <<  static_cast<int>(graphWrapper.graph[rhs]->getOutputType())
       << std::endl;
@@ -1063,7 +1064,7 @@ void StringTranslatorStow::finish()
   }
   else
   {
-    std::cout << std::endl << "wrong stack size of: " << vStack.size() << " in: " << __PRETTY_FUNCTION__ << std::endl;
+    std::cout << std::endl << "wrong stack size of: " << vStack.size() << " in: " << BOOST_CURRENT_FUNCTION << std::endl;
     std::stack<expr::Vertex> stackCopy = vStack;
     while (!stackCopy.empty())
     {
