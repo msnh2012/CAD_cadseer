@@ -17,11 +17,16 @@
  *
  */
 
+#include<TopoDS.hxx>
+
 #include <annex/seershape.h>
+#include <selection/message.h>
 #include <feature/shapehistory.h>
 #include <feature/pick.h>
 #include <feature/base.h>
 #include <tools/featuretools.h>
+
+using boost::uuids::uuid;
 
 using namespace tls;
 
@@ -112,4 +117,115 @@ std::vector<Resolved> tls::resolvePicks
   std::vector<const ftr::Base*> features(1, feature);
   ftr::Picks picks(1, pick);
   return tls::resolvePicks(features, picks, pHistory);
+}
+
+ftr::Pick tls::convertToPick(const slc::Message &messageIn, const ann::SeerShape &sShapeIn)
+{
+  assert(sShapeIn.hasShapeIdRecord(messageIn.shapeId)); //don't set me up
+  ftr::Pick out(messageIn.shapeId, 0.0, 0.0);
+  out.selectionType = messageIn.type;
+  
+  /* currently picks don't support parameters for anything higher than faces.
+   * i.e. no shells, solids. this might be a problem.
+   */
+  const TopoDS_Shape &s = sShapeIn.getOCCTShape(out.id);
+  if (out.selectionType == slc::Type::StartPoint)
+  {
+    assert(s.ShapeType() == TopAbs_EDGE);
+    out.id = sShapeIn.useGetStartVertex(out.id);
+  }
+  else if (out.selectionType == slc::Type::EndPoint)
+  {
+    assert(s.ShapeType() == TopAbs_EDGE);
+    out.id = sShapeIn.useGetEndVertex(out.id);
+  }
+  else if
+  (
+    out.selectionType == slc::Type::Edge
+    || out.selectionType == slc::Type::MidPoint
+    || out.selectionType == slc::Type::NearestPoint
+    || out.selectionType == slc::Type::QuadrantPoint
+  )
+  {
+    assert(s.ShapeType() == TopAbs_EDGE);
+    out.setParameter(TopoDS::Edge(s), messageIn.pointLocation);
+  }
+  else if (out.selectionType == slc::Type::Face)
+  {
+    assert(s.ShapeType() == TopAbs_FACE);
+    out.setParameter(TopoDS::Face(s), messageIn.pointLocation);
+  }
+  
+  out.resolvedIds.push_back(out.id);
+  out.highlightIds.push_back(out.id);
+  
+  return out;
+}
+
+slc::Message tls::convertToMessage(const ftr::Pick &pickIn, const ftr::Base *featureIn)
+{
+  slc::Message out;
+  assert(featureIn->hasAnnex(ann::Type::SeerShape)); //caller verifies.
+  const ann::SeerShape &sShape = featureIn->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
+  assert(!sShape.isNull()); //caller verifies.
+  assert(!pickIn.resolvedIds.empty());
+  assert(sShape.hasShapeIdRecord(pickIn.resolvedIds.front()));
+  if (pickIn.resolvedIds.size() > 1)
+    std::cout << "WARNING: resolved ids greater than 1 not supported in: " << BOOST_CURRENT_FUNCTION << std::endl;
+  
+  out.type = pickIn.selectionType;
+  out.featureType = featureIn->getType();
+  out.featureId = featureIn->getId();
+  out.shapeId = pickIn.resolvedIds.front(); // start and end points will overwrite.
+  
+  const TopoDS_Shape &s = sShape.getOCCTShape(pickIn.resolvedIds.front());
+  if (pickIn.selectionType == slc::Type::StartPoint || pickIn.selectionType == slc::Type::EndPoint)
+  {
+    assert(s.ShapeType() == TopAbs_VERTEX);
+    
+    std::vector<uuid> parentEdges = sShape.useGetParentsOfType(pickIn.resolvedIds.front(), TopAbs_EDGE);
+    for (const auto &edge : parentEdges)
+    {
+      if
+      (
+        (
+          (pickIn.selectionType == slc::Type::StartPoint)
+          && (sShape.useGetStartVertex(edge) == pickIn.resolvedIds.front())
+        )
+        ||
+        (
+          (pickIn.selectionType == slc::Type::EndPoint)
+          && (sShape.useGetEndVertex(edge) == pickIn.resolvedIds.front())
+        )
+      )
+      {
+        out.shapeId = edge;
+        break;
+      }
+    }
+    if (out.shapeId.is_nil())
+    {
+      std::cout << "ERROR: couldn't get edge from vertex in: " << BOOST_CURRENT_FUNCTION << std::endl;
+      return out;
+    }
+    out.pointLocation = gu::toOsg(TopoDS::Vertex(s));
+  }
+  if
+  (
+    pickIn.selectionType == slc::Type::Edge
+    || pickIn.selectionType == slc::Type::MidPoint
+    || pickIn.selectionType == slc::Type::NearestPoint
+    || pickIn.selectionType == slc::Type::QuadrantPoint
+  )
+  {
+    assert(s.ShapeType() == TopAbs_EDGE);
+    out.pointLocation = pickIn.getPoint(TopoDS::Edge(s));
+  }
+  if (pickIn.selectionType == slc::Type::Face)
+  {
+    assert(s.ShapeType() == TopAbs_FACE);
+    out.pointLocation = pickIn.getPoint(TopoDS::Face(s));
+  }
+  
+  return out;
 }

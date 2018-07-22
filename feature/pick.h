@@ -28,6 +28,7 @@
 
 #include <osg/Vec3d>
 
+#include <selection/definitions.h>
 #include <feature/shapehistory.h>
 
 class TopoDS_Edge;
@@ -46,8 +47,14 @@ namespace ftr
     double u; //!< u parameter on edge or face
     double v;//!< v parameter on face
     ShapeHistory shapeHistory;
+    std::vector<boost::uuids::uuid> highlightIds; //!< highlight ids. up to user to uniquefy
+    std::vector<boost::uuids::uuid> resolvedIds; //!< storage for resolved ids from id and history.
+    slc::Type selectionType = slc::Type::None; //!< this is needed for fictious shapes: midpoint, center, quadrant, nearest etc..
     
     bool operator==(const Pick&) const;
+    bool isParameterType() const; //!< midpoint, quadrant and nearest are really same pick with different u.
+    bool isParameterEqual(const Pick&) const;
+    std::vector<boost::uuids::uuid> resolvedOverlap(const Pick&) const; //!< not applicable to parameter types.
     void setParameter(const TopoDS_Edge&, const osg::Vec3d&);
     void setParameter(const TopoDS_Face&, const osg::Vec3d&);
     osg::Vec3d getPoint(const TopoDS_Edge&) const;

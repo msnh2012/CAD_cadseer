@@ -137,6 +137,7 @@ void Blend::go()
   
   //if we make it here. we didn't build a blend feature from pre selection.
   blendDialog = new dlg::Blend(mainWindow);
+  shouldUpdate = false; //dialog calls update
 }
 
 
@@ -166,6 +167,8 @@ void BlendEdit::activate()
   blendDialog->show();
   blendDialog->raise();
   blendDialog->activateWindow();
+  
+  shouldUpdate = false;
 }
 
 void BlendEdit::deactivate()

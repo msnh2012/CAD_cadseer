@@ -134,6 +134,8 @@ namespace ftr
       Parameter(const QString &nameIn, const boost::filesystem::path &valueIn, PathType);
       Parameter(const QString &nameIn, const osg::Vec3d &valueIn);
       Parameter(const QString &nameIn, const osg::Matrixd &valueIn);
+      Parameter(const Parameter&); //<! warning same Id
+      Parameter(const Parameter&, const boost::uuids::uuid&);
       
       QString getName() const {return name;}
       void setName(const QString &nameIn){name = nameIn;}

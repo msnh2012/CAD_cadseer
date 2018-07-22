@@ -26,17 +26,18 @@
 #include <boost/uuid/uuid.hpp>
 
 #include <QDialog>
-#include <QListWidgetItem>
-#include <QStackedWidget>
-#include <QStyledItemDelegate>
 
-#include <osg/Vec3d>
+#include <dialogs/expressionedit.h> //for expression delegate
 
 class QCloseEvent;
 class QListWidget;
 class QTableWidget;
 class QTableWidgetItem;
 class QItemSelection;
+class QComboBox;
+class QTreeView;
+class QStandardItemModel;
+class QStackedWidget;
 
 namespace ftr{class Base; class Blend; class Pick;}
 namespace msg{class Message; class Observer;}
@@ -44,40 +45,7 @@ namespace slc{class Message;}
 
 namespace dlg
 {
-  class ExpressionEdit;
-  
-  struct BlendEntry
-  {
-    BlendEntry();
-    BlendEntry(const slc::Message &);
-    boost::uuids::uuid pickId; //!< the pick id.
-    QString typeString; //!< the type. i.e. 'Edge' or 'Face'
-    double radius; //!< this member not used for constant item.
-    boost::uuids::uuid expressionLinkId; //!< nil id means no link. Not used for constant item.
-    std::vector<boost::uuids::uuid> highlightIds;//!< entities to highlight. possibly includes pick id
-    osg::Vec3d pointLocation;
-  };
-  
-  class ConstantItem : public QListWidgetItem
-  {
-  public:
-    static const int itemType = QListWidgetItem::UserType;
-    ConstantItem(QListWidget *parent);
-    std::vector<BlendEntry> picks;
-    double radius;
-    boost::uuids::uuid ftrId; //!< nil id means it has been created during dialog edit run.
-    boost::uuids::uuid expressionLinkId; //!< nil id means no link.
-  };
-  
-  class VariableItem : public QListWidgetItem
-  {
-  public:
-    static const int itemType = QListWidgetItem::UserType + 1;
-    VariableItem(QListWidget *parent);
-    BlendEntry pick; //!< only 1 pick allowed per variable.
-    std::vector<BlendEntry> constraints;
-    boost::uuids::uuid ftrId; //!< nil id means it has been created during dialog edit run.
-  };
+  class VariableWidget;
   
   class Blend : public QDialog
   {
@@ -96,62 +64,71 @@ namespace dlg
     ftr::Blend *blend = nullptr;
     const ftr::Base *blendParent = nullptr;
     std::unique_ptr<msg::Observer> observer;
-    QListWidget *blendList;
-    QStackedWidget *stackedWidget;
-    QTableWidget *constantTableWidget;
-    QTableWidget *variableTableWidget;
-    dlg::ExpressionEdit *constantRadiusEdit;
     bool isAccepted = false;
     bool isEditDialog = false;
     bool overlayWasOn = false; //!< restore overlay state upon edit finish.
-    std::set<boost::uuids::uuid> runningIds;
     std::vector<boost::uuids::uuid> leafChildren; //!< edit mode rewinds to blendParent. this restores state.
     
     void init();
     void buildGui();
-    void fillInConstant(const ConstantItem &);
-    void fillInVariable(const VariableItem &);
     void addToSelection(const boost::uuids::uuid&); //!< parent feature shape id.
-    QTableWidgetItem* addVariableTableItem(const QString &, const QString&, const boost::uuids::uuid&);
     void updateBlendFeature();
-    
-    ftr::Pick convert(const BlendEntry&);
-    BlendEntry convert(const ftr::Pick&);
     
     void setupDispatcher();
     void selectionAdditionDispatched(const msg::Message&);
     
     void finishDialog();
     
+  private:
+    QComboBox *typeCombo;
+    QComboBox *shapeCombo;
+    QStackedWidget *stacked;
+    QStandardItemModel *cModel;
+    QTreeView *cView;
+    VariableWidget *vWidget;
+    
+    void cEnsureOne();
+    void cSelectFirstRadius();
+    void cSelectionChanged(const QItemSelection &, const QItemSelection &);
+    void cAddRadius(); //!< adds a new radius definiton.
+    void cRemove(); //!< can remove both blends and picks.
+    void cLink(QModelIndex, const QString&);
+    void cUnlink(); //removes link between parameter and expression.
+    void vSelectFirstContour();
+    void vContourSelectionChanged(int);
+    void vContourRemove();
+    void vConstraintSelectionChanged(QTableWidgetItem *current, QTableWidgetItem *previous);
+    void vConstraintRemove();
+    void vHighlightContour(int);
+    void vHighlightConstraint(int);
+    void vUpdate3dSelection();
+    void vLink(QTableWidgetItem*, const QString&);
+    void vUnlink();
+    
   private Q_SLOTS:
-    void addConstantBlendSlot();
-    void addVariableBlendSlot();
-    void removeBlendSlot();
-    
-    void blendListCurrentItemChangedSlot(const QItemSelection&, const QItemSelection&);
-    
-    void constantRadiusEditingFinishedSlot();
-    void constantRadiusEditedSlot(const QString &);
-    void constantTableSelectionChangedSlot(const QItemSelection&, const QItemSelection&);
-    void constantTableRemoveSlot();
-    void requestConstantLinkSlot(const QString&);
-    void requestConstantUnlinkSlot();
-    
-    void variableTableSelectionChangedSlot(const QItemSelection&, const QItemSelection&);
-    void variableTableItemChangedSlot(QTableWidgetItem *item);
-    void variableTableRemoveSlot();
-    void requestVariableLinkSlot(QTableWidgetItem*, const QString&);
-    void requestVariableUnlinkSlot();
-    
-    void selectFirstBlendSlot(); //!< used with timer for delayed initial selection.
+    void typeComboChangedSlot(int); //ugly connect syntax if not a 'Q_SLOT'
   };
   
-  //! a filter to do drag and drop for expression edit.
-  class VariableDropFilter : public QObject
+  //! a filter to do drag and drop for constant tree view.
+  class CDropFilter : public QObject
   {
     Q_OBJECT
   public:
-    explicit VariableDropFilter(QObject *parent) : QObject(parent){}
+    explicit CDropFilter(QObject *parent) : QObject(parent){}
+    
+  protected:
+    virtual bool eventFilter(QObject *obj, QEvent *event) override;
+    
+  Q_SIGNALS:
+    void requestLinkSignal(QModelIndex, const QString&);
+  };
+  
+  //! a filter to do drag and drop for variable table.
+  class VDropFilter : public QObject
+  {
+    Q_OBJECT
+  public:
+    explicit VDropFilter(QObject *parent) : QObject(parent){}
     
   protected:
     virtual bool eventFilter(QObject *obj, QEvent *event) override;
@@ -160,32 +137,29 @@ namespace dlg
     void requestLinkSignal(QTableWidgetItem*, const QString&);
   };
   
-  //! @brief Delegate for variable table widget.
-  class VariableDelegate : public QStyledItemDelegate
+  //! @brief Delegate for constant tree.
+  class CDelegate : public ExpressionDelegate
+  {
+    Q_OBJECT
+  public:
+    explicit CDelegate(QObject *parent);
+    //! Fill editor with text to edit.
+    virtual void setEditorData(QWidget* editor, const QModelIndex& index) const override;
+    //! Set the model data or re-edit upon failure.
+    virtual void setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const override;
+  };
+  
+  //! @brief Delegate for constant tree.
+  class VDelegate : public ExpressionDelegate
   {
     Q_OBJECT
   public:
     //! Parent must be the table view.
-    explicit VariableDelegate(QObject *parent);
-    //! Creates the editor.
-    virtual QWidget* createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const;
+    explicit VDelegate(QObject *parent);
     //! Fill editor with text to edit.
-    virtual void setEditorData(QWidget* editor, const QModelIndex& index) const;
-    //! Match editor to cell size.
-    virtual void updateEditorGeometry(QWidget* editor, const QStyleOptionViewItem& option, const QModelIndex& index) const;
+    virtual void setEditorData(QWidget* editor, const QModelIndex& index) const override;
     //! Set the model data or re-edit upon failure.
-    virtual void setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const;
-    
-  private Q_SLOTS:
-    void textEditedSlot(const QString &);
-    void requestUnlinkSlot();
-    
-  Q_SIGNALS:
-    void requestUnlinkSignal();
-    
-  private:
-    mutable dlg::ExpressionEdit *eEditor = nullptr;
-    mutable bool isExpressionLinked = false;
+    virtual void setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const override;
   };
 }
 

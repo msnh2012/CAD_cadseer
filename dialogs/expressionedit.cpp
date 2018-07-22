@@ -30,8 +30,11 @@
 #include <QDropEvent>
 #include <QAction>
 #include <QMimeData>
+#include <QTimer>
 
 #include <tools/idtools.h>
+#include <expressions/manager.h>
+#include <expressions/stringtranslator.h>
 #include <dialogs/expressionedit.h>
 
 using namespace dlg;
@@ -180,4 +183,70 @@ bool ExpressionEditFilter::eventFilter(QObject *obj, QEvent *event)
   }
   else
     return QObject::eventFilter(obj, event);
+}
+
+ExpressionDelegate::ExpressionDelegate(QObject *parent): QStyledItemDelegate(parent){}
+
+QWidget* ExpressionDelegate::createEditor(QWidget* parent, const QStyleOptionViewItem&, const QModelIndex&) const
+{
+  eEditor = new dlg::ExpressionEdit(parent);
+  return eEditor;
+}
+
+void ExpressionDelegate::initEditor() const
+{
+  if (isExpressionLinked)
+  {
+    QTimer::singleShot(0, eEditor->trafficLabel, SLOT(setLinkSlot()));
+    eEditor->lineEdit->setReadOnly(true);
+  }
+  else
+  {
+    QTimer::singleShot(0, eEditor->trafficLabel, SLOT(setTrafficGreenSlot()));
+    eEditor->lineEdit->setReadOnly(false);
+  }
+  
+  connect (eEditor->lineEdit, SIGNAL(textEdited(QString)), this, SLOT(textEditedSlot(QString)));
+  connect (eEditor->trafficLabel, SIGNAL(requestUnlinkSignal()), this, SLOT(requestUnlinkSlot()));
+}
+
+void ExpressionDelegate::updateEditorGeometry(QWidget* editor, const QStyleOptionViewItem& option, const QModelIndex&) const
+{
+  //this is called before setEditorData.
+  editor->setGeometry(option.rect);
+}
+
+void ExpressionDelegate::textEditedSlot(const QString &textIn)
+{
+  assert(eEditor);
+  eEditor->trafficLabel->setTrafficYellowSlot();
+  qApp->processEvents(); //need this or we never see yellow signal.
+  
+  expr::Manager localManager;
+  expr::StringTranslator translator(localManager);
+  std::string formula("temp = ");
+  formula += textIn.toStdString();
+  if (translator.parseString(formula) == expr::StringTranslator::ParseSucceeded)
+  {
+    localManager.update();
+    eEditor->trafficLabel->setTrafficGreenSlot();
+    assert(localManager.getFormulaValueType(translator.getFormulaOutId()) == expr::ValueType::Scalar);
+    double value = boost::get<double>(localManager.getFormulaValue(translator.getFormulaOutId()));
+    eEditor->goToolTipSlot(QString::number(value));
+  }
+  else
+  {
+    eEditor->trafficLabel->setTrafficRedSlot();
+    int position = translator.getFailedPosition() - 8; // 7 chars for 'temp = ' + 1
+    eEditor->goToolTipSlot(textIn.left(position) + "?");
+  }
+}
+
+void ExpressionDelegate::requestUnlinkSlot()
+{
+  assert(isExpressionLinked); //shouldn't be able to get here if expression is not linked.
+  
+  QKeyEvent *event = new QKeyEvent (QEvent::KeyPress, Qt::Key_Escape, Qt::NoModifier);
+  qApp->postEvent (eEditor, event);
+  QTimer::singleShot(0, this, &ExpressionDelegate::requestUnlinkSignal);
 }

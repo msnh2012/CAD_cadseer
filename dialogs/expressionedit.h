@@ -22,6 +22,7 @@
 
 #include <QWidget>
 #include <QLabel>
+#include <QStyledItemDelegate>
 
 class QResizeEvent;
 class QLineEdit;
@@ -84,6 +85,38 @@ namespace dlg
     
   Q_SIGNALS:
     void requestLinkSignal(const QString&);
+  };
+  
+  /*! @brief Delegate expression editor
+   * 
+   * override setEditorData and setModelData.
+   * inside setEditorData override after setting editor value:
+   *   set isExpressionLinked
+   *   call initEditor
+   */
+  class ExpressionDelegate : public QStyledItemDelegate
+  {
+    Q_OBJECT
+  public:
+    //! Parent must be the table view.
+    explicit ExpressionDelegate(QObject *parent);
+    //! Creates the editor.
+    virtual QWidget* createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const;
+    //! Match editor to cell size.
+    virtual void updateEditorGeometry(QWidget* editor, const QStyleOptionViewItem& option, const QModelIndex& index) const;
+    
+  protected Q_SLOTS:
+    void textEditedSlot(const QString &);
+    void requestUnlinkSlot();
+    
+  Q_SIGNALS:
+    void requestUnlinkSignal();
+    
+  protected:
+    mutable dlg::ExpressionEdit *eEditor = nullptr;
+    mutable bool isExpressionLinked = false;
+    
+    void initEditor() const;
   };
 }
 

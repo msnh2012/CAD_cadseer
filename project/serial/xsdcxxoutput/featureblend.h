@@ -77,7 +77,6 @@ namespace prj
     class VariableEntry;
     class VariableEntries;
     class VariableBlend;
-    class VariableBlends;
     class FeatureBlend;
   }
 }
@@ -790,6 +789,64 @@ namespace prj
       //@}
 
       /**
+       * @name positionLabel
+       *
+       * @brief Accessor and modifier functions for the %positionLabel
+       * required element.
+       */
+      //@{
+
+      /**
+       * @brief Element type.
+       */
+      typedef ::prj::srl::PLabel PositionLabelType;
+
+      /**
+       * @brief Element traits type.
+       */
+      typedef ::xsd::cxx::tree::traits< PositionLabelType, char > PositionLabelTraits;
+
+      /**
+       * @brief Return a read-only (constant) reference to the element.
+       *
+       * @return A constant reference to the element.
+       */
+      const PositionLabelType&
+      positionLabel () const;
+
+      /**
+       * @brief Return a read-write reference to the element.
+       *
+       * @return A reference to the element.
+       */
+      PositionLabelType&
+      positionLabel ();
+
+      /**
+       * @brief Set the element value.
+       *
+       * @param x A new value to set.
+       *
+       * This function makes a copy of its argument and sets it as
+       * the new value of the element.
+       */
+      void
+      positionLabel (const PositionLabelType& x);
+
+      /**
+       * @brief Set the element value without copying.
+       *
+       * @param p A new value to use.
+       *
+       * This function will try to use the passed value directly
+       * instead of making a copy.
+       */
+      void
+      positionLabel (::std::unique_ptr< PositionLabelType > p);
+
+      //@}
+
+      /**
        * @name Constructors
        */
       //@{
@@ -801,7 +858,8 @@ namespace prj
       VariableEntry (const BlendPickType&,
                      const PositionType&,
                      const RadiusType&,
-                     const PlabelType&);
+                     const PlabelType&,
+                     const PositionLabelType&);
 
       /**
        * @brief Create an instance from the ultimate base and
@@ -814,7 +872,8 @@ namespace prj
       VariableEntry (::std::unique_ptr< BlendPickType >,
                      ::std::unique_ptr< PositionType >,
                      ::std::unique_ptr< RadiusType >,
-                     ::std::unique_ptr< PlabelType >);
+                     ::std::unique_ptr< PlabelType >,
+                     ::std::unique_ptr< PositionLabelType >);
 
       /**
        * @brief Create an instance from a DOM element.
@@ -890,6 +949,7 @@ namespace prj
       ::xsd::cxx::tree::one< PositionType > position_;
       ::xsd::cxx::tree::one< RadiusType > radius_;
       ::xsd::cxx::tree::one< PlabelType > plabel_;
+      ::xsd::cxx::tree::one< PositionLabelType > positionLabel_;
 
       //@endcond
     };
@@ -1061,9 +1121,9 @@ namespace prj
     {
       public:
       /**
-       * @name blendPick
+       * @name blendPicks
        *
-       * @brief Accessor and modifier functions for the %blendPick
+       * @brief Accessor and modifier functions for the %blendPicks
        * required element.
        */
       //@{
@@ -1071,28 +1131,28 @@ namespace prj
       /**
        * @brief Element type.
        */
-      typedef ::prj::srl::Pick BlendPickType;
+      typedef ::prj::srl::Picks BlendPicksType;
 
       /**
        * @brief Element traits type.
        */
-      typedef ::xsd::cxx::tree::traits< BlendPickType, char > BlendPickTraits;
+      typedef ::xsd::cxx::tree::traits< BlendPicksType, char > BlendPicksTraits;
 
       /**
        * @brief Return a read-only (constant) reference to the element.
        *
        * @return A constant reference to the element.
        */
-      const BlendPickType&
-      blendPick () const;
+      const BlendPicksType&
+      blendPicks () const;
 
       /**
        * @brief Return a read-write reference to the element.
        *
        * @return A reference to the element.
        */
-      BlendPickType&
-      blendPick ();
+      BlendPicksType&
+      blendPicks ();
 
       /**
        * @brief Set the element value.
@@ -1103,7 +1163,7 @@ namespace prj
        * the new value of the element.
        */
       void
-      blendPick (const BlendPickType& x);
+      blendPicks (const BlendPicksType& x);
 
       /**
        * @brief Set the element value without copying.
@@ -1114,7 +1174,7 @@ namespace prj
        * instead of making a copy.
        */
       void
-      blendPick (::std::unique_ptr< BlendPickType > p);
+      blendPicks (::std::unique_ptr< BlendPicksType > p);
 
       //@}
 
@@ -1185,7 +1245,7 @@ namespace prj
        * @brief Create an instance from the ultimate base and
        * initializers for required elements and attributes.
        */
-      VariableBlend (const BlendPickType&,
+      VariableBlend (const BlendPicksType&,
                      const VariableEntriesType&);
 
       /**
@@ -1196,7 +1256,7 @@ namespace prj
        * This constructor will try to use the passed values directly
        * instead of making copies.
        */
-      VariableBlend (::std::unique_ptr< BlendPickType >,
+      VariableBlend (::std::unique_ptr< BlendPicksType >,
                      ::std::unique_ptr< VariableEntriesType >);
 
       /**
@@ -1269,166 +1329,8 @@ namespace prj
              ::xml_schema::Flags);
 
       protected:
-      ::xsd::cxx::tree::one< BlendPickType > blendPick_;
+      ::xsd::cxx::tree::one< BlendPicksType > blendPicks_;
       ::xsd::cxx::tree::one< VariableEntriesType > variableEntries_;
-
-      //@endcond
-    };
-
-    /**
-     * @brief Class corresponding to the %VariableBlends schema type.
-     *
-     * @nosubgrouping
-     */
-    class VariableBlends: public ::xml_schema::Type
-    {
-      public:
-      /**
-       * @name array
-       *
-       * @brief Accessor and modifier functions for the %array
-       * sequence element.
-       */
-      //@{
-
-      /**
-       * @brief Element type.
-       */
-      typedef ::prj::srl::VariableBlend ArrayType;
-
-      /**
-       * @brief Element sequence container type.
-       */
-      typedef ::xsd::cxx::tree::sequence< ArrayType > ArraySequence;
-
-      /**
-       * @brief Element iterator type.
-       */
-      typedef ArraySequence::iterator ArrayIterator;
-
-      /**
-       * @brief Element constant iterator type.
-       */
-      typedef ArraySequence::const_iterator ArrayConstIterator;
-
-      /**
-       * @brief Element traits type.
-       */
-      typedef ::xsd::cxx::tree::traits< ArrayType, char > ArrayTraits;
-
-      /**
-       * @brief Return a read-only (constant) reference to the element
-       * sequence.
-       *
-       * @return A constant reference to the sequence container.
-       */
-      const ArraySequence&
-      array () const;
-
-      /**
-       * @brief Return a read-write reference to the element sequence.
-       *
-       * @return A reference to the sequence container.
-       */
-      ArraySequence&
-      array ();
-
-      /**
-       * @brief Copy elements from a given sequence.
-       *
-       * @param s A sequence to copy elements from.
-       *
-       * For each element in @a s this function makes a copy and adds it 
-       * to the sequence. Note that this operation completely changes the 
-       * sequence and all old elements will be lost.
-       */
-      void
-      array (const ArraySequence& s);
-
-      //@}
-
-      /**
-       * @name Constructors
-       */
-      //@{
-
-      /**
-       * @brief Create an instance from the ultimate base and
-       * initializers for required elements and attributes.
-       */
-      VariableBlends ();
-
-      /**
-       * @brief Create an instance from a DOM element.
-       *
-       * @param e A DOM element to extract the data from.
-       * @param f Flags to create the new instance with.
-       * @param c A pointer to the object that will contain the new
-       * instance.
-       */
-      VariableBlends (const ::xercesc::DOMElement& e,
-                      ::xml_schema::Flags f = 0,
-                      ::xml_schema::Container* c = 0);
-
-      /**
-       * @brief Copy constructor.
-       *
-       * @param x An instance to make a copy of.
-       * @param f Flags to create the copy with.
-       * @param c A pointer to the object that will contain the copy.
-       *
-       * For polymorphic object models use the @c _clone function instead.
-       */
-      VariableBlends (const VariableBlends& x,
-                      ::xml_schema::Flags f = 0,
-                      ::xml_schema::Container* c = 0);
-
-      /**
-       * @brief Copy the instance polymorphically.
-       *
-       * @param f Flags to create the copy with.
-       * @param c A pointer to the object that will contain the copy.
-       * @return A pointer to the dynamically allocated copy.
-       *
-       * This function ensures that the dynamic type of the instance is
-       * used for copying and should be used for polymorphic object
-       * models instead of the copy constructor.
-       */
-      virtual VariableBlends*
-      _clone (::xml_schema::Flags f = 0,
-              ::xml_schema::Container* c = 0) const;
-
-      /**
-       * @brief Copy assignment operator.
-       *
-       * @param x An instance to make a copy of.
-       * @return A reference to itself.
-       *
-       * For polymorphic object models use the @c _clone function instead.
-       */
-      VariableBlends&
-      operator= (const VariableBlends& x);
-
-      //@}
-
-      /**
-       * @brief Destructor.
-       */
-      virtual 
-      ~VariableBlends ();
-
-      // Implementation.
-      //
-
-      //@cond
-
-      protected:
-      void
-      parse (::xsd::cxx::xml::dom::parser< char >&,
-             ::xml_schema::Flags);
-
-      protected:
-      ArraySequence array_;
 
       //@endcond
     };
@@ -1616,9 +1518,9 @@ namespace prj
       //@}
 
       /**
-       * @name variableBlends
+       * @name variableBlend
        *
-       * @brief Accessor and modifier functions for the %variableBlends
+       * @brief Accessor and modifier functions for the %variableBlend
        * required element.
        */
       //@{
@@ -1626,28 +1528,28 @@ namespace prj
       /**
        * @brief Element type.
        */
-      typedef ::prj::srl::VariableBlends VariableBlendsType;
+      typedef ::prj::srl::VariableBlend VariableBlendType;
 
       /**
        * @brief Element traits type.
        */
-      typedef ::xsd::cxx::tree::traits< VariableBlendsType, char > VariableBlendsTraits;
+      typedef ::xsd::cxx::tree::traits< VariableBlendType, char > VariableBlendTraits;
 
       /**
        * @brief Return a read-only (constant) reference to the element.
        *
        * @return A constant reference to the element.
        */
-      const VariableBlendsType&
-      variableBlends () const;
+      const VariableBlendType&
+      variableBlend () const;
 
       /**
        * @brief Return a read-write reference to the element.
        *
        * @return A reference to the element.
        */
-      VariableBlendsType&
-      variableBlends ();
+      VariableBlendType&
+      variableBlend ();
 
       /**
        * @brief Set the element value.
@@ -1658,7 +1560,7 @@ namespace prj
        * the new value of the element.
        */
       void
-      variableBlends (const VariableBlendsType& x);
+      variableBlend (const VariableBlendType& x);
 
       /**
        * @brief Set the element value without copying.
@@ -1669,7 +1571,54 @@ namespace prj
        * instead of making a copy.
        */
       void
-      variableBlends (::std::unique_ptr< VariableBlendsType > p);
+      variableBlend (::std::unique_ptr< VariableBlendType > p);
+
+      //@}
+
+      /**
+       * @name filletShape
+       *
+       * @brief Accessor and modifier functions for the %filletShape
+       * required element.
+       */
+      //@{
+
+      /**
+       * @brief Element type.
+       */
+      typedef ::xml_schema::Int FilletShapeType;
+
+      /**
+       * @brief Element traits type.
+       */
+      typedef ::xsd::cxx::tree::traits< FilletShapeType, char > FilletShapeTraits;
+
+      /**
+       * @brief Return a read-only (constant) reference to the element.
+       *
+       * @return A constant reference to the element.
+       */
+      const FilletShapeType&
+      filletShape () const;
+
+      /**
+       * @brief Return a read-write reference to the element.
+       *
+       * @return A reference to the element.
+       */
+      FilletShapeType&
+      filletShape ();
+
+      /**
+       * @brief Set the element value.
+       *
+       * @param x A new value to set.
+       *
+       * This function makes a copy of its argument and sets it as
+       * the new value of the element.
+       */
+      void
+      filletShape (const FilletShapeType& x);
 
       //@}
 
@@ -1685,7 +1634,8 @@ namespace prj
       FeatureBlend (const FeatureBaseType&,
                     const ShapeMapType&,
                     const SimpleBlendsType&,
-                    const VariableBlendsType&);
+                    const VariableBlendType&,
+                    const FilletShapeType&);
 
       /**
        * @brief Create an instance from the ultimate base and
@@ -1698,7 +1648,8 @@ namespace prj
       FeatureBlend (::std::unique_ptr< FeatureBaseType >,
                     ::std::unique_ptr< ShapeMapType >,
                     ::std::unique_ptr< SimpleBlendsType >,
-                    ::std::unique_ptr< VariableBlendsType >);
+                    ::std::unique_ptr< VariableBlendType >,
+                    const FilletShapeType&);
 
       /**
        * @brief Create an instance from a DOM element.
@@ -1773,7 +1724,8 @@ namespace prj
       ::xsd::cxx::tree::one< FeatureBaseType > featureBase_;
       ::xsd::cxx::tree::one< ShapeMapType > shapeMap_;
       ::xsd::cxx::tree::one< SimpleBlendsType > simpleBlends_;
-      ::xsd::cxx::tree::one< VariableBlendsType > variableBlends_;
+      ::xsd::cxx::tree::one< VariableBlendType > variableBlend_;
+      ::xsd::cxx::tree::one< FilletShapeType > filletShape_;
 
       //@endcond
     };
@@ -2071,9 +2023,6 @@ namespace prj
 
     void
     operator<< (::xercesc::DOMElement&, const VariableBlend&);
-
-    void
-    operator<< (::xercesc::DOMElement&, const VariableBlends&);
 
     void
     operator<< (::xercesc::DOMElement&, const FeatureBlend&);

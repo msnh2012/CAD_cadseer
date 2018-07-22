@@ -434,6 +434,22 @@ Parameter::Parameter(const QString &nameIn, const osg::Matrixd &valueIn) :
 {
 }
 
+Parameter::Parameter(const Parameter &other, const boost::uuids::uuid &idIn) :
+  Parameter(other)
+{
+  id = idIn;
+}
+
+Parameter::Parameter(const Parameter &other) :
+  constant(other.constant),
+  name(other.name),
+  value(other.value),
+  id(other.id),
+  constraint(other.constraint),
+  pathType(other.pathType)
+{
+}
+
 void Parameter::setConstant(bool constantIn)
 {
   if (constantIn == constant)

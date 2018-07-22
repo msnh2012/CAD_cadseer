@@ -2657,6 +2657,30 @@ namespace prj
       this->history_.set (std::move (x));
     }
 
+    const Pick::SelectionTypeOptional& Pick::
+    selectionType () const
+    {
+      return this->selectionType_;
+    }
+
+    Pick::SelectionTypeOptional& Pick::
+    selectionType ()
+    {
+      return this->selectionType_;
+    }
+
+    void Pick::
+    selectionType (const SelectionTypeType& x)
+    {
+      this->selectionType_.set (x);
+    }
+
+    void Pick::
+    selectionType (const SelectionTypeOptional& x)
+    {
+      this->selectionType_ = x;
+    }
+
 
     // Picks
     // 
@@ -7275,7 +7299,8 @@ namespace prj
       id_ (id, this),
       u_ (u, this),
       v_ (v, this),
-      history_ (this)
+      history_ (this),
+      selectionType_ (this)
     {
     }
 
@@ -7287,7 +7312,8 @@ namespace prj
       id_ (x.id_, f, this),
       u_ (x.u_, f, this),
       v_ (x.v_, f, this),
-      history_ (x.history_, f, this)
+      history_ (x.history_, f, this),
+      selectionType_ (x.selectionType_, f, this)
     {
     }
 
@@ -7299,7 +7325,8 @@ namespace prj
       id_ (this),
       u_ (this),
       v_ (this),
-      history_ (this)
+      history_ (this),
+      selectionType_ (this)
     {
       if ((f & ::xml_schema::Flags::base) == 0)
       {
@@ -7368,6 +7395,17 @@ namespace prj
           }
         }
 
+        // selectionType
+        //
+        if (n.name () == "selectionType" && n.namespace_ ().empty ())
+        {
+          if (!this->selectionType_)
+          {
+            this->selectionType_.set (SelectionTypeTraits::create (i, f, this));
+            continue;
+          }
+        }
+
         break;
       }
 
@@ -7410,6 +7448,7 @@ namespace prj
         this->u_ = x.u_;
         this->v_ = x.v_;
         this->history_ = x.history_;
+        this->selectionType_ = x.selectionType_;
       }
 
       return *this;
@@ -9170,6 +9209,18 @@ namespace prj
             e));
 
         s << *i.history ();
+      }
+
+      // selectionType
+      //
+      if (i.selectionType ())
+      {
+        ::xercesc::DOMElement& s (
+          ::xsd::cxx::xml::dom::create_element (
+            "selectionType",
+            e));
+
+        s << *i.selectionType ();
       }
     }
 

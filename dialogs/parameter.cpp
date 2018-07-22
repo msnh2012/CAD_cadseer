@@ -310,10 +310,12 @@ void Parameter::buildGui()
 void Parameter::requestLinkSlot(const QString &stringIn)
 {
   //for now we only get here if we have a double. because connect inside double condition.
+  
+  expr::Manager &eManager = app::instance()->getProject()->getManager();
   boost::uuids::uuid id = gu::stringToId(stringIn.toStdString());
   assert(!id.is_nil());
+  assert(eManager.hasFormula(id));
   
-  expr::Manager &eManager = static_cast<app::Application *>(qApp)->getProject()->getManager();
   if (!parameter->isConstant())
   {
     //parameter is already linked.
@@ -321,8 +323,10 @@ void Parameter::requestLinkSlot(const QString &stringIn)
     eManager.removeParameterLink(parameter->getId());
   }
   
-  assert(eManager.hasFormula(id));
+  double value = boost::get<double>(eManager.getFormulaValue(id));
   eManager.addLink(parameter, id);
+  parameter->setValue(value);
+  parameter->setConstant(false);
   
   std::ostringstream gm;
   gm << "Linking parameter " << parameter->getName().toStdString()
@@ -343,7 +347,7 @@ void Parameter::requestUnlinkSlot()
   assert(eManager.hasParameterLink(parameter->getId()));
   boost::uuids::uuid fId = eManager.getFormulaLink(parameter->getId());
   eManager.removeParameterLink(parameter->getId());
-  //manager sets the parameter to constant or not.
+  parameter->setConstant(true);
   
   std::ostringstream gm;
   gm << "Unlinking parameter " << parameter->getName().toStdString()

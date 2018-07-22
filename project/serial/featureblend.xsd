@@ -27,6 +27,7 @@
     <xs:element name="position" type="srl:Parameter"/>
     <xs:element name="radius" type="srl:Parameter"/>
     <xs:element name="plabel" type="srl:PLabel"/>
+    <xs:element name="positionLabel" type="srl:PLabel"/>
   </xs:all>
 </xs:complexType>
 
@@ -38,23 +39,18 @@
 
 <xs:complexType name="VariableBlend">
   <xs:all>
-    <xs:element name="blendPick" type="srl:Pick"/>
+    <xs:element name="blendPicks" type="srl:Picks"/>
     <xs:element name="variableEntries" type="srl:VariableEntries"/>
   </xs:all>
 </xs:complexType>
 
-<xs:complexType name="VariableBlends">
-  <xs:sequence minOccurs="0" maxOccurs="unbounded">
-    <xs:element name="array" type="srl:VariableBlend"/>
-  </xs:sequence>
-</xs:complexType>
-  
 <xs:complexType name="FeatureBlend">
   <xs:all>
     <xs:element name="featureBase" type="srl:FeatureBase"/>
     <xs:element name="shapeMap" type="srl:EvolveContainer"/>
     <xs:element name="simpleBlends" type="srl:SimpleBlends"/>
-    <xs:element name="variableBlends" type="srl:VariableBlends"/>
+    <xs:element name="variableBlend" type="srl:VariableBlend"/>
+    <xs:element name="filletShape" type="xs:int"/>
   </xs:all>
 </xs:complexType>
 

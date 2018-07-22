@@ -23,6 +23,7 @@
 #include <vector>
 #include <string>
 #include <bitset>
+#include <cassert>
 
 #include <TopAbs_ShapeEnum.hxx>
 
@@ -100,6 +101,8 @@ namespace slc
 						      "Nearest Point",
 						      "Screen Point"
 						  });
+      std::size_t index = static_cast<std::size_t>(theType);
+      assert((index >= 0) && (index < names.size()));
       return names.at(static_cast<std::size_t>(theType));
   }
   

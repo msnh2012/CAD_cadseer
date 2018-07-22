@@ -17,6 +17,8 @@
  *
  */
 
+#include <limits>
+
 #include <QLabel>
 #include <QLineEdit>
 #include <QHBoxLayout>
@@ -26,6 +28,7 @@
 #include <QStackedWidget>
 #include <QComboBox>
 #include <QListWidget>
+#include <QListWidgetItem>
 #include <QDialogButtonBox>
 #include <QCloseEvent>
 #include <QAction>
@@ -35,15 +38,23 @@
 #include <QMessageBox>
 #include <QDebug>
 #include <QMimeData>
+#include <QComboBox>
+#include <QGridLayout>
+#include <QAbstractItemModel>
+#include <QTreeView>
+#include <QStandardItemModel>
 
 #include <boost/signals2/shared_connection_block.hpp>
+#include <boost/optional.hpp>
 
 #include <TopoDS.hxx>
 #include <BRepFilletAPI_MakeFillet.hxx>
 
 #include <osg/Switch>
+#include <osg/Vec3d>
 
 #include <tools/idtools.h>
+#include <tools/featuretools.h>
 #include <application/application.h>
 #include <application/mainwindow.h>
 #include <preferences/preferencesXML.h>
@@ -63,47 +74,251 @@
 #include <dialogs/expressionedit.h>
 #include <dialogs/blend.h>
 
-
-
-//this is a complete mess!
-
-
-
 using boost::uuids::uuid;
 
+namespace dlg
+{
+  class SimpleBlendItem : public QStandardItem
+  {
+  public:
+    SimpleBlendItem() = delete;
+    SimpleBlendItem(std::shared_ptr<ftr::prm::Parameter> rIn) :  //new blend definition
+      QStandardItem()
+      , radius(rIn)
+    {
+      update();
+    }
+    void update()
+    {
+      setToolTip(QString::number(static_cast<double>(*radius), 'f', 12));
+      
+      if (radius->isConstant())
+      {
+        setText(QString::number(static_cast<double>(*radius), 'f', 3));
+        setIcon(QIcon());
+        setData(false, Qt::UserRole);
+      }
+      else
+      {
+        setText(QString::fromStdString(expressionName));
+        setIcon(QIcon(":resources/images/linkIcon.svg"));
+        setData(true, Qt::UserRole);
+      }
+    }
+    
+    std::shared_ptr<ftr::prm::Parameter> radius;
+    boost::uuids::uuid expressionId;
+    std::string expressionName;
+  };
+  
+  class PickItem : public QStandardItem
+  {
+  public:
+    PickItem() = delete;
+    PickItem(const ftr::Pick &pIn) :
+      QStandardItem(), pick(pIn)
+    {
+      setText(QString::fromStdString(gu::idToShortString(pick.id)));
+      setToolTip(QString::fromStdString(gu::idToString(pick.id)));
+    }
+    ftr::Pick pick;
+  };
+  
+  class VariableWidget : public QWidget
+  {
+  public:
+    
+    class ListItem : public QListWidgetItem
+    {
+    public:
+      ListItem() = delete;
+      ListItem(const ftr::Pick &pIn) : QListWidgetItem(), pick(pIn){}
+      ftr::Pick pick;
+    };
+    
+    class RadiusItem : public QTableWidgetItem
+    {
+    public:
+      RadiusItem() = delete;
+      RadiusItem(std::shared_ptr<ftr::prm::Parameter> pIn) :
+        QTableWidgetItem(QTableWidgetItem::UserType),
+        parameter(pIn)
+      {
+        update();
+      }
+      void update()
+      {
+        setData(Qt::ToolTipRole, QString::number(static_cast<double>(*parameter), 'f', 12));
+        
+        if (parameter->isConstant())
+        {
+          setData(Qt::DisplayRole, QString::number(static_cast<double>(*parameter), 'f', 3));
+          setData(Qt::DecorationRole, QIcon());
+          setData(Qt::UserRole, false);
+        }
+        else
+        {
+          setData(Qt::DisplayRole, QString::fromStdString(expressionName));
+          setData(Qt::DecorationRole, QIcon(":resources/images/linkIcon.svg"));
+          setData(Qt::UserRole, true);
+        }
+      }
+      std::shared_ptr<ftr::prm::Parameter> parameter;
+      boost::uuids::uuid expressionId;
+      std::string expressionName;
+    };
+    
+    class IdItem : public QTableWidgetItem
+    {
+    public:
+      IdItem(const ftr::Pick &pIn) : QTableWidgetItem(QTableWidgetItem::UserType + 1), pick(pIn)
+      {
+        setText(QString::fromStdString(gu::idToShortString(pick.id)));
+        setToolTip(QString::fromStdString(gu::idToString(pick.id)));
+        this->setFlags(this->flags() & ~Qt::ItemIsEditable & ~Qt::ItemIsDropEnabled);
+      }
+      ftr::Pick pick;
+    };
+    
+    VariableWidget(QWidget *parent = 0) : QWidget(parent){buildGui();}
+    virtual ~VariableWidget() override{}
+    
+    ftr::VariableBlend getBlend()
+    {
+      ftr::VariableBlend out;
+      //fill in.
+      return out;
+    }
+    
+    ListItem* addContour(const ftr::Pick &pIn)
+    {
+      //scan and make sure we are not adding a duplicate.
+      for (int r = 0; r < contourList->count(); ++r)
+      {
+        ListItem *c = dynamic_cast<ListItem*>(contourList->item(r));
+        assert(c);
+        if (!c->pick.resolvedOverlap(pIn).empty())
+          return nullptr;
+      }
+      
+      ListItem *ni = new ListItem(pIn);
+      ni->setText(QString::fromStdString(gu::idToShortString(pIn.id)));
+      ni->setToolTip(QString::fromStdString(gu::idToString(pIn.id)));
+      contourList->addItem(ni);
+      return ni;
+    }
+    
+    bool addConstraint(std::shared_ptr<ftr::prm::Parameter> pIn, const ftr::Pick &pickIn)
+    {
+      //scan and make sure we are not adding a duplicate.
+      for (int r = 0; r < constraintTable->rowCount(); ++r)
+      {
+        IdItem *ii = dynamic_cast<IdItem*>(constraintTable->item(r, 1));
+        assert(ii);
+        
+        if 
+        (
+          //neither are parameter types, just call resolveOverlap.
+          (!ii->pick.isParameterType())
+          && (!pickIn.isParameterType())
+          && (!ii->pick.resolvedOverlap(pickIn).empty())
+        )
+          return false;
+        if
+        (
+          //both are parameter types.
+          (ii->pick.isParameterType())
+          && (pickIn.isParameterType())
+          && (!ii->pick.resolvedOverlap(pickIn).empty())
+          && (ii->pick.isParameterEqual(pickIn))
+        )
+          return false;
+      }
+      
+      RadiusItem *ri = new RadiusItem(pIn);
+      IdItem *ii = new IdItem(pickIn);
+      int row = constraintTable->rowCount();
+      constraintTable->insertRow(row);
+      constraintTable->setItem(row, 0, ri);
+      constraintTable->setItem(row, 1, ii);
+      
+      return true;
+    }
+    
+    std::vector<ListItem*> getContourItems()
+    {
+      std::vector<ListItem*> out;
+      for (int r = 0; r < contourList->count(); ++r)
+      {
+        ListItem *li = dynamic_cast<ListItem*>(contourList->item(r));
+        assert(li);
+        out.push_back(li);
+      }
+      return out;
+    }
+    
+    QListWidget *contourList;
+    QTableWidget *constraintTable;
+    
+  private:
+    void buildGui()
+    {
+      contourList = new QListWidget(this);
+      contourList->setContextMenuPolicy(Qt::ActionsContextMenu);
+      constraintTable = new QTableWidget(this);
+      constraintTable->setColumnCount(2);
+      constraintTable->verticalHeader()->hide();
+      constraintTable->horizontalHeader()->setStretchLastSection(true);
+      constraintTable->setSelectionMode(QAbstractItemView::SingleSelection);
+      constraintTable->setContextMenuPolicy(Qt::ActionsContextMenu);
+      QStringList labels;
+      labels << tr("Radius") << tr("Id");
+      constraintTable->setHorizontalHeaderLabels(labels);
+      constraintTable->setDragDropMode(QAbstractItemView::DropOnly);
+      constraintTable->setAcceptDrops(true);
+      constraintTable->viewport()->setAcceptDrops(true);
+      constraintTable->setDropIndicatorShown(true);
+      
+      dlg::SplitterDecorated *splitter = new dlg::SplitterDecorated(this);
+      splitter->setOrientation(Qt::Horizontal);
+      splitter->addWidget(contourList);
+      splitter->addWidget(constraintTable);
+      splitter->setCollapsible(0, false);
+      splitter->setCollapsible(1, false);
+      splitter->restoreSettings("dlg::BlendVariable");
+      
+      QHBoxLayout *mainLayout = new QHBoxLayout();
+      mainLayout->setContentsMargins(0, 0, 0, 0);
+      mainLayout->addWidget(splitter);
+      
+      this->setContentsMargins(0, 0, 0, 0);
+      this->setLayout(mainLayout);
+    }
+  };
+}
+
+static std::vector<uuid> getContourIds(const ann::SeerShape &ssIn, const uuid &edgeIdIn)
+{
+  std::vector<uuid> out;
+  assert(ssIn.hasShapeIdRecord(edgeIdIn)); //why did you set me up!
+  
+  const TopoDS_Edge& e = TopoDS::Edge(ssIn.findShapeIdRecord(edgeIdIn).shape);
+  assert(!e.IsNull());
+  
+  BRepFilletAPI_MakeFillet blendMaker(ssIn.getRootOCCTShape());
+  blendMaker.Add(e);
+  if (blendMaker.NbContours() != 1)
+    return out; //invalid edge, return empty results.
+  for (int index = 1; index <= blendMaker.NbEdges(1); ++index)
+  {
+    assert(ssIn.hasShapeIdRecord(blendMaker.Edge(1, index)));
+    out.push_back(ssIn.findShapeIdRecord(blendMaker.Edge(1, index)).id);
+  }
+  
+  return out;
+}
+
 using namespace dlg;
-
-BlendEntry::BlendEntry()
-{
-  pickId = gu::createNilId();
-  typeString = QString::fromStdString(slc::getNameOfType(slc::Type::None));
-  radius = prf::manager().rootPtr->features().blend().get().radius();
-  expressionLinkId = gu::createNilId();
-}
-
-BlendEntry::BlendEntry(const slc::Message &sMessageIn)
-{
-  pickId = sMessageIn.shapeId;
-  typeString = QString::fromStdString(slc::getNameOfType(sMessageIn.type));
-  pointLocation = sMessageIn.pointLocation;
-  radius = prf::manager().rootPtr->features().blend().get().radius();
-  expressionLinkId = gu::createNilId();
-}
-
-ConstantItem::ConstantItem(QListWidget *parent) :
-  QListWidgetItem(QObject::tr("Constant"), parent, ConstantItem::itemType)
-{
-  radius = prf::manager().rootPtr->features().blend().get().radius();
-  ftrId = gu::createNilId();
-  expressionLinkId = gu::createNilId();
-}
-
-VariableItem::VariableItem(QListWidget *parent) :
-  QListWidgetItem(QObject::tr("Variable"), parent, VariableItem::itemType)
-{
-  pick.pickId = gu::createNilId();
-  ftrId = gu::createNilId();
-}
 
 Blend::Blend(QWidget *parent) : QDialog(parent)
 {
@@ -116,8 +331,9 @@ Blend::Blend(QWidget *parent) : QDialog(parent)
   assert(blend);
   //parent will be assigned upon first edge pick.
   
-  //add a default blend.
-  addConstantBlendSlot();
+  //defaulting to a constant blend.
+  cEnsureOne();
+  QTimer::singleShot(0, this, &Blend::cSelectFirstRadius);
 }
 
 Blend::Blend(ftr::Blend *editBlendIn, QWidget *parent) : QDialog(parent), blend(editBlendIn)
@@ -137,56 +353,93 @@ Blend::Blend(ftr::Blend *editBlendIn, QWidget *parent) : QDialog(parent), blend(
   auto it = editMap.find(ftr::InputType::target);
   assert(it != editMap.end());
   blendParent = it->second;
+  assert(blendParent->hasAnnex(ann::Type::SeerShape));
   
-  for (const auto &simpleBlend : blend->getSimpleBlends())
-  {
-    ConstantItem *cItem = new ConstantItem(blendList);
-    cItem->ftrId = simpleBlend.id;
-    cItem->radius = static_cast<double>(*(simpleBlend.radius));
-    if (simpleBlend.radius->isConstant())
-    {
-      cItem->expressionLinkId = gu::createNilId();
-    }
-    else
-    {
-      const expr::Manager &eManager = static_cast<app::Application *>(qApp)->getProject()->getManager();
-      assert(eManager.hasParameterLink(simpleBlend.radius->getId()));
-      cItem->expressionLinkId = eManager.getFormulaLink(simpleBlend.radius->getId());
-    }
-    for (const auto &pick : simpleBlend.picks)
-      cItem->picks.push_back(convert(pick));
-  }
+  shapeCombo->setCurrentIndex(static_cast<int>(blend->getShape()));
   
-  for (const auto &variableBlend : blend->getVariableBlends())
+  if (!blend->getSimpleBlends().empty())
   {
-    VariableItem *vItem = new VariableItem(blendList);
-    vItem->pick = convert(variableBlend.pick);
-    vItem->ftrId = variableBlend.id;
-    for (const auto &entry : variableBlend.entries)
+    if (!blend->getVariableBlend().picks.empty())
+      std::cout << "ERROR: blend feature has both simple and variable blends in: " << BOOST_CURRENT_FUNCTION << std::endl;
+    for (const auto &sb : blend->getSimpleBlends())
     {
-      BlendEntry bEntry;
-      bEntry.pickId = entry.pick.id;
-      bEntry.typeString = tr("Vertex"); //only vertices for now.
-      bEntry.radius = static_cast<double>(*(entry.radius));
-      bEntry.highlightIds.push_back(entry.pick.id);
-      bEntry.pointLocation = 
-      gu::toOsg
-      (
-        TopoDS::Vertex(blendParent->getAnnex<ann::SeerShape>(ann::Type::SeerShape).getOCCTShape(entry.pick.id))
-      );
-      if (entry.radius->isConstant())
+      //here we need to clone the parameter so we can change it and user hit cancel.
+      SimpleBlendItem *nsbi = new SimpleBlendItem(std::make_shared<ftr::prm::Parameter>(*sb.radius));
+      if (!nsbi->radius->isConstant())
       {
-        bEntry.expressionLinkId = gu::createNilId();
+        const expr::Manager &eManager = app::instance()->getProject()->getManager();
+        assert(eManager.hasParameterLink(nsbi->radius->getId()));
+        nsbi->expressionId = eManager.getFormulaLink(nsbi->radius->getId());
+        nsbi->expressionName = eManager.getFormulaName(nsbi->expressionId);
+        nsbi->update();
+      }
+      cModel->appendRow(nsbi);
+      for (const auto &p : sb.picks)
+      {
+        const ann::SeerShape &sShape = blendParent->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
+        PickItem *np = new PickItem(p);
+        std::vector<tls::Resolved> resolved = tls::resolvePicks(blendParent, p, app::instance()->getProject()->getShapeHistory());
+        for (const auto &r : resolved)
+        {
+          auto ids = getContourIds(sShape, r.resultId);
+          std::copy(ids.begin(), ids.end(), std::back_inserter(np->pick.highlightIds));
+        }
+        QList<QStandardItem*> items;
+        items << new QStandardItem() << np;
+        nsbi->appendRow(items);
+      }
+    }
+    QTimer::singleShot(0, this, &Blend::cSelectFirstRadius);
+  }
+  else //variable blends.
+  {
+    const ann::SeerShape &sShape = blendParent->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
+    const ftr::VariableBlend &vBlend = blend->getVariableBlend();
+    for (auto np : vBlend.picks)
+    {
+      np.resolvedIds.clear();
+      np.highlightIds.clear();
+      std::vector<tls::Resolved> resolved = tls::resolvePicks(blendParent, np, app::instance()->getProject()->getShapeHistory());
+      for (const auto &r : resolved)
+      {
+        np.resolvedIds.push_back(r.resultId);
+        auto ids = getContourIds(sShape, r.resultId);
+        std::copy(ids.begin(), ids.end(), std::back_inserter(np.highlightIds));
+      }
+      vWidget->addContour(np);
+    }
+    for (const auto &e : vBlend.entries)
+    {
+      //make an update for radius item.
+      ftr::Pick np(e.pick);
+      np.resolvedIds.clear();
+      np.highlightIds.clear();
+      std::vector<tls::Resolved> resolved = tls::resolvePicks(blendParent, np, app::instance()->getProject()->getShapeHistory());
+      for (const auto &r : resolved)
+      {
+        np.resolvedIds.push_back(r.resultId);
+        np.highlightIds.push_back(r.resultId);
+      }
+      
+      if (vWidget->addConstraint(std::make_shared<ftr::prm::Parameter>(*e.radius), np))
+      {
+        auto *ct = vWidget->constraintTable;
+        auto *ri = dynamic_cast<VariableWidget::RadiusItem*>(ct->item(ct->rowCount() - 1, 0));
+        assert(ri);
+        if (!ri->parameter->isConstant())
+        {
+          const expr::Manager &eManager = app::instance()->getProject()->getManager();
+          assert(eManager.hasParameterLink(ri->parameter->getId()));
+          ri->expressionId = eManager.getFormulaLink(ri->parameter->getId());
+          ri->expressionName = eManager.getFormulaName(ri->expressionId);
+          ri->update();
+        }
       }
       else
-      {
-        const expr::Manager &eManager = static_cast<app::Application *>(qApp)->getProject()->getManager();
-        assert(eManager.hasParameterLink(entry.radius->getId()));
-        bEntry.expressionLinkId = eManager.getFormulaLink(entry.radius->getId());
-      }
-      vItem->constraints.push_back(bEntry);
-      runningIds.insert(entry.pick.id);
+        std::cout << "ERROR: failed to add constraint in: " << BOOST_CURRENT_FUNCTION << std::endl;
     }
+    QTimer::singleShot(0, [this]() {this->typeCombo->setCurrentIndex(1);});
+    QTimer::singleShot(0, this, &Blend::vSelectFirstContour);
   }
   
   leafChildren = project->getLeafChildren(blendParent->getId());
@@ -194,22 +447,11 @@ Blend::Blend(ftr::Blend *editBlendIn, QWidget *parent) : QDialog(parent), blend(
   
   overlayWasOn = blend->isVisibleOverlay();
   observer->outBlocked(msg::buildHideOverlay(blend->getId()));
-  
-  QTimer::singleShot(0, this, SLOT(selectFirstBlendSlot()));
-}
-
-void Blend::selectFirstBlendSlot()
-{
-  if (!(blendList->count() > 0))
-    return;
-  QModelIndex index = blendList->model()->index(0,0);
-  assert(index.isValid());
-  blendList->selectionModel()->select(index, QItemSelectionModel::SelectCurrent);
 }
 
 void Blend::init()
 {
-  observer = std::move(std::unique_ptr<msg::Observer>(new msg::Observer()));
+  observer = std::unique_ptr<msg::Observer>(new msg::Observer());
   observer->name = "dlg::Blend";
   setupDispatcher();
   
@@ -217,29 +459,27 @@ void Blend::init()
   
   WidgetGeometry *filter = new WidgetGeometry(this, "dlg::Blend");
   this->installEventFilter(filter);
-  
+//   
   QSettings &settings = app::instance()->getUserSettings();
   settings.beginGroup("dlg::Blend");
-  settings.beginGroup("ConstantTable");
-  constantTableWidget->horizontalHeader()->restoreState(settings.value("header").toByteArray());
+  settings.beginGroup("ConstantTree");
+  cView->header()->restoreState(settings.value("header").toByteArray());
   settings.endGroup();
   settings.beginGroup("VariableTable");
-  variableTableWidget->horizontalHeader()->restoreState(settings.value("header").toByteArray());
+  vWidget->constraintTable->horizontalHeader()->restoreState(settings.value("header").toByteArray());
   settings.endGroup();
   settings.endGroup();
-  
-  observer->out(msg::buildSelectionMask(~slc::All));
 }
 
 Blend::~Blend()
 {
   QSettings &settings = app::instance()->getUserSettings();
   settings.beginGroup("dlg::Blend");
-  settings.beginGroup("ConstantTable");
-  settings.setValue("header", constantTableWidget->horizontalHeader()->saveState());
+  settings.beginGroup("ConstantTree");
+  settings.setValue("header", cView->header()->saveState());
   settings.endGroup();
   settings.beginGroup("VariableTable");
-  settings.setValue("header", variableTableWidget->horizontalHeader()->saveState());
+  settings.setValue("header", vWidget->constraintTable->horizontalHeader()->saveState());
   settings.endGroup();
   settings.endGroup();
 }
@@ -256,6 +496,9 @@ void Blend::accept()
   isAccepted = true;
   finishDialog();
   QDialog::accept();
+  
+  if (prf::manager().rootPtr->dragger().triggerUpdateOnFinish())
+    app::instance()->queuedMessage(msg::Message(msg::Request | msg::Project | msg::Update));
 }
 
 void Blend::finishDialog()
@@ -286,50 +529,6 @@ void Blend::finishDialog()
     assert(blend);
     assert(blendParent);
     
-    //build a set of blendItem ftr ids for checking for removed definitions.
-    std::set<uuid> blendItemFtrIds;
-    
-    for (int index = 0; index < blendList->count(); ++index)
-    {
-      QListWidgetItem *item = blendList->item(index);
-      if (item->type() == ConstantItem::itemType)
-      {
-        ConstantItem *cItem = dynamic_cast<ConstantItem*>(item);
-        assert(cItem);
-        blendItemFtrIds.insert(cItem->ftrId);
-      }
-      else if(item->type() == VariableItem::itemType)
-      {
-        VariableItem *vItem = dynamic_cast<VariableItem*>(item);
-        assert(vItem);
-        blendItemFtrIds.insert(vItem->ftrId);
-      }
-      else
-        assert(0);//unrecognized item type
-    }
-    
-    //remove blend definitions from feature that are not present in blend list items set.
-    for (auto it = blend->getSimpleBlends().begin(); it != blend->getSimpleBlends().end();)
-    {
-      assert(blendItemFtrIds.count(it->id) < 2); //should be zero or 1.
-      
-      if (blendItemFtrIds.count(it->id) == 0)
-        it = blend->getSimpleBlends().erase(it);
-      else
-        it++;
-    }
-    
-    for (auto it = blend->getVariableBlends().begin(); it != blend->getVariableBlends().end();)
-    {
-      assert(blendItemFtrIds.count(it->id) < 2); //should be zero or 1.
-      
-      if (blendItemFtrIds.count(it->id) == 0)
-        it = blend->getVariableBlends().erase(it);
-      else
-        it++;
-    }
-    
-    //from here updateBlendFeature needs to either edit or add blend definitions.
     updateBlendFeature();
     blend->setModelDirty();
   }
@@ -348,417 +547,82 @@ void Blend::finishDialog()
 
 void Blend::updateBlendFeature()
 {
-  expr::Manager &eManager = 
-    static_cast<app::Application *>(qApp)->getProject()->getManager();
+  expr::Manager &eManager = app::instance()->getProject()->getManager();
   
-  for (int index = 0; index < blendList->count(); ++index)
+  /* we need to remove any expression links before we clear the blends.
+   * their copies will be added if exist
+   */
+  for (const auto &sb : blend->getSimpleBlends())
   {
-    QListWidgetItem *item = blendList->item(index);
-    if (item->type() == ConstantItem::itemType)
+    if (eManager.hasParameterLink(sb.radius->getId()))
+      eManager.removeParameterLink(sb.radius->getId());
+  }
+  for (const auto &e : blend->getVariableBlend().entries)
+  {
+    if (eManager.hasParameterLink(e.radius->getId()))
+      eManager.removeParameterLink(e.radius->getId());
+  }
+  
+  blend->setShape(static_cast<ftr::Blend::Shape>(shapeCombo->currentIndex()));
+    
+  if (typeCombo->currentIndex() == 0) // simple/constant blend
+  {
+    blend->clearBlends();
+    for (int r = 0; r < cModel->rowCount(); ++r)
     {
-      ConstantItem *cItem = dynamic_cast<ConstantItem*>(item);
-      assert(cItem);
+      ftr::SimpleBlend sBlend;
+      SimpleBlendItem *sbi = dynamic_cast<SimpleBlendItem*>(cModel->itemFromIndex(cModel->index(r, 0)));
+      assert(sbi);
+      sBlend.radius = sbi->radius;
+      if (!sbi->hasChildren()) // no picks
+        continue;
+      for (int r2 = 0; r2 < sbi->rowCount(); ++r2)
+      {
+        PickItem *pi = dynamic_cast<PickItem*>(sbi->child(r2, 1));
+        assert(pi);
+        sBlend.picks.push_back(pi->pick);
+      }
+      //either way we going to remove existing expression link if it exists.
+      if (eManager.hasParameterLink(sbi->radius->getId()))
+        eManager.removeParameterLink(sbi->radius->getId());
+      if (!sbi->radius->isConstant())
+      {
+        assert(eManager.hasFormula(sbi->expressionId));
+        eManager.addLink(sbi->radius.get(), sbi->expressionId);
+      }
+      blend->addSimpleBlend(sBlend);
+    }
+  }
+  if (typeCombo->currentIndex() == 1) //variable blend
+  {
+    blend->clearBlends();
+    ftr::VariableBlend vBlend;
+    for (auto ci : vWidget->getContourItems())
+      vBlend.picks.push_back(ci->pick);
+    for (int r = 0; r < vWidget->constraintTable->rowCount(); ++r)
+    {
+      ftr::VariableEntry e;
       
-      if (cItem->ftrId.is_nil()) //this is something new even in edit mode
+      VariableWidget::RadiusItem *ri = dynamic_cast<VariableWidget::RadiusItem*>(vWidget->constraintTable->item(r, 0));
+      assert(ri);
+      e.radius = ri->parameter;
+      //either way we going to remove existing expression link if it exists.
+      if (eManager.hasParameterLink(e.radius->getId()))
+        eManager.removeParameterLink(e.radius->getId());
+      if (!e.radius->isConstant())
       {
-        ftr::SimpleBlend sBlend;
-        for (const auto &entry : cItem->picks)
-        {
-          ftr::Pick fPick = convert(entry);
-          sBlend.picks.push_back(fPick);
-        }
-        auto radiusParameter = ftr::Blend::buildRadiusParameter();
-        radiusParameter->setValue(cItem->radius);
-        if (!cItem->expressionLinkId.is_nil())
-        {
-          assert(eManager.hasFormula(cItem->expressionLinkId));
-          eManager.addLink(radiusParameter.get(), cItem->expressionLinkId);
-        }
-        sBlend.radius = radiusParameter;
-        
-        blend->addSimpleBlend(sBlend);
+        assert(eManager.hasFormula(ri->expressionId));
+        eManager.addLink(e.radius.get(), ri->expressionId);
       }
-      else //this is not new and has been edited
-      {
-        std::vector<ftr::SimpleBlend>::iterator it;
-        for (it = blend->getSimpleBlends().begin(); it != blend->getSimpleBlends().end(); ++it)
-        {
-          if (it->id == cItem->ftrId)
-            break;
-        }
-        assert(it != blend->getSimpleBlends().end()); //any non present ftr id should have nilId in item.
-        it->radius->setValue(cItem->radius);
-        //if it is already linked just remove it by default.
-        //we will add it back if needed
-        if (eManager.hasParameterLink(it->radius->getId()))
-          eManager.removeParameterLink(it->radius->getId());
-        if (!cItem->expressionLinkId.is_nil())
-        {
-          assert(eManager.hasFormula(cItem->expressionLinkId));
-          eManager.addLink(it->radius.get(), cItem->expressionLinkId);
-        }
-        it->picks.clear();
-        for (const auto &entry : cItem->picks)
-        {
-          ftr::Pick fPick = convert(entry);
-          it->picks.push_back(fPick);
-        }
-      }
-    }
-    else if(item->type() == VariableItem::itemType)
-    {
-      VariableItem *vItem = dynamic_cast<VariableItem*>(item);
-      assert(vItem);
       
-      ftr::Pick fPick = convert(vItem->pick);
-      if (vItem->ftrId.is_nil()) //new item even in edit mode.
-      {
-        ftr::VariableBlend blendCue = ftr::Blend::buildDefaultVariable
-        (
-          blendParent->getAnnex<ann::SeerShape>(ann::Type::SeerShape),
-          fPick,
-          app::instance()->getProject()->getShapeHistory()
-        );
-        
-        for (const auto &constraint : vItem->constraints)
-        {
-          //buildDefaultVariable builds 2 parameters. one at each end of the spine.
-          //we search already created parameters and match them against the vItem constraints
-          uuid constraintId = constraint.pickId;
-          auto it = blendCue.entries.begin();
-          for (; it != blendCue.entries.end(); ++it)
-          {
-            if (it->pick.id != constraintId)
-              continue;
-            it->radius->setValue(constraint.radius);
-            if (eManager.hasParameterLink(it->radius->getId()))
-              eManager.removeParameterLink(it->radius->getId());
-            if (!constraint.expressionLinkId.is_nil())
-            {
-              assert(eManager.hasFormula(constraint.expressionLinkId));
-              eManager.addLink(it->radius.get(), constraint.expressionLinkId);
-            }
-            break;
-          }
-          if(it == blendCue.entries.end())
-          {
-            //not a match so build another one.
-            ftr::VariableEntry entry;
-            entry.pick.id = constraint.pickId;
-            entry.pick.shapeHistory = app::instance()->getProject()->getShapeHistory().createDevolveHistory(entry.pick.id);
-            entry.radius = ftr::Blend::buildRadiusParameter();
-            entry.radius->setValue(constraint.radius);
-            if (!constraint.expressionLinkId.is_nil())
-            {
-              assert(eManager.hasFormula(constraint.expressionLinkId));
-              eManager.addLink(it->radius.get(), constraint.expressionLinkId);
-            }
-            entry.position = ftr::Blend::buildPositionParameter();
-            blendCue.entries.push_back(entry);
-          }
-        }
-        
-        blend->addVariableBlend(blendCue);
-      }
-      else //editing variable blend definition.
-      {
-        std::vector<ftr::VariableBlend> &ftrVBlends = blend->getVariableBlends();
-        std::vector<ftr::VariableBlend>::iterator it;
-        for (it = ftrVBlends.begin(); it != ftrVBlends.end(); ++it)
-        {
-          if (it->id == vItem->ftrId)
-            break;
-        }
-        assert(it != ftrVBlends.end()); //any non present ftr id should have nilId in item.
-        assert(it->pick.id == vItem->pick.pickId); //shouldn't be able to have a different pick.
-        
-        //build a set of all constraint picks. loop through feature constraints and
-        //remove any not present in the set.
-        std::set<uuid> itemConstraintIds;
-        for (const auto &entry : vItem->constraints)
-          itemConstraintIds.insert(entry.pickId);
-        std::vector<ftr::VariableEntry>::iterator vIt;
-        for (vIt = it->entries.begin(); vIt != it->entries.end();)
-        {
-          assert(itemConstraintIds.count(vIt->pick.id) < 2); //should be zero or 1.
-          if (itemConstraintIds.count(vIt->pick.id) == 0)
-          {
-            assert(vIt->label->getParents().size() == 1);
-            osg::Group *parent = vIt->label->getParent(0);
-            parent->removeChild(vIt->label); //remove label from scene graph.
-            vIt = it->entries.erase(vIt);
-          }
-          else
-            vIt++;
-        }
-        
-        for (const auto &itemEntry : vItem->constraints)
-        {
-          std::vector<ftr::VariableEntry>::iterator fEIt;
-          for (fEIt = it->entries.begin(); fEIt != it->entries.end(); ++fEIt)
-          {
-            if (fEIt->pick.id == itemEntry.pickId)
-              break;
-          }
-          if (fEIt == it->entries.end())
-          {
-            ftr::VariableEntry entry;
-            entry.pick.id = itemEntry.pickId;
-            entry.pick.shapeHistory = app::instance()->getProject()->getShapeHistory().createDevolveHistory(entry.pick.id);
-            entry.radius = ftr::Blend::buildRadiusParameter();
-            entry.radius->setValue(itemEntry.radius);
-            entry.radius->connectValue(boost::bind(&ftr::Blend::setModelDirty, blend));
-            if (!itemEntry.expressionLinkId.is_nil())
-            {
-              assert(eManager.hasFormula(itemEntry.expressionLinkId));
-              eManager.addLink(entry.radius.get(), itemEntry.expressionLinkId);
-            }
-            entry.position = ftr::Blend::buildPositionParameter();
-            entry.position->connectValue(boost::bind(&ftr::Blend::setModelDirty, blend));
-            entry.label = new lbr::PLabel(entry.radius.get());
-            entry.label->valueHasChanged();
-            blend->getOverlaySwitch()->addChild(entry.label.get());
-            it->entries.push_back(entry);
-          }
-          else
-          {
-            fEIt->radius->setValue(itemEntry.radius);
-            if (!itemEntry.expressionLinkId.is_nil())
-            {
-              assert(eManager.hasFormula(itemEntry.expressionLinkId));
-              eManager.addLink(fEIt->radius.get(), itemEntry.expressionLinkId);
-            }
-          }
-        }
-        
-      }
+      VariableWidget::IdItem *ii = dynamic_cast<VariableWidget::IdItem*>(vWidget->constraintTable->item(r, 1));
+      assert(ii);
+      e.pick = ii->pick;
+      
+      vBlend.entries.push_back(e);
     }
-    else
-      assert(0);//unrecognized item type
+    blend->addVariableBlend(vBlend);
   }
-}
-
-ftr::Pick Blend::convert(const BlendEntry &entryIn)
-{
-  assert(blendParent);
-  assert(blendParent->hasAnnex(ann::Type::SeerShape));
-  
-  ftr::Pick fPick;
-  fPick.id = entryIn.pickId;
-  fPick.shapeHistory = app::instance()->getProject()->getShapeHistory().createDevolveHistory(fPick.id);
-  const ann::SeerShape &sShape = blendParent->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
-  assert(sShape.hasShapeIdRecord(entryIn.pickId));
-  const TopoDS_Shape &shape = sShape.getOCCTShape(entryIn.pickId);
-  if (shape.ShapeType() == TopAbs_EDGE)
-    fPick.setParameter(TopoDS::Edge(shape), entryIn.pointLocation);
-  else if (shape.ShapeType() == TopAbs_FACE)
-    fPick.setParameter(TopoDS::Face(shape), entryIn.pointLocation);
-  else
-    assert(0); // unrecognized occt shape type.
-  
-  return fPick;
-}
-
-BlendEntry Blend::convert(const ftr::Pick &pickIn)
-{
-  BlendEntry entry;
-  entry.pickId = pickIn.id;
-  const ann::SeerShape &parentShape = blendParent->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
-  assert(parentShape.hasShapeIdRecord(pickIn.id));
-  const TopoDS_Shape &shape = parentShape.getOCCTShape(pickIn.id);
-  BRepFilletAPI_MakeFillet blendMaker(parentShape.getRootOCCTShape());
-  std::vector<uuid> contourIds;
-  if (shape.ShapeType() == TopAbs_VERTEX)
-  {
-    entry.typeString = tr("Vertex");
-    entry.pointLocation = gu::toOsg(TopoDS::Vertex(shape));
-    runningIds.insert(pickIn.id);
-  }
-  else if (shape.ShapeType() == TopAbs_EDGE)
-  {
-    entry.typeString = tr("Edge");
-    entry.pointLocation = pickIn.getPoint(TopoDS::Edge(shape));
-    
-    blendMaker.Add(TopoDS::Edge(shape));
-    assert(blendMaker.NbContours() == 1);
-    for (int index = 1; index <= blendMaker.NbEdges(1); ++index)
-    {
-      assert(parentShape.hasShapeIdRecord(blendMaker.Edge(1, index)));
-      contourIds.push_back(parentShape.findShapeIdRecord(blendMaker.Edge(1, index)).id);
-      runningIds.insert(contourIds.back());
-    }
-  }
-  else if (shape.ShapeType() == TopAbs_FACE)
-  {
-    entry.typeString = tr("Face");
-    entry.pointLocation = pickIn.getPoint(TopoDS::Face(shape));
-  }
-  else
-    assert(0); // unrecognized occt shape type.
-  
-  entry.highlightIds = contourIds;
-  return entry;
-}
-
-void Blend::addConstantBlendSlot()
-{
-  new ConstantItem(blendList);
-  blendList->item(blendList->count() - 1)->setSelected(true);
-}
-
-void Blend::addVariableBlendSlot()
-{
-  new VariableItem(blendList);
-  blendList->item(blendList->count() - 1)->setSelected(true);
-}
-
-void Blend::removeBlendSlot()
-{
-  constantTableWidget->clearSelection();
-  variableTableWidget->clearSelection();
-  observer->out(msg::Message(msg::Request | msg::Selection | msg::Clear));
-  
-  QList<QListWidgetItem*> selected = blendList->selectedItems();
-  assert(selected.size() == 1); //we have single selection enabled on control.
-  
-  //need to update runningIds.
-  QListWidgetItem *item = selected.front();
-  if (item->type() == ConstantItem::itemType)
-  {
-    ConstantItem *cItem = dynamic_cast<ConstantItem*>(item);
-    assert(cItem);
-    for (const auto &pick : cItem->picks)
-    {
-      for (const auto &id : pick.highlightIds)
-        runningIds.erase(id);
-    }
-  }
-  else if (item->type() == VariableItem::itemType)
-  {
-    VariableItem *vItem = dynamic_cast<VariableItem*>(item);
-    assert(vItem);
-    for (const auto &id : vItem->pick.highlightIds)
-      runningIds.erase(id);
-    for (const auto &blendEntry : vItem->constraints)
-    {
-      for (const auto &id : blendEntry.highlightIds)
-        runningIds.erase(id);
-    }
-  }
-  else
-    assert(0); //unrecognized item type.
-  
-  qDeleteAll(selected);
-}
-
-void Blend::blendListCurrentItemChangedSlot(const QItemSelection &current, const QItemSelection&)
-{
-  constantTableWidget->clearSelection();
-  variableTableWidget->clearSelection();
-  observer->out(msg::Message(msg::Request | msg::Selection | msg::Clear));
-  
-  if (current.indexes().isEmpty())
-  {
-    stackedWidget->hide();
-    observer->outBlocked(msg::buildSelectionMask(~slc::All));
-    return;
-  }
-  stackedWidget->show();
-  
-  //selection model set to single selection so only 1, the front.
-  QListWidgetItem *currentItem = blendList->item(current.indexes().front().row());
-  if (currentItem->type() == ConstantItem::itemType)
-  {
-    constantTableWidget->setRowCount(0);
-    ConstantItem *cItem = dynamic_cast<ConstantItem*>(currentItem);
-    assert(cItem);
-    fillInConstant(*cItem);
-    observer->outBlocked(msg::buildSelectionMask(~slc::All | slc::EdgesEnabled | slc::EdgesSelectable));
-    stackedWidget->setCurrentIndex(0);
-  }
-  else if(currentItem->type() == VariableItem::itemType)
-  {
-    variableTableWidget->setRowCount(0);
-    VariableItem *vItem = dynamic_cast<VariableItem*>(currentItem);
-    assert(vItem);
-    fillInVariable(*vItem);
-    if (vItem->pick.pickId.is_nil())
-    {
-      observer->outBlocked(msg::buildSelectionMask(~slc::All | slc::EdgesEnabled | slc::EdgesSelectable));
-    }
-    else
-    {
-      observer->outBlocked(msg::buildSelectionMask
-        (~slc::All | slc::PointsEnabled | slc::PointsSelectable |
-        slc::EndPointsEnabled | slc::EndPointsSelectable));
-    }
-    //enable selection of edges if no edge picked, else end points.
-    stackedWidget->setCurrentIndex(1);
-  }
-  else
-    assert(0); //unrecognized item type.
-}
-
-void Blend::fillInConstant(const ConstantItem &itemIn)
-{
-  if (itemIn.expressionLinkId.is_nil())
-  {
-    constantRadiusEdit->lineEdit->setText(QString::number(itemIn.radius, 'f', 12));
-    constantRadiusEdit->lineEdit->setReadOnly(false);
-    constantRadiusEdit->lineEdit->selectAll();
-    constantRadiusEdit->lineEdit->setFocus();
-    constantRadiusEdit->trafficLabel->setTrafficGreenSlot();
-  }
-  else
-  {
-    const expr::Manager &eManager = static_cast<app::Application *>(qApp)->getProject()->getManager();
-    assert(eManager.hasFormula(itemIn.expressionLinkId));
-    constantRadiusEdit->lineEdit->setText
-      (QString::fromStdString(eManager.getFormulaName(itemIn.expressionLinkId)));
-    constantRadiusEdit->lineEdit->setReadOnly(true);
-    constantRadiusEdit->trafficLabel->setLinkSlot();
-  }
-  for (const auto &entry : itemIn.picks)
-  {
-    QTableWidgetItem *work = nullptr;
-    
-    int row = constantTableWidget->rowCount();
-    constantTableWidget->insertRow(row);
-    
-    work = new QTableWidgetItem(entry.typeString);
-    work->setFlags(work->flags() & ~Qt::ItemIsEditable);
-    constantTableWidget->setItem(row, 0, work);
-    
-    work = new QTableWidgetItem(QString::fromStdString(gu::idToString(entry.pickId)));
-    work->setFlags(work->flags() & ~Qt::ItemIsEditable);
-    constantTableWidget->setItem(row, 1, work);
-    
-    for (const auto &highlight : entry.highlightIds)
-      addToSelection(highlight);
-  }
-}
-
-void Blend::fillInVariable(const VariableItem &itemIn)
-{
-  for (const auto &constraint : itemIn.constraints)
-  {
-    if (constraint.expressionLinkId.is_nil())
-    {
-      QString radiusString = QString::number(constraint.radius, 'f', 12);
-      addVariableTableItem(radiusString, constraint.typeString, constraint.pickId);
-    }
-    else
-    {
-      const expr::Manager &eManager = static_cast<app::Application *>(qApp)->getProject()->getManager();
-      assert(eManager.hasFormula(constraint.expressionLinkId));
-      QString radiusString = QString::fromStdString(eManager.getFormulaName(constraint.expressionLinkId));
-      QTableWidgetItem *radiusItem = addVariableTableItem(radiusString, constraint.typeString, constraint.pickId);
-      radiusItem->setData(Qt::UserRole, true); //used by delegate to check for linking.
-    }
-  }
-  
-  for (const auto &highlight : itemIn.pick.highlightIds)
-    addToSelection(highlight);
 }
 
 void Blend::addToSelection(const boost::uuids::uuid &shapeIdIn)
@@ -778,130 +642,6 @@ void Blend::addToSelection(const boost::uuids::uuid &shapeIdIn)
   observer->outBlocked(freshMMessage);
 }
 
-void Blend::constantRadiusEditingFinishedSlot()
-{
-  QList<QListWidgetItem*> items = blendList->selectedItems();
-  assert(items.size() == 1);
-  assert(items.front()->type() == ConstantItem::itemType);
-  ConstantItem *cItem = dynamic_cast<ConstantItem*>(items.front());
-  assert(cItem);
-  
-  //parameter is linked to expression we shouldn't need to do anything.
-  if (!cItem->expressionLinkId.is_nil())
-    return;
-  
-  expr::Manager localManager;
-  expr::StringTranslator translator(localManager);
-  std::string formula("temp = ");
-  formula += constantRadiusEdit->lineEdit->text().toStdString();
-  if (translator.parseString(formula) == expr::StringTranslator::ParseSucceeded)
-  {
-    localManager.update();
-    assert(localManager.getFormulaValueType(translator.getFormulaOutId()) == expr::ValueType::Scalar);
-    double value = boost::get<double>(localManager.getFormulaValue(translator.getFormulaOutId()));
-    if (!(value > 0.0))
-      observer->out(msg::buildStatusMessage(QObject::tr("Need positive radei").toStdString()));
-    else
-      cItem->radius = value;
-  }
-  else
-  {
-    observer->out(msg::buildStatusMessage(QObject::tr("Parsing failed").toStdString()));
-  }
-  
-  constantRadiusEdit->lineEdit->setText(QString::number(cItem->radius, 'f', 12));
-  constantRadiusEdit->lineEdit->selectAll();
-  constantRadiusEdit->trafficLabel->setTrafficGreenSlot();
-}
-
-void Blend::constantRadiusEditedSlot(const QString &textIn)
-{
-  constantRadiusEdit->trafficLabel->setTrafficYellowSlot();
-  qApp->processEvents(); //need this or we never see yellow signal.
-  
-  expr::Manager localManager;
-  expr::StringTranslator translator(localManager);
-  std::string formula("temp = ");
-  formula += textIn.toStdString();
-  if (translator.parseString(formula) == expr::StringTranslator::ParseSucceeded)
-  {
-    localManager.update();
-    constantRadiusEdit->trafficLabel->setTrafficGreenSlot();
-    assert(localManager.getFormulaValueType(translator.getFormulaOutId()) == expr::ValueType::Scalar);
-    double value = boost::get<double>(localManager.getFormulaValue(translator.getFormulaOutId()));
-    constantRadiusEdit->goToolTipSlot(QString::number(value));
-  }
-  else
-  {
-    constantRadiusEdit->trafficLabel->setTrafficRedSlot();
-    int position = translator.getFailedPosition() - 8; // 7 chars for 'temp = ' + 1
-    constantRadiusEdit->goToolTipSlot(textIn.left(position) + "?");
-  }
-}
-
-void Blend::constantTableSelectionChangedSlot(const QItemSelection &current, const QItemSelection&)
-{
-  if (current.indexes().isEmpty())
-    return;
-  
-  //table is set to single selection.
-  QModelIndex index = constantTableWidget->model()->index(current.indexes().front().row(), 1);
-  assert(index.isValid());
-  uuid pickId = gu::stringToId(constantTableWidget->model()->data(index).toString().toStdString());
-  
-  assert(blendList->selectedItems().size() == 1);
-  ConstantItem *cItem = dynamic_cast<ConstantItem*>(blendList->selectedItems().front());
-  assert(cItem);
-  
-  observer->outBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
-  
-  for (const auto &pick : cItem->picks)
-  {
-    if (pick.pickId != pickId)
-      continue;
-    for (const auto &highlight : pick.highlightIds)
-      addToSelection(highlight);
-  }
-}
-
-void Blend::constantTableRemoveSlot()
-{
-  QModelIndexList selection = constantTableWidget->selectionModel()->selectedIndexes();
-  if (selection.isEmpty())
-  {
-    observer->out(msg::buildStatusMessage("Nothing selected to remove"));
-    return;
-  }
-  
-  //single selection so only 1.
-  QModelIndex index = constantTableWidget->model()->index(selection.front().row(), 1);
-  uuid pickId = gu::stringToId(constantTableWidget->model()->data(index).toString().toStdString());
-  constantTableWidget->removeRow(index.row());
-  constantTableWidget->clearSelection();
-  observer->outBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
-  
-  ConstantItem *cItem = dynamic_cast<ConstantItem*>(blendList->selectedItems().front());
-  assert(cItem);
-  std::vector<BlendEntry>::iterator eraseMe = cItem->picks.end();
-  for (auto it = cItem->picks.begin(); it < cItem->picks.end(); ++it)
-  {
-    if (it->pickId == pickId)
-    {
-      eraseMe = it;
-      continue;
-    }
-    for (const auto &highlight : it->highlightIds)
-      addToSelection(highlight);
-  }
-  assert(eraseMe != cItem->picks.end());
-  
-  //remove ids from runningIds.
-  for (const auto &highlightId : eraseMe->highlightIds)
-    runningIds.erase(highlightId);
-  
-  cItem->picks.erase(eraseMe);
-}
-
 void Blend::setupDispatcher()
 {
   msg::Mask mask;
@@ -913,15 +653,6 @@ void Blend::setupDispatcher()
 
 void Blend::selectionAdditionDispatched(const msg::Message &messageIn)
 {
-  //dont accept selection if nothing is selected in the blend list
-  QList<QListWidgetItem *> items = blendList->selectedItems();
-  if(items.isEmpty())
-  {
-    observer->out(msg::buildStatusMessage("Add and/or select blend from dialog"));
-    observer->outBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
-    return;
-  }
-  
   const slc::Message &sMessage = boost::get<slc::Message>(messageIn.payload);
   if (!blendParent)
   {
@@ -931,7 +662,7 @@ void Blend::selectionAdditionDispatched(const msg::Message &messageIn)
     assert(blendParent);
     if (!blendParent->hasAnnex(ann::Type::SeerShape))
     {
-      observer->out(msg::buildStatusMessage("Invalid object to blend"));
+      observer->out(msg::buildStatusMessage("Invalid object to blend", 2.0));
       observer->outBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
       return;
     }
@@ -939,553 +670,282 @@ void Blend::selectionAdditionDispatched(const msg::Message &messageIn)
   
   if (blendParent->getId() != sMessage.featureId)
   {
-    observer->out(msg::buildStatusMessage("Can't tie blend feature to multiple bodies"));
+    observer->out(msg::buildStatusMessage("Can't tie blend feature to multiple bodies", 2.0));
     observer->outBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
     return;
   }
   
-  //build a vector of all edges that will be blended and add to highlight.
-  std::vector<uuid> contourIds;
   const ann::SeerShape &parentShape = blendParent->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
-  BRepFilletAPI_MakeFillet blendMaker(parentShape.getRootOCCTShape());
-  if (sMessage.type == slc::Type::Edge)
-  {
-    blendMaker.Add(TopoDS::Edge(parentShape.getOCCTShape(sMessage.shapeId)));
-    assert(blendMaker.NbContours() == 1);
-    for (int index = 1; index <= blendMaker.NbEdges(1); ++index)
-    {
-      assert(parentShape.hasShapeIdRecord(blendMaker.Edge(1, index)));
-      contourIds.push_back(parentShape.findShapeIdRecord(blendMaker.Edge(1, index)).id);
-      if (runningIds.count(contourIds.back()) != 0)
-      {
-        auto block = observer->createBlocker();
-        observer->out(msg::Message(msg::Request | msg::Selection | msg::Clear));
-        observer->out(msg::buildStatusMessage("Blend contour overlaps other contour"));
-        return;
-      }
-    }
-    for (const auto &contourId : contourIds)
-    {
-      runningIds.insert(contourId);
-      addToSelection(contourId);
-    }
-  }
   
-  //selection model set to single selection so only 1, the front.
-  QListWidgetItem *currentItem = items.front();
-  if (currentItem->type() == ConstantItem::itemType)
+  auto buildEdgePick = [&]() -> ftr::Pick
   {
-    ConstantItem *cItem = dynamic_cast<ConstantItem*>(currentItem);
-    assert(cItem);
+    assert(parentShape.hasShapeIdRecord(sMessage.shapeId));
     assert(sMessage.type == slc::Type::Edge);
     
-    BlendEntry fresh(sMessage);
-    fresh.highlightIds = contourIds;
-    cItem->picks.push_back(fresh);
+    ftr::Pick out = tls::convertToPick(sMessage, parentShape);
+    out.shapeHistory = app::instance()->getProject()->getShapeHistory().createDevolveHistory(sMessage.shapeId);
+    out.highlightIds = getContourIds(parentShape, sMessage.shapeId);
     
-    //add the row to the constant table.
-    QTableWidgetItem *work = nullptr;
-    
-    int row = constantTableWidget->rowCount();
-    constantTableWidget->insertRow(row);
-    
-    work = new QTableWidgetItem(fresh.typeString);
-    work->setFlags(work->flags() & ~Qt::ItemIsEditable);
-    constantTableWidget->setItem(row, 0, work);
-    
-    work = new QTableWidgetItem(QString::fromStdString(gu::idToString(fresh.pickId)));
-    work->setFlags(work->flags() & ~Qt::ItemIsEditable);
-    constantTableWidget->setItem(row, 1, work);
-  }
-  else if(currentItem->type() == VariableItem::itemType)
+    return out;
+  };
+  
+  auto buildVertexPick = [&]() -> ftr::Pick
   {
-    VariableItem *vItem = dynamic_cast<VariableItem*>(currentItem);
-    assert(vItem);
+    assert(parentShape.hasShapeIdRecord(sMessage.shapeId));
+    assert(slc::isPointType(sMessage.type));
     
-    if (vItem->pick.pickId.is_nil())
+    ftr::Pick out = tls::convertToPick(sMessage, parentShape);
+    out.shapeHistory = app::instance()->getProject()->getShapeHistory().createDevolveHistory(out.id);
+    
+    return out;
+  };
+ 
+  if (typeCombo->currentIndex() == 0) //constant
+  {
+    auto *sm = cView->selectionModel();
+    //we should have ensured that we have something selected before here.
+    assert(sm->hasSelection());
+    QModelIndex s = cView->selectionModel()->selectedRows(0).front();
+    assert(s.isValid());
+    SimpleBlendItem *sbi = dynamic_cast<SimpleBlendItem*>(cModel->itemFromIndex(s));
+    assert(sbi);
+    ftr::Pick pick = buildEdgePick();
+    if (pick.highlightIds.empty()) //means invalid edge to blend
     {
-      assert(sMessage.type == slc::Type::Edge);
-      
-      vItem->pick.pickId = sMessage.shapeId;
-      vItem->pick.typeString = QString::fromStdString(slc::getNameOfType(sMessage.type));
-      vItem->pick.highlightIds = contourIds;
-      
-      TopoDS_Vertex firstVertex = blendMaker.FirstVertex(1);
-      assert(parentShape.hasShapeIdRecord(firstVertex));
-      uuid firstId = parentShape.findShapeIdRecord(firstVertex).id;
-      BlendEntry firstEntry;
-      firstEntry.radius = prf::manager().rootPtr->features().blend().get().radius();
-      firstEntry.typeString = tr("Vertex");
-      firstEntry.pickId = firstId;
-      firstEntry.pointLocation = gu::toOsg(TopoDS::Vertex(parentShape.getOCCTShape(firstId)));
-      vItem->constraints.push_back(firstEntry);
-      addVariableTableItem(QString::number(firstEntry.radius, 'f', 12), firstEntry.typeString, firstEntry.pickId);
-      runningIds.insert(firstId);
-      
-      TopoDS_Vertex lastVertex = blendMaker.LastVertex(1);
-      assert(parentShape.hasShapeIdRecord(lastVertex));
-      uuid lastId = parentShape.findShapeIdRecord(lastVertex).id;
-      BlendEntry lastEntry;
-      lastEntry.radius = prf::manager().rootPtr->features().blend().get().radius();
-      lastEntry.typeString = tr("Vertex");
-      lastEntry.pickId = lastId;
-      lastEntry.pointLocation = gu::toOsg(TopoDS::Vertex(parentShape.getOCCTShape(lastId)));
-      vItem->constraints.push_back(lastEntry);
-      addVariableTableItem(QString::number(lastEntry.radius, 'f', 12), lastEntry.typeString, lastEntry.pickId);
-      runningIds.insert(lastId);
-
-      observer->outBlocked(msg::buildSelectionMask
-        (~slc::All | slc::PointsEnabled | slc::PointsSelectable |
-        slc::EndPointsEnabled | slc::EndPointsSelectable));
+      observer->outBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+      observer->outBlocked(msg::buildStatusMessage("Invalid edge for blend", 2.0));
+      return;
     }
-    else
+    for (const auto &id : pick.highlightIds)
+      addToSelection(id);
+//     sbi->setChild(sbi->rowCount(), 1, new PickItem(pick)); //causes headerview to grow. bug?
+    QList<QStandardItem *> freshItems;
+    freshItems << new QStandardItem() << new PickItem(pick);
+    sbi->appendRow(freshItems);
+    if (!cView->isExpanded(s))
+      cView->expand(s);
+  }
+  else if (typeCombo->currentIndex() == 1) //variable
+  {
+    if (sMessage.type == slc::Type::Edge)
     {
-      double radius = prf::manager().rootPtr->features().blend().get().radius();
-      if (!vItem->constraints.empty())
-        radius = vItem->constraints.back().radius;
+      VariableWidget::ListItem *ni = vWidget->addContour(buildEdgePick());
+      if (!ni)
+      {
+        observer->outBlocked(msg::buildStatusMessage("Failed to add contour edge", 2.0));
+        app::instance()->queuedMessage(msg::Message(msg::Request | msg::Selection | msg::Remove, sMessage));
+      }
+      QTimer::singleShot(0, [this, ni]() {this->vWidget->contourList->setCurrentItem(ni);});
       
-      uuid point;
-      if (sMessage.type == slc::Type::StartPoint)
-        point = parentShape.useGetStartVertex(sMessage.shapeId);
-      else if (sMessage.type == slc::Type::EndPoint)
-        point = parentShape.useGetEndVertex(sMessage.shapeId);
+      //add first and last vertex.
+      BRepFilletAPI_MakeFillet blendMaker(parentShape.getRootOCCTShape());
+      assert(parentShape.hasShapeIdRecord(ni->pick.id));
+      blendMaker.Add(TopoDS::Edge(parentShape.getOCCTShape(ni->pick.id)));
+      if (blendMaker.NbContours() != 1)
+      {
+        std::cout << "WARNING: unexpected number of contours in: " << BOOST_CURRENT_FUNCTION << std::endl;
+        return;
+      }
+      TopoDS_Vertex fv = blendMaker.FirstVertex(1);
+      assert(parentShape.hasShapeIdRecord(fv));
+      uuid fId = parentShape.findShapeIdRecord(fv).id;
+      TopoDS_Vertex lv = blendMaker.LastVertex(1);
+      assert(parentShape.hasShapeIdRecord(lv));
+      uuid lId = parentShape.findShapeIdRecord(lv).id;
+      
+      auto constructPick = [&](const uuid &idIn) -> ftr::Pick
+      {
+        ftr::Pick out(idIn, 0.0, 0.0);
+        out.selectionType = slc::Type::EndPoint;
+        out.shapeHistory = app::instance()->getProject()->getShapeHistory().createDevolveHistory(idIn);
+        out.highlightIds.push_back(idIn);
+        out.resolvedIds.push_back(idIn);
+        return out;
+      };
+      
+      vWidget->addConstraint(ftr::Blend::buildRadiusParameter(), constructPick(fId));
+      vWidget->addConstraint(ftr::Blend::buildRadiusParameter(), constructPick(lId));
+    }
+    else //point, just vertices right now.
+    {
+      ftr::Pick vp = buildVertexPick();
+      if (vp.id.is_nil())
+      {
+        observer->outBlocked(msg::buildStatusMessage("Invalid vertex selection", 2.0));
+        app::instance()->queuedMessage(msg::Message(msg::Request | msg::Selection | msg::Remove, sMessage));
+        return;
+      }
+      
+      auto isVertexValid = [&]() -> bool
+      {
+        for (auto ci : vWidget->getContourItems())
+        {
+          BRepFilletAPI_MakeFillet blendMaker(parentShape.getRootOCCTShape());
+          int contourIndex = 1; //contour index
+          for (const auto rid : ci->pick.resolvedIds)
+          {
+            assert(parentShape.hasShapeIdRecord(rid));
+            blendMaker.Add(TopoDS::Edge(parentShape.getOCCTShape(rid)));
+            if (blendMaker.NbContours() != contourIndex)
+            {
+              std::cout << "WARNING: failed to add contour to test vertex. in: " << BOOST_CURRENT_FUNCTION << std::endl;
+              continue;
+            }
+            if (vp.selectionType == slc::Type::StartPoint || vp.selectionType == slc::Type::EndPoint)
+            {
+              double p = blendMaker.RelativeAbscissa(contourIndex, TopoDS::Vertex(parentShape.getOCCTShape(vp.id)));
+              if (!(p < 0.0))
+                return true;
+            }
+            else
+            {
+              //here we have some point and just make sure referring edge is on contour.
+              for (int ei = 1; ei < blendMaker.NbEdges(contourIndex) + 1; ++ei)
+              {
+                if (parentShape.findShapeIdRecord(blendMaker.Edge(contourIndex, ei)).id == vp.resolvedIds.front())
+                  return true;
+              }
+            }
+            contourIndex++;
+          }
+        }
+        return false;
+      };
+      
+      if (isVertexValid())
+      {
+        if (!vWidget->addConstraint(ftr::Blend::buildRadiusParameter(), vp))
+          observer->outBlocked(msg::buildStatusMessage("Point rejected", 2.0));
+        else
+          observer->outBlocked(msg::buildStatusMessage("Point added", 2.0));
+      }
       else
-        assert(0); //unrecognized selection type.
-        
-      if (runningIds.count(point) > 0)
       {
-        msg::Message out = messageIn;
-        out.mask = msg::Request | msg::Selection | msg::Remove;
-        auto block = observer->createBlocker();
-        observer->out(out);
-        observer->out(msg::buildStatusMessage("Point already defined"));
-        return;
+        observer->outBlocked(msg::buildStatusMessage("Point not on contours", 2.0));
       }
-      
-      //make sure vertex is on contour.
-      std::set<uuid> contourVertices;
-      for (const auto &highlight : vItem->pick.highlightIds)
-      {
-        auto edgeVertices = blendParent->getAnnex<ann::SeerShape>(ann::Type::SeerShape).useGetChildrenOfType(highlight, TopAbs_VERTEX);
-        assert(edgeVertices.size() == 2);
-        contourVertices.insert(edgeVertices.front());
-        contourVertices.insert(edgeVertices.back());
-      }
-      if (contourVertices.count(point) != 1)
-      {
-        msg::Message out = messageIn;
-        out.mask = msg::Request | msg::Selection | msg::Remove;
-        auto block = observer->createBlocker();
-        observer->out(out);
-        observer->out(msg::buildStatusMessage("Point not on contour"));
-        return;
-      }
-      
-      //add another constraint.
-      BlendEntry fresh;
-      fresh.pickId = point;
-      fresh.radius = radius;
-      fresh.typeString = tr("Vertex");
-      fresh.pointLocation = gu::toOsg(TopoDS::Vertex(parentShape.getOCCTShape(point)));
-      vItem->constraints.push_back(fresh);
-      addVariableTableItem(QString::number(fresh.radius, 'f', 12), fresh.typeString, fresh.pickId);
-      runningIds.insert(point);
-      
-      variableTableWidget->selectionModel()->clearSelection();
-      auto block = observer->createBlocker();
-      observer->out(msg::Message(msg::Request | msg::Selection | msg::Clear));
-      
-      //we just came from the 3d view, so in order for dialog to get
-      //keyboard input we need to activate.
-      variableTableWidget->activateWindow();
-      
-      variableTableWidget->selectRow(variableTableWidget->rowCount() - 1);
-      QTableWidgetItem *item = variableTableWidget->item(variableTableWidget->rowCount() - 1, 0);
-      variableTableWidget->setCurrentItem(item);
-      variableTableWidget->editItem(item);
-      
-      observer->out(msg::buildStatusMessage("New vertex added. Set radius"));
+      app::instance()->queuedMessage(msg::Message(msg::Request | msg::Selection | msg::Remove, sMessage));
     }
   }
 }
 
-QTableWidgetItem* Blend::addVariableTableItem(const QString &radius, const QString &typeIn, const uuid &idIn)
+void Blend::cUnlink()
 {
-  QTableWidgetItem *work = nullptr;
-  
-  int row = variableTableWidget->rowCount();
-  variableTableWidget->insertRow(row);
-  
-  //have to set the id first so when we set the radius and it triggers
-  //item changed call back, the id is valid. just do in reverse then so
-  //everything is set by the time the call back is called.
-  work = new QTableWidgetItem(QString::fromStdString(gu::idToString(idIn))); 
-  work->setFlags(work->flags() & ~Qt::ItemIsEditable & ~Qt::ItemIsDropEnabled);
-  variableTableWidget->setItem(row, 2, work);
-  
-  work = new QTableWidgetItem(typeIn); 
-  work->setFlags(work->flags() & ~Qt::ItemIsEditable & ~Qt::ItemIsDropEnabled);
-  variableTableWidget->setItem(row, 1, work);
-  
-  work = new QTableWidgetItem(radius);
-  work->setFlags(work->flags() | Qt::ItemIsDropEnabled);
-  variableTableWidget->setItem(row, 0, work);
-  
-  return work;
-}
-
-void Blend::variableTableSelectionChangedSlot(const QItemSelection &current, const QItemSelection&)
-{
-  if (current.indexes().isEmpty())
+  //actual linking/unlinking happen in accepted dialog
+  QModelIndexList ss = cView->selectionModel()->selectedIndexes();
+  if (ss.isEmpty() || (!ss.front().isValid()))
+  {
+    observer->outBlocked(msg::buildStatusMessage("Nothing selected to unlink.", 2.0));
     return;
+  }
   
-  auto block = observer->createBlocker();
-  observer->out(msg::Message(msg::Request | msg::Selection | msg::Clear));
-  
-  QModelIndex index = variableTableWidget->model()->index(current.indexes().front().row(), 2);
-  assert(index.isValid());
-  uuid pickId = gu::stringToId(variableTableWidget->model()->data(index).toString().toStdString());
-  
-  const ann::SeerShape &parentShape = blendParent->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
-  std::vector<uuid> parentEdges = parentShape.useGetParentsOfType(pickId, TopAbs_EDGE);
-  assert(!parentEdges.empty());
-  uuid parentEdge = parentEdges.front();
-  slc::Type selectionType = slc::Type::None;
-  if (parentShape.useGetStartVertex(parentEdge) == pickId)
-    selectionType = slc::Type::StartPoint;
-  else if(parentShape.useGetEndVertex(parentEdge) == pickId)
-    selectionType = slc::Type::EndPoint;
+  QModelIndex root = ss.front();
+  if (root.parent() != QModelIndex())
+    root = root.parent();
+  assert(root.parent() == QModelIndex());
+
+  SimpleBlendItem *sbi = dynamic_cast<SimpleBlendItem*>(cModel->itemFromIndex(root));
+  assert(sbi);
+  if (!sbi->radius->isConstant())
+  {
+    sbi->radius->setConstant(true);
+    sbi->update();
+  }
   else
-  {
-    assert(0);//mis matched edge to pick relationship.
-    throw std::runtime_error("mis matched edge to pick relationship in Blend::variableTableSelectionChangedSlot");
-  }
-    
-  // highlight.
-  msg::Message freshMMessage(msg::Request | msg::Selection | msg::Add);
-  slc::Message freshSMessage;
-  freshSMessage.type = selectionType;
-  freshSMessage.featureId = blendParent->getId();
-  freshSMessage.featureType = blendParent->getType();
-  freshSMessage.shapeId = parentEdge;
-  freshSMessage.pointLocation = gu::toOsg(TopoDS::Vertex(parentShape.getOCCTShape(pickId)));
-  freshMMessage.payload = freshSMessage;
-  observer->out(freshMMessage);
+    observer->outBlocked(msg::buildStatusMessage("Not linked.", 2.0));
 }
 
-void Blend::variableTableItemChangedSlot(QTableWidgetItem *item)
+void Blend::cLink(QModelIndex index, const QString &idIn)
 {
-  int row = variableTableWidget->row(item);
-  int column = variableTableWidget->column(item);
-  
-  //even though only the radius is editable we still get here
-  //when we set the other columns programmatically.
-  if (column != 0)
-    return;
-  
-  QModelIndex index = variableTableWidget->model()->index(row, 2);
-  assert(index.isValid());
-  uuid pickId = gu::stringToId(variableTableWidget->model()->data(index).toString().toStdString());
-  
-  QList<QListWidgetItem *> blendItems = blendList->selectedItems();
-  assert(blendItems.size() == 1);
-  VariableItem *vItem = dynamic_cast<VariableItem *>(blendItems.front());
-  assert(vItem);
-  for (auto &constraint : vItem->constraints)
-  {
-    if (constraint.pickId != pickId)
-      continue;
-    double temp = item->data(Qt::DisplayRole).toDouble();
-    if (temp >= 0.0)
-      constraint.radius = temp;
-    else
-    {
-      observer->out(msg::buildStatusMessage("No negative radei"));
-      item->setData(Qt::DisplayRole, QString::number(constraint.radius, 'f', 12));
-    }
-    
-    break;
-  }
-}
-
-void Blend::variableTableRemoveSlot()
-{
-  QModelIndexList selection = variableTableWidget->selectionModel()->selectedIndexes();
-  if (selection.isEmpty())
-  {
-    observer->out(msg::buildStatusMessage("Nothing selected to remove"));
-    return;
-  }
-  
-  //the first 2 entries are the start and finish vertex of the contour.
-  //these must be present so don't remove.
-  if (selection.front().row() < 2)
-  {
-    observer->out(msg::buildStatusMessage("Can't remove start or finish vertices"));
-    return;
-  }
-  
-  //single selection so only 1.
-  QModelIndex index = variableTableWidget->model()->index(selection.front().row(), 2);
-  uuid pickId = gu::stringToId(variableTableWidget->model()->data(index).toString().toStdString());
-  variableTableWidget->removeRow(index.row());
-  variableTableWidget->clearSelection();
-  observer->outBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
-  
-  VariableItem *vItem = dynamic_cast<VariableItem*>(blendList->selectedItems().front());
-  assert(vItem);
-  std::vector<BlendEntry>::iterator eraseMe = vItem->constraints.end();
-  for (auto it = vItem->constraints.begin(); it < vItem->constraints.end(); ++it)
-  {
-    if (it->pickId == pickId)
-    {
-      eraseMe = it;
-      break;
-    }
-  }
-  assert(eraseMe != vItem->constraints.end());
-  
-  for (const auto &highlightId : eraseMe->highlightIds)
-    runningIds.erase(highlightId);
-  
-  vItem->constraints.erase(eraseMe);
-  
-  observer->out(msg::buildStatusMessage("Vertex removed."));
-}
-
-void Blend::requestConstantLinkSlot(const QString &stringIn)
-{
-  boost::uuids::uuid formulaId = gu::stringToId(stringIn.toStdString());
-  assert(!formulaId.is_nil());
-  expr::Manager &eManager = static_cast<app::Application *>(qApp)->getProject()->getManager();
-  assert(eManager.hasFormula(formulaId));
-  
-  ConstantItem *cItem = dynamic_cast<ConstantItem*>(blendList->selectedItems().front());
-  assert(cItem);
-  cItem->expressionLinkId = formulaId;
-  
-  constantRadiusEdit->lineEdit->setText
-    (QString::fromStdString(eManager.getFormulaName(formulaId)));
-  constantRadiusEdit->lineEdit->setReadOnly(true);
-  constantRadiusEdit->trafficLabel->setLinkSlot();
-  
-  this->activateWindow();
-}
-
-void Blend::requestConstantUnlinkSlot()
-{
-  expr::Manager &eManager = static_cast<app::Application *>(qApp)->getProject()->getManager();
-  
-  ConstantItem *cItem = dynamic_cast<ConstantItem*>(blendList->selectedItems().front());
-  assert(cItem);
-  assert(!cItem->expressionLinkId.is_nil());
-  assert(eManager.hasFormula(cItem->expressionLinkId));
-  assert(eManager.getFormulaValueType(cItem->expressionLinkId) == expr::ValueType::Scalar);
-  
-  constantRadiusEdit->trafficLabel->setTrafficGreenSlot();
-  constantRadiusEdit->lineEdit->setReadOnly(false);
-  constantRadiusEdit->lineEdit->setFocus();
-  constantRadiusEdit->lineEdit->setText(QString::number(
-    boost::get<double>(eManager.getFormulaValue(cItem->expressionLinkId)), 'f', 12));
-  constantRadiusEdit->lineEdit->selectAll();
-  
-  cItem->expressionLinkId = gu::createNilId();
-}
-
-void Blend::requestVariableLinkSlot(QTableWidgetItem *item, const QString &idIn)
-{
+  //actual linking/unlinking happen in accepted dialog
   uuid expressionId = gu::stringToId(idIn.toStdString());
   assert(!expressionId.is_nil());
-  expr::Manager &eManager = static_cast<app::Application *>(qApp)->getProject()->getManager();
+  expr::Manager &eManager = app::instance()->getProject()->getManager();
   assert(eManager.hasFormula(expressionId));
   assert(eManager.getFormulaValueType(expressionId) == expr::ValueType::Scalar);
+  
   if (!(boost::get<double>(eManager.getFormulaValue(expressionId)) > 0.0))
   {
-    observer->out(msg::buildStatusMessage("No negative radei"));
+    observer->out(msg::buildStatusMessage("No negative radei", 2.0));
     return;
   }
   
-  int row = variableTableWidget->row(item);
-  int column = variableTableWidget->column(item);
-  assert(column == 0); //always radius column;
-  if (column != 0)
-    throw std::runtime_error("wrong column in Blend::requestVariableLinkSlot");
-  
-  QModelIndex index = variableTableWidget->model()->index(row, 2);
-  assert(index.isValid());
-  uuid pickId = gu::stringToId(variableTableWidget->model()->data(index).toString().toStdString());
-  
-  QList<QListWidgetItem *> blendItems = blendList->selectedItems();
-  assert(blendItems.size() == 1);
-  VariableItem *vItem = dynamic_cast<VariableItem *>(blendItems.front());
-  assert(vItem);
-  for (auto &constraint : vItem->constraints)
-  {
-    if (constraint.pickId != pickId)
-      continue;
-    constraint.expressionLinkId = expressionId;
-    item->setText(QString::fromStdString(eManager.getFormulaName(expressionId)));
-    item->setData(Qt::UserRole, true); //used by delegate to check for linking.
-    break;
-  }
-}
-
-void Blend::requestVariableUnlinkSlot()
-{
-  QList<QListWidgetItem*> selected = blendList->selectedItems();
-  assert(selected.size() == 1); //we have single selection enabled on control.
-  VariableItem *vItem = dynamic_cast<VariableItem*>(selected.front());
-  assert(vItem);
-  
-  QModelIndexList vSelection = variableTableWidget->selectionModel()->selectedIndexes();
-  assert(!vSelection.isEmpty());
-  QModelIndex idIndex = variableTableWidget->model()->index(vSelection.front().row(), 2);
-  assert(idIndex.isValid());
-  uuid pickId = gu::stringToId(variableTableWidget->model()->data(idIndex).toString().toStdString());
-  assert(!pickId.is_nil());
-  
-  expr::Manager &eManager = static_cast<app::Application *>(qApp)->getProject()->getManager();
-  
-  for (auto &constraint : vItem->constraints)
-  {
-    if (constraint.pickId != pickId)
-      continue;
-    
-    assert(eManager.hasFormula(constraint.expressionLinkId));
-    assert(eManager.getFormulaValueType(constraint.expressionLinkId) == expr::ValueType::Scalar);
-    double value = boost::get<double>(eManager.getFormulaValue(constraint.expressionLinkId));
-    QTableWidgetItem *item = variableTableWidget->item(vSelection.front().row(), 0);
-    assert(item);
-    item->setText(QString::number(value, 'f', 12));
-    item->setData(Qt::UserRole, false); //used by delegate to check for linking.
-    constraint.expressionLinkId = gu::createNilId();
-    break;
-  }
+  SimpleBlendItem *sbi = dynamic_cast<SimpleBlendItem*>(cModel->itemFromIndex(index));
+  assert(sbi);
+  sbi->radius->setConstant(false);
+  sbi->expressionId = expressionId;
+  sbi->expressionName = eManager.getFormulaName(expressionId);
+  sbi->radius->setValue(boost::get<double>(eManager.getFormulaValue(expressionId)));
+  sbi->update();
 }
 
 void Blend::buildGui()
 {
-  //constant radius.
-  QLabel *constantRadiusLabel = new QLabel(tr("Radius"), this);
-  constantRadiusEdit = new dlg::ExpressionEdit(this);
-  connect(constantRadiusEdit->lineEdit, SIGNAL(editingFinished()), this, SLOT(constantRadiusEditingFinishedSlot()));
-  connect(constantRadiusEdit->lineEdit, SIGNAL(textEdited(QString)), this, SLOT(constantRadiusEditedSlot(QString)));
-  ExpressionEditFilter *filter = new ExpressionEditFilter(this);
-  constantRadiusEdit->lineEdit->installEventFilter(filter);
-  connect(filter, SIGNAL(requestLinkSignal(QString)), this, SLOT(requestConstantLinkSlot(QString)));
-  connect(constantRadiusEdit->trafficLabel, SIGNAL(requestUnlinkSignal()), this, SLOT(requestConstantUnlinkSlot()));
-  QHBoxLayout *constantRadiusLayout = new QHBoxLayout();
-  constantRadiusLayout->addWidget(constantRadiusLabel);
-  constantRadiusLayout->addWidget(constantRadiusEdit);
+  typeCombo = new QComboBox(this);
+  typeCombo->addItem(tr("Constant"));
+  typeCombo->addItem(tr("Variable"));
+  shapeCombo = new QComboBox(this);
+  shapeCombo->addItem(tr("Rational"));
+  shapeCombo->addItem(tr("QuasiAngular"));
+  shapeCombo->addItem(tr("Polynomial"));
+  QLabel *typeLabel = new QLabel(tr("Type:"), this);
+  QLabel *shapeLabel = new QLabel(tr("Shape:"), this);
+  QGridLayout *cgl = new QGridLayout(); //combo grid layout
+  cgl->addWidget(typeLabel, 0, 0, Qt::AlignRight); 
+  cgl->addWidget(typeCombo, 0, 1, Qt::AlignLeft);
+  cgl->addWidget(shapeLabel, 1, 0, Qt::AlignRight); 
+  cgl->addWidget(shapeCombo, 1, 1, Qt::AlignLeft);
+  QHBoxLayout *chl = new QHBoxLayout(); //combo horizontal layout.
+  chl->addLayout(cgl);
+  chl->addStretch();
   
-  constantTableWidget = new QTableWidget(this);
-  constantTableWidget->setColumnCount(2);
-  constantTableWidget->setRowCount(2); //temp for visual test.
-  constantTableWidget->setSelectionBehavior(QAbstractItemView::SelectRows);
-  constantTableWidget->setSelectionMode(QAbstractItemView::SingleSelection);
-  constantTableWidget->horizontalHeader()->setStretchLastSection(true);
-  constantTableWidget->setHorizontalHeaderLabels(QStringList({tr("Type"), tr("Id")}));
-  constantTableWidget->verticalHeader()->hide();
-  constantTableWidget->setContextMenuPolicy(Qt::ActionsContextMenu);
-  connect(constantTableWidget->selectionModel(), SIGNAL(selectionChanged(const QItemSelection&, const QItemSelection&)),
-          this, SLOT(constantTableSelectionChangedSlot(const QItemSelection&, const QItemSelection&)));
-  QAction *constantTableRemoveAction = new QAction(tr("Remove"), constantTableWidget);
-  connect(constantTableRemoveAction, SIGNAL(triggered()), this, SLOT(constantTableRemoveSlot()));
-  constantTableWidget->addAction(constantTableRemoveAction);
+  cModel = new QStandardItemModel(this);
+  QStringList headers;
+  headers << tr("Radius") << tr("Pick");
+  cModel->setHorizontalHeaderLabels(headers); //this sets the column count to 2.
+  cView = new QTreeView(this);
+  cView->setSelectionBehavior(QAbstractItemView::SelectRows);
+  cView->setSelectionMode(QAbstractItemView::SingleSelection);
+  cView->setContextMenuPolicy(Qt::ActionsContextMenu);
+  cView->header()->setStretchLastSection(true);
+  cView->setDragDropMode(QAbstractItemView::DropOnly);
+  cView->setAcceptDrops(true);
+  cView->viewport()->setAcceptDrops(true);
+  cView->setDropIndicatorShown(true);
   
+  CDropFilter *cf = new CDropFilter(this);
+  cView->installEventFilter(cf);
+  connect(cf, &CDropFilter::requestLinkSignal, this, &Blend::cLink);
   
-  QVBoxLayout *constantPageLayout = new QVBoxLayout();
-  constantPageLayout->addLayout(constantRadiusLayout);
-  constantPageLayout->addWidget(constantTableWidget);
+  CDelegate *cd = new CDelegate(cView);
+  cView->setItemDelegateForColumn(0, cd);
   
-  QWidget *constantPage = new QWidget(this);
-  constantPage->setLayout(constantPageLayout);
+  QAction *caa = new QAction(tr("Add Radius"), cView); //constant add action
+  cView->addAction(caa);
+  QAction *cra = new QAction(tr("Remove"), cView); //constant remove action
+  cView->addAction(cra);
+  QAction *cua = new QAction(tr("Unlink"), cView); //unlink parameter with expression.
+  cView->addAction(cua);
+  cView->setModel(cModel);
   
+  vWidget = new VariableWidget(this);
+  QAction *vrc = new QAction(tr("Remove Constraint"), vWidget->constraintTable);
+  vWidget->constraintTable->addAction(vrc);
+  QAction *vua = new QAction(tr("Unlink"), vWidget->constraintTable);
+  vWidget->constraintTable->addAction(vua);
+  QAction *vrn = new QAction(tr("Remove Contour"), vWidget->contourList);
+  vWidget->contourList->addAction(vrn);
   
-  //variable radius.
-  variableTableWidget = new QTableWidget(this);
-  variableTableWidget->setColumnCount(3);
-  variableTableWidget->setRowCount(2); //temp for visual test.
-  variableTableWidget->setSelectionBehavior(QAbstractItemView::SelectRows);
-  variableTableWidget->setSelectionMode(QAbstractItemView::SingleSelection);
-  variableTableWidget->horizontalHeader()->setStretchLastSection(true);
-  variableTableWidget->setHorizontalHeaderLabels(QStringList({tr("Radius"), tr("Type"), tr("Id")}));
-  variableTableWidget->verticalHeader()->hide();
-  variableTableWidget->setContextMenuPolicy(Qt::ActionsContextMenu);
-  variableTableWidget->setDragDropMode(QAbstractItemView::DropOnly);
-  variableTableWidget->setAcceptDrops(true);
-  variableTableWidget->viewport()->setAcceptDrops(true);
-  variableTableWidget->setDropIndicatorShown(true);
-  connect(variableTableWidget->selectionModel(), SIGNAL(selectionChanged(const QItemSelection&, const QItemSelection&)),
-          this, SLOT(variableTableSelectionChangedSlot(const QItemSelection&, const QItemSelection&)));
-  connect(variableTableWidget, SIGNAL(itemChanged(QTableWidgetItem*)),
-          this, SLOT(variableTableItemChangedSlot(QTableWidgetItem*)));
-  QAction *variableTableRemoveAction = new QAction(tr("Remove"), variableTableWidget);
-  connect(variableTableRemoveAction, SIGNAL(triggered()), this, SLOT(variableTableRemoveSlot()));
-  variableTableWidget->addAction(variableTableRemoveAction);
+  VDropFilter *vf = new VDropFilter(this);
+  vWidget->constraintTable->installEventFilter(vf);
+  connect(vf, &VDropFilter::requestLinkSignal, this, &Blend::vLink);
   
-  VariableDropFilter *variableFilter = new VariableDropFilter(this);
-  variableTableWidget->installEventFilter(variableFilter);
-  connect(variableFilter, SIGNAL(requestLinkSignal(QTableWidgetItem*, const QString&)),
-          this, SLOT(requestVariableLinkSlot(QTableWidgetItem*, const QString&)));
+  VDelegate *vd = new VDelegate(vWidget->constraintTable);
+  vWidget->constraintTable->setItemDelegateForColumn(0, vd);
   
-  VariableDelegate *vDelegate = new VariableDelegate(variableTableWidget);
-  variableTableWidget->setItemDelegateForColumn(0, vDelegate);
-  connect(vDelegate, SIGNAL(requestUnlinkSignal()), this, SLOT(requestVariableUnlinkSlot()));
+  stacked = new QStackedWidget(this);
+  stacked->addWidget(cView);
+  stacked->addWidget(vWidget);
   
-  //Stacked widget of page constant and variable widgets.
-  stackedWidget = new QStackedWidget(this);
-  stackedWidget->addWidget(constantPage);
-  stackedWidget->addWidget(variableTableWidget);
-  stackedWidget->hide(); //shown when item in blendList is selected.
-  
-  
-  //fillet shape.
-  QLabel *filletShapeLabel = new QLabel(tr("Fillet Shape: "), this);
-  QComboBox *filletShapeCombo = new QComboBox(this);
-  filletShapeCombo->addItem(tr("Rational"));
-  filletShapeCombo->addItem(tr("QuasiAngular"));
-  filletShapeCombo->addItem(tr("Polynomial"));
-  filletShapeCombo->setDisabled(true);
-  QHBoxLayout *filletShapeLayout = new QHBoxLayout();
-  filletShapeLayout->addStretch();
-  filletShapeLayout->addWidget(filletShapeLabel);
-  filletShapeLayout->addWidget(filletShapeCombo);
-  
-  
-  //Right hand side layout.
-  QVBoxLayout *rhsLayout = new QVBoxLayout();
-  rhsLayout->addLayout(filletShapeLayout);
-  rhsLayout->addStretch();
-  rhsLayout->addWidget(stackedWidget);
-  
-  
-  blendList = new QListWidget(this);
-  blendList->setContextMenuPolicy(Qt::ActionsContextMenu);
-  connect(blendList->selectionModel(), SIGNAL(selectionChanged(const QItemSelection&, const QItemSelection&)),
-          this, SLOT(blendListCurrentItemChangedSlot(const QItemSelection&, const QItemSelection&)));
-  QAction *addConstantBlendAction = new QAction(tr("Add Constant"), blendList);
-  QAction *addVariableBlendAction = new QAction(tr("Add Variable"), blendList);
-  QAction *removeBlendAction = new QAction(tr("Remove"), blendList);
-  connect(addConstantBlendAction, SIGNAL(triggered()), this, SLOT(addConstantBlendSlot()));
-  connect(addVariableBlendAction, SIGNAL(triggered()), this, SLOT(addVariableBlendSlot()));
-  connect(removeBlendAction, SIGNAL(triggered()), this, SLOT(removeBlendSlot()));
-  blendList->addAction(addConstantBlendAction);
-  blendList->addAction(addVariableBlendAction);
-  blendList->addAction(removeBlendAction);
-  
-  //splitter.
-  QWidget *rhsWidget = new QWidget(this);
-  rhsWidget->setLayout(rhsLayout);
-  dlg::SplitterDecorated *splitter = new dlg::SplitterDecorated(this);
-  splitter->setOrientation(Qt::Horizontal);
-  splitter->addWidget(blendList);
-  splitter->addWidget(rhsWidget);
-  splitter->setCollapsible(0, false);
-  splitter->setCollapsible(1, false);
-  splitter->restoreSettings("dlg::Blend");
-  
-  //main layout.
   QDialogButtonBox *buttons = new QDialogButtonBox
     (QDialogButtonBox::Ok | QDialogButtonBox::Cancel, Qt::Horizontal, this);
   QHBoxLayout *buttonLayout = new QHBoxLayout();
@@ -1495,19 +955,267 @@ void Blend::buildGui()
   connect(buttons, SIGNAL(rejected()), this, SLOT(reject()));
   
   QVBoxLayout *mainLayout = new QVBoxLayout();
-  mainLayout->addWidget(splitter);
+  mainLayout->addLayout(chl);
+  mainLayout->addWidget(stacked);
   mainLayout->addLayout(buttonLayout);
   this->setLayout(mainLayout);
   
-  blendList->setFocus();
+  //currentIndexChanged is overloaded so new connect syntax gets ugly. Just use the old syntax.
+  connect(typeCombo, SIGNAL(currentIndexChanged(int)), this, SLOT(typeComboChangedSlot(int)));
+  connect(cView->selectionModel(), &QItemSelectionModel::selectionChanged, this, &Blend::cSelectionChanged);
+  connect(cra, &QAction::triggered, this, &Blend::cRemove);
+  connect(caa, &QAction::triggered, this, &Blend::cAddRadius);
+  connect(cua, &QAction::triggered, this, &Blend::cUnlink);
+  connect(vWidget->contourList, &QListWidget::currentRowChanged, this, &Blend::vContourSelectionChanged);
+  connect(vWidget->constraintTable, &QTableWidget::currentItemChanged, this, &Blend::vConstraintSelectionChanged);
+  connect(vrc, &QAction::triggered, this, &Blend::vConstraintRemove);
+  connect(vrn, &QAction::triggered, this, &Blend::vContourRemove);
+  connect(vua, &QAction::triggered, this, &Blend::vUnlink);
+  connect(cd, &CDelegate::requestUnlinkSignal, this, &Blend::cUnlink);
+  connect(vd, &VDelegate::requestUnlinkSignal, this, &Blend::vUnlink);
+  
+  cView->setFocus();
 }
 
-bool VariableDropFilter::eventFilter(QObject *obj, QEvent *event)
+void Blend::typeComboChangedSlot(int index)
 {
-  QTableWidget *tableWidget = dynamic_cast<QTableWidget*>(obj);
-  assert(tableWidget);
+  observer->outBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
   
-  auto getId = [](const QString &stringIn)
+  stacked->setCurrentIndex(index);
+  if (index == 0)
+  {
+    cSelectFirstRadius();
+  }
+  else if (index == 1)
+  {
+    observer->outBlocked
+    (
+      msg::buildSelectionMask
+      (
+        slc::None
+        | slc::EdgesEnabled
+        | slc::EdgesSelectable
+        | slc::PointsEnabled
+        | slc::PointsSelectable
+        | slc::EndPointsEnabled
+        | slc::NearestPointsEnabled
+        | slc::MidPointsEnabled
+      )
+    );
+  }
+}
+
+void Blend::cEnsureOne()
+{
+  if (cModel->rowCount() == 0)
+  {
+    std::shared_ptr<ftr::prm::Parameter> np = ftr::Blend::buildRadiusParameter();
+    cModel->appendRow(new SimpleBlendItem(np));
+  }
+}
+
+void Blend::cSelectFirstRadius()
+{
+  assert(cModel->rowCount() != 0);
+  
+  auto *sm = cView->selectionModel();
+  QModelIndex fe = cModel->index(0, 0, QModelIndex());
+  assert(fe.isValid());
+  sm->select(fe, QItemSelectionModel::SelectCurrent | QItemSelectionModel::Rows | QItemSelectionModel::Clear);
+}
+
+void Blend::cSelectionChanged(const QItemSelection &selected, const QItemSelection &/*deselected*/)
+{
+  observer->outBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  
+  QModelIndexList ss = selected.indexes();
+  if (ss.isEmpty() || (!ss.front().isValid()))
+  {
+    observer->outBlocked(msg::buildSelectionMask(slc::None));
+    return;
+  }
+  if (ss.front().parent() == QModelIndex())
+  {
+    //we have a root/blend item.
+    observer->outBlocked(msg::buildSelectionMask(slc::None | slc::EdgesEnabled | slc::EdgesSelectable));
+    observer->outBlocked(msg::buildStatusMessage("Select edges to blend."));
+    
+    cView->collapseAll();
+    cView->expand(ss.front());
+    
+    SimpleBlendItem *sbi = dynamic_cast<SimpleBlendItem*>(cModel->itemFromIndex(ss.front()));
+    assert(sbi);
+    for (int i = 0; i < sbi->rowCount(); ++i)
+    {
+      PickItem *pi = dynamic_cast<PickItem*>(sbi->child(i, 1));
+      assert(pi);
+      if (pi->pick.highlightIds.empty())
+        observer->outBlocked(msg::buildStatusMessage("No edges found from pick", 2.0));
+      for (const auto &tid : pi->pick.highlightIds)
+        addToSelection(tid);
+    }
+  }
+  else
+  {
+    //have a pick item.
+    observer->outBlocked(msg::buildSelectionMask(slc::None));
+    observer->outBlocked(msg::buildStatusMessage("Select radius in dialog to add more edges."));
+    
+    assert(ss.size() == 2);
+    PickItem *pi = dynamic_cast<PickItem*>(cModel->itemFromIndex(ss.at(1)));
+    assert(pi);
+    for (const auto &tid : pi->pick.highlightIds)
+      addToSelection(tid);
+  }
+}
+
+void Blend::cRemove()
+{
+  QModelIndexList ss = cView->selectionModel()->selectedIndexes();
+  if (ss.isEmpty() || (!ss.front().isValid()))
+  {
+    observer->outBlocked(msg::buildStatusMessage("Nothing selected to remove.", 2.0));
+    return;
+  }
+  
+  if (ss.front().parent() == QModelIndex())
+  {
+    //we have a root/blend item.
+    SimpleBlendItem *sbi = dynamic_cast<SimpleBlendItem*>(cModel->itemFromIndex(ss.front()));
+    assert(sbi);
+    if (cModel->rowCount() == 1) //dont remove last entry
+    {
+      while (sbi->rowCount() > 0)
+      {
+        sbi->removeRow(0);
+        observer->outBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+        QTimer::singleShot(0, this, &Blend::cSelectFirstRadius);
+      }
+    }
+    else
+    {
+      cModel->removeRow(ss.front().row());
+    }
+  }
+  else
+  {
+    //have a pick item.
+    assert(ss.size() == 2);
+    PickItem *pi = dynamic_cast<PickItem*>(cModel->itemFromIndex(ss.at(1)));
+    assert(pi);
+    QModelIndex parentIndex = ss.front().parent();
+    assert(parentIndex.isValid());
+    cModel->itemFromIndex(parentIndex)->removeRow(ss.front().row());
+    observer->outBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+    auto *sm = cView->selectionModel();
+    QTimer::singleShot
+    (
+      0,
+      [sm, parentIndex]()
+      {
+        sm->select(parentIndex, QItemSelectionModel::SelectCurrent | QItemSelectionModel::Rows | QItemSelectionModel::Clear);
+      }
+    );
+  }
+}
+
+void Blend::cAddRadius()
+{
+  cView->collapseAll();
+  
+  std::shared_ptr<ftr::prm::Parameter> np = ftr::Blend::buildRadiusParameter();
+  cModel->appendRow(new SimpleBlendItem(np));
+  //no need to expand a new item.
+  
+  auto *sm = cView->selectionModel();
+  QModelIndex le = cModel->index(cModel->rowCount() - 1, 0, QModelIndex());
+  assert(le.isValid());
+  QTimer::singleShot
+  (
+    0,
+    [sm, le]()
+    {
+      sm->select(le, QItemSelectionModel::SelectCurrent | QItemSelectionModel::Rows | QItemSelectionModel::Clear);
+    }
+  );
+}
+
+void Blend::vHighlightContour(int row)
+{
+  if ((row < 0) || (row >= vWidget->contourList->count()))
+    return;
+  
+  auto item = dynamic_cast<VariableWidget::ListItem*>(vWidget->contourList->item(row));
+  assert(item);
+  for (const auto &tid : item->pick.highlightIds)
+    addToSelection(tid);
+}
+
+void Blend::vHighlightConstraint(int row)
+{
+  auto *ct = vWidget->constraintTable;
+  if ((row < 0) || (row >= ct->rowCount()))
+    return;
+  VariableWidget::IdItem *ii = dynamic_cast<VariableWidget::IdItem*>(ct->item(row, 1));
+  assert(ii);
+  
+  slc::Message m = tls::convertToMessage(ii->pick, blendParent);
+  if (m.shapeId.is_nil())
+    return;
+  observer->outBlocked(msg::Message(msg::Request | msg::Selection | msg::Add, m));
+}
+
+void Blend::vUpdate3dSelection()
+{
+  observer->outBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  vHighlightContour(vWidget->contourList->currentRow());
+  vHighlightConstraint(vWidget->constraintTable->currentRow());
+}
+
+void Blend::vSelectFirstContour()
+{
+  vWidget->contourList->setCurrentRow(0, QItemSelectionModel::Clear | QItemSelectionModel::SelectCurrent);
+}
+
+void Blend::vContourSelectionChanged(int)
+{
+  QTimer::singleShot(0, this, &Blend::vUpdate3dSelection);
+}
+
+void Blend::vConstraintSelectionChanged(QTableWidgetItem*, QTableWidgetItem*)
+{
+  QTimer::singleShot(0, this, &Blend::vUpdate3dSelection);
+}
+
+void Blend::vConstraintRemove()
+{
+  auto *ct = vWidget->constraintTable;
+  QList<QTableWidgetItem *> sItems = ct->selectedItems();
+  if (sItems.isEmpty())
+    return;
+  
+  ct->removeRow(sItems.front()->row());
+  
+  QTimer::singleShot(0, this, &Blend::vUpdate3dSelection);
+}
+
+void Blend::vContourRemove()
+{
+  auto *cl = vWidget->contourList;
+  QList<QListWidgetItem*> sItems = cl->selectedItems();
+  if (sItems.isEmpty())
+    return;
+  
+  delete sItems.front();
+  QTimer::singleShot(0, this, &Blend::vUpdate3dSelection);
+}
+
+bool CDropFilter::eventFilter(QObject *obj, QEvent *event)
+{
+  QTreeView *treeView = dynamic_cast<QTreeView*>(obj);
+  assert(treeView);
+  
+  auto getId = [](const QString &stringIn) -> boost::uuids::uuid
   {
     boost::uuids::uuid idOut = gu::createNilId();
     if (stringIn.startsWith("ExpressionId;"))
@@ -1519,13 +1227,144 @@ bool VariableDropFilter::eventFilter(QObject *obj, QEvent *event)
     return idOut;
   };
   
-  auto getItem = [&](const QPoint &pointIn)
+  auto getIndex = [&](const QPoint &pointIn) -> QModelIndex
   {
     //Really! the fucking header throws off the position.
-    int headerHeight = tableWidget->horizontalHeader()->height();
+    int headerHeight = treeView->header()->height();
     QPoint adjusted(pointIn.x(), pointIn.y() - headerHeight);
-    QTableWidgetItem *item = tableWidget->itemAt(adjusted);
-    return item; //might be null.
+    QModelIndex index = treeView->indexAt(adjusted);
+    return index; //might be null.
+  };
+  
+  if (event->type() == QEvent::DragEnter)
+  {
+    QDragEnterEvent *dEvent = dynamic_cast<QDragEnterEvent*>(event);
+    if (dEvent->mimeData()->hasText())
+    {
+      boost::uuids::uuid id = getId(dEvent->mimeData()->text());
+      if (!id.is_nil())
+        dEvent->acceptProposedAction();
+    }
+    return true;
+  }
+  else if (event->type() == QEvent::DragMove)
+  {
+    QDragMoveEvent *dEvent = dynamic_cast<QDragMoveEvent*>(event);
+    assert(dEvent);
+    
+    dEvent->ignore(); //ignore by default
+    QModelIndex index = getIndex(dEvent->pos());
+    if
+    (
+      dEvent->mimeData()->hasText()
+      && index.isValid()
+      && (treeView->model()->flags(index) & Qt::ItemIsDropEnabled)
+      && (!(getId(dEvent->mimeData()->text()).is_nil()))
+    )
+      dEvent->acceptProposedAction();
+      
+    return true;
+  }
+  else if (event->type() == QEvent::Drop)
+  {
+    QDropEvent *dEvent = dynamic_cast<QDropEvent*>(event);
+    assert(dEvent);
+    
+    dEvent->ignore(); //ignore by default
+    uuid expressionId = getId(dEvent->mimeData()->text());
+    QModelIndex index = getIndex(dEvent->pos());
+    if
+    (
+      dEvent->mimeData()->hasText()
+      && index.isValid()
+      && (treeView->model()->flags(index) & Qt::ItemIsDropEnabled)
+      && (!(expressionId.is_nil()))
+    )
+    {
+      dEvent->acceptProposedAction();
+      Q_EMIT requestLinkSignal(index, QString::fromStdString(gu::idToString(expressionId)));
+    }
+    
+    return true;
+  }
+  else
+    return QObject::eventFilter(obj, event);
+}
+
+CDelegate::CDelegate(QObject *parent): ExpressionDelegate(parent){}
+
+void CDelegate::setEditorData(QWidget*, const QModelIndex& index) const
+{
+  assert(eEditor);
+  eEditor->lineEdit->setText(index.model()->data(index, Qt::ToolTipRole).toString());
+  
+  QVariant isLinked = index.model()->data(index, Qt::UserRole);
+  if (isLinked.isNull() || (isLinked.toBool() == false))
+    isExpressionLinked = false;
+  else
+    isExpressionLinked = true;
+  
+  initEditor();
+}
+
+void CDelegate::setModelData(QWidget*, QAbstractItemModel* model, const QModelIndex& index) const
+{
+  assert(eEditor);
+  
+  if (isExpressionLinked)
+    return; //shouldn't need to do anything if the expression is linked.
+  
+  expr::Manager localManager;
+  expr::StringTranslator translator(localManager);
+  std::string formula("temp = ");
+  formula += eEditor->lineEdit->text().toStdString();
+  if (translator.parseString(formula) == expr::StringTranslator::ParseSucceeded)
+  {
+    localManager.update();
+    assert(localManager.getFormulaValueType(translator.getFormulaOutId()) == expr::ValueType::Scalar);
+    double value = boost::get<double>(localManager.getFormulaValue(translator.getFormulaOutId()));
+    
+    QStandardItemModel* sim = dynamic_cast<QStandardItemModel*>(model);
+    assert(sim);
+    SimpleBlendItem *item = dynamic_cast<SimpleBlendItem*>(sim->itemFromIndex(index));
+    assert(item);
+    if (!(item->radius->isValidValue(value)))
+    {
+      app::instance()->messageSlot(msg::buildStatusMessage("ERROR: Invalid Value for radius", 2.0));
+      return;
+    }
+    item->radius->setValue(value);
+    item->update();
+  }
+  else
+  {
+    app::instance()->messageSlot(msg::buildStatusMessage("ERROR: Couldn't parse", 2.0));
+  }
+}
+
+bool VDropFilter::eventFilter(QObject *obj, QEvent *event)
+{
+  QTableWidget *table = dynamic_cast<QTableWidget*>(obj);
+  assert(table);
+  
+  auto getId = [](const QString &stringIn) -> boost::uuids::uuid
+  {
+    boost::uuids::uuid idOut = gu::createNilId();
+    if (stringIn.startsWith("ExpressionId;"))
+    {
+      QStringList split = stringIn.split(";");
+      if (split.size() == 2)
+        idOut = gu::stringToId(split.at(1).toStdString());
+    }
+    return idOut;
+  };
+  
+  auto getItem = [&](const QPoint &pointIn) -> QTableWidgetItem*
+  {
+    //Really! the fucking header throws off the position.
+    int headerHeight = table->horizontalHeader()->height();
+    QPoint adjusted(pointIn.x(), pointIn.y() - headerHeight);
+    return table->itemAt(adjusted);
   };
   
   if (event->type() == QEvent::DragEnter)
@@ -1583,47 +1422,23 @@ bool VariableDropFilter::eventFilter(QObject *obj, QEvent *event)
     return QObject::eventFilter(obj, event);
 }
 
-VariableDelegate::VariableDelegate(QObject *parent): QStyledItemDelegate(parent)
-{
-  
-}
+VDelegate::VDelegate(QObject *parent): ExpressionDelegate(parent){}
 
-QWidget* VariableDelegate::createEditor(QWidget* parent, const QStyleOptionViewItem&, const QModelIndex&) const
-{
-  eEditor = new dlg::ExpressionEdit(parent);
-  return eEditor;
-}
-
-void VariableDelegate::setEditorData(QWidget*, const QModelIndex& index) const
+void VDelegate::setEditorData(QWidget*, const QModelIndex& index) const
 {
   assert(eEditor);
-  eEditor->lineEdit->setText(index.model()->data(index, Qt::EditRole).toString());
+  eEditor->lineEdit->setText(index.model()->data(index, Qt::ToolTipRole).toString());
   
   QVariant isLinked = index.model()->data(index, Qt::UserRole);
   if (isLinked.isNull() || (isLinked.toBool() == false))
-  {
-    QTimer::singleShot(0, eEditor->trafficLabel, SLOT(setTrafficGreenSlot()));
-    eEditor->lineEdit->setReadOnly(false);
     isExpressionLinked = false;
-  }
   else
-  {
-    QTimer::singleShot(0, eEditor->trafficLabel, SLOT(setLinkSlot()));
-    eEditor->lineEdit->setReadOnly(true);
     isExpressionLinked = true;
-  }
   
-  connect (eEditor->lineEdit, SIGNAL(textEdited(QString)), this, SLOT(textEditedSlot(QString)));
-  connect (eEditor->trafficLabel, SIGNAL(requestUnlinkSignal()), this, SLOT(requestUnlinkSlot()));
+  initEditor();
 }
 
-void VariableDelegate::updateEditorGeometry(QWidget* editor, const QStyleOptionViewItem& option, const QModelIndex&) const
-{
-  //this is called before setEditorData.
-  editor->setGeometry(option.rect);
-}
-
-void VariableDelegate::setModelData(QWidget*, QAbstractItemModel* model, const QModelIndex& index) const
+void VDelegate::setModelData(QWidget*, QAbstractItemModel*, const QModelIndex& index) const
 {
   assert(eEditor);
   
@@ -1639,68 +1454,70 @@ void VariableDelegate::setModelData(QWidget*, QAbstractItemModel* model, const Q
     localManager.update();
     assert(localManager.getFormulaValueType(translator.getFormulaOutId()) == expr::ValueType::Scalar);
     double value = boost::get<double>(localManager.getFormulaValue(translator.getFormulaOutId()));
-    QString freshValue = QString::number(value, 'f', 12);
-    if (value < 0.0)
+    
+    QTableWidget *table = dynamic_cast<QTableWidget*>(this->parent());
+    assert(table);
+    VariableWidget::RadiusItem *item = dynamic_cast<VariableWidget::RadiusItem*>(table->item(index.row(), index.column()));
+    assert(item);
+    
+    if (!(item->parameter->isValidValue(value)))
     {
-      QMessageBox::critical
-      (
-        app::instance()->getMainWindow(),
-       tr("Error:"), tr("No negative numbers for radius")
-       
-      );
+      app::instance()->messageSlot(msg::buildStatusMessage("ERROR: Invalid Value for radius", 2.0));
       return;
     }
-    if (!model->setData(index, freshValue, Qt::EditRole))
-    {
-      QMessageBox::critical
-      (
-        app::instance()->getMainWindow(),
-       tr("Error:"), tr("Couldn't set model data.")
-        
-      );
-    }
+    item->parameter->setValue(value);
+    item->update();
   }
   else
   {
-    QMessageBox::critical
-    (
-      app::instance()->getMainWindow(),
-     tr("Error:"), tr("Couldn't parse string.")
-    );
+    app::instance()->messageSlot(msg::buildStatusMessage("ERROR: Couldn't parse", 2.0));
   }
 }
 
-void VariableDelegate::textEditedSlot(const QString &textIn)
+void Blend::vLink(QTableWidgetItem *itemIn, const QString &idIn)
 {
-  assert(eEditor);
-  eEditor->trafficLabel->setTrafficYellowSlot();
-  qApp->processEvents(); //need this or we never see yellow signal.
+  //actual linking/unlinking happen in accepted dialog
+  uuid expressionId = gu::stringToId(idIn.toStdString());
+  assert(!expressionId.is_nil());
+  expr::Manager &eManager = app::instance()->getProject()->getManager();
+  assert(eManager.hasFormula(expressionId));
+  assert(eManager.getFormulaValueType(expressionId) == expr::ValueType::Scalar);
   
-  expr::Manager localManager;
-  expr::StringTranslator translator(localManager);
-  std::string formula("temp = ");
-  formula += textIn.toStdString();
-  if (translator.parseString(formula) == expr::StringTranslator::ParseSucceeded)
+  double cv = boost::get<double>(eManager.getFormulaValue(expressionId));
+  
+  VariableWidget::RadiusItem *item = dynamic_cast<VariableWidget::RadiusItem *>(itemIn);
+  assert(item);
+  if (!item->parameter->isValidValue(cv))
   {
-    localManager.update();
-    eEditor->trafficLabel->setTrafficGreenSlot();
-    assert(localManager.getFormulaValueType(translator.getFormulaOutId()) == expr::ValueType::Scalar);
-    double value = boost::get<double>(localManager.getFormulaValue(translator.getFormulaOutId()));
-    eEditor->goToolTipSlot(QString::number(value));
+    observer->out(msg::buildStatusMessage("Invalid value for radius", 2.0));
+    return;
   }
-  else
-  {
-    eEditor->trafficLabel->setTrafficRedSlot();
-    int position = translator.getFailedPosition() - 8; // 7 chars for 'temp = ' + 1
-    eEditor->goToolTipSlot(textIn.left(position) + "?");
-  }
+  
+  item->parameter->setConstant(false);
+  item->expressionId = expressionId;
+  item->expressionName = eManager.getFormulaName(expressionId);
+  item->parameter->setValue(cv);
+  item->update();
 }
 
-void VariableDelegate::requestUnlinkSlot()
+void Blend::vUnlink()
 {
-  assert(isExpressionLinked); //shouldn't be able to get here if expression is not linked.
+  auto *ct = vWidget->constraintTable;
+  QList<QTableWidgetItem *> sItems = ct->selectedItems();
+  if (sItems.isEmpty() || (!sItems.front()))
+  {
+    observer->out(msg::buildStatusMessage("Nothing selected to unlink", 2.0));
+    return;
+  }
   
-  QKeyEvent *event = new QKeyEvent (QEvent::KeyPress, Qt::Key_Escape, Qt::NoModifier);
-  qApp->postEvent (eEditor, event);
-  Q_EMIT requestUnlinkSignal(); //maybe delay this with a timer.
+  VariableWidget::RadiusItem *item = dynamic_cast<VariableWidget::RadiusItem*>(sItems.front());
+  assert(item);
+  if (item->parameter->isConstant())
+  {
+    observer->outBlocked(msg::buildStatusMessage("Not linked.", 2.0));
+    return;
+  }
+  
+  item->parameter->setConstant(true);
+  item->update();
 }

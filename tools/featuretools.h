@@ -26,7 +26,9 @@
 
 #include <feature/pick.h>
 
-namespace ftr{class Base; class ShapeHistory;}
+namespace ann{class SeerShape;}
+namespace ftr{class Base; class ShapeHistory; class Pick;}
+namespace slc{class Message;}
 
 namespace tls
 {
@@ -69,6 +71,25 @@ namespace tls
     const ftr::Pick &pick,
     const ftr::ShapeHistory &pHistory
   );
+  
+  /*! @brief Convert a selection message to a feature pick.
+    * 
+    * @param messageIn message to convert.
+    * @param sShapeIn seer shape that is the target of the selection
+    * @return ftr:Pick representing the selection message.
+    * @note shapeHistory in the return is NOT set. resolvedIds and highlightIds are set to id.
+    * startpoints and endpoints get converted to ids for vertices.
+   */
+  ftr::Pick convertToPick(const slc::Message &messageIn, const ann::SeerShape &sShapeIn);
+  
+  /*! @brief Convert a feature pick to a selection message.
+    * 
+    * @param pickIn resolved pick to convert.
+    * @param sShapeIn seer shape that is the target of the pick.
+    * @return selection message representing the pick.
+    * @note assumes pickIn has been resolved with featureIn
+   */
+  slc::Message convertToMessage(const ftr::Pick &pickIn, const ftr::Base *featureIn);
 }
 
 #endif // TLS_FEATURETOOLS_H

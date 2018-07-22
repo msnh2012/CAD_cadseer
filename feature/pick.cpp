@@ -37,7 +37,8 @@ using boost::uuids::uuid;
 Pick::Pick() : id(gu::createNilId()), u(0.0), v(0.0){}
 
 Pick::Pick(const uuid &idIn, double uIn, double vIn) :
-  id(idIn), u(uIn), v(vIn){}
+id(idIn), u(uIn), v(vIn)
+{}
 
 prj::srl::Pick Pick::serialOut() const
 {
@@ -49,6 +50,7 @@ prj::srl::Pick Pick::serialOut() const
   );
   
   out.history().set(shapeHistory.serialOut());
+  out.selectionType().set(static_cast<int>(selectionType));
   
   return out;
 }
@@ -61,11 +63,49 @@ void Pick::serialIn(const prj::srl::Pick &sPickIn)
   
   if (sPickIn.history().present())
     shapeHistory.serialIn(sPickIn.history().get());
+  if (sPickIn.selectionType().present())
+    selectionType = static_cast<slc::Type>(sPickIn.selectionType().get());
 }
 
 bool Pick::operator==(const Pick &rhs) const
 {
-  return id == rhs.id;
+  //this is pretty strict.
+  if (shapeHistory != rhs.shapeHistory)
+    return false;
+       
+  if (isParameterType() && rhs.isParameterType())
+    return isParameterEqual(rhs);
+  
+  return selectionType == rhs.selectionType;
+}
+
+bool Pick::isParameterType() const
+{
+  return
+  (
+    (selectionType == slc::Type::QuadrantPoint)
+    || (selectionType == slc::Type::NearestPoint)
+    || (selectionType == slc::Type::MidPoint)
+  );
+}
+
+bool Pick::isParameterEqual(const Pick &rhs) const
+{
+  return (std::fabs(u - rhs.u) < std::numeric_limits<double>::epsilon());
+}
+
+std::vector<boost::uuids::uuid> Pick::resolvedOverlap(const Pick &other) const
+{
+//   assert(!isParameterType());
+//   assert(!other.isParameterType());
+  std::vector<uuid> c1 = resolvedIds;
+  std::vector<uuid> c2 = other.resolvedIds;
+  gu::uniquefy(c1);
+  gu::uniquefy(c2);
+  
+  std::vector<uuid> out;
+  std::set_intersection(c1.begin(), c1.end(), c2.begin(), c2.end(), std::back_inserter(out));
+  return out;
 }
 
 /*! Set u parameter

@@ -324,9 +324,13 @@ void Project::removeFeature(const uuid& idIn)
     
     //make parents have same visible state as the feature being removed.
     if (feature->isVisible3D())
-      observer->outBlocked(msg::buildShowThreeD(reversedGraph[*its.first].feature->getId()));
+    {
+      block.unblock();
+      observer->out(msg::buildShowThreeD(reversedGraph[*its.first].feature->getId()));
+      block.block();
+    }
     else
-      observer->outBlocked(msg::buildHideThreeD(reversedGraph[*its.first].feature->getId()));
+      observer->out(msg::buildHideThreeD(reversedGraph[*its.first].feature->getId()));
   }
   
   for (auto its = boost::adjacent_vertices(vertex, removedGraph); its.first != its.second; ++its.first)
@@ -397,7 +401,11 @@ void Project::setCurrentLeaf(const uuid& idIn)
   }
   
   stow->setFeatureActive(vertex);
+  //project is responsible for generating visuals, so buildShowThreeD
+  //can cause us to be back her in project. in short, don't block.
+  block.unblock();
   observer->out(msg::buildShowThreeD(stow->graph[vertex].feature->getId()));
+  block.block();
   
   //children
   Vertices iVertices;

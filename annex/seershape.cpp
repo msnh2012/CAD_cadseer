@@ -705,11 +705,6 @@ std::vector<osg::Vec3d> SeerShape::useGetMidPoint(const uuid &edgeIdIn) const
   BRepAdaptor_Curve curveAdaptor(TopoDS::Edge(shape));
   
   std::vector<osg::Vec3d> out;
-  GeomAbs_CurveType curveType = curveAdaptor.GetType();
-  //no end points for conics
-  if (curveType == GeomAbs_Circle || curveType == GeomAbs_Ellipse)
-    return out;
-  
   Standard_Real firstParameter = curveAdaptor.FirstParameter();
   Standard_Real lastParameter = curveAdaptor.LastParameter();
   Standard_Real midParameter = (lastParameter - firstParameter) / 2.0 + firstParameter;

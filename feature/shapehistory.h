@@ -108,6 +108,8 @@ namespace ftr
     ShapeHistory createDevolveHistory(const boost::uuids::uuid &shapeIdIn) const;
     
     std::vector<boost::uuids::uuid> getAllIds() const;
+    bool operator==(const ShapeHistory&) const;
+    bool operator!=(const ShapeHistory&) const;
     
     prj::srl::ShapeHistory serialOut() const;
     void serialIn(const prj::srl::ShapeHistory&);

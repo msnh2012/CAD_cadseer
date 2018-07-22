@@ -395,6 +395,20 @@ std::vector<boost::uuids::uuid> ShapeHistory::getAllIds() const
   return shapeHistoryStow->getAllIds();
 }
 
+bool ShapeHistory::operator==(const ShapeHistory &rhs) const
+{
+  std::vector<uuid> sh1 = getAllIds();
+  std::vector<uuid> sh2 = rhs.getAllIds();
+  gu::uniquefy(sh1);
+  gu::uniquefy(sh2);
+  return sh1 == sh2;
+}
+
+bool ShapeHistory::operator!=(const ShapeHistory &rhs) const
+{
+  return !(*this == rhs);
+}
+
 prj::srl::ShapeHistory ShapeHistory::serialOut() const
 {
   prj::srl::HistoryVertices vertsOut;

@@ -370,12 +370,6 @@ void Manager::addLink(ftr::prm::Parameter *parameterIn, const uuid &formulaIdIn)
   virginLink.parameter = parameterIn;
   
   formulaLinksPtr->container.insert(virginLink);
-  
-  //update current object.
-  //todo address other variant types.
-  double value = boost::get<double>(graphPtr->getFormulaValue(formulaIdIn));
-  parameterIn->setValue(value);
-  parameterIn->setConstant(false);
 }
 
 void Manager::removeParameterLink(const uuid &parameterIdIn)
@@ -385,8 +379,6 @@ void Manager::removeParameterLink(const uuid &parameterIdIn)
   FormulaLinkContainerType::index<FormulaLink::ByParameterId>::type::iterator it;
   it = formulaLinksPtr->container.get<FormulaLink::ByParameterId>().find(parameterIdIn);
   assert(it != formulaLinksPtr->container.get<FormulaLink::ByParameterId>().end()); //use has first.
-  
-  it->parameter->setConstant(true);
   
   formulaLinksPtr->container.get<FormulaLink::ByParameterId>().erase(it);
 }
