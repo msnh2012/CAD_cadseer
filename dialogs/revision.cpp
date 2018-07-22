@@ -32,7 +32,6 @@
 #include <boost/variant/variant.hpp>
 
 #include <message/message.h>
-#include <message/observer.h>
 #include <application/application.h>
 #include <project/project.h>
 #include <project/gitmanager.h>
@@ -62,11 +61,8 @@ using namespace dlg;
 
 UndoPage::UndoPage(QWidget *parent) :
 QWidget(parent),
-observer(new msg::Observer()),
 data(new UndoPage::Data())
 {
-  observer->name = "dlg::UndoPage";
-  
   buildGui();
   fillInCommitList();
   if (!data->commits.empty())
@@ -133,7 +129,7 @@ void UndoPage::resetActionSlot()
   
   app::Application *application = app::instance();
   std::string pdir = application->getProject()->getSaveDirectory().string();
-  observer->out(msg::Mask(msg::Request | msg::Close | msg::Project));
+  app::instance()->messageSlot(msg::Mask(msg::Request | msg::Close | msg::Project));
   
   /* keep in mind the project is closed, so the git manager in the project is gone.
    * when the project opens, the project will build a git manager. So here we have the potential
@@ -147,7 +143,7 @@ void UndoPage::resetActionSlot()
   
   prj::Message pMessage;
   pMessage.directory = pdir;
-  observer->out(msg::Message(msg::Mask(msg::Request | msg::Open | msg::Project), pMessage));
+  app::instance()->messageSlot(msg::Message(msg::Mask(msg::Request | msg::Open | msg::Project), pMessage));
   
   //addTab reparents so the constructor argument is not really the parent.
   QWidget *parentDialog = this->parentWidget()->parentWidget()->parentWidget();
@@ -158,10 +154,8 @@ void UndoPage::resetActionSlot()
 
 AdvancedPage::AdvancedPage(QWidget *parent) :
 QWidget(parent),
-observer(new msg::Observer()),
 data(new AdvancedPage::Data())
 {
-  observer->name = "dlg::AdvancedPage";
   data->headIcon = QIcon(":/resources/images/trafficGreen.svg");
   
   buildGui();
@@ -368,7 +362,7 @@ void AdvancedPage::checkoutTagSlot()
    */
   app::Application *application = app::instance();
   std::string pdir = application->getProject()->getSaveDirectory().string();
-  observer->out(msg::Mask(msg::Request | msg::Close | msg::Project));
+  app::instance()->messageSlot(msg::Mask(msg::Request | msg::Close | msg::Project));
   
   std::unique_ptr<prj::GitManager> localManager(new prj::GitManager());
   localManager->open(pdir);
@@ -377,7 +371,7 @@ void AdvancedPage::checkoutTagSlot()
   
   prj::Message pMessage;
   pMessage.directory = pdir;
-  observer->out(msg::Message(msg::Mask(msg::Request | msg::Open | msg::Project), pMessage));
+  app::instance()->messageSlot(msg::Message(msg::Mask(msg::Request | msg::Open | msg::Project), pMessage));
   
   //addTab reparents so the constructor argument is not really the parent.
   QWidget *parentDialog = this->parentWidget()->parentWidget()->parentWidget();
@@ -414,12 +408,9 @@ void AdvancedPage::setCurrentHead()
 
 
 Revision::Revision(QWidget *parent) :
-QDialog(parent),
-observer(new msg::Observer())
+QDialog(parent)
 {
   this->setWindowTitle(tr("Revisions"));
-  
-  observer->name = "dlg::Revision";
   
   buildGui();
   
@@ -432,7 +423,7 @@ Revision::~Revision() {}
 void Revision::closeEvent(QCloseEvent *e)
 {
   QDialog::closeEvent(e);
-  observer->out(msg::Mask(msg::Request | msg::Command | msg::Done));
+  app::instance()->messageSlot(msg::Mask(msg::Request | msg::Command | msg::Done));
 }
 
 void Revision::buildGui()

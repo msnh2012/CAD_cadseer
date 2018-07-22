@@ -28,11 +28,11 @@
 #include <osgManipulator/Constraint>
 #include <osgUtil/SmoothingVisitor>
 
+#include <application/application.h>
 #include <globalutilities.h>
 #include <tools/idtools.h>
 #include <modelviz/nodemaskdefs.h>
 #include <message/dispatch.h>
-#include <message/observer.h>
 #include <preferences/preferencesXML.h>
 #include <preferences/manager.h>
 #include <library/geometrylibrary.h>
@@ -322,10 +322,7 @@ void CSysDragger::updateMatrix(const Matrixd &mIn)
 
 CSysCallBack::CSysCallBack(osg::MatrixTransform *t) : 
       osgManipulator::DraggerTransformCallback(t)
-{
-  observer = std::move(std::unique_ptr<msg::Observer>(new msg::Observer()));
-  observer->name = "CSysCallBack";
-}
+{}
 
 bool CSysCallBack::receive(const osgManipulator::MotionCommand &commandIn)
 {
@@ -387,7 +384,7 @@ bool CSysCallBack::receive(const osgManipulator::MotionCommand &commandIn)
 //     }
 //   }
   
-  observer->out(msg::buildStatusMessage(stream.str()));
+  app::instance()->messageSlot(msg::buildStatusMessage(stream.str()));
   
   return out;
 }

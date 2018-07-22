@@ -38,7 +38,6 @@ class QButtonGroup;
 class QCheckBox;
 
 namespace ftr{class Strip;}
-namespace msg{class Message; class Observer;}
 namespace dlg{class SelectionButton;}
 
 namespace dlg
@@ -76,7 +75,6 @@ namespace dlg
     virtual void accept() override;
     
   private:
-    std::unique_ptr<msg::Observer> observer;
     ftr::Strip *strip;
     
     QTabWidget *tabWidget;

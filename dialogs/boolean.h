@@ -29,7 +29,6 @@
 class QButtonGroup;
 
 namespace ftr{class Intersect; class Subtract; class Union;}
-namespace msg{class Message; class Observer;}
 namespace dlg{class SelectionButton;}
 
 namespace dlg
@@ -55,8 +54,6 @@ namespace dlg
     virtual void accept() override;
     
   private:
-    std::unique_ptr<msg::Observer> observer;
-    
     ftr::Intersect *intersect = nullptr;
     ftr::Subtract *subtract = nullptr;
     ftr::Union *onion = nullptr;

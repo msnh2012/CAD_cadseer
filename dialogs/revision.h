@@ -29,8 +29,6 @@ class QTextEdit;
 class QTabWidget;
 class QAction;
 
-namespace msg{class Message; class Observer;}
-
 namespace dlg
 {
   class CommitWidget;
@@ -44,7 +42,6 @@ namespace dlg
     virtual ~UndoPage() override;
     
   protected:
-    std::unique_ptr<msg::Observer> observer;
     struct Data;
     std::unique_ptr<Data> data;
     QListWidget *commitList;
@@ -65,7 +62,6 @@ namespace dlg
     virtual ~AdvancedPage() override;
     
   protected:
-    std::unique_ptr<msg::Observer> observer;
     struct Data;
     std::unique_ptr<Data> data;
     QListWidget *tagList;
@@ -99,7 +95,6 @@ namespace dlg
     virtual void closeEvent (QCloseEvent*) override;
     void buildGui();
     
-    std::unique_ptr<msg::Observer> observer;
     struct Data;
     QTabWidget *tabWidget;
   };

@@ -22,7 +22,6 @@
 #include <globalutilities.h>
 #include <tools/idtools.h>
 #include <application/application.h>
-#include <message/observer.h>
 #include <feature/parameter.h>
 #include <feature/base.h>
 #include <library/csysdragger.h>
@@ -39,12 +38,9 @@ namespace ann
     DCallBack() = delete;
     DCallBack(osg::MatrixTransform *t, ftr::Base *fIn, ftr::prm::Parameter *parameterIn) :
     osgManipulator::DraggerTransformCallback(t),
-    observer(new msg::Observer()),
     feature(fIn),
     parameter(parameterIn)
-    {
-      observer->name = "ann::DCallBack";
-    }
+    {}
     
     virtual bool receive(const osgManipulator::MotionCommand &commandIn) override
     {
@@ -117,7 +113,7 @@ namespace ann
             gitStream << QObject::tr("Reposition feature: ").toStdString()
               << feature->getName().toStdString()
               << "    " << gu::idToShortString(feature->getId());
-            observer->out(msg::buildGitMessage(gitStream.str()));
+            app::instance()->messageSlot(msg::buildGitMessage(gitStream.str()));
             
             if (prf::manager().rootPtr->dragger().triggerUpdateOnFinish())
             {
@@ -128,14 +124,12 @@ namespace ann
         }
       }
       
-      observer->out(msg::buildStatusMessage(stream.str()));
-      
+      app::instance()->messageSlot(msg::buildStatusMessage(stream.str()));
       return out;
     }
     
     
   private:
-    std::unique_ptr<msg::Observer> observer;
     ftr::Base *feature;
     QString featureName;
     ftr::prm::Parameter *parameter;

@@ -31,7 +31,6 @@
 #include <application/application.h>
 #include <feature/parameter.h>
 #include <message/dispatch.h>
-#include <message/observer.h>
 #include <preferences/preferencesXML.h>
 #include <preferences/manager.h>
 #include <library/lineardimension.h>
@@ -52,9 +51,6 @@ differenceDim(),
 overallDim(),
 parameter(parameterIn)
 {
-  observer = std::move(std::unique_ptr<msg::Observer>(new msg::Observer()));
-  observer->name = "IPGroup";
-  
   rotation = new osg::AutoTransform();
   this->addChild(rotation.get());
   
@@ -236,7 +232,7 @@ bool IPGroup::processMotion(const osgManipulator::MotionCommand &commandIn)
       osg::Matrixd temp = dragger->getMatrix();
       temp.setTrans(osg::Vec3d(0.0, 0.0, overallDim->getSpread()));
       dragger->setMatrix(temp);
-      observer->out(msg::buildStatusMessage(
+      app::instance()->messageSlot(msg::buildStatusMessage(
         QObject::tr("Value out of range").toStdString()));
       return false;
     }
@@ -260,18 +256,16 @@ bool IPGroup::processMotion(const osgManipulator::MotionCommand &commandIn)
     std::ostringstream gitStream;
     gitStream << QObject::tr("Parameter ").toStdString() << parameter->getName().toStdString() <<
       QObject::tr(" changed to: ").toStdString() << static_cast<double>(*parameter);
-    observer->out(msg::buildGitMessage(gitStream.str()));
+    app::instance()->messageSlot(msg::buildGitMessage(gitStream.str()));
     
     if (prf::manager().rootPtr->dragger().triggerUpdateOnFinish())
     {
       msg::Message messageOut(msg::Request | msg::Project | msg::Update);
       app::instance()->queuedMessage(messageOut);
-      
-//       observer->out(msg::Mask(msg::Request | msg::Project | msg::Update));
     }
   }
   
-  observer->out(msg::buildStatusMessage(stream.str()));
+  app::instance()->messageSlot(msg::buildStatusMessage(stream.str()));
   
   return true;
 }

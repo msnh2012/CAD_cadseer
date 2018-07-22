@@ -32,7 +32,6 @@
 #include "rotatecirculardragger.h"
 
 namespace osgManipulator{class GridConstraint;}
-namespace msg{class Message; class Observer;}
 
 namespace lbr
 {
@@ -127,7 +126,6 @@ public:
   virtual bool receive(const osgManipulator::MotionCommand &) override;
   
 private:
-  std::unique_ptr<msg::Observer> observer;
   osg::Vec3d originStart;
 };
 }

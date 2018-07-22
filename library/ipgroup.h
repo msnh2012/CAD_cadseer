@@ -28,7 +28,6 @@
 
 namespace osg{class Switch; class AutoTransform;}
 namespace ftr{namespace prm{class Parameter;}}
-namespace msg{class Message; class Observer;}
 
 namespace lbr
 {
@@ -77,7 +76,6 @@ namespace lbr
     osg::ref_ptr<osg::Switch> draggerSwitch;
     osg::ref_ptr<osg::MatrixTransform> draggerMatrix;
     osg::ref_ptr<IPCallback> ipCallback;
-    std::unique_ptr<msg::Observer> observer;
   };
   
 

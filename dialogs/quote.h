@@ -35,7 +35,6 @@ class QButtonGroup;
 class QLabel;
 
 namespace ftr{class Quote;}
-namespace msg{class Message; class Observer;}
 namespace dlg{class SelectionButton;}
 
 namespace dlg
@@ -56,7 +55,6 @@ namespace dlg
     virtual void accept() override;
     
   private:
-    std::unique_ptr<msg::Observer> observer;
     ftr::Quote *quote;
     
     QTabWidget *tabWidget;

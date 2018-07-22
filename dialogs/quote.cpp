@@ -39,7 +39,6 @@
 #include <application/mainwindow.h>
 #include <viewer/widget.h>
 #include <project/project.h>
-#include <message/observer.h>
 #include <feature/parameter.h>
 #include <feature/quote.h>
 #include <dialogs/widgetgeometry.h>
@@ -52,9 +51,6 @@ using boost::uuids::uuid;
 
 Quote::Quote(ftr::Quote *quoteIn, QWidget *parent) : QDialog(parent)
 {
-  observer = std::unique_ptr<msg::Observer>(new msg::Observer());
-  observer->name = "dlg::Quote";
-  
   quote = quoteIn;
   
   buildGui();

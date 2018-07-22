@@ -31,7 +31,6 @@
 #include <application/application.h>
 #include <application/mainwindow.h>
 #include <project/project.h>
-#include <message/observer.h>
 #include <selection/message.h>
 #include <annex/seershape.h>
 #include <tools/featuretools.h>
@@ -46,21 +45,21 @@ using boost::uuids::uuid;
 
 using namespace dlg;
 
-Boolean::Boolean(ftr::Intersect *i, QWidget *parent) : QDialog(parent), observer(new msg::Observer())
+Boolean::Boolean(ftr::Intersect *i, QWidget *parent) : QDialog(parent)
 {
   intersect = i;
   booleanId = intersect->getId();
   init();
 }
 
-Boolean::Boolean(ftr::Subtract *s, QWidget *parent) : QDialog(parent), observer(new msg::Observer())
+Boolean::Boolean(ftr::Subtract *s, QWidget *parent) : QDialog(parent)
 {
   subtract = s;
   booleanId = subtract->getId();
   init();
 }
 
-Boolean::Boolean(ftr::Union *u, QWidget *parent) : QDialog(parent), observer(new msg::Observer())
+Boolean::Boolean(ftr::Union *u, QWidget *parent) : QDialog(parent)
 {
   onion = u;
   booleanId = onion->getId();
@@ -77,8 +76,6 @@ Boolean::~Boolean()
 
 void Boolean::init()
 {
-  observer->name = "dlg::Boolean";
-  
   buildGui();
   
   QSettings &settings = app::instance()->getUserSettings();
@@ -299,14 +296,14 @@ void Boolean::finishDialog()
     for (const auto &tid : targetIds)
     {
       p->connectInsert(tid, booleanId, {ftr::InputType::target});
-      observer->outBlocked(msg::buildHideThreeD(tid));
-      observer->outBlocked(msg::buildHideOverlay(tid));
+      app::instance()->messageSlot(msg::buildHideThreeD(tid));
+      app::instance()->messageSlot(msg::buildHideOverlay(tid));
     }
     for (const auto &tid : toolIds)
     {
       p->connect(tid, booleanId, {ftr::InputType::tool});
-      observer->outBlocked(msg::buildHideThreeD(tid));
-      observer->outBlocked(msg::buildHideOverlay(tid));
+      app::instance()->messageSlot(msg::buildHideThreeD(tid));
+      app::instance()->messageSlot(msg::buildHideOverlay(tid));
     }
   }
   else //rejected dialog

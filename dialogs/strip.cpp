@@ -40,7 +40,6 @@
 #include <application/application.h>
 #include <application/mainwindow.h>
 #include <project/project.h>
-#include <message/observer.h>
 #include <feature/strip.h>
 #include <dialogs/widgetgeometry.h>
 #include <dialogs/selectionbutton.h>
@@ -89,9 +88,6 @@ void TrashCan::dragLeaveEvent(QDragLeaveEvent *event)
 
 Strip::Strip(ftr::Strip *stripIn, QWidget *parent) : QDialog(parent)
 {
-  observer = std::unique_ptr<msg::Observer>(new msg::Observer());
-  observer->name = "dlg::Strip";
-  
   strip = stripIn;
   
   buildGui();
