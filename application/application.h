@@ -55,12 +55,12 @@ public:
     MainWindow* getMainWindow(){return mainWindow.get();}
     boost::filesystem::path getApplicationDirectory();
     QSettings& getUserSettings();
-    void queuedMessage(msg::Message); //queue message into qt event loop
+    void queuedMessage(const msg::Message&); //queue message into qt event loop
     
 public Q_SLOTS:
     void quittingSlot();
     void appStartSlot();
-    void messageSlot(msg::Message); //for queued connection
+    void messageSlot(const msg::Message&); //for queued connection
     void spaceballPollSlot();
 private:
     std::unique_ptr<MainWindow> mainWindow;

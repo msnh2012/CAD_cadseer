@@ -134,12 +134,12 @@ void Application::quittingSlot()
     }
 }
 
-void Application::queuedMessage(msg::Message message)
+void Application::queuedMessage(const msg::Message &message)
 {
   QMetaObject::invokeMethod(this, "messageSlot", Qt::QueuedConnection, Q_ARG(msg::Message, message));
 }
 
-void Application::messageSlot(msg::Message messageIn)
+void Application::messageSlot(const msg::Message &messageIn)
 {
   //can't block, message might be open file or something we need to handle here.
   observer->out(messageIn);
