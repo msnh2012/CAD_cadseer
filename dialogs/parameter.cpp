@@ -324,7 +324,7 @@ void Parameter::requestLinkSlot(const QString &stringIn)
   }
   
   double value = boost::get<double>(eManager.getFormulaValue(id));
-  eManager.addLink(parameter, id);
+  eManager.addLink(parameter->getId(), id);
   parameter->setValue(value);
   parameter->setConstant(false);
   

@@ -356,20 +356,17 @@ void Manager::removeFormula(const boost::uuids::uuid& idIn)
   
   for(; it != itEnd; ++it)
   {
-    it->parameter->setConstant(true); //change parameter constant to true.
+    ftr::prm::Parameter *p = app::instance()->getProject()->findParameter(it->parameterId);
+    assert(p);
+    p->setConstant(true); //change parameter constant to true.
   }
   
   formulaLinksPtr->container.get<FormulaLink::ByFormulaId>().erase(it2, itEnd);
 }
 
-void Manager::addLink(ftr::prm::Parameter *parameterIn, const uuid &formulaIdIn)
+void Manager::addLink(const uuid &parameterIdIn, const uuid &formulaIdIn)
 {
-  FormulaLink virginLink;
-  virginLink.parameterId = parameterIn->getId();
-  virginLink.formulaId = formulaIdIn;
-  virginLink.parameter = parameterIn;
-  
-  formulaLinksPtr->container.insert(virginLink);
+  formulaLinksPtr->container.insert(FormulaLink(parameterIdIn, formulaIdIn));
 }
 
 void Manager::removeParameterLink(const uuid &parameterIdIn)
@@ -426,9 +423,10 @@ void Manager::dispatchValues()
   FormulaLinkContainerType::const_iterator it;
   for (it = formulaLinksPtr->container.begin(); it != formulaLinksPtr->container.end(); ++it)
   {
-    assert(it->parameter);
+    ftr::prm::Parameter *p = app::instance()->getProject()->findParameter(it->parameterId);
+    assert(p);
     //todo address other value types.
-    it->parameter->setValue(boost::get<double>(graphPtr->getFormulaValue(it->formulaId)));
+    p->setValue(boost::get<double>(graphPtr->getFormulaValue(it->formulaId)));
   }
 }
 
@@ -437,8 +435,11 @@ void Manager::dumpLinks(std::ostream& stream)
   FormulaLinkContainerType::const_iterator it;
   for (it = formulaLinksPtr->container.begin(); it != formulaLinksPtr->container.end(); ++it)
   {
+    ftr::prm::Parameter *p = app::instance()->getProject()->findParameter(it->parameterId);
+    assert(p);
+    
     stream << "parameter id: " << gu::idToString(it->parameterId)
-      << "    parameter name: " << std::left << std::setw(20) << it->parameter->getName().toStdString()
+      << "    parameter name: " << std::left << std::setw(20) << p->getName().toStdString()
       << "    formula id: " << gu::idToString(it->formulaId) << std::endl;
   }
 }

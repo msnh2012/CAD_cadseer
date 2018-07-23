@@ -158,7 +158,7 @@ public:
   //@}
   
   //! Link parameter to formula. first is parameter ptr. last is formula id.
-  void addLink(ftr::prm::Parameter *, const boost::uuids::uuid &);
+  void addLink(const boost::uuids::uuid &, const boost::uuids::uuid &);
   //! erase link by parameter id.
   void removeParameterLink(const boost::uuids::uuid &);
   //! checks if parameter is linked by parameter id. 

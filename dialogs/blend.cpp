@@ -588,7 +588,7 @@ void Blend::updateBlendFeature()
       if (!sbi->radius->isConstant())
       {
         assert(eManager.hasFormula(sbi->expressionId));
-        eManager.addLink(sbi->radius.get(), sbi->expressionId);
+        eManager.addLink(sbi->radius->getId(), sbi->expressionId);
       }
       blend->addSimpleBlend(sBlend);
     }
@@ -612,7 +612,7 @@ void Blend::updateBlendFeature()
       if (!e.radius->isConstant())
       {
         assert(eManager.hasFormula(ri->expressionId));
-        eManager.addLink(e.radius.get(), ri->expressionId);
+        eManager.addLink(e.radius->getId(), ri->expressionId);
       }
       
       VariableWidget::IdItem *ii = dynamic_cast<VariableWidget::IdItem*>(vWidget->constraintTable->item(r, 1));

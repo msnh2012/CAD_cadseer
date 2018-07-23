@@ -26,6 +26,8 @@
 #include <boost/multi_index/ordered_index.hpp>
 #include <boost/multi_index/composite_key.hpp>
 
+using boost::uuids::uuid;
+
 namespace expr
 {
   /*! @brief Link between formula and parameters
@@ -34,9 +36,9 @@ namespace expr
    */
   struct FormulaLink
   {
-    boost::uuids::uuid parameterId;
-    boost::uuids::uuid formulaId;
-    ftr::prm::Parameter *parameter = nullptr;
+    FormulaLink(const uuid &pIdIn, const uuid &fIdIn): parameterId(pIdIn), formulaId(fIdIn){}
+    uuid parameterId;
+    uuid formulaId;
     
     //@{
     //! used as tags.
@@ -55,12 +57,12 @@ namespace expr
       BMI::ordered_unique //parameter can only be linked to one formula
       <
         BMI::tag<FormulaLink::ByParameterId>,
-        BMI::member<FormulaLink, boost::uuids::uuid, &FormulaLink::parameterId>
+        BMI::member<FormulaLink, uuid, &FormulaLink::parameterId>
       >,
       BMI::ordered_non_unique //formula can be linked to many parameters.
       <
         BMI::tag<FormulaLink::ByFormulaId>,
-        BMI::member<FormulaLink, boost::uuids::uuid, &FormulaLink::formulaId>
+        BMI::member<FormulaLink, uuid, &FormulaLink::formulaId>
       >
     >
   > FormulaLinkContainerType;

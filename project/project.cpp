@@ -48,6 +48,7 @@
 #include <annex/seershape.h>
 #include <feature/inert.h>
 #include <feature/shapehistory.h>
+#include <feature/parameter.h>
 #include <expressions/manager.h>
 #include <expressions/formulalink.h>
 #include <expressions/stringtranslator.h> //for serialize.
@@ -1366,7 +1367,8 @@ void Project::open()
       for (const auto &sLink : project->expressionLinks().get().array())
       {
         ftr::prm::Parameter *parameter = findParameter(gu::stringToId(sLink.parameterId()));
-        expressionManager->addLink(parameter, gu::stringToId(sLink.expressionId()));
+        assert(parameter);
+        expressionManager->addLink(parameter->getId(), gu::stringToId(sLink.expressionId()));
       }
     }
     
