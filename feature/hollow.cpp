@@ -66,6 +66,7 @@ sShape(new ann::SeerShape())
   
   label = new lbr::PLabel(offset.get());
   label->valueHasChanged();
+  label->constantHasChanged();
   overlaySwitch->addChild(label.get());
   
   annexes.insert(std::make_pair(ann::Type::SeerShape, sShape.get()));

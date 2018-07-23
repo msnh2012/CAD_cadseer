@@ -83,6 +83,7 @@ void Draft::setDraft(const DraftConvey &conveyIn)
   if (!conveyIn.label)
     label = new lbr::PLabel(angle.get());
   label->valueHasChanged();
+  label->constantHasChanged();
   overlaySwitch->addChild(label.get());
 }
 

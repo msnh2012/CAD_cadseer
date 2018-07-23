@@ -95,6 +95,7 @@ void Chamfer::addSymChamfer(const SymChamfer &chamferIn)
     symChamfers.back().label->showName = true;
   }
   symChamfers.back().label->valueHasChanged();
+  symChamfers.back().label->constantHasChanged();
   overlaySwitch->addChild(symChamfers.back().label.get());
 }
 

@@ -146,6 +146,8 @@ void PLabel::setTextColor()
     text->setColor(osg::Vec4(0.0, 0.0, 1.0, 1.0)); //blue is constant
   else
     text->setColor(osg::Vec4(0.0, 1.0, 0.0, 1.0)); //green is linked.
+    
+  //red is used for auto calc.
 }
 
 void PLabel::valueHasChanged()

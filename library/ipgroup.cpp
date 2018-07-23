@@ -147,9 +147,15 @@ void IPGroup::constantHasChanged()
 {
   assert(parameter);
   if (parameter->isConstant())
+  {
     draggerShow();
+    mainDim->setTextColor(osg::Vec4(0.0, 0.0, 1.0, 1.0));
+  }
   else
+  {
     draggerHide();
+    mainDim->setTextColor(osg::Vec4(0.0, 1.0, 0.0, 1.0));
+  }
 }
 
 void IPGroup::setParameterValue(double valueIn)

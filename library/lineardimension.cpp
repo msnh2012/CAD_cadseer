@@ -259,6 +259,11 @@ void LinearDimension::setColor(const osg::Vec4& colorIn)
   material->setDiffuse(osg::Material::FRONT_AND_BACK, colorIn);
 }
 
+void LinearDimension::setTextColor(const osg::Vec4 &colorIn)
+{
+  text->setColor(colorIn);
+}
+
 void LinearDimension::setArrowSize(double arrowWidthIn, double arrowHeightIn)
 {
   //cache these for purposes.

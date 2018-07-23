@@ -165,6 +165,7 @@ void Blend::addSimpleBlendQuiet(const SimpleBlend &simpleBlendIn)
     simpleBlends.back().label->showName = true;
   }
   simpleBlends.back().label->valueHasChanged();
+  simpleBlends.back().label->constantHasChanged();
   overlaySwitch->addChild(simpleBlends.back().label.get());
   
   parameters.push_back(simpleBlends.back().radius.get());
@@ -189,6 +190,7 @@ void Blend::addVariableBlendQuiet(const VariableBlend &variableBlendIn)
       e.label->showName = true;
     }
     e.label->valueHasChanged();
+    e.label->constantHasChanged();
     overlaySwitch->addChild(e.label.get());
     
     if (!e.position)
@@ -203,6 +205,7 @@ void Blend::addVariableBlendQuiet(const VariableBlend &variableBlendIn)
     if (e.pick.selectionType == slc::Type::MidPoint || e.pick.selectionType == slc::Type::NearestPoint)
     {
       e.positionLabel->valueHasChanged();
+      e.positionLabel->constantHasChanged();
       overlaySwitch->addChild(e.positionLabel.get());
       parameters.push_back(e.position.get());
     }

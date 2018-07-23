@@ -79,6 +79,7 @@ public:
   double getFlippedFactor() const {return flippedFactor;}
   void setCharacterSize(double sizeIn);
   void setColor(const osg::Vec4 &colorIn);
+  void setTextColor(const osg::Vec4 &colorIn);
   void setArrowSize(double arrowWidthIn, double arrowHeightIn);
   osg::BoundingBox getTextBoundingBox();
 protected:

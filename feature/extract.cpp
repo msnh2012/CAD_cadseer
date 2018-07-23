@@ -150,6 +150,7 @@ void Extract::sync(const Extract::AccruePicks &apsIn)
       if (!b.label)
         b.label = new lbr::PLabel(b.parameter.get());
       b.label->valueHasChanged();
+      b.label->constantHasChanged();
       overlaySwitch->addChild(b.label.get());
     }
   }

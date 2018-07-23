@@ -68,6 +68,7 @@ csysDragger(new ann::CSysDragger(this, csys.get()))
   includeSourceLabel = new lbr::PLabel(includeSource.get());
   includeSourceLabel->showName = true;
   includeSourceLabel->valueHasChanged();
+  includeSourceLabel->constantHasChanged();
   overlaySwitch->addChild(includeSourceLabel.get());
   
   parameters.push_back(csys.get());

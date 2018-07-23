@@ -118,6 +118,7 @@ solidId(gu::createRandomId())
   {
     l->showName = true;
     l->valueHasChanged();
+    l->constantHasChanged();
     overlaySwitch->addChild(l);
   };
   setupLabel(diameterLabel.get());
