@@ -29,7 +29,6 @@
 #include <osg/ValueObject>
 #include <osg/Point>
 #include <osg/Switch>
-#include <osg/Depth>
 #include <osgUtil/PolytopeIntersector>
 
 #include <selection/eventhandler.h>
@@ -557,8 +556,8 @@ Geometry* EventHandler::buildTempPoint(const Vec3d& pointIn)
   geometry->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::POINTS, 0, 1));
   
   geometry->getOrCreateStateSet()->setAttribute(new osg::Point(10.0));
-  geometry->getOrCreateStateSet()->setAttribute(new osg::Depth(osg::Depth::LESS, 0.0, 1.0));
   geometry->getOrCreateStateSet()->setMode(GL_LIGHTING, osg::StateAttribute::OFF);
+  geometry->getOrCreateStateSet()->setMode(GL_DEPTH_TEST, osg::StateAttribute::OFF);
   
   return geometry;
 }
