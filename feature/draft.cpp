@@ -153,7 +153,7 @@ void Draft::updateModel(const UpdatePayload &payloadIn)
     {
       if (resolved.resultId.is_nil())
         continue;
-      assert(targetSeerShape.hasShapeIdRecord(resolved.resultId)); //project shape history out of sync.
+      assert(targetSeerShape.hasId(resolved.resultId)); //project shape history out of sync.
       const TopoDS_Face &face = TopoDS::Face(targetSeerShape.getOCCTShape(resolved.resultId));
       
       dMaker.Add(face, direction, localAngle, plane);
@@ -226,8 +226,7 @@ void Draft::generatedMatch(BRepOffsetAPI_DraftAngle &dMaker, const ann::SeerShap
   
   for (const auto &cId : targetShapeIds)
   {
-    const ann::ShapeIdRecord &record = targetShapeIn.findShapeIdRecord(cId);
-    const TopTools_ListOfShape &shapes = dMaker.Generated(record.shape);
+    const TopTools_ListOfShape &shapes = dMaker.Generated(targetShapeIn.findShape(cId));
     if (shapes.Extent() < 1)
       continue;
     assert(shapes.Extent() == 1); //want to know about a situation where we have more than 1.
@@ -240,7 +239,7 @@ void Draft::generatedMatch(BRepOffsetAPI_DraftAngle &dMaker, const ann::SeerShap
       sShape->insertEvolve(cId, freshId);
     }
     
-    sShape->updateShapeIdRecord(shapes.First(), freshId);
+    sShape->updateId(shapes.First(), freshId);
   }
 }
 

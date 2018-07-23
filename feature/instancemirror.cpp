@@ -146,10 +146,10 @@ void InstanceMirror::updateModel(const UpdatePayload &payloadIn)
       {
         if (resolved.resultId.is_nil())
           continue;
-        assert(tss.hasShapeIdRecord(resolved.resultId));
-        if (!tss.hasShapeIdRecord(resolved.resultId))
+        assert(tss.hasId(resolved.resultId));
+        if (!tss.hasId(resolved.resultId))
           continue;
-        tShapes.push_back(tss.findShapeIdRecord(resolved.resultId).shape);
+        tShapes.push_back(tss.findShape(resolved.resultId));
       }
     }
     if (tShapes.empty())
@@ -181,10 +181,10 @@ void InstanceMirror::updateModel(const UpdatePayload &payloadIn)
         {
           if (resolved.resultId.is_nil())
             continue;
-          assert(mss.hasShapeIdRecord(resolved.resultId));
-          if (!mss.hasShapeIdRecord(resolved.resultId))
+          assert(mss.hasId(resolved.resultId));
+          if (!mss.hasId(resolved.resultId))
             continue;
-          dsShape = mss.findShapeIdRecord(resolved.resultId).shape;
+          dsShape = mss.findShape(resolved.resultId);
           break;
         }
 
@@ -243,7 +243,7 @@ void InstanceMirror::updateModel(const UpdatePayload &payloadIn)
     
     for (const auto &s : tShapes)
     {
-      iMapper->startMapping(tss, tss.findShapeIdRecord(s).id,  payloadIn.shapeHistory);
+      iMapper->startMapping(tss, tss.findId(s),  payloadIn.shapeHistory);
       std::size_t count = 0;
       for (const auto &si : out)
       {

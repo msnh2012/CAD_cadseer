@@ -29,6 +29,7 @@
 
 #include <osg/Switch>
 
+#include <globalutilities.h>
 #include <feature/booleanoperation.h>
 #include <feature/shapecheck.h>
 #include <project/serial/xsdcxxoutput/featuresubtract.h>

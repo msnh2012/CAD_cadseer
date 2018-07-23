@@ -229,7 +229,7 @@ void Thicken::thickenMatch(const BRepOffset_MakeOffset &offseter)
   {
     if (!oEdges.HasImage(s))
       continue;
-    uuid edgeId = sShape->findShapeIdRecord(s).id;
+    uuid edgeId = sShape->findId(s);
     assert(!edgeId.is_nil());
     if (edgeId.is_nil())
       continue;
@@ -239,7 +239,7 @@ void Thicken::thickenMatch(const BRepOffset_MakeOffset &offseter)
     TopoDS_Shape nonNilParent;
     for (const auto &pf : parentFaces)
     {
-      if (sShape->findShapeIdRecord(pf).id.is_nil())
+      if (sShape->findId(pf).is_nil())
         nilParent = pf;
       else
         nonNilParent = pf;
@@ -256,7 +256,7 @@ void Thicken::thickenMatch(const BRepOffset_MakeOffset &offseter)
     }
     else
       idForNilFace = bit->second;
-    sShape->updateShapeIdRecord(nilParent, idForNilFace);
+    sShape->updateId(nilParent, idForNilFace);
     if (!sShape->hasEvolveRecordOut(idForNilFace))
       sShape->insertEvolve(gu::createNilId(), idForNilFace);
   }
@@ -264,12 +264,12 @@ void Thicken::thickenMatch(const BRepOffset_MakeOffset &offseter)
   //now assign the offset faces and edges and derived match should handle the rest.
   auto update = [&](const TopoDS_Shape &source, const TopoDS_Shape &offset, std::map<uuid, uuid> &map)
   {
-    const uuid &sourceId = sShape->findShapeIdRecord(source).id;
+    const uuid &sourceId = sShape->findId(source);
     assert(!sourceId.is_nil());
     if (sourceId.is_nil())
       return;
-    assert(sShape->hasShapeIdRecord(offset));
-    if (!sShape->hasShapeIdRecord(offset))
+    assert(sShape->hasShape(offset));
+    if (!sShape->hasShape(offset))
       return;
     uuid idForNilShape;
     auto it = map.find(sourceId);
@@ -280,7 +280,7 @@ void Thicken::thickenMatch(const BRepOffset_MakeOffset &offseter)
     }
     else
       idForNilShape = it->second;
-    sShape->updateShapeIdRecord(offset, idForNilShape);
+    sShape->updateId(offset, idForNilShape);
     if (!sShape->hasEvolveRecordOut(idForNilShape))
       sShape->insertEvolve(gu::createNilId(), idForNilShape);
   };
@@ -298,7 +298,7 @@ void Thicken::thickenMatch(const BRepOffset_MakeOffset &offseter)
   {
     if (s.ShapeType() != TopAbs_FACE)
       continue;
-    uuid fid = sShape->findShapeIdRecord(s).id;
+    uuid fid = sShape->findId(s);
     assert(!fid.is_nil());
     if (fid.is_nil())
     {
@@ -307,13 +307,13 @@ void Thicken::thickenMatch(const BRepOffset_MakeOffset &offseter)
     }
     TopoDS_Wire ow = BRepTools::OuterWire(TopoDS::Face(s));
     assert(!ow.IsNull());
-    assert(sShape->hasShapeIdRecord(ow));
-    if (!sShape->hasShapeIdRecord(ow))
+    assert(sShape->hasShape(ow));
+    if (!sShape->hasShape(ow))
     {
       std::cout << "WARNING: outer wire is not in seershape when assigning outer wires" << std::endl;
       continue;
     }
-    uuid owid = sShape->findShapeIdRecord(ow).id;
+    uuid owid = sShape->findId(ow);
     if (!owid.is_nil())
       continue;
     uuid idForNilShape;
@@ -325,7 +325,7 @@ void Thicken::thickenMatch(const BRepOffset_MakeOffset &offseter)
     }
     else
       idForNilShape = it->second;
-    sShape->updateShapeIdRecord(ow, idForNilShape);
+    sShape->updateId(ow, idForNilShape);
     if (!sShape->hasEvolveRecordOut(idForNilShape))
       sShape->insertEvolve(gu::createNilId(), idForNilShape);
   }
@@ -336,7 +336,7 @@ void Thicken::thickenMatch(const BRepOffset_MakeOffset &offseter)
   assert(solids.size() == 1);
   if (solids.size() != 1)
     throw std::runtime_error("wrong number of result solids");
-  sShape->updateShapeIdRecord(solids.front(), solidId);
+  sShape->updateId(solids.front(), solidId);
   if (!sShape->hasEvolveRecordOut(solidId))
     sShape->insertEvolve(gu::createNilId(), solidId);
   
@@ -345,7 +345,7 @@ void Thicken::thickenMatch(const BRepOffset_MakeOffset &offseter)
   assert(shells.size() == 1);
   if (shells.size() != 1)
     throw std::runtime_error("wrong number of result shells");
-  sShape->updateShapeIdRecord(shells.front(), shellId);
+  sShape->updateId(shells.front(), shellId);
   if (!sShape->hasEvolveRecordOut(shellId))
     sShape->insertEvolve(gu::createNilId(), shellId);
 }

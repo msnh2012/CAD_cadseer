@@ -52,8 +52,8 @@ QIcon Chamfer::icon;
 
 boost::uuids::uuid Chamfer::referenceFaceId(const ann::SeerShape &seerShapeIn, const boost::uuids::uuid &edgeIdIn)
 {
-  assert(seerShapeIn.hasShapeIdRecord(edgeIdIn));
-  TopoDS_Shape edgeShape = seerShapeIn.findShapeIdRecord(edgeIdIn).shape;
+  assert(seerShapeIn.hasId(edgeIdIn));
+  TopoDS_Shape edgeShape = seerShapeIn.findShape(edgeIdIn);
   assert(edgeShape.ShapeType() == TopAbs_EDGE);
   
   std::vector<boost::uuids::uuid> faceIds = seerShapeIn.useGetParentsOfType(edgeIdIn, TopAbs_FACE);
@@ -170,13 +170,13 @@ void Chamfer::updateModel(const UpdatePayload &payloadIn)
           if (intersectionSet.size() > 1)
             std::cerr << "WARNING: more than 1 reference face in Chamfer::updateModel" << std::endl;
           
-          assert(targetSeerShape.hasShapeIdRecord(eid));
-          assert(targetSeerShape.hasShapeIdRecord(faceId));
+          assert(targetSeerShape.hasId(eid));
+          assert(targetSeerShape.hasId(faceId));
           
           updateShapeMap(eid, pick.edgePick.shapeHistory);
           updateShapeMap(faceId, pick.facePick.shapeHistory);
-          TopoDS_Edge edge = TopoDS::Edge(targetSeerShape.findShapeIdRecord(eid).shape);
-          TopoDS_Face face = TopoDS::Face(targetSeerShape.findShapeIdRecord(faceId).shape);
+          TopoDS_Edge edge = TopoDS::Edge(targetSeerShape.findShape(eid));
+          TopoDS_Face face = TopoDS::Face(targetSeerShape.findShape(faceId));
           chamferMaker.Add(static_cast<double>(*(chamfer.distance)), edge, face);
           //update location of parameter label.
           if (!labelDone)
@@ -237,7 +237,7 @@ void Chamfer::generatedMatch(BRepFilletAPI_MakeChamfer &chamferMakerIn, const an
   
   for (const auto &cId : targetShapeIds)
   {
-    const TopoDS_Shape &currentShape = targetShapeIn.findShapeIdRecord(cId).shape;
+    const TopoDS_Shape &currentShape = targetShapeIn.findShape(cId);
     TopTools_ListOfShape generated = chamferMakerIn.Generated(currentShape);
     if (generated.IsEmpty())
       continue;
@@ -253,7 +253,7 @@ void Chamfer::generatedMatch(BRepFilletAPI_MakeChamfer &chamferMakerIn, const an
     std::map<uuid, uuid>::iterator mapItFace;
     bool dummy;
     std::tie(mapItFace, dummy) = shapeMap.insert(std::make_pair(cId, gu::createRandomId()));
-    sShape->updateShapeIdRecord(chamferFace, mapItFace->second);
+    sShape->updateId(chamferFace, mapItFace->second);
     if (dummy) //insertion took place.
       sShape->insertEvolve(gu::createNilId(), mapItFace->second);
     
@@ -263,7 +263,7 @@ void Chamfer::generatedMatch(BRepFilletAPI_MakeChamfer &chamferMakerIn, const an
     std::tie(mapItWire, dummy) = shapeMap.insert(std::make_pair(mapItFace->second, gu::createRandomId()));
     //now get the wire and update the result to id.
     const TopoDS_Shape &chamferedFaceWire = BRepTools::OuterWire(TopoDS::Face(chamferFace));
-    sShape->updateShapeIdRecord(chamferedFaceWire, mapItWire->second);
+    sShape->updateId(chamferedFaceWire, mapItWire->second);
     if (dummy) //insertion took place.
       sShape->insertEvolve(gu::createNilId(), mapItWire->second);
   }

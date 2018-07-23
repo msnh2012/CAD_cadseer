@@ -37,6 +37,7 @@
 #include <library/plabel.h>
 #include <project/serial/xsdcxxoutput/featurehollow.h>
 #include <tools/featuretools.h>
+#include <tools/idtools.h>
 #include <feature/updatepayload.h>
 #include <feature/inputtype.h>
 #include <feature/parameter.h>
@@ -127,10 +128,10 @@ void Hollow::updateModel(const UpdatePayload &payloadIn)
     {
       if (resolved.resultId.is_nil())
         continue;
-      assert(tss.hasShapeIdRecord(resolved.resultId));
-      if (!tss.hasShapeIdRecord(resolved.resultId))
+      assert(tss.hasId(resolved.resultId));
+      if (!tss.hasId(resolved.resultId))
         continue;
-      TopoDS_Shape face = tss.findShapeIdRecord(resolved.resultId).shape;
+      TopoDS_Shape face = tss.findShape(resolved.resultId);
       if (face.ShapeType() != TopAbs_FACE)
         continue;
       closingFaceShapes.push_back(face);
@@ -244,10 +245,10 @@ void Hollow::generatedMatch(BRepOffsetAPI_MakeThickSolid &operationIn, const ann
     
     //if think generated is returning all the geometry from operation
     //so we have to skip non-existing geometry. like other half of a split.
-    if (!sShape->hasShapeIdRecord(newShape))
+    if (!sShape->hasShape(newShape))
       continue;
     
-    if (!sShape->findShapeIdRecord(newShape).id.is_nil())
+    if (!sShape->findId(newShape).is_nil())
       continue; //only set ids for shapes with nil ids.
       
     //should only have faces left to assign. why don't nil wires come through?
@@ -259,7 +260,7 @@ void Hollow::generatedMatch(BRepOffsetAPI_MakeThickSolid &operationIn, const ann
     std::tie(it, results) = shapeMap.insert(std::make_pair(targetId, freshFaceId));
     if (!results)
       freshFaceId = it->second;
-    sShape->updateShapeIdRecord(newShape, freshFaceId);
+    sShape->updateId(newShape, freshFaceId);
     
     //in a hollow these generated entities are actually new entities, whereas for
     //other features, like draft and blend, this is not the case. So these get a nil evolve in.
@@ -273,7 +274,7 @@ void Hollow::generatedMatch(BRepOffsetAPI_MakeThickSolid &operationIn, const ann
       freshWireId = it->second;
     
     const TopoDS_Shape &wireShape = BRepTools::OuterWire(TopoDS::Face(newShape));
-    sShape->updateShapeIdRecord(wireShape, freshWireId);
+    sShape->updateId(wireShape, freshWireId);
   }
 }
 

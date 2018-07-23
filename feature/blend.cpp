@@ -95,14 +95,14 @@ VariableBlend Blend::buildDefaultVariable(const ann::SeerShape &seerShapeIn, con
   
   //not using position parameter for vertices, but building anyway for consistency
   VariableEntry entry1;
-  entry1.pick.id = seerShapeIn.findShapeIdRecord(blendMaker.FirstVertex(1)).id;
+  entry1.pick.id = seerShapeIn.findId(blendMaker.FirstVertex(1));
   entry1.pick.shapeHistory = historyIn.createDevolveHistory(entry1.pick.id);
   entry1.radius = buildRadiusParameter();
   entry1.position = buildPositionParameter();
   out.entries.push_back(entry1);
   
   VariableEntry entry2;
-  entry2.pick.id = seerShapeIn.findShapeIdRecord(blendMaker.LastVertex(1)).id;
+  entry2.pick.id = seerShapeIn.findId(blendMaker.LastVertex(1));
   if (entry1.pick.id != entry2.pick.id) //periodic spine
   {
     entry2.pick.shapeHistory = historyIn.createDevolveHistory(entry2.pick.id);
@@ -284,7 +284,7 @@ void Blend::updateModel(const UpdatePayload &payloadIn)
           if (resolved.resultId.is_nil())
             continue;
           updateShapeMap(resolved.resultId, pick.shapeHistory);
-          assert(targetSeerShape.hasShapeIdRecord(resolved.resultId)); //project history out of sync with seershape.
+          assert(targetSeerShape.hasId(resolved.resultId)); //project history out of sync with seershape.
           TopoDS_Shape tempShape = targetSeerShape.getOCCTShape(resolved.resultId);
           assert(!tempShape.IsNull());
           assert(tempShape.ShapeType() == TopAbs_EDGE);
@@ -308,7 +308,7 @@ void Blend::updateModel(const UpdatePayload &payloadIn)
           if (resolved.resultId.is_nil())
               continue;
           updateShapeMap(resolved.resultId, pick.shapeHistory);
-          assert(targetSeerShape.hasShapeIdRecord(resolved.resultId)); //project history out of sync with seershape.
+          assert(targetSeerShape.hasId(resolved.resultId)); //project history out of sync with seershape.
           TopoDS_Shape tempShape = targetSeerShape.getOCCTShape(resolved.resultId);
           assert(!tempShape.IsNull());
           assert(tempShape.ShapeType() == TopAbs_EDGE); //TODO faces someday.
@@ -454,7 +454,7 @@ void Blend::match(ChFi3d_FilBuilder &bMaker, const ann::SeerShape &targetShapeIn
   
   for (const auto &cId : targetShapeIn.getAllShapeIds())
   {
-    const TopoDS_Shape &currentShape = targetShapeIn.findShapeIdRecord(cId).shape;
+    const TopoDS_Shape &currentShape = targetShapeIn.findShape(cId);
     assert(!currentShape.IsNull());
     const TopTools_ListOfShape &generated = bMaker.Generated(currentShape);
     if (!generated.IsEmpty())
@@ -472,7 +472,7 @@ void Blend::match(ChFi3d_FilBuilder &bMaker, const ann::SeerShape &targetShapeIn
       std::map<uuid, uuid>::iterator mapItFace;
       bool dummy;
       std::tie(mapItFace, dummy) = shapeMap.insert(std::make_pair(cId, gu::createRandomId()));
-      sShape->updateShapeIdRecord(blendFace, mapItFace->second);
+      sShape->updateId(blendFace, mapItFace->second);
       if (dummy) //insertion took place.
         sShape->insertEvolve(gu::createNilId(), mapItFace->second);
       
@@ -482,7 +482,7 @@ void Blend::match(ChFi3d_FilBuilder &bMaker, const ann::SeerShape &targetShapeIn
       std::tie(mapItWire, dummy) = shapeMap.insert(std::make_pair(mapItFace->second, gu::createRandomId()));
       //now get the wire and update the result to id.
       const TopoDS_Shape &blendFaceWire = BRepTools::OuterWire(TopoDS::Face(blendFace));
-      sShape->updateShapeIdRecord(blendFaceWire, mapItWire->second);
+      sShape->updateId(blendFaceWire, mapItWire->second);
       if (dummy) //insertion took place.
         sShape->insertEvolve(gu::createNilId(), mapItWire->second);
     }
@@ -498,7 +498,7 @@ void Blend::match(ChFi3d_FilBuilder &bMaker, const ann::SeerShape &targetShapeIn
       for (const auto &s : mods)
       {
         //this is basically the same as SeerShape match.
-        if(!sShape->hasShapeIdRecord(s))
+        if(!sShape->hasShape(s))
           continue;
         
         uuid freshId = gu::createNilId();
@@ -509,7 +509,7 @@ void Blend::match(ChFi3d_FilBuilder &bMaker, const ann::SeerShape &targetShapeIn
           freshId = gu::createRandomId();
           sShape->insertEvolve(cId, freshId);
         }
-        sShape->updateShapeIdRecord(s, freshId);
+        sShape->updateId(s, freshId);
       }
     }
   }
@@ -544,10 +544,10 @@ void Blend::ensureNoFaceNils()
   {
     if (shape.ShapeType() != TopAbs_FACE)
       continue;
-    if (!sShape->findShapeIdRecord(shape).id.is_nil())
+    if (!sShape->findId(shape).is_nil())
       continue;
     
-    sShape->updateShapeIdRecord(shape, gu::createRandomId());
+    sShape->updateId(shape, gu::createRandomId());
   }
 }
 

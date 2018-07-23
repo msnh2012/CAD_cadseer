@@ -20,217 +20,30 @@
 #ifndef ANN_SEERSHAPE_H
 #define ANN_SEERSHAPE_H
 
-#include <boost/multi_index_container.hpp>
-#include <boost/multi_index/member.hpp>
-#include <boost/multi_index/ordered_index.hpp>
-#include <boost/multi_index/mem_fun.hpp>
-#include <boost/multi_index/hashed_index.hpp>
-#include <boost/multi_index/composite_key.hpp>
+#include <memory>
 
-#include <boost/graph/adjacency_list.hpp>
-#include <boost/graph/breadth_first_search.hpp>
+#include <boost/uuid/uuid.hpp>
 
-#include <TopoDS_Shape.hxx>
-
-#include <globalutilities.h>
-#include <tools/occtools.h>
-#include <tools/idtools.h>
-#include <annex/shapeidhelper.h>
+#include <tools/occtools.h> //need for occt::ShapeVector. Brings too much fix.
 #include <annex/base.h>
+
+
+class BRepBuilderAPI_MakeShape;
+class TopoDS_Shape;
 
 namespace osg{class Vec3d;}
 
-class BRepBuilderAPI_MakeShape;
-
 namespace prj{namespace srl{class SeerShape;}}
-
-static const std::vector<std::string> shapeStrings
-({
-     "Compound",
-     "Compound_Solid",
-     "Solid",
-     "Shell",
-     "Face",
-     "Wire",
-     "Edge",
-     "Vertex",
-     "Shape"
- });
-
 namespace ftr{class ShapeHistory;}
+
+namespace BMI = boost::multi_index;
+namespace BID = boost::uuids;
+  
 namespace ann
 {
-  //mapping a set of ids to one id. this is for deriving an id from multiple parent shapes.
-  typedef std::set<boost::uuids::uuid> IdSet;
-  typedef std::map<IdSet, boost::uuids::uuid> DerivedContainer;
+  struct ShapeStow;
+  class ShapeIdHelper;
   
-  typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS> Graph;
-  typedef boost::graph_traits<Graph>::vertex_descriptor Vertex;
-  typedef boost::graph_traits<Graph>::edge_descriptor Edge;
-  typedef boost::graph_traits<Graph>::vertex_iterator VertexIterator;
-  typedef boost::graph_traits<Graph>::edge_iterator EdgeIterator;
-  typedef boost::graph_traits<Graph>::in_edge_iterator InEdgeIterator;
-  typedef boost::graph_traits<Graph>::out_edge_iterator OutEdgeIterator;
-  typedef boost::graph_traits<Graph>::adjacency_iterator VertexAdjacencyIterator;
-  
-  namespace BMI = boost::multi_index;
-  namespace BID = boost::uuids;
-  
-  struct ShapeIdRecord
-  {
-    BID::uuid id;
-    Vertex graphVertex;
-    TopoDS_Shape shape;
-    
-    ShapeIdRecord() :
-      id(gu::createNilId()),
-      graphVertex(boost::graph_traits<Graph>::null_vertex()),
-      shape(TopoDS_Shape())
-      {}
-    
-    //@{
-    //! for tags
-    struct ById{};
-    struct ByVertex{};
-    struct ByShape{};
-    //@}
-  };
-  
-  struct ShapeIdKeyHash
-  {
-    std::size_t operator()(const TopoDS_Shape& shape)const
-    {
-      int hashOut;
-      hashOut = shape.HashCode(std::numeric_limits<int>::max());
-      return static_cast<std::size_t>(hashOut);
-    }
-  };
-  
-  struct ShapeIdShapeEquality
-  {
-    bool operator()(const TopoDS_Shape &shape1, const TopoDS_Shape &shape2) const
-    {
-      return shape1.IsSame(shape2);
-    }
-  };
-  
-  typedef boost::multi_index_container
-  <
-    ShapeIdRecord,
-    BMI::indexed_by
-    <
-      BMI::ordered_non_unique
-      <
-        BMI::tag<ShapeIdRecord::ById>,
-        BMI::member<ShapeIdRecord, BID::uuid, &ShapeIdRecord::id>
-      >,
-      BMI::ordered_non_unique
-      <
-        BMI::tag<ShapeIdRecord::ByVertex>,
-        BMI::member<ShapeIdRecord, Vertex, &ShapeIdRecord::graphVertex>
-      >,
-      BMI::hashed_non_unique
-      <
-        BMI::tag<ShapeIdRecord::ByShape>,
-        BMI::member<ShapeIdRecord, TopoDS_Shape, &ShapeIdRecord::shape>,
-        ShapeIdKeyHash,
-        ShapeIdShapeEquality
-      >
-    >
-  > ShapeIdContainer;
-  
-  std::ostream& operator<<(std::ostream&, const ShapeIdRecord&);
-  std::ostream& operator<<(std::ostream&, const ShapeIdContainer&);
-  
-  
-  
-  struct EvolveRecord
-  {
-    boost::uuids::uuid inId;
-    boost::uuids::uuid outId;
-    EvolveRecord() : inId(gu::createNilId()), outId(gu::createNilId()) {}
-    EvolveRecord(const boost::uuids::uuid &inIdIn, const boost::uuids::uuid &outIdIn):
-      inId(inIdIn), outId(outIdIn){}
-    
-    //@{
-    //! used as tags.
-    struct ByInId{};
-    struct ByOutId{};
-    struct ByInOutIds{};
-    //@}
-  };
-  
-  typedef boost::multi_index_container
-  <
-    EvolveRecord,
-    BMI::indexed_by
-    <
-      BMI::ordered_non_unique
-      <
-        BMI::tag<EvolveRecord::ByInId>,
-        BMI::member<EvolveRecord, boost::uuids::uuid, &EvolveRecord::inId>
-      >,
-      BMI::ordered_non_unique
-      <
-        BMI::tag<EvolveRecord::ByOutId>,
-        BMI::member<EvolveRecord, boost::uuids::uuid, &EvolveRecord::outId>
-      >,
-      BMI::ordered_unique
-      < 
-        BMI::tag<EvolveRecord::ByInOutIds>,
-        BMI::composite_key
-        <
-          EvolveRecord,
-          BMI::member<EvolveRecord, boost::uuids::uuid, &EvolveRecord::inId>,
-          BMI::member<EvolveRecord, boost::uuids::uuid, &EvolveRecord::outId>
-        >
-      >
-    >
-  > EvolveContainer;
-  
-  std::ostream& operator<<(std::ostream& os, const EvolveRecord& record);
-  std::ostream& operator<<(std::ostream& os, const EvolveContainer& container);
-  
-  
-  
-  //! associate a string identifier to an id.
-  struct FeatureTagRecord
-  {
-    boost::uuids::uuid id;
-    std::string tag;
-    
-    FeatureTagRecord() : id(gu::createNilId()), tag() {}
-    
-    //@{
-    //! used as tags.
-    struct ById{};
-    struct ByTag{};
-    //@}
-  };
-  
-  typedef boost::multi_index_container
-  <
-    FeatureTagRecord,
-    BMI::indexed_by
-    <
-      BMI::ordered_unique
-      <
-        BMI::tag<FeatureTagRecord::ById>,
-        BMI::member<FeatureTagRecord, boost::uuids::uuid, &FeatureTagRecord::id>
-      >,
-      BMI::ordered_unique
-      <
-        BMI::tag<FeatureTagRecord::ByTag>,
-        BMI::member<FeatureTagRecord, std::string, &FeatureTagRecord::tag>
-      >
-    >
-  > FeatureTagContainer;
-  
-  std::ostream& operator<<(std::ostream& os, const FeatureTagRecord& record);
-  std::ostream& operator<<(std::ostream& os, const FeatureTagContainer& container);
-  
-  
-
   /*! @brief Extended wrapping around occt shape
   *
   * @shapeIdContainer is a 3 way link between the boost uuid shape id,
@@ -252,7 +65,7 @@ namespace ann
   * @derivedContainer is consistantly naming newly generated entities between feature
   * updates. This container doesn't get reset between updates.
   */ 
-  struct SeerShape : public Base
+  class SeerShape : public Base
   {
   public:
     SeerShape();
@@ -270,18 +83,12 @@ namespace ann
     
     //@{
     //! shapeId container related functions
-    bool hasShapeIdRecord(const BID::uuid&) const;
-    bool hasShapeIdRecord(const Vertex&) const;
-    bool hasShapeIdRecord(const TopoDS_Shape&) const;
-    const ShapeIdRecord& findShapeIdRecord(const BID::uuid&) const;
-    const ShapeIdRecord& findShapeIdRecord(const Vertex&) const;
-    const ShapeIdRecord& findShapeIdRecord(const TopoDS_Shape&) const;
-    void updateShapeIdRecord(const BID::uuid&, const TopoDS_Shape&); //update shape by id.
-    void updateShapeIdRecord(const BID::uuid&, const Vertex&); //update vertex by id.
-    void updateShapeIdRecord(const TopoDS_Shape&, const BID::uuid&); //update id by shape.
-    void updateShapeIdRecord(const TopoDS_Shape&, const Vertex&); //update vertex by shape.
-    void updateShapeIdRecord(const Vertex&, const BID::uuid&); //update id by vertex. 
-    void updateShapeIdRecord(const Vertex&, const TopoDS_Shape&); //update shape by vertex.
+    bool hasId(const BID::uuid&) const;
+    bool hasShape(const TopoDS_Shape&) const;
+    const TopoDS_Shape& findShape(const BID::uuid&) const;
+    const boost::uuids::uuid& findId(const TopoDS_Shape&) const;
+    
+    void updateId(const TopoDS_Shape&, const BID::uuid&); //update id by shape.
     std::vector<BID::uuid> getAllShapeIds() const; //all the ids in the container.
     occt::ShapeVector getAllShapes() const; //all the shapes in the container.
     occt::ShapeVector getAllNilShapes() const; //all the shapes in the container.
@@ -295,7 +102,6 @@ namespace ann
     std::vector<BID::uuid> evolve(const BID::uuid&) const; //!< forward evolution. in to out.
     std::vector<BID::uuid> devolve(const BID::uuid&) const; //!< reverse evolution. out to in.
     void insertEvolve(const BID::uuid&, const BID::uuid&); //!< add entry into evolve container
-    void insertEvolve(const EvolveRecord&); //!< add entry into evolve container
     void fillInHistory(ftr::ShapeHistory &, const BID::uuid&) const;
     void replaceId(const BID::uuid &, const BID::uuid &, const ftr::ShapeHistory &);
     //@}
@@ -303,7 +109,7 @@ namespace ann
     //@{
     //! feature tag container related functions
     BID::uuid featureTagId(const std::string &tagIn);
-    void insertFeatureTag(const FeatureTagRecord&);
+    void insertFeatureTag(const BID::uuid&, const std::string &tagIn);
     //@}
     
     //@{
@@ -412,58 +218,19 @@ namespace ann
      * and still map shapes back to the original through the
      * evolve container.
      */
-    SeerShape createWorkCopy() const;
+    std::unique_ptr<SeerShape> createWorkCopy() const;
     
     /*! @brief generate shape id helper for viz generation*/
     ShapeIdHelper buildHelper() const;
     
+    //need this for graph visitor access.
+    const ShapeStow& getStow() const {return *stow;}
+    
   private:
+    std::unique_ptr<ShapeStow> stow;
     BID::uuid rootShapeId;
-    ShapeIdContainer shapeIdContainer;
-    EvolveContainer evolveContainer;
-    FeatureTagContainer featureTagContainer;
-    DerivedContainer derivedContainer;
-    Graph graph;
-    Graph rGraph; //reversed graph.
     
     void updateGraphs();
-  };
-  
-  class TypeCollectionVisitor : public boost::default_bfs_visitor
-  {
-  public:
-    TypeCollectionVisitor(const TopAbs_ShapeEnum &shapeTypeIn, const SeerShape &seerShapeIn, std::vector<Vertex> &vertOut) :
-      shapeType(shapeTypeIn), seerShape(seerShapeIn), graphVertices(vertOut){}
-    template <typename VisitorVertex, typename VisitorGraph>
-    void discover_vertex(VisitorVertex u, const VisitorGraph &g)
-    {
-      if (seerShape.findShapeIdRecord(u).shape.ShapeType() == this->shapeType)
-	graphVertices.push_back(u);
-    }
-
-  private:
-    const TopAbs_ShapeEnum &shapeType;
-    const SeerShape &seerShape;
-    std::vector<Vertex> &graphVertices;
-  };
-  
-  template <class GraphTypeIn>
-  class Node_writer {
-  public:
-    Node_writer(const GraphTypeIn &graphIn, const SeerShape &seerShapeIn):
-      graph(graphIn), seerShape(seerShapeIn){}
-    template <class NodeW>
-    void operator()(std::ostream& out, const NodeW& v) const
-    {
-        out << 
-            "[label=\"" <<
-            shapeStrings.at(static_cast<int>(seerShape.findShapeIdRecord(v).shape.ShapeType())) << "\\n" <<
-            gu::idToString(seerShape.findShapeIdRecord(v).id) <<
-            "\"]";
-    }
-  private:
-    const GraphTypeIn &graph;
-    const SeerShape &seerShape;
   };
 }
 

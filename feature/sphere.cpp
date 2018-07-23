@@ -19,6 +19,7 @@
 
 #include <BRepPrimAPI_MakeSphere.hxx>
 
+#include <globalutilities.h>
 #include <tools/idtools.h>
 #include <preferences/preferencesXML.h>
 #include <preferences/manager.h>
@@ -191,19 +192,13 @@ void Sphere::initializeMaps()
   {
     uuid tempId = gu::createRandomId();
     tempIds.push_back(tempId);
-    
-    ann::EvolveRecord evolveRecord;
-    evolveRecord.outId = tempId;
-    sShape->insertEvolve(evolveRecord);
+    sShape->insertEvolve(gu::createNilId(), tempId);
   }
   
   //helper lamda
   auto insertIntoFeatureMap = [this](const uuid &idIn, FeatureTag featureTagIn)
   {
-    ann::FeatureTagRecord record;
-    record.id = idIn;
-    record.tag = featureTagMap.at(featureTagIn);
-    sShape->insertFeatureTag(record);
+    sShape->insertFeatureTag(idIn, featureTagMap.at(featureTagIn));
   };
   
   insertIntoFeatureMap(tempIds.at(0), FeatureTag::Root);
@@ -227,7 +222,7 @@ void Sphere::updateResult(BRepPrimAPI_MakeSphere &sphereMaker)
   auto updateShapeByTag = [this](const TopoDS_Shape &shapeIn, FeatureTag featureTagIn)
   {
     uuid localId = sShape->featureTagId(featureTagMap.at(featureTagIn));
-    sShape->updateShapeIdRecord(shapeIn, localId);
+    sShape->updateId(shapeIn, localId);
   };
   
   updateShapeByTag(sShape->getRootOCCTShape(), FeatureTag::Root);

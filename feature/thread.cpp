@@ -34,6 +34,8 @@
 #include <osg/Switch>
 
 #include <tools/occtools.h>
+#include <tools/idtools.h>
+#include <globalutilities.h>
 #include <annex/seershape.h>
 #include <annex/csysdragger.h>
 #include <library/plabel.h>
@@ -479,9 +481,9 @@ void Thread::updateIds()
   for (const auto &s : shapes)
   {
     //don't overwrite the root compound
-    if (sShape->findShapeIdRecord(s).id.is_nil())
+    if (sShape->findId(s).is_nil())
     {
-      sShape->updateShapeIdRecord(s, ids.at(si));
+      sShape->updateId(s, ids.at(si));
       if (!sShape->hasEvolveRecordOut(ids.at(si)))
         sShape->insertEvolve(gu::createNilId(), ids.at(si));
     }
@@ -490,7 +492,7 @@ void Thread::updateIds()
   
   TopoDS_Shape solid = occt::getFirstNonCompound(sShape->getRootOCCTShape());
   assert(solid.ShapeType() == TopAbs_SOLID);
-  sShape->updateShapeIdRecord(solid, solidId);
+  sShape->updateId(solid, solidId);
   if (!sShape->hasEvolveRecordOut(solidId))
     sShape->insertEvolve(gu::createNilId(), solidId);
 }

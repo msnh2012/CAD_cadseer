@@ -20,10 +20,19 @@
 #include <stack>
 #include <algorithm>
 
+#include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/iteration_macros.hpp>
 #include <boost/graph/graphviz.hpp>
+#include <boost/graph/breadth_first_search.hpp>
 #include <boost/current_function.hpp>
+#include <boost/multi_index_container.hpp>
+#include <boost/multi_index/member.hpp>
+#include <boost/multi_index/ordered_index.hpp>
+#include <boost/multi_index/mem_fun.hpp>
+#include <boost/multi_index/hashed_index.hpp>
+#include <boost/multi_index/composite_key.hpp>
 
+#include <TopoDS_Shape.hxx>
 #include <gp_Circ.hxx>
 #include <gp_Elips.hxx>
 #include <TopoDS.hxx>
@@ -43,20 +52,267 @@
 
 #include <tools/idtools.h>
 #include <tools/occtools.h>
+#include <annex/shapeidhelper.h>
 #include <project/serial/xsdcxxoutput/featurebase.h>
 #include <feature/shapehistory.h>
 #include <annex/seershape.h>
 
-using namespace ann;
-
 using boost::uuids::uuid;
+
+namespace ann
+{
+  //mapping a set of ids to one id. this is for deriving an id from multiple parent shapes.
+  typedef std::set<boost::uuids::uuid> IdSet;
+  typedef std::map<IdSet, boost::uuids::uuid> DerivedContainer;
+  
+  typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS> Graph;
+  typedef boost::graph_traits<Graph>::vertex_descriptor Vertex;
+  typedef boost::graph_traits<Graph>::edge_descriptor Edge;
+  typedef boost::graph_traits<Graph>::vertex_iterator VertexIterator;
+  typedef boost::graph_traits<Graph>::edge_iterator EdgeIterator;
+  typedef boost::graph_traits<Graph>::in_edge_iterator InEdgeIterator;
+  typedef boost::graph_traits<Graph>::out_edge_iterator OutEdgeIterator;
+  typedef boost::graph_traits<Graph>::adjacency_iterator VertexAdjacencyIterator;
+  
+  namespace BMI = boost::multi_index;
+  
+  struct ShapeIdRecord
+  {
+    uuid id;
+    Vertex graphVertex;
+    TopoDS_Shape shape;
+    
+    ShapeIdRecord() :
+      id(gu::createNilId()),
+      graphVertex(boost::graph_traits<Graph>::null_vertex()),
+      shape(TopoDS_Shape())
+      {}
+    
+    //@{
+    //! for tags
+    struct ById{};
+    struct ByVertex{};
+    struct ByShape{};
+    //@}
+  };
+  
+  struct ShapeIdKeyHash
+  {
+    std::size_t operator()(const TopoDS_Shape& shape)const
+    {
+      int hashOut;
+      hashOut = shape.HashCode(std::numeric_limits<int>::max());
+      return static_cast<std::size_t>(hashOut);
+    }
+  };
+  
+  struct ShapeIdShapeEquality
+  {
+    bool operator()(const TopoDS_Shape &shape1, const TopoDS_Shape &shape2) const
+    {
+      return shape1.IsSame(shape2);
+    }
+  };
+  
+  typedef boost::multi_index_container
+  <
+    ShapeIdRecord,
+    BMI::indexed_by
+    <
+      BMI::ordered_non_unique
+      <
+        BMI::tag<ShapeIdRecord::ById>,
+        BMI::member<ShapeIdRecord, BID::uuid, &ShapeIdRecord::id>
+      >,
+      BMI::ordered_non_unique
+      <
+        BMI::tag<ShapeIdRecord::ByVertex>,
+        BMI::member<ShapeIdRecord, Vertex, &ShapeIdRecord::graphVertex>
+      >,
+      BMI::hashed_non_unique
+      <
+        BMI::tag<ShapeIdRecord::ByShape>,
+        BMI::member<ShapeIdRecord, TopoDS_Shape, &ShapeIdRecord::shape>,
+        ShapeIdKeyHash,
+        ShapeIdShapeEquality
+      >
+    >
+  > ShapeIdContainer;
+  
+  std::ostream& operator<<(std::ostream&, const ShapeIdRecord&);
+  std::ostream& operator<<(std::ostream&, const ShapeIdContainer&);
+  
+  
+  
+  struct EvolveRecord
+  {
+    boost::uuids::uuid inId;
+    boost::uuids::uuid outId;
+    EvolveRecord() : inId(gu::createNilId()), outId(gu::createNilId()) {}
+    EvolveRecord(const boost::uuids::uuid &inIdIn, const boost::uuids::uuid &outIdIn):
+      inId(inIdIn), outId(outIdIn){}
+    
+    //@{
+    //! used as tags.
+    struct ByInId{};
+    struct ByOutId{};
+    struct ByInOutIds{};
+    //@}
+  };
+  
+  typedef boost::multi_index_container
+  <
+    EvolveRecord,
+    BMI::indexed_by
+    <
+      BMI::ordered_non_unique
+      <
+        BMI::tag<EvolveRecord::ByInId>,
+        BMI::member<EvolveRecord, boost::uuids::uuid, &EvolveRecord::inId>
+      >,
+      BMI::ordered_non_unique
+      <
+        BMI::tag<EvolveRecord::ByOutId>,
+        BMI::member<EvolveRecord, boost::uuids::uuid, &EvolveRecord::outId>
+      >,
+      BMI::ordered_unique
+      < 
+        BMI::tag<EvolveRecord::ByInOutIds>,
+        BMI::composite_key
+        <
+          EvolveRecord,
+          BMI::member<EvolveRecord, boost::uuids::uuid, &EvolveRecord::inId>,
+          BMI::member<EvolveRecord, boost::uuids::uuid, &EvolveRecord::outId>
+        >
+      >
+    >
+  > EvolveContainer;
+  
+  std::ostream& operator<<(std::ostream& os, const EvolveRecord& record);
+  std::ostream& operator<<(std::ostream& os, const EvolveContainer& container);
+  
+  
+  
+  //! associate a string identifier to an id.
+  struct FeatureTagRecord
+  {
+    boost::uuids::uuid id;
+    std::string tag;
+    
+    FeatureTagRecord() : id(gu::createNilId()), tag() {}
+    FeatureTagRecord(const uuid &idIn, const std::string &tagIn): id(idIn), tag(tagIn){}
+    
+    //@{
+    //! used as tags.
+    struct ById{};
+    struct ByTag{};
+    //@}
+  };
+  
+  typedef boost::multi_index_container
+  <
+    FeatureTagRecord,
+    BMI::indexed_by
+    <
+      BMI::ordered_unique
+      <
+        BMI::tag<FeatureTagRecord::ById>,
+        BMI::member<FeatureTagRecord, boost::uuids::uuid, &FeatureTagRecord::id>
+      >,
+      BMI::ordered_unique
+      <
+        BMI::tag<FeatureTagRecord::ByTag>,
+        BMI::member<FeatureTagRecord, std::string, &FeatureTagRecord::tag>
+      >
+    >
+  > FeatureTagContainer;
+  
+  std::ostream& operator<<(std::ostream& os, const FeatureTagRecord& record);
+  std::ostream& operator<<(std::ostream& os, const FeatureTagContainer& container);
+  
+  struct ShapeStow
+  {
+    ShapeIdContainer shapeIds;
+    EvolveContainer evolves;
+    FeatureTagContainer featureTags;
+    DerivedContainer derives;
+    Graph graph;
+    Graph rGraph; //reversed graph.
+    
+    const ShapeIdRecord& findShapeIdRecord(const uuid& idIn) const
+    {
+      typedef ShapeIdContainer::index<ShapeIdRecord::ById>::type List;
+      const List &list = shapeIds.get<ShapeIdRecord::ById>();
+      List::const_iterator it = list.find(idIn);
+      assert(it != list.end());
+      return *it;
+    }
+
+    const ShapeIdRecord& findShapeIdRecord(const Vertex& vertexIn) const
+    {
+      typedef ShapeIdContainer::index<ShapeIdRecord::ByVertex>::type List;
+      const List &list = shapeIds.get<ShapeIdRecord::ByVertex>();
+      List::const_iterator it = list.find(vertexIn);
+      assert(it != list.end());
+      return *it;
+    }
+
+    const ShapeIdRecord& findShapeIdRecord(const TopoDS_Shape& shapeIn) const
+    {
+      typedef ShapeIdContainer::index<ShapeIdRecord::ByShape>::type List;
+      const List &list = shapeIds.get<ShapeIdRecord::ByShape>();
+      List::const_iterator it = list.find(shapeIn);
+      assert(it != list.end());
+      return *it;
+    }
+  };
+  
+  template <class GraphTypeIn>
+  class Node_writer {
+  public:
+    Node_writer(const GraphTypeIn &graphIn, const SeerShape &seerShapeIn):
+      graph(graphIn), seerShape(seerShapeIn){}
+    template <class NodeW>
+    void operator()(std::ostream& out, const NodeW& v) const
+    {
+        out << 
+            "[label=\"" <<
+            occt::getShapeTypeString(seerShape.getStow().findShapeIdRecord(v).shape) << "\\n" <<
+            gu::idToString(seerShape.getStow().findShapeIdRecord(v).id) <<
+            "\"]";
+    }
+  private:
+    const GraphTypeIn &graph;
+    const SeerShape &seerShape;
+  };
+    
+  class TypeCollectionVisitor : public boost::default_bfs_visitor
+  {
+  public:
+    TypeCollectionVisitor(const TopAbs_ShapeEnum &shapeTypeIn, const SeerShape &seerShapeIn, std::vector<Vertex> &vertOut) :
+      shapeType(shapeTypeIn), seerShape(seerShapeIn), graphVertices(vertOut){}
+    template <typename VisitorVertex, typename VisitorGraph>
+    void discover_vertex(VisitorVertex u, const VisitorGraph &)
+    {
+      if (seerShape.getStow().findShapeIdRecord(u).shape.ShapeType() == this->shapeType)
+        graphVertices.push_back(u);
+    }
+
+  private:
+    const TopAbs_ShapeEnum &shapeType;
+    const SeerShape &seerShape;
+    std::vector<Vertex> &graphVertices;
+  };
+}
+
+using namespace ann;
 
 std::ostream& ann::operator<<(std::ostream& os, const ShapeIdRecord& record)
 {
   os << gu::idToString(record.id) << "      " << 
     ShapeIdKeyHash()(record.shape) << "      " <<
     record.graphVertex << "      " <<
-    shapeStrings.at(record.shape.ShapeType()) << std::endl;
+    occt::getShapeTypeString(record.shape) << std::endl;
   return os;
 }
 
@@ -68,8 +324,6 @@ std::ostream& ann::operator<<(std::ostream& os, const ShapeIdContainer& containe
     os << *it;
   return os;
 }
-
-
 
 ostream& ann::operator<<(ostream& os, const EvolveRecord& record)
 {
@@ -103,7 +357,7 @@ ostream& ann::operator<<(ostream& os, const FeatureTagContainer& container)
   return os;
 }
 
-SeerShape::SeerShape() : Base()
+SeerShape::SeerShape() : Base(), stow(new ShapeStow())
 {
   reset();
 }
@@ -125,16 +379,16 @@ void SeerShape::setOCCTShape(const TopoDS_Shape& shapeIn)
   {
     ShapeIdRecord record;
     record.shape = s;
-    record.graphVertex = boost::add_vertex(graph);
+    record.graphVertex = boost::add_vertex(stow->graph);
     //id is nil. set by record constructor.
     
-    shapeIdContainer.insert(record);
+    stow->shapeIds.insert(record);
   }
   
   //root compound shape needs an id even though it maybe temp.
   rootShapeId = gu::createRandomId();
-  updateShapeIdRecord(workShape, rootShapeId);
-  rGraph = graph; //now graph and rGraph are equal, edgeless graphs.
+  updateId(workShape, rootShapeId);
+  stow->rGraph = stow->graph; //now graph and rGraph are equal, edgeless graphs.
   
   updateGraphs();
 }
@@ -142,9 +396,9 @@ void SeerShape::setOCCTShape(const TopoDS_Shape& shapeIn)
 void SeerShape::reset()
 {
   rootShapeId = gu::createNilId();
-  shapeIdContainer.get<ShapeIdRecord::ById>().clear();
-  graph = Graph();
-  rGraph = graph;
+  stow->shapeIds.get<ShapeIdRecord::ById>().clear();
+  stow->graph = Graph();
+  stow->rGraph = stow->graph;
 }
 
 void SeerShape::updateGraphs()
@@ -160,19 +414,19 @@ void SeerShape::updateGraphs()
     for (TopoDS_Iterator it(shapeIn); it.More(); it.Next())
     {
       const TopoDS_Shape &currentShape = it.Value();
-      if (!(hasShapeIdRecord(currentShape)))
+      if (!(hasShape(currentShape)))
         continue; //topods_iterator doesn't ignore orientation like mapShapes does. probably seam edge.
 
       //add edge to previous graph vertex if stack is not empty.
       if (!shapeStack.empty())
       {
-        Vertex pVertex = findShapeIdRecord(shapeStack.top()).graphVertex;
-        Vertex cVertex = findShapeIdRecord(currentShape).graphVertex;
+        Vertex pVertex = stow->findShapeIdRecord(shapeStack.top()).graphVertex;
+        Vertex cVertex = stow->findShapeIdRecord(currentShape).graphVertex;
         
-        if (!boost::edge(pVertex, cVertex, graph).second)
+        if (!boost::edge(pVertex, cVertex, stow->graph).second)
         {
-          boost::add_edge(pVertex, cVertex, graph);
-          boost::add_edge(cVertex, pVertex, rGraph);
+          boost::add_edge(pVertex, cVertex, stow->graph);
+          boost::add_edge(cVertex, pVertex, stow->rGraph);
         }
       }
       shapeStack.push(currentShape);
@@ -186,123 +440,49 @@ void SeerShape::updateGraphs()
   recursion(rootWorkShape);
 }
 
-bool SeerShape::hasShapeIdRecord(const uuid& idIn) const
+bool SeerShape::hasId(const uuid& idIn) const
 {
   typedef ShapeIdContainer::index<ShapeIdRecord::ById>::type List;
-  const List &list = shapeIdContainer.get<ShapeIdRecord::ById>();
+  const List &list = stow->shapeIds.get<ShapeIdRecord::ById>();
   List::const_iterator it = list.find(idIn);
   return (it != list.end());
 }
 
-bool SeerShape::hasShapeIdRecord(const Vertex& vertexIn) const
-{
-  typedef ShapeIdContainer::index<ShapeIdRecord::ByVertex>::type List;
-  const List &list = shapeIdContainer.get<ShapeIdRecord::ByVertex>();
-  List::const_iterator it = list.find(vertexIn);
-  return (it != list.end());
-}
-
-bool SeerShape::hasShapeIdRecord(const TopoDS_Shape& shapeIn) const
+bool SeerShape::hasShape(const TopoDS_Shape& shapeIn) const
 {
   typedef ShapeIdContainer::index<ShapeIdRecord::ByShape>::type List;
-  const List &list = shapeIdContainer.get<ShapeIdRecord::ByShape>();
+  const List &list = stow->shapeIds.get<ShapeIdRecord::ByShape>();
   List::const_iterator it = list.find(shapeIn);
   return (it != list.end());
 }
 
-const ShapeIdRecord& SeerShape::findShapeIdRecord(const uuid& idIn) const
+const TopoDS_Shape& SeerShape::findShape(const uuid& idIn) const
 {
   typedef ShapeIdContainer::index<ShapeIdRecord::ById>::type List;
-  const List &list = shapeIdContainer.get<ShapeIdRecord::ById>();
+  const List &list = stow->shapeIds.get<ShapeIdRecord::ById>();
   List::const_iterator it = list.find(idIn);
   assert(it != list.end());
-  return *it;
+  return it->shape;
 }
 
-const ShapeIdRecord& SeerShape::findShapeIdRecord(const Vertex& vertexIn) const
-{
-  typedef ShapeIdContainer::index<ShapeIdRecord::ByVertex>::type List;
-  const List &list = shapeIdContainer.get<ShapeIdRecord::ByVertex>();
-  List::const_iterator it = list.find(vertexIn);
-  assert(it != list.end());
-  return *it;
-}
-
-const ShapeIdRecord& SeerShape::findShapeIdRecord(const TopoDS_Shape& shapeIn) const
+const uuid& SeerShape::findId(const TopoDS_Shape& shapeIn) const
 {
   typedef ShapeIdContainer::index<ShapeIdRecord::ByShape>::type List;
-  const List &list = shapeIdContainer.get<ShapeIdRecord::ByShape>();
+  const List &list = stow->shapeIds.get<ShapeIdRecord::ByShape>();
   List::const_iterator it = list.find(shapeIn);
   assert(it != list.end());
-  return *it;
-}
-
-//! updates the shape by matching id.
-void SeerShape::updateShapeIdRecord(const uuid& idIn, const TopoDS_Shape& shapeIn)
-{
-  typedef ShapeIdContainer::index<ShapeIdRecord::ById>::type List;
-  List &list = shapeIdContainer.get<ShapeIdRecord::ById>();
-  List::iterator it = list.find(idIn);
-  assert(it != list.end());
-  ShapeIdRecord record = *it;
-  record.shape = shapeIn;
-  list.replace(it, record);
-}
-
-//! updates the vertex by matching id.
-void SeerShape::updateShapeIdRecord(const uuid& idIn, const Vertex& vertexIn)
-{
-  typedef ShapeIdContainer::index<ShapeIdRecord::ById>::type List;
-  List &list = shapeIdContainer.get<ShapeIdRecord::ById>();
-  List::iterator it = list.find(idIn);
-  assert(it != list.end());
-  ShapeIdRecord record = *it;
-  record.graphVertex = vertexIn;
-  list.replace(it, record);
+  return it->id;
 }
 
 //! updates the id by matching shape.
-void SeerShape::updateShapeIdRecord(const TopoDS_Shape& shapeIn, const uuid& idIn)
+void SeerShape::updateId(const TopoDS_Shape& shapeIn, const uuid& idIn)
 {
   typedef ShapeIdContainer::index<ShapeIdRecord::ByShape>::type List;
-  List &list = shapeIdContainer.get<ShapeIdRecord::ByShape>();
+  List &list = stow->shapeIds.get<ShapeIdRecord::ByShape>();
   List::iterator it = list.find(shapeIn);
   assert(it != list.end());
   ShapeIdRecord record = *it;
   record.id = idIn;
-  list.replace(it, record);
-}
-
-void SeerShape::updateShapeIdRecord(const TopoDS_Shape& shapeIn, const Vertex& vertexIn)
-{
-  typedef ShapeIdContainer::index<ShapeIdRecord::ByShape>::type List;
-  List &list = shapeIdContainer.get<ShapeIdRecord::ByShape>();
-  List::iterator it = list.find(shapeIn);
-  assert(it != list.end());
-  ShapeIdRecord record = *it;
-  record.graphVertex = vertexIn;
-  list.replace(it, record);
-}
-
-void SeerShape::updateShapeIdRecord(const Vertex& vertexIn, const uuid& idIn)
-{
-  typedef ShapeIdContainer::index<ShapeIdRecord::ByVertex>::type List;
-  List &list = shapeIdContainer.get<ShapeIdRecord::ByVertex>();
-  List::iterator it = list.find(vertexIn);
-  assert(it != list.end());
-  ShapeIdRecord record = *it;
-  record.id = idIn;
-  list.replace(it, record);
-}
-
-void SeerShape::updateShapeIdRecord(const Vertex& vertexIn, const TopoDS_Shape& shapeIn)
-{
-  typedef ShapeIdContainer::index<ShapeIdRecord::ByVertex>::type List;
-  List &list = shapeIdContainer.get<ShapeIdRecord::ByVertex>();
-  List::iterator it = list.find(vertexIn);
-  assert(it != list.end());
-  ShapeIdRecord record = *it;
-  record.shape = shapeIn;
   list.replace(it, record);
 }
 
@@ -311,7 +491,7 @@ std::vector<uuid> SeerShape::getAllShapeIds() const
   std::vector<uuid> out;
   
   typedef ShapeIdContainer::index<ShapeIdRecord::ById>::type List;
-  const List &list = shapeIdContainer.get<ShapeIdRecord::ById>();
+  const List &list = stow->shapeIds.get<ShapeIdRecord::ById>();
   for (const auto &entry : list)
     out.push_back(entry.id);
   return out;
@@ -322,7 +502,7 @@ occt::ShapeVector SeerShape::getAllShapes() const
   occt::ShapeVector out;
   
   typedef ShapeIdContainer::index<ShapeIdRecord::ById>::type List;
-  const List &list = shapeIdContainer.get<ShapeIdRecord::ById>();
+  const List &list = stow->shapeIds.get<ShapeIdRecord::ById>();
   for (const auto &entry : list)
     out.push_back(entry.shape);
   return out;
@@ -332,7 +512,7 @@ occt::ShapeVector SeerShape::getAllNilShapes() const
 {
   occt::ShapeVector out;
   typedef ShapeIdContainer::index<ShapeIdRecord::ById>::type List;
-  const List &list = shapeIdContainer.get<ShapeIdRecord::ById>();
+  const List &list = stow->shapeIds.get<ShapeIdRecord::ById>();
   auto rangeItPair = list.equal_range(gu::createNilId());
   for (; rangeItPair.first != rangeItPair.second; ++rangeItPair.first)
     out.push_back(rangeItPair.first->shape);
@@ -343,7 +523,7 @@ occt::ShapeVector SeerShape::getAllNilShapes() const
 bool SeerShape::hasEvolveRecordIn(const uuid &idIn) const
 {
   typedef EvolveContainer::index<EvolveRecord::ByInId>::type List;
-  const List &list = evolveContainer.get<EvolveRecord::ByInId>();
+  const List &list = stow->evolves.get<EvolveRecord::ByInId>();
   List::const_iterator it = list.find(idIn);
   return (it != list.end());
 }
@@ -351,7 +531,7 @@ bool SeerShape::hasEvolveRecordIn(const uuid &idIn) const
 bool SeerShape::hasEvolveRecordOut(const uuid &idOut) const
 {
   typedef EvolveContainer::index<EvolveRecord::ByOutId>::type List;
-  const List &list = evolveContainer.get<EvolveRecord::ByOutId>();
+  const List &list = stow->evolves.get<EvolveRecord::ByOutId>();
   List::const_iterator it = list.find(idOut);
   return (it != list.end());
 }
@@ -359,7 +539,7 @@ bool SeerShape::hasEvolveRecordOut(const uuid &idOut) const
 bool SeerShape::hasEvolveRecord(const BID::uuid &inId, const BID::uuid &outId) const
 {
   typedef EvolveContainer::index<EvolveRecord::ByInOutIds>::type List;
-  const List &list = evolveContainer.get<EvolveRecord::ByInOutIds>();
+  const List &list = stow->evolves.get<EvolveRecord::ByInOutIds>();
   List::const_iterator it = list.find(std::make_tuple(inId, outId));
   return (it != list.end());
 }
@@ -368,7 +548,7 @@ std::vector<uuid> SeerShape::evolve(const uuid &idIn) const
 {
   std::vector<uuid> out;
   typedef EvolveContainer::index<EvolveRecord::ByInId>::type List;
-  const List &list = evolveContainer.get<EvolveRecord::ByInId>();
+  const List &list = stow->evolves.get<EvolveRecord::ByInId>();
   auto rangeItPair = list.equal_range(idIn);
   for (; rangeItPair.first != rangeItPair.second; ++rangeItPair.first)
     out.push_back(rangeItPair.first->outId);
@@ -380,7 +560,7 @@ std::vector<uuid> SeerShape::devolve(const uuid &idOut) const
 {
   std::vector<uuid> out;
   typedef EvolveContainer::index<EvolveRecord::ByOutId>::type List;
-  const List &list = evolveContainer.get<EvolveRecord::ByOutId>();
+  const List &list = stow->evolves.get<EvolveRecord::ByOutId>();
   auto rangeItPair = list.equal_range(idOut);
   for (; rangeItPair.first != rangeItPair.second; ++rangeItPair.first)
     out.push_back(rangeItPair.first->inId);
@@ -390,14 +570,7 @@ std::vector<uuid> SeerShape::devolve(const uuid &idOut) const
 
 void SeerShape::insertEvolve(const uuid& idIn, const uuid& idOut)
 {
-  evolveContainer.insert(EvolveRecord(idIn, idOut));
-}
-
-void SeerShape::insertEvolve(const EvolveRecord &recordIn)
-{
-  if (hasEvolveRecord(recordIn.inId, recordIn.outId))
-    return;
-  evolveContainer.insert(recordIn);
+  stow->evolves.insert(EvolveRecord(idIn, idOut));
 }
 
 void SeerShape::fillInHistory(ftr::ShapeHistory &historyIn, const BID::uuid &featureId) const
@@ -409,13 +582,13 @@ void SeerShape::fillInHistory(ftr::ShapeHistory &historyIn, const BID::uuid &fea
    */
   
   typedef EvolveContainer::index<EvolveRecord::ByInId>::type List;
-  const List &list = evolveContainer.get<EvolveRecord::ByInId>();
+  const List &list = stow->evolves.get<EvolveRecord::ByInId>();
   for (List::const_iterator it = list.begin(); it != list.end(); ++it)
   {
     //if the outid is nil, that means that a shape didn't make it through operation.
     //if the outid doesn't exist in the actually finished shape, that means this entry is from another update.
     //we don't need to worry about these conditions.
-    if (it->outId.is_nil() || !hasShapeIdRecord(it->outId))
+    if (it->outId.is_nil() || !hasId(it->outId))
       continue;
     
     if (!it->inId.is_nil())
@@ -423,7 +596,8 @@ void SeerShape::fillInHistory(ftr::ShapeHistory &historyIn, const BID::uuid &fea
       //in this case we have a valid shape with a valid id in the out column, but the
       //in column id doesn't exist in the graph. A prior feature didn't update the history graph correctly.
       if(!historyIn.hasShape(it->inId))
-        std::cout << "warning: shape id: " << gu::idToString(it->inId) << " should be in shape history in: " << BOOST_CURRENT_FUNCTION << std::endl;
+        std::cout << "warning: shape id: " << gu::idToString(it->inId)
+        << " should be in shape history in: " << BOOST_CURRENT_FUNCTION << std::endl;
     }
     
     if (!historyIn.hasShape(it->outId)) //might be there already, like a 'merge' situation.
@@ -442,7 +616,7 @@ void SeerShape::replaceId(const uuid &staleId, const uuid &freshId, const ftr::S
   assert(!freshId.is_nil());
   
   typedef EvolveContainer::index<EvolveRecord::ByInId>::type ListIn;
-  ListIn &listIn = evolveContainer.get<EvolveRecord::ByInId>();
+  ListIn &listIn = stow->evolves.get<EvolveRecord::ByInId>();
   
   //iterator over equal_range was causing infinite loop. iterator invalidation I suspect.
   auto it = listIn.find(staleId);
@@ -453,57 +627,25 @@ void SeerShape::replaceId(const uuid &staleId, const uuid &freshId, const ftr::S
     listIn.replace(it, replacement);
     it = listIn.find(staleId);
   }
-  
-//   auto rangeIn = listIn.equal_range(staleId);
-//   for (; rangeIn.first != rangeIn.second; ++rangeIn.first)
-//   {
-//     EvolveRecord replacement = *(rangeIn.first);
-//     replacement.inId = freshId;
-//     listIn.replace(rangeIn.first, replacement);
-//   }
-  
-  //don't think I need this for output. 
-//   typedef EvolveContainer::index<EvolveRecord::ByOutId>::type ListOut;
-//   ListOut &listOut = evolveContainer.get<EvolveRecord::ByOutId>();
-//   auto rangeOut = listOut.equal_range(staleId);
-//   for (; rangeOut.first != rangeOut.second; ++rangeOut.first)
-//   {
-//     EvolveRecord replacement = *rangeOut.first;
-//     replacement.outId = freshId;
-//     listOut.replace(rangeOut.first, replacement);
-//   }
-  
-  //why would I ever need to replace an id in the feature tag?
-//   typedef FeatureTagContainer::index<FeatureTagRecord::ById>::type TagList;
-//   TagList &tagList = featureTagContainer.get<FeatureTagRecord::ById>();
-//   auto tagRange = tagList.equal_range(staleId);
-//   for (; tagRange.first != tagRange.second; ++tagRange.first)
-//   {
-//     FeatureTagRecord replacement = *tagRange.first;
-//     replacement.id = freshId;
-//     tagList.replace(tagRange.first, replacement);
-//   }
-
-  //I don't think I need to update the IdSet is either?
 }
 
 uuid SeerShape::featureTagId(const std::string& tagIn)
 {
   typedef FeatureTagContainer::index<FeatureTagRecord::ByTag>::type List;
-  const List &list = featureTagContainer.get<FeatureTagRecord::ByTag>();
+  const List &list = stow->featureTags.get<FeatureTagRecord::ByTag>();
   List::const_iterator it = list.find(tagIn);
   assert(it != list.end());
   return it->id;
 }
 
-void SeerShape::insertFeatureTag(const FeatureTagRecord &recordIn)
+void SeerShape::insertFeatureTag(const uuid &idIn, const std::string &tagIn)
 {
-  featureTagContainer.insert(recordIn);
+  stow->featureTags.insert(FeatureTagRecord(idIn, tagIn));
 }
 
 const TopoDS_Shape& SeerShape::getRootOCCTShape() const
 {
-  return findShapeIdRecord(rootShapeId).shape;
+  return findShape(rootShapeId);
 }
 
 const uuid& SeerShape::getRootShapeId() const
@@ -513,7 +655,7 @@ const uuid& SeerShape::getRootShapeId() const
 
 const TopoDS_Shape& SeerShape::getOCCTShape(const uuid& idIn) const
 {
-  return findShapeIdRecord(idIn).shape;
+  return findShape(idIn);
 }
 
 void SeerShape::setRootShapeId(const uuid& idIn)
@@ -523,37 +665,37 @@ void SeerShape::setRootShapeId(const uuid& idIn)
 
 bool SeerShape::isNull() const
 {
-  return rootShapeId.is_nil() || (!hasShapeIdRecord(rootShapeId));
+  return rootShapeId.is_nil() || (!hasId(rootShapeId));
 }
 
 std::vector<uuid> SeerShape::useGetParentsOfType
   (const uuid &idIn, const TopAbs_ShapeEnum &shapeTypeIn) const
 {
-  assert(hasShapeIdRecord(idIn));
+  assert(hasId(idIn));
 
   std::vector<Vertex> vertices;
   TypeCollectionVisitor vis(shapeTypeIn, *this, vertices);
-  boost::breadth_first_search(rGraph, findShapeIdRecord(idIn).graphVertex, boost::visitor(vis));
+  boost::breadth_first_search(stow->rGraph, stow->findShapeIdRecord(idIn).graphVertex, boost::visitor(vis));
 
   std::vector<Vertex>::const_iterator vit;
   std::vector<uuid> idsOut;
   for (vit = vertices.begin(); vit != vertices.end(); ++vit)
-      idsOut.push_back(findShapeIdRecord(*vit).id);
+      idsOut.push_back(stow->findShapeIdRecord(*vit).id);
   return idsOut;
 }
 
 occt::ShapeVector SeerShape::useGetParentsOfType
   (const TopoDS_Shape &shapeIn, const TopAbs_ShapeEnum& shapeTypeIn) const
 {
-  assert(hasShapeIdRecord(shapeIn));
+  assert(hasShape(shapeIn));
   
   std::vector<Vertex> vertices;
   TypeCollectionVisitor vis(shapeTypeIn, *this, vertices);
-  boost::breadth_first_search(rGraph, findShapeIdRecord(shapeIn).graphVertex, boost::visitor(vis));
+  boost::breadth_first_search(stow->rGraph, stow->findShapeIdRecord(shapeIn).graphVertex, boost::visitor(vis));
 
   occt::ShapeVector shapesOut;
   for (const auto &gVertex : vertices)
-    shapesOut.push_back(findShapeIdRecord(gVertex).shape);
+    shapesOut.push_back(stow->findShapeIdRecord(gVertex).shape);
   
   return shapesOut;
 }
@@ -561,52 +703,52 @@ occt::ShapeVector SeerShape::useGetParentsOfType
 std::vector<uuid> SeerShape::useGetChildrenOfType
   (const uuid &idIn, const TopAbs_ShapeEnum &shapeTypeIn) const
 {
-  assert(hasShapeIdRecord(idIn));
+  assert(hasId(idIn));
 
   std::vector<Vertex> vertices;
   TypeCollectionVisitor vis(shapeTypeIn, *this, vertices);
-  boost::breadth_first_search(graph, findShapeIdRecord(idIn).graphVertex, boost::visitor(vis));
+  boost::breadth_first_search(stow->graph, stow->findShapeIdRecord(idIn).graphVertex, boost::visitor(vis));
 
   std::vector<Vertex>::const_iterator vit;
   std::vector<uuid> idsOut;
   for (vit = vertices.begin(); vit != vertices.end(); ++vit)
-      idsOut.push_back(findShapeIdRecord(*vit).id);
+      idsOut.push_back(stow->findShapeIdRecord(*vit).id);
   return idsOut;
 }
 
 occt::ShapeVector SeerShape::useGetChildrenOfType
   (const TopoDS_Shape &shapeIn, const TopAbs_ShapeEnum &shapeTypeIn) const
 {
-  assert(hasShapeIdRecord(shapeIn));
+  assert(hasShape(shapeIn));
 
   std::vector<Vertex> vertices;
   TypeCollectionVisitor vis(shapeTypeIn, *this, vertices);
-  boost::breadth_first_search(graph, findShapeIdRecord(shapeIn).graphVertex, boost::visitor(vis));
+  boost::breadth_first_search(stow->graph, stow->findShapeIdRecord(shapeIn).graphVertex, boost::visitor(vis));
 
   std::vector<Vertex>::const_iterator vit;
   occt::ShapeVector out;
   for (vit = vertices.begin(); vit != vertices.end(); ++vit)
-      out.push_back(findShapeIdRecord(*vit).shape);
+      out.push_back(stow->findShapeIdRecord(*vit).shape);
   return out;
 }
 
 uuid SeerShape::useGetWire
   (const uuid &edgeIdIn, const uuid &faceIdIn) const
 {
-  assert(hasShapeIdRecord(edgeIdIn));
-  Vertex edgeVertex = findShapeIdRecord(edgeIdIn).graphVertex;
+  assert(hasId(edgeIdIn));
+  Vertex edgeVertex = stow->findShapeIdRecord(edgeIdIn).graphVertex;
 
-  assert(hasShapeIdRecord(faceIdIn));
-  Vertex faceVertex = findShapeIdRecord(faceIdIn).graphVertex;
+  assert(hasId(faceIdIn));
+  Vertex faceVertex = stow->findShapeIdRecord(faceIdIn).graphVertex;
 
   VertexAdjacencyIterator wireIt, wireItEnd;
-  for (boost::tie(wireIt, wireItEnd) = boost::adjacent_vertices(faceVertex, graph); wireIt != wireItEnd; ++wireIt)
+  for (boost::tie(wireIt, wireItEnd) = boost::adjacent_vertices(faceVertex, stow->graph); wireIt != wireItEnd; ++wireIt)
   {
     VertexAdjacencyIterator edgeIt, edgeItEnd;
-    for (boost::tie(edgeIt, edgeItEnd) = boost::adjacent_vertices((*wireIt), graph); edgeIt != edgeItEnd; ++edgeIt)
+    for (boost::tie(edgeIt, edgeItEnd) = boost::adjacent_vertices((*wireIt), stow->graph); edgeIt != edgeItEnd; ++edgeIt)
     {
       if (edgeVertex == (*edgeIt))
-	return findShapeIdRecord(*wireIt).id;
+        return stow->findShapeIdRecord(*wireIt).id;
     }
   }
   return gu::createNilId();
@@ -618,15 +760,15 @@ uuid SeerShape::useGetClosestWire(const uuid& faceIn, const osg::Vec3d& pointIn)
   
   TopoDS_Vertex point = BRepBuilderAPI_MakeVertex(gp_Pnt(pointIn.x(), pointIn.y(), pointIn.z()));
   
-  const ShapeIdRecord &faceInRecord = findShapeIdRecord(faceIn);
+  const ShapeIdRecord &faceInRecord = stow->findShapeIdRecord(faceIn);
   Vertex faceVertex = faceInRecord.graphVertex;
   assert(faceInRecord.shape.ShapeType() == TopAbs_FACE);
   VertexAdjacencyIterator it, itEnd;
   uuid wireOut = gu::createNilId();
   double distance = std::numeric_limits<double>::max();
-  for (boost::tie(it, itEnd) = boost::adjacent_vertices(faceVertex, graph); it != itEnd; ++it)
+  for (boost::tie(it, itEnd) = boost::adjacent_vertices(faceVertex, stow->graph); it != itEnd; ++it)
   {
-    const ShapeIdRecord &cRecord = findShapeIdRecord(*it);
+    const ShapeIdRecord &cRecord = stow->findShapeIdRecord(*it);
     assert(cRecord.shape.ShapeType() == TopAbs_WIRE);
     double deflection = 0.1; //hopefully makes fast. factor of bounding box?
     BRepExtrema_DistShapeShape distanceCalc(point, cRecord.shape, deflection, Extrema_ExtFlag_MIN);
@@ -667,7 +809,7 @@ bool SeerShape::useIsEdgeOfFace(const uuid& edgeIn, const uuid& faceIn) const
   //we know the edge will be here. Not anymore. we are now selecting
   //wires with the face first. so 'this' maybe the face feature and not the edge.
 //   assert(vertexMap.count(edgeIn) > 0);
-  if(!hasShapeIdRecord(edgeIn))
+  if(!hasId(edgeIn))
     return false;
   std::vector<uuid> faceParents = useGetParentsOfType(edgeIn, TopAbs_FACE);
   std::vector<uuid>::const_iterator it = std::find(faceParents.begin(), faceParents.end(), faceIn);
@@ -676,7 +818,7 @@ bool SeerShape::useIsEdgeOfFace(const uuid& edgeIn, const uuid& faceIn) const
 
 std::vector<osg::Vec3d> SeerShape::useGetEndPoints(const uuid &edgeIdIn) const
 {
-  const TopoDS_Shape &shape = findShapeIdRecord(edgeIdIn).shape;
+  const TopoDS_Shape &shape = findShape(edgeIdIn);
   assert(!shape.IsNull());
   assert(shape.ShapeType() == TopAbs_EDGE);
   BRepAdaptor_Curve curveAdaptor(TopoDS::Edge(shape));
@@ -699,7 +841,7 @@ std::vector<osg::Vec3d> SeerShape::useGetEndPoints(const uuid &edgeIdIn) const
 std::vector<osg::Vec3d> SeerShape::useGetMidPoint(const uuid &edgeIdIn) const
 {
   //all types of curves for mid point?
-  const TopoDS_Shape &shape = findShapeIdRecord(edgeIdIn).shape;
+  const TopoDS_Shape &shape = findShape(edgeIdIn);
   assert(!shape.IsNull());
   assert(shape.ShapeType() == TopAbs_EDGE);
   BRepAdaptor_Curve curveAdaptor(TopoDS::Edge(shape));
@@ -716,7 +858,7 @@ std::vector<osg::Vec3d> SeerShape::useGetMidPoint(const uuid &edgeIdIn) const
 
 std::vector< osg::Vec3d > SeerShape::useGetCenterPoint(const uuid& edgeIdIn) const
 {
-  const TopoDS_Shape &shape = findShapeIdRecord(edgeIdIn).shape;
+  const TopoDS_Shape &shape = findShape(edgeIdIn);
   assert(!shape.IsNull());
   assert(shape.ShapeType() == TopAbs_EDGE);
   BRepAdaptor_Curve curveAdaptor(TopoDS::Edge(shape));
@@ -741,7 +883,7 @@ std::vector< osg::Vec3d > SeerShape::useGetCenterPoint(const uuid& edgeIdIn) con
 
 std::vector< osg::Vec3d > SeerShape::useGetQuadrantPoints(const uuid &edgeIdIn) const
 {
-  const TopoDS_Shape &shape = findShapeIdRecord(edgeIdIn).shape;
+  const TopoDS_Shape &shape = findShape(edgeIdIn);
   assert(!shape.IsNull());
   assert(shape.ShapeType() == TopAbs_EDGE);
   BRepAdaptor_Curve curveAdaptor(TopoDS::Edge(shape));
@@ -766,7 +908,7 @@ std::vector< osg::Vec3d > SeerShape::useGetQuadrantPoints(const uuid &edgeIdIn) 
 
 std::vector< osg::Vec3d > SeerShape::useGetNearestPoint(const uuid &shapeIn, const osg::Vec3d &pointIn) const
 {
-  const TopoDS_Shape &shape = findShapeIdRecord(shapeIn).shape;
+  const TopoDS_Shape &shape = findShape(shapeIn);
   assert(!shape.IsNull());
   TopAbs_ShapeEnum type = shape.ShapeType();
   assert((type == TopAbs_EDGE) || (type == TopAbs_FACE));
@@ -789,35 +931,35 @@ std::vector< osg::Vec3d > SeerShape::useGetNearestPoint(const uuid &shapeIn, con
 
 uuid SeerShape::useGetStartVertex(const uuid &edgeIdIn) const
 {
-  assert(hasShapeIdRecord(edgeIdIn));
+  assert(hasId(edgeIdIn));
   const TopoDS_Shape& edgeShape = getOCCTShape(edgeIdIn);
   assert(edgeShape.ShapeType() == TopAbs_EDGE);
   TopoDS_Vertex v = TopExp::FirstVertex(TopoDS::Edge(edgeShape), Standard_True);
-  assert(hasShapeIdRecord(v));
-  return findShapeIdRecord(v).id;
+  assert(hasShape(v));
+  return findId(v);
 }
 
 uuid SeerShape::useGetEndVertex(const uuid &edgeIdIn) const
 {
-  assert(hasShapeIdRecord(edgeIdIn));
+  assert(hasId(edgeIdIn));
   const TopoDS_Shape& edgeShape = getOCCTShape(edgeIdIn);
   assert(edgeShape.ShapeType() == TopAbs_EDGE);
   TopoDS_Vertex v = TopExp::LastVertex(TopoDS::Edge(edgeShape), Standard_True);
-  assert(hasShapeIdRecord(v));
-  return findShapeIdRecord(v).id;
+  assert(hasShape(v));
+  return findId(v);
 }
 
 occt::ShapeVector SeerShape::useGetNonCompoundChildren() const
 {
   occt::ShapeVector out;
-  for (auto its = boost::vertices(graph); its.first != its.second; ++its.first)
+  for (auto its = boost::vertices(stow->graph); its.first != its.second; ++its.first)
   {
-    const TopoDS_Shape &shape = findShapeIdRecord(*its.first).shape;
+    const TopoDS_Shape &shape = stow->findShapeIdRecord(*its.first).shape;
     if (shape.ShapeType() != TopAbs_COMPOUND)
       continue;
-    for (auto aits = boost::adjacent_vertices(*its.first, graph); aits.first != aits.second; ++aits.first)
+    for (auto aits = boost::adjacent_vertices(*its.first, stow->graph); aits.first != aits.second; ++aits.first)
     {
-      const TopoDS_Shape &subShape = findShapeIdRecord(*aits.first).shape;
+      const TopoDS_Shape &subShape = stow->findShapeIdRecord(*aits.first).shape;
       if (subShape.ShapeType() == TopAbs_COMPOUND)
         continue;
       out.push_back(subShape);
@@ -829,15 +971,15 @@ occt::ShapeVector SeerShape::useGetNonCompoundChildren() const
 void SeerShape::shapeMatch(const SeerShape &source)
 {
   typedef ShapeIdContainer::index<ShapeIdRecord::ByShape>::type List;
-  const List &list = source.shapeIdContainer.get<ShapeIdRecord::ByShape>();
+  const List &list = source.stow->shapeIds.get<ShapeIdRecord::ByShape>();
   
   //every feature shape has unique id even if it is the same topoDS_shape.
   //all tracking of shapes between feature will have to use evolve container.
   for (const auto &record : list)
   {
-    if (!hasShapeIdRecord(record.shape))
+    if (!hasShape(record.shape))
       continue;
-    if (!findShapeIdRecord(record.shape).id.is_nil())
+    if (!findId(record.shape).is_nil())
       continue;
     uuid freshId = gu::createNilId();
     if (hasEvolveRecordIn(record.id))
@@ -854,7 +996,7 @@ void SeerShape::shapeMatch(const SeerShape &source)
       freshId = gu::createRandomId();
       insertEvolve(record.id, freshId);
     }
-    updateShapeIdRecord(record.shape, freshId);
+    updateId(record.shape, freshId);
   }
 }
 
@@ -900,8 +1042,8 @@ void SeerShape::uniqueTypeMatch(const SeerShape &source)
     ShapeIdRecord targetRecord;
     if
     (
-      (!getUniqueRecord(source.shapeIdContainer, sourceRecord, currentShapeType)) ||
-      (!getUniqueRecord(shapeIdContainer, targetRecord, currentShapeType))
+      (!getUniqueRecord(source.stow->shapeIds, sourceRecord, currentShapeType)) ||
+      (!getUniqueRecord(stow->shapeIds, targetRecord, currentShapeType))
     )
       continue;
       
@@ -913,7 +1055,7 @@ void SeerShape::uniqueTypeMatch(const SeerShape &source)
       freshId = gu::createRandomId();
       insertEvolve(sourceRecord.id, freshId);
     }
-    updateShapeIdRecord(targetRecord.shape, freshId);
+    updateId(targetRecord.shape, freshId);
     if (currentShapeType == TopAbs_COMPOUND) //no compound of compounds? I think not.
       setRootShapeId(freshId);
   }
@@ -923,12 +1065,12 @@ void SeerShape::outerWireMatch(const SeerShape &source)
 {
   for (const auto &id : getAllShapeIds())
   {
-    const ShapeIdRecord &faceRecord = findShapeIdRecord(id);
+    const ShapeIdRecord &faceRecord = stow->findShapeIdRecord(id);
     if (faceRecord.shape.ShapeType() != TopAbs_FACE)
       continue;
     const TopoDS_Shape &thisOuterWire = BRepTools::OuterWire(TopoDS::Face(faceRecord.shape));
-    assert(hasShapeIdRecord(thisOuterWire)); //shouldn't have a result container with a face and no outer wire.
-    const ShapeIdRecord &wireRecord = findShapeIdRecord(thisOuterWire);
+    assert(hasShape(thisOuterWire)); //shouldn't have a result container with a face and no outer wire.
+    const ShapeIdRecord &wireRecord = stow->findShapeIdRecord(thisOuterWire);
     if (!wireRecord.id.is_nil())
       continue; //only set id for nil wires.
       
@@ -937,12 +1079,12 @@ void SeerShape::outerWireMatch(const SeerShape &source)
     uuid sourceFaceId = devolve(faceRecord.id).front();
       
     //now find entries in source.
-    if (!source.hasShapeIdRecord(sourceFaceId))
+    if (!source.hasId(sourceFaceId))
       continue;
-    const ShapeIdRecord &sourceFaceRecord = source.findShapeIdRecord(sourceFaceId);
+    const ShapeIdRecord &sourceFaceRecord = source.stow->findShapeIdRecord(sourceFaceId);
     const TopoDS_Shape &sourceOuterWire = BRepTools::OuterWire(TopoDS::Face(sourceFaceRecord.shape));
     assert(!sourceOuterWire.IsNull());
-    auto sourceWireId = source.findShapeIdRecord(sourceOuterWire).id;
+    auto sourceWireId = source.stow->findShapeIdRecord(sourceOuterWire).id;
     
     uuid freshId;
     if (hasEvolveRecordIn(sourceWireId))
@@ -952,7 +1094,7 @@ void SeerShape::outerWireMatch(const SeerShape &source)
       freshId = gu::createRandomId();
       insertEvolve(sourceWireId, freshId);
     }
-    updateShapeIdRecord(thisOuterWire, freshId);
+    updateId(thisOuterWire, freshId);
   }
 }
 
@@ -963,7 +1105,7 @@ void SeerShape::modifiedMatch
 )
 {
   typedef ShapeIdContainer::index<ShapeIdRecord::ById>::type List;
-  const List &sourceList = source.shapeIdContainer.get<ShapeIdRecord::ById>();
+  const List &sourceList = source.stow->shapeIds.get<ShapeIdRecord::ById>();
   for (const auto &sourceRecord : sourceList)
   {
     const TopTools_ListOfShape &modifiedList = shapeMakerIn.Modified(sourceRecord.shape);
@@ -978,7 +1120,7 @@ void SeerShape::modifiedMatch
       //could be situations where members of the modified list
       //are not in the target container. Booleans operations have
       //this situation. In short, no assert on shape not present.
-      if(!hasShapeIdRecord(it.Value()))
+      if(!hasShape(it.Value()))
         continue;
       
       uuid freshId = gu::createNilId();
@@ -989,7 +1131,7 @@ void SeerShape::modifiedMatch
         freshId = gu::createRandomId();
         insertEvolve(sourceRecord.id, freshId);
       }
-      updateShapeIdRecord(it.Value(), freshId);
+      updateId(it.Value(), freshId);
     }
   }
 }
@@ -997,7 +1139,7 @@ void SeerShape::modifiedMatch
 void SeerShape::derivedMatch()
 {
   typedef ShapeIdContainer::index<ShapeIdRecord::ById>::type List;
-  List &list = shapeIdContainer.get<ShapeIdRecord::ById>();
+  List &list = stow->shapeIds.get<ShapeIdRecord::ById>();
   occt::ShapeVector nilShapes;
   auto rangeItPair = list.equal_range(gu::createNilId());
   for (; rangeItPair.first != rangeItPair.second; ++rangeItPair.first)
@@ -1015,8 +1157,8 @@ void SeerShape::derivedMatch()
       occt::ShapeVector parents = useGetParentsOfType(shape, parentType);
       for (const auto &parent : parents)
       {
-        assert(hasShapeIdRecord(parent));
-        boost::uuids::uuid id = findShapeIdRecord(parent).id;
+        assert(hasShape(parent));
+        boost::uuids::uuid id = findId(parent);
         if (id.is_nil())
         {
             std::cout << "empty parent Id in: " << BOOST_CURRENT_FUNCTION << std::endl;
@@ -1028,19 +1170,19 @@ void SeerShape::derivedMatch()
       if (bail)
         continue;
       uuid id = gu::createNilId();
-      DerivedContainer::iterator derivedIt = derivedContainer.find(set);
-      if (derivedIt == derivedContainer.end())
+      DerivedContainer::iterator derivedIt = stow->derives.find(set);
+      if (derivedIt == stow->derives.end())
       {
         id = gu::createRandomId();
         DerivedContainer::value_type newEntry(set, id);
-        derivedContainer.insert(newEntry);
+        stow->derives.insert(newEntry);
         insertEvolve(gu::createNilId(), id);
       }
       else
       {
         id = derivedIt->second;
       }
-      updateShapeIdRecord(shape, id);
+      updateId(shape, id);
     }
   };
   
@@ -1053,7 +1195,7 @@ void SeerShape::dumpNils(const std::string &headerIn)
   std::ostringstream stream;
   
   typedef ShapeIdContainer::index<ShapeIdRecord::ById>::type List;
-  const List &list = shapeIdContainer.get<ShapeIdRecord::ById>();
+  const List &list = stow->shapeIds.get<ShapeIdRecord::ById>();
   auto rangeItPair = list.equal_range(gu::createNilId());
   for (; rangeItPair.first != rangeItPair.second; ++rangeItPair.first)
     stream << gu::idToString(rangeItPair.first->id) << "    "
@@ -1070,12 +1212,12 @@ void SeerShape::dumpDuplicates(const std::string &headerIn)
   
   std::set<boost::uuids::uuid> processed;
   typedef ShapeIdContainer::index<ShapeIdRecord::ById>::type List;
-  const List &list = shapeIdContainer.get<ShapeIdRecord::ById>();
+  const List &list = stow->shapeIds.get<ShapeIdRecord::ById>();
   for (const auto &record : list)
   {
     if (processed.count(record.id) > 0)
       continue;
-    std::size_t count = shapeIdContainer.count(record.id);
+    std::size_t count = stow->shapeIds.count(record.id);
     if (count > 1)
     {
       processed.insert(record.id);
@@ -1091,7 +1233,7 @@ void SeerShape::ensureNoNils()
   occt::ShapeVector nilShapes;
   
   typedef ShapeIdContainer::index<ShapeIdRecord::ById>::type List;
-  List &list = shapeIdContainer.get<ShapeIdRecord::ById>();
+  List &list = stow->shapeIds.get<ShapeIdRecord::ById>();
   auto rangeItPair = list.equal_range(gu::createNilId());
   for (; rangeItPair.first != rangeItPair.second; ++rangeItPair.first)
     nilShapes.push_back(rangeItPair.first->shape);
@@ -1099,7 +1241,7 @@ void SeerShape::ensureNoNils()
   for (const auto &shape : nilShapes)
   {
     auto freshId = gu::createRandomId();
-    updateShapeIdRecord(shape, freshId);
+    updateId(shape, freshId);
     insertEvolve(gu::createNilId(), freshId);
 //     std::cout << "nil id of " << occt::getShapeTypeString(shape) << ", assigned to: " << gu::idToString(freshId) << std::endl;
   }
@@ -1110,7 +1252,7 @@ void SeerShape::ensureNoDuplicates()
   std::set<boost::uuids::uuid> processed;
   occt::ShapeVector shapes;
   typedef ShapeIdContainer::index<ShapeIdRecord::ById>::type List;
-  const List &list = shapeIdContainer.get<ShapeIdRecord::ById>();
+  const List &list = stow->shapeIds.get<ShapeIdRecord::ById>();
   for (const auto &record : list)
   {
     if (processed.count(record.id) > 0)
@@ -1121,18 +1263,16 @@ void SeerShape::ensureNoDuplicates()
   for (const auto &shape : shapes)
   {
     auto freshId = gu::createRandomId();
-    updateShapeIdRecord(shape, freshId);
+    updateId(shape, freshId);
     insertEvolve(gu::createNilId(), freshId);
   }
 }
 
 void SeerShape::faceEdgeMatch(const SeerShape &source)
 {
-  using boost::uuids::uuid;
-  
   occt::ShapeVector nilEdges;
   typedef ShapeIdContainer::index<ShapeIdRecord::ById>::type List;
-  List &list = shapeIdContainer.get<ShapeIdRecord::ById>();
+  List &list = stow->shapeIds.get<ShapeIdRecord::ById>();
   auto rangeItPair = list.equal_range(gu::createNilId());
   for (; rangeItPair.first != rangeItPair.second; ++rangeItPair.first)
   {
@@ -1148,8 +1288,8 @@ void SeerShape::faceEdgeMatch(const SeerShape &source)
     if (parentFaces.size() != 2)
       continue;
     std::vector<uuid> parentFacesIds;
-    parentFacesIds.push_back(findShapeIdRecord(parentFaces.front()).id);
-    parentFacesIds.push_back(findShapeIdRecord(parentFaces.back()).id);
+    parentFacesIds.push_back(findId(parentFaces.front()));
+    parentFacesIds.push_back(findId(parentFaces.back()));
     if
     (
       (parentFacesIds.front().is_nil()) ||
@@ -1159,8 +1299,8 @@ void SeerShape::faceEdgeMatch(const SeerShape &source)
     
     if
     (!(
-      (source.hasShapeIdRecord(parentFacesIds.front())) &&
-      (source.hasShapeIdRecord(parentFacesIds.back()))
+      (source.hasId(parentFacesIds.front())) &&
+      (source.hasId(parentFacesIds.back()))
     ))
       continue;
     
@@ -1186,7 +1326,7 @@ void SeerShape::faceEdgeMatch(const SeerShape &source)
         freshId = gu::createRandomId();
         insertEvolve(commonEdges.front(), freshId);
       }
-      updateShapeIdRecord(nilEdge, freshId);
+      updateId(nilEdge, freshId);
     }
   }
 }
@@ -1197,7 +1337,7 @@ void SeerShape::edgeVertexMatch(const SeerShape &source)
   
   occt::ShapeVector nilVertices;
   typedef ShapeIdContainer::index<ShapeIdRecord::ById>::type List;
-  List &list = shapeIdContainer.get<ShapeIdRecord::ById>();
+  List &list = stow->shapeIds.get<ShapeIdRecord::ById>();
   auto rangeItPair = list.equal_range(gu::createNilId());
   for (; rangeItPair.first != rangeItPair.second; ++rangeItPair.first)
   {
@@ -1213,7 +1353,7 @@ void SeerShape::edgeVertexMatch(const SeerShape &source)
     occt::ShapeVector parentEdges = useGetParentsOfType(nilVertex, TopAbs_EDGE);
     std::vector<uuid> parentEdgeIds;
     for (const auto &pEdge : parentEdges)
-      parentEdgeIds.push_back(findShapeIdRecord(pEdge).id);
+      parentEdgeIds.push_back(findId(pEdge));
     std::vector<std::vector<uuid> >sourceVertices;
     
     for (const auto parentEdgeId : parentEdgeIds)
@@ -1223,7 +1363,7 @@ void SeerShape::edgeVertexMatch(const SeerShape &source)
         nilDetected = true;
         break;
       }
-      if (!source.hasShapeIdRecord(parentEdgeId))
+      if (!source.hasId(parentEdgeId))
       {
         missingInSource = true;
         break;
@@ -1260,7 +1400,7 @@ void SeerShape::edgeVertexMatch(const SeerShape &source)
         freshId = gu::createRandomId();
         insertEvolve(intersectedVertices.front(), freshId);
       }
-      updateShapeIdRecord(nilVertex, freshId);
+      updateId(nilVertex, freshId);
     }
   }
 }
@@ -1268,28 +1408,28 @@ void SeerShape::edgeVertexMatch(const SeerShape &source)
 void SeerShape::dumpGraph(const std::string &filePathIn) const
 {
   std::ofstream file(filePathIn.c_str());
-  boost::write_graphviz(file, graph, Node_writer<Graph>(graph, *this), boost::default_writer());
+  boost::write_graphviz(file, stow->graph, Node_writer<Graph>(stow->graph, *this), boost::default_writer());
 }
 
 void SeerShape::dumpReverseGraph(const std::string &filePathIn) const
 {
   std::ofstream file(filePathIn.c_str());
-  boost::write_graphviz(file, rGraph, Node_writer<Graph>(rGraph, *this), boost::default_writer());
+  boost::write_graphviz(file, stow->rGraph, Node_writer<Graph>(stow->rGraph, *this), boost::default_writer());
 }
 
 void SeerShape::dumpShapeIdContainer(std::ostream &streamIn) const
 {
-  streamIn << shapeIdContainer << std::endl;
+  streamIn << stow->shapeIds << std::endl;
 }
 
 void SeerShape::dumpEvolveContainer(std::ostream &streamIn) const
 {
-  streamIn << evolveContainer << std::endl;
+  streamIn << stow->evolves << std::endl;
 }
 
 void SeerShape::dumpFeatureTagContainer(std::ostream &streamIn) const
 {
-  streamIn << featureTagContainer << std::endl;
+  streamIn << stow->featureTags << std::endl;
 }
 
 prj::srl::SeerShape SeerShape::serialOut()
@@ -1305,7 +1445,7 @@ prj::srl::SeerShape SeerShape::serialOut()
       std::size_t count = 0;
       for (const auto &s : shapes)
       {
-        if (!hasShapeIdRecord(s))
+        if (!hasShape(s))
         {
           std::cerr << "WARNING: ShapeId Container doesn't have shape in SeerShape::serialOut" << std::endl;
           count++;
@@ -1313,7 +1453,7 @@ prj::srl::SeerShape SeerShape::serialOut()
         }
         prj::srl::ShapeIdRecord rRecord
         (
-          gu::idToString(findShapeIdRecord(s).id),
+          gu::idToString(findId(s)),
           count
         );
         shapeIdContainerOut.shapeIdRecord().push_back(rRecord);
@@ -1324,7 +1464,7 @@ prj::srl::SeerShape SeerShape::serialOut()
   
   prj::srl::EvolveContainer eContainerOut;
   typedef EvolveContainer::index<EvolveRecord::ByInId>::type EList;
-  const EList &eList = evolveContainer.get<EvolveRecord::ByInId>();
+  const EList &eList = stow->evolves.get<EvolveRecord::ByInId>();
   for (EList::const_iterator it = eList.begin(); it != eList.end(); ++it)
   {
     prj::srl::EvolveRecord eRecord
@@ -1337,7 +1477,7 @@ prj::srl::SeerShape SeerShape::serialOut()
   
   prj::srl::FeatureTagContainer fContainerOut;
   typedef FeatureTagContainer::index<FeatureTagRecord::ById>::type FList;
-  const FList &fList = featureTagContainer.get<FeatureTagRecord::ById>();
+  const FList &fList = stow->featureTags.get<FeatureTagRecord::ById>();
   for (FList::const_iterator it = fList.begin(); it != fList.end(); ++it)
   {
     prj::srl::FeatureTagRecord fRecord
@@ -1349,7 +1489,7 @@ prj::srl::SeerShape SeerShape::serialOut()
   }
   
   prj::srl::DerivedContainer dContainerOut;
-  for (DerivedContainer::const_iterator dIt = derivedContainer.begin(); dIt != derivedContainer.end(); ++dIt)
+  for (DerivedContainer::const_iterator dIt = stow->derives.begin(); dIt != stow->derives.end(); ++dIt)
   {
     prj::srl::IdSet setIn;
     for (IdSet::const_iterator sIt = dIt->first.begin(); sIt != dIt->first.end(); ++sIt)
@@ -1390,58 +1530,58 @@ void SeerShape::serialIn(const prj::srl::SeerShape &sSeerShapeIn)
       std::cerr << "WARNING: invalid shape offset in SeerShape::serialIn" << std::endl;
       continue;
     }
-    updateShapeIdRecord(shapes.at(sRRecord.shapeOffset()), gu::stringToId(sRRecord.id()));
+    updateId(shapes.at(sRRecord.shapeOffset()), gu::stringToId(sRRecord.id()));
   }
   
-  evolveContainer.get<EvolveRecord::ByInId>().clear();
+  stow->evolves.get<EvolveRecord::ByInId>().clear();
   for (const prj::srl::EvolveRecord &sERecord : sSeerShapeIn.evolveContainer().evolveRecord())
   {
     EvolveRecord record;
     record.inId = gu::stringToId(sERecord.idIn());
     record.outId = gu::stringToId(sERecord.idOut());
-    evolveContainer.insert(record);
+    stow->evolves.insert(record);
   }
   
-  featureTagContainer.get<FeatureTagRecord::ById>().clear();
+  stow->featureTags.get<FeatureTagRecord::ById>().clear();
   for (const prj::srl::FeatureTagRecord &sFRecord : sSeerShapeIn.featureTagContainer().featureTagRecord())
   {
     FeatureTagRecord record;
     record.id = gu::stringToId(sFRecord.id());
     record.tag = sFRecord.tag();
-    featureTagContainer.insert(record);
+    stow->featureTags.insert(record);
   }
   
-  derivedContainer.clear();
+  stow->derives.clear();
   for (const prj::srl::DerivedRecord &sDRecord : sSeerShapeIn.derivedContainer().derivedRecord())
   {
     IdSet setIn;
     for (const auto &idSet : sDRecord.idSet().id())
       setIn.insert(gu::stringToId(idSet));
     boost::uuids::uuid mId = gu::stringToId(sDRecord.id());
-    derivedContainer.insert(std::make_pair(setIn, mId));
+    stow->derives.insert(std::make_pair(setIn, mId));
   }
   
   rootShapeId = gu::stringToId(sSeerShapeIn.rootShapeId());
 }
 
-SeerShape SeerShape::createWorkCopy() const
+std::unique_ptr<SeerShape> SeerShape::createWorkCopy() const
 {
-  SeerShape target;
+  std::unique_ptr<SeerShape> target(new SeerShape());
   
   BRepBuilderAPI_Copy copier;
   copier.Perform(getRootOCCTShape());
-  target.setOCCTShape(copier.Shape());
-  target.ensureNoNils(); //give all shapes a new id.
+  target->setOCCTShape(copier.Shape());
+  target->ensureNoNils(); //give all shapes a new id.
   //ensureNoNils fills in the evolve container also. we have to clear it.
-  target.evolveContainer.get<EvolveRecord::ByInId>().clear();
+  target->stow->evolves.get<EvolveRecord::ByInId>().clear();
   
   for (const auto &sourceId : getAllShapeIds())
   {
-    const TopoDS_Shape &sourceShape = findShapeIdRecord(sourceId).shape;
+    const TopoDS_Shape &sourceShape = findShape(sourceId);
     TopoDS_Shape targetShape = copier.ModifiedShape(sourceShape);
-    assert(target.hasShapeIdRecord(targetShape));
-    uuid targetId = target.findShapeIdRecord(targetShape).id;
-    target.insertEvolve(sourceId, targetId);
+    assert(target->hasShape(targetShape));
+    uuid targetId = target->findId(targetShape);
+    target->insertEvolve(sourceId, targetId);
   }
   
   return target;
@@ -1456,7 +1596,7 @@ ShapeIdHelper SeerShape::buildHelper() const
   std::cout << std::endl;
   for (const auto &shape : shapes)
   {
-    uuid id = findShapeIdRecord(shape).id;
+    uuid id = findId(shape);
     out.add(id, shape);
   }
   

@@ -141,8 +141,8 @@ osg::Matrixd DatumPlanePlanarOffset::solve(const UpdatePayload &payloadIn)
       stream << "DatumPlanePlanarOffset: can't find target face id. Skipping id: " << gu::idToString(facePick.id);
       throw std::runtime_error(stream.str());
     }
-    assert(shape.hasShapeIdRecord(resolvedPicks.front().resultId));
-    if (!shape.hasShapeIdRecord(resolvedPicks.front().resultId))
+    assert(shape.hasId(resolvedPicks.front().resultId));
+    if (!shape.hasId(resolvedPicks.front().resultId))
       throw std::runtime_error("DatumPlanePlanarOffset: seer shape doesn't have id");
       
     const TopoDS_Shape &faceShape = shape.getOCCTShape(resolvedPicks.front().resultId);
@@ -277,8 +277,8 @@ osg::Matrixd DatumPlanePlanarCenter::solve(const UpdatePayload &payloadIn)
     }
     if (ids.size() != 2)
       throw std::runtime_error("DatumPlanePlanarCenter: wrong number of resolved ids");
-    assert(shape.hasShapeIdRecord(ids.front()) && shape.hasShapeIdRecord(ids.back()));
-    if ((!shape.hasShapeIdRecord(ids.front())) || (!shape.hasShapeIdRecord(ids.back())))
+    assert(shape.hasId(ids.front()) && shape.hasId(ids.back()));
+    if ((!shape.hasId(ids.front())) || (!shape.hasId(ids.back())))
       throw std::runtime_error("DatumPlanePlanarCenter: ids not in shape.");
     
     TopoDS_Shape face1 = shape.getOCCTShape(ids.front()); assert(!face1.IsNull());
@@ -321,8 +321,8 @@ osg::Matrixd DatumPlanePlanarCenter::solve(const UpdatePayload &payloadIn)
       else if (resolved.feature->hasAnnex(ann::Type::SeerShape) && (!resolved.resultId.is_nil()))
       {
         const ann::SeerShape &shape = resolved.feature->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
-        assert(shape.hasShapeIdRecord(resolved.resultId));
-        if (!shape.hasShapeIdRecord(resolved.resultId))
+        assert(shape.hasId(resolved.resultId));
+        if (!shape.hasId(resolved.resultId))
           throw std::runtime_error("DatumPlanePlanarCenter: expected id not found in seershape.");
         TopoDS_Shape face = shape.getOCCTShape(resolved.resultId);
         if (face.IsNull())
@@ -499,8 +499,8 @@ osg::Matrixd DatumPlanePlanarParallelThroughEdge::solve(const UpdatePayload &pay
     }
     if (faceId.is_nil())
       throw std::runtime_error("DatumPlanarParallelThroughEdge: couldn't get face id");
-    assert(shape.hasShapeIdRecord(faceId));
-    if (!shape.hasShapeIdRecord(faceId))
+    assert(shape.hasId(faceId));
+    if (!shape.hasId(faceId))
       throw std::runtime_error("DatumPlanarParallelThroughEdge: seershape doesn't have face id");
     
     uuid edgeId = gu::createNilId();
@@ -514,8 +514,8 @@ osg::Matrixd DatumPlanePlanarParallelThroughEdge::solve(const UpdatePayload &pay
     }
     if (edgeId.is_nil())
       throw std::runtime_error("DatumPlanarParallelThroughEdge: couldn't get edge id");
-    assert(shape.hasShapeIdRecord(edgeId));
-    if (!shape.hasShapeIdRecord(edgeId))
+    assert(shape.hasId(edgeId));
+    if (!shape.hasId(edgeId))
       throw std::runtime_error("DatumPlanarParallelThroughEdge: seershape doesn't have edge id");
     
     const TopoDS_Shape &face = shape.getOCCTShape(faceId);
@@ -564,8 +564,8 @@ osg::Matrixd DatumPlanePlanarParallelThroughEdge::solve(const UpdatePayload &pay
       else if (resolved.feature->hasAnnex(ann::Type::SeerShape) && (!resolved.resultId.is_nil()))
       {
         const ann::SeerShape &shape = resolved.feature->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
-        assert(shape.hasShapeIdRecord(resolved.resultId));
-        if (!shape.hasShapeIdRecord(resolved.resultId))
+        assert(shape.hasId(resolved.resultId));
+        if (!shape.hasId(resolved.resultId))
           throw std::runtime_error("DatumPlanarParallelThroughEdge: seer shape doesn't have expected shape");
         const TopoDS_Shape &occShape = shape.getOCCTShape(resolved.resultId);
         assert(!occShape.IsNull());

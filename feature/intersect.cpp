@@ -26,6 +26,7 @@
 
 #include <osg/Switch>
 
+#include <globalutilities.h>
 #include <tools/featuretools.h>
 #include <feature/booleanoperation.h>
 #include <project/serial/xsdcxxoutput/featureintersect.h>

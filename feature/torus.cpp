@@ -157,10 +157,7 @@ void Torus::initializeMaps()
   {
     uuid tempId = gu::createRandomId();
     offsetIds.push_back(tempId);
-    
-    ann::EvolveRecord evolveRecord;
-    evolveRecord.outId = tempId;
-    sShape->insertEvolve(evolveRecord);
+    sShape->insertEvolve(gu::createNilId(), tempId);
   }
 }
 
@@ -227,7 +224,7 @@ void Torus::updateResult()
   std::size_t i = 0;
   for (const auto &s : sv)
   {
-    sShape->updateShapeIdRecord(s, offsetIds.at(i));
+    sShape->updateId(s, offsetIds.at(i));
     i++; 
   }
   sShape->setRootShapeId(offsetIds.at(0));

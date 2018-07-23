@@ -283,7 +283,7 @@ void Cone::updateResult(const ConeBuilder& coneBuilderIn)
     if (shapeIn.IsNull())
       return;
     uuid localId = sShape->featureTagId(featureTagMap.at(featureTagIn));
-    sShape->updateShapeIdRecord(shapeIn, localId);
+    sShape->updateId(shapeIn, localId);
   };
   
   updateShapeByTag(sShape->getRootOCCTShape(), FeatureTag::Root);
@@ -314,19 +314,13 @@ void Cone::initializeMaps()
   {
     uuid tempId = gu::createRandomId();
     tempIds.push_back(tempId);
-    
-    ann::EvolveRecord evolveRecord;
-    evolveRecord.outId = tempId;
-    sShape->insertEvolve(evolveRecord);
+    sShape->insertEvolve(gu::createNilId(), tempId);
   }
   
   //helper lamda
   auto insertIntoFeatureMap = [this](const uuid &idIn, FeatureTag featureTagIn)
   {
-    ann::FeatureTagRecord record;
-    record.id = idIn;
-    record.tag = featureTagMap.at(featureTagIn);
-    sShape->insertFeatureTag(record);
+    sShape->insertFeatureTag(idIn, featureTagMap.at(featureTagIn));
   };
   
   //first we do the compound that is root. this is not in box maker.

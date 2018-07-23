@@ -952,14 +952,14 @@ void Project::dissolveFeatureDispatched(const msg::Message &mIn)
   occt::ShapeVector oshapes = oss.getAllShapes(); //original shapes
   for (const auto &s : oshapes)
   {
-    assert(nss.hasShapeIdRecord(s));
-    if (!nss.hasShapeIdRecord(s))
+    assert(nss.hasShape(s));
+    if (!nss.hasShape(s))
     {
       std::cerr << "WARNING: new dissolved inert feature doesn't have original shape in Project::dissolveFeatureDispatched" << std::endl;
       continue;
     }
-    auto id = oss.findShapeIdRecord(s).id;
-    nss.updateShapeIdRecord(s, id);
+    auto id = oss.findId(s);
+    nss.updateId(s, id);
     nss.insertEvolve(gu::createNilId(), id);
   }
   nss.setRootShapeId(oss.getRootShapeId());

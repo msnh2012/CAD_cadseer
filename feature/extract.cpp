@@ -222,7 +222,7 @@ void Extract::updateModel(const UpdatePayload &payloadIn)
             outShapes.push_back(child);
           continue;
         }
-        assert(targetSeerShape.hasShapeIdRecord(resolved.resultId));
+        assert(targetSeerShape.hasId(resolved.resultId));
         outShapes.push_back(targetSeerShape.getOCCTShape(resolved.resultId));
       }
     }

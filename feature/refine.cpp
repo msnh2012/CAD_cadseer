@@ -24,6 +24,8 @@
 
 #include <osg/Switch>
 
+#include <tools/idtools.h>
+#include <globalutilities.h>
 #include <project/serial/xsdcxxoutput/featurerefine.h>
 #include <annex/seershape.h>
 #include <feature/updatepayload.h>
@@ -124,7 +126,7 @@ void Refine::historyMatch(const BRepTools_History &hIn , const ann::SeerShape &t
   
   for (const auto &ctId : tIds) //cuurent target id
   {
-    const TopoDS_Shape &cs = tIn.findShapeIdRecord(ctId).shape;
+    const TopoDS_Shape &cs = tIn.findShape(ctId);
     
     //not getting anything from generated
     //modified appears to be a one to one mapping of faces and edges
@@ -132,15 +134,15 @@ void Refine::historyMatch(const BRepTools_History &hIn , const ann::SeerShape &t
     const TopTools_ListOfShape &modified = hIn.Modified(cs);
     for (const auto &ms : modified)
     {
-      assert(sShape->hasShapeIdRecord(ms));
-      if (sShape->findShapeIdRecord(ms).id.is_nil())
+      assert(sShape->hasShape(ms));
+      if (sShape->findId(ms).is_nil())
       {
         std::map<uuid, uuid>::iterator mapItFace;
         bool dummy;
         std::tie(mapItFace, dummy) = shapeMap.insert(std::make_pair(ctId, gu::createRandomId()));
-        sShape->updateShapeIdRecord(ms, mapItFace->second);
+        sShape->updateId(ms, mapItFace->second);
       }
-      sShape->insertEvolve(ctId, sShape->findShapeIdRecord(ms).id);
+      sShape->insertEvolve(ctId, sShape->findId(ms));
     }
     if (hIn.IsRemoved(cs)) //appears to remove only edges and vertices.
       sShape->insertEvolve(ctId, gu::createNilId());

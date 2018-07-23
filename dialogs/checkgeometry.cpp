@@ -51,6 +51,7 @@
 #include <osg/PolygonMode>
 #include <osg/Switch>
 
+#include <globalutilities.h>
 #include <application/application.h>
 #include <feature/base.h>
 #include <annex/seershape.h>
@@ -284,7 +285,7 @@ void BasicCheckPage::go()
   BRepCheck_Analyzer shapeCheck(shape);
   QTreeWidgetItem *rootItem = new QTreeWidgetItem();
   rootItem->setData(0, Qt::DisplayRole, QString::fromStdString(gu::idToString(rootId)));
-  rootItem->setData(1, Qt::DisplayRole, QString::fromStdString(shapeStrings.at(shape.ShapeType())));
+  rootItem->setData(1, Qt::DisplayRole, QString::fromStdString(occt::getShapeTypeString(shape)));
   treeWidget->addTopLevelItem(rootItem);
   itemStack.push(rootItem);
   
@@ -303,9 +304,9 @@ void BasicCheckPage::go()
 
 void BasicCheckPage::recursiveCheck(const BRepCheck_Analyzer &shapeCheck, const TopoDS_Shape &shape)
 {
-  if (seerShape.hasShapeIdRecord(shape))
+  if (seerShape.hasShape(shape))
   {
-    uuid shapeId = seerShape.findShapeIdRecord(shape).id;
+    uuid shapeId = seerShape.findId(shape);
 
     if
     (
@@ -318,7 +319,7 @@ void BasicCheckPage::recursiveCheck(const BRepCheck_Analyzer &shapeCheck, const 
       listIt.Initialize(shapeCheck.Result(shape)->Status());
       QTreeWidgetItem *entry = new QTreeWidgetItem(itemStack.top());
       entry->setData(0, Qt::DisplayRole, QString::fromStdString(gu::idToString(shapeId)));
-      entry->setData(1, Qt::DisplayRole, QString::fromStdString(shapeStrings.at(shape.ShapeType())));
+      entry->setData(1, Qt::DisplayRole, QString::fromStdString(occt::getShapeTypeString(shape)));
       entry->setData(2, Qt::DisplayRole, checkStatusToString(listIt.Value()));
       itemStack.push(entry);
   
@@ -366,12 +367,12 @@ void BasicCheckPage::checkSub(const BRepCheck_Analyzer &shapeCheck, const TopoDS
   {
     const TopoDS_Shape& sub = exp.Current();
     
-    if (!seerShape.hasShapeIdRecord(sub))
+    if (!seerShape.hasShape(sub))
     {
       std::cout << "Warning: no shapeIdRecord in BasicCheckPage::checkSub" << std::endl;
       continue;
     }
-    uuid subId = seerShape.findShapeIdRecord(sub).id;
+    uuid subId = seerShape.findId(sub);
     
     const Handle(BRepCheck_Result)& res = shapeCheck.Result(sub);
     for (res->InitContextIterator(); res->MoreShapeInContext(); res->NextShapeInContext())
@@ -385,7 +386,7 @@ void BasicCheckPage::checkSub(const BRepCheck_Analyzer &shapeCheck, const TopoDS
           checkedIds.insert(subId);
           QTreeWidgetItem *entry = new QTreeWidgetItem(itemStack.top());
           entry->setData(0, Qt::DisplayRole, QString::fromStdString(gu::idToString(subId)));
-          entry->setData(1, Qt::DisplayRole, QString::fromStdString(shapeStrings.at(sub.ShapeType())));
+          entry->setData(1, Qt::DisplayRole, QString::fromStdString(occt::getShapeTypeString(sub)));
           entry->setData(2, Qt::DisplayRole, checkStatusToString(itl.Value()));
 //           dispatchError(entry, itl.Value());
         }
@@ -414,7 +415,7 @@ void BasicCheckPage::selectionChangedSlot()
     return;
   uuid id = gu::stringToId(freshSelections.at(0)->data(0, Qt::DisplayRole).toString().toStdString());
   assert(!id.is_nil());
-  assert(seerShape.hasShapeIdRecord(id));
+  assert(seerShape.hasId(id));
   
   slc::Message sMessage;
   sMessage.type = slc::convert(seerShape.getOCCTShape(id).ShapeType());
@@ -544,11 +545,11 @@ void BOPCheckPage::goSlot()
   
   //I don't why we need to make a copy, but it doesn't work without it.
   //BRepAlgoAPI_Check also makes a copy of the shape.
-  ann::SeerShape workCopy = seerShape.createWorkCopy();
+  std::unique_ptr<ann::SeerShape> workCopy = seerShape.createWorkCopy();
   BOPAlgo_ArgumentAnalyzer BOPCheck;
   //   BOPCheck.StopOnFirstFaulty() = true; //this doesn't run any faster but gives us less results.
   BOPCheck.SetParallelMode(true); //this doesn't help for speed right now(occt 6.9.1).
-  BOPCheck.SetShape1(workCopy.getRootOCCTShape());
+  BOPCheck.SetShape1(workCopy->getRootOCCTShape());
   BOPCheck.ArgumentTypeMode() = true;
   BOPCheck.SelfInterMode() = true;
   BOPCheck.SmallEdgeMode() = true;
@@ -571,13 +572,13 @@ void BOPCheckPage::goSlot()
   {
     for (const auto &resultShape : result.GetFaultyShapes1())
     {
-      uuid resultId = workCopy.findShapeIdRecord(resultShape).id;
-      std::vector<uuid> sourceIds = workCopy.devolve(resultId);
+      uuid resultId = workCopy->findId(resultShape);
+      std::vector<uuid> sourceIds = workCopy->devolve(resultId);
       assert(sourceIds.size() == 1);
       uuid sourceId = sourceIds.front();
       items.push_back(QTableWidgetItem(QString::fromStdString(gu::idToString(sourceId))));
       items.push_back(QTableWidgetItem(QString::fromStdString
-        (shapeStrings.at(seerShape.getOCCTShape(sourceId).ShapeType()))));
+        (occt::getShapeTypeString(seerShape.getOCCTShape(sourceId)))));
       items.push_back(QTableWidgetItem(BOPCheckStatusToString(result.GetCheckStatus())));
     }
   }
@@ -593,7 +594,7 @@ void BOPCheckPage::goSlot()
   tableWidget->setItem(0, 0, new QTableWidgetItem
     (QString::fromStdString(gu::idToString(seerShape.getRootShapeId()))));
   tableWidget->setItem(0, 1, new QTableWidgetItem
-    (QString::fromStdString(shapeStrings.at(seerShape.getRootOCCTShape().ShapeType()))));
+    (QString::fromStdString(occt::getShapeTypeString(seerShape.getRootOCCTShape()))));
   tableWidget->setItem(0, 2, new QTableWidgetItem(overallStatus));
   
   auto it = items.begin();
@@ -627,7 +628,7 @@ void BOPCheckPage::selectionChangedSlot()
     return;
   uuid id = gu::stringToId(freshSelections.at(0)->data(Qt::DisplayRole).toString().toStdString());
   assert(!id.is_nil());
-  assert(seerShape.hasShapeIdRecord(id));
+  assert(seerShape.hasId(id));
   
   slc::Message sMessage;
   sMessage.type = slc::convert(seerShape.getOCCTShape(id).ShapeType());
@@ -767,7 +768,7 @@ void ToleranceCheckPage::go()
     tableWidget->setItem(row, 0, new QTableWidgetItem
       (QString::fromStdString(gu::idToString(id))));
     tableWidget->setItem(row, 1, new QTableWidgetItem
-      (QString::fromStdString(shapeStrings.at(seerShape.getOCCTShape(id).ShapeType()))));
+      (QString::fromStdString(occt::getShapeTypeString(seerShape.getOCCTShape(id)))));
     tableWidget->setItem(row, 2, new QTableWidgetItem
       (QString::number(tolerance, 'f', 7))); //sorting doesn't work with sci notation.
     row++;
@@ -793,7 +794,7 @@ void ToleranceCheckPage::selectionChangedSlot()
     return;
   uuid id = gu::stringToId(freshSelections.at(0)->data(Qt::DisplayRole).toString().toStdString());
   assert(!id.is_nil());
-  assert(seerShape.hasShapeIdRecord(id));
+  assert(seerShape.hasId(id));
   
   slc::Message sMessage;
   sMessage.type = slc::convert(seerShape.getOCCTShape(id).ShapeType());
@@ -891,12 +892,12 @@ void ShapesPage::go()
     std::vector<uuid> edges;
     for (const auto &e : ev)
     {
-      if (!seerShape.hasShapeIdRecord(e))
+      if (!seerShape.hasShape(e))
       {
         std::cerr << "WARNING: skipping edge in ShapesPage::go()" << std::endl;
         continue;
       }
-      edges.push_back(seerShape.findShapeIdRecord(e).id);
+      edges.push_back(seerShape.findId(e));
     }
     gu::uniquefy(edges);
     boundaries.push_back(edges);
@@ -940,7 +941,7 @@ void ShapesPage::boundaryItemChangedSlot()
   occt::ShapeVector ess;
   for (const auto &e : eids)
   {
-    if (!seerShape.hasShapeIdRecord(e))
+    if (!seerShape.hasId(e))
     {
       std::cerr << "WARNING: skipping edge in ShapesPage::boundaryItemChangedSlot()" << std::endl;
       continue;
@@ -949,12 +950,12 @@ void ShapesPage::boundaryItemChangedSlot()
     sMessage.type = slc::Type::Edge;
     sMessage.featureId = feature.getId();
     sMessage.featureType = feature.getType();
-    sMessage.shapeId = seerShape.findShapeIdRecord(e).id;
+    sMessage.shapeId = e;
     msg::Message message(msg::Request | msg::Selection | msg::Add);
     message.payload = sMessage;
     observer->out(message);
     
-    ess.push_back(seerShape.findShapeIdRecord(e).shape);
+    ess.push_back(seerShape.findShape(e));
   }
   TopoDS_Compound c = occt::ShapeVectorCast(ess);
   osg::BoundingSphered bs = calculateBoundingSphere(c);

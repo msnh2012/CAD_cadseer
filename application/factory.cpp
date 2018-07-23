@@ -383,7 +383,7 @@ void Factory::newChamferDispatched(const msg::Message&)
     )
       continue;
       
-    TopoDS_Edge edge = TopoDS::Edge(targetSeerShape.findShapeIdRecord(currentSelection.shapeId).shape);  
+    TopoDS_Edge edge = TopoDS::Edge(targetSeerShape.findShape(currentSelection.shapeId));  
     ftr::ChamferPick pick;
     pick.edgePick.id = currentSelection.shapeId;
     pick.edgePick.setParameter(edge, currentSelection.pointLocation);
@@ -435,7 +435,7 @@ void Factory::newDraftDispatched(const msg::Message&)
     )
       continue;
       
-    TopoDS_Face face = TopoDS::Face(targetSeerShape.findShapeIdRecord(currentSelection.shapeId).shape);  
+    TopoDS_Face face = TopoDS::Face(targetSeerShape.findShape(currentSelection.shapeId));  
     ftr::Pick pick;
     pick.id = currentSelection.shapeId;
     pick.setParameter(face, currentSelection.pointLocation);
@@ -535,7 +535,7 @@ void Factory::newHollowDispatched(const msg::Message&)
     ftr::Pick hPick;
     hPick.id = currentSelection.shapeId;
     hPick.shapeHistory = project->getShapeHistory().createDevolveHistory(hPick.id);
-    TopoDS_Face face = TopoDS::Face(targetSeerShape.findShapeIdRecord(currentSelection.shapeId).shape);
+    TopoDS_Face face = TopoDS::Face(targetSeerShape.findShape(currentSelection.shapeId));
     hPick.setParameter(face, currentSelection.pointLocation);
     hollowPicks.push_back(hPick);
   }

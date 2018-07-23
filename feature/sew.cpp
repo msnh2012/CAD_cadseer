@@ -191,11 +191,11 @@ void Sew::assignSolidShell()
     assert(solids.size() == 1);
     if (solids.size() > 1)
       std::cout << "WARNING: have more than 1 solid in Sew::assignSolidShell" << std::endl;
-    sShape->updateShapeIdRecord(solids.front(), solidId);
+    sShape->updateId(solids.front(), solidId);
     if (!sShape->hasEvolveRecordOut(solidId))
       sShape->insertEvolve(gu::createNilId(), solidId);
     TopoDS_Shell shell = BRepClass3d::OuterShell(TopoDS::Solid(solids.front()));
-    sShape->updateShapeIdRecord(shell, shellId);
+    sShape->updateId(shell, shellId);
     if (!sShape->hasEvolveRecordOut(shellId))
       sShape->insertEvolve(gu::createNilId(), shellId);
   }
@@ -207,7 +207,7 @@ void Sew::assignSolidShell()
       assert(shells.size() == 1);
       if (shells.size() > 1)
         std::cout << "WARNING: have more than 1 shell in Sew::assignSolidShell" << std::endl;
-      sShape->updateShapeIdRecord(shells.front(), shellId);
+      sShape->updateId(shells.front(), shellId);
       if (!sShape->hasEvolveRecordOut(shellId))
         sShape->insertEvolve(gu::createNilId(), shellId);
     }
@@ -219,18 +219,18 @@ void Sew::sewModifiedMatch(const BRepBuilderAPI_Sewing &builder, const ann::Seer
   occt::ShapeVector shapes = target.getAllShapes();
   for (const auto &ts : shapes)
   {
-    uuid tid = target.findShapeIdRecord(ts).id;
+    uuid tid = target.findId(ts);
     
     auto goEvolve = [&](const TopoDS_Shape &result)
     {
-      if (!sShape->hasShapeIdRecord(result))
+      if (!sShape->hasShape(result))
       {
         //no warning this is pretty common.
         return;
       }
       
       //make sure the shape has nil for an id. Don't overwrite.
-      uuid nid = sShape->findShapeIdRecord(result).id;
+      uuid nid = sShape->findId(result);
       if (!nid.is_nil())
         return;
       
@@ -241,7 +241,7 @@ void Sew::sewModifiedMatch(const BRepBuilderAPI_Sewing &builder, const ann::Seer
         nid = gu::createRandomId();
         sShape->insertEvolve(tid, nid);
       }
-      sShape->updateShapeIdRecord(result, nid);
+      sShape->updateId(result, nid);
     };
     
     //some shapes are in both modified and modifiedSubShape lists.

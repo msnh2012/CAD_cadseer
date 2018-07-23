@@ -27,6 +27,7 @@
 #include <preferences/preferencesXML.h>
 #include <preferences/manager.h>
 #include <tools/occtools.h>
+#include <tools/idtools.h>
 #include <squash/squash.h>
 #include <annex/seershape.h>
 #include <feature/shapecheck.h>
@@ -142,8 +143,8 @@ void Squash::updateModel(const UpdatePayload &payloadIn)
     {
       if (resolved.resultId.is_nil())
         continue;
-      assert(tss.hasShapeIdRecord(resolved.resultId));
-      if (!tss.hasShapeIdRecord(resolved.resultId))
+      assert(tss.hasId(resolved.resultId));
+      if (!tss.hasId(resolved.resultId))
         continue;
       const TopoDS_Shape &shape = tss.getOCCTShape(resolved.resultId);
       if (shape.ShapeType() != TopAbs_FACE)
@@ -191,9 +192,9 @@ void Squash::updateModel(const UpdatePayload &payloadIn)
       
       //for now, we are only going to have consistent ids for face and outer wire.
       sShape->setOCCTShape(out);
-      sShape->updateShapeIdRecord(out, faceId);
+      sShape->updateId(out, faceId);
       const TopoDS_Shape &ow = BRepTools::OuterWire(out);
-      sShape->updateShapeIdRecord(ow, wireId);
+      sShape->updateId(ow, wireId);
       sShape->ensureNoNils();
       
       setSuccess();

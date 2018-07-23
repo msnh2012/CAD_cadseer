@@ -36,8 +36,10 @@
 
 #include <osg/Matrixd>
 
+#include <globalutilities.h>
 #include <tools/infotools.h>
 #include <tools/occtools.h>
+#include <tools/idtools.h>
 #include <annex/seershape.h>
 #include <feature/seershapeinfo.h>
 
@@ -79,10 +81,10 @@ QTextStream& SeerShapeInfo::getShapeInfo(QTextStream &streamIn, const boost::uui
       streamIn << "    SeerShape is null" << endl;
       return streamIn;
     }
-    assert(seerShape.hasShapeIdRecord(idIn));
-    if (!seerShape.hasShapeIdRecord(idIn))
+    assert(seerShape.hasId(idIn));
+    if (!seerShape.hasId(idIn))
       return streamIn;
-    const TopoDS_Shape &shape = seerShape.findShapeIdRecord(idIn).shape;
+    const TopoDS_Shape &shape = seerShape.findShape(idIn);
     if (shape.IsNull())
     {
       streamIn << "    TopoDS_Shape is null" << endl;
@@ -92,7 +94,7 @@ QTextStream& SeerShapeInfo::getShapeInfo(QTextStream &streamIn, const boost::uui
     functionMapper->functionMap.at(shape.ShapeType())(streamIn, shape);
     //common to all shapes.
     streamIn << "    Orientation: " << ((shape.Orientation() == TopAbs_FORWARD) ? ("Forward") : ("Reversed")) << endl
-        << "    Hash code: " << ann::ShapeIdKeyHash()(shape) << endl
+        << "    Hash code: " << occt::getShapeHash(shape) << endl
         << "    Shape id: " << QString::fromStdString(gu::idToString(idIn)) << endl;
     
     occt::BoundingBox bb(shape);    

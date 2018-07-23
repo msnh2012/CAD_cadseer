@@ -19,6 +19,8 @@
 
 #include <TopoDS_Iterator.hxx>
 
+#include <osg/Matrixd>
+
 #include <annex/seershape.h>
 #include <feature/box.h>
 #include <feature/cylinder.h>

@@ -23,6 +23,7 @@
 #include <osg/Switch>
 
 #include <globalutilities.h>
+#include <tools/idtools.h>
 #include <tools/occtools.h>
 #include <library/plabel.h>
 #include <annex/seershape.h>
@@ -190,8 +191,8 @@ void Offset::updateModel(const UpdatePayload &payloadIn)
       {
         if (r.resultId.is_nil())
           continue;
-        assert(tss.hasShapeIdRecord(r.resultId));
-        if (!tss.hasShapeIdRecord(r.resultId))
+        assert(tss.hasId(r.resultId));
+        if (!tss.hasId(r.resultId))
           continue;
         const TopoDS_Shape &fs = tss.getOCCTShape(r.resultId);
         assert(fs.ShapeType() == TopAbs_FACE);
@@ -329,15 +330,15 @@ void Offset::offsetMatch(const BRepOffset_MakeOffset &offseter, const ann::SeerS
   
   auto update = [&](const TopoDS_Shape &original, const TopoDS_Shape &offsetShape)
   {
-    assert(tss.hasShapeIdRecord(original));
-    assert(sShape->hasShapeIdRecord(offsetShape));
-    uuid oid = tss.findShapeIdRecord(original).id;
+    assert(tss.hasShape(original));
+    assert(sShape->hasShape(offsetShape));
+    uuid oid = tss.findId(original);
     uuid nid = gu::createRandomId();
     if (sShape->hasEvolveRecordIn(oid))
       nid = sShape->evolve(oid).front(); //should be 1 to 1.
     else
       sShape->insertEvolve(oid, nid);
-    sShape->updateShapeIdRecord(offsetShape, nid);
+    sShape->updateId(offsetShape, nid);
   };
   
   for (const auto &s : as)

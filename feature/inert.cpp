@@ -25,6 +25,7 @@
 
 #include <project/serial/xsdcxxoutput/featureinert.h>
 #include <globalutilities.h>
+#include <tools/idtools.h>
 #include <tools/occtools.h>
 #include <library/csysdragger.h>
 #include <annex/seershape.h>
@@ -91,9 +92,9 @@ void Inert::updateModel(const UpdatePayload&)
     occt::ShapeVector shapes = occt::mapShapes(sShape->getRootOCCTShape());
     for (const auto &s : shapes)
     {
-      if (sShape->hasShapeIdRecord(s))
+      if (sShape->hasShape(s))
       {
-        oldIds.push_back(sShape->findShapeIdRecord(s).id);
+        oldIds.push_back(sShape->findId(s));
       }
       else
       {
@@ -111,16 +112,16 @@ void Inert::updateModel(const UpdatePayload&)
     tempShape.Location(freshLocation);
     sShape->setOCCTShape(tempShape);
     
-    sShape->updateShapeIdRecord(sShape->getRootOCCTShape(), oldRootId);
+    sShape->updateId(sShape->getRootOCCTShape(), oldRootId);
     sShape->setRootShapeId(oldRootId);
     
     shapes = occt::mapShapes(sShape->getRootOCCTShape());
     std::size_t count = 0;
     for (const auto &s : shapes)
     {
-      if (sShape->hasShapeIdRecord(s))
+      if (sShape->hasShape(s))
       {
-        sShape->updateShapeIdRecord(s, oldIds.at(count));
+        sShape->updateId(s, oldIds.at(count));
       }
       else
       {

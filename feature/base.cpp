@@ -55,6 +55,7 @@
 #include <message/message.h>
 #include <message/observer.h>
 #include <lod/message.h>
+#include <annex/shapeidhelper.h>
 #include <annex/seershape.h>
 #include <feature/parameter.h>
 #include <feature/shapehistory.h>

@@ -103,8 +103,8 @@ void RemoveFaces::updateModel(const UpdatePayload &payloadIn)
     {
       if (r.resultId.is_nil())
         continue;
-      assert(tss.hasShapeIdRecord(r.resultId));
-      if (!tss.hasShapeIdRecord(r.resultId))
+      assert(tss.hasId(r.resultId));
+      if (!tss.hasId(r.resultId))
         continue;
       const TopoDS_Shape &fs = tss.getOCCTShape(r.resultId);
       assert(fs.ShapeType() == TopAbs_FACE);

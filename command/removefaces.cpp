@@ -75,8 +75,8 @@ void RemoveFaces::go()
     const ann::SeerShape &ss = bf->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
     if (!c.shapeId.is_nil())
     {
-      assert(ss.hasShapeIdRecord(c.shapeId));
-      if (!ss.hasShapeIdRecord(c.shapeId))
+      assert(ss.hasId(c.shapeId));
+      if (!ss.hasId(c.shapeId))
       {
         std::cerr << "WARNING: seershape doesn't have id from selection in cmd::RemoveFaces::go" << std::endl;
         continue;

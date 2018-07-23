@@ -78,8 +78,8 @@ TopoDS_Solid Trim::makeHalfSpace(const ann::SeerShape &seerShapeIn, const TopoDS
   if (!e.IsDone() || e.NbSolution() < 1)
     return TopoDS_Solid();
   TopoDS_Shape support2 = e.SupportOnShape2(1);
-  assert(seerShapeIn.hasShapeIdRecord(support2)); //degenerate edge?
-  if (!seerShapeIn.hasShapeIdRecord(support2))
+  assert(seerShapeIn.hasShape(support2)); //degenerate edge?
+  if (!seerShapeIn.hasShape(support2))
     return TopoDS_Solid();
   if (support2.ShapeType() != TopAbs_FACE)
   {

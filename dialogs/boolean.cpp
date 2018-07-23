@@ -148,8 +148,8 @@ void Boolean::setEditDialog()
       const ann::SeerShape &seerShape = f->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
       if (!shapeId.is_nil())
       {
-        assert(seerShape.hasShapeIdRecord(shapeId)); //want to know about this.
-        if (!seerShape.hasShapeIdRecord(shapeId))
+        assert(seerShape.hasId(shapeId)); //want to know about this.
+        if (!seerShape.hasId(shapeId))
           continue;
       }
       slc::Message cm; //current message.

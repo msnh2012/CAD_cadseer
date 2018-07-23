@@ -69,8 +69,8 @@ void InstanceMapper::startMapping(const SeerShape &sShapeIn, const uuid &idIn, c
 {
   if (!idIn.is_nil())
   {
-    assert(sShapeIn.hasShapeIdRecord(idIn));
-    if (!sShapeIn.hasShapeIdRecord(idIn))
+    assert(sShapeIn.hasId(idIn));
+    if (!sShapeIn.hasId(idIn))
     {
       std::cerr << "WARNING: seershape doesn't have shape with id passed in: " << gu::idToString(idIn) << std::endl;
       return;
@@ -94,7 +94,7 @@ void InstanceMapper::startMapping(const SeerShape &sShapeIn, const uuid &idIn, c
   }
   for (const auto &s : shapes)
   {
-    uuid id = sShapeIn.findShapeIdRecord(s).id;
+    uuid id = sShapeIn.findId(s);
     bool foundHistoryMatch = false;
     std::size_t historyCount = 0;
     for (auto &ho : data->historyOuts)
@@ -139,7 +139,7 @@ void InstanceMapper::mapIndex(SeerShape &sShape, const TopoDS_Shape &dsShape, st
   for (const auto &s : shapes)
   {
     uuid outId = data->getOutId(shapeCount, instance);
-    sShape.updateShapeIdRecord(s, outId);
+    sShape.updateId(s, outId);
     sShape.insertEvolve(data->sourceIds.at(shapeCount), outId);
     shapeCount++;
   }

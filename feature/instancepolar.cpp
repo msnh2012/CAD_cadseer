@@ -166,10 +166,10 @@ void InstancePolar::updateModel(const UpdatePayload &payloadIn)
       {
         if (resolved.resultId.is_nil())
           continue;
-        assert(tss.hasShapeIdRecord(resolved.resultId));
-        if (!tss.hasShapeIdRecord(resolved.resultId))
+        assert(tss.hasId(resolved.resultId));
+        if (!tss.hasId(resolved.resultId))
           continue;
-        tShapes.push_back(tss.findShapeIdRecord(resolved.resultId).shape);
+        tShapes.push_back(tss.findShape(resolved.resultId));
       }
     }
     if (tShapes.empty())
@@ -196,10 +196,10 @@ void InstancePolar::updateModel(const UpdatePayload &payloadIn)
       {
         if (resolved.resultId.is_nil())
           continue;
-        assert(ass.hasShapeIdRecord(resolved.resultId));
-        if (!ass.hasShapeIdRecord(resolved.resultId))
+        assert(ass.hasId(resolved.resultId));
+        if (!ass.hasId(resolved.resultId))
           continue;
-        dsShape = ass.findShapeIdRecord(resolved.resultId).shape;
+        dsShape = ass.findShape(resolved.resultId);
         break;
       }
       if (dsShape.IsNull())
@@ -283,7 +283,7 @@ void InstancePolar::updateModel(const UpdatePayload &payloadIn)
     
     for (const auto &s : tShapes)
     {
-      iMapper->startMapping(tss, tss.findShapeIdRecord(s).id,  payloadIn.shapeHistory);
+      iMapper->startMapping(tss, tss.findId(s),  payloadIn.shapeHistory);
       std::size_t sc = 0;
       for (const auto &si : out)
       {

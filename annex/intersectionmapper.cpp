@@ -28,6 +28,8 @@
 #include <BOPDS_DS.hxx>
 #include <TopoDS.hxx>
 
+#include <globalutilities.h>
+#include <tools/idtools.h>
 #include <feature/base.h>
 #include <feature/shapehistory.h>
 #include <feature/updatepayload.h>
@@ -1070,7 +1072,7 @@ void IntersectionMapper::go(const ftr::UpdatePayload &payloadIn, BOPAlgo_Builder
   for (const auto &resultFace : resultFaces)
   {
     assert(resultFace.ShapeType() == TopAbs_FACE);
-    if (!sShape.findShapeIdRecord(resultFace).id.is_nil())
+    if (!sShape.findId(resultFace).is_nil())
       continue;
     uuid protoId = gu::createNilId();
     occt::FaceVector faces;
@@ -1080,9 +1082,9 @@ void IntersectionMapper::go(const ftr::UpdatePayload &payloadIn, BOPAlgo_Builder
       faces.push_back(TopoDS::Face(resultFace));
       for (const auto &seerShape : seerShapes)
       {
-        if (!seerShape.get().hasShapeIdRecord(resultFace))
+        if (!seerShape.get().hasShape(resultFace))
           continue;
-        protoId = seerShape.get().findShapeIdRecord(resultFace).id;
+        protoId = seerShape.get().findId(resultFace);
         break;
       }
     }
@@ -1097,7 +1099,7 @@ void IntersectionMapper::go(const ftr::UpdatePayload &payloadIn, BOPAlgo_Builder
       for (const auto &shape : imageFaces)
       {
         assert(shape.ShapeType() == TopAbs_FACE);
-        if (sShape.hasShapeIdRecord(shape))
+        if (sShape.hasShape(shape))
           faces.push_back(TopoDS::Face(shape));
       }
       if (faces.empty())
@@ -1105,9 +1107,9 @@ void IntersectionMapper::go(const ftr::UpdatePayload &payloadIn, BOPAlgo_Builder
       
       for (const auto &ss : seerShapes)
       {
-        if (ss.get().hasShapeIdRecord(originFaces.First()))
+        if (ss.get().hasShape(originFaces.First()))
         {
-          protoId = ss.get().findShapeIdRecord(originFaces.First()).id;
+          protoId = ss.get().findId(originFaces.First());
           break;
         }
       }
@@ -1127,7 +1129,7 @@ void IntersectionMapper::go(const ftr::UpdatePayload &payloadIn, BOPAlgo_Builder
       foundMatch = true;
       fs.match(faces);
       for (const auto &cid : fs.getResults())
-        sShape.updateShapeIdRecord(cid.face, cid.faceId);
+        sShape.updateId(cid.face, cid.faceId);
       break;
     }
     if (!foundMatch)
@@ -1142,12 +1144,12 @@ void IntersectionMapper::go(const ftr::UpdatePayload &payloadIn, BOPAlgo_Builder
       nfs.match(faces);
       for (const auto &cid : nfs.getResults())
       {
-        sShape.updateShapeIdRecord(cid.face, cid.faceId);
+        sShape.updateId(cid.face, cid.faceId);
         sShape.insertEvolve(protoId, cid.faceId);
         const TopoDS_Shape &wire = BRepTools::OuterWire(cid.face);
         if(!wire.IsNull())
         {
-          sShape.updateShapeIdRecord(wire, cid.wireId);
+          sShape.updateId(wire, cid.wireId);
           sShape.insertEvolve(gu::createNilId(), cid.wireId);
         }
       }
@@ -1166,7 +1168,7 @@ void IntersectionMapper::go(const ftr::UpdatePayload &payloadIn, BOPAlgo_Builder
     if (os.ShapeType() != TopAbs_EDGE)
       continue; //only interested in edges here.
     // id might have been set by previous loop iteration
-    if (!sShape.findShapeIdRecord(os).id.is_nil())
+    if (!sShape.findId(os).is_nil())
       continue;
     
     TopoDS_Shape sourceShape = os; //default non split 
@@ -1180,9 +1182,9 @@ void IntersectionMapper::go(const ftr::UpdatePayload &payloadIn, BOPAlgo_Builder
     uuid sId = gu::createNilId(); //source id
     for (const auto &ss : seerShapes)
     {
-      if (ss.get().hasShapeIdRecord(sourceShape))
+      if (ss.get().hasShape(sourceShape))
       {
-        sId = ss.get().findShapeIdRecord(sourceShape).id;
+        sId = ss.get().findId(sourceShape);
         break;
       }
     }
@@ -1193,7 +1195,7 @@ void IntersectionMapper::go(const ftr::UpdatePayload &payloadIn, BOPAlgo_Builder
     {
       for (const auto &e : images(sourceShape))
       {
-        if (sShape.hasShapeIdRecord(e))
+        if (sShape.hasShape(e))
           edges.push_back(TopoDS::Edge(e));
       }
     }
@@ -1210,7 +1212,7 @@ void IntersectionMapper::go(const ftr::UpdatePayload &payloadIn, BOPAlgo_Builder
       es.match(edges);
       for (const auto &en : es.getResults())
       {
-        sShape.updateShapeIdRecord(en.edge, en.edgeId);
+        sShape.updateId(en.edge, en.edgeId);
         sShape.insertEvolve(sId, en.edgeId);
       }
       break;
@@ -1222,7 +1224,7 @@ void IntersectionMapper::go(const ftr::UpdatePayload &payloadIn, BOPAlgo_Builder
       nes.match(edges);
       for (const auto &en : nes.getResults())
       {
-        sShape.updateShapeIdRecord(en.edge, en.edgeId);
+        sShape.updateId(en.edge, en.edgeId);
         sShape.insertEvolve(sId, en.edgeId);
       }
       data->edgeSplits.push_back(nes);
@@ -1273,9 +1275,9 @@ void IntersectionMapper::go(const ftr::UpdatePayload &payloadIn, BOPAlgo_Builder
       const TopoDS_Shape &shape = bopDS.Shape(index);
       if (shape.ShapeType() != TopAbs_EDGE)
         continue;
-      if (!sShape.hasShapeIdRecord(shape))
+      if (!sShape.hasShape(shape))
         continue;
-      if (!sShape.findShapeIdRecord(shape).id.is_nil())
+      if (!sShape.findId(shape).is_nil())
         continue;
       
       std::vector<uuid> faceIds;
@@ -1288,9 +1290,9 @@ void IntersectionMapper::go(const ftr::UpdatePayload &payloadIn, BOPAlgo_Builder
         {
           for (const auto &ss : seerShapes)
           {
-            if (ss.get().hasShapeIdRecord(sil))
+            if (ss.get().hasShape(sil))
             {
-              faceIds.push_back(ss.get().findShapeIdRecord(sil).id);
+              faceIds.push_back(ss.get().findId(sil));
               
               //get the current center
               double umin, umax, vmin, vmax;
@@ -1330,7 +1332,7 @@ void IntersectionMapper::go(const ftr::UpdatePayload &payloadIn, BOPAlgo_Builder
         es.match(tei.pairs);
         for (const auto &en : es.getResults())
         {
-          sShape.updateShapeIdRecord(en.edge, en.edgeId);
+          sShape.updateId(en.edge, en.edgeId);
           sShape.insertEvolve(gu::createNilId(), en.edgeId); //intersection edges come from nothing.
         }
         break;
@@ -1344,7 +1346,7 @@ void IntersectionMapper::go(const ftr::UpdatePayload &payloadIn, BOPAlgo_Builder
       nei.match(tei.pairs);
       for (const auto &en : nei.getResults())
       {
-        sShape.updateShapeIdRecord(en.edge, en.edgeId);
+        sShape.updateId(en.edge, en.edgeId);
         sShape.insertEvolve(gu::createNilId(), en.edgeId); //intersection edges come from nothing.
       }
       data->edgeIntersections.push_back(nei);
@@ -1374,9 +1376,9 @@ void IntersectionMapper::go(const ftr::UpdatePayload &payloadIn, BOPAlgo_Builder
     {
       for (const auto &ss : seerShapes)
       {
-        if (ss.get().hasShapeIdRecord(oShape))
+        if (ss.get().hasShape(oShape))
         {
-          oids.push_back(ss.get().findShapeIdRecord(oShape).id);
+          oids.push_back(ss.get().findId(oShape));
           break;
         }
       }
@@ -1394,7 +1396,7 @@ void IntersectionMapper::go(const ftr::UpdatePayload &payloadIn, BOPAlgo_Builder
       if (!sd.isMatch(oids))
         continue;
       foundMatch = true;
-      sShape.updateShapeIdRecord(os, sd.id);
+      sShape.updateId(os, sd.id);
       for (const auto &oid : oids)
         sShape.insertEvolve(oid, sd.id);
       break;
@@ -1405,7 +1407,7 @@ void IntersectionMapper::go(const ftr::UpdatePayload &payloadIn, BOPAlgo_Builder
       for (const auto &oid : oids)
         nsd.histories.push_back(payloadIn.shapeHistory.createDevolveHistory(oid));
       data->sameDomains.push_back(nsd);
-      sShape.updateShapeIdRecord(os, nsd.id);
+      sShape.updateId(os, nsd.id);
       for (const auto &oid : oids)
         sShape.insertEvolve(oid, nsd.id);
     }

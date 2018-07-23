@@ -19,11 +19,13 @@
 
 #include<TopoDS.hxx>
 
+#include <globalutilities.h>
 #include <annex/seershape.h>
 #include <selection/message.h>
 #include <feature/shapehistory.h>
 #include <feature/pick.h>
 #include <feature/base.h>
+#include <tools/idtools.h>
 #include <tools/featuretools.h>
 
 using boost::uuids::uuid;
@@ -91,8 +93,8 @@ std::vector<Resolved> tls::resolvePicks
       }
       for (const auto rid : rids)
       {
-        assert(toolSeerShape.hasShapeIdRecord(rid)); //project shape history and the feature shapeid records out of sync.
-        if (!toolSeerShape.hasShapeIdRecord(rid))
+        assert(toolSeerShape.hasId(rid)); //project shape history and the feature shapeid records out of sync.
+        if (!toolSeerShape.hasId(rid))
           continue;
         out.push_back(Resolved(tf, rid, *it));
       }
@@ -121,7 +123,7 @@ std::vector<Resolved> tls::resolvePicks
 
 ftr::Pick tls::convertToPick(const slc::Message &messageIn, const ann::SeerShape &sShapeIn)
 {
-  assert(sShapeIn.hasShapeIdRecord(messageIn.shapeId)); //don't set me up
+  assert(sShapeIn.hasId(messageIn.shapeId)); //don't set me up
   ftr::Pick out(messageIn.shapeId, 0.0, 0.0);
   out.selectionType = messageIn.type;
   
@@ -169,7 +171,7 @@ slc::Message tls::convertToMessage(const ftr::Pick &pickIn, const ftr::Base *fea
   const ann::SeerShape &sShape = featureIn->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
   assert(!sShape.isNull()); //caller verifies.
   assert(!pickIn.resolvedIds.empty());
-  assert(sShape.hasShapeIdRecord(pickIn.resolvedIds.front()));
+  assert(sShape.hasId(pickIn.resolvedIds.front()));
   if (pickIn.resolvedIds.size() > 1)
     std::cout << "WARNING: resolved ids greater than 1 not supported in: " << BOOST_CURRENT_FUNCTION << std::endl;
   

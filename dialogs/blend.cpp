@@ -300,9 +300,9 @@ namespace dlg
 static std::vector<uuid> getContourIds(const ann::SeerShape &ssIn, const uuid &edgeIdIn)
 {
   std::vector<uuid> out;
-  assert(ssIn.hasShapeIdRecord(edgeIdIn)); //why did you set me up!
+  assert(ssIn.hasId(edgeIdIn)); //why did you set me up!
   
-  const TopoDS_Edge& e = TopoDS::Edge(ssIn.findShapeIdRecord(edgeIdIn).shape);
+  const TopoDS_Edge& e = TopoDS::Edge(ssIn.findShape(edgeIdIn));
   assert(!e.IsNull());
   
   BRepFilletAPI_MakeFillet blendMaker(ssIn.getRootOCCTShape());
@@ -311,8 +311,8 @@ static std::vector<uuid> getContourIds(const ann::SeerShape &ssIn, const uuid &e
     return out; //invalid edge, return empty results.
   for (int index = 1; index <= blendMaker.NbEdges(1); ++index)
   {
-    assert(ssIn.hasShapeIdRecord(blendMaker.Edge(1, index)));
-    out.push_back(ssIn.findShapeIdRecord(blendMaker.Edge(1, index)).id);
+    assert(ssIn.hasShape(blendMaker.Edge(1, index)));
+    out.push_back(ssIn.findId(blendMaker.Edge(1, index)));
   }
   
   return out;
@@ -628,7 +628,7 @@ void Blend::updateBlendFeature()
 void Blend::addToSelection(const boost::uuids::uuid &shapeIdIn)
 {
   const ann::SeerShape &parentShape = blendParent->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
-  assert(parentShape.hasShapeIdRecord(shapeIdIn));
+  assert(parentShape.hasId(shapeIdIn));
   slc::Type sType = slc::convert(parentShape.getOCCTShape(shapeIdIn).ShapeType());
   assert(sType == slc::Type::Edge || sType == slc::Type::Face);
   
@@ -679,7 +679,7 @@ void Blend::selectionAdditionDispatched(const msg::Message &messageIn)
   
   auto buildEdgePick = [&]() -> ftr::Pick
   {
-    assert(parentShape.hasShapeIdRecord(sMessage.shapeId));
+    assert(parentShape.hasId(sMessage.shapeId));
     assert(sMessage.type == slc::Type::Edge);
     
     ftr::Pick out = tls::convertToPick(sMessage, parentShape);
@@ -691,7 +691,7 @@ void Blend::selectionAdditionDispatched(const msg::Message &messageIn)
   
   auto buildVertexPick = [&]() -> ftr::Pick
   {
-    assert(parentShape.hasShapeIdRecord(sMessage.shapeId));
+    assert(parentShape.hasId(sMessage.shapeId));
     assert(slc::isPointType(sMessage.type));
     
     ftr::Pick out = tls::convertToPick(sMessage, parentShape);
@@ -739,7 +739,7 @@ void Blend::selectionAdditionDispatched(const msg::Message &messageIn)
       
       //add first and last vertex.
       BRepFilletAPI_MakeFillet blendMaker(parentShape.getRootOCCTShape());
-      assert(parentShape.hasShapeIdRecord(ni->pick.id));
+      assert(parentShape.hasId(ni->pick.id));
       blendMaker.Add(TopoDS::Edge(parentShape.getOCCTShape(ni->pick.id)));
       if (blendMaker.NbContours() != 1)
       {
@@ -747,11 +747,11 @@ void Blend::selectionAdditionDispatched(const msg::Message &messageIn)
         return;
       }
       TopoDS_Vertex fv = blendMaker.FirstVertex(1);
-      assert(parentShape.hasShapeIdRecord(fv));
-      uuid fId = parentShape.findShapeIdRecord(fv).id;
+      assert(parentShape.hasShape(fv));
+      uuid fId = parentShape.findId(fv);
       TopoDS_Vertex lv = blendMaker.LastVertex(1);
-      assert(parentShape.hasShapeIdRecord(lv));
-      uuid lId = parentShape.findShapeIdRecord(lv).id;
+      assert(parentShape.hasShape(lv));
+      uuid lId = parentShape.findId(lv);
       
       auto constructPick = [&](const uuid &idIn) -> ftr::Pick
       {
@@ -784,7 +784,7 @@ void Blend::selectionAdditionDispatched(const msg::Message &messageIn)
           int contourIndex = 1; //contour index
           for (const auto rid : ci->pick.resolvedIds)
           {
-            assert(parentShape.hasShapeIdRecord(rid));
+            assert(parentShape.hasId(rid));
             blendMaker.Add(TopoDS::Edge(parentShape.getOCCTShape(rid)));
             if (blendMaker.NbContours() != contourIndex)
             {
@@ -802,7 +802,7 @@ void Blend::selectionAdditionDispatched(const msg::Message &messageIn)
               //here we have some point and just make sure referring edge is on contour.
               for (int ei = 1; ei < blendMaker.NbEdges(contourIndex) + 1; ++ei)
               {
-                if (parentShape.findShapeIdRecord(blendMaker.Edge(contourIndex, ei)).id == vp.resolvedIds.front())
+                if (parentShape.findId(blendMaker.Edge(contourIndex, ei)) == vp.resolvedIds.front())
                   return true;
               }
             }
