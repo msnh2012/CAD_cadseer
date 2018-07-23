@@ -26,9 +26,6 @@
 
 #include <boost/uuid/uuid.hpp>
 
-#include <Standard_StdAllocator.hxx>
-#include <TopoDS_Shape.hxx>
-
 class gp_Vec;
 class gp_Pnt;
 class gp_Ax2;

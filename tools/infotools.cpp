@@ -19,6 +19,9 @@
 
 #include <QTextStream>
 
+#include <gp_Pnt.hxx>
+#include <gp_Dir.hxx>
+
 #include <osg/Matrixd>
 
 #include <globalutilities.h>

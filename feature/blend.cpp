@@ -40,6 +40,7 @@
 
 #include <globalutilities.h>
 #include <tools/idtools.h>
+#include <tools/occtools.h>
 #include <tools/featuretools.h>
 #include <preferences/preferencesXML.h>
 #include <preferences/manager.h>

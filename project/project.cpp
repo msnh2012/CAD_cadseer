@@ -43,6 +43,7 @@
 #include <application/application.h>
 #include <globalutilities.h>
 #include <tools/idtools.h>
+#include <tools/occtools.h>
 #include <feature/base.h>
 #include <annex/seershape.h>
 #include <feature/inert.h>

@@ -38,6 +38,7 @@
 #include <project/serial/xsdcxxoutput/featurehollow.h>
 #include <tools/featuretools.h>
 #include <tools/idtools.h>
+#include <tools/occtools.h>
 #include <feature/updatepayload.h>
 #include <feature/inputtype.h>
 #include <feature/parameter.h>

@@ -30,7 +30,6 @@
 #include <TopoDS_Iterator.hxx>
 #include <TopTools_IndexedMapOfShape.hxx>
 #include <TopExp.hxx>
-#include <Standard_StdAllocator.hxx>
 #include <Precision.hxx>
 #include <BinTools.hxx>
 

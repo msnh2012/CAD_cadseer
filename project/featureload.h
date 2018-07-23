@@ -28,7 +28,7 @@
 
 #include <boost/filesystem/path.hpp>
 
-#include <Standard_StdAllocator.hxx>
+#include <tools/shapevector.h>
 
 class TopoDS_Shape;
 
@@ -44,7 +44,7 @@ namespace prj
     std::shared_ptr<ftr::Base> load(const std::string &idIn, const std::string &typeIn, std::size_t shapeOffsetIn);
   private:
     boost::filesystem::path directory;
-    std::vector<TopoDS_Shape, Standard_StdAllocator<TopoDS_Shape> > shapeVector;
+    occt::ShapeVector shapeVector;
     
     typedef std::function<std::shared_ptr<ftr::Base> (const std::string &, std::size_t)> LoadFunction;
     typedef std::map<std::string, LoadFunction> FunctionMap;

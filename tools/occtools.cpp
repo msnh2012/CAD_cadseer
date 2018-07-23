@@ -269,7 +269,7 @@ private:
   TopTools_MapOfShape discoveredEdges;
   TopTools_MapOfShape discoveredFaces;
   TopTools_IndexedDataMapOfShapeListOfShape edgeToFaceMap;
-  typedef std::stack<TopoDS_Face, std::deque<TopoDS_Face, Standard_StdAllocator<TopoDS_Face> > > FaceStack;
+  typedef std::stack<TopoDS_Face, std::deque<TopoDS_Face, NCollection_StdAllocator<TopoDS_Face> > > FaceStack;
   FaceStack stack;
 };
 

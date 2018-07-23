@@ -30,6 +30,7 @@
 
 #include <globalutilities.h>
 #include <tools/idtools.h>
+#include <tools/occtools.h>
 #include <feature/base.h>
 #include <feature/shapehistory.h>
 #include <feature/updatepayload.h>

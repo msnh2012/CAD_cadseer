@@ -25,19 +25,13 @@
 #include <cassert>
 
 #include <gp_Ax1.hxx>
-#include <Standard_StdAllocator.hxx>
-#include <TopoDS_Shape.hxx>
 #include <TopoDS_Compound.hxx>
-#include <TopoDS_Solid.hxx>
-#include <TopoDS_Shell.hxx>
-#include <TopoDS_Face.hxx>
-#include <TopoDS_Wire.hxx>
-#include <TopoDS_Edge.hxx>
-#include <TopoDS_Vertex.hxx>
 #include <TopTools_IndexedMapOfShape.hxx>
 #include <TopTools_MapOfShape.hxx>
 #include <TopTools_ListOfShape.hxx>
 #include <Bnd_Box.hxx>
+
+#include <tools/shapevector.h>
 
 
 namespace occt
@@ -86,14 +80,6 @@ namespace occt
     assert(index < strings.size());
     return strings.at(index);
   };
-  
-  typedef std::vector<TopoDS_Shape, Standard_StdAllocator<TopoDS_Shape> > ShapeVector;
-  typedef std::vector<TopoDS_Solid, Standard_StdAllocator<TopoDS_Solid> > SolidVector;
-  typedef std::vector<TopoDS_Shell, Standard_StdAllocator<TopoDS_Shell> > ShellVector;
-  typedef std::vector<TopoDS_Face, Standard_StdAllocator<TopoDS_Face> > FaceVector;
-  typedef std::vector<TopoDS_Wire, Standard_StdAllocator<TopoDS_Wire> > WireVector;
-  typedef std::vector<TopoDS_Edge, Standard_StdAllocator<TopoDS_Edge> > EdgeVector;
-  typedef std::vector<TopoDS_Vertex, Standard_StdAllocator<TopoDS_Vertex> > VertexVector;
   
   class ShapeVectorCast
   {

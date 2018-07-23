@@ -24,7 +24,7 @@
 
 #include <boost/uuid/uuid.hpp>
 
-#include <tools/occtools.h> //need for occt::ShapeVector. Brings too much fix.
+#include <tools/shapevector.h>
 #include <annex/base.h>
 
 

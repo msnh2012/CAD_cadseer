@@ -48,6 +48,7 @@
 #include <osgDB/WriteFile>
 
 #include <tools/idtools.h>
+#include <tools/occtools.h>
 #include <message/dispatch.h>
 #include <message/message.h>
 #include <message/observer.h>
