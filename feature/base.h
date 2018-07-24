@@ -109,7 +109,7 @@ public:
   virtual void replaceId(const boost::uuids::uuid&, const boost::uuids::uuid&, const ShapeHistory&);
   virtual QTextStream& getInfo(QTextStream &) const;
   QTextStream&  getShapeInfo(QTextStream &, const boost::uuids::uuid&) const;
-  boost::uuids::uuid getId() const {return id;}
+  const boost::uuids::uuid& getId() const {return id;}
   osg::Switch* getMainSwitch() const {return mainSwitch.get();}
   osg::Switch* getOverlaySwitch() const {return overlaySwitch.get();}
   osg::MatrixTransform* getMainTransform() const {return mainTransform.get();}

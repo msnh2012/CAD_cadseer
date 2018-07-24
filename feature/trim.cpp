@@ -17,10 +17,15 @@
  *
  */
 
+#include <gp_Ax2.hxx>
+#include <gp_Ax3.hxx>
+#include <gp_Pln.hxx>
 #include <TopoDS.hxx>
 #include <BRepPrimAPI_MakeHalfSpace.hxx>
 #include <BRepBuilderAPI_MakeVertex.hxx>
+#include <BRepBuilderAPI_MakeFace.hxx>
 #include <BRepExtrema_DistShapeShape.hxx>
+#include <BRepTools.hxx>
 
 #include <osg/Switch>
 
@@ -36,6 +41,7 @@
 #include <feature/updatepayload.h>
 #include <feature/parameter.h>
 #include <feature/inputtype.h>
+#include <feature/datumplane.h>
 #include <feature/trim.h>
 
 using namespace ftr;
@@ -48,7 +54,9 @@ Trim::Trim():
 Base(),
 reversed(new prm::Parameter(QObject::tr("Reversed"), false)),
 sShape(new ann::SeerShape()),
-iMapper(new ann::IntersectionMapper())
+iMapper(new ann::IntersectionMapper()),
+dpFaceId(gu::createRandomId()),
+dpWireId(gu::createRandomId())
 {
   if (icon.isNull())
     icon = QIcon(":/resources/images/constructionTrim.svg");
@@ -131,25 +139,62 @@ void Trim::updateModel(const UpdatePayload &payloadIn)
     std::vector<const Base*> tlfs = payloadIn.getFeatures(InputType::tool);
     if (tlfs.size() != 1)
       throw std::runtime_error("wrong number of tool parents");
-    if (!tlfs.front()->hasAnnex(ann::Type::SeerShape))
-      throw std::runtime_error("tool parent doesn't have seer shape.");
-    const ann::SeerShape &tlss = tlfs.front()->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
-    if (tlss.isNull())
-      throw std::runtime_error("tool seer shape is null");
     
-    TopoDS_Shape toolShape;
-    occt::ShapeVector shells = tlss.useGetChildrenOfType(tlss.getRootOCCTShape(), TopAbs_SHELL);
-    if (!shells.empty())
-      toolShape = shells.front();
+    TopoDS_Solid toolSolid;
+    bool fromDatum = false;
+    const ann::SeerShape *tlss = nullptr;
+    if (tlfs.front()->getType() == ftr::Type::DatumPlane)
+    {
+      fromDatum = true;
+      const DatumPlane *dp = static_cast<const DatumPlane*>(tlfs.front());
+      osg::Matrixd ts = dp->getSystem();
+      BRepBuilderAPI_MakeFace fm(gp_Pln(gp_Ax3(gu::toOcc(ts))));
+      if (!fm.IsDone())
+        throw std::runtime_error("couldn't make face from datum plane");
+      osg::Vec3d rp(0.0, 0.0, 1.0);
+      if (static_cast<bool>(*reversed))
+        rp = -rp;
+      rp = rp * ts;
+      BRepPrimAPI_MakeHalfSpace hsm(fm.Face(), gp_Pnt(gu::toOcc(rp).XYZ()));
+      if (!hsm.IsDone())
+        throw std::runtime_error("couldn't make half space from datum plane");
+      toolSolid = hsm.Solid();
+      reversedLabel->setMatrix(ts);
+      
+      //create an id linked to datum plane. this might cause problems as
+      //dplane feature id won't be in shape history
+      const uuid& dpId = tlfs.front()->getId();
+      if (!sShape->hasEvolveRecordIn(dpId))
+      {
+        uuid fid = gu::createRandomId();
+        sShape->insertEvolve(dpId, fid);
+        sShape->insertEvolve(fid, gu::createRandomId()); //used for outer wire
+      }
+    }
     else
     {
-      occt::ShapeVector faces = tlss.useGetChildrenOfType(tlss.getRootOCCTShape(), TopAbs_FACE);
-      if (!faces.empty())
-        toolShape = faces.front();
+      if (!tlfs.front()->hasAnnex(ann::Type::SeerShape))
+        throw std::runtime_error("tool parent doesn't have seer shape.");
+      tlss = &tlfs.front()->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
+      if (tlss->isNull())
+        throw std::runtime_error("tool seer shape is null");
+      
+      TopoDS_Shape toolShape;
+      occt::ShapeVector shells = tlss->useGetChildrenOfType(tlss->getRootOCCTShape(), TopAbs_SHELL);
+      if (!shells.empty())
+        toolShape = shells.front();
+      else
+      {
+        occt::ShapeVector faces = tlss->useGetChildrenOfType(tlss->getRootOCCTShape(), TopAbs_FACE);
+        if (!faces.empty())
+          toolShape = faces.front();
+      }
+      if (toolShape.IsNull())
+        throw std::runtime_error("no tool shape found");
+      toolSolid = makeHalfSpace(*tlss, toolShape);
+      occt::BoundingBox bb(toolShape);
+      reversedLabel->setMatrix(osg::Matrixd::translate(gu::toOsg(bb.getCenter())));
     }
-    if (toolShape.IsNull())
-      throw std::runtime_error("no tool shape found");
-    TopoDS_Solid toolSolid = makeHalfSpace(tlss, toolShape);
     if (toolSolid.IsNull())
       throw std::runtime_error("couldn't construct tool solid");
     
@@ -163,13 +208,19 @@ void Trim::updateModel(const UpdatePayload &payloadIn)
     
     sShape->setOCCTShape(subtracter.Shape());
     
+    //WARNING: can't find keyId for face split in IntersectionMapper::go     from datum plane trim
     iMapper->go(payloadIn, subtracter.getBuilder(), *sShape);
     
     sShape->shapeMatch(trss);
-    sShape->shapeMatch(tlss);
+    if (!fromDatum)
+      sShape->shapeMatch(*tlss);
+    else
+      datumPlaneId(tlfs.front()->getId());
+    
     sShape->uniqueTypeMatch(trss);
     sShape->outerWireMatch(trss);
-    sShape->outerWireMatch(tlss);
+    if (!fromDatum)
+      sShape->outerWireMatch(*tlss);
     sShape->derivedMatch();
     sShape->dumpNils(getTypeString()); //only if there are shapes with nil ids.
     sShape->dumpDuplicates(getTypeString());
@@ -198,6 +249,27 @@ void Trim::updateModel(const UpdatePayload &payloadIn)
     std::cout << std::endl << lastUpdateLog;
 }
 
+void Trim::datumPlaneId(const uuid &bId)
+{
+  assert(sShape->hasEvolveRecordIn(bId));
+  uuid fid = sShape->evolve(bId).front();
+  assert(sShape->hasEvolveRecordIn(fid));
+  uuid wid = sShape->evolve(fid).front();
+  
+  //find nil face
+  TopoDS_Shape f;
+  for (const auto &s : sShape->getAllNilShapes())
+  {
+    if (s.ShapeType() == TopAbs_FACE)
+    {
+      sShape->updateId(s, fid);
+      const auto &ws = BRepTools::OuterWire(TopoDS::Face(s));
+      sShape->updateId(ws, wid);
+      break;
+    }
+  }
+}
+
 void Trim::serialWrite(const boost::filesystem::path &dIn)
 {
   prj::srl::FeatureTrim so
@@ -205,7 +277,9 @@ void Trim::serialWrite(const boost::filesystem::path &dIn)
     Base::serialOut(),
     reversed->serialOut(),
     reversedLabel->serialOut(),
-    iMapper->serialOut()
+    iMapper->serialOut(),
+    gu::idToString(dpFaceId),
+    gu::idToString(dpWireId)
   );
   
   xml_schema::NamespaceInfomap infoMap;
@@ -219,4 +293,6 @@ void Trim::serialRead(const prj::srl::FeatureTrim &si)
   reversed->serialIn(si.reversed());
   reversedLabel->serialIn(si.reversedLabel());
   iMapper->serialIn(si.intersectionMapper());
+  dpFaceId = gu::stringToId(si.dpFaceId());
+  dpWireId = gu::stringToId(si.dpWireId());
 }

@@ -342,6 +342,122 @@ namespace prj
       //@}
 
       /**
+       * @name dpFaceId
+       *
+       * @brief Accessor and modifier functions for the %dpFaceId
+       * required element.
+       */
+      //@{
+
+      /**
+       * @brief Element type.
+       */
+      typedef ::xml_schema::String DpFaceIdType;
+
+      /**
+       * @brief Element traits type.
+       */
+      typedef ::xsd::cxx::tree::traits< DpFaceIdType, char > DpFaceIdTraits;
+
+      /**
+       * @brief Return a read-only (constant) reference to the element.
+       *
+       * @return A constant reference to the element.
+       */
+      const DpFaceIdType&
+      dpFaceId () const;
+
+      /**
+       * @brief Return a read-write reference to the element.
+       *
+       * @return A reference to the element.
+       */
+      DpFaceIdType&
+      dpFaceId ();
+
+      /**
+       * @brief Set the element value.
+       *
+       * @param x A new value to set.
+       *
+       * This function makes a copy of its argument and sets it as
+       * the new value of the element.
+       */
+      void
+      dpFaceId (const DpFaceIdType& x);
+
+      /**
+       * @brief Set the element value without copying.
+       *
+       * @param p A new value to use.
+       *
+       * This function will try to use the passed value directly
+       * instead of making a copy.
+       */
+      void
+      dpFaceId (::std::unique_ptr< DpFaceIdType > p);
+
+      //@}
+
+      /**
+       * @name dpWireId
+       *
+       * @brief Accessor and modifier functions for the %dpWireId
+       * required element.
+       */
+      //@{
+
+      /**
+       * @brief Element type.
+       */
+      typedef ::xml_schema::String DpWireIdType;
+
+      /**
+       * @brief Element traits type.
+       */
+      typedef ::xsd::cxx::tree::traits< DpWireIdType, char > DpWireIdTraits;
+
+      /**
+       * @brief Return a read-only (constant) reference to the element.
+       *
+       * @return A constant reference to the element.
+       */
+      const DpWireIdType&
+      dpWireId () const;
+
+      /**
+       * @brief Return a read-write reference to the element.
+       *
+       * @return A reference to the element.
+       */
+      DpWireIdType&
+      dpWireId ();
+
+      /**
+       * @brief Set the element value.
+       *
+       * @param x A new value to set.
+       *
+       * This function makes a copy of its argument and sets it as
+       * the new value of the element.
+       */
+      void
+      dpWireId (const DpWireIdType& x);
+
+      /**
+       * @brief Set the element value without copying.
+       *
+       * @param p A new value to use.
+       *
+       * This function will try to use the passed value directly
+       * instead of making a copy.
+       */
+      void
+      dpWireId (::std::unique_ptr< DpWireIdType > p);
+
+      //@}
+
+      /**
        * @name Constructors
        */
       //@{
@@ -353,7 +469,9 @@ namespace prj
       FeatureTrim (const FeatureBaseType&,
                    const ReversedType&,
                    const ReversedLabelType&,
-                   const IntersectionMapperType&);
+                   const IntersectionMapperType&,
+                   const DpFaceIdType&,
+                   const DpWireIdType&);
 
       /**
        * @brief Create an instance from the ultimate base and
@@ -366,7 +484,9 @@ namespace prj
       FeatureTrim (::std::unique_ptr< FeatureBaseType >,
                    ::std::unique_ptr< ReversedType >,
                    ::std::unique_ptr< ReversedLabelType >,
-                   ::std::unique_ptr< IntersectionMapperType >);
+                   ::std::unique_ptr< IntersectionMapperType >,
+                   const DpFaceIdType&,
+                   const DpWireIdType&);
 
       /**
        * @brief Create an instance from a DOM element.
@@ -442,6 +562,8 @@ namespace prj
       ::xsd::cxx::tree::one< ReversedType > reversed_;
       ::xsd::cxx::tree::one< ReversedLabelType > reversedLabel_;
       ::xsd::cxx::tree::one< IntersectionMapperType > intersectionMapper_;
+      ::xsd::cxx::tree::one< DpFaceIdType > dpFaceId_;
+      ::xsd::cxx::tree::one< DpWireIdType > dpWireId_;
 
       //@endcond
     };

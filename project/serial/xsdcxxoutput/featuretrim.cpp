@@ -142,6 +142,54 @@ namespace prj
     {
       this->intersectionMapper_.set (std::move (x));
     }
+
+    const FeatureTrim::DpFaceIdType& FeatureTrim::
+    dpFaceId () const
+    {
+      return this->dpFaceId_.get ();
+    }
+
+    FeatureTrim::DpFaceIdType& FeatureTrim::
+    dpFaceId ()
+    {
+      return this->dpFaceId_.get ();
+    }
+
+    void FeatureTrim::
+    dpFaceId (const DpFaceIdType& x)
+    {
+      this->dpFaceId_.set (x);
+    }
+
+    void FeatureTrim::
+    dpFaceId (::std::unique_ptr< DpFaceIdType > x)
+    {
+      this->dpFaceId_.set (std::move (x));
+    }
+
+    const FeatureTrim::DpWireIdType& FeatureTrim::
+    dpWireId () const
+    {
+      return this->dpWireId_.get ();
+    }
+
+    FeatureTrim::DpWireIdType& FeatureTrim::
+    dpWireId ()
+    {
+      return this->dpWireId_.get ();
+    }
+
+    void FeatureTrim::
+    dpWireId (const DpWireIdType& x)
+    {
+      this->dpWireId_.set (x);
+    }
+
+    void FeatureTrim::
+    dpWireId (::std::unique_ptr< DpWireIdType > x)
+    {
+      this->dpWireId_.set (std::move (x));
+    }
   }
 }
 
@@ -158,12 +206,16 @@ namespace prj
     FeatureTrim (const FeatureBaseType& featureBase,
                  const ReversedType& reversed,
                  const ReversedLabelType& reversedLabel,
-                 const IntersectionMapperType& intersectionMapper)
+                 const IntersectionMapperType& intersectionMapper,
+                 const DpFaceIdType& dpFaceId,
+                 const DpWireIdType& dpWireId)
     : ::xml_schema::Type (),
       featureBase_ (featureBase, this),
       reversed_ (reversed, this),
       reversedLabel_ (reversedLabel, this),
-      intersectionMapper_ (intersectionMapper, this)
+      intersectionMapper_ (intersectionMapper, this),
+      dpFaceId_ (dpFaceId, this),
+      dpWireId_ (dpWireId, this)
     {
     }
 
@@ -171,12 +223,16 @@ namespace prj
     FeatureTrim (::std::unique_ptr< FeatureBaseType > featureBase,
                  ::std::unique_ptr< ReversedType > reversed,
                  ::std::unique_ptr< ReversedLabelType > reversedLabel,
-                 ::std::unique_ptr< IntersectionMapperType > intersectionMapper)
+                 ::std::unique_ptr< IntersectionMapperType > intersectionMapper,
+                 const DpFaceIdType& dpFaceId,
+                 const DpWireIdType& dpWireId)
     : ::xml_schema::Type (),
       featureBase_ (std::move (featureBase), this),
       reversed_ (std::move (reversed), this),
       reversedLabel_ (std::move (reversedLabel), this),
-      intersectionMapper_ (std::move (intersectionMapper), this)
+      intersectionMapper_ (std::move (intersectionMapper), this),
+      dpFaceId_ (dpFaceId, this),
+      dpWireId_ (dpWireId, this)
     {
     }
 
@@ -188,7 +244,9 @@ namespace prj
       featureBase_ (x.featureBase_, f, this),
       reversed_ (x.reversed_, f, this),
       reversedLabel_ (x.reversedLabel_, f, this),
-      intersectionMapper_ (x.intersectionMapper_, f, this)
+      intersectionMapper_ (x.intersectionMapper_, f, this),
+      dpFaceId_ (x.dpFaceId_, f, this),
+      dpWireId_ (x.dpWireId_, f, this)
     {
     }
 
@@ -200,7 +258,9 @@ namespace prj
       featureBase_ (this),
       reversed_ (this),
       reversedLabel_ (this),
-      intersectionMapper_ (this)
+      intersectionMapper_ (this),
+      dpFaceId_ (this),
+      dpWireId_ (this)
     {
       if ((f & ::xml_schema::Flags::base) == 0)
       {
@@ -275,6 +335,34 @@ namespace prj
           }
         }
 
+        // dpFaceId
+        //
+        if (n.name () == "dpFaceId" && n.namespace_ ().empty ())
+        {
+          ::std::unique_ptr< DpFaceIdType > r (
+            DpFaceIdTraits::create (i, f, this));
+
+          if (!dpFaceId_.present ())
+          {
+            this->dpFaceId_.set (::std::move (r));
+            continue;
+          }
+        }
+
+        // dpWireId
+        //
+        if (n.name () == "dpWireId" && n.namespace_ ().empty ())
+        {
+          ::std::unique_ptr< DpWireIdType > r (
+            DpWireIdTraits::create (i, f, this));
+
+          if (!dpWireId_.present ())
+          {
+            this->dpWireId_.set (::std::move (r));
+            continue;
+          }
+        }
+
         break;
       }
 
@@ -305,6 +393,20 @@ namespace prj
           "intersectionMapper",
           "");
       }
+
+      if (!dpFaceId_.present ())
+      {
+        throw ::xsd::cxx::tree::expected_element< char > (
+          "dpFaceId",
+          "");
+      }
+
+      if (!dpWireId_.present ())
+      {
+        throw ::xsd::cxx::tree::expected_element< char > (
+          "dpWireId",
+          "");
+      }
     }
 
     FeatureTrim* FeatureTrim::
@@ -324,6 +426,8 @@ namespace prj
         this->reversed_ = x.reversed_;
         this->reversedLabel_ = x.reversedLabel_;
         this->intersectionMapper_ = x.intersectionMapper_;
+        this->dpFaceId_ = x.dpFaceId_;
+        this->dpWireId_ = x.dpWireId_;
       }
 
       return *this;
@@ -667,6 +771,28 @@ namespace prj
             e));
 
         s << i.intersectionMapper ();
+      }
+
+      // dpFaceId
+      //
+      {
+        ::xercesc::DOMElement& s (
+          ::xsd::cxx::xml::dom::create_element (
+            "dpFaceId",
+            e));
+
+        s << i.dpFaceId ();
+      }
+
+      // dpWireId
+      //
+      {
+        ::xercesc::DOMElement& s (
+          ::xsd::cxx::xml::dom::create_element (
+            "dpWireId",
+            e));
+
+        s << i.dpWireId ();
       }
     }
 

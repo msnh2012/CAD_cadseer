@@ -57,6 +57,10 @@ namespace ftr
       osg::ref_ptr<lbr::PLabel> reversedLabel;
       
       TopoDS_Solid makeHalfSpace(const ann::SeerShape &seerShapeIn, const TopoDS_Shape &shapeIn);
+      void datumPlaneId(const boost::uuids::uuid&);
+      
+      boost::uuids::uuid dpFaceId; //!< id for face with datum plane trim.
+      boost::uuids::uuid dpWireId; //!< id for wire with datum plane trim.
       
     private:
       static QIcon icon;

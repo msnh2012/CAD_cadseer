@@ -1054,7 +1054,9 @@ void IntersectionMapper::go(const ftr::UpdatePayload &payloadIn, BOPAlgo_Builder
   }
   for (auto its = payloadIn.updateMap.equal_range(ftr::InputType::tool); its.first != its.second; ++its.first)
   {
-    assert((*its.first).second->hasAnnex(ann::Type::SeerShape)); //no seershape for feature.
+    //no assert on seershape. for example trim with datum needs to go through.
+    if(!(*its.first).second->hasAnnex(ann::Type::SeerShape))
+      continue;
     const ann::SeerShape &tShape = (*its.first).second->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
     if (tShape.isNull())
       continue;
@@ -1117,6 +1119,7 @@ void IntersectionMapper::go(const ftr::UpdatePayload &payloadIn, BOPAlgo_Builder
       if (protoId.is_nil())
       {
         //same domain causes some funning split results and will trigger the following warning. FYI
+        //we also get this warning from trim feature with a datum plane
         std::cout << "WARNING: can't find keyId for face split in IntersectionMapper::go" << std::endl;
         continue;
       }

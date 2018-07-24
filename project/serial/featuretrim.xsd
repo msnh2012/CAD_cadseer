@@ -13,6 +13,8 @@
     <xs:element name="reversed" type="srl:Parameter"/>
     <xs:element name="reversedLabel" type="srl:PLabel"/>
     <xs:element name="intersectionMapper" type="srl:IntersectionMapper"/>
+    <xs:element name="dpFaceId" type="xs:string"/>
+    <xs:element name="dpWireId" type="xs:string"/>
   </xs:all>
 </xs:complexType>
 
