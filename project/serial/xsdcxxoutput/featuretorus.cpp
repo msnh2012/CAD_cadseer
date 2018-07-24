@@ -147,6 +147,30 @@ namespace prj
       this->radius2_.set (std::move (x));
     }
 
+    const FeatureTorus::SeamType& FeatureTorus::
+    seam () const
+    {
+      return this->seam_.get ();
+    }
+
+    FeatureTorus::SeamType& FeatureTorus::
+    seam ()
+    {
+      return this->seam_.get ();
+    }
+
+    void FeatureTorus::
+    seam (const SeamType& x)
+    {
+      this->seam_.set (x);
+    }
+
+    void FeatureTorus::
+    seam (::std::unique_ptr< SeamType > x)
+    {
+      this->seam_.set (std::move (x));
+    }
+
     const FeatureTorus::CsysType& FeatureTorus::
     csys () const
     {
@@ -319,6 +343,7 @@ namespace prj
     FeatureTorus (const FeatureBaseType& featureBase,
                   const Radius1Type& radius1,
                   const Radius2Type& radius2,
+                  const SeamType& seam,
                   const CsysType& csys,
                   const CsysDraggerType& csysDragger,
                   const OffsetIdsType& offsetIds)
@@ -326,6 +351,7 @@ namespace prj
       featureBase_ (featureBase, this),
       radius1_ (radius1, this),
       radius2_ (radius2, this),
+      seam_ (seam, this),
       csys_ (csys, this),
       csysDragger_ (csysDragger, this),
       offsetIds_ (offsetIds, this)
@@ -336,6 +362,7 @@ namespace prj
     FeatureTorus (::std::unique_ptr< FeatureBaseType > featureBase,
                   ::std::unique_ptr< Radius1Type > radius1,
                   ::std::unique_ptr< Radius2Type > radius2,
+                  ::std::unique_ptr< SeamType > seam,
                   ::std::unique_ptr< CsysType > csys,
                   ::std::unique_ptr< CsysDraggerType > csysDragger,
                   ::std::unique_ptr< OffsetIdsType > offsetIds)
@@ -343,6 +370,7 @@ namespace prj
       featureBase_ (std::move (featureBase), this),
       radius1_ (std::move (radius1), this),
       radius2_ (std::move (radius2), this),
+      seam_ (std::move (seam), this),
       csys_ (std::move (csys), this),
       csysDragger_ (std::move (csysDragger), this),
       offsetIds_ (std::move (offsetIds), this)
@@ -357,6 +385,7 @@ namespace prj
       featureBase_ (x.featureBase_, f, this),
       radius1_ (x.radius1_, f, this),
       radius2_ (x.radius2_, f, this),
+      seam_ (x.seam_, f, this),
       csys_ (x.csys_, f, this),
       csysDragger_ (x.csysDragger_, f, this),
       offsetIds_ (x.offsetIds_, f, this)
@@ -371,6 +400,7 @@ namespace prj
       featureBase_ (this),
       radius1_ (this),
       radius2_ (this),
+      seam_ (this),
       csys_ (this),
       csysDragger_ (this),
       offsetIds_ (this)
@@ -430,6 +460,20 @@ namespace prj
           if (!radius2_.present ())
           {
             this->radius2_.set (::std::move (r));
+            continue;
+          }
+        }
+
+        // seam
+        //
+        if (n.name () == "seam" && n.namespace_ ().empty ())
+        {
+          ::std::unique_ptr< SeamType > r (
+            SeamTraits::create (i, f, this));
+
+          if (!seam_.present ())
+          {
+            this->seam_.set (::std::move (r));
             continue;
           }
         }
@@ -500,6 +544,13 @@ namespace prj
           "");
       }
 
+      if (!seam_.present ())
+      {
+        throw ::xsd::cxx::tree::expected_element< char > (
+          "seam",
+          "");
+      }
+
       if (!csys_.present ())
       {
         throw ::xsd::cxx::tree::expected_element< char > (
@@ -538,6 +589,7 @@ namespace prj
         this->featureBase_ = x.featureBase_;
         this->radius1_ = x.radius1_;
         this->radius2_ = x.radius2_;
+        this->seam_ = x.seam_;
         this->csys_ = x.csys_;
         this->csysDragger_ = x.csysDragger_;
         this->offsetIds_ = x.offsetIds_;
@@ -893,6 +945,17 @@ namespace prj
             e));
 
         s << i.radius2 ();
+      }
+
+      // seam
+      //
+      {
+        ::xercesc::DOMElement& s (
+          ::xsd::cxx::xml::dom::create_element (
+            "seam",
+            e));
+
+        s << i.seam ();
       }
 
       // csys

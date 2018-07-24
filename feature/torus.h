@@ -24,7 +24,7 @@
 
 namespace prj{namespace srl{class FeatureTorus;}}
 namespace ann{class CSysDragger; class SeerShape;}
-namespace lbr{class IPGroup;}
+namespace lbr{class IPGroup; class PLabel;}
 
 namespace ftr
 {
@@ -59,10 +59,12 @@ namespace ftr
   protected:
     std::unique_ptr<prm::Parameter> radius1;
     std::unique_ptr<prm::Parameter> radius2; //<! has to be smaller than radius 1.
+    std::unique_ptr<prm::Parameter> seam;
     std::unique_ptr<prm::Parameter> csys;
     
     osg::ref_ptr<lbr::IPGroup> radius1IP;
     osg::ref_ptr<lbr::IPGroup> radius2IP;
+    osg::ref_ptr<lbr::PLabel> seamLabel;
   
     std::unique_ptr<ann::CSysDragger> csysDragger;
     std::unique_ptr<ann::SeerShape> sShape;

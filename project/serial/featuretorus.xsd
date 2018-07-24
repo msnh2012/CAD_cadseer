@@ -18,6 +18,7 @@
     <xs:element name="featureBase" type="srl:FeatureBase"/>
     <xs:element name="radius1" type="srl:Parameter"/>
     <xs:element name="radius2" type="srl:Parameter"/>
+    <xs:element name="seam" type="srl:Parameter"/>
     <xs:element name="csys" type="srl:Parameter"/>
     <xs:element name="csysDragger" type="srl:CSysDragger"/>
     <xs:element name="offsetIds" type="srl:OffsetIds"/>

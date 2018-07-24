@@ -453,6 +453,64 @@ namespace prj
       //@}
 
       /**
+       * @name seam
+       *
+       * @brief Accessor and modifier functions for the %seam
+       * required element.
+       */
+      //@{
+
+      /**
+       * @brief Element type.
+       */
+      typedef ::prj::srl::Parameter SeamType;
+
+      /**
+       * @brief Element traits type.
+       */
+      typedef ::xsd::cxx::tree::traits< SeamType, char > SeamTraits;
+
+      /**
+       * @brief Return a read-only (constant) reference to the element.
+       *
+       * @return A constant reference to the element.
+       */
+      const SeamType&
+      seam () const;
+
+      /**
+       * @brief Return a read-write reference to the element.
+       *
+       * @return A reference to the element.
+       */
+      SeamType&
+      seam ();
+
+      /**
+       * @brief Set the element value.
+       *
+       * @param x A new value to set.
+       *
+       * This function makes a copy of its argument and sets it as
+       * the new value of the element.
+       */
+      void
+      seam (const SeamType& x);
+
+      /**
+       * @brief Set the element value without copying.
+       *
+       * @param p A new value to use.
+       *
+       * This function will try to use the passed value directly
+       * instead of making a copy.
+       */
+      void
+      seam (::std::unique_ptr< SeamType > p);
+
+      //@}
+
+      /**
        * @name csys
        *
        * @brief Accessor and modifier functions for the %csys
@@ -638,6 +696,7 @@ namespace prj
       FeatureTorus (const FeatureBaseType&,
                     const Radius1Type&,
                     const Radius2Type&,
+                    const SeamType&,
                     const CsysType&,
                     const CsysDraggerType&,
                     const OffsetIdsType&);
@@ -653,6 +712,7 @@ namespace prj
       FeatureTorus (::std::unique_ptr< FeatureBaseType >,
                     ::std::unique_ptr< Radius1Type >,
                     ::std::unique_ptr< Radius2Type >,
+                    ::std::unique_ptr< SeamType >,
                     ::std::unique_ptr< CsysType >,
                     ::std::unique_ptr< CsysDraggerType >,
                     ::std::unique_ptr< OffsetIdsType >);
@@ -730,6 +790,7 @@ namespace prj
       ::xsd::cxx::tree::one< FeatureBaseType > featureBase_;
       ::xsd::cxx::tree::one< Radius1Type > radius1_;
       ::xsd::cxx::tree::one< Radius2Type > radius2_;
+      ::xsd::cxx::tree::one< SeamType > seam_;
       ::xsd::cxx::tree::one< CsysType > csys_;
       ::xsd::cxx::tree::one< CsysDraggerType > csysDragger_;
       ::xsd::cxx::tree::one< OffsetIdsType > offsetIds_;

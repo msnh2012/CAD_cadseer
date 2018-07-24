@@ -28,6 +28,7 @@
 #include <preferences/manager.h>
 #include <library/lineardimension.h>
 #include <library/ipgroup.h>
+#include <library/plabel.h>
 #include <library/csysdragger.h>
 #include <annex/seershape.h>
 #include <annex/csysdragger.h>
@@ -45,6 +46,7 @@ Torus::Torus():
 Base(),
 radius1(new prm::Parameter(prm::Names::Radius1, prf::manager().rootPtr->features().torus().get().radius1())),
 radius2(new prm::Parameter(prm::Names::Radius2, prf::manager().rootPtr->features().torus().get().radius2())),
+seam(new prm::Parameter(QObject::tr("Seam"), 0.0)),
 csys(new prm::Parameter(prm::Names::CSys, osg::Matrixd::identity())),
 csysDragger(new ann::CSysDragger(this, csys.get())),
 sShape(new ann::SeerShape())
@@ -60,8 +62,16 @@ sShape(new ann::SeerShape())
   radius1->setConstraint(prm::Constraint::buildZeroPositive());
   radius2->setConstraint(prm::Constraint::buildZeroPositive());
   
+  prm::Constraint sc;
+  prm::Boundary lower(0.0, prm::Boundary::End::Closed);
+  prm::Boundary upper(360.0, prm::Boundary::End::Open);
+  prm::Interval interval(lower, upper);
+  sc.intervals.push_back(interval);
+  seam->setConstraint(sc);
+  
   parameters.push_back(radius1.get());
   parameters.push_back(radius2.get());
+  parameters.push_back(seam.get());
   parameters.push_back(csys.get());
   
   annexes.insert(std::make_pair(ann::Type::SeerShape, sShape.get()));
@@ -70,6 +80,7 @@ sShape(new ann::SeerShape())
   
   radius1->connectValue(boost::bind(&Torus::setModelDirty, this));
   radius2->connectValue(boost::bind(&Torus::setModelDirty, this));
+  seam->connectValue(boost::bind(&Torus::setModelDirty, this));
   csys->connectValue(boost::bind(&Torus::setModelDirty, this));
   
   setupIPGroup();
@@ -130,6 +141,13 @@ void Torus::setupIPGroup()
   overlaySwitch->addChild(radius2IP.get());
   csysDragger->dragger->linkToMatrix(radius2IP.get());
   
+  seamLabel = new lbr::PLabel(seam.get());
+  seamLabel->showName = true;
+  seamLabel->valueHasChanged();
+  seamLabel->constantHasChanged();
+  overlaySwitch->addChild(seamLabel.get());
+  csysDragger->dragger->linkToMatrix(seamLabel.get());
+  
   updateIPGroup();
 }
 
@@ -148,6 +166,11 @@ void Torus::updateIPGroup()
   radius1IP->constantHasChanged();
   radius2IP->valueHasChanged();
   radius2IP->constantHasChanged();
+  
+  osg::Vec3d seamLocation = osg::Vec3d(static_cast<double>(*radius2), 0.0, 0.0)
+    * osg::Matrixd::rotate(osg::DegreesToRadians(static_cast<double>(*seam)), osg::Vec3d(0.0, 1.0, 0.0))
+    + osg::Vec3d(static_cast<double>(*radius1), 0.0, 0.0);
+  seamLabel->setMatrix(osg::Matrixd::translate(seamLocation * static_cast<osg::Matrixd>(*csys)));
 }
 
 void Torus::initializeMaps()
@@ -177,7 +200,8 @@ void Torus::updateModel(const UpdatePayload&)
     if (!(static_cast<double>(*radius1) > static_cast<double>(*radius2)))
       throw std::runtime_error("radius1 must be bigger than radius2");
     
-    BRepPrimAPI_MakeTorus tMaker(static_cast<double>(*radius1), static_cast<double>(*radius2));
+    double sa = osg::DegreesToRadians(static_cast<double>(*seam));
+    BRepPrimAPI_MakeTorus tMaker(static_cast<double>(*radius1), static_cast<double>(*radius2), sa, sa + osg::PI * 2.0);
     tMaker.Build();
     assert(tMaker.IsDone());
     if (!tMaker.IsDone())
@@ -241,6 +265,7 @@ void Torus::serialWrite(const boost::filesystem::path &dIn)
     Base::serialOut(),
     radius1->serialOut(),
     radius2->serialOut(),
+    seam->serialOut(),
     csys->serialOut(),
     csysDragger->serialOut(),
     oids
@@ -256,6 +281,7 @@ void Torus::serialRead(const prj::srl::FeatureTorus &ti)
   Base::serialIn(ti.featureBase());
   radius1->serialIn(ti.radius1());
   radius2->serialIn(ti.radius2());
+  seam->serialIn(ti.seam());
   csys->serialIn(ti.csys());
   csysDragger->serialIn(ti.csysDragger());
   
@@ -263,4 +289,6 @@ void Torus::serialRead(const prj::srl::FeatureTorus &ti)
     offsetIds.push_back(gu::stringToId(idIn));
   
   updateIPGroup();
+  seamLabel->valueHasChanged();
+  seamLabel->constantHasChanged();
 }
