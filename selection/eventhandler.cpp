@@ -466,7 +466,7 @@ void EventHandler::requestSelectionAdditionDispatched(const msg::Message &messag
   msg::dispatch().dumpString(debug.str());
   
   clearPrehighlight();
-
+  
   slc::Message sMessage = boost::get<slc::Message>(messageIn.payload);
   slc::Container container = messageToContainer(sMessage);
   if (alreadySelected(container))
@@ -488,9 +488,8 @@ void EventHandler::requestSelectionAdditionDispatched(const msg::Message &messag
   
   add(selectionContainers, container);
   
-  msg::Message messageOut = messageIn;
-  messageOut.mask &= ~msg::Request;
-  messageOut.mask |= msg::Response | msg::Post;
+  msg::Message messageOut(msg::Response | msg::Post | msg::Selection | msg::Add);
+  messageOut.payload = containerToMessage(container);
   observer->out(messageOut);
 }
 
