@@ -28,11 +28,12 @@
 
 namespace ann{class SeerShape;}
 namespace ftr{class Base; class ShapeHistory; class Pick;}
-namespace slc{class Message;}
+namespace slc{class Message; class Container;}
 
 namespace tls
 {
   /*! @brief Output of pick resolution
+   * 
    * 
    */
   struct Resolved
@@ -50,8 +51,9 @@ namespace tls
    * @param features input features that contain the result of the id.
    * @param picks picks to resolve.
    * @param pHistory project history.
-   * @return vector of pairs containing the parent feature pointer and the shapeid.
+   * @return vector of resolved
    * @note pilot test for this is the booleans.
+   * @note if 1 pick results into 3 ids there will be 3 entries in the return.
    */
   std::vector<Resolved>
   resolvePicks
@@ -81,6 +83,16 @@ namespace tls
     * startpoints and endpoints get converted to ids for vertices.
    */
   ftr::Pick convertToPick(const slc::Message &messageIn, const ann::SeerShape &sShapeIn);
+  
+  /*! @brief Convert a selection container to a feature pick.
+    * 
+    * @param containerIn selection container to convert.
+    * @param sShapeIn seer shape that is the target of the selection
+    * @return ftr:Pick representing the selection message.
+    * @note shapeHistory in the return is NOT set. resolvedIds and highlightIds are set to id.
+    * startpoints and endpoints get converted to ids for vertices.
+   */
+  ftr::Pick convertToPick(const slc::Container &containerIn, const ann::SeerShape &sShapeIn);
   
   /*! @brief Convert a feature pick to a selection message.
     * 

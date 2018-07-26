@@ -22,6 +22,7 @@
 #include <globalutilities.h>
 #include <annex/seershape.h>
 #include <selection/message.h>
+#include <selection/container.h>
 #include <feature/shapehistory.h>
 #include <feature/pick.h>
 #include <feature/base.h>
@@ -156,6 +157,49 @@ ftr::Pick tls::convertToPick(const slc::Message &messageIn, const ann::SeerShape
   {
     assert(s.ShapeType() == TopAbs_FACE);
     out.setParameter(TopoDS::Face(s), messageIn.pointLocation);
+  }
+  
+  out.resolvedIds.push_back(out.id);
+  out.highlightIds.push_back(out.id);
+  
+  return out;
+}
+
+ftr::Pick tls::convertToPick(const slc::Container &containerIn, const ann::SeerShape &sShapeIn)
+{
+  assert(sShapeIn.hasId(containerIn.shapeId)); //don't set me up
+  ftr::Pick out(containerIn.shapeId, 0.0, 0.0);
+  out.selectionType = containerIn.selectionType;
+  
+  /* currently picks don't support parameters for anything higher than faces.
+   * i.e. no shells, solids. this might be a problem.
+   */
+  const TopoDS_Shape &s = sShapeIn.getOCCTShape(out.id);
+  if (out.selectionType == slc::Type::StartPoint)
+  {
+    assert(s.ShapeType() == TopAbs_EDGE);
+    out.id = sShapeIn.useGetStartVertex(out.id);
+  }
+  else if (out.selectionType == slc::Type::EndPoint)
+  {
+    assert(s.ShapeType() == TopAbs_EDGE);
+    out.id = sShapeIn.useGetEndVertex(out.id);
+  }
+  else if
+  (
+    out.selectionType == slc::Type::Edge
+    || out.selectionType == slc::Type::MidPoint
+    || out.selectionType == slc::Type::NearestPoint
+    || out.selectionType == slc::Type::QuadrantPoint
+  )
+  {
+    assert(s.ShapeType() == TopAbs_EDGE);
+    out.setParameter(TopoDS::Edge(s), containerIn.pointLocation);
+  }
+  else if (out.selectionType == slc::Type::Face)
+  {
+    assert(s.ShapeType() == TopAbs_FACE);
+    out.setParameter(TopoDS::Face(s), containerIn.pointLocation);
   }
   
   out.resolvedIds.push_back(out.id);

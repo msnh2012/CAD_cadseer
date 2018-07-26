@@ -276,6 +276,7 @@ SET(MODELVIZ_SOURCES
     modelviz/datumplane.cpp
     modelviz/hiddenlineeffect.cpp
     modelviz/hiddenlinetechnique.cpp
+    modelviz/datumaxis.cpp
     )
 
 SET(GESTURE_SOURCES
@@ -335,6 +336,7 @@ SET(FEATURE_SOURCES
     feature/removefaces.cpp
     feature/torus.cpp
     feature/thread.cpp
+    feature/datumaxis.cpp
     )
     
 SET(ANNEX_SOURCES
@@ -442,6 +444,7 @@ SET(PROJECT_SOURCES
     project/serial/xsdcxxoutput/featureremovefaces.cpp
     project/serial/xsdcxxoutput/featuretorus.cpp
     project/serial/xsdcxxoutput/featurethread.cpp
+    project/serial/xsdcxxoutput/featuredatumaxis.cpp
     )
     
 SET(APPLICATION_SOURCES
@@ -490,6 +493,7 @@ SET(COMMAND_SOURCES
     command/removefaces.cpp
     command/thread.cpp
     command/dissolve.cpp
+    command/datumaxis.cpp
     )
     
 SET(LIBRARY_SOURCES

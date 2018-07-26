@@ -60,6 +60,7 @@
 #include <command/revision.h>
 #include <command/removefaces.h>
 #include <command/thread.h>
+#include <command/datumaxis.h>
 #include <message/dispatch.h>
 #include <message/observer.h>
 #include <selection/message.h>
@@ -210,6 +211,9 @@ void Manager::setupDispatcher()
   
   mask = msg::Request | msg::Construct | msg::Thread;
   observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Manager::constructThreadDispatched, this, _1)));
+  
+  mask = msg::Request | msg::Construct | msg::DatumAxis;
+  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Manager::constructDatumAxisDispatched, this, _1)));
   
   mask = msg::Request | msg::Project | msg::Revision | msg::Dialog;
   observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Manager::revisionDispatched, this, _1)));
@@ -507,6 +511,12 @@ void Manager::constructThreadDispatched(const msg::Message&)
 {
   std::shared_ptr<Thread> rf(new Thread());
   addCommand(rf);
+}
+
+void Manager::constructDatumAxisDispatched(const msg::Message&)
+{
+  std::shared_ptr<DatumAxis> f(new DatumAxis());
+  addCommand(f);
 }
 
 

@@ -850,6 +850,14 @@ void Handler::constructMenu()
       (msg::Request | msg::Construct | msg::DatumPlane).to_string(),
       constructionBase
     );
+    constructNode //TODO build datum menu node and move datum axis to it.
+    (
+      mdv::gestureCommand,
+      ":/resources/images/constructionDatumAxis.svg",
+      QObject::tr("Datum Axis Command").toStdString(),
+      (msg::Request | msg::Construct | msg::DatumAxis).to_string(),
+      constructionBase
+    );
     osg::MatrixTransform *constructionInstance = constructNode
     (
       mdv::gestureMenu,

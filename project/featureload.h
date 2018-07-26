@@ -81,6 +81,7 @@ namespace prj
     std::shared_ptr<ftr::Base> loadRemoveFaces(const std::string &, std::size_t);
     std::shared_ptr<ftr::Base> loadTorus(const std::string &, std::size_t);
     std::shared_ptr<ftr::Base> loadThread(const std::string &, std::size_t);
+    std::shared_ptr<ftr::Base> loadDatumAxis(const std::string &, std::size_t);
   };
 }
 

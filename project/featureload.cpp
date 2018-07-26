@@ -53,6 +53,7 @@
 #include <feature/removefaces.h>
 #include <feature/torus.h>
 #include <feature/thread.h>
+#include <feature/datumaxis.h>
 #include <project/serial/xsdcxxoutput/featurebox.h>
 #include <project/serial/xsdcxxoutput/featurecylinder.h>
 #include <project/serial/xsdcxxoutput/featuresphere.h>
@@ -84,6 +85,7 @@
 #include <project/serial/xsdcxxoutput/featureremovefaces.h>
 #include <project/serial/xsdcxxoutput/featuretorus.h>
 #include <project/serial/xsdcxxoutput/featurethread.h>
+#include <project/serial/xsdcxxoutput/featuredatumaxis.h>
 
 #include "featureload.h"
 
@@ -126,6 +128,7 @@ directory(directoryIn)
   functionMap.insert(std::make_pair(ftr::toString(ftr::Type::RemoveFaces), std::bind(&FeatureLoad::loadRemoveFaces, this, std::placeholders::_1, std::placeholders::_2)));
   functionMap.insert(std::make_pair(ftr::toString(ftr::Type::Torus), std::bind(&FeatureLoad::loadTorus, this, std::placeholders::_1, std::placeholders::_2)));
   functionMap.insert(std::make_pair(ftr::toString(ftr::Type::Thread), std::bind(&FeatureLoad::loadThread, this, std::placeholders::_1, std::placeholders::_2)));
+  functionMap.insert(std::make_pair(ftr::toString(ftr::Type::DatumAxis), std::bind(&FeatureLoad::loadDatumAxis, this, std::placeholders::_1, std::placeholders::_2)));
 }
 
 FeatureLoad::~FeatureLoad()
@@ -528,4 +531,15 @@ std::shared_ptr<ftr::Base> FeatureLoad::loadThread(const std::string &fileNameIn
   tf->serialRead(*st);
   
   return tf;
+}
+
+std::shared_ptr<ftr::Base> FeatureLoad::loadDatumAxis(const std::string &fileNameIn, std::size_t)
+{
+  auto sda = srl::datumAxis(fileNameIn, ::xml_schema::Flags::dont_validate);
+  assert(sda);
+  
+  std::shared_ptr<ftr::DatumAxis> daf(new ftr::DatumAxis);
+  daf->serialRead(*sda);
+  
+  return daf;
 }
