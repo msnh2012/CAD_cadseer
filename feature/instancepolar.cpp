@@ -17,6 +17,8 @@
  *
  */
 
+#include <boost/optional/optional.hpp>
+
 #include <gp_Cylinder.hxx>
 #include <gp_Lin.hxx>
 #include <Geom_Line.hxx>
@@ -24,7 +26,6 @@
 #include <TopoDS.hxx>
 #include <BRepAdaptor_Surface.hxx>
 #include <BRepBuilderAPI_Transform.hxx>
-
 
 #include <globalutilities.h>
 #include <tools/occtools.h>
@@ -39,6 +40,7 @@
 #include <feature/shapecheck.h>
 #include <feature/inputtype.h>
 #include <feature/updatepayload.h>
+#include <feature/datumaxis.h>
 #include <feature/instancepolar.h>
 
 using namespace ftr;
@@ -179,67 +181,70 @@ void InstancePolar::updateModel(const UpdatePayload &payloadIn)
     if (tShapes.empty())
       throw std::runtime_error("No shapes found.");
     
-    osg::Matrixd workSystem = static_cast<osg::Matrixd>(*csys); // zaxis is the rotation.
+    boost::optional<osg::Vec3d> newOrigin;
+    boost::optional<osg::Vec3d> newDirection;
     std::vector<const Base*> rafs = payloadIn.getFeatures(InstancePolar::rotationAxis);
     if (rafs.size() == 1)
     {
       //we have a rotation axis selection so make sure the csysdragger is hidden.
       overlaySwitch->removeChild(csysDragger->dragger.get()); //ok if not present.
       
-      if (!rafs.front()->hasAnnex(ann::Type::SeerShape)) //no datum axis exists at this time.
-        throw std::runtime_error("Input feature doesn't have seershape");
-      if (axisPick.id.is_nil())
-        throw std::runtime_error("No id for axis pick");
-      const ann::SeerShape &ass = rafs.front()->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
-      
-      TopoDS_Shape dsShape;
-      
-      
-      auto resolvedPicks = tls::resolvePicks(rafs.front(), axisPick, payloadIn.shapeHistory);
-      for (const auto &resolved : resolvedPicks)
+      if (rafs.front()->getType() == ftr::Type::DatumAxis)
       {
-        if (resolved.resultId.is_nil())
-          continue;
-        assert(ass.hasId(resolved.resultId));
-        if (!ass.hasId(resolved.resultId))
-          continue;
-        dsShape = ass.findShape(resolved.resultId);
-        break;
+        const ftr::DatumAxis *da = dynamic_cast<const ftr::DatumAxis*>(rafs.front());
+        assert(da);
+        newOrigin = da->getOrigin();
+        newDirection = da->getDirection();
       }
-      if (dsShape.IsNull())
-        throw std::runtime_error("couldn't find occt shape");
-      
-      gp_Ax1 axis;
-      bool results;
-      std::tie(axis, results) = occt::gleanAxis(dsShape);
-      if (!results)
-        throw std::runtime_error("unsupported occt shape type");
+      else
+      {
+        if (!rafs.front()->hasAnnex(ann::Type::SeerShape)) //no datum axis exists at this time.
+          throw std::runtime_error("Input feature doesn't have seershape");
+        if (axisPick.id.is_nil())
+          throw std::runtime_error("No id for axis pick");
+        const ann::SeerShape &ass = rafs.front()->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
         
-      osg::Vec3d norm = gu::toOsg(gp_Vec(axis.Direction()));
-      osg::Vec3d origin = gu::toOsg(axis.Location());
-      
-      osg::Vec3d cz = gu::getZVector(workSystem);
-      if (norm.isNaN())
-        throw std::runtime_error("invalid normal from axis direction");
-      if ((norm != cz) || (origin != workSystem.getTrans()))
-      {
-        workSystem = workSystem * osg::Matrixd::rotate(cz, norm);
-        workSystem.setTrans(origin);
+        TopoDS_Shape dsShape;
+        
+        auto resolvedPicks = tls::resolvePicks(rafs.front(), axisPick, payloadIn.shapeHistory);
+        for (const auto &resolved : resolvedPicks)
+        {
+          if (resolved.resultId.is_nil())
+            continue;
+          assert(ass.hasId(resolved.resultId));
+          if (!ass.hasId(resolved.resultId))
+            continue;
+          dsShape = ass.findShape(resolved.resultId);
+          break;
+        }
+        if (dsShape.IsNull())
+          throw std::runtime_error("couldn't find occt shape");
+        
+        gp_Ax1 axis;
+        bool results;
+        std::tie(axis, results) = occt::gleanAxis(dsShape);
+        if (!results)
+          throw std::runtime_error("unsupported occt shape type");
+        
+        newDirection = gu::toOsg(gp_Vec(axis.Direction()));
+        newOrigin = gu::toOsg(axis.Location());
       }
+      assert(newDirection && newOrigin);
+      csys->setValueQuiet(osg::Matrixd::rotate(osg::Vec3d(0.0, 0.0, 1.0), newDirection.get()) * osg::Matrixd::translate(newOrigin.get()));
+      csysDragger->draggerUpdate(); //keep dragger in sync with parameter.
     }
     else
     {
       //make sure dragger is visible
       if(!overlaySwitch->containsNode(csysDragger->dragger.get()))
         overlaySwitch->addChild(csysDragger->dragger.get());
+      newOrigin = static_cast<osg::Matrixd>(*csys).getTrans();
+      newDirection = gu::getZVector(static_cast<osg::Matrixd>(*csys));
     }
-    
-    csys->setValueQuiet(workSystem);
-    csysDragger->draggerUpdate(); //keep dragger in sync with parameter.
     
     int ac = static_cast<int>(*count); //actual count
     double aa = static_cast<double>(*angle); //actual angle
-    bool ai = static_cast<bool>(inclusiveAngle); //actual inclusive angle
+    bool ai = static_cast<bool>(*inclusiveAngle); //actual inclusive angle
     
     if (ai)
     {
@@ -261,7 +266,7 @@ void InstancePolar::updateModel(const UpdatePayload &payloadIn)
     }
     
     occt::ShapeVector out;
-    gp_Ax1 ra(gp_Pnt(gu::toOcc(workSystem.getTrans()).XYZ()), gp_Dir(gu::toOcc(gu::getZVector(workSystem))));
+    gp_Ax1 ra(gp_Pnt(gu::toOcc(newOrigin.get()).XYZ()), gp_Dir(gu::toOcc(newDirection.get())));
     
     for (int index = 0; index < ac; ++index)
     {
