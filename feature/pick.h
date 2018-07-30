@@ -50,6 +50,7 @@ namespace ftr
     std::vector<boost::uuids::uuid> highlightIds; //!< highlight ids. up to user to uniquefy
     std::vector<boost::uuids::uuid> resolvedIds; //!< storage for resolved ids from id and history.
     slc::Type selectionType = slc::Type::None; //!< this is needed for fictious shapes: midpoint, center, quadrant, nearest etc..
+    std::string tag; //!< this should us link the pick to input feature for isolated pick resolution.
     
     bool operator==(const Pick&) const;
     bool isParameterType() const; //!< midpoint, quadrant and nearest are really same pick with different u.

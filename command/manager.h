@@ -91,6 +91,7 @@ namespace cmd
     void constructRemoveFacesDispatched(const msg::Message&);
     void constructThreadDispatched(const msg::Message&);
     void constructDatumAxisDispatched(const msg::Message&);
+    void constructDatumPlaneDispatched(const msg::Message&);
     void revisionDispatched(const msg::Message&);
     
     //editing functions

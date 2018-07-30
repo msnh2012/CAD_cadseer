@@ -337,6 +337,7 @@ SET(FEATURE_SOURCES
     feature/torus.cpp
     feature/thread.cpp
     feature/datumaxis.cpp
+    feature/inputtype.cpp
     )
     
 SET(ANNEX_SOURCES
@@ -494,6 +495,7 @@ SET(COMMAND_SOURCES
     command/thread.cpp
     command/dissolve.cpp
     command/datumaxis.cpp
+    command/datumplane.cpp
     )
     
 SET(LIBRARY_SOURCES

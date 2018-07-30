@@ -44,256 +44,6 @@ namespace prj
 {
   namespace srl
   {
-    // DatumPlanePlanarOffset
-    // 
-
-    const DatumPlanePlanarOffset::FacePickType& DatumPlanePlanarOffset::
-    facePick () const
-    {
-      return this->facePick_.get ();
-    }
-
-    DatumPlanePlanarOffset::FacePickType& DatumPlanePlanarOffset::
-    facePick ()
-    {
-      return this->facePick_.get ();
-    }
-
-    void DatumPlanePlanarOffset::
-    facePick (const FacePickType& x)
-    {
-      this->facePick_.set (x);
-    }
-
-    void DatumPlanePlanarOffset::
-    facePick (::std::unique_ptr< FacePickType > x)
-    {
-      this->facePick_.set (std::move (x));
-    }
-
-    const DatumPlanePlanarOffset::OffsetType& DatumPlanePlanarOffset::
-    offset () const
-    {
-      return this->offset_.get ();
-    }
-
-    DatumPlanePlanarOffset::OffsetType& DatumPlanePlanarOffset::
-    offset ()
-    {
-      return this->offset_.get ();
-    }
-
-    void DatumPlanePlanarOffset::
-    offset (const OffsetType& x)
-    {
-      this->offset_.set (x);
-    }
-
-    void DatumPlanePlanarOffset::
-    offset (::std::unique_ptr< OffsetType > x)
-    {
-      this->offset_.set (std::move (x));
-    }
-
-
-    // DatumPlanePlanarCenter
-    // 
-
-    const DatumPlanePlanarCenter::FacePick1Type& DatumPlanePlanarCenter::
-    facePick1 () const
-    {
-      return this->facePick1_.get ();
-    }
-
-    DatumPlanePlanarCenter::FacePick1Type& DatumPlanePlanarCenter::
-    facePick1 ()
-    {
-      return this->facePick1_.get ();
-    }
-
-    void DatumPlanePlanarCenter::
-    facePick1 (const FacePick1Type& x)
-    {
-      this->facePick1_.set (x);
-    }
-
-    void DatumPlanePlanarCenter::
-    facePick1 (::std::unique_ptr< FacePick1Type > x)
-    {
-      this->facePick1_.set (std::move (x));
-    }
-
-    const DatumPlanePlanarCenter::FacePick2Type& DatumPlanePlanarCenter::
-    facePick2 () const
-    {
-      return this->facePick2_.get ();
-    }
-
-    DatumPlanePlanarCenter::FacePick2Type& DatumPlanePlanarCenter::
-    facePick2 ()
-    {
-      return this->facePick2_.get ();
-    }
-
-    void DatumPlanePlanarCenter::
-    facePick2 (const FacePick2Type& x)
-    {
-      this->facePick2_.set (x);
-    }
-
-    void DatumPlanePlanarCenter::
-    facePick2 (::std::unique_ptr< FacePick2Type > x)
-    {
-      this->facePick2_.set (std::move (x));
-    }
-
-
-    // DatumPlanePlanarParallelThroughEdge
-    // 
-
-    const DatumPlanePlanarParallelThroughEdge::FacePickType& DatumPlanePlanarParallelThroughEdge::
-    facePick () const
-    {
-      return this->facePick_.get ();
-    }
-
-    DatumPlanePlanarParallelThroughEdge::FacePickType& DatumPlanePlanarParallelThroughEdge::
-    facePick ()
-    {
-      return this->facePick_.get ();
-    }
-
-    void DatumPlanePlanarParallelThroughEdge::
-    facePick (const FacePickType& x)
-    {
-      this->facePick_.set (x);
-    }
-
-    void DatumPlanePlanarParallelThroughEdge::
-    facePick (::std::unique_ptr< FacePickType > x)
-    {
-      this->facePick_.set (std::move (x));
-    }
-
-    const DatumPlanePlanarParallelThroughEdge::EdgePickType& DatumPlanePlanarParallelThroughEdge::
-    edgePick () const
-    {
-      return this->edgePick_.get ();
-    }
-
-    DatumPlanePlanarParallelThroughEdge::EdgePickType& DatumPlanePlanarParallelThroughEdge::
-    edgePick ()
-    {
-      return this->edgePick_.get ();
-    }
-
-    void DatumPlanePlanarParallelThroughEdge::
-    edgePick (const EdgePickType& x)
-    {
-      this->edgePick_.set (x);
-    }
-
-    void DatumPlanePlanarParallelThroughEdge::
-    edgePick (::std::unique_ptr< EdgePickType > x)
-    {
-      this->edgePick_.set (std::move (x));
-    }
-
-
-    // SolverChoice
-    // 
-
-    const SolverChoice::OffsetOptional& SolverChoice::
-    offset () const
-    {
-      return this->offset_;
-    }
-
-    SolverChoice::OffsetOptional& SolverChoice::
-    offset ()
-    {
-      return this->offset_;
-    }
-
-    void SolverChoice::
-    offset (const OffsetType& x)
-    {
-      this->offset_.set (x);
-    }
-
-    void SolverChoice::
-    offset (const OffsetOptional& x)
-    {
-      this->offset_ = x;
-    }
-
-    void SolverChoice::
-    offset (::std::unique_ptr< OffsetType > x)
-    {
-      this->offset_.set (std::move (x));
-    }
-
-    const SolverChoice::CenterOptional& SolverChoice::
-    center () const
-    {
-      return this->center_;
-    }
-
-    SolverChoice::CenterOptional& SolverChoice::
-    center ()
-    {
-      return this->center_;
-    }
-
-    void SolverChoice::
-    center (const CenterType& x)
-    {
-      this->center_.set (x);
-    }
-
-    void SolverChoice::
-    center (const CenterOptional& x)
-    {
-      this->center_ = x;
-    }
-
-    void SolverChoice::
-    center (::std::unique_ptr< CenterType > x)
-    {
-      this->center_.set (std::move (x));
-    }
-
-    const SolverChoice::ParallelThroughEdgeOptional& SolverChoice::
-    parallelThroughEdge () const
-    {
-      return this->parallelThroughEdge_;
-    }
-
-    SolverChoice::ParallelThroughEdgeOptional& SolverChoice::
-    parallelThroughEdge ()
-    {
-      return this->parallelThroughEdge_;
-    }
-
-    void SolverChoice::
-    parallelThroughEdge (const ParallelThroughEdgeType& x)
-    {
-      this->parallelThroughEdge_.set (x);
-    }
-
-    void SolverChoice::
-    parallelThroughEdge (const ParallelThroughEdgeOptional& x)
-    {
-      this->parallelThroughEdge_ = x;
-    }
-
-    void SolverChoice::
-    parallelThroughEdge (::std::unique_ptr< ParallelThroughEdgeType > x)
-    {
-      this->parallelThroughEdge_.set (std::move (x));
-    }
-
-
     // FeatureDatumPlane
     // 
 
@@ -321,28 +71,94 @@ namespace prj
       this->featureBase_.set (std::move (x));
     }
 
-    const FeatureDatumPlane::RadiusType& FeatureDatumPlane::
-    radius () const
+    const FeatureDatumPlane::DpTypeType& FeatureDatumPlane::
+    dpType () const
     {
-      return this->radius_.get ();
+      return this->dpType_.get ();
     }
 
-    FeatureDatumPlane::RadiusType& FeatureDatumPlane::
-    radius ()
+    FeatureDatumPlane::DpTypeType& FeatureDatumPlane::
+    dpType ()
     {
-      return this->radius_.get ();
-    }
-
-    void FeatureDatumPlane::
-    radius (const RadiusType& x)
-    {
-      this->radius_.set (x);
+      return this->dpType_.get ();
     }
 
     void FeatureDatumPlane::
-    radius (::std::unique_ptr< RadiusType > x)
+    dpType (const DpTypeType& x)
     {
-      this->radius_.set (std::move (x));
+      this->dpType_.set (x);
+    }
+
+    const FeatureDatumPlane::PicksType& FeatureDatumPlane::
+    picks () const
+    {
+      return this->picks_.get ();
+    }
+
+    FeatureDatumPlane::PicksType& FeatureDatumPlane::
+    picks ()
+    {
+      return this->picks_.get ();
+    }
+
+    void FeatureDatumPlane::
+    picks (const PicksType& x)
+    {
+      this->picks_.set (x);
+    }
+
+    void FeatureDatumPlane::
+    picks (::std::unique_ptr< PicksType > x)
+    {
+      this->picks_.set (std::move (x));
+    }
+
+    const FeatureDatumPlane::CsysType& FeatureDatumPlane::
+    csys () const
+    {
+      return this->csys_.get ();
+    }
+
+    FeatureDatumPlane::CsysType& FeatureDatumPlane::
+    csys ()
+    {
+      return this->csys_.get ();
+    }
+
+    void FeatureDatumPlane::
+    csys (const CsysType& x)
+    {
+      this->csys_.set (x);
+    }
+
+    void FeatureDatumPlane::
+    csys (::std::unique_ptr< CsysType > x)
+    {
+      this->csys_.set (std::move (x));
+    }
+
+    const FeatureDatumPlane::FlipType& FeatureDatumPlane::
+    flip () const
+    {
+      return this->flip_.get ();
+    }
+
+    FeatureDatumPlane::FlipType& FeatureDatumPlane::
+    flip ()
+    {
+      return this->flip_.get ();
+    }
+
+    void FeatureDatumPlane::
+    flip (const FlipType& x)
+    {
+      this->flip_.set (x);
+    }
+
+    void FeatureDatumPlane::
+    flip (::std::unique_ptr< FlipType > x)
+    {
+      this->flip_.set (std::move (x));
     }
 
     const FeatureDatumPlane::AutoSizeType& FeatureDatumPlane::
@@ -369,52 +185,172 @@ namespace prj
       this->autoSize_.set (std::move (x));
     }
 
-    const FeatureDatumPlane::MatrixType& FeatureDatumPlane::
-    matrix () const
+    const FeatureDatumPlane::SizeType& FeatureDatumPlane::
+    size () const
     {
-      return this->matrix_.get ();
+      return this->size_.get ();
     }
 
-    FeatureDatumPlane::MatrixType& FeatureDatumPlane::
-    matrix ()
+    FeatureDatumPlane::SizeType& FeatureDatumPlane::
+    size ()
     {
-      return this->matrix_.get ();
-    }
-
-    void FeatureDatumPlane::
-    matrix (const MatrixType& x)
-    {
-      this->matrix_.set (x);
+      return this->size_.get ();
     }
 
     void FeatureDatumPlane::
-    matrix (::std::unique_ptr< MatrixType > x)
+    size (const SizeType& x)
     {
-      this->matrix_.set (std::move (x));
-    }
-
-    const FeatureDatumPlane::SolverChoiceType& FeatureDatumPlane::
-    solverChoice () const
-    {
-      return this->solverChoice_.get ();
-    }
-
-    FeatureDatumPlane::SolverChoiceType& FeatureDatumPlane::
-    solverChoice ()
-    {
-      return this->solverChoice_.get ();
+      this->size_.set (x);
     }
 
     void FeatureDatumPlane::
-    solverChoice (const SolverChoiceType& x)
+    size (::std::unique_ptr< SizeType > x)
     {
-      this->solverChoice_.set (x);
+      this->size_.set (std::move (x));
+    }
+
+    const FeatureDatumPlane::OffsetType& FeatureDatumPlane::
+    offset () const
+    {
+      return this->offset_.get ();
+    }
+
+    FeatureDatumPlane::OffsetType& FeatureDatumPlane::
+    offset ()
+    {
+      return this->offset_.get ();
     }
 
     void FeatureDatumPlane::
-    solverChoice (::std::unique_ptr< SolverChoiceType > x)
+    offset (const OffsetType& x)
     {
-      this->solverChoice_.set (std::move (x));
+      this->offset_.set (x);
+    }
+
+    void FeatureDatumPlane::
+    offset (::std::unique_ptr< OffsetType > x)
+    {
+      this->offset_.set (std::move (x));
+    }
+
+    const FeatureDatumPlane::AngleType& FeatureDatumPlane::
+    angle () const
+    {
+      return this->angle_.get ();
+    }
+
+    FeatureDatumPlane::AngleType& FeatureDatumPlane::
+    angle ()
+    {
+      return this->angle_.get ();
+    }
+
+    void FeatureDatumPlane::
+    angle (const AngleType& x)
+    {
+      this->angle_.set (x);
+    }
+
+    void FeatureDatumPlane::
+    angle (::std::unique_ptr< AngleType > x)
+    {
+      this->angle_.set (std::move (x));
+    }
+
+    const FeatureDatumPlane::CsysDraggerType& FeatureDatumPlane::
+    csysDragger () const
+    {
+      return this->csysDragger_.get ();
+    }
+
+    FeatureDatumPlane::CsysDraggerType& FeatureDatumPlane::
+    csysDragger ()
+    {
+      return this->csysDragger_.get ();
+    }
+
+    void FeatureDatumPlane::
+    csysDragger (const CsysDraggerType& x)
+    {
+      this->csysDragger_.set (x);
+    }
+
+    void FeatureDatumPlane::
+    csysDragger (::std::unique_ptr< CsysDraggerType > x)
+    {
+      this->csysDragger_.set (std::move (x));
+    }
+
+    const FeatureDatumPlane::FlipLabelType& FeatureDatumPlane::
+    flipLabel () const
+    {
+      return this->flipLabel_.get ();
+    }
+
+    FeatureDatumPlane::FlipLabelType& FeatureDatumPlane::
+    flipLabel ()
+    {
+      return this->flipLabel_.get ();
+    }
+
+    void FeatureDatumPlane::
+    flipLabel (const FlipLabelType& x)
+    {
+      this->flipLabel_.set (x);
+    }
+
+    void FeatureDatumPlane::
+    flipLabel (::std::unique_ptr< FlipLabelType > x)
+    {
+      this->flipLabel_.set (std::move (x));
+    }
+
+    const FeatureDatumPlane::AutoSizeLabelType& FeatureDatumPlane::
+    autoSizeLabel () const
+    {
+      return this->autoSizeLabel_.get ();
+    }
+
+    FeatureDatumPlane::AutoSizeLabelType& FeatureDatumPlane::
+    autoSizeLabel ()
+    {
+      return this->autoSizeLabel_.get ();
+    }
+
+    void FeatureDatumPlane::
+    autoSizeLabel (const AutoSizeLabelType& x)
+    {
+      this->autoSizeLabel_.set (x);
+    }
+
+    void FeatureDatumPlane::
+    autoSizeLabel (::std::unique_ptr< AutoSizeLabelType > x)
+    {
+      this->autoSizeLabel_.set (std::move (x));
+    }
+
+    const FeatureDatumPlane::AngleLabelType& FeatureDatumPlane::
+    angleLabel () const
+    {
+      return this->angleLabel_.get ();
+    }
+
+    FeatureDatumPlane::AngleLabelType& FeatureDatumPlane::
+    angleLabel ()
+    {
+      return this->angleLabel_.get ();
+    }
+
+    void FeatureDatumPlane::
+    angleLabel (const AngleLabelType& x)
+    {
+      this->angleLabel_.set (x);
+    }
+
+    void FeatureDatumPlane::
+    angleLabel (::std::unique_ptr< AngleLabelType > x)
+    {
+      this->angleLabel_.set (std::move (x));
     }
   }
 }
@@ -425,538 +361,68 @@ namespace prj
 {
   namespace srl
   {
-    // DatumPlanePlanarOffset
-    //
-
-    DatumPlanePlanarOffset::
-    DatumPlanePlanarOffset (const FacePickType& facePick,
-                            const OffsetType& offset)
-    : ::xml_schema::Type (),
-      facePick_ (facePick, this),
-      offset_ (offset, this)
-    {
-    }
-
-    DatumPlanePlanarOffset::
-    DatumPlanePlanarOffset (::std::unique_ptr< FacePickType > facePick,
-                            ::std::unique_ptr< OffsetType > offset)
-    : ::xml_schema::Type (),
-      facePick_ (std::move (facePick), this),
-      offset_ (std::move (offset), this)
-    {
-    }
-
-    DatumPlanePlanarOffset::
-    DatumPlanePlanarOffset (const DatumPlanePlanarOffset& x,
-                            ::xml_schema::Flags f,
-                            ::xml_schema::Container* c)
-    : ::xml_schema::Type (x, f, c),
-      facePick_ (x.facePick_, f, this),
-      offset_ (x.offset_, f, this)
-    {
-    }
-
-    DatumPlanePlanarOffset::
-    DatumPlanePlanarOffset (const ::xercesc::DOMElement& e,
-                            ::xml_schema::Flags f,
-                            ::xml_schema::Container* c)
-    : ::xml_schema::Type (e, f | ::xml_schema::Flags::base, c),
-      facePick_ (this),
-      offset_ (this)
-    {
-      if ((f & ::xml_schema::Flags::base) == 0)
-      {
-        ::xsd::cxx::xml::dom::parser< char > p (e, true, false, false);
-        this->parse (p, f);
-      }
-    }
-
-    void DatumPlanePlanarOffset::
-    parse (::xsd::cxx::xml::dom::parser< char >& p,
-           ::xml_schema::Flags f)
-    {
-      for (; p.more_content (); p.next_content (false))
-      {
-        const ::xercesc::DOMElement& i (p.cur_element ());
-        const ::xsd::cxx::xml::qualified_name< char > n (
-          ::xsd::cxx::xml::dom::name< char > (i));
-
-        // facePick
-        //
-        if (n.name () == "facePick" && n.namespace_ ().empty ())
-        {
-          ::std::unique_ptr< FacePickType > r (
-            FacePickTraits::create (i, f, this));
-
-          if (!facePick_.present ())
-          {
-            this->facePick_.set (::std::move (r));
-            continue;
-          }
-        }
-
-        // offset
-        //
-        if (n.name () == "offset" && n.namespace_ ().empty ())
-        {
-          ::std::unique_ptr< OffsetType > r (
-            OffsetTraits::create (i, f, this));
-
-          if (!offset_.present ())
-          {
-            this->offset_.set (::std::move (r));
-            continue;
-          }
-        }
-
-        break;
-      }
-
-      if (!facePick_.present ())
-      {
-        throw ::xsd::cxx::tree::expected_element< char > (
-          "facePick",
-          "");
-      }
-
-      if (!offset_.present ())
-      {
-        throw ::xsd::cxx::tree::expected_element< char > (
-          "offset",
-          "");
-      }
-    }
-
-    DatumPlanePlanarOffset* DatumPlanePlanarOffset::
-    _clone (::xml_schema::Flags f,
-            ::xml_schema::Container* c) const
-    {
-      return new class DatumPlanePlanarOffset (*this, f, c);
-    }
-
-    DatumPlanePlanarOffset& DatumPlanePlanarOffset::
-    operator= (const DatumPlanePlanarOffset& x)
-    {
-      if (this != &x)
-      {
-        static_cast< ::xml_schema::Type& > (*this) = x;
-        this->facePick_ = x.facePick_;
-        this->offset_ = x.offset_;
-      }
-
-      return *this;
-    }
-
-    DatumPlanePlanarOffset::
-    ~DatumPlanePlanarOffset ()
-    {
-    }
-
-    // DatumPlanePlanarCenter
-    //
-
-    DatumPlanePlanarCenter::
-    DatumPlanePlanarCenter (const FacePick1Type& facePick1,
-                            const FacePick2Type& facePick2)
-    : ::xml_schema::Type (),
-      facePick1_ (facePick1, this),
-      facePick2_ (facePick2, this)
-    {
-    }
-
-    DatumPlanePlanarCenter::
-    DatumPlanePlanarCenter (::std::unique_ptr< FacePick1Type > facePick1,
-                            ::std::unique_ptr< FacePick2Type > facePick2)
-    : ::xml_schema::Type (),
-      facePick1_ (std::move (facePick1), this),
-      facePick2_ (std::move (facePick2), this)
-    {
-    }
-
-    DatumPlanePlanarCenter::
-    DatumPlanePlanarCenter (const DatumPlanePlanarCenter& x,
-                            ::xml_schema::Flags f,
-                            ::xml_schema::Container* c)
-    : ::xml_schema::Type (x, f, c),
-      facePick1_ (x.facePick1_, f, this),
-      facePick2_ (x.facePick2_, f, this)
-    {
-    }
-
-    DatumPlanePlanarCenter::
-    DatumPlanePlanarCenter (const ::xercesc::DOMElement& e,
-                            ::xml_schema::Flags f,
-                            ::xml_schema::Container* c)
-    : ::xml_schema::Type (e, f | ::xml_schema::Flags::base, c),
-      facePick1_ (this),
-      facePick2_ (this)
-    {
-      if ((f & ::xml_schema::Flags::base) == 0)
-      {
-        ::xsd::cxx::xml::dom::parser< char > p (e, true, false, false);
-        this->parse (p, f);
-      }
-    }
-
-    void DatumPlanePlanarCenter::
-    parse (::xsd::cxx::xml::dom::parser< char >& p,
-           ::xml_schema::Flags f)
-    {
-      for (; p.more_content (); p.next_content (false))
-      {
-        const ::xercesc::DOMElement& i (p.cur_element ());
-        const ::xsd::cxx::xml::qualified_name< char > n (
-          ::xsd::cxx::xml::dom::name< char > (i));
-
-        // facePick1
-        //
-        if (n.name () == "facePick1" && n.namespace_ ().empty ())
-        {
-          ::std::unique_ptr< FacePick1Type > r (
-            FacePick1Traits::create (i, f, this));
-
-          if (!facePick1_.present ())
-          {
-            this->facePick1_.set (::std::move (r));
-            continue;
-          }
-        }
-
-        // facePick2
-        //
-        if (n.name () == "facePick2" && n.namespace_ ().empty ())
-        {
-          ::std::unique_ptr< FacePick2Type > r (
-            FacePick2Traits::create (i, f, this));
-
-          if (!facePick2_.present ())
-          {
-            this->facePick2_.set (::std::move (r));
-            continue;
-          }
-        }
-
-        break;
-      }
-
-      if (!facePick1_.present ())
-      {
-        throw ::xsd::cxx::tree::expected_element< char > (
-          "facePick1",
-          "");
-      }
-
-      if (!facePick2_.present ())
-      {
-        throw ::xsd::cxx::tree::expected_element< char > (
-          "facePick2",
-          "");
-      }
-    }
-
-    DatumPlanePlanarCenter* DatumPlanePlanarCenter::
-    _clone (::xml_schema::Flags f,
-            ::xml_schema::Container* c) const
-    {
-      return new class DatumPlanePlanarCenter (*this, f, c);
-    }
-
-    DatumPlanePlanarCenter& DatumPlanePlanarCenter::
-    operator= (const DatumPlanePlanarCenter& x)
-    {
-      if (this != &x)
-      {
-        static_cast< ::xml_schema::Type& > (*this) = x;
-        this->facePick1_ = x.facePick1_;
-        this->facePick2_ = x.facePick2_;
-      }
-
-      return *this;
-    }
-
-    DatumPlanePlanarCenter::
-    ~DatumPlanePlanarCenter ()
-    {
-    }
-
-    // DatumPlanePlanarParallelThroughEdge
-    //
-
-    DatumPlanePlanarParallelThroughEdge::
-    DatumPlanePlanarParallelThroughEdge (const FacePickType& facePick,
-                                         const EdgePickType& edgePick)
-    : ::xml_schema::Type (),
-      facePick_ (facePick, this),
-      edgePick_ (edgePick, this)
-    {
-    }
-
-    DatumPlanePlanarParallelThroughEdge::
-    DatumPlanePlanarParallelThroughEdge (::std::unique_ptr< FacePickType > facePick,
-                                         ::std::unique_ptr< EdgePickType > edgePick)
-    : ::xml_schema::Type (),
-      facePick_ (std::move (facePick), this),
-      edgePick_ (std::move (edgePick), this)
-    {
-    }
-
-    DatumPlanePlanarParallelThroughEdge::
-    DatumPlanePlanarParallelThroughEdge (const DatumPlanePlanarParallelThroughEdge& x,
-                                         ::xml_schema::Flags f,
-                                         ::xml_schema::Container* c)
-    : ::xml_schema::Type (x, f, c),
-      facePick_ (x.facePick_, f, this),
-      edgePick_ (x.edgePick_, f, this)
-    {
-    }
-
-    DatumPlanePlanarParallelThroughEdge::
-    DatumPlanePlanarParallelThroughEdge (const ::xercesc::DOMElement& e,
-                                         ::xml_schema::Flags f,
-                                         ::xml_schema::Container* c)
-    : ::xml_schema::Type (e, f | ::xml_schema::Flags::base, c),
-      facePick_ (this),
-      edgePick_ (this)
-    {
-      if ((f & ::xml_schema::Flags::base) == 0)
-      {
-        ::xsd::cxx::xml::dom::parser< char > p (e, true, false, false);
-        this->parse (p, f);
-      }
-    }
-
-    void DatumPlanePlanarParallelThroughEdge::
-    parse (::xsd::cxx::xml::dom::parser< char >& p,
-           ::xml_schema::Flags f)
-    {
-      for (; p.more_content (); p.next_content (false))
-      {
-        const ::xercesc::DOMElement& i (p.cur_element ());
-        const ::xsd::cxx::xml::qualified_name< char > n (
-          ::xsd::cxx::xml::dom::name< char > (i));
-
-        // facePick
-        //
-        if (n.name () == "facePick" && n.namespace_ ().empty ())
-        {
-          ::std::unique_ptr< FacePickType > r (
-            FacePickTraits::create (i, f, this));
-
-          if (!facePick_.present ())
-          {
-            this->facePick_.set (::std::move (r));
-            continue;
-          }
-        }
-
-        // edgePick
-        //
-        if (n.name () == "edgePick" && n.namespace_ ().empty ())
-        {
-          ::std::unique_ptr< EdgePickType > r (
-            EdgePickTraits::create (i, f, this));
-
-          if (!edgePick_.present ())
-          {
-            this->edgePick_.set (::std::move (r));
-            continue;
-          }
-        }
-
-        break;
-      }
-
-      if (!facePick_.present ())
-      {
-        throw ::xsd::cxx::tree::expected_element< char > (
-          "facePick",
-          "");
-      }
-
-      if (!edgePick_.present ())
-      {
-        throw ::xsd::cxx::tree::expected_element< char > (
-          "edgePick",
-          "");
-      }
-    }
-
-    DatumPlanePlanarParallelThroughEdge* DatumPlanePlanarParallelThroughEdge::
-    _clone (::xml_schema::Flags f,
-            ::xml_schema::Container* c) const
-    {
-      return new class DatumPlanePlanarParallelThroughEdge (*this, f, c);
-    }
-
-    DatumPlanePlanarParallelThroughEdge& DatumPlanePlanarParallelThroughEdge::
-    operator= (const DatumPlanePlanarParallelThroughEdge& x)
-    {
-      if (this != &x)
-      {
-        static_cast< ::xml_schema::Type& > (*this) = x;
-        this->facePick_ = x.facePick_;
-        this->edgePick_ = x.edgePick_;
-      }
-
-      return *this;
-    }
-
-    DatumPlanePlanarParallelThroughEdge::
-    ~DatumPlanePlanarParallelThroughEdge ()
-    {
-    }
-
-    // SolverChoice
-    //
-
-    SolverChoice::
-    SolverChoice ()
-    : ::xml_schema::Type (),
-      offset_ (this),
-      center_ (this),
-      parallelThroughEdge_ (this)
-    {
-    }
-
-    SolverChoice::
-    SolverChoice (const SolverChoice& x,
-                  ::xml_schema::Flags f,
-                  ::xml_schema::Container* c)
-    : ::xml_schema::Type (x, f, c),
-      offset_ (x.offset_, f, this),
-      center_ (x.center_, f, this),
-      parallelThroughEdge_ (x.parallelThroughEdge_, f, this)
-    {
-    }
-
-    SolverChoice::
-    SolverChoice (const ::xercesc::DOMElement& e,
-                  ::xml_schema::Flags f,
-                  ::xml_schema::Container* c)
-    : ::xml_schema::Type (e, f | ::xml_schema::Flags::base, c),
-      offset_ (this),
-      center_ (this),
-      parallelThroughEdge_ (this)
-    {
-      if ((f & ::xml_schema::Flags::base) == 0)
-      {
-        ::xsd::cxx::xml::dom::parser< char > p (e, true, false, false);
-        this->parse (p, f);
-      }
-    }
-
-    void SolverChoice::
-    parse (::xsd::cxx::xml::dom::parser< char >& p,
-           ::xml_schema::Flags f)
-    {
-      for (; p.more_content (); p.next_content (false))
-      {
-        const ::xercesc::DOMElement& i (p.cur_element ());
-        const ::xsd::cxx::xml::qualified_name< char > n (
-          ::xsd::cxx::xml::dom::name< char > (i));
-
-        // offset
-        //
-        if (n.name () == "offset" && n.namespace_ ().empty ())
-        {
-          ::std::unique_ptr< OffsetType > r (
-            OffsetTraits::create (i, f, this));
-
-          if (!this->offset_)
-          {
-            this->offset_.set (::std::move (r));
-            continue;
-          }
-        }
-
-        // center
-        //
-        if (n.name () == "center" && n.namespace_ ().empty ())
-        {
-          ::std::unique_ptr< CenterType > r (
-            CenterTraits::create (i, f, this));
-
-          if (!this->center_)
-          {
-            this->center_.set (::std::move (r));
-            continue;
-          }
-        }
-
-        // parallelThroughEdge
-        //
-        if (n.name () == "parallelThroughEdge" && n.namespace_ ().empty ())
-        {
-          ::std::unique_ptr< ParallelThroughEdgeType > r (
-            ParallelThroughEdgeTraits::create (i, f, this));
-
-          if (!this->parallelThroughEdge_)
-          {
-            this->parallelThroughEdge_.set (::std::move (r));
-            continue;
-          }
-        }
-
-        break;
-      }
-    }
-
-    SolverChoice* SolverChoice::
-    _clone (::xml_schema::Flags f,
-            ::xml_schema::Container* c) const
-    {
-      return new class SolverChoice (*this, f, c);
-    }
-
-    SolverChoice& SolverChoice::
-    operator= (const SolverChoice& x)
-    {
-      if (this != &x)
-      {
-        static_cast< ::xml_schema::Type& > (*this) = x;
-        this->offset_ = x.offset_;
-        this->center_ = x.center_;
-        this->parallelThroughEdge_ = x.parallelThroughEdge_;
-      }
-
-      return *this;
-    }
-
-    SolverChoice::
-    ~SolverChoice ()
-    {
-    }
-
     // FeatureDatumPlane
     //
 
     FeatureDatumPlane::
     FeatureDatumPlane (const FeatureBaseType& featureBase,
-                       const RadiusType& radius,
+                       const DpTypeType& dpType,
+                       const PicksType& picks,
+                       const CsysType& csys,
+                       const FlipType& flip,
                        const AutoSizeType& autoSize,
-                       const MatrixType& matrix,
-                       const SolverChoiceType& solverChoice)
+                       const SizeType& size,
+                       const OffsetType& offset,
+                       const AngleType& angle,
+                       const CsysDraggerType& csysDragger,
+                       const FlipLabelType& flipLabel,
+                       const AutoSizeLabelType& autoSizeLabel,
+                       const AngleLabelType& angleLabel)
     : ::xml_schema::Type (),
       featureBase_ (featureBase, this),
-      radius_ (radius, this),
+      dpType_ (dpType, this),
+      picks_ (picks, this),
+      csys_ (csys, this),
+      flip_ (flip, this),
       autoSize_ (autoSize, this),
-      matrix_ (matrix, this),
-      solverChoice_ (solverChoice, this)
+      size_ (size, this),
+      offset_ (offset, this),
+      angle_ (angle, this),
+      csysDragger_ (csysDragger, this),
+      flipLabel_ (flipLabel, this),
+      autoSizeLabel_ (autoSizeLabel, this),
+      angleLabel_ (angleLabel, this)
     {
     }
 
     FeatureDatumPlane::
     FeatureDatumPlane (::std::unique_ptr< FeatureBaseType > featureBase,
-                       ::std::unique_ptr< RadiusType > radius,
+                       const DpTypeType& dpType,
+                       ::std::unique_ptr< PicksType > picks,
+                       ::std::unique_ptr< CsysType > csys,
+                       ::std::unique_ptr< FlipType > flip,
                        ::std::unique_ptr< AutoSizeType > autoSize,
-                       ::std::unique_ptr< MatrixType > matrix,
-                       ::std::unique_ptr< SolverChoiceType > solverChoice)
+                       ::std::unique_ptr< SizeType > size,
+                       ::std::unique_ptr< OffsetType > offset,
+                       ::std::unique_ptr< AngleType > angle,
+                       ::std::unique_ptr< CsysDraggerType > csysDragger,
+                       ::std::unique_ptr< FlipLabelType > flipLabel,
+                       ::std::unique_ptr< AutoSizeLabelType > autoSizeLabel,
+                       ::std::unique_ptr< AngleLabelType > angleLabel)
     : ::xml_schema::Type (),
       featureBase_ (std::move (featureBase), this),
-      radius_ (std::move (radius), this),
+      dpType_ (dpType, this),
+      picks_ (std::move (picks), this),
+      csys_ (std::move (csys), this),
+      flip_ (std::move (flip), this),
       autoSize_ (std::move (autoSize), this),
-      matrix_ (std::move (matrix), this),
-      solverChoice_ (std::move (solverChoice), this)
+      size_ (std::move (size), this),
+      offset_ (std::move (offset), this),
+      angle_ (std::move (angle), this),
+      csysDragger_ (std::move (csysDragger), this),
+      flipLabel_ (std::move (flipLabel), this),
+      autoSizeLabel_ (std::move (autoSizeLabel), this),
+      angleLabel_ (std::move (angleLabel), this)
     {
     }
 
@@ -966,10 +432,18 @@ namespace prj
                        ::xml_schema::Container* c)
     : ::xml_schema::Type (x, f, c),
       featureBase_ (x.featureBase_, f, this),
-      radius_ (x.radius_, f, this),
+      dpType_ (x.dpType_, f, this),
+      picks_ (x.picks_, f, this),
+      csys_ (x.csys_, f, this),
+      flip_ (x.flip_, f, this),
       autoSize_ (x.autoSize_, f, this),
-      matrix_ (x.matrix_, f, this),
-      solverChoice_ (x.solverChoice_, f, this)
+      size_ (x.size_, f, this),
+      offset_ (x.offset_, f, this),
+      angle_ (x.angle_, f, this),
+      csysDragger_ (x.csysDragger_, f, this),
+      flipLabel_ (x.flipLabel_, f, this),
+      autoSizeLabel_ (x.autoSizeLabel_, f, this),
+      angleLabel_ (x.angleLabel_, f, this)
     {
     }
 
@@ -979,10 +453,18 @@ namespace prj
                        ::xml_schema::Container* c)
     : ::xml_schema::Type (e, f | ::xml_schema::Flags::base, c),
       featureBase_ (this),
-      radius_ (this),
+      dpType_ (this),
+      picks_ (this),
+      csys_ (this),
+      flip_ (this),
       autoSize_ (this),
-      matrix_ (this),
-      solverChoice_ (this)
+      size_ (this),
+      offset_ (this),
+      angle_ (this),
+      csysDragger_ (this),
+      flipLabel_ (this),
+      autoSizeLabel_ (this),
+      angleLabel_ (this)
     {
       if ((f & ::xml_schema::Flags::base) == 0)
       {
@@ -1015,16 +497,55 @@ namespace prj
           }
         }
 
-        // radius
+        // dpType
         //
-        if (n.name () == "radius" && n.namespace_ ().empty ())
+        if (n.name () == "dpType" && n.namespace_ ().empty ())
         {
-          ::std::unique_ptr< RadiusType > r (
-            RadiusTraits::create (i, f, this));
-
-          if (!radius_.present ())
+          if (!dpType_.present ())
           {
-            this->radius_.set (::std::move (r));
+            this->dpType_.set (DpTypeTraits::create (i, f, this));
+            continue;
+          }
+        }
+
+        // picks
+        //
+        if (n.name () == "picks" && n.namespace_ ().empty ())
+        {
+          ::std::unique_ptr< PicksType > r (
+            PicksTraits::create (i, f, this));
+
+          if (!picks_.present ())
+          {
+            this->picks_.set (::std::move (r));
+            continue;
+          }
+        }
+
+        // csys
+        //
+        if (n.name () == "csys" && n.namespace_ ().empty ())
+        {
+          ::std::unique_ptr< CsysType > r (
+            CsysTraits::create (i, f, this));
+
+          if (!csys_.present ())
+          {
+            this->csys_.set (::std::move (r));
+            continue;
+          }
+        }
+
+        // flip
+        //
+        if (n.name () == "flip" && n.namespace_ ().empty ())
+        {
+          ::std::unique_ptr< FlipType > r (
+            FlipTraits::create (i, f, this));
+
+          if (!flip_.present ())
+          {
+            this->flip_.set (::std::move (r));
             continue;
           }
         }
@@ -1043,30 +564,100 @@ namespace prj
           }
         }
 
-        // matrix
+        // size
         //
-        if (n.name () == "matrix" && n.namespace_ ().empty ())
+        if (n.name () == "size" && n.namespace_ ().empty ())
         {
-          ::std::unique_ptr< MatrixType > r (
-            MatrixTraits::create (i, f, this));
+          ::std::unique_ptr< SizeType > r (
+            SizeTraits::create (i, f, this));
 
-          if (!matrix_.present ())
+          if (!size_.present ())
           {
-            this->matrix_.set (::std::move (r));
+            this->size_.set (::std::move (r));
             continue;
           }
         }
 
-        // solverChoice
+        // offset
         //
-        if (n.name () == "solverChoice" && n.namespace_ ().empty ())
+        if (n.name () == "offset" && n.namespace_ ().empty ())
         {
-          ::std::unique_ptr< SolverChoiceType > r (
-            SolverChoiceTraits::create (i, f, this));
+          ::std::unique_ptr< OffsetType > r (
+            OffsetTraits::create (i, f, this));
 
-          if (!solverChoice_.present ())
+          if (!offset_.present ())
           {
-            this->solverChoice_.set (::std::move (r));
+            this->offset_.set (::std::move (r));
+            continue;
+          }
+        }
+
+        // angle
+        //
+        if (n.name () == "angle" && n.namespace_ ().empty ())
+        {
+          ::std::unique_ptr< AngleType > r (
+            AngleTraits::create (i, f, this));
+
+          if (!angle_.present ())
+          {
+            this->angle_.set (::std::move (r));
+            continue;
+          }
+        }
+
+        // csysDragger
+        //
+        if (n.name () == "csysDragger" && n.namespace_ ().empty ())
+        {
+          ::std::unique_ptr< CsysDraggerType > r (
+            CsysDraggerTraits::create (i, f, this));
+
+          if (!csysDragger_.present ())
+          {
+            this->csysDragger_.set (::std::move (r));
+            continue;
+          }
+        }
+
+        // flipLabel
+        //
+        if (n.name () == "flipLabel" && n.namespace_ ().empty ())
+        {
+          ::std::unique_ptr< FlipLabelType > r (
+            FlipLabelTraits::create (i, f, this));
+
+          if (!flipLabel_.present ())
+          {
+            this->flipLabel_.set (::std::move (r));
+            continue;
+          }
+        }
+
+        // autoSizeLabel
+        //
+        if (n.name () == "autoSizeLabel" && n.namespace_ ().empty ())
+        {
+          ::std::unique_ptr< AutoSizeLabelType > r (
+            AutoSizeLabelTraits::create (i, f, this));
+
+          if (!autoSizeLabel_.present ())
+          {
+            this->autoSizeLabel_.set (::std::move (r));
+            continue;
+          }
+        }
+
+        // angleLabel
+        //
+        if (n.name () == "angleLabel" && n.namespace_ ().empty ())
+        {
+          ::std::unique_ptr< AngleLabelType > r (
+            AngleLabelTraits::create (i, f, this));
+
+          if (!angleLabel_.present ())
+          {
+            this->angleLabel_.set (::std::move (r));
             continue;
           }
         }
@@ -1081,10 +672,31 @@ namespace prj
           "");
       }
 
-      if (!radius_.present ())
+      if (!dpType_.present ())
       {
         throw ::xsd::cxx::tree::expected_element< char > (
-          "radius",
+          "dpType",
+          "");
+      }
+
+      if (!picks_.present ())
+      {
+        throw ::xsd::cxx::tree::expected_element< char > (
+          "picks",
+          "");
+      }
+
+      if (!csys_.present ())
+      {
+        throw ::xsd::cxx::tree::expected_element< char > (
+          "csys",
+          "");
+      }
+
+      if (!flip_.present ())
+      {
+        throw ::xsd::cxx::tree::expected_element< char > (
+          "flip",
           "");
       }
 
@@ -1095,17 +707,52 @@ namespace prj
           "");
       }
 
-      if (!matrix_.present ())
+      if (!size_.present ())
       {
         throw ::xsd::cxx::tree::expected_element< char > (
-          "matrix",
+          "size",
           "");
       }
 
-      if (!solverChoice_.present ())
+      if (!offset_.present ())
       {
         throw ::xsd::cxx::tree::expected_element< char > (
-          "solverChoice",
+          "offset",
+          "");
+      }
+
+      if (!angle_.present ())
+      {
+        throw ::xsd::cxx::tree::expected_element< char > (
+          "angle",
+          "");
+      }
+
+      if (!csysDragger_.present ())
+      {
+        throw ::xsd::cxx::tree::expected_element< char > (
+          "csysDragger",
+          "");
+      }
+
+      if (!flipLabel_.present ())
+      {
+        throw ::xsd::cxx::tree::expected_element< char > (
+          "flipLabel",
+          "");
+      }
+
+      if (!autoSizeLabel_.present ())
+      {
+        throw ::xsd::cxx::tree::expected_element< char > (
+          "autoSizeLabel",
+          "");
+      }
+
+      if (!angleLabel_.present ())
+      {
+        throw ::xsd::cxx::tree::expected_element< char > (
+          "angleLabel",
           "");
       }
     }
@@ -1124,10 +771,18 @@ namespace prj
       {
         static_cast< ::xml_schema::Type& > (*this) = x;
         this->featureBase_ = x.featureBase_;
-        this->radius_ = x.radius_;
+        this->dpType_ = x.dpType_;
+        this->picks_ = x.picks_;
+        this->csys_ = x.csys_;
+        this->flip_ = x.flip_;
         this->autoSize_ = x.autoSize_;
-        this->matrix_ = x.matrix_;
-        this->solverChoice_ = x.solverChoice_;
+        this->size_ = x.size_;
+        this->offset_ = x.offset_;
+        this->angle_ = x.angle_;
+        this->csysDragger_ = x.csysDragger_;
+        this->flipLabel_ = x.flipLabel_;
+        this->autoSizeLabel_ = x.autoSizeLabel_;
+        this->angleLabel_ = x.angleLabel_;
       }
 
       return *this;
@@ -1425,132 +1080,6 @@ namespace prj
   namespace srl
   {
     void
-    operator<< (::xercesc::DOMElement& e, const DatumPlanePlanarOffset& i)
-    {
-      e << static_cast< const ::xml_schema::Type& > (i);
-
-      // facePick
-      //
-      {
-        ::xercesc::DOMElement& s (
-          ::xsd::cxx::xml::dom::create_element (
-            "facePick",
-            e));
-
-        s << i.facePick ();
-      }
-
-      // offset
-      //
-      {
-        ::xercesc::DOMElement& s (
-          ::xsd::cxx::xml::dom::create_element (
-            "offset",
-            e));
-
-        s << i.offset ();
-      }
-    }
-
-    void
-    operator<< (::xercesc::DOMElement& e, const DatumPlanePlanarCenter& i)
-    {
-      e << static_cast< const ::xml_schema::Type& > (i);
-
-      // facePick1
-      //
-      {
-        ::xercesc::DOMElement& s (
-          ::xsd::cxx::xml::dom::create_element (
-            "facePick1",
-            e));
-
-        s << i.facePick1 ();
-      }
-
-      // facePick2
-      //
-      {
-        ::xercesc::DOMElement& s (
-          ::xsd::cxx::xml::dom::create_element (
-            "facePick2",
-            e));
-
-        s << i.facePick2 ();
-      }
-    }
-
-    void
-    operator<< (::xercesc::DOMElement& e, const DatumPlanePlanarParallelThroughEdge& i)
-    {
-      e << static_cast< const ::xml_schema::Type& > (i);
-
-      // facePick
-      //
-      {
-        ::xercesc::DOMElement& s (
-          ::xsd::cxx::xml::dom::create_element (
-            "facePick",
-            e));
-
-        s << i.facePick ();
-      }
-
-      // edgePick
-      //
-      {
-        ::xercesc::DOMElement& s (
-          ::xsd::cxx::xml::dom::create_element (
-            "edgePick",
-            e));
-
-        s << i.edgePick ();
-      }
-    }
-
-    void
-    operator<< (::xercesc::DOMElement& e, const SolverChoice& i)
-    {
-      e << static_cast< const ::xml_schema::Type& > (i);
-
-      // offset
-      //
-      if (i.offset ())
-      {
-        ::xercesc::DOMElement& s (
-          ::xsd::cxx::xml::dom::create_element (
-            "offset",
-            e));
-
-        s << *i.offset ();
-      }
-
-      // center
-      //
-      if (i.center ())
-      {
-        ::xercesc::DOMElement& s (
-          ::xsd::cxx::xml::dom::create_element (
-            "center",
-            e));
-
-        s << *i.center ();
-      }
-
-      // parallelThroughEdge
-      //
-      if (i.parallelThroughEdge ())
-      {
-        ::xercesc::DOMElement& s (
-          ::xsd::cxx::xml::dom::create_element (
-            "parallelThroughEdge",
-            e));
-
-        s << *i.parallelThroughEdge ();
-      }
-    }
-
-    void
     operator<< (::xercesc::DOMElement& e, const FeatureDatumPlane& i)
     {
       e << static_cast< const ::xml_schema::Type& > (i);
@@ -1566,15 +1095,48 @@ namespace prj
         s << i.featureBase ();
       }
 
-      // radius
+      // dpType
       //
       {
         ::xercesc::DOMElement& s (
           ::xsd::cxx::xml::dom::create_element (
-            "radius",
+            "dpType",
             e));
 
-        s << i.radius ();
+        s << i.dpType ();
+      }
+
+      // picks
+      //
+      {
+        ::xercesc::DOMElement& s (
+          ::xsd::cxx::xml::dom::create_element (
+            "picks",
+            e));
+
+        s << i.picks ();
+      }
+
+      // csys
+      //
+      {
+        ::xercesc::DOMElement& s (
+          ::xsd::cxx::xml::dom::create_element (
+            "csys",
+            e));
+
+        s << i.csys ();
+      }
+
+      // flip
+      //
+      {
+        ::xercesc::DOMElement& s (
+          ::xsd::cxx::xml::dom::create_element (
+            "flip",
+            e));
+
+        s << i.flip ();
       }
 
       // autoSize
@@ -1588,26 +1150,81 @@ namespace prj
         s << i.autoSize ();
       }
 
-      // matrix
+      // size
       //
       {
         ::xercesc::DOMElement& s (
           ::xsd::cxx::xml::dom::create_element (
-            "matrix",
+            "size",
             e));
 
-        s << i.matrix ();
+        s << i.size ();
       }
 
-      // solverChoice
+      // offset
       //
       {
         ::xercesc::DOMElement& s (
           ::xsd::cxx::xml::dom::create_element (
-            "solverChoice",
+            "offset",
             e));
 
-        s << i.solverChoice ();
+        s << i.offset ();
+      }
+
+      // angle
+      //
+      {
+        ::xercesc::DOMElement& s (
+          ::xsd::cxx::xml::dom::create_element (
+            "angle",
+            e));
+
+        s << i.angle ();
+      }
+
+      // csysDragger
+      //
+      {
+        ::xercesc::DOMElement& s (
+          ::xsd::cxx::xml::dom::create_element (
+            "csysDragger",
+            e));
+
+        s << i.csysDragger ();
+      }
+
+      // flipLabel
+      //
+      {
+        ::xercesc::DOMElement& s (
+          ::xsd::cxx::xml::dom::create_element (
+            "flipLabel",
+            e));
+
+        s << i.flipLabel ();
+      }
+
+      // autoSizeLabel
+      //
+      {
+        ::xercesc::DOMElement& s (
+          ::xsd::cxx::xml::dom::create_element (
+            "autoSizeLabel",
+            e));
+
+        s << i.autoSizeLabel ();
+      }
+
+      // angleLabel
+      //
+      {
+        ::xercesc::DOMElement& s (
+          ::xsd::cxx::xml::dom::create_element (
+            "angleLabel",
+            e));
+
+        s << i.angleLabel ();
       }
     }
 

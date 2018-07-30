@@ -20,9 +20,7 @@
 #ifndef FTR_INPUTTYPE_H
 #define FTR_INPUTTYPE_H
 
-#include <assert.h>
 #include <vector>
-#include <set>
 #include <string>
 #include <initializer_list>
 
@@ -42,29 +40,22 @@ namespace ftr
     //@{
     //! Constructors
     InputType(){}
-    InputType(std::initializer_list<std::string> listIn) : tags(listIn){}
-    InputType(const InputType &other) : tags(other.tags){}
+    InputType(std::initializer_list<std::string> listIn);
+    InputType(const InputType &other);
     //@}
     
-    //@{
-    //! Convenience wrappers around std::set
-    bool has(const std::string &tagIn) const
-    {
-      return tags.count(tagIn) != 0;
-    }
-    void insert(const std::string &tagIn)
-    {
-      tags.insert(tagIn);
-    }
-    InputType& operator +=(const InputType &other)
-    {
-      for (const auto &t : other.tags)
-        tags.insert(t);
-      return *this;
-    }
-    //@}
+    void add(const std::string &tagIn);
+    void add(std::initializer_list<std::string> listIn);
+    void remove(const std::string &tagIn);
+    void remove(std::initializer_list<std::string> listIn);
+    bool has(const std::string &tagIn) const;
+    bool isEmpty(){return tags.empty();}
+    InputType& operator +=(const InputType &other);
     
-    std::set<std::string> tags;
+    const std::vector<std::string>& getTags() const {return tags;}
+    
+  private:
+    std::vector<std::string> tags;
   };
 }
 

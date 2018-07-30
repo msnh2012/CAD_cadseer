@@ -130,6 +130,11 @@ void DatumAxis::setDirection(const osg::Vec3d &dIn)
   direction = dn;
 }
 
+double DatumAxis::getSize() const
+{
+  return static_cast<double>(*size);
+}
+
 void DatumAxis::setPicks(const Picks &pIn)
 {
   picks = pIn;
@@ -265,9 +270,9 @@ void DatumAxis::goUpdateIntersection(const UpdatePayload &pli)
       gp_Pnt o = gu::toOcc(dpSys.getTrans()).XYZ();
       gp_Dir d = gu::toOcc(gu::getZVector(dpSys));
       planes.push_back(new Geom_Plane(o, d));
-      if (dp->getRadius() * 2.0 > tSize)
+      if (dp->getSize() * 2.0 > tSize)
       {
-        tSize = dp->getRadius() * 2.0;
+        tSize = dp->getSize() * 2.0;
         to = dpSys.getTrans();
       }
     }

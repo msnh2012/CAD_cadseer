@@ -79,6 +79,8 @@ namespace ftr
     void setDirection(const osg::Vec3d&); //!< makes type constant
     osg::Vec3d getDirection() const {return direction;}
     
+    double getSize() const;
+    
   protected:
     void goUpdateConstant();
     void goUpdatePoints(const UpdatePayload&);

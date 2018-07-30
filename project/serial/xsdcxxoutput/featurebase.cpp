@@ -2681,6 +2681,36 @@ namespace prj
       this->selectionType_ = x;
     }
 
+    const Pick::TagOptional& Pick::
+    tag () const
+    {
+      return this->tag_;
+    }
+
+    Pick::TagOptional& Pick::
+    tag ()
+    {
+      return this->tag_;
+    }
+
+    void Pick::
+    tag (const TagType& x)
+    {
+      this->tag_.set (x);
+    }
+
+    void Pick::
+    tag (const TagOptional& x)
+    {
+      this->tag_ = x;
+    }
+
+    void Pick::
+    tag (::std::unique_ptr< TagType > x)
+    {
+      this->tag_.set (std::move (x));
+    }
+
 
     // Picks
     // 
@@ -7300,7 +7330,8 @@ namespace prj
       u_ (u, this),
       v_ (v, this),
       history_ (this),
-      selectionType_ (this)
+      selectionType_ (this),
+      tag_ (this)
     {
     }
 
@@ -7313,7 +7344,8 @@ namespace prj
       u_ (x.u_, f, this),
       v_ (x.v_, f, this),
       history_ (x.history_, f, this),
-      selectionType_ (x.selectionType_, f, this)
+      selectionType_ (x.selectionType_, f, this),
+      tag_ (x.tag_, f, this)
     {
     }
 
@@ -7326,7 +7358,8 @@ namespace prj
       u_ (this),
       v_ (this),
       history_ (this),
-      selectionType_ (this)
+      selectionType_ (this),
+      tag_ (this)
     {
       if ((f & ::xml_schema::Flags::base) == 0)
       {
@@ -7406,6 +7439,20 @@ namespace prj
           }
         }
 
+        // tag
+        //
+        if (n.name () == "tag" && n.namespace_ ().empty ())
+        {
+          ::std::unique_ptr< TagType > r (
+            TagTraits::create (i, f, this));
+
+          if (!this->tag_)
+          {
+            this->tag_.set (::std::move (r));
+            continue;
+          }
+        }
+
         break;
       }
 
@@ -7449,6 +7496,7 @@ namespace prj
         this->v_ = x.v_;
         this->history_ = x.history_;
         this->selectionType_ = x.selectionType_;
+        this->tag_ = x.tag_;
       }
 
       return *this;
@@ -9221,6 +9269,18 @@ namespace prj
             e));
 
         s << *i.selectionType ();
+      }
+
+      // tag
+      //
+      if (i.tag ())
+      {
+        ::xercesc::DOMElement& s (
+          ::xsd::cxx::xml::dom::create_element (
+            "tag",
+            e));
+
+        s << *i.tag ();
       }
     }
 

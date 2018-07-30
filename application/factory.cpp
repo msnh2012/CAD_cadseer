@@ -73,7 +73,6 @@
 #include <feature/intersect.h>
 #include <feature/chamfer.h>
 #include <feature/draft.h>
-#include <feature/datumplane.h>
 #include <feature/hollow.h>
 #include <feature/inert.h>
 #include <library/lineardimension.h>
@@ -133,9 +132,6 @@ void Factory::setupDispatcher()
   
   mask = msg::Request | msg::Construct | msg::Draft;
   observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Factory::newDraftDispatched, this, _1)));
-  
-  mask = msg::Request | msg::Construct | msg::DatumPlane;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Factory::newDatumPlaneDispatched, this, _1)));
   
   mask = msg::Request | msg::Import | msg::OCC;
   observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Factory::importOCCDispatched, this, _1)));
@@ -468,6 +464,7 @@ void Factory::newDraftDispatched(const msg::Message&)
   observer->out(msg::Mask(msg::Request | msg::Project | msg::Update));
 }
 
+/*
 void Factory::newDatumPlaneDispatched(const msg::Message&)
 {
   std::ostringstream debug;
@@ -503,6 +500,7 @@ void Factory::newDatumPlaneDispatched(const msg::Message&)
   observer->out(msg::Message(msg::Request | msg::Selection | msg::Clear));
   observer->out(msg::Mask(msg::Request | msg::Project | msg::Update));
 }
+*/
 
 void Factory::newHollowDispatched(const msg::Message&)
 {

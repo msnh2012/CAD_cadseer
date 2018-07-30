@@ -51,6 +51,8 @@ prj::srl::Pick Pick::serialOut() const
   
   out.history().set(shapeHistory.serialOut());
   out.selectionType().set(static_cast<int>(selectionType));
+  if (!tag.empty())
+    out.tag().set(tag);
   
   return out;
 }
@@ -65,6 +67,8 @@ void Pick::serialIn(const prj::srl::Pick &sPickIn)
     shapeHistory.serialIn(sPickIn.history().get());
   if (sPickIn.selectionType().present())
     selectionType = static_cast<slc::Type>(sPickIn.selectionType().get());
+  if (sPickIn.tag().present())
+    tag = sPickIn.tag().get();
 }
 
 bool Pick::operator==(const Pick &rhs) const

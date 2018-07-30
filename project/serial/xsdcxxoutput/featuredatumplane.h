@@ -72,10 +72,6 @@ namespace prj
 {
   namespace srl
   {
-    class DatumPlanePlanarOffset;
-    class DatumPlanePlanarCenter;
-    class DatumPlanePlanarParallelThroughEdge;
-    class SolverChoice;
     class FeatureDatumPlane;
   }
 }
@@ -105,999 +101,6 @@ namespace prj
    */
   namespace srl
   {
-    /**
-     * @brief Class corresponding to the %DatumPlanePlanarOffset schema type.
-     *
-     * @nosubgrouping
-     */
-    class DatumPlanePlanarOffset: public ::xml_schema::Type
-    {
-      public:
-      /**
-       * @name facePick
-       *
-       * @brief Accessor and modifier functions for the %facePick
-       * required element.
-       */
-      //@{
-
-      /**
-       * @brief Element type.
-       */
-      typedef ::prj::srl::Pick FacePickType;
-
-      /**
-       * @brief Element traits type.
-       */
-      typedef ::xsd::cxx::tree::traits< FacePickType, char > FacePickTraits;
-
-      /**
-       * @brief Return a read-only (constant) reference to the element.
-       *
-       * @return A constant reference to the element.
-       */
-      const FacePickType&
-      facePick () const;
-
-      /**
-       * @brief Return a read-write reference to the element.
-       *
-       * @return A reference to the element.
-       */
-      FacePickType&
-      facePick ();
-
-      /**
-       * @brief Set the element value.
-       *
-       * @param x A new value to set.
-       *
-       * This function makes a copy of its argument and sets it as
-       * the new value of the element.
-       */
-      void
-      facePick (const FacePickType& x);
-
-      /**
-       * @brief Set the element value without copying.
-       *
-       * @param p A new value to use.
-       *
-       * This function will try to use the passed value directly
-       * instead of making a copy.
-       */
-      void
-      facePick (::std::unique_ptr< FacePickType > p);
-
-      //@}
-
-      /**
-       * @name offset
-       *
-       * @brief Accessor and modifier functions for the %offset
-       * required element.
-       */
-      //@{
-
-      /**
-       * @brief Element type.
-       */
-      typedef ::prj::srl::Parameter OffsetType;
-
-      /**
-       * @brief Element traits type.
-       */
-      typedef ::xsd::cxx::tree::traits< OffsetType, char > OffsetTraits;
-
-      /**
-       * @brief Return a read-only (constant) reference to the element.
-       *
-       * @return A constant reference to the element.
-       */
-      const OffsetType&
-      offset () const;
-
-      /**
-       * @brief Return a read-write reference to the element.
-       *
-       * @return A reference to the element.
-       */
-      OffsetType&
-      offset ();
-
-      /**
-       * @brief Set the element value.
-       *
-       * @param x A new value to set.
-       *
-       * This function makes a copy of its argument and sets it as
-       * the new value of the element.
-       */
-      void
-      offset (const OffsetType& x);
-
-      /**
-       * @brief Set the element value without copying.
-       *
-       * @param p A new value to use.
-       *
-       * This function will try to use the passed value directly
-       * instead of making a copy.
-       */
-      void
-      offset (::std::unique_ptr< OffsetType > p);
-
-      //@}
-
-      /**
-       * @name Constructors
-       */
-      //@{
-
-      /**
-       * @brief Create an instance from the ultimate base and
-       * initializers for required elements and attributes.
-       */
-      DatumPlanePlanarOffset (const FacePickType&,
-                              const OffsetType&);
-
-      /**
-       * @brief Create an instance from the ultimate base and
-       * initializers for required elements and attributes
-       * (::std::unique_ptr version).
-       *
-       * This constructor will try to use the passed values directly
-       * instead of making copies.
-       */
-      DatumPlanePlanarOffset (::std::unique_ptr< FacePickType >,
-                              ::std::unique_ptr< OffsetType >);
-
-      /**
-       * @brief Create an instance from a DOM element.
-       *
-       * @param e A DOM element to extract the data from.
-       * @param f Flags to create the new instance with.
-       * @param c A pointer to the object that will contain the new
-       * instance.
-       */
-      DatumPlanePlanarOffset (const ::xercesc::DOMElement& e,
-                              ::xml_schema::Flags f = 0,
-                              ::xml_schema::Container* c = 0);
-
-      /**
-       * @brief Copy constructor.
-       *
-       * @param x An instance to make a copy of.
-       * @param f Flags to create the copy with.
-       * @param c A pointer to the object that will contain the copy.
-       *
-       * For polymorphic object models use the @c _clone function instead.
-       */
-      DatumPlanePlanarOffset (const DatumPlanePlanarOffset& x,
-                              ::xml_schema::Flags f = 0,
-                              ::xml_schema::Container* c = 0);
-
-      /**
-       * @brief Copy the instance polymorphically.
-       *
-       * @param f Flags to create the copy with.
-       * @param c A pointer to the object that will contain the copy.
-       * @return A pointer to the dynamically allocated copy.
-       *
-       * This function ensures that the dynamic type of the instance is
-       * used for copying and should be used for polymorphic object
-       * models instead of the copy constructor.
-       */
-      virtual DatumPlanePlanarOffset*
-      _clone (::xml_schema::Flags f = 0,
-              ::xml_schema::Container* c = 0) const;
-
-      /**
-       * @brief Copy assignment operator.
-       *
-       * @param x An instance to make a copy of.
-       * @return A reference to itself.
-       *
-       * For polymorphic object models use the @c _clone function instead.
-       */
-      DatumPlanePlanarOffset&
-      operator= (const DatumPlanePlanarOffset& x);
-
-      //@}
-
-      /**
-       * @brief Destructor.
-       */
-      virtual 
-      ~DatumPlanePlanarOffset ();
-
-      // Implementation.
-      //
-
-      //@cond
-
-      protected:
-      void
-      parse (::xsd::cxx::xml::dom::parser< char >&,
-             ::xml_schema::Flags);
-
-      protected:
-      ::xsd::cxx::tree::one< FacePickType > facePick_;
-      ::xsd::cxx::tree::one< OffsetType > offset_;
-
-      //@endcond
-    };
-
-    /**
-     * @brief Class corresponding to the %DatumPlanePlanarCenter schema type.
-     *
-     * @nosubgrouping
-     */
-    class DatumPlanePlanarCenter: public ::xml_schema::Type
-    {
-      public:
-      /**
-       * @name facePick1
-       *
-       * @brief Accessor and modifier functions for the %facePick1
-       * required element.
-       */
-      //@{
-
-      /**
-       * @brief Element type.
-       */
-      typedef ::prj::srl::Pick FacePick1Type;
-
-      /**
-       * @brief Element traits type.
-       */
-      typedef ::xsd::cxx::tree::traits< FacePick1Type, char > FacePick1Traits;
-
-      /**
-       * @brief Return a read-only (constant) reference to the element.
-       *
-       * @return A constant reference to the element.
-       */
-      const FacePick1Type&
-      facePick1 () const;
-
-      /**
-       * @brief Return a read-write reference to the element.
-       *
-       * @return A reference to the element.
-       */
-      FacePick1Type&
-      facePick1 ();
-
-      /**
-       * @brief Set the element value.
-       *
-       * @param x A new value to set.
-       *
-       * This function makes a copy of its argument and sets it as
-       * the new value of the element.
-       */
-      void
-      facePick1 (const FacePick1Type& x);
-
-      /**
-       * @brief Set the element value without copying.
-       *
-       * @param p A new value to use.
-       *
-       * This function will try to use the passed value directly
-       * instead of making a copy.
-       */
-      void
-      facePick1 (::std::unique_ptr< FacePick1Type > p);
-
-      //@}
-
-      /**
-       * @name facePick2
-       *
-       * @brief Accessor and modifier functions for the %facePick2
-       * required element.
-       */
-      //@{
-
-      /**
-       * @brief Element type.
-       */
-      typedef ::prj::srl::Pick FacePick2Type;
-
-      /**
-       * @brief Element traits type.
-       */
-      typedef ::xsd::cxx::tree::traits< FacePick2Type, char > FacePick2Traits;
-
-      /**
-       * @brief Return a read-only (constant) reference to the element.
-       *
-       * @return A constant reference to the element.
-       */
-      const FacePick2Type&
-      facePick2 () const;
-
-      /**
-       * @brief Return a read-write reference to the element.
-       *
-       * @return A reference to the element.
-       */
-      FacePick2Type&
-      facePick2 ();
-
-      /**
-       * @brief Set the element value.
-       *
-       * @param x A new value to set.
-       *
-       * This function makes a copy of its argument and sets it as
-       * the new value of the element.
-       */
-      void
-      facePick2 (const FacePick2Type& x);
-
-      /**
-       * @brief Set the element value without copying.
-       *
-       * @param p A new value to use.
-       *
-       * This function will try to use the passed value directly
-       * instead of making a copy.
-       */
-      void
-      facePick2 (::std::unique_ptr< FacePick2Type > p);
-
-      //@}
-
-      /**
-       * @name Constructors
-       */
-      //@{
-
-      /**
-       * @brief Create an instance from the ultimate base and
-       * initializers for required elements and attributes.
-       */
-      DatumPlanePlanarCenter (const FacePick1Type&,
-                              const FacePick2Type&);
-
-      /**
-       * @brief Create an instance from the ultimate base and
-       * initializers for required elements and attributes
-       * (::std::unique_ptr version).
-       *
-       * This constructor will try to use the passed values directly
-       * instead of making copies.
-       */
-      DatumPlanePlanarCenter (::std::unique_ptr< FacePick1Type >,
-                              ::std::unique_ptr< FacePick2Type >);
-
-      /**
-       * @brief Create an instance from a DOM element.
-       *
-       * @param e A DOM element to extract the data from.
-       * @param f Flags to create the new instance with.
-       * @param c A pointer to the object that will contain the new
-       * instance.
-       */
-      DatumPlanePlanarCenter (const ::xercesc::DOMElement& e,
-                              ::xml_schema::Flags f = 0,
-                              ::xml_schema::Container* c = 0);
-
-      /**
-       * @brief Copy constructor.
-       *
-       * @param x An instance to make a copy of.
-       * @param f Flags to create the copy with.
-       * @param c A pointer to the object that will contain the copy.
-       *
-       * For polymorphic object models use the @c _clone function instead.
-       */
-      DatumPlanePlanarCenter (const DatumPlanePlanarCenter& x,
-                              ::xml_schema::Flags f = 0,
-                              ::xml_schema::Container* c = 0);
-
-      /**
-       * @brief Copy the instance polymorphically.
-       *
-       * @param f Flags to create the copy with.
-       * @param c A pointer to the object that will contain the copy.
-       * @return A pointer to the dynamically allocated copy.
-       *
-       * This function ensures that the dynamic type of the instance is
-       * used for copying and should be used for polymorphic object
-       * models instead of the copy constructor.
-       */
-      virtual DatumPlanePlanarCenter*
-      _clone (::xml_schema::Flags f = 0,
-              ::xml_schema::Container* c = 0) const;
-
-      /**
-       * @brief Copy assignment operator.
-       *
-       * @param x An instance to make a copy of.
-       * @return A reference to itself.
-       *
-       * For polymorphic object models use the @c _clone function instead.
-       */
-      DatumPlanePlanarCenter&
-      operator= (const DatumPlanePlanarCenter& x);
-
-      //@}
-
-      /**
-       * @brief Destructor.
-       */
-      virtual 
-      ~DatumPlanePlanarCenter ();
-
-      // Implementation.
-      //
-
-      //@cond
-
-      protected:
-      void
-      parse (::xsd::cxx::xml::dom::parser< char >&,
-             ::xml_schema::Flags);
-
-      protected:
-      ::xsd::cxx::tree::one< FacePick1Type > facePick1_;
-      ::xsd::cxx::tree::one< FacePick2Type > facePick2_;
-
-      //@endcond
-    };
-
-    /**
-     * @brief Class corresponding to the %DatumPlanePlanarParallelThroughEdge schema type.
-     *
-     * @nosubgrouping
-     */
-    class DatumPlanePlanarParallelThroughEdge: public ::xml_schema::Type
-    {
-      public:
-      /**
-       * @name facePick
-       *
-       * @brief Accessor and modifier functions for the %facePick
-       * required element.
-       */
-      //@{
-
-      /**
-       * @brief Element type.
-       */
-      typedef ::prj::srl::Pick FacePickType;
-
-      /**
-       * @brief Element traits type.
-       */
-      typedef ::xsd::cxx::tree::traits< FacePickType, char > FacePickTraits;
-
-      /**
-       * @brief Return a read-only (constant) reference to the element.
-       *
-       * @return A constant reference to the element.
-       */
-      const FacePickType&
-      facePick () const;
-
-      /**
-       * @brief Return a read-write reference to the element.
-       *
-       * @return A reference to the element.
-       */
-      FacePickType&
-      facePick ();
-
-      /**
-       * @brief Set the element value.
-       *
-       * @param x A new value to set.
-       *
-       * This function makes a copy of its argument and sets it as
-       * the new value of the element.
-       */
-      void
-      facePick (const FacePickType& x);
-
-      /**
-       * @brief Set the element value without copying.
-       *
-       * @param p A new value to use.
-       *
-       * This function will try to use the passed value directly
-       * instead of making a copy.
-       */
-      void
-      facePick (::std::unique_ptr< FacePickType > p);
-
-      //@}
-
-      /**
-       * @name edgePick
-       *
-       * @brief Accessor and modifier functions for the %edgePick
-       * required element.
-       */
-      //@{
-
-      /**
-       * @brief Element type.
-       */
-      typedef ::prj::srl::Pick EdgePickType;
-
-      /**
-       * @brief Element traits type.
-       */
-      typedef ::xsd::cxx::tree::traits< EdgePickType, char > EdgePickTraits;
-
-      /**
-       * @brief Return a read-only (constant) reference to the element.
-       *
-       * @return A constant reference to the element.
-       */
-      const EdgePickType&
-      edgePick () const;
-
-      /**
-       * @brief Return a read-write reference to the element.
-       *
-       * @return A reference to the element.
-       */
-      EdgePickType&
-      edgePick ();
-
-      /**
-       * @brief Set the element value.
-       *
-       * @param x A new value to set.
-       *
-       * This function makes a copy of its argument and sets it as
-       * the new value of the element.
-       */
-      void
-      edgePick (const EdgePickType& x);
-
-      /**
-       * @brief Set the element value without copying.
-       *
-       * @param p A new value to use.
-       *
-       * This function will try to use the passed value directly
-       * instead of making a copy.
-       */
-      void
-      edgePick (::std::unique_ptr< EdgePickType > p);
-
-      //@}
-
-      /**
-       * @name Constructors
-       */
-      //@{
-
-      /**
-       * @brief Create an instance from the ultimate base and
-       * initializers for required elements and attributes.
-       */
-      DatumPlanePlanarParallelThroughEdge (const FacePickType&,
-                                           const EdgePickType&);
-
-      /**
-       * @brief Create an instance from the ultimate base and
-       * initializers for required elements and attributes
-       * (::std::unique_ptr version).
-       *
-       * This constructor will try to use the passed values directly
-       * instead of making copies.
-       */
-      DatumPlanePlanarParallelThroughEdge (::std::unique_ptr< FacePickType >,
-                                           ::std::unique_ptr< EdgePickType >);
-
-      /**
-       * @brief Create an instance from a DOM element.
-       *
-       * @param e A DOM element to extract the data from.
-       * @param f Flags to create the new instance with.
-       * @param c A pointer to the object that will contain the new
-       * instance.
-       */
-      DatumPlanePlanarParallelThroughEdge (const ::xercesc::DOMElement& e,
-                                           ::xml_schema::Flags f = 0,
-                                           ::xml_schema::Container* c = 0);
-
-      /**
-       * @brief Copy constructor.
-       *
-       * @param x An instance to make a copy of.
-       * @param f Flags to create the copy with.
-       * @param c A pointer to the object that will contain the copy.
-       *
-       * For polymorphic object models use the @c _clone function instead.
-       */
-      DatumPlanePlanarParallelThroughEdge (const DatumPlanePlanarParallelThroughEdge& x,
-                                           ::xml_schema::Flags f = 0,
-                                           ::xml_schema::Container* c = 0);
-
-      /**
-       * @brief Copy the instance polymorphically.
-       *
-       * @param f Flags to create the copy with.
-       * @param c A pointer to the object that will contain the copy.
-       * @return A pointer to the dynamically allocated copy.
-       *
-       * This function ensures that the dynamic type of the instance is
-       * used for copying and should be used for polymorphic object
-       * models instead of the copy constructor.
-       */
-      virtual DatumPlanePlanarParallelThroughEdge*
-      _clone (::xml_schema::Flags f = 0,
-              ::xml_schema::Container* c = 0) const;
-
-      /**
-       * @brief Copy assignment operator.
-       *
-       * @param x An instance to make a copy of.
-       * @return A reference to itself.
-       *
-       * For polymorphic object models use the @c _clone function instead.
-       */
-      DatumPlanePlanarParallelThroughEdge&
-      operator= (const DatumPlanePlanarParallelThroughEdge& x);
-
-      //@}
-
-      /**
-       * @brief Destructor.
-       */
-      virtual 
-      ~DatumPlanePlanarParallelThroughEdge ();
-
-      // Implementation.
-      //
-
-      //@cond
-
-      protected:
-      void
-      parse (::xsd::cxx::xml::dom::parser< char >&,
-             ::xml_schema::Flags);
-
-      protected:
-      ::xsd::cxx::tree::one< FacePickType > facePick_;
-      ::xsd::cxx::tree::one< EdgePickType > edgePick_;
-
-      //@endcond
-    };
-
-    /**
-     * @brief Class corresponding to the %SolverChoice schema type.
-     *
-     * @nosubgrouping
-     */
-    class SolverChoice: public ::xml_schema::Type
-    {
-      public:
-      /**
-       * @name offset
-       *
-       * @brief Accessor and modifier functions for the %offset
-       * optional element.
-       */
-      //@{
-
-      /**
-       * @brief Element type.
-       */
-      typedef ::prj::srl::DatumPlanePlanarOffset OffsetType;
-
-      /**
-       * @brief Element optional container type.
-       */
-      typedef ::xsd::cxx::tree::optional< OffsetType > OffsetOptional;
-
-      /**
-       * @brief Element traits type.
-       */
-      typedef ::xsd::cxx::tree::traits< OffsetType, char > OffsetTraits;
-
-      /**
-       * @brief Return a read-only (constant) reference to the element
-       * container.
-       *
-       * @return A constant reference to the optional container.
-       */
-      const OffsetOptional&
-      offset () const;
-
-      /**
-       * @brief Return a read-write reference to the element container.
-       *
-       * @return A reference to the optional container.
-       */
-      OffsetOptional&
-      offset ();
-
-      /**
-       * @brief Set the element value.
-       *
-       * @param x A new value to set.
-       *
-       * This function makes a copy of its argument and sets it as
-       * the new value of the element.
-       */
-      void
-      offset (const OffsetType& x);
-
-      /**
-       * @brief Set the element value.
-       *
-       * @param x An optional container with the new value to set.
-       *
-       * If the value is present in @a x then this function makes a copy 
-       * of this value and sets it as the new value of the element.
-       * Otherwise the element container is set the 'not present' state.
-       */
-      void
-      offset (const OffsetOptional& x);
-
-      /**
-       * @brief Set the element value without copying.
-       *
-       * @param p A new value to use.
-       *
-       * This function will try to use the passed value directly instead
-       * of making a copy.
-       */
-      void
-      offset (::std::unique_ptr< OffsetType > p);
-
-      //@}
-
-      /**
-       * @name center
-       *
-       * @brief Accessor and modifier functions for the %center
-       * optional element.
-       */
-      //@{
-
-      /**
-       * @brief Element type.
-       */
-      typedef ::prj::srl::DatumPlanePlanarCenter CenterType;
-
-      /**
-       * @brief Element optional container type.
-       */
-      typedef ::xsd::cxx::tree::optional< CenterType > CenterOptional;
-
-      /**
-       * @brief Element traits type.
-       */
-      typedef ::xsd::cxx::tree::traits< CenterType, char > CenterTraits;
-
-      /**
-       * @brief Return a read-only (constant) reference to the element
-       * container.
-       *
-       * @return A constant reference to the optional container.
-       */
-      const CenterOptional&
-      center () const;
-
-      /**
-       * @brief Return a read-write reference to the element container.
-       *
-       * @return A reference to the optional container.
-       */
-      CenterOptional&
-      center ();
-
-      /**
-       * @brief Set the element value.
-       *
-       * @param x A new value to set.
-       *
-       * This function makes a copy of its argument and sets it as
-       * the new value of the element.
-       */
-      void
-      center (const CenterType& x);
-
-      /**
-       * @brief Set the element value.
-       *
-       * @param x An optional container with the new value to set.
-       *
-       * If the value is present in @a x then this function makes a copy 
-       * of this value and sets it as the new value of the element.
-       * Otherwise the element container is set the 'not present' state.
-       */
-      void
-      center (const CenterOptional& x);
-
-      /**
-       * @brief Set the element value without copying.
-       *
-       * @param p A new value to use.
-       *
-       * This function will try to use the passed value directly instead
-       * of making a copy.
-       */
-      void
-      center (::std::unique_ptr< CenterType > p);
-
-      //@}
-
-      /**
-       * @name parallelThroughEdge
-       *
-       * @brief Accessor and modifier functions for the %parallelThroughEdge
-       * optional element.
-       */
-      //@{
-
-      /**
-       * @brief Element type.
-       */
-      typedef ::prj::srl::DatumPlanePlanarParallelThroughEdge ParallelThroughEdgeType;
-
-      /**
-       * @brief Element optional container type.
-       */
-      typedef ::xsd::cxx::tree::optional< ParallelThroughEdgeType > ParallelThroughEdgeOptional;
-
-      /**
-       * @brief Element traits type.
-       */
-      typedef ::xsd::cxx::tree::traits< ParallelThroughEdgeType, char > ParallelThroughEdgeTraits;
-
-      /**
-       * @brief Return a read-only (constant) reference to the element
-       * container.
-       *
-       * @return A constant reference to the optional container.
-       */
-      const ParallelThroughEdgeOptional&
-      parallelThroughEdge () const;
-
-      /**
-       * @brief Return a read-write reference to the element container.
-       *
-       * @return A reference to the optional container.
-       */
-      ParallelThroughEdgeOptional&
-      parallelThroughEdge ();
-
-      /**
-       * @brief Set the element value.
-       *
-       * @param x A new value to set.
-       *
-       * This function makes a copy of its argument and sets it as
-       * the new value of the element.
-       */
-      void
-      parallelThroughEdge (const ParallelThroughEdgeType& x);
-
-      /**
-       * @brief Set the element value.
-       *
-       * @param x An optional container with the new value to set.
-       *
-       * If the value is present in @a x then this function makes a copy 
-       * of this value and sets it as the new value of the element.
-       * Otherwise the element container is set the 'not present' state.
-       */
-      void
-      parallelThroughEdge (const ParallelThroughEdgeOptional& x);
-
-      /**
-       * @brief Set the element value without copying.
-       *
-       * @param p A new value to use.
-       *
-       * This function will try to use the passed value directly instead
-       * of making a copy.
-       */
-      void
-      parallelThroughEdge (::std::unique_ptr< ParallelThroughEdgeType > p);
-
-      //@}
-
-      /**
-       * @name Constructors
-       */
-      //@{
-
-      /**
-       * @brief Create an instance from the ultimate base and
-       * initializers for required elements and attributes.
-       */
-      SolverChoice ();
-
-      /**
-       * @brief Create an instance from a DOM element.
-       *
-       * @param e A DOM element to extract the data from.
-       * @param f Flags to create the new instance with.
-       * @param c A pointer to the object that will contain the new
-       * instance.
-       */
-      SolverChoice (const ::xercesc::DOMElement& e,
-                    ::xml_schema::Flags f = 0,
-                    ::xml_schema::Container* c = 0);
-
-      /**
-       * @brief Copy constructor.
-       *
-       * @param x An instance to make a copy of.
-       * @param f Flags to create the copy with.
-       * @param c A pointer to the object that will contain the copy.
-       *
-       * For polymorphic object models use the @c _clone function instead.
-       */
-      SolverChoice (const SolverChoice& x,
-                    ::xml_schema::Flags f = 0,
-                    ::xml_schema::Container* c = 0);
-
-      /**
-       * @brief Copy the instance polymorphically.
-       *
-       * @param f Flags to create the copy with.
-       * @param c A pointer to the object that will contain the copy.
-       * @return A pointer to the dynamically allocated copy.
-       *
-       * This function ensures that the dynamic type of the instance is
-       * used for copying and should be used for polymorphic object
-       * models instead of the copy constructor.
-       */
-      virtual SolverChoice*
-      _clone (::xml_schema::Flags f = 0,
-              ::xml_schema::Container* c = 0) const;
-
-      /**
-       * @brief Copy assignment operator.
-       *
-       * @param x An instance to make a copy of.
-       * @return A reference to itself.
-       *
-       * For polymorphic object models use the @c _clone function instead.
-       */
-      SolverChoice&
-      operator= (const SolverChoice& x);
-
-      //@}
-
-      /**
-       * @brief Destructor.
-       */
-      virtual 
-      ~SolverChoice ();
-
-      // Implementation.
-      //
-
-      //@cond
-
-      protected:
-      void
-      parse (::xsd::cxx::xml::dom::parser< char >&,
-             ::xml_schema::Flags);
-
-      protected:
-      OffsetOptional offset_;
-      CenterOptional center_;
-      ParallelThroughEdgeOptional parallelThroughEdge_;
-
-      //@endcond
-    };
-
     /**
      * @brief Class corresponding to the %FeatureDatumPlane schema type.
      *
@@ -1165,9 +168,9 @@ namespace prj
       //@}
 
       /**
-       * @name radius
+       * @name dpType
        *
-       * @brief Accessor and modifier functions for the %radius
+       * @brief Accessor and modifier functions for the %dpType
        * required element.
        */
       //@{
@@ -1175,28 +178,28 @@ namespace prj
       /**
        * @brief Element type.
        */
-      typedef ::prj::srl::Parameter RadiusType;
+      typedef ::xml_schema::Int DpTypeType;
 
       /**
        * @brief Element traits type.
        */
-      typedef ::xsd::cxx::tree::traits< RadiusType, char > RadiusTraits;
+      typedef ::xsd::cxx::tree::traits< DpTypeType, char > DpTypeTraits;
 
       /**
        * @brief Return a read-only (constant) reference to the element.
        *
        * @return A constant reference to the element.
        */
-      const RadiusType&
-      radius () const;
+      const DpTypeType&
+      dpType () const;
 
       /**
        * @brief Return a read-write reference to the element.
        *
        * @return A reference to the element.
        */
-      RadiusType&
-      radius ();
+      DpTypeType&
+      dpType ();
 
       /**
        * @brief Set the element value.
@@ -1207,7 +210,54 @@ namespace prj
        * the new value of the element.
        */
       void
-      radius (const RadiusType& x);
+      dpType (const DpTypeType& x);
+
+      //@}
+
+      /**
+       * @name picks
+       *
+       * @brief Accessor and modifier functions for the %picks
+       * required element.
+       */
+      //@{
+
+      /**
+       * @brief Element type.
+       */
+      typedef ::prj::srl::Picks PicksType;
+
+      /**
+       * @brief Element traits type.
+       */
+      typedef ::xsd::cxx::tree::traits< PicksType, char > PicksTraits;
+
+      /**
+       * @brief Return a read-only (constant) reference to the element.
+       *
+       * @return A constant reference to the element.
+       */
+      const PicksType&
+      picks () const;
+
+      /**
+       * @brief Return a read-write reference to the element.
+       *
+       * @return A reference to the element.
+       */
+      PicksType&
+      picks ();
+
+      /**
+       * @brief Set the element value.
+       *
+       * @param x A new value to set.
+       *
+       * This function makes a copy of its argument and sets it as
+       * the new value of the element.
+       */
+      void
+      picks (const PicksType& x);
 
       /**
        * @brief Set the element value without copying.
@@ -1218,7 +268,123 @@ namespace prj
        * instead of making a copy.
        */
       void
-      radius (::std::unique_ptr< RadiusType > p);
+      picks (::std::unique_ptr< PicksType > p);
+
+      //@}
+
+      /**
+       * @name csys
+       *
+       * @brief Accessor and modifier functions for the %csys
+       * required element.
+       */
+      //@{
+
+      /**
+       * @brief Element type.
+       */
+      typedef ::prj::srl::Parameter CsysType;
+
+      /**
+       * @brief Element traits type.
+       */
+      typedef ::xsd::cxx::tree::traits< CsysType, char > CsysTraits;
+
+      /**
+       * @brief Return a read-only (constant) reference to the element.
+       *
+       * @return A constant reference to the element.
+       */
+      const CsysType&
+      csys () const;
+
+      /**
+       * @brief Return a read-write reference to the element.
+       *
+       * @return A reference to the element.
+       */
+      CsysType&
+      csys ();
+
+      /**
+       * @brief Set the element value.
+       *
+       * @param x A new value to set.
+       *
+       * This function makes a copy of its argument and sets it as
+       * the new value of the element.
+       */
+      void
+      csys (const CsysType& x);
+
+      /**
+       * @brief Set the element value without copying.
+       *
+       * @param p A new value to use.
+       *
+       * This function will try to use the passed value directly
+       * instead of making a copy.
+       */
+      void
+      csys (::std::unique_ptr< CsysType > p);
+
+      //@}
+
+      /**
+       * @name flip
+       *
+       * @brief Accessor and modifier functions for the %flip
+       * required element.
+       */
+      //@{
+
+      /**
+       * @brief Element type.
+       */
+      typedef ::prj::srl::Parameter FlipType;
+
+      /**
+       * @brief Element traits type.
+       */
+      typedef ::xsd::cxx::tree::traits< FlipType, char > FlipTraits;
+
+      /**
+       * @brief Return a read-only (constant) reference to the element.
+       *
+       * @return A constant reference to the element.
+       */
+      const FlipType&
+      flip () const;
+
+      /**
+       * @brief Return a read-write reference to the element.
+       *
+       * @return A reference to the element.
+       */
+      FlipType&
+      flip ();
+
+      /**
+       * @brief Set the element value.
+       *
+       * @param x A new value to set.
+       *
+       * This function makes a copy of its argument and sets it as
+       * the new value of the element.
+       */
+      void
+      flip (const FlipType& x);
+
+      /**
+       * @brief Set the element value without copying.
+       *
+       * @param p A new value to use.
+       *
+       * This function will try to use the passed value directly
+       * instead of making a copy.
+       */
+      void
+      flip (::std::unique_ptr< FlipType > p);
 
       //@}
 
@@ -1281,9 +447,9 @@ namespace prj
       //@}
 
       /**
-       * @name matrix
+       * @name size
        *
-       * @brief Accessor and modifier functions for the %matrix
+       * @brief Accessor and modifier functions for the %size
        * required element.
        */
       //@{
@@ -1291,28 +457,28 @@ namespace prj
       /**
        * @brief Element type.
        */
-      typedef ::prj::srl::Matrixd MatrixType;
+      typedef ::prj::srl::Parameter SizeType;
 
       /**
        * @brief Element traits type.
        */
-      typedef ::xsd::cxx::tree::traits< MatrixType, char > MatrixTraits;
+      typedef ::xsd::cxx::tree::traits< SizeType, char > SizeTraits;
 
       /**
        * @brief Return a read-only (constant) reference to the element.
        *
        * @return A constant reference to the element.
        */
-      const MatrixType&
-      matrix () const;
+      const SizeType&
+      size () const;
 
       /**
        * @brief Return a read-write reference to the element.
        *
        * @return A reference to the element.
        */
-      MatrixType&
-      matrix ();
+      SizeType&
+      size ();
 
       /**
        * @brief Set the element value.
@@ -1323,7 +489,7 @@ namespace prj
        * the new value of the element.
        */
       void
-      matrix (const MatrixType& x);
+      size (const SizeType& x);
 
       /**
        * @brief Set the element value without copying.
@@ -1334,14 +500,14 @@ namespace prj
        * instead of making a copy.
        */
       void
-      matrix (::std::unique_ptr< MatrixType > p);
+      size (::std::unique_ptr< SizeType > p);
 
       //@}
 
       /**
-       * @name solverChoice
+       * @name offset
        *
-       * @brief Accessor and modifier functions for the %solverChoice
+       * @brief Accessor and modifier functions for the %offset
        * required element.
        */
       //@{
@@ -1349,28 +515,28 @@ namespace prj
       /**
        * @brief Element type.
        */
-      typedef ::prj::srl::SolverChoice SolverChoiceType;
+      typedef ::prj::srl::Parameter OffsetType;
 
       /**
        * @brief Element traits type.
        */
-      typedef ::xsd::cxx::tree::traits< SolverChoiceType, char > SolverChoiceTraits;
+      typedef ::xsd::cxx::tree::traits< OffsetType, char > OffsetTraits;
 
       /**
        * @brief Return a read-only (constant) reference to the element.
        *
        * @return A constant reference to the element.
        */
-      const SolverChoiceType&
-      solverChoice () const;
+      const OffsetType&
+      offset () const;
 
       /**
        * @brief Return a read-write reference to the element.
        *
        * @return A reference to the element.
        */
-      SolverChoiceType&
-      solverChoice ();
+      OffsetType&
+      offset ();
 
       /**
        * @brief Set the element value.
@@ -1381,7 +547,7 @@ namespace prj
        * the new value of the element.
        */
       void
-      solverChoice (const SolverChoiceType& x);
+      offset (const OffsetType& x);
 
       /**
        * @brief Set the element value without copying.
@@ -1392,7 +558,297 @@ namespace prj
        * instead of making a copy.
        */
       void
-      solverChoice (::std::unique_ptr< SolverChoiceType > p);
+      offset (::std::unique_ptr< OffsetType > p);
+
+      //@}
+
+      /**
+       * @name angle
+       *
+       * @brief Accessor and modifier functions for the %angle
+       * required element.
+       */
+      //@{
+
+      /**
+       * @brief Element type.
+       */
+      typedef ::prj::srl::Parameter AngleType;
+
+      /**
+       * @brief Element traits type.
+       */
+      typedef ::xsd::cxx::tree::traits< AngleType, char > AngleTraits;
+
+      /**
+       * @brief Return a read-only (constant) reference to the element.
+       *
+       * @return A constant reference to the element.
+       */
+      const AngleType&
+      angle () const;
+
+      /**
+       * @brief Return a read-write reference to the element.
+       *
+       * @return A reference to the element.
+       */
+      AngleType&
+      angle ();
+
+      /**
+       * @brief Set the element value.
+       *
+       * @param x A new value to set.
+       *
+       * This function makes a copy of its argument and sets it as
+       * the new value of the element.
+       */
+      void
+      angle (const AngleType& x);
+
+      /**
+       * @brief Set the element value without copying.
+       *
+       * @param p A new value to use.
+       *
+       * This function will try to use the passed value directly
+       * instead of making a copy.
+       */
+      void
+      angle (::std::unique_ptr< AngleType > p);
+
+      //@}
+
+      /**
+       * @name csysDragger
+       *
+       * @brief Accessor and modifier functions for the %csysDragger
+       * required element.
+       */
+      //@{
+
+      /**
+       * @brief Element type.
+       */
+      typedef ::prj::srl::CSysDragger CsysDraggerType;
+
+      /**
+       * @brief Element traits type.
+       */
+      typedef ::xsd::cxx::tree::traits< CsysDraggerType, char > CsysDraggerTraits;
+
+      /**
+       * @brief Return a read-only (constant) reference to the element.
+       *
+       * @return A constant reference to the element.
+       */
+      const CsysDraggerType&
+      csysDragger () const;
+
+      /**
+       * @brief Return a read-write reference to the element.
+       *
+       * @return A reference to the element.
+       */
+      CsysDraggerType&
+      csysDragger ();
+
+      /**
+       * @brief Set the element value.
+       *
+       * @param x A new value to set.
+       *
+       * This function makes a copy of its argument and sets it as
+       * the new value of the element.
+       */
+      void
+      csysDragger (const CsysDraggerType& x);
+
+      /**
+       * @brief Set the element value without copying.
+       *
+       * @param p A new value to use.
+       *
+       * This function will try to use the passed value directly
+       * instead of making a copy.
+       */
+      void
+      csysDragger (::std::unique_ptr< CsysDraggerType > p);
+
+      //@}
+
+      /**
+       * @name flipLabel
+       *
+       * @brief Accessor and modifier functions for the %flipLabel
+       * required element.
+       */
+      //@{
+
+      /**
+       * @brief Element type.
+       */
+      typedef ::prj::srl::PLabel FlipLabelType;
+
+      /**
+       * @brief Element traits type.
+       */
+      typedef ::xsd::cxx::tree::traits< FlipLabelType, char > FlipLabelTraits;
+
+      /**
+       * @brief Return a read-only (constant) reference to the element.
+       *
+       * @return A constant reference to the element.
+       */
+      const FlipLabelType&
+      flipLabel () const;
+
+      /**
+       * @brief Return a read-write reference to the element.
+       *
+       * @return A reference to the element.
+       */
+      FlipLabelType&
+      flipLabel ();
+
+      /**
+       * @brief Set the element value.
+       *
+       * @param x A new value to set.
+       *
+       * This function makes a copy of its argument and sets it as
+       * the new value of the element.
+       */
+      void
+      flipLabel (const FlipLabelType& x);
+
+      /**
+       * @brief Set the element value without copying.
+       *
+       * @param p A new value to use.
+       *
+       * This function will try to use the passed value directly
+       * instead of making a copy.
+       */
+      void
+      flipLabel (::std::unique_ptr< FlipLabelType > p);
+
+      //@}
+
+      /**
+       * @name autoSizeLabel
+       *
+       * @brief Accessor and modifier functions for the %autoSizeLabel
+       * required element.
+       */
+      //@{
+
+      /**
+       * @brief Element type.
+       */
+      typedef ::prj::srl::PLabel AutoSizeLabelType;
+
+      /**
+       * @brief Element traits type.
+       */
+      typedef ::xsd::cxx::tree::traits< AutoSizeLabelType, char > AutoSizeLabelTraits;
+
+      /**
+       * @brief Return a read-only (constant) reference to the element.
+       *
+       * @return A constant reference to the element.
+       */
+      const AutoSizeLabelType&
+      autoSizeLabel () const;
+
+      /**
+       * @brief Return a read-write reference to the element.
+       *
+       * @return A reference to the element.
+       */
+      AutoSizeLabelType&
+      autoSizeLabel ();
+
+      /**
+       * @brief Set the element value.
+       *
+       * @param x A new value to set.
+       *
+       * This function makes a copy of its argument and sets it as
+       * the new value of the element.
+       */
+      void
+      autoSizeLabel (const AutoSizeLabelType& x);
+
+      /**
+       * @brief Set the element value without copying.
+       *
+       * @param p A new value to use.
+       *
+       * This function will try to use the passed value directly
+       * instead of making a copy.
+       */
+      void
+      autoSizeLabel (::std::unique_ptr< AutoSizeLabelType > p);
+
+      //@}
+
+      /**
+       * @name angleLabel
+       *
+       * @brief Accessor and modifier functions for the %angleLabel
+       * required element.
+       */
+      //@{
+
+      /**
+       * @brief Element type.
+       */
+      typedef ::prj::srl::PLabel AngleLabelType;
+
+      /**
+       * @brief Element traits type.
+       */
+      typedef ::xsd::cxx::tree::traits< AngleLabelType, char > AngleLabelTraits;
+
+      /**
+       * @brief Return a read-only (constant) reference to the element.
+       *
+       * @return A constant reference to the element.
+       */
+      const AngleLabelType&
+      angleLabel () const;
+
+      /**
+       * @brief Return a read-write reference to the element.
+       *
+       * @return A reference to the element.
+       */
+      AngleLabelType&
+      angleLabel ();
+
+      /**
+       * @brief Set the element value.
+       *
+       * @param x A new value to set.
+       *
+       * This function makes a copy of its argument and sets it as
+       * the new value of the element.
+       */
+      void
+      angleLabel (const AngleLabelType& x);
+
+      /**
+       * @brief Set the element value without copying.
+       *
+       * @param p A new value to use.
+       *
+       * This function will try to use the passed value directly
+       * instead of making a copy.
+       */
+      void
+      angleLabel (::std::unique_ptr< AngleLabelType > p);
 
       //@}
 
@@ -1406,10 +862,18 @@ namespace prj
        * initializers for required elements and attributes.
        */
       FeatureDatumPlane (const FeatureBaseType&,
-                         const RadiusType&,
+                         const DpTypeType&,
+                         const PicksType&,
+                         const CsysType&,
+                         const FlipType&,
                          const AutoSizeType&,
-                         const MatrixType&,
-                         const SolverChoiceType&);
+                         const SizeType&,
+                         const OffsetType&,
+                         const AngleType&,
+                         const CsysDraggerType&,
+                         const FlipLabelType&,
+                         const AutoSizeLabelType&,
+                         const AngleLabelType&);
 
       /**
        * @brief Create an instance from the ultimate base and
@@ -1420,10 +884,18 @@ namespace prj
        * instead of making copies.
        */
       FeatureDatumPlane (::std::unique_ptr< FeatureBaseType >,
-                         ::std::unique_ptr< RadiusType >,
+                         const DpTypeType&,
+                         ::std::unique_ptr< PicksType >,
+                         ::std::unique_ptr< CsysType >,
+                         ::std::unique_ptr< FlipType >,
                          ::std::unique_ptr< AutoSizeType >,
-                         ::std::unique_ptr< MatrixType >,
-                         ::std::unique_ptr< SolverChoiceType >);
+                         ::std::unique_ptr< SizeType >,
+                         ::std::unique_ptr< OffsetType >,
+                         ::std::unique_ptr< AngleType >,
+                         ::std::unique_ptr< CsysDraggerType >,
+                         ::std::unique_ptr< FlipLabelType >,
+                         ::std::unique_ptr< AutoSizeLabelType >,
+                         ::std::unique_ptr< AngleLabelType >);
 
       /**
        * @brief Create an instance from a DOM element.
@@ -1496,10 +968,18 @@ namespace prj
 
       protected:
       ::xsd::cxx::tree::one< FeatureBaseType > featureBase_;
-      ::xsd::cxx::tree::one< RadiusType > radius_;
+      ::xsd::cxx::tree::one< DpTypeType > dpType_;
+      ::xsd::cxx::tree::one< PicksType > picks_;
+      ::xsd::cxx::tree::one< CsysType > csys_;
+      ::xsd::cxx::tree::one< FlipType > flip_;
       ::xsd::cxx::tree::one< AutoSizeType > autoSize_;
-      ::xsd::cxx::tree::one< MatrixType > matrix_;
-      ::xsd::cxx::tree::one< SolverChoiceType > solverChoice_;
+      ::xsd::cxx::tree::one< SizeType > size_;
+      ::xsd::cxx::tree::one< OffsetType > offset_;
+      ::xsd::cxx::tree::one< AngleType > angle_;
+      ::xsd::cxx::tree::one< CsysDraggerType > csysDragger_;
+      ::xsd::cxx::tree::one< FlipLabelType > flipLabel_;
+      ::xsd::cxx::tree::one< AutoSizeLabelType > autoSizeLabel_;
+      ::xsd::cxx::tree::one< AngleLabelType > angleLabel_;
 
       //@endcond
     };
@@ -1783,18 +1263,6 @@ namespace prj
 {
   namespace srl
   {
-    void
-    operator<< (::xercesc::DOMElement&, const DatumPlanePlanarOffset&);
-
-    void
-    operator<< (::xercesc::DOMElement&, const DatumPlanePlanarCenter&);
-
-    void
-    operator<< (::xercesc::DOMElement&, const DatumPlanePlanarParallelThroughEdge&);
-
-    void
-    operator<< (::xercesc::DOMElement&, const SolverChoice&);
-
     void
     operator<< (::xercesc::DOMElement&, const FeatureDatumPlane&);
 

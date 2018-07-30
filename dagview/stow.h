@@ -108,7 +108,7 @@ namespace dag
     void operator()(std::ostream& out, const EdgeW& edgeW) const
     {
       out << "[label=\"";
-      for (const auto &input : graphEW[edgeW].inputType.tags)
+      for (const auto &input : graphEW[edgeW].inputType.getTags())
         out << input << "\\n";
       out << "\"]";
     }

@@ -577,19 +577,19 @@ std::pair<gp_Ax1, bool> occt::gleanAxis(const TopoDS_Shape sIn)
     if (sa.GetType() == GeomAbs_Cylinder)
     {
       gp_Cylinder gpc = sa.Cylinder();
-      axis = gpc.Axis().Transformed(sa.Trsf());
+      axis = gpc.Axis();
       foundAxis = true;
     }
     else if (sa.GetType() == GeomAbs_Cone)
     {
       gp_Cone cone = sa.Cone();
-      axis = cone.Axis().Transformed(sa.Trsf());
+      axis = cone.Axis();
       foundAxis = true;
     }
     else if (sa.GetType() == GeomAbs_Torus)
     {
       gp_Torus torus = sa.Torus();
-      axis = torus.Axis().Transformed(sa.Trsf());
+      axis = torus.Axis();
       foundAxis = true;
     }
     
@@ -605,31 +605,31 @@ std::pair<gp_Ax1, bool> occt::gleanAxis(const TopoDS_Shape sIn)
     if (ca.GetType() == GeomAbs_Line)
     {
       gp_Lin l = ca.Line();
-      axis = l.Position().Transformed(ca.Trsf());
+      axis = l.Position();
       foundAxis = true;
     }
     else if (ca.GetType() == GeomAbs_Circle)
     {
       gp_Circ c = ca.Circle();
-      axis = c.Axis().Transformed(ca.Trsf());
+      axis = c.Axis();
       foundAxis = true;
     }
     else if (ca.GetType() == GeomAbs_Ellipse)
     {
       gp_Elips e = ca.Ellipse();
-      axis = e.Axis().Transformed(ca.Trsf());
+      axis = e.Axis();
       foundAxis = true;
     }
     else if (ca.GetType() == GeomAbs_Hyperbola)
     {
       gp_Hypr h = ca.Hyperbola();
-      axis = h.Axis().Transformed(ca.Trsf());
+      axis = h.Axis();
       foundAxis = true;
     }
     else if (ca.GetType() == GeomAbs_Parabola)
     {
       gp_Parab p = ca.Parabola();
-      axis = p.Axis().Transformed(ca.Trsf());
+      axis = p.Axis();
       foundAxis = true;
     }
     //skip offset.

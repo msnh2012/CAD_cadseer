@@ -109,7 +109,7 @@ namespace prj
     {
       auto e = boost::edge(vIn, *its.first, gIn);
       assert(e.second);
-      for (const auto &tag : gIn[e.first].inputType.tags)
+      for (const auto &tag : gIn[e.first].inputType.getTags())
         out.insert(std::make_pair(tag, gIn[*its.first].feature.get()));
     }
     return out;

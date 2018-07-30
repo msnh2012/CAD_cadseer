@@ -520,8 +520,8 @@ void Project::removeParentTag(const uuid &targetIn, const std::string &tagIn)
     //edge references original graph. 'forward'. remove_edge wouldn't work on reversed graph.
     auto ce = boost::edge(*its.first, vertex, stow->graph);
     assert(ce.second);
-    stow->graph[ce.first].inputType.tags.erase(tagIn);
-    if (stow->graph[ce.first].inputType.tags.empty())
+    stow->graph[ce.first].inputType.remove(tagIn);
+    if (stow->graph[ce.first].inputType.isEmpty())
       stow->disconnect(ce.first);
   }
 }
@@ -1198,7 +1198,7 @@ void Project::serialWrite()
   for (auto its = boost::edges(removedGraph); its.first != its.second; ++its.first)
   {
     prj::srl::InputTypes inputTypes;
-    for (const auto &tag : removedGraph[*its.first].inputType.tags)
+    for (const auto &tag : removedGraph[*its.first].inputType.getTags())
       inputTypes.array().push_back(tag);
     ftr::Base *s = removedGraph[boost::source(*its.first, removedGraph)].feature.get();
     ftr::Base *t = removedGraph[boost::target(*its.first, removedGraph)].feature.get();
@@ -1331,7 +1331,7 @@ void Project::open()
       
       ftr::InputType inputType;
       for (const auto &sInputType : fConnection.inputType().array())
-        inputType.insert(sInputType);
+        inputType.add(sInputType);
       connect(source, target, inputType);
     }
     
@@ -1436,7 +1436,7 @@ ftr::UpdatePayload::UpdateMap Project::getParentMap(const boost::uuids::uuid &id
   {
     auto e = boost::edge(vertex, *its.first, reversedGraph);
     assert(e.second);
-    for (const auto &tag : reversedGraph[e.first].inputType.tags)
+    for (const auto &tag : reversedGraph[e.first].inputType.getTags())
     {
       auto temp = std::make_pair(tag, reversedGraph[*its.first].feature.get());
       updateMap.insert(temp);

@@ -61,6 +61,7 @@
 #include <command/removefaces.h>
 #include <command/thread.h>
 #include <command/datumaxis.h>
+#include <command/datumplane.h>
 #include <message/dispatch.h>
 #include <message/observer.h>
 #include <selection/message.h>
@@ -214,6 +215,9 @@ void Manager::setupDispatcher()
   
   mask = msg::Request | msg::Construct | msg::DatumAxis;
   observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Manager::constructDatumAxisDispatched, this, _1)));
+  
+  mask = msg::Request | msg::Construct | msg::DatumPlane;
+  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Manager::constructDatumPlaneDispatched, this, _1)));
   
   mask = msg::Request | msg::Project | msg::Revision | msg::Dialog;
   observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Manager::revisionDispatched, this, _1)));
@@ -516,6 +520,12 @@ void Manager::constructThreadDispatched(const msg::Message&)
 void Manager::constructDatumAxisDispatched(const msg::Message&)
 {
   std::shared_ptr<DatumAxis> f(new DatumAxis());
+  addCommand(f);
+}
+
+void Manager::constructDatumPlaneDispatched(const msg::Message&)
+{
+  std::shared_ptr<DatumPlane> f(new DatumPlane());
   addCommand(f);
 }
 

@@ -54,7 +54,6 @@ namespace app
     void newConeDispatched(const msg::Message&);
     void newChamferDispatched(const msg::Message&);
     void newDraftDispatched(const msg::Message&);
-    void newDatumPlaneDispatched(const msg::Message&);
     void newHollowDispatched(const msg::Message&);
     void importOCCDispatched(const msg::Message&);
     void exportOCCDispatched(const msg::Message&);

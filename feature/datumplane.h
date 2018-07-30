@@ -23,122 +23,38 @@
 #include <osg/ref_ptr>
 
 #include <tools/idtools.h>
-#include <selection/container.h>
 #include <feature/pick.h>
-#include <feature/updatepayload.h>
-#include <feature/inputtype.h>
 #include <feature/base.h>
 
-namespace osg{class MatrixTransform;}
+namespace osg{class MatrixTransform; class Switch;}
 namespace mdv{class DatumPlane;}
-namespace lbr{class IPGroup;}
+namespace lbr{class IPGroup; class PLabel;}
+namespace ann{class CSysDragger;}
 namespace prj{namespace srl{class SolverChoice; class FeatureDatumPlane;}}
 
 namespace ftr
 {
   namespace prm{class Parameter;}
+  class UpdatePayload;
   class ShapeHistory;
-  
-  enum class DatumPlaneType
-  {
-    None = 0,
-    PlanarOffset,
-    PlanarCenter, //!< 2 parallel planar faces
-    PlanarParallelThroughEdge //!< planar parallel through edge.
-  };
-  
-  inline const static QString getDatumPlaneTypeString(DatumPlaneType typeIn)
-  {
-    const static QStringList strings 
-    ({
-      QObject::tr("None"),
-      QObject::tr("Planar Offset"),
-      QObject::tr("Planar Center"),
-      QObject::tr("Planar Parallel Through Edge")
-    });
-    
-    int casted = static_cast<int>(typeIn);
-    assert(casted < strings.size());
-    return strings.at(casted);
-  }
-  
-  //! just used to relay connection info to to dplane feature. 
-  struct DatumPlaneConnection
-  {
-    boost::uuids::uuid parentId;
-    InputType inputType;
-  };
-  typedef std::vector<DatumPlaneConnection> DatumPlaneConnections;
-  
-  //! Base class for different types of datum plane generation
-  class DatumPlaneGenre
-  {
-  public:
-    DatumPlaneGenre(){};
-    virtual ~DatumPlaneGenre(){};
-    virtual DatumPlaneType getType() = 0;
-    virtual osg::Matrixd solve(const UpdatePayload&) = 0; //throw std::runtime;
-    virtual lbr::IPGroup* getIPGroup(){return nullptr;}
-    virtual void connect(Base *){}
-    virtual DatumPlaneConnections setUpFromSelection(const slc::Containers &, const ShapeHistory&) = 0;
-    virtual void serialOut(prj::srl::SolverChoice &solverChoice) = 0;
-    double radius = 1.0;
-  };
-  
-  class DatumPlanePlanarOffset : public DatumPlaneGenre
-  {
-  public:
-    DatumPlanePlanarOffset();
-    virtual ~DatumPlanePlanarOffset() override;
-    virtual DatumPlaneType getType() override {return DatumPlaneType::PlanarOffset;}
-    virtual osg::Matrixd solve(const UpdatePayload&) override;
-    virtual lbr::IPGroup* getIPGroup() override;
-    virtual void connect(Base *) override;
-    virtual DatumPlaneConnections setUpFromSelection(const slc::Containers &, const ShapeHistory&) override;
-    virtual void serialOut(prj::srl::SolverChoice &solverChoice) override;
-    
-    Pick facePick;
-    std::shared_ptr<prm::Parameter> offset;
-    osg::ref_ptr<lbr::IPGroup> offsetIP;
-    
-    static bool canDoTypes(const slc::Containers &);
-  };
-  
-  class DatumPlanePlanarCenter : public DatumPlaneGenre
-  {
-  public:
-    DatumPlanePlanarCenter();
-    virtual ~DatumPlanePlanarCenter() override;
-    virtual DatumPlaneType getType() override {return DatumPlaneType::PlanarCenter;}
-    virtual osg::Matrixd solve(const UpdatePayload&) override;
-    virtual DatumPlaneConnections setUpFromSelection(const slc::Containers &, const ShapeHistory&) override;
-    virtual void serialOut(prj::srl::SolverChoice &solverChoice) override;
-    
-    Pick facePick1;
-    Pick facePick2;
-    
-    static bool canDoTypes(const slc::Containers &);
-  };
-  
-  class DatumPlanePlanarParallelThroughEdge : public DatumPlaneGenre
-  {
-  public:
-    DatumPlanePlanarParallelThroughEdge();
-    virtual ~DatumPlanePlanarParallelThroughEdge() override;
-    virtual DatumPlaneType getType() override {return DatumPlaneType::PlanarParallelThroughEdge;}
-    virtual osg::Matrixd solve(const UpdatePayload&) override;
-    virtual DatumPlaneConnections setUpFromSelection(const slc::Containers &, const ShapeHistory&) override;
-    virtual void serialOut(prj::srl::SolverChoice &solverChoice) override;
-    
-    Pick facePick;
-    Pick edgePick;
-    
-    static bool canDoTypes(const slc::Containers &);
-  };
   
   class DatumPlane : public Base
   {
   public:
+    enum class DPType
+    {
+      Constant = 0 //!< no links
+      , POffset //!< offset from 1 planar face. parameter, ipgroup
+      , PCenter //!< 2 planar inputs. center, bisect
+      , AAngleP //!< through axis angle to planar
+      , Through //!< 3 points, 1 axis and point, 2 axes. under constrained show dragger. gives us things like through single point.
+      , Tangent //!< 1 face pick(use normal at uv), 1 face pick and 1 point pick
+      , PofC //!< plane of curve. xy plane of conics
+    };
+    
+    constexpr static const char *rotationAxis = "rotationAxis";
+    constexpr static const char *plane = "plane";
+    
     DatumPlane();
     ~DatumPlane();
     
@@ -152,26 +68,48 @@ namespace ftr
     void serialRead(const prj::srl::FeatureDatumPlane &);
     virtual QTextStream& getInfo(QTextStream &) const override;
     
-    void setSolver(std::shared_ptr<DatumPlaneGenre> solverIn);
-    osg::Matrixd getSystem() const {return transform->getMatrix();}
-    double getRadius() const;
+    void setSystem(const osg::Matrixd &); //!< makes type constant.
+    osg::Matrixd getSystem() const;
     
-    static std::vector<std::shared_ptr<DatumPlaneGenre> > solversFromSelection(const slc::Containers &);
+    void setSize(double);
+    double getSize() const;
     
+    void setPicks(const Picks&);
+    
+    void setDPType(DPType);
+    DPType getDPType(){return dpType;}
+    
+    void setAutoSize(bool);
   private:
     typedef Base Inherited;
     static QIcon icon;
-    osg::ref_ptr<mdv::DatumPlane> display;
-    osg::ref_ptr<osg::MatrixTransform> transform;
-    std::shared_ptr<DatumPlaneGenre> solver;
+    DPType dpType;
+    double cachedSize; //!< for auto calc.
+    Picks picks;
     
-    std::unique_ptr<prm::Parameter> radius; //!< double. distance to edges.
+    std::unique_ptr<prm::Parameter> csys;
+    std::unique_ptr<prm::Parameter> flip; //!< double. reverse normal
     std::unique_ptr<prm::Parameter> autoSize; //!< bool. auto calculate radius.
-    
-//     double radius = 1.0; //!< boundary size of plane.
-//     bool autoSize = true; //!< whether the plane sizes itself.
+    std::unique_ptr<prm::Parameter> size; //!< double. distance to edges.
+    std::unique_ptr<prm::Parameter> offset; //!< double. distance for POffset
+    std::unique_ptr<prm::Parameter> angle; //!< double. angle for rotationn
+    std::unique_ptr<ann::CSysDragger> csysDragger; //!< for constant type
+    osg::ref_ptr<lbr::PLabel> flipLabel;
+    osg::ref_ptr<lbr::PLabel> autoSizeLabel;
+    osg::ref_ptr<lbr::IPGroup> sizeIP; //!< for POffset
+    osg::ref_ptr<lbr::IPGroup> offsetIP; //!< for POffset
+    osg::ref_ptr<lbr::PLabel> angleLabel;
+    osg::ref_ptr<osg::Switch> overlaySubSwitch; //manage overlay vis
+    osg::ref_ptr<mdv::DatumPlane> display;
     
     void updateGeometry();
+    void updateOverlayViz();
+    void updateLabelPositions();
+    
+    void goUpdateConstant();
+    void goUpdatePOffset(const UpdatePayload&);
+    void goUpdatePCenter(const UpdatePayload&);
+    void goUpdateAAngleP(const UpdatePayload&);
   };
 }
 
