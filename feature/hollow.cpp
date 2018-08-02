@@ -63,6 +63,7 @@ sShape(new ann::SeerShape())
   
   offset->setConstraint(prm::Constraint::buildNonZero());
   offset->connectValue(boost::bind(&Hollow::setModelDirty, this));
+  parameters.push_back(offset.get());
   
   label = new lbr::PLabel(offset.get());
   label->valueHasChanged();
