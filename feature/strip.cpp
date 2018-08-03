@@ -194,7 +194,7 @@ void Strip::updateModel(const UpdatePayload &payloadIn)
       throw std::runtime_error("blank seer shape is null");
     const TopoDS_Shape &bs = occt::getFirstNonCompound(bss.getRootOCCTShape()); //blank shape.
     
-    std::vector<const Base*> nfs = payloadIn.getFeatures(blank);
+    std::vector<const Base*> nfs = payloadIn.getFeatures(nest);
     if (nfs.size() != 1)
       throw std::runtime_error("couldn't find 'nest' input");
     
