@@ -31,6 +31,11 @@
 #include <BRepBndLib.hxx>
 #include <Bnd_Box.hxx>
 #include <BRep_Builder.hxx>
+#include <Geom_Plane.hxx>
+#include <Geom_Line.hxx>
+#include <GeomAPI_IntSS.hxx>
+#include <GeomAPI_IntCS.hxx>
+#include <GeomAPI_ProjectPointOnCurve.hxx>
 
 #include <osg/Geometry>
 #include <osg/MatrixTransform>
@@ -114,7 +119,7 @@ Base()
 , autoSize(new prm::Parameter(QObject::tr("Auto Size"), false))
 , size(new prm::Parameter(QObject::tr("Size"), 1.0))
 , offset(new prm::Parameter(prm::Names::Offset, 1.0))
-, angle(new prm::Parameter(prm::Names::Angle, 90.0))
+, angle(new prm::Parameter(prm::Names::Angle, 45.0))
 , csysDragger(new ann::CSysDragger(this, csys.get()))
 , flipLabel(new lbr::PLabel(flip.get()))
 , autoSizeLabel(new lbr::PLabel(autoSize.get()))
@@ -136,11 +141,11 @@ Base()
   flip->connectValue(boost::bind(&DatumPlane::setModelDirty, this));
   parameters.push_back(flip.get());
   
-  autoSize->connectValue(boost::bind(&DatumPlane::setVisualDirty, this));
+  autoSize->connectValue(boost::bind(&DatumPlane::setModelDirty, this));
   parameters.push_back(autoSize.get());
   
   size->setConstraint(prm::Constraint::buildNonZeroPositive());
-  size->connectValue(boost::bind(&DatumPlane::setVisualDirty, this));
+  size->connectValue(boost::bind(&DatumPlane::setModelDirty, this));
   parameters.push_back(size.get());
   
   offset->connectValue(boost::bind(&DatumPlane::setModelDirty, this));
@@ -185,7 +190,8 @@ Base()
   angleLabel->constantHasChanged();
   overlaySubSwitch->addChild(angleLabel.get());
   
-  overlaySubSwitch->addChild(csysDragger->dragger);
+  annexes.insert(std::make_pair(ann::Type::CSysDragger, csysDragger.get()));
+  overlaySubSwitch->addChild(csysDragger->dragger.get());
   
   mainTransform->addChild(display.get());
   overlaySwitch->addChild(overlaySubSwitch.get());
@@ -249,6 +255,10 @@ void DatumPlane::updateModel(const UpdatePayload &pli)
       goUpdatePCenter(pli);
     else if (dpType == DPType::AAngleP)
       goUpdateAAngleP(pli);
+    else if (dpType == DPType::Average3P)
+      goUpdateAverage3P(pli);
+    else if (dpType == DPType::Through3P)
+      goUpdateThrough3P(pli);
     
     if (static_cast<bool>(*flip))
     {
@@ -257,6 +267,12 @@ void DatumPlane::updateModel(const UpdatePayload &pli)
       osg::Matrixd nm(cm.getRotate() * r);
       nm.setTrans(cm.getTrans());
       csys->setValueQuiet(nm);
+    }
+    
+    if (static_cast<bool>(*autoSize))
+    {
+      size->setValueQuiet(cachedSize);
+      sizeIP->valueHasChanged();
     }
     
     mainTransform->setMatrix(static_cast<osg::Matrixd>(*csys));
@@ -458,19 +474,80 @@ void DatumPlane::goUpdatePCenter(const UpdatePayload &pli)
   
   osg::Vec3d normal1 = gu::getZVector(face1System.get());
   osg::Vec3d normal2 = gu::getZVector(face2System.get());
+  boost::optional<osg::Matrixd> newSystem;
   
-  if (!(gu::toOcc(normal1).IsParallel(gu::toOcc(normal2), Precision::Angular())))
-    throw std::runtime_error("PCenter: planes not parallel");
+  if ((gu::toOcc(normal1).IsParallel(gu::toOcc(normal2), Precision::Angular())))
+  {
+    osg::Vec3d projection = face2System.get().getTrans() - face1System.get().getTrans();
+    double mag = projection.length() / 2.0;
+    projection.normalize();
+    projection *= mag;
+    osg::Vec3d freshOrigin = face1System.get().getTrans() + projection;
+    
+    newSystem = face1System.get();
+    newSystem.get().setTrans(freshOrigin);
+  }
+  else //try to make a bisector
+  {
+    gp_Pnt o1 = gu::toOcc(face1System.get().getTrans()).XYZ();
+    gp_Dir d1 = gu::toOcc(normal1);
+    opencascade::handle<Geom_Surface> surface1 = new Geom_Plane(o1, d1);
+    gp_Pnt o2 = gu::toOcc(face2System.get().getTrans()).XYZ();
+    gp_Dir d2 = gu::toOcc(normal2);
+    opencascade::handle<Geom_Surface> surface2 = new Geom_Plane(o2, d2);
+    
+    GeomAPI_IntSS intersector(surface1, surface2, Precision::Confusion());
+    if (!intersector.IsDone() || (intersector.NbLines() != 1))
+      throw std::runtime_error("Couldn't intersect planes");
+    const opencascade::handle<Geom_Curve> &c = intersector.Line(1);
+    const opencascade::handle<Geom_Line> &l = dynamic_cast<Geom_Line*>(c.get());
+    if (l.IsNull())
+      throw std::runtime_error("Couldn't cast intersection results to line");
+    
+    osg::Vec3d ld = gu::toOsg(gp_Vec(l->Position().Direction().XYZ()));
+    osg::Vec3d lo = gu::toOsg(l->Position().Location());
+    osg::Vec3d py = normal1 + normal2;
+    py.normalize();
+    osg::Vec3d pn = ld ^ py;
+    pn.normalize();
+    
+    //I am not smart enough for the quats.
+    osg::Matrixd ts
+    (
+      ld.x(), ld.y(), ld.z(), 0.0,
+      py.x(), py.y(), py.z(), 0.0,
+      pn.x(), pn.y(), pn.z(), 0.0,
+      0.0, 0.0, 0.0, 1.0
+    );
+    //project center of parent geometry onto line and move half of tSize.
+    boost::optional<osg::Vec3d> p1, p2;
+    GeomAPI_ProjectPointOnCurve proj1(gp_Pnt(gu::toOcc(face1System.get().getTrans()).XYZ()), c); 
+    if (proj1.NbPoints() > 0)
+      p1 = gu::toOsg(proj1.NearestPoint());
+    GeomAPI_ProjectPointOnCurve proj2(gp_Pnt(gu::toOcc(face2System.get().getTrans()).XYZ()), c); 
+    if (proj2.NbPoints() > 0)
+      p2 = gu::toOsg(proj2.NearestPoint());
+    if (p1 && p2)
+    {
+      osg::Vec3d projection = p2.get() - p1.get();
+      double mag = projection.length() / 2.0;
+      projection.normalize();
+      projection *= mag;
+      ts.setTrans(p1.get() + projection);
+    }
+    else
+    {
+      std::ostringstream s; s << "WARNING: couldn't project face origin onto intersection of planes" << std::endl;
+      lastUpdateLog += s.str();
+      ts.setTrans(lo);
+    }
+    newSystem = ts;
+  }
   
-  osg::Vec3d projection = face2System.get().getTrans() - face1System.get().getTrans();
-  double mag = projection.length() / 2.0;
-  projection.normalize();
-  projection *= mag;
-  osg::Vec3d freshOrigin = face1System.get().getTrans() + projection;
-  
-  osg::Matrixd newSystem = face1System.get();
-  newSystem.setTrans(freshOrigin);
-  csys->setValueQuiet(newSystem);
+  if (!newSystem)
+    throw std::runtime_error("PCenter: couldn't derive center datum");
+    
+  csys->setValueQuiet(newSystem.get());
 }
 
 void DatumPlane::goUpdateAAngleP(const UpdatePayload &pli)
@@ -486,13 +563,21 @@ void DatumPlane::goUpdateAAngleP(const UpdatePayload &pli)
     const DatumAxis *da = dynamic_cast<const DatumAxis*>(rfs.front());
     axisOrigin = da->getOrigin();
     axisDirection = da->getDirection();
-    tempSize = std::max(tempSize, da->getSize());
+    tempSize = std::max(tempSize, da->getSize() / 2.0);
   }
   else
   {
     assert(rfs.front()->hasAnnex(ann::Type::SeerShape));
     const ann::SeerShape &ss = rfs.front()->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
-    std::vector<tls::Resolved> axisResolves = tls::resolvePicks(rfs, picks, pli.shapeHistory);
+    std::vector<tls::Resolved> axisResolves;
+    for (const auto &p : picks)
+    {
+      if (p.tag == DatumPlane::rotationAxis)
+      {
+        axisResolves = tls::resolvePicks(rfs.front(), p, pli.shapeHistory);
+        break;
+      }
+    }
     if (!axisResolves.empty())
     {
       //just use first resolve
@@ -506,16 +591,16 @@ void DatumPlane::goUpdateAAngleP(const UpdatePayload &pli)
       axisOrigin = gu::toOsg(glean.first.Location());
       axisDirection = gu::toOsg(glean.first.Direction());
       occt::BoundingBox bb(axisShape);
-      tempSize = std::max(tempSize, bb.getDiagonal());
+      tempSize = std::max(tempSize, bb.getDiagonal() / 2.0);
     }
     if (axisResolves.size() > 1)
     {
-      std::ostringstream s; s << "WARNING: more than one resolved axis in: " << BOOST_CURRENT_FUNCTION << std::endl;
+      std::ostringstream s; s << "WARNING: more than one resolved axis in: " << std::endl;
       lastUpdateLog += s.str();
     }
   }
   
-  std::vector<const Base*> pfs = pli.getFeatures(DatumPlane::plane);
+  std::vector<const Base*> pfs = pli.getFeatures(DatumPlane::plane1);
   if (pfs.size() != 1)
     throw std::runtime_error("AAngleP: Wrong number of 'plane' inputs");
   if (pfs.front()->getType() == ftr::Type::DatumPlane)
@@ -528,15 +613,16 @@ void DatumPlane::goUpdateAAngleP(const UpdatePayload &pli)
   {
     assert(pfs.front()->hasAnnex(ann::Type::SeerShape));
     const ann::SeerShape &ss = pfs.front()->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
-    auto it = picks.begin();
-    for (; it != picks.end(); ++it)
+    std::vector<tls::Resolved> planeResolves;
+    
+    for (const auto &p : picks)
     {
-      if (it->tag == DatumPlane::plane)
+      if (p.tag == DatumPlane::plane1)
+      {
+        planeResolves = tls::resolvePicks(pfs.front(), p, pli.shapeHistory);
         break;
+      }
     }
-    if (it == picks.end())
-      throw std::runtime_error("Couldn't find plane pick");
-    std::vector<tls::Resolved> planeResolves = tls::resolvePicks(pfs.front(), *it, pli.shapeHistory);
     if (!planeResolves.empty())
     {
       //just use first resolve
@@ -548,11 +634,11 @@ void DatumPlane::goUpdateAAngleP(const UpdatePayload &pli)
         throw std::runtime_error("AAngleP: resolved 'plane' shape is not a face");
       planeNormal = gu::getZVector(getFaceSystem(planeShape));
       occt::BoundingBox bb(planeShape);
-      tempSize = std::max(tempSize, bb.getDiagonal());
+      tempSize = std::max(tempSize, bb.getDiagonal() / 2.0);
     }
     if (planeResolves.size() > 1)
     {
-      std::ostringstream s; s << "WARNING: more than one resolved plane in: " << BOOST_CURRENT_FUNCTION << std::endl;
+      std::ostringstream s; s << "WARNING: more than one resolved plane in: " << std::endl;
       lastUpdateLog += s.str();
     }
   }
@@ -572,14 +658,196 @@ void DatumPlane::goUpdateAAngleP(const UpdatePayload &pli)
   csys->setValueQuiet(csysOut);
 }
 
-void DatumPlane::updateVisual()
+void DatumPlane::goUpdateAverage3P(const UpdatePayload &pli)
 {
-  if (static_cast<bool>(*autoSize))
+  auto getParentFeature = [&](const char *tagIn) -> const Base*
   {
-    size->setValueQuiet(cachedSize);
-    sizeIP->valueHasChanged();
+    std::vector<const Base*> t1 = pli.getFeatures(tagIn);
+    if (t1.size() != 1)
+      return nullptr;
+    return t1.front();
+  };
+  
+  const Base *p1f = getParentFeature(plane1);
+  const Base *p2f = getParentFeature(plane2);
+  const Base *p3f = getParentFeature(plane3);
+  if (!p1f || !p2f || !p3f)
+    throw std::runtime_error("Average3P: invalid inputs");
+  
+  double tSize = 1.0;
+  typedef std::vector<opencascade::handle<Geom_Surface>, NCollection_StdAllocator<opencascade::handle<Geom_Surface>>> GeomVector;
+  GeomVector planes;
+  osg::Vec3d averageNormal(0.0, 0.0, 0.0);
+  
+  auto resolveSystem = [&](const Base *fIn, const char *tagIn)
+  {
+    if (!fIn->hasAnnex(ann::Type::SeerShape))
+      return;
+    boost::optional<Pick> pick;
+    for (const auto &p : picks)
+    {
+      if (p.tag == tagIn)
+        pick = p;
+    }
+    if (!pick)
+      return;
+    auto resolves = tls::resolvePicks(fIn, pick.get(), pli.shapeHistory);
+    if (resolves.empty())
+      return;
+    if (resolves.size() > 2)
+    {
+      std::ostringstream s; s << "WARNING: more than one resolved plane" << std::endl;
+      lastUpdateLog += s.str();
+    }
+    const ann::SeerShape &ss = fIn->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
+    assert(ss.hasId(resolves.front().resultId));
+    const TopoDS_Shape &shape = ss.getOCCTShape(resolves.front().resultId);
+    if (shape.ShapeType() != TopAbs_FACE)
+      return;
+    
+    BRepAdaptor_Surface sa(TopoDS::Face(shape));
+    if (sa.GetType() == GeomAbs_Plane)
+    {
+      planes.push_back(sa.Surface().Surface());
+      averageNormal += gu::toOsg(sa.Plane().Axis().Direction());
+      if (shape.Orientation() == TopAbs_REVERSED)
+        averageNormal *= -1.0;
+      occt::BoundingBox bb(shape);
+      tSize = std::max(tSize, bb.getDiagonal() / 2.0);
+    }
+  };
+  
+  auto resolveDatum = [&](const Base *fIn)
+  {
+    const DatumPlane *dp = dynamic_cast<const DatumPlane*>(fIn);
+    assert(dp);
+    
+    osg::Matrixd dpSys = dp->getSystem();
+    averageNormal += gu::getZVector(dpSys);
+    gp_Pnt o = gu::toOcc(dpSys.getTrans()).XYZ();
+    gp_Dir d = gu::toOcc(gu::getZVector(dpSys));
+    planes.push_back(new Geom_Plane(o, d));
+    
+    tSize = std::max(tSize, dp->getSize());
+  };
+  
+  if (p1f->getType() == ftr::Type::DatumPlane)
+    resolveDatum(p1f);
+  else
+    resolveSystem(p1f, plane1);
+  
+  if (p2f->getType() == ftr::Type::DatumPlane)
+    resolveDatum(p2f);
+  else
+    resolveSystem(p2f, plane2);
+  
+  if (p3f->getType() == ftr::Type::DatumPlane)
+    resolveDatum(p3f);
+  else
+    resolveSystem(p3f, plane3);
+  
+  if (planes.size() != 3)
+    throw std::runtime_error("Average3P: Invalid plane count");
+  
+  GeomAPI_IntSS intersector(planes.at(0), planes.at(1), Precision::Confusion());
+  if (!intersector.IsDone() || (intersector.NbLines() != 1))
+    throw std::runtime_error("Average3P: Couldn't intersect planes");
+  const opencascade::handle<Geom_Curve> &c = intersector.Line(1);
+  const opencascade::handle<Geom_Line> &l = dynamic_cast<Geom_Line*>(c.get());
+  if (l.IsNull())
+    throw std::runtime_error("Average3P: Couldn't cast intersection results to line");
+  
+  GeomAPI_IntCS ci(c, planes.at(2));
+  if (!ci.IsDone() || (ci.NbPoints() != 1))
+    throw std::runtime_error("Average3P: Couldn't intersect line and plane");
+  osg::Vec3d to = gu::toOsg(ci.Point(1));
+  averageNormal.normalize();
+  osg::Matrixd ns = osg::Matrixd::rotate(osg::Vec3d(0.0, 0.0, 1.0), averageNormal);
+  ns.setTrans(to);
+  csys->setValueQuiet(ns);
+  cachedSize = tSize;
+}
+
+void DatumPlane::goUpdateThrough3P(const UpdatePayload &pli)
+{
+  std::vector<osg::Vec3d> points;
+  for (const auto &p : picks)
+  {
+    std::vector<const Base*> features = pli.getFeatures(p.tag);
+    if (features.size() != 1)
+      continue;
+    std::vector<tls::Resolved> res = tls::resolvePicks(features.front(), p, pli.shapeHistory);
+    if (res.empty())
+      continue;
+    if (res.size() > 1)
+    {
+      std::ostringstream s; s << "WARNING: more than one resolved point" << std::endl;
+      lastUpdateLog += s.str();
+    }
+    if (!res.front().feature->hasAnnex(ann::Type::SeerShape))
+      continue;
+    const ann::SeerShape &ss = res.front().feature->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
+    assert(ss.hasId(res.front().resultId));
+    boost::optional<osg::Vec3d> tp;
+    if (res.front().pick.selectionType == slc::Type::StartPoint)
+    {
+      const TopoDS_Shape &v = ss.getOCCTShape(ss.useGetStartVertex(res.front().resultId));
+      assert(v.ShapeType() == TopAbs_VERTEX);
+      if (!(v.ShapeType() == TopAbs_VERTEX))
+        continue;
+      points.push_back(gu::toOsg(BRep_Tool::Pnt(TopoDS::Vertex(v))));
+    }
+    else if (res.front().pick.selectionType == slc::Type::EndPoint)
+    {
+      const TopoDS_Shape &v = ss.getOCCTShape(ss.useGetEndVertex(res.front().resultId));
+      assert(v.ShapeType() == TopAbs_VERTEX);
+      if (v.ShapeType() != TopAbs_VERTEX)
+        continue;
+      points.push_back(gu::toOsg(BRep_Tool::Pnt(TopoDS::Vertex(v))));
+    }
+    else if (res.front().pick.selectionType == slc::Type::CenterPoint)
+    {
+      std::vector<osg::Vec3d> centers = ss.useGetCenterPoint(res.front().resultId);
+      if (centers.empty())
+        continue;
+      points.push_back(centers.front());
+    }
+    else if (res.front().pick.isParameterType())
+    {
+      const TopoDS_Shape &shape = ss.getOCCTShape(res.front().resultId);
+      assert(shape.ShapeType() == TopAbs_EDGE);
+      if (shape.ShapeType() != TopAbs_EDGE)
+        continue;
+      points.push_back(res.front().pick.getPoint(TopoDS::Edge(shape)));
+    }
   }
   
+  if (points.size() != 3)
+    throw std::runtime_error("Through3P: couldn't get 3 points");
+  
+  osg::Vec3d v0 = points.at(1) - points.at(0);
+  osg::Vec3d v1 = points.at(2) - points.at(0);
+  
+  osg::Vec3d v0n(v0);
+  v0n.normalize();
+  osg::Vec3d v1n(v1);
+  v1n.normalize();
+  if ((1.0 - std::fabs(v0n * v1n)) < std::numeric_limits<float>::epsilon())
+    throw std::runtime_error("Through3P: points are collinear");
+  
+  osg::Vec3d z = v0 ^ v1;
+  z.normalize();
+  osg::Matrixd ts = osg::Matrixd::rotate(osg::Vec3d(0.0, 0.0, 1.0), z);
+  
+  osg::Vec3d center = (points.at(0) + points.at(1) + points.at(2)) / 3.0;
+  ts.setTrans(center);
+  
+  csys->setValueQuiet(ts);
+  cachedSize = std::max(std::max(v0.length(), v1.length()), (v1 - v0).length()) / 2.0;
+}
+
+void DatumPlane::updateVisual()
+{
   updateGeometry();
   updateOverlayViz();
   updateLabelPositions();
@@ -596,7 +864,8 @@ void DatumPlane::updateOverlayViz()
 {
   //just turn everything off and turn on what is needed.
   overlaySubSwitch->setAllChildrenOff();
-  overlaySubSwitch->setChildValue(autoSizeLabel.get(), true);
+  if (dpType != DPType::Constant)
+    overlaySubSwitch->setChildValue(autoSizeLabel.get(), true);
   overlaySubSwitch->setChildValue(flipLabel.get(), true);
   if (!static_cast<bool>(*autoSize))
     overlaySubSwitch->setChildValue(sizeIP.get(), true);
@@ -604,6 +873,8 @@ void DatumPlane::updateOverlayViz()
     overlaySubSwitch->setChildValue(offsetIP.get(), true);
   if (dpType == DPType::AAngleP)
     overlaySubSwitch->setChildValue(angleLabel.get(), true);
+  if (dpType == DPType::Constant)
+    overlaySubSwitch->setChildValue(csysDragger->dragger.get(), true);
 }
 
 void DatumPlane::updateLabelPositions()

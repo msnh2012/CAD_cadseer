@@ -22,6 +22,8 @@
 
 #include <command/base.h>
 
+namespace slc{class Container;}
+
 namespace cmd
 {
   /**
@@ -39,6 +41,11 @@ namespace cmd
     virtual void deactivate() override;
   private:
     void go();
+    bool attemptOffset(const slc::Container&);
+    bool attemptCenter(const std::vector<slc::Container>&);
+    bool attemptAxisAngle(const std::vector<slc::Container>&);
+    bool attemptAverage3P(const std::vector<slc::Container>&);
+    bool attemptThrough3P(const std::vector<slc::Container>&);
   };
 }
 

@@ -47,13 +47,19 @@ namespace ftr
       , POffset //!< offset from 1 planar face. parameter, ipgroup
       , PCenter //!< 2 planar inputs. center, bisect
       , AAngleP //!< through axis angle to planar
-      , Through //!< 3 points, 1 axis and point, 2 axes. under constrained show dragger. gives us things like through single point.
-      , Tangent //!< 1 face pick(use normal at uv), 1 face pick and 1 point pick
-      , PofC //!< plane of curve. xy plane of conics
+      , Average3P //!< average of three planes.
+      , Through3P //!< through 3 points
+//       , Tangent //!< 1 face pick(use normal at uv), 1 face pick and 1 point pick
+//       , PofC //!< plane of curve. xy plane of conics
     };
     
     constexpr static const char *rotationAxis = "rotationAxis";
-    constexpr static const char *plane = "plane";
+    constexpr static const char *plane1 = "plane1";
+    constexpr static const char *plane2 = "plane2";
+    constexpr static const char *plane3 = "plane3";
+    constexpr static const char *point1 = "point1";
+    constexpr static const char *point2 = "point2";
+    constexpr static const char *point3 = "point3";
     
     DatumPlane();
     ~DatumPlane();
@@ -110,6 +116,8 @@ namespace ftr
     void goUpdatePOffset(const UpdatePayload&);
     void goUpdatePCenter(const UpdatePayload&);
     void goUpdateAAngleP(const UpdatePayload&);
+    void goUpdateAverage3P(const UpdatePayload&);
+    void goUpdateThrough3P(const UpdatePayload&);
   };
 }
 
