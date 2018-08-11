@@ -543,22 +543,19 @@ void BOPCheckPage::goSlot()
   settings.endGroup();
   settings.endGroup();
   
-  //I don't why we need to make a copy, but it doesn't work without it.
-  //BRepAlgoAPI_Check also makes a copy of the shape.
-  std::unique_ptr<ann::SeerShape> workCopy = seerShape.createWorkCopy();
   BOPAlgo_ArgumentAnalyzer BOPCheck;
   //   BOPCheck.StopOnFirstFaulty() = true; //this doesn't run any faster but gives us less results.
-  BOPCheck.SetParallelMode(true); //this doesn't help for speed right now(occt 6.9.1).
-  BOPCheck.SetShape1(workCopy->getRootOCCTShape());
+  BOPCheck.SetRunParallel(true);
+  BOPCheck.SetShape1(seerShape.getRootOCCTShape());
   BOPCheck.ArgumentTypeMode() = true;
   BOPCheck.SelfInterMode() = true;
   BOPCheck.SmallEdgeMode() = true;
   BOPCheck.RebuildFaceMode() = true;
   BOPCheck.ContinuityMode() = true;
-  BOPCheck.TangentMode() = true;
-  BOPCheck.MergeVertexMode() = true;
+  BOPCheck.TangentMode() = true; //this only for more than 2 arguments
+  BOPCheck.MergeVertexMode() = true; //this only for more than 2 arguments
   BOPCheck.CurveOnSurfaceMode() = true;
-  BOPCheck.MergeEdgeMode() = true;
+  BOPCheck.MergeEdgeMode() = true; //this only for more than 2 arguments
   
   QApplication::setOverrideCursor(Qt::WaitCursor);
   QApplication::processEvents(); //so wait cursor shows.
@@ -572,10 +569,8 @@ void BOPCheckPage::goSlot()
   {
     for (const auto &resultShape : result.GetFaultyShapes1())
     {
-      uuid resultId = workCopy->findId(resultShape);
-      std::vector<uuid> sourceIds = workCopy->devolve(resultId);
-      assert(sourceIds.size() == 1);
-      uuid sourceId = sourceIds.front();
+      assert(seerShape.hasShape(resultShape));
+      uuid sourceId = seerShape.findId(resultShape);
       items.push_back(QTableWidgetItem(QString::fromStdString(gu::idToString(sourceId))));
       items.push_back(QTableWidgetItem(QString::fromStdString
         (occt::getShapeTypeString(seerShape.getOCCTShape(sourceId)))));
