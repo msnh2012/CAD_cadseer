@@ -98,6 +98,7 @@ Widget::Widget(osgViewer::ViewerBase::ThreadingModel threadingModel) : QWidget()
     
     osg::DisplaySettings::instance()->setTextShaderTechnique("SIGNED_DISTANCE_FUNCTION"); 
     setThreadingModel(threadingModel);
+    setUseConfigureAffinity(false);
     setKeyEventSetsDone(0); //stops the viewer from freezing when the escape key is pressed.
     QTimer *timer = new QTimer(this);
     connect(timer, SIGNAL(timeout()), this, SLOT(update())); //inherited update slot.
