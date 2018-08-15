@@ -30,6 +30,7 @@ Isolate::Isolate() : Base(), id(gu::createNilId()), mask(msg::ThreeD | msg::Over
 {
   setupDispatcher();
   observer->name = "cmd::Isolate";
+  shouldUpdate = false;
 }
 
 Isolate::~Isolate() {}
