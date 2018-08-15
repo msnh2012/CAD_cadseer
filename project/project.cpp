@@ -1311,6 +1311,8 @@ void Project::open()
       }
     }
     
+    observer->outBlocked(msg::buildStatusMessage("Loading: Project States"));
+    qApp->processEvents();
     for (const auto &state : project->states().array())
     {
       uuid fId = gu::stringToId(state.id());
@@ -1324,6 +1326,8 @@ void Project::open()
       observer->outBlocked(mMessage);
     }
     
+    observer->outBlocked(msg::buildStatusMessage("Loading: Feature Connections"));
+    qApp->processEvents();
     for (const auto &fConnection : project->connections().connection())
     {
       uuid source = gu::stringToId(fConnection.sourceId());
@@ -1335,6 +1339,8 @@ void Project::open()
       connect(source, target, inputType);
     }
     
+    observer->outBlocked(msg::buildStatusMessage("Loading: Expressions"));
+    qApp->processEvents();
     expr::StringTranslator sTranslator(*expressionManager);
     for (const auto &sExpression : project->expressions().array())
     {
@@ -1387,6 +1393,8 @@ void Project::open()
       }
     }
     
+    observer->outBlocked(msg::buildStatusMessage("Loading: Shape History"));
+    qApp->processEvents();
     if (project->shapeHistory().present())
       shapeHistory->serialIn(project->shapeHistory().get());
     
