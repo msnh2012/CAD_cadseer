@@ -72,6 +72,26 @@
     <file>resources/images/constructionRemoveFaces.svg</file>
     <file>resources/images/constructionTorus.svg</file>
     <file>resources/images/constructionThread.svg</file>
+    <file>resources/images/constructionSketch.svg</file>
+    <file>resources/images/sketchPoint.svg</file>
+    <file>resources/images/sketchLine.svg</file>
+    <file>resources/images/sketchArc.svg</file>
+    <file>resources/images/sketchCircle.svg</file>
+    <file>resources/images/sketchBezeir.svg</file>
+    <file>resources/images/sketchCoincident.svg</file>
+    <file>resources/images/sketchHorizontal.svg</file>
+    <file>resources/images/sketchVertical.svg</file>
+    <file>resources/images/sketchTangent.svg</file>
+    <file>resources/images/sketchAngle.svg</file>
+    <file>resources/images/sketchDiameter.svg</file>
+    <file>resources/images/sketchDistance.svg</file>
+    <file>resources/images/sketchDragged.svg</file>
+    <file>resources/images/sketchEqual.svg</file>
+    <file>resources/images/sketchEqualAngle.svg</file>
+    <file>resources/images/sketchMidPoint.svg</file>
+    <file>resources/images/sketchParallel.svg</file>
+    <file>resources/images/sketchPerpendicular.svg</file>
+    <file>resources/images/sketchSymmetry.svg</file>
     <file>resources/images/editBase.svg</file>
     <file>resources/images/editRemove.svg</file>
     <file>resources/images/editUpdate.svg</file>
