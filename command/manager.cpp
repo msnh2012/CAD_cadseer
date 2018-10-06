@@ -62,6 +62,7 @@
 #include <command/thread.h>
 #include <command/datumaxis.h>
 #include <command/datumplane.h>
+#include <command/sketch.h>
 #include <message/dispatch.h>
 #include <message/observer.h>
 #include <selection/message.h>
@@ -218,6 +219,9 @@ void Manager::setupDispatcher()
   
   mask = msg::Request | msg::Construct | msg::DatumPlane;
   observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Manager::constructDatumPlaneDispatched, this, _1)));
+  
+  mask = msg::Request | msg::Construct | msg::Sketch;
+  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Manager::constructSketchDispatched, this, _1)));
   
   mask = msg::Request | msg::Project | msg::Revision | msg::Dialog;
   observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Manager::revisionDispatched, this, _1)));
@@ -529,6 +533,11 @@ void Manager::constructDatumPlaneDispatched(const msg::Message&)
   addCommand(f);
 }
 
+void Manager::constructSketchDispatched(const msg::Message&)
+{
+  std::shared_ptr<Sketch> f(new Sketch());
+  addCommand(f);
+}
 
 //editing commands and dispatching.
 void Manager::editFeatureDispatched(const msg::Message&)
@@ -598,6 +607,12 @@ BasePtr editUnion(ftr::Base *feature)
   return command;
 }
 
+BasePtr editSketch(ftr::Base *feature)
+{
+  std::shared_ptr<Base> command(new SketchEdit(feature));
+  return command;
+}
+
 void Manager::setupEditFunctionMap()
 {
   editFunctionMap.insert(std::make_pair(ftr::Type::Blend, std::bind(editBlend, std::placeholders::_1)));
@@ -606,4 +621,5 @@ void Manager::setupEditFunctionMap()
   editFunctionMap.insert(std::make_pair(ftr::Type::Intersect, std::bind(editIntersect, std::placeholders::_1)));
   editFunctionMap.insert(std::make_pair(ftr::Type::Subtract, std::bind(editSubtract, std::placeholders::_1)));
   editFunctionMap.insert(std::make_pair(ftr::Type::Union, std::bind(editUnion, std::placeholders::_1)));
+  editFunctionMap.insert(std::make_pair(ftr::Type::Sketch, std::bind(editSketch, std::placeholders::_1)));
 }

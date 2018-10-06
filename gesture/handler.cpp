@@ -858,6 +858,14 @@ void Handler::constructMenu()
       (msg::Request | msg::Construct | msg::DatumAxis).to_string(),
       constructionBase
     );
+    constructNode
+    (
+      mdv::gestureCommand,
+      ":/resources/images/constructionSketch.svg",
+      QObject::tr("Sketch Command").toStdString(),
+      (msg::Request | msg::Construct | msg::Sketch).to_string(),
+      constructionBase
+    );
     osg::MatrixTransform *constructionInstance = constructNode
     (
       mdv::gestureMenu,

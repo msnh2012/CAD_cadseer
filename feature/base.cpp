@@ -234,14 +234,6 @@ void Base::updateVisual()
   double angular = osg::DegreesToRadians(prf::manager().rootPtr->visual().mesh().angularDeflection());
   float screenHeight = osg::DisplaySettings::instance()->getScreenHeight(); 
   
-  occt::BoundingBox bbox(ss.getRootOCCTShape());
-  double diagonal = bbox.getDiagonal();
-  if (diagonal < Precision::Confusion())
-  {
-    std::cout << "WARNING: bounding box diagonal is less than confusion in Base::updateVisual()" << std::endl;
-    diagonal = 1.0;
-  }
-  
   ann::ShapeIdHelper helper = ss.buildHelper();
   mdv::ShapeGeometryBuilder sBuilder(ss.getRootOCCTShape(), helper);
   

@@ -33,8 +33,6 @@ IF(OCCT_PROJECT_PATH)
     endif(NOT EXISTS ${OCCT_BUILD_INCLUDE})
     set(OCCT_INCLUDE_DIRS ${OCCT_INCLUDE_DIRS} ${OCCT_BUILD_INCLUDE})
     
-    include_directories(${OCCT_INCLUDE_DIRS})
-    
     set(OCCT_BUILD_LIB "${OCCT_PROJECT_PATH}/build/lin64/gcc/libd")
     if(NOT EXISTS ${OCCT_BUILD_LIB})
         message(FATAL_ERROR "build library path not valid. ${OCCT_BUILD_LIB}")
@@ -98,8 +96,6 @@ IF(OSG_PROJECT_PATH)
     endif(NOT EXISTS ${OSG_BUILD_INCLUDE})
     set(OPENSCENEGRAPH_INCLUDE_DIRS ${OPENSCENEGRAPH_INCLUDE_DIRS} ${OSG_BUILD_INCLUDE})
     
-    include_directories(${OPENSCENEGRAPH_INCLUDE_DIRS})
-    
     set(OSG_BUILD_LIB "${OSG_PROJECT_PATH}/build/lib")
     if(NOT EXISTS ${OSG_BUILD_LIB})
         message(FATAL_ERROR "build library path not valid. ${OSG_BUILD_LIB}")
@@ -130,7 +126,6 @@ IF(OSGQT_PROJECT_PATH)
         message(FATAL_ERROR "include path not valid. ${OSGQT_SOURCE_INCLUDE}")
     endif(NOT EXISTS ${OSGQT_SOURCE_INCLUDE})
     set(OSGQT_INCLUDE_DIRS ${OSGQT_INCLUDE_DIRS} ${OSGQT_SOURCE_INCLUDE})
-    include_directories(${OSGQT_INCLUDE_DIRS})
     
     set(OSGQT_BUILD_LIB "${OSGQT_PROJECT_PATH}/build/lib")
     if(NOT EXISTS ${OSGQT_BUILD_LIB})
@@ -148,7 +143,6 @@ SET(OSGQT_LIBRARIES "osgQt5")
 find_package(Spnav)
 IF(SPNAV_FOUND)
     add_definitions(-DSPNAV_FOUND)
-    include_directories(${SPNAV_INCLUDE_DIR})
 ENDIF(SPNAV_FOUND)
 
 find_package(Eigen3 REQUIRED)
@@ -241,6 +235,43 @@ else(IGL_INCLUDE_FOUND AND IGL_LIB_FOUND AND NETGEN_INCLUDE_FOUND AND NETGEN_LIB
 endif(IGL_INCLUDE_FOUND AND IGL_LIB_FOUND AND NETGEN_INCLUDE_FOUND AND NETGEN_LIB_FOUND AND CGAL_FOUND)
 #end squash
 
+#begin sketch
+SET(SOLVESPACE_PROJECT_PATH "" CACHE PATH "Path to SOLVESPACE project")
+MARK_AS_ADVANCED(SOLVESPACE_PROJECT_PATH)
+IF(SOLVESPACE_PROJECT_PATH)
+  MESSAGE(STATUS "SOLVESPACE_PROJECT_PATH is set to: ${SOLVESPACE_PROJECT_PATH}")
+
+  set(SOLVESPACE_INCLUDE "${SOLVESPACE_PROJECT_PATH}/include")
+  message(STATUS "${SOLVESPACE_INCLUDE}")
+  if(NOT EXISTS ${SOLVESPACE_INCLUDE})
+    message(STATUS "solvespace include path not valid. sketch will not be built.")
+  else(NOT EXISTS ${SOLVESPACE_INCLUDE})
+    message(STATUS "solvespace include found.")
+    set(SOLVESPACE_INCLUDE_FOUND true)
+  endif(NOT EXISTS ${SOLVESPACE_INCLUDE})
+  
+  #assuming 'build' sub directory
+  set(SOLVESPACE_LIB "${SOLVESPACE_PROJECT_PATH}/build/src/libslvs.so")
+  if(NOT EXISTS ${SOLVESPACE_LIB})
+    message(STATUS "solvespace lib missing. sketch will not be built.")
+  else(NOT EXISTS ${SOLVESPACE_LIB})
+    message(STATUS "solvespace lib found.")
+    set(SOLVESPACE_LIB_FOUND true)
+  endif(NOT EXISTS ${SOLVESPACE_LIB})
+  
+  if(SOLVESPACE_INCLUDE_FOUND AND SOLVESPACE_LIB_FOUND)
+    add_definitions(-DSOLVESPACE_FOUND)
+    set (SKETCH_SOURCES
+      sketch/solver.cpp
+      sketch/selection.cpp
+      sketch/visual.cpp
+    )
+  endif(SOLVESPACE_INCLUDE_FOUND AND SOLVESPACE_LIB_FOUND)
+ELSE(SOLVESPACE_PROJECT_PATH)
+  MESSAGE(STATUS "SOLVESPACE_PROJECT_PATH is empty. sketch will not be built.")
+ENDIF(SOLVESPACE_PROJECT_PATH)
+#end sketch
+
 #cgal was corrupting boost libraries variable. so had to move it after the cgal find.
 find_package(Boost 1.62.0 REQUIRED COMPONENTS system graph timer filesystem)
 #message(${Boost_LIBRARIES})
@@ -258,7 +289,8 @@ SET(LIBRARY_INCLUDE_PATHS
     ${CMAKE_CURRENT_BINARY_DIR} #needed to find moc files.
     ${OPENSCENEGRAPH_INCLUDE_DIRS}
     ${OSGQT_INCLUDE_DIRS}
-    ${OCC_INCLUDE_DIR}
+    ${OCCT_INCLUDE_DIRS}
+    ${SPNAV_INCLUDE_DIR}
     ${EIGEN3_INCLUDE_DIR}
     ${XSDCXX_INCLUDE_DIR}
     ${XERCESC_INCLUDE_DIR}
@@ -267,8 +299,9 @@ SET(LIBRARY_INCLUDE_PATHS
     ${ZLIB_INCLUDE_DIRS}
     ${LIBZIP_INCLUDE_DIR_ZIP}
     ${CMAKE_SOURCE_DIR}/libreoffice/libzippp/src/
+    ${SOLVESPACE_INCLUDE}
     )
-INCLUDE_DIRECTORIES(SYSTEM ${LIBRARY_INCLUDE_PATHS}) #system suppresses warnings for those libraries.
+include_directories(SYSTEM ${LIBRARY_INCLUDE_PATHS}) #system suppresses warnings for those libraries.
 
 SET(MODELVIZ_SOURCES
     modelviz/base.cpp
@@ -293,6 +326,7 @@ SET(MESSAGE_SOURCES
     
 SET(FEATURE_SOURCES
     feature/parameter.cpp
+    feature/inputtype.cpp
     feature/base.cpp
     feature/box.cpp
     feature/boxbuilder.cpp
@@ -337,7 +371,7 @@ SET(FEATURE_SOURCES
     feature/torus.cpp
     feature/thread.cpp
     feature/datumaxis.cpp
-    feature/inputtype.cpp
+    feature/sketch.cpp
     )
     
 SET(ANNEX_SOURCES
@@ -396,6 +430,7 @@ SET(DIALOG_SOURCES
     dialogs/tagwidget.cpp
     dialogs/about.cpp
     dialogs/splitterdecorated.cpp
+    dialogs/sketch.cpp
     )
     
 SET(PREFERENCE_SOURCES
@@ -496,6 +531,7 @@ SET(COMMAND_SOURCES
     command/dissolve.cpp
     command/datumaxis.cpp
     command/datumplane.cpp
+    command/sketch.cpp
     )
     
 SET(LIBRARY_SOURCES
@@ -561,6 +597,7 @@ SET(CADSEER_SOURCES
     ${SQUASH_SOURCES}
     ${LIBREOFFICE_SOURCES}
     ${LOD_SOURCES}
+    ${SKETCH_SOURCES}
     )
 
 SET(CADSEER_MOC_HDRS
@@ -591,6 +628,7 @@ SET(CADSEER_MOC_HDRS
     dialogs/commitwidget.h
     lod/manager.h
     dialogs/about.h
+    dialogs/sketch.h
     )
 
 SET(CADSEER_LIBRARIES
@@ -605,6 +643,7 @@ SET(CADSEER_LIBRARIES
     git2pp
     ${ZLIB_LIBRARIES}
     ${LIBZIP_LIBRARY}
+    ${SOLVESPACE_LIB}
     )
 
 SET(CADSEER_UIS
