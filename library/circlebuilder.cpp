@@ -97,7 +97,10 @@ CircleBuilder::operator osg::Geometry* () const
   osg::Vec3Array *array = new osg::Vec3Array();
   std::copy(allPoints.begin(), allPoints.end(), std::back_inserter(*array));
   out->setVertexArray(array);
-  out->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::LINE_LOOP, 0, array->size()));
+  if (isCompleteCircle())
+    out->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::LINE_LOOP, 0, array->size()));
+  else
+    out->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::LINE_STRIP, 0, array->size()));
   
   return out.release();
 }

@@ -16,9 +16,9 @@
     <angularIncrement>15.0</angularIncrement>
   </dragger>
   <interactiveParameter>
-    <characterSize>0.1875</characterSize>
-    <arrowWidth>0.125</arrowWidth>
-    <arrowHeight>0.25</arrowHeight>
+    <characterSize>20.0</characterSize>
+    <arrowWidth>10.0</arrowWidth>
+    <arrowHeight>20.0</arrowHeight>
   </interactiveParameter>
   <gesture>
     <animationSeconds>1.0</animationSeconds>

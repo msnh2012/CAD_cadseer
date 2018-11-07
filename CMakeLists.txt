@@ -549,6 +549,10 @@ SET(LIBRARY_SOURCES
     library/lineardimension.cpp
     library/ipgroup.cpp
     library/plabel.cpp
+    library/sketchlineardimension.cpp
+    library/angulardimension.cpp
+    library/circlebuilderlod.cpp
+    library/diameterdimension.cpp
     )
     
 SET(VIEWER_SOURCES

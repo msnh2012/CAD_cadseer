@@ -60,15 +60,11 @@ void DimensionArrow::build()
   autoArrowScale->setAutoScaleToScreen(true);
   this->addChild(autoArrowScale.get());
   
-  arrowScale = new osg::MatrixTransform();
-  arrowScale->setMatrix(osg::Matrixd::scale(75.0, 75.0, 75.0));
-  autoArrowScale->addChild(arrowScale.get());
-  
   billboard = new osg::Billboard();
   billboard->setAxis(osg::Vec3d(0.0, 1.0, 0.0));
   billboard->setNormal(osg::Vec3d(0.0, 0.0, 1.0));
   billboard->setMode(osg::Billboard::AXIAL_ROT);
-  arrowScale->addChild(billboard.get());
+  autoArrowScale->addChild(billboard.get());
   
   const prf::InteractiveParameter& iPref = prf::manager().rootPtr->interactiveParameter();
   arrowWidth = iPref.arrowWidth();
@@ -320,7 +316,7 @@ void LinearDimension::build()
   
   textScale = new osg::MatrixTransform();
   textScale->setName("textScale");
-  textScale->setMatrix(osg::Matrixd::scale(75.0, 75.0, 75.0));
+  textScale->setMatrix(osg::Matrixd::scale(1.0, 1.0, 1.0)); //magic number
   textPosition->addChild(textScale.get());
   
   text = new osgText::Text();

@@ -20,12 +20,14 @@
 #ifndef SLC_OVERLAYHANDLER_H
 #define SLC_OVERLAYHANDLER_H
 
+#include <memory>
+
 #include <osg/ref_ptr>
 #include <osgGA/GUIEventHandler>
 #include <osgManipulator/Dragger> //needed for pointerInfo
 
 namespace vwr{class Overlay;}
-
+namespace msg{class Message; class Observer;}
 namespace lbr {class IPGroup; class PLabel;}
 
 namespace slc
@@ -44,8 +46,14 @@ namespace slc
     osg::ref_ptr<lbr::IPGroup> dimension;
     osg::ref_ptr<lbr::PLabel> pLabel;
     
+    std::unique_ptr<msg::Observer> observer;
+    void setupDispatcher();
+    void requestFreezeDispatched(const msg::Message&);
+    void requestThawDispatched(const msg::Message&);
+    
     osg::NodePath path;
     bool isDrag = false;
+    bool isActive = true;
   };
 }
 

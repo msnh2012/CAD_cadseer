@@ -311,28 +311,9 @@ void Parameter::requestLinkSlot(const QString &stringIn)
 {
   //for now we only get here if we have a double. because connect inside double condition.
   
-  expr::Manager &eManager = app::instance()->getProject()->getManager();
-  boost::uuids::uuid id = gu::stringToId(stringIn.toStdString());
-  assert(!id.is_nil());
-  assert(eManager.hasFormula(id));
-  
-  if (!parameter->isConstant())
-  {
-    //parameter is already linked.
-    assert(eManager.hasParameterLink(parameter->getId()));
-    eManager.removeParameterLink(parameter->getId());
-  }
-  
-  double value = boost::get<double>(eManager.getFormulaValue(id));
-  eManager.addLink(parameter->getId(), id);
-  parameter->setValue(value);
-  parameter->setConstant(false);
-  
-  std::ostringstream gm;
-  gm << "Linking parameter " << parameter->getName().toStdString()
-  << " to formula " << eManager.getFormulaName(id);
-  
-  observer->outBlocked(msg::buildGitMessage(gm.str()));
+  boost::uuids::uuid eId = gu::stringToId(stringIn.toStdString());
+  assert(!eId.is_nil());
+  app::instance()->getProject()->expressionLink(parameter->getId(), eId);
   
   if (prf::manager().rootPtr->dragger().triggerUpdateOnFinish())
     observer->out(msg::Mask(msg::Request | msg::Project | msg::Update));
@@ -343,19 +324,9 @@ void Parameter::requestLinkSlot(const QString &stringIn)
 void Parameter::requestUnlinkSlot()
 {
   //for now we only get here if we have a double. because connect inside double condition.
-  expr::Manager &eManager = static_cast<app::Application *>(qApp)->getProject()->getManager();
-  assert(eManager.hasParameterLink(parameter->getId()));
-  boost::uuids::uuid fId = eManager.getFormulaLink(parameter->getId());
-  eManager.removeParameterLink(parameter->getId());
-  parameter->setConstant(true);
-  
-  std::ostringstream gm;
-  gm << "Unlinking parameter " << parameter->getName().toStdString()
-  << " from formula " << eManager.getFormulaName(fId);
+  app::instance()->getProject()->expressionUnlink(parameter->getId());
   
   //unlinking itself shouldn't trigger an update because the parameter value is still the same.
-  
-  observer->outBlocked(msg::buildGitMessage(gm.str()));
 }
 
 void Parameter::valueHasChanged()

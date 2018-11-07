@@ -827,7 +827,7 @@ namespace prf
   InteractiveParameter::CharacterSizeType InteractiveParameter::
   characterSize_default_value ()
   {
-    return CharacterSizeType (1.0);
+    return CharacterSizeType (20.0);
   }
 
   const InteractiveParameter::ArrowWidthType& InteractiveParameter::
@@ -857,7 +857,7 @@ namespace prf
   InteractiveParameter::ArrowWidthType InteractiveParameter::
   arrowWidth_default_value ()
   {
-    return ArrowWidthType (.5);
+    return ArrowWidthType (10.0);
   }
 
   const InteractiveParameter::ArrowHeightType& InteractiveParameter::
@@ -887,7 +887,7 @@ namespace prf
   InteractiveParameter::ArrowHeightType InteractiveParameter::
   arrowHeight_default_value ()
   {
-    return ArrowHeightType (1.0);
+    return ArrowHeightType (20.0);
   }
 
 

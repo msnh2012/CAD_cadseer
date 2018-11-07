@@ -114,6 +114,17 @@ namespace lbr
     osg::Geometry* buildIconUnlink();
     std::string fileNameFromResource(const std::string &);
   }
+  
+  namespace dim
+  {
+    static const Tag ArrowTag
+    ({
+      "Dimension",
+      "Arrow"
+    });
+    
+    osg::Geometry* buildArrow();
+  }
 }
 
 #endif // LBR_GEOMETRYLIBRARY_H

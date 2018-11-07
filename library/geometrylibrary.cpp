@@ -83,6 +83,8 @@ void Manager::setup()
   //there seems to be someking of bug with the openscenegraph svg loader.
   //getting artifacts in background. Going to leave for now as we are going
   //to use qt to load icons anyway.
+  
+  this->link(lbr::dim::ArrowTag, lbr::dim::buildArrow());
 }
 
 osg::Geometry* Manager::getGeometry(const Tag& tagIn)
@@ -238,3 +240,36 @@ std::string lbr::csys::fileNameFromResource(const std::string &resourceName)
   return filePath.string();
 }
 
+/*! @brief build an arrow for a dimension
+ * 
+ * @details The arrow is built along the x direction. 
+ * Symmetrical around the x axis with the point at 0,0,0 and 
+ * the base from 0, .5, 0 to 0, -.5, 0. Height and width are both 
+ * 1 unit and designed to be added to a scale node for sizing. 
+ * color is not established and designed to be used with
+ * material state.
+ * 
+ * @return geometry pointer. caller is responsible for memory.
+ * 
+ */
+osg::Geometry* lbr::dim::buildArrow()
+{
+  osg::Geometry *out = new osg::Geometry();
+  
+  osg::Vec3Array *array = new osg::Vec3Array();
+  array->push_back(osg::Vec3(0.0, 0.0, 0.0));
+  array->push_back(osg::Vec3(-1.0, 0.5, 0.0));
+  array->push_back(osg::Vec3(-1.0, -0.5, 0.0));
+  out->setVertexArray(array);
+  
+  osg::Vec3Array *normalArray = new osg::Vec3Array();
+  normalArray->push_back(osg::Vec3(0.0, 0.0, 1.0));
+  out->setNormalArray(normalArray);
+  out->setNormalBinding(osg::Geometry::BIND_OVERALL);
+  
+  out->setUseDisplayList(false);
+  out->setUseVertexBufferObjects(true);
+  
+  out->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::TRIANGLES, 0, 3));
+  return out;
+}

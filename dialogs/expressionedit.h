@@ -87,6 +87,20 @@ namespace dlg
     void requestLinkSignal(const QString&);
   };
   
+  //! a filter to do drag and drop for expression edit.
+  class EnterFilter : public QObject
+  {
+    Q_OBJECT
+  public:
+    explicit EnterFilter(QObject *parent) : QObject(parent){}
+    
+  protected:
+    virtual bool eventFilter(QObject *obj, QEvent *event) override;
+    
+  Q_SIGNALS:
+    void enterPressed();
+  };
+  
   /*! @brief Delegate expression editor
    * 
    * override setEditorData and setModelData.

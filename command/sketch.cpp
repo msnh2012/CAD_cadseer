@@ -75,7 +75,11 @@ SketchEdit::SketchEdit(ftr::Base *fIn) : Base()
   assert(feature);
 }
 
-SketchEdit::~SketchEdit(){}
+SketchEdit::~SketchEdit()
+{
+  if (dialog)
+    dialog->deleteLater();
+}
 
 std::string SketchEdit::getStatusMessage()
 {

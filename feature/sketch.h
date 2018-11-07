@@ -51,6 +51,13 @@ namespace ftr
     void draggerShow();
     void draggerHide();
     
+    bool hasHPPair(uint32_t);
+    bool hasHPPair(const ftr::prm::Parameter*);
+    void addHPPair(uint32_t, const std::shared_ptr<ftr::prm::Parameter>&);
+    void removeHPPair(uint32_t);
+    ftr::prm::Parameter* getHPParameter(uint32_t);
+    uint32_t getHPHandle(const ftr::prm::Parameter*);
+    
   protected:
     std::unique_ptr<ann::SeerShape> sShape;
     std::unique_ptr<skt::Solver> solver;
@@ -59,6 +66,7 @@ namespace ftr
     std::unique_ptr<ann::CSysDragger> csysDragger;
     osg::ref_ptr<osg::Switch> draggerSwitch;
     std::vector<boost::uuids::uuid> wireIds;
+    std::vector<std::pair<uint32_t, std::shared_ptr<ftr::prm::Parameter>>> hpPairs;
     
     void updateSeerShape();
     

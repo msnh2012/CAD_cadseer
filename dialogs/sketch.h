@@ -28,12 +28,14 @@
 
 class QTabWidget;
 
-namespace ftr{class Sketch;}
+namespace ftr{class Sketch; namespace prm{class Parameter;}}
 namespace skt{class Selection;}
 namespace msg{class Message; class Observer;}
 
 namespace dlg
 {
+  class ExpressionEdit;
+  
   class EditPage : public QWidget
   {
     Q_OBJECT
@@ -82,8 +84,12 @@ namespace dlg
     bool wasVisible3d = false;
     bool wasVisibleOverlay = false;
     std::unique_ptr<msg::Observer> observer;
+    void setupDispatcher();
+    void selectParameterDispatched(const msg::Message &);
     
-    QTabWidget *tabWidget;
+    QTabWidget *tabWidget = nullptr;
+    ExpressionEdit *pEdit = nullptr;
+    ftr::prm::Parameter *parameter = nullptr; //!< currently selected parameter or nullptr
     
     void buildGui();
     QWidget* buildPositionPage();
@@ -119,6 +125,15 @@ namespace dlg
     void remove();
     void cancel();
     void toggleConstruction();
+    
+    void setEditLinked();
+    void setEditUnlinked();
+    
+  private Q_SLOTS:
+    void requestParameterLinkSlot(const QString &);
+    void requestParameterUnlinkSlot();
+    void updateParameterSlot();
+    void textEditedParameterSlot(const QString &);
   };
 }
 

@@ -104,17 +104,16 @@ void PLabel::build()
 {
   const prf::InteractiveParameter& iPref = prf::manager().rootPtr->interactiveParameter();
   
+  setName("lbr::PLabel");
+  
   autoTransform = new osg::AutoTransform();
+  autoTransform->setName("lbr::PLabel::AutoTransform");
   autoTransform->setAutoRotateMode(osg::AutoTransform::ROTATE_TO_SCREEN);
   autoTransform->setAutoScaleToScreen(true);
   this->addChild(autoTransform.get());
   
-  osg::MatrixTransform *textScale = new osg::MatrixTransform();
-  textScale->setMatrix(osg::Matrixd::scale(75.0, 75.0, 75.0));
-  autoTransform->addChild(textScale);
-  
   text = new osgText::Text();
-  text->setName("PLabel");
+  text->setName("lbr::PLabel::Text");
   osg::ref_ptr<osgQt::QFontImplementation> fontImplement(new osgQt::QFontImplementation(qApp->font()));
   osg::ref_ptr<osgText::Font> textFont(new osgText::Font(fontImplement.get()));
   text->setFont(textFont);
@@ -123,7 +122,7 @@ void PLabel::build()
   text->setBackdropColor(osg::Vec4(1.0, 1.0, 1.0, 1.0));
   text->setCharacterSize(iPref.characterSize());
   text->setAlignment(osgText::Text::CENTER_CENTER);
-  textScale->addChild(text.get());
+  autoTransform->addChild(text.get());
 }
 
 void PLabel::setText()

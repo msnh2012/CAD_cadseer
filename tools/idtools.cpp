@@ -52,5 +52,17 @@ std::string gu::idToShortString(const boost::uuids::uuid &idIn)
 
 boost::uuids::uuid gu::stringToId(const std::string &stringIn)
 {
-  return sGen(stringIn);
+  uuid out;
+  try
+  {
+    out = sGen(stringIn);
+  }
+  catch (...)
+  {
+    out = nGen();
+  }
+  if (out.version() == boost::uuids::uuid::version_unknown)
+    out = nGen();
+  
+  return out;
 }

@@ -1,3 +1,22 @@
+/*
+ * CadSeer. Parametric Solid Modeling.
+ * Copyright (C) 2018  Thomas S. Anderson blobfish.at.gmx.com
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+
 #ifndef SKT_VISUAL_H
 #define SKT_VISUAL_H
 
@@ -26,6 +45,8 @@ namespace osgText
 {
   class Text;
 }
+namespace lbr{class AngularDimension;}
+namespace ftr{namespace prm{class Parameter;}}
 
 namespace skt
 {
@@ -104,12 +125,12 @@ namespace skt
     void addHorizontal();
     void addVertical();
     void addTangent();
-    void addDistance();
+    boost::optional<std::pair<SSHandle, std::shared_ptr<ftr::prm::Parameter>>> addDistance();
     void addEqual();
     void addEqualAngle();
-    void addDiameter();
+    boost::optional<std::pair<SSHandle, std::shared_ptr<ftr::prm::Parameter>>> addDiameter();
     void addSymmetric();
-    void addAngle();
+    boost::optional<std::pair<SSHandle, std::shared_ptr<ftr::prm::Parameter>>> addAngle();
     void addParallel();
     void addPerpendicular();
     void addMidpoint();
@@ -143,6 +164,7 @@ namespace skt
     static double distancePointLine(const osg::Vec3d&, const osg::Vec3d&, const osg::Vec3d&);
     bool isConstruction(SSHandle);
     boost::uuids::uuid getEntityId(SSHandle);
+    void reHighlight();
     ///@}
     
   private:
@@ -179,6 +201,9 @@ namespace skt
     osg::Vec3d lineVector(SSHandle);
     std::pair<osg::Vec3d, osg::Vec3d> endPoints(SSHandle);
     osg::Vec3d boundingCenter(const std::vector<SSHandle>&);
+    void placeAngularDimension(osg::MatrixTransform*, const std::vector<SSHandle>&);
+    void placeLinearDimension(SSHandle);
+    void placeDiameterDimension(SSHandle);
     
     void goPreHighlight();
     void clearPreHighlight();

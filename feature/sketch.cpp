@@ -97,6 +97,68 @@ void Sketch::draggerHide()
   draggerSwitch->setAllChildrenOff();
 }
 
+bool Sketch::hasHPPair(uint32_t hIn)
+{
+  for (const auto &p : hpPairs)
+  {
+    if (p.first == hIn)
+      return true;
+  }
+  return false;
+}
+
+bool Sketch::hasHPPair(const ftr::prm::Parameter *pIn)
+{
+  for (const auto &p : hpPairs)
+  {
+    if (p.second.get() == pIn)
+      return true;
+  }
+  return false;
+}
+
+void Sketch::addHPPair(uint32_t hIn, const std::shared_ptr<ftr::prm::Parameter> &pIn)
+{
+  assert(!hasHPPair(hIn));
+  hpPairs.push_back(std::make_pair(hIn, pIn));
+  parameters.push_back(pIn.get());
+  pIn->connectValue(boost::bind(&Sketch::setModelDirty, this));
+}
+
+void Sketch::removeHPPair(uint32_t hIn)
+{
+  for (auto it = hpPairs.begin(); it != hpPairs.end(); ++it)
+  {
+    if (it->first == hIn)
+    {
+      hpPairs.erase(it);
+      return;
+    }
+  }
+}
+
+ftr::prm::Parameter* Sketch::getHPParameter(uint32_t hIn)
+{
+  assert(hasHPPair(hIn));
+  for (const auto &p : hpPairs)
+  {
+    if (p.first == hIn)
+      return p.second.get();
+  }
+  return nullptr;
+}
+
+uint32_t Sketch::getHPHandle(const ftr::prm::Parameter *pIn)
+{
+  assert(hasHPPair(pIn));
+  for (const auto &p : hpPairs)
+  {
+    if (p.second.get() == pIn)
+      return p.first;
+  }
+  return 0;
+}
+
 void Sketch::updateModel(const UpdatePayload &/*payloadIn*/)
 {
   setFailure();
@@ -110,9 +172,14 @@ void Sketch::updateModel(const UpdatePayload &/*payloadIn*/)
       throw std::runtime_error("feature is skipped");
     }
     
+    //set solver constraints to parameters.
+    for (const auto &p : hpPairs)
+      solver->updateConstraintValue(p.first, static_cast<double>(*p.second));
+    
     solver->solve(solver->getGroup(), true);
     if (solver->getResultCode() != 0)
       throw std::runtime_error(solver->getResultMessage());
+    visual->update();
     
     updateSeerShape();
     mainTransform->setMatrix(osg::Matrixd::identity());
@@ -301,11 +368,14 @@ void Sketch::updateSeerShape()
     }
     if (entity.get().type == SLVS_E_CIRCLE)
     {
+      auto de = solver->findEntity(entity.get().distance);
+      assert(de);
+      double radius = solver->getParameterValue(de.get().param[0]).get();
       //this doesn't need connection
-      osg::Vec3d p0 = convertPoint(entity.get().point[0]) * toWorld;
+      osg::Vec3d p0 = convertPoint(entity.get().point[0]);
       gp_Ax2 orientation = gu::toOcc(toWorld);
       orientation.SetLocation(gp_Pnt(gu::toOcc(p0).XYZ()));
-      gp_Circ circle(orientation, entity.get().distance);
+      gp_Circ circle(orientation, radius);
       
       BRepBuilderAPI_MakeEdge em(circle);
       return em.Edge();
@@ -313,11 +383,11 @@ void Sketch::updateSeerShape()
     if (entity.get().type == SLVS_E_ARC_OF_CIRCLE)
     {
       //center doesn't need connection.
-      osg::Vec3d p0 = convertPoint(entity.get().point[0]) * toWorld;
+      osg::Vec3d p0 = convertPoint(entity.get().point[0]);
       gp_Ax2 orientation = gu::toOcc(toWorld);
       orientation.SetLocation(gp_Pnt(gu::toOcc(p0).XYZ()));
       
-      osg::Vec3d p1 = convertPoint(entity.get().point[1]) * toWorld;
+      osg::Vec3d p1 = convertPoint(entity.get().point[1]);
       gp_Circ circle(orientation, (p1 - p0).length());
       
       assert(vMap.count(entity.get().point[1]) == 1);

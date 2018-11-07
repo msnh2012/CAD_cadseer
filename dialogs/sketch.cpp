@@ -1,6 +1,6 @@
 /*
- * <one line to give the program's name and a brief idea of what it does.>
- * Copyright (C) 2018  tanderson <email>
+ * CadSeer. Parametric Solid Modeling.
+ * Copyright (C) 2018  Thomas S. Anderson blobfish.at.gmx.com
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,7 +14,11 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
+
+#include <iostream>
+#include <boost/variant.hpp>
 
 #include <QTabWidget>
 #include <QToolBar>
@@ -24,17 +28,26 @@
 #include <QLabel>
 #include <QShowEvent>
 #include <QHideEvent>
+#include <QLineEdit>
+#include <QTimer>
 
 #include "application/application.h"
 #include "application/mainwindow.h"
+#include "project/project.h"
 #include "preferences/preferencesXML.h"
 #include "preferences/manager.h"
+#include "expressions/manager.h"
+#include "expressions/stringtranslator.h"
+#include "expressions/value.h"
 #include "message/message.h"
 #include "message/observer.h"
 #include "selection/definitions.h"
 #include "viewer/widget.h"
 #include "dialogs/widgetgeometry.h"
+#include "dialogs/expressionedit.h"
+#include "feature/parameter.h"
 #include "feature/sketch.h"
+#include "sketch/solver.h"
 #include "sketch/nodemasks.h"
 #include "sketch/selection.h"
 #include "sketch/visual.h"
@@ -85,12 +98,18 @@ QDialog(parent)
   initGui();
   
   observer->name = "dlg::Sketch";
+  observer->outBlocked(msg::Message(msg::Request | msg::Overlay | msg::Selection | msg::Freeze));
   
   WidgetGeometry *filter = new WidgetGeometry(this, "dlg::Sketch");
   this->installEventFilter(filter);
+  
+  setupDispatcher();
 }
 
-Sketch::~Sketch(){}
+Sketch::~Sketch()
+{
+  observer->outBlocked(msg::Message(msg::Request | msg::Overlay | msg::Selection | msg::Thaw));
+}
 
 void Sketch::reject()
 {
@@ -146,6 +165,32 @@ void Sketch::draggerHide()
   sketch->draggerHide();
 }
 
+void Sketch::setupDispatcher()
+{
+  msg::Mask mask;
+  
+  mask = msg::Response | msg::Sketch | msg::Selection | msg::Add;
+  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Sketch::selectParameterDispatched, this, _1)));
+}
+
+void Sketch::selectParameterDispatched(const msg::Message &mIn)
+{
+  boost::uuids::uuid pId = boost::get<slc::Message>(mIn.payload).shapeId;
+  if (pId.is_nil() || (!sketch->hasParameter(pId)))
+  {
+    pEdit->lineEdit->clear();
+    pEdit->setDisabled(true);
+    parameter = nullptr;
+    return;
+  }
+  parameter = sketch->getParameter(pId);
+  activateWindow();
+  pEdit->setEnabled(true);
+  if (parameter->isConstant())
+    setEditUnlinked();
+  else
+    setEditLinked();
+}
 
 void Sketch::initGui()
 {
@@ -272,10 +317,27 @@ QWidget* Sketch::buildEditPage()
   connect(angleAction, &QAction::triggered, this, &Sketch::addAngle);
   dtb->addAction(angleAction);
   
+  pEdit = new ExpressionEdit(this);
+  pEdit->lineEdit->clear();
+  pEdit->setDisabled(true);
+  ExpressionEditFilter *filter = new ExpressionEditFilter(this);
+  pEdit->lineEdit->installEventFilter(filter);
+  EnterFilter *ef = new EnterFilter(this);
+  pEdit->lineEdit->installEventFilter(ef);
+  QObject::connect(filter, SIGNAL(requestLinkSignal(QString)), this, SLOT(requestParameterLinkSlot(QString)));
+  QObject::connect(pEdit->lineEdit, SIGNAL(textEdited(QString)), this, SLOT(textEditedParameterSlot(QString)));
+  QObject::connect(ef, SIGNAL(enterPressed()), this, SLOT(updateParameterSlot()));
+  QObject::connect(pEdit->trafficLabel, SIGNAL(requestUnlinkSignal()), this, SLOT(requestParameterUnlinkSlot()));
+  
+  QHBoxLayout *dtbLayout = new QHBoxLayout();
+  dtbLayout->addWidget(dtb);
+  dtbLayout->addStretch();
+  dtbLayout->addWidget(pEdit);
+  
   QVBoxLayout *vl = new QVBoxLayout();
   vl->addLayout(el);
   vl->addWidget(ctb);
-  vl->addWidget(dtb);
+  vl->addLayout(dtbLayout);
   vl->addStretch();
   out->setLayout(vl);
   
@@ -365,21 +427,30 @@ void Sketch::addDistance()
 {
   if (sketch->getVisual()->getState() != skt::State::selection)
     sketch->getVisual()->cancel();
-  sketch->getVisual()->addDistance();
+  
+  auto p = sketch->getVisual()->addDistance();
+  if (p)
+    sketch->addHPPair(p.get().first, p.get().second);
 }
 
 void Sketch::addDiameter()
 {
   if (sketch->getVisual()->getState() != skt::State::selection)
     sketch->getVisual()->cancel();
-  sketch->getVisual()->addDiameter();
+  
+  auto p = sketch->getVisual()->addDiameter();
+  if (p)
+    sketch->addHPPair(p.get().first, p.get().second);
 }
 
 void Sketch::addAngle()
 {
   if (sketch->getVisual()->getState() != skt::State::selection)
     sketch->getVisual()->cancel();
-  sketch->getVisual()->addAngle();
+  
+  auto p = sketch->getVisual()->addAngle();
+  if (p)
+    sketch->addHPPair(p.get().first, p.get().second);
 }
 
 void Sketch::addSymmetric()
@@ -433,6 +504,10 @@ void Sketch::addWhereDragged()
 
 void Sketch::remove()
 {
+  pEdit->lineEdit->clear();
+  pEdit->setDisabled(true);
+  parameter = nullptr;
+  
   if (sketch->getVisual()->getState() != skt::State::selection)
     sketch->getVisual()->cancel();
   sketch->getVisual()->remove();
@@ -446,4 +521,137 @@ void Sketch::cancel()
 void Sketch::toggleConstruction()
 {
   sketch->getVisual()->toggleConstruction();
+}
+
+void Sketch::requestParameterLinkSlot(const QString &stringIn)
+{
+  assert(parameter);
+  assert(pEdit);
+  
+  boost::uuids::uuid eId = gu::stringToId(stringIn.toStdString());
+  assert(!eId.is_nil()); //project asserts on presence of expression eId.
+  prj::Project *project = app::instance()->getProject();
+  double eValue = boost::get<double>(project->getManager().getFormulaValue(eId));
+  
+  if (parameter->isValidValue(eValue))
+  {
+    project->expressionLink(parameter->getId(), eId);
+    setEditLinked();
+    sketch->getVisual()->reHighlight();
+    
+    sketch->getSolver()->updateConstraintValue(sketch->getHPHandle(parameter), eValue);
+    sketch->getSolver()->solve(sketch->getSolver()->getGroup(), true);
+    sketch->getVisual()->update();
+  }
+  else
+  {
+    observer->out(msg::buildStatusMessage(QObject::tr("Value out of range").toStdString(), 2.0));
+  }
+  
+  this->activateWindow();
+}
+
+void Sketch::requestParameterUnlinkSlot()
+{
+  assert(parameter);
+  assert(pEdit);
+  
+  app::instance()->getProject()->expressionUnlink(parameter->getId());
+  
+  setEditUnlinked();
+  sketch->getVisual()->reHighlight();
+  //don't need to update, because unlinking doesn't change parameter value.
+}
+
+void Sketch::setEditLinked()
+{
+  assert(parameter);
+  assert(pEdit);
+  assert(!parameter->isConstant());
+  
+  pEdit->trafficLabel->setLinkSlot();
+  pEdit->clearFocus();
+  pEdit->lineEdit->deselect();
+  pEdit->lineEdit->setReadOnly(true);
+  
+  expr::Manager &manager = app::instance()->getProject()->getManager();
+  pEdit->lineEdit->setText(QString::fromStdString(manager.getFormulaName(manager.getFormulaLink(parameter->getId()))));
+}
+
+void Sketch::setEditUnlinked()
+{
+  assert(parameter);
+  assert(pEdit);
+  assert(parameter->isConstant());
+  
+  pEdit->trafficLabel->setTrafficGreenSlot();
+  pEdit->lineEdit->setReadOnly(false);
+  pEdit->lineEdit->setText(QString::number(static_cast<double>(*parameter), 'f', 12));
+  pEdit->lineEdit->selectAll();
+  pEdit->setFocus();
+}
+
+void Sketch::updateParameterSlot()
+{
+  assert(pEdit);
+  assert(parameter);
+  
+  if (!parameter->isConstant())
+    return;
+
+  expr::Manager localManager;
+  expr::StringTranslator translator(localManager);
+  std::string formula("temp = ");
+  formula += pEdit->lineEdit->text().toStdString();
+  if (translator.parseString(formula) == expr::StringTranslator::ParseSucceeded)
+  {
+    localManager.update();
+    assert(localManager.getFormulaValueType(translator.getFormulaOutId()) == expr::ValueType::Scalar);
+    double value = boost::get<double>(localManager.getFormulaValue(translator.getFormulaOutId()));
+    if (parameter->isValidValue(value))
+    {
+      parameter->setValue(value);
+      sketch->getSolver()->updateConstraintValue(sketch->getHPHandle(parameter), value);
+      sketch->getSolver()->solve(sketch->getSolver()->getGroup(), true);
+      sketch->getVisual()->update();
+    }
+    else
+    {
+      observer->out(msg::buildStatusMessage(QObject::tr("Value out of range").toStdString(), 2.0));
+    }
+  }
+  else
+  {
+    observer->out(msg::buildStatusMessage(QObject::tr("Parsing failed").toStdString(), 2.0));
+  }
+  pEdit->lineEdit->setText(QString::number(static_cast<double>(*parameter), 'f', 12));
+  pEdit->lineEdit->selectAll();
+  pEdit->trafficLabel->setTrafficGreenSlot();
+}
+
+void Sketch::textEditedParameterSlot(const QString &textIn)
+{
+  assert(pEdit);
+  
+  pEdit->trafficLabel->setTrafficYellowSlot();
+  qApp->processEvents(); //need this or we never see yellow signal.
+  
+  expr::Manager localManager;
+  expr::StringTranslator translator(localManager);
+  std::string formula("temp = ");
+  formula += textIn.toStdString();
+  if (translator.parseString(formula) == expr::StringTranslator::ParseSucceeded)
+  {
+    localManager.update();
+    pEdit->trafficLabel->setTrafficGreenSlot();
+    assert(localManager.getFormulaValueType(translator.getFormulaOutId()) == expr::ValueType::Scalar);
+    double value = boost::get<double>(localManager.getFormulaValue(translator.getFormulaOutId()));
+    pEdit->goToolTipSlot(QString::number(value));
+  }
+  else
+  {
+    pEdit->trafficLabel->setTrafficRedSlot();
+    int position = translator.getFailedPosition() - 8; // 7 chars for 'temp = ' + 1
+    pEdit->goToolTipSlot(textIn.left(position) + "?");
+  }
 }

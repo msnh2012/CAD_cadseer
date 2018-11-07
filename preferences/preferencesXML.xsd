@@ -80,9 +80,9 @@
 
 <xs:complexType name="InteractiveParameter">
   <xs:all>
-    <xs:element name="characterSize" type="DecPositive" default="1.0"/>
-    <xs:element name="arrowWidth" type="DecPositive" default="0.5"/>
-    <xs:element name="arrowHeight" type="DecPositive" default="1.0"/>
+    <xs:element name="characterSize" type="DecPositive" default="20.0"/>
+    <xs:element name="arrowWidth" type="DecPositive" default="10.0"/>
+    <xs:element name="arrowHeight" type="DecPositive" default="20.0"/>
   </xs:all>
 </xs:complexType>
 

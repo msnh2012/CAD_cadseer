@@ -1,3 +1,22 @@
+/*
+ * CadSeer. Parametric Solid Modeling.
+ * Copyright (C) 2018  Thomas S. Anderson blobfish.at.gmx.com
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+
 #include <iostream>
 #include <sstream>
 
@@ -5,6 +24,9 @@
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
 #include <boost/optional/optional.hpp>
+
+#include <GCE2d_MakeLine.hxx>
+#include <Geom2dAPI_InterCurveCurve.hxx>
 
 #include <osg/PositionAttitudeTransform>
 #include <osg/MatrixTransform>
@@ -22,14 +44,18 @@
 #include <osg/Hint>
 #include <osgText/Text>
 
-#include "solver.h"
-#include "visual.h"
+#include "tools/idtools.h"
+#include "application/application.h"
+#include "message/message.h"
+#include "library/angulardimension.h"
+#include "library/sketchlineardimension.h"
+#include "library/diameterdimension.h"
+#include "library/plabel.h"
+#include "feature/parameter.h"
+#include "sketch/solver.h"
+#include "sketch/visual.h"
 
 using boost::uuids::uuid;
-
-static thread_local boost::uuids::random_generator rGen;
-static thread_local boost::uuids::string_generator sGen;
-// static thread_local boost::uuids::nil_generator nGen;
 
 namespace skt
 {
@@ -127,6 +153,55 @@ namespace skt
     }
   };
   
+  /*! @class ParentMapVisitor
+   * @brief find record of node parent in map .
+   */
+  class ParentMapVisitor : public osg::NodeVisitor
+  {
+  public:
+    ParentMapVisitor(Map& mapIn):
+      NodeVisitor(osg::NodeVisitor::TRAVERSE_PARENTS),
+      map(mapIn){}
+    virtual void apply(osg::Node &nodeIn) override
+    {
+      auto record = map.getRecord(&nodeIn);
+      if (record)
+      {
+        out = record;
+        return;
+      }
+      traverse(nodeIn);
+    }
+    boost::optional<Map::Record&> out;
+    
+  protected:
+    Map& map;
+  };
+  
+  /*! @class ParentNameVisitor
+   * @brief find record of node parent in map .
+   */
+  class ParentNameVisitor : public osg::NodeVisitor
+  {
+  public:
+    ParentNameVisitor(const char *nameIn):
+      NodeVisitor(osg::NodeVisitor::TRAVERSE_PARENTS),
+      name(nameIn){}
+    virtual void apply(osg::Node &nodeIn) override
+    {
+      if (nodeIn.getName() == name)
+      {
+        out = nodeIn;
+        return;
+      }
+      traverse(nodeIn);
+    }
+    boost::optional<osg::Node&> out;
+    
+  protected:
+    const char *name;
+  };
+  
   /*! @struct Data
    * @brief Private data for visual
    */
@@ -213,7 +288,7 @@ static void setDrawableToNoBound(osg::Drawable& drawable)
  * @note This searches one level. Not a recursive search.
  */
 template <class T>
-boost::optional<T*> getNamedChild(osg::Group *parent, const std::string &nameIn)
+static boost::optional<T*> getNamedChild(osg::Group *parent, const std::string &nameIn)
 {
   for (unsigned int i = 0; i < parent->getNumChildren(); ++i)
   {
@@ -226,6 +301,8 @@ boost::optional<T*> getNamedChild(osg::Group *parent, const std::string &nameIn)
   }
   return boost::none;
 }
+
+
 
 using namespace skt;
 
@@ -290,7 +367,7 @@ void Visual::update()
       data->eMap.records.push_back(Map::Record());
       record = data->eMap.records.back();
       record.get().handle = e.h;
-      record.get().id = rGen();
+      record.get().id = gu::createRandomId();
       record.get().construction = false;
       if (e.type == SLVS_E_POINT_IN_2D)
       {
@@ -402,7 +479,7 @@ void Visual::update()
       data->cMap.records.push_back(Map::Record());
       record = data->cMap.records.back();
       record.get().handle = c.h;
-      record.get().id = rGen();
+      record.get().id = gu::createRandomId();
       if (c.type == SLVS_C_HORIZONTAL)
         record.get().node = buildConstraint1("horizontal", "H");
       if (c.type == SLVS_C_VERTICAL)
@@ -416,18 +493,18 @@ void Visual::update()
         record.get().node = buildConstraint1("coincidence", "C");
       if (c.type == SLVS_C_ARC_LINE_TANGENT)
         record.get().node = buildConstraint1("tangent", "T");
-      if (c.type == SLVS_C_PT_PT_DISTANCE)
-        record.get().node = buildConstraint1("distance", "tempText");
+//       if (c.type == SLVS_C_PT_PT_DISTANCE)
+//         record.get().node = buildConstraint1("distance", "tempText");
       if (c.type == SLVS_C_PT_LINE_DISTANCE)
         record.get().node = buildConstraint1("distance", "tempText");
-      if (c.type == SLVS_C_DIAMETER)
-        record.get().node = buildConstraint1("diameter", "tempText");
+//       if (c.type == SLVS_C_DIAMETER)
+//         record.get().node = buildConstraint1("diameter", "tempText");
       if (c.type == SLVS_C_EQUAL_LENGTH_LINES || c.type == SLVS_C_EQUAL_RADIUS || c.type == SLVS_C_EQUAL_ANGLE)
         record.get().node = buildConstraint2("equality", "E");
       if (c.type == SLVS_C_SYMMETRIC_HORIZ || c.type == SLVS_C_SYMMETRIC_VERT || c.type == SLVS_C_SYMMETRIC_LINE)
         record.get().node = buildConstraint2("symmetric", "S");
-      if (c.type == SLVS_C_ANGLE)
-        record.get().node = buildConstraint1("angle", "tempText");
+//       if (c.type == SLVS_C_ANGLE)
+//         record.get().node = buildConstraintAngle();
       if (c.type == SLVS_C_PARALLEL)
         record.get().node = buildConstraint2("parallel", "P");
       if (c.type == SLVS_C_PERPENDICULAR)
@@ -439,7 +516,7 @@ void Visual::update()
       if (record.get().node.valid())
       {
         record.get().node->setNodeMask(Constraint.to_ulong());
-        record.get().node->setName(boost::uuids::to_string(record.get().id));
+//         record.get().node->setName(boost::uuids::to_string(record.get().id));
         data->constraintGroup->addChild(record.get().node);
       }
       else
@@ -502,51 +579,9 @@ void Visual::update()
       double s = lastSize / 500.0;
       p->setScale(osg::Vec3d(s, s, s));
     }
-    if (c.type == SLVS_C_PT_PT_DISTANCE)
+    if (c.type == SLVS_C_PT_PT_DISTANCE || c.type == SLVS_C_PT_LINE_DISTANCE)
     {
-      osg::PositionAttitudeTransform *p = dynamic_cast<osg::PositionAttitudeTransform*>(record.get().node.get());
-      assert(p);
-      
-      auto oc = solver.findConstraint(record.get().handle);
-      assert(oc);
-      osg::Vec3d point1 = convert(oc.get().ptA);
-      osg::Vec3d point2 = convert(oc.get().ptB);
-      
-      osgText::Text *text = dynamic_cast<osgText::Text*>(p->getChild(0));
-      assert(text);
-      text->setText(std::to_string(oc.get().valA));
-      
-      point1 += (point2 - point1) * 0.5;
-      point1.z() = 0.002;
-      p->setPosition(point1);
-      double s = lastSize / 1000.0;
-      p->setScale(osg::Vec3d(s, s, s));
-    }
-    if (c.type == SLVS_C_PT_LINE_DISTANCE)
-    {
-      osg::PositionAttitudeTransform *p = dynamic_cast<osg::PositionAttitudeTransform*>(record.get().node.get());
-      assert(p);
-      auto oc = solver.findConstraint(record.get().handle);
-      assert(oc);
-      
-      osg::Vec3d point = convert(oc.get().ptA);
-      
-      auto ols = solver.findEntity(oc.get().entityA);
-      assert(ols);
-      osg::Vec3d lp = convert(ols.get().point[0]);
-      osg::Vec3d ld = convert(ols.get().point[1]) - lp;
-      ld.normalize();
-      osg::Vec3d pp = projectPointLine(lp, ld, point);
-      osg::Vec3d mid = ((pp - point) * 0.5) + point;
-      mid.z() = 0.002;
-      
-      osgText::Text *text = dynamic_cast<osgText::Text*>(p->getChild(0));
-      assert(text);
-      text->setText(std::to_string(oc.get().valA));
-      
-      p->setPosition(mid);
-      double s = lastSize / 1000.0;
-      p->setScale(osg::Vec3d(s, s, s));
+      placeLinearDimension(record.get().handle);
     }
     if (c.type == SLVS_C_EQUAL_LENGTH_LINES || c.type == SLVS_C_EQUAL_RADIUS)
     {
@@ -575,36 +610,7 @@ void Visual::update()
     }
     if (c.type == SLVS_C_DIAMETER)
     {
-      osg::PositionAttitudeTransform *p = dynamic_cast<osg::PositionAttitudeTransform*>(record.get().node.get());
-      assert(p);
-      
-      double s = lastSize / 1000.0;
-      osg::Vec3d scale(s, s, s);
-      p->setScale(scale);
-      
-      auto oc = solver.findConstraint(record.get().handle);
-      assert(oc);
-      osgText::Text *text = dynamic_cast<osgText::Text*>(p->getChild(0));
-      assert(text);
-      text->setText(std::to_string(oc.get().valA));
-      
-      auto oe = solver.findEntity(oc.get().entityA);
-      assert(oe);
-      if (solver.isEntityType(oc.get().entityA, SLVS_E_CIRCLE))
-      {
-        osg::Vec3d projection(1.0, 0.0, 0.0);
-        projection *= (oc.get().valA / 2.0);
-        osg::Vec3d point = convert(oe.get().point[0]);
-        point += projection;
-        point.z() = 0.002;
-        p->setPosition(point);
-      }
-      else if (solver.isEntityType(oc.get().entityA, SLVS_E_ARC_OF_CIRCLE))
-      {
-        osg::Vec3d pos = parameterPoint(oc.get().entityA, 0.5);
-        pos.z() = 0.002;
-        p->setPosition(pos);
-      }
+      placeDiameterDimension(record.get().handle);
     }
     if (c.type == SLVS_C_SYMMETRIC_HORIZ || c.type == SLVS_C_SYMMETRIC_VERT || c.type == SLVS_C_SYMMETRIC_LINE)
     {
@@ -633,31 +639,20 @@ void Visual::update()
     }
     if (c.type == SLVS_C_ANGLE)
     {
-      osg::PositionAttitudeTransform *p = dynamic_cast<osg::PositionAttitudeTransform*>(record.get().node.get());
-      assert(p);
-      
-      double s = lastSize / 1000.0;
-      osg::Vec3d scale(s, s, s);
-      p->setScale(scale);
+      osg::MatrixTransform *ad = dynamic_cast<osg::MatrixTransform*>(record.get().node.get());
+      assert(ad);
       
       auto oc = solver.findConstraint(record.get().handle);
       assert(oc);
-      osgText::Text *text = dynamic_cast<osgText::Text*>(p->getChild(0));
-      assert(text);
-      text->setText(std::to_string(oc.get().valA));
       
-      osg::Matrixd tf = osg::Matrixd::identity();
-      bool results = data->transform->computeWorldToLocalMatrix(tf, nullptr);
-      if (results)
-      {
-        std::vector<SSHandle> ehandles;
-        ehandles.push_back(oc.get().entityA);
-        ehandles.push_back(oc.get().entityB);
-        osg::Vec3d np = boundingCenter(ehandles) * tf;
-        p->setPosition(np);
-      }
-      else
-        std::cout << "couldn't calculate matrix for SLVS_C_ANGLE in: " << BOOST_CURRENT_FUNCTION << std::endl;
+      std::vector<SSHandle> ehandles;
+      ehandles.push_back(oc.get().entityA);
+      ehandles.push_back(oc.get().entityB);
+      placeAngularDimension(ad, ehandles);
+      
+      lbr::AngularDimensionCallback *cb = dynamic_cast<lbr::AngularDimensionCallback*>(ad->getUpdateCallback());
+      assert(cb);
+      cb->setAngleDegrees(oc.get().valA);
     }
     if (c.type == SLVS_C_EQUAL_ANGLE)
     {
@@ -855,7 +850,7 @@ void Visual::move(const osgUtil::PolytopeIntersector::Intersections &is)
       else if (tg->getName() == "planeLines")
         continue;
       
-      uuid id = sGen(tg->getName());
+      uuid id = gu::stringToId(tg->getName());
       if (id.is_nil())
         continue;
       
@@ -885,17 +880,17 @@ void Visual::move(const osgUtil::PolytopeIntersector::Intersections &is)
     }
     
     //add constraints.
-    osgText::Text *t = dynamic_cast<osgText::Text*>(i.drawable.get());
-    if (t)
+    auto c = data->cMap.getRecord(i.drawable);
+    if (!c)
     {
-      auto cr = data->cMap.getRecord(t->getParent(0));
-      if (!cr) //equality, for example, has 2 texts with 2 transforms for parents then group. so try parent of parent.
-        cr = data->cMap.getRecord(t->getParent(0)->getParent(0));
-      if (cr) //make sure we have constraint text
-      {
-        constraints.push_back(i);
-        continue;
-      }
+      ParentMapVisitor v(data->cMap);
+      i.drawable->accept(v);
+      c = v.out;
+    }
+    if (c)
+    {
+      constraints.push_back(i);
+      continue;
     }
   }
   
@@ -979,9 +974,23 @@ void Visual::pick(const osgUtil::PolytopeIntersector::Intersections&)
     if (!data->preHighlight.valid())
       return;
     
+    if (data->preHighlight->getName() == "lbr::PLabel::Text" && data->highlights.size() == 0)
+    {
+      ParentNameVisitor v("lbr::PLabel");
+      data->preHighlight->accept(v);
+      assert(v.out);
+      lbr::PLabel *pl = dynamic_cast<lbr::PLabel*>(&v.out.get());
+      assert(pl);
+      slc::Message sm;
+      sm.shapeId = pl->getParameter()->getId(); //lie: parameter id, not shape id.
+      app::instance()->messageSlot(msg::Message(msg::Response | msg::Sketch | msg::Selection | msg::Add, sm));
+    }
+    else
+      app::instance()->messageSlot(msg::Message(msg::Response | msg::Sketch | msg::Selection | msg::Add, slc::Message()));
+    
     data->highlights.push_back(data->preHighlight);
-    data->preHighlight.release();
     goHighlight(data->highlights.back().get());
+    data->preHighlight.release();
   }
 }
 
@@ -1224,82 +1233,128 @@ void Visual::startDrag(const osgUtil::LineSegmentIntersector::Intersections &is)
  */
 void Visual::drag(const osgUtil::LineSegmentIntersector::Intersections &is)
 {
-//   std::cout << BOOST_CURRENT_FUNCTION << std::endl;
   assert(data->state == State::drag);
   assert(data->previousPick.valid());
   auto op = getPlanePoint(is);
   if (!op)
     return;
-  osg::Vec3d projection = op.get() - data->previousPoint.get();
-  if (projection.length() < std::numeric_limits<float>::epsilon())
-    return;
+  
+  //drag entities.
   auto record = data->eMap.getRecord(data->previousPick);
-  if (!record)
-    return;
-  SSHandle ph = record.get().handle;
-  std::vector<Slvs_hParam> draggedParameters;
-  auto projectPoint = [&](Slvs_hParam x, Slvs_hParam y)
+  if (record)
   {
-    osg::Vec3d cp(solver.getParameterValue(x).get(), solver.getParameterValue(y).get(), 0.0);
-    cp += projection;
-    solver.setParameterValue(x, cp.x());
-    solver.setParameterValue(y, cp.y());
-    draggedParameters.push_back(x);
-    draggedParameters.push_back(y);
-  };
-  if (solver.isEntityType(ph, SLVS_E_POINT_IN_2D))
-  {
-    auto oe = solver.findEntity(ph);
-    assert(oe);
-    projectPoint(oe.get().param[0], oe.get().param[1]);
+    osg::Vec3d projection = op.get() - data->previousPoint.get();
+    if (projection.length() < std::numeric_limits<float>::epsilon())
+      return;
+    SSHandle ph = record.get().handle;
+    std::vector<Slvs_hParam> draggedParameters;
+    auto projectPoint = [&](Slvs_hParam x, Slvs_hParam y)
+    {
+      osg::Vec3d cp(solver.getParameterValue(x).get(), solver.getParameterValue(y).get(), 0.0);
+      cp += projection;
+      solver.setParameterValue(x, cp.x());
+      solver.setParameterValue(y, cp.y());
+      draggedParameters.push_back(x);
+      draggedParameters.push_back(y);
+    };
+    if (solver.isEntityType(ph, SLVS_E_POINT_IN_2D))
+    {
+      auto oe = solver.findEntity(ph);
+      assert(oe);
+      projectPoint(oe.get().param[0], oe.get().param[1]);
+    }
+    if (solver.isEntityType(ph, SLVS_E_LINE_SEGMENT))
+    {
+      auto ols = solver.findEntity(ph);
+      assert(ols);
+      auto p1 = solver.findEntity(ols.get().point[0]);
+      assert(p1);
+      projectPoint(p1.get().param[0], p1.get().param[1]);
+      auto p2 = solver.findEntity(ols.get().point[1]);
+      assert(p2);
+      projectPoint(p2.get().param[0], p2.get().param[1]);
+    }
+    if (solver.isEntityType(ph, SLVS_E_ARC_OF_CIRCLE))
+    {
+      auto oac = solver.findEntity(ph);
+      assert(oac);
+      auto p1 = solver.findEntity(oac.get().point[1]);
+      assert(p1);
+      projectPoint(p1.get().param[0], p1.get().param[1]);
+      auto p2 = solver.findEntity(oac.get().point[2]);
+      assert(p2);
+      projectPoint(p2.get().param[0], p2.get().param[1]);
+    }
+    if (solver.isEntityType(ph, SLVS_E_CIRCLE))
+    {
+      auto oc = solver.findEntity(ph);
+      assert(oc);
+      
+      osg::Vec3d center = convert(oc.get().point[0]);
+      osg::Vec3d rv = op.get() - center; //radius vector
+      rv.normalize();
+      osg::Vec3d pp = projectPointLine(center, rv, data->previousPoint.get());
+      osg::Vec3d prv = op.get() - pp; // projected radius vector
+      double adjustment = prv.length();
+      prv.normalize();
+      if ((prv - rv).length() > std::numeric_limits<float>::epsilon())
+        adjustment *= -1.0;
+      
+      auto od = solver.findEntity(oc.get().distance);
+      assert(od);
+      auto opv = solver.getParameterValue(od.get().param[0]);
+      solver.setParameterValue(od.get().param[0], opv.get() + adjustment);
+      draggedParameters.push_back(od.get().param[0]);
+    }
+    solver.dragSet(draggedParameters);
+    solver.solve(solver.getGroup(), true);
+    update();
   }
-  if (solver.isEntityType(ph, SLVS_E_LINE_SEGMENT))
+  else
   {
-    auto ols = solver.findEntity(ph);
-    assert(ols);
-    auto p1 = solver.findEntity(ols.get().point[0]);
-    assert(p1);
-    projectPoint(p1.get().param[0], p1.get().param[1]);
-    auto p2 = solver.findEntity(ols.get().point[1]);
-    assert(p2);
-    projectPoint(p2.get().param[0], p2.get().param[1]);
+    //drag constraints
+    if (data->previousPick->getName() == "lbr::PLabel::Text")
+    {
+      ParentNameVisitor vpl("lbr::PLabel");
+      data->previousPick->accept(vpl);
+      assert(vpl.out);
+      ParentNameVisitor vad("lbr::AngularDimension");
+      data->previousPick->accept(vad);
+      ParentNameVisitor vld("lbr::LinearDimension");
+      data->previousPick->accept(vld);
+      ParentNameVisitor vdd("lbr::DiameterDimension");
+      data->previousPick->accept(vdd);
+      if (vpl.out && vad.out)
+      {
+        lbr::PLabel *pl = dynamic_cast<lbr::PLabel*>(&vpl.out.get());
+        assert(pl);
+        osg::MatrixTransform *ad = dynamic_cast<osg::MatrixTransform*>(&vad.out.get());
+        assert(ad);
+        osg::Matrixd adi = osg::Matrix::inverse(ad->getMatrix());
+        pl->setMatrix(osg::Matrixd::translate(op.get() * adi));
+      }
+      else if (vpl.out && vld.out)
+      {
+        osg::MatrixTransform *ld = dynamic_cast<osg::MatrixTransform*>(&vld.out.get());
+        assert(ld);
+        auto *cb = dynamic_cast<lbr::LinearDimensionCallback*>(ld->getUpdateCallback());
+        assert(cb);
+        osg::Matrixd ldi = osg::Matrix::inverse(ld->getMatrix());
+        cb->setTextLocation(op.get() * ldi);
+      }
+      else if (vpl.out && vdd.out)
+      {
+        osg::MatrixTransform *dd = dynamic_cast<osg::MatrixTransform*>(&vdd.out.get());
+        assert(dd);
+        auto *cb = dynamic_cast<lbr::DiameterDimensionCallback*>(dd->getUpdateCallback());
+        assert(cb);
+        osg::Matrixd ddi = osg::Matrix::inverse(dd->getMatrix());
+        cb->setTextLocation(op.get() * ddi);
+      }
+    }
   }
-  if (solver.isEntityType(ph, SLVS_E_ARC_OF_CIRCLE))
-  {
-    auto oac = solver.findEntity(ph);
-    assert(oac);
-    auto p1 = solver.findEntity(oac.get().point[1]);
-    assert(p1);
-    projectPoint(p1.get().param[0], p1.get().param[1]);
-    auto p2 = solver.findEntity(oac.get().point[2]);
-    assert(p2);
-    projectPoint(p2.get().param[0], p2.get().param[1]);
-  }
-  if (solver.isEntityType(ph, SLVS_E_CIRCLE))
-  {
-    auto oc = solver.findEntity(ph);
-    assert(oc);
-    
-    osg::Vec3d center = convert(oc.get().point[0]);
-    osg::Vec3d rv = op.get() - center; //radius vector
-    rv.normalize();
-    osg::Vec3d pp = projectPointLine(center, rv, data->previousPoint.get());
-    osg::Vec3d prv = op.get() - pp; // projected radius vector
-    double adjustment = prv.length();
-    prv.normalize();
-    if ((prv - rv).length() > std::numeric_limits<float>::epsilon())
-      adjustment *= -1.0;
-    
-    auto od = solver.findEntity(oc.get().distance);
-    assert(od);
-    auto opv = solver.getParameterValue(od.get().param[0]);
-    solver.setParameterValue(od.get().param[0], opv.get() + adjustment);
-    draggedParameters.push_back(od.get().param[0]);
-  }
+  
   data->previousPoint = op.get();
-  solver.dragSet(draggedParameters);
-  solver.solve(solver.getGroup(), true);
-  update();
 }
 
 //! @brief Response to ending of a mouse drag.
@@ -1313,6 +1368,9 @@ void Visual::finishDrag(const osgUtil::LineSegmentIntersector::Intersections&)
 //! @brief Clear the current selection.
 void Visual::clearSelection()
 {
+  //disable dialog parameter editor.
+  app::instance()->messageSlot(msg::Message(msg::Response | msg::Sketch | msg::Selection | msg::Add, slc::Message()));
+  
   for (auto d : data->highlights)
     clearHighlight(d.get());
   
@@ -1374,9 +1432,24 @@ void Visual::clearPreHighlight()
       }
       cs->dirty();
     }
+    
     osgText::Text *t = dynamic_cast<osgText::Text*>(data->preHighlight.get());
     if (t)
-      t->setColor(osg::Vec4(1.0, 0.0, 0.0, 1.0));
+    {
+      if (t->getName() == "lbr::PLabel::Text")
+      {
+        ParentNameVisitor vpl("lbr::PLabel");
+        data->preHighlight->accept(vpl);
+        assert(vpl.out);
+        lbr::PLabel *ad = dynamic_cast<lbr::PLabel *>(&vpl.out.get());
+        assert(ad);
+        ad->setTextColor();
+      }
+      else
+        t->setColor(osg::Vec4(1.0, 0.0, 0.0, 1.0));
+    }
+    
+    
     data->preHighlight.release();
   }
 }
@@ -1438,7 +1511,19 @@ void Visual::clearHighlight(osg::Drawable *dIn)
   }
   osgText::Text *t = dynamic_cast<osgText::Text*>(dIn);
   if (t)
-    t->setColor(osg::Vec4(1.0, 0.0, 0.0, 1.0));
+  {
+    if (t->getName() == "lbr::PLabel::Text")
+    {
+      ParentNameVisitor vpl("lbr::PLabel");
+      dIn->accept(vpl);
+      assert(vpl.out);
+      lbr::PLabel *ad = dynamic_cast<lbr::PLabel *>(&vpl.out.get());
+      assert(ad);
+      ad->setTextColor();
+    }
+    else
+      t->setColor(osg::Vec4(1.0, 0.0, 0.0, 1.0));
+  }
 }
 
 /*! @brief Set the opengl point size to 10.0.
@@ -1636,8 +1721,11 @@ void Visual::addTangent()
 }
 
 //! @brief Add a distance constraint to the currently selected objects.
-void Visual::addDistance()
+boost::optional<std::pair<SSHandle, std::shared_ptr<ftr::prm::Parameter>>> Visual::addDistance()
 {
+  SSHandle dh = 0;
+  double length = 0.0;
+  
   std::vector<SSHandle> points = getSelectedPoints();
   std::vector<SSHandle> lines = getSelectedLines();
   
@@ -1645,8 +1733,8 @@ void Visual::addDistance()
   {
     osg::Vec3d p1 = convert(points.front());
     osg::Vec3d p2 = convert(points.back());
-    double length = (p2 - p1).length();
-    solver.addPointPointDistance(length, points.front(), points.back());
+    length = (p2 - p1).length();
+    dh = solver.addPointPointDistance(length, points.front(), points.back());
   }
   else if (data->highlights.size() == 1 && lines.size() == 1)
   {
@@ -1655,8 +1743,8 @@ void Visual::addDistance()
     
     osg::Vec3d p1 = convert(ols.get().point[0]);
     osg::Vec3d p2 = convert(ols.get().point[1]);
-    double length = (p2 - p1).length();
-    solver.addPointPointDistance(length, ols.get().point[0], ols.get().point[1]);
+    length = (p2 - p1).length();
+    dh = solver.addPointPointDistance(length, ols.get().point[0], ols.get().point[1]);
   }
   else if (data->highlights.size() == 2 && lines.size() == 1 && points.size() == 1)
   {
@@ -1666,17 +1754,42 @@ void Visual::addDistance()
     osg::Vec3d lp = convert(ols.get().point[0]);
     osg::Vec3d ld = convert(ols.get().point[1]) - lp;
     ld.normalize();
-    double length = distancePointLine(lp, ld, p);
-    solver.addPointLineDistance(length, points.front(), lines.front());
+    length = distancePointLine(lp, ld, p);
+    dh = solver.addPointLineDistance(length, points.front(), lines.front());
   }
   else
   {
     std::cout << "unsupported combination for distance" << std::endl;
-    return;
+    return boost::none;
   }
   solver.solve(solver.getGroup(), true);
+  
+  std::shared_ptr<ftr::prm::Parameter> parameter = std::make_shared<ftr::prm::Parameter>
+    (ftr::prm::Names::Distance, length);
+  
+  lbr::PLabel *label = new lbr::PLabel(parameter.get());
+  label->setMatrix(osg::Matrixd::translate(length / 2.0, -0.1, 0.0));
+  label->valueHasChanged();
+  label->constantHasChanged();
+    
+  osg::MatrixTransform *ld = lbr::buildLinearDimension(label);
+  lbr::LinearDimensionCallback *cb = new lbr::LinearDimensionCallback();
+  cb->setTextObjectName(label->getName().c_str());
+  cb->setDistance(static_cast<double>(*parameter));
+  ld->setUpdateCallback(cb);
+  
+  data->cMap.records.push_back(Map::Record());
+  Map::Record &record = data->cMap.records.back();
+  record.handle = dh;
+  record.id = gu::createRandomId();
+  record.node = ld;
+  record.node->setNodeMask(Constraint.to_ulong());
+  data->constraintGroup->addChild(record.node);
+  
   update();
   clearSelection();
+  
+  return std::make_pair(dh, parameter);
 }
 
 //! @brief Add a equality constraint to the currently selected objects.
@@ -1737,35 +1850,65 @@ void Visual::addEqualAngle()
 }
 
 //! @brief Add a diameter constraint to the currently selected objects.
-void Visual::addDiameter()
+boost::optional<std::pair<SSHandle, std::shared_ptr<ftr::prm::Parameter>>> Visual::addDiameter()
 {
   std::vector<SSHandle> circles = getSelectedCircles();
-  if (circles.empty())
-    return;
-  for (const auto &c : circles)
+  if (circles.size() != 1)
+    return boost::none;
+  
+  SSHandle c = circles.front();
+  auto oe = solver.findEntity(c);
+  assert(oe);
+  
+  boost::optional<double> radius;
+  osg::Vec3d position;
+  if (solver.isEntityType(c, SLVS_E_CIRCLE))
   {
-    auto oe = solver.findEntity(c);
-    assert(oe);
-    boost::optional<double> radius;
-    if (solver.isEntityType(c, SLVS_E_CIRCLE))
-    {
-      //circles have a handle to a distance entity.
-      auto od = solver.findEntity(oe.get().distance);
-      assert(od);
-      radius = solver.getParameterValue(od.get().param[0]).get();
-    }
-    else if (solver.isEntityType(c, SLVS_E_ARC_OF_CIRCLE))
-    {
-      osg::Vec3d ac = convert(oe.get().point[0]);
-      osg::Vec3d as = convert(oe.get().point[1]);
-      radius = (as - ac).length();
-    }
-    if (radius && (radius.get() > std::numeric_limits<float>::epsilon()))
-      solver.addDiameter(radius.get() * 2.0, c);
+    //circles have a handle to a distance entity.
+    auto od = solver.findEntity(oe.get().distance);
+    assert(od);
+    radius = solver.getParameterValue(od.get().param[0]).get();
+    position = osg::Vec3d(radius.get(), 0.0, 0.0);
   }
-  solver.solve(solver.getGroup(), true);
-  update();
-  clearSelection();
+  else if (solver.isEntityType(c, SLVS_E_ARC_OF_CIRCLE))
+  {
+    osg::Vec3d ac = convert(oe.get().point[0]);
+    osg::Vec3d as = convert(oe.get().point[1]);
+    radius = (as - ac).length();
+    position = parameterPoint(c, 0.5) - ac;
+  }
+  if (radius && (radius.get() > std::numeric_limits<float>::epsilon()))
+  {
+    SSHandle dh = solver.addDiameter(radius.get() * 2.0, c);
+    solver.solve(solver.getGroup(), true);
+    
+    std::shared_ptr<ftr::prm::Parameter> parameter = std::make_shared<ftr::prm::Parameter>
+    (ftr::prm::Names::Diameter, radius.get() * 2.0);
+  
+    lbr::PLabel *label = new lbr::PLabel(parameter.get());
+    label->setMatrix(osg::Matrixd::translate(position * 1.5));
+    label->valueHasChanged();
+    label->constantHasChanged();
+      
+    osg::MatrixTransform *dd = lbr::buildDiameterDimension(label);
+    lbr::DiameterDimensionCallback *cb = new lbr::DiameterDimensionCallback(label->getName());
+    cb->setDiameter(static_cast<double>(*parameter));
+    dd->setUpdateCallback(cb);
+    
+    data->cMap.records.push_back(Map::Record());
+    Map::Record &record = data->cMap.records.back();
+    record.handle = dh;
+    record.id = gu::createRandomId();
+    record.node = dd;
+    record.node->setNodeMask(Constraint.to_ulong());
+    data->constraintGroup->addChild(record.node);
+    
+    update();
+    clearSelection();
+    return std::make_pair(dh, parameter);
+  }
+  
+  return boost::none;
 }
 
 //! @brief Add a symmetric constraint to the currently selected objects.
@@ -1812,7 +1955,7 @@ void Visual::addSymmetric()
 }
 
 //! @brief Add angle constraint to the currently selected objects.
-void Visual::addAngle()
+boost::optional<std::pair<SSHandle, std::shared_ptr<ftr::prm::Parameter>>> Visual::addAngle()
 {
   std::vector<SSHandle> lines = getSelectedLines();
   if (data->highlights.size() == 2 && lines.size() == 2)
@@ -1852,7 +1995,6 @@ void Visual::addAngle()
       reversedSense = true;
     }
     
-    
     double angle = vectorAngle(cv0, cv1);
     if 
     (
@@ -1861,13 +2003,48 @@ void Visual::addAngle()
     )
     {
       std::cout << "angle to close to parallel" << std::endl;
-      return;
+      return boost::none;
     }
-    solver.addAngle(osg::RadiansToDegrees(angle), lines.front(), lines.back(), reversedSense);
+    SSHandle ah = solver.addAngle(osg::RadiansToDegrees(angle), lines.front(), lines.back(), reversedSense);
     solver.solve(solver.getGroup(), true);
+    
+    std::shared_ptr<ftr::prm::Parameter> parameter = std::make_shared<ftr::prm::Parameter> (ftr::prm::Names::Angle, osg::RadiansToDegrees(angle));
+    
+    lbr::PLabel *label = new lbr::PLabel(parameter.get());
+    label->valueHasChanged();
+    label->constantHasChanged();
+    
+    osg::MatrixTransform *angularDimension = lbr::buildAngularDimension(label);
+    lbr::AngularDimensionCallback *cb = new lbr::AngularDimensionCallback(label->getName());
+    cb->setAngleDegrees(static_cast<double>(*parameter));
+    angularDimension->setUpdateCallback(cb);
+    
+    data->cMap.records.push_back(Map::Record());
+    Map::Record &record = data->cMap.records.back();
+    record.handle = ah;
+    record.id = gu::createRandomId();
+    record.node = angularDimension;
+    record.node->setNodeMask(Constraint.to_ulong());
+//     record.get().node->setName(boost::uuids::to_string(record.get().id));
+    data->constraintGroup->addChild(record.node);
+    
+    placeAngularDimension(angularDimension, lines);
+    
+    osg::Vec3d np = boundingCenter(lines);
+    osg::Matrixd tf = osg::Matrixd::identity();
+    if (angularDimension->computeWorldToLocalMatrix(tf, nullptr))
+      np = np * tf;
+    else
+      std::cout << "WARNING: couldn't calculate matrix for SLVS_C_ANGLE in: " << BOOST_CURRENT_FUNCTION << std::endl;
+    label->setMatrix(osg::Matrixd::translate(np)); //just get it off zero.
+    
     update();
     clearSelection();
+    
+    return std::make_pair(ah, parameter);
   }
+  
+  return boost::none;
 }
 
 //! @brief Add parallel constraint to the currently selected lines.
@@ -1945,17 +2122,18 @@ void Visual::remove()
 {
   for (const auto &h : data->highlights)
   {
-    osgText::Text *t = dynamic_cast<osgText::Text*>(h.get());
-    if (t)
+    //look for constraint.
+    auto c = data->cMap.getRecord(h);
+    if (!c)
     {
-      auto c = data->cMap.getRecord(h.get()->getParent(0));
-      if (!c)
-        c = data->cMap.getRecord(h.get()->getParent(0)->getParent(0));
-      if (c)
-      {
-        solver.removeConstraint(c.get().handle);
-        continue;
-      }
+      ParentMapVisitor v(data->cMap);
+      h->accept(v);
+      c = v.out;
+    }
+    if (c)
+    {
+      solver.removeConstraint(c.get().handle);
+      continue;
     }
     
     auto e = data->eMap.getRecord(h.get());
@@ -2112,6 +2290,19 @@ boost::uuids::uuid Visual::getEntityId(SSHandle h)
   auto ro = data->eMap.getRecord(h);
   assert(ro);
   return ro.get().id;
+}
+
+/*! @brief re highlight already selected objects.
+ * 
+ * @details The reason this was added: When we link
+ * and unlink parameters to expressions, the PLabels
+ * color changes to reflect this link state. This
+ * removes our selection highlight so we need to rehighlight.
+ */
+void Visual::reHighlight()
+{
+  for (const auto &h : data->highlights)
+    goHighlight(h.get());
 }
 
 /*! @brief Build the openscenegraph plane objects.
@@ -2689,7 +2880,7 @@ osg::Vec3d Visual::parameterPoint(SSHandle h, double u)
     
     angle *= u;
     osg::Quat rot(angle, osg::Vec3d(0.0, 0.0, 1.0));
-    return (rot * (as - ac)) + ac;
+    return (rot * r1) + ac;
   }
   else
   {
@@ -2778,4 +2969,155 @@ osg::Vec3d Visual::boundingCenter(const std::vector<SSHandle> &handles)
   };
   assert(bs.valid());
   return bs.center();
+}
+
+/*! @brief position and rotate angle dimension to lines
+ * @param dim Array of entity handles.
+ * @param lines Array of 2 entity handles.
+ */
+void Visual::placeAngularDimension(osg::MatrixTransform *dim, const std::vector<SSHandle> &lines)
+{
+  assert(dim);
+  assert(lines.size() == 2);
+  
+  osg::Vec3d l0p0, l0p1, l1p0, l1p1;
+  std::tie(l0p0, l0p1) = endPoints(lines.front());
+  std::tie(l1p0, l1p1) = endPoints(lines.back());
+  
+  auto convert2d = [](const osg::Vec3d& vIn) -> gp_Pnt2d
+  {
+    return gp_Pnt2d(vIn.x(), vIn.y());
+  };
+  
+  GCE2d_MakeLine lm1(convert2d(l0p0), convert2d(l0p1));
+  GCE2d_MakeLine lm2(convert2d(l1p0), convert2d(l1p1));
+  
+  Geom2dAPI_InterCurveCurve intersect(lm1.Value(), lm2.Value());
+  if (intersect.NbPoints() != 1)
+  {
+    std::cout << "ERROR: couldn't find line intersection in: " << BOOST_CURRENT_FUNCTION << std::endl;
+    return;
+  }
+  osg::Vec3d origin(intersect.Point(1).X(), intersect.Point(1).Y(), 0.0);
+  osg::Matrix om = osg::Matrixd::translate(origin);
+  
+  //get distances between origin and points. used to detect sense and set range masks.
+  double d00 = (origin - l0p0).length();
+  double d01 = (origin - l0p1).length();
+  double d10 = (origin - l1p0).length();
+  double d11 = (origin - l1p1).length();
+  
+  osg::Vec3d nx = l0p1 - l0p0;
+  if (d01 < d00)
+    nx = -nx;
+  nx.normalize();
+  osg::Quat rotation;
+  rotation.makeRotate(osg::Vec3d(1.0, 0.0, 0.0), nx);
+  om.setRotate(rotation);
+  
+  dim->setMatrix(om);
+  
+  //update range masks
+  lbr::AngularDimensionCallback *cb = dynamic_cast<lbr::AngularDimensionCallback*>(dim->getUpdateCallback());
+  assert(cb);
+  cb->setRangeMask1(lbr::RangeMask(d00, d01));
+  cb->setRangeMask2(lbr::RangeMask(d10, d11));
+}
+
+void Visual::placeLinearDimension(SSHandle ch)
+{
+  auto record = data->cMap.getRecord(ch);
+  assert(record);
+  osg::MatrixTransform *p = dynamic_cast<osg::MatrixTransform*>(record.get().node.get());
+  assert(p);
+  lbr::LinearDimensionCallback *cb = dynamic_cast<lbr::LinearDimensionCallback*>(p->getUpdateCallback());
+  assert(cb);
+  
+  auto oc = solver.findConstraint(record.get().handle);
+  assert(oc);
+  osg::Vec3d point1 = convert(oc.get().ptA);
+  boost::optional<osg::Vec3d> xaxis;
+  
+  if (oc.get().type == SLVS_C_PT_PT_DISTANCE)
+  {
+    osg::Vec3d point2 = convert(oc.get().ptB);
+    xaxis = point2 - point1;
+    xaxis.get().normalize();
+  }
+  else if (oc.get().type == SLVS_C_PT_LINE_DISTANCE)
+  {
+    auto ols = solver.findEntity(oc.get().entityA);
+    assert(ols);
+    osg::Vec3d lp0 = convert(ols.get().point[0]);
+    osg::Vec3d lp1 = convert(ols.get().point[1]);
+    osg::Vec3d ld = lp1 - lp0;
+    ld.normalize();
+    osg::Vec3d pp = projectPointLine(lp0, ld, point1);
+    xaxis = pp - point1;
+    xaxis.get().normalize();
+    
+    //update range mask.
+    osg::Vec3d tv0 = pp - lp0;
+    osg::Vec3d tv1 = pp - lp1;
+    double l0 = tv0.length();
+    double l1 = tv1.length();
+    tv0.normalize();
+    tv1.normalize();
+    if ((tv0 * tv1) > 0.0) //equal, intersection is off of line.
+      cb->setRangeMask2(lbr::RangeMask(-l1, -l0));
+    else //opposite, intersection is on line
+      cb->setRangeMask2(lbr::RangeMask(-l1, l0));
+  }
+  if (xaxis)
+  {
+    if (oc.get().valA < 0.0)
+      xaxis.get() = -xaxis.get();
+    osg::Quat rotation;
+    rotation.makeRotate(osg::Vec3d(1.0, 0.0, 0.0), xaxis.get());
+    osg::Matrixd transform = osg::Matrixd::rotate(rotation) * osg::Matrixd::translate(point1);
+    p->setMatrix(transform);
+    cb->setDistance(oc.get().valA);
+  }
+}
+
+void Visual::placeDiameterDimension(SSHandle ch)
+{
+  auto record = data->cMap.getRecord(ch);
+  assert(record);
+  osg::MatrixTransform *p = dynamic_cast<osg::MatrixTransform*>(record.get().node.get());
+  assert(p);
+  lbr::DiameterDimensionCallback *cb = dynamic_cast<lbr::DiameterDimensionCallback*>(p->getUpdateCallback());
+  assert(cb);
+  auto oc = solver.findConstraint(record.get().handle);
+  assert(oc);
+  auto oe = solver.findEntity(oc.get().entityA);
+  assert(oe);
+  
+  auto setLocation = [&](const osg::Matrixd &r = osg::Matrixd::identity())
+  {
+    osg::Vec3d point = convert(oe.get().point[0]);
+    point.z() = 0.002;
+    p->setMatrix(r * osg::Matrixd::translate(point));
+  };
+  
+  if (solver.isEntityType(oc.get().entityA, SLVS_E_CIRCLE))
+  {
+    setLocation();
+    cb->setDiameter(oc.get().valA);
+    //no range mask for a circle.
+  }
+  else if (solver.isEntityType(oc.get().entityA, SLVS_E_ARC_OF_CIRCLE))
+  {
+    cb->setDiameter(oc.get().valA);
+    
+    osg::Vec3d ac = convert(oe.get().point[0]);
+    osg::Vec3d as = convert(oe.get().point[1]);
+    osg::Vec3d af = convert(oe.get().point[2]);
+    
+    double startAngle = vectorAngle(osg::Vec3d(1.0, 0.0, 0.0), as - ac);
+    osg::Quat rot(startAngle, osg::Vec3d(0.0, 0.0, 1.0));
+    setLocation(osg::Matrixd(rot));
+    
+    cb->setRangeMask(lbr::RangeMask(0.0, vectorAngle(as - ac, af - ac)));
+  }
 }

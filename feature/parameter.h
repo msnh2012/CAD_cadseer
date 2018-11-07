@@ -46,7 +46,7 @@ namespace ftr
       static const QString Radius1 = "Radius1"; //!< cone
       static const QString Radius2 = "Radius2"; //!< cone
       static const QString Position = "Position"; //!< blend
-      static const QString Distance = "Distance"; //!< chamfer
+      static const QString Distance = "Distance"; //!< chamfer, sketch
       static const QString Angle = "Angle"; //!< draft
       static const QString Offset = "Offset"; //!< datum plane
       static const QString CSys = "Coordinate System"; //!< feature with a coordinate system.

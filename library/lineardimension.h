@@ -53,7 +53,6 @@ protected:
   
   osg::ref_ptr<osg::Geometry> arrow;
   osg::ref_ptr<osg::AutoTransform> autoArrowScale;
-  osg::ref_ptr<osg::MatrixTransform> arrowScale;
   osg::ref_ptr<osg::Geometry> line;
   osg::ref_ptr<osg::Billboard> billboard;
 };

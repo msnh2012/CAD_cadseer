@@ -1565,3 +1565,56 @@ bool Project::isFeatureNonLeaf(const boost::uuids::uuid &idIn)
 {
   return stow->isFeatureNonLeaf(stow->findVertex(idIn));
 }
+
+/*! @brief Link a parameter to an expression.
+ * 
+ * @param pId the id of the parameter.
+ * @param eId the id of the expression.
+ */
+void Project::expressionLink(const boost::uuids::uuid &pId, const boost::uuids::uuid &eId)
+{
+  assert(!pId.is_nil());
+  assert(!eId.is_nil());
+  assert(expressionManager->hasFormula(eId));
+  
+  ftr::prm::Parameter *parameter = findParameter(pId); //asserts on no id.
+  if (!parameter->isConstant())
+  {
+    //parameter is already linked.
+    assert(expressionManager->hasParameterLink(pId));
+    expressionManager->removeParameterLink(pId);
+  }
+  
+  double value = boost::get<double>(expressionManager->getFormulaValue(eId));
+  expressionManager->addLink(pId, eId);
+  parameter->setValue(value);
+  parameter->setConstant(false);
+  
+  std::ostringstream gm;
+  gm << "Linking parameter " << parameter->getName().toStdString()
+  << " to formula " << expressionManager->getFormulaName(eId);
+  
+  gitManager->appendGitMessage(gm.str());
+}
+
+/*! @brief Unlink a parameter to an expression.
+ * 
+ * @param pId the id of the parameter.
+ */
+void Project::expressionUnlink(const boost::uuids::uuid &pId)
+{
+  assert(!pId.is_nil());
+  assert(expressionManager->hasParameterLink(pId));
+  
+  ftr::prm::Parameter *parameter = findParameter(pId); //find already asserts.
+  
+  boost::uuids::uuid eId = expressionManager->getFormulaLink(pId);
+  expressionManager->removeParameterLink(pId);
+  parameter->setConstant(true);
+  
+  std::ostringstream gm;
+  gm << "Unlinking parameter " << parameter->getName().toStdString()
+  << " from formula " << expressionManager->getFormulaName(eId);
+  
+  gitManager->appendGitMessage(gm.str());
+}
