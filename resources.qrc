@@ -73,6 +73,8 @@
     <file>resources/images/constructionTorus.svg</file>
     <file>resources/images/constructionThread.svg</file>
     <file>resources/images/constructionSketch.svg</file>
+    <file>resources/images/constructionExtrude.svg</file>
+    <file>resources/images/constructionRevolve.svg</file>
     <file>resources/images/sketchPoint.svg</file>
     <file>resources/images/sketchLine.svg</file>
     <file>resources/images/sketchArc.svg</file>
