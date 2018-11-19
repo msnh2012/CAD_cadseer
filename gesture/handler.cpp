@@ -866,6 +866,22 @@ void Handler::constructMenu()
       (msg::Request | msg::Construct | msg::Sketch).to_string(),
       constructionBase
     );
+    constructNode
+    (
+      mdv::gestureCommand,
+      ":/resources/images/constructionExtrude.svg",
+      QObject::tr("Extrude Command").toStdString(),
+      (msg::Request | msg::Construct | msg::Extrude).to_string(),
+      constructionBase
+    );
+    constructNode
+    (
+      mdv::gestureCommand,
+      ":/resources/images/constructionRevolve.svg",
+      QObject::tr("Revolve Command").toStdString(),
+      (msg::Request | msg::Construct | msg::Revolve).to_string(),
+      constructionBase
+    );
     osg::MatrixTransform *constructionInstance = constructNode
     (
       mdv::gestureMenu,

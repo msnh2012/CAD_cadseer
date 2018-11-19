@@ -23,6 +23,7 @@
 #include <vector>
 
 #include <boost/uuid/uuid.hpp>
+#include <boost/optional/optional_fwd.hpp>
 
 #include <feature/pick.h>
 
@@ -42,8 +43,9 @@ namespace tls
     const ftr::Base *feature; //!< feature containing the result
     boost::uuids::uuid resultId; //!< result id of pick in feature.
     ftr::Pick pick; //!< pick to resolve.
-    bool operator<(const Resolved&);
-    bool operator==(const Resolved&);
+    bool operator<(const Resolved&) const;
+    bool operator==(const Resolved&) const;
+    boost::optional<osg::Vec3d> getPoint(const ann::SeerShape&) const;
   };
   
   /*! @brief Get feature and shape id pairs.

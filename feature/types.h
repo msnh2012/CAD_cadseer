@@ -64,7 +64,9 @@ namespace ftr
     Torus, //!< feature for torus primitive
     Thread, //!< feature for screw threads
     DatumAxis, //!< feature for datum axis
-    Sketch //!< feature for datum axis
+    Sketch, //!< feature for sketch
+    Extrude, //!< feature for extrude
+    Revolve //!< feature for revolve
   };
   
   inline const static std::string& toString(Type typeIn)
@@ -107,7 +109,9 @@ namespace ftr
       {Type::Torus, "Torus"},
       {Type::Thread, "Thread"},
       {Type::DatumAxis, "DatumAxis"},
-      {Type::Sketch, "Sketch"}
+      {Type::Sketch, "Sketch"},
+      {Type::Extrude, "Extrude"},
+      {Type::Revolve, "Revolve"}
     };
     
     assert(strings.count(typeIn) > 0);

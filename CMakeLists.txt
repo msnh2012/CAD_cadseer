@@ -372,6 +372,8 @@ SET(FEATURE_SOURCES
     feature/thread.cpp
     feature/datumaxis.cpp
     feature/sketch.cpp
+    feature/extrude.cpp
+    feature/revolve.cpp
     )
     
 SET(ANNEX_SOURCES
@@ -481,6 +483,8 @@ SET(PROJECT_SOURCES
     project/serial/xsdcxxoutput/featuretorus.cpp
     project/serial/xsdcxxoutput/featurethread.cpp
     project/serial/xsdcxxoutput/featuredatumaxis.cpp
+    project/serial/xsdcxxoutput/featureextrude.cpp
+    project/serial/xsdcxxoutput/featurerevolve.cpp
     )
     
 SET(APPLICATION_SOURCES
@@ -532,6 +536,8 @@ SET(COMMAND_SOURCES
     command/datumaxis.cpp
     command/datumplane.cpp
     command/sketch.cpp
+    command/extrude.cpp
+    command/revolve.cpp
     )
     
 SET(LIBRARY_SOURCES

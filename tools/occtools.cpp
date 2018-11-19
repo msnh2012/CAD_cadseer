@@ -33,6 +33,7 @@
 #include <BRepBndLib.hxx>
 #include <BRep_Tool.hxx>
 #include <BRepBuilderAPI_Copy.hxx>
+#include <BRepBuilderAPI_MakeFace.hxx>
 #include <BRepAdaptor_Surface.hxx>
 #include <BRepAdaptor_Curve.hxx>
 #include <BRepExtrema_ExtPF.hxx>
@@ -431,6 +432,59 @@ TopoDS_Shape occt::getFirstNonCompound(const TopoDS_Shape &shapeIn)
       return it.Value();
   }
   return TopoDS_Shape();
+}
+
+ShapeVector occt::getNonCompounds(const TopoDS_Shape &shapeIn)
+{
+  assert(!shapeIn.IsNull());
+  ShapeVector out;
+  
+  if (shapeIn.ShapeType() > TopAbs_COMPSOLID)
+    out.push_back(shapeIn);
+  else if (shapeIn.ShapeType() == TopAbs_COMPSOLID)
+  {
+    TopTools_IndexedMapOfShape solids;
+    TopExp::MapShapes(shapeIn, TopAbs_SOLID, solids);
+    ShapeVectorCast cast(solids);
+    out = cast;
+  }
+  else
+  {
+    //we have a compound
+    typedef std::pair<TopoDS_Iterator, TopoDS_Compound> ItCompPair;
+    std::stack<ItCompPair> theStack;
+    theStack.push(std::make_pair(TopoDS_Iterator(shapeIn), TopoDS::Compound(shapeIn)));
+    TopTools_MapOfShape shapes;
+    while(!theStack.empty())
+    {
+      ItCompPair currentPair = theStack.top();
+      theStack.pop();
+      TopoDS_Iterator currentIt = currentPair.first;
+      const TopoDS_Compound &currentCompound = currentPair.second;
+      for (; currentIt.More(); currentIt.Next())
+      {
+        if (currentIt.Value().ShapeType() == TopAbs_COMPSOLID)
+        {
+          TopTools_IndexedMapOfShape solids;
+          TopExp::MapShapes(currentIt.Value(), TopAbs_SOLID, solids);
+          for (int i = 1; i <= solids.Extent(); ++i)
+            shapes.Add(solids(i));
+          continue;
+        }
+        if (currentIt.Value().ShapeType() != TopAbs_COMPOUND)
+        {
+          shapes.Add(currentIt.Value());
+          continue;
+        }
+        //here we have a compound.
+        theStack.push(std::make_pair(TopoDS_Iterator(currentIt.Value()), TopoDS::Compound(currentIt.Value())));
+      }
+    }
+    ShapeVector cs = ShapeVectorCast(shapes);
+    std::copy(cs.begin(), cs.end(), std::back_inserter(out));
+  }
+  
+  return out;
 }
 
 TopoDS_Compound occt::getLastUniqueCompound(const TopoDS_Compound& compoundIn)
@@ -873,4 +927,36 @@ ShapeVector occt::mapShapes(const TopoDS_Shape &sIn)
   }
   
   return out;
+}
+
+void occt::sortWires(WireVector &wv)
+{
+  auto predicate = [](const TopoDS_Wire& wire1, const TopoDS_Wire& wire2) -> bool
+  {
+    Bnd_Box box1, box2;
+    BRepBndLib::Add(wire1, box1);
+    BRepBndLib::Add(wire2, box2);
+    return box2.SquareExtent() < box1.SquareExtent();
+  };
+  
+  std::sort(wv.begin(), wv.end(), predicate);
+}
+
+TopoDS_Face occt::buildFace(WireVector &wv)
+{
+  occt::sortWires(wv);
+  
+  BRepBuilderAPI_MakeFace fm(wv.front(), Standard_True);
+  if (fm.Error() != BRepBuilderAPI_FaceDone)
+    return TopoDS_Face();
+
+  occt::WireVector::const_iterator it = wv.begin();
+  it++; //skip first wire that was used for the outer wire in face creation.
+  for (; it != wv.end(); ++it)
+  {
+    fm.Add(*it);
+    if (fm.Error() != BRepBuilderAPI_FaceDone)
+      return TopoDS_Face();
+  }
+  return fm;
 }

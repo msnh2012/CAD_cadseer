@@ -54,6 +54,8 @@
 #include <feature/torus.h>
 #include <feature/thread.h>
 #include <feature/datumaxis.h>
+#include <feature/extrude.h>
+#include <feature/revolve.h>
 #include <project/serial/xsdcxxoutput/featurebox.h>
 #include <project/serial/xsdcxxoutput/featurecylinder.h>
 #include <project/serial/xsdcxxoutput/featuresphere.h>
@@ -86,6 +88,8 @@
 #include <project/serial/xsdcxxoutput/featuretorus.h>
 #include <project/serial/xsdcxxoutput/featurethread.h>
 #include <project/serial/xsdcxxoutput/featuredatumaxis.h>
+#include <project/serial/xsdcxxoutput/featureextrude.h>
+#include <project/serial/xsdcxxoutput/featurerevolve.h>
 
 #include "featureload.h"
 
@@ -129,6 +133,8 @@ directory(directoryIn)
   functionMap.insert(std::make_pair(ftr::toString(ftr::Type::Torus), std::bind(&FeatureLoad::loadTorus, this, std::placeholders::_1, std::placeholders::_2)));
   functionMap.insert(std::make_pair(ftr::toString(ftr::Type::Thread), std::bind(&FeatureLoad::loadThread, this, std::placeholders::_1, std::placeholders::_2)));
   functionMap.insert(std::make_pair(ftr::toString(ftr::Type::DatumAxis), std::bind(&FeatureLoad::loadDatumAxis, this, std::placeholders::_1, std::placeholders::_2)));
+  functionMap.insert(std::make_pair(ftr::toString(ftr::Type::Extrude), std::bind(&FeatureLoad::loadExtrude, this, std::placeholders::_1, std::placeholders::_2)));
+  functionMap.insert(std::make_pair(ftr::toString(ftr::Type::Revolve), std::bind(&FeatureLoad::loadRevolve, this, std::placeholders::_1, std::placeholders::_2)));
 }
 
 FeatureLoad::~FeatureLoad()
@@ -542,4 +548,28 @@ std::shared_ptr<ftr::Base> FeatureLoad::loadDatumAxis(const std::string &fileNam
   daf->serialRead(*sda);
   
   return daf;
+}
+
+std::shared_ptr<ftr::Base> FeatureLoad::loadExtrude(const std::string &fileNameIn, std::size_t shapeOffsetIn)
+{
+  auto se = srl::extrude(fileNameIn, ::xml_schema::Flags::dont_validate);
+  assert(se);
+  
+  std::shared_ptr<ftr::Extrude> ef(new ftr::Extrude);
+  ef->getAnnex<ann::SeerShape>(ann::Type::SeerShape).setOCCTShape(shapeVector.at(shapeOffsetIn));
+  ef->serialRead(*se);
+  
+  return ef;
+}
+
+std::shared_ptr<ftr::Base> FeatureLoad::loadRevolve(const std::string &fileNameIn, std::size_t shapeOffsetIn)
+{
+  auto se = srl::revolve(fileNameIn, ::xml_schema::Flags::dont_validate);
+  assert(se);
+  
+  std::shared_ptr<ftr::Revolve> ef(new ftr::Revolve);
+  ef->getAnnex<ann::SeerShape>(ann::Type::SeerShape).setOCCTShape(shapeVector.at(shapeOffsetIn));
+  ef->serialRead(*se);
+  
+  return ef;
 }

@@ -2786,6 +2786,208 @@ namespace prj
     }
 
 
+    // IPGroup
+    // 
+
+    const IPGroup::MatrixRootType& IPGroup::
+    matrixRoot () const
+    {
+      return this->matrixRoot_.get ();
+    }
+
+    IPGroup::MatrixRootType& IPGroup::
+    matrixRoot ()
+    {
+      return this->matrixRoot_.get ();
+    }
+
+    void IPGroup::
+    matrixRoot (const MatrixRootType& x)
+    {
+      this->matrixRoot_.set (x);
+    }
+
+    void IPGroup::
+    matrixRoot (::std::unique_ptr< MatrixRootType > x)
+    {
+      this->matrixRoot_.set (std::move (x));
+    }
+
+    const IPGroup::MatrixDimsType& IPGroup::
+    matrixDims () const
+    {
+      return this->matrixDims_.get ();
+    }
+
+    IPGroup::MatrixDimsType& IPGroup::
+    matrixDims ()
+    {
+      return this->matrixDims_.get ();
+    }
+
+    void IPGroup::
+    matrixDims (const MatrixDimsType& x)
+    {
+      this->matrixDims_.set (x);
+    }
+
+    void IPGroup::
+    matrixDims (::std::unique_ptr< MatrixDimsType > x)
+    {
+      this->matrixDims_.set (std::move (x));
+    }
+
+    const IPGroup::MatrixDraggerType& IPGroup::
+    matrixDragger () const
+    {
+      return this->matrixDragger_.get ();
+    }
+
+    IPGroup::MatrixDraggerType& IPGroup::
+    matrixDragger ()
+    {
+      return this->matrixDragger_.get ();
+    }
+
+    void IPGroup::
+    matrixDragger (const MatrixDraggerType& x)
+    {
+      this->matrixDragger_.set (x);
+    }
+
+    void IPGroup::
+    matrixDragger (::std::unique_ptr< MatrixDraggerType > x)
+    {
+      this->matrixDragger_.set (std::move (x));
+    }
+
+    const IPGroup::RotationAxisType& IPGroup::
+    rotationAxis () const
+    {
+      return this->rotationAxis_.get ();
+    }
+
+    IPGroup::RotationAxisType& IPGroup::
+    rotationAxis ()
+    {
+      return this->rotationAxis_.get ();
+    }
+
+    void IPGroup::
+    rotationAxis (const RotationAxisType& x)
+    {
+      this->rotationAxis_.set (x);
+    }
+
+    void IPGroup::
+    rotationAxis (::std::unique_ptr< RotationAxisType > x)
+    {
+      this->rotationAxis_.set (std::move (x));
+    }
+
+    const IPGroup::RotationNormalType& IPGroup::
+    rotationNormal () const
+    {
+      return this->rotationNormal_.get ();
+    }
+
+    IPGroup::RotationNormalType& IPGroup::
+    rotationNormal ()
+    {
+      return this->rotationNormal_.get ();
+    }
+
+    void IPGroup::
+    rotationNormal (const RotationNormalType& x)
+    {
+      this->rotationNormal_.set (x);
+    }
+
+    void IPGroup::
+    rotationNormal (::std::unique_ptr< RotationNormalType > x)
+    {
+      this->rotationNormal_.set (std::move (x));
+    }
+
+    const IPGroup::DimsFlippedType& IPGroup::
+    dimsFlipped () const
+    {
+      return this->dimsFlipped_.get ();
+    }
+
+    IPGroup::DimsFlippedType& IPGroup::
+    dimsFlipped ()
+    {
+      return this->dimsFlipped_.get ();
+    }
+
+    void IPGroup::
+    dimsFlipped (const DimsFlippedType& x)
+    {
+      this->dimsFlipped_.set (x);
+    }
+
+    const IPGroup::RotateDraggerType& IPGroup::
+    rotateDragger () const
+    {
+      return this->rotateDragger_.get ();
+    }
+
+    IPGroup::RotateDraggerType& IPGroup::
+    rotateDragger ()
+    {
+      return this->rotateDragger_.get ();
+    }
+
+    void IPGroup::
+    rotateDragger (const RotateDraggerType& x)
+    {
+      this->rotateDragger_.set (x);
+    }
+
+    const IPGroup::VisibleDraggerType& IPGroup::
+    visibleDragger () const
+    {
+      return this->visibleDragger_.get ();
+    }
+
+    IPGroup::VisibleDraggerType& IPGroup::
+    visibleDragger ()
+    {
+      return this->visibleDragger_.get ();
+    }
+
+    void IPGroup::
+    visibleDragger (const VisibleDraggerType& x)
+    {
+      this->visibleDragger_.set (x);
+    }
+
+    const IPGroup::ColorType& IPGroup::
+    color () const
+    {
+      return this->color_.get ();
+    }
+
+    IPGroup::ColorType& IPGroup::
+    color ()
+    {
+      return this->color_.get ();
+    }
+
+    void IPGroup::
+    color (const ColorType& x)
+    {
+      this->color_.set (x);
+    }
+
+    void IPGroup::
+    color (::std::unique_ptr< ColorType > x)
+    {
+      this->color_.set (std::move (x));
+    }
+
+
     // CSysDragger
     // 
 
@@ -7716,6 +7918,320 @@ namespace prj
     {
     }
 
+    // IPGroup
+    //
+
+    IPGroup::
+    IPGroup (const MatrixRootType& matrixRoot,
+             const MatrixDimsType& matrixDims,
+             const MatrixDraggerType& matrixDragger,
+             const RotationAxisType& rotationAxis,
+             const RotationNormalType& rotationNormal,
+             const DimsFlippedType& dimsFlipped,
+             const RotateDraggerType& rotateDragger,
+             const VisibleDraggerType& visibleDragger,
+             const ColorType& color)
+    : ::xml_schema::Type (),
+      matrixRoot_ (matrixRoot, this),
+      matrixDims_ (matrixDims, this),
+      matrixDragger_ (matrixDragger, this),
+      rotationAxis_ (rotationAxis, this),
+      rotationNormal_ (rotationNormal, this),
+      dimsFlipped_ (dimsFlipped, this),
+      rotateDragger_ (rotateDragger, this),
+      visibleDragger_ (visibleDragger, this),
+      color_ (color, this)
+    {
+    }
+
+    IPGroup::
+    IPGroup (::std::unique_ptr< MatrixRootType > matrixRoot,
+             ::std::unique_ptr< MatrixDimsType > matrixDims,
+             ::std::unique_ptr< MatrixDraggerType > matrixDragger,
+             ::std::unique_ptr< RotationAxisType > rotationAxis,
+             ::std::unique_ptr< RotationNormalType > rotationNormal,
+             const DimsFlippedType& dimsFlipped,
+             const RotateDraggerType& rotateDragger,
+             const VisibleDraggerType& visibleDragger,
+             ::std::unique_ptr< ColorType > color)
+    : ::xml_schema::Type (),
+      matrixRoot_ (std::move (matrixRoot), this),
+      matrixDims_ (std::move (matrixDims), this),
+      matrixDragger_ (std::move (matrixDragger), this),
+      rotationAxis_ (std::move (rotationAxis), this),
+      rotationNormal_ (std::move (rotationNormal), this),
+      dimsFlipped_ (dimsFlipped, this),
+      rotateDragger_ (rotateDragger, this),
+      visibleDragger_ (visibleDragger, this),
+      color_ (std::move (color), this)
+    {
+    }
+
+    IPGroup::
+    IPGroup (const IPGroup& x,
+             ::xml_schema::Flags f,
+             ::xml_schema::Container* c)
+    : ::xml_schema::Type (x, f, c),
+      matrixRoot_ (x.matrixRoot_, f, this),
+      matrixDims_ (x.matrixDims_, f, this),
+      matrixDragger_ (x.matrixDragger_, f, this),
+      rotationAxis_ (x.rotationAxis_, f, this),
+      rotationNormal_ (x.rotationNormal_, f, this),
+      dimsFlipped_ (x.dimsFlipped_, f, this),
+      rotateDragger_ (x.rotateDragger_, f, this),
+      visibleDragger_ (x.visibleDragger_, f, this),
+      color_ (x.color_, f, this)
+    {
+    }
+
+    IPGroup::
+    IPGroup (const ::xercesc::DOMElement& e,
+             ::xml_schema::Flags f,
+             ::xml_schema::Container* c)
+    : ::xml_schema::Type (e, f | ::xml_schema::Flags::base, c),
+      matrixRoot_ (this),
+      matrixDims_ (this),
+      matrixDragger_ (this),
+      rotationAxis_ (this),
+      rotationNormal_ (this),
+      dimsFlipped_ (this),
+      rotateDragger_ (this),
+      visibleDragger_ (this),
+      color_ (this)
+    {
+      if ((f & ::xml_schema::Flags::base) == 0)
+      {
+        ::xsd::cxx::xml::dom::parser< char > p (e, true, false, false);
+        this->parse (p, f);
+      }
+    }
+
+    void IPGroup::
+    parse (::xsd::cxx::xml::dom::parser< char >& p,
+           ::xml_schema::Flags f)
+    {
+      for (; p.more_content (); p.next_content (false))
+      {
+        const ::xercesc::DOMElement& i (p.cur_element ());
+        const ::xsd::cxx::xml::qualified_name< char > n (
+          ::xsd::cxx::xml::dom::name< char > (i));
+
+        // matrixRoot
+        //
+        if (n.name () == "matrixRoot" && n.namespace_ ().empty ())
+        {
+          ::std::unique_ptr< MatrixRootType > r (
+            MatrixRootTraits::create (i, f, this));
+
+          if (!matrixRoot_.present ())
+          {
+            this->matrixRoot_.set (::std::move (r));
+            continue;
+          }
+        }
+
+        // matrixDims
+        //
+        if (n.name () == "matrixDims" && n.namespace_ ().empty ())
+        {
+          ::std::unique_ptr< MatrixDimsType > r (
+            MatrixDimsTraits::create (i, f, this));
+
+          if (!matrixDims_.present ())
+          {
+            this->matrixDims_.set (::std::move (r));
+            continue;
+          }
+        }
+
+        // matrixDragger
+        //
+        if (n.name () == "matrixDragger" && n.namespace_ ().empty ())
+        {
+          ::std::unique_ptr< MatrixDraggerType > r (
+            MatrixDraggerTraits::create (i, f, this));
+
+          if (!matrixDragger_.present ())
+          {
+            this->matrixDragger_.set (::std::move (r));
+            continue;
+          }
+        }
+
+        // rotationAxis
+        //
+        if (n.name () == "rotationAxis" && n.namespace_ ().empty ())
+        {
+          ::std::unique_ptr< RotationAxisType > r (
+            RotationAxisTraits::create (i, f, this));
+
+          if (!rotationAxis_.present ())
+          {
+            this->rotationAxis_.set (::std::move (r));
+            continue;
+          }
+        }
+
+        // rotationNormal
+        //
+        if (n.name () == "rotationNormal" && n.namespace_ ().empty ())
+        {
+          ::std::unique_ptr< RotationNormalType > r (
+            RotationNormalTraits::create (i, f, this));
+
+          if (!rotationNormal_.present ())
+          {
+            this->rotationNormal_.set (::std::move (r));
+            continue;
+          }
+        }
+
+        // dimsFlipped
+        //
+        if (n.name () == "dimsFlipped" && n.namespace_ ().empty ())
+        {
+          if (!dimsFlipped_.present ())
+          {
+            this->dimsFlipped_.set (DimsFlippedTraits::create (i, f, this));
+            continue;
+          }
+        }
+
+        // rotateDragger
+        //
+        if (n.name () == "rotateDragger" && n.namespace_ ().empty ())
+        {
+          if (!rotateDragger_.present ())
+          {
+            this->rotateDragger_.set (RotateDraggerTraits::create (i, f, this));
+            continue;
+          }
+        }
+
+        // visibleDragger
+        //
+        if (n.name () == "visibleDragger" && n.namespace_ ().empty ())
+        {
+          if (!visibleDragger_.present ())
+          {
+            this->visibleDragger_.set (VisibleDraggerTraits::create (i, f, this));
+            continue;
+          }
+        }
+
+        // color
+        //
+        if (n.name () == "color" && n.namespace_ ().empty ())
+        {
+          ::std::unique_ptr< ColorType > r (
+            ColorTraits::create (i, f, this));
+
+          if (!color_.present ())
+          {
+            this->color_.set (::std::move (r));
+            continue;
+          }
+        }
+
+        break;
+      }
+
+      if (!matrixRoot_.present ())
+      {
+        throw ::xsd::cxx::tree::expected_element< char > (
+          "matrixRoot",
+          "");
+      }
+
+      if (!matrixDims_.present ())
+      {
+        throw ::xsd::cxx::tree::expected_element< char > (
+          "matrixDims",
+          "");
+      }
+
+      if (!matrixDragger_.present ())
+      {
+        throw ::xsd::cxx::tree::expected_element< char > (
+          "matrixDragger",
+          "");
+      }
+
+      if (!rotationAxis_.present ())
+      {
+        throw ::xsd::cxx::tree::expected_element< char > (
+          "rotationAxis",
+          "");
+      }
+
+      if (!rotationNormal_.present ())
+      {
+        throw ::xsd::cxx::tree::expected_element< char > (
+          "rotationNormal",
+          "");
+      }
+
+      if (!dimsFlipped_.present ())
+      {
+        throw ::xsd::cxx::tree::expected_element< char > (
+          "dimsFlipped",
+          "");
+      }
+
+      if (!rotateDragger_.present ())
+      {
+        throw ::xsd::cxx::tree::expected_element< char > (
+          "rotateDragger",
+          "");
+      }
+
+      if (!visibleDragger_.present ())
+      {
+        throw ::xsd::cxx::tree::expected_element< char > (
+          "visibleDragger",
+          "");
+      }
+
+      if (!color_.present ())
+      {
+        throw ::xsd::cxx::tree::expected_element< char > (
+          "color",
+          "");
+      }
+    }
+
+    IPGroup* IPGroup::
+    _clone (::xml_schema::Flags f,
+            ::xml_schema::Container* c) const
+    {
+      return new class IPGroup (*this, f, c);
+    }
+
+    IPGroup& IPGroup::
+    operator= (const IPGroup& x)
+    {
+      if (this != &x)
+      {
+        static_cast< ::xml_schema::Type& > (*this) = x;
+        this->matrixRoot_ = x.matrixRoot_;
+        this->matrixDims_ = x.matrixDims_;
+        this->matrixDragger_ = x.matrixDragger_;
+        this->rotationAxis_ = x.rotationAxis_;
+        this->rotationNormal_ = x.rotationNormal_;
+        this->dimsFlipped_ = x.dimsFlipped_;
+        this->rotateDragger_ = x.rotateDragger_;
+        this->visibleDragger_ = x.visibleDragger_;
+        this->color_ = x.color_;
+      }
+
+      return *this;
+    }
+
+    IPGroup::
+    ~IPGroup ()
+    {
+    }
+
     // CSysDragger
     //
 
@@ -9318,6 +9834,111 @@ namespace prj
             e));
 
         s << i.matrix ();
+      }
+
+      // color
+      //
+      {
+        ::xercesc::DOMElement& s (
+          ::xsd::cxx::xml::dom::create_element (
+            "color",
+            e));
+
+        s << i.color ();
+      }
+    }
+
+    void
+    operator<< (::xercesc::DOMElement& e, const IPGroup& i)
+    {
+      e << static_cast< const ::xml_schema::Type& > (i);
+
+      // matrixRoot
+      //
+      {
+        ::xercesc::DOMElement& s (
+          ::xsd::cxx::xml::dom::create_element (
+            "matrixRoot",
+            e));
+
+        s << i.matrixRoot ();
+      }
+
+      // matrixDims
+      //
+      {
+        ::xercesc::DOMElement& s (
+          ::xsd::cxx::xml::dom::create_element (
+            "matrixDims",
+            e));
+
+        s << i.matrixDims ();
+      }
+
+      // matrixDragger
+      //
+      {
+        ::xercesc::DOMElement& s (
+          ::xsd::cxx::xml::dom::create_element (
+            "matrixDragger",
+            e));
+
+        s << i.matrixDragger ();
+      }
+
+      // rotationAxis
+      //
+      {
+        ::xercesc::DOMElement& s (
+          ::xsd::cxx::xml::dom::create_element (
+            "rotationAxis",
+            e));
+
+        s << i.rotationAxis ();
+      }
+
+      // rotationNormal
+      //
+      {
+        ::xercesc::DOMElement& s (
+          ::xsd::cxx::xml::dom::create_element (
+            "rotationNormal",
+            e));
+
+        s << i.rotationNormal ();
+      }
+
+      // dimsFlipped
+      //
+      {
+        ::xercesc::DOMElement& s (
+          ::xsd::cxx::xml::dom::create_element (
+            "dimsFlipped",
+            e));
+
+        s << i.dimsFlipped ();
+      }
+
+      // rotateDragger
+      //
+      {
+        ::xercesc::DOMElement& s (
+          ::xsd::cxx::xml::dom::create_element (
+            "rotateDragger",
+            e));
+
+        s << i.rotateDragger ();
+      }
+
+      // visibleDragger
+      //
+      {
+        ::xercesc::DOMElement& s (
+          ::xsd::cxx::xml::dom::create_element (
+            "visibleDragger",
+            e));
+
+        s << i.visibleDragger ();
       }
 
       // color

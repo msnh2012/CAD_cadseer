@@ -155,6 +155,8 @@ namespace msg
     static const Mask About(Mask().set(                        114));//!< command. move up
     static const Mask DatumAxis(Mask().set(                    115));//!< command. move up
     static const Mask Sketch(Mask().set(                       116));//!< command. move up
+    static const Mask Extrude(Mask().set(                      117));//!< command. move up
+    static const Mask Revolve(Mask().set(                      118));//!< command. move up
   
     typedef boost::variant
     <

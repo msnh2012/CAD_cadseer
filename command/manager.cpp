@@ -63,6 +63,8 @@
 #include <command/datumaxis.h>
 #include <command/datumplane.h>
 #include <command/sketch.h>
+#include <command/extrude.h>
+#include <command/revolve.h>
 #include <message/dispatch.h>
 #include <message/observer.h>
 #include <selection/message.h>
@@ -222,6 +224,12 @@ void Manager::setupDispatcher()
   
   mask = msg::Request | msg::Construct | msg::Sketch;
   observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Manager::constructSketchDispatched, this, _1)));
+  
+  mask = msg::Request | msg::Construct | msg::Extrude;
+  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Manager::constructExtrudeDispatched, this, _1)));
+  
+  mask = msg::Request | msg::Construct | msg::Revolve;
+  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Manager::constructRevolveDispatched, this, _1)));
   
   mask = msg::Request | msg::Project | msg::Revision | msg::Dialog;
   observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Manager::revisionDispatched, this, _1)));
@@ -536,6 +544,18 @@ void Manager::constructDatumPlaneDispatched(const msg::Message&)
 void Manager::constructSketchDispatched(const msg::Message&)
 {
   std::shared_ptr<Sketch> f(new Sketch());
+  addCommand(f);
+}
+
+void Manager::constructExtrudeDispatched(const msg::Message&)
+{
+  std::shared_ptr<Extrude> f(new Extrude());
+  addCommand(f);
+}
+
+void Manager::constructRevolveDispatched(const msg::Message&)
+{
+  std::shared_ptr<Revolve> f(new Revolve());
   addCommand(f);
 }
 

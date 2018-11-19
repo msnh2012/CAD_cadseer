@@ -108,6 +108,7 @@ namespace prj
     class Pick;
     class Picks;
     class PLabel;
+    class IPGroup;
     class CSysDragger;
   }
 }
@@ -10202,6 +10203,623 @@ namespace prj
     };
 
     /**
+     * @brief Class corresponding to the %IPGroup schema type.
+     *
+     * @nosubgrouping
+     */
+    class IPGroup: public ::xml_schema::Type
+    {
+      public:
+      /**
+       * @name matrixRoot
+       *
+       * @brief Accessor and modifier functions for the %matrixRoot
+       * required element.
+       */
+      //@{
+
+      /**
+       * @brief Element type.
+       */
+      typedef ::prj::srl::Matrixd MatrixRootType;
+
+      /**
+       * @brief Element traits type.
+       */
+      typedef ::xsd::cxx::tree::traits< MatrixRootType, char > MatrixRootTraits;
+
+      /**
+       * @brief Return a read-only (constant) reference to the element.
+       *
+       * @return A constant reference to the element.
+       */
+      const MatrixRootType&
+      matrixRoot () const;
+
+      /**
+       * @brief Return a read-write reference to the element.
+       *
+       * @return A reference to the element.
+       */
+      MatrixRootType&
+      matrixRoot ();
+
+      /**
+       * @brief Set the element value.
+       *
+       * @param x A new value to set.
+       *
+       * This function makes a copy of its argument and sets it as
+       * the new value of the element.
+       */
+      void
+      matrixRoot (const MatrixRootType& x);
+
+      /**
+       * @brief Set the element value without copying.
+       *
+       * @param p A new value to use.
+       *
+       * This function will try to use the passed value directly
+       * instead of making a copy.
+       */
+      void
+      matrixRoot (::std::unique_ptr< MatrixRootType > p);
+
+      //@}
+
+      /**
+       * @name matrixDims
+       *
+       * @brief Accessor and modifier functions for the %matrixDims
+       * required element.
+       */
+      //@{
+
+      /**
+       * @brief Element type.
+       */
+      typedef ::prj::srl::Matrixd MatrixDimsType;
+
+      /**
+       * @brief Element traits type.
+       */
+      typedef ::xsd::cxx::tree::traits< MatrixDimsType, char > MatrixDimsTraits;
+
+      /**
+       * @brief Return a read-only (constant) reference to the element.
+       *
+       * @return A constant reference to the element.
+       */
+      const MatrixDimsType&
+      matrixDims () const;
+
+      /**
+       * @brief Return a read-write reference to the element.
+       *
+       * @return A reference to the element.
+       */
+      MatrixDimsType&
+      matrixDims ();
+
+      /**
+       * @brief Set the element value.
+       *
+       * @param x A new value to set.
+       *
+       * This function makes a copy of its argument and sets it as
+       * the new value of the element.
+       */
+      void
+      matrixDims (const MatrixDimsType& x);
+
+      /**
+       * @brief Set the element value without copying.
+       *
+       * @param p A new value to use.
+       *
+       * This function will try to use the passed value directly
+       * instead of making a copy.
+       */
+      void
+      matrixDims (::std::unique_ptr< MatrixDimsType > p);
+
+      //@}
+
+      /**
+       * @name matrixDragger
+       *
+       * @brief Accessor and modifier functions for the %matrixDragger
+       * required element.
+       */
+      //@{
+
+      /**
+       * @brief Element type.
+       */
+      typedef ::prj::srl::Matrixd MatrixDraggerType;
+
+      /**
+       * @brief Element traits type.
+       */
+      typedef ::xsd::cxx::tree::traits< MatrixDraggerType, char > MatrixDraggerTraits;
+
+      /**
+       * @brief Return a read-only (constant) reference to the element.
+       *
+       * @return A constant reference to the element.
+       */
+      const MatrixDraggerType&
+      matrixDragger () const;
+
+      /**
+       * @brief Return a read-write reference to the element.
+       *
+       * @return A reference to the element.
+       */
+      MatrixDraggerType&
+      matrixDragger ();
+
+      /**
+       * @brief Set the element value.
+       *
+       * @param x A new value to set.
+       *
+       * This function makes a copy of its argument and sets it as
+       * the new value of the element.
+       */
+      void
+      matrixDragger (const MatrixDraggerType& x);
+
+      /**
+       * @brief Set the element value without copying.
+       *
+       * @param p A new value to use.
+       *
+       * This function will try to use the passed value directly
+       * instead of making a copy.
+       */
+      void
+      matrixDragger (::std::unique_ptr< MatrixDraggerType > p);
+
+      //@}
+
+      /**
+       * @name rotationAxis
+       *
+       * @brief Accessor and modifier functions for the %rotationAxis
+       * required element.
+       */
+      //@{
+
+      /**
+       * @brief Element type.
+       */
+      typedef ::prj::srl::Vec3d RotationAxisType;
+
+      /**
+       * @brief Element traits type.
+       */
+      typedef ::xsd::cxx::tree::traits< RotationAxisType, char > RotationAxisTraits;
+
+      /**
+       * @brief Return a read-only (constant) reference to the element.
+       *
+       * @return A constant reference to the element.
+       */
+      const RotationAxisType&
+      rotationAxis () const;
+
+      /**
+       * @brief Return a read-write reference to the element.
+       *
+       * @return A reference to the element.
+       */
+      RotationAxisType&
+      rotationAxis ();
+
+      /**
+       * @brief Set the element value.
+       *
+       * @param x A new value to set.
+       *
+       * This function makes a copy of its argument and sets it as
+       * the new value of the element.
+       */
+      void
+      rotationAxis (const RotationAxisType& x);
+
+      /**
+       * @brief Set the element value without copying.
+       *
+       * @param p A new value to use.
+       *
+       * This function will try to use the passed value directly
+       * instead of making a copy.
+       */
+      void
+      rotationAxis (::std::unique_ptr< RotationAxisType > p);
+
+      //@}
+
+      /**
+       * @name rotationNormal
+       *
+       * @brief Accessor and modifier functions for the %rotationNormal
+       * required element.
+       */
+      //@{
+
+      /**
+       * @brief Element type.
+       */
+      typedef ::prj::srl::Vec3d RotationNormalType;
+
+      /**
+       * @brief Element traits type.
+       */
+      typedef ::xsd::cxx::tree::traits< RotationNormalType, char > RotationNormalTraits;
+
+      /**
+       * @brief Return a read-only (constant) reference to the element.
+       *
+       * @return A constant reference to the element.
+       */
+      const RotationNormalType&
+      rotationNormal () const;
+
+      /**
+       * @brief Return a read-write reference to the element.
+       *
+       * @return A reference to the element.
+       */
+      RotationNormalType&
+      rotationNormal ();
+
+      /**
+       * @brief Set the element value.
+       *
+       * @param x A new value to set.
+       *
+       * This function makes a copy of its argument and sets it as
+       * the new value of the element.
+       */
+      void
+      rotationNormal (const RotationNormalType& x);
+
+      /**
+       * @brief Set the element value without copying.
+       *
+       * @param p A new value to use.
+       *
+       * This function will try to use the passed value directly
+       * instead of making a copy.
+       */
+      void
+      rotationNormal (::std::unique_ptr< RotationNormalType > p);
+
+      //@}
+
+      /**
+       * @name dimsFlipped
+       *
+       * @brief Accessor and modifier functions for the %dimsFlipped
+       * required element.
+       */
+      //@{
+
+      /**
+       * @brief Element type.
+       */
+      typedef ::xml_schema::Boolean DimsFlippedType;
+
+      /**
+       * @brief Element traits type.
+       */
+      typedef ::xsd::cxx::tree::traits< DimsFlippedType, char > DimsFlippedTraits;
+
+      /**
+       * @brief Return a read-only (constant) reference to the element.
+       *
+       * @return A constant reference to the element.
+       */
+      const DimsFlippedType&
+      dimsFlipped () const;
+
+      /**
+       * @brief Return a read-write reference to the element.
+       *
+       * @return A reference to the element.
+       */
+      DimsFlippedType&
+      dimsFlipped ();
+
+      /**
+       * @brief Set the element value.
+       *
+       * @param x A new value to set.
+       *
+       * This function makes a copy of its argument and sets it as
+       * the new value of the element.
+       */
+      void
+      dimsFlipped (const DimsFlippedType& x);
+
+      //@}
+
+      /**
+       * @name rotateDragger
+       *
+       * @brief Accessor and modifier functions for the %rotateDragger
+       * required element.
+       */
+      //@{
+
+      /**
+       * @brief Element type.
+       */
+      typedef ::xml_schema::Boolean RotateDraggerType;
+
+      /**
+       * @brief Element traits type.
+       */
+      typedef ::xsd::cxx::tree::traits< RotateDraggerType, char > RotateDraggerTraits;
+
+      /**
+       * @brief Return a read-only (constant) reference to the element.
+       *
+       * @return A constant reference to the element.
+       */
+      const RotateDraggerType&
+      rotateDragger () const;
+
+      /**
+       * @brief Return a read-write reference to the element.
+       *
+       * @return A reference to the element.
+       */
+      RotateDraggerType&
+      rotateDragger ();
+
+      /**
+       * @brief Set the element value.
+       *
+       * @param x A new value to set.
+       *
+       * This function makes a copy of its argument and sets it as
+       * the new value of the element.
+       */
+      void
+      rotateDragger (const RotateDraggerType& x);
+
+      //@}
+
+      /**
+       * @name visibleDragger
+       *
+       * @brief Accessor and modifier functions for the %visibleDragger
+       * required element.
+       */
+      //@{
+
+      /**
+       * @brief Element type.
+       */
+      typedef ::xml_schema::Boolean VisibleDraggerType;
+
+      /**
+       * @brief Element traits type.
+       */
+      typedef ::xsd::cxx::tree::traits< VisibleDraggerType, char > VisibleDraggerTraits;
+
+      /**
+       * @brief Return a read-only (constant) reference to the element.
+       *
+       * @return A constant reference to the element.
+       */
+      const VisibleDraggerType&
+      visibleDragger () const;
+
+      /**
+       * @brief Return a read-write reference to the element.
+       *
+       * @return A reference to the element.
+       */
+      VisibleDraggerType&
+      visibleDragger ();
+
+      /**
+       * @brief Set the element value.
+       *
+       * @param x A new value to set.
+       *
+       * This function makes a copy of its argument and sets it as
+       * the new value of the element.
+       */
+      void
+      visibleDragger (const VisibleDraggerType& x);
+
+      //@}
+
+      /**
+       * @name color
+       *
+       * @brief Accessor and modifier functions for the %color
+       * required element.
+       */
+      //@{
+
+      /**
+       * @brief Element type.
+       */
+      typedef ::prj::srl::Color ColorType;
+
+      /**
+       * @brief Element traits type.
+       */
+      typedef ::xsd::cxx::tree::traits< ColorType, char > ColorTraits;
+
+      /**
+       * @brief Return a read-only (constant) reference to the element.
+       *
+       * @return A constant reference to the element.
+       */
+      const ColorType&
+      color () const;
+
+      /**
+       * @brief Return a read-write reference to the element.
+       *
+       * @return A reference to the element.
+       */
+      ColorType&
+      color ();
+
+      /**
+       * @brief Set the element value.
+       *
+       * @param x A new value to set.
+       *
+       * This function makes a copy of its argument and sets it as
+       * the new value of the element.
+       */
+      void
+      color (const ColorType& x);
+
+      /**
+       * @brief Set the element value without copying.
+       *
+       * @param p A new value to use.
+       *
+       * This function will try to use the passed value directly
+       * instead of making a copy.
+       */
+      void
+      color (::std::unique_ptr< ColorType > p);
+
+      //@}
+
+      /**
+       * @name Constructors
+       */
+      //@{
+
+      /**
+       * @brief Create an instance from the ultimate base and
+       * initializers for required elements and attributes.
+       */
+      IPGroup (const MatrixRootType&,
+               const MatrixDimsType&,
+               const MatrixDraggerType&,
+               const RotationAxisType&,
+               const RotationNormalType&,
+               const DimsFlippedType&,
+               const RotateDraggerType&,
+               const VisibleDraggerType&,
+               const ColorType&);
+
+      /**
+       * @brief Create an instance from the ultimate base and
+       * initializers for required elements and attributes
+       * (::std::unique_ptr version).
+       *
+       * This constructor will try to use the passed values directly
+       * instead of making copies.
+       */
+      IPGroup (::std::unique_ptr< MatrixRootType >,
+               ::std::unique_ptr< MatrixDimsType >,
+               ::std::unique_ptr< MatrixDraggerType >,
+               ::std::unique_ptr< RotationAxisType >,
+               ::std::unique_ptr< RotationNormalType >,
+               const DimsFlippedType&,
+               const RotateDraggerType&,
+               const VisibleDraggerType&,
+               ::std::unique_ptr< ColorType >);
+
+      /**
+       * @brief Create an instance from a DOM element.
+       *
+       * @param e A DOM element to extract the data from.
+       * @param f Flags to create the new instance with.
+       * @param c A pointer to the object that will contain the new
+       * instance.
+       */
+      IPGroup (const ::xercesc::DOMElement& e,
+               ::xml_schema::Flags f = 0,
+               ::xml_schema::Container* c = 0);
+
+      /**
+       * @brief Copy constructor.
+       *
+       * @param x An instance to make a copy of.
+       * @param f Flags to create the copy with.
+       * @param c A pointer to the object that will contain the copy.
+       *
+       * For polymorphic object models use the @c _clone function instead.
+       */
+      IPGroup (const IPGroup& x,
+               ::xml_schema::Flags f = 0,
+               ::xml_schema::Container* c = 0);
+
+      /**
+       * @brief Copy the instance polymorphically.
+       *
+       * @param f Flags to create the copy with.
+       * @param c A pointer to the object that will contain the copy.
+       * @return A pointer to the dynamically allocated copy.
+       *
+       * This function ensures that the dynamic type of the instance is
+       * used for copying and should be used for polymorphic object
+       * models instead of the copy constructor.
+       */
+      virtual IPGroup*
+      _clone (::xml_schema::Flags f = 0,
+              ::xml_schema::Container* c = 0) const;
+
+      /**
+       * @brief Copy assignment operator.
+       *
+       * @param x An instance to make a copy of.
+       * @return A reference to itself.
+       *
+       * For polymorphic object models use the @c _clone function instead.
+       */
+      IPGroup&
+      operator= (const IPGroup& x);
+
+      //@}
+
+      /**
+       * @brief Destructor.
+       */
+      virtual 
+      ~IPGroup ();
+
+      // Implementation.
+      //
+
+      //@cond
+
+      protected:
+      void
+      parse (::xsd::cxx::xml::dom::parser< char >&,
+             ::xml_schema::Flags);
+
+      protected:
+      ::xsd::cxx::tree::one< MatrixRootType > matrixRoot_;
+      ::xsd::cxx::tree::one< MatrixDimsType > matrixDims_;
+      ::xsd::cxx::tree::one< MatrixDraggerType > matrixDragger_;
+      ::xsd::cxx::tree::one< RotationAxisType > rotationAxis_;
+      ::xsd::cxx::tree::one< RotationNormalType > rotationNormal_;
+      ::xsd::cxx::tree::one< DimsFlippedType > dimsFlipped_;
+      ::xsd::cxx::tree::one< RotateDraggerType > rotateDragger_;
+      ::xsd::cxx::tree::one< VisibleDraggerType > visibleDragger_;
+      ::xsd::cxx::tree::one< ColorType > color_;
+
+      //@endcond
+    };
+
+    /**
      * @brief Class corresponding to the %CSysDragger schema type.
      *
      * @nosubgrouping
@@ -10625,6 +11243,9 @@ namespace prj
 
     void
     operator<< (::xercesc::DOMElement&, const PLabel&);
+
+    void
+    operator<< (::xercesc::DOMElement&, const IPGroup&);
 
     void
     operator<< (::xercesc::DOMElement&, const CSysDragger&);

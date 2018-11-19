@@ -82,6 +82,8 @@ namespace prj
     std::shared_ptr<ftr::Base> loadTorus(const std::string &, std::size_t);
     std::shared_ptr<ftr::Base> loadThread(const std::string &, std::size_t);
     std::shared_ptr<ftr::Base> loadDatumAxis(const std::string &, std::size_t);
+    std::shared_ptr<ftr::Base> loadExtrude(const std::string &, std::size_t);
+    std::shared_ptr<ftr::Base> loadRevolve(const std::string &, std::size_t);
   };
 }
 

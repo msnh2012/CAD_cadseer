@@ -124,6 +124,14 @@ namespace occt
    */
   TopoDS_Shape getFirstNonCompound(const TopoDS_Shape &shapeIn);
   
+  /*! @brief Find all parent shapes that are not compounds.
+   * 
+   * @param shapeIn shape to be searched
+   * @return a vector of "non compound" shape. Maybe empty.
+   * @note think: a BFS that has a limited depth to first non compound shape
+   */
+  ShapeVector getNonCompounds(const TopoDS_Shape &shapeIn);
+  
   /*! @brief Get the last compound in a chain of compounds.
    * 
    * @param compoundIn shape to be searched.
@@ -222,13 +230,26 @@ namespace occt
    */
   void moveShape(TopoDS_Shape &sIn, const gp_Vec &dir, double distance);
   
-  /*! @brief Accumalate unique child shapes.
+  /*! @brief Accumulate unique child shapes.
    * 
    * @note this method ignores degenerate edges.
    * @param sIn shape to explore
    * @return vector of unique child shapes
    */
   ShapeVector mapShapes(const TopoDS_Shape &sIn);
+  
+  /*! @brief Sort Wires largest to smallest
+   * 
+   * @param wv target for sorting.
+   */
+  void sortWires(WireVector &wv);
+  
+  /*! @brief Construct a face from unsorted wires
+   * 
+   * @param wv wires for face constructing.
+   * @return a Face or Null if failed
+   */
+  TopoDS_Face buildFace(WireVector &wv);
   
   class BoundingBox
   {

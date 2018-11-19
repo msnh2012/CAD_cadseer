@@ -17,7 +17,10 @@
  *
  */
 
-#include<TopoDS.hxx>
+#include <boost/optional/optional.hpp>
+
+#include <TopoDS.hxx>
+#include <BRep_Tool.hxx>
 
 #include <globalutilities.h>
 #include <annex/seershape.h>
@@ -39,7 +42,7 @@ resultId(idIn),
 pick(pIn)
 {}
 
-bool Resolved::operator< (const Resolved &other)
+bool Resolved::operator< (const Resolved &other) const
 {
   if (feature < other.feature)
     return true;
@@ -49,7 +52,7 @@ bool Resolved::operator< (const Resolved &other)
   return false;
 }
 
-bool Resolved::operator== (const Resolved &other)
+bool Resolved::operator== (const Resolved &other) const
 {
   if
   (
@@ -59,6 +62,43 @@ bool Resolved::operator== (const Resolved &other)
   return true;
   
   return false;
+}
+boost::optional<osg::Vec3d> Resolved::getPoint(const ann::SeerShape &ssIn) const
+{
+  if (!slc::isPointType(pick.selectionType))
+    return boost::none;
+  assert(ssIn.hasId(resultId));
+  if(!ssIn.hasId(resultId))
+    return boost::none;
+  const TopoDS_Shape &rs = ssIn.getOCCTShape(resultId);
+  assert(rs.ShapeType() == TopAbs_EDGE);
+  if (rs.ShapeType() != TopAbs_EDGE)
+    return boost::none;
+  boost::optional<osg::Vec3d> p;
+  if (pick.selectionType == slc::Type::StartPoint)
+    p = gu::toOsg(BRep_Tool::Pnt(TopoDS::Vertex(ssIn.getOCCTShape(ssIn.useGetStartVertex(resultId)))));
+  if (pick.selectionType == slc::Type::EndPoint)
+    p = gu::toOsg(BRep_Tool::Pnt(TopoDS::Vertex(ssIn.getOCCTShape(ssIn.useGetEndVertex(resultId)))));
+  if (pick.selectionType == slc::Type::MidPoint)
+  {
+    auto a = ssIn.useGetMidPoint(resultId);
+    if (!a.empty())
+      p = a.front();
+  }
+  if (pick.selectionType == slc::Type::CenterPoint)
+  {
+    auto a = ssIn.useGetCenterPoint(resultId);
+    if (!a.empty())
+      p = a.front();
+  }
+  if (pick.selectionType == slc::Type::QuadrantPoint || pick.selectionType == slc::Type::NearestPoint)
+  {
+    p = pick.getPoint(TopoDS::Edge(rs));
+  }
+  if (!p)
+    return boost::none;
+  
+  return p.get();
 }
 
 std::vector<Resolved> tls::resolvePicks

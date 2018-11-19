@@ -33,6 +33,7 @@
 #include <message/dispatch.h>
 #include <preferences/preferencesXML.h>
 #include <preferences/manager.h>
+#include <project/serial/xsdcxxoutput/featurebase.h>
 #include <library/lineardimension.h>
 #include <library/lineardragger.h>
 #include <library/ipgroup.h>
@@ -49,7 +50,8 @@ osg::MatrixTransform(),
 mainDim(),
 differenceDim(),
 overallDim(),
-parameter(parameterIn)
+parameter(parameterIn),
+value(std::numeric_limits<double>::max())
 {
   rotation = new osg::AutoTransform();
   this->addChild(rotation.get());
@@ -177,6 +179,73 @@ void IPGroup::draggerShow()
 void IPGroup::draggerHide()
 {
   draggerSwitch->setAllChildrenOff();
+}
+
+prj::srl::IPGroup IPGroup::serialOut() const
+{
+  auto matrixOut = [](const osg::Matrixd &m) -> prj::srl::Matrixd
+  {
+    return prj::srl::Matrixd
+    (
+      m(0,0), m(0,1), m(0,2), m(0,3),
+      m(1,0), m(1,1), m(1,2), m(1,3),
+      m(2,0), m(2,1), m(2,2), m(2,3),
+      m(3,0), m(3,1), m(3,2), m(3,3)
+    );
+  };
+  
+  auto vecOut = [](const osg::Vec3d &v) -> prj::srl::Vec3d
+  {
+    return prj::srl::Vec3d(v.x(), v.y(), v.z());
+  };
+  
+  return prj::srl::IPGroup
+  (
+    matrixOut(this->getMatrix())
+    , matrixOut(mainDim->getMatrix())
+    , matrixOut(draggerMatrix->getMatrix())
+    , vecOut(rotation->getAxis())
+    , vecOut(rotation->getNormal())
+    , mainDim->isFlipped()
+    , static_cast<bool>(rotation->getNumChildren())
+    , draggerSwitch->getChildValue(dragger.get())
+    , prj::srl::Color(1.0, 0.0, 0.0, 1.0) //don't currently need.
+  );
+}
+
+void IPGroup::serialIn(const prj::srl::IPGroup &sgi)
+{
+  auto matrixIn = [](const prj::srl::Matrixd &mIn) -> osg::Matrixd
+  {
+    return osg::Matrixd
+    (
+      mIn.i0j0(), mIn.i0j1(), mIn.i0j2(), mIn.i0j3(),
+      mIn.i1j0(), mIn.i1j1(), mIn.i1j2(), mIn.i1j3(),
+      mIn.i2j0(), mIn.i2j1(), mIn.i2j2(), mIn.i2j3(),
+      mIn.i3j0(), mIn.i3j1(), mIn.i3j2(), mIn.i3j3()
+    );
+  };
+  
+  auto vecIn = [](const prj::srl::Vec3d &v) -> osg::Vec3d
+  {
+    return osg::Vec3d(v.x(), v.y(), v.z());
+  };
+  
+  setMatrix(matrixIn(sgi.matrixRoot()));
+  setMatrixDims(matrixIn(sgi.matrixDims()));
+  setMatrixDragger(matrixIn(sgi.matrixDragger()));
+  setRotationAxis(vecIn(sgi.rotationAxis()), vecIn(sgi.rotationNormal()));
+  setDimsFlipped(sgi.dimsFlipped());
+  if (!sgi.rotateDragger())
+    noAutoRotateDragger();
+  if (sgi.visibleDragger())
+    draggerShow();
+  else
+    draggerHide();
+  //not using color
+  
+  valueHasChanged();
+  constantHasChanged();
 }
 
 bool IPGroup::processMotion(const osgManipulator::MotionCommand &commandIn)

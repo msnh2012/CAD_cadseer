@@ -442,6 +442,11 @@ void Sketch::updateSeerShape()
   }
   
   sShape->setOCCTShape(static_cast<TopoDS_Compound>(occt::ShapeVectorCast(wires)));
+  if (!sShape->hasEvolveRecord(gu::createNilId(), sShape->getRootShapeId()))
+  {
+    assert(!sShape->hasEvolveRecordOut(sShape->getRootShapeId()));
+    sShape->insertEvolve(gu::createNilId(), sShape->getRootShapeId());
+  }
   
   while (wireIds.size() < wires.size())
     wireIds.push_back(gu::createRandomId());
@@ -449,6 +454,11 @@ void Sketch::updateSeerShape()
   for (const auto &w : wires)
   {
     sShape->updateId(w, wireIds.at(wi));
+    if (!sShape->hasEvolveRecord(gu::createNilId(), wireIds.at(wi)))
+    {
+      assert(!sShape->hasEvolveRecordOut(wireIds.at(wi)));
+      sShape->insertEvolve(gu::createNilId(), wireIds.at(wi));
+    }
     wi++;
   }
   
@@ -461,6 +471,11 @@ void Sketch::updateSeerShape()
       if (p.first.IsSame(s))
       {
         sShape->updateId(s, p.second);
+        if (!sShape->hasEvolveRecord(gu::createNilId(), p.second))
+        {
+          assert(!sShape->hasEvolveRecordOut(p.second));
+          sShape->insertEvolve(gu::createNilId(), p.second);
+        }
         break;
       }
     }

@@ -296,6 +296,20 @@
   </xs:all>
 </xs:complexType>
 
+<xs:complexType name="IPGroup">
+  <xs:all>
+    <xs:element name="matrixRoot" type="srl:Matrixd"/>
+    <xs:element name="matrixDims" type="srl:Matrixd"/>
+    <xs:element name="matrixDragger" type="srl:Matrixd"/>
+    <xs:element name="rotationAxis" type="srl:Vec3d"/>
+    <xs:element name="rotationNormal" type="srl:Vec3d"/>
+    <xs:element name="dimsFlipped" type="xs:boolean"/>
+    <xs:element name="rotateDragger" type="xs:boolean"/>
+    <xs:element name="visibleDragger" type="xs:boolean"/>
+    <xs:element name="color" type="srl:Color"/>
+  </xs:all>
+</xs:complexType>
+
 <xs:complexType name="CSysDragger">
   <xs:all>
     <xs:element name="matrix" type="srl:Matrixd"/>
