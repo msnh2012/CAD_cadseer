@@ -532,7 +532,7 @@ void Extrude::updateModel(const UpdatePayload &pIn)
     for (const auto &s : postMap)
     {
       count++;
-      if (!tss.hasShape(s))
+      if (oldIds.at(count).is_nil())
         continue;
       
       //this is for original shapes and uses original map.
