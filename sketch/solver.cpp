@@ -22,6 +22,7 @@
 
 #include <boost/current_function.hpp>
 
+#include "project/serial/xsdcxxoutput/featuresketch.h"
 #include "solver.h"
 
 using namespace skt;
@@ -2147,6 +2148,141 @@ std::string Solver::getResultMessage()
   int result = sys.result;
   assert(result >= 0 && result <= 3);
   return messages.at(result);
+}
+
+prj::srl::Solver Solver::serialOut() const
+{
+  prj::srl::SSParameters ssParameters;
+  for (const auto &p : parameters)
+    ssParameters.array().push_back(prj::srl::SSParameter(p.h, p.group, p.val));
+  
+  prj::srl::SSEntities ssEntities;
+  for (const auto &e : entities)
+  {
+    prj::srl::SS4Handles points;
+    points.array().push_back(e.point[0]);
+    points.array().push_back(e.point[1]);
+    points.array().push_back(e.point[2]);
+    points.array().push_back(e.point[3]);
+    
+    prj::srl::SS4Handles ssParams;
+    ssParams.array().push_back(e.param[0]);
+    ssParams.array().push_back(e.param[1]);
+    ssParams.array().push_back(e.param[2]);
+    ssParams.array().push_back(e.param[3]);
+    
+    ssEntities.array().push_back
+    (
+      prj::srl::SSEntity
+      (
+        e.h
+        , e.group
+        , e.type
+        , e.wrkpl
+        , points
+        , e.normal
+        , e.distance
+        , ssParams
+      )
+    );
+  }
+  
+  prj::srl::SSConstraints ssConstraints;
+  for (const auto &c : constraints)
+  {
+    ssConstraints.array().push_back
+    (
+      prj::srl::SSConstraint
+      (
+        c.h
+        , c.group
+        , c.type
+        , c.wrkpl
+        , c.valA
+        , c.ptA
+        , c.ptB
+        , c.entityA
+        , c.entityB
+        , c.entityC
+        , c.entityD
+        , c.other
+        , c.other2
+      )
+    );
+  }
+  
+  return prj::srl::Solver
+  (
+    ssParameters
+    , ssEntities
+    , ssConstraints
+    , nph
+    , neh
+    , nch
+    , group
+    , workPlane
+    , xAxis
+    , yAxis
+  );
+}
+
+void Solver::serialIn(const prj::srl::Solver &sIn)
+{
+  for (const auto &p : sIn.parameters().array())
+    parameters.push_back(Slvs_MakeParam(p.handle(), p.group(), p.value()));
+  
+  for (const auto &e : sIn.entities().array())
+  {
+    Slvs_Entity eIn;
+    eIn.h = e.handle();
+    eIn.group = e.group();
+    eIn.type = e.type();
+    eIn.wrkpl = e.workPlane();
+    eIn.point[0] = e.points().array().at(0);
+    eIn.point[1] = e.points().array().at(1);
+    eIn.point[2] = e.points().array().at(2);
+    eIn.point[3] = e.points().array().at(3);
+    eIn.normal = e.normal();
+    eIn.distance = e.distance();
+    eIn.param[0] = e.parameters().array().at(0);
+    eIn.param[1] = e.parameters().array().at(1);
+    eIn.param[2] = e.parameters().array().at(2);
+    eIn.param[3] = e.parameters().array().at(3);
+    
+    entities.push_back(eIn);
+  }
+  
+  for (const auto &c : sIn.constraints().array())
+  {
+    Slvs_Constraint cIn;
+    cIn.h = c.handle();
+    cIn.group = c.group();
+    cIn.type = c.type();
+    cIn.wrkpl = c.workPlane();
+    cIn.valA = c.value();
+    cIn.ptA = c.pointA();
+    cIn.ptB = c.pointB();
+    cIn.entityA = c.entityA();
+    cIn.entityB = c.entityB();
+    cIn.entityC = c.entityC();
+    cIn.entityD = c.entityD();
+    cIn.other = c.other();
+    cIn.other2 = c.other2();
+    
+    constraints.push_back(cIn);
+  }
+  
+  nph = sIn.nextParameterHandle();
+  neh = sIn.nextEntityHandle();
+  nch = sIn.nextConstraintHandle();
+  
+  group = sIn.currentGroup();
+  workPlane = sIn.currentWorkPlane();
+  xAxis = sIn.currentXAxis();
+  yAxis = sIn.currentYAxis();
+  
+  //update?
+//   solve(solver->getGroup(), true);
 }
 
 //doxygen wasn't picking this up in the source file for some reason.

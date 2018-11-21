@@ -29,6 +29,8 @@
 
 #include <slvs.h>
 
+namespace prj{namespace srl{class Solver;}}
+
 /*! @namespace skt
  * @brief sketcher namespace
  */
@@ -241,6 +243,14 @@ namespace skt
     int getResultCode();
     std::string getResultMessage();
     const std::vector<Slvs_hConstraint>& getFailed() const {return failed;}//!< @details get const vector of failing constraints.
+    ///@}
+    
+    /** @anchor Serial
+     * @name Serial
+     */
+    ///@{
+    prj::srl::Solver serialOut() const;
+    void serialIn(const prj::srl::Solver&);
     ///@}
     
   private:

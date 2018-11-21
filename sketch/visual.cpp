@@ -51,6 +51,8 @@
 #include "library/sketchlineardimension.h"
 #include "library/diameterdimension.h"
 #include "library/plabel.h"
+#include "library/childnamevisitor.h"
+#include "project/serial/xsdcxxoutput/featuresketch.h"
 #include "feature/parameter.h"
 #include "sketch/solver.h"
 #include "sketch/visual.h"
@@ -302,7 +304,13 @@ static boost::optional<T*> getNamedChild(osg::Group *parent, const std::string &
   return boost::none;
 }
 
-
+static void setEntityColor(osg::Geometry *g, const osg::Vec4 &cIn)
+{
+  osg::Vec4Array *cs = dynamic_cast<osg::Vec4Array*>(g->getColorArray());
+  assert(cs);
+  assert(cs->size() == 1);
+  (*cs)[0] = cIn;
+}
 
 using namespace skt;
 
@@ -369,38 +377,22 @@ void Visual::update()
       record.get().handle = e.h;
       record.get().id = gu::createRandomId();
       record.get().construction = false;
-      if (e.type == SLVS_E_POINT_IN_2D)
-      {
-        record.get().node = buildPoint();
-        record.get().node->setNodeMask(Entity.to_ulong());
-        record.get().node->setName(boost::uuids::to_string(record.get().id)); //move outside once all types.
-        data->entityGroup->addChild(record.get().node); //move outside once all types.
-      }
-      else if (e.type == SLVS_E_LINE_SEGMENT)
-      {
-        record.get().node = buildLine();
-        record.get().node->setNodeMask(Entity.to_ulong());
-        record.get().node->setName(boost::uuids::to_string(record.get().id)); //move outside once all types.
-        data->entityGroup->addChild(record.get().node); //move outside once all types.
-      }
-      else if (e.type == SLVS_E_ARC_OF_CIRCLE)
-      {
-        record.get().node = buildArc();
-        record.get().node->setNodeMask(Entity.to_ulong());
-        record.get().node->setName(boost::uuids::to_string(record.get().id)); //move outside once all types.
-        data->entityGroup->addChild(record.get().node); //move outside once all types.
-      }
-      else if (e.type == SLVS_E_CIRCLE)
-      {
-        record.get().node = buildCircle();
-        record.get().node->setNodeMask(Entity.to_ulong());
-        record.get().node->setName(boost::uuids::to_string(record.get().id)); //move outside once all types.
-        data->entityGroup->addChild(record.get().node); //move outside once all types.
-      }
     }
     //update entity, even new ones.
     if (e.type == SLVS_E_POINT_IN_2D)
     {
+      if (!record.get().node)
+      {
+        osg::Geometry *point = buildPoint();
+        if (record.get().construction)
+          setEntityColor(point, data->constructionColor);
+        else
+          setEntityColor(point, data->entityColor);
+        record.get().node = point;
+        record.get().node->setNodeMask(Entity.to_ulong());
+        record.get().node->setName(boost::uuids::to_string(record.get().id));
+        data->entityGroup->addChild(record.get().node);
+      }
       osg::Geometry *geometry = dynamic_cast<osg::Geometry*>(record.get().node.get());
       assert(geometry);
       osg::Vec3Array *verts = dynamic_cast<osg::Vec3Array*>(geometry->getVertexArray());
@@ -412,43 +404,69 @@ void Visual::update()
     }
     else if (e.type == SLVS_E_LINE_SEGMENT)
     {
-      auto le = solver.findEntity(record.get().handle);
-      assert(le);
+      if (!record.get().node)
+      {
+        osg::Geometry *line = buildLine();
+        if (record.get().construction)
+          setEntityColor(line, data->constructionColor);
+        else
+          setEntityColor(line, data->entityColor);
+        record.get().node = line;
+        record.get().node->setNodeMask(Entity.to_ulong());
+        record.get().node->setName(boost::uuids::to_string(record.get().id));
+        data->entityGroup->addChild(record.get().node);
+      }
       osg::Geometry *geometry = dynamic_cast<osg::Geometry*>(record.get().node.get());
       assert(geometry);
       osg::Vec3Array *verts = dynamic_cast<osg::Vec3Array*>(geometry->getVertexArray());
       assert(verts);
       assert(verts->size() == 2);
-      (*verts)[0] = convert(le.get().point[0]);
-      (*verts)[1] = convert(le.get().point[1]);
+      (*verts)[0] = convert(e.point[0]);
+      (*verts)[1] = convert(e.point[1]);
       verts->dirty();
       geometry->dirtyBound();
     }
     else if (e.type == SLVS_E_ARC_OF_CIRCLE)
     {
-      auto ae = solver.findEntity(record.get().handle);
-      assert(ae);
+      if (!record.get().node)
+      {
+        osg::Geometry *arc = buildArc();
+        if (record.get().construction)
+          setEntityColor(arc, data->constructionColor);
+        else
+          setEntityColor(arc, data->entityColor);
+        record.get().node = arc;
+        record.get().node->setNodeMask(Entity.to_ulong());
+        record.get().node->setName(boost::uuids::to_string(record.get().id));
+        data->entityGroup->addChild(record.get().node);
+      }
       osg::Geometry *geometry = dynamic_cast<osg::Geometry*>(record.get().node.get());
       assert(geometry);
-      
-      osg::Vec3d ac = convert(ae.get().point[0]);
-      osg::Vec3d as = convert(ae.get().point[1]);
-      osg::Vec3d af = convert(ae.get().point[2]);
-      
+      osg::Vec3d ac = convert(e.point[0]);
+      osg::Vec3d as = convert(e.point[1]);
+      osg::Vec3d af = convert(e.point[2]);
       updateArcGeometry(geometry, ac, as, af);
       geometry->dirtyBound();
     }
     else if (e.type == SLVS_E_CIRCLE)
     {
-      auto ce = solver.findEntity(record.get().handle);
-      assert(ce);
+      if (!record.get().node)
+      {
+        osg::Geometry *circle = buildCircle();
+        if (record.get().construction)
+          setEntityColor(circle, data->constructionColor);
+        else
+          setEntityColor(circle, data->entityColor);
+        record.get().node = circle;
+        record.get().node->setNodeMask(Entity.to_ulong());
+        record.get().node->setName(boost::uuids::to_string(record.get().id));
+        data->entityGroup->addChild(record.get().node);
+      }
       osg::Geometry *geometry = dynamic_cast<osg::Geometry*>(record.get().node.get());
       assert(geometry);
-      
-      osg::Vec3d center = convert(ce.get().point[0]);
-      double radius = solver.getParameterValue(solver.findEntity(ce.get().distance).get().param[0]).get();
+      osg::Vec3d center = convert(e.point[0]);
+      double radius = solver.getParameterValue(solver.findEntity(e.distance).get().param[0]).get();
       osg::Vec3d se = center + osg::Vec3d(1.0, 0.0, 0.0) * radius;
-      
       updateArcGeometry(geometry, center, se, se);
       geometry->dirtyBound();
     }
@@ -469,6 +487,27 @@ void Visual::update()
   updateText();
   
   //constraints
+  //map constraint types to node names and osg::Text
+  static const std::map<int, std::pair<std::string, std::string>> constraintTextMap =
+  {
+    std::make_pair(SLVS_C_HORIZONTAL, std::make_pair("horizontal", "H"))
+    , std::make_pair(SLVS_C_VERTICAL, std::make_pair("vertical", "V"))
+    , std::make_pair(SLVS_C_POINTS_COINCIDENT, std::make_pair("coincidence", "C"))
+    , std::make_pair(SLVS_C_PT_ON_LINE, std::make_pair("coincidence", "C"))
+    , std::make_pair(SLVS_C_PT_ON_CIRCLE, std::make_pair("coincidence", "C"))
+    , std::make_pair(SLVS_C_ARC_LINE_TANGENT, std::make_pair("tangent", "T"))
+    , std::make_pair(SLVS_C_EQUAL_LENGTH_LINES, std::make_pair("equality", "E"))
+    , std::make_pair(SLVS_C_EQUAL_RADIUS, std::make_pair("equality", "E"))
+    , std::make_pair(SLVS_C_EQUAL_ANGLE, std::make_pair("equality", "E"))
+    , std::make_pair(SLVS_C_SYMMETRIC_HORIZ, std::make_pair("symmetric", "S"))
+    , std::make_pair(SLVS_C_SYMMETRIC_VERT, std::make_pair("symmetric", "S"))
+    , std::make_pair(SLVS_C_SYMMETRIC_LINE, std::make_pair("symmetric", "S"))
+    , std::make_pair(SLVS_C_PARALLEL, std::make_pair("parallel", "P"))
+    , std::make_pair(SLVS_C_PERPENDICULAR, std::make_pair("perpendicular", "PP"))
+    , std::make_pair(SLVS_C_AT_MIDPOINT, std::make_pair("midpoint", "M"))
+    , std::make_pair(SLVS_C_WHERE_DRAGGED, std::make_pair("whereDragged", "G"))
+  };
+  
   data->cMap.setAllUnreferenced();
   for (const auto &c : solver.getConstraints())
   {
@@ -480,58 +519,20 @@ void Visual::update()
       record = data->cMap.records.back();
       record.get().handle = c.h;
       record.get().id = gu::createRandomId();
-      if (c.type == SLVS_C_HORIZONTAL)
-        record.get().node = buildConstraint1("horizontal", "H");
-      if (c.type == SLVS_C_VERTICAL)
-        record.get().node = buildConstraint1("vertical", "V");
-      if
-      (
-        c.type == SLVS_C_POINTS_COINCIDENT
-        || c.type == SLVS_C_PT_ON_LINE
-        || c.type == SLVS_C_PT_ON_CIRCLE
-      )
-        record.get().node = buildConstraint1("coincidence", "C");
-      if (c.type == SLVS_C_ARC_LINE_TANGENT)
-        record.get().node = buildConstraint1("tangent", "T");
-//       if (c.type == SLVS_C_PT_PT_DISTANCE)
-//         record.get().node = buildConstraint1("distance", "tempText");
-      if (c.type == SLVS_C_PT_LINE_DISTANCE)
-        record.get().node = buildConstraint1("distance", "tempText");
-//       if (c.type == SLVS_C_DIAMETER)
-//         record.get().node = buildConstraint1("diameter", "tempText");
-      if (c.type == SLVS_C_EQUAL_LENGTH_LINES || c.type == SLVS_C_EQUAL_RADIUS || c.type == SLVS_C_EQUAL_ANGLE)
-        record.get().node = buildConstraint2("equality", "E");
-      if (c.type == SLVS_C_SYMMETRIC_HORIZ || c.type == SLVS_C_SYMMETRIC_VERT || c.type == SLVS_C_SYMMETRIC_LINE)
-        record.get().node = buildConstraint2("symmetric", "S");
-//       if (c.type == SLVS_C_ANGLE)
-//         record.get().node = buildConstraintAngle();
-      if (c.type == SLVS_C_PARALLEL)
-        record.get().node = buildConstraint2("parallel", "P");
-      if (c.type == SLVS_C_PERPENDICULAR)
-        record.get().node = buildConstraint2("perpendicular", "PP");
-      if (c.type == SLVS_C_AT_MIDPOINT)
-        record.get().node = buildConstraint1("midpoint", "M");
-      if (c.type == SLVS_C_WHERE_DRAGGED)
-        record.get().node = buildConstraint1("whereDragged", "G");
-      if (record.get().node.valid())
-      {
-        record.get().node->setNodeMask(Constraint.to_ulong());
-//         record.get().node->setName(boost::uuids::to_string(record.get().id));
-        data->constraintGroup->addChild(record.get().node);
-      }
-      else
-      {
-        //error? didn't create osg::Node.
-        data->cMap.records.pop_back();
-        continue;
-      }
     }
-    //update constraints, even new ones.
+    //build and/or update constraints.
+    std::pair<std::string, std::string> ctMap = std::make_pair(std::string(), std::string());
+    if (constraintTextMap.count(c.type) == 1)
+      ctMap = constraintTextMap.at(c.type);
     if (c.type == SLVS_C_HORIZONTAL || c.type == SLVS_C_VERTICAL || c.type == SLVS_C_AT_MIDPOINT)
     {
+      if (!record.get().node)
+      {
+        record.get().node = buildConstraint1(ctMap.first, ctMap.second);
+        data->constraintGroup->addChild(record.get().node);
+      }
       osg::PositionAttitudeTransform *p = dynamic_cast<osg::PositionAttitudeTransform*>(record.get().node.get());
       assert(p);
-      
       auto ls = solver.findEntity(solver.findConstraint(record.get().handle).get().entityA);
       assert(ls);
       osg::Vec3d point1 = convert(ls.get().point[0]);
@@ -552,6 +553,11 @@ void Visual::update()
       || c.type == SLVS_C_WHERE_DRAGGED
     )
     {
+      if (!record.get().node)
+      {
+        record.get().node = buildConstraint1(ctMap.first, ctMap.second);
+        data->constraintGroup->addChild(record.get().node);
+      }
       osg::PositionAttitudeTransform *p = dynamic_cast<osg::PositionAttitudeTransform*>(record.get().node.get());
       assert(p);
       osg::Vec3d point1 = convert(solver.findConstraint(record.get().handle).get().ptA);
@@ -562,14 +568,17 @@ void Visual::update()
     }
     if (c.type == SLVS_C_ARC_LINE_TANGENT)
     {
+      if (!record.get().node)
+      {
+        record.get().node = buildConstraint1(ctMap.first, ctMap.second);
+        data->constraintGroup->addChild(record.get().node);
+      }
       osg::PositionAttitudeTransform *p = dynamic_cast<osg::PositionAttitudeTransform*>(record.get().node.get());
       assert(p);
-      
       auto oc = solver.findConstraint(record.get().handle);
       assert(oc);
       auto oe = solver.findEntity(oc.get().entityA);
       assert(oe);
-      
       osg::Vec3d point1 = convert(oe.get().point[1]);
       if (oc.get().other)
         point1 = convert(oe.get().point[2]);
@@ -585,6 +594,11 @@ void Visual::update()
     }
     if (c.type == SLVS_C_EQUAL_LENGTH_LINES || c.type == SLVS_C_EQUAL_RADIUS)
     {
+      if (!record.get().node)
+      {
+        record.get().node = buildConstraint2(ctMap.first, ctMap.second);
+        data->constraintGroup->addChild(record.get().node);
+      }
       osg::Group *g = record.get().node->asGroup();
       assert(g);
       osg::PositionAttitudeTransform *t0 = g->getChild(0)->asTransform()->asPositionAttitudeTransform();
@@ -614,6 +628,11 @@ void Visual::update()
     }
     if (c.type == SLVS_C_SYMMETRIC_HORIZ || c.type == SLVS_C_SYMMETRIC_VERT || c.type == SLVS_C_SYMMETRIC_LINE)
     {
+      if (!record.get().node)
+      {
+        record.get().node = buildConstraint2(ctMap.first, ctMap.second);
+        data->constraintGroup->addChild(record.get().node);
+      }
       osg::Group *g = record.get().node->asGroup();
       assert(g);
       osg::PositionAttitudeTransform *t0 = g->getChild(0)->asTransform()->asPositionAttitudeTransform();
@@ -656,7 +675,11 @@ void Visual::update()
     }
     if (c.type == SLVS_C_EQUAL_ANGLE)
     {
-      //another hack.
+      if (!record.get().node)
+      {
+        record.get().node = buildConstraint2(ctMap.first, ctMap.second);
+        data->constraintGroup->addChild(record.get().node);
+      }
       osg::Group *g = record.get().node->asGroup();
       assert(g);
       osg::PositionAttitudeTransform *t0 = g->getChild(0)->asTransform()->asPositionAttitudeTransform();
@@ -695,7 +718,11 @@ void Visual::update()
     
     if (c.type == SLVS_C_PARALLEL || c.type == SLVS_C_PERPENDICULAR)
     {
-      //another hack.
+      if (!record.get().node)
+      {
+        record.get().node = buildConstraint2(ctMap.first, ctMap.second);
+        data->constraintGroup->addChild(record.get().node);
+      }
       osg::Group *g = record.get().node->asGroup();
       assert(g);
       osg::PositionAttitudeTransform *t0 = g->getChild(0)->asTransform()->asPositionAttitudeTransform();
@@ -1766,30 +1793,105 @@ boost::optional<std::pair<SSHandle, std::shared_ptr<ftr::prm::Parameter>>> Visua
   
   std::shared_ptr<ftr::prm::Parameter> parameter = std::make_shared<ftr::prm::Parameter>
     (ftr::prm::Names::Distance, length);
-  
-  lbr::PLabel *label = new lbr::PLabel(parameter.get());
-  label->setMatrix(osg::Matrixd::translate(length / 2.0, -0.1, 0.0));
-  label->valueHasChanged();
-  label->constantHasChanged();
-    
-  osg::MatrixTransform *ld = lbr::buildLinearDimension(label);
-  lbr::LinearDimensionCallback *cb = new lbr::LinearDimensionCallback();
-  cb->setTextObjectName(label->getName().c_str());
-  cb->setDistance(static_cast<double>(*parameter));
-  ld->setUpdateCallback(cb);
-  
   data->cMap.records.push_back(Map::Record());
   Map::Record &record = data->cMap.records.back();
   record.handle = dh;
   record.id = gu::createRandomId();
-  record.node = ld;
-  record.node->setNodeMask(Constraint.to_ulong());
-  data->constraintGroup->addChild(record.node);
+  connectDistance(dh, parameter.get(), osg::Vec3d(length / 2.0, -0.1, 0.0));
   
   update();
   clearSelection();
   
   return std::make_pair(dh, parameter);
+}
+
+void Visual::connect(SSHandle cHandle, ftr::prm::Parameter *parameter, const osg::Vec3d &location)
+{
+  auto c = solver.findConstraint(cHandle);
+  if (!c)
+    return;
+  if (c.get().type == SLVS_C_PT_PT_DISTANCE || c.get().type == SLVS_C_PT_LINE_DISTANCE)
+    connectDistance(cHandle, parameter, location);
+  else if (c.get().type == SLVS_C_DIAMETER)
+    connectDiameter(cHandle, parameter, location);
+  else if (c.get().type == SLVS_C_ANGLE)
+    connectAngle(cHandle, parameter, location);
+}
+
+void Visual::connectDistance(SSHandle cHandle, ftr::prm::Parameter *parameter, const osg::Vec3d &location)
+{
+  auto oRec = data->cMap.getRecord(cHandle);
+  if (!oRec)
+  {
+    std::cout << "ERROR: couldn't find constraint handle in: " << BOOST_CURRENT_FUNCTION << std::endl;
+    return;
+  }
+  
+  lbr::PLabel *label = new lbr::PLabel(parameter);
+  label->setMatrix(osg::Matrixd::translate(location));
+  label->valueHasChanged();
+  label->constantHasChanged();
+    
+  osg::MatrixTransform *ld = lbr::buildLinearDimension(label);
+  ld->setNodeMask(Constraint.to_ulong());
+  lbr::LinearDimensionCallback *cb = new lbr::LinearDimensionCallback();
+  cb->setTextObjectName(label->getName().c_str());
+  cb->setDistance(static_cast<double>(*parameter));
+  ld->setUpdateCallback(cb);
+  
+  Map::Record &record = oRec.get();
+  record.node = ld;
+  data->constraintGroup->addChild(record.node);
+}
+
+void Visual::connectDiameter(SSHandle cHandle, ftr::prm::Parameter *parameter, const osg::Vec3d &location)
+{
+  auto oRec = data->cMap.getRecord(cHandle);
+  if (!oRec)
+  {
+    std::cout << "ERROR: couldn't find constraint handle in: " << BOOST_CURRENT_FUNCTION << std::endl;
+    return;
+  }
+  
+  lbr::PLabel *label = new lbr::PLabel(parameter);
+  label->setMatrix(osg::Matrixd::translate(location));
+  label->valueHasChanged();
+  label->constantHasChanged();
+    
+  osg::MatrixTransform *dd = lbr::buildDiameterDimension(label);
+  dd->setNodeMask(Constraint.to_ulong());
+  lbr::DiameterDimensionCallback *cb = new lbr::DiameterDimensionCallback(label->getName());
+  cb->setDiameter(static_cast<double>(*parameter));
+  dd->setUpdateCallback(cb);
+  
+  Map::Record &record = oRec.get();
+  record.node = dd;
+  data->constraintGroup->addChild(record.node);
+}
+
+void Visual::connectAngle(SSHandle cHandle, ftr::prm::Parameter *parameter, const osg::Vec3d &location)
+{
+  auto oRec = data->cMap.getRecord(cHandle);
+  if (!oRec)
+  {
+    std::cout << "ERROR: couldn't find constraint handle in: " << BOOST_CURRENT_FUNCTION << std::endl;
+    return;
+  }
+  
+  lbr::PLabel *label = new lbr::PLabel(parameter);
+  label->setMatrix(osg::Matrixd::translate(location));
+  label->valueHasChanged();
+  label->constantHasChanged();
+  
+  osg::MatrixTransform *angularDimension = lbr::buildAngularDimension(label);
+  lbr::AngularDimensionCallback *cb = new lbr::AngularDimensionCallback(label->getName());
+  cb->setAngleDegrees(static_cast<double>(*parameter));
+  angularDimension->setUpdateCallback(cb);
+  
+  Map::Record &record = oRec.get();
+  record.node = angularDimension;
+  record.node->setNodeMask(Constraint.to_ulong());
+  data->constraintGroup->addChild(record.node);
 }
 
 //! @brief Add a equality constraint to the currently selected objects.
@@ -1884,25 +1986,13 @@ boost::optional<std::pair<SSHandle, std::shared_ptr<ftr::prm::Parameter>>> Visua
     
     std::shared_ptr<ftr::prm::Parameter> parameter = std::make_shared<ftr::prm::Parameter>
     (ftr::prm::Names::Diameter, radius.get() * 2.0);
-  
-    lbr::PLabel *label = new lbr::PLabel(parameter.get());
-    label->setMatrix(osg::Matrixd::translate(position * 1.5));
-    label->valueHasChanged();
-    label->constantHasChanged();
-      
-    osg::MatrixTransform *dd = lbr::buildDiameterDimension(label);
-    lbr::DiameterDimensionCallback *cb = new lbr::DiameterDimensionCallback(label->getName());
-    cb->setDiameter(static_cast<double>(*parameter));
-    dd->setUpdateCallback(cb);
     
     data->cMap.records.push_back(Map::Record());
     Map::Record &record = data->cMap.records.back();
     record.handle = dh;
     record.id = gu::createRandomId();
-    record.node = dd;
-    record.node->setNodeMask(Constraint.to_ulong());
-    data->constraintGroup->addChild(record.node);
-    
+    connectDiameter(dh, parameter.get(), position * 1.5);
+
     update();
     clearSelection();
     return std::make_pair(dh, parameter);
@@ -2009,34 +2099,19 @@ boost::optional<std::pair<SSHandle, std::shared_ptr<ftr::prm::Parameter>>> Visua
     solver.solve(solver.getGroup(), true);
     
     std::shared_ptr<ftr::prm::Parameter> parameter = std::make_shared<ftr::prm::Parameter> (ftr::prm::Names::Angle, osg::RadiansToDegrees(angle));
-    
-    lbr::PLabel *label = new lbr::PLabel(parameter.get());
-    label->valueHasChanged();
-    label->constantHasChanged();
-    
-    osg::MatrixTransform *angularDimension = lbr::buildAngularDimension(label);
-    lbr::AngularDimensionCallback *cb = new lbr::AngularDimensionCallback(label->getName());
-    cb->setAngleDegrees(static_cast<double>(*parameter));
-    angularDimension->setUpdateCallback(cb);
-    
     data->cMap.records.push_back(Map::Record());
     Map::Record &record = data->cMap.records.back();
     record.handle = ah;
     record.id = gu::createRandomId();
-    record.node = angularDimension;
-    record.node->setNodeMask(Constraint.to_ulong());
-//     record.get().node->setName(boost::uuids::to_string(record.get().id));
-    data->constraintGroup->addChild(record.node);
-    
-    placeAngularDimension(angularDimension, lines);
     
     osg::Vec3d np = boundingCenter(lines);
     osg::Matrixd tf = osg::Matrixd::identity();
-    if (angularDimension->computeWorldToLocalMatrix(tf, nullptr))
+    if (data->transform->computeWorldToLocalMatrix(tf, nullptr))
       np = np * tf;
     else
       std::cout << "WARNING: couldn't calculate matrix for SLVS_C_ANGLE in: " << BOOST_CURRENT_FUNCTION << std::endl;
-    label->setMatrix(osg::Matrixd::translate(np)); //just get it off zero.
+    
+    connectAngle(ah, parameter.get(), np);
     
     update();
     clearSelection();
@@ -2524,6 +2599,7 @@ osg::PositionAttitudeTransform* Visual::buildConstraint1(const std::string &node
   osg::PositionAttitudeTransform *out = new osg::PositionAttitudeTransform();
   out->setPosition(osg::Vec3d(0.0, 0.0, 0.0));
   out->setName(nodeName);
+  out->setNodeMask(Constraint.to_ulong());
   osgText::Text *hText = buildConstraintText();
   hText->setText(text);
   out->addChild(hText);
@@ -2541,6 +2617,7 @@ osg::Group* Visual::buildConstraint2(const std::string &nodeName, const std::str
 {
   osg::Group *out = new osg::Group();
   out->setName(nodeName);
+  out->setNodeMask(Constraint.to_ulong());
   auto build = [&]()
   {
     osg::PositionAttitudeTransform *t = new osg::PositionAttitudeTransform();
@@ -3119,5 +3196,77 @@ void Visual::placeDiameterDimension(SSHandle ch)
     setLocation(osg::Matrixd(rot));
     
     cb->setRangeMask(lbr::RangeMask(0.0, vectorAngle(as - ac, af - ac)));
+  }
+}
+
+prj::srl::Visual Visual::serialOut() const
+{
+  auto serialMap = [](const Map& mapIn) -> prj::srl::VisualMap
+  {
+    prj::srl::VisualMap out;
+    for (const auto &e : mapIn.records)
+    {
+      osg::Vec3d location;
+      osg::Group *g = dynamic_cast<osg::Group*>(e.node.get());
+      if (g)
+      {
+        lbr::ChildNameVisitor v("lbr::PLabel");
+        g->accept(v);
+        if (v.out)
+        {
+          lbr::PLabel *l = v.castResult<lbr::PLabel>();
+          location = l->getMatrix().getTrans();
+        }
+      }
+      out.array().push_back
+      (
+        prj::srl::VisualMapRecord
+        (
+          e.handle
+          , gu::idToString(e.id)
+          , prj::srl::Vec3d(location.x(), location.y(), location.z())
+          , e.construction
+        )
+      );
+    }
+    return out;
+  };
+  
+  prj::srl::VisualMap evm = serialMap(data->eMap);
+  prj::srl::VisualMap cvm = serialMap(data->cMap);
+  
+  return prj::srl::Visual
+  (
+    autoSize
+    , size
+    , evm
+    , cvm
+  );
+}
+
+void Visual::serialIn(const prj::srl::Visual &sIn)
+{
+  autoSize = sIn.autoSize();
+  size = sIn.size();
+  
+  for (const auto &e : sIn.entityMap().array())
+  {
+    Map::Record record;
+    record.handle = e.handle();
+    record.id = gu::stringToId(e.id());
+    record.construction = e.construction();
+    
+    data->eMap.records.push_back(record);
+  }
+  
+  for (const auto &c : sIn.constraintMap().array())
+  {
+    Map::Record record;
+    record.handle = c.handle();
+    record.id = gu::stringToId(c.id());
+    //location is used in Sketch::serialRead
+    record.construction = c.construction();
+    
+    data->cMap.records.push_back(record);
   }
 }

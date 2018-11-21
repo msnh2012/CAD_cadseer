@@ -25,6 +25,7 @@
 namespace prj{namespace srl{class FeatureSketch;}}
 namespace skt{struct Solver; class Visual;}
 namespace ann{class SeerShape; class CSysDragger;}
+namespace prj{namespace srl{class FeatureSketch;}}
 
 namespace ftr
 {
@@ -44,12 +45,13 @@ namespace ftr
     virtual Descriptor getDescriptor() const override {return Descriptor::Create;}
     
     virtual void serialWrite(const boost::filesystem::path&) override;
-//     void serialRead(const prj::srl::FeatureSketch&);
+    void serialRead(const prj::srl::FeatureSketch&);
     
     skt::Solver* getSolver(){return solver.get();}
     skt::Visual* getVisual(){return visual.get();}
     void draggerShow();
     void draggerHide();
+    void buildDefault();
     
     bool hasHPPair(uint32_t);
     bool hasHPPair(const ftr::prm::Parameter*);

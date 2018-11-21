@@ -485,6 +485,7 @@ SET(PROJECT_SOURCES
     project/serial/xsdcxxoutput/featuredatumaxis.cpp
     project/serial/xsdcxxoutput/featureextrude.cpp
     project/serial/xsdcxxoutput/featurerevolve.cpp
+    project/serial/xsdcxxoutput/featuresketch.cpp
     )
     
 SET(APPLICATION_SOURCES

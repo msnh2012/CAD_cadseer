@@ -60,6 +60,7 @@ void Sketch::deactivate()
 void Sketch::go()
 {
   std::shared_ptr<ftr::Sketch> nf(new ftr::Sketch());
+  nf->buildDefault();
   project->addFeature(nf);
   observer->outBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
   

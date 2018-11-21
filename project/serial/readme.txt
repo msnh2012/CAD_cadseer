@@ -64,4 +64,5 @@ xsdcxx cxx-tree --std c++11 --generate-serialization --generate-doxygen --type-n
 xsdcxx cxx-tree --std c++11 --generate-serialization --generate-doxygen --type-naming ucc --hxx-suffix .h --cxx-suffix .cpp --guard-prefix PRJ_SRL --extern-xml-schema ../../../xmlbase.xsd ../featuredatumaxis.xsd
 xsdcxx cxx-tree --std c++11 --generate-serialization --generate-doxygen --type-naming ucc --hxx-suffix .h --cxx-suffix .cpp --guard-prefix PRJ_SRL --extern-xml-schema ../../../xmlbase.xsd ../featureextrude.xsd
 xsdcxx cxx-tree --std c++11 --generate-serialization --generate-doxygen --type-naming ucc --hxx-suffix .h --cxx-suffix .cpp --guard-prefix PRJ_SRL --extern-xml-schema ../../../xmlbase.xsd ../featurerevolve.xsd
+xsdcxx cxx-tree --std c++11 --generate-serialization --generate-doxygen --type-naming ucc --hxx-suffix .h --cxx-suffix .cpp --guard-prefix PRJ_SRL --extern-xml-schema ../../../xmlbase.xsd ../featuresketch.xsd
 

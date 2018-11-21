@@ -40,6 +40,7 @@
 #include "annex/csysdragger.h"
 #include "sketch/solver.h"
 #include "sketch/visual.h"
+#include "project/serial/xsdcxxoutput/featuresketch.h"
 #include "feature/parameter.h"
 #include "feature/shapecheck.h"
 #include "feature/sketch.h"
@@ -75,12 +76,6 @@ Base()
   draggerSwitch->addChild(csysDragger->dragger);
   overlaySwitch->addChild(draggerSwitch.get());
   
-  //maybe move to source of construction.
-  solver->setWorkPlane();
-  solver->createXAxis();
-  solver->createYAxis();
-  solver->groupIncrement();
-  
   overlaySwitch->addChild(visual->getTransform());
   visual->update();
 }
@@ -95,6 +90,15 @@ void Sketch::draggerShow()
 void Sketch::draggerHide()
 {
   draggerSwitch->setAllChildrenOff();
+}
+
+//! @details Setup a default sketch.
+void Sketch::buildDefault()
+{
+  solver->setWorkPlane();
+  solver->createXAxis();
+  solver->createYAxis();
+  solver->groupIncrement();
 }
 
 bool Sketch::hasHPPair(uint32_t hIn)
@@ -487,12 +491,66 @@ void Sketch::updateSeerShape()
   sShape->ensureNoNils();
 }
 
-void Sketch::serialWrite(const boost::filesystem::path&)
+void Sketch::serialWrite(const boost::filesystem::path &dIn)
 {
-
+  prj::srl::WireIds wIds;
+  for (const auto &wId : wireIds)
+    wIds.array().push_back(gu::idToString(wId));
+  
+  prj::srl::HandleParameterPairs sHPPairs;
+  for (const auto &hp : hpPairs)
+    sHPPairs.array().push_back(prj::srl::HandleParameterPair(hp.first, hp.second->serialOut()));
+  
+  prj::srl::FeatureSketch so
+  (
+    Base::serialOut()
+    , solver->serialOut()
+    , visual->serialOut()
+    , csys->serialOut()
+    , csysDragger->serialOut()
+    , wIds
+    , sHPPairs
+  );
+  
+  xml_schema::NamespaceInfomap infoMap;
+  std::ofstream stream(buildFilePathName(dIn).string());
+  prj::srl::sketch(stream, so, infoMap);
 }
 
-// void Sketch::serialRead(const prj::srl::FeatureSketch&)
-// {
-// 
-// }
+void Sketch::serialRead(const prj::srl::FeatureSketch &sIn)
+{
+  Base::serialIn(sIn.featureBase());
+  solver->serialIn(sIn.solver());
+  visual->serialIn(sIn.visual());
+  csys->serialIn(sIn.csys());
+  csysDragger->serialIn(sIn.csysDragger());
+  
+  for (const auto &wId : sIn.wireIds().array())
+    wireIds.push_back(gu::stringToId(wId));
+  
+  //kind of a hack, having to look up location.
+  auto findLocation = [&](skt::SSHandle h) -> boost::optional<osg::Vec3d>
+  {
+    for (const auto &r : sIn.visual().constraintMap().array())
+    {
+      if (r.handle() == h)
+        return osg::Vec3d(r.location().x(), r.location().y(), r.location().z());
+    }
+    return boost::none;
+  };
+  for (const auto &pair : sIn.handleParameterPairs().array())
+  {
+    std::shared_ptr<prm::Parameter> p = std::make_shared<prm::Parameter>(QString(), 0.0);
+    p->serialIn(pair.parameter());
+    hpPairs.push_back(std::make_pair(pair.handle(), p));
+    auto location = findLocation(hpPairs.back().first);
+    if (location)
+      visual->connect(hpPairs.back().first, p.get(), location.get());
+    else
+      std::cout << "ERROR: in finding location of constraint in: " << BOOST_CURRENT_FUNCTION << std::endl;
+  }
+  
+  visual->getTransform()->setMatrix(static_cast<osg::Matrixd>(*csys));
+  solver->solve(solver->getGroup(), true);
+  visual->update();
+}

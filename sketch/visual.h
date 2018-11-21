@@ -47,6 +47,7 @@ namespace osgText
 }
 namespace lbr{class AngularDimension;}
 namespace ftr{namespace prm{class Parameter;}}
+namespace prj{namespace srl{class Visual;}}
 
 namespace skt
 {
@@ -165,6 +166,29 @@ namespace skt
     bool isConstruction(SSHandle);
     boost::uuids::uuid getEntityId(SSHandle);
     void reHighlight();
+    ///@}
+    
+    /** @anchor ParameterBasedDimensions
+     * @name Parameter Based Dimensions
+     * Most visuals for constraints are detected and constructed as needed
+     * in update. There are a few dimensions that use ftr::prm::Parameters
+     * and this scheme doesn't work. We need to build these visuals
+     * at constraint construction and serialIn. These functions are used
+     * for that setup. @see ftr::Sketch::serialRead
+     */
+    ///@{
+    void connect(SSHandle, ftr::prm::Parameter*, const osg::Vec3d&);
+    void connectDistance(SSHandle, ftr::prm::Parameter*, const osg::Vec3d&);
+    void connectDiameter(SSHandle, ftr::prm::Parameter*, const osg::Vec3d&);
+    void connectAngle(SSHandle, ftr::prm::Parameter*, const osg::Vec3d&);
+    ///@}
+    
+    /** @anchor VisualSerial
+     * @name Serial
+     */
+    ///@{
+    prj::srl::Visual serialOut() const;
+    void serialIn(const prj::srl::Visual&);
     ///@}
     
   private:
