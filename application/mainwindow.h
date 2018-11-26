@@ -30,7 +30,7 @@ class QCloseEvent;
 
 namespace vwr{class Widget;}
 namespace slc{class Manager;}
-namespace msg{class Message; class Observer;}
+namespace msg{class Message; struct Node; struct Sift;}
 namespace dag{class View; class Model;}
 namespace expr{class Widget;}
 
@@ -69,7 +69,8 @@ private:
     IncrementWidgetAction *incrementWidget;
     InfoDialog*infoDialog;
     
-    std::unique_ptr<msg::Observer> observer;
+    std::unique_ptr<msg::Node> node;
+    std::unique_ptr<msg::Sift> sift;
     void setupDispatcher();
     void preferencesChanged(const msg::Message&);
     void infoTextDispatched(const msg::Message&);

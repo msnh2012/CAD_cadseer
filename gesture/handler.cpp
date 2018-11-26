@@ -20,6 +20,8 @@
 #include <iostream>
 #include <assert.h>
 
+#include <boost/variant.hpp>
+
 #include <QImage>
 #include <QGLWidget>
 
@@ -35,8 +37,8 @@
 #include <viewer/message.h>
 #include <gesture/node.h>
 #include <modelviz/nodemaskdefs.h>
-#include <message/dispatch.h>
-#include <message/observer.h>
+#include <message/node.h>
+#include <message/sift.h>
 #include <preferences/preferencesXML.h>
 #include <preferences/manager.h>
 #include <gesture/animations.h>
@@ -70,9 +72,12 @@ public:
 Handler::Handler(osg::Camera *cameraIn) : osgGA::GUIEventHandler(), rightButtonDown(false),
     dragStarted(false), currentNodeLeft(false), iconRadius(32.0), includedAngle(90.0)
 {
-    observer = std::move(std::unique_ptr<msg::Observer>(new msg::Observer()));
-    observer->name = "Handler";
-    setupDispatcher();
+  node = std::make_unique<msg::Node>();
+  node->connect(msg::hub());
+  sift = std::make_unique<msg::Sift>();
+  sift->name = "gsn::Handler";
+  node->setHandler(std::bind(&msg::Sift::receive, sift.get(), std::placeholders::_1));
+  setupDispatcher();
   
     gestureCamera = cameraIn;
     if (!gestureCamera.valid())
@@ -118,7 +123,7 @@ bool Handler::handle(const osgGA::GUIEventAdapter& eventAdapter,
         {
           std::ostringstream stream;
           stream << QObject::tr("Link to spaceball button ").toStdString() << spaceballButton;
-          observer->out(msg::buildStatusMessage(stream.str()));
+          node->send(msg::buildStatusMessage(stream.str()));
         }
       }
       else
@@ -145,7 +150,7 @@ bool Handler::handle(const osgGA::GUIEventAdapter& eventAdapter,
     {
       std::ostringstream stream;
       stream << QObject::tr("Link to key ").toStdString() << hotKey;
-      observer->out(msg::buildStatusMessage(stream.str()));
+      node->send(msg::buildStatusMessage(stream.str()));
     }
     else
     {
@@ -166,7 +171,7 @@ bool Handler::handle(const osgGA::GUIEventAdapter& eventAdapter,
     hotKey = -1;
     if (!rightButtonDown)
       return false;
-    observer->out(msg::buildStatusMessage(""));
+    node->send(msg::buildStatusMessage(""));
     return true;
   }
   
@@ -174,7 +179,7 @@ bool Handler::handle(const osgGA::GUIEventAdapter& eventAdapter,
     auto clearStatus = [&]()
     {
       //clear any status message
-      observer->out(msg::buildStatusMessage(""));
+      node->send(msg::buildStatusMessage(""));
     };
     
     if (eventAdapter.getModKeyMask() & osgGA::GUIEventAdapter::MODKEY_LEFT_CTRL)
@@ -266,7 +271,7 @@ bool Handler::handle(const osgGA::GUIEventAdapter& eventAdapter,
       
       //look for icon intersection, but send message when intersecting lines for user feedback.
       osg::ref_ptr<osg::Drawable> drawable;
-      osg::ref_ptr<osg::MatrixTransform> node;
+      osg::ref_ptr<osg::MatrixTransform> tnode;
       osg::Vec3 hPoint;
       for (auto &intersection : intersector->getIntersections())
       {
@@ -278,12 +283,12 @@ bool Handler::handle(const osgGA::GUIEventAdapter& eventAdapter,
         
         std::string statusString;
         if (tempNode->getUserValue<std::string>(attributeStatus, statusString))
-          observer->out(msg::buildStatusMessage(statusString));
+          node->send(msg::buildStatusMessage(statusString));
         
         if (tempDrawable->getName() != "Line")
         {
           drawable = tempDrawable;
-          node = tempNode;
+          tnode = tempNode;
           hPoint = intersection.getLocalIntersectPoint();
           break;
         }
@@ -301,7 +306,7 @@ bool Handler::handle(const osgGA::GUIEventAdapter& eventAdapter,
         return false;
       }
       
-      if (node == currentNode)
+      if (tnode == currentNode)
       {
         if (currentNodeLeft == true)
         {
@@ -314,7 +319,7 @@ bool Handler::handle(const osgGA::GUIEventAdapter& eventAdapter,
       {
         //here we are entering an already sprayed node.
         osg::MatrixTransform *parentNode = currentNode;
-        currentNode = node;
+        currentNode = tnode;
 
         osg::Switch *geometrySwitch = dynamic_cast<osg::Switch*>(parentNode->getChild(parentNode->getNumChildren() - 1));
         assert(geometrySwitch);
@@ -1378,7 +1383,7 @@ double Handler::calculateSprayRadius(int nodeCount)
 void Handler::startDrag(const osgGA::GUIEventAdapter& eventAdapter)
 {
     //send status
-    observer->out(msg::buildStatusMessage(QObject::tr("Start Menu").toStdString()));
+    node->send(msg::buildStatusMessage(QObject::tr("Start Menu").toStdString()));
   
     gestureSwitch->setAllChildrenOn();
     osg::Switch *startSwitch = dynamic_cast<osg::Switch *>(startNode->getChild(startNode->getNumChildren() - 1));
@@ -1399,10 +1404,11 @@ void Handler::startDrag(const osgGA::GUIEventAdapter& eventAdapter)
 
 void Handler::setupDispatcher()
 {
-  msg::Mask mask;
-  
-  mask = msg::Response | msg::Preferences;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Handler::preferencesChangedDispatched, this, _1)));
+  sift->insert
+  (
+    msg::Response | msg::Preferences
+    , std::bind(&Handler::preferencesChangedDispatched, this, std::placeholders::_1)
+  );
 }
 
 void Handler::updateVariables()

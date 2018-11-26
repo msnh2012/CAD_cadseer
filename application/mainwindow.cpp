@@ -21,6 +21,8 @@
 #include <assert.h>
 #include <limits>
 
+#include <boost/variant.hpp>
+
 #include <QHBoxLayout>
 #include <QCloseEvent>
 
@@ -31,9 +33,8 @@
 #include <dialogs/splitterdecorated.h>
 #include <viewer/widget.h>
 #include <selection/manager.h>
-#include <message/dispatch.h>
-#include <message/message.h>
-#include <message/observer.h>
+#include <message/node.h>
+#include <message/sift.h>
 #include <dialogs/expressionedit.h>
 #include <application/incrementwidget.h>
 #include <preferences/preferencesXML.h>
@@ -96,11 +97,15 @@ MainWindow::MainWindow(QWidget *parent) :
     infoDialog->restoreSettings();
     infoDialog->hide();
 
-    observer = std::move(std::unique_ptr<msg::Observer>(new msg::Observer()));
-    observer->name = "app::MainWindow";
+    node = std::make_unique<msg::Node>();
+    node->connect(msg::hub());
+    sift = std::make_unique<msg::Sift>();
+    sift->name = "app::MainWindow";
+    node->setHandler(std::bind(&msg::Sift::receive, sift.get(), std::placeholders::_1));
+    
     setupDispatcher();
     
-    observer->out(msg::buildSelectionMask(slc::AllEnabled));
+    node->send(msg::buildSelectionMask(slc::AllEnabled));
 }
 
 MainWindow::~MainWindow()
@@ -110,7 +115,7 @@ MainWindow::~MainWindow()
 
 void MainWindow::closeEvent (QCloseEvent *event)
 {
-  observer->out(msg::Message(msg::Request | msg::Command | msg::Clear));
+  node->send(msg::Message(msg::Request | msg::Command | msg::Clear));
   QMainWindow::closeEvent(event);
 }
 
@@ -149,13 +154,21 @@ void MainWindow::setupSelectionToolbar()
 
 void MainWindow::setupDispatcher()
 {
-  msg::Mask mask;
-  
-  mask = msg::Response | msg::Preferences;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&MainWindow::preferencesChanged, this, _1)));
-  
-  mask = msg::Request | msg::Info | msg::Text;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&MainWindow::infoTextDispatched, this, _1)));
+  sift->insert
+  (
+    {
+      std::make_pair
+      (
+        msg::Request | msg::Info | msg::Text
+        , std::bind(&MainWindow::infoTextDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Response | msg::Preferences
+        , std::bind(&MainWindow::preferencesChanged, this, std::placeholders::_1)
+      )
+    }
+  );
 }
 
 void MainWindow::preferencesChanged(const msg::Message&)

@@ -25,6 +25,7 @@
 #include <feature/parameter.h>
 #include <feature/base.h>
 #include <library/csysdragger.h>
+#include <message/message.h>
 #include <preferences/preferencesXML.h>
 #include <preferences/manager.h>
 #include <project/serial/xsdcxxoutput/featurebase.h>

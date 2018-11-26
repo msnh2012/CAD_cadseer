@@ -23,8 +23,8 @@
 
 #include <boost/variant.hpp>
 
-#include <message/message.h>
-#include <message/observer.h>
+#include <message/node.h>
+#include <message/sift.h>
 #include <selection/message.h>
 #include <selection/eventhandler.h>
 #include <dialogs/selectionbutton.h>
@@ -41,10 +41,12 @@ SelectionButton::SelectionButton(const QString &text, QWidget *parent) : Selecti
 
 SelectionButton::SelectionButton(const QIcon &icon, const QString &text, QWidget *parent) : QPushButton(icon, text, parent)
 {
-  
-  observer = std::make_unique<msg::Observer>();
-  observer->name = "dlg::SelectionButton";
-  
+  node = std::make_unique<msg::Node>();
+  node->connect(msg::hub());
+  sift = std::make_unique<msg::Sift>();
+  sift->name = "dlg::SelectionButton";
+  node->setHandler(std::bind(&msg::Sift::receive, sift.get(), std::placeholders::_1));
+    
   setCheckable(true);
   mask = slc::None;
   
@@ -60,16 +62,26 @@ SelectionButton::~SelectionButton()
 
 void SelectionButton::setupDispatcher()
 {
-  msg::Mask dMask;
-  
-  dMask = msg::Response | msg::Post | msg::Selection | msg::Add;
-  observer->dispatcher.insert(std::make_pair(dMask, boost::bind(&SelectionButton::selectionAdditionDispatched, this, _1)));
-  
-  dMask = msg::Response | msg::Pre | msg::Selection | msg::Remove;
-  observer->dispatcher.insert(std::make_pair(dMask, boost::bind(&SelectionButton::selectionSubtractionDispatched, this, _1)));
-  
-  dMask = msg::Response | msg::Selection | msg::SetMask;
-  observer->dispatcher.insert(std::make_pair(dMask, boost::bind(&SelectionButton::selectionMaskDispatched, this, _1)));
+  sift->insert
+  (
+    {
+      std::make_pair
+      (
+        msg::Response | msg::Post | msg::Selection | msg::Add
+        , std::bind(&SelectionButton::selectionAdditionDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Response | msg::Pre | msg::Selection | msg::Remove
+        , std::bind(&SelectionButton::selectionSubtractionDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Response | msg::Selection | msg::SetMask
+        , std::bind(&SelectionButton::selectionMaskDispatched, this, std::placeholders::_1)
+      )
+    }
+  );
 }
 
 /* I think it will be easier to check state in the message handlers than trying
@@ -129,17 +141,17 @@ void SelectionButton::addMessages(const slc::Messages &msIn)
 void SelectionButton::syncToSelection()
 {
   if (mask != slc::None)
-    observer->outBlocked(msg::buildSelectionMask(mask));
+    node->sendBlocked(msg::buildSelectionMask(mask));
   
   for (const auto m : messages)
   {
     msg::Message mm(msg::Request | msg::Selection | msg::Add);
     mm.payload = m;
-    observer->outBlocked(mm);
+    node->sendBlocked(mm);
   }
   
   if (!statusPrompt.isEmpty())
-    observer->outBlocked(msg::buildStatusMessage(statusPrompt.toStdString()));
+    node->sendBlocked(msg::buildStatusMessage(statusPrompt.toStdString()));
 }
 
 void SelectionButton::showEvent(QShowEvent *)
@@ -155,7 +167,7 @@ void SelectionButton::hideEvent(QHideEvent *)
   if (!isChecked())
     return;
   
-  observer->outBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
 }
 
 void SelectionButton::toggledSlot(bool cState)
@@ -163,7 +175,7 @@ void SelectionButton::toggledSlot(bool cState)
   if (cState)
     syncToSelection();
   else
-    observer->outBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+    node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
 }
 
 void SelectionButton::selectionMaskDispatched(const msg::Message &messageIn)

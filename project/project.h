@@ -34,7 +34,7 @@
 class QTextStream;
 class TopoDS_Shape;
 
-namespace msg{class Message; class Observer;}
+namespace msg{class Message; struct Node; struct Sift;}
 namespace expr{class Manager;}
 namespace ftr{class ShapeHistory; class InputType; namespace prm{class Parameter;}}
 
@@ -115,7 +115,8 @@ private:
     std::unique_ptr<ftr::ShapeHistory> shapeHistory;
     bool isLoading = false;
     
-    std::unique_ptr<msg::Observer> observer;
+    std::unique_ptr<msg::Node> node;
+    std::unique_ptr<msg::Sift> sift;
     void setupDispatcher();
     void setCurrentLeafDispatched(const msg::Message &);
     void removeFeatureDispatched(const msg::Message &);

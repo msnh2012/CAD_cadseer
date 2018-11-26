@@ -17,13 +17,15 @@
  *
  */
 
+#include <boost/variant.hpp>
+
 #include <TopoDS.hxx>
 
 #include <application/application.h>
 #include <application/mainwindow.h>
 #include <viewer/widget.h>
 #include <project/project.h>
-#include <message/observer.h>
+#include <message/node.h>
 #include <selection/eventhandler.h>
 #include <annex/seershape.h>
 #include <feature/parameter.h>
@@ -59,7 +61,7 @@ void Offset::go()
   const slc::Containers &containers = eventHandler->getSelections();
   if (containers.empty())
   {
-    observer->outBlocked(msg::buildStatusMessage("Wrong pre selection for offset", 2.0));
+    node->sendBlocked(msg::buildStatusMessage("Wrong pre selection for offset", 2.0));
     shouldUpdate = false;
     return;
   }
@@ -99,7 +101,7 @@ void Offset::go()
   }
   if (fId.is_nil())
   {
-    observer->outBlocked(msg::buildStatusMessage("No feature id for offset", 2.0));
+    node->sendBlocked(msg::buildStatusMessage("No feature id for offset", 2.0));
     shouldUpdate = false;
     return;
   }
@@ -110,8 +112,8 @@ void Offset::go()
   project->addFeature(offset);
   project->connectInsert(fId, offset->getId(), ftr::InputType{ftr::InputType::target});
   
-  observer->outBlocked(msg::buildHideThreeD(fId));
-  observer->outBlocked(msg::buildHideOverlay(fId));
+  node->sendBlocked(msg::buildHideThreeD(fId));
+  node->sendBlocked(msg::buildHideOverlay(fId));
   
-  observer->out(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
 }

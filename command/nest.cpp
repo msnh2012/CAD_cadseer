@@ -17,7 +17,9 @@
  *
  */
 
-#include <message/observer.h>
+#include <boost/variant.hpp>
+
+#include <message/node.h>
 #include <project/project.h>
 #include <selection/eventhandler.h>
 #include <feature/nest.h>
@@ -60,7 +62,7 @@ void Nest::go()
   const slc::Containers &containers = eventHandler->getSelections();
   if (containers.size() != 1)
   {
-    observer->out(msg::buildStatusMessage("Incorrect preselection for nest feature", 2.0));
+    node->send(msg::buildStatusMessage("Incorrect preselection for nest feature", 2.0));
     shouldUpdate = false;
     return;
   }
@@ -70,5 +72,5 @@ void Nest::go()
   project->addFeature(nest);
   project->connect(bId, nest->getId(), ftr::InputType{ftr::Nest::blank});
   
-  observer->out(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
 }

@@ -38,9 +38,8 @@
 #include <project/project.h>
 #include <preferences/preferencesXML.h>
 #include <preferences/manager.h>
-#include <message/dispatch.h>
-#include <message/message.h>
-#include <message/observer.h>
+#include <message/node.h>
+#include <message/sift.h>
 #include <application/factory.h>
 #include <command/manager.h>
 #include <lod/manager.h>
@@ -57,10 +56,12 @@ Application::Application(int &argc, char **argv) :
   lodManager(new lod::Manager(arguments().at(0).toStdString()))
 {
     qRegisterMetaType<msg::Message>("msg::Message");
-  
-    spaceballPresent = false;
-    observer = std::move(std::unique_ptr<msg::Observer>(new msg::Observer()));
-    observer->name = "app::Application";
+    
+    node = std::make_unique<msg::Node>();
+    node->connect(msg::hub());
+    sift = std::make_unique<msg::Sift>();
+    sift->name = "app::Application";
+    node->setHandler(std::bind(&msg::Sift::receive, sift.get(), std::placeholders::_1));
     setupDispatcher();
     
     //didn't have any luck using std::make_shared. weird behavior.
@@ -142,7 +143,7 @@ void Application::queuedMessage(const msg::Message &message)
 void Application::messageSlot(const msg::Message &messageIn)
 {
   //can't block, message might be open file or something we need to handle here.
-  observer->out(messageIn);
+  node->send(messageIn);
 }
 
 bool Application::notify(QObject* receiver, QEvent* e)
@@ -280,7 +281,7 @@ void Application::createNewProject(const std::string &directoryIn)
 {
   msg::Message preMessage;
   preMessage.mask = msg::Response | msg::Pre | msg::New | msg::Project;
-  observer->out(preMessage);
+  node->send(preMessage);
   
   //directoryIn has been verified to exist before this call.
   std::unique_ptr<prj::Project> tempProject(new prj::Project());
@@ -292,14 +293,14 @@ void Application::createNewProject(const std::string &directoryIn)
   
   msg::Message postMessage;
   postMessage.mask = msg::Response | msg::Post | msg::New | msg::Project;
-  observer->out(postMessage);
+  node->send(postMessage);
 }
 
 void Application::openProject(const std::string &directoryIn)
 {
   msg::Message preMessage;
   preMessage.mask = msg::Response | msg::Pre | msg::Open | msg::Project;
-  observer->out(preMessage);
+  node->send(preMessage);
   
   assert(!project);
   //directoryIn has been verified to exist before this call.
@@ -312,9 +313,9 @@ void Application::openProject(const std::string &directoryIn)
   
   msg::Message postMessage;
   postMessage.mask = msg::Response | msg::Post | msg::Open | msg::Project;
-  observer->out(postMessage);
+  node->send(postMessage);
   
-  observer->outBlocked(msg::Message(msg::Request | msg::Project | msg::Update | msg::Visual));
+  node->sendBlocked(msg::Message(msg::Request | msg::Project | msg::Update | msg::Visual));
 }
 
 void Application::closeProject()
@@ -323,7 +324,7 @@ void Application::closeProject()
   
   msg::Message preMessage;
   preMessage.mask = msg::Response | msg::Pre | msg::Close | msg::Project;
-  observer->out(preMessage);
+  node->send(preMessage);
  
   if (project)
   {
@@ -333,7 +334,7 @@ void Application::closeProject()
   
   msg::Message postMessage;
   postMessage.mask = msg::Response | msg::Post | msg::Close | msg::Project;
-  observer->out(postMessage);
+  node->send(postMessage);
 }
 
 void Application::updateTitle()
@@ -348,16 +349,38 @@ void Application::updateTitle()
 void Application::setupDispatcher()
 {
   msg::Mask mask;
-  mask = msg::Request | msg::New | msg::Project;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Application::newProjectRequestDispatched, this, _1)));
-  mask = msg::Request | msg::Open | msg::Project;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Application::openProjectRequestDispatched, this, _1)));
-  mask = msg::Request | msg::Close | msg::Project;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Application::closeProjectRequestDispatched, this, _1)));
-  mask = msg::Request | msg::Project | msg::Dialog;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Application::ProjectDialogRequestDispatched, this, _1)));
-  mask = msg::Request | msg::About | msg::Dialog;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Application::AboutDialogRequestDispatched, this, _1)));
+  
+  
+  sift->insert
+  (
+    {
+      std::make_pair
+      (
+        msg::Request | msg::New | msg::Project
+        , std::bind(&Application::newProjectRequestDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Open | msg::Project
+        , std::bind(&Application::openProjectRequestDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Close | msg::Project
+        , std::bind(&Application::closeProjectRequestDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Project | msg::Dialog
+        , std::bind(&Application::ProjectDialogRequestDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::About | msg::Dialog
+        , std::bind(&Application::AboutDialogRequestDispatched, this, std::placeholders::_1)
+      )
+    }
+  );
 }
 
 void Application::ProjectDialogRequestDispatched(const msg::Message&)
@@ -381,10 +404,6 @@ void Application::ProjectDialogRequestDispatched(const msg::Message&)
 
 void Application::newProjectRequestDispatched(const msg::Message &messageIn)
 {
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
-  
   prj::Message pMessage = boost::get<prj::Message>(messageIn.payload);
   
   boost::filesystem::path path = pMessage.directory;

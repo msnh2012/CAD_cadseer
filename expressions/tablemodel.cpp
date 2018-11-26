@@ -22,6 +22,7 @@
 #include <iostream>
 
 #include <boost/current_function.hpp>
+#include <boost/variant.hpp>
 
 #include <QCoreApplication>
 #include <QtCore/QTextStream>
@@ -33,8 +34,8 @@
 #include <tools/idtools.h>
 #include <application/application.h>
 #include <project/project.h>
-#include <message/dispatch.h>
-#include <message/observer.h>
+#include <message/node.h>
+#include <message/sift.h>
 #include <feature/base.h>
 #include <expressions/manager.h>
 #include <expressions/stringtranslator.h>
@@ -46,8 +47,6 @@ TableModel::TableModel(Manager &eManagerIn, QObject* parent):
   QAbstractTableModel(parent), lastFailedPosition(-1), lastFailedText(""), lastFailedMessage(""),
   eManager(eManagerIn), sTranslator(new StringTranslator(eManager))
 {
-  observer = std::move(std::unique_ptr<msg::Observer>(new msg::Observer()));
-  observer->name = "expr::TableModel";
 }
 
 TableModel::~TableModel(){}
@@ -181,7 +180,7 @@ bool TableModel::setData(const QModelIndex& index, const QVariant& value, int)
     //add git message.
     std::ostringstream gitStream;
     gitStream << "Rename expression: " << oldName << ", to: " << newName;
-    observer->out(msg::buildGitMessage(gitStream.str()));
+    app::instance()->messageSlot(msg::buildGitMessage(gitStream.str()));
   }
   if (index.column() == 1)
   {
@@ -231,7 +230,7 @@ bool TableModel::setData(const QModelIndex& index, const QVariant& value, int)
     //add git message.
     std::ostringstream gitStream;
     gitStream << "Edit expression: " << stream.str();
-    observer->out(msg::buildGitMessage(gitStream.str()));
+    app::instance()->messageSlot(msg::buildGitMessage(gitStream.str()));
     
   }
   lastFailedText.clear();
@@ -240,7 +239,7 @@ bool TableModel::setData(const QModelIndex& index, const QVariant& value, int)
   removeRhs(fId);
   Q_EMIT dataChanged(index, index);
   
-  observer->out(msg::Mask(msg::Request | msg::Project | msg::Update));
+  app::instance()->queuedMessage(msg::Mask(msg::Request | msg::Project | msg::Update));
   
   return true;
 }
@@ -309,7 +308,7 @@ void TableModel::addDefaultRow()
   //add git message.
   std::ostringstream gitStream;
   gitStream << "Adding expression: " << name;
-  observer->out(msg::buildGitMessage(gitStream.str()));
+  app::instance()->messageSlot(msg::buildGitMessage(gitStream.str()));
 }
 
 void TableModel::removeFormula(const QModelIndexList &indexesIn)
@@ -337,14 +336,14 @@ void TableModel::removeFormula(const QModelIndexList &indexesIn)
     //add git message. Doing all this in loop because formatting is specific and it's handled in gitManager.
     std::ostringstream gitStream;
     gitStream << "Remove expression: " << eManager.getFormulaName(currentId);
-    observer->out(msg::buildGitMessage(gitStream.str()));
+    app::instance()->messageSlot(msg::buildGitMessage(gitStream.str()));
     
     eManager.removeFormula(currentId);
   }
   idToRhsMap.clear();
   endResetModel();
   
-  observer->out(msg::Mask(msg::Request | msg::Project | msg::Update));
+  app::instance()->messageSlot(msg::Mask(msg::Request | msg::Project | msg::Update));
 }
 
 void TableModel::exportExpressions(QModelIndexList& indexesIn, std::ostream &streamIn) const
@@ -620,8 +619,11 @@ void GroupProxyModel::importExpressions(std::istream &streamIn)
 SelectionProxyModel::SelectionProxyModel(expr::Manager &eManagerIn, QObject* parent):
   BaseProxyModel(parent), eManager(eManagerIn)
 {
-  observer = std::move(std::unique_ptr<msg::Observer>(new msg::Observer()));
-  observer->name = "expr::SelectionProxyModel";
+  node = std::make_unique<msg::Node>();
+  node->connect(msg::hub());
+  sift = std::make_unique<msg::Sift>();
+  sift->name = "expr::SelectionProxyModel";
+  node->setHandler(std::bind(&msg::Sift::receive, sift.get(), std::placeholders::_1));
   setupDispatcher();
 }
 
@@ -658,21 +660,25 @@ bool SelectionProxyModel::filterAcceptsRow(int source_row, const QModelIndex&) c
 
 void SelectionProxyModel::setupDispatcher()
 {
-  msg::Mask mask;
-  
-  mask = msg::Response | msg::Post | msg::Selection | msg::Add;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&SelectionProxyModel::selectionAdditionDispatched, this, boost::placeholders::_1)));
-  
-  mask = msg::Response | msg::Pre | msg::Selection | msg::Remove;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&SelectionProxyModel::selectionSubtractionDispatched, this, boost::placeholders::_1)));
+  sift->insert
+  (
+    {
+      std::make_pair
+      (
+        msg::Response | msg::Post | msg::Selection | msg::Add
+        , std::bind(&SelectionProxyModel::selectionAdditionDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Response | msg::Pre | msg::Selection | msg::Remove
+        , std::bind(&SelectionProxyModel::selectionSubtractionDispatched, this, std::placeholders::_1)
+      )
+    }
+  );
 }
 
 void SelectionProxyModel::selectionAdditionDispatched(const msg::Message &messageIn)
 {
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
-  
   slc::Message sMessage = boost::get<slc::Message>(messageIn.payload);
   slc::Container aContainer;
   aContainer.selectionType = sMessage.type;
@@ -688,10 +694,6 @@ void SelectionProxyModel::selectionAdditionDispatched(const msg::Message &messag
 
 void SelectionProxyModel::selectionSubtractionDispatched(const msg::Message &messageIn)
 {
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
-  
   slc::Message sMessage = boost::get<slc::Message>(messageIn.payload);
   slc::Container aContainer;
   aContainer.selectionType = sMessage.type;

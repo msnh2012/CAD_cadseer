@@ -35,7 +35,7 @@ namespace boost{namespace uuids{class uuid;}}
 class QGraphicsProxyWidget;
 class QFocusEvent;
 
-namespace msg{class Message; class Observer;}
+namespace msg{class Message; struct Node; struct Sift;}
 
 namespace dag
 {
@@ -87,7 +87,8 @@ namespace dag
     void toggleSkippedSlot();
     
   private:
-    std::unique_ptr<msg::Observer> observer;
+    std::unique_ptr<msg::Node> node;
+    std::unique_ptr<msg::Sift> sift;
     void setupDispatcher();
     void featureAddedDispatched(const msg::Message &);
     void featureRemovedDispatched(const msg::Message &);

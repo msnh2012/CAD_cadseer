@@ -17,11 +17,13 @@
  *
  */
 
+#include <boost/variant.hpp>
+
 #include <TopoDS_Face.hxx>
 #include <TopoDS.hxx>
 
 #include <project/project.h>
-#include <message/observer.h>
+#include <message/node.h>
 #include <selection/eventhandler.h>
 #include <annex/seershape.h>
 #include <feature/extract.h>
@@ -92,8 +94,8 @@ void Extract::go()
       project->connect(baseFeature->getId(), extract->getId(), ftr::InputType{ftr::InputType::target});
       created = true;
       
-      observer->outBlocked(msg::buildHideThreeD(baseFeature->getId()));
-      observer->outBlocked(msg::buildHideOverlay(baseFeature->getId()));
+      node->sendBlocked(msg::buildHideThreeD(baseFeature->getId()));
+      node->sendBlocked(msg::buildHideOverlay(baseFeature->getId()));
       
       extract->setColor(baseFeature->getColor());
     }
@@ -113,8 +115,8 @@ void Extract::go()
       project->connect(baseFeature->getId(), extract->getId(), ftr::InputType{ftr::InputType::target});
       created = true;
       
-      observer->outBlocked(msg::buildHideThreeD(baseFeature->getId()));
-      observer->outBlocked(msg::buildHideOverlay(baseFeature->getId()));
+      node->sendBlocked(msg::buildHideThreeD(baseFeature->getId()));
+      node->sendBlocked(msg::buildHideOverlay(baseFeature->getId()));
       
       extract->setColor(baseFeature->getColor());
     }
@@ -122,8 +124,8 @@ void Extract::go()
   if (!created)
   {
     shouldUpdate = false;
-    observer->out(msg::buildStatusMessage("Extract: Invalid Preselection", 2.0));
+    node->send(msg::buildStatusMessage("Extract: Invalid Preselection", 2.0));
   }
   else
-    observer->out(msg::Message(msg::Request | msg::Selection | msg::Clear));
+    node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
 }

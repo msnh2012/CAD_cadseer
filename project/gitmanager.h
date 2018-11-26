@@ -26,7 +26,7 @@
 #include <project/libgit2pp/src/commit.hpp>
 #include <project/libgit2pp/src/tag.hpp>
 
-namespace msg{class Message; class Observer;}
+namespace msg{class Message; struct Node; struct Sift;}
 
 namespace prj
 {
@@ -106,15 +106,14 @@ namespace prj
     */
     void checkoutTag(const git2::Tag &tag);
     
-    
-    
   private:
     bool updateIndex(); //false means nothing has changed.
     void createBranch(const std::string &nameIn); //!< create a branch with name from current HEAD.
     git2::Repository repo;
     std::string commitMessage;
     bool gitMessagesFrozen = false;
-    std::unique_ptr<msg::Observer> observer;
+    std::unique_ptr<msg::Node> node;
+    std::unique_ptr<msg::Sift> sift;
     void setupDispatcher();
     void gitMessageRequestDispatched(const msg::Message &);
     void gitMessageFreezeDispatched(const msg::Message &);
@@ -128,8 +127,6 @@ namespace prj
     ~GitMessageFreezer();
     void freeze();
     void thaw();
-  private:
-    std::unique_ptr<msg::Observer> observer;
   };
 }
 

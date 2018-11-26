@@ -28,7 +28,7 @@
 
 class QAction;
 
-namespace msg{class Message; class Observer;}
+namespace msg{class Message; struct Node; struct Sift;}
 
 namespace slc
 {
@@ -77,7 +77,8 @@ private:
     void updateToolbar();
     Mask selectionMask;
     void sendUpdatedMask();
-    std::unique_ptr<msg::Observer> observer;
+    std::unique_ptr<msg::Node> node;
+    std::unique_ptr<msg::Sift> sift;
     void setupDispatcher();
     void requestSelectionMaskDispatched(const msg::Message &);
 };

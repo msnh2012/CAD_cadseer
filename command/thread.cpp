@@ -17,7 +17,9 @@
  *
  */
 
-#include <message/observer.h>
+#include <boost/variant.hpp>
+
+#include <message/node.h>
 #include <project/project.h>
 #include <feature/thread.h>
 #include <command/thread.h>
@@ -50,5 +52,5 @@ void Thread::go()
   std::shared_ptr<ftr::Thread> t(new ftr::Thread());
   project->addFeature(t);
  
-  observer->out(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
 }

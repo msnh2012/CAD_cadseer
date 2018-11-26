@@ -40,7 +40,7 @@ class QStandardItemModel;
 class QStackedWidget;
 
 namespace ftr{class Base; class Blend; class Pick;}
-namespace msg{class Message; class Observer;}
+namespace msg{class Message; struct Node; struct Sift;}
 namespace slc{class Message;}
 
 namespace dlg
@@ -63,7 +63,8 @@ namespace dlg
     std::shared_ptr<ftr::Blend> blendSmart;
     ftr::Blend *blend = nullptr;
     const ftr::Base *blendParent = nullptr;
-    std::unique_ptr<msg::Observer> observer;
+    std::unique_ptr<msg::Node> node;
+    std::unique_ptr<msg::Sift> sift;
     bool isAccepted = false;
     bool isEditDialog = false;
     bool overlayWasOn = false; //!< restore overlay state upon edit finish.

@@ -19,6 +19,8 @@
 
 #include <cassert>
 
+#include <boost/variant.hpp>
+
 #include <application/application.h>
 #include <application/mainwindow.h>
 #include <viewer/widget.h>
@@ -26,16 +28,16 @@
 #include <selection/manager.h>
 #include <selection/eventhandler.h>
 #include <selection/message.h>
-#include <message/observer.h>
-#include <message/dispatch.h>
+#include <message/node.h>
 #include <command/base.h>
 
 using namespace cmd;
 
 Base::Base()
 {
-  observer = std::move(std::unique_ptr<msg::Observer>(new msg::Observer()));
-  observer->name = "cmd::Base";
+  node = std::make_unique<msg::Node>();
+  node->connect(msg::hub());
+  
   application = app::instance(); assert(application);
   mainWindow = application->getMainWindow(); assert(mainWindow);
   project = application->getProject(); assert(project);

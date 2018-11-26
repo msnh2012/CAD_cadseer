@@ -53,8 +53,8 @@
 #include <tools/idtools.h>
 #include <viewer/message.h>
 #include <feature/base.h>
-#include <message/dispatch.h>
-#include <message/observer.h>
+#include <message/node.h>
+#include <message/sift.h>
 #include <dagview/controlleddfs.h>
 #include <dagview/rectitem.h>
 #include <dagview/stow.h>
@@ -124,8 +124,11 @@ namespace dag
 
 Model::Model(QObject *parentIn) : QGraphicsScene(parentIn), stow(new Stow())
 {
-  observer = std::move(std::unique_ptr<msg::Observer>(new msg::Observer()));
-  observer->name = "dag::Model";
+  node = std::make_unique<msg::Node>();
+  node->connect(msg::hub());
+  sift = std::make_unique<msg::Sift>();
+  sift->name = "dag::Model";
+  node->setHandler(std::bind(&msg::Sift::receive, sift.get(), std::placeholders::_1));
   setupDispatcher();
   
   //turned off BSP as it was giving inconsistent discovery of items
@@ -205,10 +208,6 @@ void Model::setupViewConstants()
 
 void Model::featureAddedDispatched(const msg::Message &messageIn)
 {
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
-  
   prj::Message message = boost::get<prj::Message>(messageIn.payload);
   
   Vertex virginVertex = boost::add_vertex(stow->graph);
@@ -236,10 +235,6 @@ void Model::featureAddedDispatched(const msg::Message &messageIn)
 
 void Model::featureRemovedDispatched(const msg::Message &messageIn)
 {
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
-  
   prj::Message message = boost::get<prj::Message>(messageIn.payload);
   
   Vertex vertex = stow->findVertex(message.feature->getId());
@@ -255,10 +250,6 @@ void Model::featureRemovedDispatched(const msg::Message &messageIn)
 
 void Model::connectionAddedDispatched(const msg::Message &messageIn)
 {
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
-  
   prj::Message message = boost::get<prj::Message>(messageIn.payload);
   
   assert(message.featureIds.size() == 2);
@@ -295,10 +286,6 @@ void Model::connectionAddedDispatched(const msg::Message &messageIn)
 
 void Model::connectionRemovedDispatched(const msg::Message &messageIn)
 {
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
-  
   prj::Message message = boost::get<prj::Message>(messageIn.payload);
   
   assert(message.featureIds.size() == 2);
@@ -321,64 +308,107 @@ void Model::connectionRemovedDispatched(const msg::Message &messageIn)
 
 void Model::setupDispatcher()
 {
-  msg::Mask mask;
+  sift->insert
+  (
+    {
+      std::make_pair
+      (
+        msg::Response | msg::Post | msg::Add | msg::Feature
+      , std::bind(&Model::featureAddedDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Response | msg::Pre | msg::Remove | msg::Feature
+      , std::bind(&Model::featureRemovedDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Response | msg::Post | msg::Add | msg::Connection
+      , std::bind(&Model::connectionAddedDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Response | msg::Pre | msg::Remove | msg::Connection
+      , std::bind(&Model::connectionRemovedDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Response | msg::Post | msg::Project | msg::Update | msg::Model
+      , std::bind(&Model::projectUpdatedDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Response | msg::Post | msg::Preselection | msg::Add
+      , std::bind(&Model::preselectionAdditionDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Response | msg::Pre | msg::Preselection | msg::Remove
+      , std::bind(&Model::preselectionSubtractionDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Response | msg::Post | msg::Selection | msg::Add
+      , std::bind(&Model::selectionAdditionDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Response | msg::Pre | msg::Selection | msg::Remove
+      , std::bind(&Model::selectionSubtractionDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Response | msg::Pre | msg::Close | msg::Project
+      , std::bind(&Model::closeProjectDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Response | msg::Feature | msg::Status
+      , std::bind(&Model::featureStateChangedDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Response | msg::Project | msg::Feature | msg::Status
+      , std::bind(&Model::projectFeatureStateChangedDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Response | msg::Edit | msg::Feature | msg::Name
+      , std::bind(&Model::featureRenamedDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::DebugDumpDAGViewGraph
+      , std::bind(&Model::dumpDAGViewGraphDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Response | msg::View | msg::Show | msg::ThreeD
+      , std::bind(&Model::threeDShowDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Response | msg::View | msg::Hide | msg::ThreeD
+      , std::bind(&Model::threeDHideDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::DAG | msg::View | msg::Update
+      , std::bind(&Model::projectUpdatedDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Response | msg::View | msg::Show | msg::Overlay
+      , std::bind(&Model::overlayShowDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Response | msg::View | msg::Hide | msg::Overlay
+      , std::bind(&Model::overlayHideDispatched, this, std::placeholders::_1)
+      )
+    }
+  );
   
-  mask = msg::Response | msg::Post | msg::Add | msg::Feature;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Model::featureAddedDispatched, this, _1)));
-  
-  mask = msg::Response | msg::Pre | msg::Remove | msg::Feature;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Model::featureRemovedDispatched, this, _1)));
-  
-  mask = msg::Response | msg::Post | msg::Add | msg::Connection;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Model::connectionAddedDispatched, this, _1)));
-  
-  mask = msg::Response | msg::Pre | msg::Remove | msg::Connection;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Model::connectionRemovedDispatched, this, _1)));
-  
-  mask = msg::Response | msg::Post | msg::Project | msg::Update | msg::Model;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Model::projectUpdatedDispatched, this, _1)));
-  
-  mask = msg::Response | msg::Post | msg::Preselection | msg::Add;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Model::preselectionAdditionDispatched, this, _1)));
-  
-  mask = msg::Response | msg::Pre | msg::Preselection | msg::Remove;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Model::preselectionSubtractionDispatched, this, _1)));
-  
-  mask = msg::Response | msg::Post | msg::Selection | msg::Add;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Model::selectionAdditionDispatched, this, _1)));
-  
-  mask = msg::Response | msg::Pre | msg::Selection | msg::Remove;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Model::selectionSubtractionDispatched, this, _1)));
-  
-  mask = msg::Response | msg::Pre | msg::Close | msg::Project;;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Model::closeProjectDispatched, this, _1)));
-  
-  mask = msg::Response | msg::Feature | msg::Status;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Model::featureStateChangedDispatched, this, _1)));
-  
-  mask = msg::Response | msg::Project | msg::Feature | msg::Status;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Model::projectFeatureStateChangedDispatched, this, _1)));
-  
-  mask = msg::Response | msg::Edit | msg::Feature | msg::Name;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Model::featureRenamedDispatched, this, _1)));
-  
-  mask = msg::Request | msg::DebugDumpDAGViewGraph;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Model::dumpDAGViewGraphDispatched, this, _1)));
-  
-  mask = msg::Response | msg::View | msg::Show | msg::ThreeD;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Model::threeDShowDispatched, this, _1)));
-  
-  mask = msg::Response | msg::View | msg::Hide | msg::ThreeD;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Model::threeDHideDispatched, this, _1)));
-  
-  mask = msg::Request | msg::DAG | msg::View | msg::Update;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Model::projectUpdatedDispatched, this, _1)));
-  
-  mask = msg::Response | msg::View | msg::Show | msg::Overlay;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Model::overlayShowDispatched, this, _1)));
-  
-  mask = msg::Response | msg::View | msg::Hide | msg::Overlay;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Model::overlayHideDispatched, this, _1)));
 }
 
 void Model::featureStateChangedDispatched(const msg::Message &messageIn)
@@ -474,10 +504,6 @@ void Model::featureRenamedDispatched(const msg::Message &messageIn)
 
 void Model::preselectionAdditionDispatched(const msg::Message &messageIn)
 {
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
-  
   slc::Message sMessage = boost::get<slc::Message>(messageIn.payload);
   if (sMessage.type != slc::Type::Object)
     return;
@@ -495,10 +521,6 @@ void Model::preselectionAdditionDispatched(const msg::Message &messageIn)
 
 void Model::preselectionSubtractionDispatched(const msg::Message &messageIn)
 {
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
-  
   slc::Message sMessage = boost::get<slc::Message>(messageIn.payload);
   if (sMessage.type != slc::Type::Object)
     return;
@@ -516,10 +538,6 @@ void Model::preselectionSubtractionDispatched(const msg::Message &messageIn)
 
 void Model::selectionAdditionDispatched(const msg::Message &messageIn)
 {
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
-  
   slc::Message sMessage = boost::get<slc::Message>(messageIn.payload);
   if (sMessage.type != slc::Type::Object)
     return;
@@ -538,10 +556,6 @@ void Model::selectionAdditionDispatched(const msg::Message &messageIn)
 
 void Model::selectionSubtractionDispatched(const msg::Message &messageIn)
 {
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
-  
   slc::Message sMessage = boost::get<slc::Message>(messageIn.payload);
   if (sMessage.type != slc::Type::Object)
     return;
@@ -566,9 +580,6 @@ void Model::closeProjectDispatched(const msg::Message&)
 
 void Model::projectUpdatedDispatched(const msg::Message &)
 {
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
   
 //   auto dumpMask = [] (const ColumnMask& columnMaskIn)
 //   {
@@ -909,7 +920,7 @@ void Model::mouseMoveEvent(QGraphicsSceneMouseEvent* event)
             stow->highlightConnectorOff(dragData->lastHighlight);
           stow->highlightConnectorOn(npi, Qt::darkYellow);
           dragData->lastHighlight = npi;
-          observer->out(msg::buildStatusMessage(QObject::tr("Drop accepted on edge").toStdString()));
+          node->send(msg::buildStatusMessage(QObject::tr("Drop accepted on edge").toStdString()));
           break;
         }
       }
@@ -933,14 +944,14 @@ void Model::mouseMoveEvent(QGraphicsSceneMouseEvent* event)
         if (std::find(av.begin(), av.end(), rv) != av.end())
         {
           foundIntersection = true;
-          observer->out(msg::buildStatusMessage(QObject::tr("Drop accepted on vertex").toStdString()));
+          node->send(msg::buildStatusMessage(QObject::tr("Drop accepted on vertex").toStdString()));
         }
       }
     }
     if (!foundIntersection)
     {
       qgv->setCursor(Qt::ForbiddenCursor);
-      observer->out(msg::buildStatusMessage(QObject::tr("Drop rejected").toStdString()));
+      node->send(msg::buildStatusMessage(QObject::tr("Drop rejected").toStdString()));
     }
     else
       qgv->setCursor(Qt::DragMoveCursor);
@@ -961,7 +972,7 @@ void Model::mouseMoveEvent(QGraphicsSceneMouseEvent* event)
       sMessage.featureId = stow->graph[vertex].featureId;
       sMessage.shapeId = gu::createNilId();
       message.payload = sMessage;
-      observer->out(message);
+      node->send(message);
     };
     
     auto setPrehighlight = [this](RectItem *rectIn)
@@ -976,7 +987,7 @@ void Model::mouseMoveEvent(QGraphicsSceneMouseEvent* event)
       sMessage.featureId = stow->graph[vertex].featureId;
       sMessage.shapeId = gu::createNilId();
       message.payload = sMessage;
-      observer->out(message);
+      node->send(message);
     };
     
     if (rect == currentPrehighlight)
@@ -1005,7 +1016,7 @@ void Model::mousePressEvent(QGraphicsSceneMouseEvent* event)
     sMessage.featureId = featureIdIn;
     sMessage.shapeId = gu::createNilId();
     message.payload = sMessage;
-    observer->out(message);
+    node->send(message);
   };
   
   auto getFeatureIdFromRect = [this](RectItem *rectIn)
@@ -1061,7 +1072,7 @@ void Model::mousePressEvent(QGraphicsSceneMouseEvent* event)
       vwr::Message vMsg;
       vMsg.featureId = stow->graph[vertex].featureId;
       msg.payload = vMsg;
-      observer->out(msg);
+      node->send(msg);
       
       return;
     }
@@ -1077,7 +1088,7 @@ void Model::mousePressEvent(QGraphicsSceneMouseEvent* event)
       vwr::Message vMsg;
       vMsg.featureId = stow->graph[vertex].featureId; //temp during conversion.
       msg.payload = vMsg;
-      observer->out(msg);
+      node->send(msg);
       
       return;
     }
@@ -1095,7 +1106,7 @@ void Model::mousePressEvent(QGraphicsSceneMouseEvent* event)
       dragData->featureId = stow->graph[vertex].featureId;
       std::tie(dragData->acceptedVertices, dragData->acceptedEdges) = stow->getDropAccepted(vertex);
       
-      observer->out(msg::Message(msg::Request | msg::Selection | msg::Clear));
+      node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
       
       return;
     }
@@ -1119,7 +1130,7 @@ void Model::mousePressEvent(QGraphicsSceneMouseEvent* event)
     msg::Message message(msg::Request | msg::Selection | msg::Clear);
     slc::Message sMessage;
     message.payload = sMessage;
-    observer->out(message);
+    node->send(message);
   }
 }
 
@@ -1147,7 +1158,7 @@ void Model::mouseReleaseEvent(QGraphicsSceneMouseEvent *e)
       pmOut.featureIds.push_back(stow->graph[boost::source(edge, stow->graph)].featureId);
       pmOut.featureIds.push_back(stow->graph[boost::target(edge, stow->graph)].featureId);
       msg::Message mOut(msg::Mask(msg::Request | msg::Project | msg::Feature | msg::Reorder), pmOut);
-      observer->out(mOut);
+      node->send(mOut);
       sentMessage = true;
     }
     else
@@ -1164,7 +1175,7 @@ void Model::mouseReleaseEvent(QGraphicsSceneMouseEvent *e)
             pmOut.featureIds.push_back(dragData->featureId);
             pmOut.featureIds.push_back(stow->graph[rv].featureId);
             msg::Message mOut(msg::Mask(msg::Request | msg::Project | msg::Feature | msg::Reorder), pmOut);
-            observer->out(mOut);
+            node->send(mOut);
             sentMessage = true;
           }
         }
@@ -1184,7 +1195,7 @@ void Model::mouseReleaseEvent(QGraphicsSceneMouseEvent *e)
 void Model::mouseDoubleClickEvent(QGraphicsSceneMouseEvent* event)
 {
   if (event->button() == Qt::LeftButton)
-    observer->out(msg::Message(msg::Request | msg::Edit | msg::Feature));
+    node->send(msg::Message(msg::Request | msg::Edit | msg::Feature));
   
   QGraphicsScene::mouseDoubleClickEvent(event);
 }
@@ -1198,13 +1209,13 @@ void Model::contextMenuEvent(QGraphicsSceneContextMenuEvent* event)
     if (currentType == qtd::visibleIcon)
     {
       Vertex v = stow->findVisibleVertex(dynamic_cast<QGraphicsPixmapItem*>(theItems.front()));
-      observer->out(msg::Message(msg::Request | msg::View | msg::ThreeD | msg::Isolate, vwr::Message(stow->graph[v].featureId)));
+      node->send(msg::Message(msg::Request | msg::View | msg::ThreeD | msg::Isolate, vwr::Message(stow->graph[v].featureId)));
       return;
     }
     else if (currentType == qtd::overlayIcon)
     {
       Vertex v = stow->findOverlayVertex(dynamic_cast<QGraphicsPixmapItem*>(theItems.front()));
-      observer->out(msg::Message(msg::Request | msg::View | msg::Overlay | msg::Isolate, vwr::Message(stow->graph[v].featureId)));
+      node->send(msg::Message(msg::Request | msg::View | msg::Overlay | msg::Isolate, vwr::Message(stow->graph[v].featureId)));
       return;
     }
   }
@@ -1222,7 +1233,7 @@ void Model::contextMenuEvent(QGraphicsSceneContextMenuEvent* event)
       sMessage.type = slc::Type::Object;
       sMessage.featureId = stow->graph[vertex].featureId;
       message.payload = sMessage;
-      observer->out(message);
+      node->send(message);
     }
     
     QMenu contextMenu;
@@ -1316,16 +1327,16 @@ void Model::setCurrentLeafSlot()
   prjMessageOut.featureIds.push_back(stow->graph[currentSelections.front()].featureId);
   msg::Message messageOut(msg::Request | msg::SetCurrentLeaf);
   messageOut.payload = prjMessageOut;
-  observer->out(messageOut);
+  node->send(messageOut);
   
   if (prf::manager().rootPtr->dragger().triggerUpdateOnFinish())
-    observer->out(msg::Mask(msg::Request | msg::Project | msg::Update));
+    node->send(msg::Mask(msg::Request | msg::Project | msg::Update));
 }
 
 void Model::removeFeatureSlot()
 {
   msg::Message message(msg::Request | msg::Remove);
-  observer->out(message);
+  node->send(message);
 }
 
 void Model::toggleOverlaySlot()
@@ -1333,7 +1344,7 @@ void Model::toggleOverlaySlot()
   auto currentSelections = stow->getAllSelected();
   
   msg::Message message(msg::Request | msg::Selection | msg::Clear);
-  observer->out(message);
+  node->send(message);
   
   for (auto v : currentSelections)
   {
@@ -1341,18 +1352,18 @@ void Model::toggleOverlaySlot()
     vwr::Message vMsg;
     vMsg.featureId = stow->graph[v].featureId;
     mOut.payload = vMsg;
-    observer->out(mOut);
+    node->send(mOut);
   }
 }
 
 void Model::viewIsolateSlot()
 {
-  observer->out(msg::Message(msg::Request | msg::View | msg::ThreeD | msg::Overlay | msg::Isolate));
+  node->send(msg::Message(msg::Request | msg::View | msg::ThreeD | msg::Overlay | msg::Isolate));
 }
 
 void Model::editColorSlot()
 {
-  observer->out(msg::Message(msg::Request | msg::Edit | msg::Feature | msg::Color));
+  node->send(msg::Message(msg::Request | msg::Edit | msg::Feature | msg::Color));
 }
 
 void Model::editRenameSlot()
@@ -1379,22 +1390,22 @@ void Model::editRenameSlot()
 
 void Model::editFeatureSlot()
 {
-  observer->out(msg::Message(msg::Request | msg::Edit | msg::Feature));
+  node->send(msg::Message(msg::Request | msg::Edit | msg::Feature));
 }
 
 void Model::dissolveSlot()
 {
-  observer->out(msg::Message(msg::Request | msg::Feature | msg::Dissolve));
+  node->send(msg::Message(msg::Request | msg::Feature | msg::Dissolve));
 }
 
 void Model::infoFeatureSlot()
 {
-  observer->out(msg::Message(msg::Request | msg::Info));
+  node->send(msg::Message(msg::Request | msg::Info));
 }
 
 void Model::checkGeometrySlot()
 {
-  observer->out(msg::Message(msg::Request | msg::CheckGeometry));
+  node->send(msg::Message(msg::Request | msg::CheckGeometry));
 }
 
 void Model::toggleSkippedSlot()
@@ -1406,10 +1417,10 @@ void Model::toggleSkippedSlot()
   for (const auto &v : selections)
     pm.featureIds.push_back(stow->graph[v].featureId);
   
-  observer->out(msg::Message(msg::Request | msg::Feature | msg::Skipped | msg::Toggle, pm));
+  node->send(msg::Message(msg::Request | msg::Feature | msg::Skipped | msg::Toggle, pm));
   
   if (prf::manager().rootPtr->dragger().triggerUpdateOnFinish())
-    observer->out(msg::Mask(msg::Request | msg::Project | msg::Update));
+    node->send(msg::Mask(msg::Request | msg::Project | msg::Update));
 }
 
 void Model::renameAcceptedSlot()
@@ -1426,12 +1437,12 @@ void Model::renameAcceptedSlot()
   {
     ftr::Message fm(stow->graph[selections.front()].featureId, freshName);
     msg::Message m(msg::Request | msg::Edit | msg::Feature | msg::Name, fm);
-    observer->out(m); //don't block rename makes it back here.
+    node->send(m); //don't block rename makes it back here.
   }
   
   finishRename();
   
-  observer->out(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
 }
 
 void Model::renameRejectedSlot()

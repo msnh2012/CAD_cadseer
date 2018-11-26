@@ -23,6 +23,8 @@
 #include <selection/definitions.h>
 #include <command/base.h>
 
+namespace msg{struct Sift;}
+
 namespace cmd
 {
   class MeasureLinear :  public Base
@@ -36,6 +38,7 @@ namespace cmd
     virtual void activate() override;
     virtual void deactivate() override;
   private:
+    std::unique_ptr<msg::Sift> sift;
     void setupDispatcher();
     void selectionAdditionDispatched(const msg::Message&);
     void selectionMaskDispatched(const msg::Message&);

@@ -17,6 +17,9 @@
  *
  */
 
+#include <boost/variant.hpp>
+#include <boost/optional.hpp>
+
 #include <TopoDS.hxx>
 #include <BRepAdaptor_Surface.hxx>
 
@@ -24,7 +27,7 @@
 #include <application/application.h>
 #include <application/mainwindow.h>
 #include <viewer/widget.h>
-#include <message/observer.h>
+#include <message/node.h>
 #include <selection/eventhandler.h>
 #include <project/project.h>
 #include <annex/seershape.h>
@@ -91,8 +94,8 @@ bool DatumPlane::attemptOffset(const slc::Container &cIn)
     dp->setAutoSize(true);
     project->addFeature(dp);
     project->connectInsert(f->getId(), dp->getId(), ftr::InputType{ftr::InputType::create});
-    observer->outBlocked(msg::buildStatusMessage("Offset datum plane added", 2.0));
-    observer->outBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+    node->sendBlocked(msg::buildStatusMessage("Offset datum plane added", 2.0));
+    node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
     return true;
   }
   
@@ -116,8 +119,8 @@ bool DatumPlane::attemptOffset(const slc::Container &cIn)
     dp->setAutoSize(true);
     project->addFeature(dp);
     project->connectInsert(f->getId(), dp->getId(), ftr::InputType{ftr::InputType::create});
-    observer->outBlocked(msg::buildStatusMessage("Offset datum plane added", 2.0));
-    observer->outBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+    node->sendBlocked(msg::buildStatusMessage("Offset datum plane added", 2.0));
+    node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
     return true;
   }
   return false;
@@ -166,8 +169,8 @@ bool DatumPlane::attemptCenter(const std::vector<slc::Container> &csIn)
     gu::uniquefy(parents);
     for (const auto &p : parents)
       project->connectInsert(p->getId(), dp->getId(), ftr::InputType{ftr::InputType::create});
-    observer->outBlocked(msg::buildStatusMessage("Center datum plane added", 2.0));
-    observer->outBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+    node->sendBlocked(msg::buildStatusMessage("Center datum plane added", 2.0));
+    node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
     return true;
   }
   return false;
@@ -256,8 +259,8 @@ bool DatumPlane::attemptAxisAngle(const std::vector<slc::Container> &csIn)
     project->addFeature(dp);
     project->connectInsert(std::get<1>(axis.get())->getId(), dp->getId(), std::get<0>(axis.get()));
     project->connectInsert(std::get<1>(plane.get())->getId(), dp->getId(), std::get<0>(plane.get()));
-    observer->outBlocked(msg::buildStatusMessage("Axis angle datum plane added", 2.0));
-    observer->outBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+    node->sendBlocked(msg::buildStatusMessage("Axis angle datum plane added", 2.0));
+    node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
     return true;
   }
   return false;
@@ -321,8 +324,8 @@ bool DatumPlane::attemptAverage3P(const std::vector<slc::Container> &csIn)
     project->connectInsert(std::get<1>(plane1.get())->getId(), dp->getId(), std::get<0>(plane1.get()));
     project->connectInsert(std::get<1>(plane2.get())->getId(), dp->getId(), std::get<0>(plane2.get()));
     project->connectInsert(std::get<1>(plane3.get())->getId(), dp->getId(), std::get<0>(plane3.get()));
-    observer->outBlocked(msg::buildStatusMessage("Average datum plane added", 2.0));
-    observer->outBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+    node->sendBlocked(msg::buildStatusMessage("Average datum plane added", 2.0));
+    node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
     return true;
   }
   return false;
@@ -377,8 +380,8 @@ bool DatumPlane::attemptThrough3P(const std::vector<slc::Container> &csIn)
     project->connectInsert(std::get<1>(point1.get())->getId(), dp->getId(), std::get<0>(point1.get()));
     project->connectInsert(std::get<1>(point2.get())->getId(), dp->getId(), std::get<0>(point2.get()));
     project->connectInsert(std::get<1>(point3.get())->getId(), dp->getId(), std::get<0>(point3.get()));
-    observer->outBlocked(msg::buildStatusMessage("Average datum plane added", 2.0));
-    observer->outBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+    node->sendBlocked(msg::buildStatusMessage("Average datum plane added", 2.0));
+    node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
     return true;
   }
   return false;
@@ -398,16 +401,16 @@ void DatumPlane::go()
     dp->setAutoSize(false);
     dp->setSystem(app::instance()->getMainWindow()->getViewer()->getCurrentSystem());
     project->addFeature(dp);
-    observer->outBlocked(msg::buildStatusMessage("Constant datum plane added at current system", 2.0));
-    observer->outBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+    node->sendBlocked(msg::buildStatusMessage("Constant datum plane added at current system", 2.0));
+    node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
     return;
   }
   if (cs.size() == 1)
   {
     if (attemptOffset(cs.front()))
     {
-      observer->outBlocked(msg::buildStatusMessage("Offset datum plane added", 2.0));
-      observer->outBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+      node->sendBlocked(msg::buildStatusMessage("Offset datum plane added", 2.0));
+      node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
       return;
     }
   }
@@ -426,5 +429,5 @@ void DatumPlane::go()
       return;
   }
   
-  observer->out(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
 }

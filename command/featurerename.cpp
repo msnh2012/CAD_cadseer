@@ -19,10 +19,13 @@
 
 #include <QInputDialog>
 
+#include <boost/variant.hpp>
+
 #include <tools/idtools.h>
 #include <application/application.h>
 #include <application/mainwindow.h>
-#include <message/observer.h>
+#include <message/node.h>
+#include <message/sift.h>
 #include <selection/eventhandler.h>
 #include <project/project.h>
 #include <feature/base.h>
@@ -34,8 +37,11 @@ using boost::uuids::uuid;
 
 FeatureRename::FeatureRename() : Base(), id(gu::createNilId()), name()
 {
+  sift = std::make_unique<msg::Sift>();
+  sift->name = "cmd::FeatureRename";
+  node->setHandler(std::bind(&msg::Sift::receive, sift.get(), std::placeholders::_1));
+  
   setupDispatcher();
-  observer->name = "cmd::FeatureRename";
   
   shouldUpdate = false;
 }
@@ -112,7 +118,7 @@ void FeatureRename::go() //re-enters from dispatch.
     sendDone();
   }
   else
-    observer->out(msg::buildSelectionMask(slc::ObjectsEnabled | slc::ObjectsSelectable));
+    node->send(msg::buildSelectionMask(slc::ObjectsEnabled | slc::ObjectsSelectable));
 }
 
 void FeatureRename::goRename()
@@ -131,16 +137,16 @@ void FeatureRename::goRename()
   gitStream << "Rename feature id: " << gu::idToShortString(feature->getId())
   << "    From: " << oldName.toStdString()
   << "    To: " << name.toStdString();
-  observer->out(msg::buildGitMessage(gitStream.str()));
+  node->send(msg::buildGitMessage(gitStream.str()));
 }
 
 void FeatureRename::setupDispatcher()
 {
-  msg::Mask mask;
-  
-  mask = msg::Response | msg::Post | msg::Selection | msg::Add;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind
-    (&FeatureRename::selectionAdditionDispatched, this, _1)));
+  sift->insert
+  (
+    msg::Response | msg::Post | msg::Selection | msg::Add
+    , std::bind(&FeatureRename::selectionAdditionDispatched, this, std::placeholders::_1)
+  );
 }
 
 void FeatureRename::selectionAdditionDispatched(const msg::Message&)

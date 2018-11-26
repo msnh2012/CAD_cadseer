@@ -39,8 +39,8 @@
 #include "expressions/manager.h"
 #include "expressions/stringtranslator.h"
 #include "expressions/value.h"
-#include "message/message.h"
-#include "message/observer.h"
+#include "message/node.h"
+#include "message/sift.h"
 #include "selection/definitions.h"
 #include "viewer/widget.h"
 #include "dialogs/widgetgeometry.h"
@@ -92,13 +92,17 @@ Sketch::Sketch(ftr::Sketch *sIn, QWidget *parent):
 QDialog(parent)
 , sketch(sIn)
 , selection(new skt::Selection(sketch->getVisual()))
-, observer(new msg::Observer())
 {
   buildGui();
   initGui();
   
-  observer->name = "dlg::Sketch";
-  observer->outBlocked(msg::Message(msg::Request | msg::Overlay | msg::Selection | msg::Freeze));
+  node = std::make_unique<msg::Node>();
+  node->connect(msg::hub());
+  sift = std::make_unique<msg::Sift>();
+  sift->name = "dlg::Sketch";
+  node->setHandler(std::bind(&msg::Sift::receive, sift.get(), std::placeholders::_1));
+  
+  node->sendBlocked(msg::Message(msg::Request | msg::Overlay | msg::Selection | msg::Freeze));
   
   WidgetGeometry *filter = new WidgetGeometry(this, "dlg::Sketch");
   this->installEventFilter(filter);
@@ -108,7 +112,7 @@ QDialog(parent)
 
 Sketch::~Sketch()
 {
-  observer->outBlocked(msg::Message(msg::Request | msg::Overlay | msg::Selection | msg::Thaw));
+  node->sendBlocked(msg::Message(msg::Request | msg::Overlay | msg::Selection | msg::Thaw));
 }
 
 void Sketch::reject()
@@ -147,12 +151,12 @@ void Sketch::sketchSelectionStop()
 
 void Sketch::selectionGo()
 {
-  observer->outBlocked(msg::buildSelectionMask(slc::AllEnabled));
+  node->sendBlocked(msg::buildSelectionMask(slc::AllEnabled));
 }
 
 void Sketch::selectionStop()
 {
-  observer->outBlocked(msg::buildSelectionMask(~slc::AllEnabled));
+  node->sendBlocked(msg::buildSelectionMask(~slc::AllEnabled));
 }
 
 void Sketch::draggerShow()
@@ -167,10 +171,11 @@ void Sketch::draggerHide()
 
 void Sketch::setupDispatcher()
 {
-  msg::Mask mask;
-  
-  mask = msg::Response | msg::Sketch | msg::Selection | msg::Add;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Sketch::selectParameterDispatched, this, _1)));
+  sift->insert
+  (
+    msg::Response | msg::Sketch | msg::Selection | msg::Add
+    , std::bind(&Sketch::selectParameterDispatched, this, std::placeholders::_1)
+  );
 }
 
 void Sketch::selectParameterDispatched(const msg::Message &mIn)
@@ -196,8 +201,8 @@ void Sketch::initGui()
 {
   wasVisible3d = sketch->isVisible3D();
   wasVisibleOverlay = sketch->isVisibleOverlay();
-  observer->outBlocked(msg::buildHideThreeD(sketch->getId()));
-  observer->outBlocked(msg::buildShowOverlay(sketch->getId()));
+  node->sendBlocked(msg::buildHideThreeD(sketch->getId()));
+  node->sendBlocked(msg::buildShowOverlay(sketch->getId()));
   selection->setMask(skt::WorkPlaneOrigin | skt::WorkPlaneAxis | skt::Entity | skt::Constraint | skt::SelectionPlane);
   draggerHide();
 }
@@ -355,13 +360,13 @@ void Sketch::finishDialog()
   sketch->draggerShow();
   
   if (wasVisible3d)
-    observer->outBlocked(msg::buildShowThreeD(sketch->getId()));
+    node->sendBlocked(msg::buildShowThreeD(sketch->getId()));
   else
-    observer->outBlocked(msg::buildHideThreeD(sketch->getId()));
+    node->sendBlocked(msg::buildHideThreeD(sketch->getId()));
   if (wasVisibleOverlay)
-    observer->outBlocked(msg::buildShowOverlay(sketch->getId()));
+    node->sendBlocked(msg::buildShowOverlay(sketch->getId()));
   else
-    observer->outBlocked(msg::buildHideOverlay(sketch->getId()));
+    node->sendBlocked(msg::buildHideOverlay(sketch->getId()));
   
   msg::Message mOut(msg::Mask(msg::Request | msg::Command | msg::Done));
   app::instance()->queuedMessage(mOut);
@@ -545,7 +550,7 @@ void Sketch::requestParameterLinkSlot(const QString &stringIn)
   }
   else
   {
-    observer->out(msg::buildStatusMessage(QObject::tr("Value out of range").toStdString(), 2.0));
+    node->send(msg::buildStatusMessage(QObject::tr("Value out of range").toStdString(), 2.0));
   }
   
   this->activateWindow();
@@ -617,12 +622,12 @@ void Sketch::updateParameterSlot()
     }
     else
     {
-      observer->out(msg::buildStatusMessage(QObject::tr("Value out of range").toStdString(), 2.0));
+      node->send(msg::buildStatusMessage(QObject::tr("Value out of range").toStdString(), 2.0));
     }
   }
   else
   {
-    observer->out(msg::buildStatusMessage(QObject::tr("Parsing failed").toStdString(), 2.0));
+    node->send(msg::buildStatusMessage(QObject::tr("Parsing failed").toStdString(), 2.0));
   }
   pEdit->lineEdit->setText(QString::number(static_cast<double>(*parameter), 'f', 12));
   pEdit->lineEdit->selectAll();

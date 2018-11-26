@@ -17,7 +17,9 @@
  *
  */
 
-#include <message/observer.h>
+#include <boost/variant.hpp>
+
+#include <message/node.h>
 #include <selection/eventhandler.h>
 #include <project/message.h>
 #include <annex/seershape.h>
@@ -56,12 +58,12 @@ void Dissolve::go()
   if (cs.size() != 1 || cs.front().selectionType != slc::Type::Object)
   {
     shouldUpdate = false;
-    observer->out(msg::buildStatusMessage(QObject::tr("Dissolve needs 1 object selected").toStdString(), 2.0));
+    node->send(msg::buildStatusMessage(QObject::tr("Dissolve needs 1 object selected").toStdString(), 2.0));
     return;
   }
   
   prj::Message pm;
   pm.featureIds.push_back(cs.front().featureId);
-  observer->out(msg::Message(msg::Request | msg::Selection | msg::Clear));
-  observer->out(msg::Message(msg::Request | msg::Project | msg::Feature | msg::Dissolve, pm));
+  node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  node->send(msg::Message(msg::Request | msg::Project | msg::Feature | msg::Dissolve, pm));
 }

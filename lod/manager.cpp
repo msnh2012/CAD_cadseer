@@ -27,7 +27,8 @@
 #include <application/application.h>
 #include <preferences/preferencesXML.h>
 #include <preferences/manager.h>
-#include <message/observer.h>
+#include <message/node.h>
+#include <message/sift.h>
 #include <feature/states.h>
 #include <feature/base.h>
 #include <lod/manager.h>
@@ -36,8 +37,7 @@ using namespace lod;
 
 namespace bfs = boost::filesystem;
 
-Manager::Manager(const std::string &parentArg):
-observer(new msg::Observer())
+Manager::Manager(const std::string &parentArg)
 {
   bfs::path argPath = bfs::path(parentArg);
   bfs::path canonicalPath = bfs::canonical(argPath);
@@ -47,7 +47,12 @@ observer(new msg::Observer())
   lodPath = folderPath / "lodgenerator";
   assert(bfs::exists(lodPath));
   
-  observer->name = "lod::Manager";
+  
+  node = std::make_unique<msg::Node>();
+  node->connect(msg::hub());
+  sift = std::make_unique<msg::Sift>();
+  sift->name = "lod::Manager";
+  node->setHandler(std::bind(&msg::Sift::receive, sift.get(), std::placeholders::_1));
   setupDispatcher();
   
   process = new QProcess(this);
@@ -156,15 +161,26 @@ void Manager::childErrorSlot(QProcess::ProcessError error)
 
 void Manager::setupDispatcher()
 {
-  msg::Mask mask;
-  mask = msg::Request | msg::Construct | msg::LOD;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Manager::constructLODRequestDispatched, this, _1)));
-  
-  mask = msg::Response | msg::Pre | msg::Remove | msg::Feature;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Manager::featureRemovedDispatched, this, _1)));
-  
-  mask = msg::Response | msg::Feature | msg::Status;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Manager::featureStateChangedDispatched, this, _1)));
+  sift->insert
+  (
+    {
+      std::make_pair
+      (
+        msg::Request | msg::Construct | msg::LOD
+        , std::bind(&Manager::constructLODRequestDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Response | msg::Pre | msg::Remove | msg::Feature
+        , std::bind(&Manager::featureRemovedDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Response | msg::Feature | msg::Status
+        , std::bind(&Manager::featureStateChangedDispatched, this, std::placeholders::_1)
+      )
+    }
+  );
 }
 
 void Manager::constructLODRequestDispatched(const msg::Message &mIn)

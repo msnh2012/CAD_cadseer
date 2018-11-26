@@ -27,7 +27,7 @@
 #include <osgManipulator/Dragger> //needed for pointerInfo
 
 namespace vwr{class Overlay;}
-namespace msg{class Message; class Observer;}
+namespace msg{class Message; struct Node; struct Sift;}
 namespace lbr {class IPGroup; class PLabel;}
 
 namespace slc
@@ -46,7 +46,8 @@ namespace slc
     osg::ref_ptr<lbr::IPGroup> dimension;
     osg::ref_ptr<lbr::PLabel> pLabel;
     
-    std::unique_ptr<msg::Observer> observer;
+    std::unique_ptr<msg::Node> node;
+    std::unique_ptr<msg::Sift> sift;
     void setupDispatcher();
     void requestFreezeDispatched(const msg::Message&);
     void requestThawDispatched(const msg::Message&);

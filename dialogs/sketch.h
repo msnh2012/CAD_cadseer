@@ -30,7 +30,7 @@ class QTabWidget;
 
 namespace ftr{class Sketch; namespace prm{class Parameter;}}
 namespace skt{class Selection;}
-namespace msg{class Message; class Observer;}
+namespace msg{class Message; struct Node; struct Sift;}
 
 namespace dlg
 {
@@ -83,7 +83,8 @@ namespace dlg
     bool isAccepted = false;
     bool wasVisible3d = false;
     bool wasVisibleOverlay = false;
-    std::unique_ptr<msg::Observer> observer;
+    std::unique_ptr<msg::Node> node;
+    std::unique_ptr<msg::Sift> sift;
     void setupDispatcher();
     void selectParameterDispatched(const msg::Message &);
     

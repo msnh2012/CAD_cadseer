@@ -25,9 +25,9 @@
 #include <QResizeEvent>
 #include <QCloseEvent>
 
-#include <message/dispatch.h>
 #include <message/message.h>
-#include <message/observer.h>
+#include <message/node.h>
+#include <message/sift.h>
 #include <application/application.h>
 #include <application/infowindow.h>
 
@@ -35,8 +35,12 @@ using namespace app;
 
 InfoWindow::InfoWindow(QWidget* parent) : QTextEdit(parent)
 {
-    observer = std::move(std::unique_ptr<msg::Observer>(new msg::Observer()));
-    observer->name = "app::MainWindow";
+    node = std::make_unique<msg::Node>();
+    node->connect(msg::hub());
+    sift = std::make_unique<msg::Sift>();
+    sift->name = "app::InfoWindow";
+    node->setHandler(std::bind(&msg::Sift::receive, sift.get(), std::placeholders::_1));
+    
     setupDispatcher();
     
     this->setWordWrapMode(QTextOption::NoWrap);
@@ -48,10 +52,16 @@ InfoWindow::~InfoWindow()
 
 void InfoWindow::setupDispatcher()
 {
-    msg::Mask mask;
-    
-    mask = msg::Request | msg::Info | msg::Text;
-    observer->dispatcher.insert(std::make_pair(mask, boost::bind(&InfoWindow::infoTextDispatched, this, _1)));
+  sift->insert
+  (
+    {
+      std::make_pair
+      (
+        msg::Request | msg::Info | msg::Text
+        , std::bind(&InfoWindow::infoTextDispatched, this, std::placeholders::_1)
+      )
+    }
+  );
 }
 
 void InfoWindow::infoTextDispatched(const msg::Message &messageIn)

@@ -20,7 +20,11 @@
 #ifndef CMD_ISOLATE_H
 #define CMD_ISOLATE_H
 
+#include <selection/definitions.h>
+#include <message/message.h>
 #include <command/base.h>
+
+namespace msg{struct Sift;}
 
 namespace cmd
 {
@@ -39,6 +43,7 @@ namespace cmd
     boost::uuids::uuid id;
     msg::Mask mask;
   private:
+    std::unique_ptr<msg::Sift> sift;
     void setupDispatcher();
     void selectionAdditionDispatched(const msg::Message&);
     void go();

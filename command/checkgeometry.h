@@ -22,6 +22,7 @@
 
 #include <command/base.h>
 
+namespace msg{struct Sift;}
 namespace dlg{class CheckGeometry;}
 
 namespace cmd
@@ -41,6 +42,7 @@ namespace cmd
     bool hasRan = false;
     
     void go();
+    std::unique_ptr<msg::Sift> sift;
     void setupDispatcher();
     void selectionAdditionDispatched(const msg::Message&);
   };

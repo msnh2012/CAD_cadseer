@@ -17,10 +17,12 @@
  *
  */
 
+#include <boost/variant.hpp>
+
 #include <tools/idtools.h>
 #include <project/project.h>
-#include <message/observer.h>
-#include <message/message.h>
+#include <message/node.h>
+#include <message/sift.h>
 #include <selection/eventhandler.h>
 #include <command/isolate.h>
 
@@ -28,8 +30,11 @@ using namespace cmd;
 
 Isolate::Isolate() : Base(), id(gu::createNilId()), mask(msg::ThreeD | msg::Overlay)
 {
+  sift = std::make_unique<msg::Sift>();
+  sift->name = "cmd::Isolate";
+  node->setHandler(std::bind(&msg::Sift::receive, sift.get(), std::placeholders::_1));
+  
   setupDispatcher();
-  observer->name = "cmd::Isolate";
   shouldUpdate = false;
 }
 
@@ -85,7 +90,7 @@ void Isolate::go()
   }
   if (id.is_nil())
   {
-    observer->out(msg::buildSelectionMask(slc::ObjectsEnabled | slc::ObjectsSelectable));
+    node->send(msg::buildSelectionMask(slc::ObjectsEnabled | slc::ObjectsSelectable));
     return;
   }
   
@@ -94,29 +99,29 @@ void Isolate::go()
     if (id == lid)
     {
       if ((mask & msg::ThreeD).any() && project->isFeatureLeaf(lid))
-        observer->outBlocked(msg::buildShowThreeD(lid));
+        node->sendBlocked(msg::buildShowThreeD(lid));
       if ((mask & msg::Overlay).any())
-        observer->outBlocked(msg::buildShowOverlay(lid));
+        node->sendBlocked(msg::buildShowOverlay(lid));
     }
     else
     {
       if ((mask & msg::ThreeD).any() && project->isFeatureLeaf(lid))
-        observer->outBlocked(msg::buildHideThreeD(lid));
+        node->sendBlocked(msg::buildHideThreeD(lid));
       if ((mask & msg::Overlay).any())
-        observer->outBlocked(msg::buildHideOverlay(lid));
+        node->sendBlocked(msg::buildHideOverlay(lid));
     }
   }
-  observer->outBlocked(msg::Message(msg::Request | msg::View | msg::Fit));
+  node->sendBlocked(msg::Message(msg::Request | msg::View | msg::Fit));
   sendDone();
 }
 
 void Isolate::setupDispatcher()
 {
-  msg::Mask lm;
-  
-  lm = msg::Response | msg::Post | msg::Selection | msg::Add;
-  observer->dispatcher.insert(std::make_pair(lm, boost::bind
-    (&Isolate::selectionAdditionDispatched, this, _1)));
+  sift->insert
+  (
+    msg::Response | msg::Post | msg::Selection | msg::Add
+    , std::bind(&Isolate::selectionAdditionDispatched, this, std::placeholders::_1)
+  );
 }
 
 void Isolate::selectionAdditionDispatched(const msg::Message&)

@@ -18,9 +18,10 @@
  */
 
 #include <memory>
+#include <boost/variant.hpp>
 
 #include <project/project.h>
-#include <message/observer.h>
+#include <message/node.h>
 #include <selection/eventhandler.h>
 #include <viewer/widget.h>
 #include <feature/parameter.h>
@@ -54,7 +55,7 @@ void InstanceMirror::go()
   const slc::Containers &containers = eventHandler->getSelections();
   if (containers.empty() || (containers.size() > 2))
   {
-    observer->outBlocked(msg::buildStatusMessage("wrong selection for instance mirror", 2.0));
+    node->sendBlocked(msg::buildStatusMessage("wrong selection for instance mirror", 2.0));
     shouldUpdate = false;
     return;
   }
@@ -62,7 +63,7 @@ void InstanceMirror::go()
   ftr::Base *bf = project->findFeature(containers.front().featureId);
   if (!bf->hasAnnex(ann::Type::SeerShape))
   {
-    observer->outBlocked(msg::buildStatusMessage("first selection should have shape for instance mirror", 2.0));
+    node->sendBlocked(msg::buildStatusMessage("first selection should have shape for instance mirror", 2.0));
     shouldUpdate = false;
     return;
   }
@@ -77,8 +78,8 @@ void InstanceMirror::go()
   project->addFeature(instance);
   project->connect(bf->getId(), instance->getId(), ftr::InputType{ftr::InputType::target});
   
-  observer->outBlocked(msg::buildHideThreeD(bf->getId()));
-  observer->outBlocked(msg::buildHideOverlay(bf->getId()));
+  node->sendBlocked(msg::buildHideThreeD(bf->getId()));
+  node->sendBlocked(msg::buildHideOverlay(bf->getId()));
   
   if (containers.size() == 1)
   {
@@ -95,10 +96,10 @@ void InstanceMirror::go()
     project->connect(fId, instance->getId(), ftr::InputType{ftr::InstanceMirror::mirrorPlane});
     
     //should we hide these?
-    observer->outBlocked(msg::buildHideThreeD(fId));
-    observer->outBlocked(msg::buildHideOverlay(fId));
+    node->sendBlocked(msg::buildHideThreeD(fId));
+    node->sendBlocked(msg::buildHideOverlay(fId));
   }
   
-//   observer->outBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
-  observer->outBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+//   node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
+  node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
 }

@@ -31,7 +31,7 @@
 
 #include <selection/container.h>
 
-namespace msg{class Message; class Observer;}
+namespace msg{class Message; struct Node; struct Sift;}
 
 namespace expr{
   class Manager;
@@ -98,8 +98,6 @@ private:
   expr::Manager &eManager;
   //! Translator to interface with the manager.
   boost::shared_ptr<StringTranslator> sTranslator;
-  //! Observer into message system
-  std::unique_ptr<msg::Observer> observer;
   //! tableview calls into ::data every paint event. Way too many! cache rhs strings for speed.
   typedef std::map<boost::uuids::uuid, std::string> IdToRhsMap;
   mutable IdToRhsMap idToRhsMap;
@@ -184,7 +182,8 @@ protected:
 private:
   //! Reference to manager
   expr::Manager &eManager;
-  std::unique_ptr<msg::Observer> observer;
+  std::unique_ptr<msg::Node> node;
+  std::unique_ptr<msg::Sift> sift;
   void setupDispatcher();
   slc::Containers containers;
   void selectionAdditionDispatched(const msg::Message&);

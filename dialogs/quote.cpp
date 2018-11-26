@@ -20,6 +20,7 @@
 #include <cassert>
 
 #include <boost/filesystem.hpp>
+#include <boost/variant.hpp>
 
 #include <QGridLayout>
 #include <QHBoxLayout>
@@ -37,8 +38,10 @@
 #include <preferences/manager.h>
 #include <application/application.h>
 #include <application/mainwindow.h>
+#include <message/message.h>
 #include <viewer/widget.h>
 #include <project/project.h>
+#include <feature/inputtype.h>
 #include <feature/parameter.h>
 #include <feature/quote.h>
 #include <dialogs/widgetgeometry.h>

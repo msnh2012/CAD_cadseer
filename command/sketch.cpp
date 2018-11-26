@@ -17,8 +17,10 @@
  *
  */
 
+#include <boost/variant.hpp>
+
 #include "application/mainwindow.h"
-#include "message/observer.h"
+#include "message/node.h"
 #include "project/project.h"
 #include "feature/sketch.h"
 #include "dialogs/sketch.h"
@@ -62,7 +64,7 @@ void Sketch::go()
   std::shared_ptr<ftr::Sketch> nf(new ftr::Sketch());
   nf->buildDefault();
   project->addFeature(nf);
-  observer->outBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
+  node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
   
   shouldUpdate = false;
   

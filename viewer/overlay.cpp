@@ -33,8 +33,8 @@
 #include <tools/idtools.h>
 #include <modelviz/nodemaskdefs.h>
 #include <feature/base.h>
-#include <message/dispatch.h>
-#include <message/observer.h>
+#include <message/node.h>
+#include <message/sift.h>
 #include <viewer/message.h>
 #include <selection/visitors.h>
 #include <project/serial/xsdcxxoutput/view.h>
@@ -44,9 +44,12 @@ using namespace vwr;
 
 Overlay::Overlay(osgViewer::GraphicsWindow *windowIn) : osg::Camera()
 {
-  observer = std::move(std::unique_ptr<msg::Observer>(new msg::Observer()));
-  observer->name = "vwr::Overlay";
-  
+  node = std::make_unique<msg::Node>();
+  node->connect(msg::hub());
+  sift = std::make_unique<msg::Sift>();
+  sift->name = "vwr::Overlay";
+  node->setHandler(std::bind(&msg::Sift::receive, sift.get(), std::placeholders::_1));
+    
   fleetingGeometry = new osg::Switch();
   this->addChild(fleetingGeometry);
   
@@ -75,65 +78,77 @@ Overlay::Overlay(osgViewer::GraphicsWindow *windowIn) : osg::Camera()
 
 void Overlay::setupDispatcher()
 {
-  msg::Mask mask;
-
-  mask = msg::Response | msg::Post | msg::Add | msg::Feature;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Overlay::featureAddedDispatched, this, _1)));
-  
-  mask = msg::Response | msg::Pre | msg::Remove | msg::Feature;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Overlay::featureRemovedDispatched, this, _1)));
-  
-  mask = msg::Response | msg::Pre | msg::Close | msg::Project;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Overlay::closeProjectDispatched, this, _1)));
-  
-  mask = msg::Request | msg::Add | msg::Overlay;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Overlay::addOverlayGeometryDispatched, this, _1)));
-  
-  mask = msg::Request | msg::Clear | msg::Overlay;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Overlay::clearOverlayGeometryDispatched, this, _1)));
-  
-  mask = msg::Request | msg::View | msg::Show | msg::Overlay;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Overlay::showOverlayDispatched, this, _1)));
-  
-  mask = msg::Request | msg::View | msg::Hide | msg::Overlay;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Overlay::hideOverlayDispatched, this, _1)));
-  
-  mask = msg::Request | msg::View | msg::Toggle | msg::Overlay;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Overlay::overlayToggleDispatched, this, _1)));
-  
-  mask = msg::Response | msg::Post | msg::Open | msg::Project;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Overlay::projectOpenedDispatched, this, _1)));
-    
-  mask = msg::Response | msg::Post | msg::Project | msg::Update | msg::Model;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Overlay::projectUpdatedDispatched, this, _1)));
+  sift->insert
+  (
+    {
+      std::make_pair
+      (
+        msg::Response | msg::Post | msg::Add | msg::Feature
+        , std::bind(&Overlay::featureAddedDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Response | msg::Pre | msg::Remove | msg::Feature
+        , std::bind(&Overlay::featureRemovedDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Response | msg::Pre | msg::Close | msg::Project
+        , std::bind(&Overlay::closeProjectDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Add | msg::Overlay
+        , std::bind(&Overlay::addOverlayGeometryDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Clear | msg::Overlay
+        , std::bind(&Overlay::clearOverlayGeometryDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::View | msg::Show | msg::Overlay
+        , std::bind(&Overlay::showOverlayDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::View | msg::Hide | msg::Overlay
+        , std::bind(&Overlay::hideOverlayDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::View | msg::Toggle | msg::Overlay
+        , std::bind(&Overlay::overlayToggleDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Response | msg::Post | msg::Open | msg::Project
+        , std::bind(&Overlay::projectOpenedDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Response | msg::Post | msg::Project | msg::Update | msg::Model
+        , std::bind(&Overlay::projectUpdatedDispatched, this, std::placeholders::_1)
+      )
+    }
+  );
 }
 
 void Overlay::featureAddedDispatched(const msg::Message &messageIn)
 {
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
-  
   prj::Message message = boost::get<prj::Message>(messageIn.payload);
   addChild(message.feature->getOverlaySwitch());
 }
 
 void Overlay::featureRemovedDispatched(const msg::Message &messageIn)
 {
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
-  
   prj::Message message = boost::get<prj::Message>(messageIn.payload);
   removeChild(message.feature->getOverlaySwitch());
 }
 
 void Overlay::closeProjectDispatched(const msg::Message&)
 {
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
-  
     //this code assumes that the first child is the absolute csys switch.
     //also the fleeting switch.
     removeChildren(2, getNumChildren() - 2);
@@ -141,29 +156,17 @@ void Overlay::closeProjectDispatched(const msg::Message&)
 
 void Overlay::addOverlayGeometryDispatched(const msg::Message &message)
 {
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
-  
     vwr::Message vMessage = boost::get<vwr::Message>(message.payload);
     fleetingGeometry->addChild(vMessage.node.get());
 }
 
 void Overlay::clearOverlayGeometryDispatched(const msg::Message&)
 {
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
-  
     fleetingGeometry->removeChildren(0, fleetingGeometry->getNumChildren());
 }
 
 void Overlay::showOverlayDispatched(const msg::Message &msgIn)
 {
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
-  
   slc::MainSwitchVisitor v(boost::get<vwr::Message>(msgIn.payload).featureId);
   this->accept(v);
   assert(v.out);
@@ -177,15 +180,11 @@ void Overlay::showOverlayDispatched(const msg::Message &msgIn)
   
   msg::Message mOut(msg::Response | msg::View | msg::Show | msg::Overlay);
   mOut.payload = msgIn.payload;
-  observer->outBlocked(mOut);
+  node->sendBlocked(mOut);
 }
 
 void Overlay::hideOverlayDispatched(const msg::Message &msgIn)
 {
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
-  
   slc::MainSwitchVisitor v(boost::get<vwr::Message>(msgIn.payload).featureId);
   this->accept(v);
   assert(v.out);
@@ -199,15 +198,11 @@ void Overlay::hideOverlayDispatched(const msg::Message &msgIn)
   
   msg::Message mOut(msg::Response | msg::View | msg::Hide | msg::Overlay);
   mOut.payload = msgIn.payload;
-  observer->outBlocked(mOut);
+  node->sendBlocked(mOut);
 }
 
 void Overlay::overlayToggleDispatched(const msg::Message &msgIn)
 {
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
-  
   slc::MainSwitchVisitor v(boost::get<vwr::Message>(msgIn.payload).featureId);
   this->accept(v);
   assert(v.out); //some features won't have overlay, but we want to filter those out before the message call.
@@ -228,24 +223,16 @@ void Overlay::overlayToggleDispatched(const msg::Message &msgIn)
   
   msg::Message mOut(maskOut);
   mOut.payload = msgIn.payload;
-  observer->outBlocked(mOut);
+  node->sendBlocked(mOut);
 }
 
 void Overlay::projectOpenedDispatched(const msg::Message &)
 {
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
-  
   serialRead();
 }
 
 void Overlay::projectUpdatedDispatched(const msg::Message &)
 {
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
-  
   serialWrite();
 }
 
@@ -257,7 +244,6 @@ public:
   NodeVisitor(osg::NodeVisitor::TRAVERSE_ALL_CHILDREN),
   states(statesIn)
   {
-    observer.name = "vwr::Overlay::SerialIn";
   }
   virtual void apply(osg::Switch &switchIn) override
   {
@@ -272,12 +258,12 @@ public:
           if (s.visible())
           {
             switchIn.setAllChildrenOn();
-            observer.outBlocked(msg::Message(msg::Mask(msg::Response | msg::View | msg::Show | msg::Overlay), payload));
+            msg::hub().sendBlocked(msg::Message(msg::Mask(msg::Response | msg::View | msg::Show | msg::Overlay), payload));
           }
           else
           {
             switchIn.setAllChildrenOff();
-            observer.outBlocked(msg::Message(msg::Mask(msg::Response | msg::View | msg::Hide | msg::Overlay), payload));
+            msg::hub().sendBlocked(msg::Message(msg::Mask(msg::Response | msg::View | msg::Hide | msg::Overlay), payload));
           }
           break;
         }
@@ -288,7 +274,6 @@ public:
   }
 protected:
   const prj::srl::States &states;
-  msg::Observer observer;
 };
 
 void Overlay::serialRead()

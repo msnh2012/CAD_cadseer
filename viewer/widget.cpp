@@ -59,8 +59,8 @@
 #include <selection/eventhandler.h>
 #include <selection/overlayhandler.h>
 #include <selection/visitors.h>
-#include <message/dispatch.h>
-#include <message/observer.h>
+#include <message/node.h>
+#include <message/sift.h>
 #include <lod/message.h>
 #include <viewer/textcamera.h>
 #include <viewer/overlay.h>
@@ -92,9 +92,12 @@ protected:
 
 Widget::Widget(osgViewer::ViewerBase::ThreadingModel threadingModel) : QWidget(), osgViewer::CompositeViewer()
 {
-    observer = std::move(std::unique_ptr<msg::Observer>(new msg::Observer()));
-    observer->name = "vwr::Widget";
-    setupDispatcher();
+  node = std::make_unique<msg::Node>();
+  node->connect(msg::hub());
+  sift = std::make_unique<msg::Sift>();
+  sift->name = "vwr::Widget";
+  node->setHandler(std::bind(&msg::Sift::receive, sift.get(), std::placeholders::_1));
+  setupDispatcher();
     
     osg::DisplaySettings::instance()->setTextShaderTechnique("SIGNED_DISTANCE_FUNCTION"); 
     setThreadingModel(threadingModel);
@@ -551,96 +554,155 @@ void Widget::exportOSGDispatched(const msg::Message&)
 
 void Widget::setupDispatcher()
 {
-  msg::Mask mask;
+  sift->insert
+  (
+    {
+      std::make_pair
+      (
+        msg::Response | msg::Post | msg::Add | msg::Feature
+        , std::bind(&Widget::featureAddedDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Response | msg::Pre | msg::Remove | msg::Feature
+        , std::bind(&Widget::featureRemovedDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Response | msg::Post | msg::Project | msg::Update | msg::Visual
+        , std::bind(&Widget::visualUpdatedDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::View | msg::Top
+        , std::bind(&Widget::viewTopDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::View | msg::Top | msg::Current
+        , std::bind(&Widget::viewTopCurrentDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::View | msg::Front
+        , std::bind(&Widget::viewFrontDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::View | msg::Front | msg::Current
+        , std::bind(&Widget::viewFrontCurrentDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::View | msg::Right
+        , std::bind(&Widget::viewRightDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::View | msg::Right | msg::Current
+        , std::bind(&Widget::viewRightCurrentDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::View | msg::Iso
+        , std::bind(&Widget::viewIsoDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::View | msg::Fit
+        , std::bind(&Widget::viewFitDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::View | msg::Fill
+        , std::bind(&Widget::viewFillDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::View | msg::Triangulation
+        , std::bind(&Widget::viewTriangulationDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::View | msg::RenderStyle | msg::Toggle
+        , std::bind(&Widget::renderStyleToggleDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Export | msg::OSG
+        , std::bind(&Widget::exportOSGDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Response | msg::Pre | msg::Close | msg::Project
+        , std::bind(&Widget::closeProjectDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::SystemReset
+        , std::bind(&Widget::systemResetDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::SystemToggle
+        , std::bind(&Widget::systemToggleDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::View | msg::Show | msg::HiddenLine
+        , std::bind(&Widget::showHiddenLinesDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::View | msg::Hide | msg::HiddenLine
+        , std::bind(&Widget::hideHiddenLinesDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::View | msg::Toggle | msg::HiddenLine
+        , std::bind(&Widget::viewToggleHiddenLinesDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::View | msg::Show | msg::ThreeD
+        , std::bind(&Widget::showThreeDDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::View | msg::Hide | msg::ThreeD
+        , std::bind(&Widget::hideThreeDDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::View | msg::Toggle | msg::ThreeD
+        , std::bind(&Widget::threeDToggleDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Response | msg::Post | msg::Open | msg::Project
+        , std::bind(&Widget::projectOpenedDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Response | msg::Post | msg::Project | msg::Update | msg::Model
+        , std::bind(&Widget::projectUpdatedDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Response | msg::Construct | msg::LOD
+        , std::bind(&Widget::lodGeneratedDispatched, this, std::placeholders::_1)
+      )
+    }
+  );
   
-  mask = msg::Response | msg::Post | msg::Add | msg::Feature;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Widget::featureAddedDispatched, this, _1)));
   
-  mask = msg::Response | msg::Pre | msg::Remove | msg::Feature;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Widget::featureRemovedDispatched, this, _1)));
   
-  mask = msg::Response | msg::Post | msg::Project | msg::Update | msg::Visual;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Widget::visualUpdatedDispatched, this, _1)));
   
-  mask = msg::Request | msg::View | msg::Top;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Widget::viewTopDispatched, this, _1)));
   
-  mask = msg::Request | msg::View | msg::Top | msg::Current;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Widget::viewTopCurrentDispatched, this, _1)));
-  
-  mask = msg::Request | msg::View | msg::Front;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Widget::viewFrontDispatched, this, _1)));
-  
-  mask = msg::Request | msg::View | msg::Front | msg::Current;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Widget::viewFrontCurrentDispatched, this, _1)));
-  
-  mask = msg::Request | msg::View | msg::Right;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Widget::viewRightDispatched, this, _1)));
-  
-  mask = msg::Request | msg::View | msg::Right | msg::Current;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Widget::viewRightCurrentDispatched, this, _1)));
-  
-  mask = msg::Request | msg::View | msg::Iso;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Widget::viewIsoDispatched, this, _1)));
-  
-  mask = msg::Request | msg::View | msg::Fit;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Widget::viewFitDispatched, this, _1)));
-  
-  mask = msg::Request | msg::View | msg::Fill;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Widget::viewFillDispatched, this, _1)));
-  
-  mask = msg::Request | msg::View | msg::Triangulation;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Widget::viewTriangulationDispatched, this, _1)));
-  
-  mask = msg::Request | msg::View | msg::RenderStyle | msg::Toggle;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Widget::renderStyleToggleDispatched, this, _1)));
-  
-  mask = msg::Request | msg::Export | msg::OSG;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Widget::exportOSGDispatched, this, _1)));
-  
-  mask = msg::Response | msg::Pre | msg::Close | msg::Project;;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Widget::closeProjectDispatched, this, _1)));
-  
-  mask = msg::Request | msg::SystemReset;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Widget::systemResetDispatched, this, _1)));
-  
-  mask = msg::Request | msg::SystemToggle;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Widget::systemToggleDispatched, this, _1)));
-  
-  mask = msg::Request | msg::View | msg::Show | msg::HiddenLine;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Widget::showHiddenLinesDispatched, this, _1)));
-  
-  mask = msg::Request | msg::View | msg::Hide | msg::HiddenLine;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Widget::hideHiddenLinesDispatched, this, _1)));
-  
-  mask = msg::Request | msg::View | msg::Toggle | msg::HiddenLine;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Widget::viewToggleHiddenLinesDispatched, this, _1)));
-  
-  mask = msg::Request | msg::View | msg::Show | msg::ThreeD;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Widget::showThreeDDispatched, this, _1)));
-  
-  mask = msg::Request | msg::View | msg::Hide | msg::ThreeD;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Widget::hideThreeDDispatched, this, _1)));
-  
-  mask = msg::Request | msg::View | msg::Toggle | msg::ThreeD;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Widget::threeDToggleDispatched, this, _1)));
-  
-  mask = msg::Response | msg::Post | msg::Open | msg::Project;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Widget::projectOpenedDispatched, this, _1)));
-  
-  mask = msg::Response | msg::Post | msg::Project | msg::Update | msg::Model;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Widget::projectUpdatedDispatched, this, _1)));
-  
-  mask = msg::Response | msg::Construct | msg::LOD;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Widget::lodGeneratedDispatched, this, _1)));
 }
 
 void Widget::featureAddedDispatched(const msg::Message &messageIn)
 {
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
-  
   prj::Message message = boost::get<prj::Message>(messageIn.payload);
   root->addChild(message.feature->getMainSwitch());
   
@@ -650,48 +712,28 @@ void Widget::featureAddedDispatched(const msg::Message &messageIn)
 
 void Widget::featureRemovedDispatched(const msg::Message &messageIn)
 {
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
-  
   prj::Message message = boost::get<prj::Message>(messageIn.payload);
   root->removeChild(message.feature->getMainSwitch());
 }
 
 void Widget::visualUpdatedDispatched(const msg::Message &)
 {
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
-  
   this->myUpdate();
 }
 
 void Widget::closeProjectDispatched(const msg::Message&)
 {
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
-  
   //don't need to keep any children of the viewer.
   root->removeChildren(0, root->getNumChildren());
 }
 
 void Widget::systemResetDispatched(const msg::Message&)
 {
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
-  
   currentSystem->setMatrix(osg::Matrixd::identity());
 }
 
 void Widget::systemToggleDispatched(const msg::Message&)
 {
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
-  
   if (systemSwitch->getValue(0))
     systemSwitch->setAllChildrenOff();
   else
@@ -704,10 +746,6 @@ void Widget::systemToggleDispatched(const msg::Message&)
 
 void Widget::showHiddenLinesDispatched(const msg::Message&)
 {
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
-  
   HiddenLineVisitor v(true);
   root->accept(v);
   
@@ -718,10 +756,6 @@ void Widget::showHiddenLinesDispatched(const msg::Message&)
 
 void Widget::hideHiddenLinesDispatched(const msg::Message&)
 {
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
-  
   HiddenLineVisitor v(false);
   root->accept(v);
   
@@ -732,10 +766,6 @@ void Widget::hideHiddenLinesDispatched(const msg::Message&)
 
 void Widget::viewToggleHiddenLinesDispatched(const msg::Message&)
 {
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
-  
   prf::Manager &manager = prf::manager();
   bool oldValue = manager.rootPtr->visual().display().showHiddenLines();
   manager.rootPtr->visual().display().showHiddenLines() = !oldValue;
@@ -748,10 +778,6 @@ void Widget::viewToggleHiddenLinesDispatched(const msg::Message&)
 
 void Widget::showThreeDDispatched(const msg::Message &msgIn)
 {
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
-  
   slc::MainSwitchVisitor v(boost::get<vwr::Message>(msgIn.payload).featureId);
   root->accept(v);
   assert(v.out);
@@ -765,7 +791,7 @@ void Widget::showThreeDDispatched(const msg::Message &msgIn)
   
   msg::Message mOut(msg::Response | msg::View | msg::Show | msg::ThreeD);
   mOut.payload = msgIn.payload;
-  observer->outBlocked(mOut);
+  node->sendBlocked(mOut);
   
   //see message in toggled for why we do this after the message.
   HiddenLineVisitor hlv(prf::manager().rootPtr->visual().display().showHiddenLines());
@@ -774,10 +800,6 @@ void Widget::showThreeDDispatched(const msg::Message &msgIn)
 
 void Widget::hideThreeDDispatched(const msg::Message &msgIn)
 {
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
-  
   slc::MainSwitchVisitor v(boost::get<vwr::Message>(msgIn.payload).featureId);
   root->accept(v);
   assert(v.out);
@@ -791,15 +813,11 @@ void Widget::hideThreeDDispatched(const msg::Message &msgIn)
   
   msg::Message mOut(msg::Response | msg::View | msg::Hide | msg::ThreeD);
   mOut.payload = msgIn.payload;
-  observer->outBlocked(mOut);
+  node->sendBlocked(mOut);
 }
 
 void Widget::threeDToggleDispatched(const msg::Message &msgIn)
 {
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
-  
   slc::MainSwitchVisitor v(boost::get<vwr::Message>(msgIn.payload).featureId);
   root->accept(v);
   assert(v.out);
@@ -819,7 +837,7 @@ void Widget::threeDToggleDispatched(const msg::Message &msgIn)
   
   msg::Message mOut(maskOut);
   mOut.payload = msgIn.payload;
-  observer->outBlocked(mOut);
+  node->sendBlocked(mOut);
   
   //we don't generate visuals until needed. so hidden and inactive features
   //have none or bogus osg data. This is the reason for the response message above.
@@ -831,19 +849,11 @@ void Widget::threeDToggleDispatched(const msg::Message &msgIn)
 
 void Widget::projectOpenedDispatched(const msg::Message &)
 {
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
-  
   serialRead();
 }
 
 void Widget::projectUpdatedDispatched(const msg::Message &)
 {
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
-  
   serialWrite();
 }
 
@@ -942,7 +952,6 @@ public:
   NodeVisitor(osg::NodeVisitor::TRAVERSE_ALL_CHILDREN),
   states(statesIn)
   {
-    observer.name = "vwr::Widget::SerialIn";
   }
   virtual void apply(osg::Switch &switchIn) override
   {
@@ -957,12 +966,12 @@ public:
           if (s.visible())
           {
             switchIn.setAllChildrenOn();
-            observer.outBlocked(msg::Message(msg::Mask(msg::Response | msg::View | msg::Show | msg::ThreeD), payload));
+            msg::hub().sendBlocked(msg::Message(msg::Mask(msg::Response | msg::View | msg::Show | msg::ThreeD), payload));
           }
           else
           {
             switchIn.setAllChildrenOff();
-            observer.outBlocked(msg::Message(msg::Mask(msg::Response | msg::View | msg::Hide | msg::ThreeD), payload));
+            msg::hub().sendBlocked(msg::Message(msg::Mask(msg::Response | msg::View | msg::Hide | msg::ThreeD), payload));
           }
           break;
         }
@@ -973,7 +982,6 @@ public:
   }
 protected:
   const prj::srl::States &states;
-  msg::Observer observer;
 };
 
 void Widget::serialRead()

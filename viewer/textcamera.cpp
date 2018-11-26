@@ -35,8 +35,8 @@
 
 #include <tools/idtools.h>
 #include <selection/definitions.h>
-#include <message/dispatch.h>
-#include <message/observer.h>
+#include <message/node.h>
+#include <message/sift.h>
 #include <viewer/textcamera.h>
 
 
@@ -127,8 +127,11 @@ bool ResizeEventHandler::handle(const osgGA::GUIEventAdapter& eventAdapter, osgG
 
 TextCamera::TextCamera(osgViewer::GraphicsWindow *windowIn) : osg::Camera()
 {
-  observer = std::move(std::unique_ptr<msg::Observer>(new msg::Observer()));
-  observer->name = "vwr::TextCamera";
+  node = std::make_unique<msg::Node>();
+  node->connect(msg::hub());
+  sift = std::make_unique<msg::Sift>();
+  sift->name = "vwr::TextCamera";
+  node->setHandler(std::bind(&msg::Sift::receive, sift.get(), std::placeholders::_1));
   setupDispatcher();
   
   setGraphicsContext(windowIn);
@@ -274,33 +277,45 @@ void TextCamera::layoutCommand()
 
 void TextCamera::setupDispatcher()
 {
-  msg::Mask mask;
-  
-  mask = msg::Response | msg::Post | msg::Preselection | msg::Add;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&TextCamera::preselectionAdditionDispatched, this, _1)));
-  
-  mask = msg::Response | msg::Pre | msg::Preselection | msg::Remove;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&TextCamera::preselectionSubtractionDispatched, this, _1)));
-  
-  mask = msg::Response | msg::Post | msg::Selection | msg::Add;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&TextCamera::selectionAdditionDispatched, this, _1)));
-  
-  mask = msg::Response | msg::Pre | msg::Selection | msg::Remove;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&TextCamera::selectionSubtractionDispatched, this, _1)));
-  
-  mask = msg::Request | msg::Status | msg::Text;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&TextCamera::statusTextDispatched, this, _1)));
-  
-  mask = msg::Request | msg::Command | msg::Text;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&TextCamera::commandTextDispatched, this, _1)));
+  sift->insert
+  (
+    {
+      std::make_pair
+      (
+        msg::Response | msg::Post | msg::Preselection | msg::Add
+        , std::bind(&TextCamera::preselectionAdditionDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Response | msg::Pre | msg::Preselection | msg::Remove
+        , std::bind(&TextCamera::preselectionSubtractionDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Response | msg::Post | msg::Selection | msg::Add
+        , std::bind(&TextCamera::selectionAdditionDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Response | msg::Pre | msg::Selection | msg::Remove
+        , std::bind(&TextCamera::selectionSubtractionDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Status | msg::Text
+        , std::bind(&TextCamera::statusTextDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Command | msg::Text
+        , std::bind(&TextCamera::commandTextDispatched, this, std::placeholders::_1)
+      )
+    }
+  );
 }
 
 void TextCamera::preselectionAdditionDispatched(const msg::Message &messageIn)
 {
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
-  
   slc::Message sMessage = boost::get<slc::Message>(messageIn.payload);
   
   preselectionText.clear();
@@ -316,20 +331,12 @@ void TextCamera::preselectionAdditionDispatched(const msg::Message &messageIn)
 
 void TextCamera::preselectionSubtractionDispatched(const msg::Message &)
 {
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
-  
   preselectionText.clear();
   updateSelectionLabel();
 }
 
 void TextCamera::selectionAdditionDispatched(const msg::Message &messageIn)
 {
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
-  
   slc::Message sMessage = boost::get<slc::Message>(messageIn.payload);
   assert(std::find(selections.begin(), selections.end(), sMessage) == selections.end());
   selections.push_back(sMessage);
@@ -338,10 +345,6 @@ void TextCamera::selectionAdditionDispatched(const msg::Message &messageIn)
 
 void TextCamera::selectionSubtractionDispatched(const msg::Message &messageIn)
 {
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
-  
   slc::Message sMessage = boost::get<slc::Message>(messageIn.payload);
   auto it = std::find(selections.begin(), selections.end(), sMessage); 
   assert(it != selections.end());
@@ -351,10 +354,6 @@ void TextCamera::selectionSubtractionDispatched(const msg::Message &messageIn)
 
 void TextCamera::statusTextDispatched(const msg::Message &messageIn)
 {
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
-  
   vwr::Message sMessage = boost::get<vwr::Message>(messageIn.payload);
   if (sMessage.time == 0.0)
   {
@@ -397,10 +396,6 @@ void TextCamera::updateSelectionLabel()
 
 void TextCamera::commandTextDispatched(const msg::Message &messageIn)
 {
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
-  
   vwr::Message vMessage = boost::get<vwr::Message>(messageIn.payload);
   commandLabel->setText(vMessage.text);
 }

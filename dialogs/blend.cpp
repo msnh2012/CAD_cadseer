@@ -62,8 +62,8 @@
 #include <project/project.h>
 #include <expressions/manager.h>
 #include <expressions/stringtranslator.h>
-#include <message/message.h>
-#include <message/observer.h>
+#include <message/node.h>
+#include <message/sift.h>
 #include <viewer/message.h>
 #include <selection/message.h>
 #include <annex/seershape.h>
@@ -446,13 +446,16 @@ Blend::Blend(ftr::Blend *editBlendIn, QWidget *parent) : QDialog(parent), blend(
   project->setCurrentLeaf(blendParent->getId());
   
   overlayWasOn = blend->isVisibleOverlay();
-  observer->outBlocked(msg::buildHideOverlay(blend->getId()));
+  node->sendBlocked(msg::buildHideOverlay(blend->getId()));
 }
 
 void Blend::init()
 {
-  observer = std::unique_ptr<msg::Observer>(new msg::Observer());
-  observer->name = "dlg::Blend";
+  node = std::make_unique<msg::Node>();
+  node->connect(msg::hub());
+  sift = std::make_unique<msg::Sift>();
+  sift->name = "dlg::Blend";
+  node->setHandler(std::bind(&msg::Sift::receive, sift.get(), std::placeholders::_1));
   setupDispatcher();
   
   buildGui();
@@ -517,8 +520,8 @@ void Blend::finishDialog()
     project->addFeature(blendSmart);
     project->connectInsert(blendParent->getId(), blendSmart->getId(), ftr::InputType{ftr::InputType::target});
     
-    observer->outBlocked(msg::buildHideThreeD(blendParent->getId()));
-    observer->outBlocked(msg::buildHideOverlay(blendParent->getId()));
+    node->sendBlocked(msg::buildHideThreeD(blendParent->getId()));
+    node->sendBlocked(msg::buildHideOverlay(blendParent->getId()));
     
     blend->setColor(blendParent->getColor());
   }
@@ -539,10 +542,10 @@ void Blend::finishDialog()
       project->setCurrentLeaf(id);
     
     if (overlayWasOn)
-      observer->outBlocked(msg::buildShowOverlay(blend->getId()));
+      node->sendBlocked(msg::buildShowOverlay(blend->getId()));
   }
   
-  observer->out(msg::Mask(msg::Request | msg::Command | msg::Done));
+  node->send(msg::Mask(msg::Request | msg::Command | msg::Done));
 }
 
 void Blend::updateBlendFeature()
@@ -639,16 +642,16 @@ void Blend::addToSelection(const boost::uuids::uuid &shapeIdIn)
   freshSMessage.featureType = blendParent->getType();
   freshSMessage.shapeId = shapeIdIn;
   freshMMessage.payload = freshSMessage;
-  observer->outBlocked(freshMMessage);
+  node->sendBlocked(freshMMessage);
 }
 
 void Blend::setupDispatcher()
 {
-  msg::Mask mask;
-  
-  mask = msg::Response | msg::Post | msg::Selection | msg::Add;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind
-  (&Blend::selectionAdditionDispatched, this, _1)));
+  sift->insert
+  (
+    msg::Response | msg::Post | msg::Selection | msg::Add
+    , std::bind(&Blend::selectionAdditionDispatched, this, std::placeholders::_1)
+  );
 }
 
 void Blend::selectionAdditionDispatched(const msg::Message &messageIn)
@@ -662,16 +665,16 @@ void Blend::selectionAdditionDispatched(const msg::Message &messageIn)
     assert(blendParent);
     if (!blendParent->hasAnnex(ann::Type::SeerShape))
     {
-      observer->out(msg::buildStatusMessage("Invalid object to blend", 2.0));
-      observer->outBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+      node->send(msg::buildStatusMessage("Invalid object to blend", 2.0));
+      node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
       return;
     }
   }
   
   if (blendParent->getId() != sMessage.featureId)
   {
-    observer->out(msg::buildStatusMessage("Can't tie blend feature to multiple bodies", 2.0));
-    observer->outBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+    node->send(msg::buildStatusMessage("Can't tie blend feature to multiple bodies", 2.0));
+    node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
     return;
   }
   
@@ -712,8 +715,8 @@ void Blend::selectionAdditionDispatched(const msg::Message &messageIn)
     ftr::Pick pick = buildEdgePick();
     if (pick.highlightIds.empty()) //means invalid edge to blend
     {
-      observer->outBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
-      observer->outBlocked(msg::buildStatusMessage("Invalid edge for blend", 2.0));
+      node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+      node->sendBlocked(msg::buildStatusMessage("Invalid edge for blend", 2.0));
       return;
     }
     for (const auto &id : pick.highlightIds)
@@ -732,7 +735,7 @@ void Blend::selectionAdditionDispatched(const msg::Message &messageIn)
       VariableWidget::ListItem *ni = vWidget->addContour(buildEdgePick());
       if (!ni)
       {
-        observer->outBlocked(msg::buildStatusMessage("Failed to add contour edge", 2.0));
+        node->sendBlocked(msg::buildStatusMessage("Failed to add contour edge", 2.0));
         app::instance()->queuedMessage(msg::Message(msg::Request | msg::Selection | msg::Remove, sMessage));
       }
       QTimer::singleShot(0, [this, ni]() {this->vWidget->contourList->setCurrentItem(ni);});
@@ -771,7 +774,7 @@ void Blend::selectionAdditionDispatched(const msg::Message &messageIn)
       ftr::Pick vp = buildVertexPick();
       if (vp.id.is_nil())
       {
-        observer->outBlocked(msg::buildStatusMessage("Invalid vertex selection", 2.0));
+        node->sendBlocked(msg::buildStatusMessage("Invalid vertex selection", 2.0));
         app::instance()->queuedMessage(msg::Message(msg::Request | msg::Selection | msg::Remove, sMessage));
         return;
       }
@@ -815,13 +818,13 @@ void Blend::selectionAdditionDispatched(const msg::Message &messageIn)
       if (isVertexValid())
       {
         if (!vWidget->addConstraint(ftr::Blend::buildRadiusParameter(), vp))
-          observer->outBlocked(msg::buildStatusMessage("Point rejected", 2.0));
+          node->sendBlocked(msg::buildStatusMessage("Point rejected", 2.0));
         else
-          observer->outBlocked(msg::buildStatusMessage("Point added", 2.0));
+          node->sendBlocked(msg::buildStatusMessage("Point added", 2.0));
       }
       else
       {
-        observer->outBlocked(msg::buildStatusMessage("Point not on contours", 2.0));
+        node->sendBlocked(msg::buildStatusMessage("Point not on contours", 2.0));
       }
       app::instance()->queuedMessage(msg::Message(msg::Request | msg::Selection | msg::Remove, sMessage));
     }
@@ -834,7 +837,7 @@ void Blend::cUnlink()
   QModelIndexList ss = cView->selectionModel()->selectedIndexes();
   if (ss.isEmpty() || (!ss.front().isValid()))
   {
-    observer->outBlocked(msg::buildStatusMessage("Nothing selected to unlink.", 2.0));
+    node->sendBlocked(msg::buildStatusMessage("Nothing selected to unlink.", 2.0));
     return;
   }
   
@@ -851,7 +854,7 @@ void Blend::cUnlink()
     sbi->update();
   }
   else
-    observer->outBlocked(msg::buildStatusMessage("Not linked.", 2.0));
+    node->sendBlocked(msg::buildStatusMessage("Not linked.", 2.0));
 }
 
 void Blend::cLink(QModelIndex index, const QString &idIn)
@@ -865,7 +868,7 @@ void Blend::cLink(QModelIndex index, const QString &idIn)
   
   if (!(boost::get<double>(eManager.getFormulaValue(expressionId)) > 0.0))
   {
-    observer->out(msg::buildStatusMessage("No negative radei", 2.0));
+    node->send(msg::buildStatusMessage("No negative radei", 2.0));
     return;
   }
   
@@ -979,7 +982,7 @@ void Blend::buildGui()
 
 void Blend::typeComboChangedSlot(int index)
 {
-  observer->outBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
   
   stacked->setCurrentIndex(index);
   if (index == 0)
@@ -988,7 +991,7 @@ void Blend::typeComboChangedSlot(int index)
   }
   else if (index == 1)
   {
-    observer->outBlocked
+    node->sendBlocked
     (
       msg::buildSelectionMask
       (
@@ -1026,19 +1029,19 @@ void Blend::cSelectFirstRadius()
 
 void Blend::cSelectionChanged(const QItemSelection &selected, const QItemSelection &/*deselected*/)
 {
-  observer->outBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
   
   QModelIndexList ss = selected.indexes();
   if (ss.isEmpty() || (!ss.front().isValid()))
   {
-    observer->outBlocked(msg::buildSelectionMask(slc::None));
+    node->sendBlocked(msg::buildSelectionMask(slc::None));
     return;
   }
   if (ss.front().parent() == QModelIndex())
   {
     //we have a root/blend item.
-    observer->outBlocked(msg::buildSelectionMask(slc::None | slc::EdgesEnabled | slc::EdgesSelectable));
-    observer->outBlocked(msg::buildStatusMessage("Select edges to blend."));
+    node->sendBlocked(msg::buildSelectionMask(slc::None | slc::EdgesEnabled | slc::EdgesSelectable));
+    node->sendBlocked(msg::buildStatusMessage("Select edges to blend."));
     
     cView->collapseAll();
     cView->expand(ss.front());
@@ -1050,7 +1053,7 @@ void Blend::cSelectionChanged(const QItemSelection &selected, const QItemSelecti
       PickItem *pi = dynamic_cast<PickItem*>(sbi->child(i, 1));
       assert(pi);
       if (pi->pick.highlightIds.empty())
-        observer->outBlocked(msg::buildStatusMessage("No edges found from pick", 2.0));
+        node->sendBlocked(msg::buildStatusMessage("No edges found from pick", 2.0));
       for (const auto &tid : pi->pick.highlightIds)
         addToSelection(tid);
     }
@@ -1058,8 +1061,8 @@ void Blend::cSelectionChanged(const QItemSelection &selected, const QItemSelecti
   else
   {
     //have a pick item.
-    observer->outBlocked(msg::buildSelectionMask(slc::None));
-    observer->outBlocked(msg::buildStatusMessage("Select radius in dialog to add more edges."));
+    node->sendBlocked(msg::buildSelectionMask(slc::None));
+    node->sendBlocked(msg::buildStatusMessage("Select radius in dialog to add more edges."));
     
     assert(ss.size() == 2);
     PickItem *pi = dynamic_cast<PickItem*>(cModel->itemFromIndex(ss.at(1)));
@@ -1074,7 +1077,7 @@ void Blend::cRemove()
   QModelIndexList ss = cView->selectionModel()->selectedIndexes();
   if (ss.isEmpty() || (!ss.front().isValid()))
   {
-    observer->outBlocked(msg::buildStatusMessage("Nothing selected to remove.", 2.0));
+    node->sendBlocked(msg::buildStatusMessage("Nothing selected to remove.", 2.0));
     return;
   }
   
@@ -1088,7 +1091,7 @@ void Blend::cRemove()
       while (sbi->rowCount() > 0)
       {
         sbi->removeRow(0);
-        observer->outBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+        node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
         QTimer::singleShot(0, this, &Blend::cSelectFirstRadius);
       }
     }
@@ -1106,7 +1109,7 @@ void Blend::cRemove()
     QModelIndex parentIndex = ss.front().parent();
     assert(parentIndex.isValid());
     cModel->itemFromIndex(parentIndex)->removeRow(ss.front().row());
-    observer->outBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+    node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
     auto *sm = cView->selectionModel();
     QTimer::singleShot
     (
@@ -1162,12 +1165,12 @@ void Blend::vHighlightConstraint(int row)
   slc::Message m = tls::convertToMessage(ii->pick, blendParent);
   if (m.shapeId.is_nil())
     return;
-  observer->outBlocked(msg::Message(msg::Request | msg::Selection | msg::Add, m));
+  node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Add, m));
 }
 
 void Blend::vUpdate3dSelection()
 {
-  observer->outBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
   vHighlightContour(vWidget->contourList->currentRow());
   vHighlightConstraint(vWidget->constraintTable->currentRow());
 }
@@ -1489,7 +1492,7 @@ void Blend::vLink(QTableWidgetItem *itemIn, const QString &idIn)
   assert(item);
   if (!item->parameter->isValidValue(cv))
   {
-    observer->out(msg::buildStatusMessage("Invalid value for radius", 2.0));
+    node->send(msg::buildStatusMessage("Invalid value for radius", 2.0));
     return;
   }
   
@@ -1506,7 +1509,7 @@ void Blend::vUnlink()
   QList<QTableWidgetItem *> sItems = ct->selectedItems();
   if (sItems.isEmpty() || (!sItems.front()))
   {
-    observer->out(msg::buildStatusMessage("Nothing selected to unlink", 2.0));
+    node->send(msg::buildStatusMessage("Nothing selected to unlink", 2.0));
     return;
   }
   
@@ -1514,7 +1517,7 @@ void Blend::vUnlink()
   assert(item);
   if (item->parameter->isConstant())
   {
-    observer->outBlocked(msg::buildStatusMessage("Not linked.", 2.0));
+    node->sendBlocked(msg::buildStatusMessage("Not linked.", 2.0));
     return;
   }
   

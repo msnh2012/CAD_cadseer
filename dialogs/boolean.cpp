@@ -18,6 +18,7 @@
  */
 
 #include <cassert>
+#include <boost/variant.hpp>
 
 #include <QSettings>
 #include <QGridLayout>
@@ -30,10 +31,12 @@
 #include <tools/idtools.h>
 #include <application/application.h>
 #include <application/mainwindow.h>
+#include <message/message.h>
 #include <project/project.h>
 #include <selection/message.h>
 #include <annex/seershape.h>
 #include <tools/featuretools.h>
+#include <feature/inputtype.h>
 #include <feature/intersect.h>
 #include <feature/subtract.h>
 #include <feature/union.h>

@@ -18,8 +18,9 @@
  */
 
 #include <boost/optional.hpp>
+#include <boost/variant.hpp>
 
-#include <message/observer.h>
+#include <message/node.h>
 #include <selection/eventhandler.h>
 #include <viewer/widget.h>
 #include <command/systemtoselection.h>
@@ -92,7 +93,7 @@ void SystemToSelection::go()
   const slc::Containers &containers = eventHandler->getSelections();
   if (containers.empty())
   {
-    observer->outBlocked(msg::buildStatusMessage("No selection for system derivation", 2.0));
+    node->sendBlocked(msg::buildStatusMessage("No selection for system derivation", 2.0));
     return;
   }
   
@@ -100,10 +101,10 @@ void SystemToSelection::go()
   ocsys = from3Points(containers);
   if (ocsys)
   {
-    observer->outBlocked(msg::buildStatusMessage("Current system set to 3 points", 2.0));
+    node->sendBlocked(msg::buildStatusMessage("Current system set to 3 points", 2.0));
     viewer->setCurrentSystem(*ocsys);
     return;
   }
   
-  observer->outBlocked(msg::buildStatusMessage("Selection not supported for system derivation", 2.0));
+  node->sendBlocked(msg::buildStatusMessage("Selection not supported for system derivation", 2.0));
 }

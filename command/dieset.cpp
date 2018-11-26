@@ -17,9 +17,11 @@
  *
  */
 
+#include <boost/variant.hpp>
+
 #include <osg/Geometry> //yuck
 
-#include <message/observer.h>
+#include <message/node.h>
 #include <project/project.h>
 #include <selection/eventhandler.h>
 #include <feature/dieset.h>
@@ -86,7 +88,7 @@ void DieSet::go()
   
   if (stripId.is_nil())
   {
-    observer->out(msg::buildStatusMessage("Couldn't infer strip id for DieSet feature", 2.0));
+    node->send(msg::buildStatusMessage("Couldn't infer strip id for DieSet feature", 2.0));
     shouldUpdate = false;
     return;
   }
@@ -95,5 +97,5 @@ void DieSet::go()
   project->addFeature(ds);
   project->connect(stripId, ds->getId(), ftr::InputType{ftr::DieSet::strip});
   
-  observer->out(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
 }

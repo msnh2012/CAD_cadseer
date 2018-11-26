@@ -178,8 +178,10 @@ namespace msg
       Payload payload;
     };
 
-    typedef std::function< void (const Message&) > MessageHandler;
-    typedef std::unordered_map<Mask, MessageHandler> MessageDispatcher;
+    typedef std::function<void (const Message&)> Handler;
+    
+    typedef std::function< void (const Message&) > MessageHandler; //deprecate
+    typedef std::unordered_map<Mask, MessageHandler> MessageDispatcher; //deprecate
     
     
     //@{

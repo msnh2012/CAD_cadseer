@@ -54,8 +54,8 @@
 #include <expressions/stringtranslator.h> //for serialize.
 #include <project/message.h>
 #include <message/message.h>
-#include <message/dispatch.h>
-#include <message/observer.h>
+#include <message/node.h>
+#include <message/sift.h>
 #include <project/gitmanager.h>
 #include <tools/graphtools.h>
 #include <project/featureload.h>
@@ -73,10 +73,13 @@ Project::Project() :
 gitManager(new GitManager()),
 expressionManager(new expr::Manager()),
 shapeHistory(new ftr::ShapeHistory()),
-observer(new msg::Observer()),
 stow(new Stow())
 {
-  observer->name = "prj::Project";
+  node = std::make_unique<msg::Node>();
+  node->connect(msg::hub());
+  sift = std::make_unique<msg::Sift>();
+  sift->name = "prj::Project";
+  node->setHandler(std::bind(&msg::Sift::receive, sift.get(), std::placeholders::_1));
   setupDispatcher();
 }
 
@@ -97,7 +100,7 @@ QTextStream& Project::getInfo(QTextStream &stream) const
 
 void Project::updateModel()
 {
-  observer->out(msg::Message(msg::Response | msg::Pre | msg::Project | msg::Update | msg::Model));
+  node->send(msg::Message(msg::Response | msg::Pre | msg::Project | msg::Update | msg::Model));
   
   expressionManager->update();
   
@@ -116,7 +119,7 @@ void Project::updateModel()
   //the update of a feature will trigger a state change signal.
   //we don't want to handle that state change here in the project
   //so we block.
-  auto block = observer->createBlocker();
+  auto block = node->createBlocker();
   
   shapeHistory->clear(); //reset history structure.
   
@@ -141,7 +144,7 @@ void Project::updateModel()
     
     std::ostringstream messageStream;
     messageStream << "Updating: " << cFeature->getName().toStdString() << "    Id: " << gu::idToShortString(cFeature->getId());
-    observer->out(msg::buildStatusMessage(messageStream.str()));
+    node->send(msg::buildStatusMessage(messageStream.str()));
     qApp->processEvents(); //need this or we won't see messages.
     
     RemovedGraph removedGraph = buildRemovedGraph(stow->graph);
@@ -164,22 +167,22 @@ void Project::updateModel()
   /* this is here to give others a chance to make changes before git makes a commit.
    * if this causes problems, then we will want git manager to use more messaging.
    */
-  observer->out(msg::Message(msg::Response | msg::Post | msg::Project | msg::Update | msg::Model));
+  node->send(msg::Message(msg::Response | msg::Post | msg::Project | msg::Update | msg::Model));
   gitManager->update();
   
 //   shapeHistory->writeGraphViz("/home/tanderson/.CadSeer/ShapeHistory.dot");
   
-  observer->out(msg::buildStatusMessage("Model Update Complete", 2.0));
+  node->send(msg::buildStatusMessage("Model Update Complete", 2.0));
 }
 
 void Project::updateVisual()
 {
   //if we have selection and then destroy the geometry when the
   //the visual updates, things get out of sync. so clear the selection.
-  observer->out(msg::Message(msg::Request | msg::Selection | msg::Clear));
-  observer->out(msg::Message(msg::Response | msg::Pre | msg::Project | msg::Update | msg::Visual));
+  node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  node->send(msg::Message(msg::Response | msg::Pre | msg::Project | msg::Update | msg::Visual));
   
-  auto block = observer->createBlocker();
+  auto block = node->createBlocker();
   
   //don't think we need to topo sort for visual.
   for(auto its = boost::vertices(stow->graph); its.first != its.second; ++its.first)
@@ -198,9 +201,9 @@ void Project::updateVisual()
       feature->updateVisual();
   }
   
-  observer->out(msg::Message(msg::Response | msg::Post | msg::Project | msg::Update | msg::Visual));
+  node->send(msg::Message(msg::Response | msg::Post | msg::Project | msg::Update | msg::Visual));
   
-  observer->out(msg::buildStatusMessage("Visual Update Complete", 2.0));
+  node->send(msg::buildStatusMessage("Visual Update Complete", 2.0));
 }
 
 void Project::writeGraphViz(const std::string& fileName)
@@ -264,7 +267,7 @@ void Project::addFeature(std::shared_ptr<ftr::Base> feature)
   prj::Message pMessage;
   pMessage.feature = feature;
   postMessage.payload = pMessage;
-  observer->out(postMessage);
+  node->send(postMessage);
 }
 
 void Project::removeFeature(const uuid& idIn)
@@ -276,7 +279,7 @@ void Project::removeFeature(const uuid& idIn)
   feature->setModelDirty(); //this will make all children dirty.
   
   //shouldn't need anymore messages into project for this function call.
-  auto block = observer->createBlocker();
+  auto block = node->createBlocker().front();
   
   RemovedGraph removedGraph = buildRemovedGraph(stow->graph); //children
   ReversedGraph reversedGraph = boost::make_reverse_graph(removedGraph); //parents
@@ -328,11 +331,11 @@ void Project::removeFeature(const uuid& idIn)
     if (feature->isVisible3D())
     {
       block.unblock();
-      observer->out(msg::buildShowThreeD(reversedGraph[*its.first].feature->getId()));
+      node->send(msg::buildShowThreeD(reversedGraph[*its.first].feature->getId()));
       block.block();
     }
     else
-      observer->out(msg::buildHideThreeD(reversedGraph[*its.first].feature->getId()));
+      node->send(msg::buildHideThreeD(reversedGraph[*its.first].feature->getId()));
   }
   
   for (auto its = boost::adjacent_vertices(vertex, removedGraph); its.first != its.second; ++its.first)
@@ -347,7 +350,7 @@ void Project::removeFeature(const uuid& idIn)
   prj::Message pMessage;
   pMessage.feature = feature;
   preMessage.payload = pMessage;
-  observer->out(preMessage);
+  node->send(preMessage);
   
   //remove file if exists.
   assert(exists(saveDirectory));
@@ -375,12 +378,12 @@ void Project::setCurrentLeaf(const uuid& idIn)
   //sometimes the visual of a feature is dirty and doesn't get updated 
   //until we try to show it. However it might be selected meaning that
   //we will destroy the old geometry that is highlighted. So clear the seleciton.
-  observer->out(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
   
   //the visitor will be setting features to an inactive state which
   //triggers the signal and we would end up back into this->stateChangedSlot.
   //so we block all the connections to avoid this.
-  auto block = observer->createBlocker();
+  auto block = node->createBlocker().front();
   
   auto vertex = stow->findVertex(idIn);
   RemovedGraph removedGraph = buildRemovedGraph(stow->graph); //children
@@ -399,14 +402,14 @@ void Project::setCurrentLeaf(const uuid& idIn)
   for (auto its = boost::vertices(fg); its.first != its.second; ++its.first)
   {
     stow->setFeatureActive(*its.first);
-    observer->out(msg::buildHideThreeD(stow->graph[*its.first].feature->getId()));
+    node->send(msg::buildHideThreeD(stow->graph[*its.first].feature->getId()));
   }
   
   stow->setFeatureActive(vertex);
   //project is responsible for generating visuals, so buildShowThreeD
   //can cause us to be back her in project. in short, don't block.
   block.unblock();
-  observer->out(msg::buildShowThreeD(stow->graph[vertex].feature->getId()));
+  node->send(msg::buildShowThreeD(stow->graph[vertex].feature->getId()));
   block.block();
   
   //children
@@ -418,7 +421,7 @@ void Project::setCurrentLeaf(const uuid& idIn)
     if (v == vertex) //don't hide the new current.
       continue;
     stow->setFeatureInactive(v);
-    observer->out(msg::buildHideThreeD(removedGraph[v].feature->getId()));
+    node->send(msg::buildHideThreeD(removedGraph[v].feature->getId()));
   }
   
   updateLeafStatus();
@@ -537,49 +540,81 @@ void Project::clearAllInputs(const boost::uuids::uuid &idIn)
 
 void Project::setupDispatcher()
 {
-  msg::Mask mask;
-  
-  mask = msg::Request | msg::SetCurrentLeaf;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Project::setCurrentLeafDispatched, this, _1)));
-  
-  mask = msg::Request | msg::Remove | msg::Feature;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Project::removeFeatureDispatched, this, _1)));
-  
-  mask = msg::Request | msg::Project | msg::Update;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Project::updateDispatched, this, _1)));
-  
-  mask = msg::Request | msg::Force | msg::Update;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Project::forceUpdateDispatched, this, _1)));
-  
-  mask = msg::Request | msg::Project | msg::Update | msg::Model;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Project::updateModelDispatched, this, _1)));
-  
-  mask = msg::Request | msg::Project | msg::Update | msg::Visual;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Project::updateVisualDispatched, this, _1)));
-  
-  mask = msg::Request | msg::Save | msg::Project;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Project::saveProjectRequestDispatched, this, _1)));
-  
-  mask = msg::Request | msg::CheckShapeIds;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Project::checkShapeIdsDispatched, this, _1)));
-  
-  mask = msg::Response | msg::Feature | msg::Status;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Project::featureStateChangedDispatched, this, _1)));
-  
-  mask = msg::Request | msg::DebugDumpProjectGraph;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Project::dumpProjectGraphDispatched, this, _1)));
-  
-  mask = msg::Response | msg::View | msg::Show | msg::ThreeD;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Project::shownThreeDDispatched, this, _1)));
-  
-  mask = msg::Request | msg::Project | msg::Feature | msg::Reorder;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Project::reorderFeatureDispatched, this, _1)));
-  
-  mask = msg::Request | msg::Feature | msg::Skipped | msg::Toggle;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Project::toggleSkippedDispatched, this, _1)));
-  
-  mask = msg::Request | msg::Project | msg::Feature | msg::Dissolve;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Project::dissolveFeatureDispatched, this, _1)));
+  sift->insert
+  (
+    {
+      std::make_pair
+      (
+        msg::Request | msg::SetCurrentLeaf
+        , std::bind(&Project::setCurrentLeafDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Remove | msg::Feature
+        , std::bind(&Project::removeFeatureDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Project | msg::Update
+        , std::bind(&Project::updateDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Force | msg::Update
+        , std::bind(&Project::forceUpdateDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Project | msg::Update | msg::Model
+        , std::bind(&Project::updateModelDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Project | msg::Update | msg::Visual
+        , std::bind(&Project::updateVisualDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Save | msg::Project
+        , std::bind(&Project::saveProjectRequestDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::CheckShapeIds
+        , std::bind(&Project::checkShapeIdsDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Response | msg::Feature | msg::Status
+        , std::bind(&Project::featureStateChangedDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::DebugDumpProjectGraph
+        , std::bind(&Project::dumpProjectGraphDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Response | msg::View | msg::Show | msg::ThreeD
+        , std::bind(&Project::shownThreeDDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Project | msg::Feature | msg::Reorder
+        , std::bind(&Project::reorderFeatureDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Feature | msg::Skipped | msg::Toggle
+        , std::bind(&Project::toggleSkippedDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Project | msg::Feature | msg::Dissolve
+        , std::bind(&Project::dissolveFeatureDispatched, this, std::placeholders::_1)
+      )
+    }
+  );
 }
 
 void Project::featureStateChangedDispatched(const msg::Message &messageIn)
@@ -598,7 +633,7 @@ void Project::featureStateChangedDispatched(const msg::Message &messageIn)
     
   //this code blocks all incoming messages to the project while it
   //executes. This prevents the cycles from setting a dependent fetures dirty.
-  auto block = observer->createBlocker();
+  auto block = node->createBlocker();
   
   Vertex vertex = stow->findVertex(fMessage.featureId);
   Vertices vertices;
@@ -610,10 +645,6 @@ void Project::featureStateChangedDispatched(const msg::Message &messageIn)
 
 void Project::setCurrentLeafDispatched(const msg::Message &messageIn)
 {
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
-  
   prj::Message message = boost::get<prj::Message>(messageIn.payload);
   //send response signal out 'pre set current feature'.
   assert(message.featureIds.size() == 1);
@@ -623,10 +654,6 @@ void Project::setCurrentLeafDispatched(const msg::Message &messageIn)
 
 void Project::removeFeatureDispatched(const msg::Message &messageIn)
 {
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
-  
   prj::Message message = boost::get<prj::Message>(messageIn.payload);
   assert(message.featureIds.size() == 1);
   removeFeature(message.featureIds.front());
@@ -634,23 +661,15 @@ void Project::removeFeatureDispatched(const msg::Message &messageIn)
 
 void Project::updateDispatched(const msg::Message&)
 {
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
-  
   app::WaitCursor waitCursor;
   updateModel();
   updateVisual();
   
-  observer->outBlocked(msg::buildStatusMessage(std::string()));
+  node->sendBlocked(msg::buildStatusMessage(std::string()));
 }
 
 void Project::forceUpdateDispatched(const msg::Message&)
 {
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
-  
   RemovedGraph rg = buildRemovedGraph(stow->graph);
   for (auto its = boost::vertices(rg); its.first != its.second; ++its.first)
     rg[*its.first].feature->setModelDirty();
@@ -659,33 +678,21 @@ void Project::forceUpdateDispatched(const msg::Message&)
   updateModel();
   updateVisual();
   
-  observer->outBlocked(msg::buildStatusMessage(std::string()));
+  node->sendBlocked(msg::buildStatusMessage(std::string()));
 }
 
 void Project::updateModelDispatched(const msg::Message&)
 {
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
-  
   updateModel();
 }
 
 void Project::updateVisualDispatched(const msg::Message&)
 {
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
-  
   updateVisual();
 }
 
 void Project::saveProjectRequestDispatched(const msg::Message&)
 {
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
-  
   save();
 }
 
@@ -791,7 +798,7 @@ void Project::reorderFeatureDispatched(const msg::Message &mIn)
   }
   
   //shouldn't need anymore messages into project.
-  auto block = observer->createBlocker();
+  auto block = node->createBlocker();
   
   /* reorder operation. Real simple For now. This only supports
    * an edge as the drop target. source node can only have 1
@@ -941,9 +948,9 @@ void Project::dissolveFeatureDispatched(const msg::Message &mIn)
     return; //do we really care about this here?
     
   fb->setModelDirty(); //this will make all children dirty.
-  auto block = observer->createBlocker();
+  auto block = node->createBlocker();
   
-  observer->out
+  node->send
   (
     msg::Message(msg::Response | msg::Pre | msg::Project | msg::Feature | msg::Dissolve, pm)
   );
@@ -970,13 +977,13 @@ void Project::dissolveFeatureDispatched(const msg::Message &mIn)
   prj::Message addPMessage;
   addPMessage.feature = nf;
   postMessage.payload = addPMessage;
-  observer->out(postMessage);
+  node->send(postMessage);
   
   //give new feature same visualization status as old.
   if (fb->isHiddenOverlay())
-    observer->out(msg::buildHideOverlay(nf->getId()));
+    node->send(msg::buildHideOverlay(nf->getId()));
   if (fb->isHidden3D())
-    observer->out(msg::buildHideThreeD(nf->getId()));
+    node->send(msg::buildHideThreeD(nf->getId()));
   
   //get children of original feature and setup graph edges from new inert feature.
   Vertex ov = stow->findVertex(pm.featureIds.front());
@@ -1037,7 +1044,7 @@ void Project::dissolveFeatureDispatched(const msg::Message &mIn)
     prj::Message pMessage;
     pMessage.feature = stow->graph[v].feature;
     preMessage.payload = pMessage;
-    observer->out(preMessage);
+    node->send(preMessage);
     
     //remove file if exists.
     assert(exists(saveDirectory));
@@ -1049,7 +1056,7 @@ void Project::dissolveFeatureDispatched(const msg::Message &mIn)
     stow->graph[v].alive = false;
   }
   
-  observer->out
+  node->send
   (
     msg::Message(msg::Response | msg::Post | msg::Project | msg::Feature | msg::Dissolve, pm)
   );
@@ -1256,11 +1263,11 @@ void Project::serialWrite()
 
 void Project::save()
 {
-  observer->out(msg::Message(msg::Response | msg::Pre | msg::Save | msg::Project));
+  node->send(msg::Message(msg::Response | msg::Pre | msg::Save | msg::Project));
   
   gitManager->save();
   
-  observer->out(msg::Message(msg::Response | msg::Post | msg::Save | msg::Project));
+  node->send(msg::Message(msg::Response | msg::Post | msg::Save | msg::Project));
 }
 
 void Project::initializeNew()
@@ -1274,7 +1281,7 @@ void Project::open()
   app::WaitCursor waitCursor;
   
   isLoading = true;
-  observer->out(msg::Message(msg::Request | msg::Git | msg::Freeze));
+  node->send(msg::Message(msg::Request | msg::Git | msg::Freeze));
   
   path pPath = saveDirectory / "project.prjt";
   path sPath = saveDirectory / "project.brep";
@@ -1295,7 +1302,7 @@ void Project::open()
     {
       std::ostringstream messageStream;
       messageStream << "Loading: " << feature.type() << "    Id: " << feature.id();
-      observer->outBlocked(msg::buildStatusMessage(messageStream.str()));
+      node->sendBlocked(msg::buildStatusMessage(messageStream.str()));
       qApp->processEvents(); //need this or we won't see messages.
       
       std::shared_ptr<ftr::Base> featurePtr = fLoader.load(feature.id(), feature.type(), feature.shapeOffset());
@@ -1307,11 +1314,11 @@ void Project::open()
         ftr::Message fMessage(featurePtr->getId(), featurePtr->getState(), ftr::StateOffset::Loading);
         msg::Message mMessage(msg::Response | msg::Feature | msg::Status);
         mMessage.payload = fMessage;
-        observer->outBlocked(mMessage);
+        node->sendBlocked(mMessage);
       }
     }
     
-    observer->outBlocked(msg::buildStatusMessage("Loading: Project States"));
+    node->sendBlocked(msg::buildStatusMessage("Loading: Project States"));
     qApp->processEvents();
     for (const auto &state : project->states().array())
     {
@@ -1323,10 +1330,10 @@ void Project::open()
       ftr::Message fMessage(fId, fState, ftr::StateOffset::Loading);
       msg::Message mMessage(msg::Response | msg::Project | msg::Feature | msg::Status);
       mMessage.payload = fMessage;
-      observer->outBlocked(mMessage);
+      node->sendBlocked(mMessage);
     }
     
-    observer->outBlocked(msg::buildStatusMessage("Loading: Feature Connections"));
+    node->sendBlocked(msg::buildStatusMessage("Loading: Feature Connections"));
     qApp->processEvents();
     for (const auto &fConnection : project->connections().connection())
     {
@@ -1339,7 +1346,7 @@ void Project::open()
       connect(source, target, inputType);
     }
     
-    observer->outBlocked(msg::buildStatusMessage("Loading: Expressions"));
+    node->sendBlocked(msg::buildStatusMessage("Loading: Expressions"));
     qApp->processEvents();
     expr::StringTranslator sTranslator(*expressionManager);
     for (const auto &sExpression : project->expressions().array())
@@ -1393,14 +1400,14 @@ void Project::open()
       }
     }
     
-    observer->outBlocked(msg::buildStatusMessage("Loading: Shape History"));
+    node->sendBlocked(msg::buildStatusMessage("Loading: Shape History"));
     qApp->processEvents();
     if (project->shapeHistory().present())
       shapeHistory->serialIn(project->shapeHistory().get());
     
-    observer->outBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
-    observer->outBlocked(msg::buildStatusMessage(std::string()));
-    observer->outBlocked(msg::buildStatusMessage("Project Opened", 2.0));
+    node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
+    node->sendBlocked(msg::buildStatusMessage(std::string()));
+    node->sendBlocked(msg::buildStatusMessage("Project Opened", 2.0));
   }
   catch (const xsd::cxx::xml::invalid_utf16_string&)
   {
@@ -1415,7 +1422,7 @@ void Project::open()
     std::cerr << e << std::endl;
   }
   
-  observer->out(msg::Message(msg::Request | msg::Git | msg::Thaw));
+  node->send(msg::Message(msg::Request | msg::Git | msg::Thaw));
   isLoading = false;
 }
 

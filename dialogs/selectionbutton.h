@@ -30,7 +30,7 @@
 class QHideEvent;
 class QShowEvent;
 
-namespace msg{class Message; class Observer;}
+namespace msg{class Message; struct Node; struct Sift;}
 
 namespace dlg
 {
@@ -72,7 +72,8 @@ namespace dlg
     void toggledSlot(bool);
     
   private:
-    std::unique_ptr<msg::Observer> observer;
+    std::unique_ptr<msg::Node> node;
+    std::unique_ptr<msg::Sift> sift;
     void setupDispatcher();
     void selectionAdditionDispatched(const msg::Message&);
     void selectionSubtractionDispatched(const msg::Message&);

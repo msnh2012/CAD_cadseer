@@ -24,21 +24,14 @@
 
 #include <tools/idtools.h>
 #include <feature/base.h>
-#include <message/message.h>
-#include <message/observer.h>
+#include <message/node.h>
 #include <project/stow.h>
 
 using namespace prj;
 
-Stow::Stow() : observer(new msg::Observer())
-{
+Stow::Stow(){}
 
-}
-
-Stow::~Stow()
-{
-
-}
+Stow::~Stow(){}
 
 Vertex Stow::addFeature(std::shared_ptr<ftr::Base> feature)
 {
@@ -76,7 +69,7 @@ void Stow::sendConnectMessage(const Vertex &parentIn, const Vertex &childIn, con
   pMessage.featureIds.push_back(graph[childIn].feature->getId()); 
   pMessage.inputType = type;
   postMessage.payload = pMessage;
-  observer->outBlocked(postMessage);
+  msg::hub().sendBlocked(postMessage);
 }
 
 void Stow::disconnect(const Edge &eIn)
@@ -93,7 +86,7 @@ void Stow::sendDisconnectMessage(const Vertex &parentIn, const Vertex &childIn, 
   pMessage.featureIds.push_back(graph[childIn].feature->getId());
   pMessage.inputType = type;
   preMessage.payload = pMessage;
-  observer->out(preMessage);
+  msg::hub().send(preMessage);
 }
 
 void Stow::removeEdges(Edges esIn)
@@ -218,7 +211,7 @@ void Stow::sendStateMessage(const Vertex &v, std::size_t stateOffset)
   ftr::Message fMessage(graph[v].feature->getId(), graph[v].state, stateOffset);
   msg::Message mMessage(msg::Response | msg::Project | msg::Feature | msg::Status);
   mMessage.payload = fMessage;
-  observer->outBlocked(mMessage);
+  msg::hub().sendBlocked(mMessage);
 }
 
 

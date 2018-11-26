@@ -20,6 +20,7 @@
 #include <iostream>
 
 #include <boost/current_function.hpp>
+#include <boost/variant.hpp>
 
 #include <QTabWidget>
 #include <QVBoxLayout>
@@ -34,8 +35,8 @@
 #include <tools/idtools.h>
 #include <application/application.h>
 #include <dialogs/splitterdecorated.h>
-#include <message/dispatch.h>
-#include <message/observer.h>
+#include <message/node.h>
+#include <message/sift.h>
 #include <expressions/tablemodel.h>
 #include <expressions/tableview.h>
 #include <expressions/manager.h>
@@ -47,8 +48,11 @@ using namespace expr;
 Widget::Widget(QWidget* parent, Qt::WindowFlags f):
   QWidget(parent, f)
 {
-  observer = std::move(std::unique_ptr<msg::Observer>(new msg::Observer()));
-  observer->name = "expr::Widget";
+  node = std::make_unique<msg::Node>();
+  node->connect(msg::hub());
+  sift = std::make_unique<msg::Sift>();
+  sift->name = "expr::Widget";
+  node->setHandler(std::bind(&msg::Sift::receive, sift.get(), std::placeholders::_1));
   setupDispatcher();
     
   setupGui();
@@ -251,38 +255,40 @@ std::string Widget::buildExamplesString()
 
 void Widget::setupDispatcher()
 {
-  msg::Mask mask;
-  
-  mask = msg::Response | msg::Pre | msg::Close | msg::Project;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Widget::closeProjectDispatched, this, boost::placeholders::_1)));
-  
-  mask = msg::Response | msg::Post | msg::Open | msg::Project;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Widget::openNewProjectDispatched, this, boost::placeholders::_1)));
-  
-  mask = msg::Response | msg::Post | msg::New | msg::Project;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Widget::openNewProjectDispatched, this, boost::placeholders::_1)));
+  sift->insert
+  (
+    {
+      std::make_pair
+      (
+        msg::Response | msg::Pre | msg::Close | msg::Project
+        , std::bind(&Widget::closeProjectDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Response | msg::Post | msg::Open | msg::Project
+        , std::bind(&Widget::openNewProjectDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Response | msg::Post | msg::New | msg::Project
+        , std::bind(&Widget::openNewProjectDispatched, this, std::placeholders::_1)
+      )
+    }
+  );
 }
 
 void Widget::closeProjectDispatched(const msg::Message&)
 {
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
   
   tabWidget->clear();
   tableViewAll->deleteLater(); //should delete all child models and views.
   tableViewAll = nullptr;
   mainTable = nullptr; //was a child of tabwidget, so should be deleted.
   eManager = nullptr; //Manager owned by project. should be deleted there.
-
 }
 
 void Widget::openNewProjectDispatched(const msg::Message&)
 {
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
-  
   assert(!eManager);
   eManager = &(static_cast<app::Application *>(qApp)->getProject()->getManager());
   assert(eManager);

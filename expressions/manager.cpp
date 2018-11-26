@@ -31,8 +31,8 @@
 #include <project/project.h>
 #include <feature/base.h>
 #include <feature/parameter.h>
-#include <message/dispatch.h>
-#include <message/observer.h>
+#include <message/node.h>
+#include <message/sift.h>
 #include <preferences/preferencesXML.h>
 #include <preferences/manager.h>
 
@@ -73,8 +73,11 @@ Manager::Manager()
   graphPtr = std::move(std::unique_ptr<GraphWrapper>(new GraphWrapper()));
   formulaLinksPtr = std::move(std::unique_ptr<FormulaLinksWrapper>(new FormulaLinksWrapper()));
   
-  observer = std::move(std::unique_ptr<msg::Observer>(new msg::Observer()));
-  observer->name = "expr::Widget";
+  node = std::make_unique<msg::Node>();
+  node->connect(msg::hub());
+  sift = std::make_unique<msg::Sift>();
+  sift->name = "expr::Widget";
+  node->setHandler(std::bind(&msg::Sift::receive, sift.get(), std::placeholders::_1));
   setupDispatcher();
   
   //allgroup id set upon serialize restore.
@@ -446,18 +449,15 @@ void Manager::dumpLinks(std::ostream& stream)
 
 void Manager::setupDispatcher()
 {
-  msg::Mask mask;
-  
-  mask = msg::Response | msg::Pre | msg::Remove | msg::Feature;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Manager::featureRemovedDispatched, this, _1)));
+  sift->insert
+  (
+    msg::Response | msg::Pre | msg::Remove | msg::Feature
+    , std::bind(&Manager::featureRemovedDispatched, this, std::placeholders::_1)
+  );
 }
 
 void Manager::featureRemovedDispatched(const msg::Message &messageIn)
 {
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
-  
   prj::Message message = boost::get<prj::Message>(messageIn.payload);
   uuid featureId = message.feature->getId();
   

@@ -25,7 +25,7 @@
 #include <QWidget>
 
 namespace boost{namespace uuids{class uuid;}}
-namespace msg{class Message; class Observer;}
+namespace msg{class Message; struct Node; struct Sift;}
 class QTabWidget;
 class QToolBar;
 
@@ -79,7 +79,8 @@ private:
   std::string buildExamplesString();
   //! Manager to interface with.
   Manager *eManager = nullptr;
-  std::unique_ptr<msg::Observer> observer;
+  std::unique_ptr<msg::Node> node;
+  std::unique_ptr<msg::Sift> sift;
   void setupDispatcher();
   void closeProjectDispatched(const msg::Message &);
   void openNewProjectDispatched(const msg::Message &);

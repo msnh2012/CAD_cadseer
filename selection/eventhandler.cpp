@@ -40,8 +40,8 @@
 #include <feature/base.h>
 #include <annex/seershape.h>
 #include <selection/message.h>
-#include <message/dispatch.h>
-#include <message/observer.h>
+#include <message/node.h>
+#include <message/sift.h>
 #include <selection/interpreter.h>
 #include <selection/intersection.h>
 
@@ -92,9 +92,12 @@ static osg::Polytope buildPolytope(double x, double y, double radius)
 
 EventHandler::EventHandler(osg::Group *viewerRootIn) : osgGA::GUIEventHandler()
 {
-    observer = std::move(std::unique_ptr<msg::Observer>(new msg::Observer()));
-    observer->name = "slc::EventHandler";
-    setupDispatcher();
+  node = std::make_unique<msg::Node>();
+  node->connect(msg::hub());
+  sift = std::make_unique<msg::Sift>();
+  sift->name = "slc::EventHandler";
+  node->setHandler(std::bind(&msg::Sift::receive, sift.get(), std::placeholders::_1));
+  setupDispatcher();
   
     viewerRoot = viewerRootIn;
     
@@ -161,7 +164,7 @@ bool EventHandler::handle(const osgGA::GUIEventAdapter& eventAdapter,
     {
       if (eventAdapter.getKey() == osgGA::GUIEventAdapter::KEY_Escape)
       {
-        observer->out(msg::Message(msg::Request | msg::Command | msg::Cancel));
+        node->send(msg::Message(msg::Request | msg::Command | msg::Cancel));
         return true;
       }
     }
@@ -258,7 +261,7 @@ bool EventHandler::handle(const osgGA::GUIEventAdapter& eventAdapter,
             //selections we need to make observers aware of this 'hidden' change.
             msg::Message clearMessage(msg::Response | msg::Pre | msg::Preselection | msg::Remove);
             clearMessage.payload = containerToMessage(lastPrehighlight);
-            observer->out(clearMessage);
+            node->send(clearMessage);
             
             if (slc::isPointType(lastPrehighlight.selectionType))
             {
@@ -278,7 +281,7 @@ bool EventHandler::handle(const osgGA::GUIEventAdapter& eventAdapter,
             msg::Message addMessage(msg::Response | msg::Post | msg::Selection | msg::Add);
             addMessage.payload = containerToMessage(lastPrehighlight);
             lastPrehighlight = Container(); //set to null before signal in case we end up in 'this' again.
-            observer->out(addMessage);
+            node->send(addMessage);
         }
         //not clearing the selection anymore on a empty pick.
 //         else
@@ -314,7 +317,7 @@ void EventHandler::clearSelections()
     {
         msg::Message removeMessage(msg::Response | msg::Pre | msg::Selection | msg::Remove);
         removeMessage.payload = containerToMessage(*it);
-        observer->out(removeMessage);
+        node->send(removeMessage);
         
         if (slc::isPointType(it->selectionType))
         {
@@ -355,7 +358,7 @@ void EventHandler::setPrehighlight(slc::Container &selected)
     
     msg::Message addMessage(msg::Response | msg::Post | msg::Preselection | msg::Add);
     addMessage.payload = containerToMessage(lastPrehighlight);
-    observer->out(addMessage);
+    node->send(addMessage);
 }
 
 void EventHandler::clearPrehighlight()
@@ -365,7 +368,7 @@ void EventHandler::clearPrehighlight()
     
     msg::Message removeMessage(msg::Response | msg::Pre | msg::Preselection | msg::Remove);
     removeMessage.payload = containerToMessage(lastPrehighlight);
-    observer->out(removeMessage);
+    node->send(removeMessage);
     
     if (slc::isPointType(lastPrehighlight.selectionType))
     {
@@ -388,25 +391,41 @@ void EventHandler::clearPrehighlight()
 
 void EventHandler::setupDispatcher()
 {
-  msg::Mask mask;
-  
-  mask = msg::Request | msg::Preselection | msg::Add;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&EventHandler::requestPreselectionAdditionDispatched, this, _1)));
-  
-  mask = msg::Request | msg::Preselection | msg::Remove;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&EventHandler::requestPreselectionSubtractionDispatched, this, _1)));
-  
-  mask = msg::Request | msg::Selection | msg::Add;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&EventHandler::requestSelectionAdditionDispatched, this, _1)));
-  
-  mask = msg::Request | msg::Selection | msg::Remove;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&EventHandler::requestSelectionSubtractionDispatched, this, _1)));
-
-  mask = msg::Request | msg::Selection | msg::Clear;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&EventHandler::requestSelectionClearDispatched, this, _1)));
-  
-  mask = msg::Response | msg::Selection | msg::SetMask;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&EventHandler::selectionMaskDispatched, this, _1)));
+  sift->insert
+  (
+    {
+      std::make_pair
+      (
+        msg::Request | msg::Preselection | msg::Add
+        , std::bind(&EventHandler::requestPreselectionAdditionDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Preselection | msg::Remove
+        , std::bind(&EventHandler::requestPreselectionSubtractionDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Selection | msg::Add
+        , std::bind(&EventHandler::requestSelectionAdditionDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Selection | msg::Remove
+        , std::bind(&EventHandler::requestSelectionSubtractionDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Selection | msg::Clear
+        , std::bind(&EventHandler::requestSelectionClearDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Response | msg::Selection | msg::SetMask
+        , std::bind(&EventHandler::selectionMaskDispatched, this, std::placeholders::_1)
+      )
+    }
+  );
 }
 
 void EventHandler::selectionOperation
@@ -426,10 +445,6 @@ void EventHandler::selectionOperation
 
 void EventHandler::requestPreselectionAdditionDispatched(const msg::Message &messageIn)
 {
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
-  
   slc::Message sMessage = boost::get<slc::Message>(messageIn.payload);
   slc::Container container = messageToContainer(sMessage);
   if
@@ -446,10 +461,6 @@ void EventHandler::requestPreselectionAdditionDispatched(const msg::Message &mes
 
 void EventHandler::requestPreselectionSubtractionDispatched(const msg::Message &messageIn)
 {
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
-  
   slc::Message sMessage = boost::get<slc::Message>(messageIn.payload);
   
   slc::Container container = messageToContainer(sMessage);
@@ -461,10 +472,6 @@ void EventHandler::requestPreselectionSubtractionDispatched(const msg::Message &
 
 void EventHandler::requestSelectionAdditionDispatched(const msg::Message &messageIn)
 {
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
-  
   clearPrehighlight();
   
   slc::Message sMessage = boost::get<slc::Message>(messageIn.payload);
@@ -490,15 +497,11 @@ void EventHandler::requestSelectionAdditionDispatched(const msg::Message &messag
   
   msg::Message messageOut(msg::Response | msg::Post | msg::Selection | msg::Add);
   messageOut.payload = containerToMessage(container);
-  observer->out(messageOut);
+  node->send(messageOut);
 }
 
 void EventHandler::requestSelectionSubtractionDispatched(const msg::Message &messageIn)
 {
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
-  
   slc::Message sMessage = boost::get<slc::Message>(messageIn.payload);
   slc::Container container = messageToContainer(sMessage);
   
@@ -510,7 +513,7 @@ void EventHandler::requestSelectionSubtractionDispatched(const msg::Message &mes
   msg::Message messageOut = messageIn;
   messageOut.mask &= ~msg::Request;
   messageOut.mask |= msg::Response | msg::Pre;
-  observer->out(messageOut);
+  node->send(messageOut);
   
   if (slc::isPointType(containIt->selectionType))
   {
@@ -525,10 +528,6 @@ void EventHandler::requestSelectionSubtractionDispatched(const msg::Message &mes
 
 void EventHandler::requestSelectionClearDispatched(const msg::Message &)
 {
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
-  
   clearPrehighlight();
   clearSelections();
 }

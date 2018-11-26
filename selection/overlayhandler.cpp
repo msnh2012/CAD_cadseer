@@ -33,11 +33,11 @@
 #include <selection/visitors.h>
 #include <modelviz/nodemaskdefs.h>
 #include <globalutilities.h>
-#include <message/dispatch.h>
-#include <message/observer.h>
+#include <message/node.h>
+#include <message/sift.h>
 #include <command/manager.h>
 #include <command/csysedit.h>
-#include "overlayhandler.h"
+#include "selection/overlayhandler.h"
 
 using namespace slc;
 
@@ -86,9 +86,12 @@ static osg::Polytope buildPolytope(double x, double y, double radius)
 
 OverlayHandler::OverlayHandler(vwr::Overlay* cameraIn):
 camera(cameraIn)
-, observer(std::make_unique<msg::Observer>())
 {
-  observer->name = "slc::OverlayHandler";
+  node = std::make_unique<msg::Node>();
+  node->connect(msg::hub());
+  sift = std::make_unique<msg::Sift>();
+  sift->name = "slc::OverlayHandler";
+  node->setHandler(std::bind(&msg::Sift::receive, sift.get(), std::placeholders::_1));
   setupDispatcher();
 }
 
@@ -418,14 +421,21 @@ bool OverlayHandler::handle
 
 void OverlayHandler::setupDispatcher()
 {
-  msg::Mask mask;
-  
-  mask = msg::Request | msg::Overlay | msg::Selection | msg::Freeze;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&OverlayHandler::requestFreezeDispatched, this, _1)));
-  
-  mask = msg::Request | msg::Overlay | msg::Selection | msg::Thaw;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&OverlayHandler::requestThawDispatched, this, _1)));
-
+  sift->insert
+  (
+    {
+      std::make_pair
+      (
+        msg::Request | msg::Overlay | msg::Selection | msg::Freeze
+        , std::bind(&OverlayHandler::requestFreezeDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Overlay | msg::Selection | msg::Thaw
+        , std::bind(&OverlayHandler::requestThawDispatched, this, std::placeholders::_1)
+      )
+    }
+  );
 }
 
 void OverlayHandler::requestFreezeDispatched(const msg::Message&)
@@ -433,12 +443,11 @@ void OverlayHandler::requestFreezeDispatched(const msg::Message&)
   //this really should consider drag state. However, this whole mess is going to be
   //refactored as some point in the future and I will address it then.
   isActive = false;
-  observer->outBlocked(msg::Message(msg::Response | msg::Overlay | msg::Selection | msg::Freeze));
+  node->sendBlocked(msg::Message(msg::Response | msg::Overlay | msg::Selection | msg::Freeze));
 }
 
 void OverlayHandler::requestThawDispatched(const msg::Message&)
 {
   isActive = true;
-  observer->outBlocked(msg::Message(msg::Response | msg::Overlay | msg::Selection | msg::Thaw));
+  node->sendBlocked(msg::Message(msg::Response | msg::Overlay | msg::Selection | msg::Thaw));
 }
-

@@ -18,10 +18,11 @@
  */
 
 #include <memory>
+#include <boost/variant.hpp>
 
 #include <application/mainwindow.h>
 #include <project/project.h>
-#include <message/observer.h>
+#include <message/node.h>
 #include <selection/eventhandler.h>
 #include <viewer/widget.h>
 #include <feature/intersect.h>
@@ -75,12 +76,12 @@ void Intersect::go()
 {
   auto goDialog = [&]()
   {
-    observer->out(msg::Message(msg::Request | msg::Selection | msg::Clear));
+    node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
     std::shared_ptr<ftr::Intersect> intersect(new ftr::Intersect());
     project->addFeature(intersect);
-    observer->outBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
+    node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
     dialog = new dlg::Boolean(intersect.get(), mainWindow);
-    observer->outBlocked(msg::buildStatusMessage("invalid pre selection", 2.0));
+    node->sendBlocked(msg::buildStatusMessage("invalid pre selection", 2.0));
   };
   
   const slc::Containers &containers = eventHandler->getSelections();
@@ -112,8 +113,8 @@ void Intersect::go()
   project->addFeature(intersect);
   project->connectInsert(tf->getId(), intersect->getId(), ftr::InputType{ftr::InputType::target});
   
-  observer->outBlocked(msg::buildHideThreeD(tf->getId()));
-  observer->outBlocked(msg::buildHideOverlay(tf->getId()));
+  node->sendBlocked(msg::buildHideThreeD(tf->getId()));
+  node->sendBlocked(msg::buildHideOverlay(tf->getId()));
   
   ftr::Picks toolPicks;
   for (std::size_t index = 1; index < containers.size(); ++index)
@@ -126,12 +127,12 @@ void Intersect::go()
       toolPicks.push_back(toolPick);
     }
     project->connect(containers.at(index).featureId, intersect->getId(), ftr::InputType{ftr::InputType::tool});
-    observer->outBlocked(msg::buildHideThreeD(containers.at(index).featureId));
-    observer->outBlocked(msg::buildHideOverlay(containers.at(index).featureId));
+    node->sendBlocked(msg::buildHideThreeD(containers.at(index).featureId));
+    node->sendBlocked(msg::buildHideOverlay(containers.at(index).featureId));
   }
   intersect->setToolPicks(toolPicks);
   
-  observer->out(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
 }
 
 IntersectEdit::IntersectEdit(ftr::Base *in) : Base()
@@ -157,7 +158,7 @@ void IntersectEdit::activate()
   isActive = true;
   if (!dialog)
   {
-    observer->outBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+    node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
     dialog = new dlg::Boolean(intersect, mainWindow);
     dialog->setEditDialog();
   }

@@ -17,9 +17,11 @@
  *
  */
 
+#include <boost/variant.hpp>
+
 #include <application/mainwindow.h>
 #include <project/project.h>
-#include <message/observer.h>
+#include <message/node.h>
 #include <selection/eventhandler.h>
 #include <feature/strip.h>
 #include <dialogs/strip.h>
@@ -89,12 +91,12 @@ void Strip::go()
         nestId = id;
     }
   }
-  observer->out(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
   
   std::shared_ptr<ftr::Strip> strip(new ftr::Strip());
   project->addFeature(strip);
   
-  observer->outBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
+  node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
   
   dialog = new dlg::Strip(strip.get(), mainWindow);
   dialog->setPartId(partId);
@@ -123,7 +125,7 @@ void StripEdit::activate()
 {
   if (!dialog)
   {
-    observer->out(msg::Message(msg::Request | msg::Selection | msg::Clear));
+    node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
     dialog = new dlg::Strip(strip, mainWindow);
   }
   

@@ -49,9 +49,8 @@
 
 #include <tools/idtools.h>
 #include <tools/occtools.h>
-#include <message/dispatch.h>
-#include <message/message.h>
-#include <message/observer.h>
+#include <message/sift.h>
+#include <message/node.h>
 #include <project/project.h>
 #include <application/application.h>
 #include <application/mainwindow.h>
@@ -84,104 +83,161 @@ using boost::uuids::uuid;
 
 Factory::Factory()
 {
-  observer = std::move(std::unique_ptr<msg::Observer>(new msg::Observer()));
-  observer->name = "app::Factory";
+  node = std::make_unique<msg::Node>();
+  node->connect(msg::hub());
+  sift = std::make_unique<msg::Sift>();
+  sift->name = "app::Factory";
+  node->setHandler(std::bind(&msg::Sift::receive, sift.get(), std::placeholders::_1));
+    
   setupDispatcher();
 }
 
 void Factory::setupDispatcher()
 {
-  msg::Mask mask;
-  
-  //main dispatcher.
-  mask = msg::Response | msg::Post | msg::New | msg::Project;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Factory::newProjectDispatched, this, _1)));
-  
-  mask = msg::Response | msg::Post | msg::Open | msg::Project;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Factory::openProjectDispatched, this, _1)));
-  
-  mask = msg::Response | msg::Pre | msg::Close | msg::Project;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Factory::closeProjectDispatched, this, _1)));
-  
-  mask = msg::Response | msg::Post | msg::Selection | msg::Add;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Factory::selectionAdditionDispatched, this, _1)));
-  
-  mask = msg::Response | msg::Pre | msg::Selection | msg::Remove;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Factory::selectionSubtractionDispatched, this, _1)));
-  
-  mask = msg::Request | msg::Construct | msg::Box;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Factory::newBoxDispatched, this, _1)));
-  
-  mask = msg::Request | msg::Construct | msg::Oblong;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Factory::newOblongDispatched, this, _1)));
-  
-  mask = msg::Request | msg::Construct | msg::Torus;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Factory::newTorusDispatched, this, _1)));
-  
-  mask = msg::Request | msg::Construct | msg::Cylinder;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Factory::newCylinderDispatched, this, _1)));
-  
-  mask = msg::Request | msg::Construct | msg::Sphere;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Factory::newSphereDispatched, this, _1)));
-  
-  mask = msg::Request | msg::Construct | msg::Cone;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Factory::newConeDispatched, this, _1)));
-  
-  mask = msg::Request | msg::Construct | msg::Chamfer;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Factory::newChamferDispatched, this, _1)));
-  
-  mask = msg::Request | msg::Construct | msg::Draft;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Factory::newDraftDispatched, this, _1)));
-  
-  mask = msg::Request | msg::Import | msg::OCC;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Factory::importOCCDispatched, this, _1)));
-  
-  mask = msg::Request | msg::Export | msg::OCC;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Factory::exportOCCDispatched, this, _1)));
-  
-  mask = msg::Request | msg::Import | msg::Step;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Factory::importStepDispatched, this, _1)));
-  
-  mask = msg::Request | msg::Export | msg::Step;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Factory::exportStepDispatched, this, _1)));
-  
-  mask = msg::Request | msg::Preferences;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Factory::preferencesDispatched, this, _1)));
-  
-  mask = msg::Request | msg::Remove;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Factory::removeDispatched, this, _1)));
-  
-  mask = msg::Request | msg::DebugDump;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Factory::debugDumpDispatched, this, _1)));
-  
-  mask = msg::Request | msg::DebugShapeTrackUp;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Factory::debugShapeTrackUpDispatched, this, _1)));
-  
-  mask = msg::Request | msg::DebugShapeTrackDown;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Factory::debugShapeTrackDownDispatched, this, _1)));
-  
-  mask = msg::Request | msg::DebugShapeGraph;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Factory::debugShapeGraphDispatched, this, _1)));
-  
-  mask = msg::Request | msg::Info;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Factory::viewInfoDispatched, this, _1)));
-  
-  mask = msg::Request | msg::Feature | msg::Model | msg::Dirty;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Factory::featureModelDirtyDispatched, this, _1)));
-  
-  mask = msg::Request | msg::Construct | msg::Hollow;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Factory::newHollowDispatched, this, _1)));
-  
-  mask = msg::Request | msg::DebugInquiry;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Factory::bopalgoTestDispatched, this, _1)));
+  sift->insert
+  (
+    {
+      std::make_pair
+      (
+        msg::Response | msg::Post | msg::New | msg::Project
+        , std::bind(&Factory::newProjectDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Response | msg::Post | msg::Open | msg::Project
+      , std::bind(&Factory::openProjectDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Response | msg::Pre | msg::Close | msg::Project
+      , std::bind(&Factory::closeProjectDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Response | msg::Post | msg::Selection | msg::Add
+      , std::bind(&Factory::selectionAdditionDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Response | msg::Pre | msg::Selection | msg::Remove
+      , std::bind(&Factory::selectionSubtractionDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Construct | msg::Box
+      , std::bind(&Factory::newBoxDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Construct | msg::Oblong
+      , std::bind(&Factory::newOblongDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Construct | msg::Torus
+      , std::bind(&Factory::newTorusDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Construct | msg::Cylinder
+      , std::bind(&Factory::newCylinderDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Construct | msg::Sphere
+      , std::bind(&Factory::newSphereDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Construct | msg::Cone
+      , std::bind(&Factory::newConeDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Construct | msg::Chamfer
+      , std::bind(&Factory::newChamferDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Construct | msg::Draft
+      , std::bind(&Factory::newDraftDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Import | msg::OCC
+      , std::bind(&Factory::importOCCDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Export | msg::OCC
+      , std::bind(&Factory::exportOCCDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Import | msg::Step
+      , std::bind(&Factory::importStepDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Export | msg::Step
+      , std::bind(&Factory::exportStepDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Preferences
+      , std::bind(&Factory::preferencesDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Remove
+      , std::bind(&Factory::removeDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::DebugDump
+      , std::bind(&Factory::debugDumpDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::DebugShapeTrackUp
+      , std::bind(&Factory::debugShapeTrackUpDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::DebugShapeTrackDown
+      , std::bind(&Factory::debugShapeTrackDownDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::DebugShapeGraph
+      , std::bind(&Factory::debugShapeGraphDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Info
+      , std::bind(&Factory::viewInfoDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Feature | msg::Model | msg::Dirty
+      , std::bind(&Factory::featureModelDirtyDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Construct | msg::Hollow
+      , std::bind(&Factory::newHollowDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::DebugInquiry
+      , std::bind(&Factory::bopalgoTestDispatched, this, std::placeholders::_1)
+      )
+    }
+  );
 }
 
 void Factory::newProjectDispatched(const msg::Message& /*messageIn*/)
 {
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
-  
   app::Application *application = dynamic_cast<app::Application *>(qApp);
   assert(application);
   project = application->getProject();
@@ -189,10 +245,6 @@ void Factory::newProjectDispatched(const msg::Message& /*messageIn*/)
 
 void Factory::openProjectDispatched(const msg::Message&)
 {
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
-  
   app::Application *application = dynamic_cast<app::Application *>(qApp);
   assert(application);
   project = application->getProject();
@@ -200,19 +252,11 @@ void Factory::openProjectDispatched(const msg::Message&)
 
 void Factory::closeProjectDispatched(const msg::Message&)
 {
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
-  
   project = nullptr;
 }
 
 void Factory::selectionAdditionDispatched(const msg::Message &messageIn)
 {
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
-  
   slc::Message sMessage = boost::get<slc::Message>(messageIn.payload);
   slc::Container aContainer;
   aContainer.selectionType = sMessage.type;
@@ -225,10 +269,6 @@ void Factory::selectionAdditionDispatched(const msg::Message &messageIn)
 
 void Factory::selectionSubtractionDispatched(const msg::Message &messageIn)
 {
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
-  
   slc::Message sMessage = boost::get<slc::Message>(messageIn.payload);
   slc::Container aContainer;
   aContainer.selectionType = sMessage.type;
@@ -244,10 +284,6 @@ void Factory::selectionSubtractionDispatched(const msg::Message &messageIn)
 
 void Factory::newBoxDispatched(const msg::Message &)
 {
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
-  
   assert(project);
   
   app::Application *application = dynamic_cast<app::Application *>(qApp);
@@ -258,15 +294,11 @@ void Factory::newBoxDispatched(const msg::Message &)
   boxPtr->setCSys(currentSystem);
   project->addFeature(boxPtr);
   
-  observer->out(msg::Mask(msg::Request | msg::Project | msg::Update));
+  node->send(msg::Mask(msg::Request | msg::Project | msg::Update));
 }
 
 void Factory::newOblongDispatched(const msg::Message &)
 {
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
-  
   assert(project);
   
   app::Application *application = dynamic_cast<app::Application *>(qApp);
@@ -277,15 +309,11 @@ void Factory::newOblongDispatched(const msg::Message &)
   oblongPtr->setCSys(currentSystem);
   project->addFeature(oblongPtr);
   
-  observer->out(msg::Mask(msg::Request | msg::Project | msg::Update));
+  node->send(msg::Mask(msg::Request | msg::Project | msg::Update));
 }
 
 void Factory::newTorusDispatched(const msg::Message &)
 {
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
-  
   assert(project);
   
   app::Application *application = dynamic_cast<app::Application *>(qApp);
@@ -296,15 +324,11 @@ void Factory::newTorusDispatched(const msg::Message &)
   t->setCSys(currentSystem);
   project->addFeature(t);
   
-  observer->out(msg::Mask(msg::Request | msg::Project | msg::Update));
+  node->send(msg::Mask(msg::Request | msg::Project | msg::Update));
 }
 
 void Factory::newCylinderDispatched(const msg::Message &)
 {
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
-  
   assert(project);
   
   app::Application *application = dynamic_cast<app::Application *>(qApp);
@@ -315,15 +339,11 @@ void Factory::newCylinderDispatched(const msg::Message &)
   cylinder->setCSys(currentSystem);
   project->addFeature(cylinder);
   
-  observer->out(msg::Mask(msg::Request | msg::Project | msg::Update));
+  node->send(msg::Mask(msg::Request | msg::Project | msg::Update));
 }
 
 void Factory::newSphereDispatched(const msg::Message&)
 {
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
-  
   assert(project);
   
   app::Application *application = dynamic_cast<app::Application *>(qApp);
@@ -334,15 +354,11 @@ void Factory::newSphereDispatched(const msg::Message&)
   sphere->setCSys(currentSystem);
   project->addFeature(sphere);
   
-  observer->out(msg::Mask(msg::Request | msg::Project | msg::Update));
+  node->send(msg::Mask(msg::Request | msg::Project | msg::Update));
 }
 
 void Factory::newConeDispatched(const msg::Message&)
 {
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
-  
   assert(project);
   
   app::Application *application = dynamic_cast<app::Application *>(qApp);
@@ -353,15 +369,11 @@ void Factory::newConeDispatched(const msg::Message&)
   cone->setCSys(currentSystem);
   project->addFeature(cone);
   
-  observer->out(msg::Mask(msg::Request | msg::Project | msg::Update));
+  node->send(msg::Mask(msg::Request | msg::Project | msg::Update));
 }
 
 void Factory::newChamferDispatched(const msg::Message&)
 {
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
-  
   assert(project);
   
   if (containers.empty())
@@ -399,24 +411,20 @@ void Factory::newChamferDispatched(const msg::Message&)
   ftr::Base *targetFeature = project->findFeature(targetFeatureId);
   chamfer->setColor(targetFeature->getColor());
   
-  observer->outBlocked(msg::buildHideThreeD(targetFeatureId));
-  observer->outBlocked(msg::buildHideOverlay(targetFeatureId));
+  node->sendBlocked(msg::buildHideThreeD(targetFeatureId));
+  node->sendBlocked(msg::buildHideOverlay(targetFeatureId));
   
-  observer->out(msg::Message(msg::Request | msg::Selection | msg::Clear));
-  observer->out(msg::Mask(msg::Request | msg::Project | msg::Update));
+  node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  node->send(msg::Mask(msg::Request | msg::Project | msg::Update));
 }
 
 void Factory::newDraftDispatched(const msg::Message&)
 {
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
-  
   assert(project);
   
   if (containers.empty())
   {
-    observer->out(msg::buildStatusMessage("Invalid Preselection For Draft", 2.0));
+    node->send(msg::buildStatusMessage("Invalid Preselection For Draft", 2.0));
     return;
   }
   uuid targetFeatureId = containers.at(0).featureId;
@@ -441,7 +449,7 @@ void Factory::newDraftDispatched(const msg::Message&)
   }
   if (convey.targets.empty())
   {
-    observer->out(msg::buildStatusMessage("Invalid Preselection For Draft", 2.0));
+    node->send(msg::buildStatusMessage("Invalid Preselection For Draft", 2.0));
     return;
   }
   
@@ -457,62 +465,20 @@ void Factory::newDraftDispatched(const msg::Message&)
   ftr::Base *targetFeature = project->findFeature(targetFeatureId);
   draft->setColor(targetFeature->getColor());
   
-  observer->outBlocked(msg::buildHideThreeD(targetFeatureId));
-  observer->outBlocked(msg::buildHideOverlay(targetFeatureId));
+  node->sendBlocked(msg::buildHideThreeD(targetFeatureId));
+  node->sendBlocked(msg::buildHideOverlay(targetFeatureId));
   
-  observer->out(msg::Message(msg::Request | msg::Selection | msg::Clear));
-  observer->out(msg::Mask(msg::Request | msg::Project | msg::Update));
+  node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  node->send(msg::Mask(msg::Request | msg::Project | msg::Update));
 }
-
-/*
-void Factory::newDatumPlaneDispatched(const msg::Message&)
-{
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
-  
-  assert(project);
-  
-  if (containers.empty())
-  {
-    observer->out(msg::buildStatusMessage("Invalid Preselection For Datum Plane", 2.0));
-    return;
-  }
-  
-  std::vector<std::shared_ptr<ftr::DatumPlaneGenre> > solvers = ftr::DatumPlane::solversFromSelection(containers);
-  if (solvers.empty()) //temp. really we should build the feature and go into edit mode.
-  {
-    observer->out(msg::buildStatusMessage("Invalid Preselection For Datum Plane", 2.0));
-    return;
-  }
-  
-  std::shared_ptr<ftr::DatumPlane> dPlane(new ftr::DatumPlane());
-  project->addFeature(dPlane);
-  
-  //just use the first one.
-  std::shared_ptr<ftr::DatumPlaneGenre> solver = solvers.front();
-  dPlane->setSolver(solver);
-  ftr::DatumPlaneConnections connections = solver->setUpFromSelection(containers, project->getShapeHistory());
-  
-  for (const auto &connection : connections)
-    project->connect(connection.parentId, dPlane->getId(), connection.inputType);
-
-  observer->out(msg::Message(msg::Request | msg::Selection | msg::Clear));
-  observer->out(msg::Mask(msg::Request | msg::Project | msg::Update));
-}
-*/
 
 void Factory::newHollowDispatched(const msg::Message&)
 {
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
-  
   assert(project);
   
   if (containers.empty())
   {
-    observer->out(msg::buildStatusMessage("Invalid Preselection For Hollow", 2.0));
+    node->send(msg::buildStatusMessage("Invalid Preselection For Hollow", 2.0));
     return;
   }
   
@@ -540,7 +506,7 @@ void Factory::newHollowDispatched(const msg::Message&)
   }
   if (hollowPicks.empty())
   {
-    observer->out(msg::buildStatusMessage("Invalid Preselection For Hollow", 2.0));
+    node->send(msg::buildStatusMessage("Invalid Preselection For Hollow", 2.0));
     return;
   }
   
@@ -550,25 +516,18 @@ void Factory::newHollowDispatched(const msg::Message&)
   project->connectInsert(targetFeatureId, hollow->getId(), ftr::InputType{ftr::InputType::target});
   hollow->setColor(targetFeature->getColor());
   
-  observer->outBlocked(msg::buildHideThreeD(targetFeatureId));
-  observer->outBlocked(msg::buildHideOverlay(targetFeatureId));
+  node->sendBlocked(msg::buildHideThreeD(targetFeatureId));
+  node->sendBlocked(msg::buildHideOverlay(targetFeatureId));
   
-  observer->out(msg::Message(msg::Request | msg::Selection | msg::Clear));
-  observer->out(msg::Mask(msg::Request | msg::Project | msg::Update));
+  node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  node->send(msg::Mask(msg::Request | msg::Project | msg::Update));
 }
 
 void Factory::importOCCDispatched(const msg::Message&)
 {
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
-  
-  app::Application *application = dynamic_cast<app::Application *>(qApp);
-  assert(application);
-  
   QStringList fileNames = QFileDialog::getOpenFileNames
   (
-    application->getMainWindow(),
+    app::instance()->getMainWindow(),
     QObject::tr("Open File"),
     QString::fromStdString(prf::manager().rootPtr->project().lastDirectory().get()),
     QObject::tr("brep (*.brep *.brp)")
@@ -584,22 +543,18 @@ void Factory::importOCCDispatched(const msg::Message&)
   prf::manager().rootPtr->project().lastDirectory() = p.remove_filename().string();
   prf::manager().saveConfig();
   
-  observer->out(msg::Mask(msg::Request | msg::Project | msg::Update));
+  node->send(msg::Mask(msg::Request | msg::Project | msg::Update));
 }
 
 void Factory::exportOCCDispatched(const msg::Message&)
 {
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
-  
   if 
   (
     (containers.empty()) ||
     (containers.at(0).selectionType != slc::Type::Object)
   )
   {
-    observer->out(msg::buildStatusMessage("Invalid Preselection For OCC export", 2.0));
+    node->send(msg::buildStatusMessage("Invalid Preselection For OCC export", 2.0));
     return;
   }
   
@@ -635,15 +590,11 @@ void Factory::exportOCCDispatched(const msg::Message&)
       BRepTools::Write(sShape.getRootOCCTShape(), fileName.toStdString().c_str());
   }
     
-  observer->out(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
 }
 
 void Factory::importStepDispatched(const msg::Message&)
 {
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
-  
   //get file name
   app::Application *application = dynamic_cast<app::Application *>(qApp);
   assert(application);
@@ -700,26 +651,22 @@ void Factory::importStepDispatched(const msg::Message&)
     }
   }
   
-  observer->out(msg::Mask(msg::Request | msg::Project | msg::Update));
+  node->send(msg::Mask(msg::Request | msg::Project | msg::Update));
   
   std::ostringstream m;
   m << si << " shapes imported";
-  observer->out(msg::buildStatusMessage(m.str()));
+  node->send(msg::buildStatusMessage(m.str()));
 }
 
 void Factory::exportStepDispatched(const msg::Message&)
 {
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
-  
   if 
   (
     (containers.empty()) ||
     (containers.at(0).selectionType != slc::Type::Object)
   )
   {
-    observer->out(msg::buildStatusMessage("Invalid Preselection For Step Export", 2.0));
+    node->send(msg::buildStatusMessage("Invalid Preselection For Step Export", 2.0));
     return;
   }
     
@@ -752,26 +699,26 @@ void Factory::exportStepDispatched(const msg::Message&)
   ftr::Base *feature = project->findFeature(containers.at(0).featureId);
   if (!feature->hasAnnex(ann::Type::SeerShape))
   {
-    observer->out(msg::buildStatusMessage("Feature Doesn't Have Shape To Export", 2.0));
+    node->send(msg::buildStatusMessage("Feature Doesn't Have Shape To Export", 2.0));
     return;
   }
   const ann::SeerShape &sShape = feature->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
   if (sShape.isNull())
   {
-    observer->out(msg::buildStatusMessage("Invalid Shape To Export", 2.0));
+    node->send(msg::buildStatusMessage("Invalid Shape To Export", 2.0));
     return;
   }
   const TopoDS_Shape &shape = sShape.getRootOCCTShape();
   if (shape.IsNull())
   {
-    observer->out(msg::buildStatusMessage("Invalid Shape To Export", 2.0));
+    node->send(msg::buildStatusMessage("Invalid Shape To Export", 2.0));
     return;
   }
   
   STEPControl_Writer stepOut;
   if (stepOut.Transfer(shape, STEPControl_AsIs) != IFSelect_RetDone)
   {
-    observer->out(msg::buildStatusMessage("Step Translation Failed", 2.0));
+    node->send(msg::buildStatusMessage("Step Translation Failed", 2.0));
     return;
   }
   
@@ -786,19 +733,15 @@ void Factory::exportStepDispatched(const msg::Message&)
   
   if (stepOut.Write(fileName.toStdString().c_str()) != IFSelect_RetDone)
   {
-    observer->out(msg::buildStatusMessage("Step Write Failed", 2.0));
+    node->send(msg::buildStatusMessage("Step Write Failed", 2.0));
     return;
   }
   
-  observer->out(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
 }
 
 void Factory::preferencesDispatched(const msg::Message&)
 {
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
-  
   app::Application *application = dynamic_cast<app::Application *>(qApp);
   assert(application);
   std::unique_ptr<dlg::Preferences> dialog(new dlg::Preferences(&prf::manager(), application->getMainWindow()));
@@ -814,32 +757,28 @@ void Factory::preferencesDispatched(const msg::Message&)
   else if(dialog->isHiddenLinesDirty())
   {
     if (prf::manager().rootPtr->visual().display().showHiddenLines())
-      observer->outBlocked(msg::Message(msg::Request | msg::View | msg::Show | msg::HiddenLine));
+      node->sendBlocked(msg::Message(msg::Request | msg::View | msg::Show | msg::HiddenLine));
     else
-      observer->outBlocked(msg::Message(msg::Request | msg::View | msg::Hide | msg::HiddenLine));
+      node->sendBlocked(msg::Message(msg::Request | msg::View | msg::Hide | msg::HiddenLine));
   }
   
   msg::Message prfResponse(msg::Response | msg::Preferences);
-  observer->outBlocked(prfResponse);
+  node->sendBlocked(prfResponse);
 }
 
 void Factory::removeDispatched(const msg::Message&)
 {
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
-  
   //containers is wired up message so it will be changing as we delete(remove from selection)
   //so cache a copy to work with first.
   slc::Containers selection = containers;
   
   if (selection.empty())
   {
-    observer->out(msg::buildStatusMessage("Invalid Preselection For Remove", 2.0));
+    node->send(msg::buildStatusMessage("Invalid Preselection For Remove", 2.0));
     return;
   }
   
-  observer->out(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
   
   for (const auto &current : selection)
   {
@@ -850,18 +789,14 @@ void Factory::removeDispatched(const msg::Message&)
     prj::Message payload;
     payload.featureIds.push_back(current.featureId);
     removeMessage.payload = payload;
-    observer->out(removeMessage);
+    node->send(removeMessage);
   }
   
-  observer->out(msg::Mask(msg::Request | msg::Project | msg::Update));
+  node->send(msg::Mask(msg::Request | msg::Project | msg::Update));
 }
 
 void Factory::debugDumpDispatched(const msg::Message&)
 {
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
-  
   assert(project);
   if (containers.empty())
     return;
@@ -884,15 +819,11 @@ void Factory::debugDumpDispatched(const msg::Message&)
     std::cout << "feature tag container:" << std::endl; seerShape.dumpFeatureTagContainer(std::cout); std::cout << std::endl;
   }
   
-  observer->out(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
 }
 
 void Factory::debugShapeTrackUpDispatched(const msg::Message&)
 {
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
-  
   assert(project);
   if (containers.empty())
     return;
@@ -904,15 +835,11 @@ void Factory::debugShapeTrackUpDispatched(const msg::Message&)
     project->shapeTrackUp(container.shapeId);
   }
   
-  observer->out(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
 }
 
 void Factory::debugShapeTrackDownDispatched(const msg::Message&)
 {
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
-  
   assert(project);
   if (containers.empty())
     return;
@@ -924,15 +851,11 @@ void Factory::debugShapeTrackDownDispatched(const msg::Message&)
     project->shapeTrackDown(container.shapeId);
   }
   
-  observer->out(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
 }
 
 void Factory::debugShapeGraphDispatched(const msg::Message&)
 {
-    std::ostringstream debug;
-    debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-    msg::dispatch().dumpString(debug.str());
-    
     assert(project);
     if (containers.empty())
         return;
@@ -952,7 +875,7 @@ void Factory::debugShapeGraphDispatched(const msg::Message&)
         QDesktopServices::openUrl(QUrl(QString::fromStdString(path.string())));
     }
     
-    observer->out(msg::Message(msg::Request | msg::Selection | msg::Clear));
+    node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
 }
 
 void Factory::viewInfoDispatched(const msg::Message &)
@@ -1050,7 +973,8 @@ void Factory::viewInfoDispatched(const msg::Message &)
     app::Message appMessage;
     appMessage.infoMessage = infoMessage;
     viewInfoMessage.payload = appMessage;
-    observer->out(viewInfoMessage);
+//     node->send(viewInfoMessage);
+    msg::hub().send(viewInfoMessage);
 }
 
 void Factory::featureModelDirtyDispatched(const msg::Message&)
@@ -1063,8 +987,8 @@ void Factory::featureModelDirtyDispatched(const msg::Message&)
 //! a testing function to analyze run time cost of messages.
 void Factory::messageStressTestDispatched(const msg::Message&)
 {
-//   msg::dispatch().dumpConnectionCount(); //has 30 at this time.
-  
+  //not updating for switch to new message signals
+  /*
   std::cout << std::endl;
   //test mask. shouldn't match any observer.
   msg::Mask test = msg::Request | msg::Response | msg::Pre | msg::Post;
@@ -1075,7 +999,7 @@ void Factory::messageStressTestDispatched(const msg::Message&)
     for (std::size_t index = 0; index < 1000; ++index)
       observers.push_back(std::unique_ptr<msg::Observer>(new msg::Observer()));
     boost::timer::auto_cpu_timer t;
-    observer->out(msg::Message(test));
+    node->send(msg::Message(test));
   }
   
   {
@@ -1083,7 +1007,7 @@ void Factory::messageStressTestDispatched(const msg::Message&)
     for (std::size_t index = 0; index < 9000; ++index)
       observers.push_back(std::unique_ptr<msg::Observer>(new msg::Observer()));
     boost::timer::auto_cpu_timer t;
-    observer->out(msg::Message(test));
+    node->send(msg::Message(test));
   }
   
   {
@@ -1091,7 +1015,7 @@ void Factory::messageStressTestDispatched(const msg::Message&)
     for (std::size_t index = 0; index < 90000; ++index)
       observers.push_back(std::unique_ptr<msg::Observer>(new msg::Observer()));
     boost::timer::auto_cpu_timer t;
-    observer->out(msg::Message(test));
+    node->send(msg::Message(test));
   }
   
   {
@@ -1099,8 +1023,9 @@ void Factory::messageStressTestDispatched(const msg::Message&)
     for (std::size_t index = 0; index < 900000; ++index)
       observers.push_back(std::unique_ptr<msg::Observer>(new msg::Observer()));
     boost::timer::auto_cpu_timer t;
-    observer->out(msg::Message(test));
+    node->send(msg::Message(test));
   }
+  */
   
   /*
    * output:
@@ -1179,7 +1104,7 @@ void Factory::bopalgoTestDispatched(const msg::Message&)
     sShapes.push_back(fb->getAnnex<ann::SeerShape>(ann::Type::SeerShape));
     shapes.push_back(sShapes.back().get().getRootOCCTShape());
   }
-  observer->out(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
   if (sShapes.size() < 2 || shapes.size() < 2)
     return;
   
@@ -1392,5 +1317,5 @@ void Factory::bopalgoTestDispatched(const msg::Message&)
     std::cout << "My Error: " << error.what() << std::endl;
   }
   
-  observer->out(msg::Mask(msg::Request | msg::Project | msg::Update));
+  node->send(msg::Mask(msg::Request | msg::Project | msg::Update));
 }

@@ -26,7 +26,7 @@
 #include <project/project.h>
 #include <selection/eventhandler.h>
 #include <annex/seershape.h>
-#include <message/observer.h>
+#include <message/node.h>
 #include <feature/blend.h>
 #include <dialogs/blend.h>
 #include <command/blend.h>
@@ -120,8 +120,8 @@ void Blend::go()
       
       ftr::Base *targetFeature = project->findFeature(targetFeatureId);
       
-      observer->outBlocked(msg::buildHideThreeD(targetFeature->getId()));
-      observer->outBlocked(msg::buildHideOverlay(targetFeature->getId()));
+      node->sendBlocked(msg::buildHideThreeD(targetFeature->getId()));
+      node->sendBlocked(msg::buildHideOverlay(targetFeature->getId()));
       
       blend->setColor(targetFeature->getColor());
                 
@@ -130,7 +130,7 @@ void Blend::go()
       dialog->raise();
       dialog->activateWindow();
       
-      observer->out(msg::Message(msg::Request | msg::Selection | msg::Clear));
+      node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
       return; 
     }
   }

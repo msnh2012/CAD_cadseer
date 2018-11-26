@@ -51,8 +51,7 @@
 #include <modelviz/nodemaskdefs.h>
 #include <modelviz/shapegeometry.h>
 #include <globalutilities.h>
-#include <message/message.h>
-#include <message/observer.h>
+#include <message/node.h>
 #include <lod/message.h>
 #include <annex/shapeidhelper.h>
 #include <annex/seershape.h>
@@ -122,8 +121,6 @@ Base::Base()
   state.set(ftr::StateOffset::VisualDirty, true);
   state.set(ftr::StateOffset::Failure, false);
   state.set(ftr::StateOffset::Skipped, false);
-  
-  observer = std::move(std::unique_ptr<msg::Observer>(new msg::Observer()));
 }
 
 Base::~Base()
@@ -188,7 +185,7 @@ void Base::sendStateMessage(std::size_t stateOffset)
   ftr::Message fMessage(id, state, stateOffset);
   msg::Message mMessage(msg::Response | msg::Feature | msg::Status);
   mMessage.payload = fMessage;
-  observer->out(mMessage);
+  msg::hub().send(mMessage);
 }
 
 bool Base::isVisible3D() const
@@ -218,7 +215,7 @@ void Base::setName(const QString &nameIn)
   ftr::Message fMessage(id, name);
   msg::Message mMessage(msg::Response | msg::Edit | msg::Feature | msg::Name);
   mMessage.payload = fMessage;
-  observer->out(mMessage);
+  msg::hub().send(mMessage);
 }
 
 void Base::updateVisual()
@@ -287,7 +284,7 @@ void Base::updateVisual()
     partition01,
     partition02
   );
-  observer->outBlocked(msg::Message(msg::Mask(msg::Request | msg::Construct | msg::LOD), m1));
+  msg::hub().sendBlocked(msg::Message(msg::Mask(msg::Request | msg::Construct | msg::LOD), m1));
   lod->addChild(sBuilder.out, partition01, partition02, filePath00.string());
   
   double partition03 = prf::manager().rootPtr->visual().mesh().lod().get().partition03();
@@ -302,7 +299,7 @@ void Base::updateVisual()
     partition02,
     partition03
   );
-  observer->outBlocked(msg::Message(msg::Mask(msg::Request | msg::Construct | msg::LOD), m2));
+  msg::hub().sendBlocked(msg::Message(msg::Mask(msg::Request | msg::Construct | msg::LOD), m2));
   lod->addChild(sBuilder.out, partition02, partition03, filePath00.string());
   
   osg::ref_ptr<osg::KdTreeBuilder> kdTreeBuilder = new osg::KdTreeBuilder();
@@ -380,7 +377,7 @@ void Base::setSuccess()
   ftr::Message fMessage(id, state, ftr::StateOffset::Failure);
   msg::Message mMessage(msg::Response | msg::Feature | msg::Status);
   mMessage.payload = fMessage;
-  observer->out(mMessage);
+  msg::hub().send(mMessage);
 }
 
 void Base::setFailure()
@@ -392,7 +389,7 @@ void Base::setFailure()
   ftr::Message fMessage(id, state, ftr::StateOffset::Failure);
   msg::Message mMessage(msg::Response | msg::Feature | msg::Status);
   mMessage.payload = fMessage;
-  observer->out(mMessage);
+  msg::hub().send(mMessage);
 }
 
 void Base::serialWrite(const boost::filesystem::path&)

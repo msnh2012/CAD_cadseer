@@ -23,6 +23,8 @@
 #include <cmath>
 #include <limits>
 
+#include <boost/variant.hpp>
+
 #include <QObject>
 
 #include <osgManipulator/Constraint>
@@ -32,9 +34,9 @@
 #include <globalutilities.h>
 #include <tools/idtools.h>
 #include <modelviz/nodemaskdefs.h>
-#include <message/dispatch.h>
 #include <preferences/preferencesXML.h>
 #include <preferences/manager.h>
+#include <message/message.h>
 #include <library/geometrylibrary.h>
 #include <library/csysdragger.h>
 

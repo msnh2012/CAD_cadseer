@@ -39,7 +39,7 @@ namespace boost{namespace uuids{class uuid;}}
 
 namespace ftr{class Base;}
 namespace ftr{namespace prm{class Parameter;}}
-namespace msg{class Message; class Observer;}
+namespace msg{class Message; struct Node; struct Sift;}
 
 namespace dlg
 {
@@ -68,7 +68,8 @@ namespace dlg
     void constantHasChanged();
     boost::signals2::connection valueConnection;
     boost::signals2::connection constantConnection;
-    std::unique_ptr<msg::Observer> observer;
+    std::unique_ptr<msg::Node> node;
+    std::unique_ptr<msg::Sift> sift;
     void featureRemovedDispatched(const msg::Message &);
     ftr::Base *feature;
     double lastValue;

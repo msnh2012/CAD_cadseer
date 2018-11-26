@@ -30,7 +30,7 @@
 namespace app{class Application; class MainWindow;}
 namespace prj{class Project;}
 namespace slc{class Manager; class EventHandler;}
-namespace msg{class Message; class Observer;}
+namespace msg{class Message; struct Node;}
 namespace vwr{class Widget;}
 
 namespace cmd
@@ -51,7 +51,7 @@ namespace cmd
     bool getShouldUpdate(){return shouldUpdate;}
     
   protected:
-    std::unique_ptr<msg::Observer> observer;
+    std::unique_ptr<msg::Node> node;
     void sendDone();
     
     app::Application *application;

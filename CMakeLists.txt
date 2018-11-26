@@ -320,8 +320,8 @@ SET(GESTURE_SOURCES
     
 SET(MESSAGE_SOURCES
     message/message.cpp
-    message/dispatch.cpp
-    message/observer.cpp
+    message/node.cpp
+    message/sift.cpp
     )
     
 SET(FEATURE_SOURCES

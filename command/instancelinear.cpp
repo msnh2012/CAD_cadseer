@@ -18,12 +18,13 @@
  */
 
 #include <memory>
+#include <boost/variant.hpp>
 
 #include <application/application.h>
 #include <application/mainwindow.h>
 #include <viewer/widget.h>
 #include <project/project.h>
-#include <message/observer.h>
+#include <message/node.h>
 #include <selection/eventhandler.h>
 #include <feature/parameter.h>
 #include <feature/instancelinear.h>
@@ -76,10 +77,10 @@ void InstanceLinear::go()
     project->connect(c.featureId, instance->getId(), ftr::InputType{ftr::InputType::target});
     created = true;
     
-    observer->outBlocked(msg::buildHideThreeD(c.featureId));
-    observer->outBlocked(msg::buildHideOverlay(c.featureId));
+    node->sendBlocked(msg::buildHideThreeD(c.featureId));
+    node->sendBlocked(msg::buildHideOverlay(c.featureId));
     
-    observer->outBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
+    node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
     
     break;
   }
@@ -87,6 +88,6 @@ void InstanceLinear::go()
   if (!created)
     shouldUpdate = false;
   else
-    observer->out(msg::Message(msg::Request | msg::Selection | msg::Clear));
+    node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
 }
 

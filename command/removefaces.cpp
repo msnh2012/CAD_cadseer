@@ -17,10 +17,12 @@
  *
  */
 
+#include <boost/variant.hpp>
+
 #include <TopoDS.hxx>
 
 #include <project/project.h>
-#include <message/observer.h>
+#include <message/node.h>
 #include <selection/eventhandler.h>
 #include <annex/seershape.h>
 #include <feature/removefaces.h>
@@ -55,7 +57,7 @@ void RemoveFaces::go()
   const slc::Containers &containers = eventHandler->getSelections();
   if (containers.empty())
   {
-    observer->outBlocked(msg::buildStatusMessage("Wrong pre selection for remove faces", 2.0));
+    node->sendBlocked(msg::buildStatusMessage("Wrong pre selection for remove faces", 2.0));
     shouldUpdate = false;
     return;
   }
@@ -93,7 +95,7 @@ void RemoveFaces::go()
   }
   if (fId.is_nil())
   {
-    observer->outBlocked(msg::buildStatusMessage("No feature id for remove face", 2.0));
+    node->sendBlocked(msg::buildStatusMessage("No feature id for remove face", 2.0));
     shouldUpdate = false;
     return;
   }
@@ -103,8 +105,8 @@ void RemoveFaces::go()
   project->addFeature(remove);
   project->connectInsert(fId, remove->getId(), ftr::InputType{ftr::InputType::target});
   
-  observer->outBlocked(msg::buildHideThreeD(fId));
-  observer->outBlocked(msg::buildHideOverlay(fId));
+  node->sendBlocked(msg::buildHideThreeD(fId));
+  node->sendBlocked(msg::buildHideOverlay(fId));
   
-  observer->out(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
 }

@@ -17,11 +17,13 @@
  *
  */
 
+#include <boost/variant.hpp>
+
 #include <globalutilities.h>
 #include <application/application.h>
 #include <application/mainwindow.h>
 #include <viewer/widget.h>
-#include <message/observer.h>
+#include <message/node.h>
 #include <selection/eventhandler.h>
 #include <project/project.h>
 #include <annex/seershape.h>
@@ -69,7 +71,7 @@ void DatumAxis::go()
       assert(p->hasAnnex(ann::Type::SeerShape));
       if (!p->hasAnnex(ann::Type::SeerShape))
       {
-        observer->outBlocked(msg::buildStatusMessage("Error: selection not valid", 2.0));
+        node->sendBlocked(msg::buildStatusMessage("Error: selection not valid", 2.0));
         shouldUpdate = false;
         return;
       }
@@ -92,7 +94,7 @@ void DatumAxis::go()
     for (const auto &p : parents)
       project->connectInsert(p->getId(), daxis->getId(), ftr::InputType{ftr::InputType::create});
     
-    observer->out(msg::Message(msg::Request | msg::Selection | msg::Clear));
+    node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
     return;
   }
   
@@ -128,7 +130,7 @@ void DatumAxis::go()
     for (const auto &p : parents)
       project->connectInsert(p->getId(), daxis->getId(), ftr::InputType{ftr::InputType::create});
     
-    observer->out(msg::Message(msg::Request | msg::Selection | msg::Clear));
+    node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
     return;
   }
   if (cs.size() == 1 && (cs.front().selectionType == slc::Type::Face || cs.front().selectionType == slc::Type::Edge))
@@ -136,7 +138,7 @@ void DatumAxis::go()
     const ftr::Base *parent = project->findFeature(cs.front().featureId);
     if (!parent->hasAnnex(ann::Type::SeerShape))
     {
-      observer->outBlocked(msg::buildStatusMessage("Error: no seer shape", 2.0));
+      node->sendBlocked(msg::buildStatusMessage("Error: no seer shape", 2.0));
       shouldUpdate = false;
       return;
     }
@@ -145,7 +147,7 @@ void DatumAxis::go()
     auto axisPair = occt::gleanAxis(s);
     if (!axisPair.second)
     {
-      observer->outBlocked(msg::buildStatusMessage("Error: couldn't glean axis", 2.0));
+      node->sendBlocked(msg::buildStatusMessage("Error: couldn't glean axis", 2.0));
       shouldUpdate = false;
       return;
     }
@@ -158,7 +160,7 @@ void DatumAxis::go()
     project->addFeature(daxis);
     project->connectInsert(parent->getId(), daxis->getId(), ftr::InputType{ftr::InputType::create});
     
-    observer->out(msg::Message(msg::Request | msg::Selection | msg::Clear));
+    node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
     return;
   }
   

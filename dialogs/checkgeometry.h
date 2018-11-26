@@ -49,7 +49,7 @@ class TopoDS_Shape;
 namespace osg{class PositionAttitudeTransform;}
 
 namespace ftr{class Base;}
-namespace msg{class Message; class Observer;}
+namespace msg{class Message; struct Node; struct Sift;}
 namespace ann{class SeerShape;}
 
 namespace dlg
@@ -61,7 +61,6 @@ namespace dlg
     CheckPageBase(const ftr::Base&, QWidget*);
     virtual ~CheckPageBase() override;
   protected:
-    std::unique_ptr<msg::Observer> observer;
     const ftr::Base &feature;
     const ann::SeerShape &seerShape;
     osg::observer_ptr<osg::PositionAttitudeTransform> boundingSphere;
@@ -167,7 +166,8 @@ namespace dlg
     BOPCheckPage *bopCheckPage;
     ToleranceCheckPage *toleranceCheckPage;
     ShapesPage *shapesPage;
-    std::unique_ptr<msg::Observer> observer;
+    std::unique_ptr<msg::Node> node;
+    std::unique_ptr<msg::Sift> sift;
     void setupDispatcher();
     void buildGui();
     void featureRemovedDispatched(const msg::Message &);

@@ -30,8 +30,8 @@
 #include <application/mainwindow.h>
 #include <viewer/widget.h>
 #include <project/project.h>
-#include <message/observer.h>
-#include <message/message.h>
+#include <message/node.h>
+#include <message/sift.h>
 #include <selection/eventhandler.h>
 #include <selection/message.h>
 #include <feature/base.h>
@@ -43,8 +43,10 @@ using namespace cmd;
 
 MeasureLinear::MeasureLinear() : Base()
 {
+  sift = std::make_unique<msg::Sift>();
+  sift->name = "cmd::MeasureLinear";
+  node->setHandler(std::bind(&msg::Sift::receive, sift.get(), std::placeholders::_1));
   setupDispatcher();
-  observer->name = "cmd::MeasureLinear";
   
   selectionMask = slc::AllEnabled;
   
@@ -61,7 +63,7 @@ std::string MeasureLinear::getStatusMessage()
 void MeasureLinear::activate()
 {
   isActive = true;
-  observer->outBlocked(msg::buildSelectionMask(selectionMask));
+  node->sendBlocked(msg::buildSelectionMask(selectionMask));
   go();
 }
 
@@ -102,7 +104,7 @@ void MeasureLinear::go()
     std::cout << "extrema failed in MeasureLinear::go" << std::endl;
     return;
   }
-  observer->outBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
   
   osg::Vec3d point1(gu::toOsg(ext.PointOnShape1(1)));
   osg::Vec3d point2(gu::toOsg(ext.PointOnShape2(1)));
@@ -158,7 +160,7 @@ void MeasureLinear::build(const osg::Vec3d &point1, const osg::Vec3d &point2)
   app::Message appMessage;
   appMessage.infoMessage = infoMessage;
   viewInfoMessage.payload = appMessage;
-  observer->outBlocked(viewInfoMessage);
+  node->sendBlocked(viewInfoMessage);
   
   if (distance < std::numeric_limits<float>::epsilon())
     return;
@@ -170,7 +172,7 @@ void MeasureLinear::build(const osg::Vec3d &point1, const osg::Vec3d &point2)
   osg::Vec3d xVector = zVectorView ^ yVector;
   if (xVector.isNaN())
   {
-    observer->outBlocked(msg::buildStatusMessage(
+    node->sendBlocked(msg::buildStatusMessage(
       QObject::tr("Can't make dimension with current view direction").toStdString(), 2.0));
     return;
   }
@@ -203,16 +205,16 @@ void MeasureLinear::build(const osg::Vec3d &point1, const osg::Vec3d &point2)
   vwr::Message vwrMessage;
   vwrMessage.node = autoTransform;
   message.payload = vwrMessage;
-  observer->outBlocked(message);
+  node->sendBlocked(message);
 }
 
 void MeasureLinear::setupDispatcher()
 {
-  msg::Mask lm;
-  
-  lm = msg::Response | msg::Post | msg::Selection | msg::Add;
-  observer->dispatcher.insert(std::make_pair(lm, boost::bind
-    (&MeasureLinear::selectionAdditionDispatched, this, _1)));
+  sift->insert
+  (
+    msg::Response | msg::Post | msg::Selection | msg::Add
+    , std::bind(&MeasureLinear::selectionAdditionDispatched, this, std::placeholders::_1)
+  );
 }
 
 void MeasureLinear::selectionAdditionDispatched(const msg::Message&)

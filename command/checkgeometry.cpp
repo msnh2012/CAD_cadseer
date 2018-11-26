@@ -17,14 +17,16 @@
  *
  */
 
+#include <boost/variant.hpp>
+
 #include <project/project.h>
 #include <application/application.h>
 #include <application/mainwindow.h>
 #include <feature/base.h>
 #include <selection/eventhandler.h>
 #include <selection/manager.h>
-#include <message/message.h>
-#include <message/observer.h>
+#include <message/node.h>
+#include <message/sift.h>
 #include <dialogs/checkgeometry.h>
 #include <command/checkgeometry.h>
 
@@ -32,6 +34,10 @@ using namespace cmd;
 
 CheckGeometry::CheckGeometry() : Base()
 {
+  sift = std::make_unique<msg::Sift>();
+  sift->name = "cmd::CheckGeometry";
+  node->setHandler(std::bind(&msg::Sift::receive, sift.get(), std::placeholders::_1));
+    
   setupDispatcher();
   shouldUpdate = false;
 }
@@ -53,7 +59,7 @@ void CheckGeometry::activate()
   
   if (!hasRan)
   {
-    observer->out(msg::buildSelectionMask(slc::ObjectsEnabled | slc::ObjectsSelectable));
+    node->send(msg::buildSelectionMask(slc::ObjectsEnabled | slc::ObjectsSelectable));
     go();
   }
 
@@ -92,24 +98,24 @@ void CheckGeometry::go()
       dialog->setWindowTitle(freshTitle);
       hasRan = true;
       dialog->go();
-      observer->out(msg::buildSelectionMask(~slc::All));
-      observer->out(msg::Message(msg::Request | msg::Selection | msg::Clear));
+      node->send(msg::buildSelectionMask(~slc::All));
+      node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
       return;
     }
   }
   
   //here we didn't have an acceptable pre seleciton.
-  observer->out(msg::Message(msg::Request | msg::Selection | msg::Clear));
-  observer->out(msg::buildStatusMessage("Select object to check"));
+  node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  node->send(msg::buildStatusMessage("Select object to check"));
 }
 
 void CheckGeometry::setupDispatcher()
 {
-  msg::Mask mask;
-  
-  mask = msg::Response | msg::Post | msg::Selection | msg::Add;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind
-    (&CheckGeometry::selectionAdditionDispatched, this, _1)));
+  sift->insert
+  (
+    msg::Response | msg::Post | msg::Selection | msg::Add
+    , std::bind(&CheckGeometry::selectionAdditionDispatched, this, std::placeholders::_1)
+  );
 }
 
 void CheckGeometry::selectionAdditionDispatched(const msg::Message&)

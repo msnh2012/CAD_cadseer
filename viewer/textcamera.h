@@ -31,7 +31,7 @@ namespace osgViewer{class GraphicsWindow;}
 namespace osg{class Switch; class Group;}
 namespace osgText{class osgText;}
 
-namespace msg{class Message; class Observer;}
+namespace msg{class Message; struct Node; struct Sift;}
 namespace vwr
 {
   class TextCamera;
@@ -60,7 +60,8 @@ public:
     void layoutSelection(); //position the text on screen
     void layoutCommand(); //position the text on screen
 private:
-  std::unique_ptr<msg::Observer> observer;
+  std::unique_ptr<msg::Node> node;
+  std::unique_ptr<msg::Sift> sift;
   void setupDispatcher();
   void preselectionAdditionDispatched(const msg::Message &);
   void preselectionSubtractionDispatched(const msg::Message &);

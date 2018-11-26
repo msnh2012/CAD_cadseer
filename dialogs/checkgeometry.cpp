@@ -55,9 +55,8 @@
 #include <application/application.h>
 #include <feature/base.h>
 #include <annex/seershape.h>
-#include <message/message.h>
-#include <message/observer.h>
-#include <message/dispatch.h>
+#include <message/node.h>
+#include <message/sift.h>
 #include <tools/idtools.h>
 #include <tools/occtools.h>
 #include <library/spherebuilder.h>
@@ -208,8 +207,6 @@ bool convertVertexSelection
 CheckPageBase::CheckPageBase(const ftr::Base &featureIn, QWidget *parent):
   QWidget(parent), feature(featureIn), seerShape(featureIn.getAnnex<ann::SeerShape>(ann::Type::SeerShape))
 {
-  observer = std::move(std::unique_ptr<msg::Observer>(new msg::Observer()));
-  
   minBoundingSphere = calculateBoundingSphere(seerShape.getRootOCCTShape());
   minBoundingSphere.radius() *= .1; //10 percent.
 }
@@ -227,8 +224,6 @@ CheckPageBase::~CheckPageBase()
 BasicCheckPage::BasicCheckPage(const ftr::Base &featureIn, QWidget *parent) :
   CheckPageBase(featureIn, parent)
 {
-  observer->name = "dlg::BasicCheckPage";
-  
   buildGui();
   
   QSettings &settings = app::instance()->getUserSettings();
@@ -407,7 +402,7 @@ void BasicCheckPage::selectionChangedSlot()
     osg::Group *parent = boundingSphere->getParent(0);
     parent->removeChild(boundingSphere.get()); //this should make boundingSphere invalid.
   }
-  observer->out(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  app::instance()->messageSlot(msg::Message(msg::Request | msg::Selection | msg::Clear));
   
   //get the fresh id.
   QList<QTreeWidgetItem*> freshSelections = treeWidget->selectedItems();
@@ -447,11 +442,11 @@ void BasicCheckPage::selectionChangedSlot()
   //select the geometry.
   msg::Message message(msg::Request | msg::Selection | msg::Add);
   message.payload = sMessage;
-  observer->out(message);
+  app::instance()->messageSlot(message);
   
   if (!bSphere.valid())
   {
-    observer->out(msg::buildStatusMessage("Unable to calculate bounding sphere"));
+    app::instance()->messageSlot(msg::buildStatusMessage("Unable to calculate bounding sphere"));
     return;
   }
   
@@ -463,7 +458,6 @@ void BasicCheckPage::selectionChangedSlot()
 BOPCheckPage::BOPCheckPage(const ftr::Base &featureIn, QWidget *parent) :
   CheckPageBase(featureIn, parent)
 {
-  observer->name = "dlg::BOPCheckPage";
 }
 
 BOPCheckPage::~BOPCheckPage()
@@ -601,9 +595,6 @@ void BOPCheckPage::goSlot()
       it++;
     }
   }
-  
-  observer = std::move(std::unique_ptr<msg::Observer>(new msg::Observer()));
-  observer->name = "dlg::BOPCheckPage";
   connect(tableWidget, SIGNAL(itemSelectionChanged()), this, SLOT(selectionChangedSlot()));
 }
 
@@ -615,7 +606,7 @@ void BOPCheckPage::selectionChangedSlot()
     osg::Group *parent = boundingSphere->getParent(0);
     parent->removeChild(boundingSphere.get()); //this should make boundingSphere invalid.
   }
-  observer->out(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  app::instance()->messageSlot(msg::Message(msg::Request | msg::Selection | msg::Clear));
   
   //get the fresh id.
   QList<QTableWidgetItem*> freshSelections = tableWidget->selectedItems();
@@ -655,11 +646,11 @@ void BOPCheckPage::selectionChangedSlot()
   //select the geometry.
   msg::Message message(msg::Request | msg::Selection | msg::Add);
   message.payload = sMessage;
-  observer->out(message);
+  app::instance()->messageSlot(message);
   
   if (!bSphere.valid())
   {
-    observer->out(msg::buildStatusMessage("Unable to calculate bounding sphere"));
+    app::instance()->messageSlot(msg::buildStatusMessage("Unable to calculate bounding sphere"));
     return;
   }
   
@@ -671,8 +662,6 @@ void BOPCheckPage::selectionChangedSlot()
 ToleranceCheckPage::ToleranceCheckPage(const ftr::Base &featureIn, QWidget *parent) :
   CheckPageBase(featureIn, parent)
 {
-  observer->name = "dlg::ToleranceCheckPage";
-  
   buildGui();
   
   QSettings &settings = app::instance()->getUserSettings();
@@ -781,7 +770,7 @@ void ToleranceCheckPage::selectionChangedSlot()
     osg::Group *parent = boundingSphere->getParent(0);
     parent->removeChild(boundingSphere.get()); //this should make boundingSphere invalid.
   }
-  observer->out(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  app::instance()->messageSlot(msg::Message(msg::Request | msg::Selection | msg::Clear));
   
   //get the fresh id.
   QList<QTableWidgetItem*> freshSelections = tableWidget->selectedItems();
@@ -821,11 +810,11 @@ void ToleranceCheckPage::selectionChangedSlot()
   //select the geometry.
   msg::Message message(msg::Request | msg::Selection | msg::Add);
   message.payload = sMessage;
-  observer->out(message);
+  app::instance()->messageSlot(message);
   
   if (!bSphere.valid())
   {
-    observer->out(msg::buildStatusMessage("Unable to calculate bounding sphere"));
+    app::instance()->messageSlot(msg::buildStatusMessage("Unable to calculate bounding sphere"));
     return;
   }
   
@@ -837,7 +826,6 @@ void ToleranceCheckPage::selectionChangedSlot()
 ShapesPage::ShapesPage(const ftr::Base &featureIn, QWidget *parent) :
   CheckPageBase(featureIn, parent)
 {
-  observer->name = "dlg::ShapesPage"; //not using at this time.
   buildGui();
 }
 
@@ -925,7 +913,7 @@ void ShapesPage::boundaryItemChangedSlot()
     osg::Group *parent = boundingSphere->getParent(0);
     parent->removeChild(boundingSphere.get()); //this should make boundingSphere invalid.
   }
-  observer->out(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  app::instance()->messageSlot(msg::Message(msg::Request | msg::Selection | msg::Clear));
   
   QList<QTableWidgetItem*> selected = boundaryTable->selectedItems();
   if (selected.isEmpty())
@@ -948,7 +936,7 @@ void ShapesPage::boundaryItemChangedSlot()
     sMessage.shapeId = e;
     msg::Message message(msg::Request | msg::Selection | msg::Add);
     message.payload = sMessage;
-    observer->out(message);
+    app::instance()->messageSlot(message);
     
     ess.push_back(seerShape.findShape(e));
   }
@@ -957,7 +945,7 @@ void ShapesPage::boundaryItemChangedSlot()
   bs.radius() = std::max(bs.radius(), minBoundingSphere.radius());
   if (!bs.valid())
   {
-    observer->out(msg::buildStatusMessage("Unable to calculate bounding sphere"));
+    app::instance()->messageSlot(msg::buildStatusMessage("Unable to calculate bounding sphere"));
     return;
   }
   boundingSphere = buildBoundingSphere(bs);
@@ -976,8 +964,11 @@ CheckGeometry::CheckGeometry(const ftr::Base &featureIn, QWidget *parent) :
 {
   this->setWindowTitle(tr("Check Geometry"));
   
-  observer = std::move(std::unique_ptr<msg::Observer>(new msg::Observer()));
-  observer->name = "dlg::CheckGeometry";
+  node = std::make_unique<msg::Node>();
+  node->connect(msg::hub());
+  sift = std::make_unique<msg::Sift>();
+  sift->name = "dlg::CheckGeometry";
+  node->setHandler(std::bind(&msg::Sift::receive, sift.get(), std::placeholders::_1));
   setupDispatcher();
   
   buildGui();
@@ -991,7 +982,7 @@ CheckGeometry::~CheckGeometry(){}
 void CheckGeometry::closeEvent(QCloseEvent *e)
 {
   QDialog::closeEvent(e);
-  observer->out(msg::Mask(msg::Request | msg::Command | msg::Done));
+  app::instance()->queuedMessage(msg::Mask(msg::Request | msg::Command | msg::Done));
 }
 
 void CheckGeometry::buildGui()
@@ -1027,23 +1018,25 @@ void CheckGeometry::go()
 
 void CheckGeometry::setupDispatcher()
 {
-  msg::Mask mask;
-  
-  mask = msg::Response | msg::Pre | msg::Remove | msg::Feature;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind
-    (&CheckGeometry::featureRemovedDispatched, this, _1)));
-
-  mask = msg::Response | msg::Feature | msg::Status;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind
-    (&CheckGeometry::featureStateChangedDispatched, this, _1)));
+  sift->insert
+  (
+    {
+      std::make_pair
+      (
+        msg::Response | msg::Pre | msg::Remove | msg::Feature
+        , std::bind(&CheckGeometry::featureRemovedDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Response | msg::Feature | msg::Status
+        , std::bind(&CheckGeometry::featureStateChangedDispatched, this, std::placeholders::_1)
+      )
+    }
+  );
 }
 
 void CheckGeometry::featureRemovedDispatched(const msg::Message &messageIn)
 {
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
-  
   prj::Message message = boost::get<prj::Message>(messageIn.payload);
   
   if

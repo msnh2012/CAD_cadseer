@@ -30,7 +30,7 @@
 #include <feature/types.h>
 #include <command/base.h>
 
-namespace msg{class Message; class Observer;}
+namespace msg{class Message; struct Node; struct Sift;}
 namespace ftr{class Base;}
 
 namespace cmd
@@ -42,7 +42,8 @@ namespace cmd
     
     void addCommand(BasePtr);
   private:
-    std::unique_ptr<msg::Observer> observer;
+    std::unique_ptr<msg::Node> node;
+    std::unique_ptr<msg::Sift> sift;
     slc::Mask selectionMask;
     void cancelCommandDispatched(const msg::Message &);
     void doneCommandDispatched(const msg::Message &);

@@ -35,7 +35,7 @@ namespace osgQt{class GraphicsWindowQt;}
 namespace vwr{class SpaceballManipulator;}
 namespace slc{class EventHandler; class OverlayHandler;}
 namespace lbr{class CSysDragger; class CSysCallBack;}
-namespace msg{class Message; class Observer;}
+namespace msg{class Message; struct Node; struct Sift;}
 
 namespace vwr
 {
@@ -80,7 +80,8 @@ protected:
     int glWidgetWidth;
     int glWidgetHeight;
     osgQt::GraphicsWindowQt *windowQt;
-    std::unique_ptr<msg::Observer> observer;
+    std::unique_ptr<msg::Node> node;
+    std::unique_ptr<msg::Sift> sift;
     void setupDispatcher();
     void featureAddedDispatched(const msg::Message &);
     void featureRemovedDispatched(const msg::Message &);

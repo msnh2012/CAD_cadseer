@@ -27,7 +27,7 @@
 #include <selection/container.h>
 
 namespace prj{class Project;}
-namespace msg{class Message; class Observer;}
+namespace msg{class Message; struct Node; struct Sift;}
 
 namespace app
 {
@@ -40,7 +40,8 @@ namespace app
     prj::Project *project = nullptr;
     slc::Containers containers;
     
-    std::unique_ptr<msg::Observer> observer;
+    std::unique_ptr<msg::Node> node;
+    std::unique_ptr<msg::Sift> sift;
     void setupDispatcher();
     void triggerUpdate(); //!< just convenience.
     void newProjectDispatched(const msg::Message&);

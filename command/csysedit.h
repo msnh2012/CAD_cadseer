@@ -26,6 +26,7 @@
 
 namespace osgManipulator{class Translate1DDragger;}
 
+namespace msg{struct Sift;}
 namespace lbr{class CSysDragger;}
 
 namespace cmd
@@ -51,6 +52,7 @@ namespace cmd
     osg::ref_ptr<osgManipulator::Translate1DDragger> translateDragger;
     
   private:
+    std::unique_ptr<msg::Sift> sift;
     void setupDispatcher();
     void selectionAdditionDispatched(const msg::Message &);
     void selectionSubtractionDispatched(const msg::Message &);

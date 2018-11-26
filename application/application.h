@@ -27,15 +27,13 @@
 
 #include <osg/Node> //for viewer message.
 
-#include <boost/variant/variant.hpp>
-
-#include <message/message.h>
+#include <boost/variant/variant_fwd.hpp>
 
 class QSettings;
 
 namespace prf{class Manager;}
 namespace prj{class Project;}
-namespace msg{class Observer;}
+namespace msg{class Message; struct Node; struct Sift;}
 namespace lod{class Manager;}
 
 namespace app
@@ -67,14 +65,15 @@ private:
     std::unique_ptr<prj::Project> project;
     std::unique_ptr<Factory> factory;
     std::unique_ptr<lod::Manager> lodManager;
-    bool spaceballPresent;
+    bool spaceballPresent = false;
     
     void createNewProject(const std::string &);
     void openProject(const std::string &);
     void closeProject();
     void updateTitle();
     
-    std::unique_ptr<msg::Observer> observer;
+    std::unique_ptr<msg::Node> node;
+    std::unique_ptr<msg::Sift> sift;
     void setupDispatcher();
     void newProjectRequestDispatched(const msg::Message &);
     void openProjectRequestDispatched(const msg::Message &);

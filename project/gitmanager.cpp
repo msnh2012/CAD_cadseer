@@ -34,8 +34,8 @@
 
 #include <preferences/preferencesXML.h>
 #include <preferences/manager.h>
-#include <message/dispatch.h>
-#include <message/observer.h>
+#include <message/node.h>
+#include <message/sift.h>
 #include <project/gitmanager.h>
 
 using namespace prj;
@@ -88,16 +88,16 @@ inline std::ostream& operator<<(std::ostream &streamIn, const StatusList &listIn
 
 GitManager::GitManager()
 {
-  observer = std::move(std::unique_ptr<msg::Observer>(new msg::Observer()));
-  observer->name = "prj::GitManager";
+  
+  node = std::make_unique<msg::Node>();
+  node->connect(msg::hub());
+  sift = std::make_unique<msg::Sift>();
+  sift->name = "prj::GitManager";
+  node->setHandler(std::bind(&msg::Sift::receive, sift.get(), std::placeholders::_1));
   setupDispatcher();
-
 }
 
-GitManager::~GitManager()
-{
-
-}
+GitManager::~GitManager(){}
 
 void GitManager::create(const std::string& pathIn)
 {
@@ -474,16 +474,26 @@ void GitManager::checkoutTag(const git2::Tag &tag)
 
 void GitManager::setupDispatcher()
 {
-  msg::Mask mask;
-  
-  mask = msg::Request | msg::Git | msg::Text;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&GitManager::gitMessageRequestDispatched, this, _1)));
-  
-  mask = msg::Request | msg::Git | msg::Freeze;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&GitManager::gitMessageFreezeDispatched, this, _1)));
-  
-  mask = msg::Request | msg::Git | msg::Thaw;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&GitManager::gitMessageThawDispatched, this, _1)));
+  sift->insert
+  (
+    {
+      std::make_pair
+      (
+        msg::Request | msg::Git | msg::Text
+        , std::bind(&GitManager::gitMessageRequestDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Git | msg::Freeze
+        , std::bind(&GitManager::gitMessageFreezeDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Git | msg::Thaw
+        , std::bind(&GitManager::gitMessageThawDispatched, this, std::placeholders::_1)
+      )
+    }
+  );
 }
 
 void GitManager::gitMessageRequestDispatched(const msg::Message &messageIn)
@@ -504,8 +514,6 @@ void GitManager::gitMessageThawDispatched(const msg::Message &)
 
 GitMessageFreezer::GitMessageFreezer()
 {
-  observer = std::move(std::unique_ptr<msg::Observer>(new msg::Observer()));
-  observer->name = "prj::GitMessageFreezer";
   freeze();
 }
 
@@ -516,10 +524,10 @@ GitMessageFreezer::~GitMessageFreezer()
 
 void GitMessageFreezer::freeze()
 {
-  observer->out(msg::Message(msg::Request | msg::Git | msg::Freeze));
+  msg::hub().send(msg::Message(msg::Request | msg::Git | msg::Freeze));
 }
 
 void GitMessageFreezer::thaw()
 {
-  observer->out(msg::Message(msg::Request | msg::Git | msg::Thaw));
+  msg::hub().send(msg::Message(msg::Request | msg::Git | msg::Thaw));
 }

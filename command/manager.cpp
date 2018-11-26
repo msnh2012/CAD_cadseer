@@ -65,8 +65,8 @@
 #include <command/sketch.h>
 #include <command/extrude.h>
 #include <command/revolve.h>
-#include <message/dispatch.h>
-#include <message/observer.h>
+#include <message/node.h>
+#include <message/sift.h>
 #include <selection/message.h>
 #include <selection/container.h>
 #include <selection/definitions.h>
@@ -86,8 +86,12 @@ Manager& cmd::manager()
 
 Manager::Manager()
 {
-  observer = std::move(std::unique_ptr<msg::Observer>(new msg::Observer()));
-  observer->name = "cmd::Manager";
+  node = std::make_unique<msg::Node>();
+  node->connect(msg::hub());
+  sift = std::make_unique<msg::Sift>();
+  sift->name = "cmd::Manager";
+  node->setHandler(std::bind(&msg::Sift::receive, sift.get(), std::placeholders::_1));
+  
   setupDispatcher();
   
   setupEditFunctionMap();
@@ -97,142 +101,236 @@ Manager::Manager()
 
 void Manager::setupDispatcher()
 {
-  msg::Mask mask;
-  
-  mask = msg::Request | msg::Command | msg::Cancel;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Manager::cancelCommandDispatched, this, _1)));
-  
-  mask = msg::Request | msg::Command | msg::Clear;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Manager::cancelCommandDispatched, this, _1)));
-  
-  mask = msg::Request | msg::Command | msg::Done;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Manager::doneCommandDispatched, this, _1)));
-  
-  mask = msg::Response | msg::Selection | msg::SetMask;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Manager::selectionMaskDispatched, this, _1)));
-  
-  mask = msg::Request | msg::FeatureToSystem;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Manager::featureToSystemDispatched, this, _1)));
-  
-  mask = msg::Request | msg::SystemToFeature;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Manager::systemToFeatureDispatched, this, _1)));
-  
-  mask = msg::Request | msg::FeatureToDragger;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Manager::featureToDraggerDispatched, this, _1)));
-  
-  mask = msg::Request | msg::DraggerToFeature;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Manager::draggerToFeatureDispatched, this, _1)));
-  
-  mask = msg::Request | msg::FeatureReposition;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Manager::featureRepositionDispatched, this, _1)));
-  
-  mask = msg::Request | msg::Feature | msg::Dissolve;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Manager::featureDissolveDispatched, this, _1)));
-  
-  mask = msg::Request | msg::SystemToSelection;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Manager::systemToSelectionDispatched, this, _1)));
-  
-  mask = msg::Request | msg::CheckGeometry;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Manager::checkGeometryDispatched, this, _1)));
-  
-  mask = msg::Request | msg::Edit | msg::Feature |msg::Color;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Manager::editColorDispatched, this, _1)));
-  
-  mask = msg::Request | msg::Edit | msg::Feature | msg::Name;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Manager::featureRenameDispatched, this, _1)));
-  
-  mask = msg::Request | msg::Construct | msg::Blend;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Manager::constructBlendDispatched, this, _1)));
-  
-  mask = msg::Request | msg::Construct | msg::Extract;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Manager::constructExtractDispatched, this, _1)));
-  
-  mask = msg::Request | msg::Construct | msg::Squash;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Manager::constructSquashDispatched, this, _1)));
-  
-  mask = msg::Request | msg::Construct | msg::Strip;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Manager::constructStripDispatched, this, _1)));
-  
-  mask = msg::Request | msg::Construct | msg::Nest;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Manager::constructNestDispatched, this, _1)));
-  
-  mask = msg::Request | msg::Construct | msg::DieSet;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Manager::constructDieSetDispatched, this, _1)));
-  
-  mask = msg::Request | msg::Construct | msg::Quote;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Manager::constructQuoteDispatched, this, _1)));
-  
-  mask = msg::Request | msg::Edit | msg::Feature;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Manager::editFeatureDispatched, this, _1)));
-  
-  mask = msg::Request | msg::View | msg::ThreeD | msg::Isolate;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Manager::viewIsolateDispatched, this, _1)));
-  
-  mask = msg::Request | msg::View | msg::Overlay | msg::Isolate;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Manager::viewIsolateDispatched, this, _1)));
-  
-  mask = msg::Request | msg::View | msg::ThreeD | msg::Overlay | msg::Isolate;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Manager::viewIsolateDispatched, this, _1)));
-  
-  mask = msg::Request | msg::LinearMeasure;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Manager::measureLinearDispatched, this, _1)));
-  
-  mask = msg::Request | msg::Construct | msg::Refine;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Manager::constructRefineDispatched, this, _1)));
-  
-  mask = msg::Request | msg::Construct | msg::InstanceLinear;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Manager::constructInstanceLinearDispatched, this, _1)));
-  
-  mask = msg::Request | msg::Construct | msg::InstanceMirror;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Manager::constructInstanceMirrorDispatched, this, _1)));
-  
-  mask = msg::Request | msg::Construct | msg::InstancePolar;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Manager::constructInstancePolarDispatched, this, _1)));
-  
-  mask = msg::Request | msg::Construct | msg::Intersect;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Manager::constructIntersectDispatched, this, _1)));
-  
-  mask = msg::Request | msg::Construct | msg::Subtract;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Manager::constructSubtractDispatched, this, _1)));
-  
-  mask = msg::Request | msg::Construct | msg::Union;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Manager::constructUnionDispatched, this, _1)));
-  
-  mask = msg::Request | msg::Construct | msg::Offset;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Manager::constructOffsetDispatched, this, _1)));
-  
-  mask = msg::Request | msg::Construct | msg::Thicken;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Manager::constructThickenDispatched, this, _1)));
-  
-  mask = msg::Request | msg::Construct | msg::Sew;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Manager::constructSewDispatched, this, _1)));
-  
-  mask = msg::Request | msg::Construct | msg::Trim;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Manager::constructTrimDispatched, this, _1)));
-  
-  mask = msg::Request | msg::Construct | msg::RemoveFaces;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Manager::constructRemoveFacesDispatched, this, _1)));
-  
-  mask = msg::Request | msg::Construct | msg::Thread;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Manager::constructThreadDispatched, this, _1)));
-  
-  mask = msg::Request | msg::Construct | msg::DatumAxis;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Manager::constructDatumAxisDispatched, this, _1)));
-  
-  mask = msg::Request | msg::Construct | msg::DatumPlane;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Manager::constructDatumPlaneDispatched, this, _1)));
-  
-  mask = msg::Request | msg::Construct | msg::Sketch;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Manager::constructSketchDispatched, this, _1)));
-  
-  mask = msg::Request | msg::Construct | msg::Extrude;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Manager::constructExtrudeDispatched, this, _1)));
-  
-  mask = msg::Request | msg::Construct | msg::Revolve;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Manager::constructRevolveDispatched, this, _1)));
-  
-  mask = msg::Request | msg::Project | msg::Revision | msg::Dialog;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Manager::revisionDispatched, this, _1)));
+  sift->insert
+  (
+    {
+      std::make_pair
+      (
+        msg::Request | msg::Command | msg::Cancel
+        , std::bind(&Manager::cancelCommandDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Command | msg::Clear
+        , std::bind(&Manager::clearCommandDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Command | msg::Done
+        , std::bind(&Manager::doneCommandDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Response | msg::Selection | msg::SetMask
+        , std::bind(&Manager::selectionMaskDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::FeatureToSystem
+        , std::bind(&Manager::featureToSystemDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::SystemToFeature
+        , std::bind(&Manager::systemToFeatureDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::FeatureToDragger
+        , std::bind(&Manager::featureToDraggerDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::DraggerToFeature
+        , std::bind(&Manager::draggerToFeatureDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::FeatureReposition
+        , std::bind(&Manager::featureRepositionDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Feature | msg::Dissolve
+        , std::bind(&Manager::featureDissolveDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::SystemToSelection
+        , std::bind(&Manager::systemToSelectionDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::CheckGeometry
+        , std::bind(&Manager::checkGeometryDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Edit | msg::Feature |msg::Color
+        , std::bind(&Manager::editColorDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Edit | msg::Feature | msg::Name
+        , std::bind(&Manager::featureRenameDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Construct | msg::Blend
+        , std::bind(&Manager::constructBlendDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Construct | msg::Extract
+        , std::bind(&Manager::constructExtractDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Construct | msg::Squash
+        , std::bind(&Manager::constructSquashDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Construct | msg::Strip
+        , std::bind(&Manager::constructStripDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Construct | msg::Nest
+        , std::bind(&Manager::constructNestDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Construct | msg::DieSet
+        , std::bind(&Manager::constructDieSetDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Construct | msg::Quote
+        , std::bind(&Manager::constructQuoteDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Edit | msg::Feature
+        , std::bind(&Manager::editFeatureDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::View | msg::ThreeD | msg::Isolate
+        , std::bind(&Manager::viewIsolateDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::View | msg::Overlay | msg::Isolate
+        , std::bind(&Manager::viewIsolateDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::View | msg::ThreeD | msg::Overlay | msg::Isolate
+        , std::bind(&Manager::viewIsolateDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::LinearMeasure
+        , std::bind(&Manager::measureLinearDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Construct | msg::Refine
+        , std::bind(&Manager::constructRefineDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Construct | msg::InstanceLinear
+        , std::bind(&Manager::constructInstanceLinearDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Construct | msg::InstanceMirror
+        , std::bind(&Manager::constructInstanceMirrorDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Construct | msg::InstancePolar
+        , std::bind(&Manager::constructInstancePolarDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Construct | msg::Intersect
+        , std::bind(&Manager::constructIntersectDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Construct | msg::Subtract
+        , std::bind(&Manager::constructSubtractDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Construct | msg::Union
+        , std::bind(&Manager::constructUnionDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Construct | msg::Offset
+        , std::bind(&Manager::constructOffsetDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Construct | msg::Thicken
+        , std::bind(&Manager::constructThickenDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Construct | msg::Sew
+        , std::bind(&Manager::constructSewDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Construct | msg::Trim
+        , std::bind(&Manager::constructTrimDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Construct | msg::RemoveFaces
+        , std::bind(&Manager::constructRemoveFacesDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Construct | msg::Thread
+        , std::bind(&Manager::constructThreadDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Construct | msg::DatumAxis
+        , std::bind(&Manager::constructDatumAxisDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Construct | msg::DatumPlane
+        , std::bind(&Manager::constructDatumPlaneDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Construct | msg::Sketch
+        , std::bind(&Manager::constructSketchDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Construct | msg::Extrude
+        , std::bind(&Manager::constructExtrudeDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Construct | msg::Revolve
+        , std::bind(&Manager::constructRevolveDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Project | msg::Revision | msg::Dialog
+        , std::bind(&Manager::revisionDispatched, this, std::placeholders::_1)
+      )
+    }
+  );
 }
 
 void Manager::cancelCommandDispatched(const msg::Message &)
@@ -277,11 +375,11 @@ void Manager::doneSlot()
     stack.pop();
   }
   clearSelection();
-  observer->outBlocked(msg::buildStatusMessage(""));
+  node->send(msg::buildStatusMessage(""));
   
   if (prf::manager().rootPtr->dragger().triggerUpdateOnFinish() && shouldCommandUpdate)
   {
-    observer->outBlocked(msg::Mask(msg::Request | msg::Project | msg::Update));
+    node->sendBlocked(msg::Mask(msg::Request | msg::Project | msg::Update));
   }
   
   if (!stack.empty())
@@ -289,13 +387,13 @@ void Manager::doneSlot()
   else
   {
     sendCommandMessage("Active command count: 0");
-    observer->outBlocked(msg::buildSelectionMask(selectionMask));
+    node->send(msg::buildSelectionMask(selectionMask));
   }
 }
 
 void Manager::activateTop()
 {
-  observer->outBlocked(msg::buildStatusMessage(stack.top()->getStatusMessage()));
+  node->sendBlocked(msg::buildStatusMessage(stack.top()->getStatusMessage()));
   
   std::ostringstream stream;
   stream << 
@@ -312,12 +410,12 @@ void Manager::sendCommandMessage(const std::string& messageIn)
   vwr::Message statusVMessage;
   statusVMessage.text = messageIn;
   statusMessage.payload = statusVMessage;
-  observer->outBlocked(statusMessage);
+  node->sendBlocked(statusMessage);
 }
 
 void Manager::clearSelection()
 {
-  observer->outBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
 }
 
 void Manager::selectionMaskDispatched(const msg::Message &messageIn)
@@ -569,13 +667,13 @@ void Manager::editFeatureDispatched(const msg::Message&)
   //edit feature only works with 1 object pre-selection.
   if (selections.size() != 1)
   {
-    observer->outBlocked(msg::buildStatusMessage("Select 1 object prior to edit feature command", 2.0));
+    node->sendBlocked(msg::buildStatusMessage("Select 1 object prior to edit feature command", 2.0));
     return;
   }
   
   if (selections.front().selectionType != slc::Type::Object)
   {
-    observer->outBlocked(msg::buildStatusMessage("Wrong selection type for edit feature command", 2.0));
+    node->sendBlocked(msg::buildStatusMessage("Wrong selection type for edit feature command", 2.0));
     return;
   }
   
@@ -584,7 +682,7 @@ void Manager::editFeatureDispatched(const msg::Message&)
   auto it = editFunctionMap.find(feature->getType());
   if (it == editFunctionMap.end())
   {
-    observer->outBlocked(msg::buildStatusMessage("Editing of feature type not implemented", 2.0));
+    node->sendBlocked(msg::buildStatusMessage("Editing of feature type not implemented", 2.0));
     return;
   }
   

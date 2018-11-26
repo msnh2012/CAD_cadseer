@@ -17,7 +17,10 @@
  *
  */
 
-#include "message/observer.h"
+#include <boost/variant.hpp>
+#include <boost/optional.hpp>
+
+#include "message/node.h"
 #include "project/project.h"
 #include "selection/eventhandler.h"
 #include "annex/seershape.h"
@@ -53,7 +56,7 @@ void Revolve::go()
   const slc::Containers &containers = eventHandler->getSelections();
   if (containers.empty())
   {
-    observer->outBlocked(msg::buildStatusMessage("Wrong pre selection for revolve", 2.0));
+    node->sendBlocked(msg::buildStatusMessage("Wrong pre selection for revolve", 2.0));
     shouldUpdate = false;
     return;
   }
@@ -96,7 +99,7 @@ void Revolve::go()
   
   if (!fId)
   {
-    observer->outBlocked(msg::buildStatusMessage("No feature id for revolve", 2.0));
+    node->sendBlocked(msg::buildStatusMessage("No feature id for revolve", 2.0));
     shouldUpdate = false;
     return;
   }
@@ -113,7 +116,7 @@ void Revolve::go()
     revolve->setAxisType(ftr::Revolve::AxisType::Picks);
   }
   
-  observer->outBlocked(msg::buildHideThreeD(fId.get()));
-  observer->outBlocked(msg::buildHideOverlay(fId.get()));
-  observer->out(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  node->sendBlocked(msg::buildHideThreeD(fId.get()));
+  node->sendBlocked(msg::buildHideOverlay(fId.get()));
+  node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
 }

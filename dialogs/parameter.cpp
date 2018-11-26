@@ -40,9 +40,8 @@
 #include <application/mainwindow.h>
 #include <feature/base.h>
 #include <feature/parameter.h>
-#include <message/message.h>
-#include <message/dispatch.h>
-#include <message/observer.h>
+#include <message/node.h>
+#include <message/sift.h>
 #include <preferences/preferencesXML.h>
 #include <preferences/manager.h>
 #include <dialogs/expressionedit.h>
@@ -272,9 +271,16 @@ Parameter::Parameter(ftr::prm::Parameter *parameterIn, const boost::uuids::uuid 
   constantConnection = parameter->connectConstant
     (boost::bind(&Parameter::constantHasChanged, this));
   
-  observer = std::move(std::unique_ptr<msg::Observer>(new msg::Observer()));
-  observer->dispatcher.insert(std::make_pair(msg::Response | msg::Pre | msg::Remove | msg::Feature,
-    boost::bind(&Parameter::featureRemovedDispatched, this, boost::placeholders::_1)));
+  node = std::make_unique<msg::Node>();
+  node->connect(msg::hub());
+  sift = std::make_unique<msg::Sift>();
+  sift->name = "dlg::Parameter";
+  sift->insert
+  (
+    msg::Response | msg::Pre | msg::Remove | msg::Feature
+    , std::bind(&Parameter::featureRemovedDispatched, this, std::placeholders::_1)
+  );
+  node->setHandler(std::bind(&msg::Sift::receive, sift.get(), std::placeholders::_1));
   
   WidgetGeometry *filter = new WidgetGeometry(this, "dlg::Parameter");
   this->installEventFilter(filter);
@@ -316,7 +322,7 @@ void Parameter::requestLinkSlot(const QString &stringIn)
   app::instance()->getProject()->expressionLink(parameter->getId(), eId);
   
   if (prf::manager().rootPtr->dragger().triggerUpdateOnFinish())
-    observer->out(msg::Mask(msg::Request | msg::Project | msg::Update));
+    node->send(msg::Mask(msg::Request | msg::Project | msg::Update));
   
   this->activateWindow();
 }
@@ -492,19 +498,19 @@ void Parameter::updateDoubleSlot()
       if (prf::manager().rootPtr->dragger().triggerUpdateOnFinish())
       {
         gitStream  << QObject::tr("    changed to: ").toStdString() << static_cast<double>(*parameter);
-        observer->out(msg::buildGitMessage(gitStream.str()));
-        observer->out(msg::Mask(msg::Request | msg::Project | msg::Update));
+        node->send(msg::buildGitMessage(gitStream.str()));
+        node->send(msg::Mask(msg::Request | msg::Project | msg::Update));
       }
     }
     else
     {
-      observer->out(msg::buildStatusMessage(QObject::tr("Value out of range").toStdString()));
+      node->send(msg::buildStatusMessage(QObject::tr("Value out of range").toStdString()));
       fail();
     }
   }
   else
   {
-    observer->out(msg::buildStatusMessage(QObject::tr("Parsing failed").toStdString()));
+    node->send(msg::buildStatusMessage(QObject::tr("Parsing failed").toStdString()));
     fail();
   }
 }
@@ -550,9 +556,9 @@ void Parameter::boolChangedSlot(int i)
     << QObject::tr("Feature: ").toStdString() << feature->getName().toStdString()
     << QObject::tr("    Parameter ").toStdString() << parameter->getName().toStdString();
     gitStream  << QObject::tr("    changed to: ").toStdString() << static_cast<bool>(*parameter);
-    observer->out(msg::buildGitMessage(gitStream.str()));
+    node->send(msg::buildGitMessage(gitStream.str()));
     if (prf::manager().rootPtr->dragger().triggerUpdateOnFinish())
-      observer->out(msg::Mask(msg::Request | msg::Project | msg::Update));
+      node->send(msg::Mask(msg::Request | msg::Project | msg::Update));
   }
 }
 
@@ -658,9 +664,9 @@ void Parameter::vectorChangedSlot()
     << QObject::tr("Feature: ").toStdString() << feature->getName().toStdString()
     << QObject::tr("    Parameter ").toStdString() << parameter->getName().toStdString();
     gitStream  << QObject::tr("    changed to: ").toStdString() << buffer.toStdString();
-    observer->out(msg::buildGitMessage(gitStream.str()));
+    node->send(msg::buildGitMessage(gitStream.str()));
     if (prf::manager().rootPtr->dragger().triggerUpdateOnFinish())
-      observer->out(msg::Mask(msg::Request | msg::Project | msg::Update));
+      node->send(msg::Mask(msg::Request | msg::Project | msg::Update));
   }
 }
 
@@ -684,9 +690,9 @@ void Parameter::intChangedSlot()
       << QObject::tr("Feature: ").toStdString() << feature->getName().toStdString()
       << QObject::tr("    Parameter ").toStdString() << parameter->getName().toStdString();
       gitStream  << QObject::tr("    changed to: ").toStdString() << tv;
-      observer->out(msg::buildGitMessage(gitStream.str()));
+      node->send(msg::buildGitMessage(gitStream.str()));
       if (prf::manager().rootPtr->dragger().triggerUpdateOnFinish())
-        observer->out(msg::Mask(msg::Request | msg::Project | msg::Update));
+        node->send(msg::Mask(msg::Request | msg::Project | msg::Update));
     }
   }
   

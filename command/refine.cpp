@@ -17,8 +17,10 @@
  *
  */
 
+#include <boost/variant.hpp>
+
 #include <project/project.h>
-#include <message/observer.h>
+#include <message/node.h>
 #include <selection/eventhandler.h>
 #include <feature/refine.h>
 #include <command/refine.h>
@@ -63,10 +65,10 @@ void Refine::go()
     project->connectInsert(c.featureId, refine->getId(), ftr::InputType{ftr::InputType::target});
     created = true;
     
-    observer->outBlocked(msg::buildHideThreeD(c.featureId));
-    observer->outBlocked(msg::buildHideOverlay(c.featureId));
+    node->sendBlocked(msg::buildHideThreeD(c.featureId));
+    node->sendBlocked(msg::buildHideOverlay(c.featureId));
     
-    observer->outBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
+    node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
     
     break;
   }
@@ -74,5 +76,5 @@ void Refine::go()
   if (!created)
     shouldUpdate = false;
   else
-    observer->out(msg::Message(msg::Request | msg::Selection | msg::Clear));
+    node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
 }

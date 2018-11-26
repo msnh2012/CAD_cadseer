@@ -17,10 +17,12 @@
  *
  */
 
+#include <boost/variant.hpp>
+
 #include <osg/Geometry>
 
 #include <project/project.h>
-#include <message/observer.h>
+#include <message/node.h>
 #include <selection/eventhandler.h>
 #include <annex/seershape.h>
 #include <feature/parameter.h>
@@ -62,7 +64,7 @@ void Trim::go()
   }
   if (filtered.size() < 2)
   {
-    observer->outBlocked(msg::buildStatusMessage("Wrong pre selection for trim", 2.0));
+    node->sendBlocked(msg::buildStatusMessage("Wrong pre selection for trim", 2.0));
     shouldUpdate = false;
     return;
   }
@@ -73,10 +75,10 @@ void Trim::go()
   for (const auto &c : filtered)
   {
     project->connect(c.featureId, trim->getId(), iType);
-    observer->outBlocked(msg::buildHideThreeD(c.featureId));
-    observer->outBlocked(msg::buildHideOverlay(c.featureId));
+    node->sendBlocked(msg::buildHideThreeD(c.featureId));
+    node->sendBlocked(msg::buildHideOverlay(c.featureId));
     iType = ftr::InputType{ftr::InputType::tool};
   }
   
-  observer->out(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
 }

@@ -28,8 +28,8 @@
 
 #include <modelviz/nodemaskdefs.h>
 #include <selection/definitions.h>
-#include <message/dispatch.h>
-#include <message/observer.h>
+#include <message/node.h>
+#include <message/sift.h>
 #include <selection/message.h>
 #include <selection/manager.h>
 
@@ -38,8 +38,11 @@ using namespace slc;
 Manager::Manager(QObject *parent) :
   QObject(parent), selectionMask(slc::AllEnabled)
 {
-  observer = std::move(std::unique_ptr<msg::Observer>(new msg::Observer()));
-  observer->name = "slc::Manager";
+  node = std::make_unique<msg::Node>();
+  node->connect(msg::hub());
+  sift = std::make_unique<msg::Sift>();
+  sift->name = "slc::Manager";
+  node->setHandler(std::bind(&msg::Sift::receive, sift.get(), std::placeholders::_1));
   setupDispatcher();
 }
 
@@ -198,7 +201,7 @@ void Manager::sendUpdatedMask()
   out.selectionMask = selectionMask;
   msg::Message mOut(msg::Response | msg::Selection | msg::SetMask);
   mOut.payload = out;
-  observer->out(mOut);
+  node->send(mOut);
 }
 
 void Manager::updateToolbar()
@@ -235,19 +238,15 @@ void Manager::updateToolbar()
 
 void Manager::setupDispatcher()
 {
-  msg::Mask mask;
-  
-  mask = msg::Request | msg::Selection | msg::SetMask;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&Manager::requestSelectionMaskDispatched, this, _1)));
+  sift->insert
+  (
+    msg::Request | msg::Selection | msg::SetMask
+    , std::bind(&Manager::requestSelectionMaskDispatched, this, std::placeholders::_1)
+  );
 }
 
 void Manager::requestSelectionMaskDispatched(const msg::Message &messageIn)
 {
-  
-  std::ostringstream debug;
-  debug << "inside: " << BOOST_CURRENT_FUNCTION << std::endl;
-  msg::dispatch().dumpString(debug.str());
-  
   slc::Message message = boost::get<slc::Message>(messageIn.payload);
   setState(message.selectionMask);
 }

@@ -30,9 +30,9 @@
 
 #include <application/application.h>
 #include <feature/parameter.h>
-#include <message/dispatch.h>
 #include <preferences/preferencesXML.h>
 #include <preferences/manager.h>
+#include <message/message.h>
 #include <project/serial/xsdcxxoutput/featurebase.h>
 #include <library/lineardimension.h>
 #include <library/lineardragger.h>

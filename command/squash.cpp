@@ -17,12 +17,14 @@
  *
  */
 
+#include <boost/variant.hpp>
+
 #include <TopoDS.hxx>
 
 #include <application/application.h>
 #include <application/mainwindow.h>
 #include <selection/eventhandler.h>
-#include <message/observer.h>
+#include <message/node.h>
 #include <project/project.h>
 #include <annex/seershape.h>
 #include <feature/squash.h>
@@ -91,14 +93,14 @@ void Squash::go()
   if(!f)
   {
     std::cout << "Squash: no feature found" << std::endl;
-    observer->out(msg::buildStatusMessage("Squash: no feature found", 2.0));
+    node->send(msg::buildStatusMessage("Squash: no feature found", 2.0));
     shouldUpdate = false;
     return;
   }
   if(fps.empty())
   {
     std::cout << "Squash: no faces" << std::endl;
-    observer->out(msg::buildStatusMessage("Squash: no faces", 2.0));
+    node->send(msg::buildStatusMessage("Squash: no faces", 2.0));
     shouldUpdate = false;
     return;
   }
@@ -111,9 +113,9 @@ void Squash::go()
   //here we are going to execute the update manually and then set skipUpdate to true.
   //this way we get the feature, but we stop the slow updates for now.
   app::WaitCursor wc;
-  observer->outBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
-  observer->out(msg::Message(msg::Request | msg::Project | msg::Update | msg::Model));
+  node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
+  node->send(msg::Message(msg::Request | msg::Project | msg::Update | msg::Model));
   squash->setGranularity(0.0); //this will 'freeze' 
   
-  observer->out(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
 }

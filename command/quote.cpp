@@ -17,9 +17,11 @@
  *
  */
 
+#include <boost/variant.hpp>
+
 #include <application/mainwindow.h>
 #include <project/project.h>
-#include <message/observer.h>
+#include <message/node.h>
 #include <selection/eventhandler.h>
 #include <feature/quote.h>
 #include <dialogs/quote.h>
@@ -91,12 +93,12 @@ void Quote::go()
   std::shared_ptr<ftr::Quote> quote(new ftr::Quote());
   project->addFeature(quote);
   
-  observer->outBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
+  node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
   
   dialog = new dlg::Quote(quote.get(), mainWindow);
   dialog->setStripId(stripId);
   dialog->setDieSetId(diesetId);
-  observer->out(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
 }
 
 QuoteEdit::QuoteEdit(ftr::Base *feature) : Base()

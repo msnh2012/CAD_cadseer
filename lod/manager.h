@@ -31,7 +31,7 @@
 #include <message/message.h>
 
 class QTimer;
-namespace msg{class Observer;}
+namespace msg{struct Node; struct Sift;}
 
 namespace lod
 {
@@ -69,7 +69,8 @@ namespace lod
     void cleanMessages(const boost::uuids::uuid&);
     QProcess *process = nullptr;
     
-    std::unique_ptr<msg::Observer> observer;
+    std::unique_ptr<msg::Node> node;
+    std::unique_ptr<msg::Sift> sift;
     void setupDispatcher();
     void constructLODRequestDispatched(const msg::Message &);
     void featureRemovedDispatched(const msg::Message &);

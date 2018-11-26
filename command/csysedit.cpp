@@ -26,8 +26,8 @@
 #include <library/csysdragger.h>
 #include <tools/occtools.h>
 #include <project/project.h>
-#include <message/message.h>
-#include <message/observer.h>
+#include <message/node.h>
+#include <message/sift.h>
 #include <feature/parameter.h>
 #include <feature/base.h>
 #include <annex/seershape.h>
@@ -38,6 +38,10 @@ using namespace cmd;
 
 CSysEdit::CSysEdit() : Base()
 {
+  sift = std::make_unique<msg::Sift>();
+  sift->name = "cmd::CSysEdit";
+  node->setHandler(std::bind(&msg::Sift::receive, sift.get(), std::placeholders::_1));
+  
   setupDispatcher();
 }
 
@@ -72,13 +76,21 @@ std::string CSysEdit::getStatusMessage()
 
 void CSysEdit::setupDispatcher()
 {
-  msg::Mask mask;
-  
-  mask = msg::Response | msg::Post | msg::Selection | msg::Add;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&CSysEdit::selectionAdditionDispatched, this, _1)));
-  
-  mask = msg::Response | msg::Pre | msg::Selection | msg::Remove;
-  observer->dispatcher.insert(std::make_pair(mask, boost::bind(&CSysEdit::selectionSubtractionDispatched, this, _1)));
+  sift->insert
+  (
+    {
+      std::make_pair
+      (
+        msg::Response | msg::Post | msg::Selection | msg::Add
+        , std::bind(&CSysEdit::selectionAdditionDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Response | msg::Pre | msg::Selection | msg::Remove
+        , std::bind(&CSysEdit::selectionSubtractionDispatched, this, std::placeholders::_1)
+      )
+    }
+  );
 }
 
 
@@ -139,14 +151,14 @@ void CSysEdit::analyzeSelections()
           std::tie(vector, results) = occt::gleanVector(seerShape.getOCCTShape(messages.at(0).shapeId), point);
           if (!results)
           {
-            observer->outBlocked(msg::buildStatusMessage("Couldn't get vector from shape"));
+            node->sendBlocked(msg::buildStatusMessage("Couldn't get vector from shape"));
             //remove selection?
             return;
           }
           osg::Vec3d direction = gu::toOsg(vector);
           if (direction.isNaN())
           {
-            observer->outBlocked(msg::buildStatusMessage("Direction is invalid"));
+            node->sendBlocked(msg::buildStatusMessage("Direction is invalid"));
             //remove selection?
             return;
           }
@@ -308,12 +320,12 @@ void CSysEdit::activate()
   if (type == Type::Origin)
     csysDragger->highlightOrigin();
   
-  auto block = observer->createBlocker();
+  auto block = node->createBlocker();
   msg::Message messageOut(msg::Message(msg::Request | msg::Selection | msg::Add));
   for (const auto &sMessage : messages)
   {
     messageOut.payload = sMessage;
-    observer->out(messageOut);
+    node->send(messageOut);
   }
   isActive = true;
 }

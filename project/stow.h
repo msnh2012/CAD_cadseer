@@ -36,7 +36,6 @@
 #include <tools/graphtools.h>
 #include <globalutilities.h>
 
-namespace msg{class Message; class Observer;}
 namespace ftr{class Base; namespace prm{class Parameter;}}
 
 namespace prj
@@ -95,7 +94,6 @@ namespace prj
     
     Graph graph;
   private:
-    std::unique_ptr<msg::Observer> observer;
     void sendStateMessage(const Vertex&, std::size_t);
   };
   

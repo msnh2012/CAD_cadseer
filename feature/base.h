@@ -43,7 +43,6 @@ class QTextStream;
 
 namespace osg{class Switch; class MatrixTransform; class PagedLOD;}
 namespace prj{namespace srl{class FeatureBase;}}
-namespace msg{class Message; class Observer;}
 namespace ftr
 {
 class ShapeHistory;
@@ -155,8 +154,6 @@ protected:
   QString name;
   prm::Parameters parameters;
   ann::Annexes annexes;
-  
-  std::unique_ptr<msg::Observer> observer;
   
   boost::uuids::uuid id;
   ftr::State state;
