@@ -18,6 +18,7 @@
  */
 
 #include <assert.h>
+#include <boost/variant/variant.hpp>
 
 #include <preferences/preferencesXML.h>
 #include <preferences/manager.h>

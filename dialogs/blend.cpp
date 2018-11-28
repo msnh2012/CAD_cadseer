@@ -44,7 +44,6 @@
 #include <QTreeView>
 #include <QStandardItemModel>
 
-#include <boost/signals2/shared_connection_block.hpp>
 #include <boost/optional.hpp>
 
 #include <TopoDS.hxx>

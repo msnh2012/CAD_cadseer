@@ -17,6 +17,8 @@
  *
  */
 
+#include <boost/variant/variant.hpp>
+
 #include <gp_Ax2.hxx>
 #include <TopoDS.hxx>
 #include <BRepBuilderAPI_Transform.hxx>

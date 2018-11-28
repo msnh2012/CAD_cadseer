@@ -17,6 +17,8 @@
  *
  */
 
+#include <boost/variant/variant.hpp>
+
 #include <boost/filesystem.hpp>
 
 #include <gp_Pnt.hxx>

@@ -17,6 +17,8 @@
  *
  */
 
+#include <boost/variant/variant.hpp>
+
 #include <gp_Ax3.hxx>
 #include <BRepPrimAPI_MakeTorus.hxx>
 

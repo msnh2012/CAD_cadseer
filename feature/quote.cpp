@@ -17,6 +17,7 @@
  *
  */
 
+#include <boost/variant/variant.hpp>
 #include <boost/filesystem.hpp>
 
 #include <libzippp.h>

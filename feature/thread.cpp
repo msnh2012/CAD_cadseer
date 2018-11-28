@@ -17,6 +17,8 @@
  *
  */
 
+#include <boost/variant/variant.hpp>
+
 #include <gp_Cone.hxx>
 #include <Geom_CylindricalSurface.hxx>
 #include <GCE2d_MakeSegment.hxx>

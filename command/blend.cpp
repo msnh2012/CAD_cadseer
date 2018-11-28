@@ -17,17 +17,20 @@
  *
  */
 
+#include <boost/variant/variant.hpp>
+
 #include <TopoDS.hxx>
 #include <TopoDS_Edge.hxx>
 
 #include <application/application.h>
 #include <application/mainwindow.h>
-#include <dialogs/parameter.h>
 #include <project/project.h>
 #include <selection/eventhandler.h>
 #include <annex/seershape.h>
 #include <message/node.h>
+#include <feature/parameter.h>
 #include <feature/blend.h>
+#include <dialogs/parameter.h>
 #include <dialogs/blend.h>
 #include <command/blend.h>
 

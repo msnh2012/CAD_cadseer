@@ -17,6 +17,8 @@
  *
  */
 
+#include <boost/variant/variant.hpp>
+
 #include <osg/Switch>
 
 #include <globalutilities.h>

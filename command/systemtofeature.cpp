@@ -17,6 +17,8 @@
  *
  */
 
+#include <boost/variant/variant.hpp>
+
 #include <project/project.h>
 #include <application/mainwindow.h>
 #include <selection/eventhandler.h>

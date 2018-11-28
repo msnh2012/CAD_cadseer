@@ -17,6 +17,9 @@
  *
  */
 
+#include <boost/variant/variant.hpp>
+#include <boost/optional/optional.hpp>
+
 #include <osg/Switch>
 
 #include <TopoDS.hxx>

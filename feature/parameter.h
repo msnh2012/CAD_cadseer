@@ -22,7 +22,6 @@
 
 #include <QString>
 
-#include <boost/signals2/signal.hpp>
 #include <boost/uuid/uuid.hpp>
 #include <boost/variant/variant_fwd.hpp>
 #include <boost/filesystem/path.hpp>
@@ -110,6 +109,97 @@ namespace ftr
       static Constraint buildUnit(); //!< parametric range of 0 to 1
       static Constraint buildNonZeroAngle(); //!< -360 to 360 excludes zero
       static void unitTest();
+    };
+    
+    typedef std::function<void ()> Handler;
+    
+    /*! @struct Observer 
+    * @brief observes parameter changes and triggers handlers
+    * 
+    * pimpl idiom for compile performance. Lives in objects
+    * interested in parameter changes.
+    */
+    struct Observer
+    {
+      Observer();
+      Observer(Handler);
+      Observer(Handler, Handler);
+      ~Observer();
+      Observer(const Observer&) = delete; //no copy
+      Observer& operator=(const Observer&) = delete; //no copy
+      Observer(Observer &&) noexcept;
+      Observer& operator=(Observer &&) noexcept;
+      
+      void block();
+      void unblock();
+      
+      struct Stow; //!< forward declare pimpl
+      std::unique_ptr<Stow> stow; //!< private data
+      
+      Handler valueHandler;
+      Handler constantHandler;
+    };
+    
+    struct ObserverBlocker
+    {
+      ObserverBlocker(Observer &oIn):o(oIn){o.block();}
+      ~ObserverBlocker(){o.unblock();}
+      Observer &o;
+    };
+    
+    /*! @struct Subject 
+    * @brief Sources/Signals of parameter changes.
+    * 
+    * pimpl idiom for compile performance. Lives in parameter
+    * and is reponsible for triggering change signals of owning parameter.
+    * 
+    * There are two modes of use.
+    * 1st, persistent observations like features:
+    * Because lifetimes of parameters are <= features, we can directly
+    * connect feature functions to the signals. This frees us from the burden
+    * of features having connection/wrapping objects for each parameter.
+    * For this mode see @see Persistent.
+    * 
+    * 2nd, transient observations, like parameter dialog:
+    * Connection objects live in an observer object that
+    * will remove the connection upon observer destruction.
+    * For this mode see @see Transient.
+    */
+    struct Subject
+    {
+    public:
+      Subject();
+      ~Subject();
+      Subject(const Subject&) = delete; //no copy
+      Subject& operator=(const Subject&) = delete; //no copy
+      Subject(Subject &&) noexcept;
+      Subject& operator=(Subject &&) noexcept;
+      
+      //@{
+      /*! @anchor Persistent
+       * @name Persistent
+       * 1 way, persistent communication.
+       * assumes Handler target life >= Subject life
+       */
+      void addValueHandler(Handler);
+      void addConstantHandler(Handler);
+      //@}
+      
+      //@{
+      /*! @anchor Transient
+       * @name Transient 
+       * 1 way, transient communication.
+       * no constraints on target life vs Subject life
+       */
+      void connect(Observer&);
+      //@}
+      
+      void sendValueChanged() const;
+      void sendConstantChanged() const;
+      
+    private:
+      struct Stow; //!< forward declare for private data
+      std::unique_ptr<Stow> stow; //!< private data
     };
     
     /*! @brief Parameters are values linked to features
@@ -204,18 +294,12 @@ namespace ftr
       explicit operator osg::Matrixd() const;
       //@}
       
-      
-      typedef boost::signals2::signal<void ()> ValueChangedSignal;
-      boost::signals2::connection connectValue(const ValueChangedSignal::slot_type &subscriber) const
-      {
-        return valueChangedSignal.connect(subscriber);
-      }
-      
-      typedef boost::signals2::signal<void ()> ConstantChangedSignal;
-      boost::signals2::connection connectConstant(const ConstantChangedSignal::slot_type &subscriber) const
-      {
-        return constantChangedSignal.connect(subscriber);
-      }
+      //! observations of parameter changes.
+      //@{
+      void connect(Observer&);
+      void connectValue(Handler);
+      void connectConstant(Handler);
+      //@}
       
       prj::srl::Parameter serialOut() const;
       void serialIn(const prj::srl::Parameter &sParameterIn);
@@ -227,10 +311,7 @@ namespace ftr
       boost::uuids::uuid id;
       Constraint constraint;
       PathType pathType;
-      
-      //mutable allows us to connect to the signal through a const object.
-      mutable ValueChangedSignal valueChangedSignal;
-      mutable ConstantChangedSignal constantChangedSignal;
+      Subject subject;
     };
     
     typedef std::vector<Parameter*> Parameters;

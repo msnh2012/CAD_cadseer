@@ -17,6 +17,8 @@
  *
  */
 
+#include <boost/variant/variant.hpp>
+
 #include <BRepExtrema_DistShapeShape.hxx>
 #include <BRepExtrema_Poly.hxx>
 #include <BRepMesh_IncrementalMesh.hxx>

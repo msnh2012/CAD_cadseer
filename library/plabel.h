@@ -20,15 +20,15 @@
 #ifndef LBR_PLABEL_H
 #define LBR_PLABEL_H
 
-#include <boost/signals2/connection.hpp>
+#include <memory>
 
-#include <osg/MatrixTransform>
 #include <osg/ref_ptr>
+#include <osg/MatrixTransform>
 
 namespace osg{class AutoTransform;}
 namespace osgText{class Text;}
 
-namespace ftr{namespace prm{class Parameter;}}
+namespace ftr{namespace prm{class Parameter; class Observer;}}
 namespace prj{namespace srl{class PLabel;}}
 
 namespace lbr
@@ -59,8 +59,7 @@ namespace lbr
     osg::ref_ptr<osg::AutoTransform> autoTransform;
     osg::ref_ptr<osgText::Text> text;
     
-    boost::signals2::scoped_connection valueConnection;
-    boost::signals2::scoped_connection constantConnection;
+    std::unique_ptr<ftr::prm::Observer> pObserver;
   };
 }
 

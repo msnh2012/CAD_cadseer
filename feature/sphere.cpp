@@ -17,6 +17,8 @@
  *
  */
 
+#include <boost/variant/variant.hpp>
+
 #include <BRepPrimAPI_MakeSphere.hxx>
 
 #include <globalutilities.h>

@@ -18,6 +18,7 @@
  */
 
 #include <assert.h>
+#include <boost/variant/variant.hpp>
 
 #include <TopoDS.hxx>
 #include <TopoDS_Vertex.hxx>

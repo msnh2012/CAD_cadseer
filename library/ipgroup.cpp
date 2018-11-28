@@ -22,6 +22,7 @@
 #include <iomanip>
 #include <cmath>
 #include <limits>
+#include <boost/variant/variant.hpp>
 
 #include <QObject>
 
@@ -87,8 +88,8 @@ value(std::numeric_limits<double>::max())
   ipCallback = new IPCallback(dragger.get(), this);
   dragger->addDraggerCallback(ipCallback.get());
   
-  parameter->connectValue(boost::bind(&IPGroup::valueHasChanged, this));
-  parameter->connectConstant(boost::bind(&IPGroup::constantHasChanged, this));
+  parameter->connectValue(std::bind(&IPGroup::valueHasChanged, this));
+  parameter->connectConstant(std::bind(&IPGroup::constantHasChanged, this));
 }
 
 IPGroup::IPGroup(const IPGroup& copy, const osg::CopyOp& copyOp) : osg::MatrixTransform(copy, copyOp)

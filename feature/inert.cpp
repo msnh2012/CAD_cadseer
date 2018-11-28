@@ -17,6 +17,8 @@
  *
  */
 
+#include <boost/variant/variant.hpp>
+
 #include <TopExp.hxx>
 #include <TopTools_IndexedMapOfShape.hxx>
 #include <gp_Ax3.hxx>

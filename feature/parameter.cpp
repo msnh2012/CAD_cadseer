@@ -17,8 +17,10 @@
  *
  */
 
+#include <memory>
 #include <limits>
 
+#include <boost/signals2.hpp>
 #include <boost/variant.hpp>
 
 #include <tools/idtools.h>
@@ -233,6 +235,90 @@ bool Constraint::test(double testValue) const
     out |= it->test(testValue);
   
   return out;
+}
+
+namespace ftr
+{
+  namespace prm
+  {
+    struct Observer::Stow
+    {
+      std::vector<boost::signals2::scoped_connection> connections;
+      std::vector<boost::signals2::shared_connection_block> blockers;
+    };
+    struct Subject::Stow
+    {
+      boost::signals2::signal<void ()> valueSignal;
+      boost::signals2::signal<void ()> constantSignal;
+    };
+  }
+}
+
+Observer::Observer()
+: stow(std::make_unique<Stow>())
+{}
+
+Observer::Observer(Handler vhIn)
+: stow(std::make_unique<Stow>())
+, valueHandler(vhIn)
+{}
+
+Observer::Observer(Handler vhIn, Handler chIn)
+: stow(std::make_unique<Stow>())
+, valueHandler(vhIn)
+, constantHandler(chIn)
+{}
+
+Observer::~Observer() = default;
+Observer::Observer(Observer &&) noexcept = default;
+Observer& Observer::operator=(Observer &&) noexcept = default;
+
+void Observer::block()
+{
+  for (auto &c : stow->connections)
+    stow->blockers.push_back(boost::signals2::shared_connection_block(c));
+}
+
+void Observer::unblock()
+{
+  stow->blockers.clear();
+}
+
+
+Subject::Subject()
+: stow(std::make_unique<Stow>())
+{}
+
+Subject::~Subject() = default;
+Subject::Subject(Subject &&) noexcept = default;
+Subject& Subject::operator=(Subject &&) noexcept = default;
+
+void Subject::addValueHandler(Handler vhIn)
+{
+  stow->valueSignal.connect(vhIn);
+}
+
+void Subject::addConstantHandler(Handler chIn)
+{
+  stow->constantSignal.connect(chIn);
+}
+
+void Subject::connect(Observer &oIn)
+{
+  if (oIn.valueHandler)
+    oIn.stow->connections.push_back(stow->valueSignal.connect(oIn.valueHandler));
+  if (oIn.constantHandler)
+    oIn.stow->connections.push_back(stow->constantSignal.connect(oIn.constantHandler));
+}
+
+void Subject::sendValueChanged() const
+{
+  stow->valueSignal();
+}
+
+void Subject::sendConstantChanged() const
+{
+  stow->constantSignal();
 }
 
 class DoubleVisitor : public boost::static_visitor<double>
@@ -455,7 +541,7 @@ void Parameter::setConstant(bool constantIn)
   if (constantIn == constant)
     return;
   constant = constantIn;
-  constantChangedSignal();
+  subject.sendConstantChanged();
 }
 
 const std::type_info& Parameter::getValueType() const
@@ -472,7 +558,7 @@ bool Parameter::setValue(double valueIn)
 {
   if (setValueQuiet(valueIn))
   {
-    valueChangedSignal();
+    subject.sendValueChanged();
     return true;
   }
   
@@ -514,7 +600,7 @@ bool Parameter::setValue(int valueIn)
 {
   if (setValueQuiet(valueIn))
   {
-    valueChangedSignal();
+    subject.sendValueChanged();
     return true;
   }
   
@@ -547,7 +633,7 @@ bool Parameter::setValue(bool valueIn)
 {
   if (setValueQuiet(valueIn))
   {
-    valueChangedSignal();
+    subject.sendValueChanged();
     return true;
   }
   
@@ -572,7 +658,7 @@ bool Parameter::setValue(const path &valueIn)
 {
   if (setValueQuiet(valueIn))
   {
-    valueChangedSignal();
+    subject.sendValueChanged();
     return true;
   }
   
@@ -597,7 +683,7 @@ bool Parameter::setValue(const osg::Vec3d &vIn)
 {
   if (setValueQuiet(vIn))
   {
-    valueChangedSignal();
+    subject.sendValueChanged();
     return true;
   }
   
@@ -622,7 +708,7 @@ bool Parameter::setValue(const osg::Matrixd &mIn)
 {
   if (setValueQuiet(mIn))
   {
-    valueChangedSignal();
+    subject.sendValueChanged();
     return true;
   }
   
@@ -636,6 +722,20 @@ bool Parameter::setValueQuiet(const osg::Matrixd &mIn)
   
   value = mIn;
   return true;
+}
+
+void Parameter::connect(Observer &o)
+{
+  subject.connect(o);
+}
+void Parameter::connectValue(Handler h)
+{
+  subject.addValueHandler(h);
+}
+
+void Parameter::connectConstant(Handler h)
+{
+  subject.addConstantHandler(h);
 }
 
 Parameter::operator osg::Matrixd() const

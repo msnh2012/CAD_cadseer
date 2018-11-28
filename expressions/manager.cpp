@@ -26,6 +26,7 @@
 
 #include <boost/graph/topological_sort.hpp>
 #include <boost/current_function.hpp>
+#include <boost/variant/variant.hpp>
 
 #include <application/application.h>
 #include <project/project.h>

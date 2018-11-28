@@ -17,6 +17,8 @@
  *
  */
 
+#include <boost/variant/variant.hpp>
+
 #include <gp_Ax2.hxx>
 #include <gp_Circ.hxx>
 #include <BRep_Builder.hxx>

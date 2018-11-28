@@ -17,6 +17,7 @@
  *
  */
 
+#include <boost/variant/variant.hpp>
 #include <boost/optional/optional.hpp>
 
 #include <BRep_Tool.hxx>

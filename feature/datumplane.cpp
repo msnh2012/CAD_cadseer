@@ -20,6 +20,7 @@
 #include <limits>
 
 #include <boost/optional/optional.hpp>
+#include <boost/variant/variant.hpp>
 
 #include <QTextStream>
 

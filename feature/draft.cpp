@@ -18,6 +18,7 @@
  */
 
 #include <cassert>
+#include <boost/variant/variant.hpp>
 
 #include <gp_Pln.hxx>
 #include <BRepOffsetAPI_DraftAngle.hxx>

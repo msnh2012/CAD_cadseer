@@ -17,6 +17,8 @@
  *
  */
 
+#include <boost/variant/variant.hpp>
+
 #include <TopoDS.hxx>
 
 #include <globalutilities.h>

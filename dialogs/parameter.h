@@ -22,10 +22,6 @@
 
 #include <memory>
 
-#ifndef Q_MOC_RUN
-#include <boost/signals2/connection.hpp>
-#endif
-
 #include <QDialog>
 #include <QLineEdit>
 
@@ -38,7 +34,7 @@ class QLabel;
 namespace boost{namespace uuids{class uuid;}}
 
 namespace ftr{class Base;}
-namespace ftr{namespace prm{class Parameter;}}
+namespace ftr{namespace prm{class Parameter; struct Observer;}}
 namespace msg{class Message; struct Node; struct Sift;}
 
 namespace dlg
@@ -66,8 +62,7 @@ namespace dlg
     void buildGui();
     void valueHasChanged();
     void constantHasChanged();
-    boost::signals2::connection valueConnection;
-    boost::signals2::connection constantConnection;
+    std::unique_ptr<ftr::prm::Observer> pObserver;
     std::unique_ptr<msg::Node> node;
     std::unique_ptr<msg::Sift> sift;
     void featureRemovedDispatched(const msg::Message &);

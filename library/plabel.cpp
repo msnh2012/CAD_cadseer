@@ -20,8 +20,7 @@
 #include <cassert>
 #include <sstream>
 #include <iomanip>
-
-#include <boost/signals2.hpp>
+#include <boost/variant/variant.hpp>
 
 #include <application/application.h>
 
@@ -91,13 +90,15 @@ PLabel::PLabel(const PLabel& copy, const osg::CopyOp& copyOp) : osg::MatrixTrans
   assert(0); //don't use copy.
 }
 
-PLabel::PLabel(ftr::prm::Parameter* parameterIn) : osg::MatrixTransform(), parameter(parameterIn)
+PLabel::PLabel(ftr::prm::Parameter* parameterIn)
+: osg::MatrixTransform()
+, parameter(parameterIn)
+, pObserver(new ftr::prm::Observer(std::bind(&PLabel::valueHasChanged, this), std::bind(&PLabel::constantHasChanged, this)))
 {
   getOrCreateStateSet()->setMode(GL_LIGHTING, osg::StateAttribute::OFF);
   build();
   
-  valueConnection = parameter->connectValue(boost::bind(&PLabel::valueHasChanged, this));
-  constantConnection = parameter->connectConstant(boost::bind(&PLabel::constantHasChanged, this));
+  parameter->connect(*pObserver);
 }
 
 void PLabel::build()
