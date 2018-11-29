@@ -66,7 +66,7 @@ sShape(new ann::SeerShape())
   csys->setValue(gu::toOsg(sShape->getRootOCCTShape().Location().Transformation()));
   csysDragger->draggerUpdate(); //set dragger to parameter.
   
-  csys->connectValue(boost::bind(&Inert::setModelDirty, this));
+  csys->connectValue(std::bind(&Inert::setModelDirty, this));
 }
 
 Inert::~Inert(){}

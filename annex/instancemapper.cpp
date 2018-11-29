@@ -27,7 +27,6 @@
 #include <annex/instancemapper.h>
 
 using boost::uuids::uuid;
-namespace BMI = boost::multi_index;
 
 using namespace ann;
 

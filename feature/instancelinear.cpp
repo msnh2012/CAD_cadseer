@@ -70,17 +70,17 @@ csysDragger(new ann::CSysDragger(this, csys.get()))
   yCount->setConstraint(prm::Constraint::buildNonZeroPositive());
   zCount->setConstraint(prm::Constraint::buildNonZeroPositive());
   
-  xOffset->connectValue(boost::bind(&InstanceLinear::setModelDirty, this));
-  yOffset->connectValue(boost::bind(&InstanceLinear::setModelDirty, this));
-  zOffset->connectValue(boost::bind(&InstanceLinear::setModelDirty, this));
+  xOffset->connectValue(std::bind(&InstanceLinear::setModelDirty, this));
+  yOffset->connectValue(std::bind(&InstanceLinear::setModelDirty, this));
+  zOffset->connectValue(std::bind(&InstanceLinear::setModelDirty, this));
   
-  xCount->connectValue(boost::bind(&InstanceLinear::setModelDirty, this));
-  yCount->connectValue(boost::bind(&InstanceLinear::setModelDirty, this));
-  zCount->connectValue(boost::bind(&InstanceLinear::setModelDirty, this));
+  xCount->connectValue(std::bind(&InstanceLinear::setModelDirty, this));
+  yCount->connectValue(std::bind(&InstanceLinear::setModelDirty, this));
+  zCount->connectValue(std::bind(&InstanceLinear::setModelDirty, this));
   
-  csys->connectValue(boost::bind(&InstanceLinear::setModelDirty, this));
+  csys->connectValue(std::bind(&InstanceLinear::setModelDirty, this));
   
-  includeSource->connectValue(boost::bind(&InstanceLinear::setModelDirty, this));
+  includeSource->connectValue(std::bind(&InstanceLinear::setModelDirty, this));
   
   xOffsetLabel = new lbr::PLabel(xOffset.get());
   xOffsetLabel->showName = true;

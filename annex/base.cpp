@@ -17,16 +17,30 @@
  *
  */
 
+#include <boost/bimap.hpp>
+#include <boost/assign/list_of.hpp>
 #include <annex/base.h>
 
 using namespace ann;
 
-Base::Base()
-{
+Base::Base() = default;
 
+Base::~Base() = default;
+
+typedef boost::bimap<Type, std::string> TypeMap;
+static const TypeMap typeMap = boost::assign::list_of<TypeMap::relation>
+(Type::Base, "Base")
+(Type::CSysDragger, "CSysDragger")
+(Type::SeerShape, "SeerShape")
+(Type::IntersectionMapper, "IntersectionMapper")
+(Type::InstanceMapper, "InstanceMapper");
+
+const std::string& ann::toString(const Type &tIn)
+{
+  return typeMap.left.at(tIn);
 }
 
-Base::~Base()
+const ann::Type& ann::toType(const std::string &sIn)
 {
-
+  return typeMap.right.at(sIn);
 }

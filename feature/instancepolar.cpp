@@ -68,20 +68,20 @@ csysDragger(new ann::CSysDragger(this, csys.get()))
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
   
   count->setConstraint(prm::Constraint::buildNonZeroPositive());
-  count->connectValue(boost::bind(&InstancePolar::setModelDirty, this));
+  count->connectValue(std::bind(&InstancePolar::setModelDirty, this));
   parameters.push_back(count.get());
   
-  csys->connectValue(boost::bind(&InstancePolar::setModelDirty, this));
+  csys->connectValue(std::bind(&InstancePolar::setModelDirty, this));
   parameters.push_back(csys.get());
   
   angle->setConstraint(prm::Constraint::buildNonZeroAngle());
-  angle->connectValue(boost::bind(&InstancePolar::setModelDirty, this));
+  angle->connectValue(std::bind(&InstancePolar::setModelDirty, this));
   parameters.push_back(angle.get());
   
-  inclusiveAngle->connectValue(boost::bind(&InstancePolar::setModelDirty, this));
+  inclusiveAngle->connectValue(std::bind(&InstancePolar::setModelDirty, this));
   parameters.push_back(inclusiveAngle.get());
   
-  includeSource->connectValue(boost::bind(&InstancePolar::setModelDirty, this));
+  includeSource->connectValue(std::bind(&InstancePolar::setModelDirty, this));
   parameters.push_back(includeSource.get());
   
   countLabel = new lbr::PLabel(count.get());

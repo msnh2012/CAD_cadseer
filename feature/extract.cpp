@@ -145,7 +145,7 @@ void Extract::sync(const Extract::AccruePicks &apsIn)
       auto &b = accruePicks.back();
       if(!b.parameter)
         b.parameter = buildAngleParameter(); //assume angle parameter.
-      b.parameter->connectValue(boost::bind(&Extract::setModelDirty, this));
+      b.parameter->connectValue(std::bind(&Extract::setModelDirty, this));
       //else the parameter should already be connected if it exists.
       parameters.push_back(b.parameter.get());
       

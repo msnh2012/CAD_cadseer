@@ -36,7 +36,6 @@ namespace osg{class Vec3d;}
 namespace prj{namespace srl{class SeerShape;}}
 namespace ftr{class ShapeHistory;}
 
-namespace BMI = boost::multi_index;
 namespace BID = boost::uuids;
   
 namespace ann

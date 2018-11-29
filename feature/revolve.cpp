@@ -61,14 +61,14 @@ Base()
   name = QObject::tr("Revolve");
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
   
-  axisOrigin->connectValue(boost::bind(&Revolve::setModelDirty, this));
+  axisOrigin->connectValue(std::bind(&Revolve::setModelDirty, this));
   parameters.push_back(axisOrigin.get());
   
-  axisDirection->connectValue(boost::bind(&Revolve::setModelDirty, this));
+  axisDirection->connectValue(std::bind(&Revolve::setModelDirty, this));
   parameters.push_back(axisDirection.get());
   
   angle->setConstraint(prm::Constraint::buildNonZeroAngle());
-  angle->connectValue(boost::bind(&Revolve::setModelDirty, this));
+  angle->connectValue(std::bind(&Revolve::setModelDirty, this));
   parameters.push_back(angle.get());
   
   auto labelInit = [&](lbr::PLabel *pl)

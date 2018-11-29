@@ -71,14 +71,14 @@ DatumAxis::DatumAxis() : Base()
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
   
   parameters.push_back(csys.get()); //should we add and remove this when type switching? PIA
-  csys->connectValue(boost::bind(&DatumAxis::setModelDirty, this));
+  csys->connectValue(std::bind(&DatumAxis::setModelDirty, this));
   overlaySwitch->addChild(csysDragger->dragger);
   
   parameters.push_back(autoSize.get());
-  autoSize->connectValue(boost::bind(&DatumAxis::setVisualDirty, this));
+  autoSize->connectValue(std::bind(&DatumAxis::setVisualDirty, this));
   
   parameters.push_back(size.get());
-  size->connectValue(boost::bind(&DatumAxis::setVisualDirty, this));
+  size->connectValue(std::bind(&DatumAxis::setVisualDirty, this));
   
   autoSizeLabel = new lbr::PLabel(autoSize.get());
   autoSizeLabel->showName = true;

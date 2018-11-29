@@ -59,8 +59,8 @@ csysDragger(new ann::CSysDragger(this, csys.get()))
   name = QObject::tr("Instance Mirror");
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
   
-  csys->connectValue(boost::bind(&InstanceMirror::setModelDirty, this));
-  includeSource->connectValue(boost::bind(&InstanceMirror::setModelDirty, this));
+  csys->connectValue(std::bind(&InstanceMirror::setModelDirty, this));
+  includeSource->connectValue(std::bind(&InstanceMirror::setModelDirty, this));
   
   csysDragger->dragger->unlinkToMatrix(getMainTransform());
   csysDragger->dragger->hide(lbr::CSysDragger::SwitchIndexes::LinkIcon);

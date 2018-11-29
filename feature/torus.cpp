@@ -80,10 +80,10 @@ sShape(new ann::SeerShape())
   annexes.insert(std::make_pair(ann::Type::CSysDragger, csysDragger.get()));
   overlaySwitch->addChild(csysDragger->dragger);
   
-  radius1->connectValue(boost::bind(&Torus::setModelDirty, this));
-  radius2->connectValue(boost::bind(&Torus::setModelDirty, this));
-  seam->connectValue(boost::bind(&Torus::setModelDirty, this));
-  csys->connectValue(boost::bind(&Torus::setModelDirty, this));
+  radius1->connectValue(std::bind(&Torus::setModelDirty, this));
+  radius2->connectValue(std::bind(&Torus::setModelDirty, this));
+  seam->connectValue(std::bind(&Torus::setModelDirty, this));
+  csys->connectValue(std::bind(&Torus::setModelDirty, this));
   
   setupIPGroup();
 }

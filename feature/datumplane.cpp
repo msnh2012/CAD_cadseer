@@ -137,19 +137,19 @@ Base()
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
   
   parameters.push_back(csys.get());
-  csys->connectValue(boost::bind(&DatumPlane::setModelDirty, this));
+  csys->connectValue(std::bind(&DatumPlane::setModelDirty, this));
   
-  flip->connectValue(boost::bind(&DatumPlane::setModelDirty, this));
+  flip->connectValue(std::bind(&DatumPlane::setModelDirty, this));
   parameters.push_back(flip.get());
   
-  autoSize->connectValue(boost::bind(&DatumPlane::setModelDirty, this));
+  autoSize->connectValue(std::bind(&DatumPlane::setModelDirty, this));
   parameters.push_back(autoSize.get());
   
   size->setConstraint(prm::Constraint::buildNonZeroPositive());
-  size->connectValue(boost::bind(&DatumPlane::setModelDirty, this));
+  size->connectValue(std::bind(&DatumPlane::setModelDirty, this));
   parameters.push_back(size.get());
   
-  offset->connectValue(boost::bind(&DatumPlane::setModelDirty, this));
+  offset->connectValue(std::bind(&DatumPlane::setModelDirty, this));
   parameters.push_back(offset.get());
   
   prm::Constraint ac;
@@ -158,7 +158,7 @@ Base()
   prm::Interval interval(lower, upper);
   ac.intervals.push_back(interval);
   angle->setConstraint(ac);
-  angle->connectValue(boost::bind(&DatumPlane::setModelDirty, this));
+  angle->connectValue(std::bind(&DatumPlane::setModelDirty, this));
   parameters.push_back(angle.get());
   
   flipLabel->showName = true;

@@ -17,6 +17,8 @@
  *
  */
 
+#include <sstream>
+
 #include <QInputDialog>
 
 #include <boost/variant.hpp>

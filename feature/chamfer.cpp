@@ -89,7 +89,7 @@ void Chamfer::addSymChamfer(const SymChamfer &chamferIn)
   
   if (!symChamfers.back().distance)
     symChamfers.back().distance = buildSymParameter();
-  symChamfers.back().distance->connectValue(boost::bind(&Chamfer::setModelDirty, this));
+  symChamfers.back().distance->connectValue(std::bind(&Chamfer::setModelDirty, this));
   
   if (!symChamfers.back().label)
   {

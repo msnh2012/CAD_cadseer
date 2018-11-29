@@ -87,7 +87,7 @@ solidId(gu::createRandomId())
   auto setupParameter = [&](prm::Parameter *p)
   {
     p->setConstraint(prm::Constraint::buildNonZeroPositive());
-    p->connectValue(boost::bind(&Thread::setModelDirty, this));
+    p->connectValue(std::bind(&Thread::setModelDirty, this));
     parameters.push_back(p);
   };
   setupParameter(diameter.get());
@@ -101,19 +101,19 @@ solidId(gu::createRandomId())
   prm::Interval interval(lower, upper);
   angleConstraint.intervals.push_back(interval);
   angle->setConstraint(angleConstraint);
-  angle->connectValue(boost::bind(&Thread::setModelDirty, this));
+  angle->connectValue(std::bind(&Thread::setModelDirty, this));
   parameters.push_back(angle.get());
   
-  internal->connectValue(boost::bind(&Thread::setModelDirty, this));
+  internal->connectValue(std::bind(&Thread::setModelDirty, this));
   parameters.push_back(internal.get());
   
-  fake->connectValue(boost::bind(&Thread::setModelDirty, this));
+  fake->connectValue(std::bind(&Thread::setModelDirty, this));
   parameters.push_back(fake.get());
   
-  leftHanded->connectValue(boost::bind(&Thread::setModelDirty, this));
+  leftHanded->connectValue(std::bind(&Thread::setModelDirty, this));
   parameters.push_back(leftHanded.get());
   
-  csys->connectValue(boost::bind(&Thread::setModelDirty, this));
+  csys->connectValue(std::bind(&Thread::setModelDirty, this));
   parameters.push_back(csys.get());
   
   auto setupLabel = [&](lbr::PLabel *l)

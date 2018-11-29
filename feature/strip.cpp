@@ -79,26 +79,26 @@ sShape(new ann::SeerShape())
   
   annexes.insert(std::make_pair(ann::Type::SeerShape, sShape.get()));
   
-  feedDirection->connectValue(boost::bind(&Strip::setModelDirty, this));
+  feedDirection->connectValue(std::bind(&Strip::setModelDirty, this));
   parameters.push_back(feedDirection.get());
   
   pitch->setConstraint(prm::Constraint::buildNonZeroPositive());
-  pitch->connectValue(boost::bind(&Strip::setModelDirty, this));
+  pitch->connectValue(std::bind(&Strip::setModelDirty, this));
   parameters.push_back(pitch.get());
   
   width->setConstraint(prm::Constraint::buildNonZeroPositive());
-  width->connectValue(boost::bind(&Strip::setModelDirty, this));
+  width->connectValue(std::bind(&Strip::setModelDirty, this));
   parameters.push_back(width.get());
   
   widthOffset->setConstraint(prm::Constraint::buildAll());
-  widthOffset->connectValue(boost::bind(&Strip::setModelDirty, this));
+  widthOffset->connectValue(std::bind(&Strip::setModelDirty, this));
   parameters.push_back(widthOffset.get());
   
   gap->setConstraint(prm::Constraint::buildNonZeroPositive());
-  gap->connectValue(boost::bind(&Strip::setModelDirty, this));
+  gap->connectValue(std::bind(&Strip::setModelDirty, this));
   parameters.push_back(gap.get());
   
-  autoCalc->connectValue(boost::bind(&Strip::setModelDirty, this));
+  autoCalc->connectValue(std::bind(&Strip::setModelDirty, this));
   parameters.push_back(autoCalc.get());
   
   feedDirectionLabel = new lbr::PLabel(feedDirection.get());

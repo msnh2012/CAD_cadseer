@@ -64,7 +64,7 @@ sShape(new ann::SeerShape())
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
   
   offset->setConstraint(prm::Constraint::buildNonZero());
-  offset->connectValue(boost::bind(&Hollow::setModelDirty, this));
+  offset->connectValue(std::bind(&Hollow::setModelDirty, this));
   parameters.push_back(offset.get());
   
   label = new lbr::PLabel(offset.get());

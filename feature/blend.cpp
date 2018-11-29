@@ -159,7 +159,7 @@ void Blend::addSimpleBlendQuiet(const SimpleBlend &simpleBlendIn)
     temp.radius = buildRadiusParameter();
     simpleBlends.push_back(temp);
   }
-  simpleBlends.back().radius->connectValue(boost::bind(&Blend::setModelDirty, this));
+  simpleBlends.back().radius->connectValue(std::bind(&Blend::setModelDirty, this));
   if (!simpleBlends.back().label)
   {
     simpleBlends.back().label = new lbr::PLabel(simpleBlends.back().radius.get());
@@ -183,7 +183,7 @@ void Blend::addVariableBlendQuiet(const VariableBlend &variableBlendIn)
   variableBlend = variableBlendIn;
   for (auto &e : variableBlend.entries)
   {
-    e.radius->connectValue(boost::bind(&Blend::setModelDirty, this));
+    e.radius->connectValue(std::bind(&Blend::setModelDirty, this));
     parameters.push_back(e.radius.get());
     if (!e.label)
     {
@@ -197,7 +197,7 @@ void Blend::addVariableBlendQuiet(const VariableBlend &variableBlendIn)
     if (!e.position)
       e.position = buildPositionParameter();
     e.position->setValue(e.pick.u);
-    e.position->connectValue(boost::bind(&Blend::setModelDirty, this));
+    e.position->connectValue(std::bind(&Blend::setModelDirty, this));
     if (!e.positionLabel)
     {
       e.positionLabel = new lbr::PLabel(e.position.get());

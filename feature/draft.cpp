@@ -80,7 +80,7 @@ void Draft::setDraft(const DraftConvey &conveyIn)
   neutralPick = conveyIn.neutralPlane;
   if (!conveyIn.angle)
     angle = buildAngleParameter();
-  angle->connectValue(boost::bind(&Draft::setModelDirty, this));
+  angle->connectValue(std::bind(&Draft::setModelDirty, this));
   if (!conveyIn.label)
     label = new lbr::PLabel(angle.get());
   label->valueHasChanged();
@@ -272,7 +272,7 @@ void Draft::serialRead(const prj::srl::FeatureDraft &sDraftIn)
   
   angle = buildAngleParameter();
   angle->serialIn(sDraftIn.angle());
-  angle->connectValue(boost::bind(&Draft::setModelDirty, this));
+  angle->connectValue(std::bind(&Draft::setModelDirty, this));
   
   label = new lbr::PLabel(angle.get());
   label->serialIn(sDraftIn.plabel());

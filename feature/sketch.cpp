@@ -72,7 +72,7 @@ Base()
   annexes.insert(std::make_pair(ann::Type::CSysDragger, csysDragger.get()));
   parameters.push_back(csys.get());
   
-  csys->connectValue(boost::bind(&Sketch::setModelDirty, this));
+  csys->connectValue(std::bind(&Sketch::setModelDirty, this));
   
   csysDragger->dragger->linkToMatrix(visual->getTransform());
   draggerSwitch->addChild(csysDragger->dragger);
@@ -128,7 +128,7 @@ void Sketch::addHPPair(uint32_t hIn, const std::shared_ptr<ftr::prm::Parameter> 
   assert(!hasHPPair(hIn));
   hpPairs.push_back(std::make_pair(hIn, pIn));
   parameters.push_back(pIn.get());
-  pIn->connectValue(boost::bind(&Sketch::setModelDirty, this));
+  pIn->connectValue(std::bind(&Sketch::setModelDirty, this));
 }
 
 void Sketch::removeHPPair(uint32_t hIn)

@@ -66,7 +66,7 @@ dpWireId(gu::createRandomId())
   name = QObject::tr("Trim");
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
   
-  reversed->connectValue(boost::bind(&Trim::setModelDirty, this));
+  reversed->connectValue(std::bind(&Trim::setModelDirty, this));
   parameters.push_back(reversed.get());
   
   reversedLabel = new lbr::PLabel(reversed.get());

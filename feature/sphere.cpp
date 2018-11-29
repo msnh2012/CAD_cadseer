@@ -87,8 +87,8 @@ sShape(new ann::SeerShape())
   annexes.insert(std::make_pair(ann::Type::CSysDragger, csysDragger.get()));
   overlaySwitch->addChild(csysDragger->dragger);
   
-  radius->connectValue(boost::bind(&Sphere::setModelDirty, this));
-  csys->connectValue(boost::bind(&Sphere::setModelDirty, this));
+  radius->connectValue(std::bind(&Sphere::setModelDirty, this));
+  csys->connectValue(std::bind(&Sphere::setModelDirty, this));
   
   setupIPGroup();
 }

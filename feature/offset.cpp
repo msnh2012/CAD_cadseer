@@ -55,7 +55,7 @@ sShape(new ann::SeerShape())
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
   
   distance->setConstraint(prm::Constraint::buildNonZero());
-  distance->connectValue(boost::bind(&Offset::setModelDirty, this));
+  distance->connectValue(std::bind(&Offset::setModelDirty, this));
   parameters.push_back(distance.get());
   
   distanceLabel = new lbr::PLabel(distance.get());

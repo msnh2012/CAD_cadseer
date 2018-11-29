@@ -147,10 +147,10 @@ Oblong::Oblong() :
   annexes.insert(std::make_pair(ann::Type::CSysDragger, csysDragger.get()));
   overlaySwitch->addChild(csysDragger->dragger);
   
-  length->connectValue(boost::bind(&Oblong::setModelDirty, this));
-  width->connectValue(boost::bind(&Oblong::setModelDirty, this));
-  height->connectValue(boost::bind(&Oblong::setModelDirty, this));
-  csys->connectValue(boost::bind(&Oblong::setModelDirty, this));
+  length->connectValue(std::bind(&Oblong::setModelDirty, this));
+  width->connectValue(std::bind(&Oblong::setModelDirty, this));
+  height->connectValue(std::bind(&Oblong::setModelDirty, this));
+  csys->connectValue(std::bind(&Oblong::setModelDirty, this));
   
   setupIPGroup();
 }

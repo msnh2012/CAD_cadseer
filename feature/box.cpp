@@ -155,10 +155,10 @@ Box::Box() :
   annexes.insert(std::make_pair(ann::Type::CSysDragger, csysDragger.get()));
   overlaySwitch->addChild(csysDragger->dragger);
   
-  length->connectValue(boost::bind(&Box::setModelDirty, this));
-  width->connectValue(boost::bind(&Box::setModelDirty, this));
-  height->connectValue(boost::bind(&Box::setModelDirty, this));
-  csys->connectValue(boost::bind(&Box::setModelDirty, this));
+  length->connectValue(std::bind(&Box::setModelDirty, this));
+  width->connectValue(std::bind(&Box::setModelDirty, this));
+  height->connectValue(std::bind(&Box::setModelDirty, this));
+  csys->connectValue(std::bind(&Box::setModelDirty, this));
   
   setupIPGroup();
 }

@@ -22,9 +22,6 @@
 
 #include <map>
 
-#include <boost/bimap.hpp>
-#include <boost/assign/list_of.hpp>
-
 namespace ann
 {
   enum class Type
@@ -36,23 +33,8 @@ namespace ann
     InstanceMapper
   };
   
-  typedef boost::bimap<Type, std::string> TypeMap;
-  static const TypeMap typeMap = boost::assign::list_of<TypeMap::relation>
-  (Type::Base, "Base")
-  (Type::CSysDragger, "CSysDragger")
-  (Type::SeerShape, "SeerShape")
-  (Type::IntersectionMapper, "IntersectionMapper")
-  (Type::InstanceMapper, "InstanceMapper");
-  
-  inline const std::string& toString(const Type &tIn)
-  {
-    return typeMap.left.at(tIn);
-  }
-  
-  inline const Type& toType(const std::string &sIn)
-  {
-    return typeMap.right.at(sIn);
-  }
+  const std::string& toString(const Type &tIn);
+  const Type& toType(const std::string &sIn);
   
   class Base
   {

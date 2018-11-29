@@ -102,9 +102,9 @@ Cylinder::Cylinder() : Base(),
   annexes.insert(std::make_pair(ann::Type::CSysDragger, csysDragger.get()));
   overlaySwitch->addChild(csysDragger->dragger);
   
-  radius->connectValue(boost::bind(&Cylinder::setModelDirty, this));
-  height->connectValue(boost::bind(&Cylinder::setModelDirty, this));
-  csys->connectValue(boost::bind(&Cylinder::setModelDirty, this));
+  radius->connectValue(std::bind(&Cylinder::setModelDirty, this));
+  height->connectValue(std::bind(&Cylinder::setModelDirty, this));
+  csys->connectValue(std::bind(&Cylinder::setModelDirty, this));
   
   setupIPGroup();
 }

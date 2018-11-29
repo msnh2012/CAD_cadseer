@@ -180,13 +180,13 @@ Base()
   name = QObject::tr("Extrude");
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
   
-  direction->connectValue(boost::bind(&Extrude::setModelDirty, this));
+  direction->connectValue(std::bind(&Extrude::setModelDirty, this));
   parameters.push_back(direction.get());
   
-  distance->connectValue(boost::bind(&Extrude::setModelDirty, this));
+  distance->connectValue(std::bind(&Extrude::setModelDirty, this));
   parameters.push_back(distance.get());
   
-  offset->connectValue(boost::bind(&Extrude::setModelDirty, this));
+  offset->connectValue(std::bind(&Extrude::setModelDirty, this));
   parameters.push_back(offset.get());
   
   annexes.insert(std::make_pair(ann::Type::SeerShape, sShape.get()));

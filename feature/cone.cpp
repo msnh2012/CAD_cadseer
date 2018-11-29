@@ -106,10 +106,10 @@ Cone::Cone() : Base(),
   annexes.insert(std::make_pair(ann::Type::CSysDragger, csysDragger.get()));
   overlaySwitch->addChild(csysDragger->dragger);
   
-  radius1->connectValue(boost::bind(&Cone::setModelDirty, this));
-  radius2->connectValue(boost::bind(&Cone::setModelDirty, this));
-  height->connectValue(boost::bind(&Cone::setModelDirty, this));
-  csys->connectValue(boost::bind(&Cone::setModelDirty, this));
+  radius1->connectValue(std::bind(&Cone::setModelDirty, this));
+  radius2->connectValue(std::bind(&Cone::setModelDirty, this));
+  height->connectValue(std::bind(&Cone::setModelDirty, this));
+  csys->connectValue(std::bind(&Cone::setModelDirty, this));
   
   setupIPGroup();
 }

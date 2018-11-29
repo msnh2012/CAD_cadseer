@@ -72,7 +72,7 @@ Squash::Squash() : Base(), sShape(new ann::SeerShape())
   c.intervals.push_back(interval);
   granularity->setConstraint(c);
   
-  granularity->connectValue(boost::bind(&Squash::setModelDirty, this));
+  granularity->connectValue(std::bind(&Squash::setModelDirty, this));
   parameters.push_back(granularity.get());
   
   label = new lbr::PLabel(granularity.get());

@@ -63,10 +63,10 @@ sShape(new ann::SeerShape())
   //pitch does not get wired up to dirty.
   
   gap->setConstraint(prm::Constraint::buildNonZeroPositive());
-  gap->connectValue(boost::bind(&Nest::setModelDirty, this));
+  gap->connectValue(std::bind(&Nest::setModelDirty, this));
   parameters.push_back(gap.get());
   
-  feedDirection->connectValue(boost::bind(&Nest::setModelDirty, this));
+  feedDirection->connectValue(std::bind(&Nest::setModelDirty, this));
   parameters.push_back(feedDirection.get());
   
   gapLabel = new lbr::PLabel(gap.get());

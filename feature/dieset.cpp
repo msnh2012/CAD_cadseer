@@ -51,12 +51,12 @@ DieSet::DieSet() : Base(), sShape(new ann::SeerShape())
   
   length = std::shared_ptr<prm::Parameter>(new prm::Parameter(prm::Names::Length, 1.0));
   length->setConstraint(prm::Constraint::buildNonZeroPositive());
-  length->connectValue(boost::bind(&DieSet::setModelDirty, this));
+  length->connectValue(std::bind(&DieSet::setModelDirty, this));
   parameters.push_back(length.get());
   
   width = std::shared_ptr<prm::Parameter>(new prm::Parameter(prm::Names::Width, 1.0));
   width->setConstraint(prm::Constraint::buildNonZeroPositive());
-  width->connectValue(boost::bind(&DieSet::setModelDirty, this));
+  width->connectValue(std::bind(&DieSet::setModelDirty, this));
   parameters.push_back(width.get());
   
   lengthPadding = std::shared_ptr<prm::Parameter>
@@ -68,7 +68,7 @@ DieSet::DieSet() : Base(), sShape(new ann::SeerShape())
     )
   );
   lengthPadding->setConstraint(prm::Constraint::buildZeroPositive());
-  lengthPadding->connectValue(boost::bind(&DieSet::setModelDirty, this));
+  lengthPadding->connectValue(std::bind(&DieSet::setModelDirty, this));
   parameters.push_back(lengthPadding.get());
   
   widthPadding = std::shared_ptr<prm::Parameter>
@@ -80,7 +80,7 @@ DieSet::DieSet() : Base(), sShape(new ann::SeerShape())
     )
   );
   widthPadding->setConstraint(prm::Constraint::buildZeroPositive());
-  widthPadding->connectValue(boost::bind(&DieSet::setModelDirty, this));
+  widthPadding->connectValue(std::bind(&DieSet::setModelDirty, this));
   parameters.push_back(widthPadding.get());
   
   origin = std::shared_ptr<prm::Parameter>
@@ -91,7 +91,7 @@ DieSet::DieSet() : Base(), sShape(new ann::SeerShape())
       osg::Vec3d(-1.0, -1.0, -1.0)
     )
   );
-  origin->connectValue(boost::bind(&DieSet::setModelDirty, this));
+  origin->connectValue(std::bind(&DieSet::setModelDirty, this));
   parameters.push_back(origin.get());
   
   autoCalc = std::shared_ptr<prm::Parameter>
@@ -102,7 +102,7 @@ DieSet::DieSet() : Base(), sShape(new ann::SeerShape())
       true
     )
   );
-  autoCalc->connectValue(boost::bind(&DieSet::setModelDirty, this));
+  autoCalc->connectValue(std::bind(&DieSet::setModelDirty, this));
   parameters.push_back(autoCalc.get());
   
   annexes.insert(std::make_pair(ann::Type::SeerShape, sShape.get()));
