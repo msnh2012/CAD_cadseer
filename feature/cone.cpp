@@ -17,8 +17,6 @@
  *
  */
 
-#include <boost/variant/variant.hpp>
-
 #include <globalutilities.h>
 #include <tools/idtools.h>
 #include <preferences/preferencesXML.h>
@@ -31,7 +29,7 @@
 #include <annex/csysdragger.h>
 #include <feature/conebuilder.h>
 #include <feature/updatepayload.h>
-#include <feature/parameter.h>
+#include <parameter/parameter.h>
 #include <feature/cone.h>
 
 using namespace ftr;

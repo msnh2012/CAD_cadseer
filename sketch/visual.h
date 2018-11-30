@@ -46,7 +46,7 @@ namespace osgText
   class Text;
 }
 namespace lbr{class AngularDimension;}
-namespace ftr{namespace prm{class Parameter;}}
+namespace prm{class Parameter;}
 namespace prj{namespace srl{class Visual;}}
 
 namespace skt
@@ -126,12 +126,12 @@ namespace skt
     void addHorizontal();
     void addVertical();
     void addTangent();
-    boost::optional<std::pair<SSHandle, std::shared_ptr<ftr::prm::Parameter>>> addDistance();
+    boost::optional<std::pair<SSHandle, std::shared_ptr<prm::Parameter>>> addDistance();
     void addEqual();
     void addEqualAngle();
-    boost::optional<std::pair<SSHandle, std::shared_ptr<ftr::prm::Parameter>>> addDiameter();
+    boost::optional<std::pair<SSHandle, std::shared_ptr<prm::Parameter>>> addDiameter();
     void addSymmetric();
-    boost::optional<std::pair<SSHandle, std::shared_ptr<ftr::prm::Parameter>>> addAngle();
+    boost::optional<std::pair<SSHandle, std::shared_ptr<prm::Parameter>>> addAngle();
     void addParallel();
     void addPerpendicular();
     void addMidpoint();
@@ -171,16 +171,16 @@ namespace skt
     /** @anchor ParameterBasedDimensions
      * @name Parameter Based Dimensions
      * Most visuals for constraints are detected and constructed as needed
-     * in update. There are a few dimensions that use ftr::prm::Parameters
+     * in update. There are a few dimensions that use prm::Parameters
      * and this scheme doesn't work. We need to build these visuals
      * at constraint construction and serialIn. These functions are used
      * for that setup. @see ftr::Sketch::serialRead
      */
     ///@{
-    void connect(SSHandle, ftr::prm::Parameter*, const osg::Vec3d&);
-    void connectDistance(SSHandle, ftr::prm::Parameter*, const osg::Vec3d&);
-    void connectDiameter(SSHandle, ftr::prm::Parameter*, const osg::Vec3d&);
-    void connectAngle(SSHandle, ftr::prm::Parameter*, const osg::Vec3d&);
+    void connect(SSHandle, prm::Parameter*, const osg::Vec3d&);
+    void connectDistance(SSHandle, prm::Parameter*, const osg::Vec3d&);
+    void connectDiameter(SSHandle, prm::Parameter*, const osg::Vec3d&);
+    void connectAngle(SSHandle, prm::Parameter*, const osg::Vec3d&);
     ///@}
     
     /** @anchor VisualSerial

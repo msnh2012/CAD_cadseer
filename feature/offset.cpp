@@ -17,7 +17,7 @@
  *
  */
 
-#include <boost/variant/variant.hpp>
+#include <boost/filesystem/path.hpp>
 
 #include <TopoDS.hxx>
 #include <BRepOffsetAPI_MakeOffsetShape.hxx>
@@ -34,7 +34,7 @@
 #include <feature/shapecheck.h>
 #include <feature/updatepayload.h>
 #include <feature/inputtype.h>
-#include <feature/parameter.h>
+#include <parameter/parameter.h>
 #include <feature/offset.h>
 
 using namespace ftr;

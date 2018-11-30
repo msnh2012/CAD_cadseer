@@ -17,7 +17,7 @@
  *
  */
 
-#include <boost/variant/variant.hpp>
+#include <boost/filesystem/path.hpp>
 #include <boost/optional/optional.hpp>
 
 #include <osg/Switch>
@@ -30,7 +30,7 @@
 #include "library/plabel.h"
 #include "annex/seershape.h"
 #include "feature/shapecheck.h"
-#include "feature/parameter.h"
+#include "parameter/parameter.h"
 #include "feature/updatepayload.h"
 #include "feature/inputtype.h"
 #include "feature/datumaxis.h"

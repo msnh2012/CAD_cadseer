@@ -17,7 +17,7 @@
  *
  */
 
-#include <boost/variant/variant.hpp>
+#include <boost/filesystem/path.hpp>
 #include <boost/optional/optional.hpp>
 
 #include <gp_Cylinder.hxx>
@@ -35,7 +35,7 @@
 #include <annex/seershape.h>
 #include <annex/csysdragger.h>
 #include <annex/instancemapper.h>
-#include <feature/parameter.h>
+#include <parameter/parameter.h>
 #include <project/serial/xsdcxxoutput/featureinstancepolar.h>
 #include <tools/featuretools.h>
 #include <feature/shapecheck.h>

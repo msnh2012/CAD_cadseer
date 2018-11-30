@@ -45,7 +45,7 @@
 #include "viewer/widget.h"
 #include "dialogs/widgetgeometry.h"
 #include "dialogs/expressionedit.h"
-#include "feature/parameter.h"
+#include "parameter/parameter.h"
 #include "feature/sketch.h"
 #include "sketch/solver.h"
 #include "sketch/nodemasks.h"

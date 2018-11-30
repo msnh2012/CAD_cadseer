@@ -32,7 +32,6 @@ namespace ann{class CSysDragger; class SeerShape;}
 namespace ftr
 {
 class BoxBuilder;
-namespace prm{class Parameter;}
 
 class Box : public Base
 {

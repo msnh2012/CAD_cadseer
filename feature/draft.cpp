@@ -18,7 +18,6 @@
  */
 
 #include <cassert>
-#include <boost/variant/variant.hpp>
 
 #include <gp_Pln.hxx>
 #include <BRepOffsetAPI_DraftAngle.hxx>
@@ -44,7 +43,7 @@
 #include <tools/featuretools.h>
 #include <feature/updatepayload.h>
 #include <feature/inputtype.h>
-#include <feature/parameter.h>
+#include <parameter/parameter.h>
 #include <feature/draft.h>
 
 using namespace ftr;

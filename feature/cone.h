@@ -32,7 +32,6 @@ namespace ann{class CSysDragger;}
 
 namespace ftr
 {
-  namespace prm{class Parameter;}
   class ConeBuilder;
   
   class Cone : public Base

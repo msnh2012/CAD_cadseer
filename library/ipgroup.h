@@ -27,7 +27,7 @@
 #include <osgManipulator/Dragger>
 
 namespace osg{class Switch; class AutoTransform;}
-namespace ftr{namespace prm{class Parameter;}}
+namespace prm{class Parameter;}
 namespace prj{namespace srl{class IPGroup;}}
 
 namespace lbr
@@ -43,11 +43,11 @@ namespace lbr
   class IPGroup : public osg::MatrixTransform
   {
   public:
-    IPGroup(ftr::prm::Parameter *parameterIn);
+    IPGroup(prm::Parameter *parameterIn);
     IPGroup(const IPGroup &copy, const osg::CopyOp& copyOp=osg::CopyOp::SHALLOW_COPY);
     META_Node(osg, IPGroup);
     
-    ftr::prm::Parameter* getParameter(){return parameter;}
+    prm::Parameter* getParameter(){return parameter;}
     void setParameterValue(double valueIn);
     void setRotationAxis(const osg::Vec3d&, const osg::Vec3d&);
     void valueHasChanged();
@@ -72,7 +72,7 @@ namespace lbr
     
   protected:
     IPGroup();
-    ftr::prm::Parameter *parameter = nullptr;
+    prm::Parameter *parameter = nullptr;
     double value;
     osg::Vec3d originStart;
     osg::ref_ptr<osg::Switch> dimSwitch;

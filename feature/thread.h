@@ -31,8 +31,6 @@ namespace lbr{class PLabel;}
 
 namespace ftr
 {
-  namespace prm{class Parameter;}
-  
   /**
   * @brief For creating screw threads.
   * 

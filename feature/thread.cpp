@@ -17,8 +17,6 @@
  *
  */
 
-#include <boost/variant/variant.hpp>
-
 #include <gp_Cone.hxx>
 #include <Geom_CylindricalSurface.hxx>
 #include <GCE2d_MakeSegment.hxx>
@@ -47,7 +45,7 @@
 #include <preferences/manager.h>
 #include <feature/booleanoperation.h>
 #include <feature/shapecheck.h>
-#include <feature/parameter.h>
+#include <parameter/parameter.h>
 #include <feature/thread.h>
 
 using namespace ftr;

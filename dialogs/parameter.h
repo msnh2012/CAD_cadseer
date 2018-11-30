@@ -34,7 +34,7 @@ class QLabel;
 namespace boost{namespace uuids{class uuid;}}
 
 namespace ftr{class Base;}
-namespace ftr{namespace prm{class Parameter; struct Observer;}}
+namespace prm{class Parameter; struct Observer;}
 namespace msg{class Message; struct Node; struct Sift;}
 
 namespace dlg
@@ -43,9 +43,9 @@ namespace dlg
   {
     Q_OBJECT
   public:
-    Parameter(ftr::prm::Parameter *parameterIn, const boost::uuids::uuid &idIn);
+    Parameter(prm::Parameter *parameterIn, const boost::uuids::uuid &idIn);
     virtual ~Parameter() override;
-    ftr::prm::Parameter *parameter = nullptr;
+    prm::Parameter *parameter = nullptr;
     QWidget *editWidget;
 
     //triggered from parameter being changed. Source can be either internal or external.
@@ -62,7 +62,7 @@ namespace dlg
     void buildGui();
     void valueHasChanged();
     void constantHasChanged();
-    std::unique_ptr<ftr::prm::Observer> pObserver;
+    std::unique_ptr<prm::Observer> pObserver;
     std::unique_ptr<msg::Node> node;
     std::unique_ptr<msg::Sift> sift;
     void featureRemovedDispatched(const msg::Message &);

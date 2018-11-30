@@ -17,8 +17,6 @@
  *
  */
 
-#include <boost/variant/variant.hpp>
-
 #include <BRepFilletAPI_MakeChamfer.hxx>
 #include <TopExp.hxx>
 #include <TopoDS_Edge.hxx>
@@ -43,7 +41,7 @@
 #include <annex/seershape.h>
 #include <feature/shapecheck.h>
 #include <feature/updatepayload.h>
-#include <feature/parameter.h>
+#include <parameter/parameter.h>
 #include <tools/featuretools.h>
 #include <feature/chamfer.h>
 

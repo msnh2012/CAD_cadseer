@@ -66,7 +66,7 @@
 #include <viewer/message.h>
 #include <selection/message.h>
 #include <annex/seershape.h>
-#include <feature/parameter.h>
+#include <parameter/parameter.h>
 #include <feature/blend.h>
 #include <dialogs/splitterdecorated.h>
 #include <dialogs/widgetgeometry.h>
@@ -81,7 +81,7 @@ namespace dlg
   {
   public:
     SimpleBlendItem() = delete;
-    SimpleBlendItem(std::shared_ptr<ftr::prm::Parameter> rIn) :  //new blend definition
+    SimpleBlendItem(std::shared_ptr<prm::Parameter> rIn) :  //new blend definition
       QStandardItem()
       , radius(rIn)
     {
@@ -105,7 +105,7 @@ namespace dlg
       }
     }
     
-    std::shared_ptr<ftr::prm::Parameter> radius;
+    std::shared_ptr<prm::Parameter> radius;
     boost::uuids::uuid expressionId;
     std::string expressionName;
   };
@@ -139,7 +139,7 @@ namespace dlg
     {
     public:
       RadiusItem() = delete;
-      RadiusItem(std::shared_ptr<ftr::prm::Parameter> pIn) :
+      RadiusItem(std::shared_ptr<prm::Parameter> pIn) :
         QTableWidgetItem(QTableWidgetItem::UserType),
         parameter(pIn)
       {
@@ -162,7 +162,7 @@ namespace dlg
           setData(Qt::UserRole, true);
         }
       }
-      std::shared_ptr<ftr::prm::Parameter> parameter;
+      std::shared_ptr<prm::Parameter> parameter;
       boost::uuids::uuid expressionId;
       std::string expressionName;
     };
@@ -207,7 +207,7 @@ namespace dlg
       return ni;
     }
     
-    bool addConstraint(std::shared_ptr<ftr::prm::Parameter> pIn, const ftr::Pick &pickIn)
+    bool addConstraint(std::shared_ptr<prm::Parameter> pIn, const ftr::Pick &pickIn)
     {
       //scan and make sure we are not adding a duplicate.
       for (int r = 0; r < constraintTable->rowCount(); ++r)
@@ -363,7 +363,7 @@ Blend::Blend(ftr::Blend *editBlendIn, QWidget *parent) : QDialog(parent), blend(
     for (const auto &sb : blend->getSimpleBlends())
     {
       //here we need to clone the parameter so we can change it and user hit cancel.
-      SimpleBlendItem *nsbi = new SimpleBlendItem(std::make_shared<ftr::prm::Parameter>(*sb.radius));
+      SimpleBlendItem *nsbi = new SimpleBlendItem(std::make_shared<prm::Parameter>(*sb.radius));
       if (!nsbi->radius->isConstant())
       {
         const expr::Manager &eManager = app::instance()->getProject()->getManager();
@@ -420,7 +420,7 @@ Blend::Blend(ftr::Blend *editBlendIn, QWidget *parent) : QDialog(parent), blend(
         np.highlightIds.push_back(r.resultId);
       }
       
-      if (vWidget->addConstraint(std::make_shared<ftr::prm::Parameter>(*e.radius), np))
+      if (vWidget->addConstraint(std::make_shared<prm::Parameter>(*e.radius), np))
       {
         auto *ct = vWidget->constraintTable;
         auto *ri = dynamic_cast<VariableWidget::RadiusItem*>(ct->item(ct->rowCount() - 1, 0));
@@ -1011,7 +1011,7 @@ void Blend::cEnsureOne()
 {
   if (cModel->rowCount() == 0)
   {
-    std::shared_ptr<ftr::prm::Parameter> np = ftr::Blend::buildRadiusParameter();
+    std::shared_ptr<prm::Parameter> np = ftr::Blend::buildRadiusParameter();
     cModel->appendRow(new SimpleBlendItem(np));
   }
 }
@@ -1125,7 +1125,7 @@ void Blend::cAddRadius()
 {
   cView->collapseAll();
   
-  std::shared_ptr<ftr::prm::Parameter> np = ftr::Blend::buildRadiusParameter();
+  std::shared_ptr<prm::Parameter> np = ftr::Blend::buildRadiusParameter();
   cModel->appendRow(new SimpleBlendItem(np));
   //no need to expand a new item.
   

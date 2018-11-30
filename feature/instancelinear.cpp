@@ -17,7 +17,7 @@
  *
  */
 
-#include <boost/variant/variant.hpp>
+#include <boost/filesystem/path.hpp>
 
 #include <TopoDS.hxx>
 
@@ -28,7 +28,7 @@
 #include <annex/csysdragger.h>
 #include <annex/instancemapper.h>
 #include <feature/datumplane.h>
-#include <feature/parameter.h>
+#include <parameter/parameter.h>
 #include <feature/shapecheck.h>
 #include <project/serial/xsdcxxoutput/featureinstancelinear.h>
 #include <tools/featuretools.h>

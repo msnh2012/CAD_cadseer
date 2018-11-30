@@ -325,7 +325,6 @@ SET(MESSAGE_SOURCES
     )
     
 SET(FEATURE_SOURCES
-    feature/parameter.cpp
     feature/inputtype.cpp
     feature/base.cpp
     feature/box.cpp
@@ -374,6 +373,10 @@ SET(FEATURE_SOURCES
     feature/sketch.cpp
     feature/extrude.cpp
     feature/revolve.cpp
+    )
+    
+SET(PARAMETER_SOURCES
+    parameter/parameter.cpp
     )
     
 SET(ANNEX_SOURCES
@@ -594,6 +597,7 @@ SET(CADSEER_SOURCES
     ${GESTURE_SOURCES}
     ${MESSAGE_SOURCES}
     ${FEATURE_SOURCES}
+    ${PARAMETER_SOURCES}
     ${ANNEX_SOURCES}
     ${EXPRESSION_SOURCES}
     ${SELECTION_SOURCES}

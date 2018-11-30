@@ -30,7 +30,8 @@
 
 #include <preferences/preferencesXML.h>
 #include <preferences/manager.h>
-#include <feature/parameter.h>
+#include <parameter/variant.h>
+#include <parameter/parameter.h>
 #include <project/serial/xsdcxxoutput/featurebase.h>
 #include <library/plabel.h>
 
@@ -90,10 +91,10 @@ PLabel::PLabel(const PLabel& copy, const osg::CopyOp& copyOp) : osg::MatrixTrans
   assert(0); //don't use copy.
 }
 
-PLabel::PLabel(ftr::prm::Parameter* parameterIn)
+PLabel::PLabel(prm::Parameter* parameterIn)
 : osg::MatrixTransform()
 , parameter(parameterIn)
-, pObserver(new ftr::prm::Observer(std::bind(&PLabel::valueHasChanged, this), std::bind(&PLabel::constantHasChanged, this)))
+, pObserver(new prm::Observer(std::bind(&PLabel::valueHasChanged, this), std::bind(&PLabel::constantHasChanged, this)))
 {
   getOrCreateStateSet()->setMode(GL_LIGHTING, osg::StateAttribute::OFF);
   build();
@@ -131,7 +132,7 @@ void PLabel::setText()
   std::ostringstream stream;
   if (showName)
     stream << parameter->getName().toStdString() << " = ";
-  stream << boost::apply_visitor(TextVisitor(), parameter->getVariant());
+  stream << boost::apply_visitor(TextVisitor(), parameter->getStow().variant);
   text->setText(stream.str());
 }
 

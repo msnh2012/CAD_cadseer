@@ -21,9 +21,9 @@
 
 #include <QTextStream>
 
-#include <boost/variant/variant.hpp>
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
+#include <boost/variant/variant.hpp>
 
 #include <BRep_Builder.hxx>
 #include <TopoDS_Compound.hxx>
@@ -55,7 +55,8 @@
 #include <lod/message.h>
 #include <annex/shapeidhelper.h>
 #include <annex/seershape.h>
-#include <feature/parameter.h>
+#include <parameter/variant.h>
+#include <parameter/parameter.h>
 #include <feature/shapehistory.h>
 #include <feature/seershapeinfo.h>
 #include <project/serial/xsdcxxoutput/featurebase.h>
@@ -535,7 +536,7 @@ QTextStream& Base::getInfo(QTextStream &stream) const
       {
           stream
               << "    Parameter name: " << p->getName()
-              << "    Value: " << boost::apply_visitor(InfoVisitor(), p->getVariant())
+              << "    Value: " << boost::apply_visitor(InfoVisitor(), p->getStow().variant)
               << "    Is linked: " << boolString(!(p->isConstant())) << endl;
       }
     }

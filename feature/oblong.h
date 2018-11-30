@@ -30,7 +30,6 @@ namespace ann{class CSysDragger; class SeerShape;}
 
 namespace ftr
 {
-  namespace prm{class Parameter;}
   class OblongBuilder;
   
   class Oblong : public Base

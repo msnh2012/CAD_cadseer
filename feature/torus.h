@@ -28,8 +28,6 @@ namespace lbr{class IPGroup; class PLabel;}
 
 namespace ftr
 {
-  namespace prm{class Parameter;}
-  
   /**
   * @brief build a torus solid primitive
   */

@@ -17,7 +17,7 @@
  *
  */
 
-#include <boost/variant/variant.hpp>
+#include <boost/filesystem/path.hpp>
 
 #include <TopoDS.hxx>
 #include <BRepOffsetAPI_MakeOffsetShape.hxx>
@@ -34,7 +34,7 @@
 #include <project/serial/xsdcxxoutput/featurethicken.h>
 #include <feature/shapecheck.h>
 #include <feature/updatepayload.h>
-#include <feature/parameter.h>
+#include <parameter/parameter.h>
 #include <feature/inputtype.h>
 #include <feature/thicken.h>
 

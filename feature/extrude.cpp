@@ -17,7 +17,7 @@
  *
  */
 
-#include <boost/variant/variant.hpp>
+#include <boost/filesystem/path.hpp>
 #include <boost/optional/optional.hpp>
 
 #include <osg/Switch>
@@ -37,7 +37,7 @@
 #include "feature/shapecheck.h"
 #include "feature/updatepayload.h"
 #include "feature/inputtype.h"
-#include "feature/parameter.h"
+#include "parameter/parameter.h"
 #include "feature/datumaxis.h"
 #include "tools/featuretools.h"
 #include "tools/idtools.h"

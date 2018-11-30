@@ -28,7 +28,7 @@
 namespace osg{class AutoTransform;}
 namespace osgText{class Text;}
 
-namespace ftr{namespace prm{class Parameter; class Observer;}}
+namespace prm{class Parameter; class Observer;}
 namespace prj{namespace srl{class PLabel;}}
 
 namespace lbr
@@ -36,13 +36,13 @@ namespace lbr
   class PLabel : public osg::MatrixTransform
   {
   public:
-    PLabel(ftr::prm::Parameter *parameterIn);
+    PLabel(prm::Parameter *parameterIn);
     PLabel(const PLabel &copy, const osg::CopyOp& copyOp=osg::CopyOp::SHALLOW_COPY);
     META_Node(osg, PLabel);
     
     void valueHasChanged();
     void constantHasChanged();
-    ftr::prm::Parameter* getParameter(){return parameter;}
+    prm::Parameter* getParameter(){return parameter;}
     void setTextColor(const osg::Vec4&);
     void setTextColor(); //!< linked is green and constant is blue.
     
@@ -55,11 +55,11 @@ namespace lbr
     PLabel(); //needed for META_Node
     void build();
     void setText(); //sets the text from the parameter value
-    ftr::prm::Parameter *parameter = nullptr;
+    prm::Parameter *parameter = nullptr;
     osg::ref_ptr<osg::AutoTransform> autoTransform;
     osg::ref_ptr<osgText::Text> text;
     
-    std::unique_ptr<ftr::prm::Observer> pObserver;
+    std::unique_ptr<prm::Observer> pObserver;
   };
 }
 

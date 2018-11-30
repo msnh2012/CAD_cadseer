@@ -17,8 +17,6 @@
  *
  */
 
-#include <boost/variant/variant.hpp>
-
 #include <TopoDS.hxx>
 #include <BRepTools.hxx>
 #include <Precision.hxx>

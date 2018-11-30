@@ -30,7 +30,7 @@
 #include <osg/AutoTransform>
 
 #include <application/application.h>
-#include <feature/parameter.h>
+#include <parameter/parameter.h>
 #include <preferences/preferencesXML.h>
 #include <preferences/manager.h>
 #include <message/message.h>
@@ -46,7 +46,7 @@ IPGroup::IPGroup()
   assert(0);
 }
 
-IPGroup::IPGroup(ftr::prm::Parameter *parameterIn) :
+IPGroup::IPGroup(prm::Parameter *parameterIn) :
 osg::MatrixTransform(),
 mainDim(),
 differenceDim(),

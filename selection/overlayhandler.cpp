@@ -29,7 +29,7 @@
 #include <library/csysdragger.h>
 #include <library/ipgroup.h>
 #include <library/plabel.h>
-#include <feature/parameter.h>
+#include <parameter/parameter.h>
 #include <dialogs/parameter.h>
 #include <selection/visitors.h>
 #include <modelviz/nodemaskdefs.h>

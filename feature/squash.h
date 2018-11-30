@@ -21,7 +21,7 @@
 #define FTR_SQUASH_H
 
 #include <feature/pick.h>
-#include <feature/parameter.h>
+#include <parameter/parameter.h>
 #include <library/plabel.h>
 #include <feature/base.h>
 

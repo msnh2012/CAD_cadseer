@@ -17,7 +17,7 @@
  *
  */
 
-#include <boost/variant/variant.hpp>
+#include <boost/filesystem/path.hpp>
 
 #include <gp_Ax2.hxx>
 #include <gp_Ax3.hxx>
@@ -41,7 +41,7 @@
 #include <feature/booleanoperation.h>
 #include <feature/shapecheck.h>
 #include <feature/updatepayload.h>
-#include <feature/parameter.h>
+#include <parameter/parameter.h>
 #include <feature/inputtype.h>
 #include <feature/datumplane.h>
 #include <feature/trim.h>

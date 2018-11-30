@@ -28,7 +28,8 @@
 
 class QTabWidget;
 
-namespace ftr{class Sketch; namespace prm{class Parameter;}}
+namespace prm{class Parameter;}
+namespace ftr{class Sketch;}
 namespace skt{class Selection;}
 namespace msg{class Message; struct Node; struct Sift;}
 
@@ -90,7 +91,7 @@ namespace dlg
     
     QTabWidget *tabWidget = nullptr;
     ExpressionEdit *pEdit = nullptr;
-    ftr::prm::Parameter *parameter = nullptr; //!< currently selected parameter or nullptr
+    prm::Parameter *parameter = nullptr; //!< currently selected parameter or nullptr
     
     void buildGui();
     QWidget* buildPositionPage();

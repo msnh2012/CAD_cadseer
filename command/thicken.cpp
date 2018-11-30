@@ -22,7 +22,7 @@
 #include <message/node.h>
 #include <selection/eventhandler.h>
 #include <annex/seershape.h>
-#include <feature/parameter.h>
+#include <parameter/parameter.h>
 #include <feature/thicken.h>
 #include <command/thicken.h>
 

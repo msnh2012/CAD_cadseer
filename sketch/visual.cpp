@@ -55,7 +55,7 @@
 #include "library/plabel.h"
 #include "library/childnamevisitor.h"
 #include "project/serial/xsdcxxoutput/featuresketch.h"
-#include "feature/parameter.h"
+#include "parameter/parameter.h"
 #include "sketch/solver.h"
 #include "sketch/visual.h"
 
@@ -1750,7 +1750,7 @@ void Visual::addTangent()
 }
 
 //! @brief Add a distance constraint to the currently selected objects.
-boost::optional<std::pair<SSHandle, std::shared_ptr<ftr::prm::Parameter>>> Visual::addDistance()
+boost::optional<std::pair<SSHandle, std::shared_ptr<prm::Parameter>>> Visual::addDistance()
 {
   SSHandle dh = 0;
   double length = 0.0;
@@ -1793,8 +1793,8 @@ boost::optional<std::pair<SSHandle, std::shared_ptr<ftr::prm::Parameter>>> Visua
   }
   solver.solve(solver.getGroup(), true);
   
-  std::shared_ptr<ftr::prm::Parameter> parameter = std::make_shared<ftr::prm::Parameter>
-    (ftr::prm::Names::Distance, length);
+  std::shared_ptr<prm::Parameter> parameter = std::make_shared<prm::Parameter>
+    (prm::Names::Distance, length);
   data->cMap.records.push_back(Map::Record());
   Map::Record &record = data->cMap.records.back();
   record.handle = dh;
@@ -1807,7 +1807,7 @@ boost::optional<std::pair<SSHandle, std::shared_ptr<ftr::prm::Parameter>>> Visua
   return std::make_pair(dh, parameter);
 }
 
-void Visual::connect(SSHandle cHandle, ftr::prm::Parameter *parameter, const osg::Vec3d &location)
+void Visual::connect(SSHandle cHandle, prm::Parameter *parameter, const osg::Vec3d &location)
 {
   auto c = solver.findConstraint(cHandle);
   if (!c)
@@ -1820,7 +1820,7 @@ void Visual::connect(SSHandle cHandle, ftr::prm::Parameter *parameter, const osg
     connectAngle(cHandle, parameter, location);
 }
 
-void Visual::connectDistance(SSHandle cHandle, ftr::prm::Parameter *parameter, const osg::Vec3d &location)
+void Visual::connectDistance(SSHandle cHandle, prm::Parameter *parameter, const osg::Vec3d &location)
 {
   auto oRec = data->cMap.getRecord(cHandle);
   if (!oRec)
@@ -1846,7 +1846,7 @@ void Visual::connectDistance(SSHandle cHandle, ftr::prm::Parameter *parameter, c
   data->constraintGroup->addChild(record.node);
 }
 
-void Visual::connectDiameter(SSHandle cHandle, ftr::prm::Parameter *parameter, const osg::Vec3d &location)
+void Visual::connectDiameter(SSHandle cHandle, prm::Parameter *parameter, const osg::Vec3d &location)
 {
   auto oRec = data->cMap.getRecord(cHandle);
   if (!oRec)
@@ -1871,7 +1871,7 @@ void Visual::connectDiameter(SSHandle cHandle, ftr::prm::Parameter *parameter, c
   data->constraintGroup->addChild(record.node);
 }
 
-void Visual::connectAngle(SSHandle cHandle, ftr::prm::Parameter *parameter, const osg::Vec3d &location)
+void Visual::connectAngle(SSHandle cHandle, prm::Parameter *parameter, const osg::Vec3d &location)
 {
   auto oRec = data->cMap.getRecord(cHandle);
   if (!oRec)
@@ -1954,7 +1954,7 @@ void Visual::addEqualAngle()
 }
 
 //! @brief Add a diameter constraint to the currently selected objects.
-boost::optional<std::pair<SSHandle, std::shared_ptr<ftr::prm::Parameter>>> Visual::addDiameter()
+boost::optional<std::pair<SSHandle, std::shared_ptr<prm::Parameter>>> Visual::addDiameter()
 {
   std::vector<SSHandle> circles = getSelectedCircles();
   if (circles.size() != 1)
@@ -1986,8 +1986,8 @@ boost::optional<std::pair<SSHandle, std::shared_ptr<ftr::prm::Parameter>>> Visua
     SSHandle dh = solver.addDiameter(radius.get() * 2.0, c);
     solver.solve(solver.getGroup(), true);
     
-    std::shared_ptr<ftr::prm::Parameter> parameter = std::make_shared<ftr::prm::Parameter>
-    (ftr::prm::Names::Diameter, radius.get() * 2.0);
+    std::shared_ptr<prm::Parameter> parameter = std::make_shared<prm::Parameter>
+    (prm::Names::Diameter, radius.get() * 2.0);
     
     data->cMap.records.push_back(Map::Record());
     Map::Record &record = data->cMap.records.back();
@@ -2047,7 +2047,7 @@ void Visual::addSymmetric()
 }
 
 //! @brief Add angle constraint to the currently selected objects.
-boost::optional<std::pair<SSHandle, std::shared_ptr<ftr::prm::Parameter>>> Visual::addAngle()
+boost::optional<std::pair<SSHandle, std::shared_ptr<prm::Parameter>>> Visual::addAngle()
 {
   std::vector<SSHandle> lines = getSelectedLines();
   if (data->highlights.size() == 2 && lines.size() == 2)
@@ -2100,7 +2100,7 @@ boost::optional<std::pair<SSHandle, std::shared_ptr<ftr::prm::Parameter>>> Visua
     SSHandle ah = solver.addAngle(osg::RadiansToDegrees(angle), lines.front(), lines.back(), reversedSense);
     solver.solve(solver.getGroup(), true);
     
-    std::shared_ptr<ftr::prm::Parameter> parameter = std::make_shared<ftr::prm::Parameter> (ftr::prm::Names::Angle, osg::RadiansToDegrees(angle));
+    std::shared_ptr<prm::Parameter> parameter = std::make_shared<prm::Parameter> (prm::Names::Angle, osg::RadiansToDegrees(angle));
     data->cMap.records.push_back(Map::Record());
     Map::Record &record = data->cMap.records.back();
     record.handle = ah;

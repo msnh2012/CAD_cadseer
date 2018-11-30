@@ -21,13 +21,13 @@
 #include <limits>
 
 #include <boost/signals2.hpp>
-#include <boost/variant.hpp>
 
 #include <tools/idtools.h>
 #include <project/serial/xsdcxxoutput/featurebase.h>
-#include <feature/parameter.h>
+#include <parameter/variant.h>
+#include <parameter/parameter.h>
 
-using namespace ftr::prm;
+using namespace prm;
 using boost::filesystem::path;
 
 Boundary::Boundary(double valueIn, Boundary::End endIn) :
@@ -237,21 +237,18 @@ bool Constraint::test(double testValue) const
   return out;
 }
 
-namespace ftr
+namespace prm
 {
-  namespace prm
+  struct Observer::Stow
   {
-    struct Observer::Stow
-    {
-      std::vector<boost::signals2::scoped_connection> connections;
-      std::vector<boost::signals2::shared_connection_block> blockers;
-    };
-    struct Subject::Stow
-    {
-      boost::signals2::signal<void ()> valueSignal;
-      boost::signals2::signal<void ()> constantSignal;
-    };
-  }
+    std::vector<boost::signals2::scoped_connection> connections;
+    std::vector<boost::signals2::shared_connection_block> blockers;
+  };
+  struct Subject::Stow
+  {
+    boost::signals2::signal<void ()> valueSignal;
+    boost::signals2::signal<void ()> constantSignal;
+  };
 }
 
 Observer::Observer()
@@ -473,7 +470,7 @@ public:
 
 Parameter::Parameter(const QString& nameIn, double valueIn) :
   name(nameIn),
-  value(valueIn),
+  stow(new Stow(valueIn)),
   id(gu::createRandomId()),
   constraint(Constraint::buildAll())
 {
@@ -481,7 +478,7 @@ Parameter::Parameter(const QString& nameIn, double valueIn) :
 
 Parameter::Parameter(const QString& nameIn, int valueIn) :
   name(nameIn),
-  value(valueIn),
+  stow(new Stow(valueIn)),
   id(gu::createRandomId()),
   constraint(Constraint::buildAll())
 {
@@ -489,7 +486,7 @@ Parameter::Parameter(const QString& nameIn, int valueIn) :
 
 Parameter::Parameter(const QString& nameIn, bool valueIn) :
   name(nameIn),
-  value(valueIn),
+  stow(new Stow(valueIn)),
   id(gu::createRandomId()),
   constraint()
 {
@@ -497,7 +494,7 @@ Parameter::Parameter(const QString& nameIn, bool valueIn) :
 
 Parameter::Parameter(const QString &nameIn, const boost::filesystem::path &valueIn, PathType ptIn) :
   name(nameIn),
-  value(valueIn),
+  stow(new Stow(valueIn)),
   id(gu::createRandomId()),
   constraint(),
   pathType(ptIn)
@@ -506,7 +503,7 @@ Parameter::Parameter(const QString &nameIn, const boost::filesystem::path &value
 
 Parameter::Parameter(const QString &nameIn, const osg::Vec3d &valueIn) :
   name(nameIn),
-  value(valueIn),
+  stow(new Stow(valueIn)),
   id(gu::createRandomId()),
   constraint()
 {
@@ -514,7 +511,7 @@ Parameter::Parameter(const QString &nameIn, const osg::Vec3d &valueIn) :
 
 Parameter::Parameter(const QString &nameIn, const osg::Matrixd &valueIn) :
   name(nameIn),
-  value(valueIn),
+  stow(new Stow(valueIn)),
   id(gu::createRandomId()),
   constraint()
 {
@@ -529,12 +526,14 @@ Parameter::Parameter(const Parameter &other, const boost::uuids::uuid &idIn) :
 Parameter::Parameter(const Parameter &other) :
   constant(other.constant),
   name(other.name),
-  value(other.value),
+  stow(new Stow(other.stow->variant)),
   id(other.id),
   constraint(other.constraint),
   pathType(other.pathType)
 {
 }
+
+Parameter::~Parameter() = default;
 
 void Parameter::setConstant(bool constantIn)
 {
@@ -546,12 +545,17 @@ void Parameter::setConstant(bool constantIn)
 
 const std::type_info& Parameter::getValueType() const
 {
-  return value.type();
+  return stow->variant.type();
 }
 
 std::string Parameter::getValueTypeString() const
 {
-  return boost::apply_visitor(TypeStringVisitor(), value);
+  return boost::apply_visitor(TypeStringVisitor(), stow->variant);
+}
+
+const Stow& Parameter::getStow() const
+{
+  return *stow;
 }
 
 bool Parameter::setValue(double valueIn)
@@ -567,19 +571,19 @@ bool Parameter::setValue(double valueIn)
 
 bool Parameter::setValueQuiet(double valueIn)
 {
-  if (boost::apply_visitor(DoubleVisitor(), value) == valueIn)
+  if (boost::apply_visitor(DoubleVisitor(), stow->variant) == valueIn)
     return false;
   
   if (!isValidValue(valueIn))
     return false;
   
-  value = valueIn;
+  stow->variant = valueIn;
   return true;
 }
 
 Parameter::operator double() const
 {
-  return boost::apply_visitor(DoubleVisitor(), value);
+  return boost::apply_visitor(DoubleVisitor(), stow->variant);
 }
 
 bool Parameter::isValidValue(const double &valueIn) const
@@ -609,13 +613,13 @@ bool Parameter::setValue(int valueIn)
 
 bool Parameter::setValueQuiet(int valueIn)
 {
-  if (boost::apply_visitor(IntVisitor(), value) == valueIn)
+  if (boost::apply_visitor(IntVisitor(), stow->variant) == valueIn)
     return false;
   
   if (!isValidValue(valueIn))
     return false;
   
-  value = valueIn;
+  stow->variant = valueIn;
   return true;
 }
 
@@ -626,7 +630,7 @@ bool Parameter::isValidValue(const int &valueIn) const
 
 Parameter::operator int() const
 {
-  return boost::apply_visitor(IntVisitor(), value);
+  return boost::apply_visitor(IntVisitor(), stow->variant);
 }
 
 bool Parameter::setValue(bool valueIn)
@@ -642,16 +646,16 @@ bool Parameter::setValue(bool valueIn)
 
 bool Parameter::setValueQuiet(bool valueIn)
 {
-  if (boost::apply_visitor(BoolVisitor(), value) == valueIn)
+  if (boost::apply_visitor(BoolVisitor(), stow->variant) == valueIn)
     return false;
   
-  value = valueIn;
+  stow->variant = valueIn;
   return true;
 }
 
 Parameter::operator bool() const
 {
-  return boost::apply_visitor(BoolVisitor(), value);
+  return boost::apply_visitor(BoolVisitor(), stow->variant);
 }
 
 bool Parameter::setValue(const path &valueIn)
@@ -667,16 +671,16 @@ bool Parameter::setValue(const path &valueIn)
 
 bool Parameter::setValueQuiet(const path &valueIn)
 {
-  if (boost::apply_visitor(PathVisitor(), value) == valueIn)
+  if (boost::apply_visitor(PathVisitor(), stow->variant) == valueIn)
     return false;
   
-  value = valueIn;
+  stow->variant = valueIn;
   return true;
 }
 
 Parameter::operator boost::filesystem::path() const
 {
-  return boost::apply_visitor(PathVisitor(), value);
+  return boost::apply_visitor(PathVisitor(), stow->variant);
 }
 
 bool Parameter::setValue(const osg::Vec3d &vIn)
@@ -692,16 +696,16 @@ bool Parameter::setValue(const osg::Vec3d &vIn)
 
 bool Parameter::setValueQuiet(const osg::Vec3d &vIn)
 {
-  if (boost::apply_visitor(Vec3dVisitor(), value) == vIn)
+  if (boost::apply_visitor(Vec3dVisitor(), stow->variant) == vIn)
     return false;
   
-  value = vIn;
+  stow->variant = vIn;
   return true;
 }
 
 Parameter::operator osg::Vec3d() const
 {
-  return boost::apply_visitor(Vec3dVisitor(), value);
+  return boost::apply_visitor(Vec3dVisitor(), stow->variant);
 }
 
 bool Parameter::setValue(const osg::Matrixd &mIn)
@@ -717,10 +721,10 @@ bool Parameter::setValue(const osg::Matrixd &mIn)
 
 bool Parameter::setValueQuiet(const osg::Matrixd &mIn)
 {
-  if (boost::apply_visitor(MatrixdVisitor(), value) == mIn)
+  if (boost::apply_visitor(MatrixdVisitor(), stow->variant) == mIn)
     return false;
   
-  value = mIn;
+  stow->variant = mIn;
   return true;
 }
 
@@ -740,7 +744,7 @@ void Parameter::connectConstant(Handler h)
 
 Parameter::operator osg::Matrixd() const
 {
-  return boost::apply_visitor(MatrixdVisitor(), value);
+  return boost::apply_visitor(MatrixdVisitor(), stow->variant);
 }
 
 
@@ -755,7 +759,7 @@ Parameter::operator osg::Quat() const{return osg::Quat();}
 prj::srl::Parameter Parameter::serialOut() const
 {
   prj::srl::Parameter out(name.toStdString(), constant, gu::idToString(id));
-  out.pValue() = boost::apply_visitor(SrlVisitor(), value);
+  out.pValue() = boost::apply_visitor(SrlVisitor(), stow->variant);
   
   return out;
 }
@@ -770,23 +774,23 @@ void Parameter::serialIn(const prj::srl::Parameter& sParameterIn)
   {
     const auto &vIn = sParameterIn.pValue().get();
     if (vIn.aDouble().present())
-      value = vIn.aDouble().get();
+      stow->variant = vIn.aDouble().get();
     else if (vIn.anInteger().present())
-      value = vIn.anInteger().get();
+      stow->variant = vIn.anInteger().get();
     else if (vIn.aBool().present())
-      value = vIn.aBool().get();
+      stow->variant = vIn.aBool().get();
     else if (vIn.aString().present())
-      value = vIn.aString().get();
+      stow->variant = vIn.aString().get();
     else if (vIn.aPath().present())
-      value = boost::filesystem::path(vIn.aPath().get());
+      stow->variant = boost::filesystem::path(vIn.aPath().get());
     else if (vIn.aVec3d().present())
-      value = osg::Vec3d(vIn.aVec3d().get().x(), vIn.aVec3d().get().y(), vIn.aVec3d().get().z());
+      stow->variant = osg::Vec3d(vIn.aVec3d().get().x(), vIn.aVec3d().get().y(), vIn.aVec3d().get().z());
     else if (vIn.aQuat().present())
-      value = osg::Quat(vIn.aQuat().get().x(), vIn.aQuat().get().y(), vIn.aQuat().get().z(), vIn.aQuat().get().w());
+      stow->variant = osg::Quat(vIn.aQuat().get().x(), vIn.aQuat().get().y(), vIn.aQuat().get().z(), vIn.aQuat().get().w());
     else if (vIn.aMatrixd().present())
     {
       const auto &mIn = vIn.aMatrixd().get();
-      value = osg::Matrixd
+      stow->variant = osg::Matrixd
       (
         mIn.i0j0(), mIn.i0j1(), mIn.i0j2(), mIn.i0j3(),
         mIn.i1j0(), mIn.i1j1(), mIn.i1j2(), mIn.i1j3(),
@@ -797,7 +801,7 @@ void Parameter::serialIn(const prj::srl::Parameter& sParameterIn)
   }
   else if (sParameterIn.value().present())
   {
-    value = sParameterIn.value().get();
+    stow->variant = sParameterIn.value().get();
   }
   else
     assert(0);

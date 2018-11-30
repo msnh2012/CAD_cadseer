@@ -26,7 +26,7 @@
 #include <viewer/widget.h>
 #include <library/csysdragger.h>
 #include <annex/csysdragger.h>
-#include <feature/parameter.h>
+#include <parameter/parameter.h>
 #include <feature/base.h>
 #include <command/featurereposition.h>
 

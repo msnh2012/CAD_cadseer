@@ -28,7 +28,7 @@
 #include <project/project.h>
 #include <message/node.h>
 #include <message/sift.h>
-#include <feature/parameter.h>
+#include <parameter/parameter.h>
 #include <feature/base.h>
 #include <annex/seershape.h>
 #include <annex/csysdragger.h>

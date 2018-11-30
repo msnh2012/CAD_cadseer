@@ -23,7 +23,7 @@
 #include <globalutilities.h>
 #include <tools/idtools.h>
 #include <application/application.h>
-#include <feature/parameter.h>
+#include <parameter/parameter.h>
 #include <feature/base.h>
 #include <library/csysdragger.h>
 #include <message/message.h>
@@ -38,7 +38,7 @@ namespace ann
   {
   public:
     DCallBack() = delete;
-    DCallBack(osg::MatrixTransform *t, ftr::Base *fIn, ftr::prm::Parameter *parameterIn) :
+    DCallBack(osg::MatrixTransform *t, ftr::Base *fIn, prm::Parameter *parameterIn) :
     osgManipulator::DraggerTransformCallback(t),
     feature(fIn),
     parameter(parameterIn)
@@ -134,7 +134,7 @@ namespace ann
   private:
     ftr::Base *feature;
     QString featureName;
-    ftr::prm::Parameter *parameter;
+    prm::Parameter *parameter;
     osg::Vec3d originStart;
     osg::Matrixd cachedMatrix;
   };
@@ -142,7 +142,7 @@ namespace ann
 
 using namespace ann;
 
-CSysDragger::CSysDragger(ftr::Base *fIn, ftr::prm::Parameter *pIn) :
+CSysDragger::CSysDragger(ftr::Base *fIn, prm::Parameter *pIn) :
 Base(),
 dragger(new lbr::CSysDragger()),
 callBack(new DCallBack(dragger.get(), fIn, pIn)),

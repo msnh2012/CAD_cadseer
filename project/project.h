@@ -36,7 +36,8 @@ class TopoDS_Shape;
 
 namespace msg{class Message; struct Node; struct Sift;}
 namespace expr{class Manager;}
-namespace ftr{class ShapeHistory; class InputType; namespace prm{class Parameter;}}
+namespace prm{class Parameter;}
+namespace ftr{class ShapeHistory; class InputType;}
 
 namespace prj
 {
@@ -50,7 +51,7 @@ public:
     ~Project();
     void readOCC(const std::string &fileName);
     void addOCCShape(const TopoDS_Shape &shapeIn, std::string name = "");
-    ftr::prm::Parameter* findParameter(const boost::uuids::uuid &idIn) const;
+    prm::Parameter* findParameter(const boost::uuids::uuid &idIn) const;
     void updateModel();
     void updateVisual();
     void writeGraphViz(const std::string &fileName);

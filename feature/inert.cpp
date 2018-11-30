@@ -17,7 +17,7 @@
  *
  */
 
-#include <boost/variant/variant.hpp>
+#include <boost/filesystem/path.hpp>
 
 #include <TopExp.hxx>
 #include <TopTools_IndexedMapOfShape.hxx>
@@ -32,7 +32,7 @@
 #include <library/csysdragger.h>
 #include <annex/seershape.h>
 #include <annex/csysdragger.h>
-#include <feature/parameter.h>
+#include <parameter/parameter.h>
 #include <feature/updatepayload.h>
 #include <feature/inert.h>
 

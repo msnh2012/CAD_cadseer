@@ -31,8 +31,6 @@ namespace prj{namespace srl{class FeatureQuote;}}
 
 namespace ftr
 {
-  namespace prm{class Parameter;}
-  
   struct QuoteData
   {
     int quoteNumber;

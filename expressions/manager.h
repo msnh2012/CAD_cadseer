@@ -30,7 +30,7 @@
 
 class QTextStream;
 
-namespace ftr{namespace prm{class Parameter;}}
+namespace prm{class Parameter;}
 namespace msg{class Message; struct Node; struct Sift;}
 
 namespace expr{

@@ -20,7 +20,6 @@
 #include <limits>
 
 #include <boost/optional/optional.hpp>
-#include <boost/variant/variant.hpp>
 
 #include <QTextStream>
 
@@ -58,7 +57,7 @@
 #include <project/serial/xsdcxxoutput/featuredatumplane.h>
 #include <tools/featuretools.h>
 #include <tools/occtools.h>
-#include <feature/parameter.h>
+#include <parameter/parameter.h>
 #include <feature/datumaxis.h>
 #include <feature/datumplane.h>
 

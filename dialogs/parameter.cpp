@@ -38,7 +38,8 @@
 #include <project/project.h>
 #include <application/mainwindow.h>
 #include <feature/base.h>
-#include <feature/parameter.h>
+#include <parameter/variant.h>
+#include <parameter/parameter.h>
 #include <message/node.h>
 #include <message/sift.h>
 #include <preferences/preferencesXML.h>
@@ -254,10 +255,10 @@ private:
   Parameter *dialog;
 };
 
-Parameter::Parameter(ftr::prm::Parameter *parameterIn, const boost::uuids::uuid &idIn):
+Parameter::Parameter(prm::Parameter *parameterIn, const boost::uuids::uuid &idIn):
   QDialog(app::instance()->getMainWindow()),
   parameter(parameterIn)
-  , pObserver(new ftr::prm::Observer(std::bind(&Parameter::valueHasChanged, this), std::bind(&Parameter::constantHasChanged, this)))
+  , pObserver(new prm::Observer(std::bind(&Parameter::valueHasChanged, this), std::bind(&Parameter::constantHasChanged, this)))
 {
   assert(parameter);
   
@@ -300,7 +301,7 @@ void Parameter::buildGui()
   editLayout->addWidget(nameLabel);
   
   WidgetFactoryVisitor fv(this);
-  editWidget = boost::apply_visitor(fv, parameter->getVariant());
+  editWidget = boost::apply_visitor(fv, parameter->getStow().variant);
   editLayout->addWidget(editWidget);
   
   mainLayout->addLayout(editLayout);
@@ -331,7 +332,7 @@ void Parameter::requestUnlinkSlot()
 void Parameter::valueHasChanged()
 {
   ValueChangedVisitor v(this);
-  boost::apply_visitor(v, parameter->getVariant());
+  boost::apply_visitor(v, parameter->getStow().variant);
 }
 
 void Parameter::valueHasChangedDouble()
@@ -411,7 +412,7 @@ void Parameter::valueHasChangedVector()
 void Parameter::constantHasChanged()
 {
   ConstantChangedVisitor v(this);
-  boost::apply_visitor(v, parameter->getVariant());
+  boost::apply_visitor(v, parameter->getStow().variant);
 }
 
 void Parameter::constantHasChangedDouble()
@@ -539,7 +540,7 @@ void Parameter::textEditedDoubleSlot(const QString &textIn)
 void Parameter::boolChangedSlot(int i)
 {
   //we don't need to respond to this value change, so block.
-  ftr::prm::ObserverBlocker block(*pObserver);
+  prm::ObserverBlocker block(*pObserver);
   
   bool cwv = static_cast<QComboBox*>(QObject::sender())->itemData(i).toBool(); //current widget value
   if(parameter->setValue(cwv))
@@ -558,7 +559,7 @@ void Parameter::boolChangedSlot(int i)
 void Parameter::browseForPathSlot()
 {
   //we are manually setting the lineEdit so we can block value signal.
-  ftr::prm::ObserverBlocker block(*pObserver);
+  prm::ObserverBlocker block(*pObserver);
   
   //find the line edit child widget and get text.
   QLineEdit *lineEdit = editWidget->findChild<QLineEdit*>(QString("TheLineEdit"));
@@ -575,7 +576,7 @@ void Parameter::browseForPathSlot()
     extension += ".*";
   extension += ")";
   
-  if (parameter->getPathType() == ftr::prm::PathType::Read)
+  if (parameter->getPathType() == prm::PathType::Read)
   {
     //read expects the file to exist. start browse from project directory if doesn't exist.
     if (!bfs::exists(t))
@@ -598,7 +599,7 @@ void Parameter::browseForPathSlot()
     
     lineEdit->setText(fileName);
   }
-  else if (parameter->getPathType() == ftr::prm::PathType::Write)
+  else if (parameter->getPathType() == prm::PathType::Write)
   {
     if (!bfs::exists(t.parent_path()))
     {
@@ -628,7 +629,7 @@ void Parameter::browseForPathSlot()
 void Parameter::vectorChangedSlot()
 {
   //block value signal.
-  ftr::prm::ObserverBlocker block(*pObserver);
+  prm::ObserverBlocker block(*pObserver);
   
   QLineEdit *xLineEdit = editWidget->findChild<QLineEdit*>(QString("XLineEdit"));
   assert(xLineEdit); if (!xLineEdit) return;
@@ -666,7 +667,7 @@ void Parameter::vectorChangedSlot()
 void Parameter::intChangedSlot()
 {
   //block value signal.
-  ftr::prm::ObserverBlocker block(*pObserver);
+  prm::ObserverBlocker block(*pObserver);
   
   QLineEdit *lineEdit = dynamic_cast<QLineEdit*>(editWidget);
   assert(lineEdit);

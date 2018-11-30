@@ -18,7 +18,6 @@
  */
 
 #include <assert.h>
-#include <boost/variant/variant.hpp>
 
 #include <TopoDS.hxx>
 #include <TopoDS_Vertex.hxx>
@@ -46,10 +45,10 @@
 #include <preferences/preferencesXML.h>
 #include <preferences/manager.h>
 #include <project/serial/xsdcxxoutput/featureblend.h>
-#include <feature/parameter.h>
+#include <parameter/parameter.h>
 #include <feature/shapecheck.h>
 #include <annex/seershape.h>
-#include <feature/parameter.h>
+#include <parameter/parameter.h>
 #include <feature/updatepayload.h>
 #include <feature/blend.h>
 

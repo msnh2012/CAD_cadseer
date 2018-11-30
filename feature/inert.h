@@ -27,8 +27,6 @@ namespace ann{class CSysDragger;}
 
 namespace ftr
 {
-  namespace prm{class Parameter;}
-  
   /*! @brief static feature.
    * 
    * feature that has no real parameters or update.

@@ -17,8 +17,6 @@
  *
  */
 
-#include <boost/variant/variant.hpp>
-
 #include <gp_Ax3.hxx>
 #include <BRepPrimAPI_MakeTorus.hxx>
 
@@ -35,7 +33,7 @@
 #include <annex/seershape.h>
 #include <annex/csysdragger.h>
 #include <project/serial/xsdcxxoutput/featuretorus.h>
-#include <feature/parameter.h>
+#include <parameter/parameter.h>
 #include <feature/torus.h>
 
 using namespace ftr;

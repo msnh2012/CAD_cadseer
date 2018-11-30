@@ -17,8 +17,6 @@
  *
  */
 
-#include <boost/variant/variant.hpp>
-
 #include <BRepPrimAPI_MakeSphere.hxx>
 
 #include <globalutilities.h>
@@ -30,7 +28,7 @@
 #include <project/serial/xsdcxxoutput/featuresphere.h>
 #include <annex/csysdragger.h>
 #include <annex/seershape.h>
-#include <feature/parameter.h>
+#include <parameter/parameter.h>
 #include <feature/updatepayload.h>
 #include <feature/sphere.h>
 

@@ -24,7 +24,7 @@
 #include <message/node.h>
 #include <selection/eventhandler.h>
 #include <viewer/widget.h>
-#include <feature/parameter.h>
+#include <parameter/parameter.h>
 #include <feature/instancemirror.h>
 #include <command/instancemirror.h>
 

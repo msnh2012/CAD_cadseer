@@ -48,7 +48,7 @@
 #include <annex/seershape.h>
 #include <feature/inert.h>
 #include <feature/shapehistory.h>
-#include <feature/parameter.h>
+#include <parameter/parameter.h>
 #include <expressions/manager.h>
 #include <expressions/formulalink.h>
 #include <expressions/stringtranslator.h> //for serialize.
@@ -232,7 +232,7 @@ ftr::Base* Project::findFeature(const uuid &idIn) const
   return stow->findFeature(idIn);
 }
 
-ftr::prm::Parameter* Project::findParameter(const uuid &idIn) const
+prm::Parameter* Project::findParameter(const uuid &idIn) const
 {
   return stow->findParameter(idIn);
 }
@@ -1379,7 +1379,7 @@ void Project::open()
     {
       for (const auto &sLink : project->expressionLinks().get().array())
       {
-        ftr::prm::Parameter *parameter = findParameter(gu::stringToId(sLink.parameterId()));
+        prm::Parameter *parameter = findParameter(gu::stringToId(sLink.parameterId()));
         assert(parameter);
         expressionManager->addLink(parameter->getId(), gu::stringToId(sLink.expressionId()));
       }
@@ -1584,7 +1584,7 @@ void Project::expressionLink(const boost::uuids::uuid &pId, const boost::uuids::
   assert(!eId.is_nil());
   assert(expressionManager->hasFormula(eId));
   
-  ftr::prm::Parameter *parameter = findParameter(pId); //asserts on no id.
+  prm::Parameter *parameter = findParameter(pId); //asserts on no id.
   if (!parameter->isConstant())
   {
     //parameter is already linked.
@@ -1613,7 +1613,7 @@ void Project::expressionUnlink(const boost::uuids::uuid &pId)
   assert(!pId.is_nil());
   assert(expressionManager->hasParameterLink(pId));
   
-  ftr::prm::Parameter *parameter = findParameter(pId); //find already asserts.
+  prm::Parameter *parameter = findParameter(pId); //find already asserts.
   
   boost::uuids::uuid eId = expressionManager->getFormulaLink(pId);
   expressionManager->removeParameterLink(pId);

@@ -36,7 +36,8 @@
 #include <tools/graphtools.h>
 #include <globalutilities.h>
 
-namespace ftr{class Base; namespace prm{class Parameter;}}
+namespace prm{class Parameter;}
+namespace ftr{class Base;}
 
 namespace prj
 {
@@ -79,7 +80,7 @@ namespace prj
     ftr::Base* findFeature(const boost::uuids::uuid &) const;
     Vertex findVertex(const boost::uuids::uuid&) const;
     std::vector<boost::uuids::uuid> getAllFeatureIds() const;
-    ftr::prm::Parameter* findParameter(const boost::uuids::uuid &idIn) const;
+    prm::Parameter* findParameter(const boost::uuids::uuid &idIn) const;
     
     void writeGraphViz(const std::string &fileName);
     

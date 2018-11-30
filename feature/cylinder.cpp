@@ -18,7 +18,6 @@
  */
 
 #include <assert.h>
-#include <boost/variant/variant.hpp>
 
 #include <preferences/preferencesXML.h>
 #include <preferences/manager.h>
@@ -32,7 +31,7 @@
 #include <feature/cylinderbuilder.h>
 #include <annex/seershape.h>
 #include <feature/updatepayload.h>
-#include <feature/parameter.h>
+#include <parameter/parameter.h>
 #include <feature/cylinder.h>
 
 using namespace ftr;

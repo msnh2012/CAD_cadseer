@@ -40,7 +40,7 @@ namespace osg
   class AutoTransform;
 }
 
-namespace ftr{namespace prm{class Parameter;}}
+namespace prm{class Parameter;}
 
 namespace lbr
 {

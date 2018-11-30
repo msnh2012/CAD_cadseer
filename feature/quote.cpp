@@ -17,7 +17,6 @@
  *
  */
 
-#include <boost/variant/variant.hpp>
 #include <boost/filesystem.hpp>
 
 #include <libzippp.h>
@@ -38,7 +37,7 @@
 #include <project/serial/xsdcxxoutput/featurequote.h>
 #include <feature/updatepayload.h>
 #include <feature/inputtype.h>
-#include <feature/parameter.h>
+#include <parameter/parameter.h>
 #include <feature/quote.h>
 
 using namespace ftr;

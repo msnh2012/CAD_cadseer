@@ -31,7 +31,7 @@
 #include <application/application.h>
 #include <project/project.h>
 #include <feature/base.h>
-#include <feature/parameter.h>
+#include <parameter/parameter.h>
 #include <message/node.h>
 #include <message/sift.h>
 #include <preferences/preferencesXML.h>
@@ -360,7 +360,7 @@ void Manager::removeFormula(const boost::uuids::uuid& idIn)
   
   for(; it != itEnd; ++it)
   {
-    ftr::prm::Parameter *p = app::instance()->getProject()->findParameter(it->parameterId);
+    prm::Parameter *p = app::instance()->getProject()->findParameter(it->parameterId);
     assert(p);
     p->setConstant(true); //change parameter constant to true.
   }
@@ -427,7 +427,7 @@ void Manager::dispatchValues()
   FormulaLinkContainerType::const_iterator it;
   for (it = formulaLinksPtr->container.begin(); it != formulaLinksPtr->container.end(); ++it)
   {
-    ftr::prm::Parameter *p = app::instance()->getProject()->findParameter(it->parameterId);
+    prm::Parameter *p = app::instance()->getProject()->findParameter(it->parameterId);
     assert(p);
     //todo address other value types.
     p->setValue(boost::get<double>(graphPtr->getFormulaValue(it->formulaId)));
@@ -439,7 +439,7 @@ void Manager::dumpLinks(std::ostream& stream)
   FormulaLinkContainerType::const_iterator it;
   for (it = formulaLinksPtr->container.begin(); it != formulaLinksPtr->container.end(); ++it)
   {
-    ftr::prm::Parameter *p = app::instance()->getProject()->findParameter(it->parameterId);
+    prm::Parameter *p = app::instance()->getProject()->findParameter(it->parameterId);
     assert(p);
     
     stream << "parameter id: " << gu::idToString(it->parameterId)
@@ -462,7 +462,7 @@ void Manager::featureRemovedDispatched(const msg::Message &messageIn)
   prj::Message message = boost::get<prj::Message>(messageIn.payload);
   uuid featureId = message.feature->getId();
   
-  const ftr::prm::Parameters &pVector = app::instance()->getProject()->findFeature(featureId)->getParameters();
+  const prm::Parameters &pVector = app::instance()->getProject()->findFeature(featureId)->getParameters();
   
   for (const auto &p : pVector)
   {

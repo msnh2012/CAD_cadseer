@@ -33,7 +33,6 @@ namespace ann{class CSysDragger; class SeerShape;}
 
 namespace ftr
 {
-  namespace prm{class Parameter;}
   class Sphere : public Base
   {
   public:

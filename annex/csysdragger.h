@@ -22,7 +22,8 @@
 
 #include <annex/base.h>
 
-namespace ftr{class Base; namespace prm{class Parameter;}}
+namespace prm{class Parameter;}
+namespace ftr{class Base;}
 namespace lbr{class CSysDragger;}
 namespace osg{class Matrixd;}
 namespace prj{namespace srl{class CSysDragger;}}
@@ -34,7 +35,7 @@ namespace ann
   {
   public:
     CSysDragger() = delete;
-    CSysDragger(ftr::Base*, ftr::prm::Parameter*);
+    CSysDragger(ftr::Base*, prm::Parameter*);
     virtual ~CSysDragger() override;
     virtual Type getType() override {return Type::CSysDragger;}
     
@@ -47,7 +48,7 @@ namespace ann
     
     osg::ref_ptr<lbr::CSysDragger> dragger;
     osg::ref_ptr<DCallBack> callBack;
-    ftr::prm::Parameter *parameter;
+    prm::Parameter *parameter;
   };
 }
 

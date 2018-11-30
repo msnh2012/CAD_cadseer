@@ -43,12 +43,12 @@ class QTextStream;
 
 namespace osg{class Switch; class MatrixTransform; class PagedLOD;}
 namespace prj{namespace srl{class FeatureBase;}}
+namespace prm{class Parameter; typedef std::vector<Parameter*> Parameters;}
 namespace ftr
 {
 class ShapeHistory;
 class UpdatePayload;
 
-namespace prm{class Parameter; typedef std::vector<Parameter*> Parameters;}
 
 enum class Descriptor
 {

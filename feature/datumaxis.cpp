@@ -17,7 +17,7 @@
  *
  */
 
-#include <boost/variant/variant.hpp>
+#include <boost/filesystem/path.hpp>
 #include <boost/optional/optional.hpp>
 
 #include <BRep_Tool.hxx>
@@ -42,7 +42,7 @@
 #include <library/plabel.h>
 #include <annex/csysdragger.h>
 #include <project/serial/xsdcxxoutput/featuredatumaxis.h>
-#include <feature/parameter.h>
+#include <parameter/parameter.h>
 #include <feature/inputtype.h>
 #include <feature/updatepayload.h>
 #include <feature/datumplane.h>

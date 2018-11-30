@@ -140,7 +140,7 @@ std::vector<boost::uuids::uuid> Stow::getAllFeatureIds() const
   return out;
 }
 
-ftr::prm::Parameter* Stow::findParameter(const boost::uuids::uuid &idIn) const
+prm::Parameter* Stow::findParameter(const boost::uuids::uuid &idIn) const
 {
   for (auto its = boost::vertices(graph); its.first != its.second; ++its.first)
   {

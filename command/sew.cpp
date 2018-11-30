@@ -25,7 +25,7 @@
 #include <message/node.h>
 #include <selection/eventhandler.h>
 #include <annex/seershape.h>
-#include <feature/parameter.h>
+#include <parameter/parameter.h>
 #include <feature/sew.h>
 #include <command/sew.h>
 

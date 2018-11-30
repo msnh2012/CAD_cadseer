@@ -42,7 +42,7 @@
 #include <viewer/widget.h>
 #include <project/project.h>
 #include <feature/inputtype.h>
-#include <feature/parameter.h>
+#include <parameter/parameter.h>
 #include <feature/quote.h>
 #include <dialogs/widgetgeometry.h>
 #include <dialogs/selectionbutton.h>

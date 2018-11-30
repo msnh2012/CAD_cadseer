@@ -17,8 +17,6 @@
  *
  */
 
-#include <boost/variant/variant.hpp>
-
 #include <osg/Switch>
 
 #include <globalutilities.h>
@@ -26,7 +24,7 @@
 #include <tools/occtools.h>
 #include <preferences/preferencesXML.h>
 #include <preferences/manager.h>
-#include <feature/parameter.h>
+#include <parameter/parameter.h>
 #include <annex/seershape.h>
 #include <feature/shapecheck.h>
 #include <feature/boxbuilder.h>

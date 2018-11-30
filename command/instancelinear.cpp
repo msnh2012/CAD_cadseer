@@ -26,7 +26,7 @@
 #include <project/project.h>
 #include <message/node.h>
 #include <selection/eventhandler.h>
-#include <feature/parameter.h>
+#include <parameter/parameter.h>
 #include <feature/instancelinear.h>
 #include <command/instancelinear.h>
 

@@ -26,7 +26,6 @@
 
 #include <feature/base.h>
 
-namespace ftr{namespace prm{class Parameter;}}
 namespace lbr{class PLabel;}
 namespace prj{namespace srl{class FeatureDieSet;}}
 namespace ann{class SeerShape;}

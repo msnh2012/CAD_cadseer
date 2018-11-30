@@ -17,7 +17,7 @@
  *
  */
 
-#include <boost/variant/variant.hpp>
+#include <boost/filesystem/path.hpp>
 
 #include <gp_Ax2.hxx>
 #include <gp_Circ.hxx>
@@ -43,7 +43,7 @@
 #include "sketch/solver.h"
 #include "sketch/visual.h"
 #include "project/serial/xsdcxxoutput/featuresketch.h"
-#include "feature/parameter.h"
+#include "parameter/parameter.h"
 #include "feature/shapecheck.h"
 #include "feature/sketch.h"
 
@@ -113,7 +113,7 @@ bool Sketch::hasHPPair(uint32_t hIn)
   return false;
 }
 
-bool Sketch::hasHPPair(const ftr::prm::Parameter *pIn)
+bool Sketch::hasHPPair(const prm::Parameter *pIn)
 {
   for (const auto &p : hpPairs)
   {
@@ -123,7 +123,7 @@ bool Sketch::hasHPPair(const ftr::prm::Parameter *pIn)
   return false;
 }
 
-void Sketch::addHPPair(uint32_t hIn, const std::shared_ptr<ftr::prm::Parameter> &pIn)
+void Sketch::addHPPair(uint32_t hIn, const std::shared_ptr<prm::Parameter> &pIn)
 {
   assert(!hasHPPair(hIn));
   hpPairs.push_back(std::make_pair(hIn, pIn));
@@ -143,7 +143,7 @@ void Sketch::removeHPPair(uint32_t hIn)
   }
 }
 
-ftr::prm::Parameter* Sketch::getHPParameter(uint32_t hIn)
+prm::Parameter* Sketch::getHPParameter(uint32_t hIn)
 {
   assert(hasHPPair(hIn));
   for (const auto &p : hpPairs)
@@ -154,7 +154,7 @@ ftr::prm::Parameter* Sketch::getHPParameter(uint32_t hIn)
   return nullptr;
 }
 
-uint32_t Sketch::getHPHandle(const ftr::prm::Parameter *pIn)
+uint32_t Sketch::getHPHandle(const prm::Parameter *pIn)
 {
   assert(hasHPPair(pIn));
   for (const auto &p : hpPairs)

@@ -54,11 +54,11 @@ namespace ftr
     void buildDefault();
     
     bool hasHPPair(uint32_t);
-    bool hasHPPair(const ftr::prm::Parameter*);
-    void addHPPair(uint32_t, const std::shared_ptr<ftr::prm::Parameter>&);
+    bool hasHPPair(const prm::Parameter*);
+    void addHPPair(uint32_t, const std::shared_ptr<prm::Parameter>&);
     void removeHPPair(uint32_t);
-    ftr::prm::Parameter* getHPParameter(uint32_t);
-    uint32_t getHPHandle(const ftr::prm::Parameter*);
+    prm::Parameter* getHPParameter(uint32_t);
+    uint32_t getHPHandle(const prm::Parameter*);
     
   protected:
     std::unique_ptr<ann::SeerShape> sShape;
@@ -68,7 +68,7 @@ namespace ftr
     std::unique_ptr<ann::CSysDragger> csysDragger;
     osg::ref_ptr<osg::Switch> draggerSwitch;
     std::vector<boost::uuids::uuid> wireIds;
-    std::vector<std::pair<uint32_t, std::shared_ptr<ftr::prm::Parameter>>> hpPairs;
+    std::vector<std::pair<uint32_t, std::shared_ptr<prm::Parameter>>> hpPairs;
     
     void updateSeerShape();
     

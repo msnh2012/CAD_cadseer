@@ -34,7 +34,6 @@ namespace prj{namespace srl{class SolverChoice; class FeatureDatumPlane;}}
 
 namespace ftr
 {
-  namespace prm{class Parameter;}
   class UpdatePayload;
   class ShapeHistory;
   

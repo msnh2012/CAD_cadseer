@@ -32,7 +32,6 @@ namespace prj{namespace srl{class FeatureHollow;}}
 namespace ann{class SeerShape;}
 namespace ftr
 {
-  namespace prm{class Parameter;}
   class Hollow : public Base
   {
   public:

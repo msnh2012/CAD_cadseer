@@ -41,7 +41,6 @@ namespace prj{namespace srl{class FeatureDatumAxis;}}
 
 namespace ftr
 {
-  namespace prm{class Parameter;}
   class UpdatePayload;
   
   /**

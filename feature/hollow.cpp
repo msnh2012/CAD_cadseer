@@ -17,8 +17,6 @@
  *
  */
 
-#include <boost/variant/variant.hpp>
-
 #include <BRepOffsetAPI_MakeThickSolid.hxx>
 #include <BRepBuilderAPI_MakeVertex.hxx>
 #include <BRepExtrema_DistShapeShape.hxx>
@@ -43,7 +41,7 @@
 #include <tools/occtools.h>
 #include <feature/updatepayload.h>
 #include <feature/inputtype.h>
-#include <feature/parameter.h>
+#include <parameter/parameter.h>
 #include <feature/hollow.h>
 
 using namespace ftr;

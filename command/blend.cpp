@@ -28,7 +28,7 @@
 #include <selection/eventhandler.h>
 #include <annex/seershape.h>
 #include <message/node.h>
-#include <feature/parameter.h>
+#include <parameter/parameter.h>
 #include <feature/blend.h>
 #include <dialogs/parameter.h>
 #include <dialogs/blend.h>

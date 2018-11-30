@@ -36,7 +36,6 @@ namespace ann{class SeerShape;}
 namespace ftr
 {
   class ShapeHistory;
-  namespace prm{class Parameter;}
 
 struct SimpleBlend
 {

@@ -17,7 +17,7 @@
  *
  */
 
-#include <boost/variant/variant.hpp>
+#include <boost/filesystem/path.hpp>
 
 #include <TopoDS.hxx>
 #include <BRepBuilderAPI_MakeSolid.hxx>

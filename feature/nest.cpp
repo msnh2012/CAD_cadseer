@@ -17,8 +17,6 @@
  *
  */
 
-#include <boost/variant/variant.hpp>
-
 #include <BRepExtrema_DistShapeShape.hxx>
 #include <BRepExtrema_Poly.hxx>
 #include <BRepMesh_IncrementalMesh.hxx>
@@ -29,7 +27,7 @@
 #include <preferences/preferencesXML.h>
 #include <preferences/manager.h>
 #include <library/plabel.h>
-#include <feature/parameter.h>
+#include <parameter/parameter.h>
 #include <annex/seershape.h>
 #include <feature/shapecheck.h>
 #include <tools/occtools.h>

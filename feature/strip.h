@@ -20,7 +20,7 @@
 #ifndef FTR_STRIP_H
 #define FTR_STRIP_H
 
-#include <feature/parameter.h>
+#include <parameter/parameter.h>
 #include <library/plabel.h>
 #include <feature/base.h>
 
