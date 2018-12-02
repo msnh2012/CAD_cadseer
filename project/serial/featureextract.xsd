@@ -10,7 +10,6 @@
 <xs:complexType name="AccruePick">
   <xs:all>
     <xs:element name="picks" type="srl:Picks"/>
-    <xs:element name="accrueType" type="xs:string"/>
     <xs:element name="parameter" type="srl:Parameter"/>
     <xs:element name="plabel" type="srl:PLabel"/>
   </xs:all>

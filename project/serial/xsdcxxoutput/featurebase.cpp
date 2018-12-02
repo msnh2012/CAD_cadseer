@@ -2711,6 +2711,36 @@ namespace prj
       this->tag_.set (std::move (x));
     }
 
+    const Pick::AccrueTypeOptional& Pick::
+    accrueType () const
+    {
+      return this->accrueType_;
+    }
+
+    Pick::AccrueTypeOptional& Pick::
+    accrueType ()
+    {
+      return this->accrueType_;
+    }
+
+    void Pick::
+    accrueType (const AccrueTypeType& x)
+    {
+      this->accrueType_.set (x);
+    }
+
+    void Pick::
+    accrueType (const AccrueTypeOptional& x)
+    {
+      this->accrueType_ = x;
+    }
+
+    void Pick::
+    accrueType (::std::unique_ptr< AccrueTypeType > x)
+    {
+      this->accrueType_.set (std::move (x));
+    }
+
 
     // Picks
     // 
@@ -7533,7 +7563,8 @@ namespace prj
       v_ (v, this),
       history_ (this),
       selectionType_ (this),
-      tag_ (this)
+      tag_ (this),
+      accrueType_ (this)
     {
     }
 
@@ -7547,7 +7578,8 @@ namespace prj
       v_ (x.v_, f, this),
       history_ (x.history_, f, this),
       selectionType_ (x.selectionType_, f, this),
-      tag_ (x.tag_, f, this)
+      tag_ (x.tag_, f, this),
+      accrueType_ (x.accrueType_, f, this)
     {
     }
 
@@ -7561,7 +7593,8 @@ namespace prj
       v_ (this),
       history_ (this),
       selectionType_ (this),
-      tag_ (this)
+      tag_ (this),
+      accrueType_ (this)
     {
       if ((f & ::xml_schema::Flags::base) == 0)
       {
@@ -7655,6 +7688,20 @@ namespace prj
           }
         }
 
+        // accrueType
+        //
+        if (n.name () == "accrueType" && n.namespace_ ().empty ())
+        {
+          ::std::unique_ptr< AccrueTypeType > r (
+            AccrueTypeTraits::create (i, f, this));
+
+          if (!this->accrueType_)
+          {
+            this->accrueType_.set (::std::move (r));
+            continue;
+          }
+        }
+
         break;
       }
 
@@ -7699,6 +7746,7 @@ namespace prj
         this->history_ = x.history_;
         this->selectionType_ = x.selectionType_;
         this->tag_ = x.tag_;
+        this->accrueType_ = x.accrueType_;
       }
 
       return *this;
@@ -9797,6 +9845,18 @@ namespace prj
             e));
 
         s << *i.tag ();
+      }
+
+      // accrueType
+      //
+      if (i.accrueType ())
+      {
+        ::xercesc::DOMElement& s (
+          ::xsd::cxx::xml::dom::create_element (
+            "accrueType",
+            e));
+
+        s << *i.accrueType ();
       }
     }
 

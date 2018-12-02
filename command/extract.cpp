@@ -77,16 +77,17 @@ void Extract::go()
     
     if (container.selectionType == slc::Type::Face)
     {
+      //for now we just assume face equals tangent accrue.
       TopoDS_Face face = TopoDS::Face(targetSeerShape.getOCCTShape(container.shapeId));  
       ftr::Pick pick;
       pick.id = container.shapeId;
       pick.setParameter(face, container.pointLocation);
       pick.shapeHistory = project->getShapeHistory().createDevolveHistory(pick.id);
+      pick.accrueType = ftr::AccrueType::Tangent;
       
       std::shared_ptr<ftr::Extract> extract(new ftr::Extract());
       ftr::Extract::AccruePick ap;
       ap.picks = ftr::Picks({pick});
-      ap.accrueType = ftr::AccrueType::Tangent;
       ap.parameter = ftr::Extract::buildAngleParameter(10.0);
       extract->sync(ftr::Extract::AccruePicks({ap}));
       

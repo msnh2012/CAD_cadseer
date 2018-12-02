@@ -170,64 +170,6 @@ namespace prj
       //@}
 
       /**
-       * @name accrueType
-       *
-       * @brief Accessor and modifier functions for the %accrueType
-       * required element.
-       */
-      //@{
-
-      /**
-       * @brief Element type.
-       */
-      typedef ::xml_schema::String AccrueTypeType;
-
-      /**
-       * @brief Element traits type.
-       */
-      typedef ::xsd::cxx::tree::traits< AccrueTypeType, char > AccrueTypeTraits;
-
-      /**
-       * @brief Return a read-only (constant) reference to the element.
-       *
-       * @return A constant reference to the element.
-       */
-      const AccrueTypeType&
-      accrueType () const;
-
-      /**
-       * @brief Return a read-write reference to the element.
-       *
-       * @return A reference to the element.
-       */
-      AccrueTypeType&
-      accrueType ();
-
-      /**
-       * @brief Set the element value.
-       *
-       * @param x A new value to set.
-       *
-       * This function makes a copy of its argument and sets it as
-       * the new value of the element.
-       */
-      void
-      accrueType (const AccrueTypeType& x);
-
-      /**
-       * @brief Set the element value without copying.
-       *
-       * @param p A new value to use.
-       *
-       * This function will try to use the passed value directly
-       * instead of making a copy.
-       */
-      void
-      accrueType (::std::unique_ptr< AccrueTypeType > p);
-
-      //@}
-
-      /**
        * @name parameter
        *
        * @brief Accessor and modifier functions for the %parameter
@@ -353,7 +295,6 @@ namespace prj
        * initializers for required elements and attributes.
        */
       AccruePick (const PicksType&,
-                  const AccrueTypeType&,
                   const ParameterType&,
                   const PlabelType&);
 
@@ -366,7 +307,6 @@ namespace prj
        * instead of making copies.
        */
       AccruePick (::std::unique_ptr< PicksType >,
-                  const AccrueTypeType&,
                   ::std::unique_ptr< ParameterType >,
                   ::std::unique_ptr< PlabelType >);
 
@@ -441,7 +381,6 @@ namespace prj
 
       protected:
       ::xsd::cxx::tree::one< PicksType > picks_;
-      ::xsd::cxx::tree::one< AccrueTypeType > accrueType_;
       ::xsd::cxx::tree::one< ParameterType > parameter_;
       ::xsd::cxx::tree::one< PlabelType > plabel_;
 

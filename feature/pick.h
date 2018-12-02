@@ -23,27 +23,41 @@
 #include <vector>
 #include <utility>
 
-#include <boost/bimap.hpp>
-#include <boost/assign/list_of.hpp>
-
-#include <osg/Vec3d>
-
 #include <selection/definitions.h>
 #include <feature/shapehistory.h>
 
 class TopoDS_Edge;
 class TopoDS_Face;
+namespace osg{class Vec3d;}
 
 namespace prj{namespace srl{class Pick; class Picks;}}
 
 namespace ftr
 {
-  //! Selection data for features.
+  //! Enum for describing collections from a pick
+  enum class AccrueType
+  {
+    None = 0, //!< no automatic collection. This is the default.
+    Tangent //!< what type edges, faces etc determined by pick.
+  };
+  
+  //! Convert AccrueType enum to a string
+  std::string findAccrueString(AccrueType);
+  //! Convert string to AccrueType enum
+  AccrueType findAccrueType(std::string);
+  
+  /*! @struct Pick
+   * @brief Selection for a feature.
+   * 
+   * @details Picks are stored and used in features
+   * to resolve what entities from the parents
+   * are to be used in modeling algorithms.
+   */
   struct Pick
   {
     Pick();
     Pick(const boost::uuids::uuid&, double, double);
-    boost::uuids::uuid id; //!< id of edge or face.
+    boost::uuids::uuid id; //!< id of subshape. deprecate, use shapehistory.
     double u; //!< u parameter on edge or face
     double v;//!< v parameter on face
     ShapeHistory shapeHistory;
@@ -51,6 +65,7 @@ namespace ftr
     std::vector<boost::uuids::uuid> resolvedIds; //!< storage for resolved ids from id and history.
     slc::Type selectionType = slc::Type::None; //!< this is needed for fictious shapes: midpoint, center, quadrant, nearest etc..
     std::string tag; //!< this should us link the pick to input feature for isolated pick resolution.
+    AccrueType accrueType = AccrueType::None;
     
     bool operator==(const Pick&) const;
     bool isParameterType() const; //!< midpoint, quadrant and nearest are really same pick with different u.
@@ -74,17 +89,6 @@ namespace ftr
   typedef std::vector<Pick> Picks;
   prj::srl::Picks serialOut(const Picks&);
   Picks serialIn(const prj::srl::Picks&);
-  
-  enum class AccrueType
-  {
-    None = 0,
-    Tangent //!< what type edges, faces etc determined by pick.
-  };
-  
-  typedef boost::bimap<AccrueType, std::string> AccrueMap;
-  static const AccrueMap accrueMap = boost::assign::list_of<AccrueMap::relation>
-  (AccrueType::None, "None")
-  (AccrueType::Tangent, "Tangent");
 }
 
 #endif // FTR_PICK_H

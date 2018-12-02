@@ -24,12 +24,12 @@
 
 #include <tools/idtools.h>
 #include <library/plabel.h>
-#include <parameter/parameter.h>
 #include <feature/pick.h>
 #include <feature/base.h>
 
 namespace prj{namespace srl{class FeatureExtract;}}
 namespace ann{class SeerShape;}
+namespace prm{class Parameter;}
 
 namespace ftr
 {
@@ -39,8 +39,7 @@ namespace ftr
     struct AccruePick
     {
       boost::uuids::uuid id = gu::createRandomId(); //!< just used for runtime sync with dialog. no serial etc...
-      Picks picks; //!< seeds for accrue
-      AccrueType accrueType;
+      Picks picks; //!< seeds for accrue. all picks should have same accrue value.
       std::shared_ptr<prm::Parameter> parameter; //!< degrees for tangent tolerance.
       osg::ref_ptr<lbr::PLabel> label; //!< graphic icon
     };

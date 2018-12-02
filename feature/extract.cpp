@@ -34,6 +34,7 @@
 #include <feature/updatepayload.h>
 #include <tools/featuretools.h>
 #include <feature/inputtype.h>
+#include <parameter/parameter.h>
 #include <feature/extract.h>
 
 using namespace ftr;
@@ -127,7 +128,6 @@ void Extract::sync(const Extract::AccruePicks &apsIn)
         if (apsInPick.id == ap.id)
         {
           ap.picks = apsInPick.picks;
-          ap.accrueType = apsInPick.accrueType;
           //we assume parameter and labe are the same.
           assert(ap.parameter == apsInPick.parameter);
           assert(ap.label == apsInPick.label);
@@ -192,9 +192,9 @@ void Extract::updateModel(const UpdatePayload &payloadIn)
         if (shape.ShapeType() == TopAbs_FACE)
         {
           TopoDS_Face f = TopoDS::Face(shape);
-          if (ap.accrueType == AccrueType::Tangent)
+          if (resolved.pick.accrueType == AccrueType::Tangent)
             faces = occt::walkTangentFaces(targetSeerShape.getRootOCCTShape(), f, static_cast<double>(*(ap.parameter)));
-          else if (ap.accrueType == AccrueType::None)
+          else if (resolved.pick.accrueType == AccrueType::None)
             faces.push_back(f);
           
           if (!labelDone)
@@ -281,7 +281,6 @@ void Extract::serialWrite(const boost::filesystem::path &dIn)
       prj::srl::AccruePick
       (
         ::ftr::serialOut(ap.picks),
-        accrueMap.left.at(ap.accrueType),
         ap.parameter->serialOut(),
         ap.label->serialOut()
       )
@@ -310,16 +309,14 @@ void Extract::serialRead(const prj::srl::FeatureExtract &sExtractIn)
   {
     AccruePick c;
     c.picks = ::ftr::serialIn(ap.picks());
-    c.accrueType = accrueMap.right.at(ap.accrueType());
-    if (c.accrueType == AccrueType::Tangent)
+    //here we assume all picks have same accrue value.
+    if (!c.picks.empty() && c.picks.front().accrueType == AccrueType::Tangent)
     {
       c.parameter = buildAngleParameter(0.0);
-      c.label = new lbr::PLabel(c.parameter.get());
-    }
-    if (c.parameter)
       c.parameter->serialIn(ap.parameter());
-    if (c.label)
+      c.label = new lbr::PLabel(c.parameter.get());
       c.label->serialIn(ap.plabel());
+    }
     
     aps.push_back(c);
   }
