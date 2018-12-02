@@ -20,7 +20,7 @@
 #ifndef LBR_DIAMETERDIMENSION_H
 #define LBR_DIAMETERDIMENSION_H
 
-#include <boost/optional/optional.hpp>
+#include <boost/optional/optional_fwd.hpp>
 
 #include <osg/NodeCallback>
 

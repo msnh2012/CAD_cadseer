@@ -20,8 +20,7 @@
 #ifndef LBR_ANGULARDIMENSION_H
 #define LBR_ANGULARDIMENSION_H
 
-
-#include <boost/optional/optional.hpp>
+#include <boost/optional/optional_fwd.hpp>
 
 #include <osg/ref_ptr>
 #include <osg/MatrixTransform>

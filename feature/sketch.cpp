@@ -17,6 +17,7 @@
  *
  */
 
+#include <boost/optional/optional.hpp>
 #include <boost/filesystem/path.hpp>
 
 #include <gp_Ax2.hxx>

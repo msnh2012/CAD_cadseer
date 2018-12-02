@@ -20,7 +20,7 @@
 #ifndef LBR_SKETCHLINEARDIMENSION_H
 #define LBR_SKETCHLINEARDIMENSION_H
 
-#include <boost/optional/optional.hpp>
+#include <boost/optional/optional_fwd.hpp>
 
 #include <osg/ref_ptr>
 #include <osg/NodeCallback>

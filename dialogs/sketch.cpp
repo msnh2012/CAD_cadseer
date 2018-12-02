@@ -18,6 +18,7 @@
  */
 
 #include <iostream>
+#include <boost/optional/optional.hpp>
 #include <boost/variant.hpp>
 
 #include <QTabWidget>

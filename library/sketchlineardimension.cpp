@@ -17,6 +17,8 @@
  *
  */
 
+#include <boost/optional/optional.hpp>
+
 #include <osg/Billboard>
 #include <osg/Switch>
 #include <osg/AutoTransform>

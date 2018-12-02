@@ -18,6 +18,7 @@
  */
 
 #include <cassert>
+#include <boost/optional/optional.hpp>
 
 #include <osg/Billboard>
 #include <osg/Switch>

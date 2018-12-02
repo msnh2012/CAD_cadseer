@@ -20,6 +20,7 @@
 #include <cassert>
 #include <iostream>
 
+#include <boost/optional/optional.hpp>
 #include <boost/current_function.hpp>
 
 #include "project/serial/xsdcxxoutput/featuresketch.h"

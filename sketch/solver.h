@@ -25,7 +25,7 @@
 #include <vector>
 #include <cstring>
 
-#include <boost/optional/optional.hpp>
+#include <boost/optional/optional_fwd.hpp>
 
 #include <slvs.h>
 

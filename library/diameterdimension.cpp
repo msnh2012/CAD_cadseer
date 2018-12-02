@@ -17,6 +17,8 @@
  *
  */
 
+#include <boost/optional/optional.hpp>
+
 #include <osg/MatrixTransform>
 #include <osg/Switch>
 #include <osg/LOD>
