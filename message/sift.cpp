@@ -57,10 +57,7 @@ void Sift::sort()
 
 void Sift::receive(const Message &mIn) const
 {
-  if (stackDepth)
-    std::cout << "WARNING: " << name << " stack depth: " << stackDepth << std::endl;
-  stackDepth++;
-  
+  Handler handler;
   if (isSorted)
   {
     auto it = std::lower_bound
@@ -75,16 +72,25 @@ void Sift::receive(const Message &mIn) const
     );
     
     if (it != mapPairs.end() && it->first == mIn.mask)
-      it->second(mIn);
+      handler = it->second;
   }
   else
   {
     for (const auto &p : mapPairs)
     {
       if (p.first == mIn.mask)
-        p.second(mIn);
+      {
+        handler = p.second;
+        break; //only one function per mask.
+      }
     }
   }
   
+  if (!handler)
+    return;
+  if (stackDepth)
+    std::cout << "WARNING: " << name << " stack depth: " << stackDepth << std::endl;
+  stackDepth++;
+  handler(mIn);
   stackDepth--;
 }
