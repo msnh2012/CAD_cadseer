@@ -20,7 +20,6 @@
 #include <iostream>
 
 #include <boost/current_function.hpp>
-#include <boost/variant.hpp>
 
 #include <QTabWidget>
 #include <QVBoxLayout>

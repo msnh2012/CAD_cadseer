@@ -22,7 +22,6 @@
 #include <iostream>
 
 #include <boost/current_function.hpp>
-#include <boost/variant.hpp>
 
 #include <QCoreApplication>
 #include <QtCore/QTextStream>
@@ -36,6 +35,7 @@
 #include <project/project.h>
 #include <message/node.h>
 #include <message/sift.h>
+#include <selection/message.h>
 #include <feature/base.h>
 #include <expressions/manager.h>
 #include <expressions/stringtranslator.h>
@@ -679,7 +679,7 @@ void SelectionProxyModel::setupDispatcher()
 
 void SelectionProxyModel::selectionAdditionDispatched(const msg::Message &messageIn)
 {
-  slc::Message sMessage = boost::get<slc::Message>(messageIn.payload);
+  slc::Message sMessage = messageIn.getSLC();
   slc::Container aContainer;
   aContainer.selectionType = sMessage.type;
   aContainer.featureId = sMessage.featureId;
@@ -694,7 +694,7 @@ void SelectionProxyModel::selectionAdditionDispatched(const msg::Message &messag
 
 void SelectionProxyModel::selectionSubtractionDispatched(const msg::Message &messageIn)
 {
-  slc::Message sMessage = boost::get<slc::Message>(messageIn.payload);
+  slc::Message sMessage = messageIn.getSLC();
   slc::Container aContainer;
   aContainer.selectionType = sMessage.type;
   aContainer.featureId = sMessage.featureId;

@@ -18,7 +18,6 @@
  */
 
 #include <memory>
-#include <boost/variant.hpp>
 
 #include <application/application.h>
 #include <application/mainwindow.h>
@@ -27,6 +26,7 @@
 #include <message/node.h>
 #include <selection/eventhandler.h>
 #include <parameter/parameter.h>
+#include <feature/inputtype.h>
 #include <feature/instancelinear.h>
 #include <command/instancelinear.h>
 

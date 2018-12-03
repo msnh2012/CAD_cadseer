@@ -20,7 +20,6 @@
 #include <iostream>
 #include <iomanip>
 
-#include <boost/variant.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/current_function.hpp>
 
@@ -44,33 +43,35 @@
 #include <osg/BlendFunc>
 #include <osg/ValueObject>
 #include <osg/DisplaySettings>
+#include <osgText/Text>
 
-#include <application/application.h>
-#include <viewer/spaceballmanipulator.h>
-#include <viewer/widget.h>
-#include <viewer/gleventwidget.h>
-#include <modelviz/nodemaskdefs.h>
-#include <modelviz/hiddenlineeffect.h>
-#include <selection/definitions.h>
-#include <gesture/handler.h>
 #include <globalutilities.h>
 #include <tools/infotools.h>
+#include <application/application.h>
+#include <application/mainwindow.h>
+#include <project/project.h>
+#include <project/message.h>
+#include <modelviz/nodemaskdefs.h>
+#include <modelviz/hiddenlineeffect.h>
 #include <library/csysdragger.h>
+#include <selection/definitions.h>
 #include <selection/eventhandler.h>
 #include <selection/overlayhandler.h>
 #include <selection/visitors.h>
 #include <message/node.h>
 #include <message/sift.h>
 #include <lod/message.h>
-#include <viewer/textcamera.h>
-#include <viewer/overlay.h>
 #include <feature/base.h>
+#include <gesture/handler.h>
 #include <preferences/preferencesXML.h>
 #include <preferences/manager.h>
 #include <project/serial/xsdcxxoutput/view.h>
-#include <application/application.h>
-#include <application/mainwindow.h>
-#include <project/project.h>
+#include <viewer/spaceballmanipulator.h>
+#include <viewer/gleventwidget.h>
+#include <viewer/message.h>
+#include <viewer/textcamera.h>
+#include <viewer/overlay.h>
+#include <viewer/widget.h>
 
 using namespace vwr;
 
@@ -703,7 +704,7 @@ void Widget::setupDispatcher()
 
 void Widget::featureAddedDispatched(const msg::Message &messageIn)
 {
-  prj::Message message = boost::get<prj::Message>(messageIn.payload);
+  prj::Message message = messageIn.getPRJ();
   root->addChild(message.feature->getMainSwitch());
   
   slc::PLODPathVisitor visitor(app::instance()->getProject()->getSaveDirectory().string());
@@ -712,7 +713,7 @@ void Widget::featureAddedDispatched(const msg::Message &messageIn)
 
 void Widget::featureRemovedDispatched(const msg::Message &messageIn)
 {
-  prj::Message message = boost::get<prj::Message>(messageIn.payload);
+  prj::Message message = messageIn.getPRJ();
   root->removeChild(message.feature->getMainSwitch());
 }
 
@@ -778,7 +779,8 @@ void Widget::viewToggleHiddenLinesDispatched(const msg::Message&)
 
 void Widget::showThreeDDispatched(const msg::Message &msgIn)
 {
-  slc::MainSwitchVisitor v(boost::get<vwr::Message>(msgIn.payload).featureId);
+  const vwr::Message &vm = msgIn.getVWR();
+  slc::MainSwitchVisitor v(vm.featureId);
   root->accept(v);
   assert(v.out);
   if (!v.out)
@@ -789,8 +791,7 @@ void Widget::showThreeDDispatched(const msg::Message &msgIn)
   
   v.out->setAllChildrenOn();
   
-  msg::Message mOut(msg::Response | msg::View | msg::Show | msg::ThreeD);
-  mOut.payload = msgIn.payload;
+  msg::Message mOut(msg::Response | msg::View | msg::Show | msg::ThreeD, vm);
   node->sendBlocked(mOut);
   
   //see message in toggled for why we do this after the message.
@@ -800,7 +801,8 @@ void Widget::showThreeDDispatched(const msg::Message &msgIn)
 
 void Widget::hideThreeDDispatched(const msg::Message &msgIn)
 {
-  slc::MainSwitchVisitor v(boost::get<vwr::Message>(msgIn.payload).featureId);
+  const vwr::Message &vm = msgIn.getVWR();
+  slc::MainSwitchVisitor v(vm.featureId);
   root->accept(v);
   assert(v.out);
   if (!v.out)
@@ -811,14 +813,14 @@ void Widget::hideThreeDDispatched(const msg::Message &msgIn)
   
   v.out->setAllChildrenOff();
   
-  msg::Message mOut(msg::Response | msg::View | msg::Hide | msg::ThreeD);
-  mOut.payload = msgIn.payload;
+  msg::Message mOut(msg::Response | msg::View | msg::Hide | msg::ThreeD, vm);
   node->sendBlocked(mOut);
 }
 
 void Widget::threeDToggleDispatched(const msg::Message &msgIn)
 {
-  slc::MainSwitchVisitor v(boost::get<vwr::Message>(msgIn.payload).featureId);
+  const vwr::Message &vm = msgIn.getVWR();
+  slc::MainSwitchVisitor v(vm.featureId);
   root->accept(v);
   assert(v.out);
   if (!v.out)
@@ -835,8 +837,7 @@ void Widget::threeDToggleDispatched(const msg::Message &msgIn)
     maskOut = msg::Response | msg::View | msg::Show | msg::ThreeD;
   }
   
-  msg::Message mOut(maskOut);
-  mOut.payload = msgIn.payload;
+  msg::Message mOut(maskOut, vm);
   node->sendBlocked(mOut);
   
   //we don't generate visuals until needed. so hidden and inactive features
@@ -859,7 +860,7 @@ void Widget::projectUpdatedDispatched(const msg::Message &)
 
 void Widget::lodGeneratedDispatched(const msg::Message &mIn)
 {
-  const lod::Message &m = boost::get<lod::Message>(mIn.payload);
+  const lod::Message &m = mIn.getLOD();
   slc::PLODIdVisitor vis(m.featureId);
   root->accept(vis);
   assert(vis.out != nullptr); //temp for development. feature might have been deleted.
@@ -962,16 +963,16 @@ public:
       {
         if (userValue == s.id())
         {
-          msg::Payload payload((vwr::Message(gu::stringToId(userValue))));
+          vwr::Message vm(gu::stringToId(userValue));
           if (s.visible())
           {
             switchIn.setAllChildrenOn();
-            msg::hub().sendBlocked(msg::Message(msg::Mask(msg::Response | msg::View | msg::Show | msg::ThreeD), payload));
+            msg::hub().sendBlocked(msg::Message(msg::Mask(msg::Response | msg::View | msg::Show | msg::ThreeD), vm));
           }
           else
           {
             switchIn.setAllChildrenOff();
-            msg::hub().sendBlocked(msg::Message(msg::Mask(msg::Response | msg::View | msg::Hide | msg::ThreeD), payload));
+            msg::hub().sendBlocked(msg::Message(msg::Mask(msg::Response | msg::View | msg::Hide | msg::ThreeD), vm));
           }
           break;
         }

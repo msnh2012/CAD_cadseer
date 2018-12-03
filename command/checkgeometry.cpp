@@ -17,8 +17,6 @@
  *
  */
 
-#include <boost/variant.hpp>
-
 #include <project/project.h>
 #include <application/application.h>
 #include <application/mainwindow.h>

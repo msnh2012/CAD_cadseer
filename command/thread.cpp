@@ -17,8 +17,6 @@
  *
  */
 
-#include <boost/variant.hpp>
-
 #include <message/node.h>
 #include <project/project.h>
 #include <feature/thread.h>

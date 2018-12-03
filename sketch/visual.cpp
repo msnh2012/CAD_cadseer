@@ -20,8 +20,6 @@
 #include <iostream>
 #include <sstream>
 
-#include <boost/variant.hpp>
-
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
@@ -48,6 +46,7 @@
 
 #include "tools/idtools.h"
 #include "application/application.h"
+#include "selection/message.h"
 #include "message/message.h"
 #include "library/angulardimension.h"
 #include "library/sketchlineardimension.h"

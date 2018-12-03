@@ -18,13 +18,13 @@
  */
 
 #include <memory>
-#include <boost/variant.hpp>
 
 #include <project/project.h>
 #include <application/mainwindow.h>
 #include <message/node.h>
 #include <selection/eventhandler.h>
 #include <viewer/widget.h>
+#include <feature/inputtype.h>
 #include <feature/union.h>
 #include <dialogs/boolean.h>
 #include <command/union.h>

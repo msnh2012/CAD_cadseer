@@ -26,10 +26,10 @@
 
 #include <boost/graph/topological_sort.hpp>
 #include <boost/current_function.hpp>
-#include <boost/variant/variant.hpp>
 
 #include <application/application.h>
 #include <project/project.h>
+#include <project/message.h>
 #include <feature/base.h>
 #include <parameter/parameter.h>
 #include <message/node.h>
@@ -459,7 +459,7 @@ void Manager::setupDispatcher()
 
 void Manager::featureRemovedDispatched(const msg::Message &messageIn)
 {
-  prj::Message message = boost::get<prj::Message>(messageIn.payload);
+  prj::Message message = messageIn.getPRJ();
   uuid featureId = message.feature->getId();
   
   const prm::Parameters &pVector = app::instance()->getProject()->findFeature(featureId)->getParameters();

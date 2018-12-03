@@ -17,11 +17,10 @@
  *
  */
 
-#include <boost/variant.hpp>
-
 #include <project/project.h>
 #include <message/node.h>
 #include <selection/eventhandler.h>
+#include <feature/inputtype.h>
 #include <feature/refine.h>
 #include <command/refine.h>
 

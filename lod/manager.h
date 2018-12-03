@@ -23,11 +23,10 @@
 #include <memory>
 #include <fstream>
 
-#include <boost/variant/variant.hpp>
-
 #include <QObject>
 #include <QProcess> //for enums.
 
+#include <lod/message.h>
 #include <message/message.h>
 
 class QTimer;

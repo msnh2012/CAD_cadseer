@@ -18,13 +18,14 @@
  */
 
 #include <boost/graph/graphviz.hpp>
-#include <boost/variant/variant.hpp>
 
 #include <osg/Node> //yuck
 
 #include <tools/idtools.h>
 #include <feature/base.h>
+#include <feature/message.h>
 #include <message/node.h>
+#include <project/message.h>
 #include <project/stow.h>
 
 using namespace prj;
@@ -63,12 +64,15 @@ Edge Stow::connect(const Vertex &parentIn, const Vertex &childIn, const ftr::Inp
 
 void Stow::sendConnectMessage(const Vertex &parentIn, const Vertex &childIn, const ftr::InputType &type) const
 {
-  msg::Message postMessage(msg::Response | msg::Post | msg::Add | msg::Connection);
   prj::Message pMessage;
   pMessage.featureIds.push_back(graph[parentIn].feature->getId());
   pMessage.featureIds.push_back(graph[childIn].feature->getId()); 
   pMessage.inputType = type;
-  postMessage.payload = pMessage;
+  msg::Message postMessage
+  (
+    msg::Response | msg::Post | msg::Add | msg::Connection
+    , pMessage
+  );
   msg::hub().sendBlocked(postMessage);
 }
 
@@ -80,12 +84,11 @@ void Stow::disconnect(const Edge &eIn)
 
 void Stow::sendDisconnectMessage(const Vertex &parentIn, const Vertex &childIn, const ftr::InputType &type) const
 {
-  msg::Message preMessage(msg::Response | msg::Pre | msg::Remove | msg::Connection);
   prj::Message pMessage;
   pMessage.featureIds.push_back(graph[parentIn].feature->getId());
   pMessage.featureIds.push_back(graph[childIn].feature->getId());
   pMessage.inputType = type;
-  preMessage.payload = pMessage;
+  msg::Message preMessage(msg::Response | msg::Pre | msg::Remove | msg::Connection, pMessage);
   msg::hub().send(preMessage);
 }
 
@@ -209,8 +212,7 @@ bool Stow::isFeatureNonLeaf(Vertex vIn)
 void Stow::sendStateMessage(const Vertex &v, std::size_t stateOffset)
 {
   ftr::Message fMessage(graph[v].feature->getId(), graph[v].state, stateOffset);
-  msg::Message mMessage(msg::Response | msg::Project | msg::Feature | msg::Status);
-  mMessage.payload = fMessage;
+  msg::Message mMessage(msg::Response | msg::Project | msg::Feature | msg::Status, fMessage);
   msg::hub().sendBlocked(mMessage);
 }
 

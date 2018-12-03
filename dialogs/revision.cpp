@@ -29,8 +29,6 @@
 #include <QAction>
 #include <QCloseEvent>
 
-#include <boost/variant/variant.hpp>
-
 #include <message/message.h>
 #include <application/application.h>
 #include <project/project.h>

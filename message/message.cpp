@@ -17,10 +17,11 @@
  *
  */
 
-#include <boost/variant/variant.hpp>
+#include <boost/variant/get.hpp>
 
 #include <osg/Node>
 
+#include <message/variant.h>
 #include <message/message.h>
 
 using namespace msg;
@@ -29,88 +30,140 @@ Message::Message() : mask(0){}
 
 Message::Message(const Mask &maskIn) : mask(maskIn){}
 
-Message::Message(const Payload &payloadIn) : payload(payloadIn){}
+Message::Message(const Mask &maskIn, const Stow &sIn)
+: mask(maskIn)
+, stow(std::make_shared<Stow>(sIn)){}
 
-Message::Message(const Mask &maskIn, const Payload &payloadIn) : mask(maskIn), payload(payloadIn){}
+Message::Message(const Mask &mIn, const prj::Message &m)
+: mask(mIn)
+, stow(std::make_shared<Stow>(m)){}
+
+Message::Message(const Mask &mIn, const app::Message &m)
+: mask(mIn)
+, stow(std::make_shared<Stow>(m)){}
+
+Message::Message(const Mask &mIn, const slc::Message &m)
+: mask(mIn)
+, stow(std::make_shared<Stow>(m)){}
+
+Message::Message(const Mask &mIn, const vwr::Message &m)
+: mask(mIn)
+, stow(std::make_shared<Stow>(m)){}
+
+Message::Message(const Mask &mIn, const ftr::Message &m)
+: mask(mIn)
+, stow(std::make_shared<Stow>(m)){}
+
+Message::Message(const Mask &mIn, const lod::Message &m)
+: mask(mIn)
+, stow(std::make_shared<Stow>(m)){}
+
+const prj::Message& Message::getPRJ() const
+{
+  assert(stow->variant.type() == typeid(prj::Message));
+  return boost::get<prj::Message>(stow->variant);
+}
+
+const app::Message& Message::getAPP() const
+{
+  assert(stow->variant.type() == typeid(app::Message));
+  return boost::get<app::Message>(stow->variant);
+}
+
+const slc::Message& Message::getSLC() const
+{
+  assert(stow->variant.type() == typeid(slc::Message));
+  return boost::get<slc::Message>(stow->variant);
+}
+
+const vwr::Message& Message::getVWR() const
+{
+  assert(stow->variant.type() == typeid(vwr::Message));
+  return boost::get<vwr::Message>(stow->variant);
+}
+
+const ftr::Message& Message::getFTR() const
+{
+  assert(stow->variant.type() == typeid(ftr::Message));
+  return boost::get<ftr::Message>(stow->variant);
+}
+
+const lod::Message& Message::getLOD() const
+{
+  assert(stow->variant.type() == typeid(lod::Message));
+  return boost::get<lod::Message>(stow->variant);
+}
 
 msg::Message msg::buildGitMessage(const std::string &messageIn)
 {
-  msg::Message out;
-  out.mask = msg::Request | msg::Git | msg::Text;
   prj::Message pMessage;
   pMessage.gitMessage = messageIn;
-  out.payload = pMessage;
-  
-  return out;
+  return msg::Message
+  (
+    msg::Request | msg::Git | msg::Text
+    , pMessage
+  );
 }
 
 msg::Message msg::buildStatusMessage(const std::string &messageIn)
 {
-  msg::Message out;
-  out.mask = msg::Request | msg::Status | msg::Text;
-  vwr::Message statusMessage;
-  statusMessage.text = messageIn;
-  out.payload = statusMessage;
-  
-  return out;
+  return msg::Message
+  (
+    msg::Request | msg::Status | msg::Text
+    , vwr::Message(messageIn)
+  );
 }
 
 msg::Message msg::buildStatusMessage(const std::string &messageIn, float timeIn)
 {
-  msg::Message out;
-  out.mask = msg::Request | msg::Status | msg::Text;
-  vwr::Message statusMessage(messageIn, timeIn);
-  out.payload = statusMessage;
-  
-  return out;
+  return msg::Message
+  (
+    msg::Request | msg::Status | msg::Text
+    , vwr::Message(messageIn, timeIn)
+  );
 }
 
 msg::Message msg::buildSelectionMask(slc::Mask maskIn)
 {
-  slc::Message sMsg;
-  sMsg.selectionMask = maskIn;
-  msg::Message mMsg(msg::Request | msg::Selection | msg::SetMask);
-  mMsg.payload = sMsg;
-  
-  return mMsg;
+  return msg::Message
+  (
+    msg::Request | msg::Selection | msg::SetMask
+    , slc::Message(maskIn)
+  );
 }
 
 msg::Message msg::buildShowThreeD(const boost::uuids::uuid &idIn)
 {
-  vwr::Message vMsg;
-  vMsg.featureId = idIn;
-  msg::Message out(msg::Request | msg::View | msg::Show | msg::ThreeD);
-  out.payload = vMsg;
-  
-  return out;
+  return msg::Message
+  (
+    msg::Request | msg::View | msg::Show | msg::ThreeD
+    , vwr::Message(idIn)
+  );
 }
 
 msg::Message msg::buildHideThreeD(const boost::uuids::uuid &idIn)
 {
-  vwr::Message vMsg;
-  vMsg.featureId = idIn;
-  msg::Message out(msg::Request | msg::View | msg::Hide | msg::ThreeD);
-  out.payload = vMsg;
-  
-  return out;
+  return msg::Message
+  (
+    msg::Request | msg::View | msg::Hide | msg::ThreeD
+    , vwr::Message(idIn)
+  );
 }
 
 msg::Message msg::buildShowOverlay(const boost::uuids::uuid &idIn)
 {
-  vwr::Message vMsg;
-  vMsg.featureId = idIn;
-  msg::Message out(msg::Request | msg::View | msg::Show | msg::Overlay);
-  out.payload = vMsg;
-  
-  return out;
+  return msg::Message
+  (
+    msg::Request | msg::View | msg::Show | msg::Overlay
+    , vwr::Message(idIn)
+  );
 }
 
 msg::Message msg::buildHideOverlay(const boost::uuids::uuid &idIn)
 {
-  vwr::Message vMsg;
-  vMsg.featureId = idIn;
-  msg::Message out(msg::Request | msg::View | msg::Hide | msg::Overlay);
-  out.payload = vMsg;
-  
-  return out;
+  return msg::Message
+  (
+    msg::Request | msg::View | msg::Hide | msg::Overlay
+    , vwr::Message(idIn)
+  );
 }

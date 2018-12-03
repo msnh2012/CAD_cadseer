@@ -21,7 +21,6 @@
 #include <sstream>
 #include <assert.h>
 
-#include <boost/variant.hpp>
 #include <boost/current_function.hpp>
 
 #include <QApplication>
@@ -35,8 +34,10 @@
 
 #include <tools/idtools.h>
 #include <selection/definitions.h>
+#include <selection/message.h>
 #include <message/node.h>
 #include <message/sift.h>
+#include <viewer/message.h>
 #include <viewer/textcamera.h>
 
 
@@ -316,7 +317,7 @@ void TextCamera::setupDispatcher()
 
 void TextCamera::preselectionAdditionDispatched(const msg::Message &messageIn)
 {
-  slc::Message sMessage = boost::get<slc::Message>(messageIn.payload);
+  slc::Message sMessage = messageIn.getSLC();
   
   preselectionText.clear();
   std::ostringstream preselectStream;
@@ -337,7 +338,7 @@ void TextCamera::preselectionSubtractionDispatched(const msg::Message &)
 
 void TextCamera::selectionAdditionDispatched(const msg::Message &messageIn)
 {
-  slc::Message sMessage = boost::get<slc::Message>(messageIn.payload);
+  slc::Message sMessage = messageIn.getSLC();
   assert(std::find(selections.begin(), selections.end(), sMessage) == selections.end());
   selections.push_back(sMessage);
   updateSelectionLabel();
@@ -345,7 +346,7 @@ void TextCamera::selectionAdditionDispatched(const msg::Message &messageIn)
 
 void TextCamera::selectionSubtractionDispatched(const msg::Message &messageIn)
 {
-  slc::Message sMessage = boost::get<slc::Message>(messageIn.payload);
+  slc::Message sMessage = messageIn.getSLC();
   auto it = std::find(selections.begin(), selections.end(), sMessage); 
   assert(it != selections.end());
   selections.erase(it);
@@ -354,7 +355,7 @@ void TextCamera::selectionSubtractionDispatched(const msg::Message &messageIn)
 
 void TextCamera::statusTextDispatched(const msg::Message &messageIn)
 {
-  vwr::Message sMessage = boost::get<vwr::Message>(messageIn.payload);
+  vwr::Message sMessage = messageIn.getVWR();
   if (sMessage.time == 0.0)
   {
     std::string display = "What is thy bidding, my master?";
@@ -396,6 +397,6 @@ void TextCamera::updateSelectionLabel()
 
 void TextCamera::commandTextDispatched(const msg::Message &messageIn)
 {
-  vwr::Message vMessage = boost::get<vwr::Message>(messageIn.payload);
+  vwr::Message vMessage = messageIn.getVWR();
   commandLabel->setText(vMessage.text);
 }

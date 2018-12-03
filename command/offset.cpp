@@ -17,8 +17,6 @@
  *
  */
 
-#include <boost/variant.hpp>
-
 #include <TopoDS.hxx>
 
 #include <application/application.h>
@@ -29,6 +27,7 @@
 #include <selection/eventhandler.h>
 #include <annex/seershape.h>
 #include <parameter/parameter.h>
+#include <feature/inputtype.h>
 #include <feature/offset.h>
 #include <command/offset.h>
 

@@ -19,8 +19,6 @@
 
 #include <functional>
 
-#include <boost/variant.hpp>
-
 #include <osg/Geometry> //need this for containers.
 
 #include <application/application.h>
@@ -406,10 +404,9 @@ void Manager::activateTop()
 
 void Manager::sendCommandMessage(const std::string& messageIn)
 {
-  msg::Message statusMessage(msg::Request | msg::Command | msg::Text);
   vwr::Message statusVMessage;
   statusVMessage.text = messageIn;
-  statusMessage.payload = statusVMessage;
+  msg::Message statusMessage(msg::Request | msg::Command | msg::Text, statusVMessage);
   node->sendBlocked(statusMessage);
 }
 
@@ -423,7 +420,7 @@ void Manager::selectionMaskDispatched(const msg::Message &messageIn)
   if (!stack.empty()) //only when no commands 
     return;
   
-  slc::Message sMsg = boost::get<slc::Message>(messageIn.payload);
+  slc::Message sMsg = messageIn.getSLC();
   selectionMask = sMsg.selectionMask;
 }
 

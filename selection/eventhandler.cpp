@@ -20,7 +20,6 @@
 #include <iostream>
 #include <assert.h>
 
-#include <boost/variant.hpp>
 #include <boost/current_function.hpp>
 
 #include <osg/Geometry>
@@ -31,19 +30,19 @@
 #include <osg/Switch>
 #include <osgUtil/PolytopeIntersector>
 
-#include <selection/eventhandler.h>
 #include <modelviz/nodemaskdefs.h>
-#include <selection/definitions.h>
 #include <globalutilities.h>
 #include <application/application.h>
 #include <project/project.h>
 #include <feature/base.h>
 #include <annex/seershape.h>
-#include <selection/message.h>
 #include <message/node.h>
 #include <message/sift.h>
+#include <selection/message.h>
+#include <selection/definitions.h>
 #include <selection/interpreter.h>
 #include <selection/intersection.h>
+#include <selection/eventhandler.h>
 
 using namespace osg;
 using namespace boost::uuids;
@@ -259,8 +258,11 @@ bool EventHandler::handle(const osgGA::GUIEventAdapter& eventAdapter,
             //prehighlight gets 'moved' into selections so can't call
             //clear prehighlight, but we still clear the prehighlight
             //selections we need to make observers aware of this 'hidden' change.
-            msg::Message clearMessage(msg::Response | msg::Pre | msg::Preselection | msg::Remove);
-            clearMessage.payload = containerToMessage(lastPrehighlight);
+            msg::Message clearMessage
+            (
+              msg::Response | msg::Pre | msg::Preselection | msg::Remove
+              , containerToMessage(lastPrehighlight)
+            );
             node->send(clearMessage);
             
             if (slc::isPointType(lastPrehighlight.selectionType))
@@ -278,8 +280,11 @@ bool EventHandler::handle(const osgGA::GUIEventAdapter& eventAdapter,
             
             add(selectionContainers, lastPrehighlight);
             
-            msg::Message addMessage(msg::Response | msg::Post | msg::Selection | msg::Add);
-            addMessage.payload = containerToMessage(lastPrehighlight);
+            msg::Message addMessage
+            (
+              msg::Response | msg::Post | msg::Selection | msg::Add
+              , containerToMessage(lastPrehighlight)
+            );
             lastPrehighlight = Container(); //set to null before signal in case we end up in 'this' again.
             node->send(addMessage);
         }
@@ -315,8 +320,11 @@ void EventHandler::clearSelections()
     Containers::reverse_iterator it;
     for (it = selectionContainers.rbegin(); it != selectionContainers.rend(); ++it)
     {
-        msg::Message removeMessage(msg::Response | msg::Pre | msg::Selection | msg::Remove);
-        removeMessage.payload = containerToMessage(*it);
+        msg::Message removeMessage
+        (
+          msg::Response | msg::Pre | msg::Selection | msg::Remove
+          , containerToMessage(*it)
+        );
         node->send(removeMessage);
         
         if (slc::isPointType(it->selectionType))
@@ -356,8 +364,11 @@ void EventHandler::setPrehighlight(slc::Container &selected)
     else
       selectionOperation(selected.featureId, selected.selectionIds, HighlightVisitor::Operation::PreHighlight);
     
-    msg::Message addMessage(msg::Response | msg::Post | msg::Preselection | msg::Add);
-    addMessage.payload = containerToMessage(lastPrehighlight);
+    msg::Message addMessage
+    (
+      msg::Response | msg::Post | msg::Preselection | msg::Add
+      , containerToMessage(lastPrehighlight)
+    );
     node->send(addMessage);
 }
 
@@ -366,8 +377,11 @@ void EventHandler::clearPrehighlight()
     if (lastPrehighlight.selectionType == Type::None)
       return;
     
-    msg::Message removeMessage(msg::Response | msg::Pre | msg::Preselection | msg::Remove);
-    removeMessage.payload = containerToMessage(lastPrehighlight);
+    msg::Message removeMessage
+    (
+      msg::Response | msg::Pre | msg::Preselection | msg::Remove
+      , containerToMessage(lastPrehighlight)
+    );
     node->send(removeMessage);
     
     if (slc::isPointType(lastPrehighlight.selectionType))
@@ -445,7 +459,7 @@ void EventHandler::selectionOperation
 
 void EventHandler::requestPreselectionAdditionDispatched(const msg::Message &messageIn)
 {
-  slc::Message sMessage = boost::get<slc::Message>(messageIn.payload);
+  slc::Message sMessage = messageIn.getSLC();
   slc::Container container = messageToContainer(sMessage);
   if
   (
@@ -461,7 +475,7 @@ void EventHandler::requestPreselectionAdditionDispatched(const msg::Message &mes
 
 void EventHandler::requestPreselectionSubtractionDispatched(const msg::Message &messageIn)
 {
-  slc::Message sMessage = boost::get<slc::Message>(messageIn.payload);
+  slc::Message sMessage = messageIn.getSLC();
   
   slc::Container container = messageToContainer(sMessage);
   assert(container == lastPrehighlight);
@@ -474,7 +488,7 @@ void EventHandler::requestSelectionAdditionDispatched(const msg::Message &messag
 {
   clearPrehighlight();
   
-  slc::Message sMessage = boost::get<slc::Message>(messageIn.payload);
+  slc::Message sMessage = messageIn.getSLC();
   slc::Container container = messageToContainer(sMessage);
   if (alreadySelected(container))
     return;
@@ -495,14 +509,17 @@ void EventHandler::requestSelectionAdditionDispatched(const msg::Message &messag
   
   add(selectionContainers, container);
   
-  msg::Message messageOut(msg::Response | msg::Post | msg::Selection | msg::Add);
-  messageOut.payload = containerToMessage(container);
+  msg::Message messageOut
+  (
+    msg::Response | msg::Post | msg::Selection | msg::Add
+    , containerToMessage(container)
+  );
   node->send(messageOut);
 }
 
 void EventHandler::requestSelectionSubtractionDispatched(const msg::Message &messageIn)
 {
-  slc::Message sMessage = boost::get<slc::Message>(messageIn.payload);
+  slc::Message sMessage = messageIn.getSLC();
   slc::Container container = messageToContainer(sMessage);
   
   Containers::iterator containIt = std::find(selectionContainers.begin(), selectionContainers.end(), container);
@@ -534,7 +551,7 @@ void EventHandler::requestSelectionClearDispatched(const msg::Message &)
 
 void EventHandler::selectionMaskDispatched(const msg::Message &messageIn)
 {
-  slc::Message sMsg = boost::get<slc::Message>(messageIn.payload);
+  slc::Message sMsg = messageIn.getSLC();
   setSelectionMask(sMsg.selectionMask);
 }
 

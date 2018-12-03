@@ -20,7 +20,6 @@
 #include <iostream>
 #include <cassert>
 
-#include <boost/variant.hpp>
 #include <boost/filesystem.hpp>
 
 #include <tools/idtools.h>
@@ -29,6 +28,9 @@
 #include <preferences/manager.h>
 #include <message/node.h>
 #include <message/sift.h>
+#include <lod/message.h>
+#include <project/message.h>
+#include <feature/message.h>
 #include <feature/states.h>
 #include <feature/base.h>
 #include <lod/manager.h>
@@ -185,19 +187,19 @@ void Manager::setupDispatcher()
 
 void Manager::constructLODRequestDispatched(const msg::Message &mIn)
 {
-  messages.push_back(boost::get<lod::Message>(mIn.payload));
+  messages.push_back(mIn.getLOD());
   send();
 }
 
 void Manager::featureRemovedDispatched(const msg::Message &mIn)
 {
-  prj::Message pm = boost::get<prj::Message>(mIn.payload);
+  prj::Message pm = mIn.getPRJ();
   cleanMessages(pm.feature->getId());
 }
 
 void Manager::featureStateChangedDispatched(const msg::Message &mIn)
 {
-  ftr::Message fm = boost::get<ftr::Message>(mIn.payload);
+  ftr::Message fm = mIn.getFTR();
   
   auto test = [&](std::size_t offset) -> bool
   {

@@ -30,7 +30,6 @@
 #include <QLabel>
 #include <QPushButton>
 
-#include <boost/variant.hpp>
 #include <boost/current_function.hpp>
 
 #include <BRepCheck_Analyzer.hxx>
@@ -53,10 +52,13 @@
 
 #include <globalutilities.h>
 #include <application/application.h>
+#include <project/message.h>
 #include <feature/base.h>
+#include <feature/message.h>
 #include <annex/seershape.h>
 #include <message/node.h>
 #include <message/sift.h>
+#include <selection/message.h>
 #include <tools/idtools.h>
 #include <tools/occtools.h>
 #include <library/spherebuilder.h>
@@ -440,8 +442,11 @@ void BasicCheckPage::selectionChangedSlot()
   }
   
   //select the geometry.
-  msg::Message message(msg::Request | msg::Selection | msg::Add);
-  message.payload = sMessage;
+  msg::Message message
+  (
+    msg::Request | msg::Selection | msg::Add
+    , sMessage
+  );
   app::instance()->messageSlot(message);
   
   if (!bSphere.valid())
@@ -644,8 +649,11 @@ void BOPCheckPage::selectionChangedSlot()
   }
   
   //select the geometry.
-  msg::Message message(msg::Request | msg::Selection | msg::Add);
-  message.payload = sMessage;
+  msg::Message message
+  (
+    msg::Request | msg::Selection | msg::Add
+    , sMessage
+  );
   app::instance()->messageSlot(message);
   
   if (!bSphere.valid())
@@ -808,8 +816,11 @@ void ToleranceCheckPage::selectionChangedSlot()
   }
   
   //select the geometry.
-  msg::Message message(msg::Request | msg::Selection | msg::Add);
-  message.payload = sMessage;
+  msg::Message message
+  (
+    msg::Request | msg::Selection | msg::Add
+    , sMessage
+  );
   app::instance()->messageSlot(message);
   
   if (!bSphere.valid())
@@ -934,8 +945,11 @@ void ShapesPage::boundaryItemChangedSlot()
     sMessage.featureId = feature.getId();
     sMessage.featureType = feature.getType();
     sMessage.shapeId = e;
-    msg::Message message(msg::Request | msg::Selection | msg::Add);
-    message.payload = sMessage;
+    msg::Message message
+    (
+      msg::Request | msg::Selection | msg::Add
+      , sMessage
+    );
     app::instance()->messageSlot(message);
     
     ess.push_back(seerShape.findShape(e));
@@ -1037,7 +1051,7 @@ void CheckGeometry::setupDispatcher()
 
 void CheckGeometry::featureRemovedDispatched(const msg::Message &messageIn)
 {
-  prj::Message message = boost::get<prj::Message>(messageIn.payload);
+  prj::Message message = messageIn.getPRJ();
   
   if
   (
@@ -1049,7 +1063,7 @@ void CheckGeometry::featureRemovedDispatched(const msg::Message &messageIn)
 
 void CheckGeometry::featureStateChangedDispatched(const msg::Message &messageIn)
 {
-  ftr::Message fMessage = boost::get<ftr::Message>(messageIn.payload);
+  ftr::Message fMessage = messageIn.getFTR();
   if (fMessage.featureId == feature.getId())
     qApp->postEvent(this, new QCloseEvent());
 }

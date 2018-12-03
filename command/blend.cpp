@@ -17,8 +17,6 @@
  *
  */
 
-#include <boost/variant/variant.hpp>
-
 #include <TopoDS.hxx>
 #include <TopoDS_Edge.hxx>
 
@@ -29,6 +27,7 @@
 #include <annex/seershape.h>
 #include <message/node.h>
 #include <parameter/parameter.h>
+#include <feature/inputtype.h>
 #include <feature/blend.h>
 #include <dialogs/parameter.h>
 #include <dialogs/blend.h>

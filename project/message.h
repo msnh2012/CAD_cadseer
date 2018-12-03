@@ -20,8 +20,8 @@
 #ifndef PRJ_MESSAGE_H
 #define PRJ_MESSAGE_H
 
+#include <memory>
 #include <boost/uuid/uuid.hpp>
-#include <boost/shared_ptr.hpp>
 
 #include <feature/inputtype.h>
 

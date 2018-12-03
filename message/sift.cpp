@@ -18,8 +18,7 @@
  */
 
 #include <iostream>
-
-#include <boost/variant/variant.hpp>
+#include <algorithm>
 
 #include "message/sift.h"
 

@@ -20,7 +20,6 @@
 #include <cassert>
 
 #include <boost/filesystem.hpp>
-#include <boost/variant.hpp>
 
 #include <QGridLayout>
 #include <QHBoxLayout>

@@ -27,8 +27,6 @@
 
 #include <osg/Node> //for viewer message.
 
-#include <boost/variant/variant_fwd.hpp>
-
 class QSettings;
 
 namespace prf{class Manager;}

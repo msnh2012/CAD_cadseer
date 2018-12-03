@@ -17,8 +17,6 @@
  *
  */
 
-#include <boost/variant/variant.hpp>
-
 #include <TopoDS_Iterator.hxx>
 
 #include <osg/Matrixd>

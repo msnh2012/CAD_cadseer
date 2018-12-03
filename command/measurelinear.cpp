@@ -17,8 +17,6 @@
  *
  */
 
-#include <boost/variant.hpp>
-
 #include <QTextStream>
 
 #include <BRepBuilderAPI_MakeVertex.hxx>
@@ -28,12 +26,14 @@
 
 #include <globalutilities.h>
 #include <application/mainwindow.h>
+#include <application/message.h>
 #include <viewer/widget.h>
 #include <project/project.h>
 #include <message/node.h>
 #include <message/sift.h>
 #include <selection/eventhandler.h>
 #include <selection/message.h>
+#include <viewer/message.h>
 #include <feature/base.h>
 #include <annex/seershape.h>
 #include <library/lineardimension.h>
@@ -156,10 +156,9 @@ void MeasureLinear::build(const osg::Vec3d &point1, const osg::Vec3d &point2)
     << endl << "        delta Z: " << csPoint2.z() - csPoint1.z();
   stream << endl;
   
-  msg::Message viewInfoMessage(msg::Request | msg::Info | msg::Text);
   app::Message appMessage;
   appMessage.infoMessage = infoMessage;
-  viewInfoMessage.payload = appMessage;
+  msg::Message viewInfoMessage(msg::Request | msg::Info | msg::Text, appMessage);
   node->sendBlocked(viewInfoMessage);
   
   if (distance < std::numeric_limits<float>::epsilon())
@@ -201,10 +200,9 @@ void MeasureLinear::build(const osg::Vec3d &point1, const osg::Vec3d &point2)
   dim->setSpread((point2 - point1).length());
   autoTransform->addChild(dim.get());
   
-  msg::Message message(msg::Request | msg::Add | msg::Overlay);
   vwr::Message vwrMessage;
   vwrMessage.node = autoTransform;
-  message.payload = vwrMessage;
+  msg::Message message(msg::Request | msg::Add | msg::Overlay, vwrMessage);
   node->sendBlocked(message);
 }
 
@@ -230,7 +228,6 @@ void MeasureLinear::selectionMaskDispatched(const msg::Message &messageIn)
   if (!isActive)
     return;
   
-  slc::Message sMsg = boost::get<slc::Message>(messageIn.payload);
+  slc::Message sMsg = messageIn.getSLC();
   selectionMask = sMsg.selectionMask;
 }
-

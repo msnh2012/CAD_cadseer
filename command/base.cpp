@@ -19,8 +19,6 @@
 
 #include <cassert>
 
-#include <boost/variant.hpp>
-
 #include <application/application.h>
 #include <application/mainwindow.h>
 #include <viewer/widget.h>

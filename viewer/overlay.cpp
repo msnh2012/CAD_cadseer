@@ -21,16 +21,16 @@
 #include <sstream>
 #include <assert.h>
 
-#include <boost/variant.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/current_function.hpp>
 
 #include <osgViewer/GraphicsWindow>
 
-#include <application/application.h>
-#include <project/project.h>
 #include <globalutilities.h>
 #include <tools/idtools.h>
+#include <application/application.h>
+#include <project/project.h>
+#include <project/message.h>
 #include <modelviz/nodemaskdefs.h>
 #include <feature/base.h>
 #include <message/node.h>
@@ -137,13 +137,13 @@ void Overlay::setupDispatcher()
 
 void Overlay::featureAddedDispatched(const msg::Message &messageIn)
 {
-  prj::Message message = boost::get<prj::Message>(messageIn.payload);
+  const prj::Message &message = messageIn.getPRJ();
   addChild(message.feature->getOverlaySwitch());
 }
 
 void Overlay::featureRemovedDispatched(const msg::Message &messageIn)
 {
-  prj::Message message = boost::get<prj::Message>(messageIn.payload);
+  const prj::Message &message = messageIn.getPRJ();
   removeChild(message.feature->getOverlaySwitch());
 }
 
@@ -156,7 +156,7 @@ void Overlay::closeProjectDispatched(const msg::Message&)
 
 void Overlay::addOverlayGeometryDispatched(const msg::Message &message)
 {
-    vwr::Message vMessage = boost::get<vwr::Message>(message.payload);
+    const vwr::Message &vMessage = message.getVWR();
     fleetingGeometry->addChild(vMessage.node.get());
 }
 
@@ -167,7 +167,8 @@ void Overlay::clearOverlayGeometryDispatched(const msg::Message&)
 
 void Overlay::showOverlayDispatched(const msg::Message &msgIn)
 {
-  slc::MainSwitchVisitor v(boost::get<vwr::Message>(msgIn.payload).featureId);
+  const vwr::Message &vm = msgIn.getVWR();
+  slc::MainSwitchVisitor v(vm.featureId);
   this->accept(v);
   assert(v.out);
   if (!v.out)
@@ -178,14 +179,14 @@ void Overlay::showOverlayDispatched(const msg::Message &msgIn)
   
   v.out->setAllChildrenOn();
   
-  msg::Message mOut(msg::Response | msg::View | msg::Show | msg::Overlay);
-  mOut.payload = msgIn.payload;
+  msg::Message mOut(msg::Response | msg::View | msg::Show | msg::Overlay, vm);
   node->sendBlocked(mOut);
 }
 
 void Overlay::hideOverlayDispatched(const msg::Message &msgIn)
 {
-  slc::MainSwitchVisitor v(boost::get<vwr::Message>(msgIn.payload).featureId);
+  const vwr::Message &vm = msgIn.getVWR();
+  slc::MainSwitchVisitor v(vm.featureId);
   this->accept(v);
   assert(v.out);
   if (!v.out)
@@ -196,14 +197,14 @@ void Overlay::hideOverlayDispatched(const msg::Message &msgIn)
   
   v.out->setAllChildrenOff();
   
-  msg::Message mOut(msg::Response | msg::View | msg::Hide | msg::Overlay);
-  mOut.payload = msgIn.payload;
+  msg::Message mOut(msg::Response | msg::View | msg::Hide | msg::Overlay, vm);
   node->sendBlocked(mOut);
 }
 
 void Overlay::overlayToggleDispatched(const msg::Message &msgIn)
 {
-  slc::MainSwitchVisitor v(boost::get<vwr::Message>(msgIn.payload).featureId);
+  const vwr::Message &vm = msgIn.getVWR();
+  slc::MainSwitchVisitor v(vm.featureId);
   this->accept(v);
   assert(v.out); //some features won't have overlay, but we want to filter those out before the message call.
   if (!v.out)
@@ -221,8 +222,7 @@ void Overlay::overlayToggleDispatched(const msg::Message &msgIn)
     maskOut = msg::Response | msg::View | msg::Show | msg::Overlay;
   }
   
-  msg::Message mOut(maskOut);
-  mOut.payload = msgIn.payload;
+  msg::Message mOut(maskOut, vm);
   node->sendBlocked(mOut);
 }
 
@@ -254,16 +254,16 @@ public:
       {
         if (userValue == s.id())
         {
-          msg::Payload payload((vwr::Message(gu::stringToId(userValue))));
+          vwr::Message vm(gu::stringToId(userValue));
           if (s.visible())
           {
             switchIn.setAllChildrenOn();
-            msg::hub().sendBlocked(msg::Message(msg::Mask(msg::Response | msg::View | msg::Show | msg::Overlay), payload));
+            msg::hub().sendBlocked(msg::Message(msg::Mask(msg::Response | msg::View | msg::Show | msg::Overlay), vm));
           }
           else
           {
             switchIn.setAllChildrenOff();
-            msg::hub().sendBlocked(msg::Message(msg::Mask(msg::Response | msg::View | msg::Hide | msg::Overlay), payload));
+            msg::hub().sendBlocked(msg::Message(msg::Mask(msg::Response | msg::View | msg::Hide | msg::Overlay), vm));
           }
           break;
         }

@@ -17,13 +17,13 @@
  *
  */
 
-#include <boost/variant.hpp>
 
 #include <tools/idtools.h>
 #include <project/project.h>
 #include <message/node.h>
 #include <message/sift.h>
 #include <selection/eventhandler.h>
+#include <viewer/message.h>
 #include <command/isolate.h>
 
 using namespace cmd;
@@ -40,22 +40,11 @@ Isolate::Isolate() : Base(), id(gu::createNilId()), mask(msg::ThreeD | msg::Over
 
 Isolate::~Isolate() {}
 
-
-class VwrMessageVisitor : public boost::static_visitor<vwr::Message>
-{
-public:
-  vwr::Message operator()(const prj::Message&) const {return vwr::Message();}
-  vwr::Message operator()(const slc::Message&) const {return vwr::Message();}
-  vwr::Message operator()(const app::Message&) const {return vwr::Message();}
-  vwr::Message operator()(const vwr::Message &mIn) const {return mIn;}
-  vwr::Message operator()(const ftr::Message&) const {return vwr::Message();}
-  vwr::Message operator()(const lod::Message&) const {return vwr::Message();}
-};
 void Isolate::setFromMessage(const msg::Message &mIn)
 {
   mask = mIn.mask;
   
-  vwr::Message vm = boost::apply_visitor(VwrMessageVisitor(), mIn.payload);
+  vwr::Message vm = mIn.getVWR();
   id = vm.featureId;
 }
 

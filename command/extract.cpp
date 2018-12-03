@@ -17,8 +17,6 @@
  *
  */
 
-#include <boost/variant.hpp>
-
 #include <TopoDS_Face.hxx>
 #include <TopoDS.hxx>
 
@@ -26,6 +24,7 @@
 #include <message/node.h>
 #include <selection/eventhandler.h>
 #include <annex/seershape.h>
+#include <feature/inputtype.h>
 #include <feature/extract.h>
 #include <command/extract.h>
 

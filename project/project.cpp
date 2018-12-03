@@ -48,15 +48,17 @@
 #include <annex/seershape.h>
 #include <feature/inert.h>
 #include <feature/shapehistory.h>
+#include <feature/message.h>
 #include <parameter/parameter.h>
 #include <expressions/manager.h>
 #include <expressions/formulalink.h>
 #include <expressions/stringtranslator.h> //for serialize.
-#include <project/message.h>
 #include <message/message.h>
 #include <message/node.h>
 #include <message/sift.h>
+#include <viewer/message.h>
 #include <project/gitmanager.h>
+#include <project/message.h>
 #include <tools/graphtools.h>
 #include <project/featureload.h>
 #include <project/serial/xsdcxxoutput/shapehistory.h>
@@ -263,10 +265,13 @@ void Project::addFeature(std::shared_ptr<ftr::Base> feature)
     gitManager->appendGitMessage(gitMessage.str());
   }
   
-  msg::Message postMessage(msg::Response | msg::Post | msg::Add | msg::Feature);
   prj::Message pMessage;
   pMessage.feature = feature;
-  postMessage.payload = pMessage;
+  msg::Message postMessage
+  (
+    msg::Response | msg::Post | msg::Add | msg::Feature
+    , pMessage
+  );
   node->send(postMessage);
 }
 
@@ -346,10 +351,13 @@ void Project::removeFeature(const uuid& idIn)
     stow->sendDisconnectMessage(vertex, *its.first, removedGraph[ce.first].inputType);
   }
   
-  msg::Message preMessage(msg::Response | msg::Pre | msg::Remove | msg::Feature);
   prj::Message pMessage;
   pMessage.feature = feature;
-  preMessage.payload = pMessage;
+  msg::Message preMessage
+  (
+    msg::Response | msg::Pre | msg::Remove | msg::Feature
+    , pMessage
+  );
   node->send(preMessage);
   
   //remove file if exists.
@@ -620,7 +628,7 @@ void Project::setupDispatcher()
 void Project::featureStateChangedDispatched(const msg::Message &messageIn)
 {
   //here we want to dirty depenedent features when applicable.
-  ftr::Message fMessage = boost::get<ftr::Message>(messageIn.payload);
+  ftr::Message fMessage = messageIn.getFTR();
   std::size_t co = fMessage.stateOffset; //changed offset.
   
   //we only care about dirty and skipped states.
@@ -645,7 +653,7 @@ void Project::featureStateChangedDispatched(const msg::Message &messageIn)
 
 void Project::setCurrentLeafDispatched(const msg::Message &messageIn)
 {
-  prj::Message message = boost::get<prj::Message>(messageIn.payload);
+  prj::Message message = messageIn.getPRJ();
   //send response signal out 'pre set current feature'.
   assert(message.featureIds.size() == 1);
   setCurrentLeaf(message.featureIds.front());
@@ -654,7 +662,7 @@ void Project::setCurrentLeafDispatched(const msg::Message &messageIn)
 
 void Project::removeFeatureDispatched(const msg::Message &messageIn)
 {
-  prj::Message message = boost::get<prj::Message>(messageIn.payload);
+  prj::Message message = messageIn.getPRJ();
   assert(message.featureIds.size() == 1);
   removeFeature(message.featureIds.front());
 }
@@ -769,7 +777,7 @@ void Project::dumpProjectGraphDispatched(const msg::Message &)
 
 void Project::shownThreeDDispatched(const msg::Message &mIn)
 {
-  uuid id = boost::get<vwr::Message>(mIn.payload).featureId;
+  uuid id = mIn.getVWR().featureId;
   auto feature = stow->findFeature(id);
   if
   (
@@ -783,7 +791,7 @@ void Project::shownThreeDDispatched(const msg::Message &mIn)
 
 void Project::reorderFeatureDispatched(const msg::Message &mIn)
 {
-  const prj::Message &pm = boost::get<prj::Message>(mIn.payload);
+  const prj::Message &pm = mIn.getPRJ();
   Vertices fvs; //feature vertices.
   for (const auto &id : pm.featureIds)
   {
@@ -917,7 +925,7 @@ void Project::toggleSkippedDispatched(const msg::Message &mIn)
   std::ostringstream gitMessage;
   gitMessage << QObject::tr("Toggling skip status for: ").toStdString();
   
-  const prj::Message &pm = boost::get<prj::Message>(mIn.payload);
+  const prj::Message &pm = mIn.getPRJ();
   for (const auto& id : pm.featureIds)
   {
     ftr::Base *f = stow->findFeature(id);
@@ -932,7 +940,7 @@ void Project::toggleSkippedDispatched(const msg::Message &mIn)
 
 void Project::dissolveFeatureDispatched(const msg::Message &mIn)
 {
-  const prj::Message &pm = boost::get<prj::Message>(mIn.payload);
+  const prj::Message &pm = mIn.getPRJ();
   assert(pm.featureIds.size() == 1);
   assert(hasFeature(pm.featureIds.front()));
   if (!hasFeature(pm.featureIds.front()))
@@ -973,10 +981,13 @@ void Project::dissolveFeatureDispatched(const msg::Message &mIn)
   }
   nss.setRootShapeId(oss.getRootShapeId());
   Vertex nfv = stow->addFeature(nf); //new feature vertex.
-  msg::Message postMessage(msg::Response | msg::Post | msg::Add | msg::Feature);
   prj::Message addPMessage;
   addPMessage.feature = nf;
-  postMessage.payload = addPMessage;
+  msg::Message postMessage
+  (
+    msg::Response | msg::Post | msg::Add | msg::Feature
+    , addPMessage
+  );
   node->send(postMessage);
   
   //give new feature same visualization status as old.
@@ -1040,10 +1051,13 @@ void Project::dissolveFeatureDispatched(const msg::Message &mIn)
   {
     assert (boost::degree(v, stow->graph) == 0);
     
-    msg::Message preMessage(msg::Response | msg::Pre | msg::Remove | msg::Feature);
     prj::Message pMessage;
     pMessage.feature = stow->graph[v].feature;
-    preMessage.payload = pMessage;
+    msg::Message preMessage
+    (
+      msg::Response | msg::Pre | msg::Remove | msg::Feature
+      , pMessage
+    );
     node->send(preMessage);
     
     //remove file if exists.
@@ -1312,8 +1326,7 @@ void Project::open()
         
         //send state message
         ftr::Message fMessage(featurePtr->getId(), featurePtr->getState(), ftr::StateOffset::Loading);
-        msg::Message mMessage(msg::Response | msg::Feature | msg::Status);
-        mMessage.payload = fMessage;
+        msg::Message mMessage(msg::Response | msg::Feature | msg::Status, fMessage);
         node->sendBlocked(mMessage);
       }
     }
@@ -1328,8 +1341,7 @@ void Project::open()
       
       //send state message
       ftr::Message fMessage(fId, fState, ftr::StateOffset::Loading);
-      msg::Message mMessage(msg::Response | msg::Project | msg::Feature | msg::Status);
-      mMessage.payload = fMessage;
+      msg::Message mMessage(msg::Response | msg::Project | msg::Feature | msg::Status, fMessage);
       node->sendBlocked(mMessage);
     }
     

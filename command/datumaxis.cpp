@@ -17,8 +17,6 @@
  *
  */
 
-#include <boost/variant.hpp>
-
 #include <globalutilities.h>
 #include <application/application.h>
 #include <application/mainwindow.h>
@@ -29,6 +27,7 @@
 #include <annex/seershape.h>
 #include <tools/featuretools.h>
 #include <tools/occtools.h>
+#include <feature/inputtype.h>
 #include <feature/datumaxis.h>
 #include <command/datumaxis.h>
 

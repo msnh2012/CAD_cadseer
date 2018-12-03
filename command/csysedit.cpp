@@ -20,7 +20,6 @@
 #include <cassert>
 
 #include <boost/signals2/shared_connection_block.hpp>
-#include <boost/variant.hpp>
 
 #include <globalutilities.h>
 #include <library/csysdragger.h>
@@ -28,6 +27,7 @@
 #include <project/project.h>
 #include <message/node.h>
 #include <message/sift.h>
+#include <selection/message.h>
 #include <parameter/parameter.h>
 #include <feature/base.h>
 #include <annex/seershape.h>
@@ -99,7 +99,7 @@ void CSysEdit::selectionAdditionDispatched(const msg::Message &messageIn)
   if (!isActive)
     return;
   
-  slc::Message sMessage = boost::get<slc::Message>(messageIn.payload);
+  slc::Message sMessage = messageIn.getSLC();
   
   if (!slc::has(messages, sMessage))
     slc::add(messages, sMessage);
@@ -112,7 +112,7 @@ void CSysEdit::selectionSubtractionDispatched(const msg::Message &messageIn)
   if (!isActive)
     return;
   
-  slc::Message sMessage = boost::get<slc::Message>(messageIn.payload);
+  slc::Message sMessage = messageIn.getSLC();
   
   if (slc::has(messages, sMessage))
     slc::remove(messages, sMessage);
@@ -321,10 +321,9 @@ void CSysEdit::activate()
     csysDragger->highlightOrigin();
   
   auto block = node->createBlocker();
-  msg::Message messageOut(msg::Message(msg::Request | msg::Selection | msg::Add));
   for (const auto &sMessage : messages)
   {
-    messageOut.payload = sMessage;
+    msg::Message messageOut(msg::Message(msg::Request | msg::Selection | msg::Add, sMessage));
     node->send(messageOut);
   }
   isActive = true;

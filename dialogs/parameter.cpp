@@ -36,6 +36,7 @@
 #include <expressions/value.h>
 #include <application/application.h>
 #include <project/project.h>
+#include <project/message.h>
 #include <application/mainwindow.h>
 #include <feature/base.h>
 #include <parameter/variant.h>
@@ -448,7 +449,7 @@ void Parameter::constantHasChangedInt()
 
 void Parameter::featureRemovedDispatched(const msg::Message &messageIn)
 {
-  prj::Message pMessage = boost::get<prj::Message>(messageIn.payload);
+  prj::Message pMessage = messageIn.getPRJ();
   if(pMessage.feature->getId() == feature->getId())
     this->reject();
 }

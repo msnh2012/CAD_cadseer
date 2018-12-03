@@ -22,7 +22,6 @@
 
 #include <boost/graph/topological_sort.hpp>
 #include <boost/graph/breadth_first_search.hpp>
-#include <boost/variant.hpp>
 #include <boost/current_function.hpp>
 
 #include <QString>
@@ -51,10 +50,13 @@
 #include <project/project.h>
 #include <globalutilities.h>
 #include <tools/idtools.h>
-#include <viewer/message.h>
 #include <feature/base.h>
 #include <message/node.h>
 #include <message/sift.h>
+#include <project/message.h>
+#include <feature/message.h>
+#include <selection/message.h>
+#include <viewer/message.h>
 #include <dagview/controlleddfs.h>
 #include <dagview/rectitem.h>
 #include <dagview/stow.h>
@@ -208,7 +210,7 @@ void Model::setupViewConstants()
 
 void Model::featureAddedDispatched(const msg::Message &messageIn)
 {
-  prj::Message message = boost::get<prj::Message>(messageIn.payload);
+  prj::Message message = messageIn.getPRJ();
   
   Vertex virginVertex = boost::add_vertex(stow->graph);
   stow->graph[virginVertex].featureId = message.feature->getId();
@@ -235,7 +237,7 @@ void Model::featureAddedDispatched(const msg::Message &messageIn)
 
 void Model::featureRemovedDispatched(const msg::Message &messageIn)
 {
-  prj::Message message = boost::get<prj::Message>(messageIn.payload);
+  prj::Message message = messageIn.getPRJ();
   
   Vertex vertex = stow->findVertex(message.feature->getId());
   if (vertex == NullVertex())
@@ -250,7 +252,7 @@ void Model::featureRemovedDispatched(const msg::Message &messageIn)
 
 void Model::connectionAddedDispatched(const msg::Message &messageIn)
 {
-  prj::Message message = boost::get<prj::Message>(messageIn.payload);
+  prj::Message message = messageIn.getPRJ();
   
   assert(message.featureIds.size() == 2);
   Vertex parentVertex = stow->findVertex(message.featureIds.front());
@@ -286,7 +288,7 @@ void Model::connectionAddedDispatched(const msg::Message &messageIn)
 
 void Model::connectionRemovedDispatched(const msg::Message &messageIn)
 {
-  prj::Message message = boost::get<prj::Message>(messageIn.payload);
+  prj::Message message = messageIn.getPRJ();
   
   assert(message.featureIds.size() == 2);
   Vertex parentVertex = stow->findVertex(message.featureIds.front());
@@ -413,7 +415,7 @@ void Model::setupDispatcher()
 
 void Model::featureStateChangedDispatched(const msg::Message &messageIn)
 {
-  ftr::Message fMessage = boost::get<ftr::Message>(messageIn.payload);
+  ftr::Message fMessage = messageIn.getFTR();
   Vertex vertex = stow->findVertex(fMessage.featureId);
   if (vertex == NullVertex())
     return;
@@ -427,7 +429,7 @@ void Model::featureStateChangedDispatched(const msg::Message &messageIn)
 
 void Model::projectFeatureStateChangedDispatched(const msg::Message &mIn)
 {
-  ftr::Message fMessage = boost::get<ftr::Message>(mIn.payload);
+  ftr::Message fMessage = mIn.getFTR();
   Vertex vertex = stow->findVertex(fMessage.featureId);
   if (vertex == NullVertex())
     return;
@@ -495,7 +497,7 @@ void Model::stateUpdate(Vertex vIn)
 
 void Model::featureRenamedDispatched(const msg::Message &messageIn)
 {
-  ftr::Message fMessage = boost::get<ftr::Message>(messageIn.payload);
+  ftr::Message fMessage = messageIn.getFTR();
   Vertex vertex = stow->findVertex(fMessage.featureId);
   if (vertex == NullVertex())
     return;
@@ -504,7 +506,7 @@ void Model::featureRenamedDispatched(const msg::Message &messageIn)
 
 void Model::preselectionAdditionDispatched(const msg::Message &messageIn)
 {
-  slc::Message sMessage = boost::get<slc::Message>(messageIn.payload);
+  slc::Message sMessage = messageIn.getSLC();
   if (sMessage.type != slc::Type::Object)
     return;
   Vertex vertex = stow->findVertex(sMessage.featureId);
@@ -521,7 +523,7 @@ void Model::preselectionAdditionDispatched(const msg::Message &messageIn)
 
 void Model::preselectionSubtractionDispatched(const msg::Message &messageIn)
 {
-  slc::Message sMessage = boost::get<slc::Message>(messageIn.payload);
+  slc::Message sMessage = messageIn.getSLC();
   if (sMessage.type != slc::Type::Object)
     return;
   Vertex vertex = stow->findVertex(sMessage.featureId);
@@ -538,7 +540,7 @@ void Model::preselectionSubtractionDispatched(const msg::Message &messageIn)
 
 void Model::selectionAdditionDispatched(const msg::Message &messageIn)
 {
-  slc::Message sMessage = boost::get<slc::Message>(messageIn.payload);
+  slc::Message sMessage = messageIn.getSLC();
   if (sMessage.type != slc::Type::Object)
     return;
   Vertex vertex = stow->findVertex(sMessage.featureId);
@@ -556,7 +558,7 @@ void Model::selectionAdditionDispatched(const msg::Message &messageIn)
 
 void Model::selectionSubtractionDispatched(const msg::Message &messageIn)
 {
-  slc::Message sMessage = boost::get<slc::Message>(messageIn.payload);
+  slc::Message sMessage = messageIn.getSLC();
   if (sMessage.type != slc::Type::Object)
     return;
   Vertex vertex = stow->findVertex(sMessage.featureId);
@@ -819,7 +821,7 @@ void Model::dumpDAGViewGraphDispatched(const msg::Message &)
 
 void Model::threeDShowDispatched(const msg::Message &msgIn)
 {
-  Vertex vertex = stow->findVertex(boost::get<vwr::Message>(msgIn.payload).featureId);
+  Vertex vertex = stow->findVertex(msgIn.getVWR().featureId);
   if (vertex == NullVertex())
     return;
   stow->graph[vertex].visibleIconShared->setPixmap(visiblePixmapEnabled);
@@ -827,7 +829,7 @@ void Model::threeDShowDispatched(const msg::Message &msgIn)
 
 void Model::threeDHideDispatched(const msg::Message &msgIn)
 {
-  Vertex vertex = stow->findVertex(boost::get<vwr::Message>(msgIn.payload).featureId);
+  Vertex vertex = stow->findVertex(msgIn.getVWR().featureId);
   if (vertex == NullVertex())
     return;
   stow->graph[vertex].visibleIconShared->setPixmap(visiblePixmapDisabled);
@@ -835,7 +837,7 @@ void Model::threeDHideDispatched(const msg::Message &msgIn)
 
 void Model::overlayShowDispatched(const msg::Message &msgIn)
 {
-  Vertex vertex = stow->findVertex(boost::get<vwr::Message>(msgIn.payload).featureId);
+  Vertex vertex = stow->findVertex(msgIn.getVWR().featureId);
   if (vertex == NullVertex())
     return;
   stow->graph[vertex].overlayIconShared->setPixmap(overlayPixmapEnabled);
@@ -843,7 +845,7 @@ void Model::overlayShowDispatched(const msg::Message &msgIn)
 
 void Model::overlayHideDispatched(const msg::Message &msgIn)
 {
-  Vertex vertex = stow->findVertex(boost::get<vwr::Message>(msgIn.payload).featureId);
+  Vertex vertex = stow->findVertex(msgIn.getVWR().featureId);
   if (vertex == NullVertex())
     return;
   stow->graph[vertex].overlayIconShared->setPixmap(overlayPixmapDisabled);
@@ -966,12 +968,15 @@ void Model::mouseMoveEvent(QGraphicsSceneMouseEvent* event)
       if (vertex == NullVertex())
         return;
       
-      msg::Message message(msg::Request | msg::Preselection | msg::Remove);
       slc::Message sMessage;
       sMessage.type = slc::Type::Object;
       sMessage.featureId = stow->graph[vertex].featureId;
       sMessage.shapeId = gu::createNilId();
-      message.payload = sMessage;
+      msg::Message message
+      (
+        msg::Request | msg::Preselection | msg::Remove
+        ,sMessage
+      );
       node->send(message);
     };
     
@@ -981,12 +986,15 @@ void Model::mouseMoveEvent(QGraphicsSceneMouseEvent* event)
       if (vertex == NullVertex())
         return;
       
-      msg::Message message(msg::Request | msg::Preselection | msg::Add);
       slc::Message sMessage;
       sMessage.type = slc::Type::Object;
       sMessage.featureId = stow->graph[vertex].featureId;
       sMessage.shapeId = gu::createNilId();
-      message.payload = sMessage;
+      msg::Message message
+      (
+        msg::Request | msg::Preselection | msg::Add
+        , sMessage
+      );
       node->send(message);
     };
     
@@ -1010,12 +1018,15 @@ void Model::mousePressEvent(QGraphicsSceneMouseEvent* event)
     assert((actionIn == msg::Add) || (actionIn == msg::Remove));
     if (featureIdIn.is_nil())
       return;
-    msg::Message message(msg::Request | msg::Selection | actionIn);
     slc::Message sMessage;
     sMessage.type = slc::Type::Object;
     sMessage.featureId = featureIdIn;
     sMessage.shapeId = gu::createNilId();
-    message.payload = sMessage;
+    msg::Message message
+    (
+      msg::Request | msg::Selection | actionIn
+      , sMessage
+    );
     node->send(message);
   };
   
@@ -1068,10 +1079,11 @@ void Model::mousePressEvent(QGraphicsSceneMouseEvent* event)
       Vertex vertex = stow->findVisibleVertex(currentPixmap);
       if (vertex == NullVertex())
         return;
-      msg::Message msg(msg::Request | msg::View | msg::Toggle | msg::ThreeD);
-      vwr::Message vMsg;
-      vMsg.featureId = stow->graph[vertex].featureId;
-      msg.payload = vMsg;
+      msg::Message msg
+      (
+        msg::Request | msg::View | msg::Toggle | msg::ThreeD
+        , vwr::Message(stow->graph[vertex].featureId)
+      );
       node->send(msg);
       
       return;
@@ -1084,10 +1096,11 @@ void Model::mousePressEvent(QGraphicsSceneMouseEvent* event)
       Vertex vertex = stow->findOverlayVertex(currentPixmap);
       if (vertex == NullVertex())
         return;
-      msg::Message msg(msg::Request | msg::View | msg::Toggle | msg::Overlay);
-      vwr::Message vMsg;
-      vMsg.featureId = stow->graph[vertex].featureId; //temp during conversion.
-      msg.payload = vMsg;
+      msg::Message msg
+      (
+        msg::Request | msg::View | msg::Toggle | msg::Overlay
+        , vwr::Message(stow->graph[vertex].featureId)
+      );
       node->send(msg);
       
       return;
@@ -1127,10 +1140,7 @@ void Model::mousePressEvent(QGraphicsSceneMouseEvent* event)
   }
   else if (event->button() == Qt::MiddleButton)
   {
-    msg::Message message(msg::Request | msg::Selection | msg::Clear);
-    slc::Message sMessage;
-    message.payload = sMessage;
-    node->send(message);
+    node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
   }
 }
 
@@ -1228,11 +1238,14 @@ void Model::contextMenuEvent(QGraphicsSceneContextMenuEvent* event)
       return;
     if (!rect->isSelected())
     {
-      msg::Message message(msg::Request | msg::Selection | msg::Add);
       slc::Message sMessage;
       sMessage.type = slc::Type::Object;
       sMessage.featureId = stow->graph[vertex].featureId;
-      message.payload = sMessage;
+      msg::Message message
+      (
+        msg::Request | msg::Selection | msg::Add
+        , sMessage
+      );
       node->send(message);
     }
     
@@ -1325,8 +1338,7 @@ void Model::setCurrentLeafSlot()
   
   prj::Message prjMessageOut;
   prjMessageOut.featureIds.push_back(stow->graph[currentSelections.front()].featureId);
-  msg::Message messageOut(msg::Request | msg::SetCurrentLeaf);
-  messageOut.payload = prjMessageOut;
+  msg::Message messageOut(msg::Request | msg::SetCurrentLeaf, prjMessageOut);
   node->send(messageOut);
   
   if (prf::manager().rootPtr->dragger().triggerUpdateOnFinish())
@@ -1348,10 +1360,11 @@ void Model::toggleOverlaySlot()
   
   for (auto v : currentSelections)
   {
-    msg::Message mOut(msg::Request | msg::View | msg::Toggle | msg::Overlay);
-    vwr::Message vMsg;
-    vMsg.featureId = stow->graph[v].featureId;
-    mOut.payload = vMsg;
+    msg::Message mOut
+    (
+      msg::Request | msg::View | msg::Toggle | msg::Overlay
+      , vwr::Message(stow->graph[v].featureId)
+    );
     node->send(mOut);
   }
 }

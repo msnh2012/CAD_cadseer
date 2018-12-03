@@ -20,7 +20,6 @@
 #include <iostream>
 #include <assert.h>
 #include <memory>
-#include <boost/variant/variant.hpp>
 
 #include <osgViewer/View>
 #include <osgUtil/PolytopeIntersector>

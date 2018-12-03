@@ -20,7 +20,6 @@
 #include <cassert>
 #include <sstream>
 #include <iomanip>
-#include <boost/variant/variant.hpp>
 
 #include <application/application.h>
 

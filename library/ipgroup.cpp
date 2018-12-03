@@ -22,7 +22,6 @@
 #include <iomanip>
 #include <cmath>
 #include <limits>
-#include <boost/variant/variant.hpp>
 
 #include <QObject>
 

@@ -22,13 +22,17 @@
 #include <tools/idtools.h>
 #include <selection/message.h>
 
-slc::Message::Message()
+using namespace slc;
+
+Message::Message() : Message(slc::None){}
+
+Message::Message(Mask mask)
 {
   type = slc::Type::None;
   featureType = ftr::Type::Base; //like empty
   featureId = gu::createNilId();
   shapeId = gu::createNilId();
-  selectionMask = slc::None;
+  selectionMask = mask;
 }
 
 bool slc::has(const slc::Messages& messagesIn, const slc::Message& messageIn)

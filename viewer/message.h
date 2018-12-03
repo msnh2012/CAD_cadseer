@@ -25,8 +25,7 @@
 #include <boost/uuid/uuid.hpp>
 
 #include <osg/ref_ptr>
-
-namespace osg{class Node;}
+#include <osg/Node>
 
 namespace vwr
 {

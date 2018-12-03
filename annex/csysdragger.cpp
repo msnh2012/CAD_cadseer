@@ -18,7 +18,6 @@
  */
 
 #include <iomanip>
-#include <boost/variant/variant.hpp>
 
 #include <globalutilities.h>
 #include <tools/idtools.h>

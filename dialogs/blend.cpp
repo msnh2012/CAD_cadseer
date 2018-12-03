@@ -67,6 +67,7 @@
 #include <selection/message.h>
 #include <annex/seershape.h>
 #include <parameter/parameter.h>
+#include <feature/inputtype.h>
 #include <feature/blend.h>
 #include <dialogs/splitterdecorated.h>
 #include <dialogs/widgetgeometry.h>
@@ -634,13 +635,16 @@ void Blend::addToSelection(const boost::uuids::uuid &shapeIdIn)
   slc::Type sType = slc::convert(parentShape.getOCCTShape(shapeIdIn).ShapeType());
   assert(sType == slc::Type::Edge || sType == slc::Type::Face);
   
-  msg::Message freshMMessage(msg::Request | msg::Selection | msg::Add);
   slc::Message freshSMessage;
   freshSMessage.type = sType;
   freshSMessage.featureId = blendParent->getId();
   freshSMessage.featureType = blendParent->getType();
   freshSMessage.shapeId = shapeIdIn;
-  freshMMessage.payload = freshSMessage;
+  msg::Message freshMMessage
+  (
+    msg::Request | msg::Selection | msg::Add
+    , freshSMessage
+  );
   node->sendBlocked(freshMMessage);
 }
 
@@ -655,7 +659,7 @@ void Blend::setupDispatcher()
 
 void Blend::selectionAdditionDispatched(const msg::Message &messageIn)
 {
-  const slc::Message &sMessage = boost::get<slc::Message>(messageIn.payload);
+  const slc::Message &sMessage = messageIn.getSLC();
   if (!blendParent)
   {
     prj::Project *project = app::instance()->getProject();

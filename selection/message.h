@@ -34,6 +34,7 @@ namespace slc
   struct Message
   {
     Message();
+    Message(Mask);
     slc::Type type;
     ftr::Type featureType;
     boost::uuids::uuid featureId;

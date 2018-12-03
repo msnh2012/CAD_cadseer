@@ -20,8 +20,6 @@
 #include <iostream>
 #include <assert.h>
 
-#include <boost/variant.hpp>
-
 #include <QImage>
 #include <QGLWidget>
 

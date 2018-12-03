@@ -20,7 +20,6 @@
 #include <iostream>
 #include <memory>
 
-#include <boost/variant.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <boost/current_function.hpp>
 
@@ -34,6 +33,7 @@
 #include <application/mainwindow.h>
 #include <viewer/spaceballqevent.h>
 #include <viewer/widget.h>
+#include <project/message.h>
 #include <project/gitmanager.h> //needed for unique_ptr destructor call.
 #include <project/project.h>
 #include <preferences/preferencesXML.h>
@@ -404,7 +404,7 @@ void Application::ProjectDialogRequestDispatched(const msg::Message&)
 
 void Application::newProjectRequestDispatched(const msg::Message &messageIn)
 {
-  prj::Message pMessage = boost::get<prj::Message>(messageIn.payload);
+  prj::Message pMessage = messageIn.getPRJ();
   
   boost::filesystem::path path = pMessage.directory;
   if (!boost::filesystem::create_directory(path))
@@ -421,7 +421,7 @@ void Application::newProjectRequestDispatched(const msg::Message &messageIn)
 
 void Application::openProjectRequestDispatched(const msg::Message &messageIn)
 {
-  prj::Message pMessage = boost::get<prj::Message>(messageIn.payload);
+  prj::Message pMessage = messageIn.getPRJ();
   
   boost::filesystem::path path = pMessage.directory;
   if (!boost::filesystem::exists(path))

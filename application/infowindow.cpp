@@ -17,8 +17,6 @@
  *
  */
 
-#include <boost/variant.hpp>
-
 #include <QHBoxLayout>
 #include <QSettings>
 #include <QShowEvent>
@@ -28,6 +26,7 @@
 #include <message/message.h>
 #include <message/node.h>
 #include <message/sift.h>
+#include <application/message.h>
 #include <application/application.h>
 #include <application/infowindow.h>
 
@@ -66,7 +65,7 @@ void InfoWindow::setupDispatcher()
 
 void InfoWindow::infoTextDispatched(const msg::Message &messageIn)
 {
-    app::Message message = boost::get<app::Message>(messageIn.payload);
+    app::Message message = messageIn.getAPP();
     append(message.infoMessage);
 }
 

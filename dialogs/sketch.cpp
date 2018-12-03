@@ -19,7 +19,6 @@
 
 #include <iostream>
 #include <boost/optional/optional.hpp>
-#include <boost/variant.hpp>
 
 #include <QTabWidget>
 #include <QToolBar>
@@ -43,6 +42,7 @@
 #include "message/node.h"
 #include "message/sift.h"
 #include "selection/definitions.h"
+#include "selection/message.h"
 #include "viewer/widget.h"
 #include "dialogs/widgetgeometry.h"
 #include "dialogs/expressionedit.h"
@@ -181,7 +181,7 @@ void Sketch::setupDispatcher()
 
 void Sketch::selectParameterDispatched(const msg::Message &mIn)
 {
-  boost::uuids::uuid pId = boost::get<slc::Message>(mIn.payload).shapeId;
+  boost::uuids::uuid pId = mIn.getSLC().shapeId;
   if (pId.is_nil() || (!sketch->hasParameter(pId)))
   {
     pEdit->lineEdit->clear();

@@ -23,7 +23,6 @@
 
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
-#include <boost/variant/variant.hpp>
 
 #include <BRep_Builder.hxx>
 #include <TopoDS_Compound.hxx>
@@ -57,6 +56,7 @@
 #include <annex/seershape.h>
 #include <parameter/variant.h>
 #include <parameter/parameter.h>
+#include <feature/message.h>
 #include <feature/shapehistory.h>
 #include <feature/seershapeinfo.h>
 #include <project/serial/xsdcxxoutput/featurebase.h>
@@ -184,8 +184,7 @@ void Base::setNotSkipped()
 void Base::sendStateMessage(std::size_t stateOffset)
 {
   ftr::Message fMessage(id, state, stateOffset);
-  msg::Message mMessage(msg::Response | msg::Feature | msg::Status);
-  mMessage.payload = fMessage;
+  msg::Message mMessage(msg::Response | msg::Feature | msg::Status, fMessage);
   msg::hub().send(mMessage);
 }
 
@@ -214,8 +213,7 @@ void Base::setName(const QString &nameIn)
   name = nameIn;
   
   ftr::Message fMessage(id, name);
-  msg::Message mMessage(msg::Response | msg::Edit | msg::Feature | msg::Name);
-  mMessage.payload = fMessage;
+  msg::Message mMessage(msg::Response | msg::Edit | msg::Feature | msg::Name, fMessage);
   msg::hub().send(mMessage);
 }
 
@@ -376,8 +374,7 @@ void Base::setSuccess()
   state.set(ftr::StateOffset::Failure, false);
   
   ftr::Message fMessage(id, state, ftr::StateOffset::Failure);
-  msg::Message mMessage(msg::Response | msg::Feature | msg::Status);
-  mMessage.payload = fMessage;
+  msg::Message mMessage(msg::Response | msg::Feature | msg::Status, fMessage);
   msg::hub().send(mMessage);
 }
 
@@ -388,8 +385,7 @@ void Base::setFailure()
   state.set(ftr::StateOffset::Failure, true);
   
   ftr::Message fMessage(id, state, ftr::StateOffset::Failure);
-  msg::Message mMessage(msg::Response | msg::Feature | msg::Status);
-  mMessage.payload = fMessage;
+  msg::Message mMessage(msg::Response | msg::Feature | msg::Status, fMessage);
   msg::hub().send(mMessage);
 }
 

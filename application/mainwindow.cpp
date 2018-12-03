@@ -21,8 +21,6 @@
 #include <assert.h>
 #include <limits>
 
-#include <boost/variant.hpp>
-
 #include <QHBoxLayout>
 #include <QCloseEvent>
 

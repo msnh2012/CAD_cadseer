@@ -17,11 +17,10 @@
  *
  */
 
-#include <boost/variant.hpp>
-
 #include <message/node.h>
 #include <project/project.h>
 #include <selection/eventhandler.h>
+#include <feature/inputtype.h>
 #include <feature/nest.h>
 #include <command/nest.h>
 

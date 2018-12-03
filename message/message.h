@@ -22,16 +22,18 @@
 
 #include <bitset>
 #include <functional>
-#include <unordered_map>
+#include <memory>
 
-#include <boost/variant/variant_fwd.hpp>
+#include "selection/definitions.h"
 
-#include <project/message.h>
-#include <selection/message.h>
-#include <application/message.h>
-#include <viewer/message.h>
-#include <feature/message.h>
-#include <lod/message.h>
+namespace boost{namespace uuids{class uuid;}}
+
+namespace prj {struct Message;}
+namespace app {struct Message;}
+namespace slc {struct Message;}
+namespace vwr {struct Message;}
+namespace ftr {struct Message;}
+namespace lod {struct Message;}
 
 namespace msg
 {
@@ -158,24 +160,26 @@ namespace msg
     static const Mask Extrude(Mask().set(                      117));//!< command. move up
     static const Mask Revolve(Mask().set(                      118));//!< command. move up
   
-    typedef boost::variant
-    <
-      prj::Message,
-      slc::Message,
-      app::Message,
-      vwr::Message,
-      ftr::Message,
-      lod::Message
-    > Payload;
-  
+    struct Stow; // forward declare see message/variant.h
     struct Message
     {
       Message();
       Message(const Mask&);
-      Message(const Payload&);
-      Message(const Mask&, const Payload&);
+      Message(const Mask&, const Stow&);
+      Message(const Mask&, const prj::Message&);
+      Message(const Mask&, const app::Message&);
+      Message(const Mask&, const slc::Message&);
+      Message(const Mask&, const vwr::Message&);
+      Message(const Mask&, const ftr::Message&);
+      Message(const Mask&, const lod::Message&);
       Mask mask;
-      Payload payload;
+      std::shared_ptr<Stow> stow;
+      const prj::Message& getPRJ() const;
+      const app::Message& getAPP() const;
+      const slc::Message& getSLC() const;
+      const vwr::Message& getVWR() const;
+      const ftr::Message& getFTR() const;
+      const lod::Message& getLOD() const;
     };
 
     typedef std::function<void (const Message&)> Handler;

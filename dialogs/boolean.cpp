@@ -18,7 +18,6 @@
  */
 
 #include <cassert>
-#include <boost/variant.hpp>
 
 #include <QSettings>
 #include <QGridLayout>

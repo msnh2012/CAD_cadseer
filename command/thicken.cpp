@@ -16,13 +16,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#include <boost/variant.hpp>
 
 #include <project/project.h>
 #include <message/node.h>
 #include <selection/eventhandler.h>
 #include <annex/seershape.h>
 #include <parameter/parameter.h>
+#include <feature/inputtype.h>
 #include <feature/thicken.h>
 #include <command/thicken.h>
 

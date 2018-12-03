@@ -21,8 +21,6 @@
 
 #include <QInputDialog>
 
-#include <boost/variant.hpp>
-
 #include <tools/idtools.h>
 #include <application/application.h>
 #include <application/mainwindow.h>
@@ -30,6 +28,7 @@
 #include <message/sift.h>
 #include <selection/eventhandler.h>
 #include <project/project.h>
+#include <feature/message.h>
 #include <feature/base.h>
 #include <command/featurerename.h>
 
@@ -66,19 +65,9 @@ void FeatureRename::deactivate()
   isActive = false;
 }
 
-class FtrMessageVisitor : public boost::static_visitor<ftr::Message>
-{
-public:
-  ftr::Message operator()(const prj::Message&) const {return ftr::Message();}
-  ftr::Message operator()(const slc::Message&) const {return ftr::Message();}
-  ftr::Message operator()(const app::Message&) const {return ftr::Message();}
-  ftr::Message operator()(const vwr::Message&) const {return ftr::Message();}
-  ftr::Message operator()(const ftr::Message &mIn) const {return mIn;}
-  ftr::Message operator()(const lod::Message&) const {return ftr::Message();}
-};
 void FeatureRename::setFromMessage(const msg::Message &mIn)
 {
-  ftr::Message fm = boost::apply_visitor(FtrMessageVisitor(), mIn.payload);
+  ftr::Message fm = mIn.getFTR();
   id = fm.featureId;
   name = fm.string;
 }

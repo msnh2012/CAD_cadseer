@@ -20,7 +20,6 @@
 #include <cassert>
 #include <ostream>
 
-#include <boost/variant.hpp>
 #include <boost/filesystem.hpp>
 
 #include <project/libgit2pp/src/index.hpp>
@@ -36,6 +35,7 @@
 #include <preferences/manager.h>
 #include <message/node.h>
 #include <message/sift.h>
+#include <project/message.h>
 #include <project/gitmanager.h>
 
 using namespace prj;
@@ -498,7 +498,7 @@ void GitManager::setupDispatcher()
 
 void GitManager::gitMessageRequestDispatched(const msg::Message &messageIn)
 {
-  Message pMessage = boost::get<prj::Message>(messageIn.payload);
+  Message pMessage = messageIn.getPRJ();
   appendGitMessage(pMessage.gitMessage);
 }
 

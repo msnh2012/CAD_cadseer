@@ -17,7 +17,6 @@
  *
  */
 
-#include <boost/variant.hpp>
 #include <boost/optional.hpp>
 
 #include <TopoDS.hxx>
@@ -33,6 +32,7 @@
 #include <annex/seershape.h>
 #include <tools/featuretools.h>
 #include <tools/occtools.h>
+#include <feature/inputtype.h>
 #include <feature/datumplane.h>
 #include <command/datumplane.h>
 

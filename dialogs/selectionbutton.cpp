@@ -21,8 +21,6 @@
 #include <QHideEvent>
 #include <QTimer>
 
-#include <boost/variant.hpp>
-
 #include <message/node.h>
 #include <message/sift.h>
 #include <selection/message.h>
@@ -92,7 +90,7 @@ void SelectionButton::selectionAdditionDispatched(const msg::Message &mIn)
   if (!isVisible() || !isChecked())
     return;
   
-  messages.push_back(boost::get<slc::Message>(mIn.payload));
+  messages.push_back(mIn.getSLC());
   
   dirty();
   
@@ -105,7 +103,7 @@ void SelectionButton::selectionSubtractionDispatched(const msg::Message &mIn)
   if (!isVisible() || !isChecked())
     return;
   
-  const slc::Message& sm = boost::get<slc::Message>(mIn.payload);
+  const slc::Message& sm = mIn.getSLC();
   if (slc::has(messages, sm))
   {
     slc::remove(messages, sm);
@@ -143,10 +141,13 @@ void SelectionButton::syncToSelection()
   if (mask != slc::None)
     node->sendBlocked(msg::buildSelectionMask(mask));
   
-  for (const auto m : messages)
+  for (const auto &m : messages)
   {
-    msg::Message mm(msg::Request | msg::Selection | msg::Add);
-    mm.payload = m;
+    msg::Message mm
+    (
+      msg::Request | msg::Selection | msg::Add
+      , m
+    );
     node->sendBlocked(mm);
   }
   
@@ -183,6 +184,5 @@ void SelectionButton::selectionMaskDispatched(const msg::Message &messageIn)
   if (!isVisible() || !isChecked())
     return;
   
-  slc::Message sMsg = boost::get<slc::Message>(messageIn.payload);
-  mask = sMsg.selectionMask;
+  mask = messageIn.getSLC().selectionMask;
 }

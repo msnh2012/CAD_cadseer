@@ -17,8 +17,6 @@
  *
  */
 
-#include <boost/variant.hpp>
-
 #include <message/node.h>
 #include <selection/eventhandler.h>
 #include <project/message.h>

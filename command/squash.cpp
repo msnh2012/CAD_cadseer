@@ -17,8 +17,6 @@
  *
  */
 
-#include <boost/variant.hpp>
-
 #include <TopoDS.hxx>
 
 #include <application/application.h>
@@ -27,6 +25,7 @@
 #include <message/node.h>
 #include <project/project.h>
 #include <annex/seershape.h>
+#include <feature/inputtype.h>
 #include <feature/squash.h>
 #include <tools/occtools.h>
 #include <tools/idtools.h>

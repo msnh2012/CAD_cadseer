@@ -23,8 +23,6 @@
 #include <cmath>
 #include <limits>
 
-#include <boost/variant.hpp>
-
 #include <QObject>
 
 #include <osgManipulator/Constraint>

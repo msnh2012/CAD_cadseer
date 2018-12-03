@@ -29,7 +29,6 @@
 
 #include <boost/uuid/uuid.hpp>
 #include <boost/timer/timer.hpp>
-#include <boost/variant.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/current_function.hpp>
 
@@ -52,15 +51,17 @@
 #include <message/sift.h>
 #include <message/node.h>
 #include <project/project.h>
+#include <project/message.h>
 #include <application/application.h>
 #include <application/mainwindow.h>
+#include <application/message.h>
 #include <viewer/widget.h>
-#include <viewer/message.h>
 #include <dialogs/preferences.h>
 #include <preferences/preferencesXML.h>
 #include <preferences/manager.h>
 #include <annex/seershape.h>
 #include <feature/types.h>
+#include <feature/inputtype.h>
 #include <feature/box.h>
 #include <feature/oblong.h>
 #include <feature/torus.h>
@@ -75,6 +76,7 @@
 #include <feature/hollow.h>
 #include <feature/inert.h>
 #include <library/lineardimension.h>
+#include <selection/message.h>
 #include <selection/visitors.h>
 #include <application/factory.h>
 
@@ -257,7 +259,7 @@ void Factory::closeProjectDispatched(const msg::Message&)
 
 void Factory::selectionAdditionDispatched(const msg::Message &messageIn)
 {
-  slc::Message sMessage = boost::get<slc::Message>(messageIn.payload);
+  slc::Message sMessage = messageIn.getSLC();
   slc::Container aContainer;
   aContainer.selectionType = sMessage.type;
   aContainer.featureId = sMessage.featureId;
@@ -269,7 +271,7 @@ void Factory::selectionAdditionDispatched(const msg::Message &messageIn)
 
 void Factory::selectionSubtractionDispatched(const msg::Message &messageIn)
 {
-  slc::Message sMessage = boost::get<slc::Message>(messageIn.payload);
+  slc::Message sMessage = messageIn.getSLC();
   slc::Container aContainer;
   aContainer.selectionType = sMessage.type;
   aContainer.featureId = sMessage.featureId;
@@ -784,11 +786,9 @@ void Factory::removeDispatched(const msg::Message&)
   {
     if (current.selectionType != slc::Type::Object)
       continue;
-    msg::Message removeMessage;
-    removeMessage.mask = msg::Request | msg::Remove | msg::Feature;
     prj::Message payload;
     payload.featureIds.push_back(current.featureId);
-    removeMessage.payload = payload;
+    msg::Message removeMessage(msg::Request | msg::Remove | msg::Feature, payload);
     node->send(removeMessage);
   }
   
@@ -969,11 +969,9 @@ void Factory::viewInfoDispatched(const msg::Message &)
       }
     }
     
-    msg::Message viewInfoMessage(msg::Request | msg::Info | msg::Text);
     app::Message appMessage;
     appMessage.infoMessage = infoMessage;
-    viewInfoMessage.payload = appMessage;
-//     node->send(viewInfoMessage);
+    msg::Message viewInfoMessage(msg::Request | msg::Info | msg::Text, appMessage);
     msg::hub().send(viewInfoMessage);
 }
 

@@ -17,11 +17,10 @@
  *
  */
 
-#include <boost/variant.hpp>
-
 #include "application/mainwindow.h"
 #include "message/node.h"
 #include "project/project.h"
+#include "feature/inputtype.h"
 #include "feature/sketch.h"
 #include "dialogs/sketch.h"
 #include "command/sketch.h"

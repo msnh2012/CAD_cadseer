@@ -19,7 +19,6 @@
 
 #include <sstream>
 
-#include <boost/variant.hpp>
 #include <boost/current_function.hpp>
 
 #include <QAction>
@@ -197,10 +196,11 @@ void Manager::setState(Mask stateIn)
 }
 void Manager::sendUpdatedMask()
 {
-  slc::Message out;
-  out.selectionMask = selectionMask;
-  msg::Message mOut(msg::Response | msg::Selection | msg::SetMask);
-  mOut.payload = out;
+  msg::Message mOut
+  (
+    msg::Response | msg::Selection | msg::SetMask
+    , slc::Message(selectionMask)
+  );
   node->send(mOut);
 }
 
@@ -247,6 +247,6 @@ void Manager::setupDispatcher()
 
 void Manager::requestSelectionMaskDispatched(const msg::Message &messageIn)
 {
-  slc::Message message = boost::get<slc::Message>(messageIn.payload);
+  slc::Message message = messageIn.getSLC();
   setState(message.selectionMask);
 }

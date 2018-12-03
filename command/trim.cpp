@@ -17,8 +17,6 @@
  *
  */
 
-#include <boost/variant.hpp>
-
 #include <osg/Geometry>
 
 #include <project/project.h>
@@ -26,6 +24,7 @@
 #include <selection/eventhandler.h>
 #include <annex/seershape.h>
 #include <parameter/parameter.h>
+#include <feature/inputtype.h>
 #include <feature/trim.h>
 #include <command/trim.h>
 

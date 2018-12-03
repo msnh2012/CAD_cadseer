@@ -17,13 +17,13 @@
  *
  */
 
-#include <boost/variant.hpp>
 #include <boost/optional.hpp>
 
 #include "message/node.h"
 #include "project/project.h"
 #include "selection/eventhandler.h"
 #include "annex/seershape.h"
+#include "feature/inputtype.h"
 #include "feature/extrude.h"
 #include "command/extrude.h"
 

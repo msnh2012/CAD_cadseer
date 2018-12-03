@@ -17,14 +17,13 @@
  *
  */
 
-#include <boost/variant.hpp>
-
 #include <TopoDS.hxx>
 
 #include <project/project.h>
 #include <message/node.h>
 #include <selection/eventhandler.h>
 #include <annex/seershape.h>
+#include <feature/inputtype.h>
 #include <feature/removefaces.h>
 #include <command/removefaces.h>
 

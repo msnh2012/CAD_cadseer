@@ -17,13 +17,12 @@
  *
  */
 
-#include <boost/variant.hpp>
-
 #include <osg/Geometry> //yuck
 
 #include <message/node.h>
 #include <project/project.h>
 #include <selection/eventhandler.h>
+#include <feature/inputtype.h>
 #include <feature/dieset.h>
 #include <command/dieset.h>
 
