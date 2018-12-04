@@ -19,6 +19,7 @@
 
 #include <message/node.h>
 #include <project/project.h>
+#include <viewer/widget.h>
 #include <feature/thread.h>
 #include <command/thread.h>
 
@@ -48,6 +49,7 @@ void Thread::deactivate()
 void Thread::go()
 {
   std::shared_ptr<ftr::Thread> t(new ftr::Thread());
+  t->setCSys(viewer->getCurrentSystem());
   project->addFeature(t);
  
   node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));

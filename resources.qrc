@@ -1,6 +1,6 @@
 <RCC>
   <qresource prefix="/">
-    <file>resources/images/background.png</file>
+    <file>resources/images/background.svg</file>
     <file>resources/images/iconBackground.svg</file>
     <file>resources/images/cursor.svg</file>
     <file>resources/images/selectFaces.svg</file>

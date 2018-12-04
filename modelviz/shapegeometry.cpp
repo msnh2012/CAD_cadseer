@@ -633,7 +633,7 @@ void ShapeGeometryBuilder::edgeConstruct(const TopoDS_Edge &edgeIn)
     const TColgp_Array1OfPnt& nodes = poly->Nodes();
     indices->resizeElements(nodes.Size());
     std::size_t tempIndex = 0;
-    for (auto point : nodes)
+    for (auto point : nodes) //can't const ref, might transform.
     {
       if (!identity)
         point.Transform(transformation);
@@ -642,7 +642,11 @@ void ShapeGeometryBuilder::edgeConstruct(const TopoDS_Edge &edgeIn)
       (*indices)[tempIndex] = vertices->size() - 1;
       tempIndex++;
       
-      //store primitiveset index and vertex indexes into map.
+      //first point is skipped, like above.
+      if (tempIndex == 1)
+        continue;
+      
+      //store primitiveset index and primitive index into map.
       PSetPrimitiveRecord record;
       record.primitiveSetIndex = edgeGeometry->getNumPrimitiveSets();
       record.primitiveIndex = primitiveCountEdge;

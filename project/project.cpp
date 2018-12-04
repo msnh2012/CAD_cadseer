@@ -965,6 +965,7 @@ void Project::dissolveFeatureDispatched(const msg::Message &mIn)
   
   //create new feature and assign seershape and ids.
   std::shared_ptr<ftr::Inert> nf(new ftr::Inert(oss.getRootOCCTShape()));
+  nf->setColor(fb->getColor());
   ann::SeerShape &nss = nf->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
   occt::ShapeVector oshapes = oss.getAllShapes(); //original shapes
   for (const auto &s : oshapes)

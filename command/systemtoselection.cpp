@@ -19,21 +19,23 @@
 
 #include <boost/optional.hpp>
 
+#include <project/project.h>
 #include <message/node.h>
 #include <selection/eventhandler.h>
 #include <viewer/widget.h>
+#include <feature/datumplane.h>
 #include <command/systemtoselection.h>
 
 using namespace cmd;
 
-boost::optional<osg::Matrixd> from3Points(const slc::Containers &csIn)
+static boost::optional<osg::Matrixd> from3Points(const slc::Containers &csIn)
 {
   if (csIn.size() != 3)
-    return boost::optional<osg::Matrixd>();
+    return boost::none;
   for (const auto &c : csIn)
   {
     if (!slc::isPointType(c.selectionType))
-      return boost::optional<osg::Matrixd>();
+      return boost::none;
   }
   osg::Vec3d origin = csIn.at(0).pointLocation;
   osg::Vec3d xPoint = csIn.at(1).pointLocation;
@@ -42,14 +44,14 @@ boost::optional<osg::Matrixd> from3Points(const slc::Containers &csIn)
   osg::Vec3d xVector = xPoint - origin;
   osg::Vec3d yVector = yPoint - origin;
   if (xVector.isNaN() || yVector.isNaN())
-    return boost::optional<osg::Matrixd>();
+    return boost::none;
   xVector.normalize();
   yVector.normalize();
   if ((1 - std::fabs(xVector * yVector)) < std::numeric_limits<float>::epsilon())
-    return boost::optional<osg::Matrixd>();
+    return boost::none;
   osg::Vec3d zVector = xVector ^ yVector;
   if (zVector.isNaN())
-    return boost::optional<osg::Matrixd>();
+    return boost::none;
   zVector.normalize();
   yVector = zVector ^ xVector;
   yVector.normalize();
@@ -60,7 +62,7 @@ boost::optional<osg::Matrixd> from3Points(const slc::Containers &csIn)
   fm(2,0) = zVector.x(); fm(2,1) = zVector.y(); fm(2,2) = zVector.z();
   fm.setTrans(origin);
   
-  return boost::optional<osg::Matrixd>(fm);
+  return fm;
 }
 
 SystemToSelection::SystemToSelection() : Base()
@@ -102,6 +104,14 @@ void SystemToSelection::go()
   {
     node->sendBlocked(msg::buildStatusMessage("Current system set to 3 points", 2.0));
     viewer->setCurrentSystem(*ocsys);
+    return;
+  }
+  if (containers.size() == 1 && containers.front().featureType == ftr::Type::DatumPlane)
+  {
+    const ftr::DatumPlane *dp = dynamic_cast<const ftr::DatumPlane*>(project->findFeature(containers.front().featureId));
+    assert(dp);
+    viewer->setCurrentSystem(dp->getSystem());
+    node->sendBlocked(msg::buildStatusMessage("Current system set to datum plane", 2.0));
     return;
   }
   

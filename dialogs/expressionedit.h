@@ -54,6 +54,7 @@ namespace dlg
     QPixmap trafficGreen;
     QPixmap link;
     QAction *unlinkAction;
+    int current = 1; //1=red, 2=yellow, 3=green, 4=link
   };
   
   //! a widget with an edit line and traffic signal hooked up to expressions.

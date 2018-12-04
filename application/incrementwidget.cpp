@@ -52,8 +52,6 @@ QWidget* IncrementWidgetAction::createWidget(QWidget* parent)
   QLabel *label1 = new QLabel(title1, out);
   vLayout1->addWidget(label1);
   lineEdit1 = new dlg::ExpressionEdit(out);
-  int width1 = QFontMetrics(QApplication::font()).boundingRect(title1).width();
-  lineEdit1->setMaximumWidth(width1);
   vLayout1->addWidget(lineEdit1);
   vLayout1->setContentsMargins(0, 0, 0, 0);
   hLayout->addLayout(vLayout1);
@@ -68,8 +66,6 @@ QWidget* IncrementWidgetAction::createWidget(QWidget* parent)
   QLabel *label2 = new QLabel(title2, out);
   vLayout2->addWidget(label2);
   lineEdit2 = new dlg::ExpressionEdit(out);
-  int width2 = QFontMetrics(QApplication::font()).boundingRect(title2).width();
-  lineEdit2->setMaximumWidth(width2);
   vLayout2->addWidget(lineEdit2);
   vLayout2->setContentsMargins(0, 0, 0, 0);
   hLayout->addLayout(vLayout2);

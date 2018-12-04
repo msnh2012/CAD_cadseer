@@ -68,8 +68,8 @@ Draft::~Draft() //for forward declare with osg::ref_ptr
 
 std::shared_ptr<prm::Parameter> Draft::buildAngleParameter()
 {
-   //some kind of default angle?
   std::shared_ptr<prm::Parameter> out(new prm::Parameter(prm::Names::Angle, prf::manager().rootPtr->features().draft().get().angle()));
+  out->setConstraint(prm::Constraint::buildNonZeroAngle());
   return out;
 }
 

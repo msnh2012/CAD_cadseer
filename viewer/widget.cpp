@@ -348,23 +348,55 @@ void Widget::paintEvent(QPaintEvent*)
 
 osg::Camera* Widget::createBackgroundCamera()
 {
-    //get background image and convert.
-    QImage qImageBase(":/resources/images/background.png");
-    //I am hoping that osg will free this memory.
-    QImage *qImage = new QImage(QGLWidget::convertToGLFormat(qImageBase));
-    unsigned char *imageData = qImage->bits();
-    osg::ref_ptr<osg::Image> osgImage = new osg::Image();
-    osgImage->setImage(qImage->width(), qImage->height(), 1, GL_RGBA, GL_RGBA,
-                       GL_UNSIGNED_BYTE, imageData, osg::Image::USE_NEW_DELETE, 1);
+  auto backgroundPath = []() -> boost::filesystem::path
+  {
+    //make sure file exists for osg to load.
+    //duplicate of gesture node code
+    std::string resourceName = ":/resources/images/background.svg";
+    std::string fileName(resourceName);
+    fileName.erase(fileName.begin(), fileName.begin() + 1); //remove starting ':'
+    std::replace(fileName.begin(), fileName.end(), '/', '_');
+    
+    boost::filesystem::path filePath = boost::filesystem::temp_directory_path();
+    filePath /= fileName;
+    if (!exists(filePath))
+    {
+      QFile resourceFile(QString::fromStdString(resourceName));
+      if (!resourceFile.open(QIODevice::ReadOnly | QIODevice::Text))
+      {
+        std::cout << "couldn't resource: " << resourceName << std::endl;
+        return boost::filesystem::path();
+      }
+      QByteArray buffer = resourceFile.readAll();
+      resourceFile.close();
+      
+      QFile newFile(QString::fromStdString(filePath.string()));
+      if (!newFile.open(QIODevice::WriteOnly | QIODevice::Text))
+      {
+        std::cout << "couldn't open new temp file in gsn::ensureFile" << std::endl;
+        return boost::filesystem::path();
+      }
+      std::cout << "newfilename is: " << filePath.string() << std::endl;
+      newFile.write(buffer);
+      newFile.close();
+    }
+    return filePath;
+  };
+  
+  boost::filesystem::path filePath = backgroundPath();
+  osg::ref_ptr<osg::Image> image = new osg::Image(); //default to blank image
+  if (!filePath.empty())
+  {
+    std::string opString("256x256");
+    osg::ref_ptr<osgDB::Options> options = new osgDB::Options(opString);
+    image = osgDB::readImageFile(filePath.string(), options.get());
+  }
 
     osg::ref_ptr<osg::Texture2D> texture = new osg::Texture2D;
-
-    texture->setImage(osgImage.get());
-    osg::ref_ptr<osg::Drawable> quad = osg::createTexturedQuadGeometry
+    texture->setImage(image.get());
+    osg::ref_ptr<osg::Geometry> quad = osg::createTexturedQuadGeometry
             (osg::Vec3(), osg::Vec3(1.0f, 0.0f, 0.0f), osg::Vec3(0.0f, 1.0f, 0.0f));
     quad->getOrCreateStateSet()->setTextureAttributeAndModes(0, texture.get());
-    osg::ref_ptr<osg::Geode> geode = new osg::Geode;
-    geode->addDrawable(quad.get());
 
     osg::Camera *bgCamera = new osg::Camera();
     bgCamera->setName("backgrd");
@@ -374,7 +406,7 @@ osg::Camera* Widget::createBackgroundCamera()
     bgCamera->setReferenceFrame(osg::Transform::ABSOLUTE_RF);
     bgCamera->setRenderOrder(osg::Camera::NESTED_RENDER, 0);
     bgCamera->setProjectionMatrix(osg::Matrix::ortho2D(0.0, 1.0, 0.0, 1.0));
-    bgCamera->addChild(geode.get());
+    bgCamera->addChild(quad.get());
     bgCamera->setNodeMask(mdv::backGroundCamera);
 
     osg::StateSet* ss = bgCamera->getOrCreateStateSet();

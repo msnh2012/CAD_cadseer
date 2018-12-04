@@ -159,6 +159,7 @@ bool Handler::handle(const osgGA::GUIEventAdapter& eventAdapter,
         msg::Message messageOut;
         messageOut.mask = msgMask;
         app::instance()->queuedMessage(messageOut);
+        rightButtonDown = false; //don't do menu if launching a command.
       }
       hotKey = -1;
     }

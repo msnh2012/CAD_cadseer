@@ -52,6 +52,14 @@ void TrafficLabel::resizeEvent(QResizeEvent *event)
 {
   iconSize = event->size().height();
   updatePixmaps();
+  if (current == 1)
+    setPixmap(trafficRed);
+  else if (current == 2)
+    setPixmap(trafficYellow);
+  else if (current == 3)
+    setPixmap(trafficGreen);
+  else if (current == 4)
+    setPixmap(link);
 }
 
 void TrafficLabel::updatePixmaps()
@@ -79,24 +87,28 @@ void TrafficLabel::setTrafficRedSlot()
 {
   setPixmap(trafficRed);
   this->removeAction(unlinkAction);
+  current = 1;
 }
 
 void TrafficLabel::setTrafficYellowSlot()
 {
   setPixmap(trafficYellow);
   this->removeAction(unlinkAction);
+  current = 2;
 }
 
 void TrafficLabel::setTrafficGreenSlot()
 {
   setPixmap(trafficGreen);
   this->removeAction(unlinkAction);
+  current = 3;
 }
 
 void TrafficLabel::setLinkSlot()
 {
   setPixmap(link);
   this->addAction(unlinkAction);
+  current = 4;
 }
 
 ExpressionEdit::ExpressionEdit(QWidget* parent, Qt::WindowFlags f) :
@@ -116,6 +128,7 @@ void ExpressionEdit::setupGui()
   layout->addWidget(lineEdit);
   
   trafficLabel = new TrafficLabel(this);
+  trafficLabel->setMinimumSize(1, 1);
   layout->addWidget(trafficLabel);
   
   this->setLayout(layout);
