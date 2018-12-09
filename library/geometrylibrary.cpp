@@ -19,11 +19,11 @@
 
 #include <iostream>
 
-#include <boost/filesystem.hpp>
-
 #include <QFile>
+#include <QSvgRenderer>
+#include <QPainter>
+#include <QImage>
 
-#include <osgDB/ReadFile>
 #include <osgManipulator/Dragger>
 
 #include <modelviz/nodemaskdefs.h>
@@ -193,51 +193,58 @@ osg::Geometry* lbr::csys::buildRotationTorus()
   return torus;
 }
 
+static void goPaint(QSvgRenderer &renderer, QImage &image)
+{
+  QPainter painter(&image);
+  painter.setRenderHint(QPainter::Antialiasing);
+  renderer.render(&painter, image.rect());
+};
+
+static osg::ref_ptr<osg::Image> toOsgImage(const QImage &imageIn)
+{
+  osg::ref_ptr<osg::Image> out = new osg::Image();
+  
+  out->allocateImage(64, 64, 1, GL_RGBA, GL_UNSIGNED_BYTE);
+  assert(imageIn.sizeInBytes() == out->getTotalDataSize());
+  if(imageIn.sizeInBytes() != out->getTotalDataSize())
+  {
+    std::cout << "Error: QImage size doesn't match osg::Image size" << std::endl;
+    std::cout << "QImage size: " << imageIn.sizeInBytes() << std::endl;
+    std::cout << "osg::Image size: " << out->getTotalDataSize() << std::endl;
+    return osg::ref_ptr<osg::Image>();
+  }
+  std::memcpy(out->data(), imageIn.bits(), imageIn.sizeInBytes());
+  
+  //don't know why images are flipped and I need the following?
+  out->flipVertical();
+  
+  return out;
+};
+
 osg::Geometry* lbr::csys::buildIconLink()
 {
-  std::string resourceName = ":/resources/images/linkIcon.svg";
-  resourceName = fileNameFromResource(resourceName);
-  osg::Image *linkImage = osgDB::readImageFile(resourceName);
-  assert(linkImage);
-  IconBuilder iBuilder(linkImage);
+  QSvgRenderer svgRenderer(QString(":/resources/images/linkIcon.svg"));
+  QImage qImage(64, 64, QImage::Format_RGBA8888);
+  qImage.fill(Qt::black);
+  if (svgRenderer.isValid())
+    goPaint(svgRenderer, qImage);
+  osg::ref_ptr<osg::Image> linkImage = toOsgImage(qImage);
+  assert(linkImage.valid());
+  IconBuilder iBuilder(linkImage.get());
   return iBuilder;
 }
 
 osg::Geometry* lbr::csys::buildIconUnlink()
 {
-  std::string resourceName = ":/resources/images/unlinkIcon.svg";
-  resourceName = fileNameFromResource(resourceName);
-  osg::Image *unlinkImage = osgDB::readImageFile(resourceName);
-  assert(unlinkImage);
-  IconBuilder iBuilder(unlinkImage);
+  QSvgRenderer svgRenderer(QString(":/resources/images/unlinkIcon.svg"));
+  QImage qImage(64, 64, QImage::Format_RGBA8888);
+  qImage.fill(Qt::black);
+  if (svgRenderer.isValid())
+    goPaint(svgRenderer, qImage);
+  osg::ref_ptr<osg::Image> unlinkImage = toOsgImage(qImage);
+  assert(unlinkImage.valid());
+  IconBuilder iBuilder(unlinkImage.get());
   return iBuilder;
-}
-
-std::string lbr::csys::fileNameFromResource(const std::string &resourceName)
-{
-  std::string fileName(resourceName);
-  fileName.erase(fileName.begin(), fileName.begin()); //remove starting ':'
-  std::replace(fileName.begin(), fileName.end(), '/', '_');
-  
-  boost::filesystem::path filePath = boost::filesystem::temp_directory_path();
-  filePath /= fileName;
-
-  if (!boost::filesystem::exists(filePath))
-  {
-    QFile resourceFile(resourceName.c_str());
-    if (!resourceFile.open(QIODevice::ReadOnly | QIODevice::Text))
-      std::cout << "couldn't resource file" << std::endl;
-    QByteArray buffer = resourceFile.readAll();
-    resourceFile.close();
-     
-    QFile newFile(QString::fromStdString(filePath.string()));
-    if (!newFile.open(QIODevice::WriteOnly | QIODevice::Text))
-      std::cout << "couldn't open new temp file" << std::endl;
-    std::cout << "newfilename is: " << filePath.string() << std::endl;
-    newFile.write(buffer);
-    newFile.close();
-  }
-  return filePath.string();
 }
 
 /*! @brief build an arrow for a dimension

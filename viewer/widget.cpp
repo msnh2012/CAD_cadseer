@@ -348,54 +348,40 @@ void Widget::paintEvent(QPaintEvent*)
 
 osg::Camera* Widget::createBackgroundCamera()
 {
-  auto backgroundPath = []() -> boost::filesystem::path
+  const int imageSize = 1024;
+  QImage qImage(imageSize, imageSize, QImage::Format_RGBA8888);
+  qImage.fill(Qt::transparent);
+  QSvgRenderer svgRenderer(QString(":/resources/images/background.svg"));
+  if (svgRenderer.isValid())
   {
-    //make sure file exists for osg to load.
-    //duplicate of gesture node code
-    std::string resourceName = ":/resources/images/background.svg";
-    std::string fileName(resourceName);
-    fileName.erase(fileName.begin(), fileName.begin() + 1); //remove starting ':'
-    std::replace(fileName.begin(), fileName.end(), '/', '_');
-    
-    boost::filesystem::path filePath = boost::filesystem::temp_directory_path();
-    filePath /= fileName;
-    if (!exists(filePath))
-    {
-      QFile resourceFile(QString::fromStdString(resourceName));
-      if (!resourceFile.open(QIODevice::ReadOnly | QIODevice::Text))
-      {
-        std::cout << "couldn't resource: " << resourceName << std::endl;
-        return boost::filesystem::path();
-      }
-      QByteArray buffer = resourceFile.readAll();
-      resourceFile.close();
-      
-      QFile newFile(QString::fromStdString(filePath.string()));
-      if (!newFile.open(QIODevice::WriteOnly | QIODevice::Text))
-      {
-        std::cout << "couldn't open new temp file in gsn::ensureFile" << std::endl;
-        return boost::filesystem::path();
-      }
-      std::cout << "newfilename is: " << filePath.string() << std::endl;
-      newFile.write(buffer);
-      newFile.close();
-    }
-    return filePath;
-  };
-  
-  boost::filesystem::path filePath = backgroundPath();
-  osg::ref_ptr<osg::Image> image = new osg::Image(); //default to blank image
-  if (!filePath.empty())
-  {
-    std::string opString("256x256");
-    osg::ref_ptr<osgDB::Options> options = new osgDB::Options(opString);
-    image = osgDB::readImageFile(filePath.string(), options.get());
+    QPainter painter(&qImage);
+    painter.setRenderHint(QPainter::Antialiasing);
+    svgRenderer.render(&painter, qImage.rect());
   }
-
+  osg::ref_ptr<osg::Image> image = new osg::Image(); //default to blank image
+  image->allocateImage(imageSize, imageSize, 1, GL_RGBA, GL_UNSIGNED_BYTE);
+  assert(qImage.sizeInBytes() == image->getTotalDataSize());
+  if(qImage.sizeInBytes() == image->getTotalDataSize())
+  {
+    std::memcpy(image->data(), qImage.bits(), qImage.sizeInBytes());
+  }
+  else
+  {
+    std::cout << "Error: QImage size doesn't match osg::Image size" << std::endl;
+    std::cout << "QImage size: " << qImage.sizeInBytes() << std::endl;
+    std::cout << "osg::Image size: " << image->getTotalDataSize() << std::endl;
+  }
+  image->flipVertical(); //don't know why images are flipped and I need this?
+      
     osg::ref_ptr<osg::Texture2D> texture = new osg::Texture2D;
     texture->setImage(image.get());
     osg::ref_ptr<osg::Geometry> quad = osg::createTexturedQuadGeometry
             (osg::Vec3(), osg::Vec3(1.0f, 0.0f, 0.0f), osg::Vec3(0.0f, 1.0f, 0.0f));
+    texture->setDataVariance(osg::Object::STATIC);
+    texture->setWrap(osg::Texture::WRAP_S, osg::Texture::CLAMP_TO_EDGE);
+    texture->setWrap(osg::Texture::WRAP_T, osg::Texture::CLAMP_TO_EDGE);
+    texture->setFilter(osg::Texture::MIN_FILTER, osg::Texture::LINEAR);
+    texture->setFilter(osg::Texture::MAG_FILTER, osg::Texture::LINEAR);
     quad->getOrCreateStateSet()->setTextureAttributeAndModes(0, texture.get());
 
     osg::Camera *bgCamera = new osg::Camera();

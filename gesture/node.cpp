@@ -17,84 +17,22 @@
  *
  */
 
-#include <assert.h>
+#include <cassert>
+#include <iostream>
+#include <cstring> //for memcpy
 
-#include <boost/filesystem.hpp>
-
+#include <QSvgRenderer>
+#include <QPainter>
 #include <QImage>
-#include <QGLWidget>
-#include <QDebug>
-#include <QFile>
 
 #include <osg/Switch>
 #include <osg/MatrixTransform>
 #include <osg/Texture2D>
 #include <osg/Geometry>
-#include <osg/Geode>
-#include <osg/LineWidth>
-#include <osgDB/ReadFile>
 #include <osg/Depth>
-#include <osg/TexEnv>
 
 #include <gesture/node.h>
 #include <modelviz/nodemaskdefs.h>
-
-using namespace boost::filesystem;
-
-using namespace gsn;
-
-path ensureFile(const char *resourceName)
-{
-  //alright this sucks. getting svg icons onto geode is a pain.
-  //I tried something I found on the web using qimage, but looks like ass.
-  //the openscenegraph svg reader only takes a filename.
-  //so we will write out the resource files to the temp directory
-  //so we can pass a file name to the svg reader. I don't like it either.
-  
-  std::string fileName(resourceName);
-  fileName.erase(fileName.begin(), fileName.begin() + 1); //remove starting ':'
-  std::replace(fileName.begin(), fileName.end(), '/', '_');
-  
-  path filePath = temp_directory_path();
-  filePath /= fileName;
-  if (!exists(filePath))
-  {
-    QFile resourceFile(resourceName);
-    if (!resourceFile.open(QIODevice::ReadOnly | QIODevice::Text))
-    {
-      std::cout << "couldn't resource: " << resourceName << std::endl;
-      return path();
-    }
-    QByteArray buffer = resourceFile.readAll();
-    resourceFile.close();
-     
-    QFile newFile(QString::fromStdString(filePath.string()));
-    if (!newFile.open(QIODevice::WriteOnly | QIODevice::Text))
-    {
-      std::cout << "couldn't open new temp file in gsn::ensureFile" << std::endl;
-      return path();
-    }
-    std::cout << "newfilename is: " << filePath.string() << std::endl;
-    newFile.write(buffer);
-    newFile.close();
-  }
-  
-  return filePath;
-}
-
-static osg::ref_ptr<osg::Image> readImageFile(const char * resourceName, double radius)
-{
-  path resourceFileName = ensureFile(resourceName);
-  if (resourceFileName.empty())
-    return osg::ref_ptr<osg::Image>();
-  
-  int size = std::max(static_cast<int>(radius), 16);
-  std::ostringstream opString;
-  opString << size << 'x' << size;
-  osg::ref_ptr<osgDB::Options> options = new osgDB::Options(opString.str());
-  osg::ref_ptr<osg::Image> image = osgDB::readImageFile(resourceFileName.string(), options.get());
-  return image;
-}
 
 //line is now actually a quad
 static osg::Geometry* buildLineGeometry()
@@ -122,8 +60,155 @@ static osg::Geometry* buildLineGeometry()
   return geometryLine.release();
 }
 
-osg::MatrixTransform* gsn::buildNode(const char *resourceName, unsigned int mask, const NodeCue &nodeCue)
+namespace gsn
 {
+  struct NodeBuilder::Stow
+  {
+    Stow() = delete;
+    Stow(double radiusIn, int sidesIn)
+    : radius(radiusIn)
+    , sides(sidesIn)
+    , background(radius * 2.0, radius * 2.0, QImage::Format_RGBA8888)
+    {}
+    
+    /* we pass the rect explicitly instead of using image.rect(), because
+     * we use the rect to scale the command icons to fit inside background icon
+     */
+    static void goPaint(QSvgRenderer &renderer, QImage &image, const QRectF &rect)
+    {
+      QPainter painter(&image);
+      painter.setRenderHint(QPainter::Antialiasing);
+      renderer.render(&painter, rect);
+    };
+    
+    osg::ref_ptr<osg::Image> toOsgImage(const QImage &imageIn)
+    {
+      osg::ref_ptr<osg::Image> out = new osg::Image();
+      
+      int size = static_cast<int>(radius * 2.0);
+      out->allocateImage(size, size, 1, GL_RGBA, GL_UNSIGNED_BYTE);
+      assert(imageIn.sizeInBytes() == out->getTotalDataSize());
+      if(imageIn.sizeInBytes() != out->getTotalDataSize())
+      {
+        std::cout << "Error: QImage size doesn't match osg::Image size" << std::endl;
+        std::cout << "QImage size: " << imageIn.sizeInBytes() << std::endl;
+        std::cout << "osg::Image size: " << out->getTotalDataSize() << std::endl;
+        return osg::ref_ptr<osg::Image>();
+      }
+      std::memcpy(out->data(), imageIn.bits(), imageIn.sizeInBytes());
+      
+      //don't know why images are flipped and I need the following?
+      out->flipVertical();
+      
+      return out;
+    };
+    
+    double radius;
+    int sides;
+    osg::ref_ptr<osg::Geometry> geometry;
+    osg::ref_ptr<osg::Vec3Array> vertices;
+    osg::ref_ptr<osg::Vec3Array> normals; //only 1 bind overall
+    osg::ref_ptr<osg::Vec4Array> colors; //only 1 bind overall
+    osg::ref_ptr<osg::Texture2D> texture;
+    osg::ref_ptr<osg::Vec2Array> tCoords;
+    osg::ref_ptr<osg::Depth> depth;
+    QImage background;
+  };
+}
+
+using namespace gsn;
+
+NodeBuilder::NodeBuilder(double radiusIn, int sidesIn)
+: stow(std::make_unique<Stow>(radiusIn, sidesIn))
+{
+  initialize();
+}
+
+NodeBuilder::~NodeBuilder() = default;
+
+void NodeBuilder::initialize()
+{
+  stow->geometry = new osg::Geometry();
+  stow->geometry->setName("Icon");
+  stow->geometry->setDataVariance(osg::Object::STATIC);
+  
+  stow->sides = (stow->sides < 4) ? static_cast<int>(stow->radius) : stow->sides;
+  osg::Vec3d currentPoint(stow->radius, 0.0, 0.0);
+  std::vector<osg::Vec3d> points;
+  osg::Vec2Array *tCoords = new osg::Vec2Array();
+  points.push_back(osg::Vec3d(0.0, 0.0, 0.0)); //center
+  tCoords->push_back(osg::Vec2(0.5, 0.5)); //center point
+  float p = 0.498; //cheats texture point to help with perimeter noise.
+  osg::Quat rotation(2 * M_PI / static_cast<double>(stow->sides) , osg::Vec3d(0.0, 0.0, 1.0));
+  for (int index = 0; index < stow->sides; ++index)
+  {
+    points.push_back(currentPoint);
+    osg::Vec3 tempPointVec(currentPoint);
+    tempPointVec.normalize();
+    osg::Vec2 tempTextVec(tempPointVec.x(), tempPointVec.y());
+    tempTextVec *= p;
+    tCoords->push_back((tempTextVec) + osg::Vec2(0.5, 0.5));
+    currentPoint = rotation * currentPoint;
+  }
+  points.push_back(osg::Vec3d(stow->radius, 0.0, 0.0));
+  tCoords->push_back(tCoords->at(1));
+  
+  osg::Vec3Array *vertices = new osg::Vec3Array();
+  std::vector<osg::Vec3d>::const_iterator it;
+  for (it = points.begin(); it != points.end(); ++it)
+    vertices->push_back(*it);
+  stow->geometry->setVertexArray(vertices);
+  stow->geometry->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::TRIANGLE_FAN, 0, vertices->size()));
+  stow->geometry->setTexCoordArray(0, tCoords);
+
+  osg::Vec3Array *normals = new osg::Vec3Array();
+  normals->push_back(osg::Vec3(0.0, 0.0, 1.0));
+  stow->geometry->setNormalArray(normals);
+  stow->geometry->setNormalBinding(osg::Geometry::BIND_OVERALL);
+  
+  osg::Vec4Array *colors = new osg::Vec4Array();
+  colors->push_back(osg::Vec4(1.0, 1.0, 1.0, 1.0));
+  stow->geometry->setColorArray(colors);
+  stow->geometry->setColorBinding(osg::Geometry::BIND_OVERALL);
+  
+  osg::Depth *depth = new osg::Depth();
+  depth->setRange(0.003, 1.003);
+  stow->geometry->getOrCreateStateSet()->setAttribute(depth);
+  
+  QSvgRenderer svgRenderer(QString(":/resources/images/iconBackground.svg"));
+  stow->background.fill(Qt::black);
+  if (svgRenderer.isValid())
+    stow->goPaint(svgRenderer, stow->background, stow->background.rect());
+}
+
+osg::MatrixTransform* NodeBuilder::buildNode(const char *resource, unsigned int mask)
+{
+  float size = static_cast<float>(stow->radius * 2.0);
+  float shrink = size / 1.41421; //inscribed square to circumscribed square
+  float offset = (size - shrink) / 2.0;
+  
+  QImage combinedImage = stow->background; //make a copy to render.
+  QSvgRenderer renderer(QString::fromUtf8(resource));
+  if (renderer.isValid())
+    stow->goPaint(renderer, combinedImage, QRectF(offset, offset, shrink, shrink));
+  
+  osg::ref_ptr<osg::Image> osgImage = stow->toOsgImage(combinedImage);
+  assert(osgImage);
+  if (!osgImage)
+    return new osg::MatrixTransform();
+  
+  osg::Texture2D *texture = new osg::Texture2D();
+  texture->setImage(osgImage);
+  texture->setDataVariance(osg::Object::STATIC);
+  texture->setWrap(osg::Texture::WRAP_S, osg::Texture::CLAMP_TO_EDGE);
+  texture->setWrap(osg::Texture::WRAP_T, osg::Texture::CLAMP_TO_EDGE);
+  texture->setFilter(osg::Texture::MIN_FILTER, osg::Texture::LINEAR);
+  texture->setFilter(osg::Texture::MAG_FILTER, osg::Texture::LINEAR);
+  osg::Geometry *aClone = static_cast<osg::Geometry*>(stow->geometry->clone(osg::CopyOp()));
+  osg::StateSet *state = static_cast<osg::StateSet*>(aClone->getOrCreateStateSet()->clone(osg::CopyOp()));
+  state->setTextureAttributeAndModes(0, texture, osg::StateAttribute::ON);
+  aClone->setStateSet(state);
+  
   osg::MatrixTransform *mainNode = new osg::MatrixTransform();
   mainNode->setMatrix(osg::Matrixd::identity());
   mainNode->setName("Node");
@@ -133,103 +218,7 @@ osg::MatrixTransform* gsn::buildNode(const char *resourceName, unsigned int mask
   aSwitch->setName("LineIconSwitch");
   mainNode->addChild(aSwitch);
   aSwitch->addChild(buildLineGeometry());
+  aSwitch->addChild(aClone);
   
-  osg::ref_ptr<osg::Image> forImage = readImageFile(resourceName, nodeCue.radius * 2.0);
-  if (!forImage.valid())
-  {
-    std::cout << "Error: forground image is invalid in gsn::buildNode" << std::endl;
-    forImage = new osg::Image();
-  }
-
-  osg::ref_ptr<osg::Texture2D> forTexture = new osg::Texture2D();
-  forTexture->setImage(forImage);
-  forTexture->setDataVariance(osg::Object::STATIC);
-  forTexture->setWrap(osg::Texture::WRAP_S, osg::Texture::CLAMP_TO_EDGE);
-  forTexture->setWrap(osg::Texture::WRAP_T, osg::Texture::CLAMP_TO_EDGE);
-  forTexture->setFilter(osg::Texture::MIN_FILTER, osg::Texture::LINEAR);
-  forTexture->setFilter(osg::Texture::MAG_FILTER, osg::Texture::LINEAR);
-  
-  osg::Geometry *geometry = new osg::Geometry();
-  geometry->setName("Icon");
-  geometry->setDataVariance(osg::Object::STATIC);
-  geometry->setVertexArray(nodeCue.vertices.get());
-  geometry->setTexCoordArray(0, nodeCue.tCoords0.get());
-  geometry->setTexCoordArray(1, nodeCue.tCoords1.get());
-  geometry->setNormalArray(nodeCue.normals.get());
-  geometry->setNormalBinding(osg::Geometry::BIND_OVERALL);
-  geometry->setColorArray(nodeCue.colors.get());
-  geometry->setColorBinding(osg::Geometry::BIND_OVERALL);
-  geometry->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::TRIANGLE_FAN, 0, nodeCue.vertices->size()));
-  geometry->getOrCreateStateSet()->setTextureAttributeAndModes(0, nodeCue.backTexture.get(), osg::StateAttribute::ON);
-  geometry->getOrCreateStateSet()->setTextureAttributeAndModes(1, forTexture.get(), osg::StateAttribute::ON);
-  geometry->getOrCreateStateSet()->setTextureAttribute(1, nodeCue.texenv);
-  geometry->getOrCreateStateSet()->setAttribute(nodeCue.depth.get());
-  
-  aSwitch->addChild(geometry);
-
   return mainNode;
 }
-
-NodeCue::NodeCue(double radiusIn, int sidesIn) : radius(radiusIn)
-{
-  tCoords0 = new osg::Vec2Array();
-  tCoords1 = new osg::Vec2Array();
-  sides = (sidesIn < 4) ? static_cast<int>(radius) : sidesIn;
-  double shrinkFactor = 1.41421; //inscribed square to circumscribed square
-  osg::Vec3d currentPoint(radius, 0.0, 0.0);
-  std::vector<osg::Vec3d> points;
-  points.push_back(osg::Vec3d(0.0, 0.0, 0.0)); //center
-  float p = 0.499; //cheats texture point to help with perimeter noise.
-  tCoords0->push_back(osg::Vec2(0.5, 0.5)); //center point
-  tCoords1->push_back(tCoords0->back()); //center point
-  osg::Quat rotation(2 * M_PI / static_cast<double>(sides) , osg::Vec3d(0.0, 0.0, 1.0));
-  for (int index = 0; index < sides; ++index)
-  {
-    points.push_back(currentPoint);
-    osg::Vec3 tempPointVec(currentPoint);
-    tempPointVec.normalize();
-    osg::Vec2 tempTextVec(tempPointVec.x(), tempPointVec.y());
-    tempTextVec *= p;
-    tCoords0->push_back((tempTextVec) + osg::Vec2(0.5, 0.5));
-    tCoords1->push_back((tempTextVec * shrinkFactor) + osg::Vec2(0.5, 0.5));
-    currentPoint = rotation * currentPoint;
-  }
-  points.push_back(osg::Vec3d(radius, 0.0, 0.0));
-  tCoords0->push_back(tCoords0->at(1));
-  tCoords1->push_back(tCoords1->at(1));
-  
-  vertices = new osg::Vec3Array();
-  std::vector<osg::Vec3d>::const_iterator it;
-  for (it = points.begin(); it != points.end(); ++it)
-    vertices->push_back(*it);
-
-  normals = new osg::Vec3Array();
-  normals->push_back(osg::Vec3(0.0, 0.0, 1.0));
-  
-  colors = new osg::Vec4Array();
-  colors->push_back(osg::Vec4(1.0, 1.0, 1.0, 1.0));
-  
-  osg::ref_ptr<osg::Image> backImage = readImageFile(":/resources/images/iconBackground.svg", radius * 2.0);
-  if (!backImage.valid())
-  {
-    std::cout << "Error: background image is invalid in NodeCue::NodeCue" << std::endl;
-    backImage = new osg::Image();
-  }
-  
-  backTexture = new osg::Texture2D();
-  backTexture->setImage(backImage);
-  backTexture->setDataVariance(osg::Object::STATIC);
-  backTexture->setWrap(osg::Texture::WRAP_S, osg::Texture::CLAMP_TO_EDGE);
-  backTexture->setWrap(osg::Texture::WRAP_T, osg::Texture::CLAMP_TO_EDGE);
-  backTexture->setFilter(osg::Texture::MIN_FILTER, osg::Texture::LINEAR);
-  backTexture->setFilter(osg::Texture::MAG_FILTER, osg::Texture::LINEAR);
-  
-  texenv = new osg::TexEnv;
-  texenv->setMode(osg::TexEnv::DECAL);
-  
-  depth = new osg::Depth;
-  depth->setRange(0.003, 1.003);
-}
-
-NodeCue::~NodeCue(){}
-

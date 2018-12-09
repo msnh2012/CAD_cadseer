@@ -421,9 +421,8 @@ void Handler::constructMenu()
   //should only be 2. the start object and the transparent quad
   gestureSwitch->removeChildren(0, gestureSwitch->getNumChildren() - 1);
   
-  gsn::NodeCue nodeCue(iconRadius);
-
-  startNode = gsn::buildNode(":/resources/images/start.svg", mdv::gestureMenu, nodeCue);
+  gsn::NodeBuilder builder(iconRadius);
+  startNode = builder.buildNode(":/resources/images/start.svg", mdv::gestureMenu);
   startNode->setUserValue<std::string>(attributeStatus, QObject::tr("Start Menu").toStdString());
   gestureSwitch->insertChild(0, startNode);
 
@@ -442,8 +441,7 @@ void Handler::constructMenu()
     if (nodeMask == mdv::gestureCommand)
       assert(!mask.empty());
     
-    osg::MatrixTransform *out;
-    out = gsn::buildNode(resource, nodeMask, nodeCue);
+    osg::MatrixTransform *out = builder.buildNode(resource, nodeMask);
     out->setUserValue<std::string>(attributeStatus, statusText);
     if (nodeMask == mdv::gestureCommand)
       out->setUserValue<std::string>(attributeMask, mask);

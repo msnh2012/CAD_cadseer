@@ -112,7 +112,6 @@ namespace lbr
     osg::Geometry* buildRotationTorus();
     osg::Geometry* buildIconLink();
     osg::Geometry* buildIconUnlink();
-    std::string fileNameFromResource(const std::string &);
   }
   
   namespace dim
