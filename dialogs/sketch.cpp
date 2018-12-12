@@ -94,9 +94,6 @@ QDialog(parent)
 , sketch(sIn)
 , selection(new skt::Selection(sketch->getVisual()))
 {
-  buildGui();
-  initGui();
-  
   node = std::make_unique<msg::Node>();
   node->connect(msg::hub());
   sift = std::make_unique<msg::Sift>();
@@ -104,6 +101,9 @@ QDialog(parent)
   node->setHandler(std::bind(&msg::Sift::receive, sift.get(), std::placeholders::_1));
   
   node->sendBlocked(msg::Message(msg::Request | msg::Overlay | msg::Selection | msg::Freeze));
+  
+  buildGui();
+  initGui();
   
   WidgetGeometry *filter = new WidgetGeometry(this, "dlg::Sketch");
   this->installEventFilter(filter);

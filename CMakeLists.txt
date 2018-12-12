@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8)
-SET(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+SET(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake ${CMAKE_CURRENT_SOURCE_DIR}/sketch/solvespace/cmake)
 project(cadseer)
 SET(CMAKE_CXX_STANDARD 14)
 SET(CXX_STANDARD_REQUIRED YES)
@@ -236,40 +236,16 @@ endif(IGL_INCLUDE_FOUND AND IGL_LIB_FOUND AND NETGEN_INCLUDE_FOUND AND NETGEN_LI
 #end squash
 
 #begin sketch
-SET(SOLVESPACE_PROJECT_PATH "" CACHE PATH "Path to SOLVESPACE project")
-MARK_AS_ADVANCED(SOLVESPACE_PROJECT_PATH)
-IF(SOLVESPACE_PROJECT_PATH)
-  MESSAGE(STATUS "SOLVESPACE_PROJECT_PATH is set to: ${SOLVESPACE_PROJECT_PATH}")
-
-  set(SOLVESPACE_INCLUDE "${SOLVESPACE_PROJECT_PATH}/include")
-  message(STATUS "${SOLVESPACE_INCLUDE}")
-  if(NOT EXISTS ${SOLVESPACE_INCLUDE})
-    message(STATUS "solvespace include path not valid. sketch will not be built.")
-  else(NOT EXISTS ${SOLVESPACE_INCLUDE})
-    message(STATUS "solvespace include found.")
-    set(SOLVESPACE_INCLUDE_FOUND true)
-  endif(NOT EXISTS ${SOLVESPACE_INCLUDE})
-  
-  #assuming 'build' sub directory
-  set(SOLVESPACE_LIB "${SOLVESPACE_PROJECT_PATH}/build/src/libslvs.so")
-  if(NOT EXISTS ${SOLVESPACE_LIB})
-    message(STATUS "solvespace lib missing. sketch will not be built.")
-  else(NOT EXISTS ${SOLVESPACE_LIB})
-    message(STATUS "solvespace lib found.")
-    set(SOLVESPACE_LIB_FOUND true)
-  endif(NOT EXISTS ${SOLVESPACE_LIB})
-  
-  if(SOLVESPACE_INCLUDE_FOUND AND SOLVESPACE_LIB_FOUND)
-    add_definitions(-DSOLVESPACE_FOUND)
-    set (SKETCH_SOURCES
-      sketch/solver.cpp
-      sketch/selection.cpp
-      sketch/visual.cpp
-    )
-  endif(SOLVESPACE_INCLUDE_FOUND AND SOLVESPACE_LIB_FOUND)
-ELSE(SOLVESPACE_PROJECT_PATH)
-  MESSAGE(STATUS "SOLVESPACE_PROJECT_PATH is empty. sketch will not be built.")
-ENDIF(SOLVESPACE_PROJECT_PATH)
+SET(SOLVESPACE_ONLY_LIB TRUE CACHE BOOL "only build solvespace library")
+include_directories(${CMAKE_SOURCE_DIR}/sketch/solvespace/include)
+add_subdirectory(sketch/solvespace)
+set(SOLVESPACE_INCLUDE "${CMAKE_SOURCE_DIR}/sketch/solvespace/include")
+set(SOLVESPACE_LIB "${CMAKE_BINARY_DIR}/sketch/solvespace/src/libslvs.so")
+set(SKETCH_SOURCES
+  sketch/solver.cpp
+  sketch/selection.cpp
+  sketch/visual.cpp
+)
 #end sketch
 
 #cgal was corrupting boost libraries variable. so had to move it after the cgal find.

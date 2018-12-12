@@ -4,3 +4,6 @@
 [submodule "libreoffice/libzippp"]
 	path = libreoffice/libzippp
 	url = https://github.com/ctabin/libzippp.git
+[submodule "sketch/solvespace"]
+	path = sketch/solvespace
+	url = https://gitlab.com/blobfish/solvespace.git
