@@ -51,6 +51,7 @@ make -j4
 * [CGAL](https://www.cgal.org/) - Computational Geometry Algorithms Library
 * [libigl](http://libigl.github.io/libigl/) - A simple C++ geometry processing library
 * [netgen](https://sourceforge.net/projects/netgen-mesher/) - An automatic 3d tetrahedral mesh generator
+* [solvespace](http://solvespace.com/index.pl/) - A geometric constraint solver
 
 ## License
 
