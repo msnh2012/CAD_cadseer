@@ -4,15 +4,18 @@ project(cadseer)
 SET(CMAKE_CXX_STANDARD 14)
 SET(CXX_STANDARD_REQUIRED YES)
 SET(CXX_EXTENSIONS NO)
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wshadow -fext-numeric-literals -frounding-math" )
+#SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wshadow -fext-numeric-literals -frounding-math" )
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fext-numeric-literals -frounding-math" )
+
+add_definitions(-D_USE_MATH_DEFINES)
 
 add_definitions(-DQT_NO_KEYWORDS) #macros clashing
 find_package(Qt5Core REQUIRED)
 find_package(Qt5Widgets REQUIRED)
 find_package(Qt5OpenGL REQUIRED)
-find_package(Qt5X11Extras REQUIRED)
+#find_package(Qt5X11Extras REQUIRED)
 find_package(Qt5Svg REQUIRED)
-SET(QT_LIBRARIES Qt5::Core Qt5::Widgets Qt5::OpenGL Qt5::X11Extras Qt5::Svg)
+SET(QT_LIBRARIES Qt5::Core Qt5::Widgets Qt5::OpenGL Qt5::Svg)
 add_definitions(${Qt5Widgets_DEFINITIONS})
 
 # OCCT_PROJECT_PATH lets user define cmake variables based on a locally built and
@@ -68,6 +71,8 @@ IF(OCCT_PROJECT_PATH)
 ELSE(OCCT_PROJECT_PATH)
     MESSAGE(STATUS "OCCT_PROJECT_PATH is empty. Using find_package for OCCT")
     find_package(OpenCasCade REQUIRED)
+	set(OCCT_INCLUDE_DIRS ${OCC_INCLUDE_DIR})
+	link_directories(${OCC_LIBRARY_DIR})
     SET(OCE_LIBRARIES ${OCC_LIBRARIES})
 ENDIF(OCCT_PROJECT_PATH)
 
@@ -148,7 +153,10 @@ ENDIF(SPNAV_FOUND)
 find_package(Eigen3 REQUIRED)
 
 find_package(XercesC REQUIRED)
-find_package(XSDCXX REQUIRED)
+find_package(XSDCXX)
+#include_directories("C:\\Users\\holden\\development\\xsd-4.0.0-i686-windows\\libxsd")
+include_directories(${XSDCXX_INCLUDE_DIR})
+include_directories(${XERCESC_INCLUDE_DIR})
 
 #begin squash
 SET(CGAL_DO_NOT_WARN_ABOUT_CMAKE_BUILD_TYPE TRUE) #shutup! I know debug is slow.
@@ -178,7 +186,7 @@ IF(IGL_PROJECT_PATH)
   
   #static lib has problems just go with slow header only for now.
   #assuming 'lib' directory
-  set(IGL_LIB "${IGL_PROJECT_PATH}/lib/libigl.a") #not using right now.
+  set(IGL_LIB "${IGL_PROJECT_PATH}/build/igl.lib")
 #   add_definitions(-DIGL_STATIC_LIBRARY)
   if(NOT EXISTS ${IGL_LIB})
     message(STATUS "igl lib missing. squash will not be built.")
@@ -205,8 +213,8 @@ IF(NETGEN_PROJECT_PATH)
     set(NETGEN_INCLUDE_FOUND true)
   endif(NOT EXISTS ${NETGEN_INCLUDE})
   
-  #assuming 'lib' directory
-  set(NETGEN_LIB "${NETGEN_PROJECT_PATH}/build/nglib/libnglib.so")
+  #assuming 'build' directory
+  set(NETGEN_LIB "${NETGEN_PROJECT_PATH}/build/nglib/nglib.lib")
   if(NOT EXISTS ${NETGEN_LIB})
     message(STATUS "netgen lib missing. squash will not be built.")
   else(NOT EXISTS ${NETGEN_LIB})
@@ -239,8 +247,9 @@ endif(IGL_INCLUDE_FOUND AND IGL_LIB_FOUND AND NETGEN_INCLUDE_FOUND AND NETGEN_LI
 SET(SOLVESPACE_ONLY_LIB TRUE CACHE BOOL "only build solvespace library")
 include_directories(${CMAKE_SOURCE_DIR}/sketch/solvespace/include)
 add_subdirectory(sketch/solvespace)
+
 set(SOLVESPACE_INCLUDE "${CMAKE_SOURCE_DIR}/sketch/solvespace/include")
-set(SOLVESPACE_LIB "${CMAKE_BINARY_DIR}/sketch/solvespace/src/libslvs.so")
+#set(SOLVESPACE_LIB "${CMAKE_BINARY_DIR}/sketch/solvespace/src/libslvs.so")
 set(SKETCH_SOURCES
   sketch/solver.cpp
   sketch/selection.cpp
@@ -266,10 +275,10 @@ SET(LIBRARY_INCLUDE_PATHS
     ${OPENSCENEGRAPH_INCLUDE_DIRS}
     ${OSGQT_INCLUDE_DIRS}
     ${OCCT_INCLUDE_DIRS}
+	${OCC_INCLUDE_DIR}
     ${SPNAV_INCLUDE_DIR}
     ${EIGEN3_INCLUDE_DIR}
-    ${XSDCXX_INCLUDE_DIR}
-    ${XERCESC_INCLUDE_DIR}
+#    ${XERCESC_INCLUDE_DIR}
     ${CMAKE_SOURCE_DIR}/project/libgit2pp/libgit2/include/
     ${SQUASH_INCLUDE_DIRS}
     ${ZLIB_INCLUDE_DIRS}
@@ -629,12 +638,14 @@ SET(CADSEER_LIBRARIES
     ${OSGQT_LIBRARIES}
     ${OCE_LIBRARIES}
     ${XERCESC_LIBRARIES}
+	${XERCESC_LIBRARY}
     ${SPNAV_LIBRARIES}
     ${SQUASH_LIBRARIES}
     git2pp
     ${ZLIB_LIBRARIES}
     ${LIBZIP_LIBRARY}
-    ${SOLVESPACE_LIB}
+    slvs
+	bcrypt
     )
 
 SET(CADSEER_UIS
@@ -669,6 +680,7 @@ SET(LODGENERATOR_LIBRARIES
     ${Boost_LIBRARIES}
     ${OPENSCENEGRAPH_LIBRARIES}
     ${OCE_LIBRARIES}
+	bcrypt
     )
 add_executable(lodgenerator ${LODGENERATOR_SOURCES})
 target_link_libraries(lodgenerator ${LODGENERATOR_LIBRARIES})
