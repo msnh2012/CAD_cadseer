@@ -24,6 +24,8 @@
 
 #include <boost/uuid/uuid.hpp>
 #include <boost/tuple/tuple.hpp>
+#include <boost/type_traits/is_volatile.hpp>
+#include <boost/type_traits/is_assignable.hpp>
 #include <boost/unordered_map.hpp>
 
 #include <expressions/value.h>

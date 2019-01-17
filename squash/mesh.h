@@ -22,6 +22,8 @@
 
 #include <vector>
 
+#include <boost/type_traits/is_volatile.hpp>
+#include <boost/type_traits/is_assignable.hpp>
 #include <CGAL/Kernel/global_functions.h>
 #include <CGAL/Simple_cartesian.h>
 #include <CGAL/Surface_mesh.h>

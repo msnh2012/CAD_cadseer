@@ -17,6 +17,8 @@
  *
  */
 
+#include <boost/type_traits/is_volatile.hpp>
+#include <boost/type_traits/is_assignable.hpp>
 #include <boost/uuid/uuid.hpp>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/breadth_first_search.hpp>

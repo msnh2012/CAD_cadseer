@@ -20,6 +20,8 @@
 #ifndef MSG_VARIANT_H
 #define MSG_VARIANT_H
 
+#include <boost/type_traits/is_volatile.hpp>
+#include <boost/type_traits/is_assignable.hpp>
 #include <boost/variant/variant.hpp>
 
 #include <project/message.h>

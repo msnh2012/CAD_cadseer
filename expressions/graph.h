@@ -23,6 +23,8 @@
 #include <memory>
 #include <stack>
 
+#include <boost/type_traits/is_volatile.hpp>
+#include <boost/type_traits/is_assignable.hpp>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/depth_first_search.hpp>
 #include <boost/graph/breadth_first_search.hpp>

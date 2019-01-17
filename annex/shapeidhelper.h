@@ -22,6 +22,8 @@
 
 #include <vector>
 
+#include <boost/type_traits/is_volatile.hpp>
+#include <boost/type_traits/is_assignable.hpp>
 #include <boost/optional.hpp>
 #include <boost/uuid/uuid.hpp>
 

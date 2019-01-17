@@ -17,6 +17,8 @@
  *
  */
 
+#include <boost/type_traits/is_volatile.hpp>
+#include <boost/type_traits/is_assignable.hpp>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/filtered_graph.hpp>
 #include <boost/graph/graphviz.hpp>
