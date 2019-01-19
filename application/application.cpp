@@ -46,7 +46,9 @@
 #include <dialogs/project.h>
 #include <dialogs/about.h>
 
+#ifdef SPNAV_FOUND
 #include <spnav.h>
+#endif
 
 
 using namespace app;
@@ -92,7 +94,9 @@ Application::Application(int &argc, char **argv) :
 Application::~Application()
 {
   git_libgit2_shutdown();
+#ifdef SPNAV_FOUND
   spnav_close();
+#endif
 }
 
 void Application::appStartSlot()
@@ -125,6 +129,7 @@ void Application::appStartSlot()
 
 void Application::quittingSlot()
 {
+#ifdef SPNAV_FOUND
     if (!spnav_close())// the not seems goofy.
     {
 //        std::cout << "spaceball disconnected" << std::endl;
@@ -133,6 +138,7 @@ void Application::quittingSlot()
     {
 //        std::cout << "couldn't disconnect spaceball" << std::endl;
     }
+#endif
 }
 
 void Application::queuedMessage(const msg::Message &message)
@@ -204,6 +210,7 @@ void Application::initializeSpaceball()
     if (!mainWindow)
         return;
 
+#ifdef SPNAV_FOUND
     vwr::registerEvents();
 
     if (spnav_open() == -1)
@@ -219,10 +226,12 @@ void Application::initializeSpaceball()
       connect(spaceballTimer, &QTimer::timeout, this, &Application::spaceballPollSlot);
       spaceballTimer->start();
     }
+#endif
 }
 
 void Application::spaceballPollSlot()
 {
+#ifdef SPNAV_FOUND
   spnav_event navEvent;
   if (!spnav_poll_event(&navEvent))
     return;
@@ -251,6 +260,7 @@ void Application::spaceballPollSlot()
     this->postEvent(currentWidget, qEvent);
     return;
   }
+#endif
 }
 
 boost::filesystem::path Application::getApplicationDirectory()
