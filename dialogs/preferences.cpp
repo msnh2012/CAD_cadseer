@@ -601,7 +601,7 @@ void Preferences::quoteTemplateBrowseSlot()
   namespace bfs = boost::filesystem;
   bfs::path t = ui->quoteTSheetEdit->text().toStdString();
   if (!bfs::exists(t)) //todo use a parameter from preferences.
-    t = manager->rootPtr->project().lastDirectory().get();
+    t = std::string(manager->rootPtr->project().lastDirectory().get());
   
   QString fileName = QFileDialog::getOpenFileName
   (
