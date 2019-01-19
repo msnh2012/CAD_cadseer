@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-
+ 
 #include <iostream>
 #include <iomanip>
 
@@ -65,6 +65,8 @@
 #include <gesture/handler.h>
 #include <preferences/preferencesXML.h>
 #include <preferences/manager.h>
+#undef near
+#undef far
 #include <project/serial/xsdcxxoutput/view.h>
 #include <viewer/spaceballmanipulator.h>
 #include <viewer/gleventwidget.h>
@@ -328,9 +330,9 @@ void Widget::createMainCamera(osg::Camera *camera)
 //    camera->setProjectionMatrixAsPerspective(30.0f, static_cast<double>(glWidget->width()) /
 //                                             static_cast<double>(glWidget->height()), 1.0f, 10000.0f);
     camera->setProjectionMatrixAsOrtho
-            (0.0d, static_cast<double>(glWidget->width()),
-             0.0d, static_cast<double>(glWidget->height()),
-             1.0f, 10000.0f);
+            (0.0, static_cast<double>(glWidget->width()),
+             0.0, static_cast<double>(glWidget->height()),
+             1.0, 10000.0);
 
     //this allows us to see points.
     camera->setCullingMode(camera->getCullingMode() &
