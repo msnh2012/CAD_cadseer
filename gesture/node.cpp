@@ -34,6 +34,9 @@
 #include <gesture/node.h>
 #include <modelviz/nodemaskdefs.h>
 
+#define _USE_MATH_DEFINES
+#include <cmath>
+
 //line is now actually a quad
 static osg::Geometry* buildLineGeometry()
 {
