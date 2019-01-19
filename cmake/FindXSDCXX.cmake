@@ -11,14 +11,14 @@
 # XSDCXX_FOUND, If false, XSDCXX was not found.
 
 find_path(XSDCXX_INCLUDE_DIR xsd/cxx/parser/elements.hxx
-  PATHS $ENV{XSDDIR} /usr/local /usr
+  PATHS $ENV{XSDDIR} /usr/local /usr "C:/Users/holden/development/xsd/libxsd"
   PATH_SUFFIXES include libxsd xsd
   NO_CMAKE_FIND_ROOT_PATH
 )
 
 find_program(XSDCXX_EXECUTABLE
   NAMES xsd xsdcxx
-  PATHS $ENV{XSDDIR}/bin /usr/local/bin /usr/bin
+  PATHS $ENV{XSDDIR}/bin /usr/local/bin /usr/bin "C:/Program\ Files\ (x86)/CodeSynthesis\ XSD\ 4.0/bin"
   NO_SYSTEM_ENVIRONMENT_PATH
 )
 

@@ -49,9 +49,11 @@ else(OCE_FOUND) #look for OpenCASCADE
     else(CYGWIN OR MINGW)
     FIND_PATH(OCC_INCLUDE_DIR Standard_Version.hxx
         "[HKEY_LOCAL_MACHINE\\SOFTWARE\\SIM\\OCC\\2;Installation Path]/include"
+		"C:\\OpenCASCADE-7.3.0-vc14-64\\opencascade-7.3.0\\inc"
       )
       FIND_LIBRARY(OCC_LIBRARY TKernel
         "[HKEY_LOCAL_MACHINE\\SOFTWARE\\SIM\\OCC\\2;Installation Path]/lib"
+		"C:\\OpenCASCADE-7.3.0-vc14-64\\opencascade-7.3.0\\win64\\vc14\\lib"
       )
     endif(CYGWIN OR MINGW)
   else(WIN32)

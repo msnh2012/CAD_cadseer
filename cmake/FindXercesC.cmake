@@ -13,6 +13,7 @@
 FIND_PATH(XERCESC_INCLUDE_DIR xercesc/dom/DOM.hpp
   "[HKEY_CURRENT_USER\\software\\xerces-c\\src]"
   "[HKEY_CURRENT_USER\\xerces-c\\src]"
+  "C:\\Users\\holden\\development\\vcpkg\\installed\\x64-windows\\include"
   $ENV{XERCESCROOT}/src/
   /usr/local/include
   /usr/include
@@ -20,11 +21,12 @@ FIND_PATH(XERCESC_INCLUDE_DIR xercesc/dom/DOM.hpp
 
 FIND_LIBRARY(XERCESC_LIBRARIES
   NAMES
-    xerces-c
+    xerces-c_3
   PATHS
     "[HKEY_CURRENT_USER\\software\\xerces-c\\lib]"
     "[HKEY_CURRENT_USER\\xerces-c\\lib]"
-    $ENV{XERCESCROOT}/${LIB_DESTINATION}
+	"C:\\Users\\holden\\development\\vcpkg\\installed\\x64-windows\\lib"
+	$ENV{XERCESCROOT}/${LIB_DESTINATION}
     /usr/local/${LIB_DESTINATION}
     /usr/${LIB_DESTINATION}
 )
