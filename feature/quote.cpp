@@ -46,7 +46,7 @@ using boost::filesystem::path;
 QIcon Quote::icon;
 
 Quote::Quote() : Base(),
-tFile(new prm::Parameter("Template File", prf::manager().rootPtr->features().quote().get().templateSheet(), prm::PathType::Read)),
+tFile(new prm::Parameter("Template File", path(std::string(prf::manager().rootPtr->features().quote().get().templateSheet())), prm::PathType::Read)),
 oFile(new prm::Parameter("Output File",  path(app::instance()->getProject()->getSaveDirectory()) /= "Quote.ods", prm::PathType::Write))
 {
   if (icon.isNull())
@@ -257,7 +257,7 @@ void Quote::serialRead(const prj::srl::FeatureQuote &qIn)
   Base::serialIn(qIn.featureBase());
   tFile->serialIn(qIn.templateFile());
   oFile->serialIn(qIn.outFile());
-  pFile = qIn.pictureFile();
+  pFile = std::string(qIn.pictureFile());
   quoteData.quoteNumber = qIn.quoteNumber();
   quoteData.customerName = QString::fromStdString(qIn.customerName());
   quoteData.customerId = gu::stringToId(qIn.customerId());

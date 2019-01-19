@@ -784,7 +784,7 @@ void Parameter::serialIn(const prj::srl::Parameter& sParameterIn)
     else if (vIn.aString().present())
       stow->variant = vIn.aString().get();
     else if (vIn.aPath().present())
-      stow->variant = boost::filesystem::path(vIn.aPath().get());
+      stow->variant = boost::filesystem::path(std::string(vIn.aPath().get()));
     else if (vIn.aVec3d().present())
       stow->variant = osg::Vec3d(vIn.aVec3d().get().x(), vIn.aVec3d().get().y(), vIn.aVec3d().get().z());
     else if (vIn.aQuat().present())

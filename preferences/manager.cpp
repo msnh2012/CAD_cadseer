@@ -245,14 +245,14 @@ std::string Manager::getHotKey(int number) const
 void Manager::ensureDefaults()
 {
   //project defaults.
-  path basePath = rootPtr->project().basePath();
+  path basePath = std::string(rootPtr->project().basePath());
   if (!exists(basePath))
     rootPtr->project().basePath() = path(getenv("HOME")).string();
   
-  path lastPath = rootPtr->project().basePath();
+  path lastPath = std::string(rootPtr->project().basePath());
   if (rootPtr->project().lastDirectory().present())
   {
-    path configLastPath = rootPtr->project().lastDirectory().get();
+    path configLastPath = std::string(rootPtr->project().lastDirectory().get());
     if (exists(configLastPath))
       lastPath = configLastPath;
   }

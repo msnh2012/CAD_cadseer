@@ -151,7 +151,7 @@ void Quote::initGui()
 void Quote::loadLabelPixmapSlot()
 {
   pLabel->setText(QString::fromStdString(quote->pFile.string() + " not found"));
-  QPixmap pMap(quote->pFile.c_str());
+  QPixmap pMap(QString::fromStdString(quote->pFile.string()));
   if (!pMap.isNull())
   {
     QPixmap scaled = pMap.scaledToHeight(pMap.height() / 2.0);
@@ -451,7 +451,7 @@ void Quote::browseForTemplateSlot()
   namespace bfs = boost::filesystem;
   bfs::path t = tFileEdit->text().toStdString();
   if (!bfs::exists(t)) //todo use a parameter from preferences.
-    t = prf::manager().rootPtr->project().lastDirectory().get();
+    t = std::string(prf::manager().rootPtr->project().lastDirectory().get());
   
   QString fileName = QFileDialog::getOpenFileName
   (
@@ -477,7 +477,7 @@ void Quote::browseForOutputSlot()
   bfs::path t = oFileEdit->text().toStdString();
   if (!bfs::exists(t.parent_path()))
   {
-    t = prf::manager().rootPtr->project().lastDirectory().get();
+    t = std::string(prf::manager().rootPtr->project().lastDirectory().get());
     t /= quote->getName().toStdString() + ".ods";
   }
   

@@ -581,7 +581,7 @@ void Parameter::browseForPathSlot()
   {
     //read expects the file to exist. start browse from project directory if doesn't exist.
     if (!bfs::exists(t))
-      t = prf::manager().rootPtr->project().lastDirectory().get();
+      t = std::string(prf::manager().rootPtr->project().lastDirectory().get());
     
     QString fileName = QFileDialog::getOpenFileName
     (
@@ -604,7 +604,7 @@ void Parameter::browseForPathSlot()
   {
     if (!bfs::exists(t.parent_path()))
     {
-      t = prf::manager().rootPtr->project().lastDirectory().get();
+      t = std::string(prf::manager().rootPtr->project().lastDirectory().get());
       t /= "file" + extension;
     }
     

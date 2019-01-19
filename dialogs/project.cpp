@@ -57,7 +57,7 @@ Project::Project(QWidget *parent) : QDialog(parent), ui(new Ui::projectDialog)
   settings.endGroup();
   
   //test the default project directory.
-  path p = prf::manager().rootPtr->project().basePath();
+  path p = std::string(prf::manager().rootPtr->project().basePath());
   if (!exists(p))
   {
     ui->newNameEdit->setPlaceholderText(QObject::tr("Default project location doesn't exist"));
@@ -86,7 +86,7 @@ void Project::populateRecentList()
   std::size_t row = 0;
   for (const auto &entry : recent)
   {
-    path p = entry;
+    path p = std::string(entry);
     if (!validateDir(p)) //only valid directories.
       continue;
     reconcile.push_back(entry);
@@ -122,7 +122,7 @@ bool Project::validateDir(const path& dir)
 
 void Project::goNewSlot()
 {
-  path basePath = prf::manager().rootPtr->project().basePath();
+  path basePath = std::string(prf::manager().rootPtr->project().basePath());
   QString newNameText = ui->newNameEdit->text();
   if (exists(basePath) && (!newNameText.isEmpty()))
   {
@@ -146,7 +146,7 @@ void Project::goNewSlot()
     //browse dialog.
     path browsePath = basePath;
     if (!exists(browsePath))
-      browsePath = prf::manager().rootPtr->project().lastDirectory().get();
+      browsePath = std::string(prf::manager().rootPtr->project().lastDirectory().get());
     if (!exists(browsePath))
     {
       const char *home = std::getenv("HOME");
@@ -190,9 +190,9 @@ void Project::goNewSlot()
 
 void Project::goOpenSlot()
 {
-  path p = prf::manager().rootPtr->project().basePath();
+  path p = std::string(prf::manager().rootPtr->project().basePath());
   if (p.empty() || (!exists(p)))
-    p = prf::manager().rootPtr->project().lastDirectory().get();
+    p = std::string(prf::manager().rootPtr->project().lastDirectory().get());
   QString freshDirectory = QFileDialog::getExistingDirectory
   (
     this,
