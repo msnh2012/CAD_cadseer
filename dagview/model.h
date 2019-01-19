@@ -54,7 +54,7 @@ namespace dag
   
   class Stow;
   class RectItem;
-  typedef unsigned long Vertex; //!< kind of a hack to keep graph definition out
+  typedef unsigned long long Vertex; //!< kind of a hack to keep graph definition out
   struct DragData;
   
   class Model : public QGraphicsScene
