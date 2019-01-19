@@ -1,0 +1,14 @@
+cmake ^
+-GNinja ^
+-DCMAKE_BUILD_TYPE=Release ^
+-DCMAKE_WINDOWS_EXPORT_ALL_SYMBOLS=TRUE ^
+-DBUILD_SHARED_LIBS=TRUE ^
+-DIGL_PROJECT_PATH="C:/Users/holden/development/libigl" ^
+-DNETGEN_PROJECT_PATH="C:/Users/holden/development/netgen-mesher-git" ^
+-DCMAKE_TOOLCHAIN_FILE=C:/Users/holden/development/vcpkg/scripts/buildsystems/vcpkg.cmake ^
+-DBUILD_CLAR=OFF ^
+..
+
+
+
+-DBUILD_CLAR=OFF is for libgit2
