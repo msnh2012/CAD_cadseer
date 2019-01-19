@@ -70,12 +70,12 @@ static bool readIdPSet(osgDB::InputStream& is, mdv::ShapeGeometry &sgIn)
 {
   std::shared_ptr<IdPSetWrapper> ipsw(new IdPSetWrapper());
   
-  std::size_t size = 0;
+  unsigned long size = 0;
   is >> size >> is.BEGIN_BRACKET;
-  for (std::size_t index = 0; index < size; ++index)
+  for (unsigned long index = 0; index < size; ++index)
   {
     std::string idString;
-    std::size_t pSetIndex;
+    unsigned long pSetIndex;
     is >> idString >> pSetIndex;
     IdPSetRecord r;
     r.id = gu::stringToId(idString);
@@ -113,12 +113,12 @@ static bool readPSetPrimitive(osgDB::InputStream& is, mdv::ShapeGeometry &sgIn)
 {
   std::shared_ptr<PSetPrimitiveWrapper> pspw(new PSetPrimitiveWrapper());
   
-  std::size_t size = 0;
+  unsigned long size = 0;
   is >> size >> is.BEGIN_BRACKET;
-  for (std::size_t index = 0; index < size; ++index)
+  for (unsigned long index = 0; index < size; ++index)
   {
-    std::size_t pSetIndex;
-    std::size_t pIndex;
+    unsigned long pSetIndex;
+    unsigned long pIndex;
     is >> pSetIndex >> pIndex;
     PSetPrimitiveRecord r;
     r.primitiveSetIndex = pSetIndex;
