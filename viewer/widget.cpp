@@ -124,7 +124,7 @@ Widget::Widget(osgViewer::ViewerBase::ThreadingModel threadingModel) : QWidget()
     osg::ShadeModel *shadeModel = new osg::ShadeModel(osg::ShadeModel::SMOOTH);
     root->getOrCreateStateSet()->setAttribute(shadeModel);
     
-    root->getOrCreateStateSet()->setMode(GL_MULTISAMPLE_ARB, osg::StateAttribute::ON);
+    //root->getOrCreateStateSet()->setMode(GL_MULTISAMPLE_ARB, osg::StateAttribute::ON);
     root->getOrCreateStateSet()->setMode(GL_LIGHTING, osg::StateAttribute::ON);
     
 //     Plotter::getReference().setBase(root);
