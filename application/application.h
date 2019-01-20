@@ -31,7 +31,7 @@ class QSettings;
 
 namespace prf{class Manager;}
 namespace prj{class Project;}
-namespace msg{class Message; struct Node; struct Sift;}
+namespace msg{struct Message; struct Node; struct Sift;}
 namespace lod{class Manager;}
 
 namespace app

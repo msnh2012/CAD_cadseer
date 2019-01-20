@@ -19,6 +19,7 @@
 
 
 #include <cassert>
+#include <algorithm>
 
 #include <osg/BlendFunc>
 #include <osgUtil/Optimizer>

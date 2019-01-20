@@ -55,8 +55,8 @@ namespace msg
     ~Node();
     Node(const Node&) = delete; //no copy
     Node& operator=(const Node&) = delete; //no copy
-    Node(Node &&) noexcept;
-    Node& operator=(Node &&) noexcept;
+    Node(Node &&);
+    Node& operator=(Node &&);
     
     void setHandler(Handler);
     void send(const Message&) const;

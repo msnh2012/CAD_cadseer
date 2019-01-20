@@ -111,8 +111,8 @@ namespace prm
     ~Observer();
     Observer(const Observer&) = delete; //no copy
     Observer& operator=(const Observer&) = delete; //no copy
-    Observer(Observer &&) noexcept;
-    Observer& operator=(Observer &&) noexcept;
+    Observer(Observer &&);
+    Observer& operator=(Observer &&);
     
     void block();
     void unblock();

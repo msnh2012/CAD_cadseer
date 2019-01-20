@@ -19,6 +19,7 @@
 
 #include <cassert>
 #include <iostream>
+#include <array>
 
 #include <boost/optional/optional.hpp>
 #include <boost/current_function.hpp>

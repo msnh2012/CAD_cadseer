@@ -38,9 +38,9 @@ Node::Node(Handler hIn) : handler(hIn), stow(std::make_unique<Stow>()) {}
 
 Node::~Node() = default;
 
-Node::Node(Node &&) noexcept = default;
+Node::Node(Node &&) = default;
 
-Node& Node::operator=(Node &&) noexcept = default;
+Node& Node::operator=(Node &&) = default;
 
 void Node::setHandler(Handler hIn)
 {
