@@ -102,7 +102,7 @@ Widget::Widget(osgViewer::ViewerBase::ThreadingModel threadingModel) : QWidget()
   node->setHandler(std::bind(&msg::Sift::receive, sift.get(), std::placeholders::_1));
   setupDispatcher();
     
-    osg::DisplaySettings::instance()->setTextShaderTechnique("SIGNED_DISTANCE_FUNCTION"); 
+    osg::DisplaySettings::instance()->setTextShaderTechnique("NO_TEXT_SHADER"); 
     setThreadingModel(threadingModel);
     setUseConfigureAffinity(false);
     setKeyEventSetsDone(0); //stops the viewer from freezing when the escape key is pressed.
