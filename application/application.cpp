@@ -266,7 +266,8 @@ void Application::spaceballPollSlot()
 boost::filesystem::path Application::getApplicationDirectory()
 {
   //if windows wants hidden, somebody else will have to do it.
-  boost::filesystem::path path = boost::filesystem::path(getenv("HOME"));
+  boost::filesystem::path path = boost::filesystem::path(getenv("USERPROFILE")); //USERPROFILE for windows 10
+    
   path /= ".CadSeer";
   if (!boost::filesystem::exists(path))
     if (!boost::filesystem::create_directory(path))

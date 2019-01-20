@@ -149,7 +149,7 @@ void Project::goNewSlot()
       browsePath = std::string(prf::manager().rootPtr->project().lastDirectory().get());
     if (!exists(browsePath))
     {
-      const char *home = std::getenv("HOME");
+      const char *home = std::getenv("USERPROFILE");
       if (home == NULL)
       {
         QMessageBox::critical(this, tr("Error"), tr("REALLY!? no home directory"));

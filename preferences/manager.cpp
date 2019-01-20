@@ -247,7 +247,7 @@ void Manager::ensureDefaults()
   //project defaults.
   path basePath = std::string(rootPtr->project().basePath());
   if (!exists(basePath))
-    rootPtr->project().basePath() = path(getenv("HOME")).string();
+    rootPtr->project().basePath() = path(getenv("USERPROFILE")).string();
   
   path lastPath = std::string(rootPtr->project().basePath());
   if (rootPtr->project().lastDirectory().present())
