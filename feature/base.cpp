@@ -245,9 +245,9 @@ void Base::updateVisual()
   boost::filesystem::path filePathBase;
   filePathBase = app::instance()->getProject()->getSaveDirectory();
   filePathBase /= ".scratch";
-  boost::filesystem::path filePath00 = filePathBase / (gu::idToString(id) + "_00.osgb");
-  boost::filesystem::path filePath01 = filePathBase / (gu::idToString(id) + "_01.osgb");
-  boost::filesystem::path filePath02 = filePathBase / (gu::idToString(id) + "_02.osgb");
+  boost::filesystem::path filePath00 = filePathBase / (gu::idToString(id) + "_00.osgt");
+  boost::filesystem::path filePath01 = filePathBase / (gu::idToString(id) + "_01.osgt");
+  boost::filesystem::path filePath02 = filePathBase / (gu::idToString(id) + "_02.osgt");
   //make sure old files are gone.
   boost::filesystem::remove(filePath00);
   boost::filesystem::remove(filePath01);
