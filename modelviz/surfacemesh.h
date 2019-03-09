@@ -1,6 +1,6 @@
 /*
  * CadSeer. Parametric Solid Modeling.
- * Copyright (C) 2017  Thomas S. Anderson blobfish.at.gmx.com
+ * Copyright (C) 2019  Thomas S. Anderson blobfish.at.gmx.com
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,37 +17,17 @@
  *
  */
 
-#ifndef ANN_BASE_H
-#define ANN_BASE_H
+#ifndef MDV_SURFACEMESH_H
+#define MDV_SURFACEMESH_H
 
-#include <map>
+#include "modelviz/base.h"
 
-namespace ann
+namespace osg{class Switch;}
+namespace ann{class SurfaceMesh;}
+
+namespace mdv
 {
-  enum class Type
-  {
-    Base,
-    CSysDragger,
-    SeerShape,
-    IntersectionMapper,
-    InstanceMapper,
-    SurfaceMesh,
-    SolidMesh
-  };
-  
-  const std::string& toString(const Type &tIn);
-  const Type& toType(const std::string &sIn);
-  
-  class Base
-  {
-  public:
-    Base();
-    virtual ~Base();
-    virtual Type getType(){return Type::Base;}
-  };
-  
-  //only 1 of a type per feature?
-  typedef std::map<Type, Base*> Annexes; 
+  osg::Switch* generate(const ann::SurfaceMesh&);
 }
 
-#endif // ANN_BASE_H
+#endif //MDV_SURFACEMESH_H

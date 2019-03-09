@@ -66,7 +66,8 @@ namespace ftr
     DatumAxis, //!< feature for datum axis
     Sketch, //!< feature for sketch
     Extrude, //!< feature for extrude
-    Revolve //!< feature for revolve
+    Revolve, //!< feature for revolve
+    SurfaceMesh //!< feature for surface mesh creation.
   };
   
   inline const static std::string& toString(Type typeIn)
@@ -111,7 +112,8 @@ namespace ftr
       {Type::DatumAxis, "DatumAxis"},
       {Type::Sketch, "Sketch"},
       {Type::Extrude, "Extrude"},
-      {Type::Revolve, "Revolve"}
+      {Type::Revolve, "Revolve"},
+      {Type::SurfaceMesh, "SurfaceMesh"}
     };
     
     assert(strings.count(typeIn) > 0);

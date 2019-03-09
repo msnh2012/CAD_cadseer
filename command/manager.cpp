@@ -63,6 +63,7 @@
 #include <command/sketch.h>
 #include <command/extrude.h>
 #include <command/revolve.h>
+#include <command/surfacemesh.h>
 #include <message/node.h>
 #include <message/sift.h>
 #include <selection/message.h>
@@ -321,6 +322,11 @@ void Manager::setupDispatcher()
       (
         msg::Request | msg::Construct | msg::Revolve
         , std::bind(&Manager::constructRevolveDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Construct | msg::SurfaceMesh
+        , std::bind(&Manager::constructSurfaceMeshDispatched, this, std::placeholders::_1)
       )
       , std::make_pair
       (
@@ -651,6 +657,12 @@ void Manager::constructExtrudeDispatched(const msg::Message&)
 void Manager::constructRevolveDispatched(const msg::Message&)
 {
   std::shared_ptr<Revolve> f(new Revolve());
+  addCommand(f);
+}
+
+void Manager::constructSurfaceMeshDispatched(const msg::Message&)
+{
+  std::shared_ptr<SurfaceMesh> f(new SurfaceMesh());
   addCommand(f);
 }
 

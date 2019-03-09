@@ -33,7 +33,9 @@ static const TypeMap typeMap = boost::assign::list_of<TypeMap::relation>
 (Type::CSysDragger, "CSysDragger")
 (Type::SeerShape, "SeerShape")
 (Type::IntersectionMapper, "IntersectionMapper")
-(Type::InstanceMapper, "InstanceMapper");
+(Type::InstanceMapper, "InstanceMapper")
+(Type::SurfaceMesh, "SurfaceMesh")
+(Type::SolidMesh, "SolidMesh");
 
 const std::string& ann::toString(const Type &tIn)
 {

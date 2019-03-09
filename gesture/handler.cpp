@@ -918,6 +918,24 @@ void Handler::constructMenu()
         constructionInstance
       );
     }
+    osg::MatrixTransform *constructionMesh = constructNode
+    (
+      mdv::gestureMenu,
+      ":/resources/images/constructionMesh.svg",
+      QObject::tr("Mesh Menu").toStdString(),
+      std::string(),
+      constructionBase
+    );
+    {
+      constructNode
+      (
+        mdv::gestureCommand,
+        ":/resources/images/constructionSurfaceMesh.svg",
+        QObject::tr("Surface Mesh Command").toStdString(),
+        (msg::Request | msg::Construct | msg::SurfaceMesh).to_string(),
+        constructionMesh
+      );
+    }
   }
   osg::MatrixTransform *editBase = constructNode
   (

@@ -96,6 +96,7 @@ namespace cmd
     void constructSketchDispatched(const msg::Message&);
     void constructExtrudeDispatched(const msg::Message&);
     void constructRevolveDispatched(const msg::Message&);
+    void constructSurfaceMeshDispatched(const msg::Message&);
     void revisionDispatched(const msg::Message&);
     
     //editing functions

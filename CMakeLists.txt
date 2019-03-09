@@ -161,6 +161,10 @@ else(CGAL_FOUND)
   message(STATUS "CGAL not found. squash will not be built.")
 endif(CGAL_FOUND)
 
+find_package(Gmsh)
+IF(GMSH_FOUND)
+    add_definitions(-DGMSH_PRESENT)
+ENDIF(GMSH_FOUND)
 
 SET(IGL_PROJECT_PATH "" CACHE PATH "Path to IGL project")
 MARK_AS_ADVANCED(IGL_PROJECT_PATH)
@@ -179,7 +183,7 @@ IF(IGL_PROJECT_PATH)
   #static lib has problems just go with slow header only for now.
   #assuming 'lib' directory
   set(IGL_LIB "${IGL_PROJECT_PATH}/lib/libigl.a") #not using right now.
-#   add_definitions(-DIGL_STATIC_LIBRARY)
+  add_definitions(-DIGL_STATIC_LIBRARY)
   if(NOT EXISTS ${IGL_LIB})
     message(STATUS "igl lib missing. squash will not be built.")
   else(NOT EXISTS ${IGL_LIB})
@@ -286,6 +290,7 @@ SET(MODELVIZ_SOURCES
     modelviz/hiddenlineeffect.cpp
     modelviz/hiddenlinetechnique.cpp
     modelviz/datumaxis.cpp
+    modelviz/surfacemesh.cpp
     )
 
 SET(GESTURE_SOURCES
@@ -349,6 +354,7 @@ SET(FEATURE_SOURCES
     feature/sketch.cpp
     feature/extrude.cpp
     feature/revolve.cpp
+    feature/surfacemesh.cpp
     )
     
 SET(PARAMETER_SOURCES
@@ -362,6 +368,7 @@ SET(ANNEX_SOURCES
     annex/intersectionmapper.cpp
     annex/instancemapper.cpp
     annex/shapeidhelper.cpp
+    annex/surfacemesh.cpp
     )
     
 SET(EXPRESSION_SOURCES
@@ -518,6 +525,7 @@ SET(COMMAND_SOURCES
     command/sketch.cpp
     command/extrude.cpp
     command/revolve.cpp
+    command/surfacemesh.cpp
     )
     
 SET(LIBRARY_SOURCES
@@ -562,6 +570,10 @@ SET(LOD_SOURCES
     lod/manager.cpp
 )
 
+SET(MESH_SOURCES
+    mesh/parameters.cpp
+)
+
 SET(CADSEER_SOURCES
     main.cpp
     dagview/view.cpp
@@ -588,6 +600,7 @@ SET(CADSEER_SOURCES
     ${SQUASH_SOURCES}
     ${LIBREOFFICE_SOURCES}
     ${LOD_SOURCES}
+    ${MESH_SOURCES}
     ${SKETCH_SOURCES}
     )
 
@@ -635,6 +648,7 @@ SET(CADSEER_LIBRARIES
     ${ZLIB_LIBRARIES}
     ${LIBZIP_LIBRARY}
     ${SOLVESPACE_LIB}
+    ${GMSH_LIBRARIES}
     )
 
 SET(CADSEER_UIS
