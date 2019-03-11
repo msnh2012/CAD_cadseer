@@ -5,5 +5,5 @@
 	path = subprojects/libzippp
 	url = https://github.com/ctabin/libzippp.git
 [submodule "sketch/solvespace"]
-	path = sketch/solvespace
+	path = subprojects/solvespace
 	url = https://gitlab.com/blobfish/solvespace.git
