@@ -2,7 +2,7 @@
 	path = subprojects/libgit2pp
 	url = https://gitlab.com/blobfish/libgit2pp.git
 [submodule "libreoffice/libzippp"]
-	path = libreoffice/libzippp
+	path = subprojects/libzippp
 	url = https://github.com/ctabin/libzippp.git
 [submodule "sketch/solvespace"]
 	path = sketch/solvespace
