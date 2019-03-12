@@ -25,7 +25,7 @@
 #include <globalutilities.h>
 #include <application/application.h>
 #include <application/mainwindow.h>
-#include <viewer/widget.h>
+#include <viewer/vwrwidget.h>
 #include <message/node.h>
 #include <selection/eventhandler.h>
 #include <project/project.h>
@@ -38,7 +38,6 @@
 
 using namespace cmd;
 using boost::uuids::uuid;
-
 
 //caller needs to set pick tag and shapehistory.
 static boost::optional<ftr::Pick> buildPlanePick(const slc::Container &cIn, const ftr::Base *f)
@@ -57,10 +56,7 @@ static boost::optional<ftr::Pick> buildPlanePick(const slc::Container &cIn, cons
   
   ftr::Pick p = tls::convertToPick(cIn, ss);
   return p;
-};
-
-
-
+}
 
 DatumPlane::DatumPlane() : Base() {}
 DatumPlane::~DatumPlane() {}

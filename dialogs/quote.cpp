@@ -38,7 +38,7 @@
 #include <application/application.h>
 #include <application/mainwindow.h>
 #include <message/message.h>
-#include <viewer/widget.h>
+#include <viewer/vwrwidget.h>
 #include <project/project.h>
 #include <feature/inputtype.h>
 #include <parameter/parameter.h>

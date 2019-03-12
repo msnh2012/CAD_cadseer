@@ -102,7 +102,7 @@ namespace slc
 						      "Screen Point"
 						  });
       std::size_t index = static_cast<std::size_t>(theType);
-      assert((index >= 0) && (index < names.size()));
+      assert(index < names.size());
       return names.at(static_cast<std::size_t>(theType));
   }
   

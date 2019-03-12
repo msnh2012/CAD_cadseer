@@ -55,7 +55,7 @@
 #include <application/application.h>
 #include <application/mainwindow.h>
 #include <application/message.h>
-#include <viewer/widget.h>
+#include <viewer/vwrwidget.h>
 #include <dialogs/preferences.h>
 #include <preferences/preferencesXML.h>
 #include <preferences/manager.h>

@@ -22,7 +22,7 @@
 #include <project/project.h>
 #include <message/node.h>
 #include <selection/eventhandler.h>
-#include <viewer/widget.h>
+#include <viewer/vwrwidget.h>
 #include <feature/datumplane.h>
 #include <command/systemtoselection.h>
 

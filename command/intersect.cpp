@@ -23,7 +23,7 @@
 #include <project/project.h>
 #include <message/node.h>
 #include <selection/eventhandler.h>
-#include <viewer/widget.h>
+#include <viewer/vwrwidget.h>
 #include <feature/inputtype.h>
 #include <feature/intersect.h>
 #include <dialogs/boolean.h>

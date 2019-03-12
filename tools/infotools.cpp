@@ -31,7 +31,7 @@
 QString ms(const double &number)
 {
   return QString::number(number, 'f', 12);
-};
+}
 
 QTextStream& gu::osgMatrixOut(QTextStream &streamIn, const osg::Matrixd &m)
 {

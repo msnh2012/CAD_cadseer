@@ -460,7 +460,6 @@ ShapeVector occt::getNonCompounds(const TopoDS_Shape &shapeIn)
       ItCompPair currentPair = theStack.top();
       theStack.pop();
       TopoDS_Iterator currentIt = currentPair.first;
-      const TopoDS_Compound &currentCompound = currentPair.second;
       for (; currentIt.More(); currentIt.Next())
       {
         if (currentIt.Value().ShapeType() == TopAbs_COMPSOLID)
@@ -570,7 +569,7 @@ gp_Vec occt::getNormal(const TopoDS_Face& fIn, double u, double v)
   if (sa.Face().Orientation() == TopAbs_REVERSED)
     n = -n;
   return n;
-};
+}
 
 std::pair<gp_Vec, bool> occt::gleanVector(const TopoDS_Shape &shapeIn, const gp_Pnt &pIn)
 {

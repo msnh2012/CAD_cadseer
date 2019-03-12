@@ -79,7 +79,7 @@ namespace occt
     std::size_t index = static_cast<std::size_t>(shapeIn.ShapeType());
     assert(index < strings.size());
     return strings.at(index);
-  };
+  }
   
   class ShapeVectorCast
   {

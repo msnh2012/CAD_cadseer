@@ -22,9 +22,9 @@
 
 #include <memory>
 
-#include <project/libgit2pp/src/repository.hpp>
-#include <project/libgit2pp/src/commit.hpp>
-#include <project/libgit2pp/src/tag.hpp>
+#include <subprojects/libgit2pp/src/repository.hpp>
+#include <subprojects/libgit2pp/src/commit.hpp>
+#include <subprojects/libgit2pp/src/tag.hpp>
 
 namespace msg{class Message; struct Node; struct Sift;}
 

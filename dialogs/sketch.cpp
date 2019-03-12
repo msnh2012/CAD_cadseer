@@ -43,7 +43,7 @@
 #include "message/sift.h"
 #include "selection/definitions.h"
 #include "selection/message.h"
-#include "viewer/widget.h"
+#include "viewer/vwrwidget.h"
 #include "dialogs/widgetgeometry.h"
 #include "dialogs/expressionedit.h"
 #include "parameter/parameter.h"

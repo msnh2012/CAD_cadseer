@@ -120,7 +120,7 @@ public:
   virtual ~ScalarConstantNode() {}
   virtual NodeType getType() const override {return NodeType::ScalarConstant;}
   virtual std::string className() const override {return "ScalarConstant";}
-  virtual void calculate(const EdgePropertiesMap &propertyMap) {setClean();}
+  virtual void calculate(const EdgePropertiesMap&) {setClean();}
   virtual ValueType getOutputType() const override {return ValueType::Scalar;}
   
   //! Set the value of this constant node.

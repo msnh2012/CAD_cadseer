@@ -298,7 +298,7 @@ public:
     }
     
     template<typename FindVertex, typename FindGraph>
-    void start_vertex(FindVertex vertex, FindGraph &graph)
+    void start_vertex(FindVertex vertex, FindGraph&)
     {
       /* from the doc: "This is invoked on the source vertex once before the start of the search."
        * this is misleading. What I am seeing here is this is invoked on the every tree source node.
@@ -320,7 +320,7 @@ public:
     }
     
     template<typename FindEdge, typename FindGraph>
-    void examine_edge(FindEdge edge, FindGraph &graph)
+    void examine_edge(FindEdge edge, FindGraph&)
     {
       if (completedTest)
         return;
@@ -370,7 +370,7 @@ public:
   }
   
   template<typename Vertex, typename Graph>
-  void start_vertex(Vertex vertex, Graph &graph)
+  void start_vertex(Vertex, Graph&)
   {
     if (hasCycle)
       return;
@@ -378,7 +378,7 @@ public:
   }
   
   template <class Edge, class Graph>
-  void back_edge(Edge edge, Graph& graph)
+  void back_edge(Edge, Graph&)
   {
     if (hasCycle)
       return;

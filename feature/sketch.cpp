@@ -223,8 +223,7 @@ void Sketch::updateSeerShape()
   typedef std::vector<skt::SSHandle> Handles;
   typedef std::vector<Handles> HandleSets;
   HandleSets handleSets;
-  typedef std::allocator<std::pair<skt::SSHandle, NCollection_StdAllocator<TopoDS_Vertex>>> VMapAlloc;
-  std::map<skt::SSHandle, TopoDS_Vertex, std::less<skt::SSHandle>, VMapAlloc> vMap;
+  std::map<skt::SSHandle, TopoDS_Vertex> vMap;
   
   auto findHandleSetIndex = [&](skt::SSHandle ch) -> boost::optional<std::size_t>
   {

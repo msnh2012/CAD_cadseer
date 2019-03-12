@@ -106,7 +106,7 @@ static osg::Matrixd getFaceSystem(const TopoDS_Shape &faceShape)
   faceSystem.setTrans(centerVec);
   
   return faceSystem;
-};
+}
 
 //default constructed plane is 2.0 x 2.0
 DatumPlane::DatumPlane() :
@@ -416,7 +416,8 @@ void DatumPlane::goUpdatePCenter(const UpdatePayload &pli)
   else if (features.size() == 2)
   {
     //with 2 inputs, either one can be a face or a datum.
-    double radius1, radius2;
+    double radius1 = std::numeric_limits<float>::epsilon();
+    double radius2 = radius1;
     
     std::vector<const ftr::Base*> featuresToResolve;
     for (const auto &f : features)

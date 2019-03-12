@@ -198,7 +198,7 @@ static void goPaint(QSvgRenderer &renderer, QImage &image)
   QPainter painter(&image);
   painter.setRenderHint(QPainter::Antialiasing);
   renderer.render(&painter, image.rect());
-};
+}
 
 static osg::ref_ptr<osg::Image> toOsgImage(const QImage &imageIn)
 {
@@ -219,7 +219,7 @@ static osg::ref_ptr<osg::Image> toOsgImage(const QImage &imageIn)
   out->flipVertical();
   
   return out;
-};
+}
 
 osg::Geometry* lbr::csys::buildIconLink()
 {

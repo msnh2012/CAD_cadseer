@@ -22,14 +22,14 @@
 
 #include <boost/filesystem.hpp>
 
-#include <project/libgit2pp/src/index.hpp>
-#include <project/libgit2pp/src/object.hpp>
-#include <project/libgit2pp/src/commit.hpp>
-#include <project/libgit2pp/src/branch.hpp>
-#include <project/libgit2pp/src/ref.hpp>
-#include <project/libgit2pp/src/signature.hpp>
-#include <project/libgit2pp/src/exception.hpp>
-#include <project/libgit2pp/src/revwalk.hpp>
+#include <subprojects/libgit2pp/src/index.hpp>
+#include <subprojects/libgit2pp/src/object.hpp>
+#include <subprojects/libgit2pp/src/commit.hpp>
+#include <subprojects/libgit2pp/src/branch.hpp>
+#include <subprojects/libgit2pp/src/ref.hpp>
+#include <subprojects/libgit2pp/src/signature.hpp>
+#include <subprojects/libgit2pp/src/exception.hpp>
+#include <subprojects/libgit2pp/src/revwalk.hpp>
 
 #include <preferences/preferencesXML.h>
 #include <preferences/manager.h>

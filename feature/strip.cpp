@@ -30,7 +30,7 @@
 #include <osgText/Text>
 #include <osg/Switch>
 
-#include <libzippp.h>
+#include <subprojects/libzippp/src/libzippp.h>
 #include <libreoffice/odshack.h>
 
 #include <application/application.h>

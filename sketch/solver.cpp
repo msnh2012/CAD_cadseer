@@ -1507,7 +1507,7 @@ boost::optional<std::pair<Slvs_hEntity, Slvs_hEntity> > Solver::getCoincidentPoi
   std::vector<Slvs_hEntity> ap; //all points
   std::set_union(points1.begin(), points1.end(), points2.begin(), points2.end(), std::back_inserter(ap));
   
-  boost::optional<Slvs_hEntity> v1, v2;
+  boost::optional<Slvs_hEntity> v1, v2; //ignore gcc warning for this.
   for (const auto &c : constraints)
   {
     if (c.type != SLVS_C_POINTS_COINCIDENT)

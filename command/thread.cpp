@@ -19,7 +19,7 @@
 
 #include <message/node.h>
 #include <project/project.h>
-#include <viewer/widget.h>
+#include <viewer/vwrwidget.h>
 #include <feature/thread.h>
 #include <command/thread.h>
 

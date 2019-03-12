@@ -89,7 +89,7 @@ Selection::Selection(Visual *vIn):
 visual(vIn)
 {
   timer.stop(); // turn on as needed.
-};
+}
 
 //!@brief Intersection visitors will visit all nodes.
 void Selection::setMaskAll()

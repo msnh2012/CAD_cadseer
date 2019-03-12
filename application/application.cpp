@@ -27,12 +27,12 @@
 #include <QMessageBox>
 #include <QSettings>
 
-#include <project/libgit2pp/libgit2/include/git2/global.h> //for git start and shutdown.
+#include <global.hpp> //for git start and shutdown.
 
 #include <application/application.h>
 #include <application/mainwindow.h>
 #include <viewer/spaceballqevent.h>
-#include <viewer/widget.h>
+#include <viewer/vwrwidget.h>
 #include <project/message.h>
 #include <project/gitmanager.h> //needed for unique_ptr destructor call.
 #include <project/project.h>
@@ -42,7 +42,7 @@
 #include <message/sift.h>
 #include <application/factory.h>
 #include <command/manager.h>
-#include <lod/manager.h>
+#include <lod/lodmanager.h>
 #include <dialogs/project.h>
 #include <dialogs/about.h>
 
@@ -86,12 +86,12 @@ Application::Application(int &argc, char **argv) :
     setOrganizationDomain("blobfish.org"); //doesn't exist.
     setApplicationName("cadseer");
     
-    git_libgit2_init();
+    git2::start();
 }
 
 Application::~Application()
 {
-  git_libgit2_shutdown();
+  git2::stop();
   spnav_close();
 }
 
@@ -448,6 +448,10 @@ void Application::AboutDialogRequestDispatched(const msg::Message &)
   dialog->exec();
 }
 
+Application* app::instance()
+{
+  return static_cast<Application*>(qApp);
+}
 
 WaitCursor::WaitCursor()
 {

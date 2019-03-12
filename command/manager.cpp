@@ -72,7 +72,7 @@
 #include <preferences/preferencesXML.h>
 #include <preferences/manager.h>
 #include <viewer/message.h>
-#include <viewer/widget.h>
+#include <viewer/vwrwidget.h>
 #include <command/manager.h>
 
 using namespace cmd;

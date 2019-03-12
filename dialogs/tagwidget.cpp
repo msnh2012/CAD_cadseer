@@ -24,8 +24,8 @@
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 
-#include <project/libgit2pp/src/signature.hpp>
-#include <project/libgit2pp/src/oid.hpp>
+#include <subprojects/libgit2pp/src/signature.hpp>
+#include <subprojects/libgit2pp/src/oid.hpp>
 
 #include <dialogs/tagwidget.h>
 

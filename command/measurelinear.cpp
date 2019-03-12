@@ -27,7 +27,7 @@
 #include <globalutilities.h>
 #include <application/mainwindow.h>
 #include <application/message.h>
-#include <viewer/widget.h>
+#include <viewer/vwrwidget.h>
 #include <project/project.h>
 #include <message/node.h>
 #include <message/sift.h>

@@ -36,6 +36,6 @@ namespace cmd
     virtual void activate() override;
     virtual void deactivate() override;
   };
-};
+}
 
 #endif // CMD_DRAGGERTOFEATURE_H

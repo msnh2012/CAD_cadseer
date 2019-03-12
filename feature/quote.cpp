@@ -19,7 +19,7 @@
 
 #include <boost/filesystem.hpp>
 
-#include <libzippp.h>
+#include <subprojects/libzippp/src/libzippp.h>
 
 #include <osg/Switch>
 

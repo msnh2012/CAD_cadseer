@@ -33,7 +33,7 @@
 #include <feature/message.h>
 #include <feature/states.h>
 #include <feature/base.h>
-#include <lod/manager.h>
+#include <lod/lodmanager.h>
 
 using namespace lod;
 

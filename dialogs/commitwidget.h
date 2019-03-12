@@ -22,7 +22,7 @@
 
 #include <QWidget>
 
-#include <project/libgit2pp/src/commit.hpp>
+#include <subprojects/libgit2pp/src/commit.hpp>
 
 class QLabel;
 class QDateTimeEdit;

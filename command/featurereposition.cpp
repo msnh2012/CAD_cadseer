@@ -21,7 +21,7 @@
 #include <project/project.h>
 #include <application/mainwindow.h>
 #include <selection/eventhandler.h>
-#include <viewer/widget.h>
+#include <viewer/vwrwidget.h>
 #include <library/csysdragger.h>
 #include <annex/csysdragger.h>
 #include <parameter/parameter.h>

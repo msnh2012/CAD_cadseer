@@ -29,7 +29,7 @@
 #include <expressions/widget.h>
 #include <application/application.h>
 #include <dialogs/splitterdecorated.h>
-#include <viewer/widget.h>
+#include <viewer/vwrwidget.h>
 #include <selection/manager.h>
 #include <message/node.h>
 #include <message/sift.h>

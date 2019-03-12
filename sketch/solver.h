@@ -27,7 +27,7 @@
 
 #include <boost/optional/optional_fwd.hpp>
 
-#include <slvs.h>
+#include <subprojects/solvespace/include/slvs.h>
 
 namespace prj{namespace srl{class Solver;}}
 

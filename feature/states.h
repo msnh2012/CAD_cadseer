@@ -44,7 +44,7 @@ namespace ftr
     
     static const State FeatureMask("00001111");
     static const State ProjectMask("00110000");
-  };
+  }
 }
 
 #endif // STATES_H

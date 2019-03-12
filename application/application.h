@@ -80,7 +80,7 @@ private:
     void AboutDialogRequestDispatched(const msg::Message &);
 };
 
-static Application* instance(){return static_cast<Application*>(qApp);}
+Application* instance();
 
 struct WaitCursor
 {

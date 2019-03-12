@@ -49,7 +49,7 @@ enum class EdgeProperty
 };
 
 //! @brief Return a string associated to an edge property.
-static std::string getEdgePropertyString(const EdgeProperty &property)
+static inline std::string getEdgePropertyString(const EdgeProperty &property)
 {
   static std::map<EdgeProperty, std::string> strings;
   static bool init =  false;
