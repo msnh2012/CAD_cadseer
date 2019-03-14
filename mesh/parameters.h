@@ -85,7 +85,9 @@ namespace msh
       bool checkOverlap = true;
       bool checkOverlappingBoundary = true;
       
+#ifdef NETGEN_PRESENT
       nglib::Ng_Meshing_Parameters convert() const;
+#endif
     };
     
     /**

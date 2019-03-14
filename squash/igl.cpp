@@ -20,7 +20,7 @@
 #include "igl.h"
 
 
-std::pair<Eigen::MatrixXd, Eigen::MatrixXi> sqs::toIgl(const Mesh &mIn)
+std::pair<Eigen::MatrixXd, Eigen::MatrixXi> sqs::toIgl(const msh::srf::Mesh &mIn)
 {
   //warning: if mIn has garbage then output will be out of sync.
   
@@ -54,25 +54,25 @@ std::pair<Eigen::MatrixXd, Eigen::MatrixXi> sqs::toIgl(const Mesh &mIn)
   return std::make_pair(vsOut, fsOut);
 }
 
-Mesh sqs::toCgal(const Eigen::MatrixXd &vsIn, const Eigen::MatrixXi &fsIn)
+msh::srf::Mesh sqs::toCgal(const Eigen::MatrixXd &vsIn, const Eigen::MatrixXi &fsIn)
 {
-  Mesh out;
+  msh::srf::Mesh out;
   
   for (int r = 0; r < vsIn.rows(); ++r)
   {
     if (vsIn.cols() == 2)
-      out.add_vertex(Point(vsIn(r,0), vsIn(r, 1), 0.0));
+      out.add_vertex(msh::srf::Point(vsIn(r,0), vsIn(r, 1), 0.0));
     else if (vsIn.cols() == 3)
-      out.add_vertex(Point(vsIn(r,0), vsIn(r, 1), vsIn(r, 2)));
+      out.add_vertex(msh::srf::Point(vsIn(r,0), vsIn(r, 1), vsIn(r, 2)));
   }
   
   for (int r = 0; r < fsIn.rows(); ++r)
   {
     out.add_face
     (
-      static_cast<Vertex>(fsIn(r,0)),
-      static_cast<Vertex>(fsIn(r,1)),
-      static_cast<Vertex>(fsIn(r,2))
+      static_cast<msh::srf::Vertex>(fsIn(r,0)),
+      static_cast<msh::srf::Vertex>(fsIn(r,1)),
+      static_cast<msh::srf::Vertex>(fsIn(r,2))
     );
   }
   

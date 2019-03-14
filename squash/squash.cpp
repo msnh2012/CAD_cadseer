@@ -35,9 +35,12 @@
 #include <CGAL/boost/graph/Euler_operations.h>
 #include <squash/tools.h>
 #include <squash/support.h>
-#include <squash/netgen.h>
 #include <squash/igl.h>
 #include <squash/squash.h>
+
+#include "mesh/parameters.h"
+#include "mesh/mesh.h"
+#include "annex/surfacemesh.h"
 
 #include <BRepTools.hxx>
 #include <BRepBndLib.hxx>
@@ -52,6 +55,8 @@ using namespace boost::filesystem;
 
 using namespace sqs;
 
+Parameters::~Parameters(){}
+
 std::string writeShellOut(const TopoDS_Shell& sIn)
 {
   path sPath = temp_directory_path() / (gu::idToString(gu::createRandomId()) + ".brep");
@@ -59,7 +64,7 @@ std::string writeShellOut(const TopoDS_Shell& sIn)
   return sPath.string();
 }
 
-std::pair<int, int> fillHoles(Mesh &mIn)
+std::pair<int, int> fillHoles(msh::srf::Mesh &mIn)
 {
   //try to fill holes.
   std::vector<HalfEdges> boundaries = sqs::getBoundaries(mIn);
@@ -89,7 +94,7 @@ std::pair<int, int> fillHoles(Mesh &mIn)
   return std::make_pair(holesFilled, holesFailed);
 }
 
-void remesh(Mesh &mIn, int granularity = 0, int tCount = 0, double clength = 0.0)
+void remesh(msh::srf::Mesh &mIn, int granularity = 0, int tCount = 0, double clength = 0.0)
 {
   //remeshing.
   //get collapse length.
@@ -179,29 +184,55 @@ Vertices getBaseVertices(const Mesh &mIn, const occt::FaceVector &fvIn)
   return out;
 }
 
+static osg::BoundingSphered convertBoundSphere(msh::srf::BSphere &sIn) //sphere can't be const?
+{
+  const auto it = sIn.center_cartesian_begin();
+  msh::srf::Point t(*it, *(it + 1), *(it + 2));
+  osg::Vec3d center(t.x(), t.y(), t.z());
+  double radius = sIn.radius();
+  
+  return osg::BoundingSphered(center, radius);
+}
+
+static osg::Vec3d convertPoint(const msh::srf::Point &pIn)
+{
+  return osg::Vec3d(pIn.x(), pIn.y(), pIn.z());
+}
+
+static msh::srf::Point convertPoint(const osg::Vec3d &pIn)
+{
+  return msh::srf::Point(pIn.x(), pIn.y(), pIn.z());
+}
 
 void sqs::squash(sqs::Parameters &ps)
 {
-  std::string sf = writeShellOut(ps.s); //shell file.
-  Mesh baseMesh = ntg::readBrepFile(sf, ntg::Parameters());
-  fillHoles(baseMesh);
-  remesh(baseMesh, ps.granularity);
+  //Just going to use a fine setting for occt.
+  msh::prm::OCCT occtSettings;
+  occtSettings.linearDeflection = 0.05;
+  occtSettings.angularDeflection = 0.1;
+  auto surfaceMeshPtr = ann::SurfaceMesh::generate(ps.s, occtSettings);
+  msh::srf::Mesh baseMesh = surfaceMeshPtr->getStow().mesh;
+  
+//   fillHoles(baseMesh);
+//   remesh(baseMesh, ps.granularity);
   
   baseMesh.collect_garbage();
-  Mesh baseMeshCopy = baseMesh; //we alter the base mesh, so make a copy for use later.
+  msh::srf::Mesh baseMeshCopy = baseMesh; //we alter the base mesh, so make a copy for use later.
   
-  ps.mesh3d = sqs::createOsg(sqs::OsgInfo(baseMesh, osg::Vec4(0.0, 1.0, 0.0, 0.5)));
+  ps.mesh3d = std::make_shared<ann::SurfaceMesh>(msh::srf::Stow(baseMesh));
   
-  Vertices baseVertices = getBaseVertices(baseMesh, ps.fs);
+  msh::srf::Vertices baseVertices = getBaseVertices(baseMesh, ps.fs);
   
   /* going to scale and translate mesh so it fits in parametric
    * range (0,1). arap solver appears to need it.
    */
   osg::Matrixd bmpt;
   {
-    BSphere tbmbs; //temp base mesh bounding sphere.
-    sqs::getBSphere(baseMesh, tbmbs);
-    osg::BoundingSphered bmbs = sqs::toOsg(tbmbs); //base mesh bounding sphere.
+    msh::srf::BSphere tbmbs; //temp base mesh bounding sphere.
+    for (const auto &v : baseMesh.vertices())
+      tbmbs.insert(baseMesh.point(v));
+//     sqs::getBSphere(baseMesh, tbmbs);
+    osg::BoundingSphered bmbs = convertBoundSphere(tbmbs); //base mesh bounding sphere.
     osg::Vec3d ap = bmbs.center(); //anchor point.
     ap.z() = 0.0;
     osg::Matrixd bmt = osg::Matrixd::translate(-ap);
@@ -213,9 +244,9 @@ void sqs::squash(sqs::Parameters &ps)
   //transform base mesh.
   for (const auto &v : CGAL::vertices(baseMesh))
   {
-    osg::Vec3d op = sqs::toOsg(baseMesh.point(v));
+    osg::Vec3d op = convertPoint(baseMesh.point(v));
     op = op * bmpt;
-    baseMesh.point(v) = sqs::toCgal(op);
+    baseMesh.point(v) = convertPoint(op);
   }
   
   Eigen::MatrixXd iglVs;
@@ -267,11 +298,11 @@ void sqs::squash(sqs::Parameters &ps)
   if (!arap_solve(bc,arap_data,V_uv))
     throw std::runtime_error("arap_solve failed");
   
-  Mesh uvMesh = sqs::toCgal(V_uv, iglFs);
+  msh::srf::Mesh uvMesh = sqs::toCgal(V_uv, iglFs);
   for (const auto &v : CGAL::vertices(uvMesh))
-    uvMesh.point(v) = sqs::toCgal(sqs::toOsg(uvMesh.point(v)) * osg::Matrixd::inverse(bmpt));
+    uvMesh.point(v) = convertPoint(convertPoint(uvMesh.point(v)) * osg::Matrixd::inverse(bmpt));
   
-  ps.mesh2d = sqs::createOsg(sqs::OsgInfo(uvMesh, osg::Vec4(0.0, 0.0, 1.0, 0.5)));
+  ps.mesh2d = std::make_shared<ann::SurfaceMesh>(msh::srf::Stow(uvMesh));
   
   double baseMeshArea = sqs::getMeshFaceArea(baseMeshCopy);
   double baseMeshEdgeLength = sqs::getMeshEdgeLength(baseMeshCopy);

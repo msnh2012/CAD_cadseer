@@ -22,12 +22,12 @@
 
 #include <Eigen/Core>
 
-#include "mesh.h"
+#include "mesh/mesh.h"
 
 namespace sqs
 {
-  std::pair<Eigen::MatrixXd, Eigen::MatrixXi> toIgl(const Mesh&);
-  Mesh toCgal(const Eigen::MatrixXd&, const Eigen::MatrixXi&);
+  std::pair<Eigen::MatrixXd, Eigen::MatrixXi> toIgl(const msh::srf::Mesh&);
+  msh::srf::Mesh toCgal(const Eigen::MatrixXd&, const Eigen::MatrixXi&);
 }
 
 #endif // SQS_IGL_H

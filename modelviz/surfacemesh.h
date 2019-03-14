@@ -20,7 +20,7 @@
 #ifndef MDV_SURFACEMESH_H
 #define MDV_SURFACEMESH_H
 
-#include "modelviz/base.h"
+#include <osg/NodeCallback>
 
 namespace osg{class Switch;}
 namespace ann{class SurfaceMesh;}
@@ -28,6 +28,24 @@ namespace ann{class SurfaceMesh;}
 namespace mdv
 {
   osg::Switch* generate(const ann::SurfaceMesh&);
+  
+  class MeshCallback : public osg::NodeCallback
+  {
+  public:
+    void showTriangles();
+    void hideTriangles();
+    void showEdges();
+    void hideEdges();
+    void showBorderEdges();
+    void hideBorderEdges();
+    
+    void operator()(osg::Node*, osg::NodeVisitor*) override;
+  private:
+    bool dirty = true;
+    bool triVis = true;
+    bool intEdgeVis = true;
+    bool extEdgeVis = true;
+  };
 }
 
 #endif //MDV_SURFACEMESH_H

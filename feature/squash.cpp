@@ -33,6 +33,7 @@
 #include <feature/shapecheck.h>
 #include <project/serial/xsdcxxoutput/featuresquash.h>
 #include <tools/featuretools.h>
+#include <modelviz/surfacemesh.h>
 #include <feature/updatepayload.h>
 #include <feature/inputtype.h>
 #include <feature/squash.h>
@@ -181,9 +182,17 @@ void Squash::updateModel(const UpdatePayload &payloadIn)
     sqs::squash(ps);
     TopoDS_Face out = ps.ff;
     if(ps.mesh3d)
-      overlaySwitch->insertChild(0, ps.mesh3d.get());
+    {
+      osg::Switch *viz = mdv::generate(*ps.mesh3d);
+      if (viz)
+        overlaySwitch->insertChild(0, viz);
+    }
     if(ps.mesh2d)
-      overlaySwitch->insertChild(0, ps.mesh2d.get());
+    {
+      osg::Switch *viz = mdv::generate(*ps.mesh2d);
+      if (viz)
+        overlaySwitch->insertChild(0, viz);
+    }
     
     if (!out.IsNull())
     {

@@ -31,12 +31,14 @@
 #include <CGAL/Polygon_mesh_processing/repair.h>
 #include <CGAL/Polygon_mesh_processing/stitch_borders.h>
 
+#ifdef NETGEN_PRESENT
 #define OCCGEOMETRY
 namespace nglib //what the fuck is this nonsense!
 {
-#include <netgen/nglib.h>
+  #include <netgen/nglib.h>
 }
 using namespace nglib;
+#endif
 
 #ifdef GMSH_PRESENT
   #include <gmsh.h>
@@ -50,6 +52,12 @@ using namespace nglib;
 using namespace ann;
 
 SurfaceMesh::SurfaceMesh() : Base(), stow(new msh::srf::Stow()) {}
+
+SurfaceMesh::SurfaceMesh(const msh::srf::Stow &stowIn)
+: Base()
+, stow(new msh::srf::Stow(stowIn))
+{
+}
 
 SurfaceMesh::~SurfaceMesh() {}
 
@@ -158,16 +166,17 @@ std::unique_ptr<SurfaceMesh> SurfaceMesh::generate(const TopoDS_Shape &shapeIn, 
 
 
 //****************************************** Begin netgen ***********************************************
-
+#ifdef NETGEN_PRESENT
 typedef std::unique_ptr<Ng_OCC_Geometry, std::function<Ng_Result(Ng_OCC_Geometry*)> > OccGeomPtr;
 typedef std::unique_ptr<Ng_Mesh, std::function<void(Ng_Mesh *)> > NgMeshPtr;
 
 struct NgManager
 {
-  NgManager(){Ng_Init();};
-  ~NgManager(){Ng_Exit();};
+  NgManager(){Ng_Init();}
+  ~NgManager(){Ng_Exit();}
 };
 typedef std::unique_ptr<NgManager> NgManagerPtr;
+#endif
 
 /*! @brief Generate a mesh from a face with parameters.
  * 
@@ -198,6 +207,7 @@ std::unique_ptr<SurfaceMesh> SurfaceMesh::generate(const TopoDS_Shape &shapeIn, 
   if (shapeIn.IsNull())
     return out;
   
+#ifdef NETGEN_PRESENT
   //netgen is structured around a file, so write out a temp brep so netgen can read it.
   assert(boost::filesystem::exists(prmsIn.filePath.parent_path()));
   BRepTools::Write(shapeIn, prmsIn.filePath.string().c_str());
@@ -257,9 +267,20 @@ std::unique_ptr<SurfaceMesh> SurfaceMesh::generate(const TopoDS_Shape &shapeIn, 
     
     m.add_face(static_cast<Vertex>(pIndex[0] - 1), static_cast<Vertex>(pIndex[1] - 1), static_cast<Vertex>(pIndex[2] - 1));
   }
+#endif
   
   return out;
 }
+
+//**************************************** begin gmsh *************************************************
+
+#ifdef GMSH_PRESENT
+struct GmshManager
+{
+  GmshManager(){gmsh::initialize();}
+  ~GmshManager(){gmsh::finalize();}
+};
+#endif
 
 std::unique_ptr<SurfaceMesh> SurfaceMesh::generate(const TopoDS_Face &faceIn, const msh::prm::GMSH &prmsIn)
 {
@@ -287,7 +308,7 @@ std::unique_ptr<SurfaceMesh> SurfaceMesh::generate(const TopoDS_Shape &shapeIn, 
   assert(boost::filesystem::exists(prmsIn.filePath.parent_path()));
   BRepTools::Write(shapeIn, prmsIn.filePath.string().c_str());
   
-  gmsh::initialize();
+  GmshManager manager;
 //   gmsh::option::setNumber("General.Terminal", 1); //good for log info on terminal
   gmsh::open(prmsIn.filePath.string().c_str());
   for (const auto &option : prmsIn.options)
@@ -334,8 +355,6 @@ std::unique_ptr<SurfaceMesh> SurfaceMesh::generate(const TopoDS_Shape &shapeIn, 
       }
     }
   }
-  
-  gmsh::finalize();
 #endif //GMSH_PRESENT
   
   return out;

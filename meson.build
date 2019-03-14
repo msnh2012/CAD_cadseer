@@ -34,9 +34,11 @@ xerces = dependency('xerces-c', version : '>=3.2.2')
 #I had comment out call to 'CGAL_detect_if_Boost_Thread_is_required()' in /usr/lib/x86_64-linux-gnu/cmake/CGAL/CGAL_SetupBoost.cmake:46
 cgal = dependency('CGAL', version : '>=4.13')
 
-#static igl library needs to link to thread.
+#static igl library needs to link to thread even in header only mode.
 threads = dependency('threads')
+#static igl library std::bad_alloc. removed from cadseer dependencies.
 libigl = dependency('libigl', version : '>=3.3.7', modules : ['igl::core'])
+defines += '-DLIBIGL_USE_STATIC_LIBRARY=OFF'
 
 if(host_machine.system() == 'linux' or host_machine.system() == 'darwin')
   spnav = comp.find_library('spnav', required : false)
@@ -48,15 +50,21 @@ if(host_machine.system() == 'linux' or host_machine.system() == 'darwin')
   endif
 endif
 
-gmsh = comp.find_library('gmsh', required : false)
-if(gmsh.found())
-  defines += '-DGMSH_PRESENT'
+gmsh = dependency('', required:false)
+if (get_option('gmsh'))
+  gmsh = comp.find_library('gmsh', required : false)
+  if(gmsh.found())
+    defines += '-DGMSH_PRESENT'
+  endif
 endif
 
 #had to install the application to satisfy netgenconfig.cmake
-netgen = dependency('Netgen', version : '>=6.2', required : false, modules : ['nglib'])
-if(netgen.found())
-  defines += '-DNETGEN_PRESENT'
+netgen = dependency('', required:false)
+if (get_option('netgen'))
+  netgen = dependency('Netgen', version : '>=6.2', required : false, modules : ['nglib'])
+  if(netgen.found())
+    defines += '-DNETGEN_PRESENT'
+  endif
 endif
 
 #assuming if this is there, then xsdcxx is installed. No lib to link.
@@ -73,7 +81,6 @@ libzippp = libzippp_proj.get_variable('libzippp_static_dep')
 
 squash_sources = ['squash/squash.cpp'
   , 'squash/igl.cpp'
-  , 'squash/netgen.cpp'
   , 'squash/support.cpp'
   , 'squash/tools.cpp']
   
@@ -405,7 +412,7 @@ qt5_processed = qt5process.preprocess(
 )
 
 cadseer_exe = executable('cadseer', [cadseer_sources, qt5_processed]
-  , dependencies : [qt5, boost, occt, osg, osgqt, eigen, xerces, cgal, threads, libigl, libzippp, spnav, gmsh, netgen, git2pp, solvespace]
+  , dependencies : [qt5, boost, occt, osg, osgqt, eigen, xerces, cgal, threads, libzippp, spnav, gmsh, netgen, git2pp, solvespace]
   , cpp_args : [defines, extra_args])
   
 lodgenerator_sources = ['lod/main.cpp'

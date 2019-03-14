@@ -49,6 +49,7 @@ namespace ann
   {
   public:
     SurfaceMesh();
+    SurfaceMesh(const msh::srf::Stow&);
     virtual ~SurfaceMesh() override;
     virtual Type getType() override {return Type::SurfaceMesh;}
     

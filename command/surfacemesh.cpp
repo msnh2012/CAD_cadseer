@@ -66,9 +66,9 @@ void SurfaceMesh::go()
   }
   
   std::shared_ptr<ftr::SurfaceMesh> sfm(new ftr::SurfaceMesh());
-//   sfm->setMeshType(ftr::SurfaceMesh::MeshType::occt);
+  sfm->setMeshType(ftr::SurfaceMesh::MeshType::occt);
 //   sfm->setMeshType(ftr::SurfaceMesh::MeshType::netgen);
-  sfm->setMeshType(ftr::SurfaceMesh::MeshType::gmsh);
+//   sfm->setMeshType(ftr::SurfaceMesh::MeshType::gmsh);
   project->addFeature(sfm);
   project->connectInsert(bf->getId(), sfm->getId(), ftr::InputType{ftr::InputType::target});
   

@@ -20,15 +20,20 @@
 #ifndef SQS_SQUASH_H
 #define SQS_SQUASH_H
 
+#include <memory>
+
 #include <osg/Group>
 
 #include <tools/occtools.h>
+
+namespace ann{class SurfaceMesh;}
 
 namespace sqs
 {
   struct Parameters
   {
     Parameters(const TopoDS_Shell &sIn, const occt::FaceVector &fsIn): s(sIn), fs(fsIn){}
+    ~Parameters();
     
     //input
     const TopoDS_Shell &s; //!< shell to flatten
@@ -39,8 +44,8 @@ namespace sqs
     //output
     TopoDS_Face ff; //!< flat face
     occt::EdgeVector es; //!< flat edges in case face is invalid.
-    osg::ref_ptr<osg::Group> mesh3d;
-    osg::ref_ptr<osg::Group> mesh2d;
+    std::shared_ptr<ann::SurfaceMesh> mesh3d;
+    std::shared_ptr<ann::SurfaceMesh> mesh2d;
     std::string message;
   };
   

@@ -1,0 +1,2 @@
+option('netgen', type : 'boolean', value : false, description : 'Build with netgen meshing support')
+option('gmsh', type : 'boolean', value : false, description : 'Build with gmsh meshing support')

@@ -22,17 +22,20 @@
 #include <boost/bimap.hpp>
 #include <boost/assign/list_of.hpp>
 
+#ifdef NETGEN_PRESENT
 #define OCCGEOMETRY
 namespace nglib //what the fuck is this nonsense!
 {
 #include <netgen/nglib.h>
 }
 using namespace nglib;
+#endif
 
 #include "mesh/parameters.h"
 
 using namespace msh::prm;
 
+#ifdef NETGEN_PRESENT
 nglib::Ng_Meshing_Parameters Netgen::convert() const
 {
   Ng_Meshing_Parameters out;
@@ -59,6 +62,7 @@ nglib::Ng_Meshing_Parameters Netgen::convert() const
   
   return out;
 }
+#endif
 
 namespace msh
 {
