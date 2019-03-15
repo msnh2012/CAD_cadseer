@@ -7,3 +7,6 @@
 [submodule "sketch/solvespace"]
 	path = subprojects/solvespace
 	url = https://gitlab.com/blobfish/solvespace.git
+[submodule "subprojects/libigl"]
+	path = subprojects/libigl
+	url = https://github.com/libigl/libigl.git

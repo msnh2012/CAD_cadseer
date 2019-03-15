@@ -34,12 +34,6 @@ xerces = dependency('xerces-c', version : '>=3.2.2')
 #I had comment out call to 'CGAL_detect_if_Boost_Thread_is_required()' in /usr/lib/x86_64-linux-gnu/cmake/CGAL/CGAL_SetupBoost.cmake:46
 cgal = dependency('CGAL', version : '>=4.13')
 
-#static igl library needs to link to thread even in header only mode.
-threads = dependency('threads')
-#static igl library std::bad_alloc. removed from cadseer dependencies.
-libigl = dependency('libigl', version : '>=3.3.7', modules : ['igl::core'])
-defines += '-DLIBIGL_USE_STATIC_LIBRARY=OFF'
-
 if(host_machine.system() == 'linux' or host_machine.system() == 'darwin')
   spnav = comp.find_library('spnav', required : false)
   if(spnav.found())
@@ -78,6 +72,14 @@ solvespace = solvespace_proj.get_variable('libsolvespace_dep')
 
 libzippp_proj = subproject('libzippp')
 libzippp = libzippp_proj.get_variable('libzippp_static_dep')
+
+#libigl has some problems. See myBuild.txt in subproject/libigl for description.
+#libigl = dependency('libigl', version : '>=3.3.7', modules : ['igl::core'])
+libigl_proj = subproject('libigl')
+libigl = libigl_proj.get_variable('libigl_dep')
+defines += '-DLIBIGL_USE_STATIC_LIBRARY=OFF'
+#static igl library needs to link to threads even in header only mode.
+threads = dependency('threads')
 
 squash_sources = ['squash/squash.cpp'
   , 'squash/igl.cpp'
@@ -412,7 +414,7 @@ qt5_processed = qt5process.preprocess(
 )
 
 cadseer_exe = executable('cadseer', [cadseer_sources, qt5_processed]
-  , dependencies : [qt5, boost, occt, osg, osgqt, eigen, xerces, cgal, threads, libzippp, spnav, gmsh, netgen, git2pp, solvespace]
+  , dependencies : [qt5, boost, occt, osg, osgqt, eigen, xerces, cgal, threads, libzippp, spnav, gmsh, netgen, git2pp, solvespace, libigl]
   , cpp_args : [defines, extra_args])
   
 lodgenerator_sources = ['lod/main.cpp'
