@@ -24,6 +24,8 @@
 #include <CGAL/Surface_mesh.h>
 #include <CGAL/Min_sphere_of_spheres_d.h>
 #include <CGAL/Min_sphere_of_points_d_traits_3.h>
+#include <CGAL/Kernel/global_functions.h>
+#include <CGAL/algorithm.h>
 
 namespace msh
 {
@@ -39,13 +41,13 @@ namespace msh
 
     typedef CGAL::Surface_mesh<Point> Mesh;
     typedef Mesh::Vertex_index Vertex;
-//     typedef Mesh::Edge_index Edge;
-//     typedef Mesh::Halfedge_index HalfEdge;
-//     typedef Mesh::Face_index Face;
+    typedef Mesh::Edge_index Edge;
+    typedef Mesh::Halfedge_index HalfEdge;
+    typedef Mesh::Face_index Face;
     typedef std::vector<Vertex> Vertices;
-//     typedef std::vector<HalfEdge> HalfEdges;
-//     typedef std::vector<Edge> Edges;
-//     typedef std::vector<Face> Faces;
+    typedef std::vector<HalfEdge> HalfEdges;
+    typedef std::vector<Edge> Edges;
+    typedef std::vector<Face> Faces;
     typedef CGAL::Min_sphere_of_points_d_traits_3<Kernel, double, CGAL::Tag_true, CGAL::Default_algorithm> SphereTraits;
     typedef CGAL::Min_sphere_of_spheres_d<SphereTraits> BSphere;
     

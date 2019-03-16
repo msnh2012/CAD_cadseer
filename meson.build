@@ -82,9 +82,7 @@ defines += '-DLIBIGL_USE_STATIC_LIBRARY=OFF'
 threads = dependency('threads')
 
 squash_sources = ['squash/squash.cpp'
-  , 'squash/igl.cpp'
-  , 'squash/support.cpp'
-  , 'squash/tools.cpp']
+  , 'squash/igl.cpp']
   
 sketch_sources = ['sketch/solver.cpp'
   , 'sketch/selection.cpp'

@@ -20,6 +20,7 @@
 #include <cassert>
 
 #include <boost/filesystem.hpp>
+#include <boost/next_prior.hpp>
 
 #include <igl/arap.h>
 #include <igl/boundary_loop.h>
@@ -27,20 +28,23 @@
 #include <igl/map_vertices_to_circle.h>
 #include <igl/massmatrix.h>
 
-#include <tools/idtools.h>
-#include <squash/mesh.h>
+// cgal bug diagnosis
+// #define CGAL_PMP_REMESHING_VERBOSE_PROGRESS
+//cgal 4.13 has bug.
+#define CGAL_NO_ASSERTIONS
+
 #include <CGAL/Polygon_mesh_processing/triangulate_hole.h>
 #include <CGAL/Polygon_mesh_processing/remesh.h>
 #include <CGAL/Polygon_mesh_processing/border.h>
 #include <CGAL/boost/graph/Euler_operations.h>
-#include <squash/tools.h>
-#include <squash/support.h>
-#include <squash/igl.h>
-#include <squash/squash.h>
 
+#include "tools/idtools.h"
+#include "squash/igl.h"
+#include "squash/squash.h"
 #include "mesh/parameters.h"
 #include "mesh/mesh.h"
 #include "annex/surfacemesh.h"
+#include "globalutilities.h"
 
 #include <BRepTools.hxx>
 #include <BRepBndLib.hxx>
@@ -55,6 +59,18 @@ using namespace boost::filesystem;
 
 using namespace sqs;
 
+using Mesh = msh::srf::Mesh;
+using Face = msh::srf::Face;
+using Faces = msh::srf::Faces;
+using Edge = msh::srf::Edge;
+using HalfEdge = msh::srf::HalfEdge;
+using Vertex = msh::srf::Vertex;
+using HalfEdges = msh::srf::HalfEdges;
+using Vertices = msh::srf::Vertices;
+using BSphere = msh::srf::BSphere;
+using Point = msh::srf::Point;
+using Kernel = msh::srf::Kernel;
+
 Parameters::~Parameters(){}
 
 std::string writeShellOut(const TopoDS_Shell& sIn)
@@ -64,10 +80,74 @@ std::string writeShellOut(const TopoDS_Shell& sIn)
   return sPath.string();
 }
 
+static double getBSphereRadius(const Mesh &mIn, const HalfEdges &hesIn)
+{
+  BSphere bs; //bounding sphere.
+  for (const auto &he : hesIn)
+    bs.insert(mIn.point(mIn.source(he)));
+  return bs.radius();
+}
+
+static std::vector<HalfEdges> getBoundaries(const msh::srf::Mesh &mIn)
+{
+  HalfEdges abhes; //all border half edges
+  for (const auto &he : mIn.halfedges())
+  {
+    if (mIn.is_border(he))
+      abhes.push_back(he);
+  }
+  gu::uniquefy(abhes);
+  
+  std::vector<HalfEdges> bheso; //border half edges out
+  while(!abhes.empty())
+  {
+    HalfEdges cb; //current border.
+    cb.push_back(abhes.back());
+    abhes.pop_back();
+    for (auto it = abhes.begin(); it != abhes.end();)
+    {
+      if (mIn.target(cb.back()) == mIn.source(*it))
+      {
+        cb.push_back(*it);
+        abhes.erase(it);
+        it = abhes.begin();
+      }
+      else
+       ++it;
+      
+      if (mIn.source(cb.front()) == mIn.target(cb.back()))
+      {
+        break;
+      }
+    }
+    bheso.push_back(cb);
+  }
+  
+  std::vector<HalfEdges>::iterator lrit = bheso.end(); //largest radius iterator
+  double largestRadius = -1.0;
+  for (auto it = bheso.begin(); it != bheso.end(); ++it)
+  {
+    double cr = getBSphereRadius(mIn, *it);
+    if (cr > largestRadius)
+    {
+      largestRadius = cr;
+      lrit = it;
+    }
+  }
+  if (lrit == bheso.end() || largestRadius <= 0.0)
+    throw std::runtime_error("no largest boundary");
+  
+  HalfEdges temp = *lrit;
+  bheso.erase(lrit);
+  bheso.push_back(temp);
+  
+  return bheso;
+}
+
 std::pair<int, int> fillHoles(msh::srf::Mesh &mIn)
 {
   //try to fill holes.
-  std::vector<HalfEdges> boundaries = sqs::getBoundaries(mIn);
+  std::vector<HalfEdges> boundaries = getBoundaries(mIn);
   boundaries.pop_back(); //get boundaries puts the largest boundary at the end. so just remove it.
   int holesFilled = 0;
   int holesFailed = 0;
@@ -94,6 +174,42 @@ std::pair<int, int> fillHoles(msh::srf::Mesh &mIn)
   return std::make_pair(holesFilled, holesFailed);
 }
 
+static double getFaceArea(const msh::srf::Mesh &mIn, const Face &fIn)
+{
+  std::vector<Point> ps;
+  for (const auto &he : CGAL::halfedges_around_face(mIn.halfedge(fIn), mIn))
+    ps.push_back(mIn.point(mIn.source(he)));
+  assert(ps.size() == 3);
+  return Kernel::Compute_area_3()(ps[0], ps[1], ps[2]);
+}
+
+static double getMeshFaceArea(const msh::srf::Mesh &mIn)
+{
+  double out = 0.0;
+  for (const auto &f : mIn.faces())
+    out += getFaceArea(mIn, f);
+  
+  return out;
+}
+
+static double getMeshEdgeLength(const msh::srf::Mesh &mIn)
+{
+  auto getEdgeLength = [&](const Edge &eIn) -> double
+  {
+    std::vector<msh::srf::Point> ps;
+    ps.push_back(mIn.point(mIn.vertex(eIn, 0)));
+    ps.push_back(mIn.point(mIn.vertex(eIn, 1)));
+    
+    return std::sqrt(Kernel::Compute_squared_distance_3()(ps[0], ps[1]));
+  };
+  
+  double out = 0.0;
+  for (const auto &e : mIn.edges())
+    out += getEdgeLength(e);
+  
+  return out;
+}
+
 void remesh(msh::srf::Mesh &mIn, int granularity = 0, int tCount = 0, double clength = 0.0)
 {
   //remeshing.
@@ -107,7 +223,7 @@ void remesh(msh::srf::Mesh &mIn, int granularity = 0, int tCount = 0, double cle
   
   auto calculateCLength = [&](int tc) -> double
   {
-    double a = sqs::getMeshFaceArea(mIn);
+    double a = getMeshFaceArea(mIn);
     double ofa = a / static_cast<double>(tc); //one face area
     double l = std::sqrt(2 * ofa);
     l = rangeCLength(l);
@@ -143,19 +259,19 @@ void remesh(msh::srf::Mesh &mIn, int granularity = 0, int tCount = 0, double cle
     .protect_constraints(false)//false = don't protect border
   );
 
-  Faces nf;
-  Vertices nv;
-  pmp::refine
-  (
-    mIn,
-    sqs::obtuse(mIn, 170),
-    std::back_inserter(nf),
-    std::back_inserter(nv),
-    pmp::parameters::density_control_factor(2.0)
-  );
+//   Faces nf;
+//   Vertices nv;
+//   pmp::refine
+//   (
+//     mIn,
+//     sqs::obtuse(mIn, 170),
+//     std::back_inserter(nf),
+//     std::back_inserter(nv),
+//     pmp::parameters::density_control_factor(2.0)
+//   );
 }
 
-Vertices getBaseVertices(const Mesh &mIn, const occt::FaceVector &fvIn)
+Vertices getBaseVertices(const msh::srf::Mesh &mIn, const occt::FaceVector &fvIn)
 {
   //we are not checking the connection of the faces in.
   Bnd_Box bb;
@@ -213,8 +329,8 @@ void sqs::squash(sqs::Parameters &ps)
   auto surfaceMeshPtr = ann::SurfaceMesh::generate(ps.s, occtSettings);
   msh::srf::Mesh baseMesh = surfaceMeshPtr->getStow().mesh;
   
-//   fillHoles(baseMesh);
-//   remesh(baseMesh, ps.granularity);
+  fillHoles(baseMesh);
+  remesh(baseMesh, ps.granularity);
   
   baseMesh.collect_garbage();
   msh::srf::Mesh baseMeshCopy = baseMesh; //we alter the base mesh, so make a copy for use later.
@@ -304,10 +420,10 @@ void sqs::squash(sqs::Parameters &ps)
   
   ps.mesh2d = std::make_shared<ann::SurfaceMesh>(msh::srf::Stow(uvMesh));
   
-  double baseMeshArea = sqs::getMeshFaceArea(baseMeshCopy);
-  double baseMeshEdgeLength = sqs::getMeshEdgeLength(baseMeshCopy);
-  double faceError = std::fabs(baseMeshArea - sqs::getMeshFaceArea(uvMesh)) / baseMeshArea;
-  double edgeError = std::fabs(baseMeshEdgeLength - sqs::getMeshEdgeLength(uvMesh)) / baseMeshEdgeLength;
+  double baseMeshArea = getMeshFaceArea(baseMeshCopy);
+  double baseMeshEdgeLength = getMeshEdgeLength(baseMeshCopy);
+  double faceError = std::fabs(baseMeshArea - getMeshFaceArea(uvMesh)) / baseMeshArea;
+  double edgeError = std::fabs(baseMeshEdgeLength - getMeshEdgeLength(uvMesh)) / baseMeshEdgeLength;
   std::ostringstream stream;
   stream
   << "squash results: " << std::endl
@@ -315,7 +431,7 @@ void sqs::squash(sqs::Parameters &ps)
   << "edge error: " << edgeError << std::endl;
   ps.message = stream.str();
   
-  std::vector<HalfEdges> fbs = sqs::getBoundaries(uvMesh);
+  std::vector<HalfEdges> fbs = getBoundaries(uvMesh);
   assert(fbs.size() == 1);
   
   TopoDS_Vertex fv; //first vertex.

@@ -161,6 +161,12 @@ std::unique_ptr<SurfaceMesh> SurfaceMesh::generate(const TopoDS_Shape &shapeIn, 
   CGAL::Polygon_mesh_processing::stitch_borders(m);
   m.collect_garbage();
   
+  if (!m.is_valid())
+  {
+    std::cout << "Mesh is invalid in: " << BOOST_CURRENT_FUNCTION << std::endl;
+    out->stow->mesh = msh::srf::Mesh();
+  }
+  
   return out;
 }
 
