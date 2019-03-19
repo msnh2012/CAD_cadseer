@@ -322,17 +322,27 @@ static msh::srf::Point convertPoint(const osg::Vec3d &pIn)
 
 void sqs::squash(sqs::Parameters &ps)
 {
+  //set the out 3d mesh. used for snapshots of the mesh during operations.
+  auto set3dMesh = [&](const msh::srf::Mesh &mIn)
+  {
+    ps.mesh3d = std::make_shared<ann::SurfaceMesh>(msh::srf::Stow(mIn));
+  };
+  
   //Just going to use a fine setting for occt.
   msh::prm::OCCT occtSettings;
   occtSettings.linearDeflection = 0.05;
   occtSettings.angularDeflection = 0.1;
   auto surfaceMeshPtr = ann::SurfaceMesh::generate(ps.s, occtSettings);
   msh::srf::Mesh baseMesh = surfaceMeshPtr->getStow().mesh;
+  set3dMesh(baseMesh); ps.message = "Last operation: occt mesh\n";
   
-  fillHoles(baseMesh);
   remesh(baseMesh, ps.granularity);
+  set3dMesh(baseMesh); ps.message = "Last operation: isotropic remesh\n";
+  fillHoles(baseMesh);
+  set3dMesh(baseMesh); ps.message = "Last operation: fill holes\n";
   
   baseMesh.collect_garbage();
+  set3dMesh(baseMesh);
   msh::srf::Mesh baseMeshCopy = baseMesh; //we alter the base mesh, so make a copy for use later.
   
   ps.mesh3d = std::make_shared<ann::SurfaceMesh>(msh::srf::Stow(baseMesh));
@@ -399,7 +409,7 @@ void sqs::squash(sqs::Parameters &ps)
   }
 
   // Initialize ARAP
-  arap_data.max_iter = 400;
+  arap_data.max_iter = 1600;
   arap_data.with_dynamics = true;
   arap_data.M = massIgl;
   arap_data.ym = 203395.33976;

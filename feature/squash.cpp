@@ -64,7 +64,7 @@ Squash::Squash() : Base(), sShape(new ann::SeerShape())
     )
   );
   
-  prm::Boundary lower(0.0, prm::Boundary::End::Closed); // 0.0 means no update
+  prm::Boundary lower(1.0, prm::Boundary::End::Closed);
   prm::Boundary upper(5.0, prm::Boundary::End::Closed);
   prm::Interval interval(lower, upper);
   prm::Constraint c;
@@ -97,12 +97,6 @@ void Squash::setGranularity(int vIn)
 
 void Squash::updateModel(const UpdatePayload &payloadIn)
 {
-  if (static_cast<int>(*granularity) == 0)
-  {
-    setSuccess();
-    setModelClean();
-    return;
-  }
   lastUpdateLog.clear();
   overlaySwitch->removeChildren(0, overlaySwitch->getNumChildren());
   overlaySwitch->addChild(label.get());
@@ -179,8 +173,21 @@ void Squash::updateModel(const UpdatePayload &payloadIn)
     
     sqs::Parameters ps(s, fs);
     ps.granularity = static_cast<int>(*granularity);
-    sqs::squash(ps);
-    TopoDS_Face out = ps.ff;
+    try
+    {
+      sqs::squash(ps);
+    }
+    catch (const std::exception &e)
+    {
+      lastUpdateLog += ps.message;
+      if(ps.mesh3d)
+      {
+        osg::Switch *viz = mdv::generate(*ps.mesh3d);
+        if (viz)
+          overlaySwitch->insertChild(0, viz);
+      }
+      throw;
+    }
     if(ps.mesh3d)
     {
       osg::Switch *viz = mdv::generate(*ps.mesh3d);
@@ -193,30 +200,38 @@ void Squash::updateModel(const UpdatePayload &payloadIn)
       if (viz)
         overlaySwitch->insertChild(0, viz);
     }
+    TopoDS_Face out = ps.ff;
     
-    if (!out.IsNull())
-    {
-      ShapeCheck check(out);
-      if (!check.isValid())
-        throw std::runtime_error("shapeCheck failed");
-      
-      //for now, we are only going to have consistent ids for face and outer wire.
-      sShape->setOCCTShape(out);
-      sShape->updateId(out, faceId);
-      const TopoDS_Shape &ow = BRepTools::OuterWire(out);
-      sShape->updateId(ow, wireId);
-      sShape->ensureNoNils();
-      
-      setSuccess();
-    }
-    else
+    auto setEdges = [&]()
     {
       //this is incase face is bad, this should show something.
       //we don't really care about id evolution with these edges.
       TopoDS_Compound c = occt::ShapeVectorCast(ps.es);
-      sShape->setOCCTShape(out);
+      sShape->setOCCTShape(c);
       sShape->ensureNoNils();
+      std::ostringstream s; s << "Face was invalid, using edges" << std::endl;
+      lastUpdateLog += s.str();
+    };
+    
+    if (!out.IsNull())
+    {
+      ShapeCheck check(out);
+      if (check.isValid())
+      {
+        //for now, we are only going to have consistent ids for face and outer wire.
+        sShape->setOCCTShape(out);
+        sShape->updateId(out, faceId);
+        const TopoDS_Shape &ow = BRepTools::OuterWire(out);
+        sShape->updateId(ow, wireId);
+        sShape->ensureNoNils();
+      }
+      else
+        setEdges();
     }
+    else
+      setEdges();
+    
+    setSuccess();
   }
   catch (const Standard_Failure &e)
   {

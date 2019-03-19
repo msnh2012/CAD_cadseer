@@ -386,9 +386,13 @@ bool TangentFaceVisitor::discoverEdge(const TopoDS_Edge& edgeIn)
         return false;
       anyFound = true;
     }
-    catch(const std::runtime_error &e)
+    catch (const std::runtime_error &e)
     {
 //       std::cout << e.what() << std::endl;
+    }
+    catch (const Standard_Failure &e)
+    {
+//       std::cout << e.GetMessageString() << std::endl;
     }
   }
   if (!anyFound)
