@@ -936,6 +936,24 @@ void Handler::constructMenu()
         constructionMesh
       );
     }
+    osg::MatrixTransform *constructionCurves = constructNode
+    (
+      mdv::gestureMenu,
+      ":/resources/images/constructionCurves.svg",
+      QObject::tr("Curves Menu").toStdString(),
+      std::string(),
+      constructionBase
+    );
+    {
+      constructNode
+      (
+        mdv::gestureCommand,
+        ":/resources/images/sketchLine.svg",
+        QObject::tr("Line Command").toStdString(),
+        (msg::Request | msg::Construct | msg::Line).to_string(),
+        constructionCurves
+      );
+    }
   }
   osg::MatrixTransform *editBase = constructNode
   (

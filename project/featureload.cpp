@@ -57,6 +57,7 @@
 #include <feature/extrude.h>
 #include <feature/revolve.h>
 #include <feature/sketch.h>
+#include <feature/ftrline.h>
 #include <project/serial/xsdcxxoutput/featurebox.h>
 #include <project/serial/xsdcxxoutput/featurecylinder.h>
 #include <project/serial/xsdcxxoutput/featuresphere.h>
@@ -92,6 +93,7 @@
 #include <project/serial/xsdcxxoutput/featureextrude.h>
 #include <project/serial/xsdcxxoutput/featurerevolve.h>
 #include <project/serial/xsdcxxoutput/featuresketch.h>
+#include <project/serial/xsdcxxoutput/featureline.h>
 
 #include "featureload.h"
 
@@ -138,6 +140,7 @@ directory(directoryIn)
   functionMap.insert(std::make_pair(ftr::toString(ftr::Type::Extrude), std::bind(&FeatureLoad::loadExtrude, this, std::placeholders::_1, std::placeholders::_2)));
   functionMap.insert(std::make_pair(ftr::toString(ftr::Type::Revolve), std::bind(&FeatureLoad::loadRevolve, this, std::placeholders::_1, std::placeholders::_2)));
   functionMap.insert(std::make_pair(ftr::toString(ftr::Type::Sketch), std::bind(&FeatureLoad::loadSketch, this, std::placeholders::_1, std::placeholders::_2)));
+  functionMap.insert(std::make_pair(ftr::toString(ftr::Type::Line), std::bind(&FeatureLoad::loadLine, this, std::placeholders::_1, std::placeholders::_2)));
 }
 
 FeatureLoad::~FeatureLoad()
@@ -583,6 +586,18 @@ std::shared_ptr<ftr::Base> FeatureLoad::loadSketch(const std::string &fileNameIn
   assert(ss);
   
   std::shared_ptr<ftr::Sketch> sf(new ftr::Sketch);
+  sf->getAnnex<ann::SeerShape>(ann::Type::SeerShape).setOCCTShape(shapeVector.at(shapeOffsetIn));
+  sf->serialRead(*ss);
+  
+  return sf;
+}
+
+std::shared_ptr<ftr::Base> FeatureLoad::loadLine(const std::string &fileNameIn, std::size_t shapeOffsetIn)
+{
+  auto ss = srl::line(fileNameIn, ::xml_schema::Flags::dont_validate);
+  assert(ss);
+  
+  std::shared_ptr<ftr::Line> sf(new ftr::Line);
   sf->getAnnex<ann::SeerShape>(ann::Type::SeerShape).setOCCTShape(shapeVector.at(shapeOffsetIn));
   sf->serialRead(*ss);
   

@@ -64,6 +64,7 @@
 #include <command/extrude.h>
 #include <command/revolve.h>
 #include <command/surfacemesh.h>
+#include <command/cmdline.h>
 #include <message/node.h>
 #include <message/sift.h>
 #include <selection/message.h>
@@ -327,6 +328,11 @@ void Manager::setupDispatcher()
       (
         msg::Request | msg::Construct | msg::SurfaceMesh
         , std::bind(&Manager::constructSurfaceMeshDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Construct | msg::Line
+        , std::bind(&Manager::constructLineDispatched, this, std::placeholders::_1)
       )
       , std::make_pair
       (
@@ -663,6 +669,12 @@ void Manager::constructRevolveDispatched(const msg::Message&)
 void Manager::constructSurfaceMeshDispatched(const msg::Message&)
 {
   std::shared_ptr<SurfaceMesh> f(new SurfaceMesh());
+  addCommand(f);
+}
+
+void Manager::constructLineDispatched(const msg::Message&)
+{
+  std::shared_ptr<Line> f(new Line());
   addCommand(f);
 }
 
