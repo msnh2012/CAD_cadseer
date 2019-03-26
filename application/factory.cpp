@@ -642,12 +642,18 @@ void Factory::importStepDispatched(const msg::Message&)
     if (s.IsNull())
       continue;
     
-    //not sure how the reader is determining what is a 'root' shape.
-    //but the sample I have is 2 independent solids, but is coming through
-    //as 1 root. so iterate and create different features.
-    for (TopoDS_Iterator it(s); it.More(); it.Next())
+    if (s.ShapeType() == TopAbs_COMPOUND)
     {
-      std::shared_ptr<ftr::Inert> inert(new ftr::Inert(it.Value()));
+      for (TopoDS_Iterator it(s); it.More(); it.Next())
+      {
+        std::shared_ptr<ftr::Inert> inert(new ftr::Inert(it.Value()));
+        project->addFeature(inert);
+        si++;
+      }
+    }
+    else
+    {
+      std::shared_ptr<ftr::Inert> inert(new ftr::Inert(s));
       project->addFeature(inert);
       si++;
     }

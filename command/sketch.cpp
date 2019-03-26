@@ -17,7 +17,9 @@
  *
  */
 
+#include "application/application.h"
 #include "application/mainwindow.h"
+#include "viewer/vwrwidget.h"
 #include "message/node.h"
 #include "project/project.h"
 #include "feature/inputtype.h"
@@ -61,7 +63,7 @@ void Sketch::deactivate()
 void Sketch::go()
 {
   std::shared_ptr<ftr::Sketch> nf(new ftr::Sketch());
-  nf->buildDefault();
+  nf->buildDefault(viewer->getCurrentSystem(), viewer->getDiagonalLength() / 5.0);
   project->addFeature(nf);
   node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
   

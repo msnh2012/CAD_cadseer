@@ -1115,14 +1115,14 @@ void Project::setColor(const boost::uuids::uuid &featureIdIn, const osg::Vec4 &c
   //reversed. don't walk up if feature is create.
   if (stow->graph[baseVertex].feature->getDescriptor() != ftr::Descriptor::Create)
   {
-    auto rvg = boost::make_reverse_graph((rmg));
+    auto rvg = boost::make_reverse_graph(rmg);
     Vertices fvs; //filter vertices.
     gu::BFSLimitVisitor<Vertex> fvis(fvs);
     boost::breadth_first_search(rvg, baseVertex, visitor(fvis));
     
     gu::SubsetFilter<decltype(rvg)> ssf(rvg, fvs); //subset filter
     typedef boost::filtered_graph<decltype(rvg), boost::keep_all, decltype(ssf) > SubsetGraph;
-    SubsetGraph fg(rmg, boost::keep_all(), ssf);
+    SubsetGraph fg(rvg, boost::keep_all(), ssf);
     
     AlterVisitor apv(alters, AlterVisitor::Create::Inclusion);
     boost::depth_first_search(fg, visitor(apv).root_vertex(baseVertex));

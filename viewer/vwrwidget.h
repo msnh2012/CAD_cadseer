@@ -56,6 +56,7 @@ public:
     void setCurrentSystem(const osg::Matrixd &mIn);
     const osg::Matrixd& getViewSystem() const;
     QTextStream& getInfo(QTextStream &stream) const;
+    double getDiagonalLength() const;
     
     //! first is file path without dot and extension. second is extension without the dot
     void screenCapture(const std::string &, const std::string &);

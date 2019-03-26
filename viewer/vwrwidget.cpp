@@ -963,6 +963,26 @@ QTextStream& Widget::getInfo(QTextStream &stream) const
   return stream;
 }
 
+/*! @brief Diagonal length of screen in world units.
+ * 
+ * used for scaling world objects to current view.
+ */
+double Widget::getDiagonalLength() const
+{
+  osgQt::GLWidget *glWidget = windowQt->getGLWidget();
+  assert(glWidget);
+  
+  osg::Matrixd m = mainCamera->getViewMatrix();
+  m.postMult(mainCamera->getProjectionMatrix());
+  m.postMult(mainCamera->getViewport()->computeWindowMatrix());
+  osg::Matrixd i = osg::Matrixd::inverse(m);
+  
+  osg::Vec3d origin(osg::Vec3d(0.0, 0.0, 0.0) * i);
+  osg::Vec3d corner(osg::Vec3d(static_cast<double>(glWidget->width()), static_cast<double>(glWidget->height()), 0.0) * i);
+  double length = (corner - origin).length(); 
+  return length;
+}
+
 //restore states from serialize
 class SerialInViewVisitor : public osg::NodeVisitor
 {

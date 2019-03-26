@@ -51,7 +51,9 @@ namespace ftr
     skt::Visual* getVisual(){return visual.get();}
     void draggerShow();
     void draggerHide();
-    void buildDefault();
+    void buildDefault(const osg::Matrixd&, double);
+    void setCSys(const osg::Matrixd&);
+    osg::Matrixd getCSys() const;
     
     bool hasHPPair(uint32_t);
     bool hasHPPair(const prm::Parameter*);

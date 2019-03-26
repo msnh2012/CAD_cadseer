@@ -43,6 +43,7 @@
 #include <osg/Depth>
 #include <osg/Hint>
 #include <osgText/Text>
+#include <osg/ComputeBoundsVisitor>
 
 #include "tools/idtools.h"
 #include "application/application.h"
@@ -507,6 +508,7 @@ void Visual::update()
     , std::make_pair(SLVS_C_PERPENDICULAR, std::make_pair("perpendicular", "PP"))
     , std::make_pair(SLVS_C_AT_MIDPOINT, std::make_pair("midpoint", "M"))
     , std::make_pair(SLVS_C_WHERE_DRAGGED, std::make_pair("whereDragged", "G"))
+    , std::make_pair(SLVS_C_CURVE_CURVE_TANGENT, std::make_pair("tangent", "T"))
   };
   
   data->cMap.setAllUnreferenced();
@@ -567,7 +569,7 @@ void Visual::update()
       double s = lastSize / 500.0;
       p->setScale(osg::Vec3d(s, s, s));
     }
-    if (c.type == SLVS_C_ARC_LINE_TANGENT)
+    if (c.type == SLVS_C_ARC_LINE_TANGENT || c.type == SLVS_C_CURVE_CURVE_TANGENT)
     {
       if (!record.get().node)
       {
@@ -1746,6 +1748,18 @@ void Visual::addTangent()
     // else warning about no common points coincidently constrained.
     return;
   }
+  if (arcs.size() == 2)
+  {
+    SSHandle tc = solver.addCurveCurveTangent(arcs.front(), arcs.back());
+    if (tc != 0)
+    {
+      solver.solve(solver.getGroup(), true);
+      update();
+      clearSelection();
+    }
+    // else warning about no common points coincidently constrained.
+    return;
+  }
 }
 
 //! @brief Add a distance constraint to the currently selected objects.
@@ -2639,23 +2653,17 @@ void Visual::updatePlaneSize()
   if (!autoSize)
     return;
   
-  osg::Matrixd m(osg::Matrixd::identity());
-  osg::MatrixList ms = data->planeGroup->getWorldMatrices();
-  if (!ms.empty())
-    m = ms.front();
+  //try to use boundingbox compute for a more accurate plane size.
+  //boundingbox is in parent's space.
+  osg::ComputeBoundsVisitor bv;
+  data->entityGroup->accept(bv);
+  osg::BoundingBox cb = bv.getBoundingBox();
+  if (!cb.valid())
+    return; //lets try and leave the size where it is and see what happens.
   
-  const osg::BoundingSphere &ebs = data->entityGroup->getBound();
-  if (!ebs.valid())
-  {
-    size = 1.0;
-    return;
-  }
-  
-  //build a sphere at the transform origin and expand it to encapsulate entity bounding sphere.
-  osg::BoundingSphere bs;
-  bs.radius() = std::numeric_limits<float>::epsilon(); //otherwise bs is invalid and different behaviour.
-  bs.center() = m.getTrans();
-  bs.expandRadiusBy(ebs);
+  //we have to give a value for the radius in order for expandBy to work.
+  osg::BoundingSphere bs(osg::Vec3d(), std::numeric_limits<double>::epsilon());
+  bs.expandRadiusBy(cb);
   size = bs.radius();
 }
 
@@ -3036,7 +3044,9 @@ osg::Vec3d Visual::boundingCenter(const std::vector<SSHandle> &handles)
   for (const auto &h : handles)
   {
     auto r = data->eMap.getRecord(h);
-    assert(r);
+    // might have selected an axis so no assert on r.
+    if (!r)
+      continue;
     
     osg::Drawable *d = dynamic_cast<osg::Drawable*>(r.get().node.get());
     assert(d);

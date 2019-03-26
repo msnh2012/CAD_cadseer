@@ -96,12 +96,35 @@ void Sketch::draggerHide()
 }
 
 //! @details Setup a default sketch.
-void Sketch::buildDefault()
+void Sketch::buildDefault(const osg::Matrixd &mIn, double sizeIn)
 {
   solver->setWorkPlane();
   solver->createXAxis();
   solver->createYAxis();
   solver->groupIncrement();
+  
+  csys->setValue(mIn);
+  csysDragger->draggerUpdate(mIn);
+  visual->getTransform()->setMatrix(mIn);
+  visual->setSize(std::max(Precision::Confusion(), sizeIn));
+  visual->update();
+  visual->setAutoSize(true); //setSize disables.
+}
+
+void Sketch::setCSys(const osg::Matrixd &csysIn)
+{
+  osg::Matrixd oldSystem = static_cast<osg::Matrixd>(*csys);
+  if (!csys->setValue(csysIn))
+    return; // already at this csys
+    
+  //apply the same transformation to dragger, so dragger moves with it.
+  osg::Matrixd diffMatrix = osg::Matrixd::inverse(oldSystem) * csysIn;
+  csysDragger->draggerUpdate(csysDragger->dragger->getMatrix() * diffMatrix);
+}
+
+osg::Matrixd Sketch::getCSys() const
+{
+  return static_cast<osg::Matrixd>(*csys);
 }
 
 bool Sketch::hasHPPair(uint32_t hIn)
