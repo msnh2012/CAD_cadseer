@@ -45,6 +45,7 @@ using namespace nglib;
 #endif
 
 #include "tools/occtools.h"
+#include "project/serial/xsdcxxoutput/mesh.h"
 #include "mesh/parameters.h"
 #include "mesh/mesh.h"
 #include "annex/surfacemesh.h"
@@ -364,4 +365,38 @@ std::unique_ptr<SurfaceMesh> SurfaceMesh::generate(const TopoDS_Shape &shapeIn, 
 #endif //GMSH_PRESENT
   
   return out;
+}
+
+prj::srl::msh::Surface SurfaceMesh::serialOut()
+{
+  const msh::srf::Mesh &m = stow->mesh;
+  
+  prj::srl::msh::Points mps;
+  for (const msh::srf::Vertex &v : m.vertices())
+  {
+    const msh::srf::Point &p = m.point(v);
+    mps.array().push_back(prj::srl::msh::Point(p.x(), p.y(), p.z()));
+  }
+  
+  prj::srl::msh::Faces mfs;
+  for (const msh::srf::Face &f : m.faces())
+  {
+    prj::srl::msh::Indexes mi;
+    for(const msh::srf::Vertex &vd : vertices_around_face(m.halfedge(f), m))
+      mi.array().push_back(vd);
+    mfs.array().push_back(prj::srl::msh::Face(mi));
+  }
+  
+  return prj::srl::msh::Surface(mps, mfs);
+}
+
+void SurfaceMesh::serialIn(const prj::srl::msh::Surface &smIn)
+{
+  msh::srf::Mesh &m = stow->mesh;
+  
+  for (const auto &pIn : smIn.points().array())
+    m.add_vertex(msh::srf::Point(pIn.x(), pIn.y(), pIn.z()));
+  
+  for (const auto &fIn : smIn.faces().array())
+    m.add_face(fIn.indexes().array());
 }

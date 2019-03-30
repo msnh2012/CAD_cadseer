@@ -254,7 +254,9 @@ project_sources = ['project/project.cpp'
   , 'project/serial/xsdcxxoutput/featureextrude.cpp'
   , 'project/serial/xsdcxxoutput/featurerevolve.cpp'
   , 'project/serial/xsdcxxoutput/featuresketch.cpp'
-  , 'project/serial/xsdcxxoutput/featureline.cpp']
+  , 'project/serial/xsdcxxoutput/featureline.cpp'
+  , 'project/serial/xsdcxxoutput/mesh.cpp'
+  , 'project/serial/xsdcxxoutput/featuresurfacemesh.cpp']
   
 application_sources = ['application/mainwindow.cpp'
   , 'application/application.cpp'

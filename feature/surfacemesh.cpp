@@ -36,6 +36,7 @@
 #include "annex/seershape.h"
 #include "annex/surfacemesh.h"
 #include "modelviz/surfacemesh.h"
+#include "project/serial/xsdcxxoutput/featuresurfacemesh.h"
 #include "feature/surfacemesh.h"
 
 
@@ -75,9 +76,10 @@ void SurfaceMesh::setMeshType(MeshType t)
  * marks visual dirty for display update.
  * 
  */
-void SurfaceMesh::setMesh(std::unique_ptr<ann::SurfaceMesh> mIn)
+void SurfaceMesh::setMesh(std::unique_ptr<ann::SurfaceMesh> mIn, bool setToInert)
 {
-  meshType = MeshType::inert;
+  if (setToInert)
+    meshType = MeshType::inert;
   annexes.erase(ann::Type::SurfaceMesh);
   mesh = std::move(mIn);
   annexes.insert(std::make_pair(ann::Type::SurfaceMesh, mesh.get()));
@@ -136,18 +138,18 @@ void SurfaceMesh::updateModel(const UpdatePayload &pIn)
       if (meshType == MeshType::occt)
       {
         if (!stm.IsNull())
-          setMesh(ann::SurfaceMesh::generate(stm, occtParameters));
+          setMesh(ann::SurfaceMesh::generate(stm, occtParameters), false);
         else
-          setMesh(ann::SurfaceMesh::generate(ftm, occtParameters));
+          setMesh(ann::SurfaceMesh::generate(ftm, occtParameters), false);
       }
       else if (meshType == MeshType::netgen)
       {
         netgenParameters.filePath = boost::filesystem::temp_directory_path();
         netgenParameters.filePath /= boost::filesystem::path(gu::idToString(getId()) + ".brep");
         if (!stm.IsNull())
-          setMesh(ann::SurfaceMesh::generate(stm, netgenParameters));
+          setMesh(ann::SurfaceMesh::generate(stm, netgenParameters), false);
         else
-          setMesh(ann::SurfaceMesh::generate(ftm, netgenParameters));
+          setMesh(ann::SurfaceMesh::generate(ftm, netgenParameters), false);
       }
       else if (meshType == MeshType::gmsh)
       {
@@ -157,9 +159,9 @@ void SurfaceMesh::updateModel(const UpdatePayload &pIn)
         gmshParameters.filePath = boost::filesystem::temp_directory_path();
         gmshParameters.filePath /= boost::filesystem::path(gu::idToString(getId()) + ".brep");
         if (!stm.IsNull())
-          setMesh(ann::SurfaceMesh::generate(stm, gmshParameters));
+          setMesh(ann::SurfaceMesh::generate(stm, gmshParameters), false);
         else
-          setMesh(ann::SurfaceMesh::generate(ftm, gmshParameters));
+          setMesh(ann::SurfaceMesh::generate(ftm, gmshParameters), false);
       }
     }
     
@@ -191,6 +193,29 @@ void SurfaceMesh::updateVisual()
     mainTransform->addChild(viz);
 }
 
-void SurfaceMesh::serialWrite(const boost::filesystem::path&)
+void SurfaceMesh::serialWrite(const boost::filesystem::path &dIn)
 {
+  prj::srl::FeatureSurfaceMesh so
+  (
+    Base::serialOut()
+    , mesh->serialOut()
+    , occtParameters.serialOut()
+    , netgenParameters.serialOut()
+    , gmshParameters.serialOut()
+    , static_cast<int>(meshType)
+  );
+  
+  xml_schema::NamespaceInfomap infoMap;
+  std::ofstream stream(buildFilePathName(dIn).string());
+  prj::srl::surfaceMesh(stream, so, infoMap);
+}
+
+void SurfaceMesh::serialRead(const prj::srl::FeatureSurfaceMesh &smIn)
+{
+  Base::serialIn(smIn.featureBase());
+  mesh->serialIn(smIn.surface());
+  occtParameters.serialIn(smIn.parametersOCCT());
+  netgenParameters.serialIn(smIn.parametersNetgen());
+  gmshParameters.serialIn(smIn.parametersGMSH());
+  meshType = static_cast<MeshType>(smIn.meshType());
 }

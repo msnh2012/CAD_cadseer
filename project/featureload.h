@@ -86,6 +86,7 @@ namespace prj
     std::shared_ptr<ftr::Base> loadRevolve(const std::string &, std::size_t);
     std::shared_ptr<ftr::Base> loadSketch(const std::string &, std::size_t);
     std::shared_ptr<ftr::Base> loadLine(const std::string &, std::size_t);
+    std::shared_ptr<ftr::Base> loadSurfaceMesh(const std::string &, std::size_t);
   };
 }
 

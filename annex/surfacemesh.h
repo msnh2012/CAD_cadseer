@@ -28,6 +28,8 @@ class TopoDS_Shape;
 class TopoDS_Shell;
 class TopoDS_Face;
 
+namespace prj{namespace srl{namespace msh{class Surface;}}}
+
 namespace msh
 {
   namespace srf{struct Stow;}
@@ -61,6 +63,9 @@ namespace ann
     static std::unique_ptr<SurfaceMesh> generate(const TopoDS_Shell&, const msh::prm::Netgen&);
     static std::unique_ptr<SurfaceMesh> generate(const TopoDS_Face&, const msh::prm::GMSH&);
     static std::unique_ptr<SurfaceMesh> generate(const TopoDS_Shell&, const msh::prm::GMSH&);
+    
+    prj::srl::msh::Surface serialOut();
+    void serialIn(const prj::srl::msh::Surface&);
   private:
     std::unique_ptr<msh::srf::Stow> stow;
     static std::unique_ptr<SurfaceMesh> generate(const TopoDS_Shape&, const msh::prm::OCCT&);

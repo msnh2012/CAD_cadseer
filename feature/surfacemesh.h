@@ -24,6 +24,7 @@
 #include "feature/base.h"
 
 namespace ann{class SurfaceMesh;}
+namespace prj{namespace srl{class FeatureSurfaceMesh;}}
 
 namespace ftr
 {
@@ -51,14 +52,14 @@ namespace ftr
     void setMeshType(MeshType);
     MeshType getMeshType() const {return meshType;}
     //use Base::getAnnex to get mesh.
-    void setMesh(std::unique_ptr<ann::SurfaceMesh>); //used with inert type.
+    void setMesh(std::unique_ptr<ann::SurfaceMesh> mIn, bool setToInert = true);
     const msh::prm::OCCT& getOcctParameters() const {return occtParameters;}
     void setOcctParameters(const msh::prm::OCCT&);
     const msh::prm::Netgen& getNetgenParameters() const {return netgenParameters;}
     void setNetgenParameters(const msh::prm::Netgen&);
     
     virtual void serialWrite(const boost::filesystem::path&) override;
-//     void serialRead(const prj::srl::FeatureSurfaceMesh&);
+    void serialRead(const prj::srl::FeatureSurfaceMesh&);
     
   protected:
     MeshType meshType = MeshType::inert;

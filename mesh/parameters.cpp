@@ -31,9 +31,30 @@ namespace nglib //what the fuck is this nonsense!
 using namespace nglib;
 #endif
 
+
+#include "project/serial/xsdcxxoutput/mesh.h"
 #include "mesh/parameters.h"
 
 using namespace msh::prm;
+
+void OCCT::serialIn(const prj::srl::msh::ParametersOCCT &psIn)
+{
+  linearDeflection = psIn.linearDeflection();
+  angularDeflection = psIn.angularDeflection();
+  relative = psIn.relative();
+  minArea = psIn.minArea();
+}
+
+prj::srl::msh::ParametersOCCT OCCT::serialOut() const
+{
+  return prj::srl::msh::ParametersOCCT
+  (
+    linearDeflection
+    , angularDeflection
+    , relative
+    , minArea
+  );
+}
 
 #ifdef NETGEN_PRESENT
 nglib::Ng_Meshing_Parameters Netgen::convert() const
@@ -63,6 +84,59 @@ nglib::Ng_Meshing_Parameters Netgen::convert() const
   return out;
 }
 #endif
+
+void Netgen::serialIn(const prj::srl::msh::ParametersNetgen &psIn)
+{
+    useLocalH = psIn.useLocalH();
+    maxH = psIn.maxH();
+    minH = psIn.minH();
+    fineness = psIn.fineness();
+    grading = psIn.grading();
+    elementsPerEdge = psIn.elementsPerEdge();
+    elementsPerCurve = psIn.elementsPerCurve();
+    closeEdgeEnable = psIn.closeEdgeEnable();
+    closeEdgeFactor = psIn.closeEdgeFactor();
+    minEdgeLenEnable = psIn.minEdgeLenEnable();
+    minEdgeLen = psIn.minEdgeLen();
+    secondOrder = psIn.secondOrder();
+    quadDominated = psIn.quadDominated();
+    optSurfMeshEnable = psIn.optSurfMeshEnable();
+    optVolMeshEnable = psIn.optVolMeshEnable();
+    optSteps2d = psIn.optSteps2d();
+    optSteps3d = psIn.optSteps3d();
+    invertTets = psIn.invertTets();
+    invertTrigs = psIn.invertTrigs();
+    checkOverlap = psIn.checkOverlap();
+    checkOverlappingBoundary = psIn.checkOverlappingBoundary();
+}
+
+prj::srl::msh::ParametersNetgen Netgen::serialOut() const
+{
+  return prj::srl::msh::ParametersNetgen
+  (
+    useLocalH
+    , maxH
+    , minH
+    , fineness
+    , grading
+    , elementsPerEdge
+    , elementsPerCurve
+    , closeEdgeEnable
+    , closeEdgeFactor
+    , minEdgeLenEnable
+    , minEdgeLen
+    , secondOrder
+    , quadDominated
+    , optSurfMeshEnable
+    , optVolMeshEnable
+    , optSteps2d
+    , optSteps3d
+    , invertTets
+    , invertTrigs
+    , checkOverlap
+    , checkOverlappingBoundary
+  );
+}
 
 namespace msh
 {
@@ -803,4 +877,23 @@ void GMSH::setOption(const std::string &keyIn, const std::string &eIn)
     if (option.getKey() == keyIn)
       option.setValue(eIn);
   }
+}
+
+void GMSH::serialIn(const prj::srl::msh::ParametersGMSH &psIn)
+{
+  refine = psIn.refine();
+  for (const auto &p : psIn.options().array())
+    setOption(p.key(), p.value());
+}
+
+prj::srl::msh::ParametersGMSH GMSH::serialOut() const
+{
+  prj::srl::msh::ParametersGMSHOptions serialOptions;
+  for (const auto &option : options)
+    serialOptions.array().push_back(prj::srl::msh::ParametersGMSHOption(option.getKey(), option.getValue()));
+  return prj::srl::msh::ParametersGMSH
+  (
+    serialOptions
+    , refine
+  );
 }

@@ -106,9 +106,8 @@ osg::Switch* mdv::generate(const ann::SurfaceMesh &sfIn)
   assignDepth(intEdges, 0.003, 1.003);
   assignDepth(extEdges, 0.002, 1.002);
   
-  osg::LineWidth *lineWidth = new osg::LineWidth(2.0f);
-  intEdges->getOrCreateStateSet()->setAttributeAndModes(lineWidth);
-  extEdges->getOrCreateStateSet()->setAttributeAndModes(lineWidth);
+  intEdges->getOrCreateStateSet()->setAttributeAndModes(new osg::LineWidth(2.0f));
+  extEdges->getOrCreateStateSet()->setAttributeAndModes(new osg::LineWidth(5.0f));
   
   osg::DrawElementsUInt *intEdgeElements = new osg::DrawElementsUInt(GL_LINES);
   intEdges->addPrimitiveSet(intEdgeElements);
