@@ -78,6 +78,7 @@
     <file>resources/images/constructionMesh.svg</file>
     <file>resources/images/constructionSurfaceMesh.svg</file>
     <file>resources/images/constructionCurves.svg</file>
+    <file>resources/images/constructionRuled.svg</file>
     <file>resources/images/sketchPoint.svg</file>
     <file>resources/images/sketchLine.svg</file>
     <file>resources/images/sketchArc.svg</file>
