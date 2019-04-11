@@ -52,6 +52,10 @@ namespace ftr
    * @details Picks are stored and used in features
    * to resolve what entities from the parents
    * are to be used in modeling algorithms.
+   * 
+   * @note:
+   * StartPoint and EndPoint consider edge orientation where the
+   * parameter driven types don't.
    */
   struct Pick
   {

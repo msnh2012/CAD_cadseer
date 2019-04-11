@@ -68,7 +68,8 @@ namespace ftr
     Extrude, //!< feature for extrude
     Revolve, //!< feature for revolve
     SurfaceMesh, //!< feature for surface mesh creation.
-    Line //!< feature for lines
+    Line, //!< feature for lines
+    TransitionCurve //!< feature for lines
   };
   
   inline const static std::string& toString(Type typeIn)
@@ -115,7 +116,8 @@ namespace ftr
       {Type::Extrude, "Extrude"},
       {Type::Revolve, "Revolve"},
       {Type::SurfaceMesh, "SurfaceMesh"},
-      {Type::Line, "Line"}
+      {Type::Line, "Line"},
+      {Type::TransitionCurve, "TransitionCurve"}
     };
     
     assert(strings.count(typeIn) > 0);

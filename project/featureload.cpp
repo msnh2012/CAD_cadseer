@@ -59,6 +59,7 @@
 #include <feature/sketch.h>
 #include <feature/ftrline.h>
 #include <feature/surfacemesh.h>
+#include <feature/ftrtransitioncurve.h>
 #include <project/serial/xsdcxxoutput/featurebox.h>
 #include <project/serial/xsdcxxoutput/featurecylinder.h>
 #include <project/serial/xsdcxxoutput/featuresphere.h>
@@ -96,6 +97,7 @@
 #include <project/serial/xsdcxxoutput/featuresketch.h>
 #include <project/serial/xsdcxxoutput/featureline.h>
 #include <project/serial/xsdcxxoutput/featuresurfacemesh.h>
+#include <project/serial/xsdcxxoutput/featuretransitioncurve.h>
 
 #include "featureload.h"
 
@@ -144,6 +146,7 @@ directory(directoryIn)
   functionMap.insert(std::make_pair(ftr::toString(ftr::Type::Sketch), std::bind(&FeatureLoad::loadSketch, this, std::placeholders::_1, std::placeholders::_2)));
   functionMap.insert(std::make_pair(ftr::toString(ftr::Type::Line), std::bind(&FeatureLoad::loadLine, this, std::placeholders::_1, std::placeholders::_2)));
   functionMap.insert(std::make_pair(ftr::toString(ftr::Type::SurfaceMesh), std::bind(&FeatureLoad::loadSurfaceMesh, this, std::placeholders::_1, std::placeholders::_2)));
+  functionMap.insert(std::make_pair(ftr::toString(ftr::Type::TransitionCurve), std::bind(&FeatureLoad::loadTransitionCurve, this, std::placeholders::_1, std::placeholders::_2)));
 }
 
 FeatureLoad::~FeatureLoad()
@@ -613,6 +616,18 @@ std::shared_ptr<ftr::Base> FeatureLoad::loadSurfaceMesh(const std::string &fileN
   assert(ss);
   
   std::shared_ptr<ftr::SurfaceMesh> sf(new ftr::SurfaceMesh);
+  sf->serialRead(*ss);
+  
+  return sf;
+}
+
+std::shared_ptr<ftr::Base> FeatureLoad::loadTransitionCurve(const std::string &fileNameIn, std::size_t shapeOffsetIn)
+{
+  auto ss = srl::transitionCurve(fileNameIn, ::xml_schema::Flags::dont_validate);
+  assert(ss);
+  
+  std::shared_ptr<ftr::TransitionCurve> sf(new ftr::TransitionCurve);
+  sf->getAnnex<ann::SeerShape>(ann::Type::SeerShape).setOCCTShape(shapeVector.at(shapeOffsetIn));
   sf->serialRead(*ss);
   
   return sf;

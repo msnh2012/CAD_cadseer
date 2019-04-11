@@ -65,6 +65,7 @@
 #include <command/revolve.h>
 #include <command/surfacemesh.h>
 #include <command/cmdline.h>
+#include <command/cmdtransitioncurve.h>
 #include <message/node.h>
 #include <message/sift.h>
 #include <selection/message.h>
@@ -333,6 +334,11 @@ void Manager::setupDispatcher()
       (
         msg::Request | msg::Construct | msg::Line
         , std::bind(&Manager::constructLineDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Construct | msg::TransitionCurve
+        , std::bind(&Manager::constructTransitionCurveDispatched, this, std::placeholders::_1)
       )
       , std::make_pair
       (
@@ -676,6 +682,11 @@ void Manager::constructLineDispatched(const msg::Message&)
 {
   std::shared_ptr<Line> f(new Line());
   addCommand(f);
+}
+
+void Manager::constructTransitionCurveDispatched(const msg::Message&)
+{
+  addCommand(std::make_shared<TransitionCurve>());
 }
 
 //editing commands and dispatching.

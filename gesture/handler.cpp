@@ -953,6 +953,14 @@ void Handler::constructMenu()
         (msg::Request | msg::Construct | msg::Line).to_string(),
         constructionCurves
       );
+      constructNode
+      (
+        mdv::gestureCommand,
+        ":/resources/images/sketchBezeir.svg",
+        QObject::tr("Transition Curve Command").toStdString(),
+        (msg::Request | msg::Construct | msg::TransitionCurve).to_string(),
+        constructionCurves
+      );
     }
   }
   osg::MatrixTransform *editBase = constructNode
