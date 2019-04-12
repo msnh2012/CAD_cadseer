@@ -154,7 +154,8 @@ feature_sources = ['feature/inputtype.cpp'
   , 'feature/revolve.cpp'
   , 'feature/surfacemesh.cpp'
   , 'feature/ftrline.cpp'
-  , 'feature/ftrtransitioncurve.cpp']
+  , 'feature/ftrtransitioncurve.cpp'
+  , 'feature/ftrruled.cpp']
   
 parameter_sources = ['parameter/parameter.cpp']
 
@@ -258,7 +259,8 @@ project_sources = ['project/project.cpp'
   , 'project/serial/xsdcxxoutput/featureline.cpp'
   , 'project/serial/xsdcxxoutput/mesh.cpp'
   , 'project/serial/xsdcxxoutput/featuresurfacemesh.cpp'
-  , 'project/serial/xsdcxxoutput/featuretransitioncurve.cpp']
+  , 'project/serial/xsdcxxoutput/featuretransitioncurve.cpp'
+  , 'project/serial/xsdcxxoutput/featureruled.cpp']
   
 application_sources = ['application/mainwindow.cpp'
   , 'application/application.cpp'
@@ -310,7 +312,8 @@ command_sources = ['command/manager.cpp'
   , 'command/revolve.cpp'
   , 'command/cmdline.cpp'
   , 'command/surfacemesh.cpp'
-  , 'command/cmdtransitioncurve.cpp']
+  , 'command/cmdtransitioncurve.cpp'
+  , 'command/cmdruled.cpp']
   
 library_sources = ['library/circlebuilder.cpp'
   , 'library/circleprojector.cpp'

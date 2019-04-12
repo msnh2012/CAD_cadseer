@@ -294,6 +294,10 @@ void TransitionCurve::updateModel(const UpdatePayload &pIn)
     
     sShape->setOCCTShape(edgeMaker.Edge());
     sShape->updateId(edgeMaker.Edge(), curveId);
+    if (!sShape->hasEvolveRecordOut(curveId))
+      sShape->insertEvolve(gu::createNilId(), curveId);
+    sShape->ensureNoNils();
+    sShape->ensureNoDuplicates();
     setSuccess();
   }
   catch (const Standard_Failure &e)

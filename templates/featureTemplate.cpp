@@ -77,14 +77,35 @@ void %CLASSNAME%::updateModel(const UpdatePayload &/*pIn*/)
 //   sShape->reset();
   try
   {
-//     std::vector<const Base*> tfs = pIn.getFeatures(InputType::target);
-//     if (tfs.size() != 1)
-//       throw std::runtime_error("wrong number of parents");
-//     if (!tfs.front()->hasAnnex(ann::Type::SeerShape))
-//       throw std::runtime_error("parent doesn't have seer shape.");
-//     const ann::SeerShape &tss = tfs.front()->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
-//     if (tss.isNull())
-//       throw std::runtime_error("target seer shape is null");
+//     auto getFeature = [&](const std::string& tagIn) -> const Base&
+//     {
+//       std::vector<const Base*> tfs = pIn.getFeatures(tagIn);
+//       if (tfs.size() != 1)
+//         throw std::runtime_error("wrong number of parents");
+//       return *(tfs.front());
+//     };
+//     
+//     auto getSeerShape = [&](const Base &bfIn) -> const ann::SeerShape&
+//     {
+//       if (!bfIn.hasAnnex(ann::Type::SeerShape))
+//         throw std::runtime_error("parent doesn't have seer shape.");
+//       const ann::SeerShape &tss = bfIn.getAnnex<ann::SeerShape>(ann::Type::SeerShape);
+//       if (tss.isNull())
+//         throw std::runtime_error("target seer shape is null");
+//       return tss;
+//     };
+//     
+//     const Base &tbf0 = getFeature(pickZero);
+//     const ann::SeerShape &tss0 = getSeerShape(tbf0);
+//     
+//     const Base &tbf1 = getFeature(pickOne);
+//     const ann::SeerShape &tss1 = getSeerShape(tbf1);
+//     
+//     auto resolved0 = tls::resolvePicks(&tbf0, picks.front(), pIn.shapeHistory);
+//     auto resolved1 = tls::resolvePicks(&tbf1, picks.back(), pIn.shapeHistory);
+//     if (resolved0.empty() || resolved1.empty())
+//       throw std::runtime_error("invalid pick resolution");
+
     
     //setup new failure state.
 //     sShape->setOCCTShape(tss.getRootOCCTShape());
@@ -102,6 +123,10 @@ void %CLASSNAME%::updateModel(const UpdatePayload &/*pIn*/)
     }
     
     //update goes here.
+    
+//     ShapeCheck check(out);
+//     if (!check.isValid())
+//       throw std::runtime_error("shapeCheck failed");
     
     setSuccess();
   }

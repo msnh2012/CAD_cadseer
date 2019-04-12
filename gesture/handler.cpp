@@ -962,6 +962,24 @@ void Handler::constructMenu()
         constructionCurves
       );
     }
+    osg::MatrixTransform *constructionSurface = constructNode
+    (
+      mdv::gestureMenu,
+      ":/resources/images/constructionSurface.svg",
+      QObject::tr("Surface Menu").toStdString(),
+      std::string(),
+      constructionBase
+    );
+    {
+      constructNode
+      (
+        mdv::gestureCommand,
+        ":/resources/images/constructionRuled.svg",
+        QObject::tr("Ruled Surface Command").toStdString(),
+        (msg::Request | msg::Construct | msg::Ruled).to_string(),
+        constructionSurface
+      );
+    }
   }
   osg::MatrixTransform *editBase = constructNode
   (

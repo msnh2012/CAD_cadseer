@@ -26,7 +26,6 @@
 // #include "application/application.h"
 #include "project/project.h"
 #include "message/node.h"
-#include "project/project.h"
 #include "selection/eventhandler.h"
 // #include "parameter/parameter.h"
 // #include "dialogs/parameter.h"
@@ -96,7 +95,7 @@ void TransitionCurve::go()
     return;
   }
   
-  ftr::Base const *bf0 = project->findFeature(cs.front().featureId);
+  const ftr::Base *bf0 = project->findFeature(cs.front().featureId);
   if (!bf0 || !bf0->hasAnnex(ann::Type::SeerShape))
   {
     node->sendBlocked(msg::buildStatusMessage("Invalid first selection for TransitionCurve", 2.0));
@@ -116,9 +115,11 @@ void TransitionCurve::go()
   
   ftr::Picks picks;
   picks.push_back(tls::convertToPick(cs.front(), ss0));
-  picks.back().shapeHistory = project->getShapeHistory().createDevolveHistory(cs.front().shapeId);
+  if (!cs.front().shapeId.is_nil())
+    picks.back().shapeHistory = project->getShapeHistory().createDevolveHistory(cs.front().shapeId);
   picks.push_back(tls::convertToPick(cs.back(), ss1));
-  picks.back().shapeHistory = project->getShapeHistory().createDevolveHistory(cs.back().shapeId);
+  if (!cs.back().shapeId.is_nil())
+    picks.back().shapeHistory = project->getShapeHistory().createDevolveHistory(cs.back().shapeId);
   
   assert(ss0.hasId(cs.front().shapeId));
   assert(ss0.findShape(cs.front().shapeId).ShapeType() == TopAbs_EDGE);

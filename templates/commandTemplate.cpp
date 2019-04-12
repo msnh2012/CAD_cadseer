@@ -22,7 +22,6 @@
 // #include "application/application.h"
 // #include "project/project.h"
 // #include "message/node.h"
-// #include "project/project.h"
 // #include "selection/eventhandler.h"
 // #include "parameter/parameter.h"
 // #include "dialogs/parameter.h"
@@ -65,7 +64,7 @@ void %CLASSNAME%::go()
 //     return;
 //   }
 //   
-//   ftr::Base const *bf0 = project->findFeature(cs.front().featureId);
+//   const ftr::Base *bf0 = project->findFeature(cs.front().featureId);
 //   if (!bf0 || !bf0->hasAnnex(ann::Type::SeerShape))
 //   {
 //     node->sendBlocked(msg::buildStatusMessage("Invalid first selection for %CLASSNAME%", 2.0));

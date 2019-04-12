@@ -66,6 +66,7 @@
 #include <command/surfacemesh.h>
 #include <command/cmdline.h>
 #include <command/cmdtransitioncurve.h>
+#include <command/cmdruled.h>
 #include <message/node.h>
 #include <message/sift.h>
 #include <selection/message.h>
@@ -339,6 +340,11 @@ void Manager::setupDispatcher()
       (
         msg::Request | msg::Construct | msg::TransitionCurve
         , std::bind(&Manager::constructTransitionCurveDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Construct | msg::Ruled
+        , std::bind(&Manager::constructRuledDispatched, this, std::placeholders::_1)
       )
       , std::make_pair
       (
@@ -687,6 +693,11 @@ void Manager::constructLineDispatched(const msg::Message&)
 void Manager::constructTransitionCurveDispatched(const msg::Message&)
 {
   addCommand(std::make_shared<TransitionCurve>());
+}
+
+void Manager::constructRuledDispatched(const msg::Message&)
+{
+  addCommand(std::make_shared<Ruled>());
 }
 
 //editing commands and dispatching.

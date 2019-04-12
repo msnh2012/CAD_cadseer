@@ -1,0 +1,126 @@
+/*
+ * CadSeer. Parametric Solid Modeling.
+ * Copyright (C) 2019 Thomas S. Anderson blobfish.at.gmx.com
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+
+#include "tools/featuretools.h"
+// #include "application/mainwindow.h"
+// #include "application/application.h"
+#include "project/project.h"
+#include "message/node.h"
+#include "selection/eventhandler.h"
+// #include "parameter/parameter.h"
+// #include "dialogs/parameter.h"
+// #include "dialogs/ruled.h"
+#include "annex/seershape.h"
+#include "feature/inputtype.h"
+#include "feature/ftrruled.h"
+#include "command/cmdruled.h"
+
+using namespace cmd;
+
+Ruled::Ruled() : Base() {}
+
+Ruled::~Ruled() {}
+
+std::string Ruled::getStatusMessage()
+{
+  return QObject::tr("Select geometry for Ruled feature").toStdString();
+}
+
+void Ruled::activate()
+{
+  isActive = true;
+  go();
+  sendDone();
+}
+
+void Ruled::deactivate()
+{
+  isActive = false;
+}
+
+void Ruled::go()
+{
+  const slc::Containers &cs = eventHandler->getSelections();
+  if (cs.size() != 2)
+  {
+    node->sendBlocked(msg::buildStatusMessage("Incorrect selection for Ruled", 2.0));
+    shouldUpdate = false;
+    return;
+  }
+  
+  auto checkType = [](const slc::Container &cIn) -> bool
+  {
+    auto t = cIn.selectionType;
+    if
+    (
+      (t == slc::Type::Object)
+      || (t == slc::Type::Wire)
+      || (t == slc::Type::Edge)
+    )
+      return true;
+    return false;
+  };
+  if ((!checkType(cs.front())) || (!checkType(cs.back())))
+  {
+    node->sendBlocked(msg::buildStatusMessage("Wrong selection types for Ruled", 2.0));
+    shouldUpdate = false;
+    return;
+  }
+  
+  const ftr::Base *bf0 = project->findFeature(cs.front().featureId);
+  if (!bf0 || !bf0->hasAnnex(ann::Type::SeerShape))
+  {
+    node->sendBlocked(msg::buildStatusMessage("Invalid first selection for Ruled", 2.0));
+    shouldUpdate = false;
+    return;
+  }
+  const ann::SeerShape &ss0 = bf0->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
+  
+  const ftr::Base *bf1 = project->findFeature(cs.back().featureId);
+  if (!bf1 || !bf1->hasAnnex(ann::Type::SeerShape))
+  {
+    node->sendBlocked(msg::buildStatusMessage("Invalid first selection for Ruled", 2.0));
+    shouldUpdate = false;
+    return;
+  }
+  const ann::SeerShape &ss1 = bf1->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
+  
+  ftr::Picks picks;
+  if (cs.front().selectionType != slc::Type::Object)
+  {
+    picks.push_back(tls::convertToPick(cs.front(), ss0));
+    picks.back().shapeHistory = project->getShapeHistory().createDevolveHistory(cs.front().shapeId);
+    picks.back().tag = ftr::Ruled::pickZero;
+  }
+  if (cs.back().selectionType != slc::Type::Object)
+  {
+    picks.push_back(tls::convertToPick(cs.back(), ss1));
+    picks.back().shapeHistory = project->getShapeHistory().createDevolveHistory(cs.back().shapeId);
+    picks.back().tag = ftr::Ruled::pickOne;
+  }
+  
+  auto f = std::make_shared<ftr::Ruled>();
+  f->setPicks(picks);
+  project->addFeature(f);
+  project->connectInsert(cs.front().featureId, f->getId(), ftr::InputType{ftr::Ruled::pickZero});
+  project->connectInsert(cs.back().featureId, f->getId(), ftr::InputType{ftr::Ruled::pickOne});
+  
+  node->sendBlocked(msg::buildStatusMessage("Ruled created", 2.0));
+  node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
+}
