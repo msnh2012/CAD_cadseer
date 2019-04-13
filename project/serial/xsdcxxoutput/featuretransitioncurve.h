@@ -757,6 +757,140 @@ namespace prj
       //@}
 
       /**
+       * @name vertex0Id
+       *
+       * @brief Accessor and modifier functions for the %vertex0Id
+       * required element.
+       */
+      //@{
+
+      /**
+       * @brief Element type.
+       */
+      typedef ::xml_schema::String Vertex0IdType;
+
+      /**
+       * @brief Element traits type.
+       */
+      typedef ::xsd::cxx::tree::traits< Vertex0IdType, char > Vertex0IdTraits;
+
+      /**
+       * @brief Return a read-only (constant) reference to the element.
+       *
+       * @return A constant reference to the element.
+       */
+      const Vertex0IdType&
+      vertex0Id () const;
+
+      /**
+       * @brief Return a read-write reference to the element.
+       *
+       * @return A reference to the element.
+       */
+      Vertex0IdType&
+      vertex0Id ();
+
+      /**
+       * @brief Set the element value.
+       *
+       * @param x A new value to set.
+       *
+       * This function makes a copy of its argument and sets it as
+       * the new value of the element.
+       */
+      void
+      vertex0Id (const Vertex0IdType& x);
+
+      /**
+       * @brief Set the element value without copying.
+       *
+       * @param p A new value to use.
+       *
+       * This function will try to use the passed value directly
+       * instead of making a copy.
+       */
+      void
+      vertex0Id (::std::unique_ptr< Vertex0IdType > p);
+
+      /**
+       * @brief Return the default value for the element.
+       *
+       * @return A read-only (constant) reference to the element's
+       * default value.
+       */
+      static const Vertex0IdType&
+      vertex0Id_default_value ();
+
+      //@}
+
+      /**
+       * @name vertex1Id
+       *
+       * @brief Accessor and modifier functions for the %vertex1Id
+       * required element.
+       */
+      //@{
+
+      /**
+       * @brief Element type.
+       */
+      typedef ::xml_schema::String Vertex1IdType;
+
+      /**
+       * @brief Element traits type.
+       */
+      typedef ::xsd::cxx::tree::traits< Vertex1IdType, char > Vertex1IdTraits;
+
+      /**
+       * @brief Return a read-only (constant) reference to the element.
+       *
+       * @return A constant reference to the element.
+       */
+      const Vertex1IdType&
+      vertex1Id () const;
+
+      /**
+       * @brief Return a read-write reference to the element.
+       *
+       * @return A reference to the element.
+       */
+      Vertex1IdType&
+      vertex1Id ();
+
+      /**
+       * @brief Set the element value.
+       *
+       * @param x A new value to set.
+       *
+       * This function makes a copy of its argument and sets it as
+       * the new value of the element.
+       */
+      void
+      vertex1Id (const Vertex1IdType& x);
+
+      /**
+       * @brief Set the element value without copying.
+       *
+       * @param p A new value to use.
+       *
+       * This function will try to use the passed value directly
+       * instead of making a copy.
+       */
+      void
+      vertex1Id (::std::unique_ptr< Vertex1IdType > p);
+
+      /**
+       * @brief Return the default value for the element.
+       *
+       * @return A read-only (constant) reference to the element's
+       * default value.
+       */
+      static const Vertex1IdType&
+      vertex1Id_default_value ();
+
+      //@}
+
+      /**
        * @name Constructors
        */
       //@{
@@ -775,7 +909,9 @@ namespace prj
                               const DirectionLabel1Type&,
                               const MagnitudeLabel0Type&,
                               const MagnitudeLabel1Type&,
-                              const CurveIdType&);
+                              const CurveIdType&,
+                              const Vertex0IdType&,
+                              const Vertex1IdType&);
 
       /**
        * @brief Create an instance from the ultimate base and
@@ -795,7 +931,9 @@ namespace prj
                               ::std::unique_ptr< DirectionLabel1Type >,
                               ::std::unique_ptr< MagnitudeLabel0Type >,
                               ::std::unique_ptr< MagnitudeLabel1Type >,
-                              const CurveIdType&);
+                              const CurveIdType&,
+                              const Vertex0IdType&,
+                              const Vertex1IdType&);
 
       /**
        * @brief Create an instance from a DOM element.
@@ -879,6 +1017,10 @@ namespace prj
       ::xsd::cxx::tree::one< MagnitudeLabel1Type > magnitudeLabel1_;
       ::xsd::cxx::tree::one< CurveIdType > curveId_;
       static const CurveIdType curveId_default_value_;
+      ::xsd::cxx::tree::one< Vertex0IdType > vertex0Id_;
+      static const Vertex0IdType vertex0Id_default_value_;
+      ::xsd::cxx::tree::one< Vertex1IdType > vertex1Id_;
+      static const Vertex1IdType vertex1Id_default_value_;
 
       //@endcond
     };

@@ -316,6 +316,66 @@ namespace prj
     {
       return curveId_default_value_;
     }
+
+    const FeatureTransitionCurve::Vertex0IdType& FeatureTransitionCurve::
+    vertex0Id () const
+    {
+      return this->vertex0Id_.get ();
+    }
+
+    FeatureTransitionCurve::Vertex0IdType& FeatureTransitionCurve::
+    vertex0Id ()
+    {
+      return this->vertex0Id_.get ();
+    }
+
+    void FeatureTransitionCurve::
+    vertex0Id (const Vertex0IdType& x)
+    {
+      this->vertex0Id_.set (x);
+    }
+
+    void FeatureTransitionCurve::
+    vertex0Id (::std::unique_ptr< Vertex0IdType > x)
+    {
+      this->vertex0Id_.set (std::move (x));
+    }
+
+    const FeatureTransitionCurve::Vertex0IdType& FeatureTransitionCurve::
+    vertex0Id_default_value ()
+    {
+      return vertex0Id_default_value_;
+    }
+
+    const FeatureTransitionCurve::Vertex1IdType& FeatureTransitionCurve::
+    vertex1Id () const
+    {
+      return this->vertex1Id_.get ();
+    }
+
+    FeatureTransitionCurve::Vertex1IdType& FeatureTransitionCurve::
+    vertex1Id ()
+    {
+      return this->vertex1Id_.get ();
+    }
+
+    void FeatureTransitionCurve::
+    vertex1Id (const Vertex1IdType& x)
+    {
+      this->vertex1Id_.set (x);
+    }
+
+    void FeatureTransitionCurve::
+    vertex1Id (::std::unique_ptr< Vertex1IdType > x)
+    {
+      this->vertex1Id_.set (std::move (x));
+    }
+
+    const FeatureTransitionCurve::Vertex1IdType& FeatureTransitionCurve::
+    vertex1Id_default_value ()
+    {
+      return vertex1Id_default_value_;
+    }
   }
 }
 
@@ -331,6 +391,12 @@ namespace prj
     const FeatureTransitionCurve::CurveIdType FeatureTransitionCurve::curveId_default_value_ (
       "00000000-0000-0000-0000-000000000000");
 
+    const FeatureTransitionCurve::Vertex0IdType FeatureTransitionCurve::vertex0Id_default_value_ (
+      "00000000-0000-0000-0000-000000000000");
+
+    const FeatureTransitionCurve::Vertex1IdType FeatureTransitionCurve::vertex1Id_default_value_ (
+      "00000000-0000-0000-0000-000000000000");
+
     FeatureTransitionCurve::
     FeatureTransitionCurve (const FeatureBaseType& featureBase,
                             const PicksType& picks,
@@ -342,7 +408,9 @@ namespace prj
                             const DirectionLabel1Type& directionLabel1,
                             const MagnitudeLabel0Type& magnitudeLabel0,
                             const MagnitudeLabel1Type& magnitudeLabel1,
-                            const CurveIdType& curveId)
+                            const CurveIdType& curveId,
+                            const Vertex0IdType& vertex0Id,
+                            const Vertex1IdType& vertex1Id)
     : ::xml_schema::Type (),
       featureBase_ (featureBase, this),
       picks_ (picks, this),
@@ -354,7 +422,9 @@ namespace prj
       directionLabel1_ (directionLabel1, this),
       magnitudeLabel0_ (magnitudeLabel0, this),
       magnitudeLabel1_ (magnitudeLabel1, this),
-      curveId_ (curveId, this)
+      curveId_ (curveId, this),
+      vertex0Id_ (vertex0Id, this),
+      vertex1Id_ (vertex1Id, this)
     {
     }
 
@@ -369,7 +439,9 @@ namespace prj
                             ::std::unique_ptr< DirectionLabel1Type > directionLabel1,
                             ::std::unique_ptr< MagnitudeLabel0Type > magnitudeLabel0,
                             ::std::unique_ptr< MagnitudeLabel1Type > magnitudeLabel1,
-                            const CurveIdType& curveId)
+                            const CurveIdType& curveId,
+                            const Vertex0IdType& vertex0Id,
+                            const Vertex1IdType& vertex1Id)
     : ::xml_schema::Type (),
       featureBase_ (std::move (featureBase), this),
       picks_ (std::move (picks), this),
@@ -381,7 +453,9 @@ namespace prj
       directionLabel1_ (std::move (directionLabel1), this),
       magnitudeLabel0_ (std::move (magnitudeLabel0), this),
       magnitudeLabel1_ (std::move (magnitudeLabel1), this),
-      curveId_ (curveId, this)
+      curveId_ (curveId, this),
+      vertex0Id_ (vertex0Id, this),
+      vertex1Id_ (vertex1Id, this)
     {
     }
 
@@ -400,7 +474,9 @@ namespace prj
       directionLabel1_ (x.directionLabel1_, f, this),
       magnitudeLabel0_ (x.magnitudeLabel0_, f, this),
       magnitudeLabel1_ (x.magnitudeLabel1_, f, this),
-      curveId_ (x.curveId_, f, this)
+      curveId_ (x.curveId_, f, this),
+      vertex0Id_ (x.vertex0Id_, f, this),
+      vertex1Id_ (x.vertex1Id_, f, this)
     {
     }
 
@@ -419,7 +495,9 @@ namespace prj
       directionLabel1_ (this),
       magnitudeLabel0_ (this),
       magnitudeLabel1_ (this),
-      curveId_ (this)
+      curveId_ (this),
+      vertex0Id_ (this),
+      vertex1Id_ (this)
     {
       if ((f & ::xml_schema::Flags::base) == 0)
       {
@@ -592,6 +670,34 @@ namespace prj
           }
         }
 
+        // vertex0Id
+        //
+        if (n.name () == "vertex0Id" && n.namespace_ ().empty ())
+        {
+          ::std::unique_ptr< Vertex0IdType > r (
+            Vertex0IdTraits::create (i, f, this));
+
+          if (!vertex0Id_.present ())
+          {
+            this->vertex0Id_.set (::std::move (r));
+            continue;
+          }
+        }
+
+        // vertex1Id
+        //
+        if (n.name () == "vertex1Id" && n.namespace_ ().empty ())
+        {
+          ::std::unique_ptr< Vertex1IdType > r (
+            Vertex1IdTraits::create (i, f, this));
+
+          if (!vertex1Id_.present ())
+          {
+            this->vertex1Id_.set (::std::move (r));
+            continue;
+          }
+        }
+
         break;
       }
 
@@ -671,6 +777,20 @@ namespace prj
           "curveId",
           "");
       }
+
+      if (!vertex0Id_.present ())
+      {
+        throw ::xsd::cxx::tree::expected_element< char > (
+          "vertex0Id",
+          "");
+      }
+
+      if (!vertex1Id_.present ())
+      {
+        throw ::xsd::cxx::tree::expected_element< char > (
+          "vertex1Id",
+          "");
+      }
     }
 
     FeatureTransitionCurve* FeatureTransitionCurve::
@@ -697,6 +817,8 @@ namespace prj
         this->magnitudeLabel0_ = x.magnitudeLabel0_;
         this->magnitudeLabel1_ = x.magnitudeLabel1_;
         this->curveId_ = x.curveId_;
+        this->vertex0Id_ = x.vertex0Id_;
+        this->vertex1Id_ = x.vertex1Id_;
       }
 
       return *this;
@@ -1117,6 +1239,28 @@ namespace prj
             e));
 
         s << i.curveId ();
+      }
+
+      // vertex0Id
+      //
+      {
+        ::xercesc::DOMElement& s (
+          ::xsd::cxx::xml::dom::create_element (
+            "vertex0Id",
+            e));
+
+        s << i.vertex0Id ();
+      }
+
+      // vertex1Id
+      //
+      {
+        ::xercesc::DOMElement& s (
+          ::xsd::cxx::xml::dom::create_element (
+            "vertex1Id",
+            e));
+
+        s << i.vertex1Id ();
       }
     }
 

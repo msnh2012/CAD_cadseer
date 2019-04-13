@@ -20,6 +20,8 @@
     <xs:element name="magnitudeLabel0" type="srl:PLabel"/>
     <xs:element name="magnitudeLabel1" type="srl:PLabel"/>
     <xs:element name="curveId" type="xs:string" default="00000000-0000-0000-0000-000000000000"/>
+    <xs:element name="vertex0Id" type="xs:string" default="00000000-0000-0000-0000-000000000000"/>
+    <xs:element name="vertex1Id" type="xs:string" default="00000000-0000-0000-0000-000000000000"/>
   </xs:all>
 </xs:complexType>
 

@@ -71,6 +71,8 @@ namespace ftr
     osg::ref_ptr<lbr::PLabel> magnitudeLabel1;
     
     boost::uuids::uuid curveId;
+    boost::uuids::uuid vertex0Id;
+    boost::uuids::uuid vertex1Id;
     
     static QIcon icon;
   };

@@ -27,6 +27,7 @@
 #include <BRepAdaptor_Curve.hxx>
 #include <BRepBuilderAPI_MakeEdge.hxx>
 #include <Precision.hxx>
+#include <TopExp.hxx>
 
 #include "globalutilities.h"
 #include "annex/seershape.h"
@@ -58,6 +59,8 @@ Base()
 , magnitudeLabel0(new lbr::PLabel(pick0Magnitude.get()))
 , magnitudeLabel1(new lbr::PLabel(pick1Magnitude.get()))
 , curveId(gu::createRandomId())
+, vertex0Id(gu::createRandomId())
+, vertex1Id(gu::createRandomId())
 {
   if (icon.isNull())
     icon = QIcon(":/resources/images/sketchBezeir.svg");
@@ -296,6 +299,19 @@ void TransitionCurve::updateModel(const UpdatePayload &pIn)
     sShape->updateId(edgeMaker.Edge(), curveId);
     if (!sShape->hasEvolveRecordOut(curveId))
       sShape->insertEvolve(gu::createNilId(), curveId);
+    
+    TopoDS_Vertex vertex0 = TopExp::FirstVertex(edgeMaker.Edge(), Standard_True);
+    assert(sShape->hasShape(vertex0));
+    sShape->updateId(vertex0, vertex0Id);
+    if (!sShape->hasEvolveRecordOut(vertex0Id))
+      sShape->insertEvolve(gu::createNilId(), vertex0Id);
+    
+    TopoDS_Vertex vertex1 = TopExp::LastVertex(edgeMaker.Edge(), Standard_True);
+    assert(sShape->hasShape(vertex1));
+    sShape->updateId(vertex1, vertex1Id);
+    if (!sShape->hasEvolveRecordOut(vertex1Id))
+      sShape->insertEvolve(gu::createNilId(), vertex1Id);
+    
     sShape->ensureNoNils();
     sShape->ensureNoDuplicates();
     setSuccess();
@@ -335,6 +351,8 @@ void TransitionCurve::serialWrite(const boost::filesystem::path &dIn)
     , magnitudeLabel0->serialOut()
     , magnitudeLabel1->serialOut()
     , gu::idToString(curveId)
+    , gu::idToString(vertex0Id)
+    , gu::idToString(vertex1Id)
   );
   
   xml_schema::NamespaceInfomap infoMap;
@@ -355,4 +373,6 @@ void TransitionCurve::serialRead(const prj::srl::FeatureTransitionCurve &so)
   magnitudeLabel0->serialIn(so.magnitudeLabel0());
   magnitudeLabel1->serialIn(so.magnitudeLabel1());
   curveId = gu::stringToId(so.curveId());
+  vertex0Id = gu::stringToId(so.vertex0Id());
+  vertex1Id = gu::stringToId(so.vertex1Id());
 }
