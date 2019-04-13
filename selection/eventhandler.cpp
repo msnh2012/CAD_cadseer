@@ -113,12 +113,12 @@ void EventHandler::setSelectionMask(Mask maskIn)
 
     if
     (
-      canSelectWires(selectionMask) |
-      canSelectFaces(selectionMask) |
-      canSelectShells(selectionMask) |
-      canSelectSolids(selectionMask) |
-      canSelectFeatures(selectionMask) |
-      canSelectObjects(selectionMask) |
+      canSelectWires(selectionMask) ||
+      canSelectFaces(selectionMask) ||
+      canSelectShells(selectionMask) ||
+      canSelectSolids(selectionMask) ||
+      canSelectFeatures(selectionMask) ||
+      canSelectObjects(selectionMask) ||
       canSelectNearestPoints(selectionMask)
     )
         nodeMask |= mdv::face;
@@ -127,8 +127,10 @@ void EventHandler::setSelectionMask(Mask maskIn)
 
     if
     (
-      canSelectEdges(selectionMask) |
-      canSelectWires(selectionMask) |
+      canSelectEdges(selectionMask) ||
+      canSelectWires(selectionMask) ||
+      canSelectFeatures(selectionMask) ||
+      canSelectObjects(selectionMask) ||
       canSelectPoints(selectionMask)
     )
         nodeMask |= mdv::edge;
@@ -613,7 +615,9 @@ Container EventHandler::messageToContainer(const Message &messageIn)
     const ann::SeerShape &seerShape = feature->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
     if (messageIn.type == slc::Type::Object)
     {
-      container.selectionIds = seerShape.useGetChildrenOfType(seerShape.getRootShapeId(), TopAbs_FACE);
+      container.selectionIds = seerShape.useGetChildrenOfType(seerShape.getRootShapeId(), TopAbs_EDGE);
+      auto faceIds = seerShape.useGetChildrenOfType(seerShape.getRootShapeId(), TopAbs_FACE);
+      container.selectionIds.insert(container.selectionIds.end(), faceIds.begin(), faceIds.end());
     }
     //skip feature for now.
     else if

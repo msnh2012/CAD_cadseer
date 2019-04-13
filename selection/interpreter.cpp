@@ -108,6 +108,25 @@ void Interpreter::go()
     std::size_t pSetIndex = shapeGeometry->getPSetFromPrimitive(intersection.primitiveIndex);
     uuid selectedId = shapeGeometry->getId(pSetIndex);
     
+    //objects can be selected by either edges or faces so we create a lambda here
+    //and call it from both if clauses.
+    auto goSelectObject = [&]()
+    {
+      uuid object = sShape.getRootShapeId();
+      if (!object.is_nil())
+      {
+        container.selectionType = Type::Object;
+        container.shapeId = gu::createNilId();
+        if (!has(containersOut, container)) //don't run again
+        {
+          container.selectionIds = sShape.useGetChildrenOfType(object, TopAbs_EDGE);
+          auto faceIds = sShape.useGetChildrenOfType(object, TopAbs_FACE);
+          container.selectionIds.insert(container.selectionIds.end(), faceIds.begin(), faceIds.end());
+          add(containersOut, container);
+        }
+      }
+    };
+    
     if (localNodeMask == mdv::edge)
     {
       if (canSelectPoints(selectionMask))
@@ -207,6 +226,8 @@ void Interpreter::go()
             add(containersOut, container);
         }
       }
+      if (canSelectObjects(selectionMask))
+        goSelectObject();
     }
     else if(localNodeMask == mdv::face)
     {
@@ -258,19 +279,7 @@ void Interpreter::go()
         }
       }
       if (canSelectObjects(selectionMask))
-      {
-        uuid object = sShape.getRootShapeId();
-        if (!object.is_nil())
-        {
-            container.selectionType = Type::Object;
-            container.shapeId = gu::createNilId();
-            if (!has(containersOut, container)) //don't run again
-            {
-                container.selectionIds = sShape.useGetChildrenOfType(object, TopAbs_FACE);
-                add(containersOut, container);
-            }
-        }
-      }
+        goSelectObject();
     }
   }
 }
