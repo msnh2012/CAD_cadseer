@@ -980,6 +980,14 @@ void Handler::constructMenu()
         constructionSurface
       );
     }
+    constructNode
+    (
+      mdv::gestureCommand,
+      ":/resources/images/constructionImagePlane.svg",
+      QObject::tr("Image Plane Command").toStdString(),
+      (msg::Request | msg::Construct | msg::ImagePlane).to_string(),
+      constructionBase
+    );
   }
   osg::MatrixTransform *editBase = constructNode
   (

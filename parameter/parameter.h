@@ -45,8 +45,10 @@ namespace prm
     static const QString Angle = "Angle"; //!< draft
     static const QString Offset = "Offset"; //!< datum plane
     static const QString CSys = "Coordinate System"; //!< feature with a coordinate system.
-    static const QString Diameter = "Diameter"; //!< feature with a coordinate system.
-    static const QString Direction = "Direction"; //!< feature with a coordinate system.
+    static const QString Diameter = "Diameter"; //!< sketch
+    static const QString Direction = "Direction"; //!< extrude.
+    static const QString Scale = "Scale"; //!< image plane.
+    static const QString Path = "Path"; //!< image plane.
   }
   
   /*! Descriptor for path parameters.*/

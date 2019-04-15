@@ -21,6 +21,7 @@
 // #include "application/mainwindow.h"
 // #include "application/application.h"
 // #include "project/project.h"
+// #include "viewer/vwrwidget.h"
 // #include "message/node.h"
 // #include "selection/eventhandler.h"
 // #include "parameter/parameter.h"

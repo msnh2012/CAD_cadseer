@@ -89,6 +89,7 @@ namespace prj
     std::shared_ptr<ftr::Base> loadSurfaceMesh(const std::string &, std::size_t);
     std::shared_ptr<ftr::Base> loadTransitionCurve(const std::string &, std::size_t);
     std::shared_ptr<ftr::Base> loadRuled(const std::string &, std::size_t);
+    std::shared_ptr<ftr::Base> loadImagePlane(const std::string &, std::size_t);
   };
 }
 

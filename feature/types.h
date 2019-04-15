@@ -70,7 +70,8 @@ namespace ftr
     SurfaceMesh, //!< feature for surface mesh creation.
     Line, //!< feature for lines
     TransitionCurve, //!< feature for lines
-    Ruled //!< feature for lines
+    Ruled, //!< feature for ruled surfaces
+    ImagePlane //!< feature for image planes
   };
   
   inline const static std::string& toString(Type typeIn)
@@ -119,7 +120,8 @@ namespace ftr
       {Type::SurfaceMesh, "SurfaceMesh"},
       {Type::Line, "Line"},
       {Type::TransitionCurve, "TransitionCurve"},
-      {Type::Ruled, "Ruled"}
+      {Type::Ruled, "Ruled"},
+      {Type::ImagePlane, "ImagePlane"}
     };
     
     assert(strings.count(typeIn) > 0);

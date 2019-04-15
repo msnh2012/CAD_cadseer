@@ -163,6 +163,7 @@ namespace msg
     static const Mask Line(Mask().set(                         120));//!< command. move up
     static const Mask TransitionCurve(Mask().set(              121));//!< command. move up
     static const Mask Ruled(Mask().set(                        122));//!< command. move up
+    static const Mask ImagePlane(Mask().set(                   123));//!< command. move up
   
     struct Stow; // forward declare see message/variant.h
     struct Message

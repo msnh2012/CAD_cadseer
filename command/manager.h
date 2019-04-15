@@ -100,6 +100,7 @@ namespace cmd
     void constructLineDispatched(const msg::Message&);
     void constructTransitionCurveDispatched(const msg::Message&);
     void constructRuledDispatched(const msg::Message&);
+    void constructImagePlaneDispatched(const msg::Message&);
     void revisionDispatched(const msg::Message&);
     
     //editing functions
