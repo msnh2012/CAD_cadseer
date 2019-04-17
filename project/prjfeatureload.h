@@ -36,14 +36,19 @@ namespace ftr{class Base;}
 
 namespace prj
 {
+  /*! @class FeatureLoad
+   * 
+   * @brief Object for feature construction upon loading of project
+   * 
+   */
   class FeatureLoad
   {
   public:
-    FeatureLoad(const boost::filesystem::path &directoryIn, const TopoDS_Shape&);
-    ~FeatureLoad();
+    FeatureLoad(const boost::filesystem::path &, const TopoDS_Shape&, bool = false);
     std::shared_ptr<ftr::Base> load(const std::string &idIn, const std::string &typeIn, std::size_t shapeOffsetIn);
   private:
     boost::filesystem::path directory;
+    unsigned long flags = 0;
     occt::ShapeVector shapeVector;
     
     typedef std::function<std::shared_ptr<ftr::Base> (const std::string &, std::size_t)> LoadFunction;

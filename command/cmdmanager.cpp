@@ -456,244 +456,206 @@ void Manager::selectionMaskDispatched(const msg::Message &messageIn)
 
 void Manager::featureToSystemDispatched(const msg::Message&)
 {
-  std::shared_ptr<cmd::FeatureToSystem> featureToSystem(new cmd::FeatureToSystem());
-  addCommand(featureToSystem);
+  addCommand(std::make_shared<FeatureToSystem>());
 }
 
 void Manager::systemToFeatureDispatched(const msg::Message&)
 {
-  std::shared_ptr<cmd::SystemToFeature> systemToFeature(new cmd::SystemToFeature());
-  addCommand(systemToFeature);
+  addCommand(std::make_shared<SystemToFeature>());
 }
 
 void Manager::draggerToFeatureDispatched(const msg::Message&)
 {
-  std::shared_ptr<cmd::DraggerToFeature> draggerToFeature(new cmd::DraggerToFeature());
-  addCommand(draggerToFeature);
+  addCommand(std::make_shared<DraggerToFeature>());
 }
 
 void Manager::featureToDraggerDispatched(const msg::Message&)
 {
-  std::shared_ptr<cmd::FeatureToDragger> featureToDragger(new cmd::FeatureToDragger());
-  addCommand(featureToDragger);
+  addCommand(std::make_shared<FeatureToDragger>());
 }
 
 void Manager::checkGeometryDispatched(const msg::Message&)
 {
-  std::shared_ptr<CheckGeometry> checkGeometry(new CheckGeometry());
-  addCommand(checkGeometry);
+  addCommand(std::make_shared<CheckGeometry>());
 }
 
 void Manager::editColorDispatched(const msg::Message&)
 {
-  std::shared_ptr<EditColor> editColor(new EditColor());
-  addCommand(editColor);
+  addCommand(std::make_shared<EditColor>());
 }
 
 void Manager::featureRenameDispatched(const msg::Message &mIn)
 {
-  std::shared_ptr<FeatureRename> featureRename(new FeatureRename());
+  auto featureRename = std::make_shared<FeatureRename>();
   featureRename->setFromMessage(mIn);
   addCommand(featureRename);
 }
 
 void Manager::constructBlendDispatched(const msg::Message&)
 {
-  std::shared_ptr<Blend> blend(new Blend());
-  addCommand(blend);
+  addCommand(std::make_shared<Blend>());
 }
 
 void Manager::constructExtractDispatched(const msg::Message&)
 {
-  std::shared_ptr<Extract> e(new Extract());
-  addCommand(e);
+  addCommand(std::make_shared<Extract>());
 }
 
 void Manager::constructSquashDispatched(const msg::Message&)
 {
-  std::shared_ptr<Squash> s(new Squash());
-  addCommand(s);
+  addCommand(std::make_shared<Squash>());
 }
 
 void Manager::constructStripDispatched(const msg::Message&)
 {
-  std::shared_ptr<Strip> s(new Strip());
-  addCommand(s);
+  addCommand(std::make_shared<Strip>());
 }
 
 void Manager::constructNestDispatched(const msg::Message&)
 {
-  std::shared_ptr<Nest> n(new Nest());
-  addCommand(n);
+  addCommand(std::make_shared<Nest>());
 }
 
 void Manager::constructDieSetDispatched(const msg::Message&)
 {
-  std::shared_ptr<DieSet> d(new DieSet());
-  addCommand(d);
+  addCommand(std::make_shared<DieSet>());
 }
 
 void Manager::constructQuoteDispatched(const msg::Message&)
 {
-  std::shared_ptr<Quote> q(new Quote());
-  addCommand(q);
+  addCommand(std::make_shared<Quote>());
 }
 
 void Manager::viewIsolateDispatched(const msg::Message &mIn)
 {
-  std::shared_ptr<Isolate> i(new Isolate());
+  auto i = std::make_shared<Isolate>();
   i->setFromMessage(mIn);
   addCommand(i);
 }
 
 void Manager::featureRepositionDispatched(const msg::Message&)
 {
-  std::shared_ptr<FeatureReposition> fr(new FeatureReposition());
-  addCommand(fr);
+  addCommand(std::make_shared<FeatureReposition>());
 }
 
 void Manager::featureDissolveDispatched(const msg::Message&)
 {
-  std::shared_ptr<Dissolve> f(new Dissolve());
-  addCommand(f);
+  addCommand(std::make_shared<Dissolve>());
 }
 
 void Manager::systemToSelectionDispatched(const msg::Message&)
 {
-  std::shared_ptr<SystemToSelection> c(new SystemToSelection());
-  addCommand(c);
+  addCommand(std::make_shared<SystemToSelection>());
 }
 
 void Manager::measureLinearDispatched(const msg::Message&)
 {
-  std::shared_ptr<MeasureLinear> ml(new MeasureLinear());
-  addCommand(ml);
+  addCommand(std::make_shared<MeasureLinear>());
 }
 
 void Manager::constructRefineDispatched(const msg::Message&)
 {
-  std::shared_ptr<Refine> r(new Refine());
-  addCommand(r);
+  addCommand(std::make_shared<Refine>());
 }
 
 void Manager::constructInstanceLinearDispatched(const msg::Message&)
 {
-  std::shared_ptr<InstanceLinear> i(new InstanceLinear());
-  addCommand(i);
+  addCommand(std::make_shared<InstanceLinear>());
 }
 
 void Manager::constructInstanceMirrorDispatched(const msg::Message&)
 {
-  std::shared_ptr<InstanceMirror> i(new InstanceMirror());
-  addCommand(i);
+  addCommand(std::make_shared<InstanceMirror>());
 }
 
 void Manager::constructInstancePolarDispatched(const msg::Message&)
 {
-  std::shared_ptr<InstancePolar> i(new InstancePolar());
-  addCommand(i);
+  addCommand(std::make_shared<InstancePolar>());
 }
 
 void Manager::constructIntersectDispatched(const msg::Message&)
 {
-  std::shared_ptr<Intersect> i(new Intersect());
-  addCommand(i);
+  addCommand(std::make_shared<Intersect>());
 }
 
 void Manager::constructSubtractDispatched(const msg::Message&)
 {
-  std::shared_ptr<Subtract> s(new Subtract());
-  addCommand(s);
+  addCommand(std::make_shared<Subtract>());
 }
 
 void Manager::constructUnionDispatched(const msg::Message&)
 {
-  std::shared_ptr<Union> u(new Union());
-  addCommand(u);
+  addCommand(std::make_shared<Union>());
 }
 
 void Manager::constructOffsetDispatched(const msg::Message&)
 {
-  std::shared_ptr<Offset> f(new Offset());
-  addCommand(f);
+  addCommand(std::make_shared<Offset>());
 }
 
 void Manager::constructThickenDispatched(const msg::Message&)
 {
-  std::shared_ptr<Thicken> f(new Thicken());
-  addCommand(f);
+  addCommand(std::make_shared<Thicken>());
 }
 
 void Manager::constructSewDispatched(const msg::Message&)
 {
-  std::shared_ptr<Sew> c(new Sew());
-  addCommand(c);
+  addCommand(std::make_shared<Sew>());
 }
 
 void Manager::constructTrimDispatched(const msg::Message&)
 {
-  std::shared_ptr<Trim> c(new Trim());
-  addCommand(c);
+  addCommand(std::make_shared<Trim>());
 }
 
 void Manager::revisionDispatched(const msg::Message&)
 {
-  std::shared_ptr<Revision> c(new Revision());
-  addCommand(c);
+  addCommand(std::make_shared<Revision>());
 }
 
 void Manager::constructRemoveFacesDispatched(const msg::Message&)
 {
-  std::shared_ptr<RemoveFaces> rf(new RemoveFaces());
-  addCommand(rf);
+  addCommand(std::make_shared<RemoveFaces>());
 }
 
 void Manager::constructThreadDispatched(const msg::Message&)
 {
-  std::shared_ptr<Thread> rf(new Thread());
-  addCommand(rf);
+  addCommand(std::make_shared<Thread>());
 }
 
 void Manager::constructDatumAxisDispatched(const msg::Message&)
 {
-  std::shared_ptr<DatumAxis> f(new DatumAxis());
-  addCommand(f);
+  addCommand(std::make_shared<DatumAxis>());
 }
 
 void Manager::constructDatumPlaneDispatched(const msg::Message&)
 {
-  std::shared_ptr<DatumPlane> f(new DatumPlane());
-  addCommand(f);
+  addCommand(std::make_shared<DatumPlane>());
 }
 
 void Manager::constructSketchDispatched(const msg::Message&)
 {
-  std::shared_ptr<Sketch> f(new Sketch());
-  addCommand(f);
+  addCommand(std::make_shared<Sketch>());
 }
 
 void Manager::constructExtrudeDispatched(const msg::Message&)
 {
-  std::shared_ptr<Extrude> f(new Extrude());
-  addCommand(f);
+  addCommand(std::make_shared<Extrude>());
 }
 
 void Manager::constructRevolveDispatched(const msg::Message&)
 {
-  std::shared_ptr<Revolve> f(new Revolve());
-  addCommand(f);
+  addCommand(std::make_shared<Revolve>());
 }
 
 void Manager::constructSurfaceMeshDispatched(const msg::Message&)
 {
-  std::shared_ptr<SurfaceMesh> f(new SurfaceMesh());
-  addCommand(f);
+  addCommand(std::make_shared<SurfaceMesh>());
 }
 
 void Manager::constructLineDispatched(const msg::Message&)
 {
-  std::shared_ptr<Line> f(new Line());
-  addCommand(f);
+  addCommand(std::make_shared<Line>());
 }
 
 void Manager::constructTransitionCurveDispatched(const msg::Message&)
@@ -745,44 +707,37 @@ void Manager::editFeatureDispatched(const msg::Message&)
 
 BasePtr editBlend(ftr::Base *feature)
 {
-  std::shared_ptr<Base> command(new BlendEdit(feature));
-  return command;
+  return std::make_shared<BlendEdit>(feature);
 }
 
 BasePtr editStrip(ftr::Base *feature)
 {
-  std::shared_ptr<Base> command(new StripEdit(feature));
-  return command;
+  return std::make_shared<StripEdit>(feature);
 }
 
 BasePtr editQuote(ftr::Base *feature)
 {
-  std::shared_ptr<Base> command(new QuoteEdit(feature));
-  return command;
+  return std::make_shared<QuoteEdit>(feature);
 }
 
 BasePtr editIntersect(ftr::Base *feature)
 {
-  std::shared_ptr<Base> command(new IntersectEdit(feature));
-  return command;
+  return std::make_shared<IntersectEdit>(feature);
 }
 
 BasePtr editSubtract(ftr::Base *feature)
 {
-  std::shared_ptr<Base> command(new SubtractEdit(feature));
-  return command;
+  return std::make_shared<SubtractEdit>(feature);
 }
 
 BasePtr editUnion(ftr::Base *feature)
 {
-  std::shared_ptr<Base> command(new UnionEdit(feature));
-  return command;
+  return std::make_shared<UnionEdit>(feature);
 }
 
 BasePtr editSketch(ftr::Base *feature)
 {
-  std::shared_ptr<Base> command(new SketchEdit(feature));
-  return command;
+  return std::make_shared<SketchEdit>(feature);
 }
 
 void Manager::setupEditFunctionMap()
