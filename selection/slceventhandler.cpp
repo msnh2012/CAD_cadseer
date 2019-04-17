@@ -98,311 +98,317 @@ EventHandler::EventHandler(osg::Group *viewerRootIn) : osgGA::GUIEventHandler()
   node->setHandler(std::bind(&msg::Sift::receive, sift.get(), std::placeholders::_1));
   setupDispatcher();
   
-    viewerRoot = viewerRootIn;
-    
-    preHighlightColor = Vec4(1.0, 1.0, 0.0, 1.0);
-    selectionColor = Vec4(1.0, 1.0, 1.0, 1.0);
-    nodeMask = ~(mdv::backGroundCamera | mdv::gestureCamera | mdv::csys | mdv::point);
-    
-    setSelectionMask(slc::AllEnabled);
+  viewerRoot = viewerRootIn;
+  
+  preHighlightColor = Vec4(1.0, 1.0, 0.0, 1.0);
+  selectionColor = Vec4(1.0, 1.0, 1.0, 1.0);
+  nodeMask = ~(mdv::backGroundCamera | mdv::gestureCamera | mdv::csys | mdv::point);
+  
+  setSelectionMask(slc::AllEnabled);
 }
 
 void EventHandler::setSelectionMask(Mask maskIn)
 {
-    selectionMask = maskIn;
+  selectionMask = maskIn;
 
-    if
-    (
-      canSelectWires(selectionMask) ||
-      canSelectFaces(selectionMask) ||
-      canSelectShells(selectionMask) ||
-      canSelectSolids(selectionMask) ||
-      canSelectFeatures(selectionMask) ||
-      canSelectObjects(selectionMask) ||
-      canSelectNearestPoints(selectionMask)
-    )
-        nodeMask |= mdv::face;
-    else
-        nodeMask &= ~mdv::face;
+  if
+  (
+    canSelectWires(selectionMask) ||
+    canSelectFaces(selectionMask) ||
+    canSelectShells(selectionMask) ||
+    canSelectSolids(selectionMask) ||
+    canSelectFeatures(selectionMask) ||
+    canSelectObjects(selectionMask) ||
+    canSelectNearestPoints(selectionMask)
+  )
+      nodeMask |= mdv::face;
+  else
+      nodeMask &= ~mdv::face;
 
-    if
-    (
-      canSelectEdges(selectionMask) ||
-      canSelectWires(selectionMask) ||
-      canSelectFeatures(selectionMask) ||
-      canSelectObjects(selectionMask) ||
-      canSelectPoints(selectionMask)
-    )
-        nodeMask |= mdv::edge;
-    else
-        nodeMask &= ~mdv::edge;
+  if
+  (
+    canSelectEdges(selectionMask) ||
+    canSelectWires(selectionMask) ||
+    canSelectFeatures(selectionMask) ||
+    canSelectObjects(selectionMask) ||
+    canSelectPoints(selectionMask)
+  )
+      nodeMask |= mdv::edge;
+  else
+      nodeMask &= ~mdv::edge;
 
-    //obsolete. we no longer generate vertices
-//     if ((Selection::pointsSelectable & selectionMask) == Selection::pointsSelectable)
-//         nodeMask |= NodeMaskDef::vertex;
-//     else
-//         nodeMask &= ~NodeMaskDef::vertex;
+  //obsolete. we no longer generate vertices
+//   if ((Selection::pointsSelectable & selectionMask) == Selection::pointsSelectable)
+//       nodeMask |= NodeMaskDef::vertex;
+//   else
+//       nodeMask &= ~NodeMaskDef::vertex;
 }
 
 bool EventHandler::handle(const osgGA::GUIEventAdapter& eventAdapter,
                     osgGA::GUIActionAdapter& actionAdapter, osg::Object*,
                                    osg::NodeVisitor*)
 {
-    if (eventAdapter.getModKeyMask() & osgGA::GUIEventAdapter::MODKEY_LEFT_CTRL)
-    {
-      clearPrehighlight();
-      return false;
-    }
-  
-    if(eventAdapter.getHandled())
-    {
-      clearPrehighlight();
-      return true; //overlay has taken event;
-    }
-    
-    //escape key should dispatch to cancel command.
-    if (eventAdapter.getEventType() == osgGA::GUIEventAdapter::KEYUP)
-    {
-      if (eventAdapter.getKey() == osgGA::GUIEventAdapter::KEY_Escape)
-      {
-        node->send(msg::Message(msg::Request | msg::Command | msg::Cancel));
-        return true;
-      }
-    }
-  
-    if (eventAdapter.getEventType() == osgGA::GUIEventAdapter::MOVE)
-    {
-        osg::View* view = actionAdapter.asView();
-        if (!view)
-            return false;
-        
-        Intersections currentIntersections;
-        
-        //use poly on just the edges for now.
-        if (nodeMask & mdv::edge)
-        {
-          osg::ref_ptr<osgUtil::PolytopeIntersector> polyPicker = new osgUtil::PolytopeIntersector
-          (
-            osgUtil::Intersector::WINDOW,
-            buildPolytope(eventAdapter.getX(), eventAdapter.getY(), 16.0)
-  //           eventAdapter.getX() - 16.0,
-  //           eventAdapter.getY() - 16.0,
-  //           eventAdapter.getX() + 16.0,
-  //           eventAdapter.getY() + 16.0
-          );
-          osgUtil::IntersectionVisitor polyVisitor(polyPicker.get());
-          polyVisitor.setTraversalMask(nodeMask & ~mdv::face);
-          view->getCamera()->accept(polyVisitor);
-          append(currentIntersections, polyPicker->getIntersections());
-        }
-        
-        //use linesegment on just the faces for now.
-        if (nodeMask & mdv::face)
-        {
-          osg::ref_ptr<osgUtil::LineSegmentIntersector> linePicker = new osgUtil::LineSegmentIntersector
-          (
-            osgUtil::Intersector::WINDOW,
-            eventAdapter.getX(),
-            eventAdapter.getY()
-          );
-          osgUtil::IntersectionVisitor lineVisitor(linePicker.get());
-          lineVisitor.setTraversalMask(nodeMask & ~mdv::edge);
-  //         lineVisitor.setUseKdTreeWhenAvailable(false); //temp for testing.
-          view->getCamera()->accept(lineVisitor);
-          append(currentIntersections, linePicker->getIntersections());
-        }
-
-        if (!currentIntersections.empty())
-        {
-            Interpreter interpreter(currentIntersections, selectionMask);
-
-            slc::Container newContainer;
-            //loop to get first non selected geometry.
-            for (const auto& container : interpreter.containersOut)
-            {
-                if(alreadySelected(container))
-                    continue;
-                newContainer = container;
-                break;
-            }
-
-            if (newContainer == lastPrehighlight)
-            {
-                //update the point location though.
-                lastPrehighlight.pointLocation = newContainer.pointLocation;
-                return false;
-            }
-
-           clearPrehighlight();
-
-            if (newContainer.selectionType == slc::Type::None)
-                return false;
-           
-            //this is here so we make sure we get through all selection
-            //conditions before we construct point geometry.
-            if (isPointType(newContainer.selectionType))
-            {
-                ref_ptr<Geometry> pointGeometry(buildTempPoint(newContainer.pointLocation));
-                newContainer.pointGeometry = pointGeometry.get();
-                viewerRoot->addChild(pointGeometry.get());
-            }
-            setPrehighlight(newContainer);
-        }
-        else
-            clearPrehighlight();
-    }
-
-    if (eventAdapter.getButton() == osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON &&
-            eventAdapter.getEventType() == osgGA::GUIEventAdapter::RELEASE)
-    {
-        if(lastPrehighlight.selectionType != slc::Type::None)
-        {
-            //prehighlight gets 'moved' into selections so can't call
-            //clear prehighlight, but we still clear the prehighlight
-            //selections we need to make observers aware of this 'hidden' change.
-            msg::Message clearMessage
-            (
-              msg::Response | msg::Pre | msg::Preselection | msg::Remove
-              , containerToMessage(lastPrehighlight)
-            );
-            node->send(clearMessage);
-            
-            if (slc::isPointType(lastPrehighlight.selectionType))
-            {
-                assert(lastPrehighlight.pointGeometry.valid());
-                osg::Vec4Array *colors = dynamic_cast<osg::Vec4Array*>(lastPrehighlight.pointGeometry->getColorArray());
-                assert(colors);
-                (*colors)[0] = osg::Vec4(1.0, 1.0, 1.0, 1.0);
-                colors->dirty();
-                lastPrehighlight.pointGeometry->dirtyDisplayList();
-            }
-            else
-                selectionOperation(lastPrehighlight.featureId, lastPrehighlight.selectionIds,
-                    HighlightVisitor::Operation::Highlight);
-            
-            add(selectionContainers, lastPrehighlight);
-            
-            msg::Message addMessage
-            (
-              msg::Response | msg::Post | msg::Selection | msg::Add
-              , containerToMessage(lastPrehighlight)
-            );
-            lastPrehighlight = Container(); //set to null before signal in case we end up in 'this' again.
-            node->send(addMessage);
-        }
-        //not clearing the selection anymore on a empty pick.
-//         else
-//             clearSelections();
-    }
-    
-    if (eventAdapter.getButton() == osgGA::GUIEventAdapter::MIDDLE_MOUSE_BUTTON &&
-            eventAdapter.getEventType() == osgGA::GUIEventAdapter::RELEASE)
-    {
-      clearSelections();
-    }
-
-    if (eventAdapter.getButton() == osgGA::GUIEventAdapter::RIGHT_MOUSE_BUTTON &&
-            eventAdapter.getEventType() == osgGA::GUIEventAdapter::PUSH)
-    {
-        clearPrehighlight();
-    }
-
-    if (eventAdapter.getEventType() == osgGA::GUIEventAdapter::DRAG)
-    {
-        //don't get button info here, need to cache.
-    }
-
+  if (eventAdapter.getModKeyMask() & osgGA::GUIEventAdapter::MODKEY_LEFT_CTRL)
+  {
+    clearPrehighlight();
     return false;
+  }
+  
+  if(eventAdapter.getHandled())
+  {
+    clearPrehighlight();
+    return true; //overlay has taken event;
+  }
+    
+  //escape key should dispatch to cancel command.
+  if (eventAdapter.getEventType() == osgGA::GUIEventAdapter::KEYUP)
+  {
+    if (eventAdapter.getKey() == osgGA::GUIEventAdapter::KEY_Escape)
+    {
+      node->send(msg::Message(msg::Request | msg::Command | msg::Cancel));
+      return true;
+    }
+  }
+  
+  if (eventAdapter.getEventType() == osgGA::GUIEventAdapter::MOVE)
+  {
+    osg::View* view = actionAdapter.asView();
+    if (!view)
+      return false;
+      
+    Intersections currentIntersections;
+      
+    //use poly on just the edges for now.
+    if (nodeMask & mdv::edge)
+    {
+      osg::ref_ptr<osgUtil::PolytopeIntersector> polyPicker = new osgUtil::PolytopeIntersector
+      (
+        osgUtil::Intersector::WINDOW,
+        buildPolytope(eventAdapter.getX(), eventAdapter.getY(), 16.0)
+//         eventAdapter.getX() - 16.0,
+//         eventAdapter.getY() - 16.0,
+//         eventAdapter.getX() + 16.0,
+//         eventAdapter.getY() + 16.0
+      );
+      osgUtil::IntersectionVisitor polyVisitor(polyPicker.get());
+      polyVisitor.setTraversalMask(nodeMask & ~mdv::face);
+      view->getCamera()->accept(polyVisitor);
+      append(currentIntersections, polyPicker->getIntersections());
+    }
+      
+    //use linesegment on just the faces for now.
+    if (nodeMask & mdv::face)
+    {
+      osg::ref_ptr<osgUtil::LineSegmentIntersector> linePicker = new osgUtil::LineSegmentIntersector
+      (
+        osgUtil::Intersector::WINDOW,
+        eventAdapter.getX(),
+        eventAdapter.getY()
+      );
+      osgUtil::IntersectionVisitor lineVisitor(linePicker.get());
+      lineVisitor.setTraversalMask(nodeMask & ~mdv::edge);
+//         lineVisitor.setUseKdTreeWhenAvailable(false); //temp for testing.
+      view->getCamera()->accept(lineVisitor);
+      append(currentIntersections, linePicker->getIntersections());
+    }
+
+    if (!currentIntersections.empty())
+    {
+      Interpreter interpreter(currentIntersections, selectionMask);
+
+      slc::Container newContainer;
+      //loop to get first non selected geometry.
+      for (const auto& container : interpreter.containersOut)
+      {
+        if(alreadySelected(container))
+          continue;
+        newContainer = container;
+        break;
+      }
+
+      if (newContainer == lastPrehighlight)
+      {
+        //update the point location though.
+        lastPrehighlight.pointLocation = newContainer.pointLocation;
+        return false;
+      }
+
+      clearPrehighlight();
+
+      if (newContainer.selectionType == slc::Type::None)
+        return false;
+        
+      //this is here so we make sure we get through all selection
+      //conditions before we construct point geometry.
+      if (isPointType(newContainer.selectionType))
+      {
+        ref_ptr<Geometry> pointGeometry(buildTempPoint(newContainer.pointLocation));
+        newContainer.pointGeometry = pointGeometry.get();
+        viewerRoot->addChild(pointGeometry.get());
+      }
+      setPrehighlight(newContainer);
+    }
+    else
+      clearPrehighlight();
+  }
+
+  if (eventAdapter.getButton() == osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON &&
+          eventAdapter.getEventType() == osgGA::GUIEventAdapter::RELEASE)
+  {
+    if(lastPrehighlight.selectionType != slc::Type::None)
+    {
+      //prehighlight gets 'moved' into selections so can't call
+      //clear prehighlight, but we still clear the prehighlight
+      //selections we need to make observers aware of this 'hidden' change.
+      msg::Message clearMessage
+      (
+        msg::Response | msg::Pre | msg::Preselection | msg::Remove
+        , containerToMessage(lastPrehighlight)
+      );
+      node->send(clearMessage);
+      
+      if (slc::isPointType(lastPrehighlight.selectionType))
+      {
+        assert(lastPrehighlight.pointGeometry.valid());
+        osg::Vec4Array *colors = dynamic_cast<osg::Vec4Array*>(lastPrehighlight.pointGeometry->getColorArray());
+        assert(colors);
+        (*colors)[0] = osg::Vec4(1.0, 1.0, 1.0, 1.0);
+        colors->dirty();
+        lastPrehighlight.pointGeometry->dirtyDisplayList();
+      }
+      else
+      {
+        selectionOperation
+        (
+          lastPrehighlight.featureId
+          , lastPrehighlight.selectionIds
+          , HighlightVisitor::Operation::Highlight
+        );
+      }
+      
+      add(selectionContainers, lastPrehighlight);
+      
+      msg::Message addMessage
+      (
+        msg::Response | msg::Post | msg::Selection | msg::Add
+        , containerToMessage(lastPrehighlight)
+      );
+      lastPrehighlight = Container(); //set to null before signal in case we end up in 'this' again.
+      node->send(addMessage);
+    }
+    //not clearing the selection anymore on a empty pick.
+//       else
+//         clearSelections();
+  }
+    
+  if (eventAdapter.getButton() == osgGA::GUIEventAdapter::MIDDLE_MOUSE_BUTTON &&
+          eventAdapter.getEventType() == osgGA::GUIEventAdapter::RELEASE)
+  {
+    clearSelections();
+  }
+
+  if (eventAdapter.getButton() == osgGA::GUIEventAdapter::RIGHT_MOUSE_BUTTON &&
+          eventAdapter.getEventType() == osgGA::GUIEventAdapter::PUSH)
+  {
+      clearPrehighlight();
+  }
+
+  if (eventAdapter.getEventType() == osgGA::GUIEventAdapter::DRAG)
+  {
+      //don't get button info here, need to cache.
+  }
+
+  return false;
 }
 
 void EventHandler::clearSelections()
 {
-    // clear in reverse order to fix wire issue were edges remained highlighted. edge was remembering already selected color.
-    // something else will have to been when we get into delselection. maybe pool of selection and indexes for container?
-    Containers::reverse_iterator it;
-    for (it = selectionContainers.rbegin(); it != selectionContainers.rend(); ++it)
+  // clear in reverse order to fix wire issue were edges remained highlighted. edge was remembering already selected color.
+  // something else will have to been when we get into delselection. maybe pool of selection and indexes for container?
+  Containers::reverse_iterator it;
+  for (it = selectionContainers.rbegin(); it != selectionContainers.rend(); ++it)
+  {
+    msg::Message removeMessage
+    (
+      msg::Response | msg::Pre | msg::Selection | msg::Remove
+      , containerToMessage(*it)
+    );
+    node->send(removeMessage);
+    
+    if (slc::isPointType(it->selectionType))
     {
-        msg::Message removeMessage
-        (
-          msg::Response | msg::Pre | msg::Selection | msg::Remove
-          , containerToMessage(*it)
-        );
-        node->send(removeMessage);
-        
-        if (slc::isPointType(it->selectionType))
-        {
-            assert(it->pointGeometry.valid());
-            osg::Group *parent = it->pointGeometry->getParent(0)->asGroup();
-            parent->removeChild(it->pointGeometry);
-        }
-        else
-            selectionOperation(it->featureId, it->selectionIds, HighlightVisitor::Operation::Restore);
+      assert(it->pointGeometry.valid());
+      osg::Group *parent = it->pointGeometry->getParent(0)->asGroup();
+      parent->removeChild(it->pointGeometry);
     }
-    selectionContainers.clear();
+    else
+      selectionOperation(it->featureId, it->selectionIds, HighlightVisitor::Operation::Restore);
+  }
+  selectionContainers.clear();
 }
 
 bool EventHandler::alreadySelected(const slc::Container &testContainer)
 {
-    Containers::const_iterator it;
-    for (it = selectionContainers.begin(); it != selectionContainers.end(); ++it)
-    {
-        if ((*it) == testContainer)
-            return true;
-    }
-    return false;
+  Containers::const_iterator it;
+  for (it = selectionContainers.begin(); it != selectionContainers.end(); ++it)
+  {
+    if ((*it) == testContainer)
+      return true;
+  }
+  return false;
 }
 
 void EventHandler::setPrehighlight(slc::Container &selected)
 {
-    lastPrehighlight = selected;
-    if (slc::isPointType(selected.selectionType))
-    {
-      assert(selected.pointGeometry.valid());
-      osg::Vec4Array *colors = dynamic_cast<osg::Vec4Array*>(selected.pointGeometry->getColorArray());
-      assert(colors);
-      colors->at(0) = osg::Vec4(1.0, 1.0, 0.0, 1.0);
-      colors->dirty();
-    }
-    else
-      selectionOperation(selected.featureId, selected.selectionIds, HighlightVisitor::Operation::PreHighlight);
-    
-    msg::Message addMessage
-    (
-      msg::Response | msg::Post | msg::Preselection | msg::Add
-      , containerToMessage(lastPrehighlight)
-    );
-    node->send(addMessage);
+  lastPrehighlight = selected;
+  if (slc::isPointType(selected.selectionType))
+  {
+    assert(selected.pointGeometry.valid());
+    osg::Vec4Array *colors = dynamic_cast<osg::Vec4Array*>(selected.pointGeometry->getColorArray());
+    assert(colors);
+    colors->at(0) = osg::Vec4(1.0, 1.0, 0.0, 1.0);
+    colors->dirty();
+  }
+  else
+    selectionOperation(selected.featureId, selected.selectionIds, HighlightVisitor::Operation::PreHighlight);
+  
+  msg::Message addMessage
+  (
+    msg::Response | msg::Post | msg::Preselection | msg::Add
+    , containerToMessage(lastPrehighlight)
+  );
+  node->send(addMessage);
 }
 
 void EventHandler::clearPrehighlight()
 {
-    if (lastPrehighlight.selectionType == Type::None)
-      return;
-    
-    msg::Message removeMessage
-    (
-      msg::Response | msg::Pre | msg::Preselection | msg::Remove
-      , containerToMessage(lastPrehighlight)
-    );
-    node->send(removeMessage);
-    
-    if (slc::isPointType(lastPrehighlight.selectionType))
-    {
-      assert(lastPrehighlight.pointGeometry.valid());
-      osg::Group *parent = lastPrehighlight.pointGeometry->getParent(0)->asGroup();
-      parent->removeChild(lastPrehighlight.pointGeometry);
-    }
-    else
-    {
-      selectionOperation(lastPrehighlight.featureId, lastPrehighlight.selectionIds, HighlightVisitor::Operation::Restore);
-      //certain situations, like selecting wires, where prehighlight can over write something already selected. Then
-      //when the prehighlight gets cleared and the color restored the selection is lost. for now lets just re select
-      //everything and do something different if we have performance problems.
-      for (const auto &current : selectionContainers)
-        selectionOperation(current.featureId, current.selectionIds, HighlightVisitor::Operation::Highlight);
-    }
-    
-    lastPrehighlight = Container();
+  if (lastPrehighlight.selectionType == Type::None)
+    return;
+  
+  msg::Message removeMessage
+  (
+    msg::Response | msg::Pre | msg::Preselection | msg::Remove
+    , containerToMessage(lastPrehighlight)
+  );
+  node->send(removeMessage);
+  
+  if (slc::isPointType(lastPrehighlight.selectionType))
+  {
+    assert(lastPrehighlight.pointGeometry.valid());
+    osg::Group *parent = lastPrehighlight.pointGeometry->getParent(0)->asGroup();
+    parent->removeChild(lastPrehighlight.pointGeometry);
+  }
+  else
+  {
+    selectionOperation(lastPrehighlight.featureId, lastPrehighlight.selectionIds, HighlightVisitor::Operation::Restore);
+    //certain situations, like selecting wires, where prehighlight can over write something already selected. Then
+    //when the prehighlight gets cleared and the color restored the selection is lost. for now lets just re select
+    //everything and do something different if we have performance problems.
+    for (const auto &current : selectionContainers)
+      selectionOperation(current.featureId, current.selectionIds, HighlightVisitor::Operation::Highlight);
+  }
+  
+  lastPrehighlight = Container();
 }
 
 void EventHandler::setupDispatcher()
@@ -648,4 +654,3 @@ Container EventHandler::messageToContainer(const Message &messageIn)
   
   return container;
 }
-

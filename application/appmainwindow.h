@@ -34,31 +34,29 @@ namespace msg{class Message; struct Node; struct Sift;}
 namespace dag{class View; class Model;}
 namespace expr{class Widget;}
 
-namespace Ui {
-class MainWindow;
-}
+namespace Ui {class MainWindow;}
 
 class TopoDS_Face;
 class TopoDS_Shape;
 
 namespace app
 {
-class IncrementWidgetAction;
-class InfoDialog;
-class MainWindow : public QMainWindow
-{
+  class IncrementWidgetAction;
+  class InfoDialog;
+  class MainWindow : public QMainWindow
+  {
     Q_OBJECT
-    
-public:
+      
+  public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
     vwr::Widget* getViewer(){return viewWidget;}
     slc::Manager* getSelectionManager(){return selectionManager;}
-    
-protected:
-  virtual void closeEvent (QCloseEvent*) override;
+      
+  protected:
+    virtual void closeEvent (QCloseEvent*) override;
 
-private:
+  private:
     void setupSelectionToolbar();
     Ui::MainWindow *ui;
     vwr::Widget* viewWidget;
@@ -74,7 +72,7 @@ private:
     void setupDispatcher();
     void preferencesChanged(const msg::Message&);
     void infoTextDispatched(const msg::Message&);
-};
+  };
 }
 
 #endif // APP_MAINWINDOW_H

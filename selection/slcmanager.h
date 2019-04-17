@@ -32,10 +32,10 @@ namespace msg{class Message; struct Node; struct Sift;}
 
 namespace slc
 {
-class Manager : public QObject
-{
+  class Manager : public QObject
+  {
     Q_OBJECT
-public:
+  public:
     explicit Manager(QObject *parent = 0);
     ~Manager();
     Mask getState(){return selectionMask;}
@@ -55,8 +55,8 @@ public:
     QAction *actionSelectQuadrantPoints;
     QAction *actionSelectNearestPoints;
     QAction *actionSelectScreenPoints;
-    
-public Q_SLOTS:
+      
+  public Q_SLOTS:
     void triggeredObjects(bool objectStateIn);
     void triggeredFeatures(bool featureStateIn);
     void triggeredSolids(bool solidStateIn);
@@ -72,7 +72,7 @@ public Q_SLOTS:
     void triggeredNearestPoints(bool nearestPointStateIn);
     void triggeredScreenPoints(bool screenPointStateIn);
 
-private:
+  private:
     void setState(Mask);
     void updateToolbar();
     Mask selectionMask;
@@ -81,7 +81,7 @@ private:
     std::unique_ptr<msg::Sift> sift;
     void setupDispatcher();
     void requestSelectionMaskDispatched(const msg::Message &);
-};
+  };
 }
 
 #endif // SLC_SELECTIONMANAGER_H

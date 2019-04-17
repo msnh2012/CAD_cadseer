@@ -31,41 +31,41 @@ namespace gsn
   class Handler : public osgGA::GUIEventHandler
   {
   public:
-      Handler(osg::Camera *cameraIn);
+    Handler(osg::Camera *cameraIn);
       
   protected:
-      virtual bool handle(const osgGA::GUIEventAdapter& eventAdapter,
-                          osgGA::GUIActionAdapter& actionAdapter, osg::Object *object,
-                          osg::NodeVisitor *nodeVistor) override;
-      double calculateSprayRadius(int nodeCount);
-      void startDrag(const osgGA::GUIEventAdapter& eventAdapter);
-      void constructMenu();
-      std::vector<osg::Vec3> buildNodeLocations(osg::Vec3 direction, int nodeCount);
-      void spraySubNodes(osg::Vec3 cursorLocation);
-      void contractSubNodes();
-      bool rightButtonDown;
-      bool dragStarted;
-      int spaceballButton = -1; //button pressed or -1 for no button pressed.
-      int hotKey = -1; //-1 = no key or invalid key pressed.
-      osg::ref_ptr<osg::Switch> gestureSwitch;
-      osg::ref_ptr<osg::Camera> gestureCamera;
-      osg::ref_ptr<osg::MatrixTransform> startNode;
-      osg::ref_ptr<osg::MatrixTransform> currentNode;
-      osg::Matrixd aggregateMatrix;
-      bool currentNodeLeft;
-      
-      float time();
+    virtual bool handle(const osgGA::GUIEventAdapter& eventAdapter,
+                        osgGA::GUIActionAdapter& actionAdapter, osg::Object *object,
+                        osg::NodeVisitor *nodeVistor) override;
+    double calculateSprayRadius(int nodeCount);
+    void startDrag(const osgGA::GUIEventAdapter& eventAdapter);
+    void constructMenu();
+    std::vector<osg::Vec3> buildNodeLocations(osg::Vec3 direction, int nodeCount);
+    void spraySubNodes(osg::Vec3 cursorLocation);
+    void contractSubNodes();
+    bool rightButtonDown;
+    bool dragStarted;
+    int spaceballButton = -1; //button pressed or -1 for no button pressed.
+    int hotKey = -1; //-1 = no key or invalid key pressed.
+    osg::ref_ptr<osg::Switch> gestureSwitch;
+    osg::ref_ptr<osg::Camera> gestureCamera;
+    osg::ref_ptr<osg::MatrixTransform> startNode;
+    osg::ref_ptr<osg::MatrixTransform> currentNode;
+    osg::Matrixd aggregateMatrix;
+    bool currentNodeLeft;
+    
+    float time();
 
-      double iconRadius;
-      double includedAngle; //in degrees
-      double minimumSprayRadius;
-      double nodeSpread;
-      void updateVariables();
-      
-      std::unique_ptr<msg::Node> node;
-      std::unique_ptr<msg::Sift> sift;
-      void setupDispatcher();
-      void preferencesChangedDispatched(const msg::Message&);
+    double iconRadius;
+    double includedAngle; //in degrees
+    double minimumSprayRadius;
+    double nodeSpread;
+    void updateVariables();
+    
+    std::unique_ptr<msg::Node> node;
+    std::unique_ptr<msg::Sift> sift;
+    void setupDispatcher();
+    void preferencesChangedDispatched(const msg::Message&);
   };
 }
 

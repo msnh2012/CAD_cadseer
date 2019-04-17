@@ -34,15 +34,15 @@ using namespace app;
 
 InfoWindow::InfoWindow(QWidget* parent) : QTextEdit(parent)
 {
-    node = std::make_unique<msg::Node>();
-    node->connect(msg::hub());
-    sift = std::make_unique<msg::Sift>();
-    sift->name = "app::InfoWindow";
-    node->setHandler(std::bind(&msg::Sift::receive, sift.get(), std::placeholders::_1));
-    
-    setupDispatcher();
-    
-    this->setWordWrapMode(QTextOption::NoWrap);
+  node = std::make_unique<msg::Node>();
+  node->connect(msg::hub());
+  sift = std::make_unique<msg::Sift>();
+  sift->name = "app::InfoWindow";
+  node->setHandler(std::bind(&msg::Sift::receive, sift.get(), std::placeholders::_1));
+  
+  setupDispatcher();
+  
+  this->setWordWrapMode(QTextOption::NoWrap);
 }
 
 InfoWindow::~InfoWindow()
@@ -65,49 +65,49 @@ void InfoWindow::setupDispatcher()
 
 void InfoWindow::infoTextDispatched(const msg::Message &messageIn)
 {
-    app::Message message = messageIn.getAPP();
-    append(message.infoMessage);
+  app::Message message = messageIn.getAPP();
+  append(message.infoMessage);
 }
 
 InfoDialog::InfoDialog(QWidget *parent) : QDialog(parent)
 {
-    setWindowTitle(tr("Information Window"));
-    infoWindow = new InfoWindow(this);
-    QHBoxLayout *layout = new QHBoxLayout();
-    layout->addWidget(infoWindow);
-    this->setLayout(layout);
+  setWindowTitle(tr("Information Window"));
+  infoWindow = new InfoWindow(this);
+  QHBoxLayout *layout = new QHBoxLayout();
+  layout->addWidget(infoWindow);
+  this->setLayout(layout);
 }
 
 void InfoDialog::showEvent(QShowEvent *event)
 {
-    restoreSettings();
-    QDialog::showEvent(event);
+  restoreSettings();
+  QDialog::showEvent(event);
 }
 
 void InfoDialog::resizeEvent(QResizeEvent *event)
 {
-    saveSettings();
-    QDialog::resizeEvent(event);
+  saveSettings();
+  QDialog::resizeEvent(event);
 }
 
 void InfoDialog::closeEvent(QCloseEvent *event)
 {
-    saveSettings();
-    QDialog::closeEvent(event);
+  saveSettings();
+  QDialog::closeEvent(event);
 }
 
 void InfoDialog::restoreSettings()
 {
-    QSettings &settings = app::instance()->getUserSettings();
-    settings.beginGroup("infoDialog");
-    restoreGeometry(settings.value("dialogGeometry").toByteArray());
-    settings.endGroup();
+  QSettings &settings = app::instance()->getUserSettings();
+  settings.beginGroup("infoDialog");
+  restoreGeometry(settings.value("dialogGeometry").toByteArray());
+  settings.endGroup();
 }
 
 void InfoDialog::saveSettings()
 {
-    QSettings &settings = app::instance()->getUserSettings();
-    settings.beginGroup("infoDialog");
-    settings.setValue("dialogGeometry", saveGeometry());
-    settings.endGroup();
+  QSettings &settings = app::instance()->getUserSettings();
+  settings.beginGroup("infoDialog");
+  settings.setValue("dialogGeometry", saveGeometry());
+  settings.endGroup();
 }

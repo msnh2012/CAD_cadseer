@@ -100,111 +100,109 @@ Widget::Widget(osgViewer::ViewerBase::ThreadingModel threadingModel) : QWidget()
   node->setHandler(std::bind(&msg::Sift::receive, sift.get(), std::placeholders::_1));
   setupDispatcher();
     
-    osg::DisplaySettings::instance()->setTextShaderTechnique("SIGNED_DISTANCE_FUNCTION"); 
-    setThreadingModel(threadingModel);
-    setUseConfigureAffinity(false);
-    setKeyEventSetsDone(0); //stops the viewer from freezing when the escape key is pressed.
-    QTimer *timer = new QTimer(this);
-    connect(timer, SIGNAL(timeout()), this, SLOT(update())); //inherited update slot.
+  osg::DisplaySettings::instance()->setTextShaderTechnique("SIGNED_DISTANCE_FUNCTION"); 
+  setThreadingModel(threadingModel);
+  setUseConfigureAffinity(false);
+  setKeyEventSetsDone(0); //stops the viewer from freezing when the escape key is pressed.
+  QTimer *timer = new QTimer(this);
+  connect(timer, SIGNAL(timeout()), this, SLOT(update())); //inherited update slot.
 
-    root = new osg::Group;
-    root->setName("root");
+  root = new osg::Group;
+  root->setName("root");
+  
+  osg::ref_ptr<osg::PolygonMode> pm = new osg::PolygonMode;
+  root->getOrCreateStateSet()->setAttribute(pm.get());
+  prf::RenderStyle::Value renderStyle = prf::Manager().rootPtr->visual().display().renderStyle().get();
+  if (renderStyle == prf::RenderStyle::fill)
+    viewFillDispatched(msg::Message());
+  else if (renderStyle == prf::RenderStyle::triangulation)
+    viewTriangulationDispatched(msg::Message());
+  //nothing for wireframe yet.
+  
+  osg::ShadeModel *shadeModel = new osg::ShadeModel(osg::ShadeModel::SMOOTH);
+  root->getOrCreateStateSet()->setAttribute(shadeModel);
+  
+  root->getOrCreateStateSet()->setMode(GL_MULTISAMPLE_ARB, osg::StateAttribute::ON);
+  root->getOrCreateStateSet()->setMode(GL_LIGHTING, osg::StateAttribute::ON);
     
-    osg::ref_ptr<osg::PolygonMode> pm = new osg::PolygonMode;
-    root->getOrCreateStateSet()->setAttribute(pm.get());
-    prf::RenderStyle::Value renderStyle = prf::Manager().rootPtr->visual().display().renderStyle().get();
-    if (renderStyle == prf::RenderStyle::fill)
-      viewFillDispatched(msg::Message());
-    else if (renderStyle == prf::RenderStyle::triangulation)
-      viewTriangulationDispatched(msg::Message());
-    //nothing for wireframe yet.
-    
-    osg::ShadeModel *shadeModel = new osg::ShadeModel(osg::ShadeModel::SMOOTH);
-    root->getOrCreateStateSet()->setAttribute(shadeModel);
-    
-    root->getOrCreateStateSet()->setMode(GL_MULTISAMPLE_ARB, osg::StateAttribute::ON);
-    root->getOrCreateStateSet()->setMode(GL_LIGHTING, osg::StateAttribute::ON);
-    
-//     Plotter::getReference().setBase(root);
-    
-    osgViewer::View* view = new osgViewer::View;
-    mainCamera = view->getCamera();
-    createMainCamera(mainCamera);
+  osgViewer::View* view = new osgViewer::View;
+  mainCamera = view->getCamera();
+  createMainCamera(mainCamera);
 
-    //background was covering scene. don't know if it was the upgrade to osg 3.2
-    //or the switch to the open source ati driver. I am guessing the driver.
-    osg::Camera *backGroundCamera = createBackgroundCamera();
-    backGroundCamera->setViewport(new osg::Viewport(0, 0, glWidgetWidth, glWidgetHeight));
-    backGroundCamera->setProjectionResizePolicy(osg::Camera::ProjectionResizePolicy::FIXED);
-    view->addSlave(backGroundCamera, false);
+  //background was covering scene. don't know if it was the upgrade to osg 3.2
+  //or the switch to the open source ati driver. I am guessing the driver.
+  osg::Camera *backGroundCamera = createBackgroundCamera();
+  backGroundCamera->setViewport(new osg::Viewport(0, 0, glWidgetWidth, glWidgetHeight));
+  backGroundCamera->setProjectionResizePolicy(osg::Camera::ProjectionResizePolicy::FIXED);
+  view->addSlave(backGroundCamera, false);
 
-    osg::Camera *gestureCamera = createGestureCamera();
-    gestureCamera->setViewport(new osg::Viewport(0, 0, glWidgetWidth, glWidgetHeight));
-    gestureCamera->setProjectionResizePolicy(osg::Camera::ProjectionResizePolicy::FIXED);
-    view->addSlave(gestureCamera, false);
-    
-    TextCamera *infoCamera = new TextCamera(windowQt);
-    infoCamera->setViewport(0, 0, glWidgetWidth, glWidgetHeight);
-    infoCamera->setProjectionResizePolicy(osg::Camera::ProjectionResizePolicy::FIXED);
-    view->addSlave(infoCamera, false);
-    
-    Overlay *oCamera = new Overlay(windowQt);
-    view->addSlave(oCamera, false);
-    
-    systemSwitch = new osg::Switch();
-    oCamera->addChild(systemSwitch);
-    
-    currentSystem = new lbr::CSysDragger();
-    currentSystem->setScreenScale(100.0f);
-    currentSystem->setRotationIncrement(15.0);
-    currentSystem->setTranslationIncrement(0.25);
-    currentSystem->setHandleEvents(false);
-    currentSystem->setupDefaultGeometry();
-    currentSystem->setUnlink();
-//     currentSystem->hide(lbr::CSysDragger::SwitchIndexes::XRotate);
-//     currentSystem->hide(lbr::CSysDragger::SwitchIndexes::YRotate);
-//     currentSystem->hide(lbr::CSysDragger::SwitchIndexes::ZRotate);
-    currentSystem->hide(lbr::CSysDragger::SwitchIndexes::LinkIcon);
-    currentSystemCallBack = new lbr::CSysCallBack(currentSystem.get());
-    currentSystem->addDraggerCallback(currentSystemCallBack.get());
-    systemSwitch->addChild(currentSystem);
-    systemSwitch->setValue(0, prf::manager().rootPtr->visual().display().showCurrentSystem());
+  osg::Camera *gestureCamera = createGestureCamera();
+  gestureCamera->setViewport(new osg::Viewport(0, 0, glWidgetWidth, glWidgetHeight));
+  gestureCamera->setProjectionResizePolicy(osg::Camera::ProjectionResizePolicy::FIXED);
+  view->addSlave(gestureCamera, false);
+  
+  TextCamera *infoCamera = new TextCamera(windowQt);
+  infoCamera->setViewport(0, 0, glWidgetWidth, glWidgetHeight);
+  infoCamera->setProjectionResizePolicy(osg::Camera::ProjectionResizePolicy::FIXED);
+  view->addSlave(infoCamera, false);
+  
+  Overlay *oCamera = new Overlay(windowQt);
+  view->addSlave(oCamera, false);
+  
+  systemSwitch = new osg::Switch();
+  oCamera->addChild(systemSwitch);
+  
+  currentSystem = new lbr::CSysDragger();
+  currentSystem->setScreenScale(100.0f);
+  currentSystem->setRotationIncrement(15.0);
+  currentSystem->setTranslationIncrement(0.25);
+  currentSystem->setHandleEvents(false);
+  currentSystem->setupDefaultGeometry();
+  currentSystem->setUnlink();
+//   currentSystem->hide(lbr::CSysDragger::SwitchIndexes::XRotate);
+//   currentSystem->hide(lbr::CSysDragger::SwitchIndexes::YRotate);
+//   currentSystem->hide(lbr::CSysDragger::SwitchIndexes::ZRotate);
+  currentSystem->hide(lbr::CSysDragger::SwitchIndexes::LinkIcon);
+  currentSystemCallBack = new lbr::CSysCallBack(currentSystem.get());
+  currentSystem->addDraggerCallback(currentSystemCallBack.get());
+  systemSwitch->addChild(currentSystem);
+  systemSwitch->setValue(0, prf::manager().rootPtr->visual().display().showCurrentSystem());
 
-    view->setSceneData(root);
-    view->addEventHandler(new StatsHandler());
-    overlayHandler = new slc::OverlayHandler(oCamera);
-    view->addEventHandler(overlayHandler.get());
-    selectionHandler = new slc::EventHandler(root);
-    view->addEventHandler(selectionHandler.get());
-    //why does the following line create an additional thread. why?
-    //not sure why it does, but it happens down inside librsvg and doesn't
-    //come into play for application. I have proven out that our qactions
-    //between gesture camera a mainwindlow slots are synchronized.
-    view->addEventHandler(new gsn::Handler(gestureCamera));
-    view->addEventHandler(new ResizeEventHandler(infoCamera));
-    spaceballManipulator = new vwr::SpaceballManipulator(view->getCamera());
-    view->setCameraManipulator(spaceballManipulator);
-    screenCaptureHandler = new osgViewer::ScreenCaptureHandler();
-    screenCaptureHandler->setKeyEventTakeScreenShot(-1); //no keyboard execution
-    screenCaptureHandler->setKeyEventToggleContinuousCapture(-1); //no keyboard execution
-//     view->addEventHandler(screenCaptureHandler); //don't think this needs to be added the way I am using it.
-    
-    addView(view);
+  view->setSceneData(root);
+  view->addEventHandler(new StatsHandler());
+  overlayHandler = new slc::OverlayHandler(oCamera);
+  view->addEventHandler(overlayHandler.get());
+  selectionHandler = new slc::EventHandler(root);
+  view->addEventHandler(selectionHandler.get());
+  //why does the following line create an additional thread. why?
+  //not sure why it does, but it happens down inside librsvg and doesn't
+  //come into play for application. I have proven out that our qactions
+  //between gesture camera a mainwindlow slots are synchronized.
+  view->addEventHandler(new gsn::Handler(gestureCamera));
+  view->addEventHandler(new ResizeEventHandler(infoCamera));
+  spaceballManipulator = new vwr::SpaceballManipulator(view->getCamera());
+  view->setCameraManipulator(spaceballManipulator);
+  screenCaptureHandler = new osgViewer::ScreenCaptureHandler();
+  screenCaptureHandler->setKeyEventTakeScreenShot(-1); //no keyboard execution
+  screenCaptureHandler->setKeyEventToggleContinuousCapture(-1); //no keyboard execution
+//   view->addEventHandler(screenCaptureHandler); //don't think this needs to be added the way I am using it.
+  
+  addView(view);
 
-    QHBoxLayout *layout = new QHBoxLayout();
-    layout->addWidget(windowQt->getGLWidget());
-    setLayout(layout);
-    
-    //get screen resolution.
-    osg::GraphicsContext::WindowingSystemInterface *wsi = windowQt->getWindowingSystemInterface();
-    assert(wsi->getNumScreens() > 0);
-    osg::GraphicsContext::ScreenSettings settings;
-    wsi->getScreenSettings(osg::GraphicsContext::ScreenIdentifier(0), settings);
-    //wsi->getDisplaySettings is null here and also in myUpdate.
-    osg::DisplaySettings::instance()->setScreenHeight(static_cast<float>(settings.height));
-    osg::DisplaySettings::instance()->setScreenWidth(static_cast<float>(settings.width));
+  QHBoxLayout *layout = new QHBoxLayout();
+  layout->addWidget(windowQt->getGLWidget());
+  setLayout(layout);
+  
+  //get screen resolution.
+  osg::GraphicsContext::WindowingSystemInterface *wsi = windowQt->getWindowingSystemInterface();
+  assert(wsi->getNumScreens() > 0);
+  osg::GraphicsContext::ScreenSettings settings;
+  wsi->getScreenSettings(osg::GraphicsContext::ScreenIdentifier(0), settings);
+  //wsi->getDisplaySettings is null here and also in myUpdate.
+  osg::DisplaySettings::instance()->setScreenHeight(static_cast<float>(settings.height));
+  osg::DisplaySettings::instance()->setScreenWidth(static_cast<float>(settings.width));
 
-    timer->start(10); //this calls QWidget::update which triggers a paint event.
+  timer->start(10); //this calls QWidget::update which triggers a paint event.
 }
 
 Widget::~Widget() //for forward declarations.
@@ -304,46 +302,46 @@ void Widget::createMainCamera(osg::Camera *camera)
             samples = -1
           */
 //    osgQt::GLWidget *glWidget = new osgQt::GLWidget(QGLFormat::defaultFormat(), this);
-    QGLFormat format = QGLFormat::defaultFormat();
-    int samples = prf::manager().rootPtr->visual().display().samples().get();
-    if (samples > 0)
-    {
-      format.setSampleBuffers(true);
-      format.setSamples(samples); //big slowdown.
-    }
+  QGLFormat format = QGLFormat::defaultFormat();
+  int samples = prf::manager().rootPtr->visual().display().samples().get();
+  if (samples > 0)
+  {
+    format.setSampleBuffers(true);
+    format.setSamples(samples); //big slowdown.
+  }
 
-    vwr::GLEventWidget *glWidget = new vwr::GLEventWidget(format, this);
-    windowQt = new osgQt::GraphicsWindowQt(glWidget);
+  vwr::GLEventWidget *glWidget = new vwr::GLEventWidget(format, this);
+  windowQt = new osgQt::GraphicsWindowQt(glWidget);
 
-    camera->setGraphicsContext(windowQt);
-    camera->setName("main");
-    camera->setRenderOrder(osg::Camera::NESTED_RENDER, 1);
-    camera->setClearMask(GL_DEPTH_BUFFER_BIT);
+  camera->setGraphicsContext(windowQt);
+  camera->setName("main");
+  camera->setRenderOrder(osg::Camera::NESTED_RENDER, 1);
+  camera->setClearMask(GL_DEPTH_BUFFER_BIT);
 
-    QCursor cursor(loadCursor());//hot point defaults to center.
-    glWidget->setCursor(cursor);
+  QCursor cursor(loadCursor());//hot point defaults to center.
+  glWidget->setCursor(cursor);
 
-    camera->setClearColor(osg::Vec4(0.2, 0.2, 0.6, 1.0));
-    camera->setViewport(new osg::Viewport(0, 0, glWidget->width(), glWidget->height()));
-//    camera->setProjectionMatrixAsPerspective(30.0f, static_cast<double>(glWidget->width()) /
-//                                             static_cast<double>(glWidget->height()), 1.0f, 10000.0f);
-    camera->setProjectionMatrixAsOrtho
-            (0.0, static_cast<double>(glWidget->width()),
-             0.0, static_cast<double>(glWidget->height()),
-             1.0, 10000.0);
+  camera->setClearColor(osg::Vec4(0.2, 0.2, 0.6, 1.0));
+  camera->setViewport(new osg::Viewport(0, 0, glWidget->width(), glWidget->height()));
+//   camera->setProjectionMatrixAsPerspective(30.0f, static_cast<double>(glWidget->width()) /
+//                                           static_cast<double>(glWidget->height()), 1.0f, 10000.0f);
+  camera->setProjectionMatrixAsOrtho
+          (0.0, static_cast<double>(glWidget->width()),
+            0.0, static_cast<double>(glWidget->height()),
+            1.0, 10000.0);
 
-    //this allows us to see points.
-    camera->setCullingMode(camera->getCullingMode() &
-    ~osg::CullSettings::SMALL_FEATURE_CULLING);
+  //this allows us to see points.
+  camera->setCullingMode(camera->getCullingMode() &
+  ~osg::CullSettings::SMALL_FEATURE_CULLING);
 
-    //use this for fade specs
-    glWidgetWidth = glWidget->width();
-    glWidgetHeight = glWidget->height();
+  //use this for fade specs
+  glWidgetWidth = glWidget->width();
+  glWidgetHeight = glWidget->height();
 }
 
 void Widget::paintEvent(QPaintEvent*)
 {
-    frame();
+  frame();
 }
 
 osg::Camera* Widget::createBackgroundCamera()
@@ -373,121 +371,121 @@ osg::Camera* Widget::createBackgroundCamera()
   }
   image->flipVertical(); //don't know why images are flipped and I need this?
       
-    osg::ref_ptr<osg::Texture2D> texture = new osg::Texture2D;
-    texture->setImage(image.get());
-    osg::ref_ptr<osg::Geometry> quad = osg::createTexturedQuadGeometry
-            (osg::Vec3(), osg::Vec3(1.0f, 0.0f, 0.0f), osg::Vec3(0.0f, 1.0f, 0.0f));
-    texture->setDataVariance(osg::Object::STATIC);
-    texture->setWrap(osg::Texture::WRAP_S, osg::Texture::CLAMP_TO_EDGE);
-    texture->setWrap(osg::Texture::WRAP_T, osg::Texture::CLAMP_TO_EDGE);
-    texture->setFilter(osg::Texture::MIN_FILTER, osg::Texture::LINEAR);
-    texture->setFilter(osg::Texture::MAG_FILTER, osg::Texture::LINEAR);
-    quad->getOrCreateStateSet()->setTextureAttributeAndModes(0, texture.get());
+  osg::ref_ptr<osg::Texture2D> texture = new osg::Texture2D;
+  texture->setImage(image.get());
+  osg::ref_ptr<osg::Geometry> quad = osg::createTexturedQuadGeometry
+          (osg::Vec3(), osg::Vec3(1.0f, 0.0f, 0.0f), osg::Vec3(0.0f, 1.0f, 0.0f));
+  texture->setDataVariance(osg::Object::STATIC);
+  texture->setWrap(osg::Texture::WRAP_S, osg::Texture::CLAMP_TO_EDGE);
+  texture->setWrap(osg::Texture::WRAP_T, osg::Texture::CLAMP_TO_EDGE);
+  texture->setFilter(osg::Texture::MIN_FILTER, osg::Texture::LINEAR);
+  texture->setFilter(osg::Texture::MAG_FILTER, osg::Texture::LINEAR);
+  quad->getOrCreateStateSet()->setTextureAttributeAndModes(0, texture.get());
 
-    osg::Camera *bgCamera = new osg::Camera();
-    bgCamera->setName("backgrd");
-    bgCamera->setGraphicsContext(windowQt);
-    bgCamera->setCullingActive(false);
-    bgCamera->setAllowEventFocus(false);
-    bgCamera->setReferenceFrame(osg::Transform::ABSOLUTE_RF);
-    bgCamera->setRenderOrder(osg::Camera::NESTED_RENDER, 0);
-    bgCamera->setProjectionMatrix(osg::Matrix::ortho2D(0.0, 1.0, 0.0, 1.0));
-    bgCamera->addChild(quad.get());
-    bgCamera->setNodeMask(mdv::backGroundCamera);
+  osg::Camera *bgCamera = new osg::Camera();
+  bgCamera->setName("backgrd");
+  bgCamera->setGraphicsContext(windowQt);
+  bgCamera->setCullingActive(false);
+  bgCamera->setAllowEventFocus(false);
+  bgCamera->setReferenceFrame(osg::Transform::ABSOLUTE_RF);
+  bgCamera->setRenderOrder(osg::Camera::NESTED_RENDER, 0);
+  bgCamera->setProjectionMatrix(osg::Matrix::ortho2D(0.0, 1.0, 0.0, 1.0));
+  bgCamera->addChild(quad.get());
+  bgCamera->setNodeMask(mdv::backGroundCamera);
 
-    osg::StateSet* ss = bgCamera->getOrCreateStateSet();
-    ss->setMode(GL_LIGHTING, osg::StateAttribute::OFF);
-    ss->setAttributeAndModes(new osg::Depth(osg::Depth::LEQUAL, 1.0, 1.0));
+  osg::StateSet* ss = bgCamera->getOrCreateStateSet();
+  ss->setMode(GL_LIGHTING, osg::StateAttribute::OFF);
+  ss->setAttributeAndModes(new osg::Depth(osg::Depth::LEQUAL, 1.0, 1.0));
 
-    return bgCamera;
+  return bgCamera;
 }
 
 osg::Camera* Widget::createGestureCamera()
 {
-    double quadSize = 10000;
+  double quadSize = 10000;
 
-    osg::ref_ptr<osg::Geometry> quad = osg::createTexturedQuadGeometry
-      (osg::Vec3(), osg::Vec3(quadSize, 0.0, 0.0), osg::Vec3(0.0, quadSize, 0.0));
-    osg::Vec4Array *colorArray = new osg::Vec4Array();
-    colorArray->push_back(osg::Vec4(0.0, 0.0, 0.0, 0.5));
-    quad->setColorArray(colorArray);
-    quad->setColorBinding(osg::Geometry::BIND_OVERALL);
-    quad->setNodeMask(mdv::noIntersect);
-    osg::Depth *depth = new osg::Depth;
-    depth->setRange(0.005, 1.005);
-    quad->getOrCreateStateSet()->setAttribute(depth);
+  osg::ref_ptr<osg::Geometry> quad = osg::createTexturedQuadGeometry
+    (osg::Vec3(), osg::Vec3(quadSize, 0.0, 0.0), osg::Vec3(0.0, quadSize, 0.0));
+  osg::Vec4Array *colorArray = new osg::Vec4Array();
+  colorArray->push_back(osg::Vec4(0.0, 0.0, 0.0, 0.5));
+  quad->setColorArray(colorArray);
+  quad->setColorBinding(osg::Geometry::BIND_OVERALL);
+  quad->setNodeMask(mdv::noIntersect);
+  osg::Depth *depth = new osg::Depth;
+  depth->setRange(0.005, 1.005);
+  quad->getOrCreateStateSet()->setAttribute(depth);
 
-    osg::Camera *fadeCamera = new osg::Camera();
-    fadeCamera->setName("gesture");
-    fadeCamera->setCullingActive(false);
-    fadeCamera->setClearMask(GL_DEPTH_BUFFER_BIT);
-    fadeCamera->setAllowEventFocus(false);
-    fadeCamera->setReferenceFrame(osg::Transform::ABSOLUTE_RF);
-    fadeCamera->setRenderOrder(osg::Camera::NESTED_RENDER, 4);
-    fadeCamera->setProjectionMatrixAsOrtho2D
-    (
-      0.0, static_cast<double>(glWidgetWidth),
-      0.0, static_cast<double>(glWidgetHeight)
-    );
-    fadeCamera->setViewMatrix(osg::Matrixd::identity());
-    fadeCamera->setGraphicsContext(windowQt);
-    fadeCamera->setNodeMask(mdv::gestureCamera);
-    fadeCamera->getOrCreateStateSet()->setMode(GL_MULTISAMPLE_ARB, osg::StateAttribute::ON);
-    fadeCamera->getOrCreateStateSet()->setMode(GL_LIGHTING, osg::StateAttribute::OFF);
-    fadeCamera->getOrCreateStateSet()->setRenderingHint(osg::StateSet::TRANSPARENT_BIN);
-    fadeCamera->getOrCreateStateSet()->setMode(GL_BLEND, osg::StateAttribute::ON);
-    osg::ref_ptr<osg::BlendFunc> blendFunc = new osg::BlendFunc;
-    blendFunc->setFunction(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    fadeCamera->getOrCreateStateSet()->setAttributeAndModes(blendFunc);
+  osg::Camera *fadeCamera = new osg::Camera();
+  fadeCamera->setName("gesture");
+  fadeCamera->setCullingActive(false);
+  fadeCamera->setClearMask(GL_DEPTH_BUFFER_BIT);
+  fadeCamera->setAllowEventFocus(false);
+  fadeCamera->setReferenceFrame(osg::Transform::ABSOLUTE_RF);
+  fadeCamera->setRenderOrder(osg::Camera::NESTED_RENDER, 4);
+  fadeCamera->setProjectionMatrixAsOrtho2D
+  (
+    0.0, static_cast<double>(glWidgetWidth),
+    0.0, static_cast<double>(glWidgetHeight)
+  );
+  fadeCamera->setViewMatrix(osg::Matrixd::identity());
+  fadeCamera->setGraphicsContext(windowQt);
+  fadeCamera->setNodeMask(mdv::gestureCamera);
+  fadeCamera->getOrCreateStateSet()->setMode(GL_MULTISAMPLE_ARB, osg::StateAttribute::ON);
+  fadeCamera->getOrCreateStateSet()->setMode(GL_LIGHTING, osg::StateAttribute::OFF);
+  fadeCamera->getOrCreateStateSet()->setRenderingHint(osg::StateSet::TRANSPARENT_BIN);
+  fadeCamera->getOrCreateStateSet()->setMode(GL_BLEND, osg::StateAttribute::ON);
+  osg::ref_ptr<osg::BlendFunc> blendFunc = new osg::BlendFunc;
+  blendFunc->setFunction(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  fadeCamera->getOrCreateStateSet()->setAttributeAndModes(blendFunc);
 
-    osg::Switch *aSwitch = new osg::Switch();
-    aSwitch->addChild(quad.get());
-    aSwitch->setAllChildrenOff();
-    fadeCamera->addChild(aSwitch);
+  osg::Switch *aSwitch = new osg::Switch();
+  aSwitch->addChild(quad.get());
+  aSwitch->setAllChildrenOff();
+  fadeCamera->addChild(aSwitch);
 
-    return fadeCamera;
+  return fadeCamera;
 }
 
 void Widget::viewTopDispatched(const msg::Message&)
 {
-    spaceballManipulator->setView(osg::Vec3d(0.0, 0.0, -1.0), osg::Vec3d(0.0, 1.0, 0.0));
-    spaceballManipulator->viewFit();
+  spaceballManipulator->setView(osg::Vec3d(0.0, 0.0, -1.0), osg::Vec3d(0.0, 1.0, 0.0));
+  spaceballManipulator->viewFit();
 }
 
 void Widget::viewTopCurrentDispatched(const msg::Message&)
 {
-    osg::Vec3d z = -gu::getZVector(currentSystem->getMatrix());
-    osg::Vec3d y = gu::getYVector(currentSystem->getMatrix());
-    spaceballManipulator->setView(z, y);
-    spaceballManipulator->viewFit();
+  osg::Vec3d z = -gu::getZVector(currentSystem->getMatrix());
+  osg::Vec3d y = gu::getYVector(currentSystem->getMatrix());
+  spaceballManipulator->setView(z, y);
+  spaceballManipulator->viewFit();
 }
 
 void Widget::viewFrontDispatched(const msg::Message&)
 {
-    spaceballManipulator->setView(osg::Vec3d(0.0, 1.0, 0.0), osg::Vec3d(0.0, 0.0, 1.0));
-    spaceballManipulator->viewFit();
+  spaceballManipulator->setView(osg::Vec3d(0.0, 1.0, 0.0), osg::Vec3d(0.0, 0.0, 1.0));
+  spaceballManipulator->viewFit();
 }
 
 void Widget::viewFrontCurrentDispatched(const msg::Message&)
 {
-    osg::Vec3d z = gu::getZVector(currentSystem->getMatrix());
-    osg::Vec3d y = gu::getYVector(currentSystem->getMatrix());
-    spaceballManipulator->setView(y, z);
-    spaceballManipulator->viewFit();
+  osg::Vec3d z = gu::getZVector(currentSystem->getMatrix());
+  osg::Vec3d y = gu::getYVector(currentSystem->getMatrix());
+  spaceballManipulator->setView(y, z);
+  spaceballManipulator->viewFit();
 }
 
 void Widget::viewRightDispatched(const msg::Message&)
 {
-    spaceballManipulator->setView(osg::Vec3d(-1.0, 0.0, 0.0), osg::Vec3d(0.0, 0.0, 1.0));
-    spaceballManipulator->viewFit();
+  spaceballManipulator->setView(osg::Vec3d(-1.0, 0.0, 0.0), osg::Vec3d(0.0, 0.0, 1.0));
+  spaceballManipulator->viewFit();
 }
 
 void Widget::viewRightCurrentDispatched(const msg::Message&)
 {
-    osg::Vec3d x = -gu::getXVector(currentSystem->getMatrix());
-    osg::Vec3d z = gu::getZVector(currentSystem->getMatrix());
-    spaceballManipulator->setView(x, z);
-    spaceballManipulator->viewFit();
+  osg::Vec3d x = -gu::getXVector(currentSystem->getMatrix());
+  osg::Vec3d z = gu::getZVector(currentSystem->getMatrix());
+  spaceballManipulator->setView(x, z);
+  spaceballManipulator->viewFit();
 }
 
 void Widget::viewIsoDispatched(const msg::Message &)
@@ -713,11 +711,6 @@ void Widget::setupDispatcher()
       )
     }
   );
-  
-  
-  
-  
-  
 }
 
 void Widget::featureAddedDispatched(const msg::Message &messageIn)

@@ -76,17 +76,17 @@ Handler::Handler(osg::Camera *cameraIn) : osgGA::GUIEventHandler(), rightButtonD
   sift->name = "gsn::Handler";
   node->setHandler(std::bind(&msg::Sift::receive, sift.get(), std::placeholders::_1));
   setupDispatcher();
+
+  gestureCamera = cameraIn;
+  if (!gestureCamera.valid())
+      return;
+  gestureSwitch = dynamic_cast<osg::Switch *>(gestureCamera->getChild(0));
+  if (!gestureSwitch.valid())
+      return;
   
-    gestureCamera = cameraIn;
-    if (!gestureCamera.valid())
-        return;
-    gestureSwitch = dynamic_cast<osg::Switch *>(gestureCamera->getChild(0));
-    if (!gestureSwitch.valid())
-        return;
-    
-    updateVariables();
-    constructMenu();
-//     dumpMenuGraphViz(*startNode, "SOMEPATH");
+  updateVariables();
+  constructMenu();
+//   dumpMenuGraphViz(*startNode, "SOMEPATH");
 }
 
 bool Handler::handle(const osgGA::GUIEventAdapter& eventAdapter,
@@ -174,241 +174,240 @@ bool Handler::handle(const osgGA::GUIEventAdapter& eventAdapter,
     return true;
   }
   
-    //lambda to clear status.
-    auto clearStatus = [&]()
-    {
-      //clear any status message
-      node->send(msg::buildStatusMessage(""));
-    };
+  //lambda to clear status.
+  auto clearStatus = [&]()
+  {
+    //clear any status message
+    node->send(msg::buildStatusMessage(""));
+  };
     
-    if (eventAdapter.getModKeyMask() & osgGA::GUIEventAdapter::MODKEY_LEFT_CTRL)
+  if (eventAdapter.getModKeyMask() & osgGA::GUIEventAdapter::MODKEY_LEFT_CTRL)
+  {
+    if (dragStarted)
     {
-        if (dragStarted)
-        {
-          clearStatus();
-          GestureAllSwitchesOffVisitor visitor;
-          gestureCamera->accept(visitor);
-          dragStarted = false;
-          gestureSwitch->setAllChildrenOff();
-        }
-        return false;
-    }
-  
-    if (!gestureSwitch.valid())
-    {
-      std::cout << "gestureSwitch is invalid in Handler::handle" << std::endl;
-      return false;
-    }
-
-    if (eventAdapter.getButton() == osgGA::GUIEventAdapter::RIGHT_MOUSE_BUTTON)
-    {
-        if (eventAdapter.getEventType() == osgGA::GUIEventAdapter::PUSH)
-        {
-            GestureAllSwitchesOffVisitor visitor;
-            gestureCamera->accept(visitor);
-
-            rightButtonDown = true;
-        }
-
-        if (eventAdapter.getEventType() == osgGA::GUIEventAdapter::RELEASE)
-        {
-            clearStatus();
-            rightButtonDown = false;
-            if (!dragStarted)
-                return false;
-            dragStarted = false;
-            gestureSwitch->setAllChildrenOff();
-            if (currentNode && (currentNode->getNodeMask() & mdv::gestureCommand))
-            {
-                std::string msgMaskString;
-                if (currentNode->getUserValue<std::string>(attributeMask, msgMaskString))
-                {
-                    if (spaceballButton != -1)
-                    {
-                      prf::manager().setSpaceballButton(spaceballButton, msgMaskString);
-                      prf::manager().saveConfig();
-                    }
-                    if (hotKey != -1)
-                    {
-                      prf::manager().setHotKey(hotKey, msgMaskString);
-                      prf::manager().saveConfig();
-                      hotKey = -1;
-                    }
-                    
-                    msg::Mask msgMask(msgMaskString);
-                    msg::Message messageOut;
-                    messageOut.mask = msgMask;
-                    app::instance()->queuedMessage(messageOut);
-                }
-                else
-                    assert(0); //gesture node doesn't have msgMask attribute;
-            }
-        }
-    }
-
-    if (eventAdapter.getEventType() == osgGA::GUIEventAdapter::DRAG)
-    {
-      if (!rightButtonDown) //only right button drag
-          return false;
-      if (!dragStarted)
-      {
-          dragStarted = true;
-          startDrag(eventAdapter);
-      }
-
-      osg::Matrixd transformation = osg::Matrixd::inverse
-        (gestureCamera->getProjectionMatrix() * gestureCamera->getViewport()->computeWindowMatrix());
-      osg::Vec3d temp(eventAdapter.getX(), eventAdapter.getY(), 0.0);
-      temp = transformation * temp;
-      temp.z() = 0.0;
-
-      osg::ref_ptr<osgUtil::LineSegmentIntersector> intersector = new osgUtil::LineSegmentIntersector
-              (osgUtil::Intersector::WINDOW, temp.x(), temp.y());
-      osgUtil::IntersectionVisitor iv(intersector);
-      iv.setTraversalMask(~mdv::noIntersect);
-      gestureSwitch->accept(iv);
-      
-      //look for icon intersection, but send message when intersecting lines for user feedback.
-      osg::ref_ptr<osg::Drawable> drawable;
-      osg::ref_ptr<osg::MatrixTransform> tnode;
-      osg::Vec3 hPoint;
-      for (auto &intersection : intersector->getIntersections())
-      {
-        osg::ref_ptr<osg::Drawable> tempDrawable = intersection.drawable;
-        assert(tempDrawable.valid());
-        osg::ref_ptr<osg::MatrixTransform> tempNode = dynamic_cast<osg::MatrixTransform*>
-          (tempDrawable->getParent(0)->getParent(0));
-        assert(temp.valid());
-        
-        std::string statusString;
-        if (tempNode->getUserValue<std::string>(attributeStatus, statusString))
-          node->send(msg::buildStatusMessage(statusString));
-        
-        if (tempDrawable->getName() != "Line")
-        {
-          drawable = tempDrawable;
-          tnode = tempNode;
-          hPoint = intersection.getLocalIntersectPoint();
-          break;
-        }
-      }
-      
-      if (!drawable.valid()) //no icon intersection found.
-      {
-        if (currentNodeLeft == false)
-        {
-          currentNodeLeft = true;
-          if (currentNode && (currentNode->getNodeMask() & mdv::gestureMenu))
-            spraySubNodes(temp);
-        }
-        
-        return false;
-      }
-      
-      if (tnode == currentNode)
-      {
-        if (currentNodeLeft == true)
-        {
-          currentNodeLeft = false;
-          if (currentNode->getNodeMask() & mdv::gestureMenu)
-              contractSubNodes();
-        }
-      }
-      else
-      {
-        //here we are entering an already sprayed node.
-        osg::MatrixTransform *parentNode = currentNode;
-        currentNode = tnode;
-
-        osg::Switch *geometrySwitch = dynamic_cast<osg::Switch*>(parentNode->getChild(parentNode->getNumChildren() - 1));
-        assert(geometrySwitch);
-        geometrySwitch->setAllChildrenOff();
-
-        unsigned int childIndex = parentNode->getChildIndex(currentNode);
-        for (unsigned int index = 0; index < parentNode->getNumChildren() - 1; ++index)
-        {
-          osg::MatrixTransform *childNode = dynamic_cast<osg::MatrixTransform*>(parentNode->getChild(index));
-          assert(childNode);
-          
-          osg::Switch *lineNodeSwitch = childNode->getChild(childNode->getNumChildren() - 1)->asSwitch();
-          assert(lineNodeSwitch);
-          lineNodeSwitch->setAllChildrenOff();
-
-          if (index == childIndex)
-            lineNodeSwitch->setValue(1, true);
-        }
-
-        currentNodeLeft = false;
-        aggregateMatrix = currentNode->getMatrix() * aggregateMatrix;
-      }
+      clearStatus();
+      GestureAllSwitchesOffVisitor visitor;
+      gestureCamera->accept(visitor);
+      dragStarted = false;
+      gestureSwitch->setAllChildrenOff();
     }
     return false;
+  }
+  
+  if (!gestureSwitch.valid())
+  {
+    std::cout << "gestureSwitch is invalid in Handler::handle" << std::endl;
+    return false;
+  }
+
+  if (eventAdapter.getButton() == osgGA::GUIEventAdapter::RIGHT_MOUSE_BUTTON)
+  {
+    if (eventAdapter.getEventType() == osgGA::GUIEventAdapter::PUSH)
+    {
+      GestureAllSwitchesOffVisitor visitor;
+      gestureCamera->accept(visitor);
+
+      rightButtonDown = true;
+    }
+
+    if (eventAdapter.getEventType() == osgGA::GUIEventAdapter::RELEASE)
+    {
+      clearStatus();
+      rightButtonDown = false;
+      if (!dragStarted)
+        return false;
+      dragStarted = false;
+      gestureSwitch->setAllChildrenOff();
+      if (currentNode && (currentNode->getNodeMask() & mdv::gestureCommand))
+      {
+        std::string msgMaskString;
+        if (currentNode->getUserValue<std::string>(attributeMask, msgMaskString))
+        {
+          if (spaceballButton != -1)
+          {
+            prf::manager().setSpaceballButton(spaceballButton, msgMaskString);
+            prf::manager().saveConfig();
+          }
+          if (hotKey != -1)
+          {
+            prf::manager().setHotKey(hotKey, msgMaskString);
+            prf::manager().saveConfig();
+            hotKey = -1;
+          }
+          
+          msg::Mask msgMask(msgMaskString);
+          msg::Message messageOut;
+          messageOut.mask = msgMask;
+          app::instance()->queuedMessage(messageOut);
+        }
+        else
+          assert(0); //gesture node doesn't have msgMask attribute;
+      }
+    }
+  }
+
+  if (eventAdapter.getEventType() == osgGA::GUIEventAdapter::DRAG)
+  {
+    if (!rightButtonDown) //only right button drag
+        return false;
+    if (!dragStarted)
+    {
+      dragStarted = true;
+      startDrag(eventAdapter);
+    }
+
+    osg::Matrixd transformation = osg::Matrixd::inverse
+      (gestureCamera->getProjectionMatrix() * gestureCamera->getViewport()->computeWindowMatrix());
+    osg::Vec3d temp(eventAdapter.getX(), eventAdapter.getY(), 0.0);
+    temp = transformation * temp;
+    temp.z() = 0.0;
+
+    osg::ref_ptr<osgUtil::LineSegmentIntersector> intersector = new osgUtil::LineSegmentIntersector
+            (osgUtil::Intersector::WINDOW, temp.x(), temp.y());
+    osgUtil::IntersectionVisitor iv(intersector);
+    iv.setTraversalMask(~mdv::noIntersect);
+    gestureSwitch->accept(iv);
+    
+    //look for icon intersection, but send message when intersecting lines for user feedback.
+    osg::ref_ptr<osg::Drawable> drawable;
+    osg::ref_ptr<osg::MatrixTransform> tnode;
+    osg::Vec3 hPoint;
+    for (auto &intersection : intersector->getIntersections())
+    {
+      osg::ref_ptr<osg::Drawable> tempDrawable = intersection.drawable;
+      assert(tempDrawable.valid());
+      osg::ref_ptr<osg::MatrixTransform> tempNode = dynamic_cast<osg::MatrixTransform*>
+        (tempDrawable->getParent(0)->getParent(0));
+      assert(temp.valid());
+      
+      std::string statusString;
+      if (tempNode->getUserValue<std::string>(attributeStatus, statusString))
+        node->send(msg::buildStatusMessage(statusString));
+      
+      if (tempDrawable->getName() != "Line")
+      {
+        drawable = tempDrawable;
+        tnode = tempNode;
+        hPoint = intersection.getLocalIntersectPoint();
+        break;
+      }
+    }
+    
+    if (!drawable.valid()) //no icon intersection found.
+    {
+      if (currentNodeLeft == false)
+      {
+        currentNodeLeft = true;
+        if (currentNode && (currentNode->getNodeMask() & mdv::gestureMenu))
+          spraySubNodes(temp);
+      }
+      
+      return false;
+    }
+    
+    if (tnode == currentNode)
+    {
+      if (currentNodeLeft == true)
+      {
+        currentNodeLeft = false;
+        if (currentNode->getNodeMask() & mdv::gestureMenu)
+            contractSubNodes();
+      }
+    }
+    else
+    {
+      //here we are entering an already sprayed node.
+      osg::MatrixTransform *parentNode = currentNode;
+      currentNode = tnode;
+
+      osg::Switch *geometrySwitch = dynamic_cast<osg::Switch*>(parentNode->getChild(parentNode->getNumChildren() - 1));
+      assert(geometrySwitch);
+      geometrySwitch->setAllChildrenOff();
+
+      unsigned int childIndex = parentNode->getChildIndex(currentNode);
+      for (unsigned int index = 0; index < parentNode->getNumChildren() - 1; ++index)
+      {
+        osg::MatrixTransform *childNode = dynamic_cast<osg::MatrixTransform*>(parentNode->getChild(index));
+        assert(childNode);
+        
+        osg::Switch *lineNodeSwitch = childNode->getChild(childNode->getNumChildren() - 1)->asSwitch();
+        assert(lineNodeSwitch);
+        lineNodeSwitch->setAllChildrenOff();
+
+        if (index == childIndex)
+          lineNodeSwitch->setValue(1, true);
+      }
+
+      currentNodeLeft = false;
+      aggregateMatrix = currentNode->getMatrix() * aggregateMatrix;
+    }
+  }
+  return false;
 }
 
 void Handler::spraySubNodes(osg::Vec3 cursorLocation)
 {
-    cursorLocation = cursorLocation * osg::Matrixd::inverse(aggregateMatrix);
-    osg::Vec3 direction = cursorLocation;
+  cursorLocation = cursorLocation * osg::Matrixd::inverse(aggregateMatrix);
+  osg::Vec3 direction = cursorLocation;
 
-    int childCount = currentNode->getNumChildren();
-    assert(childCount > 1);//line, icon and sub items.
-    if (childCount < 2)
-      return;
-    std::vector<osg::Vec3> locations = buildNodeLocations(direction, childCount - 1);
-    for (unsigned int index = 0; index < locations.size(); ++index)
-    {
-        osg::MatrixTransform *tempLocation = dynamic_cast<osg::MatrixTransform *>
-                (currentNode->getChild(index));
-        assert(tempLocation);
-        
-        osg::Vec3d startLocation = osg::Vec3d(0.0, 0.0, -0.001); //cheat in z to be under parent.
-        tempLocation->setMatrix(osg::Matrixd::translate(startLocation));
-        
-        gsn::NodeExpand *childAnimation = new gsn::NodeExpand(startLocation, locations.at(index), time());
-        tempLocation->setUpdateCallback(childAnimation);
+  int childCount = currentNode->getNumChildren();
+  assert(childCount > 1);//line, icon and sub items.
+  if (childCount < 2)
+    return;
+  std::vector<osg::Vec3> locations = buildNodeLocations(direction, childCount - 1);
+  for (unsigned int index = 0; index < locations.size(); ++index)
+  {
+    osg::MatrixTransform *tempLocation = dynamic_cast<osg::MatrixTransform *>
+            (currentNode->getChild(index));
+    assert(tempLocation);
+    
+    osg::Vec3d startLocation = osg::Vec3d(0.0, 0.0, -0.001); //cheat in z to be under parent.
+    tempLocation->setMatrix(osg::Matrixd::translate(startLocation));
+    
+    gsn::NodeExpand *childAnimation = new gsn::NodeExpand(startLocation, locations.at(index), time());
+    tempLocation->setUpdateCallback(childAnimation);
 
-        osg::Switch *tempSwitch = dynamic_cast<osg::Switch *>
-                (tempLocation->getChild(tempLocation->getNumChildren() - 1));
-        assert(tempSwitch);
-        tempSwitch->setAllChildrenOn();
-        
-        osg::Geometry *geometry = tempSwitch->getChild(0)->asGeometry();
-        assert(geometry);
-        osg::Vec3Array *pointArray = dynamic_cast<osg::Vec3Array *>(geometry->getVertexArray());
-        assert(pointArray);
-        (*pointArray)[1] = locations.at(index) * -1.0;
-        geometry->dirtyDisplayList();
-        geometry->dirtyBound();
-        
-        gsn::GeometryExpand *lineAnimate = new gsn::GeometryExpand
-          (osg::Vec3d(0.0, 0.0, 0.0), -locations.at(index), time());
-        geometry->setUpdateCallback(lineAnimate);
-    }
+    osg::Switch *tempSwitch = dynamic_cast<osg::Switch *>
+            (tempLocation->getChild(tempLocation->getNumChildren() - 1));
+    assert(tempSwitch);
+    tempSwitch->setAllChildrenOn();
+    
+    osg::Geometry *geometry = tempSwitch->getChild(0)->asGeometry();
+    assert(geometry);
+    osg::Vec3Array *pointArray = dynamic_cast<osg::Vec3Array *>(geometry->getVertexArray());
+    assert(pointArray);
+    (*pointArray)[1] = locations.at(index) * -1.0;
+    geometry->dirtyDisplayList();
+    geometry->dirtyBound();
+    
+    gsn::GeometryExpand *lineAnimate = new gsn::GeometryExpand
+      (osg::Vec3d(0.0, 0.0, 0.0), -locations.at(index), time());
+    geometry->setUpdateCallback(lineAnimate);
+  }
 }
 
 void Handler::contractSubNodes()
 {
-    int childCount = currentNode->getNumChildren();
-    assert(childCount > 1);//line, icon and sub items.
-    for (int index = 0; index < childCount - 1; ++index)
-    {
-        osg::MatrixTransform *tempLocation = dynamic_cast<osg::MatrixTransform *>
-                (currentNode->getChild(index));
-        assert(tempLocation);
-        
-        gsn::NodeCollapse *childAnimation = new gsn::NodeCollapse
-          (tempLocation->getMatrix().getTrans(), osg::Vec3d(0.0, 0.0, -0.001), time());
-        tempLocation->setUpdateCallback(childAnimation);
-        
-        osg::Geometry *geometry = tempLocation->getChild(tempLocation->getNumChildren() - 1)->
-          asSwitch()->getChild(0)->asGeometry();
-        assert(geometry);
-        
-        gsn::GeometryCollapse *lineAnimate = new gsn::GeometryCollapse
-          (osg::Vec3d(0.0, 0.0, 0.0), -(tempLocation->getMatrix().getTrans()), time());
-          
-        geometry->setUpdateCallback(lineAnimate);
-    }
+  int childCount = currentNode->getNumChildren();
+  assert(childCount > 1);//line, icon and sub items.
+  for (int index = 0; index < childCount - 1; ++index)
+  {
+    osg::MatrixTransform *tempLocation = dynamic_cast<osg::MatrixTransform *>(currentNode->getChild(index));
+    assert(tempLocation);
+    
+    gsn::NodeCollapse *childAnimation = new gsn::NodeCollapse
+      (tempLocation->getMatrix().getTrans(), osg::Vec3d(0.0, 0.0, -0.001), time());
+    tempLocation->setUpdateCallback(childAnimation);
+    
+    osg::Geometry *geometry = tempLocation->getChild(tempLocation->getNumChildren() - 1)->
+      asSwitch()->getChild(0)->asGeometry();
+    assert(geometry);
+    
+    gsn::GeometryCollapse *lineAnimate = new gsn::GeometryCollapse
+      (osg::Vec3d(0.0, 0.0, 0.0), -(tempLocation->getMatrix().getTrans()), time());
+      
+    geometry->setUpdateCallback(lineAnimate);
+  }
 }
 
 float Handler::time()
@@ -1395,78 +1394,78 @@ void Handler::constructMenu()
 
 std::vector<osg::Vec3> Handler::buildNodeLocations(osg::Vec3 direction, int nodeCount)
 {
-    double sprayRadius = calculateSprayRadius(nodeCount);
-    
-    osg::Vec3 point = direction;
-    point.normalize();
-    point *= sprayRadius;
+  double sprayRadius = calculateSprayRadius(nodeCount);
+  
+  osg::Vec3 point = direction;
+  point.normalize();
+  point *= sprayRadius;
 
-    double localIncludedAngle = includedAngle;
-    if (sprayRadius == minimumSprayRadius)
-    {
-        //now we limit the angle to get node separation.
-        double singleAngle = osg::RadiansToDegrees(2 * asin(nodeSpread / (sprayRadius * 2)));
-        localIncludedAngle = singleAngle * (nodeCount -1);
-    }
+  double localIncludedAngle = includedAngle;
+  if (sprayRadius == minimumSprayRadius)
+  {
+    //now we limit the angle to get node separation.
+    double singleAngle = osg::RadiansToDegrees(2 * asin(nodeSpread / (sprayRadius * 2)));
+    localIncludedAngle = singleAngle * (nodeCount -1);
+  }
 
-    double incrementAngle = localIncludedAngle / (nodeCount - 1);
-    double startAngle = localIncludedAngle / 2.0;
-    if (nodeCount < 2)
-        startAngle = 0;
-    //I am missing something why are the following 2 vectors are opposite of what I would expect?
-    osg::Matrixd startRotation = osg::Matrixd::rotate(osg::DegreesToRadians(startAngle), osg::Vec3d(0.0, 0.0, -1.0));
-    osg::Matrixd incrementRotation = osg::Matrixd::rotate(osg::DegreesToRadians(incrementAngle), osg::Vec3d(0.0, 0.0, 1.0));
-    point = (startRotation * point);
-    std::vector<osg::Vec3> pointArray;
+  double incrementAngle = localIncludedAngle / (nodeCount - 1);
+  double startAngle = localIncludedAngle / 2.0;
+  if (nodeCount < 2)
+      startAngle = 0;
+  //I am missing something why are the following 2 vectors are opposite of what I would expect?
+  osg::Matrixd startRotation = osg::Matrixd::rotate(osg::DegreesToRadians(startAngle), osg::Vec3d(0.0, 0.0, -1.0));
+  osg::Matrixd incrementRotation = osg::Matrixd::rotate(osg::DegreesToRadians(incrementAngle), osg::Vec3d(0.0, 0.0, 1.0));
+  point = (startRotation * point);
+  std::vector<osg::Vec3> pointArray;
+  pointArray.push_back(point);
+  for (int index = 0; index < nodeCount - 1; index++)
+  {
+    point = (incrementRotation * point);
     pointArray.push_back(point);
-    for (int index = 0; index < nodeCount - 1; index++)
-    {
-        point = (incrementRotation * point);
-        pointArray.push_back(point);
-    }
-    return pointArray;
+  }
+  return pointArray;
 }
 
 double Handler::calculateSprayRadius(int nodeCount)
 {
-    double segmentCount = nodeCount - 1;
-    if (segmentCount < 1)
-        return minimumSprayRadius;
-    
-    double angle = 0.0;
-    double includedAngleRadians = osg::DegreesToRadians(includedAngle);
-    
-    //try to use minimum spray radius and check against include angle.
-    angle = std::asin(nodeSpread / 2.0 / minimumSprayRadius) * 2.0;
-    if ((angle * segmentCount) < includedAngleRadians)
+  double segmentCount = nodeCount - 1;
+  if (segmentCount < 1)
       return minimumSprayRadius;
-    
-    //that didn't work so calculate angle and use to determin spray radius for node spread.
-    double halfAngle = includedAngleRadians / segmentCount / 2.0;
-    double hypt = nodeSpread / 2.0 / std::sin(halfAngle);
-    return hypt;
+  
+  double angle = 0.0;
+  double includedAngleRadians = osg::DegreesToRadians(includedAngle);
+  
+  //try to use minimum spray radius and check against include angle.
+  angle = std::asin(nodeSpread / 2.0 / minimumSprayRadius) * 2.0;
+  if ((angle * segmentCount) < includedAngleRadians)
+    return minimumSprayRadius;
+  
+  //that didn't work so calculate angle and use to determin spray radius for node spread.
+  double halfAngle = includedAngleRadians / segmentCount / 2.0;
+  double hypt = nodeSpread / 2.0 / std::sin(halfAngle);
+  return hypt;
 }
 
 void Handler::startDrag(const osgGA::GUIEventAdapter& eventAdapter)
 {
-    //send status
-    node->send(msg::buildStatusMessage(QObject::tr("Start Menu").toStdString()));
-  
-    gestureSwitch->setAllChildrenOn();
-    osg::Switch *startSwitch = dynamic_cast<osg::Switch *>(startNode->getChild(startNode->getNumChildren() - 1));
-    assert(startSwitch);
-    startSwitch->setValue(1, true);
-    currentNode = startNode;
-    currentNodeLeft = false;
+  //send status
+  node->send(msg::buildStatusMessage(QObject::tr("Start Menu").toStdString()));
 
-    osg::Matrixd t = gestureCamera->getProjectionMatrix() * gestureCamera->getViewport()->computeWindowMatrix();
-    t = osg::Matrixd::inverse(t);
-    osg::Vec3d position(osg::Vec3d(eventAdapter.getX(), eventAdapter.getY(), 0.0) * t);
-    position.z() = 0.0;
-    
-    osg::Matrixd temp = osg::Matrixd::scale(t.getScale()) * osg::Matrixd::translate(position);
-    startNode->setMatrix(temp);
-    aggregateMatrix = startNode->getMatrix();
+  gestureSwitch->setAllChildrenOn();
+  osg::Switch *startSwitch = dynamic_cast<osg::Switch *>(startNode->getChild(startNode->getNumChildren() - 1));
+  assert(startSwitch);
+  startSwitch->setValue(1, true);
+  currentNode = startNode;
+  currentNodeLeft = false;
+
+  osg::Matrixd t = gestureCamera->getProjectionMatrix() * gestureCamera->getViewport()->computeWindowMatrix();
+  t = osg::Matrixd::inverse(t);
+  osg::Vec3d position(osg::Vec3d(eventAdapter.getX(), eventAdapter.getY(), 0.0) * t);
+  position.z() = 0.0;
+  
+  osg::Matrixd temp = osg::Matrixd::scale(t.getScale()) * osg::Matrixd::translate(position);
+  startNode->setMatrix(temp);
+  aggregateMatrix = startNode->getMatrix();
 }
 
 void Handler::setupDispatcher()

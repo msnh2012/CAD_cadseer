@@ -48,67 +48,67 @@ MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
-    ui->setupUi(this);
+  ui->setupUi(this);
 
-    dagModel = new dag::Model(this);
-    dagView = new dag::View(this);
-    dagView->setScene(dagModel);
-    expressionWidget = new expr::Widget(this);
-    dlg::SplitterDecorated *subSplitter = new dlg::SplitterDecorated(this);
-    subSplitter->setOrientation(Qt::Vertical);
-    subSplitter->addWidget(expressionWidget);
-    subSplitter->addWidget(dagView);
-    subSplitter->restoreSettings("mainWindowSubSplitter");
-    
-    viewWidget = new vwr::Widget(osgViewer::ViewerBase::SingleThreaded);
-    viewWidget->setGeometry( 100, 100, 800, 600 );
-    viewWidget->setMinimumSize(QSize(100, 100)); //don't collapse view widget. osg nan erros.
-    
-    dlg::SplitterDecorated *splitter = new dlg::SplitterDecorated(this);
-    splitter->setOpaqueResize(Qt::Horizontal);
-    splitter->addWidget(viewWidget);
-    splitter->addWidget(subSplitter);
-    //size setup temp.
-    QList<int> sizes;
-    sizes.append(1000);
-    sizes.append(300);
-    splitter->setSizes(sizes);
-    splitter->setCollapsible(0, false); //don't collapse view widget. osg nan erros.
-    splitter->restoreSettings("mainWindowSplitter");
-    
-    QHBoxLayout *aLayout = new QHBoxLayout();
-    aLayout->addWidget(splitter);
-    ui->centralwidget->setLayout(aLayout);
+  dagModel = new dag::Model(this);
+  dagView = new dag::View(this);
+  dagView->setScene(dagModel);
+  expressionWidget = new expr::Widget(this);
+  dlg::SplitterDecorated *subSplitter = new dlg::SplitterDecorated(this);
+  subSplitter->setOrientation(Qt::Vertical);
+  subSplitter->addWidget(expressionWidget);
+  subSplitter->addWidget(dagView);
+  subSplitter->restoreSettings("mainWindowSubSplitter");
+  
+  viewWidget = new vwr::Widget(osgViewer::ViewerBase::SingleThreaded);
+  viewWidget->setGeometry( 100, 100, 800, 600 );
+  viewWidget->setMinimumSize(QSize(100, 100)); //don't collapse view widget. osg nan erros.
+  
+  dlg::SplitterDecorated *splitter = new dlg::SplitterDecorated(this);
+  splitter->setOpaqueResize(Qt::Horizontal);
+  splitter->addWidget(viewWidget);
+  splitter->addWidget(subSplitter);
+  //size setup temp.
+  QList<int> sizes;
+  sizes.append(1000);
+  sizes.append(300);
+  splitter->setSizes(sizes);
+  splitter->setCollapsible(0, false); //don't collapse view widget. osg nan erros.
+  splitter->restoreSettings("mainWindowSplitter");
+  
+  QHBoxLayout *aLayout = new QHBoxLayout();
+  aLayout->addWidget(splitter);
+  ui->centralwidget->setLayout(aLayout);
 
-    selectionManager = new slc::Manager(this);
-    setupSelectionToolbar();
-    
-    //add increment widgets to toolbar.
-    ui->toolBar->setContentsMargins(0, 0, 0, 0);
-    ui->toolBar->addSeparator();
-    incrementWidget = new IncrementWidgetAction
-      (this, tr("Translation Increment:"), tr("Rotation Increment:"));
-    ui->toolBar->addAction(incrementWidget);
-    
-    //build the info window.
-    infoDialog = new InfoDialog(this);
-    infoDialog->restoreSettings();
-    infoDialog->hide();
+  selectionManager = new slc::Manager(this);
+  setupSelectionToolbar();
+  
+  //add increment widgets to toolbar.
+  ui->toolBar->setContentsMargins(0, 0, 0, 0);
+  ui->toolBar->addSeparator();
+  incrementWidget = new IncrementWidgetAction
+    (this, tr("Translation Increment:"), tr("Rotation Increment:"));
+  ui->toolBar->addAction(incrementWidget);
+  
+  //build the info window.
+  infoDialog = new InfoDialog(this);
+  infoDialog->restoreSettings();
+  infoDialog->hide();
 
-    node = std::make_unique<msg::Node>();
-    node->connect(msg::hub());
-    sift = std::make_unique<msg::Sift>();
-    sift->name = "app::MainWindow";
-    node->setHandler(std::bind(&msg::Sift::receive, sift.get(), std::placeholders::_1));
-    
-    setupDispatcher();
-    
-    node->send(msg::buildSelectionMask(slc::AllEnabled));
+  node = std::make_unique<msg::Node>();
+  node->connect(msg::hub());
+  sift = std::make_unique<msg::Sift>();
+  sift->name = "app::MainWindow";
+  node->setHandler(std::bind(&msg::Sift::receive, sift.get(), std::placeholders::_1));
+  
+  setupDispatcher();
+  
+  node->send(msg::buildSelectionMask(slc::AllEnabled));
 }
 
 MainWindow::~MainWindow()
 {
-    delete ui;
+  delete ui;
 }
 
 void MainWindow::closeEvent (QCloseEvent *event)
@@ -119,35 +119,35 @@ void MainWindow::closeEvent (QCloseEvent *event)
 
 void MainWindow::setupSelectionToolbar()
 {
-    selectionManager->actionSelectObjects = ui->actionSelectObjects;
-    selectionManager->actionSelectFeatures = ui->actionSelectFeatures;
-    selectionManager->actionSelectSolids = ui->actionSelectSolids;
-    selectionManager->actionSelectShells = ui->actionSelectShells;
-    selectionManager->actionSelectFaces = ui->actionSelectFaces;
-    selectionManager->actionSelectWires = ui->actionSelectWires;
-    selectionManager->actionSelectEdges = ui->actionSelectEdges;
-    selectionManager->actionSelectVertices = ui->actionSelectVertices;
-    selectionManager->actionSelectEndPoints = ui->actionSelectEndPoints;
-    selectionManager->actionSelectMidPoints = ui->actionSelectMidPoints;
-    selectionManager->actionSelectCenterPoints = ui->actionSelectCenterPoints;
-    selectionManager->actionSelectQuadrantPoints = ui->actionSelectQuandrantPoints;
-    selectionManager->actionSelectNearestPoints = ui->actionSelectNearestPoints;
-    selectionManager->actionSelectScreenPoints = ui->actionSelectScreenPoints;
+  selectionManager->actionSelectObjects = ui->actionSelectObjects;
+  selectionManager->actionSelectFeatures = ui->actionSelectFeatures;
+  selectionManager->actionSelectSolids = ui->actionSelectSolids;
+  selectionManager->actionSelectShells = ui->actionSelectShells;
+  selectionManager->actionSelectFaces = ui->actionSelectFaces;
+  selectionManager->actionSelectWires = ui->actionSelectWires;
+  selectionManager->actionSelectEdges = ui->actionSelectEdges;
+  selectionManager->actionSelectVertices = ui->actionSelectVertices;
+  selectionManager->actionSelectEndPoints = ui->actionSelectEndPoints;
+  selectionManager->actionSelectMidPoints = ui->actionSelectMidPoints;
+  selectionManager->actionSelectCenterPoints = ui->actionSelectCenterPoints;
+  selectionManager->actionSelectQuadrantPoints = ui->actionSelectQuandrantPoints;
+  selectionManager->actionSelectNearestPoints = ui->actionSelectNearestPoints;
+  selectionManager->actionSelectScreenPoints = ui->actionSelectScreenPoints;
 
-    connect(ui->actionSelectObjects, SIGNAL(triggered(bool)), selectionManager, SLOT(triggeredObjects(bool)));
-    connect(ui->actionSelectFeatures, SIGNAL(triggered(bool)), selectionManager, SLOT(triggeredFeatures(bool)));
-    connect(ui->actionSelectSolids, SIGNAL(triggered(bool)), selectionManager, SLOT(triggeredSolids(bool)));
-    connect(ui->actionSelectShells, SIGNAL(triggered(bool)), selectionManager, SLOT(triggeredShells(bool)));
-    connect(ui->actionSelectFaces, SIGNAL(triggered(bool)), selectionManager, SLOT(triggeredFaces(bool)));
-    connect(ui->actionSelectWires, SIGNAL(triggered(bool)), selectionManager, SLOT(triggeredWires(bool)));
-    connect(ui->actionSelectEdges, SIGNAL(triggered(bool)), selectionManager, SLOT(triggeredEdges(bool)));
-    connect(ui->actionSelectVertices, SIGNAL(triggered(bool)), selectionManager, SLOT(triggeredVertices(bool)));
-    connect(ui->actionSelectEndPoints, SIGNAL(triggered(bool)), selectionManager, SLOT(triggeredEndPoints(bool)));
-    connect(ui->actionSelectMidPoints, SIGNAL(triggered(bool)), selectionManager, SLOT(triggeredMidPoints(bool)));
-    connect(ui->actionSelectCenterPoints, SIGNAL(triggered(bool)), selectionManager, SLOT(triggeredCenterPoints(bool)));
-    connect(ui->actionSelectQuandrantPoints, SIGNAL(triggered(bool)), selectionManager, SLOT(triggeredQuadrantPoints(bool)));
-    connect(ui->actionSelectNearestPoints, SIGNAL(triggered(bool)), selectionManager, SLOT(triggeredNearestPoints(bool)));
-    connect(ui->actionSelectScreenPoints, SIGNAL(triggered(bool)), selectionManager, SLOT(triggeredScreenPoints(bool)));
+  connect(ui->actionSelectObjects, SIGNAL(triggered(bool)), selectionManager, SLOT(triggeredObjects(bool)));
+  connect(ui->actionSelectFeatures, SIGNAL(triggered(bool)), selectionManager, SLOT(triggeredFeatures(bool)));
+  connect(ui->actionSelectSolids, SIGNAL(triggered(bool)), selectionManager, SLOT(triggeredSolids(bool)));
+  connect(ui->actionSelectShells, SIGNAL(triggered(bool)), selectionManager, SLOT(triggeredShells(bool)));
+  connect(ui->actionSelectFaces, SIGNAL(triggered(bool)), selectionManager, SLOT(triggeredFaces(bool)));
+  connect(ui->actionSelectWires, SIGNAL(triggered(bool)), selectionManager, SLOT(triggeredWires(bool)));
+  connect(ui->actionSelectEdges, SIGNAL(triggered(bool)), selectionManager, SLOT(triggeredEdges(bool)));
+  connect(ui->actionSelectVertices, SIGNAL(triggered(bool)), selectionManager, SLOT(triggeredVertices(bool)));
+  connect(ui->actionSelectEndPoints, SIGNAL(triggered(bool)), selectionManager, SLOT(triggeredEndPoints(bool)));
+  connect(ui->actionSelectMidPoints, SIGNAL(triggered(bool)), selectionManager, SLOT(triggeredMidPoints(bool)));
+  connect(ui->actionSelectCenterPoints, SIGNAL(triggered(bool)), selectionManager, SLOT(triggeredCenterPoints(bool)));
+  connect(ui->actionSelectQuandrantPoints, SIGNAL(triggered(bool)), selectionManager, SLOT(triggeredQuadrantPoints(bool)));
+  connect(ui->actionSelectNearestPoints, SIGNAL(triggered(bool)), selectionManager, SLOT(triggeredNearestPoints(bool)));
+  connect(ui->actionSelectScreenPoints, SIGNAL(triggered(bool)), selectionManager, SLOT(triggeredScreenPoints(bool)));
 }
 
 void MainWindow::setupDispatcher()
@@ -179,7 +179,7 @@ void MainWindow::preferencesChanged(const msg::Message&)
 
 void MainWindow::infoTextDispatched(const msg::Message&)
 {
-    infoDialog->show();
-    infoDialog->raise();
-    infoDialog->activateWindow();
+  infoDialog->show();
+  infoDialog->raise();
+  infoDialog->activateWindow();
 }

@@ -34,14 +34,14 @@ namespace msg{class Message; struct Node; struct Sift;}
 
 namespace slc
 {
-class EventHandler : public osgGA::GUIEventHandler
-{
-public:
+  class EventHandler : public osgGA::GUIEventHandler
+  {
+  public:
     EventHandler(osg::Group* viewerRootIn);
     const Containers& getSelections() const {return selectionContainers;}
     void clearSelections();
 
-protected:
+  protected:
     virtual bool handle(const osgGA::GUIEventAdapter& eventAdapter,
                         osgGA::GUIActionAdapter& actionAdapter, osg::Object *object,
                         osg::NodeVisitor *nodeVistor);
@@ -73,7 +73,7 @@ protected:
     
     slc::Container messageToContainer(const slc::Message &);
     slc::Message containerToMessage(const slc::Container &);
-};
+  };
 }
 
 #endif // SLC_SELECTIONEVENTHANDLER_H

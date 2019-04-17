@@ -33,33 +33,33 @@ namespace msg{class Message; struct Node; struct Sift;}
 
 namespace app
 {
-    class InfoWindow : public QTextEdit
-    {
-        Q_OBJECT
-    public:
-        explicit InfoWindow(QWidget *parent = 0);
-        virtual ~InfoWindow() override;
-        
-    private:
-        std::unique_ptr<msg::Node> node;
-        std::unique_ptr<msg::Sift> sift;
-        void setupDispatcher();
-        void infoTextDispatched(const msg::Message&);
-    };
-    
-    class InfoDialog : public QDialog
-    {
-        Q_OBJECT
-    public:
-        explicit InfoDialog(QWidget *parent = 0);
-        InfoWindow *infoWindow;
-        void restoreSettings();
-        void saveSettings();
-    protected:
-        virtual void resizeEvent(QResizeEvent*) override;
-        virtual void showEvent(QShowEvent*) override;
-        virtual void closeEvent(QCloseEvent*) override;
-    };
+  class InfoWindow : public QTextEdit
+  {
+    Q_OBJECT
+  public:
+    explicit InfoWindow(QWidget *parent = 0);
+    virtual ~InfoWindow() override;
+      
+  private:
+    std::unique_ptr<msg::Node> node;
+    std::unique_ptr<msg::Sift> sift;
+    void setupDispatcher();
+    void infoTextDispatched(const msg::Message&);
+  };
+
+  class InfoDialog : public QDialog
+  {
+    Q_OBJECT
+  public:
+    explicit InfoDialog(QWidget *parent = 0);
+    InfoWindow *infoWindow;
+    void restoreSettings();
+    void saveSettings();
+  protected:
+    virtual void resizeEvent(QResizeEvent*) override;
+    virtual void showEvent(QShowEvent*) override;
+    virtual void closeEvent(QCloseEvent*) override;
+  };
 }
 
 #endif // APP_INFOWINDOW_H

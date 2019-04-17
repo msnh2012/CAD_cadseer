@@ -39,10 +39,10 @@ namespace msg{class Message; struct Node; struct Sift;}
 
 namespace vwr
 {
-class Widget : public QWidget, public osgViewer::CompositeViewer
-{
+  class Widget : public QWidget, public osgViewer::CompositeViewer
+  {
     Q_OBJECT
-public:
+  public:
     Widget(osgViewer::ViewerBase::ThreadingModel threadingModel=osgViewer::CompositeViewer::SingleThreaded);
     virtual ~Widget() override;
     
@@ -63,7 +63,7 @@ public:
     
     QWidget* getGraphicsWidget(); //!< needed to forward spaceball events.
 
-protected:
+  protected:
     QPixmap loadCursor();
     void createMainCamera(osg::Camera *camera);
     osg::Camera* createBackgroundCamera();
@@ -114,15 +114,14 @@ protected:
     
     void serialRead();
     void serialWrite();
-};
+  };
 
-class StatsHandler : public osgViewer::StatsHandler
-{
-public:
-  virtual void collectWhichCamerasToRenderStatsFor
-    (osgViewer::ViewerBase *, osgViewer::ViewerBase::Cameras &) override;
-};
-
+  class StatsHandler : public osgViewer::StatsHandler
+  {
+  public:
+    virtual void collectWhichCamerasToRenderStatsFor
+      (osgViewer::ViewerBase *, osgViewer::ViewerBase::Cameras &) override;
+  };
 }
 
 #endif // VWR_WIDGET_H

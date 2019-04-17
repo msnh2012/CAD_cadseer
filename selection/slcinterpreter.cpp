@@ -86,15 +86,15 @@ void Interpreter::go()
       {
         if (canSelectFeatures(selectionMask))
         {
-            container.selectionType = Type::Feature;
-            add(containersOut, container);
-            continue;
+          container.selectionType = Type::Feature;
+          add(containersOut, container);
+          continue;
         }
         if (canSelectObjects(selectionMask))
         {
-            container.selectionType = Type::Object;
-            add(containersOut, container);
-            continue;
+          container.selectionType = Type::Object;
+          add(containersOut, container);
+          continue;
         }
       }
       continue;
@@ -138,65 +138,65 @@ void Interpreter::go()
 
         auto updateSnaps = [&](const std::vector<osg::Vec3d> &vecIn) -> bool
         {
-            bool out = false;
-            for (const auto& point : vecIn)
-            {
+          bool out = false;
+          for (const auto& point : vecIn)
+          {
             double tempDistance = (iPoint - point).length2();
             if (tempDistance < distance)
             {
-                snapPoint = point;
-                distance = tempDistance;
-                out = true;
+              snapPoint = point;
+              distance = tempDistance;
+              out = true;
             }
-            }
-            return out;
+          }
+          return out;
         };
 
         if (canSelectEndPoints(selectionMask))
         {
-            std::vector<osg::Vec3d> endPoints = sShape.useGetEndPoints(selectedId);
-            if (endPoints.size() > 0)
-            {
-                std::vector<osg::Vec3d> startPoint;
-                startPoint.push_back(endPoints.at(0));
-                if (updateSnaps(startPoint))
-                    sType = slc::Type::StartPoint;
-            }
-            if (endPoints.size() > 1)
-            {
-                std::vector<osg::Vec3d> endPoint;
-                endPoint.push_back(endPoints.at(1));
-                if (updateSnaps(endPoints))
-                    sType = slc::Type::EndPoint;
-            }
+          std::vector<osg::Vec3d> endPoints = sShape.useGetEndPoints(selectedId);
+          if (endPoints.size() > 0)
+          {
+            std::vector<osg::Vec3d> startPoint;
+            startPoint.push_back(endPoints.at(0));
+            if (updateSnaps(startPoint))
+              sType = slc::Type::StartPoint;
+          }
+          if (endPoints.size() > 1)
+          {
+            std::vector<osg::Vec3d> endPoint;
+            endPoint.push_back(endPoints.at(1));
+            if (updateSnaps(endPoints))
+              sType = slc::Type::EndPoint;
+          }
         }
 
         if (canSelectMidPoints(selectionMask))
         {
-            std::vector<osg::Vec3d> midPoints = sShape.useGetMidPoint(selectedId);
-            if (updateSnaps(midPoints))
-                sType = slc::Type::MidPoint;
+          std::vector<osg::Vec3d> midPoints = sShape.useGetMidPoint(selectedId);
+          if (updateSnaps(midPoints))
+            sType = slc::Type::MidPoint;
         }
 
         if (canSelectCenterPoints(selectionMask))
         {
-            std::vector<osg::Vec3d> centerPoints = sShape.useGetCenterPoint(selectedId);
-            if (updateSnaps(centerPoints))
-                sType = slc::Type::CenterPoint;
+          std::vector<osg::Vec3d> centerPoints = sShape.useGetCenterPoint(selectedId);
+          if (updateSnaps(centerPoints))
+            sType = slc::Type::CenterPoint;
         }
 
         if (canSelectQuadrantPoints(selectionMask))
         {
-            std::vector<osg::Vec3d> quadrantPoints = sShape.useGetQuadrantPoints(selectedId);
-            if (updateSnaps(quadrantPoints))
-                sType = slc::Type::QuadrantPoint;
+          std::vector<osg::Vec3d> quadrantPoints = sShape.useGetQuadrantPoints(selectedId);
+          if (updateSnaps(quadrantPoints))
+            sType = slc::Type::QuadrantPoint;
         }
 
         if (canSelectNearestPoints(selectionMask))
         {
-            std::vector<osg::Vec3d> nearestPoints = sShape.useGetNearestPoint(selectedId, worldPoint);
-            if (updateSnaps(nearestPoints))
-            sType = slc::Type::NearestPoint;
+          std::vector<osg::Vec3d> nearestPoints = sShape.useGetNearestPoint(selectedId, worldPoint);
+          if (updateSnaps(nearestPoints))
+          sType = slc::Type::NearestPoint;
         }
         container.selectionType = sType;
         container.shapeId = selectedId;
@@ -215,15 +215,14 @@ void Interpreter::go()
         //only select 'faceless' wires through an edge.
         //if the wire has a face it will be selected through
         //face intersection.
-
         uuid edgeId = selectedId;
         std::vector<uuid> wireIds = sShape.useGetFacelessWires(edgeId);
         if (!wireIds.empty())
         {
-            container.selectionType = Type::Wire;
-            container.selectionIds = sShape.useGetChildrenOfType(wireIds.front(), TopAbs_EDGE);
-            container.shapeId = wireIds.front();
-            add(containersOut, container);
+          container.selectionType = Type::Wire;
+          container.selectionIds = sShape.useGetChildrenOfType(wireIds.front(), TopAbs_EDGE);
+          container.shapeId = wireIds.front();
+          add(containersOut, container);
         }
       }
       if (canSelectObjects(selectionMask))
@@ -236,10 +235,10 @@ void Interpreter::go()
         uuid wire = sShape.useGetClosestWire(selectedId, worldPoint);
         if (!wire.is_nil())
         {
-            container.selectionIds = sShape.useGetChildrenOfType(wire, TopAbs_EDGE);
-            container.selectionType = Type::Wire;
-            container.shapeId = wire;
-            add(containersOut, container);
+          container.selectionIds = sShape.useGetChildrenOfType(wire, TopAbs_EDGE);
+          container.selectionType = Type::Wire;
+          container.shapeId = wire;
+          add(containersOut, container);
         }
       }
       if (canSelectFaces(selectionMask))
@@ -254,13 +253,13 @@ void Interpreter::go()
         std::vector<uuid> shells = sShape.useGetParentsOfType(selectedId, TopAbs_SHELL);
         if (shells.size() == 1)
         {
-            container.selectionType = Type::Shell;
-            container.shapeId = shells.at(0);
-            if (!has(containersOut, container)) //don't run again
-            {
-                container.selectionIds = sShape.useGetChildrenOfType(shells.at(0), TopAbs_FACE);
-                add(containersOut, container);
-            }
+          container.selectionType = Type::Shell;
+          container.shapeId = shells.at(0);
+          if (!has(containersOut, container)) //don't run again
+          {
+            container.selectionIds = sShape.useGetChildrenOfType(shells.at(0), TopAbs_FACE);
+            add(containersOut, container);
+          }
         }
       }
       if (canSelectSolids(selectionMask))
@@ -269,13 +268,13 @@ void Interpreter::go()
         //should be only 1 solid
         if (solids.size() == 1)
         {
-            container.selectionType = Type::Solid;
-            container.shapeId = solids.at(0);
-            if (!has(containersOut, container)) //don't run again
-            {
-                container.selectionIds = sShape.useGetChildrenOfType(solids.at(0), TopAbs_FACE);
-                add(containersOut, container);
-            }
+          container.selectionType = Type::Solid;
+          container.shapeId = solids.at(0);
+          if (!has(containersOut, container)) //don't run again
+          {
+            container.selectionIds = sShape.useGetChildrenOfType(solids.at(0), TopAbs_FACE);
+            add(containersOut, container);
+          }
         }
       }
       if (canSelectObjects(selectionMask))
