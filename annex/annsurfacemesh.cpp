@@ -46,9 +46,9 @@ using namespace nglib;
 
 #include "tools/occtools.h"
 #include "project/serial/xsdcxxoutput/mesh.h"
-#include "mesh/parameters.h"
-#include "mesh/mesh.h"
-#include "annex/surfacemesh.h"
+#include "mesh/mshparameters.h"
+#include "mesh/mshmesh.h"
+#include "annex/annsurfacemesh.h"
 
 using namespace ann;
 

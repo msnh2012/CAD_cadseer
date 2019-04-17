@@ -26,8 +26,8 @@
 #include <QObject>
 #include <QProcess> //for enums.
 
-#include <lod/message.h>
-#include <message/message.h>
+#include "lod/lodmessage.h"
+#include "message/msgmessage.h"
 
 class QTimer;
 namespace msg{struct Node; struct Sift;}

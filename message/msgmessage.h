@@ -24,7 +24,7 @@
 #include <functional>
 #include <memory>
 
-#include "selection/definitions.h"
+#include "selection/slcdefinitions.h"
 
 namespace boost{namespace uuids{class uuid;}}
 

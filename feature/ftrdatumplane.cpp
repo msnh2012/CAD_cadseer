@@ -41,25 +41,25 @@
 #include <osg/MatrixTransform>
 #include <osg/Switch>
 
-#include <tools/infotools.h>
-#include <globalutilities.h>
-#include <preferences/preferencesXML.h>
-#include <preferences/manager.h>
-#include <modelviz/nodemaskdefs.h>
-#include <library/ipgroup.h>
-#include <library/csysdragger.h>
-#include <library/plabel.h>
-#include <annex/csysdragger.h>
-#include <modelviz/datumplane.h>
-#include <annex/seershape.h>
-#include <feature/updatepayload.h>
-#include <feature/inputtype.h>
-#include <project/serial/xsdcxxoutput/featuredatumplane.h>
-#include <tools/featuretools.h>
-#include <tools/occtools.h>
-#include <parameter/parameter.h>
-#include <feature/datumaxis.h>
-#include <feature/datumplane.h>
+#include "tools/infotools.h"
+#include "globalutilities.h"
+#include "preferences/preferencesXML.h"
+#include "preferences/prfmanager.h"
+#include "modelviz/mdvnodemaskdefs.h"
+#include "library/lbripgroup.h"
+#include "library/lbrcsysdragger.h"
+#include "library/lbrplabel.h"
+#include "annex/anncsysdragger.h"
+#include "modelviz/mdvdatumplane.h"
+#include "annex/annseershape.h"
+#include "feature/ftrupdatepayload.h"
+#include "feature/ftrinputtype.h"
+#include "project/serial/xsdcxxoutput/featuredatumplane.h"
+#include "tools/featuretools.h"
+#include "tools/occtools.h"
+#include "parameter/prmparameter.h"
+#include "feature/ftrdatumaxis.h"
+#include "feature/ftrdatumplane.h"
 
 using namespace ftr;
 

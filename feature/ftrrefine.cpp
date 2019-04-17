@@ -24,13 +24,13 @@
 
 #include <osg/Switch>
 
-#include <tools/idtools.h>
-#include <globalutilities.h>
-#include <project/serial/xsdcxxoutput/featurerefine.h>
-#include <annex/seershape.h>
-#include <feature/updatepayload.h>
-#include <feature/inputtype.h>
-#include <feature/refine.h>
+#include "tools/idtools.h"
+#include "globalutilities.h"
+#include "project/serial/xsdcxxoutput/featurerefine.h"
+#include "annex/annseershape.h"
+#include "feature/ftrupdatepayload.h"
+#include "feature/ftrinputtype.h"
+#include "feature/ftrrefine.h"
 
 using namespace ftr;
 

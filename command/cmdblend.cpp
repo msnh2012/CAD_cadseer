@@ -20,18 +20,18 @@
 #include <TopoDS.hxx>
 #include <TopoDS_Edge.hxx>
 
-#include <application/application.h>
-#include <application/mainwindow.h>
-#include <project/project.h>
-#include <selection/eventhandler.h>
-#include <annex/seershape.h>
-#include <message/node.h>
-#include <parameter/parameter.h>
-#include <feature/inputtype.h>
-#include <feature/blend.h>
-#include <dialogs/parameter.h>
-#include <dialogs/blend.h>
-#include <command/blend.h>
+#include "application/appapplication.h"
+#include "application/appmainwindow.h"
+#include "project/prjproject.h"
+#include "selection/slceventhandler.h"
+#include "annex/annseershape.h"
+#include "message/msgnode.h"
+#include "parameter/prmparameter.h"
+#include "feature/ftrinputtype.h"
+#include "feature/ftrblend.h"
+#include "dialogs/dlgparameter.h"
+#include "dialogs/dlgblend.h"
+#include "command/cmdblend.h"
 
 using namespace cmd;
 

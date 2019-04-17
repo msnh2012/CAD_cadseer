@@ -28,15 +28,15 @@
 #include <osg/Switch>
 #include <osg/AutoTransform>
 
-#include <application/application.h>
-#include <parameter/parameter.h>
-#include <preferences/preferencesXML.h>
-#include <preferences/manager.h>
-#include <message/message.h>
-#include <project/serial/xsdcxxoutput/featurebase.h>
-#include <library/lineardimension.h>
-#include <library/lineardragger.h>
-#include <library/ipgroup.h>
+#include "application/appapplication.h"
+#include "parameter/prmparameter.h"
+#include "preferences/preferencesXML.h"
+#include "preferences/prfmanager.h"
+#include "message/msgmessage.h"
+#include "project/serial/xsdcxxoutput/featurebase.h"
+#include "library/lbrlineardimension.h"
+#include "library/lbrlineardragger.h"
+#include "library/lbripgroup.h"
 
 using namespace lbr;
 

@@ -17,7 +17,7 @@
  *
  */
 
-#include <viewer/spaceballosgevent.h>
+#include "viewer/vwrspaceballosgevent.h"
 
 using namespace vwr;
 

@@ -25,7 +25,7 @@
 #include <osg/Switch>
 #include <osg/Material>
 
-#include <gesture/animations.h>
+#include "gesture/gsnanimations.h"
 
 using namespace osg;
 using namespace osgAnimation;

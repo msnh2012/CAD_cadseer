@@ -30,19 +30,19 @@
 #include <osg/Switch>
 #include <osgUtil/PolytopeIntersector>
 
-#include <modelviz/nodemaskdefs.h>
-#include <globalutilities.h>
-#include <application/application.h>
-#include <project/project.h>
-#include <feature/base.h>
-#include <annex/seershape.h>
-#include <message/node.h>
-#include <message/sift.h>
-#include <selection/message.h>
-#include <selection/definitions.h>
-#include <selection/interpreter.h>
-#include <selection/intersection.h>
-#include <selection/eventhandler.h>
+#include "modelviz/mdvnodemaskdefs.h"
+#include "globalutilities.h"
+#include "application/appapplication.h"
+#include "project/prjproject.h"
+#include "feature/ftrbase.h"
+#include "annex/annseershape.h"
+#include "message/msgnode.h"
+#include "message/msgsift.h"
+#include "selection/slcmessage.h"
+#include "selection/slcdefinitions.h"
+#include "selection/slcinterpreter.h"
+#include "selection/slcintersection.h"
+#include "selection/slceventhandler.h"
 
 using namespace osg;
 using namespace boost::uuids;

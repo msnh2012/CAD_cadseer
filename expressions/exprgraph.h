@@ -27,8 +27,8 @@
 #include <boost/graph/depth_first_search.hpp>
 #include <boost/graph/breadth_first_search.hpp>
 
-#include <expressions/abstractnode.h>
-#include <expressions/edgeproperty.h>
+#include "expressions/exprabstractnode.h"
+#include "expressions/expredgeproperty.h"
 
 namespace expr{
 

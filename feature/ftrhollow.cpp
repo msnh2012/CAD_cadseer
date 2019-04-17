@@ -29,20 +29,20 @@
 
 #include <osg/Switch>
 
-#include <globalutilities.h>
-#include <preferences/preferencesXML.h>
-#include <preferences/manager.h>
-#include <annex/seershape.h>
-#include <feature/shapecheck.h>
-#include <library/plabel.h>
-#include <project/serial/xsdcxxoutput/featurehollow.h>
-#include <tools/featuretools.h>
-#include <tools/idtools.h>
-#include <tools/occtools.h>
-#include <feature/updatepayload.h>
-#include <feature/inputtype.h>
-#include <parameter/parameter.h>
-#include <feature/hollow.h>
+#include "globalutilities.h"
+#include "preferences/preferencesXML.h"
+#include "preferences/prfmanager.h"
+#include "annex/annseershape.h"
+#include "feature/ftrshapecheck.h"
+#include "library/lbrplabel.h"
+#include "project/serial/xsdcxxoutput/featurehollow.h"
+#include "tools/featuretools.h"
+#include "tools/idtools.h"
+#include "tools/occtools.h"
+#include "feature/ftrupdatepayload.h"
+#include "feature/ftrinputtype.h"
+#include "parameter/prmparameter.h"
+#include "feature/ftrhollow.h"
 
 using namespace ftr;
 

@@ -19,17 +19,17 @@
 
 #include <TopoDS.hxx>
 
-#include <application/application.h>
-#include <application/mainwindow.h>
-#include <selection/eventhandler.h>
-#include <message/node.h>
-#include <project/project.h>
-#include <annex/seershape.h>
-#include <feature/inputtype.h>
-#include <feature/squash.h>
-#include <tools/occtools.h>
-#include <tools/idtools.h>
-#include <command/squash.h>
+#include "application/appapplication.h"
+#include "application/appmainwindow.h"
+#include "selection/slceventhandler.h"
+#include "message/msgnode.h"
+#include "project/prjproject.h"
+#include "annex/annseershape.h"
+#include "feature/ftrinputtype.h"
+#include "feature/ftrsquash.h"
+#include "tools/occtools.h"
+#include "tools/idtools.h"
+#include "command/cmdsquash.h"
 
 using namespace cmd;
 using boost::uuids::uuid;

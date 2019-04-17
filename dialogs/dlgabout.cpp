@@ -19,8 +19,8 @@
 
 #include <QPainter>
 
-#include <dialogs/about.h>
-#include <ui_about.h> //in build directory
+#include "dialogs/dlgabout.h"
+#include "ui_dlgabout.h" //in build directory
 
 using namespace dlg;
 

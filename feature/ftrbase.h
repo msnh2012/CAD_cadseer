@@ -31,9 +31,9 @@
 #include <osg/ref_ptr>
 #include <osg/Vec4>
 
-#include <feature/types.h>
-#include <feature/states.h>
-#include <annex/base.h>
+#include "feature/ftrtypes.h"
+#include "feature/ftrstates.h"
+#include "annex/annbase.h"
 
 namespace boost {namespace filesystem {class path;}}
 

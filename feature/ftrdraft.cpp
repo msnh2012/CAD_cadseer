@@ -32,19 +32,19 @@
 
 #include <osg/Switch>
 
-#include <globalutilities.h>
-#include <tools/idtools.h>
-#include <preferences/preferencesXML.h>
-#include <preferences/manager.h>
-#include <feature/shapecheck.h>
-#include <library/plabel.h>
-#include <project/serial/xsdcxxoutput/featuredraft.h>
-#include <annex/seershape.h>
-#include <tools/featuretools.h>
-#include <feature/updatepayload.h>
-#include <feature/inputtype.h>
-#include <parameter/parameter.h>
-#include <feature/draft.h>
+#include "globalutilities.h"
+#include "tools/idtools.h"
+#include "preferences/preferencesXML.h"
+#include "preferences/prfmanager.h"
+#include "feature/ftrshapecheck.h"
+#include "library/lbrplabel.h"
+#include "project/serial/xsdcxxoutput/featuredraft.h"
+#include "annex/annseershape.h"
+#include "tools/featuretools.h"
+#include "feature/ftrupdatepayload.h"
+#include "feature/ftrinputtype.h"
+#include "parameter/prmparameter.h"
+#include "feature/ftrdraft.h"
 
 using namespace ftr;
 using boost::uuids::uuid;

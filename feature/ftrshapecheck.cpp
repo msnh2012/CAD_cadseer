@@ -20,8 +20,8 @@
 #include <TopoDS_Shape.hxx>
 #include <BRepCheck_Analyzer.hxx>
 
-#include <tools/occtools.h>
-#include <feature/shapecheck.h>
+#include "tools/occtools.h"
+#include "feature/ftrshapecheck.h"
 
 namespace ftr
 {

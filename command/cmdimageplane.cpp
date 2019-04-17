@@ -21,13 +21,13 @@
 
 #include <QFileDialog>
 
-#include <preferences/preferencesXML.h>
-#include <preferences/manager.h>
-#include "application/mainwindow.h"
-#include "application/application.h"
-#include "project/project.h"
+#include "preferences/preferencesXML.h"
+#include "preferences/prfmanager.h"
+#include "application/appmainwindow.h"
+#include "application/appapplication.h"
+#include "project/prjproject.h"
 #include "viewer/vwrwidget.h"
-#include "message/node.h"
+#include "message/msgnode.h"
 #include "feature/ftrimageplane.h"
 #include "command/cmdimageplane.h"
 

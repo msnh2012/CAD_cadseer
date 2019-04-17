@@ -17,8 +17,8 @@
  *
  */
 
-#include <tools/idtools.h>
-#include <project/message.h>
+#include "tools/idtools.h"
+#include "project/prjmessage.h"
 
 prj::Message::Message()
 {

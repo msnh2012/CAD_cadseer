@@ -22,10 +22,10 @@
 #include <QTextStream>
 #include <QPen>
 
-#include <tools/idtools.h>
-#include <tools/graphtools.h>
-#include <feature/states.h>
-#include <dagview/stow.h>
+#include "tools/idtools.h"
+#include "tools/graphtools.h"
+#include "feature/ftrstates.h"
+#include "dagview/dagstow.h"
 
 using namespace dag;
 

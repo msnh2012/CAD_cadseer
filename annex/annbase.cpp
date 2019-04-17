@@ -19,7 +19,7 @@
 
 #include <boost/bimap.hpp>
 #include <boost/assign/list_of.hpp>
-#include <annex/base.h>
+#include "annex/annbase.h"
 
 using namespace ann;
 

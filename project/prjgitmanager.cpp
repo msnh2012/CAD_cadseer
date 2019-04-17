@@ -22,21 +22,21 @@
 
 #include <boost/filesystem.hpp>
 
-#include <subprojects/libgit2pp/src/index.hpp>
-#include <subprojects/libgit2pp/src/object.hpp>
-#include <subprojects/libgit2pp/src/commit.hpp>
-#include <subprojects/libgit2pp/src/branch.hpp>
-#include <subprojects/libgit2pp/src/ref.hpp>
-#include <subprojects/libgit2pp/src/signature.hpp>
-#include <subprojects/libgit2pp/src/exception.hpp>
-#include <subprojects/libgit2pp/src/revwalk.hpp>
+#include "subprojects/libgit2pp/src/index.hpp"
+#include "subprojects/libgit2pp/src/object.hpp"
+#include "subprojects/libgit2pp/src/commit.hpp"
+#include "subprojects/libgit2pp/src/branch.hpp"
+#include "subprojects/libgit2pp/src/ref.hpp"
+#include "subprojects/libgit2pp/src/signature.hpp"
+#include "subprojects/libgit2pp/src/exception.hpp"
+#include "subprojects/libgit2pp/src/revwalk.hpp"
 
-#include <preferences/preferencesXML.h>
-#include <preferences/manager.h>
-#include <message/node.h>
-#include <message/sift.h>
-#include <project/message.h>
-#include <project/gitmanager.h>
+#include "preferences/preferencesXML.h"
+#include "preferences/prfmanager.h"
+#include "message/msgnode.h"
+#include "message/msgsift.h"
+#include "project/prjmessage.h"
+#include "project/prjgitmanager.h"
 
 using namespace prj;
 using namespace git2;

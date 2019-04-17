@@ -24,7 +24,7 @@
 
 #include <osg/Group>
 
-#include <tools/occtools.h>
+#include "tools/occtools.h"
 
 namespace ann{class SurfaceMesh;}
 

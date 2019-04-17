@@ -25,9 +25,9 @@
 #include <boost/graph/filtered_graph.hpp>
 #include <boost/current_function.hpp>
 
-#include <expressions/grammar.h>
-#include <expressions/stringtranslatorstow.h>
-#include <tools/graphtools.h>
+#include "expressions/exprgrammar.h"
+#include "expressions/exprstringtranslatorstow.h"
+#include "tools/graphtools.h"
 
 using namespace expr;
 

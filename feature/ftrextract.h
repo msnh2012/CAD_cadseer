@@ -22,10 +22,10 @@
 
 #include <osg/ref_ptr>
 
-#include <tools/idtools.h>
-#include <library/plabel.h>
-#include <feature/pick.h>
-#include <feature/base.h>
+#include "tools/idtools.h"
+#include "library/lbrplabel.h"
+#include "feature/ftrpick.h"
+#include "feature/ftrbase.h"
 
 namespace prj{namespace srl{class FeatureExtract;}}
 namespace ann{class SeerShape;}

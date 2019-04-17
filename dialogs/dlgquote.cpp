@@ -33,19 +33,19 @@
 #include <QTimer>
 #include <QFileDialog>
 
-#include <preferences/preferencesXML.h>
-#include <preferences/manager.h>
-#include <application/application.h>
-#include <application/mainwindow.h>
-#include <message/message.h>
-#include <viewer/vwrwidget.h>
-#include <project/project.h>
-#include <feature/inputtype.h>
-#include <parameter/parameter.h>
-#include <feature/quote.h>
-#include <dialogs/widgetgeometry.h>
-#include <dialogs/selectionbutton.h>
-#include <dialogs/quote.h>
+#include "preferences/preferencesXML.h"
+#include "preferences/prfmanager.h"
+#include "application/appapplication.h"
+#include "application/appmainwindow.h"
+#include "message/msgmessage.h"
+#include "viewer/vwrwidget.h"
+#include "project/prjproject.h"
+#include "feature/ftrinputtype.h"
+#include "parameter/prmparameter.h"
+#include "feature/ftrquote.h"
+#include "dialogs/dlgwidgetgeometry.h"
+#include "dialogs/dlgselectionbutton.h"
+#include "dialogs/dlgquote.h"
 
 using namespace dlg;
 

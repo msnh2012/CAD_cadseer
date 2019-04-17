@@ -24,7 +24,7 @@
 
 #include <QString>
 
-#include <feature/states.h>
+#include "feature/ftrstates.h"
 
 namespace ftr
 {

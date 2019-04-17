@@ -24,7 +24,7 @@
 #include <osgManipulator/Dragger>
 #include <osgManipulator/Projector>
 #include <osgManipulator/Constraint>
-#include "circleprojector.h"
+#include "library/lbrcircleprojector.h"
 
 namespace lbr
 {

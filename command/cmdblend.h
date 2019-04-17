@@ -20,7 +20,7 @@
 #ifndef CMD_BLEND_H
 #define CMD_BLEND_H
 
-#include <command/base.h>
+#include "command/cmdbase.h"
 
 namespace dlg{class Blend;}
 namespace ftr{class Blend;}

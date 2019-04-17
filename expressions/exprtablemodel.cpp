@@ -30,16 +30,16 @@
 
 #include <osg/Geometry> //yuck!
 
-#include <tools/idtools.h>
-#include <application/application.h>
-#include <project/project.h>
-#include <message/node.h>
-#include <message/sift.h>
-#include <selection/message.h>
-#include <feature/base.h>
-#include <expressions/manager.h>
-#include <expressions/stringtranslator.h>
-#include <expressions/tablemodel.h>
+#include "tools/idtools.h"
+#include "application/appapplication.h"
+#include "project/prjproject.h"
+#include "message/msgnode.h"
+#include "message/msgsift.h"
+#include "selection/slcmessage.h"
+#include "feature/ftrbase.h"
+#include "expressions/exprmanager.h"
+#include "expressions/exprstringtranslator.h"
+#include "expressions/exprtablemodel.h"
 
 using namespace expr;
 

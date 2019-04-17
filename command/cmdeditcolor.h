@@ -20,7 +20,7 @@
 #ifndef CMD_EDITCOLOR_H
 #define CMD_EDITCOLOR_H
 
-#include <command/base.h>
+#include "command/cmdbase.h"
 
 class QColorDialog;
 

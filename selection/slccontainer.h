@@ -23,9 +23,9 @@
 #include <osg/ref_ptr>
 #include <osg/Vec3d>
 
-#include <tools/idtools.h>
-#include <feature/types.h>
-#include <selection/definitions.h>
+#include "tools/idtools.h"
+#include "feature/ftrtypes.h"
+#include "selection/slcdefinitions.h"
 
 namespace osg {class Geometry;}
 

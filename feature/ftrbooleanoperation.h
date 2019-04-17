@@ -22,7 +22,7 @@
 
 #include <BRepAlgoAPI_BooleanOperation.hxx>
 
-#include <tools/occtools.h>
+#include "tools/occtools.h"
 
 class BOPAlgo_Builder;
 

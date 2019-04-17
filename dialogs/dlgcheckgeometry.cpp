@@ -50,20 +50,20 @@
 #include <osg/PolygonMode>
 #include <osg/Switch>
 
-#include <globalutilities.h>
-#include <application/application.h>
-#include <project/message.h>
-#include <feature/base.h>
-#include <feature/message.h>
-#include <annex/seershape.h>
-#include <message/node.h>
-#include <message/sift.h>
-#include <selection/message.h>
-#include <tools/idtools.h>
-#include <tools/occtools.h>
-#include <library/spherebuilder.h>
-#include <dialogs/widgetgeometry.h>
-#include <dialogs/checkgeometry.h>
+#include "globalutilities.h"
+#include "application/appapplication.h"
+#include "project/prjmessage.h"
+#include "feature/ftrbase.h"
+#include "feature/ftrmessage.h"
+#include "annex/annseershape.h"
+#include "message/msgnode.h"
+#include "message/msgsift.h"
+#include "selection/slcmessage.h"
+#include "tools/idtools.h"
+#include "tools/occtools.h"
+#include "library/lbrspherebuilder.h"
+#include "dialogs/dlgwidgetgeometry.h"
+#include "dialogs/dlgcheckgeometry.h"
 
 using namespace dlg;
 using boost::uuids::uuid;

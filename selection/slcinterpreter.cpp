@@ -19,16 +19,16 @@
 
 #include <cassert>
 
-#include <globalutilities.h>
-#include <tools/idtools.h>
-#include <modelviz/nodemaskdefs.h>
-#include <application/application.h>
-#include <project/project.h>
-#include <feature/base.h>
-#include <annex/seershape.h>
-#include <modelviz/shapegeometry.h>
-#include <selection/visitors.h>
-#include <selection/interpreter.h>
+#include "globalutilities.h"
+#include "tools/idtools.h"
+#include "modelviz/mdvnodemaskdefs.h"
+#include "application/appapplication.h"
+#include "project/prjproject.h"
+#include "feature/ftrbase.h"
+#include "annex/annseershape.h"
+#include "modelviz/mdvshapegeometry.h"
+#include "selection/slcvisitors.h"
+#include "selection/slcinterpreter.h"
 
 using namespace slc;
 

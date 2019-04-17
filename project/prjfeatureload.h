@@ -28,7 +28,7 @@
 
 #include <boost/filesystem/path.hpp>
 
-#include <tools/shapevector.h>
+#include "tools/shapevector.h"
 
 class TopoDS_Shape;
 

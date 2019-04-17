@@ -24,7 +24,7 @@
 
 #include <osg/NodeCallback>
 
-#include "library/rangemask.h"
+#include "library/lbrrangemask.h"
 
 namespace osg
 {

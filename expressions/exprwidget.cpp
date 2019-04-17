@@ -31,16 +31,16 @@
 #include <QTextEdit>
 #include <QTextStream>
 
-#include <tools/idtools.h>
-#include <application/application.h>
-#include <dialogs/splitterdecorated.h>
-#include <message/node.h>
-#include <message/sift.h>
-#include <expressions/tablemodel.h>
-#include <expressions/tableview.h>
-#include <expressions/manager.h>
-#include <expressions/widget.h>
-#include <project/project.h>
+#include "tools/idtools.h"
+#include "application/appapplication.h"
+#include "dialogs/dlgsplitterdecorated.h"
+#include "message/msgnode.h"
+#include "message/msgsift.h"
+#include "expressions/exprtablemodel.h"
+#include "expressions/exprtableview.h"
+#include "expressions/exprmanager.h"
+#include "expressions/exprwidget.h"
+#include "project/prjproject.h"
 
 using namespace expr;
 

@@ -20,8 +20,8 @@
 #ifndef SLC_INTERPRETER_H
 #define SLC_INTERPRETER_H
 
-#include <selection/container.h>
-#include <selection/intersection.h>
+#include "selection/slccontainer.h"
+#include "selection/slcintersection.h"
 
 namespace slc
 {

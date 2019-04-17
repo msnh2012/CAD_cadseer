@@ -22,15 +22,15 @@
 #include <TopoDS.hxx>
 #include <BRep_Tool.hxx>
 
-#include <globalutilities.h>
-#include <annex/seershape.h>
-#include <selection/message.h>
-#include <selection/container.h>
-#include <feature/shapehistory.h>
-#include <feature/pick.h>
-#include <feature/base.h>
-#include <tools/idtools.h>
-#include <tools/featuretools.h>
+#include "globalutilities.h"
+#include "annex/annseershape.h"
+#include "selection/slcmessage.h"
+#include "selection/slccontainer.h"
+#include "feature/ftrshapehistory.h"
+#include "feature/ftrpick.h"
+#include "feature/ftrbase.h"
+#include "tools/idtools.h"
+#include "tools/featuretools.h"
 
 using boost::uuids::uuid;
 

@@ -23,7 +23,7 @@
 #include <memory>
 #include <vector>
 
-#include "message/message.h"
+#include "message/msgmessage.h"
 
 namespace boost{namespace signals2{class shared_connection_block;}}
 

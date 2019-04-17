@@ -28,15 +28,15 @@
 #include <osgManipulator/Constraint>
 #include <osgUtil/SmoothingVisitor>
 
-#include <application/application.h>
-#include <globalutilities.h>
-#include <tools/idtools.h>
-#include <modelviz/nodemaskdefs.h>
-#include <preferences/preferencesXML.h>
-#include <preferences/manager.h>
-#include <message/message.h>
-#include <library/geometrylibrary.h>
-#include <library/csysdragger.h>
+#include "application/appapplication.h"
+#include "globalutilities.h"
+#include "tools/idtools.h"
+#include "modelviz/mdvnodemaskdefs.h"
+#include "preferences/preferencesXML.h"
+#include "preferences/prfmanager.h"
+#include "message/msgmessage.h"
+#include "library/lbrgeometrylibrary.h"
+#include "library/lbrcsysdragger.h"
 
 using namespace osg;
 using namespace osgManipulator;

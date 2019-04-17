@@ -20,8 +20,8 @@
 #ifndef FTR_EXTRUDE_H
 #define FTR_EXTRUDE_H
 
-#include "feature/pick.h"
-#include "feature/base.h"
+#include "feature/ftrpick.h"
+#include "feature/ftrbase.h"
 
 namespace ann{class SeerShape;}
 namespace lbr{class IPGroup; class PLabel;}

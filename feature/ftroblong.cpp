@@ -17,19 +17,19 @@
  *
  */
 
-#include <globalutilities.h>
-#include <tools/idtools.h>
-#include <preferences/preferencesXML.h>
-#include <preferences/manager.h>
-#include <annex/seershape.h>
-#include <library/ipgroup.h>
-#include <library/csysdragger.h>
-#include <project/serial/xsdcxxoutput/featureoblong.h>
-#include <annex/csysdragger.h>
-#include <feature/oblongbuilder.h>
-#include <feature/updatepayload.h>
-#include <parameter/parameter.h>
-#include <feature/oblong.h>
+#include "globalutilities.h"
+#include "tools/idtools.h"
+#include "preferences/preferencesXML.h"
+#include "preferences/prfmanager.h"
+#include "annex/annseershape.h"
+#include "library/lbripgroup.h"
+#include "library/lbrcsysdragger.h"
+#include "project/serial/xsdcxxoutput/featureoblong.h"
+#include "annex/anncsysdragger.h"
+#include "feature/ftroblongbuilder.h"
+#include "feature/ftrupdatepayload.h"
+#include "parameter/prmparameter.h"
+#include "feature/ftroblong.h"
 
 using namespace ftr;
 using boost::uuids::uuid;

@@ -21,20 +21,20 @@
 
 #include <TopoDS.hxx>
 
-#include <globalutilities.h>
-#include <library/plabel.h>
-#include <library/csysdragger.h>
-#include <annex/seershape.h>
-#include <annex/csysdragger.h>
-#include <annex/instancemapper.h>
-#include <feature/datumplane.h>
-#include <parameter/parameter.h>
-#include <feature/shapecheck.h>
-#include <project/serial/xsdcxxoutput/featureinstancelinear.h>
-#include <tools/featuretools.h>
-#include <feature/inputtype.h>
-#include <feature/updatepayload.h>
-#include <feature/instancelinear.h>
+#include "globalutilities.h"
+#include "library/lbrplabel.h"
+#include "library/lbrcsysdragger.h"
+#include "annex/annseershape.h"
+#include "annex/anncsysdragger.h"
+#include "annex/anninstancemapper.h"
+#include "feature/ftrdatumplane.h"
+#include "parameter/prmparameter.h"
+#include "feature/ftrshapecheck.h"
+#include "project/serial/xsdcxxoutput/featureinstancelinear.h"
+#include "tools/featuretools.h"
+#include "feature/ftrinputtype.h"
+#include "feature/ftrupdatepayload.h"
+#include "feature/ftrinstancelinear.h"
 
 using namespace ftr;
 

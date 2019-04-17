@@ -21,8 +21,8 @@
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 
-#include <application/application.h>
-#include <dialogs/splitterdecorated.h>
+#include "application/appapplication.h"
+#include "dialogs/dlgsplitterdecorated.h"
 
 using namespace dlg;
 

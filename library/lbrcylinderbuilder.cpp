@@ -23,8 +23,8 @@
 #include <osg/Geometry>
 #include <osgUtil/SmoothingVisitor>
 
-#include "circlebuilder.h"
-#include "cylinderbuilder.h"
+#include "library/lbrcirclebuilder.h"
+#include "library/lbrcylinderbuilder.h"
 
 using namespace lbr;
 

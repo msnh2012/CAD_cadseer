@@ -23,7 +23,7 @@
 #include <osg/Geometry>
 #include <osgUtil/SmoothingVisitor>
 
-#include "spherebuilder.h"
+#include "library/lbrspherebuilder.h"
 
 using namespace lbr;
 

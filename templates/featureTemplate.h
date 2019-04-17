@@ -20,8 +20,8 @@
 #ifndef FTR_%CLASSNAMEUPPERCASE%_H
 #define FTR_%CLASSNAMEUPPERCASE%_H
 
-// #include "feature/pick.h"
-#include "feature/base.h"
+// #include "feature/ftrpick.h"
+#include "feature/ftrbase.h"
 
 // namespace ann{class SeerShape;}
 // namespace prj{namespace srl{class Feature%CLASSNAME%;}}

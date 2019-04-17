@@ -33,20 +33,20 @@
 
 #include <osg/Switch>
 
-#include <tools/occtools.h>
-#include <tools/idtools.h>
-#include <globalutilities.h>
-#include <annex/seershape.h>
-#include <annex/csysdragger.h>
-#include <library/plabel.h>
-#include <library/csysdragger.h>
-#include <project/serial/xsdcxxoutput/featurethread.h>
-#include <preferences/preferencesXML.h>
-#include <preferences/manager.h>
-#include <feature/booleanoperation.h>
-#include <feature/shapecheck.h>
-#include <parameter/parameter.h>
-#include <feature/thread.h>
+#include "tools/occtools.h"
+#include "tools/idtools.h"
+#include "globalutilities.h"
+#include "annex/annseershape.h"
+#include "annex/anncsysdragger.h"
+#include "library/lbrplabel.h"
+#include "library/lbrcsysdragger.h"
+#include "project/serial/xsdcxxoutput/featurethread.h"
+#include "preferences/preferencesXML.h"
+#include "preferences/prfmanager.h"
+#include "feature/ftrbooleanoperation.h"
+#include "feature/ftrshapecheck.h"
+#include "parameter/prmparameter.h"
+#include "feature/ftrthread.h"
 
 using namespace ftr;
 

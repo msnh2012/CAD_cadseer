@@ -19,20 +19,20 @@
 
 #include <assert.h>
 
-#include <preferences/preferencesXML.h>
-#include <preferences/manager.h>
-#include <globalutilities.h>
-#include <tools/idtools.h>
-#include <library/lineardimension.h>
-#include <library/ipgroup.h>
-#include <library/csysdragger.h>
-#include <project/serial/xsdcxxoutput/featurecylinder.h>
-#include <annex/csysdragger.h>
-#include <feature/cylinderbuilder.h>
-#include <annex/seershape.h>
-#include <feature/updatepayload.h>
-#include <parameter/parameter.h>
-#include <feature/cylinder.h>
+#include "preferences/preferencesXML.h"
+#include "preferences/prfmanager.h"
+#include "globalutilities.h"
+#include "tools/idtools.h"
+#include "library/lbrlineardimension.h"
+#include "library/lbripgroup.h"
+#include "library/lbrcsysdragger.h"
+#include "project/serial/xsdcxxoutput/featurecylinder.h"
+#include "annex/anncsysdragger.h"
+#include "feature/ftrcylinderbuilder.h"
+#include "annex/annseershape.h"
+#include "feature/ftrupdatepayload.h"
+#include "parameter/prmparameter.h"
+#include "feature/ftrcylinder.h"
 
 using namespace ftr;
 using boost::uuids::uuid;

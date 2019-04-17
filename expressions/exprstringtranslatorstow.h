@@ -20,8 +20,8 @@
 #ifndef EXPR_STRINGTRANSLATORSTOW_H
 #define EXPR_STRINGTRANSLATORSTOW_H
 
-#include <expressions/graph.h>
-#include <expressions/manager.h>
+#include "expressions/exprgraph.h"
+#include "expressions/exprmanager.h"
 
 namespace expr
 {

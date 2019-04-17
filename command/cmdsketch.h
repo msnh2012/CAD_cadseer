@@ -20,7 +20,7 @@
 #ifndef CMD_SKETCH_H
 #define CMD_SKETCH_H
 
-#include "command/base.h"
+#include "command/cmdbase.h"
 
 namespace dlg{class Sketch;}
 namespace ftr{class Sketch;}

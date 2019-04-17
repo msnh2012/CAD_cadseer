@@ -25,7 +25,7 @@
 #include <boost/current_function.hpp>
 
 #include "project/serial/xsdcxxoutput/featuresketch.h"
-#include "solver.h"
+#include "sketch/sktsolver.h"
 
 using namespace skt;
 

@@ -19,7 +19,7 @@
 
 #include <boost/signals2.hpp>
 
-#include "node.h"
+#include "message/msgnode.h"
 
 namespace msg
 {

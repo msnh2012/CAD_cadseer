@@ -17,13 +17,13 @@
  *
  */
 
-#include <application/mainwindow.h>
-#include <project/project.h>
-#include <message/node.h>
-#include <selection/eventhandler.h>
-#include <feature/strip.h>
-#include <dialogs/strip.h>
-#include <command/strip.h>
+#include "application/appmainwindow.h"
+#include "project/prjproject.h"
+#include "message/msgnode.h"
+#include "selection/slceventhandler.h"
+#include "feature/ftrstrip.h"
+#include "dialogs/dlgstrip.h"
+#include "command/cmdstrip.h"
 
 using namespace cmd;
 using boost::uuids::uuid;

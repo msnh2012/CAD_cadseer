@@ -32,8 +32,8 @@
 #include <osg/Geometry>
 #include <osg/ValueObject>
 
-#include <tools/idtools.h>
-#include <globalutilities.h>
+#include "tools/idtools.h"
+#include "globalutilities.h"
 
 boost::uuids::uuid gu::getId(const osg::Geometry *geometry)
 {

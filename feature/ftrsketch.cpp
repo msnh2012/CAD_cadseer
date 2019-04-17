@@ -38,15 +38,15 @@
 #include "globalutilities.h"
 #include "tools/idtools.h"
 #include "tools/occtools.h"
-#include "library/csysdragger.h"
-#include "annex/seershape.h"
-#include "annex/csysdragger.h"
-#include "sketch/solver.h"
-#include "sketch/visual.h"
+#include "library/lbrcsysdragger.h"
+#include "annex/annseershape.h"
+#include "annex/anncsysdragger.h"
+#include "sketch/sktsolver.h"
+#include "sketch/sktvisual.h"
 #include "project/serial/xsdcxxoutput/featuresketch.h"
-#include "parameter/parameter.h"
-#include "feature/shapecheck.h"
-#include "feature/sketch.h"
+#include "parameter/prmparameter.h"
+#include "feature/ftrshapecheck.h"
+#include "feature/ftrsketch.h"
 
 using namespace ftr;
 

@@ -17,7 +17,7 @@
  *
  */
 
-#include "message.h"
+#include "application/appmessage.h"
 
 using namespace app;
 

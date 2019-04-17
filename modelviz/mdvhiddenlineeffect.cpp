@@ -21,8 +21,8 @@
 #include <osgDB/Registry>
 #include <osgFX/Registry>
 
-#include "hiddenlinetechnique.h"
-#include "hiddenlineeffect.h"
+#include "modelviz/mdvhiddenlinetechnique.h"
+#include "modelviz/mdvhiddenlineeffect.h"
 
 using namespace osgFX;
 using namespace mdv;

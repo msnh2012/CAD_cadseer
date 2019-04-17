@@ -26,22 +26,22 @@
 #include <QDialogButtonBox>
 #include <QTimer>
 
-#include <globalutilities.h>
-#include <tools/idtools.h>
-#include <application/application.h>
-#include <application/mainwindow.h>
-#include <message/message.h>
-#include <project/project.h>
-#include <selection/message.h>
-#include <annex/seershape.h>
-#include <tools/featuretools.h>
-#include <feature/inputtype.h>
-#include <feature/intersect.h>
-#include <feature/subtract.h>
-#include <feature/union.h>
-#include <dialogs/widgetgeometry.h>
-#include <dialogs/selectionbutton.h>
-#include <dialogs/boolean.h>
+#include "globalutilities.h"
+#include "tools/idtools.h"
+#include "application/appapplication.h"
+#include "application/appmainwindow.h"
+#include "message/msgmessage.h"
+#include "project/prjproject.h"
+#include "selection/slcmessage.h"
+#include "annex/annseershape.h"
+#include "tools/featuretools.h"
+#include "feature/ftrinputtype.h"
+#include "feature/ftrintersect.h"
+#include "feature/ftrsubtract.h"
+#include "feature/ftrunion.h"
+#include "dialogs/dlgwidgetgeometry.h"
+#include "dialogs/dlgselectionbutton.h"
+#include "dialogs/dlgboolean.h"
 
 using boost::uuids::uuid;
 

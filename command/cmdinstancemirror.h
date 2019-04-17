@@ -20,7 +20,7 @@
 #ifndef CMD_INSTANCEMIRROR_H
 #define CMD_INSTANCEMIRROR_H
 
-#include <command/base.h>
+#include "command/cmdbase.h"
 
 namespace cmd
 {

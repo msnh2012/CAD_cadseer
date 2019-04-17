@@ -30,11 +30,11 @@
 #include <boost/multi_index/member.hpp>
 #include <boost/multi_index/ordered_index.hpp>
 
-#include <globalutilities.h>
-#include <tools/idtools.h>
-#include <tools/graphtools.h>
-#include <project/serial/xsdcxxoutput/featurebase.h>
-#include <feature/shapehistory.h>
+#include "globalutilities.h"
+#include "tools/idtools.h"
+#include "tools/graphtools.h"
+#include "project/serial/xsdcxxoutput/featurebase.h"
+#include "feature/ftrshapehistory.h"
 
 using namespace ftr;
 

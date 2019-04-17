@@ -19,15 +19,15 @@
 
 #include <cassert>
 
-#include <application/application.h>
-#include <application/mainwindow.h>
-#include <viewer/vwrwidget.h>
-#include <project/project.h>
-#include <selection/manager.h>
-#include <selection/eventhandler.h>
-#include <selection/message.h>
-#include <message/node.h>
-#include <command/base.h>
+#include "application/appapplication.h"
+#include "application/appmainwindow.h"
+#include "viewer/vwrwidget.h"
+#include "project/prjproject.h"
+#include "selection/slcmanager.h"
+#include "selection/slceventhandler.h"
+#include "selection/slcmessage.h"
+#include "message/msgnode.h"
+#include "command/cmdbase.h"
 
 using namespace cmd;
 

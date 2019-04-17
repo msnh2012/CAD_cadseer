@@ -17,20 +17,20 @@
  *
  */
 
-#include <globalutilities.h>
-#include <tools/idtools.h>
-#include <preferences/preferencesXML.h>
-#include <preferences/manager.h>
-#include <library/lineardimension.h>
-#include <library/ipgroup.h>
-#include <library/csysdragger.h>
-#include <project/serial/xsdcxxoutput/featurecone.h>
-#include <annex/seershape.h>
-#include <annex/csysdragger.h>
-#include <feature/conebuilder.h>
-#include <feature/updatepayload.h>
-#include <parameter/parameter.h>
-#include <feature/cone.h>
+#include "globalutilities.h"
+#include "tools/idtools.h"
+#include "preferences/preferencesXML.h"
+#include "preferences/prfmanager.h"
+#include "library/lbrlineardimension.h"
+#include "library/lbripgroup.h"
+#include "library/lbrcsysdragger.h"
+#include "project/serial/xsdcxxoutput/featurecone.h"
+#include "annex/annseershape.h"
+#include "annex/anncsysdragger.h"
+#include "feature/ftrconebuilder.h"
+#include "feature/ftrupdatepayload.h"
+#include "parameter/prmparameter.h"
+#include "feature/ftrcone.h"
 
 using namespace ftr;
 using boost::uuids::uuid;

@@ -23,9 +23,9 @@
 
 #include <QString>
 
-#include <expressions/stringtranslatorstow.h>
-#include <expressions/stringtranslator.h>
-#include <expressions/manager.h>
+#include "expressions/exprstringtranslatorstow.h"
+#include "expressions/exprstringtranslator.h"
+#include "expressions/exprmanager.h"
 
 using namespace expr;
 

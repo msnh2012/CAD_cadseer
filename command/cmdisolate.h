@@ -20,9 +20,9 @@
 #ifndef CMD_ISOLATE_H
 #define CMD_ISOLATE_H
 
-#include <selection/definitions.h>
-#include <message/message.h>
-#include <command/base.h>
+#include "selection/slcdefinitions.h"
+#include "message/msgmessage.h"
+#include "command/cmdbase.h"
 
 namespace msg{struct Sift;}
 

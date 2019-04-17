@@ -31,8 +31,8 @@
 #include <osg/Geometry>
 #include <osg/Depth>
 
-#include <gesture/node.h>
-#include <modelviz/nodemaskdefs.h>
+#include "gesture/gsnnode.h"
+#include "modelviz/mdvnodemaskdefs.h"
 
 //line is now actually a quad
 static osg::Geometry* buildLineGeometry()

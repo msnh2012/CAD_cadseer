@@ -20,7 +20,7 @@
 #ifndef ANN_CSYSDRAGGER_H
 #define ANN_CSYSDRAGGER_H
 
-#include <annex/base.h>
+#include "annex/annbase.h"
 
 namespace prm{class Parameter;}
 namespace ftr{class Base;}

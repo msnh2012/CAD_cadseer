@@ -22,8 +22,8 @@
 
 #include <osg/ref_ptr>
 
-#include <feature/pick.h>
-#include <feature/base.h>
+#include "feature/ftrpick.h"
+#include "feature/ftrbase.h"
 
 namespace ann{class SeerShape; class InstanceMapper; class CSysDragger;}
 namespace lbr{class PLabel;}

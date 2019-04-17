@@ -24,8 +24,8 @@
 
 #include <QPushButton>
 
-#include <selection/message.h>
-#include <selection/definitions.h>
+#include "selection/slcmessage.h"
+#include "selection/slcdefinitions.h"
 
 class QHideEvent;
 class QShowEvent;

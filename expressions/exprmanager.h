@@ -26,7 +26,7 @@
 #include <boost/tuple/tuple.hpp>
 #include <boost/unordered_map.hpp>
 
-#include <expressions/value.h>
+#include "expressions/exprvalue.h"
 
 class QTextStream;
 

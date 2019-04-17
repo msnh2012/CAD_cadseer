@@ -24,7 +24,7 @@
 #include <map>
 #include <memory>
 
-#include <selection/container.h>
+#include "selection/slccontainer.h"
 
 namespace prj{class Project;}
 namespace msg{class Message; struct Node; struct Sift;}

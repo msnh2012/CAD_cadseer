@@ -20,7 +20,7 @@
 #ifndef CMD_LINE_H
 #define CMD_LINE_H
 
-#include "command/base.h"
+#include "command/cmdbase.h"
 
 namespace cmd
 {

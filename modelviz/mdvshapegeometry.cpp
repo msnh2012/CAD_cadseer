@@ -35,12 +35,12 @@
 #include <osg/LineWidth>
 #include <osg/Point>
 
-#include <tools/idtools.h>
-#include <annex/shapeidhelper.h>
-#include <modelviz/hiddenlineeffect.h>
-#include <modelviz/shapegeometryprivate.h>
-#include <modelviz/shapegeometry.h>
-#include <modelviz/nodemaskdefs.h>
+#include "tools/idtools.h"
+#include "annex/annshapeidhelper.h"
+#include "modelviz/mdvhiddenlineeffect.h"
+#include "modelviz/mdvshapegeometryprivate.h"
+#include "modelviz/mdvshapegeometry.h"
+#include "modelviz/mdvnodemaskdefs.h"
 
 using namespace mdv;
 using namespace osg;

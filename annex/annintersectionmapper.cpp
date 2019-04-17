@@ -28,16 +28,16 @@
 #include <BOPDS_DS.hxx>
 #include <TopoDS.hxx>
 
-#include <globalutilities.h>
-#include <tools/idtools.h>
-#include <tools/occtools.h>
-#include <feature/base.h>
-#include <feature/shapehistory.h>
-#include <feature/updatepayload.h>
-#include <feature/inputtype.h>
-#include <annex/seershape.h>
-#include <project/serial/xsdcxxoutput/featurebase.h>
-#include <annex/intersectionmapper.h>
+#include "globalutilities.h"
+#include "tools/idtools.h"
+#include "tools/occtools.h"
+#include "feature/ftrbase.h"
+#include "feature/ftrshapehistory.h"
+#include "feature/ftrupdatepayload.h"
+#include "feature/ftrinputtype.h"
+#include "annex/annseershape.h"
+#include "project/serial/xsdcxxoutput/featurebase.h"
+#include "annex/annintersectionmapper.h"
 
 
 using boost::uuids::uuid;

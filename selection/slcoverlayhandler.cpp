@@ -24,20 +24,20 @@
 #include <osgViewer/View>
 #include <osgUtil/PolytopeIntersector>
 
-#include <viewer/overlay.h>
-#include <library/csysdragger.h>
-#include <library/ipgroup.h>
-#include <library/plabel.h>
-#include <parameter/parameter.h>
-#include <dialogs/parameter.h>
-#include <selection/visitors.h>
-#include <modelviz/nodemaskdefs.h>
-#include <globalutilities.h>
-#include <message/node.h>
-#include <message/sift.h>
-#include <command/manager.h>
-#include <command/csysedit.h>
-#include "selection/overlayhandler.h"
+#include "viewer/vwroverlay.h"
+#include "library/lbrcsysdragger.h"
+#include "library/lbripgroup.h"
+#include "library/lbrplabel.h"
+#include "parameter/prmparameter.h"
+#include "dialogs/dlgparameter.h"
+#include "selection/slcvisitors.h"
+#include "modelviz/mdvnodemaskdefs.h"
+#include "globalutilities.h"
+#include "message/msgnode.h"
+#include "message/msgsift.h"
+#include "command/cmdmanager.h"
+#include "command/cmdcsysedit.h"
+#include "selection/slcoverlayhandler.h"
 
 using namespace slc;
 

@@ -20,7 +20,7 @@
 #ifndef ANN_INSTANCEMAPPER_H
 #define ANN_INSTANCEMAPPER_H
 
-#include <annex/base.h>
+#include "annex/annbase.h"
 
 namespace ftr{class ShapeHistory;}
 namespace prj{namespace srl{class InstanceData;}}

@@ -29,16 +29,16 @@
 
 #include <osg/Switch>
 
-#include <globalutilities.h>
-#include <feature/booleanoperation.h>
-#include <feature/shapecheck.h>
-#include <project/serial/xsdcxxoutput/featuresubtract.h>
-#include <annex/seershape.h>
-#include <annex/intersectionmapper.h>
-#include <tools/featuretools.h>
-#include <feature/updatepayload.h>
-#include <feature/inputtype.h>
-#include <feature/subtract.h>
+#include "globalutilities.h"
+#include "feature/ftrbooleanoperation.h"
+#include "feature/ftrshapecheck.h"
+#include "project/serial/xsdcxxoutput/featuresubtract.h"
+#include "annex/annseershape.h"
+#include "annex/annintersectionmapper.h"
+#include "tools/featuretools.h"
+#include "feature/ftrupdatepayload.h"
+#include "feature/ftrinputtype.h"
+#include "feature/ftrsubtract.h"
 
 using boost::uuids::uuid;
 

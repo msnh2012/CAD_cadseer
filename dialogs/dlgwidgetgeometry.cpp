@@ -24,8 +24,8 @@
 #include <QWidget>
 #include <QEvent>
 
-#include <application/application.h>
-#include <dialogs/widgetgeometry.h>
+#include "application/appapplication.h"
+#include "dialogs/dlgwidgetgeometry.h"
 
 using namespace dlg;
 

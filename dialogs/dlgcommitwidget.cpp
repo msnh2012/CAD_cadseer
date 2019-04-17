@@ -27,7 +27,7 @@
 #include <subprojects/libgit2pp/src/signature.hpp>
 #include <subprojects/libgit2pp/src/oid.hpp>
 
-#include <dialogs/commitwidget.h>
+#include "dialogs/dlgcommitwidget.h"
 
 using namespace dlg;
 

@@ -20,7 +20,7 @@
 #ifndef CMD_DISSOLVE_H
 #define CMD_DISSOLVE_H
 
-#include <command/base.h>
+#include "command/cmdbase.h"
 
 namespace cmd
 {

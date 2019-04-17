@@ -20,8 +20,8 @@
 #ifndef FTR_TRANSITIONCURVE_H
 #define FTR_TRANSITIONCURVE_H
 
-#include "feature/pick.h"
-#include "feature/base.h"
+#include "feature/ftrpick.h"
+#include "feature/ftrbase.h"
 
 class TopoDS_Edge;
 

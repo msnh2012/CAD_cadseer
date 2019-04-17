@@ -20,7 +20,7 @@
 #ifndef CMD_REFINE_H
 #define CMD_REFINE_H
 
-#include <command/base.h>
+#include "command/cmdbase.h"
 
 namespace cmd
 {

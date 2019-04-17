@@ -22,12 +22,12 @@
 
 #include <boost/variant/variant.hpp>
 
-#include <project/message.h>
-#include <selection/message.h>
-#include <application/message.h>
-#include <viewer/message.h>
-#include <feature/message.h>
-#include <lod/message.h>
+#include "project/prjmessage.h"
+#include "selection/slcmessage.h"
+#include "application/appmessage.h"
+#include "viewer/vwrmessage.h"
+#include "feature/ftrmessage.h"
+#include "lod/lodmessage.h"
 
 namespace msg
 {

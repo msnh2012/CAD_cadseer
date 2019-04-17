@@ -17,7 +17,7 @@
  *
  */
 
-#include "circleprojector.h"
+#include "library/lbrcircleprojector.h"
 
 using namespace osg;
 using namespace osgManipulator;

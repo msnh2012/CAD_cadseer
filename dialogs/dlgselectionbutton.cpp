@@ -21,11 +21,11 @@
 #include <QHideEvent>
 #include <QTimer>
 
-#include <message/node.h>
-#include <message/sift.h>
-#include <selection/message.h>
-#include <selection/eventhandler.h>
-#include <dialogs/selectionbutton.h>
+#include "message/msgnode.h"
+#include "message/msgsift.h"
+#include "selection/slcmessage.h"
+#include "selection/slceventhandler.h"
+#include "dialogs/dlgselectionbutton.h"
 
 using namespace dlg;
 

@@ -19,7 +19,7 @@
 
 #include <iostream>
 
-#include <libreoffice/odshack.h>
+#include "libreoffice/lboodshack.h"
 
 using namespace lbo;
 

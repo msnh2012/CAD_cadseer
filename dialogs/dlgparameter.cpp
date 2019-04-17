@@ -29,25 +29,25 @@
 #include <QTextStream>
 #include <QFileDialog>
 
-#include <tools/idtools.h>
-#include <tools/infotools.h>
-#include <expressions/manager.h>
-#include <expressions/stringtranslator.h>
-#include <expressions/value.h>
-#include <application/application.h>
-#include <project/project.h>
-#include <project/message.h>
-#include <application/mainwindow.h>
-#include <feature/base.h>
-#include <parameter/variant.h>
-#include <parameter/parameter.h>
-#include <message/node.h>
-#include <message/sift.h>
-#include <preferences/preferencesXML.h>
-#include <preferences/manager.h>
-#include <dialogs/expressionedit.h>
-#include <dialogs/widgetgeometry.h>
-#include <dialogs/parameter.h>
+#include "tools/idtools.h"
+#include "tools/infotools.h"
+#include "expressions/exprmanager.h"
+#include "expressions/exprstringtranslator.h"
+#include "expressions/exprvalue.h"
+#include "application/appapplication.h"
+#include "project/prjproject.h"
+#include "project/prjmessage.h"
+#include "application/appmainwindow.h"
+#include "feature/ftrbase.h"
+#include "parameter/prmvariant.h"
+#include "parameter/prmparameter.h"
+#include "message/msgnode.h"
+#include "message/msgsift.h"
+#include "preferences/preferencesXML.h"
+#include "preferences/prfmanager.h"
+#include "dialogs/dlgexpressionedit.h"
+#include "dialogs/dlgwidgetgeometry.h"
+#include "dialogs/dlgparameter.h"
 
 using namespace dlg;
 

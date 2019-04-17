@@ -19,8 +19,8 @@
 
 #include <osg/Node>
 
-#include <tools/idtools.h>
-#include <viewer/message.h>
+#include "tools/idtools.h"
+#include "viewer/vwrmessage.h"
 
 using namespace vwr;
 

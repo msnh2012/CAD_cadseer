@@ -25,7 +25,7 @@
 
 #include <QObject> //for string translation.
 
-#include <selection/message.h> //for derived classes
+#include "selection/slcmessage.h" //for derived classes
 
 namespace app{class Application; class MainWindow;}
 namespace prj{class Project;}

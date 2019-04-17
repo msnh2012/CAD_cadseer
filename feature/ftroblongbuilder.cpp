@@ -35,8 +35,8 @@
 #include <TopExp_Explorer.hxx>
 #include <BRepTools.hxx>
 
-#include <globalutilities.h>
-#include <feature/oblongbuilder.h>
+#include "globalutilities.h"
+#include "feature/ftroblongbuilder.h"
 
 using namespace ftr;
 

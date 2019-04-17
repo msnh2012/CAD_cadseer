@@ -23,7 +23,7 @@
 #include <memory>
 #include <boost/uuid/uuid.hpp>
 
-#include <feature/inputtype.h>
+#include "feature/ftrinputtype.h"
 
 namespace ftr{class Base;}
 

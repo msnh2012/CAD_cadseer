@@ -24,9 +24,9 @@
 
 #include <osgGA/GUIEventHandler>
 
-#include <selection/container.h>
-#include <selection/message.h>
-#include <selection/visitors.h>
+#include "selection/slccontainer.h"
+#include "selection/slcmessage.h"
+#include "selection/slcvisitors.h"
 
 namespace osg{class Switch;}
 namespace mdv{class ShapeGeometry;}

@@ -24,7 +24,7 @@
 
 #include <osg/ref_ptr>
 
-#include <feature/base.h>
+#include "feature/ftrbase.h"
 
 namespace lbr{class IPGroup;}
 namespace prj{namespace srl{class FeatureCone;}}

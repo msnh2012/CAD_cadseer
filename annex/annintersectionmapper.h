@@ -20,7 +20,7 @@
 #ifndef ANN_INTERSECTIONMAPPER_H
 #define ANN_INTERSECTIONMAPPER_H
 
-#include <annex/base.h>
+#include "annex/annbase.h"
 
 class BOPAlgo_Builder;
 

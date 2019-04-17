@@ -24,18 +24,18 @@
 
 #include <osg/Switch>
 
-#include <globalutilities.h>
-#include <tools/idtools.h>
-#include <tools/occtools.h>
-#include <library/plabel.h>
-#include <annex/seershape.h>
-#include <tools/featuretools.h>
-#include <project/serial/xsdcxxoutput/featureoffset.h>
-#include <feature/shapecheck.h>
-#include <feature/updatepayload.h>
-#include <feature/inputtype.h>
-#include <parameter/parameter.h>
-#include <feature/offset.h>
+#include "globalutilities.h"
+#include "tools/idtools.h"
+#include "tools/occtools.h"
+#include "library/lbrplabel.h"
+#include "annex/annseershape.h"
+#include "tools/featuretools.h"
+#include "project/serial/xsdcxxoutput/featureoffset.h"
+#include "feature/ftrshapecheck.h"
+#include "feature/ftrupdatepayload.h"
+#include "feature/ftrinputtype.h"
+#include "parameter/prmparameter.h"
+#include "feature/ftroffset.h"
 
 using namespace ftr;
 

@@ -20,7 +20,7 @@
 #ifndef FTR_REFINE_H
 #define FTR_REFINE_H
 
-#include <feature/base.h>
+#include "feature/ftrbase.h"
 
 class BRepTools_History;
 

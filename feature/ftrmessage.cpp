@@ -17,8 +17,8 @@
  *
  */
 
-#include <tools/idtools.h>
-#include <feature/message.h>
+#include "tools/idtools.h"
+#include "feature/ftrmessage.h"
 
 using namespace ftr;
 

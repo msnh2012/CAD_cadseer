@@ -34,11 +34,11 @@
 #include <osgText/Text>
 #include <osgQt/QFontImplementation>
 
-#include <application/application.h>
-#include <preferences/preferencesXML.h>
-#include <preferences/manager.h>
-#include <modelviz/nodemaskdefs.h>
-#include <library/lineardimension.h>
+#include "application/appapplication.h"
+#include "preferences/preferencesXML.h"
+#include "preferences/prfmanager.h"
+#include "modelviz/mdvnodemaskdefs.h"
+#include "library/lbrlineardimension.h"
 
 using namespace lbr;
 

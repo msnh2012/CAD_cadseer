@@ -20,7 +20,7 @@
 #ifndef CMD_INSTANCE_H
 #define CMD_INSTANCE_H
 
-#include <command/base.h>
+#include "command/cmdbase.h"
 
 namespace cmd
 {

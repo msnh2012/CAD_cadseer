@@ -24,7 +24,7 @@
 #include <boost/graph/topological_sort.hpp>
 #include <boost/graph/graphviz.hpp>
 
-#include <expressions/graph.h>
+#include "expressions/exprgraph.h"
 
 using namespace expr;
 using boost::uuids::uuid;

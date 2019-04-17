@@ -23,8 +23,8 @@
 #include <osg/Geometry>
 #include <osgUtil/SmoothingVisitor>
 
-#include "circlebuilder.h"
-#include "conebuilder.h"
+#include "library/lbrcirclebuilder.h"
+#include "library/lbrconebuilder.h"
 
 using namespace lbr;
 

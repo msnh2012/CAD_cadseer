@@ -44,23 +44,23 @@
 #include <QUrl>
 #include <QDesktopServices>
 
-#include <application/application.h>
-#include <preferences/preferencesXML.h>
-#include <preferences/manager.h>
-#include <project/project.h>
-#include <globalutilities.h>
-#include <tools/idtools.h>
-#include <feature/base.h>
-#include <message/node.h>
-#include <message/sift.h>
-#include <project/message.h>
-#include <feature/message.h>
-#include <selection/message.h>
-#include <viewer/message.h>
-#include <dagview/controlleddfs.h>
-#include <dagview/rectitem.h>
-#include <dagview/stow.h>
-#include <dagview/model.h>
+#include "application/appapplication.h"
+#include "preferences/preferencesXML.h"
+#include "preferences/prfmanager.h"
+#include "project/prjproject.h"
+#include "globalutilities.h"
+#include "tools/idtools.h"
+#include "feature/ftrbase.h"
+#include "message/msgnode.h"
+#include "message/msgsift.h"
+#include "project/prjmessage.h"
+#include "feature/ftrmessage.h"
+#include "selection/slcmessage.h"
+#include "viewer/vwrmessage.h"
+#include "dagview/dagcontrolleddfs.h"
+#include "dagview/dagrectitem.h"
+#include "dagview/dagstow.h"
+#include "dagview/dagmodel.h"
 
 using boost::uuids::uuid;
 

@@ -21,8 +21,8 @@
 
 #include <boost/filesystem.hpp>
 
-#include <tools/idtools.h>
-#include <annex/shapeidhelper.h>
+#include "tools/idtools.h"
+#include "annex/annshapeidhelper.h"
 
 using namespace ann;
 using boost::optional;

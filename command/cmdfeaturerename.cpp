@@ -21,16 +21,16 @@
 
 #include <QInputDialog>
 
-#include <tools/idtools.h>
-#include <application/application.h>
-#include <application/mainwindow.h>
-#include <message/node.h>
-#include <message/sift.h>
-#include <selection/eventhandler.h>
-#include <project/project.h>
-#include <feature/message.h>
-#include <feature/base.h>
-#include <command/featurerename.h>
+#include "tools/idtools.h"
+#include "application/appapplication.h"
+#include "application/appmainwindow.h"
+#include "message/msgnode.h"
+#include "message/msgsift.h"
+#include "selection/slceventhandler.h"
+#include "project/prjproject.h"
+#include "feature/ftrmessage.h"
+#include "feature/ftrbase.h"
+#include "command/cmdfeaturerename.h"
 
 using namespace cmd;
 

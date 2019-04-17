@@ -24,8 +24,8 @@
 
 #include <osg/Matrixd>
 
-#include <globalutilities.h>
-#include <tools/infotools.h>
+#include "globalutilities.h"
+#include "tools/infotools.h"
 
 
 QString ms(const double &number)

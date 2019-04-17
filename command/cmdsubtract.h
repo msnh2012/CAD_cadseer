@@ -20,7 +20,7 @@
 #ifndef CMD_SUBTRACT_H
 #define CMD_SUBTRACT_H
 
-#include <command/base.h>
+#include "command/cmdbase.h"
 
 namespace dlg{class Boolean;}
 namespace ftr{class Subtract;}

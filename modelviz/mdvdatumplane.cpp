@@ -22,8 +22,8 @@
 #include <osg/LineWidth>
 #include <osg/BlendFunc>
 
-#include <modelviz/nodemaskdefs.h>
-#include <modelviz/datumplane.h>
+#include "modelviz/mdvnodemaskdefs.h"
+#include "modelviz/mdvdatumplane.h"
 
 using namespace mdv;
 

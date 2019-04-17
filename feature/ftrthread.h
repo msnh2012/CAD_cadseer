@@ -21,7 +21,7 @@
 #ifndef FTR_THREAD_H
 #define FTR_THREAD_H
 
-#include <feature/base.h>
+#include "feature/ftrbase.h"
 
 namespace osg{class Matrixd;}
 

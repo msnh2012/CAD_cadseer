@@ -29,10 +29,10 @@
 #include <osg/ComputeBoundsVisitor>
 
 #include "preferences/preferencesXML.h"
-#include "preferences/manager.h"
-#include "library/childnamevisitor.h"
-#include "library/geometrylibrary.h"
-#include "library/sketchlineardimension.h"
+#include "preferences/prfmanager.h"
+#include "library/lbrchildnamevisitor.h"
+#include "library/lbrgeometrylibrary.h"
+#include "library/lbrsketchlineardimension.h"
 
 static const char *rootTransformName = "lbr::LinearDimension";
 static const char *rootSwitchName = "lbr::LinearDimension::Switch";

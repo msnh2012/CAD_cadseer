@@ -22,10 +22,10 @@
 
 #include <boost/signals2.hpp>
 
-#include <tools/idtools.h>
-#include <project/serial/xsdcxxoutput/featurebase.h>
-#include <parameter/variant.h>
-#include <parameter/parameter.h>
+#include "tools/idtools.h"
+#include "project/serial/xsdcxxoutput/featurebase.h"
+#include "parameter/prmvariant.h"
+#include "parameter/prmparameter.h"
 
 using namespace prm;
 using boost::filesystem::path;

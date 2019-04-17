@@ -22,8 +22,8 @@
 
 #include <osg/ref_ptr>
 
-#include <feature/pick.h>
-#include <feature/base.h>
+#include "feature/ftrpick.h"
+#include "feature/ftrbase.h"
 
 class BRepOffsetAPI_DraftAngle;
 class TopoDS_Face;

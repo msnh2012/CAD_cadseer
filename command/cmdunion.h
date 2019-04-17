@@ -20,7 +20,7 @@
 #ifndef CMD_UNION_H
 #define CMD_UNION_H
 
-#include <command/base.h>
+#include "command/cmdbase.h"
 
 namespace dlg{class Boolean;}
 namespace ftr{class Union;}

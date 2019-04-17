@@ -22,16 +22,16 @@
 #include <osg/Switch>
 
 #include "globalutilities.h"
-// #include "annex/seershape.h"
-// #include "library/plabel.h"
-// #include "library/ipgroup.h"
-// #include "parameter/parameter.h"
+// #include "annex/annseershape.h"
+// #include "library/lbrplabel.h"
+// #include "library/lbripgroup.h"
+// #include "parameter/prmparameter.h"
 #include "tools/occtools.h"
 // #include "tools/featuretools.h"
 // #include "tools/idtools.h"
-// #include "feature/shapecheck.h"
-#include "feature/updatepayload.h"
-// #include "feature/inputtype.h"
+// #include "feature/ftrshapecheck.h"
+#include "feature/ftrupdatepayload.h"
+// #include "feature/ftrinputtype.h"
 // #include "project/serial/xsdcxxoutput/feature%CLASSNAMELOWERCASE%.h"
 #include "feature/ftr%CLASSNAMELOWERCASE%.h"
 

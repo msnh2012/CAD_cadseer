@@ -23,8 +23,8 @@
 #include <osg/LOD>
 #include <osg/Geometry>
 
-#include "library/circlebuilder.h"
-#include "library/circlebuilderlod.h"
+#include "library/lbrcirclebuilder.h"
+#include "library/lbrcirclebuilderlod.h"
 
 using namespace lbr;
 

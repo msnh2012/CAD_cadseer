@@ -28,8 +28,8 @@
 #include <boost/graph/reverse_graph.hpp>
 #include <boost/uuid/uuid.hpp>
 
-#include <feature/inputtype.h>
-#include <dagview/rectitem.h>
+#include "feature/ftrinputtype.h"
+#include "dagview/dagrectitem.h"
 
 namespace dag
 {

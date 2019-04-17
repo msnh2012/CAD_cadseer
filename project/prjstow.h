@@ -30,11 +30,11 @@
 #include <boost/graph/depth_first_search.hpp>
 #include <boost/uuid/uuid.hpp>
 
-#include <feature/states.h>
-#include <feature/inputtype.h>
-#include <feature/updatepayload.h>
-#include <tools/graphtools.h>
-#include <globalutilities.h>
+#include "feature/ftrstates.h"
+#include "feature/ftrinputtype.h"
+#include "feature/ftrupdatepayload.h"
+#include "tools/graphtools.h"
+#include "globalutilities.h"
 
 namespace prm{class Parameter;}
 namespace ftr{class Base;}

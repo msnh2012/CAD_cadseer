@@ -20,7 +20,7 @@
 #ifndef FTR_INERT_H
 #define FTR_INERT_H
 
-#include <feature/base.h>
+#include "feature/ftrbase.h"
 
 namespace prj{namespace srl{class FeatureInert;}}
 namespace ann{class CSysDragger;}

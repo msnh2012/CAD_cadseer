@@ -24,7 +24,7 @@
 
 #include <QObject>
 
-#include <selection/definitions.h>
+#include "selection/slcdefinitions.h"
 
 class QAction;
 

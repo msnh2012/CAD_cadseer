@@ -24,10 +24,10 @@
 
 #include <boost/filesystem.hpp>
 
-#include <application/application.h>
+#include "application/appapplication.h"
 
-#include <preferences/preferencesXML.h>
-#include <preferences/manager.h>
+#include "preferences/preferencesXML.h"
+#include "preferences/prfmanager.h"
 
 //xml, xsd validation website.
 //http://www.utilities-online.info/xsdvalidation/#.Vf2u9ZOVvts

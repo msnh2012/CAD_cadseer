@@ -20,7 +20,7 @@
 #ifndef CMD_INSTANCEPOLAR_H
 #define CMD_INSTANCEPOLAR_H
 
-#include <command/base.h>
+#include "command/cmdbase.h"
 
 namespace cmd
 {

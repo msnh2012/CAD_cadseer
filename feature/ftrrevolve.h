@@ -20,8 +20,8 @@
 #ifndef FTR_REVOLVE_H
 #define FTR_REVOLVE_H
 
-#include "feature/pick.h"
-#include "feature/base.h"
+#include "feature/ftrpick.h"
+#include "feature/ftrbase.h"
 
 namespace ann{class SeerShape;}
 namespace lbr{class PLabel;}

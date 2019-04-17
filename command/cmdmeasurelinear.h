@@ -20,8 +20,8 @@
 #ifndef CMD_MEASURELINEAR_H
 #define CMD_MEASURELINEAR_H
 
-#include <selection/definitions.h>
-#include <command/base.h>
+#include "selection/slcdefinitions.h"
+#include "command/cmdbase.h"
 
 namespace msg{struct Sift;}
 

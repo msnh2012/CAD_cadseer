@@ -21,18 +21,18 @@
 #include <sstream>
 #include <iomanip>
 
-#include <application/application.h>
+#include "application/appapplication.h"
 
 #include <osg/AutoTransform>
 #include <osgQt/QFontImplementation>
 #include <osgText/Text>
 
-#include <preferences/preferencesXML.h>
-#include <preferences/manager.h>
-#include <parameter/variant.h>
-#include <parameter/parameter.h>
-#include <project/serial/xsdcxxoutput/featurebase.h>
-#include <library/plabel.h>
+#include "preferences/preferencesXML.h"
+#include "preferences/prfmanager.h"
+#include "parameter/prmvariant.h"
+#include "parameter/prmparameter.h"
+#include "project/serial/xsdcxxoutput/featurebase.h"
+#include "library/lbrplabel.h"
 
 using namespace lbr;
 

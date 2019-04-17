@@ -40,27 +40,27 @@
 #include <osg/LightModel>
 #include <osgDB/WriteFile>
 
-#include <tools/idtools.h>
-#include <tools/infotools.h>
-#include <tools/occtools.h>
-#include <application/application.h> //need project directory for viz
-#include <project/project.h> //need project directory for viz
-#include <preferences/preferencesXML.h>
-#include <preferences/manager.h>
-#include <modelviz/nodemaskdefs.h>
-#include <modelviz/shapegeometry.h>
-#include <globalutilities.h>
-#include <message/node.h>
-#include <lod/message.h>
-#include <annex/shapeidhelper.h>
-#include <annex/seershape.h>
-#include <parameter/variant.h>
-#include <parameter/parameter.h>
-#include <feature/message.h>
-#include <feature/shapehistory.h>
-#include <feature/seershapeinfo.h>
-#include <project/serial/xsdcxxoutput/featurebase.h>
-#include <feature/base.h>
+#include "tools/idtools.h"
+#include "tools/infotools.h"
+#include "tools/occtools.h"
+#include "application/appapplication.h" //need project directory for viz
+#include "project/prjproject.h" //need project directory for viz
+#include "preferences/preferencesXML.h"
+#include "preferences/prfmanager.h"
+#include "modelviz/mdvnodemaskdefs.h"
+#include "modelviz/mdvshapegeometry.h"
+#include "globalutilities.h"
+#include "message/msgnode.h"
+#include "lod/lodmessage.h"
+#include "annex/annshapeidhelper.h"
+#include "annex/annseershape.h"
+#include "parameter/prmvariant.h"
+#include "parameter/prmparameter.h"
+#include "feature/ftrmessage.h"
+#include "feature/ftrshapehistory.h"
+#include "feature/ftrseershapeinfo.h"
+#include "project/serial/xsdcxxoutput/featurebase.h"
+#include "feature/ftrbase.h"
 
 
 using namespace ftr;

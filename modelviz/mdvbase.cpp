@@ -20,7 +20,7 @@
 #include <osgDB/ObjectWrapper>
 #include <osgDB/Registry>
 
-#include <modelviz/base.h>
+#include "modelviz/mdvbase.h"
 
 using namespace mdv;
 

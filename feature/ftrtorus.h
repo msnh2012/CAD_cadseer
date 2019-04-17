@@ -20,7 +20,7 @@
 #ifndef FTR_TORUS_H
 #define FTR_TORUS_H
 
-#include <feature/base.h>
+#include "feature/ftrbase.h"
 
 namespace prj{namespace srl{class FeatureTorus;}}
 namespace ann{class CSysDragger; class SeerShape;}

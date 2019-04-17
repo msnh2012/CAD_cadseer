@@ -20,13 +20,13 @@
 #include <TopoDS_Face.hxx>
 #include <TopoDS.hxx>
 
-#include <project/project.h>
-#include <message/node.h>
-#include <selection/eventhandler.h>
-#include <annex/seershape.h>
-#include <feature/inputtype.h>
-#include <feature/extract.h>
-#include <command/extract.h>
+#include "project/prjproject.h"
+#include "message/msgnode.h"
+#include "selection/slceventhandler.h"
+#include "annex/annseershape.h"
+#include "feature/ftrinputtype.h"
+#include "feature/ftrextract.h"
+#include "command/cmdextract.h"
 
 using namespace cmd;
 using boost::uuids::uuid;

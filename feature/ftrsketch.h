@@ -20,7 +20,7 @@
 #ifndef FTR_SKETCH_H
 #define FTR_SKETCH_H
 
-#include "feature/base.h"
+#include "feature/ftrbase.h"
 
 namespace prj{namespace srl{class FeatureSketch;}}
 namespace skt{struct Solver; class Visual;}

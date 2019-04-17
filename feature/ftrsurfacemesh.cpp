@@ -31,13 +31,13 @@
 #include "globalutilities.h"
 #include "tools/occtools.h"
 #include "tools/idtools.h"
-#include "feature/updatepayload.h"
-#include "feature/inputtype.h"
-#include "annex/seershape.h"
-#include "annex/surfacemesh.h"
-#include "modelviz/surfacemesh.h"
+#include "feature/ftrupdatepayload.h"
+#include "feature/ftrinputtype.h"
+#include "annex/annseershape.h"
+#include "annex/annsurfacemesh.h"
+#include "modelviz/mdvsurfacemesh.h"
 #include "project/serial/xsdcxxoutput/featuresurfacemesh.h"
-#include "feature/surfacemesh.h"
+#include "feature/ftrsurfacemesh.h"
 
 
 using namespace ftr;

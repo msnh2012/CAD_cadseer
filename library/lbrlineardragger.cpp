@@ -21,8 +21,8 @@
 
 #include <osg/AutoTransform>
 
-#include <library/geometrylibrary.h>
-#include <library/lineardragger.h>
+#include "library/lbrgeometrylibrary.h"
+#include "library/lbrlineardragger.h"
 
 using namespace lbr;
 

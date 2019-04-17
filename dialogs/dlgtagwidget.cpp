@@ -24,10 +24,10 @@
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 
-#include <subprojects/libgit2pp/src/signature.hpp>
-#include <subprojects/libgit2pp/src/oid.hpp>
+#include "subprojects/libgit2pp/src/signature.hpp"
+#include "subprojects/libgit2pp/src/oid.hpp"
 
-#include <dialogs/tagwidget.h>
+#include "dialogs/dlgtagwidget.h"
 
 using namespace dlg;
 

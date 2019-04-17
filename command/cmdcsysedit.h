@@ -22,7 +22,7 @@
 
 #include <osg/ref_ptr>
 
-#include <command/base.h>
+#include "command/cmdbase.h"
 
 namespace osgManipulator{class Translate1DDragger;}
 

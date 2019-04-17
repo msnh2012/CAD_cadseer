@@ -26,16 +26,16 @@
 
 #include <osg/Switch>
 
-#include <globalutilities.h>
-#include <tools/occtools.h>
-#include <annex/seershape.h>
-#include <feature/shapecheck.h>
-#include <project/serial/xsdcxxoutput/featureextract.h>
-#include <feature/updatepayload.h>
-#include <tools/featuretools.h>
-#include <feature/inputtype.h>
-#include <parameter/parameter.h>
-#include <feature/extract.h>
+#include "globalutilities.h"
+#include "tools/occtools.h"
+#include "annex/annseershape.h"
+#include "feature/ftrshapecheck.h"
+#include "project/serial/xsdcxxoutput/featureextract.h"
+#include "feature/ftrupdatepayload.h"
+#include "tools/featuretools.h"
+#include "feature/ftrinputtype.h"
+#include "parameter/prmparameter.h"
+#include "feature/ftrextract.h"
 
 using namespace ftr;
 

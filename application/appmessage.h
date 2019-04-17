@@ -23,8 +23,6 @@
 
 #include <QString>
 
-#include <feature/types.h>
-
 namespace app
 {
   struct Message

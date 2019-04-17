@@ -21,7 +21,7 @@
 #include <QApplication>
 #include <QStyleOptionViewItem>
 
-#include <dagview/rectitem.h>
+#include "dagview/dagrectitem.h"
 
 using namespace dag;
 

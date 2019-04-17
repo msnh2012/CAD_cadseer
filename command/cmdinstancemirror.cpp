@@ -19,14 +19,14 @@
 
 #include <memory>
 
-#include <project/project.h>
-#include <message/node.h>
-#include <selection/eventhandler.h>
-#include <viewer/vwrwidget.h>
-#include <parameter/parameter.h>
-#include <feature/inputtype.h>
-#include <feature/instancemirror.h>
-#include <command/instancemirror.h>
+#include "project/prjproject.h"
+#include "message/msgnode.h"
+#include "selection/slceventhandler.h"
+#include "viewer/vwrwidget.h"
+#include "parameter/prmparameter.h"
+#include "feature/ftrinputtype.h"
+#include "feature/ftrinstancemirror.h"
+#include "command/cmdinstancemirror.h"
 
 using namespace cmd;
 

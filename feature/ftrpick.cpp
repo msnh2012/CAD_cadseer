@@ -30,10 +30,10 @@
 #include <BRepBuilderAPI_MakeVertex.hxx>
 #include <BRepExtrema_DistShapeShape.hxx>
 
-#include <tools/idtools.h>
-#include <globalutilities.h>
-#include <project/serial/xsdcxxoutput/featurebase.h>
-#include <feature/pick.h>
+#include "tools/idtools.h"
+#include "globalutilities.h"
+#include "project/serial/xsdcxxoutput/featurebase.h"
+#include "feature/ftrpick.h"
 
 using namespace ftr;
 using boost::uuids::uuid;

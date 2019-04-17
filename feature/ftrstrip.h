@@ -20,9 +20,9 @@
 #ifndef FTR_STRIP_H
 #define FTR_STRIP_H
 
-#include <parameter/parameter.h>
-#include <library/plabel.h>
-#include <feature/base.h>
+#include "parameter/prmparameter.h"
+#include "library/lbrplabel.h"
+#include "feature/ftrbase.h"
 
 class TopoDS_Shape;
 

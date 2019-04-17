@@ -22,9 +22,9 @@
 
 #include <osg/ref_ptr>
 
-#include <tools/occtools.h>
-#include <feature/pick.h>
-#include <feature/base.h>
+#include "tools/occtools.h"
+#include "feature/ftrpick.h"
+#include "feature/ftrbase.h"
 
 namespace osg{class Node;}
 

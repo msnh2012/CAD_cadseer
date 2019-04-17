@@ -17,11 +17,11 @@
  *
  */
 
-#include <message/node.h>
-#include <project/project.h>
-#include <viewer/vwrwidget.h>
-#include <feature/thread.h>
-#include <command/thread.h>
+#include "message/msgnode.h"
+#include "project/prjproject.h"
+#include "viewer/vwrwidget.h"
+#include "feature/ftrthread.h"
+#include "command/cmdthread.h"
 
 using boost::uuids::uuid;
 using namespace cmd;

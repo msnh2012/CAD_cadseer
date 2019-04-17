@@ -24,8 +24,8 @@
 
 #include <osg/Vec3d>
 
-#include <expressions/edgeproperty.h>
-#include <expressions/value.h>
+#include "expressions/expredgeproperty.h"
+#include "expressions/exprvalue.h"
 
 namespace expr{
 

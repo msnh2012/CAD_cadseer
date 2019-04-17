@@ -29,7 +29,7 @@
 #include <osg/Switch>
 #include <osg/AutoTransform>
 
-#include "rotatecirculardragger.h"
+#include "library/lbrrotatecirculardragger.h"
 
 namespace osgManipulator{class GridConstraint;}
 

@@ -31,17 +31,17 @@
 #include <osg/Depth>
 // #include <osgDB/WriteFile>
 
-#include <application/application.h>
-#include <viewer/message.h>
-#include <gesture/node.h>
-#include <modelviz/nodemaskdefs.h>
-#include <message/node.h>
-#include <message/sift.h>
-#include <preferences/preferencesXML.h>
-#include <preferences/manager.h>
-#include <gesture/animations.h>
-#include <viewer/spaceballosgevent.h>
-#include <gesture/handler.h>
+#include "application/appapplication.h"
+#include "viewer/vwrmessage.h"
+#include "gesture/gsnnode.h"
+#include "modelviz/mdvnodemaskdefs.h"
+#include "message/msgnode.h"
+#include "message/msgsift.h"
+#include "preferences/preferencesXML.h"
+#include "preferences/prfmanager.h"
+#include "gesture/gsnanimations.h"
+#include "viewer/vwrspaceballosgevent.h"
+#include "gesture/gsnhandler.h"
 
 using namespace gsn;
 

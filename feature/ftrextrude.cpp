@@ -31,18 +31,18 @@
 
 #include "globalutilities.h"
 #include "tools/occtools.h"
-#include "annex/seershape.h"
-#include "library/plabel.h"
-#include "library/ipgroup.h"
-#include "feature/shapecheck.h"
-#include "feature/updatepayload.h"
-#include "feature/inputtype.h"
-#include "parameter/parameter.h"
-#include "feature/datumaxis.h"
+#include "annex/annseershape.h"
+#include "library/lbrplabel.h"
+#include "library/lbripgroup.h"
+#include "feature/ftrshapecheck.h"
+#include "feature/ftrupdatepayload.h"
+#include "feature/ftrinputtype.h"
+#include "parameter/prmparameter.h"
+#include "feature/ftrdatumaxis.h"
 #include "tools/featuretools.h"
 #include "tools/idtools.h"
 #include "project/serial/xsdcxxoutput/featureextrude.h"
-#include "feature/extrude.h"
+#include "feature/ftrextrude.h"
 
 using namespace ftr;
 using boost::uuids::uuid;

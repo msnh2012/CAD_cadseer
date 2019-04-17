@@ -32,13 +32,13 @@
 #include <osgQt/QFontImplementation>
 #include <osgAnimation/EaseMotion>
 
-#include <tools/idtools.h>
-#include <selection/definitions.h>
-#include <selection/message.h>
-#include <message/node.h>
-#include <message/sift.h>
-#include <viewer/message.h>
-#include <viewer/textcamera.h>
+#include "tools/idtools.h"
+#include "selection/slcdefinitions.h"
+#include "selection/slcmessage.h"
+#include "message/msgnode.h"
+#include "message/msgsift.h"
+#include "viewer/vwrmessage.h"
+#include "viewer/vwrtextcamera.h"
 
 
 namespace vwr

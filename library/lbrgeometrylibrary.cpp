@@ -26,15 +26,15 @@
 
 #include <osgManipulator/Dragger>
 
-#include <modelviz/nodemaskdefs.h>
-#include "circlebuilder.h"
-#include "cylinderbuilder.h"
-#include "spherebuilder.h"
-#include "conebuilder.h"
-#include "torusbuilder.h"
-#include "iconbuilder.h"
-#include "geometrylibraryprivate.h"
-#include "geometrylibrary.h"
+#include "modelviz/mdvnodemaskdefs.h"
+#include "library/lbrcirclebuilder.h"
+#include "library/lbrcylinderbuilder.h"
+#include "library/lbrspherebuilder.h"
+#include "library/lbrconebuilder.h"
+#include "library/lbrtorusbuilder.h"
+#include "library/lbriconbuilder.h"
+#include "library/lbrgeometrylibraryprivate.h"
+#include "library/lbrgeometrylibrary.h"
 
 using namespace lbr;
 

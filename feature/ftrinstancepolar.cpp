@@ -28,21 +28,21 @@
 #include <BRepAdaptor_Surface.hxx>
 #include <BRepBuilderAPI_Transform.hxx>
 
-#include <globalutilities.h>
-#include <tools/occtools.h>
-#include <library/plabel.h>
-#include <library/csysdragger.h>
-#include <annex/seershape.h>
-#include <annex/csysdragger.h>
-#include <annex/instancemapper.h>
-#include <parameter/parameter.h>
-#include <project/serial/xsdcxxoutput/featureinstancepolar.h>
-#include <tools/featuretools.h>
-#include <feature/shapecheck.h>
-#include <feature/inputtype.h>
-#include <feature/updatepayload.h>
-#include <feature/datumaxis.h>
-#include <feature/instancepolar.h>
+#include "globalutilities.h"
+#include "tools/occtools.h"
+#include "library/lbrplabel.h"
+#include "library/lbrcsysdragger.h"
+#include "annex/annseershape.h"
+#include "annex/anncsysdragger.h"
+#include "annex/anninstancemapper.h"
+#include "parameter/prmparameter.h"
+#include "project/serial/xsdcxxoutput/featureinstancepolar.h"
+#include "tools/featuretools.h"
+#include "feature/ftrshapecheck.h"
+#include "feature/ftrinputtype.h"
+#include "feature/ftrupdatepayload.h"
+#include "feature/ftrdatumaxis.h"
+#include "feature/ftrinstancepolar.h"
 
 using namespace ftr;
 

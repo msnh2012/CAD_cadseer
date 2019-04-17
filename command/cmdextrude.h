@@ -20,7 +20,7 @@
 #ifndef CMD_EXTRUDE_H
 #define CMD_EXTRUDE_H
 
-#include "command/base.h"
+#include "command/cmdbase.h"
 
 namespace cmd
 {

@@ -23,11 +23,11 @@
 #include <osg/ValueObject>
 #include <osg/PagedLOD>
 
-#include <globalutilities.h>
-#include <tools/idtools.h>
-#include <modelviz/nodemaskdefs.h>
-#include <modelviz/shapegeometry.h>
-#include <selection/visitors.h>
+#include "globalutilities.h"
+#include "tools/idtools.h"
+#include "modelviz/mdvnodemaskdefs.h"
+#include "modelviz/mdvshapegeometry.h"
+#include "selection/slcvisitors.h"
 
 using namespace slc;
 using boost::uuids::uuid;

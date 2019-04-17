@@ -19,12 +19,12 @@
 
 #include <osg/Geometry> //yuck
 
-#include <message/node.h>
-#include <project/project.h>
-#include <selection/eventhandler.h>
-#include <feature/inputtype.h>
-#include <feature/dieset.h>
-#include <command/dieset.h>
+#include "message/msgnode.h"
+#include "project/prjproject.h"
+#include "selection/slceventhandler.h"
+#include "feature/ftrinputtype.h"
+#include "feature/ftrdieset.h"
+#include "command/cmddieset.h"
 
 using namespace cmd;
 

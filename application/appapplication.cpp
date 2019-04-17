@@ -29,22 +29,22 @@
 
 #include <global.hpp> //for git start and shutdown.
 
-#include <application/application.h>
-#include <application/mainwindow.h>
-#include <viewer/spaceballqevent.h>
-#include <viewer/vwrwidget.h>
-#include <project/message.h>
-#include <project/gitmanager.h> //needed for unique_ptr destructor call.
-#include <project/project.h>
-#include <preferences/preferencesXML.h>
-#include <preferences/manager.h>
-#include <message/node.h>
-#include <message/sift.h>
-#include <application/factory.h>
-#include <command/manager.h>
-#include <lod/lodmanager.h>
-#include <dialogs/project.h>
-#include <dialogs/about.h>
+#include "application/appapplication.h"
+#include "application/appmainwindow.h"
+#include "viewer/vwrspaceballqevent.h"
+#include "viewer/vwrwidget.h"
+#include "project/prjmessage.h"
+#include "project/prjgitmanager.h" //needed for unique_ptr destructor call.
+#include "project/prjproject.h"
+#include "preferences/preferencesXML.h"
+#include "preferences/prfmanager.h"
+#include "message/msgnode.h"
+#include "message/msgsift.h"
+#include "application/appfactory.h"
+#include "command/cmdmanager.h"
+#include "lod/lodmanager.h"
+#include "dialogs/dlgproject.h"
+#include "dialogs/dlgabout.h"
 
 #include <spnav.h>
 

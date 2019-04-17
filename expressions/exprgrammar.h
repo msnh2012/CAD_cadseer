@@ -27,7 +27,7 @@
 #include <boost/spirit/include/phoenix_function.hpp>
 #include <boost/spirit/include/phoenix_bind.hpp>
 
-#include <expressions/stringtranslatorstow.h>
+#include "expressions/exprstringtranslatorstow.h"
 
 
 namespace bp = boost::phoenix;

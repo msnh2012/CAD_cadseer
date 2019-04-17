@@ -33,7 +33,7 @@ using namespace nglib;
 
 
 #include "project/serial/xsdcxxoutput/mesh.h"
-#include "mesh/parameters.h"
+#include "mesh/mshparameters.h"
 
 using namespace msh::prm;
 

@@ -20,10 +20,10 @@
 #ifndef FTR_SQUASH_H
 #define FTR_SQUASH_H
 
-#include <feature/pick.h>
-#include <parameter/parameter.h>
-#include <library/plabel.h>
-#include <feature/base.h>
+#include "feature/ftrpick.h"
+#include "parameter/prmparameter.h"
+#include "library/lbrplabel.h"
+#include "feature/ftrbase.h"
 
 namespace prj{namespace srl{class FeatureSquash;}}
 namespace ann{class SeerShape;}

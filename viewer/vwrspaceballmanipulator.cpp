@@ -23,11 +23,11 @@
 
 #include <osg/ComputeBoundsVisitor>
 
-#include <preferences/preferencesXML.h>
-#include <preferences/manager.h>
-#include <modelviz/nodemaskdefs.h>
-#include <viewer/spaceballosgevent.h>
-#include <viewer/spaceballmanipulator.h>
+#include "preferences/preferencesXML.h"
+#include "preferences/prfmanager.h"
+#include "modelviz/mdvnodemaskdefs.h"
+#include "viewer/vwrspaceballosgevent.h"
+#include "viewer/vwrspaceballmanipulator.h"
 
 using namespace vwr;
 

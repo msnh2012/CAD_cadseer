@@ -20,7 +20,7 @@
 #ifndef CMD_NEST_H
 #define CMD_NEST_H
 
-#include <command/base.h>
+#include "command/cmdbase.h"
 
 namespace cmd
 {

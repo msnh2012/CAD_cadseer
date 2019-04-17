@@ -19,15 +19,15 @@
 
 #include <memory>
 
-#include <application/mainwindow.h>
-#include <project/project.h>
-#include <message/node.h>
-#include <selection/eventhandler.h>
-#include <viewer/vwrwidget.h>
-#include <feature/inputtype.h>
-#include <feature/intersect.h>
-#include <dialogs/boolean.h>
-#include <command/intersect.h>
+#include "application/appmainwindow.h"
+#include "project/prjproject.h"
+#include "message/msgnode.h"
+#include "selection/slceventhandler.h"
+#include "viewer/vwrwidget.h"
+#include "feature/ftrinputtype.h"
+#include "feature/ftrintersect.h"
+#include "dialogs/dlgboolean.h"
+#include "command/cmdintersect.h"
 
 using namespace cmd;
 

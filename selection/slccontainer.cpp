@@ -22,7 +22,7 @@
 #include <osg/Geometry>
 #include <osg/io_utils>
 
-#include <selection/container.h>
+#include "selection/slccontainer.h"
 
 using namespace slc;
 

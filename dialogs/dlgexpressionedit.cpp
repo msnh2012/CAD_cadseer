@@ -32,10 +32,10 @@
 #include <QMimeData>
 #include <QTimer>
 
-#include <tools/idtools.h>
-#include <expressions/manager.h>
-#include <expressions/stringtranslator.h>
-#include <dialogs/expressionedit.h>
+#include "tools/idtools.h"
+#include "expressions/exprmanager.h"
+#include "expressions/exprstringtranslator.h"
+#include "dialogs/dlgexpressionedit.h"
 
 using namespace dlg;
 

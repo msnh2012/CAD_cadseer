@@ -19,17 +19,17 @@
 
 #include <iomanip>
 
-#include <globalutilities.h>
-#include <tools/idtools.h>
-#include <application/application.h>
-#include <parameter/parameter.h>
-#include <feature/base.h>
-#include <library/csysdragger.h>
-#include <message/message.h>
-#include <preferences/preferencesXML.h>
-#include <preferences/manager.h>
-#include <project/serial/xsdcxxoutput/featurebase.h>
-#include <annex/csysdragger.h>
+#include "globalutilities.h"
+#include "tools/idtools.h"
+#include "application/appapplication.h"
+#include "parameter/prmparameter.h"
+#include "feature/ftrbase.h"
+#include "library/lbrcsysdragger.h"
+#include "message/msgmessage.h"
+#include "preferences/preferencesXML.h"
+#include "preferences/prfmanager.h"
+#include "project/serial/xsdcxxoutput/featurebase.h"
+#include "annex/anncsysdragger.h"
 
 namespace ann
 {

@@ -21,8 +21,8 @@
 
 #include <osg/Node>
 
-#include <message/variant.h>
-#include <message/message.h>
+#include "message/msgvariant.h"
+#include "message/msgmessage.h"
 
 using namespace msg;
 

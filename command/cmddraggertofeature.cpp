@@ -17,12 +17,12 @@
  *
  */
 
-#include <project/project.h>
-#include <application/mainwindow.h>
-#include <selection/eventhandler.h>
-#include <annex/csysdragger.h>
-#include <feature/base.h>
-#include <command/draggertofeature.h>
+#include "project/prjproject.h"
+#include "application/appmainwindow.h"
+#include "selection/slceventhandler.h"
+#include "annex/anncsysdragger.h"
+#include "feature/ftrbase.h"
+#include "command/cmddraggertofeature.h"
 
 using namespace cmd;
 

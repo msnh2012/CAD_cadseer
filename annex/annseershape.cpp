@@ -50,12 +50,12 @@
 
 #include <osg/Vec3d>
 
-#include <tools/idtools.h>
-#include <tools/occtools.h>
-#include <annex/shapeidhelper.h>
-#include <project/serial/xsdcxxoutput/featurebase.h>
-#include <feature/shapehistory.h>
-#include <annex/seershape.h>
+#include "tools/idtools.h"
+#include "tools/occtools.h"
+#include "annex/annshapeidhelper.h"
+#include "project/serial/xsdcxxoutput/featurebase.h"
+#include "feature/ftrshapehistory.h"
+#include "annex/annseershape.h"
 
 using boost::uuids::uuid;
 

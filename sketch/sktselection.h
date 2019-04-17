@@ -24,7 +24,7 @@
 
 #include <osgGA/GUIEventHandler>
 
-#include "nodemasks.h"
+#include "sketch/sktnodemasks.h"
 
 namespace osg
 {

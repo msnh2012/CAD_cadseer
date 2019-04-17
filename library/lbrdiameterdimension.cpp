@@ -29,11 +29,11 @@
 #include <osg/ComputeBoundsVisitor>
 
 #include "preferences/preferencesXML.h"
-#include "preferences/manager.h"
-#include "library/childnamevisitor.h"
-#include "library/geometrylibrary.h"
-#include "library/circlebuilderlod.h"
-#include "library/diameterdimension.h"
+#include "preferences/prfmanager.h"
+#include "library/lbrchildnamevisitor.h"
+#include "library/lbrgeometrylibrary.h"
+#include "library/lbrcirclebuilderlod.h"
+#include "library/lbrdiameterdimension.h"
 
 using namespace lbr;
 

@@ -17,16 +17,16 @@
  *
  */
 
-#include <globalutilities.h>
-#include <project/project.h>
-#include <application/mainwindow.h>
-#include <selection/eventhandler.h>
-#include <viewer/vwrwidget.h>
-#include <library/csysdragger.h>
-#include <annex/csysdragger.h>
-#include <parameter/parameter.h>
-#include <feature/base.h>
-#include <command/featurereposition.h>
+#include "globalutilities.h"
+#include "project/prjproject.h"
+#include "application/appmainwindow.h"
+#include "selection/slceventhandler.h"
+#include "viewer/vwrwidget.h"
+#include "library/lbrcsysdragger.h"
+#include "annex/anncsysdragger.h"
+#include "parameter/prmparameter.h"
+#include "feature/ftrbase.h"
+#include "command/cmdfeaturereposition.h"
 
 using namespace cmd;
 

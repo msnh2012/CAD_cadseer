@@ -20,7 +20,7 @@
 #ifndef CMD_TRIM_H
 #define CMD_TRIM_H
 
-#include <command/base.h>
+#include "command/cmdbase.h"
 
 namespace cmd
 {

@@ -20,7 +20,7 @@
 #ifndef MSG_SIFT_H
 #define MSG_SIFT_H
 
-#include "message/message.h"
+#include "message/msgmessage.h"
 
 namespace msg
 {

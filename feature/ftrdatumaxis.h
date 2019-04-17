@@ -22,8 +22,8 @@
 
 #include <osg/Vec3d>
 
-#include <feature/pick.h>
-#include <feature/base.h>
+#include "feature/ftrpick.h"
+#include "feature/ftrbase.h"
 
 /* types
  * 

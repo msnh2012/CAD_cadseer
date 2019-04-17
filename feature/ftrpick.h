@@ -23,8 +23,8 @@
 #include <vector>
 #include <utility>
 
-#include <selection/definitions.h>
-#include <feature/shapehistory.h>
+#include "selection/slcdefinitions.h"
+#include "feature/ftrshapehistory.h"
 
 class TopoDS_Edge;
 class TopoDS_Face;

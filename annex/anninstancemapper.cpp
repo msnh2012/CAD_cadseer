@@ -19,12 +19,12 @@
 
 #include <iostream>
 
-#include <tools/idtools.h>
-#include <tools/occtools.h>
-#include <feature/shapehistory.h>
-#include <annex/seershape.h>
-#include <project/serial/xsdcxxoutput/instancemapper.h>
-#include <annex/instancemapper.h>
+#include "tools/idtools.h"
+#include "tools/occtools.h"
+#include "feature/ftrshapehistory.h"
+#include "annex/annseershape.h"
+#include "project/serial/xsdcxxoutput/instancemapper.h"
+#include "annex/anninstancemapper.h"
 
 using boost::uuids::uuid;
 

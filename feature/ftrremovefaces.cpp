@@ -23,17 +23,17 @@
 
 #include <osg/Switch>
 
-#include <globalutilities.h>
-#include <tools/occtools.h>
-#include <tools/idtools.h>
-#include <tools/featuretools.h>
-#include <feature/shapecheck.h>
-#include <project/serial/xsdcxxoutput/featureremovefaces.h>
-#include <feature/updatepayload.h>
-#include <feature/inputtype.h>
-#include <feature/shapecheck.h>
-#include <annex/seershape.h>
-#include <feature/removefaces.h>
+#include "globalutilities.h"
+#include "tools/occtools.h"
+#include "tools/idtools.h"
+#include "tools/featuretools.h"
+#include "feature/ftrshapecheck.h"
+#include "project/serial/xsdcxxoutput/featureremovefaces.h"
+#include "feature/ftrupdatepayload.h"
+#include "feature/ftrinputtype.h"
+#include "feature/ftrshapecheck.h"
+#include "annex/annseershape.h"
+#include "feature/ftrremovefaces.h"
 
 using namespace ftr;
 

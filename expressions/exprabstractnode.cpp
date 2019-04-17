@@ -22,8 +22,8 @@
 
 #include <boost/math/constants/constants.hpp>
 
-#include <tools/idtools.h>
-#include <expressions/abstractnode.h>
+#include "tools/idtools.h"
+#include "expressions/exprabstractnode.h"
 
 using namespace expr;
 

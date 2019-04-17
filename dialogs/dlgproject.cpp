@@ -26,12 +26,12 @@
 #include <QFileDialog>
 #include <QSettings>
 
-#include <application/application.h>
-#include <preferences/preferencesXML.h>
-#include <preferences/manager.h>
-#include <dialogs/widgetgeometry.h>
-#include <dialogs/project.h>
-#include <ui_project.h> //in build directory
+#include "application/appapplication.h"
+#include "preferences/preferencesXML.h"
+#include "preferences/prfmanager.h"
+#include "dialogs/dlgwidgetgeometry.h"
+#include "dialogs/dlgproject.h"
+#include "ui_dlgproject.h" //in build directory
 
 using namespace boost::filesystem;
 

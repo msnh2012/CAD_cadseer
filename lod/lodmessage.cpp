@@ -17,4 +17,4 @@
  *
  */
 
-#include <lod/message.h>
+#include "lod/lodmessage.h"

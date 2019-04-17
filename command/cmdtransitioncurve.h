@@ -20,7 +20,7 @@
 #ifndef CMD_TRANSITIONCURVE_H
 #define CMD_TRANSITIONCURVE_H
 
-#include "command/base.h"
+#include "command/cmdbase.h"
 
 namespace cmd
 {

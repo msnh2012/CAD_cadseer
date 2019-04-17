@@ -19,12 +19,12 @@
 
 #include <QColorDialog>
 
-#include <application/application.h>
-#include <application/mainwindow.h>
-#include <project/project.h>
-#include <feature/base.h>
-#include <selection/eventhandler.h>
-#include <command/editcolor.h>
+#include "application/appapplication.h"
+#include "application/appmainwindow.h"
+#include "project/prjproject.h"
+#include "feature/ftrbase.h"
+#include "selection/slceventhandler.h"
+#include "command/cmdeditcolor.h"
 
 using namespace cmd;
 

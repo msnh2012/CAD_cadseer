@@ -20,7 +20,7 @@
 #ifndef MDV_DATUMAXIS_H
 #define MDV_DATUMAXIS_H
 
-#include <modelviz/base.h>
+#include "modelviz/mdvbase.h"
 
 namespace mdv
 {

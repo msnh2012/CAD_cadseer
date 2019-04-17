@@ -20,7 +20,7 @@
 #ifndef CMD_FEATURERENAME_H
 #define CMD_FEATURERENAME_H
 
-#include <command/base.h>
+#include "command/cmdbase.h"
 
 namespace msg{struct Sift;}
 

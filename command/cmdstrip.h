@@ -20,7 +20,7 @@
 #ifndef CMD_STRIP_H
 #define CMD_STRIP_H
 
-#include <command/base.h>
+#include "command/cmdbase.h"
 
 namespace dlg{class Strip;}
 namespace ftr{class Strip;}

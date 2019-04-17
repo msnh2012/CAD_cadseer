@@ -20,7 +20,7 @@
 #include <osg/LineStipple>
 #include <osg/Depth>
 
-#include "hiddenlinetechnique.h"
+#include "modelviz/mdvhiddenlinetechnique.h"
 
 using namespace mdv;
 

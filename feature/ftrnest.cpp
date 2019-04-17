@@ -23,18 +23,18 @@
 
 #include <osg/Switch>
 
-#include <globalutilities.h>
-#include <preferences/preferencesXML.h>
-#include <preferences/manager.h>
-#include <library/plabel.h>
-#include <parameter/parameter.h>
-#include <annex/seershape.h>
-#include <feature/shapecheck.h>
-#include <tools/occtools.h>
-#include <project/serial/xsdcxxoutput/featurenest.h>
-#include <feature/updatepayload.h>
-#include <feature/inputtype.h>
-#include <feature/nest.h>
+#include "globalutilities.h"
+#include "preferences/preferencesXML.h"
+#include "preferences/prfmanager.h"
+#include "library/lbrplabel.h"
+#include "parameter/prmparameter.h"
+#include "annex/annseershape.h"
+#include "feature/ftrshapecheck.h"
+#include "tools/occtools.h"
+#include "project/serial/xsdcxxoutput/featurenest.h"
+#include "feature/ftrupdatepayload.h"
+#include "feature/ftrinputtype.h"
+#include "feature/ftrnest.h"
 
 using namespace ftr;
 

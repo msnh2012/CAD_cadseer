@@ -20,7 +20,7 @@
 #ifndef CMD_IMAGEPLANE_H
 #define CMD_IMAGEPLANE_H
 
-#include "command/base.h"
+#include "command/cmdbase.h"
 
 namespace cmd
 {

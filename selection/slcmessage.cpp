@@ -19,8 +19,8 @@
 
 #include <algorithm>
 
-#include <tools/idtools.h>
-#include <selection/message.h>
+#include "tools/idtools.h"
+#include "selection/slcmessage.h"
 
 using namespace slc;
 

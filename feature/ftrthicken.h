@@ -22,7 +22,7 @@
 
 #include <osg/ref_ptr>
 
-#include <feature/base.h>
+#include "feature/ftrbase.h"
 
 class BRepOffset_MakeOffset;
 

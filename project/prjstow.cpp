@@ -21,12 +21,12 @@
 
 #include <osg/Node> //yuck
 
-#include <tools/idtools.h>
-#include <feature/base.h>
-#include <feature/message.h>
-#include <message/node.h>
-#include <project/message.h>
-#include <project/stow.h>
+#include "tools/idtools.h"
+#include "feature/ftrbase.h"
+#include "feature/ftrmessage.h"
+#include "message/msgnode.h"
+#include "project/prjmessage.h"
+#include "project/prjstow.h"
 
 using namespace prj;
 

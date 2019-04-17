@@ -24,7 +24,7 @@
 
 #include <osg/Geometry>
 
-#include "geometrylibrarytag.h"
+#include "library/lbrgeometrylibrarytag.h"
 
 namespace lbr
 {

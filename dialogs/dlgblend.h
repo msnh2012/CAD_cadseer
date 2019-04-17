@@ -27,7 +27,7 @@
 
 #include <QDialog>
 
-#include <dialogs/expressionedit.h> //for expression delegate
+#include "dialogs/dlgexpressionedit.h" //for expression delegate
 
 class QCloseEvent;
 class QListWidget;

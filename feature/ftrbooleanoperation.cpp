@@ -19,7 +19,7 @@
 
 #include <BOPAlgo_Builder.hxx>
 
-#include "booleanoperation.h"
+#include "feature/ftrbooleanoperation.h"
 
 using namespace ftr;
 

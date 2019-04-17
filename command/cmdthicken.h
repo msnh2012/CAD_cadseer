@@ -20,7 +20,7 @@
 #ifndef CMD_THICKEN_H
 #define CMD_THICKEN_H
 
-#include <command/base.h>
+#include "command/cmdbase.h"
 
 namespace cmd
 {

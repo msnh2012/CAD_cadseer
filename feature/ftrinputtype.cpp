@@ -17,8 +17,8 @@
  *
  */
 
-#include <globalutilities.h>
-#include <feature/inputtype.h>
+#include "globalutilities.h"
+#include "feature/ftrinputtype.h"
 
 using namespace ftr;
 

@@ -20,7 +20,7 @@
 #ifndef CMD_DATUMPLANE_H
 #define CMD_DATUMPLANE_H
 
-#include <command/base.h>
+#include "command/cmdbase.h"
 
 namespace slc{class Container;}
 

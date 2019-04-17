@@ -20,7 +20,7 @@
 #ifndef CMD_DRAGGERTOFEATURE_H
 #define CMD_DRAGGERTOFEATURE_H
 
-#include <command/base.h>
+#include "command/cmdbase.h"
 
 namespace cmd
 {

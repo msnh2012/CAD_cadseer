@@ -20,7 +20,7 @@
 #ifndef CMD_SEW_H
 #define CMD_SEW_H
 
-#include <command/base.h>
+#include "command/cmdbase.h"
 
 namespace cmd
 {

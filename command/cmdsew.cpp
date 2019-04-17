@@ -19,14 +19,14 @@
 
 #include <osg/Geometry>
 
-#include <project/project.h>
-#include <message/node.h>
-#include <selection/eventhandler.h>
-#include <annex/seershape.h>
-#include <parameter/parameter.h>
-#include <feature/inputtype.h>
-#include <feature/sew.h>
-#include <command/sew.h>
+#include "project/prjproject.h"
+#include "message/msgnode.h"
+#include "selection/slceventhandler.h"
+#include "annex/annseershape.h"
+#include "parameter/prmparameter.h"
+#include "feature/ftrinputtype.h"
+#include "feature/ftrsew.h"
+#include "command/cmdsew.h"
 
 using boost::uuids::uuid;
 

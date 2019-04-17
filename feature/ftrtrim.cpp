@@ -31,20 +31,20 @@
 
 #include <osg/Switch>
 
-#include <globalutilities.h>
-#include <tools/occtools.h>
-#include <tools/idtools.h>
-#include <library/plabel.h>
-#include <annex/seershape.h>
-#include <annex/intersectionmapper.h>
-#include <project/serial/xsdcxxoutput/featuretrim.h>
-#include <feature/booleanoperation.h>
-#include <feature/shapecheck.h>
-#include <feature/updatepayload.h>
-#include <parameter/parameter.h>
-#include <feature/inputtype.h>
-#include <feature/datumplane.h>
-#include <feature/trim.h>
+#include "globalutilities.h"
+#include "tools/occtools.h"
+#include "tools/idtools.h"
+#include "library/lbrplabel.h"
+#include "annex/annseershape.h"
+#include "annex/annintersectionmapper.h"
+#include "project/serial/xsdcxxoutput/featuretrim.h"
+#include "feature/ftrbooleanoperation.h"
+#include "feature/ftrshapecheck.h"
+#include "feature/ftrupdatepayload.h"
+#include "parameter/prmparameter.h"
+#include "feature/ftrinputtype.h"
+#include "feature/ftrdatumplane.h"
+#include "feature/ftrtrim.h"
 
 using namespace ftr;
 

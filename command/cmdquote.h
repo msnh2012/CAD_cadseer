@@ -20,7 +20,7 @@
 #ifndef CMD_QUOTE_H
 #define CMD_QUOTE_H
 
-#include <command/base.h>
+#include "command/cmdbase.h"
 
 namespace dlg{class Quote;}
 namespace ftr{class Quote;}

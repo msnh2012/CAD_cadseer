@@ -29,7 +29,7 @@
 #include <TopTools_IndexedDataMapOfShapeListOfShape.hxx>
 #include <TopTools_MapOfShape.hxx>
 
-#include <modelviz/base.h>
+#include "modelviz/mdvbase.h"
 
 namespace boost{namespace uuids{class uuid;}}
 class TopoDS_Face; class TopoDS_Edge;

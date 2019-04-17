@@ -17,15 +17,15 @@
  *
  */
 
-#include <project/project.h>
-#include <application/mainwindow.h>
-#include <selection/eventhandler.h>
-#include <globalutilities.h>
-#include <viewer/vwrwidget.h>
-#include <annex/csysdragger.h>
-#include <parameter/parameter.h>
-#include <feature/base.h>
-#include <command/systemtofeature.h>
+#include "project/prjproject.h"
+#include "application/appmainwindow.h"
+#include "selection/slceventhandler.h"
+#include "globalutilities.h"
+#include "viewer/vwrwidget.h"
+#include "annex/anncsysdragger.h"
+#include "parameter/prmparameter.h"
+#include "feature/ftrbase.h"
+#include "command/cmdsystemtofeature.h"
 
 using namespace cmd;
 

@@ -21,18 +21,18 @@
 
 #include <boost/signals2/shared_connection_block.hpp>
 
-#include <globalutilities.h>
-#include <library/csysdragger.h>
-#include <tools/occtools.h>
-#include <project/project.h>
-#include <message/node.h>
-#include <message/sift.h>
-#include <selection/message.h>
-#include <parameter/parameter.h>
-#include <feature/base.h>
-#include <annex/seershape.h>
-#include <annex/csysdragger.h>
-#include <command/csysedit.h>
+#include "globalutilities.h"
+#include "library/lbrcsysdragger.h"
+#include "tools/occtools.h"
+#include "project/prjproject.h"
+#include "message/msgnode.h"
+#include "message/msgsift.h"
+#include "selection/slcmessage.h"
+#include "parameter/prmparameter.h"
+#include "feature/ftrbase.h"
+#include "annex/annseershape.h"
+#include "annex/anncsysdragger.h"
+#include "command/cmdcsysedit.h"
 
 using namespace cmd;
 

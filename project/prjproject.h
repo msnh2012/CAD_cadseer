@@ -29,7 +29,7 @@
 #include <boost/uuid/uuid.hpp>
 #include <boost/filesystem/path.hpp>
 
-#include <feature/updatepayload.h>
+#include "feature/ftrupdatepayload.h"
 
 class QTextStream;
 class TopoDS_Shape;

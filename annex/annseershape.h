@@ -24,8 +24,8 @@
 
 #include <boost/uuid/uuid.hpp>
 
-#include <tools/shapevector.h>
-#include <annex/base.h>
+#include "tools/shapevector.h"
+#include "annex/annbase.h"
 
 
 class BRepBuilderAPI_MakeShape;

@@ -20,7 +20,7 @@
 #include <iostream>
 #include <algorithm>
 
-#include "message/sift.h"
+#include "message/msgsift.h"
 
 using namespace msg;
 

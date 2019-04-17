@@ -17,16 +17,16 @@
  *
  */
 
-#include <project/project.h>
-#include <application/application.h>
-#include <application/mainwindow.h>
-#include <feature/base.h>
-#include <selection/eventhandler.h>
-#include <selection/manager.h>
-#include <message/node.h>
-#include <message/sift.h>
-#include <dialogs/checkgeometry.h>
-#include <command/checkgeometry.h>
+#include "project/prjproject.h"
+#include "application/appapplication.h"
+#include "application/appmainwindow.h"
+#include "feature/ftrbase.h"
+#include "selection/slceventhandler.h"
+#include "selection/slcmanager.h"
+#include "message/msgnode.h"
+#include "message/msgsift.h"
+#include "dialogs/dlgcheckgeometry.h"
+#include "command/cmdcheckgeometry.h"
 
 using namespace cmd;
 

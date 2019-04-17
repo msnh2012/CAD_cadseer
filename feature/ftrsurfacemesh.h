@@ -20,8 +20,8 @@
 #ifndef FTR_SURFACEMESH_H
 #define FTR_SURFACEMESH_H
 
-#include "mesh/parameters.h"
-#include "feature/base.h"
+#include "mesh/mshparameters.h"
+#include "feature/ftrbase.h"
 
 namespace ann{class SurfaceMesh;}
 namespace prj{namespace srl{class FeatureSurfaceMesh;}}

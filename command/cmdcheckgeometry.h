@@ -20,7 +20,7 @@
 #ifndef CMD_CHECKGEOMETRYCOMMAND_H
 #define CMD_CHECKGEOMETRYCOMMAND_H
 
-#include <command/base.h>
+#include "command/cmdbase.h"
 
 namespace msg{struct Sift;}
 namespace dlg{class CheckGeometry;}

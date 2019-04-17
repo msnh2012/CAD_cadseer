@@ -36,12 +36,12 @@
 
 #include <osg/Matrixd>
 
-#include <globalutilities.h>
-#include <tools/infotools.h>
-#include <tools/occtools.h>
-#include <tools/idtools.h>
-#include <annex/seershape.h>
-#include <feature/seershapeinfo.h>
+#include "globalutilities.h"
+#include "tools/infotools.h"
+#include "tools/occtools.h"
+#include "tools/idtools.h"
+#include "annex/annseershape.h"
+#include "feature/ftrseershapeinfo.h"
 
 namespace ftr
 {

@@ -23,12 +23,12 @@
 #include <QResizeEvent>
 #include <QCloseEvent>
 
-#include <message/message.h>
-#include <message/node.h>
-#include <message/sift.h>
-#include <application/message.h>
-#include <application/application.h>
-#include <application/infowindow.h>
+#include "message/msgmessage.h"
+#include "message/msgnode.h"
+#include "message/msgsift.h"
+#include "application/appmessage.h"
+#include "application/appapplication.h"
+#include "application/appinfowindow.h"
 
 using namespace app;
 

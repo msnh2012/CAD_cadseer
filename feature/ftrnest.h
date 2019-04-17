@@ -25,7 +25,7 @@
 #include <osg/ref_ptr>
 #include <osg/Vec3d>
 
-#include <feature/base.h>
+#include "feature/ftrbase.h"
 
 namespace lbr{class PLabel;}
 namespace prj{namespace srl{class FeatureNest;}}

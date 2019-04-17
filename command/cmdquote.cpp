@@ -17,13 +17,13 @@
  *
  */
 
-#include <application/mainwindow.h>
-#include <project/project.h>
-#include <message/node.h>
-#include <selection/eventhandler.h>
-#include <feature/quote.h>
-#include <dialogs/quote.h>
-#include <command/quote.h>
+#include "application/appmainwindow.h"
+#include "project/prjproject.h"
+#include "message/msgnode.h"
+#include "selection/slceventhandler.h"
+#include "feature/ftrquote.h"
+#include "dialogs/dlgquote.h"
+#include "command/cmdquote.h"
 
 using namespace cmd;
 

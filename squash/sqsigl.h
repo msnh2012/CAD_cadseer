@@ -22,7 +22,7 @@
 
 #include <Eigen/Core>
 
-#include "mesh/mesh.h"
+#include "mesh/mshmesh.h"
 
 namespace sqs
 {

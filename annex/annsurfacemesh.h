@@ -22,7 +22,7 @@
 
 #include <memory>
 
-#include "annex/base.h"
+#include "annex/annbase.h"
 
 class TopoDS_Shape;
 class TopoDS_Shell;

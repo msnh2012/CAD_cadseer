@@ -20,7 +20,7 @@
 #ifndef CMD_EXTRACT_H
 #define CMD_EXTRACT_H
 
-#include <command/base.h>
+#include "command/cmdbase.h"
 
 namespace cmd
 {

@@ -20,7 +20,7 @@
 #ifndef CMD_DIESET_H
 #define CMD_DIESET_H
 
-#include <command/base.h>
+#include "command/cmdbase.h"
 
 namespace cmd
 {

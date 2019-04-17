@@ -20,7 +20,7 @@
 #ifndef CMD_DATUMAXIS_H
 #define CMD_DATUMAXIS_H
 
-#include <command/base.h>
+#include "command/cmdbase.h"
 
 namespace cmd
 {

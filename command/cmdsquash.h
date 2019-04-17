@@ -20,7 +20,7 @@
 #ifndef CMD_SQUASH_H
 #define CMD_SQUASH_H
 
-#include <command/base.h>
+#include "command/cmdbase.h"
 
 namespace cmd
 {

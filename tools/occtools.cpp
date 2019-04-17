@@ -49,7 +49,7 @@
 #include <GeomLib_Tool.hxx>
 #include <ShapeAnalysis_FreeBoundsProperties.hxx>
 
-#include <tools/occtools.h>
+#include "tools/occtools.h"
 
 static const double pi = boost::math::constants::pi<double>();
 

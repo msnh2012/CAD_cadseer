@@ -20,7 +20,7 @@
 #ifndef MDV_DATUMPLANE_H
 #define MDV_DATUMPLANE_H
 
-#include <modelviz/base.h>
+#include "modelviz/mdvbase.h"
 
 namespace mdv
 {

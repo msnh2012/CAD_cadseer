@@ -19,13 +19,13 @@
 
 #include <boost/optional.hpp>
 
-#include "message/node.h"
-#include "project/project.h"
-#include "selection/eventhandler.h"
-#include "annex/seershape.h"
-#include "feature/inputtype.h"
-#include "feature/revolve.h"
-#include "command/revolve.h"
+#include "message/msgnode.h"
+#include "project/prjproject.h"
+#include "selection/slceventhandler.h"
+#include "annex/annseershape.h"
+#include "feature/ftrinputtype.h"
+#include "feature/ftrrevolve.h"
+#include "command/cmdrevolve.h"
 
 using boost::uuids::uuid;
 

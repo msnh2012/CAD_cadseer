@@ -24,22 +24,22 @@
 #include <QHBoxLayout>
 #include <QCloseEvent>
 
-#include <dagview/model.h>
-#include <dagview/view.h>
-#include <expressions/widget.h>
-#include <application/application.h>
-#include <dialogs/splitterdecorated.h>
-#include <viewer/vwrwidget.h>
-#include <selection/manager.h>
-#include <message/node.h>
-#include <message/sift.h>
-#include <dialogs/expressionedit.h>
-#include <application/incrementwidget.h>
-#include <preferences/preferencesXML.h>
-#include <preferences/manager.h>
-#include <application/infowindow.h>
-#include <ui_mainwindow.h>
-#include <application/mainwindow.h>
+#include "dagview/dagmodel.h"
+#include "dagview/dagview.h"
+#include "expressions/exprwidget.h"
+#include "application/appapplication.h"
+#include "dialogs/dlgsplitterdecorated.h"
+#include "viewer/vwrwidget.h"
+#include "selection/slcmanager.h"
+#include "message/msgnode.h"
+#include "message/msgsift.h"
+#include "dialogs/dlgexpressionedit.h"
+#include "application/appincrementwidget.h"
+#include "preferences/preferencesXML.h"
+#include "preferences/prfmanager.h"
+#include "application/appinfowindow.h"
+#include "ui_appmainwindow.h"
+#include "application/appmainwindow.h"
 
 using boost::uuids::uuid;
 using namespace app;

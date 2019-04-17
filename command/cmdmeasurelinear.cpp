@@ -24,20 +24,20 @@
 
 #include <osg/AutoTransform>
 
-#include <globalutilities.h>
-#include <application/mainwindow.h>
-#include <application/message.h>
-#include <viewer/vwrwidget.h>
-#include <project/project.h>
-#include <message/node.h>
-#include <message/sift.h>
-#include <selection/eventhandler.h>
-#include <selection/message.h>
-#include <viewer/message.h>
-#include <feature/base.h>
-#include <annex/seershape.h>
-#include <library/lineardimension.h>
-#include <command/measurelinear.h>
+#include "globalutilities.h"
+#include "application/appmainwindow.h"
+#include "application/appmessage.h"
+#include "viewer/vwrwidget.h"
+#include "project/prjproject.h"
+#include "message/msgnode.h"
+#include "message/msgsift.h"
+#include "selection/slceventhandler.h"
+#include "selection/slcmessage.h"
+#include "viewer/vwrmessage.h"
+#include "feature/ftrbase.h"
+#include "annex/annseershape.h"
+#include "library/lbrlineardimension.h"
+#include "command/cmdmeasurelinear.h"
 
 using namespace cmd;
 

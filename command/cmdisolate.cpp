@@ -18,13 +18,13 @@
  */
 
 
-#include <tools/idtools.h>
-#include <project/project.h>
-#include <message/node.h>
-#include <message/sift.h>
-#include <selection/eventhandler.h>
-#include <viewer/message.h>
-#include <command/isolate.h>
+#include "tools/idtools.h"
+#include "project/prjproject.h"
+#include "message/msgnode.h"
+#include "message/msgsift.h"
+#include "selection/slceventhandler.h"
+#include "viewer/vwrmessage.h"
+#include "command/cmdisolate.h"
 
 using namespace cmd;
 

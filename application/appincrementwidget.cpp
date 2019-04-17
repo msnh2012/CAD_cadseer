@@ -25,13 +25,13 @@
 #include <QTimer>
 #include <QKeyEvent>
 
-#include <expressions/manager.h>
-#include <expressions/stringtranslator.h>
-#include <expressions/value.h>
-#include <dialogs/expressionedit.h>
-#include <preferences/preferencesXML.h>
-#include <preferences/manager.h>
-#include <application/incrementwidget.h>
+#include "expressions/exprmanager.h"
+#include "expressions/exprstringtranslator.h"
+#include "expressions/exprvalue.h"
+#include "dialogs/dlgexpressionedit.h"
+#include "preferences/preferencesXML.h"
+#include "preferences/prfmanager.h"
+#include "application/appincrementwidget.h"
 
 using namespace app;
 

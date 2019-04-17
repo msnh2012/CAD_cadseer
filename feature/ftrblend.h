@@ -24,9 +24,9 @@
 
 #include <osg/ref_ptr>
 
-#include <library/plabel.h>
-#include <feature/pick.h>
-#include <feature/base.h>
+#include "library/lbrplabel.h"
+#include "feature/ftrpick.h"
+#include "feature/ftrbase.h"
 
 class ChFi3d_FilBuilder;
 class TopoDS_Edge;

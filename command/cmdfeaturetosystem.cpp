@@ -17,13 +17,13 @@
  *
  */
 
-#include <application/mainwindow.h>
-#include <viewer/vwrwidget.h>
-#include <selection/eventhandler.h>
-#include <project/project.h>
-#include <annex/csysdragger.h>
-#include <feature/base.h>
-#include <command/featuretosystem.h>
+#include "application/appmainwindow.h"
+#include "viewer/vwrwidget.h"
+#include "selection/slceventhandler.h"
+#include "project/prjproject.h"
+#include "annex/anncsysdragger.h"
+#include "feature/ftrbase.h"
+#include "command/cmdfeaturetosystem.h"
 
 using namespace cmd;
 

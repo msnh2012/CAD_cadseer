@@ -26,9 +26,9 @@
 #include <functional>
 #include <map>
 
-#include <selection/definitions.h>
-#include <feature/types.h>
-#include <command/base.h>
+#include "selection/slcdefinitions.h"
+#include "feature/ftrtypes.h"
+#include "command/cmdbase.h"
 
 namespace msg{class Message; struct Node; struct Sift;}
 namespace ftr{class Base;}

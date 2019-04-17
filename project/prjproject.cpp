@@ -40,31 +40,31 @@
 
 #include <osg/ValueObject>
 
-#include <application/application.h>
-#include <globalutilities.h>
-#include <tools/idtools.h>
-#include <tools/occtools.h>
-#include <feature/base.h>
-#include <annex/seershape.h>
-#include <feature/inert.h>
-#include <feature/shapehistory.h>
-#include <feature/message.h>
-#include <parameter/parameter.h>
-#include <expressions/manager.h>
-#include <expressions/formulalink.h>
-#include <expressions/stringtranslator.h> //for serialize.
-#include <message/message.h>
-#include <message/node.h>
-#include <message/sift.h>
-#include <viewer/message.h>
-#include <project/gitmanager.h>
-#include <project/message.h>
-#include <tools/graphtools.h>
-#include <project/featureload.h>
-#include <project/serial/xsdcxxoutput/shapehistory.h>
-#include <project/serial/xsdcxxoutput/project.h>
-#include <project/stow.h>
-#include <project/project.h>
+#include "application/appapplication.h"
+#include "globalutilities.h"
+#include "tools/idtools.h"
+#include "tools/occtools.h"
+#include "feature/ftrbase.h"
+#include "annex/annseershape.h"
+#include "feature/ftrinert.h"
+#include "feature/ftrshapehistory.h"
+#include "feature/ftrmessage.h"
+#include "parameter/prmparameter.h"
+#include "expressions/exprmanager.h"
+#include "expressions/exprformulalink.h"
+#include "expressions/exprstringtranslator.h" //for serialize.
+#include "message/msgmessage.h"
+#include "message/msgnode.h"
+#include "message/msgsift.h"
+#include "viewer/vwrmessage.h"
+#include "project/prjgitmanager.h"
+#include "project/prjmessage.h"
+#include "tools/graphtools.h"
+#include "project/prjfeatureload.h"
+#include "project/serial/xsdcxxoutput/shapehistory.h"
+#include "project/serial/xsdcxxoutput/project.h"
+#include "project/prjstow.h"
+#include "project/prjproject.h"
 
 using namespace boost::filesystem;
 

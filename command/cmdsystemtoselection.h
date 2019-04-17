@@ -20,7 +20,7 @@
 #ifndef CMD_SYSTEMTOSELECTION_H
 #define CMD_SYSTEMTOSELECTION_H
 
-#include <command/base.h>
+#include "command/cmdbase.h"
 
 namespace cmd
 {

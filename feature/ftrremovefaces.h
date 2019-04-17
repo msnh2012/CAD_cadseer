@@ -20,8 +20,8 @@
 #ifndef FTR_REMOVEFACES_H
 #define FTR_REMOVEFACES_H
 
-#include <feature/pick.h>
-#include <feature/base.h>
+#include "feature/ftrpick.h"
+#include "feature/ftrbase.h"
 
 namespace prj{namespace srl{class FeatureRemoveFaces;}}
 

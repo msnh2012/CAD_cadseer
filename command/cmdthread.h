@@ -20,7 +20,7 @@
 #ifndef CMD_THREAD_H
 #define CMD_THREAD_H
 
-#include <command/base.h>
+#include "command/cmdbase.h"
 
 namespace cmd
 {

@@ -19,12 +19,12 @@
 
 #include <boost/optional.hpp>
 
-#include <project/project.h>
-#include <message/node.h>
-#include <selection/eventhandler.h>
-#include <viewer/vwrwidget.h>
-#include <feature/datumplane.h>
-#include <command/systemtoselection.h>
+#include "project/prjproject.h"
+#include "message/msgnode.h"
+#include "selection/slceventhandler.h"
+#include "viewer/vwrwidget.h"
+#include "feature/ftrdatumplane.h"
+#include "command/cmdsystemtoselection.h"
 
 using namespace cmd;
 

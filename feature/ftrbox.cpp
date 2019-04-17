@@ -21,19 +21,19 @@
 #include <string>
 #include <map>
 
-#include <globalutilities.h>
-#include <tools/idtools.h>
-#include <preferences/preferencesXML.h>
-#include <preferences/manager.h>
-#include <library/ipgroup.h>
-#include <library/csysdragger.h>
-#include <feature/boxbuilder.h>
-#include <annex/seershape.h>
-#include <annex/csysdragger.h>
-#include <project/serial/xsdcxxoutput/featurebox.h>
-#include <feature/updatepayload.h>
-#include <parameter/parameter.h>
-#include <feature/box.h>
+#include "globalutilities.h"
+#include "tools/idtools.h"
+#include "preferences/preferencesXML.h"
+#include "preferences/prfmanager.h"
+#include "library/lbripgroup.h"
+#include "library/lbrcsysdragger.h"
+#include "feature/ftrboxbuilder.h"
+#include "annex/annseershape.h"
+#include "annex/anncsysdragger.h"
+#include "project/serial/xsdcxxoutput/featurebox.h"
+#include "feature/ftrupdatepayload.h"
+#include "parameter/prmparameter.h"
+#include "feature/ftrbox.h"
 
 using namespace ftr;
 using boost::uuids::uuid;

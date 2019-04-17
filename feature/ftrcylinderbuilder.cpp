@@ -22,7 +22,7 @@
 #include <BRepPrimAPI_MakeCylinder.hxx>
 #include <TopoDS_Iterator.hxx>
 
-#include <feature/cylinderbuilder.h>
+#include "feature/ftrcylinderbuilder.h"
 
 using namespace ftr;
 

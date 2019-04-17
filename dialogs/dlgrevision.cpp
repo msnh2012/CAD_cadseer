@@ -29,16 +29,16 @@
 #include <QAction>
 #include <QCloseEvent>
 
-#include <message/message.h>
-#include <application/application.h>
-#include <project/project.h>
-#include <project/gitmanager.h>
-#include <project/message.h>
-#include <dialogs/widgetgeometry.h>
-#include <dialogs/commitwidget.h>
-#include <dialogs/tagwidget.h>
-#include <dialogs/splitterdecorated.h>
-#include <dialogs/revision.h>
+#include "message/msgmessage.h"
+#include "application/appapplication.h"
+#include "project/prjproject.h"
+#include "project/prjgitmanager.h"
+#include "project/prjmessage.h"
+#include "dialogs/dlgwidgetgeometry.h"
+#include "dialogs/dlgcommitwidget.h"
+#include "dialogs/dlgtagwidget.h"
+#include "dialogs/dlgsplitterdecorated.h"
+#include "dialogs/dlgrevision.h"
 
 namespace dlg
 {

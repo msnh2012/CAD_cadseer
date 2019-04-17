@@ -36,21 +36,21 @@
 #include <Geom_Curve.hxx>
 
 #include <osg/Switch>
-#include <feature/inputtype.h>
+#include "feature/ftrinputtype.h"
 
-#include <globalutilities.h>
-#include <tools/idtools.h>
-#include <tools/occtools.h>
-#include <tools/featuretools.h>
-#include <preferences/preferencesXML.h>
-#include <preferences/manager.h>
-#include <project/serial/xsdcxxoutput/featureblend.h>
-#include <parameter/parameter.h>
-#include <feature/shapecheck.h>
-#include <annex/seershape.h>
-#include <parameter/parameter.h>
-#include <feature/updatepayload.h>
-#include <feature/blend.h>
+#include "globalutilities.h"
+#include "tools/idtools.h"
+#include "tools/occtools.h"
+#include "tools/featuretools.h"
+#include "preferences/preferencesXML.h"
+#include "preferences/prfmanager.h"
+#include "project/serial/xsdcxxoutput/featureblend.h"
+#include "parameter/prmparameter.h"
+#include "feature/ftrshapecheck.h"
+#include "annex/annseershape.h"
+#include "parameter/prmparameter.h"
+#include "feature/ftrupdatepayload.h"
+#include "feature/ftrblend.h"
 
 using namespace ftr;
 using boost::uuids::uuid;

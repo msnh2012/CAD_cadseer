@@ -26,9 +26,9 @@
 #include <osg/Geometry>
 #include <osg/io_utils>
 
-#include "modelviz/nodemaskdefs.h"
-#include "visual.h"
-#include "selection.h"
+#include "modelviz/mdvnodemaskdefs.h"
+#include "sketch/sktvisual.h"
+#include "sketch/sktselection.h"
 
 using namespace skt;
 

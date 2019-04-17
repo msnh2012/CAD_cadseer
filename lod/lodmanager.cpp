@@ -22,18 +22,18 @@
 
 #include <boost/filesystem.hpp>
 
-#include <tools/idtools.h>
-#include <application/application.h>
-#include <preferences/preferencesXML.h>
-#include <preferences/manager.h>
-#include <message/node.h>
-#include <message/sift.h>
-#include <lod/message.h>
-#include <project/message.h>
-#include <feature/message.h>
-#include <feature/states.h>
-#include <feature/base.h>
-#include <lod/lodmanager.h>
+#include "tools/idtools.h"
+#include "application/appapplication.h"
+#include "preferences/preferencesXML.h"
+#include "preferences/prfmanager.h"
+#include "message/msgnode.h"
+#include "message/msgsift.h"
+#include "lod/lodmessage.h"
+#include "project/prjmessage.h"
+#include "feature/ftrmessage.h"
+#include "feature/ftrstates.h"
+#include "feature/ftrbase.h"
+#include "lod/lodmanager.h"
 
 using namespace lod;
 

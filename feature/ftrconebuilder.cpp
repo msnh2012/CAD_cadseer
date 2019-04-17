@@ -32,7 +32,7 @@
 #include <ShapeAnalysis_Edge.hxx>
 #include <gp_Circ.hxx>
 
-#include <feature/conebuilder.h>
+#include "feature/ftrconebuilder.h"
 
 using namespace ftr;
 

@@ -25,16 +25,16 @@
 #include <gp_Trsf.hxx>
 #include <TopLoc_Location.hxx>
 
-#include <project/serial/xsdcxxoutput/featureinert.h>
-#include <globalutilities.h>
-#include <tools/idtools.h>
-#include <tools/occtools.h>
-#include <library/csysdragger.h>
-#include <annex/seershape.h>
-#include <annex/csysdragger.h>
-#include <parameter/parameter.h>
-#include <feature/updatepayload.h>
-#include <feature/inert.h>
+#include "project/serial/xsdcxxoutput/featureinert.h"
+#include "globalutilities.h"
+#include "tools/idtools.h"
+#include "tools/occtools.h"
+#include "library/lbrcsysdragger.h"
+#include "annex/annseershape.h"
+#include "annex/anncsysdragger.h"
+#include "parameter/prmparameter.h"
+#include "feature/ftrupdatepayload.h"
+#include "feature/ftrinert.h"
 
 using namespace ftr;
 using namespace boost::uuids;

@@ -20,7 +20,7 @@
 #ifndef CMD_FEATUREREPOSITION_H
 #define CMD_FEATUREREPOSITION_H
 
-#include <command/base.h>
+#include "command/cmdbase.h"
 
 namespace cmd
 {

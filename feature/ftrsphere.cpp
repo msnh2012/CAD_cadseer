@@ -19,18 +19,18 @@
 
 #include <BRepPrimAPI_MakeSphere.hxx>
 
-#include <globalutilities.h>
-#include <tools/idtools.h>
-#include <preferences/preferencesXML.h>
-#include <preferences/manager.h>
-#include <library/ipgroup.h>
-#include <library/csysdragger.h>
-#include <project/serial/xsdcxxoutput/featuresphere.h>
-#include <annex/csysdragger.h>
-#include <annex/seershape.h>
-#include <parameter/parameter.h>
-#include <feature/updatepayload.h>
-#include <feature/sphere.h>
+#include "globalutilities.h"
+#include "tools/idtools.h"
+#include "preferences/preferencesXML.h"
+#include "preferences/prfmanager.h"
+#include "library/lbripgroup.h"
+#include "library/lbrcsysdragger.h"
+#include "project/serial/xsdcxxoutput/featuresphere.h"
+#include "annex/anncsysdragger.h"
+#include "annex/annseershape.h"
+#include "parameter/prmparameter.h"
+#include "feature/ftrupdatepayload.h"
+#include "feature/ftrsphere.h"
 
 using namespace ftr;
 using namespace boost::uuids;

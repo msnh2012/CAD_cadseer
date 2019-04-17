@@ -39,11 +39,11 @@
 #include <CGAL/boost/graph/Euler_operations.h>
 
 #include "tools/idtools.h"
-#include "squash/igl.h"
-#include "squash/squash.h"
-#include "mesh/parameters.h"
-#include "mesh/mesh.h"
-#include "annex/surfacemesh.h"
+#include "squash/sqsigl.h"
+#include "squash/sqssquash.h"
+#include "mesh/mshparameters.h"
+#include "mesh/mshmesh.h"
+#include "annex/annsurfacemesh.h"
 #include "globalutilities.h"
 
 #include <BRepTools.hxx>

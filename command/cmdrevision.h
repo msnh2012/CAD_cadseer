@@ -20,7 +20,7 @@
 #ifndef CMD_REVISION_H
 #define CMD_REVISION_H
 
-#include <command/base.h>
+#include "command/cmdbase.h"
 
 namespace dlg{class Revision;}
 

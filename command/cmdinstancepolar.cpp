@@ -19,14 +19,14 @@
 
 #include <memory>
 
-#include <project/project.h>
-#include <message/node.h>
-#include <selection/eventhandler.h>
-#include <viewer/vwrwidget.h>
-#include <parameter/parameter.h>
-#include <feature/inputtype.h>
-#include <feature/instancepolar.h>
-#include <command/instancepolar.h>
+#include "project/prjproject.h"
+#include "message/msgnode.h"
+#include "selection/slceventhandler.h"
+#include "viewer/vwrwidget.h"
+#include "parameter/prmparameter.h"
+#include "feature/ftrinputtype.h"
+#include "feature/ftrinstancepolar.h"
+#include "command/cmdinstancepolar.h"
 
 using namespace cmd;
 

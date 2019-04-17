@@ -17,14 +17,14 @@
  *
  */
 
-#include <project/project.h>
-#include <message/node.h>
-#include <selection/eventhandler.h>
-#include <annex/seershape.h>
-#include <parameter/parameter.h>
-#include <feature/inputtype.h>
-#include <feature/thicken.h>
-#include <command/thicken.h>
+#include "project/prjproject.h"
+#include "message/msgnode.h"
+#include "selection/slceventhandler.h"
+#include "annex/annseershape.h"
+#include "parameter/prmparameter.h"
+#include "feature/ftrinputtype.h"
+#include "feature/ftrthicken.h"
+#include "command/cmdthicken.h"
 
 
 using boost::uuids::uuid;

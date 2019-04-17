@@ -20,7 +20,7 @@
 #ifndef CMD_%CLASSNAMEUPPERCASE%_H
 #define CMD_%CLASSNAMEUPPERCASE%_H
 
-#include "command/base.h"
+#include "command/cmdbase.h"
 
 namespace cmd
 {

@@ -39,14 +39,14 @@
 #include <QTimer>
 #include <QClipboard>
 
-#include <preferences/preferencesXML.h>
-#include <preferences/manager.h>
-#include <tools/idtools.h>
-#include <dialogs/expressionedit.h>
-#include <expressions/tableview.h>
-#include <expressions/tablemodel.h>
-#include <expressions/manager.h>
-#include <expressions/stringtranslator.h>
+#include "preferences/preferencesXML.h"
+#include "preferences/prfmanager.h"
+#include "tools/idtools.h"
+#include "dialogs/dlgexpressionedit.h"
+#include "expressions/exprtableview.h"
+#include "expressions/exprtablemodel.h"
+#include "expressions/exprmanager.h"
+#include "expressions/exprstringtranslator.h"
 
 using namespace expr;
 

@@ -29,7 +29,7 @@
 #include <QAbstractTableModel>
 #include <QSortFilterProxyModel>
 
-#include <selection/container.h>
+#include "selection/slccontainer.h"
 
 namespace msg{class Message; struct Node; struct Sift;}
 

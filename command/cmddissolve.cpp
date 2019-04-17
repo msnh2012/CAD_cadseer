@@ -17,11 +17,11 @@
  *
  */
 
-#include <message/node.h>
-#include <selection/eventhandler.h>
-#include <project/message.h>
-#include <annex/seershape.h>
-#include <command/dissolve.h>
+#include "message/msgnode.h"
+#include "selection/slceventhandler.h"
+#include "project/prjmessage.h"
+#include "annex/annseershape.h"
+#include "command/cmddissolve.h"
 
 using boost::uuids::uuid;
 using namespace cmd;

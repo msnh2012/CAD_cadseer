@@ -24,10 +24,10 @@
 #include <osg/BlendFunc>
 #include <osgUtil/Optimizer>
 
-#include <library/conebuilder.h>
-#include <library/cylinderbuilder.h>
-#include <modelviz/nodemaskdefs.h>
-#include <modelviz/datumaxis.h>
+#include "library/lbrconebuilder.h"
+#include "library/lbrcylinderbuilder.h"
+#include "modelviz/mdvnodemaskdefs.h"
+#include "modelviz/mdvdatumaxis.h"
 
 using namespace mdv;
 

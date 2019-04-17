@@ -25,7 +25,7 @@
 #include <boost/optional.hpp>
 #include <boost/uuid/uuid.hpp>
 
-#include <tools/occtools.h>
+#include "tools/occtools.h"
 
 namespace boost{namespace filesystem{class path;}}
 

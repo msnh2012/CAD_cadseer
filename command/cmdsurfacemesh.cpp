@@ -17,12 +17,12 @@
  *
  */
 
-#include "message/node.h"
-#include "project/project.h"
-#include "selection/eventhandler.h"
-#include "feature/inputtype.h"
-#include "feature/surfacemesh.h"
-#include "command/surfacemesh.h"
+#include "message/msgnode.h"
+#include "project/prjproject.h"
+#include "selection/slceventhandler.h"
+#include "feature/ftrinputtype.h"
+#include "feature/ftrsurfacemesh.h"
+#include "command/cmdsurfacemesh.h"
 
 using namespace cmd;
 

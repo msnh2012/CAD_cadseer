@@ -17,19 +17,19 @@
  *
  */
 
-#include <globalutilities.h>
-#include <application/application.h>
-#include <application/mainwindow.h>
-#include <viewer/vwrwidget.h>
-#include <message/node.h>
-#include <selection/eventhandler.h>
-#include <project/project.h>
-#include <annex/seershape.h>
-#include <tools/featuretools.h>
-#include <tools/occtools.h>
-#include <feature/inputtype.h>
-#include <feature/datumaxis.h>
-#include <command/datumaxis.h>
+#include "globalutilities.h"
+#include "application/appapplication.h"
+#include "application/appmainwindow.h"
+#include "viewer/vwrwidget.h"
+#include "message/msgnode.h"
+#include "selection/slceventhandler.h"
+#include "project/prjproject.h"
+#include "annex/annseershape.h"
+#include "tools/featuretools.h"
+#include "tools/occtools.h"
+#include "feature/ftrinputtype.h"
+#include "feature/ftrdatumaxis.h"
+#include "command/cmddatumaxis.h"
 
 using boost::uuids::uuid;
 using namespace cmd;

@@ -19,7 +19,7 @@
 
 #include <map>
 
-#include <selection/definitions.h>
+#include "selection/slcdefinitions.h"
 
 using namespace slc;
 

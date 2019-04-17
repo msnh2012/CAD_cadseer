@@ -19,9 +19,9 @@
 
 #include <cassert>
 
-#include <viewer/gleventwidget.h>
-#include <viewer/spaceballqevent.h>
-#include <viewer/spaceballosgevent.h>
+#include "viewer/vwrgleventwidget.h"
+#include "viewer/vwrspaceballqevent.h"
+#include "viewer/vwrspaceballosgevent.h"
 
 using namespace vwr;
 

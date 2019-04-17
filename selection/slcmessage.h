@@ -26,8 +26,8 @@
 
 #include <osg/Vec3d>
 
-#include <feature/types.h>
-#include <selection/definitions.h>
+#include "feature/ftrtypes.h"
+#include "selection/slcdefinitions.h"
 
 namespace slc
 {

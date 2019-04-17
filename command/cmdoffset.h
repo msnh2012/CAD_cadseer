@@ -20,7 +20,7 @@
 #ifndef CMD_OFFSET_H
 #define CMD_OFFSET_H
 
-#include <command/base.h>
+#include "command/cmdbase.h"
 
 namespace cmd
 {

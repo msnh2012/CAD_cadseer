@@ -20,7 +20,7 @@
 #ifndef FTR_SEW_H
 #define FTR_SEW_H
 
-#include <feature/base.h>
+#include "feature/ftrbase.h"
 
 class BRepBuilderAPI_Sewing;
 

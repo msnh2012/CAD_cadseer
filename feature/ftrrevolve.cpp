@@ -27,17 +27,17 @@
 
 #include "globalutilities.h"
 #include "tools/occtools.h"
-#include "library/plabel.h"
-#include "annex/seershape.h"
-#include "feature/shapecheck.h"
-#include "parameter/parameter.h"
-#include "feature/updatepayload.h"
-#include "feature/inputtype.h"
-#include "feature/datumaxis.h"
+#include "library/lbrplabel.h"
+#include "annex/annseershape.h"
+#include "feature/ftrshapecheck.h"
+#include "parameter/prmparameter.h"
+#include "feature/ftrupdatepayload.h"
+#include "feature/ftrinputtype.h"
+#include "feature/ftrdatumaxis.h"
 #include "tools/featuretools.h"
 #include "tools/idtools.h"
 #include "project/serial/xsdcxxoutput/featurerevolve.h"
-#include "feature/revolve.h"
+#include "feature/ftrrevolve.h"
 
 using namespace ftr;
 using boost::uuids::uuid;

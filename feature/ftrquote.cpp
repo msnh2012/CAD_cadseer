@@ -19,26 +19,26 @@
 
 #include <boost/filesystem.hpp>
 
-#include <subprojects/libzippp/src/libzippp.h>
-
 #include <osg/Switch>
 
-#include <globalutilities.h>
-#include <tools/occtools.h>
-#include <application/application.h>
-#include <project/project.h>
-#include <preferences/preferencesXML.h>
-#include <preferences/manager.h>
-#include <tools/idtools.h>
-#include <libreoffice/odshack.h>
-#include <feature/strip.h>
-#include <feature/dieset.h>
-#include <annex/seershape.h>
-#include <project/serial/xsdcxxoutput/featurequote.h>
-#include <feature/updatepayload.h>
-#include <feature/inputtype.h>
-#include <parameter/parameter.h>
-#include <feature/quote.h>
+#include "subprojects/libzippp/src/libzippp.h"
+
+#include "globalutilities.h"
+#include "tools/occtools.h"
+#include "application/appapplication.h"
+#include "project/prjproject.h"
+#include "preferences/preferencesXML.h"
+#include "preferences/prfmanager.h"
+#include "tools/idtools.h"
+#include "libreoffice/lboodshack.h"
+#include "feature/ftrstrip.h"
+#include "feature/ftrdieset.h"
+#include "annex/annseershape.h"
+#include "project/serial/xsdcxxoutput/featurequote.h"
+#include "feature/ftrupdatepayload.h"
+#include "feature/ftrinputtype.h"
+#include "parameter/prmparameter.h"
+#include "feature/ftrquote.h"
 
 using namespace ftr;
 using boost::filesystem::path;

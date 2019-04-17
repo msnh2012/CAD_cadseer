@@ -20,11 +20,11 @@
 #include <boost/optional/optional.hpp>
 
 #include "tools/featuretools.h"
-#include "message/node.h"
-#include "project/project.h"
-#include "selection/eventhandler.h"
-#include "annex/seershape.h"
-#include "feature/inputtype.h"
+#include "message/msgnode.h"
+#include "project/prjproject.h"
+#include "selection/slceventhandler.h"
+#include "annex/annseershape.h"
+#include "feature/ftrinputtype.h"
 #include "feature/ftrline.h"
 #include "command/cmdline.h"
 

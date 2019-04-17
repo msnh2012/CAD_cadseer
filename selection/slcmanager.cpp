@@ -25,12 +25,12 @@
 
 #include <osg/Node>
 
-#include <modelviz/nodemaskdefs.h>
-#include <selection/definitions.h>
-#include <message/node.h>
-#include <message/sift.h>
-#include <selection/message.h>
-#include <selection/manager.h>
+#include "modelviz/mdvnodemaskdefs.h"
+#include "selection/slcdefinitions.h"
+#include "message/msgnode.h"
+#include "message/msgsift.h"
+#include "selection/slcmessage.h"
+#include "selection/slcmanager.h"
 
 using namespace slc;
 

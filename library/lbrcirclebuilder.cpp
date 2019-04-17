@@ -24,7 +24,7 @@
 #include <osg/Quat>
 #include <osg/Geometry>
 
-#include "circlebuilder.h"
+#include "library/lbrcirclebuilder.h"
 
 using namespace lbr;
 

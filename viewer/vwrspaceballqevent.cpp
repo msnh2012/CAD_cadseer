@@ -17,7 +17,7 @@
  *
  */
 
-#include <viewer/spaceballqevent.h>
+#include "viewer/vwrspaceballqevent.h"
 
 using namespace vwr;
 

@@ -28,7 +28,7 @@
 #include <osgViewer/CompositeViewer>
 #include <osgViewer/ViewerEventHandlers> //for subclass of stats handler.
 
-#include <selection/container.h>
+#include "selection/slccontainer.h"
 
 class QTextStream;
 namespace osgQt{class GraphicsWindowQt;}

@@ -24,9 +24,9 @@
 #include <osg/LineWidth>
 #include <osgUtil/SmoothingVisitor>
 
-#include "circlebuilder.h"
-#include "torusbuilder.h"
-#include "rotatecirculardragger.h"
+#include "library/lbrcirclebuilder.h"
+#include "library/lbrtorusbuilder.h"
+#include "library/lbrrotatecirculardragger.h"
 
 using namespace osg;
 using namespace osgManipulator;

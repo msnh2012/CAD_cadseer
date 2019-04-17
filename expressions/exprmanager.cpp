@@ -27,21 +27,21 @@
 #include <boost/graph/topological_sort.hpp>
 #include <boost/current_function.hpp>
 
-#include <application/application.h>
-#include <project/project.h>
-#include <project/message.h>
-#include <feature/base.h>
-#include <parameter/parameter.h>
-#include <message/node.h>
-#include <message/sift.h>
-#include <preferences/preferencesXML.h>
-#include <preferences/manager.h>
+#include "application/appapplication.h"
+#include "project/prjproject.h"
+#include "project/prjmessage.h"
+#include "feature/ftrbase.h"
+#include "parameter/prmparameter.h"
+#include "message/msgnode.h"
+#include "message/msgsift.h"
+#include "preferences/preferencesXML.h"
+#include "preferences/prfmanager.h"
 
-#include <tools/idtools.h>
-#include <expressions/edgeproperty.h>
-#include <expressions/graph.h>
-#include <expressions/formulalink.h>
-#include <expressions/manager.h>
+#include "tools/idtools.h"
+#include "expressions/expredgeproperty.h"
+#include "expressions/exprgraph.h"
+#include "expressions/exprformulalink.h"
+#include "expressions/exprmanager.h"
 
 //temp.
 #include <sstream>

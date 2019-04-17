@@ -23,20 +23,20 @@
 
 #include <osg/Switch>
 
-#include <globalutilities.h>
-#include <preferences/preferencesXML.h>
-#include <preferences/manager.h>
-#include <tools/occtools.h>
-#include <tools/idtools.h>
-#include <squash/squash.h>
-#include <annex/seershape.h>
-#include <feature/shapecheck.h>
-#include <project/serial/xsdcxxoutput/featuresquash.h>
-#include <tools/featuretools.h>
-#include <modelviz/surfacemesh.h>
-#include <feature/updatepayload.h>
-#include <feature/inputtype.h>
-#include <feature/squash.h>
+#include "globalutilities.h"
+#include "preferences/preferencesXML.h"
+#include "preferences/prfmanager.h"
+#include "tools/occtools.h"
+#include "tools/idtools.h"
+#include "squash/sqssquash.h"
+#include "annex/annseershape.h"
+#include "feature/ftrshapecheck.h"
+#include "project/serial/xsdcxxoutput/featuresquash.h"
+#include "tools/featuretools.h"
+#include "modelviz/mdvsurfacemesh.h"
+#include "feature/ftrupdatepayload.h"
+#include "feature/ftrinputtype.h"
+#include "feature/ftrsquash.h"
 
 using namespace ftr;
 

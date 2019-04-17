@@ -17,9 +17,9 @@
  *
  */
 
-#include <application/mainwindow.h>
-#include <dialogs/revision.h>
-#include <command/revision.h>
+#include "application/appmainwindow.h"
+#include "dialogs/dlgrevision.h"
+#include "command/cmdrevision.h"
 
 using namespace cmd;
 

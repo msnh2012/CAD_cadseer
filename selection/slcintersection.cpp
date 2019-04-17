@@ -17,7 +17,7 @@
  *
  */
 
-#include <selection/intersection.h>
+#include "selection/slcintersection.h"
 
 using namespace slc;
 

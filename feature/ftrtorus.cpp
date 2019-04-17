@@ -22,19 +22,19 @@
 
 #include <osg/Switch>
 
-#include <globalutilities.h>
-#include <tools/idtools.h>
-#include <preferences/preferencesXML.h>
-#include <preferences/manager.h>
-#include <library/lineardimension.h>
-#include <library/ipgroup.h>
-#include <library/plabel.h>
-#include <library/csysdragger.h>
-#include <annex/seershape.h>
-#include <annex/csysdragger.h>
-#include <project/serial/xsdcxxoutput/featuretorus.h>
-#include <parameter/parameter.h>
-#include <feature/torus.h>
+#include "globalutilities.h"
+#include "tools/idtools.h"
+#include "preferences/preferencesXML.h"
+#include "preferences/prfmanager.h"
+#include "library/lbrlineardimension.h"
+#include "library/lbripgroup.h"
+#include "library/lbrplabel.h"
+#include "library/lbrcsysdragger.h"
+#include "annex/annseershape.h"
+#include "annex/anncsysdragger.h"
+#include "project/serial/xsdcxxoutput/featuretorus.h"
+#include "parameter/prmparameter.h"
+#include "feature/ftrtorus.h"
 
 using namespace ftr;
 

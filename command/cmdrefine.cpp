@@ -17,12 +17,12 @@
  *
  */
 
-#include <project/project.h>
-#include <message/node.h>
-#include <selection/eventhandler.h>
-#include <feature/inputtype.h>
-#include <feature/refine.h>
-#include <command/refine.h>
+#include "project/prjproject.h"
+#include "message/msgnode.h"
+#include "selection/slceventhandler.h"
+#include "feature/ftrinputtype.h"
+#include "feature/ftrrefine.h"
+#include "command/cmdrefine.h"
 
 using namespace cmd;
 

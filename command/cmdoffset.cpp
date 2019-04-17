@@ -19,17 +19,17 @@
 
 #include <TopoDS.hxx>
 
-#include <application/application.h>
-#include <application/mainwindow.h>
-#include <viewer/vwrwidget.h>
-#include <project/project.h>
-#include <message/node.h>
-#include <selection/eventhandler.h>
-#include <annex/seershape.h>
-#include <parameter/parameter.h>
-#include <feature/inputtype.h>
-#include <feature/offset.h>
-#include <command/offset.h>
+#include "application/appapplication.h"
+#include "application/appmainwindow.h"
+#include "viewer/vwrwidget.h"
+#include "project/prjproject.h"
+#include "message/msgnode.h"
+#include "selection/slceventhandler.h"
+#include "annex/annseershape.h"
+#include "parameter/prmparameter.h"
+#include "feature/ftrinputtype.h"
+#include "feature/ftroffset.h"
+#include "command/cmdoffset.h"
 
 using boost::uuids::uuid;
 

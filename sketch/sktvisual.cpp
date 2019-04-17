@@ -46,18 +46,18 @@
 #include <osg/ComputeBoundsVisitor>
 
 #include "tools/idtools.h"
-#include "application/application.h"
-#include "selection/message.h"
-#include "message/message.h"
-#include "library/angulardimension.h"
-#include "library/sketchlineardimension.h"
-#include "library/diameterdimension.h"
-#include "library/plabel.h"
-#include "library/childnamevisitor.h"
+#include "application/appapplication.h"
+#include "selection/slcmessage.h"
+#include "message/msgmessage.h"
+#include "library/lbrangulardimension.h"
+#include "library/lbrsketchlineardimension.h"
+#include "library/lbrdiameterdimension.h"
+#include "library/lbrplabel.h"
+#include "library/lbrchildnamevisitor.h"
 #include "project/serial/xsdcxxoutput/featuresketch.h"
-#include "parameter/parameter.h"
-#include "sketch/solver.h"
-#include "sketch/visual.h"
+#include "parameter/prmparameter.h"
+#include "sketch/sktsolver.h"
+#include "sketch/sktvisual.h"
 
 using boost::uuids::uuid;
 

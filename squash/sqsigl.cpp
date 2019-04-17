@@ -17,7 +17,7 @@
  *
  */
 
-#include "igl.h"
+#include "squash/sqsigl.h"
 
 
 std::pair<Eigen::MatrixXd, Eigen::MatrixXi> sqs::toIgl(const msh::srf::Mesh &mIn)

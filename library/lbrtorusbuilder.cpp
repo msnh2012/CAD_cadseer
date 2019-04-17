@@ -23,9 +23,8 @@
 #include <osg/Geometry>
 #include <osgUtil/SmoothingVisitor>
 
-#include "circlebuilder.h"
-
-#include "torusbuilder.h"
+#include "library/lbrcirclebuilder.h"
+#include "library/lbrtorusbuilder.h"
 
 using namespace lbr;
 

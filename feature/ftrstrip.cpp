@@ -30,21 +30,22 @@
 #include <osgText/Text>
 #include <osg/Switch>
 
-#include <subprojects/libzippp/src/libzippp.h>
-#include <libreoffice/odshack.h>
+#include "subprojects/libzippp/src/libzippp.h"
 
-#include <application/application.h>
-#include <preferences/preferencesXML.h>
-#include <preferences/manager.h>
-#include <globalutilities.h>
-#include <tools/occtools.h>
-#include <annex/seershape.h>
-#include <feature/shapecheck.h>
-#include <feature/nest.h>
-#include <project/serial/xsdcxxoutput/featurestrip.h>
-#include <feature/updatepayload.h>
-#include <feature/inputtype.h>
-#include <feature/strip.h>
+#include "libreoffice/lboodshack.h"
+
+#include "application/appapplication.h"
+#include "preferences/preferencesXML.h"
+#include "preferences/prfmanager.h"
+#include "globalutilities.h"
+#include "tools/occtools.h"
+#include "annex/annseershape.h"
+#include "feature/ftrshapecheck.h"
+#include "feature/ftrnest.h"
+#include "project/serial/xsdcxxoutput/featurestrip.h"
+#include "feature/ftrupdatepayload.h"
+#include "feature/ftrinputtype.h"
+#include "feature/ftrstrip.h"
 
 using namespace ftr;
 

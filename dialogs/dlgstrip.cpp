@@ -36,16 +36,16 @@
 #include <QButtonGroup>
 #include <QCheckBox>
 
-#include <tools/idtools.h>
-#include <application/application.h>
-#include <application/mainwindow.h>
-#include <message/message.h>
-#include <project/project.h>
-#include <feature/inputtype.h>
-#include <feature/strip.h>
-#include <dialogs/widgetgeometry.h>
-#include <dialogs/selectionbutton.h>
-#include <dialogs/strip.h>
+#include "tools/idtools.h"
+#include "application/appapplication.h"
+#include "application/appmainwindow.h"
+#include "message/msgmessage.h"
+#include "project/prjproject.h"
+#include "feature/ftrinputtype.h"
+#include "feature/ftrstrip.h"
+#include "dialogs/dlgwidgetgeometry.h"
+#include "dialogs/dlgselectionbutton.h"
+#include "dialogs/dlgstrip.h"
 
 using namespace dlg;
 

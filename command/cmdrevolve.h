@@ -20,7 +20,7 @@
 #ifndef CMD_REVOLVE_H
 #define CMD_REVOLVE_H
 
-#include "command/base.h"
+#include "command/cmdbase.h"
 
 namespace cmd
 {

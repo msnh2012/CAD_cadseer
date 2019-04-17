@@ -35,9 +35,9 @@
 #include <osg/Switch>
 #include <osgDB/WriteFile>
 
-#include <tools/occtools.h>
-#include <annex/shapeidhelper.h>
-#include <modelviz/shapegeometry.h>
+#include "tools/occtools.h"
+#include "annex/annshapeidhelper.h"
+#include "modelviz/mdvshapegeometry.h"
 
 namespace bfs = boost::filesystem;
 using boost::uuids::uuid;

@@ -26,19 +26,19 @@
 
 #include <osgViewer/GraphicsWindow>
 
-#include <globalutilities.h>
-#include <tools/idtools.h>
-#include <application/application.h>
-#include <project/project.h>
-#include <project/message.h>
-#include <modelviz/nodemaskdefs.h>
-#include <feature/base.h>
-#include <message/node.h>
-#include <message/sift.h>
-#include <viewer/message.h>
-#include <selection/visitors.h>
-#include <project/serial/xsdcxxoutput/view.h>
-#include <viewer/overlay.h>
+#include "globalutilities.h"
+#include "tools/idtools.h"
+#include "application/appapplication.h"
+#include "project/prjproject.h"
+#include "project/prjmessage.h"
+#include "modelviz/mdvnodemaskdefs.h"
+#include "feature/ftrbase.h"
+#include "message/msgnode.h"
+#include "message/msgsift.h"
+#include "viewer/vwrmessage.h"
+#include "selection/slcvisitors.h"
+#include "project/serial/xsdcxxoutput/view.h"
+#include "viewer/vwroverlay.h"
 
 using namespace vwr;
 

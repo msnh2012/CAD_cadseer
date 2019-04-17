@@ -32,21 +32,21 @@
 #include <osg/Switch>
 #include <osg/MatrixTransform>
 
-#include <globalutilities.h>
-#include <tools/idtools.h>
-#include <tools/occtools.h>
-#include <tools/featuretools.h>
-#include <annex/seershape.h>
-#include <modelviz/datumaxis.h>
-#include <library/csysdragger.h>
-#include <library/plabel.h>
-#include <annex/csysdragger.h>
-#include <project/serial/xsdcxxoutput/featuredatumaxis.h>
-#include <parameter/parameter.h>
-#include <feature/inputtype.h>
-#include <feature/updatepayload.h>
-#include <feature/datumplane.h>
-#include <feature/datumaxis.h>
+#include "globalutilities.h"
+#include "tools/idtools.h"
+#include "tools/occtools.h"
+#include "tools/featuretools.h"
+#include "annex/annseershape.h"
+#include "modelviz/mdvdatumaxis.h"
+#include "library/lbrcsysdragger.h"
+#include "library/lbrplabel.h"
+#include "annex/anncsysdragger.h"
+#include "project/serial/xsdcxxoutput/featuredatumaxis.h"
+#include "parameter/prmparameter.h"
+#include "feature/ftrinputtype.h"
+#include "feature/ftrupdatepayload.h"
+#include "feature/ftrdatumplane.h"
+#include "feature/ftrdatumaxis.h"
 
 using namespace ftr;
 

@@ -25,7 +25,7 @@
 #include <osg/NodeVisitor>
 #include <osgGA/GUIEventHandler>
 
-#include <selection/message.h>
+#include "selection/slcmessage.h"
 
 namespace osgViewer{class GraphicsWindow;}
 namespace osg{class Switch; class Group;}

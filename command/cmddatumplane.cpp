@@ -22,19 +22,19 @@
 #include <TopoDS.hxx>
 #include <BRepAdaptor_Surface.hxx>
 
-#include <globalutilities.h>
-#include <application/application.h>
-#include <application/mainwindow.h>
-#include <viewer/vwrwidget.h>
-#include <message/node.h>
-#include <selection/eventhandler.h>
-#include <project/project.h>
-#include <annex/seershape.h>
-#include <tools/featuretools.h>
-#include <tools/occtools.h>
-#include <feature/inputtype.h>
-#include <feature/datumplane.h>
-#include <command/datumplane.h>
+#include "globalutilities.h"
+#include "application/appapplication.h"
+#include "application/appmainwindow.h"
+#include "viewer/vwrwidget.h"
+#include "message/msgnode.h"
+#include "selection/slceventhandler.h"
+#include "project/prjproject.h"
+#include "annex/annseershape.h"
+#include "tools/featuretools.h"
+#include "tools/occtools.h"
+#include "feature/ftrinputtype.h"
+#include "feature/ftrdatumplane.h"
+#include "command/cmddatumplane.h"
 
 using namespace cmd;
 using boost::uuids::uuid;

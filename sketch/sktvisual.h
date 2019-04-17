@@ -30,7 +30,7 @@
 #include <osgUtil/PolytopeIntersector>
 #include <osgUtil/LineSegmentIntersector>
 
-#include "nodemasks.h"
+#include "sketch/sktnodemasks.h"
 
 namespace osg
 {

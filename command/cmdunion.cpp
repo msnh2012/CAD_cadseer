@@ -19,15 +19,15 @@
 
 #include <memory>
 
-#include <project/project.h>
-#include <application/mainwindow.h>
-#include <message/node.h>
-#include <selection/eventhandler.h>
-#include <viewer/vwrwidget.h>
-#include <feature/inputtype.h>
-#include <feature/union.h>
-#include <dialogs/boolean.h>
-#include <command/union.h>
+#include "project/prjproject.h"
+#include "application/appmainwindow.h"
+#include "message/msgnode.h"
+#include "selection/slceventhandler.h"
+#include "viewer/vwrwidget.h"
+#include "feature/ftrinputtype.h"
+#include "feature/ftrunion.h"
+#include "dialogs/dlgboolean.h"
+#include "command/cmdunion.h"
 
 using namespace cmd;
 

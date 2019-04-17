@@ -27,13 +27,13 @@
 #include <QTimer>
 #include <QHBoxLayout>
 
-#include <application/application.h>
-#include <preferences/preferencesXML.h>
-#include <preferences/manager.h>
-#include <dialogs/widgetgeometry.h>
-#include <dialogs/preferences.h>
-#include <dialogs/splitterdecorated.h>
-#include <ui_preferences.h> //in build directory
+#include "application/appapplication.h"
+#include "preferences/preferencesXML.h"
+#include "preferences/prfmanager.h"
+#include "dialogs/dlgwidgetgeometry.h"
+#include "dialogs/dlgpreferences.h"
+#include "dialogs/dlgsplitterdecorated.h"
+#include "ui_dlgpreferences.h" //in build directory
 
 using namespace dlg;
 

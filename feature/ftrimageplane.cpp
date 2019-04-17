@@ -30,12 +30,12 @@
 #include <osg/Texture2D>
 
 #include "globalutilities.h"
-#include "parameter/parameter.h"
+#include "parameter/prmparameter.h"
 #include "tools/occtools.h"
-#include "feature/updatepayload.h"
-#include "library/csysdragger.h"
-#include "library/plabel.h"
-#include "annex/csysdragger.h"
+#include "feature/ftrupdatepayload.h"
+#include "library/lbrcsysdragger.h"
+#include "library/lbrplabel.h"
+#include "annex/anncsysdragger.h"
 #include "project/serial/xsdcxxoutput/featureimageplane.h"
 #include "feature/ftrimageplane.h"
 

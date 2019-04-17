@@ -17,15 +17,15 @@
  *
  */
 
-#include "application/application.h"
-#include "application/mainwindow.h"
+#include "application/appapplication.h"
+#include "application/appmainwindow.h"
 #include "viewer/vwrwidget.h"
-#include "message/node.h"
-#include "project/project.h"
-#include "feature/inputtype.h"
-#include "feature/sketch.h"
-#include "dialogs/sketch.h"
-#include "command/sketch.h"
+#include "message/msgnode.h"
+#include "project/prjproject.h"
+#include "feature/ftrinputtype.h"
+#include "feature/ftrsketch.h"
+#include "dialogs/dlgsketch.h"
+#include "command/cmdsketch.h"
 
 using boost::uuids::uuid;
 

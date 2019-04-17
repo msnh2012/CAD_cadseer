@@ -25,11 +25,11 @@
 #include <osgUtil/SmoothingVisitor>
 #include <osgUtil/UpdateVisitor>
 
-#include "library/childnamevisitor.h"
-#include "mesh/mesh.h"
-#include "annex/surfacemesh.h"
-#include "modelviz/nodemaskdefs.h"
-#include "modelviz/surfacemesh.h"
+#include "library/lbrchildnamevisitor.h"
+#include "mesh/mshmesh.h"
+#include "annex/annsurfacemesh.h"
+#include "modelviz/mdvnodemaskdefs.h"
+#include "modelviz/mdvsurfacemesh.h"
 
 void assignDepth(osg::Geometry *g, double low, double high)
 {

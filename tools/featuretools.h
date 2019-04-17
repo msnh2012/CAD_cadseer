@@ -25,7 +25,7 @@
 #include <boost/uuid/uuid.hpp>
 #include <boost/optional/optional_fwd.hpp>
 
-#include <feature/pick.h>
+#include "feature/ftrpick.h"
 
 namespace ann{class SeerShape;}
 namespace ftr{class Base; class ShapeHistory; class Pick;}

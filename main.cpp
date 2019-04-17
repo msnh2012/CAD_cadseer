@@ -19,8 +19,8 @@
 
 #include <QTimer>
 
-#include <application/application.h>
-#include <application/mainwindow.h>
+#include "application/appapplication.h"
+#include "application/appmainwindow.h"
 
 int main( int argc, char** argv )
 {

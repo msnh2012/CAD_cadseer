@@ -19,16 +19,16 @@
 
 #include <memory>
 
-#include <application/application.h>
-#include <application/mainwindow.h>
-#include <viewer/vwrwidget.h>
-#include <project/project.h>
-#include <message/node.h>
-#include <selection/eventhandler.h>
-#include <parameter/parameter.h>
-#include <feature/inputtype.h>
-#include <feature/instancelinear.h>
-#include <command/instancelinear.h>
+#include "application/appapplication.h"
+#include "application/appmainwindow.h"
+#include "viewer/vwrwidget.h"
+#include "project/prjproject.h"
+#include "message/msgnode.h"
+#include "selection/slceventhandler.h"
+#include "parameter/prmparameter.h"
+#include "feature/ftrinputtype.h"
+#include "feature/ftrinstancelinear.h"
+#include "command/cmdinstancelinear.h"
 
 using namespace cmd;
 

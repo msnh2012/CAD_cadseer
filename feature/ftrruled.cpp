@@ -31,13 +31,13 @@
 #include <osg/Switch>
 
 #include "globalutilities.h"
-#include "annex/seershape.h"
+#include "annex/annseershape.h"
 #include "tools/occtools.h"
 #include "tools/featuretools.h"
 #include "tools/idtools.h"
-#include "feature/shapecheck.h"
-#include "feature/updatepayload.h"
-#include "feature/inputtype.h"
+#include "feature/ftrshapecheck.h"
+#include "feature/ftrupdatepayload.h"
+#include "feature/ftrinputtype.h"
 #include "project/serial/xsdcxxoutput/featureruled.h"
 #include "feature/ftrruled.h"
 
