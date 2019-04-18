@@ -81,6 +81,7 @@
     <file>resources/images/constructionSurface.svg</file>
     <file>resources/images/constructionRuled.svg</file>
     <file>resources/images/constructionImagePlane.svg</file>
+    <file>resources/images/constructionSweep.svg</file>
     <file>resources/images/sketchPoint.svg</file>
     <file>resources/images/sketchLine.svg</file>
     <file>resources/images/sketchArc.svg</file>
