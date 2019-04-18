@@ -316,7 +316,8 @@ command_sources = ['command/cmdmanager.cpp'
   , 'command/cmdsurfacemesh.cpp'
   , 'command/cmdtransitioncurve.cpp'
   , 'command/cmdruled.cpp'
-  , 'command/cmdimageplane.cpp']
+  , 'command/cmdimageplane.cpp'
+  , 'command/cmdocctexport.cpp']
   
 library_sources = ['library/lbrcirclebuilder.cpp'
   , 'library/lbrcircleprojector.cpp'

@@ -57,7 +57,6 @@ namespace app
     void newDraftDispatched(const msg::Message&);
     void newHollowDispatched(const msg::Message&);
     void importOCCDispatched(const msg::Message&);
-    void exportOCCDispatched(const msg::Message&);
     void importStepDispatched(const msg::Message&);
     void exportStepDispatched(const msg::Message&);
     void preferencesDispatched(const msg::Message&);

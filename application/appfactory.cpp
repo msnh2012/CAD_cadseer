@@ -171,11 +171,6 @@ void Factory::setupDispatcher()
       )
       , std::make_pair
       (
-        msg::Request | msg::Export | msg::OCC
-      , std::bind(&Factory::exportOCCDispatched, this, std::placeholders::_1)
-      )
-      , std::make_pair
-      (
         msg::Request | msg::Import | msg::Step
       , std::bind(&Factory::importStepDispatched, this, std::placeholders::_1)
       )
@@ -546,53 +541,6 @@ void Factory::importOCCDispatched(const msg::Message&)
   prf::manager().saveConfig();
   
   node->send(msg::Mask(msg::Request | msg::Project | msg::Update));
-}
-
-void Factory::exportOCCDispatched(const msg::Message&)
-{
-  if 
-  (
-    (containers.empty()) ||
-    (containers.at(0).selectionType != slc::Type::Object)
-  )
-  {
-    node->send(msg::buildStatusMessage("Invalid Preselection For OCC export", 2.0));
-    return;
-  }
-  
-  app::Application *application = dynamic_cast<app::Application *>(qApp);
-  assert(application);
-  QString fileName = QFileDialog::getSaveFileName
-  (
-    application->getMainWindow(),
-    QObject::tr("Save File"),
-    QString::fromStdString(prf::manager().rootPtr->project().lastDirectory().get()),
-    QObject::tr("brep (*.brep *.brp)")
-  );
-  if (fileName.isEmpty())
-      return;
-  if
-  (
-    (!fileName.endsWith(QObject::tr(".brep"))) &&
-    (!fileName.endsWith(QObject::tr(".brp")))
-  )
-    fileName += QObject::tr(".brep");
-    
-  boost::filesystem::path p = fileName.toStdString();
-  prf::manager().rootPtr->project().lastDirectory() = p.remove_filename().string();
-  prf::manager().saveConfig();
-    
-  assert(project);
-  
-  ftr::Base *f = project->findFeature(containers.at(0).featureId);
-  if (f->hasAnnex(ann::Type::SeerShape))
-  {
-    const ann::SeerShape &sShape = f->getAnnex<ann::SeerShape>();
-    if (!sShape.isNull())
-      BRepTools::Write(sShape.getRootOCCTShape(), fileName.toStdString().c_str());
-  }
-    
-  node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
 }
 
 void Factory::importStepDispatched(const msg::Message&)

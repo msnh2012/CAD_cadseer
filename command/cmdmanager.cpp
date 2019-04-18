@@ -68,6 +68,7 @@
 #include "command/cmdtransitioncurve.h"
 #include "command/cmdruled.h"
 #include "command/cmdimageplane.h"
+#include "command/cmdocctexport.h"
 #include "message/msgnode.h"
 #include "message/msgsift.h"
 #include "selection/slcmessage.h"
@@ -351,6 +352,11 @@ void Manager::setupDispatcher()
       (
         msg::Request | msg::Construct | msg::ImagePlane
         , std::bind(&Manager::constructImagePlaneDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Export | msg::OCC
+        , std::bind(&Manager::occtExportDispatched, this, std::placeholders::_1)
       )
       , std::make_pair
       (
@@ -671,6 +677,11 @@ void Manager::constructRuledDispatched(const msg::Message&)
 void Manager::constructImagePlaneDispatched(const msg::Message&)
 {
   addCommand(std::make_shared<ImagePlane>());
+}
+
+void Manager::occtExportDispatched(const msg::Message&)
+{
+  addCommand(std::make_shared<OCCTExport>());
 }
 
 //editing commands and dispatching.
