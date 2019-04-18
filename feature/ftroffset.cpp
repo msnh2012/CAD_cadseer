@@ -111,7 +111,7 @@ void Offset::updateModel(const UpdatePayload &payloadIn)
       throw std::runtime_error("wrong number of parents");
     if (!tfs.front()->hasAnnex(ann::Type::SeerShape))
       throw std::runtime_error("parent doesn't have seer shape.");
-    const ann::SeerShape &tss = tfs.front()->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
+    const ann::SeerShape &tss = tfs.front()->getAnnex<ann::SeerShape>();
     if (tss.isNull())
       throw std::runtime_error("target seer shape is null");
     

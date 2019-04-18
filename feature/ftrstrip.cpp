@@ -180,7 +180,7 @@ void Strip::updateModel(const UpdatePayload &payloadIn)
       throw std::runtime_error("wrong number of 'part' inputs");
     if(!pfs.front()->hasAnnex(ann::Type::SeerShape))
       throw std::runtime_error("no seer shape for part");
-    const ann::SeerShape &pss = pfs.front()->getAnnex<ann::SeerShape>(ann::Type::SeerShape); //part seer shape.
+    const ann::SeerShape &pss = pfs.front()->getAnnex<ann::SeerShape>(); //part seer shape.
     if (pss.isNull())
       throw std::runtime_error("part seer shape is null");
     const TopoDS_Shape &ps = occt::getFirstNonCompound(pss.getRootOCCTShape()); //part shape.
@@ -190,7 +190,7 @@ void Strip::updateModel(const UpdatePayload &payloadIn)
       throw std::runtime_error("wrong number of 'blank' inputs");
     if(!bfs.front()->hasAnnex(ann::Type::SeerShape))
       throw std::runtime_error("no seer shape for blank");
-    const ann::SeerShape &bss = bfs.front()->getAnnex<ann::SeerShape>(ann::Type::SeerShape); //blank seer shape.
+    const ann::SeerShape &bss = bfs.front()->getAnnex<ann::SeerShape>(); //blank seer shape.
     if (bss.isNull())
       throw std::runtime_error("blank seer shape is null");
     const TopoDS_Shape &bs = occt::getFirstNonCompound(bss.getRootOCCTShape()); //blank shape.

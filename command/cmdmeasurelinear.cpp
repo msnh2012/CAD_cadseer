@@ -83,11 +83,11 @@ void MeasureLinear::go()
     }
     
     ftr::Base *fb = project->findFeature(cIn.featureId);
-    if (!fb->hasAnnex(ann::Type::SeerShape) || fb->getAnnex<ann::SeerShape>(ann::Type::SeerShape).isNull())
+    if (!fb->hasAnnex(ann::Type::SeerShape) || fb->getAnnex<ann::SeerShape>().isNull())
       return TopoDS_Shape();
     if (cIn.shapeId.is_nil())
-      return fb->getAnnex<ann::SeerShape>(ann::Type::SeerShape).getRootOCCTShape();
-    return fb->getAnnex<ann::SeerShape>(ann::Type::SeerShape).getOCCTShape(cIn.shapeId);
+      return fb->getAnnex<ann::SeerShape>().getRootOCCTShape();
+    return fb->getAnnex<ann::SeerShape>().getOCCTShape(cIn.shapeId);
   };
   
   const slc::Containers &containers = eventHandler->getSelections();

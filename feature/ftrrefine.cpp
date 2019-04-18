@@ -63,7 +63,7 @@ void Refine::updateModel(const UpdatePayload &payloadIn)
       throw std::runtime_error("wrong number of 'target' inputs");
     if(!tfs.front()->hasAnnex(ann::Type::SeerShape))
       throw std::runtime_error("no seer shape for target");
-    const ann::SeerShape &tss = tfs.front()->getAnnex<ann::SeerShape>(ann::Type::SeerShape); //target seer shape.
+    const ann::SeerShape &tss = tfs.front()->getAnnex<ann::SeerShape>(); //target seer shape.
     if (tss.isNull())
       throw std::runtime_error("target seer shape is null");
     const TopoDS_Shape &shape = tss.getRootOCCTShape();

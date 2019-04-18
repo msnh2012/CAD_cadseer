@@ -89,7 +89,7 @@ void Blend::go()
   {
     //get targetId and filter out edges not belonging to first target.
     uuid targetFeatureId = containers.at(0).featureId;
-    const ann::SeerShape &targetSeerShape = project->findFeature(targetFeatureId)->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
+    const ann::SeerShape &targetSeerShape = project->findFeature(targetFeatureId)->getAnnex<ann::SeerShape>();
     ftr::SimpleBlend simpleBlend;
     //no variable blend for pick first scenario
     for (const auto &currentSelection : containers)

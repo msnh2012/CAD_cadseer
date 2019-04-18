@@ -46,7 +46,7 @@ static boost::optional<ftr::Pick> buildPlanePick(const slc::Container &cIn, cons
     return boost::none;
   if (!f->hasAnnex(ann::Type::SeerShape))
     return boost::none;
-  const ann::SeerShape &ss = f->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
+  const ann::SeerShape &ss = f->getAnnex<ann::SeerShape>();
   const TopoDS_Shape &shape = ss.getOCCTShape(cIn.shapeId);
   if (shape.ShapeType() != TopAbs_FACE)
     return boost::none;
@@ -99,7 +99,7 @@ bool DatumPlane::attemptOffset(const slc::Container &cIn)
     return false;
   if (!f->hasAnnex(ann::Type::SeerShape))
     return false;
-  const ann::SeerShape &ss = f->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
+  const ann::SeerShape &ss = f->getAnnex<ann::SeerShape>();
   assert(ss.hasId(cIn.shapeId));
   const TopoDS_Shape &fs = ss.getOCCTShape(cIn.shapeId);
   assert(fs.ShapeType() == TopAbs_FACE);
@@ -139,7 +139,7 @@ bool DatumPlane::attemptCenter(const std::vector<slc::Container> &csIn)
     {
       if (!f->hasAnnex(ann::Type::SeerShape))
         continue;
-      const ann::SeerShape &ss = f->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
+      const ann::SeerShape &ss = f->getAnnex<ann::SeerShape>();
       assert(ss.hasId(s.shapeId));
       const TopoDS_Shape &fs = ss.getOCCTShape(s.shapeId);
       if (fs.ShapeType() != TopAbs_FACE)
@@ -181,13 +181,13 @@ bool DatumPlane::attemptAxisAngle(const std::vector<slc::Container> &csIn)
       return boost::none;
     if (!f->hasAnnex(ann::Type::SeerShape))
       return boost::none;
-    const ann::SeerShape &ss = f->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
+    const ann::SeerShape &ss = f->getAnnex<ann::SeerShape>();
     const TopoDS_Shape &shape = ss.getOCCTShape(cIn.shapeId);
     auto glean = occt::gleanAxis(shape);
     if (!glean.second)
       return boost::none;
     
-    ftr::Pick p = tls::convertToPick(cIn, project->findFeature(cIn.featureId)->getAnnex<ann::SeerShape>(ann::Type::SeerShape));
+    ftr::Pick p = tls::convertToPick(cIn, project->findFeature(cIn.featureId)->getAnnex<ann::SeerShape>());
     p.shapeHistory = project->getShapeHistory().createDevolveHistory(cIn.shapeId);
     p.tag = ftr::DatumPlane::rotationAxis;
     return p;
@@ -359,7 +359,7 @@ bool DatumPlane::attemptThrough3P(const std::vector<slc::Container> &csIn)
       return ftr::DatumPlane::point3;
     };
 
-    ftr::Pick p = tls::convertToPick(s, project->findFeature(s.featureId)->getAnnex<ann::SeerShape>(ann::Type::SeerShape));
+    ftr::Pick p = tls::convertToPick(s, project->findFeature(s.featureId)->getAnnex<ann::SeerShape>());
     p.shapeHistory = project->getShapeHistory().createDevolveHistory(s.shapeId);
     p.tag = assign();
     picks.push_back(p);

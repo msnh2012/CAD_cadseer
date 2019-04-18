@@ -44,6 +44,7 @@ class QTextStream;
 namespace osg{class Switch; class MatrixTransform; class PagedLOD;}
 namespace prj{namespace srl{class FeatureBase;}}
 namespace prm{class Parameter; typedef std::vector<Parameter*> Parameters;}
+namespace ann{class SeerShape;}
 namespace ftr
 {
 class ShapeHistory;
@@ -134,6 +135,20 @@ public:
     assert(out);
     return *out;
   }
+  template <typename T> const T& getAnnex() const
+  {
+    static_assert(sizeof(T) == 0, "Specialization needs to be implemented");
+    T* out = dynamic_cast<T*>(annexes.at(ann::Type::Base));
+    assert(out);
+    return *out;
+  }
+  template <typename T> T& getAnnex()
+  {
+    static_assert(sizeof(T) == 0, "Specialization needs to be implemented");
+    T* out = dynamic_cast<T*>(annexes.at(ann::Type::Base));
+    assert(out);
+    return *out;
+  }
   
   virtual void serialWrite(const boost::filesystem::path&); //!< override in leaf classes only.
   std::string getFileName() const; //!< used by git.
@@ -167,6 +182,9 @@ protected:
   osg::Vec4 color;
   std::string lastUpdateLog;
 };
+
+template <> const ann::SeerShape& Base::getAnnex<ann::SeerShape>() const;
+template <> ann::SeerShape& Base::getAnnex<ann::SeerShape>();
 }
 
 #endif // FTR_BASE_H

@@ -134,7 +134,7 @@ void Trim::updateModel(const UpdatePayload &payloadIn)
       throw std::runtime_error("wrong number of target parents");
     if (!trfs.front()->hasAnnex(ann::Type::SeerShape))
       throw std::runtime_error("target parent doesn't have seer shape.");
-    const ann::SeerShape &trss = trfs.front()->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
+    const ann::SeerShape &trss = trfs.front()->getAnnex<ann::SeerShape>();
     if (trss.isNull())
       throw std::runtime_error("target seer shape is null");
     
@@ -177,7 +177,7 @@ void Trim::updateModel(const UpdatePayload &payloadIn)
     {
       if (!tlfs.front()->hasAnnex(ann::Type::SeerShape))
         throw std::runtime_error("tool parent doesn't have seer shape.");
-      tlss = &tlfs.front()->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
+      tlss = &tlfs.front()->getAnnex<ann::SeerShape>();
       if (tlss->isNull())
         throw std::runtime_error("tool seer shape is null");
       

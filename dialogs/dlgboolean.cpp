@@ -129,7 +129,7 @@ void Boolean::setEditDialog()
   {
     if (!f->hasAnnex(ann::Type::SeerShape))
       return false;
-    const ann::SeerShape &targetSeerShape = f->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
+    const ann::SeerShape &targetSeerShape = f->getAnnex<ann::SeerShape>();
     if (targetSeerShape.isNull())
       return false;
     
@@ -147,7 +147,7 @@ void Boolean::setEditDialog()
       uuid shapeId = resolved.resultId;
       if (!isFeatureValid(f)) //this should filter invalid picks.
         continue;
-      const ann::SeerShape &seerShape = f->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
+      const ann::SeerShape &seerShape = f->getAnnex<ann::SeerShape>();
       if (!shapeId.is_nil())
       {
         assert(seerShape.hasId(shapeId)); //want to know about this.

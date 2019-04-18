@@ -301,7 +301,7 @@ void Extrude::updateModel(const UpdatePayload &pIn)
       throw std::runtime_error("wrong number of parents");
     if (!tfs.front()->hasAnnex(ann::Type::SeerShape))
       throw std::runtime_error("parent doesn't have seer shape.");
-    const ann::SeerShape &tss = tfs.front()->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
+    const ann::SeerShape &tss = tfs.front()->getAnnex<ann::SeerShape>();
     if (tss.isNull())
       throw std::runtime_error("target seer shape is null");
     
@@ -458,7 +458,7 @@ void Extrude::updateModel(const UpdatePayload &pIn)
         {
           if (r.resultId.is_nil())
             continue;
-          const ann::SeerShape &ass = r.feature->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
+          const ann::SeerShape &ass = r.feature->getAnnex<ann::SeerShape>();
           if (slc::isPointType(r.pick.selectionType))
           {
             auto tempPoint = r.getPoint(ass);

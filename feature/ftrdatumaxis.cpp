@@ -209,7 +209,7 @@ void DatumAxis::goUpdatePoints(const UpdatePayload &pli)
   for (const auto &r : resolves)
   {
     //features without seershapes are not included in results of resolvePicks.
-    const ann::SeerShape &ss = r.feature->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
+    const ann::SeerShape &ss = r.feature->getAnnex<ann::SeerShape>();
     assert(ss.hasId(r.resultId));
     const TopoDS_Shape &rs = ss.getOCCTShape(r.resultId);
     if (rs.ShapeType() != TopAbs_EDGE)
@@ -288,7 +288,7 @@ void DatumAxis::goUpdateIntersection(const UpdatePayload &pli)
         {
           if (r.resultId.is_nil())
             continue;
-          const ann::SeerShape &ss = r.feature->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
+          const ann::SeerShape &ss = r.feature->getAnnex<ann::SeerShape>();
           assert(ss.hasId(r.resultId));
           const TopoDS_Shape &fs = ss.getOCCTShape(r.resultId);
           if (fs.ShapeType() != TopAbs_FACE)
@@ -350,7 +350,7 @@ void DatumAxis::goUpdateGeometry(const UpdatePayload &pli)
   {
     if (r.resultId.is_nil())
       continue;
-    const ann::SeerShape &ss = r.feature->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
+    const ann::SeerShape &ss = r.feature->getAnnex<ann::SeerShape>();
     const TopoDS_Shape &s = ss.getOCCTShape(r.resultId);
     auto axisPair = occt::gleanAxis(s);
     if (!axisPair.second)

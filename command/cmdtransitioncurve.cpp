@@ -97,7 +97,7 @@ void TransitionCurve::go()
     shouldUpdate = false;
     return;
   }
-  const ann::SeerShape &ss0 = bf0->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
+  const ann::SeerShape &ss0 = bf0->getAnnex<ann::SeerShape>();
   
   ftr::Base const *bf1 = project->findFeature(cs.back().featureId);
   if (!bf1 || !bf1->hasAnnex(ann::Type::SeerShape))
@@ -106,7 +106,7 @@ void TransitionCurve::go()
     shouldUpdate = false;
     return;
   }
-  const ann::SeerShape &ss1 = bf1->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
+  const ann::SeerShape &ss1 = bf1->getAnnex<ann::SeerShape>();
   
   ftr::Picks picks;
   picks.push_back(tls::convertToPick(cs.front(), ss0));

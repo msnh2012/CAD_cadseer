@@ -193,7 +193,7 @@ void Nest::updateModel(const UpdatePayload &payloadIn)
     const ftr::Base *bbf = payloadIn.updateMap.equal_range(Nest::blank).first->second;
     if(!bbf->hasAnnex(ann::Type::SeerShape))
       throw std::runtime_error("no seer shape for blank");
-    const ann::SeerShape &bss = bbf->getAnnex<ann::SeerShape>(ann::Type::SeerShape); //part seer shape.
+    const ann::SeerShape &bss = bbf->getAnnex<ann::SeerShape>(); //part seer shape.
     if (bss.isNull())
       throw std::runtime_error("seer shape for blank is null");
     TopoDS_Shape bs = occt::getFirstNonCompound(bss.getRootOCCTShape()); //blank shape. not const, might mesh.

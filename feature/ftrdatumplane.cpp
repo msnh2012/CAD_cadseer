@@ -328,7 +328,7 @@ void DatumPlane::goUpdatePOffset(const UpdatePayload &pli)
       throw std::runtime_error("POffset: no pick or nil shape id");
     if (!features.front()->hasAnnex(ann::Type::SeerShape))
       throw std::runtime_error("POffset: Parent feature doesn't have seer shape.");
-    const ann::SeerShape &shape = features.front()->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
+    const ann::SeerShape &shape = features.front()->getAnnex<ann::SeerShape>();
     
     auto resolvedPicks = tls::resolvePicks(features.front(), picks.front(), pli.shapeHistory);
     if (resolvedPicks.front().resultId.is_nil())
@@ -387,7 +387,7 @@ void DatumPlane::goUpdatePCenter(const UpdatePayload &pli)
     //note: can't do a center with only 1 datum plane. so we know this condition must be a shape.
     if (!features.front()->hasAnnex(ann::Type::SeerShape))
       throw std::runtime_error("PCenter: null seer shape");
-    const ann::SeerShape &shape = features.front()->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
+    const ann::SeerShape &shape = features.front()->getAnnex<ann::SeerShape>();
     
     std::vector<uuid> ids;
     auto resolvedPicks = tls::resolvePicks(features, picks, pli.shapeHistory);
@@ -444,7 +444,7 @@ void DatumPlane::goUpdatePCenter(const UpdatePayload &pli)
     auto resolvedPicks = tls::resolvePicks(featuresToResolve, picks, pli.shapeHistory);
     for (const auto &resolved : resolvedPicks)
     {
-      const ann::SeerShape &shape = resolved.feature->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
+      const ann::SeerShape &shape = resolved.feature->getAnnex<ann::SeerShape>();
       assert(shape.hasId(resolved.resultId));
       if (!shape.hasId(resolved.resultId))
         throw std::runtime_error("PCenter: expected id not found in seershape.");
@@ -569,7 +569,7 @@ void DatumPlane::goUpdateAAngleP(const UpdatePayload &pli)
   else
   {
     assert(rfs.front()->hasAnnex(ann::Type::SeerShape));
-    const ann::SeerShape &ss = rfs.front()->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
+    const ann::SeerShape &ss = rfs.front()->getAnnex<ann::SeerShape>();
     std::vector<tls::Resolved> axisResolves;
     for (const auto &p : picks)
     {
@@ -613,7 +613,7 @@ void DatumPlane::goUpdateAAngleP(const UpdatePayload &pli)
   else
   {
     assert(pfs.front()->hasAnnex(ann::Type::SeerShape));
-    const ann::SeerShape &ss = pfs.front()->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
+    const ann::SeerShape &ss = pfs.front()->getAnnex<ann::SeerShape>();
     std::vector<tls::Resolved> planeResolves;
     
     for (const auto &p : picks)
@@ -700,7 +700,7 @@ void DatumPlane::goUpdateAverage3P(const UpdatePayload &pli)
       std::ostringstream s; s << "WARNING: more than one resolved plane" << std::endl;
       lastUpdateLog += s.str();
     }
-    const ann::SeerShape &ss = fIn->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
+    const ann::SeerShape &ss = fIn->getAnnex<ann::SeerShape>();
     assert(ss.hasId(resolves.front().resultId));
     const TopoDS_Shape &shape = ss.getOCCTShape(resolves.front().resultId);
     if (shape.ShapeType() != TopAbs_FACE)
@@ -787,7 +787,7 @@ void DatumPlane::goUpdateThrough3P(const UpdatePayload &pli)
     }
     if (!res.front().feature->hasAnnex(ann::Type::SeerShape))
       continue;
-    const ann::SeerShape &ss = res.front().feature->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
+    const ann::SeerShape &ss = res.front().feature->getAnnex<ann::SeerShape>();
     assert(ss.hasId(res.front().resultId));
     boost::optional<osg::Vec3d> tp;
     if (res.front().pick.selectionType == slc::Type::StartPoint)

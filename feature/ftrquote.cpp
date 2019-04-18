@@ -109,7 +109,7 @@ void Quote::updateModel(const UpdatePayload &payloadIn)
       throw std::runtime_error("can not cast to dieset feature");
     
     //place labels
-    const ann::SeerShape &dss = dsf->getAnnex<ann::SeerShape>(ann::Type::SeerShape); //part seer shape.
+    const ann::SeerShape &dss = dsf->getAnnex<ann::SeerShape>(); //part seer shape.
     if (dss.isNull())
       throw std::runtime_error("die set seer shape is null");
     const TopoDS_Shape &ds = dss.getRootOCCTShape(); //part shape.

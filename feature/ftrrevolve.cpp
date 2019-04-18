@@ -143,7 +143,7 @@ void Revolve::updateModel(const UpdatePayload &pIn)
       throw std::runtime_error("wrong number of parents");
     if (!tfs.front()->hasAnnex(ann::Type::SeerShape))
       throw std::runtime_error("parent doesn't have seer shape.");
-    const ann::SeerShape &tss = tfs.front()->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
+    const ann::SeerShape &tss = tfs.front()->getAnnex<ann::SeerShape>();
     if (tss.isNull())
       throw std::runtime_error("target seer shape is null");
     
@@ -227,7 +227,7 @@ void Revolve::updateModel(const UpdatePayload &pIn)
         if (resolved.empty())
           throw std::runtime_error("Couldn't resolve axis picks");
         assert(resolved.front().feature->hasAnnex(ann::Type::SeerShape));
-        const ann::SeerShape &ss = resolved.front().feature->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
+        const ann::SeerShape &ss = resolved.front().feature->getAnnex<ann::SeerShape>();
         if (resolved.size() == 1)
         {
           auto glean = occt::gleanAxis(ss.getOCCTShape(resolved.front().resultId));

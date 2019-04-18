@@ -79,7 +79,7 @@ void Offset::go()
     if (!bf->hasAnnex(ann::Type::SeerShape))
       continue;
     color = bf->getColor();
-    const ann::SeerShape &ss = bf->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
+    const ann::SeerShape &ss = bf->getAnnex<ann::SeerShape>();
     if (!c.shapeId.is_nil())
     {
       assert(ss.hasId(c.shapeId));

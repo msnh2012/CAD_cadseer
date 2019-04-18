@@ -72,7 +72,7 @@ void %CLASSNAME%::go()
 //     shouldUpdate = false;
 //     return;
 //   }
-//   const ann::SeerShape &ss0 = bf0->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
+//   const ann::SeerShape &ss0 = bf0->getAnnex<ann::SeerShape>();
 //   
 //   ftr::Picks picks;
 //   picks.push_back(tls::convertToPick(cs.front(), ss0));

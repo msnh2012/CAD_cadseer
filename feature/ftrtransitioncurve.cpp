@@ -199,7 +199,7 @@ void TransitionCurve::updateModel(const UpdatePayload &pIn)
     {
       if (!bfIn.hasAnnex(ann::Type::SeerShape))
         throw std::runtime_error("parent doesn't have seer shape.");
-      const ann::SeerShape &tss = bfIn.getAnnex<ann::SeerShape>(ann::Type::SeerShape);
+      const ann::SeerShape &tss = bfIn.getAnnex<ann::SeerShape>();
       if (tss.isNull())
         throw std::runtime_error("target seer shape is null");
       return tss;

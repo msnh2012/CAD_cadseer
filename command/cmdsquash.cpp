@@ -81,7 +81,7 @@ void Squash::go()
         continue;
     }
     
-    const ann::SeerShape &ss = f->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
+    const ann::SeerShape &ss = f->getAnnex<ann::SeerShape>();
     TopoDS_Face face = TopoDS::Face(ss.getOCCTShape(container.shapeId));  
     ftr::Pick pick;
     pick.id = container.shapeId;

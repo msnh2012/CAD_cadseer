@@ -103,7 +103,7 @@ void Interpreter::go()
     ftr::Base *bf = app::instance()->getProject()->findFeature(container.featureId);
     assert(bf);
     assert(bf->hasAnnex(ann::Type::SeerShape));
-    const ann::SeerShape &sShape = bf->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
+    const ann::SeerShape &sShape = bf->getAnnex<ann::SeerShape>();
     
     std::size_t pSetIndex = shapeGeometry->getPSetFromPrimitive(intersection.primitiveIndex);
     uuid selectedId = shapeGeometry->getId(pSetIndex);

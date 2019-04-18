@@ -315,7 +315,7 @@ void Project::removeFeature(const uuid& idIn)
       if (!feature->hasAnnex(ann::Type::SeerShape))
         continue;
       //update ids.
-      for (const uuid &staleId : feature->getAnnex<ann::SeerShape>(ann::Type::SeerShape).getAllShapeIds())
+      for (const uuid &staleId : feature->getAnnex<ann::SeerShape>().getAllShapeIds())
       {
         uuid freshId = shapeHistory->devolve(stow->graph[targetParent].feature->getId(), staleId);
         if (freshId.is_nil())
@@ -951,7 +951,7 @@ void Project::dissolveFeatureDispatched(const msg::Message &mIn)
     return; //for now we only care about features with shape.
   //should dissolve be a virtual member of ftr::Base?
     
-  const ann::SeerShape &oss = fb->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
+  const ann::SeerShape &oss = fb->getAnnex<ann::SeerShape>();
   if (oss.isNull())
     return; //do we really care about this here?
     
@@ -966,7 +966,7 @@ void Project::dissolveFeatureDispatched(const msg::Message &mIn)
   //create new feature and assign seershape and ids.
   std::shared_ptr<ftr::Inert> nf(new ftr::Inert(oss.getRootOCCTShape()));
   nf->setColor(fb->getColor());
-  ann::SeerShape &nss = nf->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
+  ann::SeerShape &nss = nf->getAnnex<ann::SeerShape>();
   occt::ShapeVector oshapes = oss.getAllShapes(); //original shapes
   for (const auto &s : oshapes)
   {
@@ -1194,7 +1194,7 @@ void Project::serialWrite()
     TopoDS_Shape shapeOut;
     if (f->hasAnnex(ann::Type::SeerShape))
     {
-      const ann::SeerShape &sShape = f->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
+      const ann::SeerShape &sShape = f->getAnnex<ann::SeerShape>();
       if (sShape.isNull() || sShape.getRootOCCTShape().IsNull())
         std::cout << "WARNING: trying to write out null shape in: Project::serialWrite" << std::endl;
       else

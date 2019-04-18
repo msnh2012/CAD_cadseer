@@ -72,7 +72,7 @@ void Extract::go()
     assert(baseFeature);
     if (!baseFeature->hasAnnex(ann::Type::SeerShape))
       continue;
-    const ann::SeerShape &targetSeerShape = baseFeature->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
+    const ann::SeerShape &targetSeerShape = baseFeature->getAnnex<ann::SeerShape>();
     
     if (container.selectionType == slc::Type::Face)
     {

@@ -170,7 +170,7 @@ void Extract::updateModel(const UpdatePayload &payloadIn)
       throw std::runtime_error("wrong number of parents");
     if (!targetFeatures.front()->hasAnnex(ann::Type::SeerShape))
       throw std::runtime_error("parent doesn't have seer shape");
-    const ann::SeerShape &targetSeerShape = targetFeatures.front()->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
+    const ann::SeerShape &targetSeerShape = targetFeatures.front()->getAnnex<ann::SeerShape>();
     if (targetSeerShape.isNull())
       throw std::runtime_error("target seer shape is null");
     

@@ -376,7 +376,7 @@ Blend::Blend(ftr::Blend *editBlendIn, QWidget *parent) : QDialog(parent), blend(
       cModel->appendRow(nsbi);
       for (const auto &p : sb.picks)
       {
-        const ann::SeerShape &sShape = blendParent->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
+        const ann::SeerShape &sShape = blendParent->getAnnex<ann::SeerShape>();
         PickItem *np = new PickItem(p);
         std::vector<tls::Resolved> resolved = tls::resolvePicks(blendParent, p, app::instance()->getProject()->getShapeHistory());
         for (const auto &r : resolved)
@@ -393,7 +393,7 @@ Blend::Blend(ftr::Blend *editBlendIn, QWidget *parent) : QDialog(parent), blend(
   }
   else //variable blends.
   {
-    const ann::SeerShape &sShape = blendParent->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
+    const ann::SeerShape &sShape = blendParent->getAnnex<ann::SeerShape>();
     const ftr::VariableBlend &vBlend = blend->getVariableBlend();
     for (auto np : vBlend.picks)
     {
@@ -630,7 +630,7 @@ void Blend::updateBlendFeature()
 
 void Blend::addToSelection(const boost::uuids::uuid &shapeIdIn)
 {
-  const ann::SeerShape &parentShape = blendParent->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
+  const ann::SeerShape &parentShape = blendParent->getAnnex<ann::SeerShape>();
   assert(parentShape.hasId(shapeIdIn));
   slc::Type sType = slc::convert(parentShape.getOCCTShape(shapeIdIn).ShapeType());
   assert(sType == slc::Type::Edge || sType == slc::Type::Face);
@@ -681,7 +681,7 @@ void Blend::selectionAdditionDispatched(const msg::Message &messageIn)
     return;
   }
   
-  const ann::SeerShape &parentShape = blendParent->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
+  const ann::SeerShape &parentShape = blendParent->getAnnex<ann::SeerShape>();
   
   auto buildEdgePick = [&]() -> ftr::Pick
   {

@@ -80,7 +80,7 @@ void Line::updateModel(const UpdatePayload &pIn)
       throw std::runtime_error("wrong number of pick zero parent features");
     if (!pzf.front()->hasAnnex(ann::Type::SeerShape))
       throw std::runtime_error("pick zero parent doesn't have seer shape.");
-    const ann::SeerShape &pzss = pzf.front()->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
+    const ann::SeerShape &pzss = pzf.front()->getAnnex<ann::SeerShape>();
     if (pzss.isNull())
       throw std::runtime_error("pick zero seer shape is null");
     std::vector<tls::Resolved> res0 = tls::resolvePicks(pzf.front(), picks.at(0), pIn.shapeHistory);
@@ -91,7 +91,7 @@ void Line::updateModel(const UpdatePayload &pIn)
       throw std::runtime_error("wrong number of pick one parent features");
     if (!pof.front()->hasAnnex(ann::Type::SeerShape))
       throw std::runtime_error("pick one parent doesn't have seer shape.");
-    const ann::SeerShape &poss = pof.front()->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
+    const ann::SeerShape &poss = pof.front()->getAnnex<ann::SeerShape>();
     if (pzss.isNull())
       throw std::runtime_error("pick one seer shape is null");
     std::vector<tls::Resolved> res1 = tls::resolvePicks(pof.front(), picks.at(1), pIn.shapeHistory);

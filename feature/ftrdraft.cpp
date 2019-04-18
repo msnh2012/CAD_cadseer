@@ -99,7 +99,7 @@ void Draft::updateModel(const UpdatePayload &payloadIn)
       throw std::runtime_error("no parent");
     if (!features.front()->hasAnnex(ann::Type::SeerShape))
       throw std::runtime_error("no seer shape in parent");
-    const ann::SeerShape &targetSeerShape = features.front()->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
+    const ann::SeerShape &targetSeerShape = features.front()->getAnnex<ann::SeerShape>();
     if (targetSeerShape.isNull())
       throw std::runtime_error("target seer shape is null");
     

@@ -222,9 +222,9 @@ void Base::updateVisual()
   //clear all the children from the main transform.
   lod->removeChildren(0, lod->getNumChildren());
   
-  if ((!hasAnnex(ann::Type::SeerShape)) || (getAnnex<ann::SeerShape>(ann::Type::SeerShape).isNull()))
+  if ((!hasAnnex(ann::Type::SeerShape)) || (getAnnex<ann::SeerShape>().isNull()))
     return;
-  const ann::SeerShape &ss = getAnnex<ann::SeerShape>(ann::Type::SeerShape);
+  const ann::SeerShape &ss = getAnnex<ann::SeerShape>();
 
   double linear = prf::manager().rootPtr->visual().mesh().linearDeflection();
   double angular = osg::DegreesToRadians(prf::manager().rootPtr->visual().mesh().angularDeflection());
@@ -266,7 +266,7 @@ void Base::updateVisual()
   //the binary format seems to be a bit of a black box.
   //I just chose to use the brp extension. Couldn't find the accepted binary file extension.
   boost::filesystem::path filePathOCCT = filePathBase / (gu::idToString(id) + ".brp");
-  BinTools::Write(getAnnex<ann::SeerShape>(ann::Type::SeerShape).getRootOCCTShape(), filePathOCCT.string().c_str());
+  BinTools::Write(getAnnex<ann::SeerShape>().getRootOCCTShape(), filePathOCCT.string().c_str());
   
   boost::filesystem::path filePathIds = filePathBase / (gu::idToString(id) + ".ids");
   helper.write(filePathIds);
@@ -314,7 +314,7 @@ void Base::updateVisual()
     lod->getOrCreateStateSet()->setAttributeAndModes(lm);
   };
   //this isn't right! I need to use top explorer and avoid solids
-  for (TopoDS_Iterator it(getAnnex<ann::SeerShape>(ann::Type::SeerShape).getRootOCCTShape()); it.More(); it.Next())
+  for (TopoDS_Iterator it(getAnnex<ann::SeerShape>().getRootOCCTShape()); it.More(); it.Next())
   {
     if
     (
@@ -358,13 +358,13 @@ void Base::applyColor()
 void Base::fillInHistory(ShapeHistory &historyIn)
 {
   if (hasAnnex(ann::Type::SeerShape))
-    getAnnex<ann::SeerShape>(ann::Type::SeerShape).fillInHistory(historyIn, id);
+    getAnnex<ann::SeerShape>().fillInHistory(historyIn, id);
 }
 
 void Base::replaceId(const boost::uuids::uuid &staleId, const boost::uuids::uuid &freshId, const ShapeHistory &shapeHistory)
 {
   if (hasAnnex(ann::Type::SeerShape))
-    getAnnex<ann::SeerShape>(ann::Type::SeerShape).replaceId(staleId, freshId, shapeHistory);
+    getAnnex<ann::SeerShape>().replaceId(staleId, freshId, shapeHistory);
 }
 
 void Base::setSuccess()
@@ -404,7 +404,7 @@ prj::srl::FeatureBase Base::serialOut()
   );
   
   if (hasAnnex(ann::Type::SeerShape))
-    out.seerShape() = getAnnex<ann::SeerShape>(ann::Type::SeerShape).serialOut();
+    out.seerShape() = getAnnex<ann::SeerShape>().serialOut();
   
   prj::srl::Color colorOut
   (
@@ -434,7 +434,7 @@ void Base::serialIn(const prj::srl::FeatureBase& sBaseIn)
   overlaySwitch->setUserValue<std::string>(gu::idAttributeTitle, gu::idToString(id));
   
   if (sBaseIn.seerShape().present())
-    getAnnex<ann::SeerShape>(ann::Type::SeerShape).serialIn(sBaseIn.seerShape().get());
+    getAnnex<ann::SeerShape>().serialIn(sBaseIn.seerShape().get());
   
   if (sBaseIn.color().present())
   {
@@ -504,6 +504,20 @@ prm::Parameter* Base::getParameter(const boost::uuids::uuid &idIn) const
   return nullptr;
 }
 
+template <> const ann::SeerShape& Base::getAnnex<ann::SeerShape>() const
+{
+  ann::SeerShape* out = dynamic_cast<ann::SeerShape*>(annexes.at(ann::Type::SeerShape));
+  assert(out);
+  return *out;
+}
+
+template <> ann::SeerShape& Base::getAnnex<ann::SeerShape>()
+{
+  ann::SeerShape* out = dynamic_cast<ann::SeerShape*>(annexes.at(ann::Type::SeerShape));
+  assert(out);
+  return *out;
+}
+
 QTextStream& Base::getInfo(QTextStream &stream) const
 {
     auto boolString = [](bool input)
@@ -538,7 +552,7 @@ QTextStream& Base::getInfo(QTextStream &stream) const
     }
     
     if (hasAnnex(ann::Type::SeerShape))
-      getShapeInfo(stream, getAnnex<ann::SeerShape>(ann::Type::SeerShape).getRootShapeId());
+      getShapeInfo(stream, getAnnex<ann::SeerShape>().getRootShapeId());
     
     return stream;
 }
@@ -546,7 +560,7 @@ QTextStream& Base::getInfo(QTextStream &stream) const
 QTextStream&  Base::getShapeInfo(QTextStream &streamIn, const boost::uuids::uuid &idIn) const
 {
     assert(hasAnnex(ann::Type::SeerShape));
-    SeerShapeInfo shapeInfo(getAnnex<ann::SeerShape>(ann::Type::SeerShape));
+    SeerShapeInfo shapeInfo(getAnnex<ann::SeerShape>());
     shapeInfo.getShapeInfo(streamIn, idIn);
     
     return streamIn;

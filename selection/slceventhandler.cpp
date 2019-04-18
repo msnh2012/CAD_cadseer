@@ -616,9 +616,9 @@ Container EventHandler::messageToContainer(const Message &messageIn)
   if (container.featureType == ftr::Type::Base)
     container.featureType = feature->getType();
   
-  if (feature->hasAnnex(ann::Type::SeerShape) && !feature->getAnnex<ann::SeerShape>(ann::Type::SeerShape).isNull())
+  if (feature->hasAnnex(ann::Type::SeerShape) && !feature->getAnnex<ann::SeerShape>().isNull())
   {
-    const ann::SeerShape &seerShape = feature->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
+    const ann::SeerShape &seerShape = feature->getAnnex<ann::SeerShape>();
     if (messageIn.type == slc::Type::Object)
     {
       container.selectionIds = seerShape.useGetChildrenOfType(seerShape.getRootShapeId(), TopAbs_EDGE);

@@ -256,7 +256,7 @@ void Blend::updateModel(const UpdatePayload &payloadIn)
       throw std::runtime_error("wrong number of target inputs");
     if (!features.front()->hasAnnex(ann::Type::SeerShape))
       throw std::runtime_error("no seer shape in parent");
-    const ann::SeerShape &targetSeerShape = features.front()->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
+    const ann::SeerShape &targetSeerShape = features.front()->getAnnex<ann::SeerShape>();
     if (targetSeerShape.isNull())
       throw std::runtime_error("target seer shape is null");
     

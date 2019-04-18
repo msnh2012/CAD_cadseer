@@ -384,7 +384,7 @@ void Factory::newChamferDispatched(const msg::Message&)
   
   ftr::SymChamfer symChamfer;
   symChamfer.distance = ftr::Chamfer::buildSymParameter();
-  const ann::SeerShape &targetSeerShape = project->findFeature(targetFeatureId)->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
+  const ann::SeerShape &targetSeerShape = project->findFeature(targetFeatureId)->getAnnex<ann::SeerShape>();
   for (const auto &currentSelection : containers)
   {
     if
@@ -432,7 +432,7 @@ void Factory::newDraftDispatched(const msg::Message&)
   uuid targetFeatureId = containers.at(0).featureId;
   
   ftr::DraftConvey convey;
-  const ann::SeerShape &targetSeerShape = project->findFeature(targetFeatureId)->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
+  const ann::SeerShape &targetSeerShape = project->findFeature(targetFeatureId)->getAnnex<ann::SeerShape>();
   for (const auto &currentSelection : containers)
   {
     if
@@ -487,7 +487,7 @@ void Factory::newHollowDispatched(const msg::Message&)
   uuid targetFeatureId = containers.at(0).featureId;
   ftr::Base *targetFeature = project->findFeature(targetFeatureId);
   assert(targetFeature->hasAnnex(ann::Type::SeerShape));
-  const ann::SeerShape &targetSeerShape = targetFeature->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
+  const ann::SeerShape &targetSeerShape = targetFeature->getAnnex<ann::SeerShape>();
   
   ftr::Picks hollowPicks;
   for (const auto &currentSelection : containers)
@@ -587,7 +587,7 @@ void Factory::exportOCCDispatched(const msg::Message&)
   ftr::Base *f = project->findFeature(containers.at(0).featureId);
   if (f->hasAnnex(ann::Type::SeerShape))
   {
-    const ann::SeerShape &sShape = f->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
+    const ann::SeerShape &sShape = f->getAnnex<ann::SeerShape>();
     if (!sShape.isNull())
       BRepTools::Write(sShape.getRootOCCTShape(), fileName.toStdString().c_str());
   }
@@ -710,7 +710,7 @@ void Factory::exportStepDispatched(const msg::Message&)
     node->send(msg::buildStatusMessage("Feature Doesn't Have Shape To Export", 2.0));
     return;
   }
-  const ann::SeerShape &sShape = feature->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
+  const ann::SeerShape &sShape = feature->getAnnex<ann::SeerShape>();
   if (sShape.isNull())
   {
     node->send(msg::buildStatusMessage("Invalid Shape To Export", 2.0));
@@ -817,7 +817,7 @@ void Factory::debugDumpDispatched(const msg::Message&)
     assert(feature);
     if (!feature->hasAnnex(ann::Type::SeerShape))
       continue;
-    const ann::SeerShape &seerShape = feature->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
+    const ann::SeerShape &seerShape = feature->getAnnex<ann::SeerShape>();
     std::cout << std::endl;
     std::cout << "feature name: " << feature->getName().toStdString() << "    feature id: " << gu::idToString(feature->getId()) << std::endl;
     std::cout << "shape id container:" << std::endl; seerShape.dumpShapeIdContainer(std::cout); std::cout << std::endl;
@@ -875,7 +875,7 @@ void Factory::debugShapeGraphDispatched(const msg::Message&)
         if (!feature->hasAnnex(ann::Type::SeerShape))
             continue;
         path /= gu::idToString(feature->getId()) + ".dot";
-        const ann::SeerShape &shape = feature->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
+        const ann::SeerShape &shape = feature->getAnnex<ann::SeerShape>();
         shape.dumpGraph(path.string());
         
         QDesktopServices::openUrl(QUrl(QString::fromStdString(path.string())));
@@ -958,13 +958,13 @@ void Factory::viewInfoDispatched(const msg::Message &)
           }
           else if (container.selectionType == slc::Type::StartPoint)
           {
-              const ann::SeerShape &s = feature->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
+              const ann::SeerShape &s = feature->getAnnex<ann::SeerShape>();
               feature->getShapeInfo(stream, s.useGetStartVertex(container.shapeId));
               streamPoint(container.pointLocation);
           }
           else if (container.selectionType == slc::Type::EndPoint)
           {
-            const ann::SeerShape &s = feature->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
+            const ann::SeerShape &s = feature->getAnnex<ann::SeerShape>();
             feature->getShapeInfo(stream, s.useGetEndVertex(container.shapeId));
             streamPoint(container.pointLocation);
           }
@@ -1105,7 +1105,7 @@ void Factory::bopalgoTestDispatched(const msg::Message&)
     const ftr::Base* fb = project->findFeature(cs.featureId);
     if (!fb->hasAnnex(ann::Type::SeerShape))
       continue;
-    sShapes.push_back(fb->getAnnex<ann::SeerShape>(ann::Type::SeerShape));
+    sShapes.push_back(fb->getAnnex<ann::SeerShape>());
     shapes.push_back(sShapes.back().get().getRootOCCTShape());
   }
   node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));

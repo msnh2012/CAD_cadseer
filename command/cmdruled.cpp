@@ -85,7 +85,7 @@ void Ruled::go()
     shouldUpdate = false;
     return;
   }
-  const ann::SeerShape &ss0 = bf0->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
+  const ann::SeerShape &ss0 = bf0->getAnnex<ann::SeerShape>();
   
   const ftr::Base *bf1 = project->findFeature(cs.back().featureId);
   if (!bf1 || !bf1->hasAnnex(ann::Type::SeerShape))
@@ -94,7 +94,7 @@ void Ruled::go()
     shouldUpdate = false;
     return;
   }
-  const ann::SeerShape &ss1 = bf1->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
+  const ann::SeerShape &ss1 = bf1->getAnnex<ann::SeerShape>();
   
   ftr::Picks picks;
   if (cs.front().selectionType != slc::Type::Object)

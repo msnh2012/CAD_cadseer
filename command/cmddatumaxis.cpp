@@ -77,10 +77,10 @@ void DatumAxis::go()
     }
     
     ftr::Picks picks;
-    ftr::Pick p1 = tls::convertToPick(cs.front(), parents.front()->getAnnex<ann::SeerShape>(ann::Type::SeerShape));
+    ftr::Pick p1 = tls::convertToPick(cs.front(), parents.front()->getAnnex<ann::SeerShape>());
     p1.shapeHistory = app::instance()->getProject()->getShapeHistory().createDevolveHistory(cs.front().shapeId);
     picks.push_back(p1);
-    ftr::Pick p2 = tls::convertToPick(cs.back(), parents.back()->getAnnex<ann::SeerShape>(ann::Type::SeerShape));
+    ftr::Pick p2 = tls::convertToPick(cs.back(), parents.back()->getAnnex<ann::SeerShape>());
     p2.shapeHistory = app::instance()->getProject()->getShapeHistory().createDevolveHistory(cs.back().shapeId);
     picks.push_back(p2);
     
@@ -114,7 +114,7 @@ void DatumAxis::go()
       parents.push_back(project->findFeature(c.featureId));
       if (c.selectionType == slc::Type::Face)
       {
-        ftr::Pick p1 = tls::convertToPick(c, parents.back()->getAnnex<ann::SeerShape>(ann::Type::SeerShape));
+        ftr::Pick p1 = tls::convertToPick(c, parents.back()->getAnnex<ann::SeerShape>());
         p1.shapeHistory = app::instance()->getProject()->getShapeHistory().createDevolveHistory(c.shapeId);
         picks.push_back(p1);
       }
@@ -141,7 +141,7 @@ void DatumAxis::go()
       shouldUpdate = false;
       return;
     }
-    const ann::SeerShape &ss = parent->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
+    const ann::SeerShape &ss = parent->getAnnex<ann::SeerShape>();
     const TopoDS_Shape &s = ss.getOCCTShape(cs.front().shapeId);
     auto axisPair = occt::gleanAxis(s);
     if (!axisPair.second)

@@ -89,7 +89,7 @@ void Sew::updateModel(const UpdatePayload &payloadIn)
         lastUpdateLog += stream.str();
         continue;
       }
-      const ann::SeerShape &tss = f->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
+      const ann::SeerShape &tss = f->getAnnex<ann::SeerShape>();
       if (tss.isNull())
         continue; //no warning. null seer shapes are normal with skipping used.
       seerShapes.push_back(tss);

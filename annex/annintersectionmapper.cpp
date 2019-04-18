@@ -1047,7 +1047,7 @@ void IntersectionMapper::go(const ftr::UpdatePayload &payloadIn, BOPAlgo_Builder
   for (auto its = payloadIn.updateMap.equal_range(ftr::InputType::target); its.first != its.second; ++its.first)
   {
     assert((*its.first).second->hasAnnex(ann::Type::SeerShape)); //no seershape for feature.
-    const ann::SeerShape &tShape = (*its.first).second->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
+    const ann::SeerShape &tShape = (*its.first).second->getAnnex<ann::SeerShape>();
     if (tShape.isNull())
       continue;
     seerShapes.push_back(tShape);
@@ -1057,7 +1057,7 @@ void IntersectionMapper::go(const ftr::UpdatePayload &payloadIn, BOPAlgo_Builder
     //no assert on seershape. for example trim with datum needs to go through.
     if(!(*its.first).second->hasAnnex(ann::Type::SeerShape))
       continue;
-    const ann::SeerShape &tShape = (*its.first).second->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
+    const ann::SeerShape &tShape = (*its.first).second->getAnnex<ann::SeerShape>();
     if (tShape.isNull())
       continue;
     seerShapes.push_back(tShape);

@@ -112,7 +112,7 @@ void Chamfer::updateModel(const UpdatePayload &payloadIn)
     const Base* tf = targetFeatures.front();
     if (!tf->hasAnnex(ann::Type::SeerShape))
       throw std::runtime_error("parent doesn't have seer shape");
-    const ann::SeerShape &targetSeerShape = tf->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
+    const ann::SeerShape &targetSeerShape = tf->getAnnex<ann::SeerShape>();
     if (targetSeerShape.isNull())
       throw std::runtime_error("target seer shape is null");
     

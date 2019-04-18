@@ -207,7 +207,7 @@ bool convertVertexSelection
 }
 
 CheckPageBase::CheckPageBase(const ftr::Base &featureIn, QWidget *parent):
-  QWidget(parent), feature(featureIn), seerShape(featureIn.getAnnex<ann::SeerShape>(ann::Type::SeerShape))
+  QWidget(parent), feature(featureIn), seerShape(featureIn.getAnnex<ann::SeerShape>())
 {
   minBoundingSphere = calculateBoundingSphere(seerShape.getRootOCCTShape());
   minBoundingSphere.radius() *= .1; //10 percent.

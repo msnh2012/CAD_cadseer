@@ -89,7 +89,7 @@ void Intersect::updateModel(const UpdatePayload &payloadIn)
       assert((*f)->hasAnnex(ann::Type::SeerShape));
       if (!(*f)->hasAnnex(ann::Type::SeerShape))
         throw std::runtime_error("target feature doesn't have seer shape");
-      const ann::SeerShape &targetSeerShape = (*f)->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
+      const ann::SeerShape &targetSeerShape = (*f)->getAnnex<ann::SeerShape>();
       if (targetSeerShape.isNull())
         f = targetFeatures.erase(f);
       else
@@ -101,7 +101,7 @@ void Intersect::updateModel(const UpdatePayload &payloadIn)
     occt::ShapeVector targetOCCTShapes;
     for (const auto &resolved : resolves)
     {
-      const ann::SeerShape &tShape = resolved.feature->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
+      const ann::SeerShape &tShape = resolved.feature->getAnnex<ann::SeerShape>();
       if (resolved.resultId.is_nil())
       {
         //don't include the compound.
@@ -129,11 +129,11 @@ void Intersect::updateModel(const UpdatePayload &payloadIn)
     BOPAlgo_Builder dummy;
     iMapper->go(payloadIn, dummy, *sShape);
     for (const auto *it : targetFeatures)
-      sShape->shapeMatch(it->getAnnex<ann::SeerShape>(ann::Type::SeerShape));
+      sShape->shapeMatch(it->getAnnex<ann::SeerShape>());
     for (const auto *it : targetFeatures)
-      sShape->uniqueTypeMatch(it->getAnnex<ann::SeerShape>(ann::Type::SeerShape));
+      sShape->uniqueTypeMatch(it->getAnnex<ann::SeerShape>());
     for (const auto *it : targetFeatures)
-      sShape->outerWireMatch(it->getAnnex<ann::SeerShape>(ann::Type::SeerShape));
+      sShape->outerWireMatch(it->getAnnex<ann::SeerShape>());
     sShape->derivedMatch();
     sShape->ensureNoNils(); //just in case
     sShape->ensureNoDuplicates(); //just in case
@@ -153,7 +153,7 @@ void Intersect::updateModel(const UpdatePayload &payloadIn)
       assert((*tf)->hasAnnex(ann::Type::SeerShape)); //make user interface verify the input.
       if (!(*tf)->hasAnnex(ann::Type::SeerShape))
         throw std::runtime_error("tool feature has no seer shape");
-      const ann::SeerShape &toolSeerShape = (*tf)->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
+      const ann::SeerShape &toolSeerShape = (*tf)->getAnnex<ann::SeerShape>();
       if (toolSeerShape.isNull())
         tf = toolFeatures.erase(tf);
       else
@@ -165,7 +165,7 @@ void Intersect::updateModel(const UpdatePayload &payloadIn)
     occt::ShapeVector toolOCCTShapes;
     for (const auto &resolved : resolves2)
     {
-      const ann::SeerShape &tShape = resolved.feature->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
+      const ann::SeerShape &tShape = resolved.feature->getAnnex<ann::SeerShape>();
       if (resolved.resultId.is_nil())
       {
         //don't include the compound.
@@ -198,15 +198,15 @@ void Intersect::updateModel(const UpdatePayload &payloadIn)
     iMapper->go(payloadIn, intersector.getBuilder(), *sShape);
     
     for (const auto *it : targetFeatures)
-      sShape->shapeMatch(it->getAnnex<ann::SeerShape>(ann::Type::SeerShape));
+      sShape->shapeMatch(it->getAnnex<ann::SeerShape>());
     for (const auto *it : toolFeatures)
-      sShape->shapeMatch(it->getAnnex<ann::SeerShape>(ann::Type::SeerShape));
+      sShape->shapeMatch(it->getAnnex<ann::SeerShape>());
     for (const auto *it : targetFeatures)
-      sShape->uniqueTypeMatch(it->getAnnex<ann::SeerShape>(ann::Type::SeerShape));
+      sShape->uniqueTypeMatch(it->getAnnex<ann::SeerShape>());
     for (const auto *it : targetFeatures)
-      sShape->outerWireMatch(it->getAnnex<ann::SeerShape>(ann::Type::SeerShape));
+      sShape->outerWireMatch(it->getAnnex<ann::SeerShape>());
     for (const auto *it : toolFeatures)
-      sShape->outerWireMatch(it->getAnnex<ann::SeerShape>(ann::Type::SeerShape));
+      sShape->outerWireMatch(it->getAnnex<ann::SeerShape>());
     sShape->derivedMatch();
     sShape->dumpNils("intersect feature"); //only if there are shapes with nil ids.
     sShape->dumpDuplicates("intersect feature");

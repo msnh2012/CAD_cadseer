@@ -130,7 +130,7 @@ void CSysEdit::analyzeSelections()
       assert(feature);
       if (feature->hasAnnex(ann::Type::SeerShape))
       {
-        const ann::SeerShape &seerShape = feature->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
+        const ann::SeerShape &seerShape = feature->getAnnex<ann::SeerShape>();
         assert(!seerShape.isNull());
         if (seerShape.isNull())
         {

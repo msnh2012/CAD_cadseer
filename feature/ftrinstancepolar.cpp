@@ -149,7 +149,7 @@ void InstancePolar::updateModel(const UpdatePayload &payloadIn)
       throw std::runtime_error("wrong number of parents");
     if (!tfs.front()->hasAnnex(ann::Type::SeerShape))
       throw std::runtime_error("parent doesn't have seer shape.");
-    const ann::SeerShape &tss = tfs.front()->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
+    const ann::SeerShape &tss = tfs.front()->getAnnex<ann::SeerShape>();
     if (tss.isNull())
       throw std::runtime_error("target seer shape is null");
     
@@ -203,7 +203,7 @@ void InstancePolar::updateModel(const UpdatePayload &payloadIn)
           throw std::runtime_error("Input feature doesn't have seershape");
         if (axisPick.id.is_nil())
           throw std::runtime_error("No id for axis pick");
-        const ann::SeerShape &ass = rafs.front()->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
+        const ann::SeerShape &ass = rafs.front()->getAnnex<ann::SeerShape>();
         
         TopoDS_Shape dsShape;
         

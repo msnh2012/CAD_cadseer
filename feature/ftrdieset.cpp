@@ -166,7 +166,7 @@ void DieSet::updateModel(const UpdatePayload &payloadIn)
       const ftr::Base *sbf = payloadIn.updateMap.equal_range(strip).first->second;
       if(!sbf->hasAnnex(ann::Type::SeerShape))
         throw std::runtime_error("no seer shape for strip");
-      const ann::SeerShape &sss = sbf->getAnnex<ann::SeerShape>(ann::Type::SeerShape); //part seer shape.
+      const ann::SeerShape &sss = sbf->getAnnex<ann::SeerShape>(); //part seer shape.
       const TopoDS_Shape &ss = sss.getRootOCCTShape(); //part shape.
       
       occt::BoundingBox sbbox(ss); //blank bounding box.

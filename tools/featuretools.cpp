@@ -118,7 +118,7 @@ std::vector<Resolved> tls::resolvePicks
     assert(tf->hasAnnex(ann::Type::SeerShape)); //caller verifies.
     if (!tf->hasAnnex(ann::Type::SeerShape))
       continue;
-    const ann::SeerShape &toolSeerShape = tf->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
+    const ann::SeerShape &toolSeerShape = tf->getAnnex<ann::SeerShape>();
     assert(!toolSeerShape.isNull()); //caller verifies.
     if (toolSeerShape.isNull())
       continue;
@@ -252,7 +252,7 @@ slc::Message tls::convertToMessage(const ftr::Pick &pickIn, const ftr::Base *fea
 {
   slc::Message out;
   assert(featureIn->hasAnnex(ann::Type::SeerShape)); //caller verifies.
-  const ann::SeerShape &sShape = featureIn->getAnnex<ann::SeerShape>(ann::Type::SeerShape);
+  const ann::SeerShape &sShape = featureIn->getAnnex<ann::SeerShape>();
   assert(!sShape.isNull()); //caller verifies.
   assert(!pickIn.resolvedIds.empty());
   assert(sShape.hasId(pickIn.resolvedIds.front()));
