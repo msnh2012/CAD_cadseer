@@ -391,12 +391,11 @@ void Factory::newChamferDispatched(const msg::Message&)
       
     TopoDS_Edge edge = TopoDS::Edge(targetSeerShape.findShape(currentSelection.shapeId));  
     ftr::ChamferPick pick;
-    pick.edgePick.id = currentSelection.shapeId;
     pick.edgePick.setParameter(edge, currentSelection.pointLocation);
-    pick.edgePick.shapeHistory = project->getShapeHistory().createDevolveHistory(pick.edgePick.id);
-    pick.facePick.id = ftr::Chamfer::referenceFaceId(targetSeerShape, pick.edgePick.id);
+    pick.edgePick.shapeHistory = project->getShapeHistory().createDevolveHistory(currentSelection.shapeId);
+    uuid faceId = ftr::Chamfer::referenceFaceId(targetSeerShape, currentSelection.shapeId);
     //for now user doesn't specify face so we don't worry about u, v of facePick.
-    pick.facePick.shapeHistory = project->getShapeHistory().createDevolveHistory(pick.facePick.id);
+    pick.facePick.shapeHistory = project->getShapeHistory().createDevolveHistory(faceId);
     symChamfer.picks.push_back(pick);
   }
   
@@ -439,9 +438,8 @@ void Factory::newDraftDispatched(const msg::Message&)
       
     TopoDS_Face face = TopoDS::Face(targetSeerShape.findShape(currentSelection.shapeId));  
     ftr::Pick pick;
-    pick.id = currentSelection.shapeId;
     pick.setParameter(face, currentSelection.pointLocation);
-    pick.shapeHistory = project->getShapeHistory().createDevolveHistory(pick.id);
+    pick.shapeHistory = project->getShapeHistory().createDevolveHistory(currentSelection.shapeId);
     convey.targets.push_back(pick);
   }
   if (convey.targets.empty())
@@ -495,8 +493,7 @@ void Factory::newHollowDispatched(const msg::Message&)
       continue;
       
     ftr::Pick hPick;
-    hPick.id = currentSelection.shapeId;
-    hPick.shapeHistory = project->getShapeHistory().createDevolveHistory(hPick.id);
+    hPick.shapeHistory = project->getShapeHistory().createDevolveHistory(currentSelection.shapeId);
     TopoDS_Face face = TopoDS::Face(targetSeerShape.findShape(currentSelection.shapeId));
     hPick.setParameter(face, currentSelection.pointLocation);
     hollowPicks.push_back(hPick);

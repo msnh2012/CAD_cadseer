@@ -77,12 +77,8 @@ void DatumAxis::go()
     }
     
     ftr::Picks picks;
-    ftr::Pick p1 = tls::convertToPick(cs.front(), parents.front()->getAnnex<ann::SeerShape>());
-    p1.shapeHistory = app::instance()->getProject()->getShapeHistory().createDevolveHistory(cs.front().shapeId);
-    picks.push_back(p1);
-    ftr::Pick p2 = tls::convertToPick(cs.back(), parents.back()->getAnnex<ann::SeerShape>());
-    p2.shapeHistory = app::instance()->getProject()->getShapeHistory().createDevolveHistory(cs.back().shapeId);
-    picks.push_back(p2);
+    picks.push_back(tls::convertToPick(cs.front(), parents.front()->getAnnex<ann::SeerShape>(), project->getShapeHistory()));
+    picks.push_back(tls::convertToPick(cs.back(), parents.back()->getAnnex<ann::SeerShape>(), project->getShapeHistory()));
     
     std::shared_ptr<ftr::DatumAxis> daxis(new ftr::DatumAxis());
     daxis->setAxisType(ftr::DatumAxis::AxisType::Points);
@@ -113,11 +109,7 @@ void DatumAxis::go()
     {
       parents.push_back(project->findFeature(c.featureId));
       if (c.selectionType == slc::Type::Face)
-      {
-        ftr::Pick p1 = tls::convertToPick(c, parents.back()->getAnnex<ann::SeerShape>());
-        p1.shapeHistory = app::instance()->getProject()->getShapeHistory().createDevolveHistory(c.shapeId);
-        picks.push_back(p1);
-      }
+        picks.push_back(tls::convertToPick(c, parents.back()->getAnnex<ann::SeerShape>(), project->getShapeHistory()));
     }
     
     std::shared_ptr<ftr::DatumAxis> daxis(new ftr::DatumAxis());
@@ -150,8 +142,7 @@ void DatumAxis::go()
       shouldUpdate = false;
       return;
     }
-    ftr::Pick pick = tls::convertToPick(cs.front(), ss);
-    pick.shapeHistory = app::instance()->getProject()->getShapeHistory().createDevolveHistory(cs.front().shapeId);
+    ftr::Pick pick = tls::convertToPick(cs.front(), ss, project->getShapeHistory());
     std::shared_ptr<ftr::DatumAxis> daxis(new ftr::DatumAxis());
     daxis->setAxisType(ftr::DatumAxis::AxisType::Geometry);
     daxis->setPicks(ftr::Picks({pick}));

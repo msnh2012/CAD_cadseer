@@ -19,6 +19,7 @@
 
 #include <TopoDS.hxx>
 
+#include "tools/featuretools.h"
 #include "project/prjproject.h"
 #include "message/msgnode.h"
 #include "selection/slceventhandler.h"
@@ -86,9 +87,7 @@ void RemoveFaces::go()
       assert(fs.ShapeType() == TopAbs_FACE);
       if (fs.ShapeType() != TopAbs_FACE)
         continue;
-      ftr::Pick p(c.shapeId, 0.0, 0.0);
-      p.setParameter(TopoDS::Face(fs), c.pointLocation);
-      p.shapeHistory = project->getShapeHistory().createDevolveHistory(p.id);
+      ftr::Pick p = tls::convertToPick(c, ss, project->getShapeHistory());
       picks.push_back(p);
     }
   }

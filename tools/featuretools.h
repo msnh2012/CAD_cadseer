@@ -80,21 +80,33 @@ namespace tls
     * 
     * @param messageIn message to convert.
     * @param sShapeIn seer shape that is the target of the selection
+    * @param pHistory project history used to generate pick history.
     * @return ftr:Pick representing the selection message.
-    * @note shapeHistory in the return is NOT set. resolvedIds and highlightIds are set to id.
+    * @note resolvedIds and highlightIds are set to id.
     * startpoints and endpoints get converted to ids for vertices.
    */
-  ftr::Pick convertToPick(const slc::Message &messageIn, const ann::SeerShape &sShapeIn);
+  ftr::Pick convertToPick
+  (
+    const slc::Message &messageIn
+    , const ann::SeerShape &sShapeIn
+    , const ftr::ShapeHistory &pHistory
+  );
   
   /*! @brief Convert a selection container to a feature pick.
     * 
     * @param containerIn selection container to convert.
     * @param sShapeIn seer shape that is the target of the selection
+    * @param pHistory project history used to generate pick history.
     * @return ftr:Pick representing the selection message.
-    * @note shapeHistory in the return is NOT set. resolvedIds and highlightIds are set to id.
+    * @note resolvedIds and highlightIds are set to containerIn.shapeid if not nil.
     * startpoints and endpoints get converted to ids for vertices.
    */
-  ftr::Pick convertToPick(const slc::Container &containerIn, const ann::SeerShape &sShapeIn);
+  ftr::Pick convertToPick
+  (
+    const slc::Container &containerIn
+    , const ann::SeerShape &sShapeIn
+    , const ftr::ShapeHistory &pHistory
+  );
   
   /*! @brief Convert a feature pick to a selection message.
     * 

@@ -99,13 +99,12 @@ void Ruled::go()
   ftr::Picks picks;
   if (cs.front().selectionType != slc::Type::Object)
   {
-    picks.push_back(tls::convertToPick(cs.front(), ss0));
-    picks.back().shapeHistory = project->getShapeHistory().createDevolveHistory(cs.front().shapeId);
+    picks.push_back(tls::convertToPick(cs.front(), ss0, project->getShapeHistory()));
     picks.back().tag = ftr::Ruled::pickZero;
   }
   if (cs.back().selectionType != slc::Type::Object)
   {
-    picks.push_back(tls::convertToPick(cs.back(), ss1));
+    picks.push_back(tls::convertToPick(cs.back(), ss1, project->getShapeHistory()));
     picks.back().shapeHistory = project->getShapeHistory().createDevolveHistory(cs.back().shapeId);
     picks.back().tag = ftr::Ruled::pickOne;
   }

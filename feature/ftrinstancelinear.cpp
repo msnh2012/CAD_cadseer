@@ -188,7 +188,7 @@ void InstanceLinear::updateModel(const UpdatePayload &payloadIn)
     }
     
     occt::ShapeVector tShapes;
-    if (pick.id.is_nil())
+    if (pick.shapeHistory.getRootId().is_nil())
     {
       tShapes = tss.useGetNonCompoundChildren();
     }

@@ -109,12 +109,8 @@ void TransitionCurve::go()
   const ann::SeerShape &ss1 = bf1->getAnnex<ann::SeerShape>();
   
   ftr::Picks picks;
-  picks.push_back(tls::convertToPick(cs.front(), ss0));
-  if (!cs.front().shapeId.is_nil())
-    picks.back().shapeHistory = project->getShapeHistory().createDevolveHistory(cs.front().shapeId);
-  picks.push_back(tls::convertToPick(cs.back(), ss1));
-  if (!cs.back().shapeId.is_nil())
-    picks.back().shapeHistory = project->getShapeHistory().createDevolveHistory(cs.back().shapeId);
+  picks.push_back(tls::convertToPick(cs.front(), ss0, project->getShapeHistory()));
+  picks.push_back(tls::convertToPick(cs.back(), ss1, project->getShapeHistory()));
   
   assert(ss0.hasId(cs.front().shapeId));
   assert(ss0.findShape(cs.front().shapeId).ShapeType() == TopAbs_EDGE);

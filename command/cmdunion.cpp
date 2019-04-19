@@ -97,11 +97,10 @@ void Union::go()
   
   std::shared_ptr<ftr::Union> unite(new ftr::Union());
   ftr::Pick targetPick;
-  targetPick.id = containers.front().shapeId;
   ftr::Picks targetPicks;
-  if (!targetPick.id.is_nil())
+  if (!containers.front().shapeId.is_nil())
   {
-    targetPick.shapeHistory = project->getShapeHistory().createDevolveHistory(targetPick.id);
+    targetPick.shapeHistory = project->getShapeHistory().createDevolveHistory(containers.front().shapeId);
     targetPicks.push_back(targetPick);
     unite->setTargetPicks(targetPicks);
   }
@@ -117,10 +116,9 @@ void Union::go()
   for (std::size_t index = 1; index < containers.size(); ++index)
   {
     ftr::Pick toolPick;
-    toolPick.id = containers.at(index).shapeId;
-    if (!toolPick.id.is_nil())
+    if (!containers.at(index).shapeId.is_nil())
     {
-      toolPick.shapeHistory = project->getShapeHistory().createDevolveHistory(toolPick.id);
+      toolPick.shapeHistory = project->getShapeHistory().createDevolveHistory(containers.at(index).shapeId);
       toolPicks.push_back(toolPick);
     }
     project->connect(containers.at(index).featureId, unite->getId(), ftr::InputType{ftr::InputType::tool});

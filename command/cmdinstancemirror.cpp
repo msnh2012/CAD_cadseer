@@ -70,9 +70,8 @@ void InstanceMirror::go()
   std::shared_ptr<ftr::InstanceMirror> instance(new ftr::InstanceMirror());
   
   ftr::Pick shapePick;
-  shapePick.id = containers.front().shapeId;
-  if (!shapePick.id.is_nil())
-    shapePick.shapeHistory = project->getShapeHistory().createDevolveHistory(shapePick.id);
+  if (!containers.front().shapeId.is_nil())
+    shapePick.shapeHistory = project->getShapeHistory().createDevolveHistory(containers.front().shapeId);
   instance->setShapePick(shapePick);
   
   project->addFeature(instance);
@@ -89,9 +88,8 @@ void InstanceMirror::go()
   {
     boost::uuids::uuid fId = containers.back().featureId;
     ftr::Pick planePick;
-    planePick.id = containers.back().shapeId;
-    if (!planePick.id.is_nil())
-      planePick.shapeHistory = project->getShapeHistory().createDevolveHistory(planePick.id);
+    if (!containers.back().shapeId.is_nil())
+      planePick.shapeHistory = project->getShapeHistory().createDevolveHistory(containers.back().shapeId);
     instance->setPlanePick(planePick);
     project->connect(fId, instance->getId(), ftr::InputType{ftr::InstanceMirror::mirrorPlane});
     

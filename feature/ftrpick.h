@@ -59,11 +59,8 @@ namespace ftr
    */
   struct Pick
   {
-    Pick();
-    Pick(const boost::uuids::uuid&, double, double);
-    boost::uuids::uuid id; //!< id of subshape. deprecate, use shapehistory.
-    double u; //!< u parameter on edge or face
-    double v;//!< v parameter on face
+    double u = 0.0; //!< u parameter on edge or face
+    double v = 0.0;//!< v parameter on face
     ShapeHistory shapeHistory;
     std::vector<boost::uuids::uuid> highlightIds; //!< highlight ids. up to user to uniquefy
     std::vector<boost::uuids::uuid> resolvedIds; //!< storage for resolved ids from id and history.

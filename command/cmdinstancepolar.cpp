@@ -70,9 +70,8 @@ void InstancePolar::go()
   
   std::shared_ptr<ftr::InstancePolar> instance(new ftr::InstancePolar());
   ftr::Pick shapePick;
-  shapePick.id = containers.front().shapeId;
-  if (!shapePick.id.is_nil())
-    shapePick.shapeHistory = project->getShapeHistory().createDevolveHistory(shapePick.id);
+  if (!containers.front().shapeId.is_nil())
+    shapePick.shapeHistory = project->getShapeHistory().createDevolveHistory(containers.front().shapeId);
   instance->setShapePick(shapePick);
   
   project->addFeature(instance);
@@ -89,9 +88,8 @@ void InstancePolar::go()
   {
     boost::uuids::uuid fId = containers.back().featureId;
     ftr::Pick axisPick;
-    axisPick.id = containers.back().shapeId;
-    if (!axisPick.id.is_nil())
-      axisPick.shapeHistory = project->getShapeHistory().createDevolveHistory(axisPick.id);
+    if (!containers.back().shapeId.is_nil())
+      axisPick.shapeHistory = project->getShapeHistory().createDevolveHistory(containers.back().shapeId);
     instance->setAxisPick(axisPick);
     project->connect(fId, instance->getId(), ftr::InputType{ftr::InstancePolar::rotationAxis});
     

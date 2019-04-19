@@ -2549,36 +2549,6 @@ namespace prj
     // Pick
     // 
 
-    const Pick::IdType& Pick::
-    id () const
-    {
-      return this->id_.get ();
-    }
-
-    Pick::IdType& Pick::
-    id ()
-    {
-      return this->id_.get ();
-    }
-
-    void Pick::
-    id (const IdType& x)
-    {
-      this->id_.set (x);
-    }
-
-    void Pick::
-    id (::std::unique_ptr< IdType > x)
-    {
-      this->id_.set (std::move (x));
-    }
-
-    const Pick::IdType& Pick::
-    id_default_value ()
-    {
-      return id_default_value_;
-    }
-
     const Pick::UType& Pick::
     u () const
     {
@@ -7550,15 +7520,10 @@ namespace prj
     // Pick
     //
 
-    const Pick::IdType Pick::id_default_value_ (
-      "00000000-0000-0000-0000-000000000000");
-
     Pick::
-    Pick (const IdType& id,
-          const UType& u,
+    Pick (const UType& u,
           const VType& v)
     : ::xml_schema::Type (),
-      id_ (id, this),
       u_ (u, this),
       v_ (v, this),
       history_ (this),
@@ -7573,7 +7538,6 @@ namespace prj
           ::xml_schema::Flags f,
           ::xml_schema::Container* c)
     : ::xml_schema::Type (x, f, c),
-      id_ (x.id_, f, this),
       u_ (x.u_, f, this),
       v_ (x.v_, f, this),
       history_ (x.history_, f, this),
@@ -7588,7 +7552,6 @@ namespace prj
           ::xml_schema::Flags f,
           ::xml_schema::Container* c)
     : ::xml_schema::Type (e, f | ::xml_schema::Flags::base, c),
-      id_ (this),
       u_ (this),
       v_ (this),
       history_ (this),
@@ -7612,20 +7575,6 @@ namespace prj
         const ::xercesc::DOMElement& i (p.cur_element ());
         const ::xsd::cxx::xml::qualified_name< char > n (
           ::xsd::cxx::xml::dom::name< char > (i));
-
-        // id
-        //
-        if (n.name () == "id" && n.namespace_ ().empty ())
-        {
-          ::std::unique_ptr< IdType > r (
-            IdTraits::create (i, f, this));
-
-          if (!id_.present ())
-          {
-            this->id_.set (::std::move (r));
-            continue;
-          }
-        }
 
         // u
         //
@@ -7705,13 +7654,6 @@ namespace prj
         break;
       }
 
-      if (!id_.present ())
-      {
-        throw ::xsd::cxx::tree::expected_element< char > (
-          "id",
-          "");
-      }
-
       if (!u_.present ())
       {
         throw ::xsd::cxx::tree::expected_element< char > (
@@ -7740,7 +7682,6 @@ namespace prj
       if (this != &x)
       {
         static_cast< ::xml_schema::Type& > (*this) = x;
-        this->id_ = x.id_;
         this->u_ = x.u_;
         this->v_ = x.v_;
         this->history_ = x.history_;
@@ -9777,17 +9718,6 @@ namespace prj
     operator<< (::xercesc::DOMElement& e, const Pick& i)
     {
       e << static_cast< const ::xml_schema::Type& > (i);
-
-      // id
-      //
-      {
-        ::xercesc::DOMElement& s (
-          ::xsd::cxx::xml::dom::create_element (
-            "id",
-            e));
-
-        s << i.id ();
-      }
 
       // u
       //

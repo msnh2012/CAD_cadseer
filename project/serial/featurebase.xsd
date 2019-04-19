@@ -274,7 +274,6 @@
 
 <xs:complexType name="Pick">
   <xs:all>
-    <xs:element name="id" type="xs:string" default="00000000-0000-0000-0000-000000000000"/>
     <xs:element name="u" type="xs:double" default="0.0"/>
     <xs:element name="v" type="xs:double" default="0.0"/>
     <xs:element name="history" type="srl:ShapeHistory"  minOccurs="0" maxOccurs="1"/>

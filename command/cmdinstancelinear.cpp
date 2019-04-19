@@ -66,9 +66,8 @@ void InstanceLinear::go()
     std::shared_ptr<ftr::InstanceLinear> instance(new ftr::InstanceLinear());
     
     ftr::Pick pick;
-    pick.id = c.shapeId;
-    if (!pick.id.is_nil())
-      pick.shapeHistory = project->getShapeHistory().createDevolveHistory(pick.id);
+    if (!c.shapeId.is_nil())
+      pick.shapeHistory = project->getShapeHistory().createDevolveHistory(c.shapeId);
     instance->setPick(pick);
     
     instance->setCSys(viewer->getCurrentSystem());

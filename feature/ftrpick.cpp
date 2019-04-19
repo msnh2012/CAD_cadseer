@@ -38,18 +38,10 @@
 using namespace ftr;
 using boost::uuids::uuid;
 
-
-Pick::Pick() : id(gu::createNilId()), u(0.0), v(0.0){}
-
-Pick::Pick(const uuid &idIn, double uIn, double vIn) :
-id(idIn), u(uIn), v(vIn)
-{}
-
 prj::srl::Pick Pick::serialOut() const
 {
   prj::srl::Pick out
   (
-    gu::idToString(id),
     u,
     v
   );
@@ -65,7 +57,6 @@ prj::srl::Pick Pick::serialOut() const
 
 void Pick::serialIn(const prj::srl::Pick &sPickIn)
 {
-  id = gu::stringToId(sPickIn.id());
   u = sPickIn.u();
   v = sPickIn.v();
   

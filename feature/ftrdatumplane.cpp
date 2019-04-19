@@ -324,7 +324,7 @@ void DatumPlane::goUpdatePOffset(const UpdatePayload &pli)
   }
   else //look for seer shape.
   {
-    if (picks.empty() || picks.front().id.is_nil())
+    if (picks.empty() || picks.front().shapeHistory.getRootId().is_nil())
       throw std::runtime_error("POffset: no pick or nil shape id");
     if (!features.front()->hasAnnex(ann::Type::SeerShape))
       throw std::runtime_error("POffset: Parent feature doesn't have seer shape.");
@@ -334,7 +334,7 @@ void DatumPlane::goUpdatePOffset(const UpdatePayload &pli)
     if (resolvedPicks.front().resultId.is_nil())
     {
       std::ostringstream stream;
-      stream << "POffset: can't find target face id. Skipping id: " << gu::idToString(picks.front().id);
+      stream << "POffset: can't find target face id. Skipping id: " << gu::idToString(picks.front().shapeHistory.getRootId());
       throw std::runtime_error(stream.str());
     }
     assert(shape.hasId(resolvedPicks.front().resultId));

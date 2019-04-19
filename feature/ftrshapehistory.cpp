@@ -189,6 +189,11 @@ void ShapeHistory::clear()
   shapeHistoryStow->idMap.clear();
 }
 
+bool ShapeHistory::isEmpty() const
+{
+  return boost::num_vertices(shapeHistoryStow->graph) == 0;
+}
+
 void ShapeHistory::writeGraphViz(const std::string &fileName) const
 {
   std::ofstream file(fileName.c_str());
@@ -263,7 +268,6 @@ uuid ShapeHistory::evolve(const uuid &featureIdIn, const uuid &shapeIdIn) const
   return gu::createNilId();
 }
 
-
 std::vector<boost::uuids::uuid> ShapeHistory::resolveHistories
 (
   const ShapeHistory &pick,
@@ -332,8 +336,6 @@ std::vector<boost::uuids::uuid> ShapeHistory::resolveHistories
   return out;
 }
 
-
-
 ShapeHistory ShapeHistory::createEvolveHistory(const uuid &shapeIdIn) const
 {
   assert(shapeHistoryStow->hasShape(shapeIdIn));
@@ -364,7 +366,6 @@ ShapeHistory ShapeHistory::createEvolveHistory(const uuid &shapeIdIn) const
   return ShapeHistory(stowOut);
 }
 
-
 ShapeHistory ShapeHistory::createDevolveHistory(const uuid &shapeIdIn) const
 {
   assert(shapeHistoryStow->hasShape(shapeIdIn));
@@ -388,6 +389,18 @@ ShapeHistory ShapeHistory::createDevolveHistory(const uuid &shapeIdIn) const
     stowOut->idMap.insert(ShapeIdRecord(stowOut->graph[*it].shapeId, *it));
   
   return ShapeHistory(stowOut);
+}
+
+const boost::uuids::uuid& ShapeHistory::getRootId() const
+{
+  const static uuid nil = gu::createNilId();
+  for (auto its = boost::vertices(shapeHistoryStow->graph); its.first != its.second; ++its.first)
+  {
+    if (boost::in_degree(*its.first, shapeHistoryStow->graph) == 0)
+      return shapeHistoryStow->graph[*its.first].shapeId;
+  }
+  
+  return nil;
 }
 
 std::vector<boost::uuids::uuid> ShapeHistory::getAllIds() const

@@ -118,8 +118,8 @@ namespace dlg
     PickItem(const ftr::Pick &pIn) :
       QStandardItem(), pick(pIn)
     {
-      setText(QString::fromStdString(gu::idToShortString(pick.id)));
-      setToolTip(QString::fromStdString(gu::idToString(pick.id)));
+      setText(QString::fromStdString(gu::idToShortString(pick.shapeHistory.getRootId())));
+      setToolTip(QString::fromStdString(gu::idToString(pick.shapeHistory.getRootId())));
     }
     ftr::Pick pick;
   };
@@ -173,8 +173,8 @@ namespace dlg
     public:
       IdItem(const ftr::Pick &pIn) : QTableWidgetItem(QTableWidgetItem::UserType + 1), pick(pIn)
       {
-        setText(QString::fromStdString(gu::idToShortString(pick.id)));
-        setToolTip(QString::fromStdString(gu::idToString(pick.id)));
+        setText(QString::fromStdString(gu::idToShortString(pick.shapeHistory.getRootId())));
+        setToolTip(QString::fromStdString(gu::idToString(pick.shapeHistory.getRootId())));
         this->setFlags(this->flags() & ~Qt::ItemIsEditable & ~Qt::ItemIsDropEnabled);
       }
       ftr::Pick pick;
@@ -202,8 +202,8 @@ namespace dlg
       }
       
       ListItem *ni = new ListItem(pIn);
-      ni->setText(QString::fromStdString(gu::idToShortString(pIn.id)));
-      ni->setToolTip(QString::fromStdString(gu::idToString(pIn.id)));
+      ni->setText(QString::fromStdString(gu::idToShortString(pIn.shapeHistory.getRootId())));
+      ni->setToolTip(QString::fromStdString(gu::idToString(pIn.shapeHistory.getRootId())));
       contourList->addItem(ni);
       return ni;
     }
@@ -688,8 +688,7 @@ void Blend::selectionAdditionDispatched(const msg::Message &messageIn)
     assert(parentShape.hasId(sMessage.shapeId));
     assert(sMessage.type == slc::Type::Edge);
     
-    ftr::Pick out = tls::convertToPick(sMessage, parentShape);
-    out.shapeHistory = app::instance()->getProject()->getShapeHistory().createDevolveHistory(sMessage.shapeId);
+    ftr::Pick out = tls::convertToPick(sMessage, parentShape, app::instance()->getProject()->getShapeHistory());
     out.highlightIds = getContourIds(parentShape, sMessage.shapeId);
     
     return out;
@@ -700,8 +699,7 @@ void Blend::selectionAdditionDispatched(const msg::Message &messageIn)
     assert(parentShape.hasId(sMessage.shapeId));
     assert(slc::isPointType(sMessage.type));
     
-    ftr::Pick out = tls::convertToPick(sMessage, parentShape);
-    out.shapeHistory = app::instance()->getProject()->getShapeHistory().createDevolveHistory(out.id);
+    ftr::Pick out = tls::convertToPick(sMessage, parentShape, app::instance()->getProject()->getShapeHistory());
     
     return out;
   };
@@ -745,8 +743,8 @@ void Blend::selectionAdditionDispatched(const msg::Message &messageIn)
       
       //add first and last vertex.
       BRepFilletAPI_MakeFillet blendMaker(parentShape.getRootOCCTShape());
-      assert(parentShape.hasId(ni->pick.id));
-      blendMaker.Add(TopoDS::Edge(parentShape.getOCCTShape(ni->pick.id)));
+      assert(parentShape.hasId(ni->pick.shapeHistory.getRootId()));
+      blendMaker.Add(TopoDS::Edge(parentShape.getOCCTShape(ni->pick.shapeHistory.getRootId())));
       if (blendMaker.NbContours() != 1)
       {
         std::cout << "WARNING: unexpected number of contours in: " << BOOST_CURRENT_FUNCTION << std::endl;
@@ -761,7 +759,7 @@ void Blend::selectionAdditionDispatched(const msg::Message &messageIn)
       
       auto constructPick = [&](const uuid &idIn) -> ftr::Pick
       {
-        ftr::Pick out(idIn, 0.0, 0.0);
+        ftr::Pick out;
         out.selectionType = slc::Type::EndPoint;
         out.shapeHistory = app::instance()->getProject()->getShapeHistory().createDevolveHistory(idIn);
         out.highlightIds.push_back(idIn);
@@ -775,7 +773,7 @@ void Blend::selectionAdditionDispatched(const msg::Message &messageIn)
     else //point, just vertices right now.
     {
       ftr::Pick vp = buildVertexPick();
-      if (vp.id.is_nil())
+      if (vp.shapeHistory.getRootId().is_nil())
       {
         node->sendBlocked(msg::buildStatusMessage("Invalid vertex selection", 2.0));
         app::instance()->queuedMessage(msg::Message(msg::Request | msg::Selection | msg::Remove, sMessage));
@@ -799,7 +797,7 @@ void Blend::selectionAdditionDispatched(const msg::Message &messageIn)
             }
             if (vp.selectionType == slc::Type::StartPoint || vp.selectionType == slc::Type::EndPoint)
             {
-              double p = blendMaker.RelativeAbscissa(contourIndex, TopoDS::Vertex(parentShape.getOCCTShape(vp.id)));
+              double p = blendMaker.RelativeAbscissa(contourIndex, TopoDS::Vertex(parentShape.getOCCTShape(vp.shapeHistory.getRootId())));
               if (!(p < 0.0))
                 return true;
             }

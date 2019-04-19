@@ -138,7 +138,7 @@ void InstanceMirror::updateModel(const UpdatePayload &payloadIn)
     
     //get the shapes to mirror.
     occt::ShapeVector tShapes;
-    if (shapePick.id.is_nil())
+    if (shapePick.shapeHistory.getRootId().is_nil())
     {
       tShapes = tss.useGetNonCompoundChildren();
     }
@@ -175,7 +175,7 @@ void InstanceMirror::updateModel(const UpdatePayload &payloadIn)
       else if (mfs.front()->hasAnnex(ann::Type::SeerShape))
       {
         const ann::SeerShape &mss = mfs.front()->getAnnex<ann::SeerShape>();
-        if (planePick.id.is_nil())
+        if (planePick.shapeHistory.getRootId().is_nil())
           throw std::runtime_error("plane pick id is nil");
 
         TopoDS_Shape dsShape;

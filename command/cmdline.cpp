@@ -80,10 +80,8 @@ void Line::go()
   const ann::SeerShape &ss1 = bf1->getAnnex<ann::SeerShape>();
   
   ftr::Picks picks;
-  picks.push_back(tls::convertToPick(cs.front(), ss0));
-  picks.push_back(tls::convertToPick(cs.back(), ss1));
-  picks.at(0).shapeHistory = project->getShapeHistory().createDevolveHistory(cs.at(0).shapeId);
-  picks.at(1).shapeHistory = project->getShapeHistory().createDevolveHistory(cs.at(1).shapeId);
+  picks.push_back(tls::convertToPick(cs.front(), ss0, project->getShapeHistory()));
+  picks.push_back(tls::convertToPick(cs.back(), ss1, project->getShapeHistory()));
   
   std::shared_ptr<ftr::Line> fl(new ftr::Line());
   fl->setPicks(picks);

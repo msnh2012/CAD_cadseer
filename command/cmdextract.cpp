@@ -79,9 +79,8 @@ void Extract::go()
       //for now we just assume face equals tangent accrue.
       TopoDS_Face face = TopoDS::Face(targetSeerShape.getOCCTShape(container.shapeId));  
       ftr::Pick pick;
-      pick.id = container.shapeId;
       pick.setParameter(face, container.pointLocation);
-      pick.shapeHistory = project->getShapeHistory().createDevolveHistory(pick.id);
+      pick.shapeHistory = project->getShapeHistory().createDevolveHistory(container.shapeId);
       pick.accrueType = ftr::AccrueType::Tangent;
       
       std::shared_ptr<ftr::Extract> extract(new ftr::Extract());
@@ -103,10 +102,9 @@ void Extract::go()
     {
       std::shared_ptr<ftr::Extract> extract(new ftr::Extract());
       ftr::Pick pick;
-      pick.id = container.shapeId;
-      if (!pick.id.is_nil())
+      if (!container.shapeId.is_nil())
       {
-        pick.shapeHistory = project->getShapeHistory().createDevolveHistory(pick.id);
+        pick.shapeHistory = project->getShapeHistory().createDevolveHistory(container.shapeId);
         ftr::Picks picks({pick});
         extract->sync(picks);
       }

@@ -75,8 +75,7 @@ void %CLASSNAME%::go()
 //   const ann::SeerShape &ss0 = bf0->getAnnex<ann::SeerShape>();
 //   
 //   ftr::Picks picks;
-//   picks.push_back(tls::convertToPick(cs.front(), ss0));
-//   picks.at(0).shapeHistory = project->getShapeHistory().createDevolveHistory(cs.at(0).shapeId);
+//   picks.push_back(tls::convertToPick(cs.front(), ss0, project->getShapeHistory()));
 //   
 //   auto f = std::make_shared<ftr::%CLASSNAME%>();
 //   f->setPicks(picks);

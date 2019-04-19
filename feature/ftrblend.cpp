@@ -91,22 +91,22 @@ VariableBlend Blend::buildDefaultVariable(const ann::SeerShape &seerShapeIn, con
   
   const TopoDS_Shape &rootShape = seerShapeIn.getRootOCCTShape();
   BRepFilletAPI_MakeFillet blendMaker(rootShape);
-  const TopoDS_Shape &edge = seerShapeIn.getOCCTShape(pickIn.id); //TODO might be face!
+  const TopoDS_Shape &edge = seerShapeIn.getOCCTShape(pickIn.shapeHistory.getRootId()); //TODO might be face!
   blendMaker.Add(TopoDS::Edge(edge));
   
   //not using position parameter for vertices, but building anyway for consistency
   VariableEntry entry1;
-  entry1.pick.id = seerShapeIn.findId(blendMaker.FirstVertex(1));
-  entry1.pick.shapeHistory = historyIn.createDevolveHistory(entry1.pick.id);
+  uuid entry1Id = seerShapeIn.findId(blendMaker.FirstVertex(1));
+  entry1.pick.shapeHistory = historyIn.createDevolveHistory(entry1Id);
   entry1.radius = buildRadiusParameter();
   entry1.position = buildPositionParameter();
   out.entries.push_back(entry1);
   
   VariableEntry entry2;
-  entry2.pick.id = seerShapeIn.findId(blendMaker.LastVertex(1));
-  if (entry1.pick.id != entry2.pick.id) //periodic spine
+  uuid entry2Id = seerShapeIn.findId(blendMaker.LastVertex(1));
+  if (entry1Id != entry2Id) //periodic spine
   {
-    entry2.pick.shapeHistory = historyIn.createDevolveHistory(entry2.pick.id);
+    entry2.pick.shapeHistory = historyIn.createDevolveHistory(entry2Id);
     entry2.radius = buildRadiusParameter();
     entry2.radius->setValue(1.5);
     entry2.position = buildPositionParameter();

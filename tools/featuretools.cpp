@@ -71,34 +71,40 @@ boost::optional<osg::Vec3d> Resolved::getPoint(const ann::SeerShape &ssIn) const
   if(!ssIn.hasId(resultId))
     return boost::none;
   const TopoDS_Shape &rs = ssIn.getOCCTShape(resultId);
-  assert(rs.ShapeType() == TopAbs_EDGE);
-  if (rs.ShapeType() != TopAbs_EDGE)
-    return boost::none;
-  boost::optional<osg::Vec3d> p;
-  if (pick.selectionType == slc::Type::StartPoint)
-    p = gu::toOsg(BRep_Tool::Pnt(TopoDS::Vertex(ssIn.getOCCTShape(ssIn.useGetStartVertex(resultId)))));
-  if (pick.selectionType == slc::Type::EndPoint)
-    p = gu::toOsg(BRep_Tool::Pnt(TopoDS::Vertex(ssIn.getOCCTShape(ssIn.useGetEndVertex(resultId)))));
-  if (pick.selectionType == slc::Type::MidPoint)
+  if (rs.ShapeType() == TopAbs_VERTEX)
   {
-    auto a = ssIn.useGetMidPoint(resultId);
-    if (!a.empty())
-      p = a.front();
+    return gu::toOsg(BRep_Tool::Pnt(TopoDS::Vertex(rs)));
   }
-  if (pick.selectionType == slc::Type::CenterPoint)
+  if (rs.ShapeType() == TopAbs_EDGE)
   {
-    auto a = ssIn.useGetCenterPoint(resultId);
-    if (!a.empty())
-      p = a.front();
+    boost::optional<osg::Vec3d> p;
+    if (pick.selectionType == slc::Type::StartPoint)
+      p = gu::toOsg(BRep_Tool::Pnt(TopoDS::Vertex(ssIn.getOCCTShape(ssIn.useGetStartVertex(resultId)))));
+    if (pick.selectionType == slc::Type::EndPoint)
+      p = gu::toOsg(BRep_Tool::Pnt(TopoDS::Vertex(ssIn.getOCCTShape(ssIn.useGetEndVertex(resultId)))));
+    if (pick.selectionType == slc::Type::MidPoint)
+    {
+      auto a = ssIn.useGetMidPoint(resultId);
+      if (!a.empty())
+        p = a.front();
+    }
+    if (pick.selectionType == slc::Type::CenterPoint)
+    {
+      auto a = ssIn.useGetCenterPoint(resultId);
+      if (!a.empty())
+        p = a.front();
+    }
+    if (pick.selectionType == slc::Type::QuadrantPoint || pick.selectionType == slc::Type::NearestPoint)
+    {
+      p = pick.getPoint(TopoDS::Edge(rs));
+    }
+    if (!p)
+      return boost::none;
+    
+    return p.get();
   }
-  if (pick.selectionType == slc::Type::QuadrantPoint || pick.selectionType == slc::Type::NearestPoint)
-  {
-    p = pick.getPoint(TopoDS::Edge(rs));
-  }
-  if (!p)
-    return boost::none;
   
-  return p.get();
+  return boost::none;
 }
 
 std::vector<Resolved> tls::resolvePicks
@@ -162,88 +168,113 @@ std::vector<Resolved> tls::resolvePicks
   return tls::resolvePicks(features, picks, pHistory);
 }
 
-ftr::Pick tls::convertToPick(const slc::Message &messageIn, const ann::SeerShape &sShapeIn)
+ftr::Pick tls::convertToPick
+(
+  const slc::Message &messageIn
+  , const ann::SeerShape &sShapeIn
+  , const ftr::ShapeHistory &pHistory
+)
 {
-  assert(sShapeIn.hasId(messageIn.shapeId)); //don't set me up
-  ftr::Pick out(messageIn.shapeId, 0.0, 0.0);
+  ftr::Pick out;
   out.selectionType = messageIn.type;
   
-  /* currently picks don't support parameters for anything higher than faces.
-   * i.e. no shells, solids. this might be a problem.
-   */
-  const TopoDS_Shape &s = sShapeIn.getOCCTShape(out.id);
-  if (out.selectionType == slc::Type::StartPoint)
+  if ((messageIn.type != slc::Type::Object) && (messageIn.type != slc::Type::Feature))
   {
-    assert(s.ShapeType() == TopAbs_EDGE);
-    out.id = sShapeIn.useGetStartVertex(out.id);
+    assert(sShapeIn.hasId(messageIn.shapeId)); //don't set me up
+    //create devolve history from original pick not resolved
+    out.shapeHistory = pHistory.createDevolveHistory(messageIn.shapeId);
+    
+    uuid resolvedId = messageIn.shapeId; //this mutates upon points to vertices.
+    /* currently picks don't support parameters for anything higher than faces.
+    * i.e. no shells, solids. this might be a problem.
+    */
+    const TopoDS_Shape &s = sShapeIn.getOCCTShape(resolvedId);
+    if (messageIn.type == slc::Type::StartPoint)
+    {
+      assert(s.ShapeType() == TopAbs_EDGE);
+      resolvedId = sShapeIn.useGetStartVertex(resolvedId);
+    }
+    else if (messageIn.type == slc::Type::EndPoint)
+    {
+      assert(s.ShapeType() == TopAbs_EDGE);
+      resolvedId = sShapeIn.useGetEndVertex(resolvedId);
+    }
+    else if
+    (
+      messageIn.type == slc::Type::Edge
+      || messageIn.type == slc::Type::MidPoint
+      || messageIn.type == slc::Type::NearestPoint
+      || messageIn.type == slc::Type::QuadrantPoint
+    )
+    {
+      assert(s.ShapeType() == TopAbs_EDGE);
+      out.setParameter(TopoDS::Edge(s), messageIn.pointLocation);
+    }
+    else if (messageIn.type == slc::Type::Face)
+    {
+      assert(s.ShapeType() == TopAbs_FACE);
+      out.setParameter(TopoDS::Face(s), messageIn.pointLocation);
+    }
+    
+    out.resolvedIds.push_back(resolvedId);
+    out.highlightIds.push_back(resolvedId);
+    out.shapeHistory = pHistory.createDevolveHistory(resolvedId);
   }
-  else if (out.selectionType == slc::Type::EndPoint)
-  {
-    assert(s.ShapeType() == TopAbs_EDGE);
-    out.id = sShapeIn.useGetEndVertex(out.id);
-  }
-  else if
-  (
-    out.selectionType == slc::Type::Edge
-    || out.selectionType == slc::Type::MidPoint
-    || out.selectionType == slc::Type::NearestPoint
-    || out.selectionType == slc::Type::QuadrantPoint
-  )
-  {
-    assert(s.ShapeType() == TopAbs_EDGE);
-    out.setParameter(TopoDS::Edge(s), messageIn.pointLocation);
-  }
-  else if (out.selectionType == slc::Type::Face)
-  {
-    assert(s.ShapeType() == TopAbs_FACE);
-    out.setParameter(TopoDS::Face(s), messageIn.pointLocation);
-  }
-  
-  out.resolvedIds.push_back(out.id);
-  out.highlightIds.push_back(out.id);
   
   return out;
 }
 
-ftr::Pick tls::convertToPick(const slc::Container &containerIn, const ann::SeerShape &sShapeIn)
+ftr::Pick tls::convertToPick
+(
+  const slc::Container &containerIn
+  , const ann::SeerShape &sShapeIn
+  , const ftr::ShapeHistory &pHistory
+)
 {
-  assert(sShapeIn.hasId(containerIn.shapeId)); //don't set me up
-  ftr::Pick out(containerIn.shapeId, 0.0, 0.0);
+  ftr::Pick out;
   out.selectionType = containerIn.selectionType;
   
-  /* currently picks don't support parameters for anything higher than faces.
-   * i.e. no shells, solids. this might be a problem.
-   */
-  const TopoDS_Shape &s = sShapeIn.getOCCTShape(out.id);
-  if (out.selectionType == slc::Type::StartPoint)
+  if ((containerIn.selectionType != slc::Type::Object) && (containerIn.selectionType != slc::Type::Feature))
   {
-    assert(s.ShapeType() == TopAbs_EDGE);
-    out.id = sShapeIn.useGetStartVertex(out.id);
+    assert(sShapeIn.hasId(containerIn.shapeId)); //don't set me up
+    //create devolve history from original pick not resolved
+    out.shapeHistory = pHistory.createDevolveHistory(containerIn.shapeId);
+    
+    uuid resolvedId = containerIn.shapeId; //this mutates upon points to vertices.
+    /* currently picks don't support parameters for anything higher than faces.
+    * i.e. no shells, solids. this might be a problem.
+    */
+    const TopoDS_Shape &s = sShapeIn.getOCCTShape(resolvedId);
+    if (containerIn.selectionType == slc::Type::StartPoint)
+    {
+      assert(s.ShapeType() == TopAbs_EDGE);
+      resolvedId = sShapeIn.useGetStartVertex(resolvedId);
+    }
+    else if (containerIn.selectionType == slc::Type::EndPoint)
+    {
+      assert(s.ShapeType() == TopAbs_EDGE);
+      resolvedId = sShapeIn.useGetEndVertex(resolvedId);
+    }
+    else if
+    (
+      containerIn.selectionType == slc::Type::Edge
+      || containerIn.selectionType == slc::Type::MidPoint
+      || containerIn.selectionType == slc::Type::NearestPoint
+      || containerIn.selectionType == slc::Type::QuadrantPoint
+    )
+    {
+      assert(s.ShapeType() == TopAbs_EDGE);
+      out.setParameter(TopoDS::Edge(s), containerIn.pointLocation);
+    }
+    else if (containerIn.selectionType == slc::Type::Face)
+    {
+      assert(s.ShapeType() == TopAbs_FACE);
+      out.setParameter(TopoDS::Face(s), containerIn.pointLocation);
+    }
+    
+    out.resolvedIds.push_back(resolvedId);
+    out.highlightIds.push_back(resolvedId);
   }
-  else if (out.selectionType == slc::Type::EndPoint)
-  {
-    assert(s.ShapeType() == TopAbs_EDGE);
-    out.id = sShapeIn.useGetEndVertex(out.id);
-  }
-  else if
-  (
-    out.selectionType == slc::Type::Edge
-    || out.selectionType == slc::Type::MidPoint
-    || out.selectionType == slc::Type::NearestPoint
-    || out.selectionType == slc::Type::QuadrantPoint
-  )
-  {
-    assert(s.ShapeType() == TopAbs_EDGE);
-    out.setParameter(TopoDS::Edge(s), containerIn.pointLocation);
-  }
-  else if (out.selectionType == slc::Type::Face)
-  {
-    assert(s.ShapeType() == TopAbs_FACE);
-    out.setParameter(TopoDS::Face(s), containerIn.pointLocation);
-  }
-  
-  out.resolvedIds.push_back(out.id);
-  out.highlightIds.push_back(out.id);
   
   return out;
 }

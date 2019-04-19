@@ -34,7 +34,7 @@ namespace ftr
    * 
    * Shape history will be used in 2 related ways.
    * 1) will be destroyed and regenerated and used during every
-   * update to resolve identifing shapes.
+   * update to resolve identifying shapes.
    * 2) will be used for storing picks. These picks will be a
    * 'sub set' of the 'update generated graph' related to a user pick. 
    * These picks will remain in the feature until the user 'deselects'
@@ -56,6 +56,9 @@ namespace ftr
     //! reset all data structures.
     void clear();
     
+    //! is graph empty
+    bool isEmpty() const;
+    
     //! write out in graphViz format.
     void writeGraphViz(const std::string &fileName) const;
     
@@ -74,7 +77,7 @@ namespace ftr
     //! query functions.
     bool hasShape(const boost::uuids::uuid &shapeIdIn) const;
     
-    /*! search for a decendant that is a result of @featureIdIn for the shape id @shapeIdIn.
+    /*! search for a descendant that is a result of @featureIdIn for the shape id @shapeIdIn.
      * @return id of shape or nil id if not found.
      */
     boost::uuids::uuid evolve(const boost::uuids::uuid &featureIdIn, const boost::uuids::uuid &shapeIdIn) const;
@@ -104,8 +107,18 @@ namespace ftr
     //! create a 'subset', descendants graph related to shape id @shapeIdIn
     ShapeHistory createEvolveHistory(const boost::uuids::uuid &shapeIdIn) const;
     
-    //! create a 'subset', anscendant graph related to shape id @shapeIdIn. use for picks.
+    //! create a 'subset', ascendant graph related to shape id @shapeIdIn. use for picks.
     ShapeHistory createDevolveHistory(const boost::uuids::uuid &shapeIdIn) const;
+    
+    /*! @brief Get the pick root id
+     * 
+     * @details This is designed for the pick history context.
+     * This id was the actual id of the original selection.
+     * This should be a unique graph vertex in a pick graph, in that it's
+     * in-degree == 0.
+     * @return first 'in-degree == 0' uuid or nil id.
+     */
+    const boost::uuids::uuid& getRootId() const;
     
     std::vector<boost::uuids::uuid> getAllIds() const;
     bool operator==(const ShapeHistory&) const;

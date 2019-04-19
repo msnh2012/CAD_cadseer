@@ -103,9 +103,8 @@ void Blend::go()
       
       TopoDS_Edge edge = TopoDS::Edge(targetSeerShape.getOCCTShape(currentSelection.shapeId));  
       ftr::Pick pick;
-      pick.id = currentSelection.shapeId;
       pick.setParameter(edge, currentSelection.pointLocation);
-      pick.shapeHistory = project->getShapeHistory().createDevolveHistory(pick.id);
+      pick.shapeHistory = project->getShapeHistory().createDevolveHistory(currentSelection.shapeId);
       
       //simple radius test  
       simpleBlend.picks.push_back(pick);

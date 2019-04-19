@@ -19,6 +19,7 @@
 
 #include <boost/optional.hpp>
 
+#include "tools/featuretools.h"
 #include "message/msgnode.h"
 #include "project/prjproject.h"
 #include "selection/slceventhandler.h"
@@ -91,8 +92,7 @@ void Extrude::go()
       if (!ss.hasId(c.shapeId))
         continue;
       //todo: something to turn end points into vertices.
-      ftr::Pick p(c.shapeId, 0.0, 0.0);
-      p.shapeHistory = project->getShapeHistory().createDevolveHistory(p.id);
+      ftr::Pick p = tls::convertToPick(c, ss, project->getShapeHistory());
       picks.push_back(p);
     }
   }

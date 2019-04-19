@@ -236,10 +236,9 @@ void Boolean::finishDialog()
     {
       targetIds.push_back(m.featureId);
       ftr::Pick tp; //target pick
-      tp.id = m.shapeId;
-      if (!tp.id.is_nil())
+      if (!m.shapeId.is_nil())
       {
-        tp.shapeHistory = p->getShapeHistory().createDevolveHistory(tp.id);
+        tp.shapeHistory = p->getShapeHistory().createDevolveHistory(m.shapeId);
         tps.push_back(tp);
       }
     }
@@ -256,10 +255,9 @@ void Boolean::finishDialog()
     {
       toolIds.push_back(m.featureId);
       ftr::Pick pk;
-      pk.id = m.shapeId;
-      if (!pk.id.is_nil())
+      if (!m.shapeId.is_nil())
       {
-        pk.shapeHistory = p->getShapeHistory().createDevolveHistory(pk.id);
+        pk.shapeHistory = p->getShapeHistory().createDevolveHistory(m.shapeId);
         tlps.push_back(pk);
       }
     }

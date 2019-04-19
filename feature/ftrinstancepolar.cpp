@@ -162,7 +162,7 @@ void InstancePolar::updateModel(const UpdatePayload &payloadIn)
     
     //get the shapes to mirror.
     occt::ShapeVector tShapes;
-    if (shapePick.id.is_nil())
+    if (shapePick.shapeHistory.getRootId().is_nil())
     {
       tShapes = tss.useGetNonCompoundChildren();
     }
@@ -201,7 +201,7 @@ void InstancePolar::updateModel(const UpdatePayload &payloadIn)
       {
         if (!rafs.front()->hasAnnex(ann::Type::SeerShape)) //no datum axis exists at this time.
           throw std::runtime_error("Input feature doesn't have seershape");
-        if (axisPick.id.is_nil())
+        if (axisPick.shapeHistory.getRootId().is_nil())
           throw std::runtime_error("No id for axis pick");
         const ann::SeerShape &ass = rafs.front()->getAnnex<ann::SeerShape>();
         

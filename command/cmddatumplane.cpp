@@ -39,8 +39,13 @@
 using namespace cmd;
 using boost::uuids::uuid;
 
-//caller needs to set pick tag and shapehistory.
-static boost::optional<ftr::Pick> buildPlanePick(const slc::Container &cIn, const ftr::Base *f)
+//caller needs to set pick tag.
+static boost::optional<ftr::Pick> buildPlanePick
+(
+  const slc::Container &cIn
+  , const ftr::Base *f
+  , const ftr::ShapeHistory &pHistory
+)
 {
   if (cIn.shapeId.is_nil())
     return boost::none;
@@ -54,7 +59,7 @@ static boost::optional<ftr::Pick> buildPlanePick(const slc::Container &cIn, cons
   if (adaptor.GetType() != GeomAbs_Plane)
     return boost::none;
   
-  ftr::Pick p = tls::convertToPick(cIn, ss);
+  ftr::Pick p = tls::convertToPick(cIn, ss, pHistory);
   return p;
 }
 
@@ -108,8 +113,7 @@ bool DatumPlane::attemptOffset(const slc::Container &cIn)
   {
     //a single plane is an offset.
     std::shared_ptr<ftr::DatumPlane> dp(new ftr::DatumPlane());
-    ftr::Pick pick = tls::convertToPick(cIn, ss);
-    pick.shapeHistory = project->getShapeHistory().createDevolveHistory(cIn.shapeId);
+    ftr::Pick pick = tls::convertToPick(cIn, ss, project->getShapeHistory());
     dp->setPicks(ftr::Picks({pick}));
     dp->setDPType(ftr::DatumPlane::DPType::POffset);
     dp->setAutoSize(true);
@@ -148,8 +152,7 @@ bool DatumPlane::attemptCenter(const std::vector<slc::Container> &csIn)
       if (sa.GetType() == GeomAbs_Plane)
       {
         pc++;
-        ftr::Pick pick = tls::convertToPick(s, ss);
-        pick.shapeHistory = project->getShapeHistory().createDevolveHistory(s.shapeId);
+        ftr::Pick pick = tls::convertToPick(s, ss, project->getShapeHistory());
         picks.push_back(pick);
         parents.push_back(f);
       }
@@ -187,8 +190,7 @@ bool DatumPlane::attemptAxisAngle(const std::vector<slc::Container> &csIn)
     if (!glean.second)
       return boost::none;
     
-    ftr::Pick p = tls::convertToPick(cIn, project->findFeature(cIn.featureId)->getAnnex<ann::SeerShape>());
-    p.shapeHistory = project->getShapeHistory().createDevolveHistory(cIn.shapeId);
+    ftr::Pick p = tls::convertToPick(cIn, project->findFeature(cIn.featureId)->getAnnex<ann::SeerShape>(), project->getShapeHistory());
     p.tag = ftr::DatumPlane::rotationAxis;
     return p;
   };
@@ -229,10 +231,9 @@ bool DatumPlane::attemptAxisAngle(const std::vector<slc::Container> &csIn)
       }
       else
       {
-        auto pp = buildPlanePick(s, f);
+        auto pp = buildPlanePick(s, f, project->getShapeHistory());
         if (pp)
         {
-          pp.get().shapeHistory = project->getShapeHistory().createDevolveHistory(s.shapeId);
           pp.get().tag = ftr::DatumPlane::plane1;
           aaPicks.push_back(pp.get());
           plane = std::make_tuple
@@ -298,11 +299,10 @@ bool DatumPlane::attemptAverage3P(const std::vector<slc::Container> &csIn)
     }
     else
     {
-      auto pp = buildPlanePick(s, f);
+      auto pp = buildPlanePick(s, f, project->getShapeHistory());
       if (pp)
       {
         const char *tag = assign();
-        pp.get().shapeHistory = project->getShapeHistory().createDevolveHistory(s.shapeId);
         pp.get().tag = tag;
         picks.push_back(pp.get());
       }
@@ -359,8 +359,7 @@ bool DatumPlane::attemptThrough3P(const std::vector<slc::Container> &csIn)
       return ftr::DatumPlane::point3;
     };
 
-    ftr::Pick p = tls::convertToPick(s, project->findFeature(s.featureId)->getAnnex<ann::SeerShape>());
-    p.shapeHistory = project->getShapeHistory().createDevolveHistory(s.shapeId);
+    ftr::Pick p = tls::convertToPick(s, project->findFeature(s.featureId)->getAnnex<ann::SeerShape>(), project->getShapeHistory());
     p.tag = assign();
     picks.push_back(p);
   }
