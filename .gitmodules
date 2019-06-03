@@ -1,12 +1,12 @@
-[submodule "project/libgit2pp"]
+[submodule "libgit2pp"]
 	path = subprojects/libgit2pp
 	url = https://gitlab.com/blobfish/libgit2pp.git
-[submodule "libreoffice/libzippp"]
+[submodule "libzippp"]
 	path = subprojects/libzippp
-	url = https://github.com/ctabin/libzippp.git
-[submodule "sketch/solvespace"]
+	url = https://gitlab.com/blobfish/libzippp.git
+[submodule "solvespace"]
 	path = subprojects/solvespace
 	url = https://gitlab.com/blobfish/solvespace.git
-[submodule "subprojects/libigl"]
+[submodule "libigl"]
 	path = subprojects/libigl
-	url = https://github.com/libigl/libigl.git
+	url = https://gitlab.com/blobfish/libigl.git
