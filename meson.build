@@ -23,9 +23,9 @@ boost = dependency('boost', modules : ['system', 'graph', 'timer', 'filesystem']
 occt = dependency('OpenCASCADE', version : '>=7.3')
 
 osg = dependency('openscenegraph', version : '>=3.6', modules : ['OpenThreads', 'osg',
-  'osgDB', 'osgUtil', 'osgViewer', 'osgGA', 'osgText', 'osgManipulator', 'osgFX', 'osgQt5'])
+  'osgDB', 'osgUtil', 'osgViewer', 'osgGA', 'osgText', 'osgManipulator', 'osgFX'])
   
-osgqt = dependency('openscenegraph-osgQt5', version : '>=3.6')
+osgqt = dependency('openscenegraph-osgQt', version : '>=3.6')
   
 eigen = dependency('eigen3', version : '>=3.3.7')
 
