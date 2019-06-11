@@ -20,7 +20,11 @@ qt5 = dependency('Qt5', version : '>=5.11.3', modules : ['Core', 'Widgets', 'Ope
 
 boost = dependency('boost', modules : ['system', 'graph', 'timer', 'filesystem'])
 
-occt = dependency('OpenCASCADE', version : '>=7.3')
+occt = dependency('OpenCASCADE', version : '>=7.3', modules : ['TKernel', 'TKMath', 'TKG2d',
+  'TKG3d', 'TKGeomBase', 'TKBRep', 'TKGeomAlgo', 'TKTopAlgo', 'TKPrim', 'TKBO', 'TKShHealing',
+  'TKBool', 'TKHLR', 'TKFillet', 'TKOffset', 'TKFeat', 'TKMesh', 'TKXMesh', 'TKXSBase',
+  'TKSTEPBase', 'TKSTEPAttr', 'TKSTEP209', 'TKSTEP', 'TKIGES', 'TKXCAF', 'TKXDEIGES',
+  'TKXDESTEP', 'TKSTL', 'TKVRML', 'TKXmlXCAF', 'TKBinXCAF'])
 
 osg = dependency('openscenegraph', version : '>=3.6', modules : ['OpenThreads', 'osg',
   'osgDB', 'osgUtil', 'osgViewer', 'osgGA', 'osgText', 'osgManipulator', 'osgFX'])
