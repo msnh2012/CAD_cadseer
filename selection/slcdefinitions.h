@@ -202,6 +202,15 @@ namespace slc
     );
   }
   
+  inline bool isShapeType(const Type typeIn)
+  {
+    return
+    (
+      (typeIn != Type::Object)
+      && (typeIn != Type::Feature)
+    );
+  }
+  
   Type convert(TopAbs_ShapeEnum);
   TopAbs_ShapeEnum convert(Type);
 }

@@ -71,6 +71,7 @@ namespace ftr
     bool operator==(const Pick&) const;
     bool isParameterType() const; //!< midpoint, quadrant and nearest are really same pick with different u.
     bool isParameterEqual(const Pick&) const;
+    bool isEmpty() const; //!< an empty pick has empty shapehistory.
     std::vector<boost::uuids::uuid> resolvedOverlap(const Pick&) const; //!< not applicable to parameter types.
     void setParameter(const TopoDS_Edge&, const osg::Vec3d&);
     void setParameter(const TopoDS_Face&, const osg::Vec3d&);

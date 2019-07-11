@@ -978,6 +978,14 @@ void Handler::constructMenu()
         (msg::Request | msg::Construct | msg::Ruled).to_string(),
         constructionSurface
       );
+      constructNode
+      (
+        mdv::gestureCommand,
+        ":/resources/images/constructionSweep.svg",
+        QObject::tr("Sweep Surface Command").toStdString(),
+        (msg::Request | msg::Construct | msg::Sweep).to_string(),
+        constructionSurface
+      );
     }
     constructNode
     (

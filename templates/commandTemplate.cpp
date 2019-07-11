@@ -26,7 +26,7 @@
 // #include "selection/slceventhandler.h"
 // #include "parameter/prmparameter.h"
 // #include "dialogs/dlgparameter.h"
-// #include "dialogs/%CLASSNAMELOWERCASE%.h"
+// #include "dialogs/dlg%CLASSNAMELOWERCASE%.h"
 // #include "annex/annseershape.h"
 // #include "feature/ftrinputtype.h"
 #include "feature/ftr%CLASSNAMELOWERCASE%.h"
@@ -65,17 +65,24 @@ void %CLASSNAME%::go()
 //     return;
 //   }
 //   
-//   const ftr::Base *bf0 = project->findFeature(cs.front().featureId);
-//   if (!bf0 || !bf0->hasAnnex(ann::Type::SeerShape))
+//   const ftr::Base *bf = project->findFeature(cs.front().featureId);
+//   if (!bf || !bf->hasAnnex(ann::Type::SeerShape))
 //   {
 //     node->sendBlocked(msg::buildStatusMessage("Invalid first selection for %CLASSNAME%", 2.0));
 //     shouldUpdate = false;
 //     return;
 //   }
-//   const ann::SeerShape &ss0 = bf0->getAnnex<ann::SeerShape>();
+//   const ann::SeerShape &ss = bf->getAnnex<ann::SeerShape>();
+//   if (ss.isNull())
+//   {
+//     node->sendBlocked(msg::buildStatusMessage("Seershape is null for %CLASSNAME%", 2.0));
+//     shouldUpdate = false;
+//     return;
+//   }
 //   
 //   ftr::Picks picks;
 //   picks.push_back(tls::convertToPick(cs.front(), ss0, project->getShapeHistory()));
+//   picks.back().tag = "something";
 //   
 //   auto f = std::make_shared<ftr::%CLASSNAME%>();
 //   f->setPicks(picks);

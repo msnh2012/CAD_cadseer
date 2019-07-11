@@ -1458,20 +1458,20 @@ ftr::UpdatePayload::UpdateMap Project::getParentMap(const boost::uuids::uuid &id
   ftr::UpdatePayload::UpdateMap updateMap;
   
   auto vertex = stow->findVertex(idIn);
+  assert(vertex != NullVertex());
   RemovedGraph removedGraph = buildRemovedGraph(stow->graph); //children
   ReversedGraph reversedGraph = boost::make_reverse_graph(removedGraph); //parents
-  for (auto its = boost::adjacent_vertices(vertex, reversedGraph); its.first != its.second; ++its.first)
-  {
-    auto e = boost::edge(vertex, *its.first, reversedGraph);
-    assert(e.second);
-    for (const auto &tag : reversedGraph[e.first].inputType.getTags())
-    {
-      auto temp = std::make_pair(tag, reversedGraph[*its.first].feature.get());
-      updateMap.insert(temp);
-    }
-  }
   
-  return updateMap;
+  return buildAjacentUpdateMap
+  <
+    ReversedGraph,
+    boost::graph_traits<ReversedGraph>::vertex_descriptor
+  >(reversedGraph, vertex);
+}
+
+ftr::UpdatePayload Project::getPayload(const boost::uuids::uuid &idIn) const
+{
+  return ftr::UpdatePayload(getParentMap(idIn), *shapeHistory);
 }
 
 template <typename VertexT>

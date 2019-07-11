@@ -97,6 +97,10 @@ bool Pick::isParameterEqual(const Pick &rhs) const
   return (std::fabs(u - rhs.u) < std::numeric_limits<double>::epsilon());
 }
 
+bool Pick::isEmpty() const
+{
+  return shapeHistory.isEmpty();
+}
 std::vector<boost::uuids::uuid> Pick::resolvedOverlap(const Pick &other) const
 {
 //   assert(!isParameterType());

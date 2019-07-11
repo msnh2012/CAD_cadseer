@@ -1,6 +1,6 @@
 /*
  * CadSeer. Parametric Solid Modeling.
- * Copyright (C) 2017  Thomas S. Anderson blobfish.at.gmx.com
+ * Copyright (C) 2019 Thomas S. Anderson blobfish.at.gmx.com
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,38 +17,40 @@
  *
  */
 
-#ifndef ANN_BASE_H
-#define ANN_BASE_H
+#ifndef ANN_LAW_FUNCTION_H
+#define ANN_LAW_FUNCTION_H
 
-#include <map>
+#include <memory>
+
+#include <osg/ref_ptr>
+
+#include "annex/annbase.h"
+
+namespace lwf{struct Cue;}
+namespace lbr{class PLabel;}
 
 namespace ann
 {
-  enum class Type
-  {
-    Base,
-    CSysDragger,
-    SeerShape,
-    IntersectionMapper,
-    InstanceMapper,
-    SurfaceMesh,
-    SolidMesh,
-    LawFunction
-  };
-  
-  const std::string& toString(const Type &tIn);
-  const Type& toType(const std::string &sIn);
-  
-  class Base
+  /**
+  * @class LawFunction
+  * @brief Annex class to hold a law function.
+  */
+  class LawFunction : public Base
   {
   public:
-    Base();
-    virtual ~Base();
-    virtual Type getType(){return Type::Base;}
+    LawFunction();
+    LawFunction(const lwf::Cue&);
+    ~LawFunction() override;
+    Type getType() override {return Type::LawFunction;}
+    
+    void setCue(const lwf::Cue&);
+    const lwf::Cue& getCue() const;
+    lwf::Cue& getCue();
+    
+  private:
+    struct Stow;
+    std::unique_ptr<Stow> stow;
   };
-  
-  //only 1 of a type per feature?
-  typedef std::map<Type, Base*> Annexes; 
 }
 
-#endif // ANN_BASE_H
+#endif //ANN_LAW_FUNCTION_H

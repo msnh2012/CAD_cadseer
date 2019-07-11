@@ -35,7 +35,8 @@ static const TypeMap typeMap = boost::assign::list_of<TypeMap::relation>
 (Type::IntersectionMapper, "IntersectionMapper")
 (Type::InstanceMapper, "InstanceMapper")
 (Type::SurfaceMesh, "SurfaceMesh")
-(Type::SolidMesh, "SolidMesh");
+(Type::SolidMesh, "SolidMesh")
+(Type::LawFunction, "LawFunction");
 
 const std::string& ann::toString(const Type &tIn)
 {

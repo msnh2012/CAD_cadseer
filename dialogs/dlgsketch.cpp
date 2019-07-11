@@ -45,6 +45,7 @@
 #include "selection/slcmessage.h"
 #include "viewer/vwrwidget.h"
 #include "dialogs/dlgwidgetgeometry.h"
+#include "dialogs/dlgenterfilter.h"
 #include "dialogs/dlgexpressionedit.h"
 #include "parameter/prmparameter.h"
 #include "feature/ftrsketch.h"

@@ -94,7 +94,8 @@ modelviz_sources = ['modelviz/mdvbase.cpp'
   , 'modelviz/mdvhiddenlineeffect.cpp'
   , 'modelviz/mdvhiddenlinetechnique.cpp'
   , 'modelviz/mdvdatumaxis.cpp'
-  , 'modelviz/mdvsurfacemesh.cpp']
+  , 'modelviz/mdvsurfacemesh.cpp'
+  , 'modelviz/mdvlawfunction.cpp']
   
 gesture_sources = ['gesture/gsnhandler.cpp'
   , 'gesture/gsnnode.cpp'
@@ -156,7 +157,8 @@ feature_sources = ['feature/ftrinputtype.cpp'
   , 'feature/ftrline.cpp'
   , 'feature/ftrtransitioncurve.cpp'
   , 'feature/ftrruled.cpp'
-  , 'feature/ftrimageplane.cpp']
+  , 'feature/ftrimageplane.cpp'
+  , 'feature/ftrsweep.cpp']
   
 parameter_sources = ['parameter/prmparameter.cpp']
 
@@ -166,7 +168,8 @@ annex_sources = ['annex/annbase.cpp'
   , 'annex/annintersectionmapper.cpp'
   , 'annex/anninstancemapper.cpp'
   , 'annex/annshapeidhelper.cpp'
-  , 'annex/annsurfacemesh.cpp']
+  , 'annex/annsurfacemesh.cpp'
+  , 'annex/annlawfunction.cpp']
   
 expression_sources = ['expressions/exprabstractnode.cpp'
   , 'expressions/exprgraph.cpp'
@@ -208,7 +211,10 @@ dialog_sources = ['dialogs/dlgparameter.cpp'
   , 'dialogs/dlgtagwidget.cpp'
   , 'dialogs/dlgabout.cpp'
   , 'dialogs/dlgsplitterdecorated.cpp'
-  , 'dialogs/dlgsketch.cpp']
+  , 'dialogs/dlgsketch.cpp'
+  , 'dialogs/dlgsweep.cpp'
+  , 'dialogs/dlglawfunctionwidget.cpp'
+  , 'dialogs/dlgenterfilter.cpp']
   
 preference_sources = ['preferences/preferencesXML.cpp', 'preferences/prfmanager.cpp']
 
@@ -262,7 +268,9 @@ project_sources = ['project/prjproject.cpp'
   , 'project/serial/xsdcxxoutput/featuresurfacemesh.cpp'
   , 'project/serial/xsdcxxoutput/featuretransitioncurve.cpp'
   , 'project/serial/xsdcxxoutput/featureruled.cpp'
-  , 'project/serial/xsdcxxoutput/featureimageplane.cpp']
+  , 'project/serial/xsdcxxoutput/featureimageplane.cpp'
+  , 'project/serial/xsdcxxoutput/lawfunction.cpp'
+  , 'project/serial/xsdcxxoutput/featuresweep.cpp']
   
 application_sources = ['application/appmainwindow.cpp'
   , 'application/appapplication.cpp'
@@ -317,8 +325,11 @@ command_sources = ['command/cmdmanager.cpp'
   , 'command/cmdtransitioncurve.cpp'
   , 'command/cmdruled.cpp'
   , 'command/cmdimageplane.cpp'
-  , 'command/cmdocctexport.cpp']
+  , 'command/cmdocctexport.cpp'
+  , 'command/cmdsweep.cpp']
   
+law_sources = ['law/lwfcue.cpp']
+
 library_sources = ['library/lbrcirclebuilder.cpp'
   , 'library/lbrcircleprojector.cpp'
   , 'library/lbrconebuilder.cpp'
@@ -375,6 +386,7 @@ cadseer_sources = ['main.cpp'
   , preference_sources
   , project_sources
   , application_sources
+  , law_sources
   , library_sources
   , command_sources
   , viewer_sources
@@ -416,7 +428,10 @@ cadseer_moc_hdrs = ['viewer/vwrwidget.h'
   , 'dialogs/dlgcommitwidget.h'
   , 'lod/lodmanager.h'
   , 'dialogs/dlgabout.h'
-  , 'dialogs/dlgsketch.h']
+  , 'dialogs/dlgsketch.h'
+  , 'dialogs/dlgsweep.h'
+  , 'dialogs/dlglawfunctionwidget.h'
+  , 'dialogs/dlgenterfilter.h']
   
 cadseer_resources = ['resources.qrc']
 

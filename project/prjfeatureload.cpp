@@ -62,6 +62,7 @@
 #include "feature/ftrtransitioncurve.h"
 #include "feature/ftrruled.h"
 #include "feature/ftrimageplane.h"
+#include "feature/ftrsweep.h"
 #include "project/serial/xsdcxxoutput/featurebox.h"
 #include "project/serial/xsdcxxoutput/featurecylinder.h"
 #include "project/serial/xsdcxxoutput/featuresphere.h"
@@ -102,6 +103,7 @@
 #include "project/serial/xsdcxxoutput/featuretransitioncurve.h"
 #include "project/serial/xsdcxxoutput/featureruled.h"
 #include "project/serial/xsdcxxoutput/featureimageplane.h"
+#include "project/serial/xsdcxxoutput/featuresweep.h"
 
 #include "project/prjfeatureload.h"
 
@@ -167,6 +169,7 @@ FeatureLoad::FeatureLoad(const path& directoryIn, const TopoDS_Shape &masterShap
   functionMap.insert(std::make_pair(ftr::toString(ftr::Type::TransitionCurve), std::bind(&FeatureLoad::loadTransitionCurve, this, std::placeholders::_1, std::placeholders::_2)));
   functionMap.insert(std::make_pair(ftr::toString(ftr::Type::Ruled), std::bind(&FeatureLoad::loadRuled, this, std::placeholders::_1, std::placeholders::_2)));
   functionMap.insert(std::make_pair(ftr::toString(ftr::Type::ImagePlane), std::bind(&FeatureLoad::loadImagePlane, this, std::placeholders::_1, std::placeholders::_2)));
+  functionMap.insert(std::make_pair(ftr::toString(ftr::Type::Sweep), std::bind(&FeatureLoad::loadSweep, this, std::placeholders::_1, std::placeholders::_2)));
 }
 
 std::shared_ptr< ftr::Base > FeatureLoad::load(const std::string& idIn, const std::string& typeIn, std::size_t shapeOffsetIn)
@@ -664,6 +667,18 @@ std::shared_ptr<ftr::Base> FeatureLoad::loadImagePlane(const std::string &fileNa
   assert(ss);
   
   auto sf = std::make_shared<ftr::ImagePlane>();
+  sf->serialRead(*ss);
+  
+  return sf;
+}
+
+std::shared_ptr<ftr::Base> FeatureLoad::loadSweep(const std::string &fileNameIn, std::size_t shapeOffsetIn)
+{
+  auto ss = srl::sweep(fileNameIn, flags);
+  assert(ss);
+  
+  auto sf = std::make_shared<ftr::Sweep>();
+  sf->getAnnex<ann::SeerShape>().setOCCTShape(shapeVector.at(shapeOffsetIn));
   sf->serialRead(*ss);
   
   return sf;

@@ -68,6 +68,7 @@
 #include "command/cmdtransitioncurve.h"
 #include "command/cmdruled.h"
 #include "command/cmdimageplane.h"
+#include "command/cmdsweep.h"
 #include "command/cmdocctexport.h"
 #include "message/msgnode.h"
 #include "message/msgsift.h"
@@ -352,6 +353,11 @@ void Manager::setupDispatcher()
       (
         msg::Request | msg::Construct | msg::ImagePlane
         , std::bind(&Manager::constructImagePlaneDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Construct | msg::Sweep
+        , std::bind(&Manager::constructSweepDispatched, this, std::placeholders::_1)
       )
       , std::make_pair
       (
@@ -679,6 +685,11 @@ void Manager::constructImagePlaneDispatched(const msg::Message&)
   addCommand(std::make_shared<ImagePlane>());
 }
 
+void Manager::constructSweepDispatched(const msg::Message&)
+{
+  addCommand(std::make_shared<Sweep>());
+}
+
 void Manager::occtExportDispatched(const msg::Message&)
 {
   addCommand(std::make_shared<OCCTExport>());
@@ -751,6 +762,11 @@ BasePtr editSketch(ftr::Base *feature)
   return std::make_shared<SketchEdit>(feature);
 }
 
+BasePtr editSweep(ftr::Base *feature)
+{
+  return std::make_shared<SweepEdit>(feature);
+}
+
 void Manager::setupEditFunctionMap()
 {
   editFunctionMap.insert(std::make_pair(ftr::Type::Blend, std::bind(editBlend, std::placeholders::_1)));
@@ -760,4 +776,5 @@ void Manager::setupEditFunctionMap()
   editFunctionMap.insert(std::make_pair(ftr::Type::Subtract, std::bind(editSubtract, std::placeholders::_1)));
   editFunctionMap.insert(std::make_pair(ftr::Type::Union, std::bind(editUnion, std::placeholders::_1)));
   editFunctionMap.insert(std::make_pair(ftr::Type::Sketch, std::bind(editSketch, std::placeholders::_1)));
+  editFunctionMap.insert(std::make_pair(ftr::Type::Sweep, std::bind(editSweep, std::placeholders::_1)));
 }

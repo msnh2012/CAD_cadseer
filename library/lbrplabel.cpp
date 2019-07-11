@@ -39,13 +39,22 @@ using namespace lbr;
 class TextVisitor : public boost::static_visitor<std::string>
 {
 public:
+  TextVisitor() = delete;
+  TextVisitor(const prm::Parameter &pIn) : parameter(pIn){}
+  
   std::string operator()(double d) const
   {
     std::ostringstream stream;
     stream << std::setprecision(3) << std::fixed << d << std::endl;
     return stream.str();
   }
-  std::string operator()(int i) const {return std::to_string(i);}
+  std::string operator()(int i) const
+  {
+    if (parameter.isEnumeration())
+      return parameter.getEnumerationString().toStdString();
+    
+    return std::to_string(i);
+  }
   std::string operator()(bool b) const
   {
     if (b)
@@ -78,6 +87,8 @@ public:
   {
     return "some matrix";
   }
+  
+  const prm::Parameter &parameter;
 };
 
 PLabel::PLabel() : osg::MatrixTransform()
@@ -131,7 +142,7 @@ void PLabel::setText()
   std::ostringstream stream;
   if (showName)
     stream << parameter->getName().toStdString() << " = ";
-  stream << boost::apply_visitor(TextVisitor(), parameter->getStow().variant);
+  stream << boost::apply_visitor(TextVisitor(*parameter), parameter->getStow().variant);
   text->setText(stream.str());
 }
 

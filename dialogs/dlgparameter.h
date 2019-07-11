@@ -79,6 +79,7 @@ namespace dlg
     void browseForPathSlot();
     void vectorChangedSlot();
     void intChangedSlot();
+    void intChangedSlot(int);
   };
 }
 

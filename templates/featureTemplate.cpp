@@ -59,6 +59,11 @@ Base()
 //   distance->connectValue(std::bind(&%CLASSNAME%::setModelDirty, this));
 //   parameters.push_back(distance.get());
   
+//   distanceLabel->showName = true;
+//   distanceLabel->valueHasChanged();
+//   distanceLabel->constantHasChanged();
+//   overlaySwitch->addChild(distanceLabel.get());
+  
 //   annexes.insert(std::make_pair(ann::Type::SeerShape, sShape.get()));
 }
 

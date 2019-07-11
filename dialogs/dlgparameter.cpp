@@ -91,11 +91,29 @@ private:
     
   QWidget* buildInt() const
   {
-    QLineEdit* out = new QLineEdit(dialog);
-    out->setText(QString::number(static_cast<int>(*(dialog->parameter))));
-    QObject::connect(out, SIGNAL(editingFinished()), dialog, SLOT(intChangedSlot()));
+    QWidget *widgetOut = nullptr;
+    int value = static_cast<int>(*(dialog->parameter));
     
-    return out;
+    if (dialog->parameter->isEnumeration())
+    {
+      QComboBox *out = new QComboBox(dialog);
+      for (const auto &s : dialog->parameter->getEnumeration())
+        out->addItem(s);
+      assert(value < out->count());
+      out->setCurrentIndex(value);
+      QObject::connect(out, SIGNAL(currentIndexChanged(int)), dialog, SLOT(intChangedSlot(int)));
+      widgetOut = out;
+    }
+    else
+    {
+      QLineEdit* out = new QLineEdit(dialog);
+      out->setText(QString::number(value));
+      QObject::connect(out, SIGNAL(editingFinished()), dialog, SLOT(intChangedSlot()));
+      widgetOut = out;
+    }
+    
+    assert(widgetOut);
+    return widgetOut;
   }
   
   QWidget* buildBool() const
@@ -352,13 +370,25 @@ void Parameter::valueHasChangedDouble()
 
 void Parameter::valueHasChangedInt()
 {
-  QLineEdit *lineEdit = dynamic_cast<QLineEdit*>(editWidget);
-  assert(lineEdit);
-  
-  if (parameter->isConstant())
+  int value = static_cast<int>(*parameter);
+  if (parameter->isEnumeration())
   {
-    lineEdit->setText(QString::number(static_cast<int>(*parameter)));
-    lineEdit->selectAll();
+    QComboBox *cb = dynamic_cast<QComboBox*>(editWidget);
+    assert(cb);
+    
+    assert(value < cb->count());
+    cb->setCurrentIndex(value);
+  }
+  else
+  {
+    QLineEdit *lineEdit = dynamic_cast<QLineEdit*>(editWidget);
+    assert(lineEdit);
+    
+    if (parameter->isConstant())
+    {
+      lineEdit->setText(QString::number(value));
+      lineEdit->selectAll();
+    }
   }
 }
 
@@ -695,4 +725,31 @@ void Parameter::intChangedSlot()
   //connection is blocked, so in any case we need to update the edit line.
   lineEdit->setText(QString::number(static_cast<int>(*parameter)));
   lineEdit->selectAll();
+}
+
+void Parameter::intChangedSlot(int currentIndex)
+{
+  if (currentIndex == static_cast<int>(*parameter))
+    return;
+  
+  //block value signal.
+  prm::ObserverBlocker block(*pObserver);
+  
+  QComboBox *cb = dynamic_cast<QComboBox*>(editWidget);
+  assert(cb);
+  if (!cb)
+    return;
+  
+  assert(parameter->isValidValue(currentIndex));
+  if (parameter->setValue(currentIndex))
+  {
+    std::ostringstream gitStream;
+    gitStream
+    << QObject::tr("Feature: ").toStdString() << feature->getName().toStdString()
+    << QObject::tr("    Parameter ").toStdString() << parameter->getName().toStdString()
+    << QObject::tr("    changed to: ").toStdString() << parameter->getEnumerationString().toStdString();
+    node->send(msg::buildGitMessage(gitStream.str()));
+    if (prf::manager().rootPtr->dragger().triggerUpdateOnFinish())
+      node->send(msg::Mask(msg::Request | msg::Project | msg::Update));
+  }
 }

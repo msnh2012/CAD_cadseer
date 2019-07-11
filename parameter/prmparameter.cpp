@@ -468,6 +468,19 @@ public:
   }
 };
 
+/*! @brief construct parameter from serial object
+ * 
+ * @warning constraints are not serialized.
+ */
+Parameter::Parameter(const prj::srl::Parameter &pIn)
+: name(QString())
+, stow(new Stow(1.0))
+, id(gu::createNilId())
+, constraint()
+{
+  serialIn(pIn);
+}
+
 Parameter::Parameter(const QString& nameIn, double valueIn) :
   name(nameIn),
   stow(new Stow(valueIn)),
@@ -535,6 +548,18 @@ Parameter::Parameter(const Parameter &other) :
 
 Parameter::~Parameter() = default;
 
+Parameter& Parameter::operator=(const Parameter &other)
+{
+  constant = other.constant;
+  name = other.name;
+  stow = std::make_unique<Stow>(other.stow->variant);
+  id = other.id;
+  constraint = other.constraint;
+  pathType = other.pathType;
+  
+  return *this;
+}
+
 void Parameter::setConstant(bool constantIn)
 {
   if (constantIn == constant)
@@ -551,6 +576,32 @@ const std::type_info& Parameter::getValueType() const
 std::string Parameter::getValueTypeString() const
 {
   return boost::apply_visitor(TypeStringVisitor(), stow->variant);
+}
+
+bool Parameter::isEnumeration() const
+{
+  assert(getValueType() == typeid(int));
+  return (!enumeration.isEmpty());
+}
+
+void Parameter::setEnumeration(const QStringList &lIn)
+{
+  assert(getValueType() == typeid(int));
+  enumeration = lIn;
+}
+
+const QStringList& Parameter::getEnumeration() const
+{
+  assert(getValueType() == typeid(int));
+  return enumeration;
+}
+
+const QString& Parameter::getEnumerationString() const
+{
+  assert(getValueType() == typeid(int));
+  int value = boost::apply_visitor(IntVisitor(), stow->variant);
+  assert(value < enumeration.size());
+  return enumeration.at(value);
 }
 
 const Stow& Parameter::getStow() const

@@ -1,6 +1,6 @@
 /*
  * CadSeer. Parametric Solid Modeling.
- * Copyright (C) 2017  Thomas S. Anderson blobfish.at.gmx.com
+ * Copyright (C) 2019 Thomas S. Anderson blobfish.at.gmx.com
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,38 +17,39 @@
  *
  */
 
-#ifndef ANN_BASE_H
-#define ANN_BASE_H
-
-#include <map>
+#include "law/lwfcue.h"
+#include "annex/annlawfunction.h"
 
 namespace ann
 {
-  enum class Type
+  struct LawFunction::Stow
   {
-    Base,
-    CSysDragger,
-    SeerShape,
-    IntersectionMapper,
-    InstanceMapper,
-    SurfaceMesh,
-    SolidMesh,
-    LawFunction
+    lwf::Cue cue;
   };
-  
-  const std::string& toString(const Type &tIn);
-  const Type& toType(const std::string &sIn);
-  
-  class Base
-  {
-  public:
-    Base();
-    virtual ~Base();
-    virtual Type getType(){return Type::Base;}
-  };
-  
-  //only 1 of a type per feature?
-  typedef std::map<Type, Base*> Annexes; 
 }
 
-#endif // ANN_BASE_H
+using namespace ann;
+
+LawFunction::LawFunction() : Base(), stow(new Stow()) {}
+
+LawFunction::LawFunction(const lwf::Cue &cIn) : Base(), stow(new Stow())
+{
+  setCue(cIn);
+}
+
+LawFunction::~LawFunction(){}
+
+void LawFunction::setCue(const lwf::Cue &cIn)
+{
+  stow->cue = cIn;
+}
+
+const lwf::Cue& LawFunction::getCue() const
+{
+  return stow->cue;
+}
+
+lwf::Cue& LawFunction::getCue()
+{
+  return stow->cue;
+}

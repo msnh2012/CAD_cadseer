@@ -71,7 +71,8 @@ namespace ftr
     Line, //!< feature for lines
     TransitionCurve, //!< feature for lines
     Ruled, //!< feature for ruled surfaces
-    ImagePlane //!< feature for image planes
+    ImagePlane, //!< feature for image planes
+    Sweep //!< feature for sweep surfaces
   };
   
   inline const static std::string& toString(Type typeIn)
@@ -121,7 +122,8 @@ namespace ftr
       {Type::Line, "Line"},
       {Type::TransitionCurve, "TransitionCurve"},
       {Type::Ruled, "Ruled"},
-      {Type::ImagePlane, "ImagePlane"}
+      {Type::ImagePlane, "ImagePlane"},
+      {Type::Sweep, "Sweep"}
     };
     
     assert(strings.count(typeIn) > 0);

@@ -17,6 +17,9 @@
  *
  */
 
+#ifndef LBR_CHILDNAMEVISITOR_H
+#define LBR_CHILDNAMEVISITOR_H
+
 #include <osg/NodeVisitor>
 
 namespace lbr
@@ -48,4 +51,36 @@ namespace lbr
   protected:
     const char *name;
   };
+  
+  class ChildrenNameVisitor : public osg::NodeVisitor
+  {
+  public:
+    ChildrenNameVisitor(const char *nameIn) :
+      osg::NodeVisitor(osg::NodeVisitor::TRAVERSE_ALL_CHILDREN), name(nameIn){}
+    virtual void apply(osg::Node &node) override
+    {
+      if (node.getName() == std::string(name))
+        out.push_back(&node);
+      traverse(node);
+    }
+    
+    template <typename T>
+    std::vector<T*> castResult()
+    {
+      std::vector<T*> result;
+      for (auto *n : out)
+      {
+        T* temp = dynamic_cast<T*>(n);
+        assert(temp);
+        result.push_back(temp);
+      }
+      return result;
+    }
+    
+    std::vector<osg::Node*> out;
+  protected:
+    const char *name;
+  };
 }
+
+#endif // LBR_CHILDNAMEVISITOR_H

@@ -34,9 +34,10 @@ namespace msg{class Message; struct Node; struct Sift;}
 
 namespace dlg
 {
-  /* a QPushButton connected to selection mechanism.
+  /*! @class SelectionButton
+   * @brief A QPushButton connected to the selection mechanism.
    * 
-   * sync the selection upon showing and clears
+   * @details sync the selection upon showing and clears
    * selection upon hiding.
    */
   class SelectionButton : public QPushButton
@@ -50,7 +51,8 @@ namespace dlg
     virtual ~SelectionButton() override;
     
     slc::Mask mask; //!< to control selection.
-    void syncToSelection(); //!< this doesn't clear the current selection.
+    void syncToSelection();
+    void highlightIndex(int);
     const slc::Messages& getMessages() const {return messages;}
     void setMessages(const slc::Messages&);
     void setMessages(const slc::Message&);

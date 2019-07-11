@@ -96,6 +96,7 @@ public:
     void shapeTrackUp(const boost::uuids::uuid &shapeId) const;
     void shapeTrackDown(const boost::uuids::uuid &shapeId) const;
     ftr::UpdatePayload::UpdateMap getParentMap(const boost::uuids::uuid&) const;
+    ftr::UpdatePayload getPayload(const boost::uuids::uuid&) const;
     std::vector<boost::uuids::uuid> getLeafChildren(const boost::uuids::uuid&) const;
     
     expr::Manager& getManager(){return *expressionManager;}

@@ -1163,10 +1163,10 @@ void Blend::vHighlightConstraint(int row)
   VariableWidget::IdItem *ii = dynamic_cast<VariableWidget::IdItem*>(ct->item(row, 1));
   assert(ii);
   
-  slc::Message m = tls::convertToMessage(ii->pick, blendParent);
-  if (m.shapeId.is_nil())
+  auto ms = tls::convertToMessage(ii->pick, blendParent);
+  if (ms.empty() || ms.front().shapeId.is_nil())
     return;
-  node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Add, m));
+  node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Add, ms.front()));
 }
 
 void Blend::vUpdate3dSelection()

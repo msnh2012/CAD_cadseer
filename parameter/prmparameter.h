@@ -20,9 +20,11 @@
 #ifndef PRM_PARAMETER_H
 #define PRM_PARAMETER_H
 
+#include <memory>
 #include <functional>
 
 #include <QString>
+#include <QStringList>
 
 #include <boost/uuid/uuid.hpp>
 
@@ -192,7 +194,7 @@ namespace prm
   
   /*! @brief Parameters are values linked to features
     * 
-    * We are using a boost variant to model various types that parmeters
+    * We are using a boost variant to model various types that parameters
     * can take. This presents some challenges as variants can change types
     * implicitly. We want parameters of different types but we want that
     * type to stay constant after being constructed. So no default constructor
@@ -200,13 +202,15 @@ namespace prm
     * functions will assert types are equal and no exception. Release build undefined
     * behaviour. value retrieval using explicit conversion operator using static_cast.
     * a little ugly, but should be safer. value retrieval will also assert with no
-    * exception.
+    * exception. Enums are a hack onto the int type. int will store the index into
+    * the enum string array.
     * 
     */
   class Parameter
   {
   public:
     Parameter() = delete;
+    Parameter(const prj::srl::Parameter&);
     Parameter(const QString &nameIn, double valueIn);
     Parameter(const QString &nameIn, int valueIn);
     Parameter(const QString &nameIn, bool valueIn);
@@ -216,6 +220,7 @@ namespace prm
     Parameter(const Parameter&); //<! warning same Id
     Parameter(const Parameter&, const boost::uuids::uuid&);
     ~Parameter();
+    Parameter& operator=(const Parameter&);
     
     QString getName() const {return name;}
     void setName(const QString &nameIn){name = nameIn;}
@@ -226,6 +231,10 @@ namespace prm
     std::string getValueTypeString() const;
     const Stow& getStow() const; //!< to get access to actual variant for visitation.
     PathType getPathType() const {return pathType;}
+    bool isEnumeration() const; //!< has to be int type
+    void setEnumeration(const QStringList&); //!< has to be int type
+    const QStringList& getEnumeration() const; //!< has to be int type
+    const QString& getEnumerationString() const; //!< has to be int type
     
     //@{
     //! original functions from when only doubles supported.
@@ -301,6 +310,7 @@ namespace prm
     Constraint constraint;
     PathType pathType;
     Subject subject;
+    QStringList enumeration;
   };
   
   typedef std::vector<Parameter*> Parameters;

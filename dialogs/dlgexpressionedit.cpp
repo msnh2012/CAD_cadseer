@@ -198,20 +198,6 @@ bool ExpressionEditFilter::eventFilter(QObject *obj, QEvent *event)
     return QObject::eventFilter(obj, event);
 }
 
-bool EnterFilter::eventFilter(QObject *obj, QEvent *event)
-{
-  if (event->type() == QEvent::KeyPress)
-  {
-    QKeyEvent *keyEvent = static_cast<QKeyEvent*>(event);
-    if (keyEvent->key() == Qt::Key_Enter || keyEvent->key() == Qt::Key_Return)
-    {
-      Q_EMIT enterPressed();
-      return true; // mark the event as handled
-    }
-  }
-  return QObject::eventFilter(obj, event);
-}
-
 ExpressionDelegate::ExpressionDelegate(QObject *parent): QStyledItemDelegate(parent){}
 
 QWidget* ExpressionDelegate::createEditor(QWidget* parent, const QStyleOptionViewItem&, const QModelIndex&) const

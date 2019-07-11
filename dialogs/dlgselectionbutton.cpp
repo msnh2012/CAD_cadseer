@@ -90,12 +90,16 @@ void SelectionButton::selectionAdditionDispatched(const msg::Message &mIn)
   if (!isVisible() || !isChecked())
     return;
   
-  messages.push_back(mIn.getSLC());
-  
-  dirty();
-  
   if (isSingleSelection)
+  {
     QTimer::singleShot(0, this, SIGNAL(advance()));
+    messages.clear();
+    node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+    node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Add, mIn.getSLC()));
+  }
+  
+  messages.push_back(mIn.getSLC());
+  dirty();
 }
 
 void SelectionButton::selectionSubtractionDispatched(const msg::Message &mIn)
@@ -136,6 +140,10 @@ void SelectionButton::addMessages(const slc::Messages &msIn)
   dirty();
 }
 
+/*! @brief Add all stored to the selection system
+ * 
+ * @details This doesn't clear the current selection.
+ */
 void SelectionButton::syncToSelection()
 {
   if (mask != slc::None)
@@ -153,6 +161,20 @@ void SelectionButton::syncToSelection()
   
   if (!statusPrompt.isEmpty())
     node->sendBlocked(msg::buildStatusMessage(statusPrompt.toStdString()));
+}
+
+/*! @brief Add single stored item to the selection system
+ * 
+ * @details This does clear the current selection.
+ */
+void SelectionButton::highlightIndex(int index)
+{
+  assert(static_cast<std::size_t>(index) < messages.size());
+  
+  node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  
+  msg::Message mm(msg::Request | msg::Selection | msg::Add, messages.at(index));
+  node->sendBlocked(mm);
 }
 
 void SelectionButton::showEvent(QShowEvent *)
