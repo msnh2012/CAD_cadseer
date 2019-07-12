@@ -197,7 +197,7 @@ void DieSet::updateModel(const UpdatePayload &payloadIn)
       throw std::runtime_error("shapeCheck failed");
     
     //No shape consistency yet.
-    sShape->setOCCTShape(out);
+    sShape->setOCCTShape(out, getId());
     sShape->ensureNoNils();
     
     //update label locations

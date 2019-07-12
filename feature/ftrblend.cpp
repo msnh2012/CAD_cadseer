@@ -261,7 +261,7 @@ void Blend::updateModel(const UpdatePayload &payloadIn)
       throw std::runtime_error("target seer shape is null");
     
     //parent is good. Set up seershape in case of failure.
-    sShape->setOCCTShape(targetSeerShape.getRootOCCTShape());
+    sShape->setOCCTShape(targetSeerShape.getRootOCCTShape(), getId());
     sShape->shapeMatch(targetSeerShape);
     sShape->uniqueTypeMatch(targetSeerShape);
     sShape->outerWireMatch(targetSeerShape);
@@ -391,7 +391,7 @@ void Blend::updateModel(const UpdatePayload &payloadIn)
     if (!check.isValid())
       throw std::runtime_error("shapeCheck failed");
     
-    sShape->setOCCTShape(bMaker.Shape());
+    sShape->setOCCTShape(bMaker.Shape(), getId());
     sShape->shapeMatch(targetSeerShape);
     sShape->uniqueTypeMatch(targetSeerShape);
     match(bMaker, targetSeerShape);

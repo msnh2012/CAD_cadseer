@@ -146,7 +146,7 @@ void Sew::updateModel(const UpdatePayload &payloadIn)
     if (!check.isValid())
       throw std::runtime_error("shapeCheck failed");
     
-    sShape->setOCCTShape(out);
+    sShape->setOCCTShape(out, getId());
     for (const auto &ss : seerShapes)
       sShape->shapeMatch(ss);
 //     sShape->uniqueTypeMatch(ss);

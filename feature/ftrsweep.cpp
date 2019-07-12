@@ -701,7 +701,7 @@ void Sweep::updateModel(const UpdatePayload &pIn)
         //1 spine edge and and one support face.
         //projection is a PIA. we will want to move this somewhere else.
         ann::SeerShape temp;
-        temp.setOCCTShape(spineShape);
+        temp.setOCCTShape(spineShape, gu::createRandomId());
         occt::ShapeVector childShapes = temp.useGetChildrenOfType(temp.getRootOCCTShape(), TopAbs_EDGE);
         occt::EdgeVector childEdges = occt::ShapeVectorCast(childShapes);
         if (childEdges.empty())
@@ -800,7 +800,7 @@ void Sweep::updateModel(const UpdatePayload &pIn)
     if (!check.isValid())
       throw std::runtime_error("Shape check failed");
     
-    sShape->setOCCTShape(sweeper.Shape());
+    sShape->setOCCTShape(sweeper.Shape(), getId());
     sShape->updateId(sShape->getRootOCCTShape(), this->getId());
     sShape->setRootShapeId(this->getId());
     if (!sShape->hasEvolveRecordOut(this->getId()))
@@ -870,7 +870,7 @@ void Sweep::updateModel(const UpdatePayload &pIn)
     auto getSubShapes = [](const TopoDS_Shape &sIn, TopAbs_ShapeEnum typeIn) -> occt::ShapeVector
     {
       ann::SeerShape temp;
-      temp.setOCCTShape(sIn);
+      temp.setOCCTShape(sIn, gu::createRandomId);
       return temp.useGetChildrenOfType(sIn, typeIn);
     };
     

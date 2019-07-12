@@ -129,7 +129,6 @@ void Union::go()
   unite->setToolPicks(toolPicks);
   
   node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
-  node->send(msg::Mask(msg::Request | msg::Project | msg::Update));
 }
 
 

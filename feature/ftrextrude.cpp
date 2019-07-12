@@ -527,7 +527,7 @@ void Extrude::updateModel(const UpdatePayload &pIn)
     if (!extruder.IsDone())
       throw std::runtime_error("Extrusion operation failed");
     
-    sShape->setOCCTShape(extruder.Shape());
+    sShape->setOCCTShape(extruder.Shape(), getId());
     
     occt::ShapeVector postMap = occt::mapShapes(stec);
     assert((previousMap.size() == postMap.size()) && (postMap.size() == oldIds.size()));

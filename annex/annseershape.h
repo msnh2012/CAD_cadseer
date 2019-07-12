@@ -43,7 +43,8 @@ namespace ann
   struct ShapeStow;
   class ShapeIdHelper;
   
-  /*! @brief Extended wrapping around occt shape
+  /*! @class SeerShape
+  * @brief Extended wrapping around occt shape
   *
   * @shapeIdContainer is a 3 way link between the boost uuid shape id,
   * Graph vertex topology and the OCCT TopoDS_Shape. Any references to OCCT shapes
@@ -54,9 +55,7 @@ namespace ann
   * by ids in a container during update may lead to incorrect results.
   * 
   * @evolveContainer is for post update interrogation of shape changes. Joins and splits
-  * will result in duplicate entries in either inId or outId. This container, like the
-  * shapeIdContainer, will be completely regenerated every update. Any persistent information
-  * must stored in other members. It is cleared in @setOCCTShape 
+  * will result in duplicate entries in either inId or outId. This container is persistent.
   * 
   * @featureTagContainer is linking a string identifier to a uuid. Once constructed this
   * container should be constant through out the life time of feature.
@@ -71,7 +70,7 @@ namespace ann
     virtual ~SeerShape() override;
     virtual Type getType(){return Type::SeerShape;}
     
-    void setOCCTShape(const TopoDS_Shape& shapeIn); //!< resets container and graphs!
+    void setOCCTShape(const TopoDS_Shape& shapeIn, const boost::uuids::uuid &idIn);
     void reset(); //!< clears data and this isNull() == true;
     
     const TopoDS_Shape& getRootOCCTShape() const;

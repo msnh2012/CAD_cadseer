@@ -239,7 +239,7 @@ void Extract::updateModel(const UpdatePayload &payloadIn)
       throw std::runtime_error("shapeCheck failed");
     
     //these seem to be taking care of it.
-    sShape->setOCCTShape(out);
+    sShape->setOCCTShape(out, getId());
     sShape->shapeMatch(targetSeerShape);
     sShape->uniqueTypeMatch(targetSeerShape);
     sShape->outerWireMatch(targetSeerShape);

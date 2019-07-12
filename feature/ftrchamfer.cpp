@@ -117,7 +117,7 @@ void Chamfer::updateModel(const UpdatePayload &payloadIn)
       throw std::runtime_error("target seer shape is null");
     
     //setup failure state.
-    sShape->setOCCTShape(targetSeerShape.getRootOCCTShape());
+    sShape->setOCCTShape(targetSeerShape.getRootOCCTShape(), getId());
     sShape->shapeMatch(targetSeerShape);
     sShape->uniqueTypeMatch(targetSeerShape);
     sShape->outerWireMatch(targetSeerShape);
@@ -195,7 +195,7 @@ void Chamfer::updateModel(const UpdatePayload &payloadIn)
     if (!check.isValid())
       throw std::runtime_error("shapeCheck failed");
 
-    sShape->setOCCTShape(chamferMaker.Shape());
+    sShape->setOCCTShape(chamferMaker.Shape(), getId());
     sShape->shapeMatch(targetSeerShape);
     sShape->uniqueTypeMatch(targetSeerShape);
     sShape->modifiedMatch(chamferMaker, targetSeerShape);

@@ -248,7 +248,7 @@ void Cone::updateModel(const UpdatePayload &)
       static_cast<double>(*height),
       gu::toOcc(static_cast<osg::Matrixd>(*csys))
     );
-    sShape->setOCCTShape(coneBuilder.getSolid());
+    sShape->setOCCTShape(coneBuilder.getSolid(), getId());
     updateResult(coneBuilder);
     mainTransform->setMatrix(osg::Matrixd::identity());
     setSuccess();

@@ -116,7 +116,7 @@ void Offset::updateModel(const UpdatePayload &payloadIn)
       throw std::runtime_error("target seer shape is null");
     
     //setup failure state.
-    sShape->setOCCTShape(tss.getRootOCCTShape());
+    sShape->setOCCTShape(tss.getRootOCCTShape(), getId());
     sShape->shapeMatch(tss);
     sShape->uniqueTypeMatch(tss);
     sShape->outerWireMatch(tss);
@@ -169,7 +169,7 @@ void Offset::updateModel(const UpdatePayload &payloadIn)
       if (!check.isValid())
         throw std::runtime_error("shapeCheck failed");
       
-      sShape->setOCCTShape(builder.Shape());
+      sShape->setOCCTShape(builder.Shape(), getId());
       sShape->shapeMatch(tss);
       sShape->uniqueTypeMatch(tss);
       sShape->modifiedMatch(builder, tss);
@@ -271,7 +271,7 @@ void Offset::updateModel(const UpdatePayload &payloadIn)
       if (!check.isValid())
         throw std::runtime_error("shapeCheck failed");
       
-      sShape->setOCCTShape(builder.Shape());
+      sShape->setOCCTShape(builder.Shape(), getId());
       sShape->shapeMatch(tss);
       sShape->uniqueTypeMatch(tss);
       offsetMatch(builder, tss);

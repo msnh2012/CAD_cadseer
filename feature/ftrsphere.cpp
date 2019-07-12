@@ -158,7 +158,7 @@ void Sphere::updateModel(const UpdatePayload&)
     BRepPrimAPI_MakeSphere sphereMaker(gu::toOcc(static_cast<osg::Matrixd>(*csys)), static_cast<double>(*radius));
     sphereMaker.Build();
     assert(sphereMaker.IsDone());
-    sShape->setOCCTShape(sphereMaker.Shape());
+    sShape->setOCCTShape(sphereMaker.Shape(), getId());
     updateResult(sphereMaker);
     mainTransform->setMatrix(osg::Matrixd::identity());
     setSuccess();
@@ -225,7 +225,7 @@ void Sphere::updateResult(BRepPrimAPI_MakeSphere &sphereMaker)
     sShape->updateId(shapeIn, localId);
   };
   
-  updateShapeByTag(sShape->getRootOCCTShape(), FeatureTag::Root);
+//   updateShapeByTag(sShape->getRootOCCTShape(), FeatureTag::Root);
   updateShapeByTag(sphereMaker.Shape(), FeatureTag::Solid);
   
   BRepPrim_Sphere &sphereSubMaker = sphereMaker.Sphere();
@@ -237,7 +237,7 @@ void Sphere::updateResult(BRepPrimAPI_MakeSphere &sphereMaker)
   updateShapeByTag(sphereSubMaker.BottomStartVertex(), FeatureTag::VertexBottom);
   updateShapeByTag(sphereSubMaker.TopStartVertex(), FeatureTag::VertexTop);
   
-  sShape->setRootShapeId(sShape->featureTagId(featureTagMap.at(FeatureTag::Root)));
+//   sShape->setRootShapeId(sShape->featureTagId(featureTagMap.at(FeatureTag::Root)));
 }
 
 void Sphere::serialWrite(const boost::filesystem::path &dIn)

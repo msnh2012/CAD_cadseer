@@ -50,6 +50,7 @@ namespace prj
     boost::filesystem::path directory;
     unsigned long flags = 0;
     occt::ShapeVector shapeVector;
+    boost::uuids::uuid featureId;
     
     typedef std::function<std::shared_ptr<ftr::Base> (const std::string &, std::size_t)> LoadFunction;
     typedef std::map<std::string, LoadFunction> FunctionMap;

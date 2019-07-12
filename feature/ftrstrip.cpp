@@ -274,7 +274,7 @@ void Strip::updateModel(const UpdatePayload &payloadIn)
       throw std::runtime_error("shapeCheck failed");
     
     //for now, we are only going to have consistent ids for face and outer wire.
-    sShape->setOCCTShape(out);
+    sShape->setOCCTShape(out, getId());
     sShape->ensureNoNils();
     
     

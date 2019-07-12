@@ -437,7 +437,7 @@ void Thread::updateModel(const UpdatePayload&)
     TopLoc_Location nl(nt); //new location
     out.Location(nt);
     
-    sShape->setOCCTShape(out);
+    sShape->setOCCTShape(out, getId());
     updateIds();
     sShape->ensureNoNils();
     sShape->ensureNoDuplicates();

@@ -109,7 +109,7 @@ void Hollow::updateModel(const UpdatePayload &payloadIn)
       throw std::runtime_error("target seer shape is null");
     
     //setup new failure state.
-    sShape->setOCCTShape(tss.getRootOCCTShape());
+    sShape->setOCCTShape(tss.getRootOCCTShape(), getId());
     sShape->shapeMatch(tss);
     sShape->uniqueTypeMatch(tss);
     sShape->outerWireMatch(tss);
@@ -171,7 +171,7 @@ void Hollow::updateModel(const UpdatePayload &payloadIn)
     if (!check.isValid())
       throw std::runtime_error("shapeCheck failed in hollow feature");
     
-    sShape->setOCCTShape(operation.Shape());
+    sShape->setOCCTShape(operation.Shape(), getId());
     sShape->shapeMatch(tss);
     sShape->uniqueTypeMatch(tss);
     sShape->modifiedMatch(operation, tss);

@@ -69,7 +69,7 @@ void Refine::updateModel(const UpdatePayload &payloadIn)
     const TopoDS_Shape &shape = tss.getRootOCCTShape();
     
     //setup new failure state.
-    sShape->setOCCTShape(tss.getRootOCCTShape());
+    sShape->setOCCTShape(tss.getRootOCCTShape(), getId());
     sShape->shapeMatch(tss);
     sShape->uniqueTypeMatch(tss);
     sShape->outerWireMatch(tss);
@@ -85,7 +85,7 @@ void Refine::updateModel(const UpdatePayload &payloadIn)
     
     ShapeUpgrade_UnifySameDomain usd(shape);
     usd.Build();
-    sShape->setOCCTShape(usd.Shape());
+    sShape->setOCCTShape(usd.Shape(), getId());
     sShape->shapeMatch(tss);
     sShape->uniqueTypeMatch(tss);
     

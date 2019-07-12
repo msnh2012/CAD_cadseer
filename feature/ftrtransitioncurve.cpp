@@ -295,7 +295,7 @@ void TransitionCurve::updateModel(const UpdatePayload &pIn)
     if (!edgeMaker.IsDone())
       throw std::runtime_error("edgeMaker failed");
     
-    sShape->setOCCTShape(edgeMaker.Edge());
+    sShape->setOCCTShape(edgeMaker.Edge(), getId());
     sShape->updateId(edgeMaker.Edge(), curveId);
     if (!sShape->hasEvolveRecordOut(curveId))
       sShape->insertEvolve(gu::createNilId(), curveId);

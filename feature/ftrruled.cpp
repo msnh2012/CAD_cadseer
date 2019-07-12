@@ -169,7 +169,7 @@ void Ruled::updateModel(const UpdatePayload &pIn)
       ShapeCheck check(face);
       if (!check.isValid())
         throw std::runtime_error("BRepFill::Face result is invalid");
-      sShape->setOCCTShape(face);
+      sShape->setOCCTShape(face, getId());
       sShape->updateId(face, parentId);
     }
     else if (shape0.ShapeType() == TopAbs_WIRE && shape1.ShapeType() == TopAbs_WIRE)
@@ -221,7 +221,7 @@ void Ruled::updateModel(const UpdatePayload &pIn)
       if (nc.IsNull() || nc.ShapeType() != TopAbs_SHELL)
         throw std::runtime_error("SewedShape result is not a shell");
       
-      sShape->setOCCTShape(builder.SewedShape());
+      sShape->setOCCTShape(builder.SewedShape(), getId());
       sShape->updateId(builder.SewedShape(), parentId);
     }
     else

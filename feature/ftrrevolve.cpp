@@ -270,7 +270,7 @@ void Revolve::updateModel(const UpdatePayload &pIn)
     BRepPrimAPI_MakeRevol revolver(strc, axis, osg::DegreesToRadians(la));
     revolver.Check(); //throw occ exception if failed
     
-    sShape->setOCCTShape(revolver.Shape());
+    sShape->setOCCTShape(revolver.Shape(), getId());
     sShape->shapeMatch(tss);
     
     int count = -1;

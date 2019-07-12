@@ -104,7 +104,7 @@ void Draft::updateModel(const UpdatePayload &payloadIn)
       throw std::runtime_error("target seer shape is null");
     
     //setup new failure state.
-    sShape->setOCCTShape(targetSeerShape.getRootOCCTShape());
+    sShape->setOCCTShape(targetSeerShape.getRootOCCTShape(), getId());
     sShape->shapeMatch(targetSeerShape);
     sShape->uniqueTypeMatch(targetSeerShape);
     sShape->outerWireMatch(targetSeerShape);
@@ -177,7 +177,7 @@ void Draft::updateModel(const UpdatePayload &payloadIn)
     if (!check.isValid())
       throw std::runtime_error("shapeCheck failed");
     
-    sShape->setOCCTShape(dMaker.Shape());
+    sShape->setOCCTShape(dMaker.Shape(), getId());
     sShape->shapeMatch(targetSeerShape);
     sShape->uniqueTypeMatch(targetSeerShape);
     sShape->modifiedMatch(dMaker, targetSeerShape);

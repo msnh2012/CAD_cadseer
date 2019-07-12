@@ -242,7 +242,7 @@ void InstanceMirror::updateModel(const UpdatePayload &payloadIn)
     if (!check.isValid())
       throw std::runtime_error("shapeCheck failed");
     
-    sShape->setOCCTShape(result);
+    sShape->setOCCTShape(result, getId());
     
     for (const auto &s : tShapes)
     {

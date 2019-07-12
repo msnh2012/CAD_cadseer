@@ -104,7 +104,7 @@ void Line::updateModel(const UpdatePayload &pIn)
     BRepBuilderAPI_MakeEdge edgeMaker(gp_Pnt(gu::toOcc(point0.get()).XYZ()), gp_Pnt(gu::toOcc(point1.get()).XYZ()));
     if (!edgeMaker.IsDone())
       throw std::runtime_error("Couldn't construct line edge");
-    sShape->setOCCTShape(TopoDS::Edge(edgeMaker));
+    sShape->setOCCTShape(TopoDS::Edge(edgeMaker), getId());
     sShape->updateId(edgeMaker.Edge(), lineId);
     if (!sShape->hasEvolveRecordOut(lineId))
       sShape->insertEvolve(gu::createNilId(), lineId);

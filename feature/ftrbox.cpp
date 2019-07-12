@@ -301,7 +301,7 @@ void Box::updateModel(const UpdatePayload&)
       static_cast<double>(*height),
       gu::toOcc(static_cast<osg::Matrixd>(*csys))
     );
-    sShape->setOCCTShape(boxMaker.getSolid());
+    sShape->setOCCTShape(boxMaker.getSolid(), getId());
     updateResult(boxMaker);
     mainTransform->setMatrix(osg::Matrixd::identity());
     setSuccess();
@@ -395,7 +395,7 @@ void Box::updateResult(const BoxBuilder& boxMakerIn)
     sShape->updateId(shapeIn, localId);
   };
   
-  updateShapeByTag(sShape->getRootOCCTShape(), FeatureTag::Root);
+//   updateShapeByTag(sShape->getRootOCCTShape(), FeatureTag::Root);
   updateShapeByTag(boxMakerIn.getSolid(), FeatureTag::Solid);
   updateShapeByTag(boxMakerIn.getShell(), FeatureTag::Shell);
   updateShapeByTag(boxMakerIn.getFaceXP(), FeatureTag::FaceXP);
@@ -431,7 +431,7 @@ void Box::updateResult(const BoxBuilder& boxMakerIn)
   updateShapeByTag(boxMakerIn.getVertexXNYPZN(), FeatureTag::VertexXNYPZN);
   updateShapeByTag(boxMakerIn.getVertexXNYNZN(), FeatureTag::VertexXNYNZN);
   
-  sShape->setRootShapeId(sShape->featureTagId(featureTagMap.at(FeatureTag::Root)));
+//   sShape->setRootShapeId(sShape->featureTagId(featureTagMap.at(FeatureTag::Root)));
   
 //   std::cout << std::endl << "update result:" << std::endl << resultContainer << std::endl;
 }

@@ -213,7 +213,7 @@ void Torus::updateModel(const UpdatePayload&)
     nt.Invert();
     TopLoc_Location nl(nt); //new location
     out.Location(nt);
-    sShape->setOCCTShape(out);
+    sShape->setOCCTShape(out, getId());
     
     updateResult();
     
@@ -248,10 +248,11 @@ void Torus::updateResult()
   std::size_t i = 0;
   for (const auto &s : sv)
   {
-    sShape->updateId(s, offsetIds.at(i));
+    if (sShape->findId(s).is_nil())
+      sShape->updateId(s, offsetIds.at(i));
     i++; 
   }
-  sShape->setRootShapeId(offsetIds.at(0));
+//   sShape->setRootShapeId(offsetIds.at(0));
 }
 
 void Torus::serialWrite(const boost::filesystem::path &dIn)

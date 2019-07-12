@@ -207,7 +207,7 @@ void Squash::updateModel(const UpdatePayload &payloadIn)
       //this is incase face is bad, this should show something.
       //we don't really care about id evolution with these edges.
       TopoDS_Compound c = occt::ShapeVectorCast(ps.es);
-      sShape->setOCCTShape(c);
+      sShape->setOCCTShape(c, getId());
       sShape->ensureNoNils();
       std::ostringstream s; s << "Face was invalid, using edges" << std::endl;
       lastUpdateLog += s.str();
@@ -219,7 +219,7 @@ void Squash::updateModel(const UpdatePayload &payloadIn)
       if (check.isValid())
       {
         //for now, we are only going to have consistent ids for face and outer wire.
-        sShape->setOCCTShape(out);
+        sShape->setOCCTShape(out, getId());
         sShape->updateId(out, faceId);
         const TopoDS_Shape &ow = BRepTools::OuterWire(out);
         sShape->updateId(ow, wireId);

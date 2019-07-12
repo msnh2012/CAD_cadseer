@@ -53,7 +53,7 @@ sShape(new ann::SeerShape())
   name = QObject::tr("Inert");
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
   
-  sShape->setOCCTShape(shapeIn);
+  sShape->setOCCTShape(shapeIn, getId());
   sShape->ensureNoNils();
   
   parameters.push_back(csys.get());
@@ -112,7 +112,7 @@ void Inert::updateModel(const UpdatePayload&)
     tempTrsf.SetTransformation(tempAx3);
     TopLoc_Location freshLocation(tempTrsf);
     tempShape.Location(freshLocation);
-    sShape->setOCCTShape(tempShape);
+    sShape->setOCCTShape(tempShape, getId());
     
     sShape->updateId(sShape->getRootOCCTShape(), oldRootId);
     sShape->setRootShapeId(oldRootId);

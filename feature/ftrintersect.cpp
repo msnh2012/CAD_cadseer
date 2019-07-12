@@ -125,7 +125,7 @@ void Intersect::updateModel(const UpdatePayload &payloadIn)
     
     //set to new failed state.
     TopoDS_Compound tc = occt::ShapeVectorCast(targetOCCTShapes);
-    sShape->setOCCTShape(tc);
+    sShape->setOCCTShape(tc, getId());
     BOPAlgo_Builder dummy;
     iMapper->go(payloadIn, dummy, *sShape);
     for (const auto *it : targetFeatures)
@@ -193,7 +193,7 @@ void Intersect::updateModel(const UpdatePayload &payloadIn)
     if (!check.isValid())
       throw std::runtime_error("shapeCheck failed");
     
-    sShape->setOCCTShape(intersector.Shape());
+    sShape->setOCCTShape(intersector.Shape(), getId());
     
     iMapper->go(payloadIn, intersector.getBuilder(), *sShape);
     

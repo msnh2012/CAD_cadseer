@@ -364,7 +364,14 @@ SeerShape::SeerShape() : Base(), stow(new ShapeStow())
 
 SeerShape::~SeerShape(){}
 
-void SeerShape::setOCCTShape(const TopoDS_Shape& shapeIn)
+/*! @brief Resets the seershape and adds a new occt shape.
+ * 
+ * @param shapeIn is the new shape. This will be wrapped into a compound
+ * If it isn't already.
+ * @param idIn is the shape id for the root compound.
+ * @see reset
+ */
+void SeerShape::setOCCTShape(const TopoDS_Shape& shapeIn, const uuid &idIn)
 {
   reset();
   
@@ -385,14 +392,19 @@ void SeerShape::setOCCTShape(const TopoDS_Shape& shapeIn)
     stow->shapeIds.insert(record);
   }
   
-  //root compound shape needs an id even though it maybe temp.
-  rootShapeId = gu::createRandomId();
-  updateId(workShape, rootShapeId);
+  updateId(workShape, idIn);
+  rootShapeId = idIn;
+  if (!hasEvolveRecordOut(idIn))
+    insertEvolve(gu::createNilId(), idIn);
   stow->rGraph = stow->graph; //now graph and rGraph are equal, edgeless graphs.
   
   updateGraphs();
 }
 
+/*! @brief Resets the seershape.
+ * 
+ * @details clears shapeIds and graphs.
+ */
 void SeerShape::reset()
 {
   rootShapeId = gu::createNilId();
@@ -1047,6 +1059,9 @@ void SeerShape::uniqueTypeMatch(const SeerShape &source)
     )
       continue;
       
+    if (!targetRecord.id.is_nil())
+      continue;
+
     uuid freshId = gu::createNilId();
     if (hasEvolveRecordIn(sourceRecord.id))
       freshId = evolve(sourceRecord.id).front(); //multiple returns?
@@ -1056,8 +1071,6 @@ void SeerShape::uniqueTypeMatch(const SeerShape &source)
       insertEvolve(sourceRecord.id, freshId);
     }
     updateId(targetRecord.shape, freshId);
-    if (currentShapeType == TopAbs_COMPOUND) //no compound of compounds? I think not.
-      setRootShapeId(freshId);
   }
 }
 
@@ -1570,7 +1583,7 @@ std::unique_ptr<SeerShape> SeerShape::createWorkCopy() const
   
   BRepBuilderAPI_Copy copier;
   copier.Perform(getRootOCCTShape());
-  target->setOCCTShape(copier.Shape());
+  target->setOCCTShape(copier.Shape(), gu::createRandomId());
   target->ensureNoNils(); //give all shapes a new id.
   //ensureNoNils fills in the evolve container also. we have to clear it.
   target->stow->evolves.get<EvolveRecord::ByInId>().clear();

@@ -222,7 +222,7 @@ void Cylinder::updateModel(const UpdatePayload&)
       static_cast<double>(*height),
       gu::toOcc(static_cast<osg::Matrixd>(*csys))
     );
-    sShape->setOCCTShape(cylinderMaker.getSolid());
+    sShape->setOCCTShape(cylinderMaker.getSolid(), getId());
     updateResult(cylinderMaker);
     mainTransform->setMatrix(osg::Matrixd::identity());
     setSuccess();

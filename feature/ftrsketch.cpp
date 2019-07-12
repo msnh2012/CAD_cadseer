@@ -470,7 +470,7 @@ void Sketch::updateSeerShape()
     wires.push_back(wm.Wire());
   }
   
-  sShape->setOCCTShape(static_cast<TopoDS_Compound>(occt::ShapeVectorCast(wires)));
+  sShape->setOCCTShape(static_cast<TopoDS_Compound>(occt::ShapeVectorCast(wires)), getId());
   if (!sShape->hasEvolveRecord(gu::createNilId(), sShape->getRootShapeId()))
   {
     assert(!sShape->hasEvolveRecordOut(sShape->getRootShapeId()));

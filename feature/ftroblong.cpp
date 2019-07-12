@@ -293,7 +293,7 @@ void Oblong::updateModel(const UpdatePayload&)
       static_cast<double>(*height),
       gu::toOcc(static_cast<osg::Matrixd>(*csys))
     );
-    sShape->setOCCTShape(oblongMaker.getSolid());
+    sShape->setOCCTShape(oblongMaker.getSolid(), getId());
     updateResult(oblongMaker);
     mainTransform->setMatrix(osg::Matrixd::identity());
     setSuccess();
@@ -328,7 +328,7 @@ void Oblong::updateResult(const OblongBuilder& oblongMakerIn)
     sShape->updateId(shapeIn, localId);
   };
   
-  updateShapeByTag(sShape->getRootOCCTShape(), FeatureTag::Root);
+//   updateShapeByTag(sShape->getRootOCCTShape(), FeatureTag::Root);
   updateShapeByTag(oblongMakerIn.getSolid(), FeatureTag::Solid);
   updateShapeByTag(oblongMakerIn.getShell(), FeatureTag::Shell);
   updateShapeByTag(oblongMakerIn.getFaceXP(), FeatureTag::FaceXP);
@@ -364,7 +364,7 @@ void Oblong::updateResult(const OblongBuilder& oblongMakerIn)
   updateShapeByTag(oblongMakerIn.getVertexXNYPZN(), FeatureTag::VertexXNYPZN);
   updateShapeByTag(oblongMakerIn.getVertexXNYNZN(), FeatureTag::VertexXNYNZN);
   
-  sShape->setRootShapeId(sShape->featureTagId(featureTagMap.at(FeatureTag::Root)));
+//   sShape->setRootShapeId(sShape->featureTagId(featureTagMap.at(FeatureTag::Root)));
 }
 
 void Oblong::setupIPGroup()

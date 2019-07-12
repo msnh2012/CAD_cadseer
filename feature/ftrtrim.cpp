@@ -208,7 +208,7 @@ void Trim::updateModel(const UpdatePayload &payloadIn)
     if (!check.isValid())
       throw std::runtime_error("shapeCheck failed");
     
-    sShape->setOCCTShape(subtracter.Shape());
+    sShape->setOCCTShape(subtracter.Shape(), getId());
     
     //WARNING: can't find keyId for face split in IntersectionMapper::go     from datum plane trim
     iMapper->go(payloadIn, subtracter.getBuilder(), *sShape);
