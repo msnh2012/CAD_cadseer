@@ -1,6 +1,6 @@
 /*
  * CadSeer. Parametric Solid Modeling.
- * Copyright (C) %YEAR% Thomas S. Anderson blobfish.at.gmx.com
+ * Copyright (C) 2019 Thomas S. Anderson blobfish.at.gmx.com
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,49 +17,54 @@
  *
  */
 
-#ifndef CMD_%CLASSNAMEUPPERCASE%_H
-#define CMD_%CLASSNAMEUPPERCASE%_H
+#ifndef CMD_BOOLEAN_H
+#define CMD_BOOLEAN_H
 
 #include "command/cmdbase.h"
 
-namespace dlg{class %CLASSNAME%;}
-namespace ftr{class %CLASSNAME%;}
+namespace dlg{class Boolean;}
+namespace ftr{class Base; class Intersect; class Subtract; class Union;}
 
 namespace cmd
 {
   /**
   * @todo write docs
   */
-  class %CLASSNAME% : public Base
+  class Boolean : public Base
   {
   public:
-    %CLASSNAME%();
-    ~%CLASSNAME%() override;
+    Boolean(const ftr::Type&);
+    ~Boolean() override;
     
-    std::string getCommandName() override{return "%CLASSNAME%";}
+    std::string getCommandName() override;
     std::string getStatusMessage() override;
     void activate() override;
     void deactivate() override;
   private:
     void go();
+    ftr::Type ftrType;
+    bool firstRun = true;
+    dlg::Boolean *dialog = nullptr;
   };
   
   /**
   * @todo write docs
   */
-  class %CLASSNAME%Edit : public Base
+  class BooleanEdit : public Base
   {
   public:
-    %CLASSNAME%Edit(ftr::Base*);
-    virtual ~%CLASSNAME%Edit() override;
+    BooleanEdit(ftr::Base*);
+    virtual ~BooleanEdit() override;
     
-    virtual std::string getCommandName() override{return "%CLASSNAME% Edit";}
+    virtual std::string getCommandName() override{return "Boolean Edit";}
     virtual std::string getStatusMessage() override;
     virtual void activate() override;
     virtual void deactivate() override;
   private:
-    dlg::%CLASSNAME% *dialog = nullptr;
-    ftr::%CLASSNAME% *feature = nullptr;
+    dlg::Boolean *dialog = nullptr;
+    ftr::Intersect *iPtr = nullptr;
+    ftr::Subtract *sPtr = nullptr;
+    ftr::Union *uPtr = nullptr;
   };
 }
-#endif // CMD_%CLASSNAMEUPPERCASE%_H
+#endif // CMD_BOOLEAN_H

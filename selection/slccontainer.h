@@ -46,6 +46,10 @@ namespace slc
       std::vector<boost::uuids::uuid> selectionIds; //!< objects to color. i.e. faces for a solid
       osg::ref_ptr<osg::Geometry> pointGeometry;
       osg::Vec3d pointLocation;
+      
+      bool isObjectType() const {return slc::isObjectType(selectionType);}
+      bool isShapeType() const {return slc::isShapeType(selectionType);}
+      bool isPointType() const {return slc::isPointType(selectionType);}
   };
   
   inline bool operator==(const Container& lhs, const Container& rhs)

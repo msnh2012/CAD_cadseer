@@ -26,6 +26,7 @@
 #include "annex/annseershape.h"
 #include "feature/ftrinputtype.h"
 #include "feature/ftrextract.h"
+#include "tools/featuretools.h"
 #include "command/cmdextract.h"
 
 using namespace cmd;
@@ -73,14 +74,12 @@ void Extract::go()
     if (!baseFeature->hasAnnex(ann::Type::SeerShape))
       continue;
     const ann::SeerShape &targetSeerShape = baseFeature->getAnnex<ann::SeerShape>();
-    
+    ftr::Pick pick = tls::convertToPick(container, targetSeerShape, project->getShapeHistory());
+    pick.tag = ftr::InputType::target;
     if (container.selectionType == slc::Type::Face)
     {
       //for now we just assume face equals tangent accrue.
       TopoDS_Face face = TopoDS::Face(targetSeerShape.getOCCTShape(container.shapeId));  
-      ftr::Pick pick;
-      pick.setParameter(face, container.pointLocation);
-      pick.shapeHistory = project->getShapeHistory().createDevolveHistory(container.shapeId);
       pick.accrueType = ftr::AccrueType::Tangent;
       
       std::shared_ptr<ftr::Extract> extract(new ftr::Extract());
@@ -90,7 +89,7 @@ void Extract::go()
       extract->sync(ftr::Extract::AccruePicks({ap}));
       
       project->addFeature(extract);
-      project->connect(baseFeature->getId(), extract->getId(), ftr::InputType{ftr::InputType::target});
+      project->connect(baseFeature->getId(), extract->getId(), {pick.tag});
       created = true;
       
       node->sendBlocked(msg::buildHideThreeD(baseFeature->getId()));
@@ -101,16 +100,9 @@ void Extract::go()
     else
     {
       std::shared_ptr<ftr::Extract> extract(new ftr::Extract());
-      ftr::Pick pick;
-      if (!container.shapeId.is_nil())
-      {
-        pick.shapeHistory = project->getShapeHistory().createDevolveHistory(container.shapeId);
-        ftr::Picks picks({pick});
-        extract->sync(picks);
-      }
-      
+      extract->sync({pick});
       project->addFeature(extract);
-      project->connect(baseFeature->getId(), extract->getId(), ftr::InputType{ftr::InputType::target});
+      project->connect(baseFeature->getId(), extract->getId(), {pick.tag});
       created = true;
       
       node->sendBlocked(msg::buildHideThreeD(baseFeature->getId()));

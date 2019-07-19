@@ -29,6 +29,7 @@
 #include "feature/ftrsquash.h"
 #include "tools/occtools.h"
 #include "tools/idtools.h"
+#include "tools/featuretools.h"
 #include "command/cmdsquash.h"
 
 using namespace cmd;
@@ -83,9 +84,8 @@ void Squash::go()
     
     const ann::SeerShape &ss = f->getAnnex<ann::SeerShape>();
     TopoDS_Face face = TopoDS::Face(ss.getOCCTShape(container.shapeId));  
-    ftr::Pick pick;
-    pick.setParameter(face, container.pointLocation);
-    pick.shapeHistory = project->getShapeHistory().createDevolveHistory(container.shapeId);
+    ftr::Pick pick = tls::convertToPick(container, ss, project->getShapeHistory());
+    pick.tag = ftr::InputType::target;
     fps.push_back(pick);
   }
   if(!f)

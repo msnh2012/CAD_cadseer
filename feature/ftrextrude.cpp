@@ -39,6 +39,7 @@
 #include "feature/ftrinputtype.h"
 #include "parameter/prmparameter.h"
 #include "feature/ftrdatumaxis.h"
+#include "feature/ftrdatumplane.h"
 #include "tools/featuretools.h"
 #include "tools/idtools.h"
 #include "project/serial/xsdcxxoutput/featureextrude.h"
@@ -296,20 +297,18 @@ void Extrude::updateModel(const UpdatePayload &pIn)
   sShape->reset();
   try
   {
-    std::vector<const Base*> tfs = pIn.getFeatures(InputType::target);
-    if (tfs.size() != 1)
-      throw std::runtime_error("wrong number of parents");
-    if (!tfs.front()->hasAnnex(ann::Type::SeerShape))
-      throw std::runtime_error("parent doesn't have seer shape.");
-    const ann::SeerShape &tss = tfs.front()->getAnnex<ann::SeerShape>();
-    if (tss.isNull())
-      throw std::runtime_error("target seer shape is null");
-    
     if (isSkipped())
     {
       setSuccess();
       throw std::runtime_error("feature is skipped");
     }
+    
+    if (picks.size() != 1) //only 1 for now.
+      throw std::runtime_error("wrong number of target picks.");
+    tls::Resolver tResolver(pIn);
+    tResolver.resolve(picks.front());
+    if (!tResolver.getFeature() || !tResolver.getSeerShape() || tResolver.getShapes().empty())
+      throw std::runtime_error("target resolution failed.");
     
     //make sure that distance > offset.
     if (static_cast<double>(*offset) >= static_cast<double>(*distance))
@@ -321,14 +320,13 @@ void Extrude::updateModel(const UpdatePayload &pIn)
     td.normalize();
     direction->setValueQuiet(td);
     
-    occt::BoundingBox bb;
     occt::ShapeVector ste; //shapes to extrude
-    if (picks.empty())
+    if (slc::isObjectType(picks.front().selectionType))
     {
       //treat sketches special
-      if (tfs.front()->getType() == Type::Sketch)
+      if (tResolver.getFeature()->getType() == Type::Sketch)
       {
-        occt::ShapeVectorCast cast(TopoDS::Compound(tss.getRootOCCTShape()));
+        occt::ShapeVectorCast cast(TopoDS::Compound(tResolver.getShapes().front()));
         occt::WireVector wv = static_cast<occt::WireVector>(cast);
         if (wv.empty())
           throw std::runtime_error("No wires found in sketch");
@@ -341,15 +339,17 @@ void Extrude::updateModel(const UpdatePayload &pIn)
         ste.push_back(fte);
         if (directionType == DirectionType::Infer)
         {
-          assert(tfs.front()->hasParameter(prm::Names::CSys));
-          const prm::Parameter *sketchSys = tfs.front()->getParameter(prm::Names::CSys);
+          assert(tResolver.getFeature()->hasParameter(prm::Names::CSys));
+          const prm::Parameter *sketchSys = tResolver.getFeature()->getParameter(prm::Names::CSys);
           osg::Matrixd sm = static_cast<osg::Matrixd>(*sketchSys);
           direction->setValueQuiet(gu::getZVector(sm));
         }
       }
       else //not a sketch
       {
-        occt::ShapeVector shapes = occt::getNonCompounds(tss.getRootOCCTShape());
+        occt::ShapeVector shapes = tResolver.getSeerShape()->useGetNonCompoundChildren();
+        if (shapes.empty())
+          throw std::runtime_error("No resolved non compound children");
         for (const auto &s : shapes)
         {
           TopAbs_ShapeEnum t = s.ShapeType();
@@ -373,21 +373,9 @@ void Extrude::updateModel(const UpdatePayload &pIn)
         }
       }
     }
-    else
+    else //target pick is a shape selection.
     {
-      //we have sub shape picks.
-      std::vector<tls::Resolved> resolved;
-      resolved = tls::resolvePicks(tfs, picks, pIn.shapeHistory);
-      
-      for (const auto &r : resolved)
-      {
-        if (r.resultId.is_nil())
-          continue;
-        assert(tss.hasId(r.resultId));
-        if (!tss.hasId(r.resultId))
-          continue;
-        ste.push_back(tss.getOCCTShape(r.resultId));
-      }
+      ste = tResolver.getShapes();
       if (directionType == DirectionType::Infer)
       {
         auto tempDirection = inferDirection(ste);
@@ -441,59 +429,73 @@ void Extrude::updateModel(const UpdatePayload &pIn)
     
     if (directionType == DirectionType::Picks)
     {
-      std::vector<const Base*> afs = pIn.getFeatures(axisName);
-      if (afs.size() == 1 && afs.front()->getType() == Type::DatumAxis)
+      if (axisPicks.empty() || axisPicks.size() > 2)
+        throw std::runtime_error("wrong number of axis picks");
+      
+      
+      if (axisPicks.size() == 1)
       {
-        const DatumAxis *da = dynamic_cast<const DatumAxis*>(afs.front());
-        assert(da);
-        direction->setValueQuiet(da->getDirection());
-      }
-      else if (!afs.empty())
-      {
-        std::vector<tls::Resolved> resolved;
-        resolved = tls::resolvePicks(afs, axisPicks, pIn.shapeHistory);
-        boost::optional<osg::Vec3d> tempAxis;
-        std::vector<osg::Vec3d> points;
-        for (const auto &r : resolved)
+        if (slc::isPointType(axisPicks.front().selectionType))
+          throw std::runtime_error("Can't determine direction from 1 point");
+        tls::Resolver aResolver(pIn);
+        aResolver.resolve(axisPicks.front());
+        if (!aResolver.getFeature())
+          throw std::runtime_error("Resolution failure for first axis pick");
+        if (slc::isObjectType(axisPicks.front().selectionType))
         {
-          if (r.resultId.is_nil())
-            continue;
-          const ann::SeerShape &ass = r.feature->getAnnex<ann::SeerShape>();
-          if (slc::isPointType(r.pick.selectionType))
+          if (aResolver.getFeature()->getType() == Type::DatumAxis)
           {
-            auto tempPoint = r.getPoint(ass);
-            if (tempPoint)
-            {
-              points.push_back(tempPoint.get());
-              if (points.size() == 2)
-              {
-                tempAxis = points.front() - points.back();
-                break;
-              }
-            }
+            const DatumAxis *da = dynamic_cast<const DatumAxis*>(aResolver.getFeature());
+            assert(da);
+            direction->setValueQuiet(da->getDirection());
           }
+          else if (aResolver.getFeature()->getType() == Type::DatumPlane)
+          {
+            const DatumPlane *dp = dynamic_cast<const DatumPlane*>(aResolver.getFeature());
+            assert(dp);
+            direction->setValueQuiet(gu::getZVector(dp->getSystem()));
+          }
+        }
+        else 
+        {
+          auto shapes = aResolver.getShapes();
+          if (shapes.empty())
+            throw std::runtime_error("No resolved shapes for 1 axis pick");
+          if (shapes.size() > 1)
+          {
+            std::ostringstream s; s << "WARNING: More than 1 shape resolved for 1 axis pick." << std::endl;
+            lastUpdateLog += s.str();
+          }
+          auto glean = occt::gleanAxis(shapes.front());
+          if (glean.second)
+            direction->setValueQuiet(gu::toOsg(gp_Vec(glean.first.Direction())));
           else
-          {
-            auto glean = occt::gleanAxis(ass.getOCCTShape(r.resultId));
-            if (glean.second)
-            {
-              tempAxis = gu::toOsg(gp_Vec(glean.first.Direction()));
-              break;
-            }
-          }
+            throw std::runtime_error("Couldn't glean direction for 1 axis pick");
         }
-        if (tempAxis)
-        {
-          tempAxis.get().normalize();
-          direction->setValueQuiet(tempAxis.get());
-        }
-        else
-          throw std::runtime_error("Couldn't determine direction from pick inputs");
       }
-      else
-        throw std::runtime_error("No axis picks");
+      else //2 pick axis
+      {
+        if (!slc::isPointType(axisPicks.front().selectionType) || !slc::isPointType(axisPicks.back().selectionType))
+          throw std::runtime_error("Wrong type for 2 pick axis");
+        tls::Resolver resolver(pIn);
+        resolver.resolve(axisPicks.front());
+        auto points0 = resolver.getPoints();
+        resolver.resolve(axisPicks.back());
+        auto points1 = resolver.getPoints();
+        if (points0.empty() || points1.empty())
+          throw std::runtime_error("Failed to resolve 2 axis pick points");
+        if (points0.size() > 1 || points1.size() > 1)
+        {
+          std::ostringstream s; s << "WARNING: More than 1 shape resolved for 2 pick axis." << std::endl;
+          lastUpdateLog += s.str();
+        }
+        osg::Vec3d tAxis = points0.front() - points1.front();
+        tAxis.normalize();
+        direction->setValueQuiet(tAxis);
+      }
     }
     
+    occt::BoundingBox bb;
     bb.add(ste);
     
     //put all shapes into a compound so we have 1 extrusion
@@ -506,12 +508,12 @@ void Extrude::updateModel(const UpdatePayload &pIn)
     for (const auto &s : previousMap)
     {
       //we create some shapes, so skip those.
-      if (!tss.hasShape(s))
+      if (!tResolver.getSeerShape()->hasShape(s))
       {
         oldIds.push_back(gu::createNilId()); //place holder.
         continue;
       }
-      uuid tId = tss.findId(s);
+      uuid tId = tResolver.getSeerShape()->findId(s);
       oldIds.push_back(tId);
     }
     
@@ -596,7 +598,7 @@ void Extrude::updateModel(const UpdatePayload &pIn)
       }
     }
     
-    sShape->outerWireMatch(tss);
+    sShape->outerWireMatch(*tResolver.getSeerShape());
     
     //this should assign ids to nil outerwires based upon parent face id.
     occt::ShapeVector ns = sShape->getAllNilShapes();
@@ -628,7 +630,7 @@ void Extrude::updateModel(const UpdatePayload &pIn)
     // entities. For example: wires created from connecting edges. 
     
     sShape->derivedMatch();
-    sShape->uniqueTypeMatch(tss);
+    sShape->uniqueTypeMatch(*tResolver.getSeerShape());
     sShape->dumpNils("extrude feature");
     sShape->dumpDuplicates("extrude feature");
     sShape->ensureNoNils();

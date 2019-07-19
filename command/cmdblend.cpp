@@ -29,6 +29,7 @@
 #include "parameter/prmparameter.h"
 #include "feature/ftrinputtype.h"
 #include "feature/ftrblend.h"
+#include "tools/featuretools.h"
 #include "dialogs/dlgparameter.h"
 #include "dialogs/dlgblend.h"
 #include "command/cmdblend.h"
@@ -88,38 +89,37 @@ void Blend::go()
   if (!containers.empty())
   {
     //get targetId and filter out edges not belonging to first target.
-    uuid targetFeatureId = containers.at(0).featureId;
-    const ann::SeerShape &targetSeerShape = project->findFeature(targetFeatureId)->getAnnex<ann::SeerShape>();
-    ftr::SimpleBlend simpleBlend;
-    //no variable blend for pick first scenario
+    const ftr::Base *targetFeature = project->findFeature(containers.at(0).featureId);
+    const ann::SeerShape &targetSeerShape = project->findFeature(targetFeature->getId())->getAnnex<ann::SeerShape>();
+    ftr::SimpleBlend simpleBlend; //no variable blend for pick first scenario
+    tls::Connector connector;
+    int pickIndex = -1;
     for (const auto &currentSelection : containers)
     {
+      pickIndex++;
       if
       (
-        currentSelection.featureId != targetFeatureId ||
+        currentSelection.featureId != targetFeature->getId() ||
         currentSelection.selectionType != slc::Type::Edge //just edges for now.
       )
         continue;
       
       TopoDS_Edge edge = TopoDS::Edge(targetSeerShape.getOCCTShape(currentSelection.shapeId));  
-      ftr::Pick pick;
-      pick.setParameter(edge, currentSelection.pointLocation);
-      pick.shapeHistory = project->getShapeHistory().createDevolveHistory(currentSelection.shapeId);
-      
-      //simple radius test  
+      ftr::Pick pick = tls::convertToPick(currentSelection, targetSeerShape, project->getShapeHistory());
+      pick.tag = std::string(ftr::InputType::target) + std::to_string(pickIndex);
       simpleBlend.picks.push_back(pick);
-      auto simpleRadius = ftr::Blend::buildRadiusParameter();
-      simpleBlend.radius = simpleRadius;
+      connector.add(targetFeature->getId(), pick.tag);
     }
     if (!simpleBlend.picks.empty())
     {
+      auto simpleRadius = ftr::Blend::buildRadiusParameter();
+      simpleBlend.radius = simpleRadius;
+      
       std::shared_ptr<ftr::Blend> blend(new ftr::Blend());
       project->addFeature(blend);
-      project->connectInsert(targetFeatureId, blend->getId(), ftr::InputType{ftr::InputType::target});
-      if (!simpleBlend.picks.empty())
-        blend->addSimpleBlend(simpleBlend);
-      
-      ftr::Base *targetFeature = project->findFeature(targetFeatureId);
+      for (const auto &p : connector.pairs)
+        project->connectInsert(p.first, blend->getId(), {p.second});
+      blend->addSimpleBlend(simpleBlend);
       
       node->sendBlocked(msg::buildHideThreeD(targetFeature->getId()));
       node->sendBlocked(msg::buildHideOverlay(targetFeature->getId()));

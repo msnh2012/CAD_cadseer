@@ -412,13 +412,13 @@ void Sweep::loadFeatureData()
   stow->transitionBox->setCurrentIndex(data.transition);
   stow->profilesList->lawCheck->setChecked(data.useLaw);
   
+  tls::Resolver resolver(payload);
   //spine
   {
-    auto resolved = tls::resolvePick(data.spine, payload);
-    if (resolved.feature)
+    resolver.resolve(data.spine);
+    if (resolver.getFeature())
     {
-      auto spineMessage = tls::convertToMessage(resolved.pick, resolved.feature);
-      stow->spineButton->setMessages(spineMessage);
+      stow->spineButton->setMessages(resolver.convertToMessages());
       //no extra data so button should handle filling in widget data
     }
   }
@@ -427,10 +427,10 @@ void Sweep::loadFeatureData()
   {
     for (const auto &p : data.profiles)
     {
-      auto resolved = tls::resolvePick(p.pick, payload);
-      if (resolved.feature)
+      resolver.resolve(p.pick);
+      if (resolver.getFeature())
       {
-        auto profileMessages = tls::convertToMessage(resolved.pick, resolved.feature);
+        auto profileMessages = resolver.convertToMessages();
         //we have extra data so we build items and add to widget.
         //we have to call addMessages after so selection list uses items we added.
         for (const auto &m : profileMessages)
@@ -458,36 +458,29 @@ void Sweep::loadFeatureData()
       //binormal
       for (const auto &p : data.binormal.picks)
       {
-        auto resolved = tls::resolvePick(p, payload);
-        if (resolved.feature)
-        {
-          auto binormalMessage = tls::convertToMessage(resolved.pick, resolved.feature);
-          stow->binormalButton->addMessages(binormalMessage);
+        resolver.resolve(p);
+        if (resolver.getFeature())
+          stow->binormalButton->addMessages(resolver.convertToMessages());
           //no extra data so button should handle filling in widget data
-        }
       }
       break;
     }
     case 5:
     {
       //support
-      auto resolved = tls::resolvePick(data.support, payload);
-      if (resolved.feature)
-      {
-        auto supportMessage = tls::convertToMessage(resolved.pick, resolved.feature);
-        stow->supportButton->addMessages(supportMessage);
+      resolver.resolve(data.support);
+      if (resolver.getFeature())
+        stow->supportButton->addMessages(resolver.convertToMessages());
         //no extra data so button should handle filling in widget data
-      }
       break;
     }
     case 6:
     {
       //auxiliary
-      auto resolved = tls::resolvePick(data.auxiliary.pick, payload);
-      if (resolved.feature)
+      resolver.resolve(data.auxiliary.pick);
+      if (resolver.getFeature())
       {
-        auto auxMessage = tls::convertToMessage(resolved.pick, resolved.feature);
-        stow->auxiliaryButton->addMessages(auxMessage);
+        stow->auxiliaryButton->addMessages(resolver.convertToMessages());
         //there is only 1 auxiliary pick so we just store the data in the checkboxes
         //not in the list widget items.
         stow->auxiliaryList->curvilinearEquivalence->setChecked(static_cast<bool>(*data.auxiliary.curvilinearEquivalence));

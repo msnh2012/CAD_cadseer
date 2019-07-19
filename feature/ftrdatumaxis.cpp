@@ -201,72 +201,72 @@ void DatumAxis::goUpdatePoints(const UpdatePayload &pli)
 {
   if (picks.size() != 2)
     throw std::runtime_error("Wrong number of picks");
-  std::vector<tls::Resolved> resolves = tls::resolvePicks(pli.getFeatures(InputType::create), picks, pli.shapeHistory);
-  if (resolves.size() != 2)
-    throw std::runtime_error("Wrong number of point resolves");
   
-  boost::optional<osg::Vec3d> head, tail;
-  for (const auto &r : resolves)
+  tls::Resolver resolver(pli);
+  
+  resolver.resolve(picks.front());
+  auto points0 = resolver.getPoints();
+  if (points0.empty())
+    throw std::runtime_error("No points for first pick");
+  if (points0.size() > 1)
   {
-    //features without seershapes are not included in results of resolvePicks.
-    const ann::SeerShape &ss = r.feature->getAnnex<ann::SeerShape>();
-    assert(ss.hasId(r.resultId));
-    const TopoDS_Shape &rs = ss.getOCCTShape(r.resultId);
-    if (rs.ShapeType() != TopAbs_EDGE)
-      throw std::runtime_error("Point not referencing edge");
-    boost::optional<osg::Vec3d> p;
-    if (r.pick.selectionType == slc::Type::StartPoint)
-      p = gu::toOsg(BRep_Tool::Pnt(TopoDS::Vertex(ss.getOCCTShape(ss.useGetStartVertex(r.resultId)))));
-    if (r.pick.selectionType == slc::Type::EndPoint)
-      p = gu::toOsg(BRep_Tool::Pnt(TopoDS::Vertex(ss.getOCCTShape(ss.useGetEndVertex(r.resultId)))));
-    if (r.pick.selectionType == slc::Type::MidPoint)
-    {
-      auto a = ss.useGetMidPoint(r.resultId);
-      if (!a.empty())
-        p = a.front();
-    }
-    if (r.pick.selectionType == slc::Type::CenterPoint)
-    {
-      auto a = ss.useGetCenterPoint(r.resultId);
-      if (!a.empty())
-        p = a.front();
-    }
-    if (r.pick.selectionType == slc::Type::QuadrantPoint || r.pick.selectionType == slc::Type::NearestPoint)
-    {
-      p = r.pick.getPoint(TopoDS::Edge(rs));
-    }
-    if (!p)
-      throw std::runtime_error("Couldn't derive point from pick");
-    if (r.pick == picks.front())
-      head = p.get();
-    if (r.pick == picks.back())
-      tail = p.get();
+    std::ostringstream s; s << "WARNING. more than 1 point for first pick" << std::endl;
+    lastUpdateLog += s.str();
   }
   
-  if (!head)
-    throw std::runtime_error("couldn't get head point of direction vector");
-  if (!tail)
-    throw std::runtime_error("couldn't get tail point of direction vector");
+  resolver.resolve(picks.back());
+  auto points1 = resolver.getPoints();
+  if (points1.empty())
+    throw std::runtime_error("No points for second pick");
+  if (points1.size() > 1)
+  {
+    std::ostringstream s; s << "WARNING. more than 1 point for second pick" << std::endl;
+    lastUpdateLog += s.str();
+  }
   
-  direction = head.get() - tail.get();
+  osg::Vec3d temp = points0.front() - points1.front();
+  if (temp.isNaN())
+    throw std::runtime_error("direction is invalid");
+  if (temp.length() < std::numeric_limits<float>::epsilon())
+    throw std::runtime_error("direction length is invalid");
+  direction = temp;
   cachedSize = direction.length();
   direction.normalize();
-  origin = tail.get() + direction * cachedSize * 0.5;
+  origin = points1.front() + direction * cachedSize * 0.5;
 }
 
 void DatumAxis::goUpdateIntersection(const UpdatePayload &pli)
 {
-  const std::vector<const Base*> pfs = pli.getFeatures(InputType::create); //parent features.
-  
   typedef std::vector<opencascade::handle<Geom_Surface>, NCollection_StdAllocator<opencascade::handle<Geom_Surface>>> GeomVector;
   GeomVector planes;
   double tSize = 1.0;
   osg::Vec3d to; //temp origin. need to project to intersection line.
-  for (const auto &pf : pfs)
+  
+  tls::Resolver resolver(pli);
+  for (const auto &p : picks)
   {
-    if (pf->getType() == Type::DatumPlane)
+    resolver.resolve(p);
+    if (slc::isShapeType(p.selectionType))
     {
-      const DatumPlane *dp = static_cast<const DatumPlane*>(pf);
+      if (p.selectionType != slc::Type::Face)
+        continue;
+      auto rShapes = resolver.getShapes();
+      if (rShapes.empty() || rShapes.front().ShapeType() != TopAbs_FACE)
+        continue;
+      BRepAdaptor_Surface sa(TopoDS::Face(rShapes.front()));
+      if (sa.GetType() != GeomAbs_Plane)
+        continue;
+      planes.push_back(sa.Surface().Surface());
+      occt::BoundingBox fbb(rShapes.front());
+      if (fbb.getDiagonal() > tSize)
+      {
+        tSize = fbb.getDiagonal();
+        to = gu::toOsg(fbb.getCenter());
+      }
+    }
+    else if (resolver.getFeature() && resolver.getFeature()->getType() == Type::DatumPlane)
+    {
+      const DatumPlane *dp = static_cast<const DatumPlane*>(resolver.getFeature());
       osg::Matrixd dpSys = dp->getSystem();
       gp_Pnt o = gu::toOcc(dpSys.getTrans()).XYZ();
       gp_Dir d = gu::toOcc(gu::getZVector(dpSys));
@@ -275,43 +275,6 @@ void DatumAxis::goUpdateIntersection(const UpdatePayload &pli)
       {
         tSize = dp->getSize() * 2.0;
         to = dpSys.getTrans();
-      }
-    }
-    else
-    {
-      for (const auto &p : picks)
-      {
-        if (p.selectionType != slc::Type::Face)
-          continue;
-        std::vector<tls::Resolved> resolves = tls::resolvePicks(pf, p, pli.shapeHistory);
-        for (const auto &r : resolves)
-        {
-          if (r.resultId.is_nil())
-            continue;
-          const ann::SeerShape &ss = r.feature->getAnnex<ann::SeerShape>();
-          assert(ss.hasId(r.resultId));
-          const TopoDS_Shape &fs = ss.getOCCTShape(r.resultId);
-          if (fs.ShapeType() != TopAbs_FACE)
-          {
-            std::ostringstream s; s << "Unexpected shape type, looking for face." << std::endl;
-            lastUpdateLog += s.str();
-            continue;
-          }
-          BRepAdaptor_Surface sa(TopoDS::Face(fs));
-          if (sa.GetType() != GeomAbs_Plane)
-          {
-            std::ostringstream s; s << "Unexpected surface type, looking for plane." << std::endl;
-            lastUpdateLog += s.str();
-            continue;
-          }
-          planes.push_back(sa.Surface().Surface());
-          occt::BoundingBox fbb(fs);
-          if (fbb.getDiagonal() > tSize)
-          {
-            tSize = fbb.getDiagonal();
-            to = gu::toOsg(fbb.getCenter());
-          }
-        }
       }
     }
   }
@@ -338,36 +301,32 @@ void DatumAxis::goUpdateIntersection(const UpdatePayload &pli)
 
 void DatumAxis::goUpdateGeometry(const UpdatePayload &pli)
 {
-  const std::vector<const Base*> pfs = pli.getFeatures(InputType::create); //parent features.
-  if (pfs.size() != 1)
-    throw std::runtime_error("wrong number of parent features");
-  if (!pfs.front()->hasAnnex(ann::Type::SeerShape))
-    throw std::runtime_error("parent feature doesn't have seershape");
   if (picks.size() != 1)
-    throw std::runtime_error("wrong number of picks");
-  std::vector<tls::Resolved> resolves = tls::resolvePicks(pfs.front(), picks.front(), pli.shapeHistory);
-  for (const auto &r : resolves)
+    throw std::runtime_error("picks count should be 1");
+  tls::Resolver resolver(pli);
+  resolver.resolve(picks.front());
+  auto rShapes = resolver.getShapes();
+  if (rShapes.empty())
+    throw std::runtime_error("no resolved shapes");
+  if (rShapes.size() > 1)
   {
-    if (r.resultId.is_nil())
-      continue;
-    const ann::SeerShape &ss = r.feature->getAnnex<ann::SeerShape>();
-    const TopoDS_Shape &s = ss.getOCCTShape(r.resultId);
-    auto axisPair = occt::gleanAxis(s);
-    if (!axisPair.second)
-      continue;
-    gp_Ax1 axis = axisPair.first;
-    origin = gu::toOsg(axis.Location());
-    direction = gu::toOsg(axis.Direction());
-    
-    occt::BoundingBox bb(s);
-    cachedSize = bb.getDiagonal();
-    gp_Pnt center = bb.getCenter();
-    opencascade::handle<Geom_Line> pLine = new Geom_Line(axis);
-    GeomAPI_ProjectPointOnCurve proj(center, pLine); 
-    if (proj.NbPoints() > 0)
-      origin = gu::toOsg(proj.NearestPoint());
-    break;
+    std::ostringstream s; s << "WARNING. more than 1 resolved" << std::endl;
+    lastUpdateLog += s.str();
   }
+  auto axisPair = occt::gleanAxis(rShapes.front());
+  if (!axisPair.second)
+    throw std::runtime_error("couldn't glean axis");
+  gp_Ax1 axis = axisPair.first;
+  origin = gu::toOsg(axis.Location());
+  direction = gu::toOsg(axis.Direction());
+  
+  occt::BoundingBox bb(rShapes.front());
+  cachedSize = bb.getDiagonal();
+  gp_Pnt center = bb.getCenter();
+  opencascade::handle<Geom_Line> pLine = new Geom_Line(axis);
+  GeomAPI_ProjectPointOnCurve proj(center, pLine); 
+  if (proj.NbPoints() > 0)
+    origin = gu::toOsg(proj.NearestPoint());
 }
 
 void DatumAxis::updateVisual()

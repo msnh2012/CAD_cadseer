@@ -28,6 +28,7 @@
 #include "parameter/prmparameter.h"
 #include "feature/ftrinputtype.h"
 #include "feature/ftrinstancelinear.h"
+#include "tools/featuretools.h"
 #include "command/cmdinstancelinear.h"
 
 using namespace cmd;
@@ -54,39 +55,37 @@ void InstanceLinear::deactivate()
 
 void InstanceLinear::go()
 {
-  bool created = false;
+  shouldUpdate = false;
   
   const slc::Containers &containers = eventHandler->getSelections();
-  for (const auto &c : containers)
+  if (containers.size() != 1)
   {
-    ftr::Base *bf = project->findFeature(c.featureId);
-    if (!bf->hasAnnex(ann::Type::SeerShape))
-      continue;
-    
-    std::shared_ptr<ftr::InstanceLinear> instance(new ftr::InstanceLinear());
-    
-    ftr::Pick pick;
-    if (!c.shapeId.is_nil())
-      pick.shapeHistory = project->getShapeHistory().createDevolveHistory(c.shapeId);
-    instance->setPick(pick);
-    
-    instance->setCSys(viewer->getCurrentSystem());
-    
-    project->addFeature(instance);
-    project->connect(c.featureId, instance->getId(), ftr::InputType{ftr::InputType::target});
-    created = true;
-    
-    node->sendBlocked(msg::buildHideThreeD(c.featureId));
-    node->sendBlocked(msg::buildHideOverlay(c.featureId));
-    
-    node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
-    
-    break;
+    node->sendBlocked(msg::buildStatusMessage("Wrong Preselection", 2.0));
+    return;
+  }
+  ftr::Base *bf = project->findFeature(containers.front().featureId);
+  if (!bf->hasAnnex(ann::Type::SeerShape))
+  {
+    node->sendBlocked(msg::buildStatusMessage("Wrong Preselection", 2.0));
+    return;
   }
   
-  if (!created)
-    shouldUpdate = false;
-  else
-    node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  std::shared_ptr<ftr::InstanceLinear> instance(new ftr::InstanceLinear());
+  
+  ftr::Pick pick = tls::convertToPick(containers.front(), *bf, project->getShapeHistory());
+  pick.tag = ftr::InputType::target;
+  instance->setPick(pick);
+  
+  instance->setCSys(viewer->getCurrentSystem());
+  
+  project->addFeature(instance);
+  project->connectInsert(containers.front().featureId, instance->getId(), ftr::InputType{pick.tag});
+  
+  node->sendBlocked(msg::buildHideThreeD(containers.front().featureId));
+  node->sendBlocked(msg::buildHideOverlay(containers.front().featureId));
+  
+  node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
+  
+  shouldUpdate = true;
+  node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
 }
-

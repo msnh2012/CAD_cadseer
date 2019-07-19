@@ -63,6 +63,7 @@ void RemoveFaces::go()
   }
   uuid fId = gu::createNilId();
   ftr::Picks picks;
+  tls::Connector connector;
   for (const auto &c : containers)
   {
     //make sure all selections belong to the same feature.
@@ -75,23 +76,24 @@ void RemoveFaces::go()
     if (!bf->hasAnnex(ann::Type::SeerShape))
       continue;
     const ann::SeerShape &ss = bf->getAnnex<ann::SeerShape>();
-    if (!c.shapeId.is_nil())
+    if (c.shapeId.is_nil())
+      continue;
+    assert(ss.hasId(c.shapeId));
+    if (!ss.hasId(c.shapeId))
     {
-      assert(ss.hasId(c.shapeId));
-      if (!ss.hasId(c.shapeId))
-      {
-        std::cerr << "WARNING: seershape doesn't have id from selection in cmd::RemoveFaces::go" << std::endl;
-        continue;
-      }
-      const TopoDS_Shape &fs = ss.getOCCTShape(c.shapeId);
-      assert(fs.ShapeType() == TopAbs_FACE);
-      if (fs.ShapeType() != TopAbs_FACE)
-        continue;
-      ftr::Pick p = tls::convertToPick(c, ss, project->getShapeHistory());
-      picks.push_back(p);
+      std::cerr << "WARNING: seershape doesn't have id from selection in cmd::RemoveFaces::go" << std::endl;
+      continue;
     }
+    const TopoDS_Shape &fs = ss.getOCCTShape(c.shapeId);
+    assert(fs.ShapeType() == TopAbs_FACE);
+    if (fs.ShapeType() != TopAbs_FACE)
+      continue;
+    ftr::Pick p = tls::convertToPick(c, ss, project->getShapeHistory());
+    p.tag = std::string(ftr::InputType::target) + std::to_string(picks.size());
+    connector.add(fId, p.tag);
+    picks.push_back(p);
   }
-  if (fId.is_nil())
+  if (fId.is_nil() || picks.empty())
   {
     node->sendBlocked(msg::buildStatusMessage("No feature id for remove face", 2.0));
     shouldUpdate = false;
@@ -101,7 +103,8 @@ void RemoveFaces::go()
   std::shared_ptr<ftr::RemoveFaces> remove(new ftr::RemoveFaces());
   remove->setPicks(picks);
   project->addFeature(remove);
-  project->connectInsert(fId, remove->getId(), ftr::InputType{ftr::InputType::target});
+  for (const auto &p : connector.pairs)
+    project->connectInsert(p.first, remove->getId(), {p.second});
   
   node->sendBlocked(msg::buildHideThreeD(fId));
   node->sendBlocked(msg::buildHideOverlay(fId));

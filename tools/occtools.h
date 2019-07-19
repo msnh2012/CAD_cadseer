@@ -124,7 +124,7 @@ namespace occt
    */
   TopoDS_Shape getFirstNonCompound(const TopoDS_Shape &shapeIn);
   
-  /*! @brief Find all parent shapes that are not compounds.
+  /*! @brief Find all child shapes that are not compounds.
    * 
    * @param shapeIn shape to be searched
    * @return a vector of "non compound" shape. Maybe empty.

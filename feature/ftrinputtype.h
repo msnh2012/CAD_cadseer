@@ -53,6 +53,7 @@ namespace ftr
     InputType& operator +=(const InputType &other);
     
     const std::vector<std::string>& getTags() const {return tags;}
+    static std::string createIndexedTag(const std::string&, int);
     
   private:
     std::vector<std::string> tags;

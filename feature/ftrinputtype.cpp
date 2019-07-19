@@ -73,3 +73,8 @@ InputType& InputType::operator +=(const InputType &other)
   gu::uniquefy(tags);
   return *this;
 }
+
+std::string InputType::createIndexedTag(const std::string &baseIn, int index)
+{
+  return baseIn + std::to_string(index);
+}

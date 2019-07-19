@@ -92,3 +92,55 @@ void %CLASSNAME%::go()
 //   node->sendBlocked(msg::buildStatusMessage("%CLASSNAME% created", 2.0));
 //   node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+%CLASSNAME%Edit::%CLASSNAME%Edit(ftr::Base *in) : Base()
+{
+  //command manager edit dispatcher dispatches on ftr::type, so we know the type of 'in'
+  feature = dynamic_cast<ftr::%CLASSNAME%*>(in);
+  assert(feature);
+}
+
+%CLASSNAME%Edit::~%CLASSNAME%Edit()
+{
+  if (dialog)
+    dialog->deleteLater();
+}
+
+std::string %CLASSNAME%Edit::getStatusMessage()
+{
+  return QObject::tr("Editing %CLASSNAMELOWERCASE%").toStdString();
+}
+
+void %CLASSNAME%Edit::activate()
+{
+  isActive = true;
+  if (!dialog)
+  {
+    node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+    dialog = new dlg::%CLASSNAME%(feature, mainWindow);
+    dialog->setEditDialog();
+  }
+
+  dialog->show();
+  dialog->raise();
+  dialog->activateWindow();
+}
+
+void %CLASSNAME%Edit::deactivate()
+{
+  dialog->hide();
+  isActive = false;
+}

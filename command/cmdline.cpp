@@ -53,11 +53,12 @@ void Line::deactivate()
 
 void Line::go()
 {
+  shouldUpdate = false;
+  
   const slc::Containers &cs = eventHandler->getSelections();
   if (cs.size() != 2)
   {
     node->sendBlocked(msg::buildStatusMessage("Incorrect selection for line", 2.0));
-    shouldUpdate = false;
     return;
   }
   
@@ -65,7 +66,6 @@ void Line::go()
   if (!bf0 || !bf0->hasAnnex(ann::Type::SeerShape))
   {
     node->sendBlocked(msg::buildStatusMessage("Invalid first selection", 2.0));
-    shouldUpdate = false;
     return;
   }
   const ann::SeerShape &ss0 = bf0->getAnnex<ann::SeerShape>();
@@ -74,18 +74,21 @@ void Line::go()
   if (!bf1 || !bf1->hasAnnex(ann::Type::SeerShape))
   {
     node->sendBlocked(msg::buildStatusMessage("Invalid second selection", 2.0));
-    shouldUpdate = false;
     return;
   }
   const ann::SeerShape &ss1 = bf1->getAnnex<ann::SeerShape>();
   
   ftr::Picks picks;
   picks.push_back(tls::convertToPick(cs.front(), ss0, project->getShapeHistory()));
+  picks.back().tag = ftr::Line::pickZero;
   picks.push_back(tls::convertToPick(cs.back(), ss1, project->getShapeHistory()));
+  picks.back().tag = ftr::Line::pickOne;
   
   std::shared_ptr<ftr::Line> fl(new ftr::Line());
   fl->setPicks(picks);
   project->addFeature(fl);
   project->connectInsert(cs.front().featureId, fl->getId(), ftr::InputType{ftr::Line::pickZero});
   project->connectInsert(cs.back().featureId, fl->getId(), ftr::InputType{ftr::Line::pickOne});
+  
+  shouldUpdate = true;
 }

@@ -98,7 +98,7 @@ void Revolve::setPicks(const Picks &pIn)
 void Revolve::setAxisPicks(const Picks &pIn)
 {
   axisPicks = pIn;
-  setModelDirty();
+  setAxisType(AxisType::Picks);
 }
 
 void Revolve::setAxisType(AxisType ai)
@@ -138,29 +138,26 @@ void Revolve::updateModel(const UpdatePayload &pIn)
   sShape->reset();
   try
   {
-    std::vector<const Base*> tfs = pIn.getFeatures(InputType::target);
-    if (tfs.size() != 1)
-      throw std::runtime_error("wrong number of parents");
-    if (!tfs.front()->hasAnnex(ann::Type::SeerShape))
-      throw std::runtime_error("parent doesn't have seer shape.");
-    const ann::SeerShape &tss = tfs.front()->getAnnex<ann::SeerShape>();
-    if (tss.isNull())
-      throw std::runtime_error("target seer shape is null");
-    
     if (isSkipped())
     {
       setSuccess();
       throw std::runtime_error("feature is skipped");
     }
     
-    occt::BoundingBox bb;
+    if (picks.size() != 1) //only 1 for now.
+      throw std::runtime_error("wrong number of target picks.");
+    tls::Resolver tResolver(pIn);
+    tResolver.resolve(picks.front());
+    if (!tResolver.getFeature() || !tResolver.getSeerShape() || tResolver.getShapes().empty())
+      throw std::runtime_error("target resolution failed.");
+    
     occt::ShapeVector str; //shapes to revolve
-    if (picks.empty())
+    if (slc::isObjectType(picks.front().selectionType))
     {
       //treat sketches special
-      if (tfs.front()->getType() == Type::Sketch)
+      if (tResolver.getFeature()->getType() == Type::Sketch)
       {
-        occt::ShapeVectorCast cast(TopoDS::Compound(tss.getRootOCCTShape()));
+        occt::ShapeVectorCast cast(TopoDS::Compound(tResolver.getSeerShape()->getRootOCCTShape()));
         occt::WireVector wv = static_cast<occt::WireVector>(cast);
         if (wv.empty())
           throw std::runtime_error("No wires found in sketch");
@@ -174,7 +171,7 @@ void Revolve::updateModel(const UpdatePayload &pIn)
       }
       else //not a sketch
       {
-        occt::ShapeVector shapes = occt::getNonCompounds(tss.getRootOCCTShape());
+        occt::ShapeVector shapes = tResolver.getSeerShape()->useGetNonCompoundChildren();
         for (const auto &s : shapes)
         {
           TopAbs_ShapeEnum t = s.ShapeType();
@@ -192,71 +189,71 @@ void Revolve::updateModel(const UpdatePayload &pIn)
     }
     else
     {
-      //we have sub shape picks.
-      std::vector<tls::Resolved> resolved;
-      resolved = tls::resolvePicks(tfs, picks, pIn.shapeHistory);
-      
-      for (const auto &r : resolved)
-      {
-        if (r.resultId.is_nil())
-          continue;
-        assert(tss.hasId(r.resultId));
-        if (!tss.hasId(r.resultId))
-          continue;
-        str.push_back(tss.getOCCTShape(r.resultId));
-      }
+      str = tResolver.getShapes();
     }
     
     if (str.empty())
       throw std::runtime_error("Nothing to revolve");
+    occt::BoundingBox bb;
     bb.add(str);
     
     if (axisType == AxisType::Picks)
     {
-      std::vector<const Base*> afs = pIn.getFeatures(axisName);
-      if (afs.size() == 1 && afs.front()->getType() == Type::DatumAxis)
+      if (axisPicks.empty() || axisPicks.size() > 2)
+        throw std::runtime_error("Wrong number of axis picks");
+      tls::Resolver aResolver(pIn);
+      if (axisPicks.size() == 1)
       {
-        const DatumAxis *da = dynamic_cast<const DatumAxis*>(afs.front());
-        assert(da);
-        axisOrigin->setValueQuiet(da->getOrigin());
-        axisDirection->setValueQuiet(da->getDirection());
-      }
-      else
-      {
-        std::vector<tls::Resolved> resolved = tls::resolvePicks(afs, axisPicks, pIn.shapeHistory);
-        if (resolved.empty())
-          throw std::runtime_error("Couldn't resolve axis picks");
-        assert(resolved.front().feature->hasAnnex(ann::Type::SeerShape));
-        const ann::SeerShape &ss = resolved.front().feature->getAnnex<ann::SeerShape>();
-        if (resolved.size() == 1)
+        aResolver.resolve(axisPicks.front());
+        if (!aResolver.getFeature())
+          throw std::runtime_error("Unable to resolve single axis pick");
+        if (slc::isObjectType(axisPicks.front().selectionType))
         {
-          auto glean = occt::gleanAxis(ss.getOCCTShape(resolved.front().resultId));
+          if (aResolver.getFeature()->getType() != Type::DatumAxis)
+            throw std::runtime_error("Wrong feature type for single axis pick");
+          const DatumAxis *da = dynamic_cast<const DatumAxis*>(aResolver.getFeature());
+          assert(da);
+          axisOrigin->setValueQuiet(da->getOrigin());
+          axisDirection->setValueQuiet(da->getDirection());
+        }
+        else
+        {
+          if (!aResolver.getSeerShape())
+            throw std::runtime_error("No seer shape for single axis pick");
+          auto rShapes = aResolver.getShapes();
+          if (rShapes.empty())
+            throw std::runtime_error("No resolved shapes from single axis pick");
+          if (rShapes.size() > 1)
+          {
+            std::ostringstream s; s << "WARNING: Multiple resolve shapes from single axis pick " << std::endl;
+            lastUpdateLog += s.str();
+          }
+          auto glean = occt::gleanAxis(rShapes.front());
           if (!glean.second)
-            throw std::runtime_error("Couldn't glean axis from single pick");
+            throw std::runtime_error("Couldn't glean axis from single axis pick");
           axisOrigin->setValueQuiet(gu::toOsg(glean.first.Location()));
           axisDirection->setValueQuiet(gu::toOsg(glean.first.Direction()));
         }
-        else if (resolved.size() == 2)
+      }
+      else //axisPicks size == 2
+      {
+        if (!slc::isPointType(axisPicks.front().selectionType) || !slc::isPointType(axisPicks.back().selectionType))
+          throw std::runtime_error("Wrong type for 2 pick axis");
+        aResolver.resolve(axisPicks.front());
+        auto points0 = aResolver.getPoints();
+        aResolver.resolve(axisPicks.back());
+        auto points1 = aResolver.getPoints();
+        if (points0.empty() || points1.empty())
+          throw std::runtime_error("Failed to resolve 2 axis pick points");
+        if (points0.size() > 1 || points1.size() > 1)
         {
-          if
-          (
-            !slc::isPointType(resolved.front().pick.selectionType)
-            || !slc::isPointType(resolved.back().pick.selectionType)
-          )
-            throw std::runtime_error("Unsupported resolved axis 2 picks");
-          auto head = resolved.front().getPoint(ss);
-          auto tail = resolved.back().getPoint(ss);
-          if (!head || !tail)
-            throw std::runtime_error("Couldn't get points from 2 picks");
-          osg::Vec3d tempDirection = head.get() - tail.get();
-          if (tempDirection.length() < std::numeric_limits<float>::epsilon())
-            throw std::runtime_error("Invalid direction from 2 points");
-          tempDirection.normalize();
-          axisOrigin->setValueQuiet(tail.get());
-          axisDirection->setValueQuiet(tempDirection);
+          std::ostringstream s; s << "WARNING: More than 1 shape resolved for 2 pick axis." << std::endl;
+          lastUpdateLog += s.str();
         }
-        else
-          throw std::runtime_error("Unsupported resolved axis picks");
+        osg::Vec3d tAxis = points0.front() - points1.front();
+        tAxis.normalize();
+        axisOrigin->setValueQuiet(points1.front());
+        axisDirection->setValueQuiet(tAxis);
       }
     }
     
@@ -271,15 +268,15 @@ void Revolve::updateModel(const UpdatePayload &pIn)
     revolver.Check(); //throw occ exception if failed
     
     sShape->setOCCTShape(revolver.Shape(), getId());
-    sShape->shapeMatch(tss);
+    sShape->shapeMatch(*tResolver.getSeerShape());
     
     int count = -1;
     for (const auto &s : occt::mapShapes(strc))
     {
       count++;
-      if (!tss.hasShape(s))
+      if (!tResolver.getSeerShape()->hasShape(s))
         continue; //skip at least the generated compound.
-      uuid oldId = tss.findId(s);
+      uuid oldId = tResolver.getSeerShape()->findId(s);
       
       //because we don't move the original shapes we use SeerShape::shapeMatch
       //and we can ignore id mapping for the original shapes.
@@ -326,7 +323,7 @@ void Revolve::updateModel(const UpdatePayload &pIn)
       }
     }
     
-    sShape->outerWireMatch(tss);
+    sShape->outerWireMatch(*tResolver.getSeerShape());
     
     //this should assign ids to nil outerwires based upon parent face id.
     occt::ShapeVector ns = sShape->getAllNilShapes();
@@ -355,7 +352,7 @@ void Revolve::updateModel(const UpdatePayload &pIn)
     }
     
     sShape->derivedMatch();
-    sShape->uniqueTypeMatch(tss);
+    sShape->uniqueTypeMatch(*tResolver.getSeerShape());
     sShape->dumpNils("revolve feature");
     sShape->dumpDuplicates("revolve feature");
     sShape->ensureNoNils();

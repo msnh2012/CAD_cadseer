@@ -44,11 +44,19 @@ namespace ftr
     shapeHistory(shapeHistoryIn)
     {}
     
+    /*! @brief Get vector of base feature pointers that match tag.
+     * 
+     * @details if tag is empty then all features will be returned
+     */
     std::vector<const Base*> getFeatures(const std::string &tag) const;
     
     UpdateMap updateMap;
     const ShapeHistory &shapeHistory;
     
+    /*! @brief Get vector of base feature pointers that match tag.
+     * 
+     * @details if tag is empty then all features will be returned
+     */
     static std::vector<const Base*> getFeatures(const UpdateMap &updateMapIn, const std::string &tag);
   };
   

@@ -512,18 +512,17 @@ void Sweep::updateModel(const UpdatePayload &pIn)
       throw std::runtime_error("unsupported shape type in ensureWire");
     };
     
-    auto getWire = [&]
-    (
-      const Base &bf
-      , const ann::SeerShape &ss
-      , const Pick &p
-    ) -> TopoDS_Wire
+    auto getWire = [&](const Pick &p) -> TopoDS_Wire
     {
       boost::optional<TopoDS_Wire> out;
+      tls::Resolver resolver(pIn);
+      resolver.resolve(p);
+      if (!resolver.getFeature() || !resolver.getSeerShape())
+          throw std::runtime_error("invalid pick resolution");
       
-      if (p.shapeHistory.isEmpty())
+      if (!slc::isShapeType(p.selectionType))
       {
-        auto shapes = ss.useGetNonCompoundChildren();
+        auto shapes = resolver.getSeerShape()->useGetNonCompoundChildren();
         if (shapes.empty())
           throw std::runtime_error("no shapes found");
         if (shapes.size() > 1)
@@ -537,19 +536,17 @@ void Sweep::updateModel(const UpdatePayload &pIn)
       }
       else
       {
-        auto resolvedSpine = tls::resolvePicks(&bf, p, pIn.shapeHistory);
-        if (resolvedSpine.empty())
-          throw std::runtime_error("invalid pick resolution");
-        if (resolvedSpine.size() > 1)
+        auto rShapes = resolver.getShapes();
+        if (rShapes.empty())
+          throw std::runtime_error("no shapes from pick resolution");
+        if (rShapes.size() > 1)
         {
-          std::ostringstream s; s << "Warning more than 1 resolved pick. Using first" << std::endl;
+          std::ostringstream s; s << "Warning more than 1 resolved shape. Using first" << std::endl;
           lastUpdateLog += s.str();
         }
-        assert(ss.hasId(resolvedSpine.front().resultId));
-        const TopoDS_Shape& tempShape = ss.getOCCTShape(resolvedSpine.front().resultId);
-        if (!isValidShape(tempShape))
+        if (!isValidShape(rShapes.front()))
           throw std::runtime_error("invalid shape from resolve");
-        out = ensureWire(tempShape);
+        out = ensureWire(rShapes.front());
       }
       
       if (!out)
@@ -558,9 +555,7 @@ void Sweep::updateModel(const UpdatePayload &pIn)
     };
     
     occt::BoundingBox globalBounder; //use this to place labels
-    const Base &sf = getFeature(spineTag);
-    const ann::SeerShape &sss = getSeerShape(sf);
-    TopoDS_Wire spineShape = getWire(sf, sss, spine);
+    TopoDS_Wire spineShape = getWire(spine);
     globalBounder.add(spineShape);
     
 //     occt::WireVector profileShapes;
@@ -600,15 +595,16 @@ void Sweep::updateModel(const UpdatePayload &pIn)
           }
           else
           {
-            auto resolved = tls::resolvePicks(&feature, pick, pIn.shapeHistory);
-            if (resolved.empty())
+            tls::Resolver resolver(pIn);
+            auto rShapes = resolver.getShapes(pick);
+            if (rShapes.empty())
               throw std::runtime_error("couldn't resolve binormal 1st pick");
-            if (resolved.size() > 1)
+            if (rShapes.size() > 1)
             {
               std::ostringstream s; s << "Warning more than 1 resolved pick for binormal. Using first" << std::endl;
               lastUpdateLog += s.str();
             }
-            out = seerShape.getOCCTShape(resolved.front().resultId);
+            out = rShapes.front();
           }
           return out;
         };
@@ -642,17 +638,19 @@ void Sweep::updateModel(const UpdatePayload &pIn)
         }
         else if (binormal.picks.size() == 2)
         {
+          tls::Resolver resolver(pIn);
           auto getPoint = [&](int index) -> osg::Vec3d
           {
-            const Base &feature = getFeature(std::string(binormalTag) + std::to_string(index));
-            const ann::SeerShape &seerShape = getSeerShape(feature);
-            auto resolved = tls::resolvePicks(&feature, binormal.picks.at(index), pIn.shapeHistory);
-            if (resolved.empty())
-              throw std::runtime_error("couldn't resolve shape in binormal getPoint");
-            auto out = resolved.front().getPoint(seerShape);
-            if (!out)
-              throw std::runtime_error("couldn't get optional point binormal getPoint");
-            return out.get();
+            resolver.resolve(binormal.picks.at(index));
+            auto thePoints = resolver.getPoints();
+            if (thePoints.empty())
+              throw std::runtime_error("couldn't resolve inn binormal getPoint");
+            if (thePoints.size() > 1)
+            {
+              std::ostringstream s; s << "Warning more than 1 resolved binormal point. Using first" << std::endl;
+              lastUpdateLog += s.str();
+            }
+            return thePoints.front();
           };
           
           if
@@ -675,20 +673,16 @@ void Sweep::updateModel(const UpdatePayload &pIn)
       }
       case 5:
       {
-        const Base &bf = getFeature(support.tag);
-        const ann::SeerShape &ss = getSeerShape(bf);
-        auto resolvedSupport = tls::resolvePicks(&bf, support, pIn.shapeHistory);
-        if (resolvedSupport.empty())
+        tls::Resolver resolver(pIn);
+        auto rShapes = resolver.getShapes(support);
+        if (rShapes.empty())
           throw std::runtime_error("invalid support pick resolution");
-        if (resolvedSupport.size() > 1)
+        if (rShapes.size() > 1)
         {
           std::ostringstream s; s << "Warning more than 1 resolved support pick. Using first" << std::endl;
           lastUpdateLog += s.str();
         }
-        assert(ss.hasId(resolvedSupport.front().resultId));
-        const TopoDS_Shape& supportShape = ss.getOCCTShape(resolvedSupport.front().resultId);
-        if (supportShape.IsNull())
-          throw std::runtime_error("null support shape");
+        const TopoDS_Shape &supportShape = rShapes.front();
         if (/*supportShape.ShapeType() != TopAbs_SHELL && */supportShape.ShapeType() != TopAbs_FACE)
           throw std::runtime_error("invalid shape type for support");
         const TopoDS_Face &supportFace = TopoDS::Face(supportShape);
@@ -725,9 +719,7 @@ void Sweep::updateModel(const UpdatePayload &pIn)
       }
       case 6:
       {
-        const Base &bf = getFeature(auxiliary.pick.tag);
-        const ann::SeerShape &ss = getSeerShape(bf);
-        TopoDS_Wire wire = getWire(bf, ss, auxiliary.pick);
+        TopoDS_Wire wire = getWire(auxiliary.pick);
         if (!wire.IsNull())
         {
           bool cle = static_cast<bool>(*auxiliary.curvilinearEquivalence);
@@ -752,7 +744,7 @@ void Sweep::updateModel(const UpdatePayload &pIn)
     {
       const Base &bf = getFeature(p.pick.tag);
       const ann::SeerShape &ss = getSeerShape(bf);
-      TopoDS_Wire wire = getWire(bf, ss, p.pick);
+      TopoDS_Wire wire = getWire(p.pick);
       seerShapeProfileRefs.push_back(ss);
       
       //this is temp.

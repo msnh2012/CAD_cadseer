@@ -81,72 +81,41 @@ void Ruled::updateModel(const UpdatePayload &pIn)
       throw std::runtime_error("feature is skipped");
     }
     
-    auto getFeature = [&](const std::string& tagIn) -> const Base&
+    if (picks.size() != 2)
+      throw std::runtime_error("Don't have 2 picks");
+    tls::Resolver resolver(pIn);
+    
+    resolver.resolve(picks.front());
+    if (!resolver.getSeerShape())
+      throw std::runtime_error("no seer shape for first pick");
+    const ann::SeerShape &tss0 = *resolver.getSeerShape();
+    auto rShapes0 = resolver.getShapes();
+    if (rShapes0.empty())
+      throw std::runtime_error("no resolved shapes for first pick");
+    if (rShapes0.size() > 1)
     {
-      std::vector<const Base*> tfs = pIn.getFeatures(tagIn);
-      if (tfs.size() != 1)
-        throw std::runtime_error("wrong number of parents");
-      return *(tfs.front());
-    };
-    
-    auto getSeerShape = [&](const Base &bfIn) -> const ann::SeerShape&
-    {
-      if (!bfIn.hasAnnex(ann::Type::SeerShape))
-        throw std::runtime_error("parent doesn't have seer shape.");
-      const ann::SeerShape &tss = bfIn.getAnnex<ann::SeerShape>();
-      if (tss.isNull())
-        throw std::runtime_error("target seer shape is null");
-      return tss;
-    };
-    
-    const Base &tbf0 = getFeature(pickZero);
-    const ann::SeerShape &tss0 = getSeerShape(tbf0);
-    
-    const Base &tbf1 = getFeature(pickOne);
-    const ann::SeerShape &tss1 = getSeerShape(tbf1);
-    
-    //I would say this sucked, but I don't want to oversell it.
-    auto getPick = [&](const std::string &tagIn) -> boost::optional<const Pick&>
-    {
-      for (const auto &p : picks)
-      {
-        if (p.tag == tagIn)
-          return p;
-      }
-      return boost::none;
-    };
-    
-    TopoDS_Shape shape0;
-    auto pz = getPick(pickZero);
-    if (pz)
-    {
-      auto resolved = tls::resolvePicks(&tbf0, pz.get(), pIn.shapeHistory);
-      if (resolved.empty())
-        throw std::runtime_error("invalid pick zero resolution");
-      if (resolved.front().resultId.is_nil())
-        throw std::runtime_error("invalid pick zero resolution id");
-      shape0 = tss0.getOCCTShape(resolved.front().resultId);
+      std::ostringstream s; s << "WARNING: more than 1 shape for first pick" << std::endl;
+      lastUpdateLog += s.str();
     }
-    else
-    {
-      shape0 = occt::getFirstNonCompound(tss0.getRootOCCTShape());
-    }
+    TopoDS_Shape shape0 = rShapes0.front();
+    if (!slc::isShapeType(picks.front().selectionType))
+      shape0 = occt::getFirstNonCompound(shape0);
     
-    TopoDS_Shape shape1;
-    auto po = getPick(pickOne);
-    if (po)
+    resolver.resolve(picks.back());
+    if (!resolver.getSeerShape())
+      throw std::runtime_error("no seer shape for second pick");
+    const ann::SeerShape &tss1 = *resolver.getSeerShape();
+    auto rShapes1 = resolver.getShapes();
+    if (rShapes1.empty())
+      throw std::runtime_error("no resolved shapes for first pick");
+    if (rShapes1.size() > 1)
     {
-      auto resolved = tls::resolvePicks(&tbf1, po.get(), pIn.shapeHistory);
-      if (resolved.empty())
-        throw std::runtime_error("invalid pick one resolution");
-      if (resolved.front().resultId.is_nil())
-        throw std::runtime_error("invalid pick one resolution id");
-      shape1 = tss1.getOCCTShape(resolved.front().resultId);
+      std::ostringstream s; s << "WARNING: more than 1 shape for second pick" << std::endl;
+      lastUpdateLog += s.str();
     }
-    else
-    {
-      shape1 = occt::getFirstNonCompound(tss1.getRootOCCTShape());
-    }
+    TopoDS_Shape shape1 = rShapes1.front();
+    if (!slc::isShapeType(picks.back().selectionType))
+      shape1 = occt::getFirstNonCompound(shape1);
 
     if (shape0.IsNull() || shape1.IsNull())
       throw std::runtime_error("Null resolved shapes");

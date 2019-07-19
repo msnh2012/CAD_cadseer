@@ -45,6 +45,8 @@ namespace ftr
   class Draft : public Base
   {
     public:
+      constexpr static const char *neutral = "neutral";
+      
       Draft();
       ~Draft();
       

@@ -26,6 +26,7 @@
 #include "parameter/prmparameter.h"
 #include "feature/ftrinputtype.h"
 #include "feature/ftrinstancemirror.h"
+#include "tools/featuretools.h"
 #include "command/cmdinstancemirror.h"
 
 using namespace cmd;
@@ -52,11 +53,11 @@ void InstanceMirror::deactivate()
 
 void InstanceMirror::go()
 {
+  shouldUpdate = false;
   const slc::Containers &containers = eventHandler->getSelections();
   if (containers.empty() || (containers.size() > 2))
   {
     node->sendBlocked(msg::buildStatusMessage("wrong selection for instance mirror", 2.0));
-    shouldUpdate = false;
     return;
   }
   
@@ -64,18 +65,16 @@ void InstanceMirror::go()
   if (!bf->hasAnnex(ann::Type::SeerShape))
   {
     node->sendBlocked(msg::buildStatusMessage("first selection should have shape for instance mirror", 2.0));
-    shouldUpdate = false;
     return;
   }
   std::shared_ptr<ftr::InstanceMirror> instance(new ftr::InstanceMirror());
   
-  ftr::Pick shapePick;
-  if (!containers.front().shapeId.is_nil())
-    shapePick.shapeHistory = project->getShapeHistory().createDevolveHistory(containers.front().shapeId);
+  ftr::Pick shapePick = tls::convertToPick(containers.front(), *bf, project->getShapeHistory());
+  shapePick.tag = ftr::InputType::target;
   instance->setShapePick(shapePick);
   
   project->addFeature(instance);
-  project->connect(bf->getId(), instance->getId(), ftr::InputType{ftr::InputType::target});
+  project->connect(bf->getId(), instance->getId(), ftr::InputType{shapePick.tag});
   
   node->sendBlocked(msg::buildHideThreeD(bf->getId()));
   node->sendBlocked(msg::buildHideOverlay(bf->getId()));
@@ -87,17 +86,16 @@ void InstanceMirror::go()
   else //size == 2
   {
     boost::uuids::uuid fId = containers.back().featureId;
-    ftr::Pick planePick;
-    if (!containers.back().shapeId.is_nil())
-      planePick.shapeHistory = project->getShapeHistory().createDevolveHistory(containers.back().shapeId);
+    assert(project->hasFeature(fId));
+    ftr::Pick planePick = tls::convertToPick(containers.back(), *project->findFeature(fId), project->getShapeHistory());
+    planePick.tag = ftr::InstanceMirror::mirrorPlane;
     instance->setPlanePick(planePick);
-    project->connect(fId, instance->getId(), ftr::InputType{ftr::InstanceMirror::mirrorPlane});
+    project->connect(fId, instance->getId(), ftr::InputType{planePick.tag});
     
     //should we hide these?
     node->sendBlocked(msg::buildHideThreeD(fId));
     node->sendBlocked(msg::buildHideOverlay(fId));
   }
-  
-//   node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
+  shouldUpdate = true;
   node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
 }

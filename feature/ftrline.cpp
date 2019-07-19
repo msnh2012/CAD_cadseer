@@ -74,34 +74,32 @@ void Line::updateModel(const UpdatePayload &pIn)
       setSuccess();
       throw std::runtime_error("feature is skipped");
     }
+    if (picks.size() != 2) //probably temp
+      throw std::runtime_error("wrong number of picks");
     
-    std::vector<const Base*> pzf = pIn.getFeatures(pickZero);
-    if (pzf.size() != 1)
-      throw std::runtime_error("wrong number of pick zero parent features");
-    if (!pzf.front()->hasAnnex(ann::Type::SeerShape))
-      throw std::runtime_error("pick zero parent doesn't have seer shape.");
-    const ann::SeerShape &pzss = pzf.front()->getAnnex<ann::SeerShape>();
-    if (pzss.isNull())
-      throw std::runtime_error("pick zero seer shape is null");
-    std::vector<tls::Resolved> res0 = tls::resolvePicks(pzf.front(), picks.at(0), pIn.shapeHistory);
-    boost::optional<osg::Vec3d> point0 = (!res0.empty()) ? res0.front().getPoint(pzss) : boost::none;
+    tls::Resolver resolver(pIn);
     
-    std::vector<const Base*> pof = pIn.getFeatures(pickOne);
-    if (pof.size() != 1)
-      throw std::runtime_error("wrong number of pick one parent features");
-    if (!pof.front()->hasAnnex(ann::Type::SeerShape))
-      throw std::runtime_error("pick one parent doesn't have seer shape.");
-    const ann::SeerShape &poss = pof.front()->getAnnex<ann::SeerShape>();
-    if (pzss.isNull())
-      throw std::runtime_error("pick one seer shape is null");
-    std::vector<tls::Resolved> res1 = tls::resolvePicks(pof.front(), picks.at(1), pIn.shapeHistory);
-    boost::optional<osg::Vec3d> point1 = (!res1.empty()) ? res1.front().getPoint(poss) : boost::none;
+    resolver.resolve(picks.front());
+    auto points0 = resolver.getPoints();
+    if (points0.empty())
+      throw std::runtime_error("No points for first pick");
+    if (points0.size() > 1)
+    {
+      std::ostringstream s; s << "WARNING: more than 1 point for first pick. Using first" << std::endl;
+      lastUpdateLog += s.str();
+    }
     
-    //for now we are just supporting points.
-    if (!point0 || !point1)
-      throw std::runtime_error("didn't get 2 points");
+    resolver.resolve(picks.back());
+    auto points1 = resolver.getPoints();
+    if (points1.empty())
+      throw std::runtime_error("No points for second pick");
+    if (points1.size() > 1)
+    {
+      std::ostringstream s; s << "WARNING: more than 1 point for second pick. Using first" << std::endl;
+      lastUpdateLog += s.str();
+    }
     
-    BRepBuilderAPI_MakeEdge edgeMaker(gp_Pnt(gu::toOcc(point0.get()).XYZ()), gp_Pnt(gu::toOcc(point1.get()).XYZ()));
+    BRepBuilderAPI_MakeEdge edgeMaker(gp_Pnt(gu::toOcc(points0.front()).XYZ()), gp_Pnt(gu::toOcc(points1.front()).XYZ()));
     if (!edgeMaker.IsDone())
       throw std::runtime_error("Couldn't construct line edge");
     sShape->setOCCTShape(TopoDS::Edge(edgeMaker), getId());

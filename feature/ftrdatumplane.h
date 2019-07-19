@@ -52,13 +52,10 @@ namespace ftr
 //       , PofC //!< plane of curve. xy plane of conics
     };
     
-    constexpr static const char *rotationAxis = "rotationAxis";
-    constexpr static const char *plane1 = "plane1";
-    constexpr static const char *plane2 = "plane2";
-    constexpr static const char *plane3 = "plane3";
-    constexpr static const char *point1 = "point1";
-    constexpr static const char *point2 = "point2";
-    constexpr static const char *point3 = "point3";
+    constexpr static const char *axis = "axis";
+    constexpr static const char *center = "center";
+    constexpr static const char *plane = "plane";
+    constexpr static const char *point = "point";
     
     DatumPlane();
     ~DatumPlane();

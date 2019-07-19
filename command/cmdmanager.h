@@ -82,9 +82,7 @@ namespace cmd
     void constructInstanceLinearDispatched(const msg::Message&);
     void constructInstanceMirrorDispatched(const msg::Message&);
     void constructInstancePolarDispatched(const msg::Message&);
-    void constructIntersectDispatched(const msg::Message&);
-    void constructSubtractDispatched(const msg::Message&);
-    void constructUnionDispatched(const msg::Message&);
+    void constructBooleanDispatched(const msg::Message&);
     void constructOffsetDispatched(const msg::Message&);
     void constructThickenDispatched(const msg::Message&);
     void constructSewDispatched(const msg::Message&);

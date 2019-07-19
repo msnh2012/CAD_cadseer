@@ -175,36 +175,35 @@ void Extract::updateModel(const UpdatePayload &payloadIn)
       throw std::runtime_error("target seer shape is null");
     
     //no new failure state.
-    
+    tls::Resolver pr(payloadIn);
     occt::ShapeVector outShapes;
     for (const auto &ap : accruePicks)
     {
       occt::FaceVector faces;
       bool labelDone = false; //set label position to first pick.
-      auto resolvedPicks = tls::resolvePicks(targetFeatures, ap.picks, payloadIn.shapeHistory);
-      for (const auto &resolved : resolvedPicks)
+      
+      for (const auto &p : ap.picks)
       {
-        if (resolved.resultId.is_nil()) //accrue doesn't work with whole features.
+        if (!pr.resolve(p))
           continue;
-        
-        TopoDS_Shape shape = targetSeerShape.getOCCTShape(resolved.resultId);
-        assert(!shape.IsNull());
-        if (shape.ShapeType() == TopAbs_FACE)
+        for (const auto &s : pr.getShapes())
         {
-          TopoDS_Face f = TopoDS::Face(shape);
-          if (resolved.pick.accrueType == AccrueType::Tangent)
-            faces = occt::walkTangentFaces(targetSeerShape.getRootOCCTShape(), f, static_cast<double>(*(ap.parameter)));
-          else if (resolved.pick.accrueType == AccrueType::None)
+          if (s.ShapeType() != TopAbs_FACE)
+            continue; //just faces for now.
+          TopoDS_Face f = TopoDS::Face(s);
+          if (p.accrueType == AccrueType::Tangent)
+            faces = occt::walkTangentFaces(pr.getSeerShape()->getRootOCCTShape(), f, static_cast<double>(*(ap.parameter)));
+          else if (p.accrueType == AccrueType::None)
             faces.push_back(f);
-          
           if (!labelDone)
           {
             labelDone = true;
-            ap.label->setMatrix(osg::Matrixd::translate(resolved.pick.getPoint(f)));
+            ap.label->setMatrix(osg::Matrixd::translate(p.getPoint(f)));
           }
         }
       }
       
+      //apparently just throw all faces into the quilter and it will sort it out?
       BRepTools_Quilt quilter;
       for (const auto &f : faces)
         quilter.Add(f);
@@ -215,20 +214,15 @@ void Extract::updateModel(const UpdatePayload &payloadIn)
     
     if (accruePicks.empty())
     {
-      auto resolvedPicks = tls::resolvePicks(targetFeatures, picks, payloadIn.shapeHistory);
-      for (const auto &resolved : resolvedPicks)
+      for (const auto &p : picks)
       {
-        if (resolved.resultId.is_nil())
-        {
-          occt::ShapeVector children = targetSeerShape.useGetNonCompoundChildren();
-          for (const auto &child : children)
-            outShapes.push_back(child);
+        if (!pr.resolve(p))
           continue;
-        }
-        assert(targetSeerShape.hasId(resolved.resultId));
-        outShapes.push_back(targetSeerShape.getOCCTShape(resolved.resultId));
+        for (const auto &s : pr.getShapes())
+          outShapes.push_back(s);
       }
     }
+
     TopoDS_Compound out = static_cast<TopoDS_Compound>(occt::ShapeVectorCast(outShapes));
     
     if (out.IsNull())

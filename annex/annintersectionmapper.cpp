@@ -1044,20 +1044,11 @@ void IntersectionMapper::go(const ftr::UpdatePayload &payloadIn, BOPAlgo_Builder
    */
   
   std::vector<std::reference_wrapper<const ann::SeerShape>> seerShapes;
-  for (auto its = payloadIn.updateMap.equal_range(ftr::InputType::target); its.first != its.second; ++its.first)
+  for (const auto *feature : payloadIn.getFeatures(std::string()))
   {
-    assert((*its.first).second->hasAnnex(ann::Type::SeerShape)); //no seershape for feature.
-    const ann::SeerShape &tShape = (*its.first).second->getAnnex<ann::SeerShape>();
-    if (tShape.isNull())
+    if (!feature->hasAnnex(ann::Type::SeerShape))
       continue;
-    seerShapes.push_back(tShape);
-  }
-  for (auto its = payloadIn.updateMap.equal_range(ftr::InputType::tool); its.first != its.second; ++its.first)
-  {
-    //no assert on seershape. for example trim with datum needs to go through.
-    if(!(*its.first).second->hasAnnex(ann::Type::SeerShape))
-      continue;
-    const ann::SeerShape &tShape = (*its.first).second->getAnnex<ann::SeerShape>();
+    const ann::SeerShape &tShape = feature->getAnnex<ann::SeerShape>();
     if (tShape.isNull())
       continue;
     seerShapes.push_back(tShape);

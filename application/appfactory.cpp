@@ -75,6 +75,7 @@
 #include "feature/ftrdraft.h"
 #include "feature/ftrhollow.h"
 #include "feature/ftrinert.h"
+#include "tools/featuretools.h"
 #include "library/lbrlineardimension.h"
 #include "selection/slcmessage.h"
 #include "selection/slcvisitors.h"
@@ -380,6 +381,8 @@ void Factory::newChamferDispatched(const msg::Message&)
   ftr::SymChamfer symChamfer;
   symChamfer.distance = ftr::Chamfer::buildSymParameter();
   const ann::SeerShape &targetSeerShape = project->findFeature(targetFeatureId)->getAnnex<ann::SeerShape>();
+  int pickIndex = -1;
+  tls::Connector connector;
   for (const auto &currentSelection : containers)
   {
     if
@@ -389,20 +392,29 @@ void Factory::newChamferDispatched(const msg::Message&)
     )
       continue;
       
+    pickIndex++;
     TopoDS_Edge edge = TopoDS::Edge(targetSeerShape.findShape(currentSelection.shapeId));  
     ftr::ChamferPick pick;
-    pick.edgePick.setParameter(edge, currentSelection.pointLocation);
-    pick.edgePick.shapeHistory = project->getShapeHistory().createDevolveHistory(currentSelection.shapeId);
+    pick.edgePick = tls::convertToPick(currentSelection, targetSeerShape, project->getShapeHistory());
+    pick.edgePick.tag = std::string(ftr::InputType::target) + std::to_string(pickIndex) + "edge";
+    connector.add(targetFeatureId, pick.edgePick.tag);
+    
     uuid faceId = ftr::Chamfer::referenceFaceId(targetSeerShape, currentSelection.shapeId);
     //for now user doesn't specify face so we don't worry about u, v of facePick.
+    pick.facePick.selectionType = slc::Type::Face;
     pick.facePick.shapeHistory = project->getShapeHistory().createDevolveHistory(faceId);
+    pick.facePick.resolvedIds.push_back(faceId);
+    pick.facePick.highlightIds.push_back(faceId);
+    pick.facePick.tag = std::string(ftr::InputType::target) + std::to_string(pickIndex) + "face";
+    connector.add(targetFeatureId, pick.facePick.tag);
     symChamfer.picks.push_back(pick);
   }
   
   std::shared_ptr<ftr::Chamfer> chamfer(new ftr::Chamfer());
   chamfer->addSymChamfer(symChamfer);
   project->addFeature(chamfer);
-  project->connectInsert(targetFeatureId, chamfer->getId(), ftr::InputType{ftr::InputType::target});
+  for (const auto &p : connector.pairs)
+    project->connectInsert(p.first, chamfer->getId(), {p.second});
   
   ftr::Base *targetFeature = project->findFeature(targetFeatureId);
   chamfer->setColor(targetFeature->getColor());
@@ -418,7 +430,7 @@ void Factory::newDraftDispatched(const msg::Message&)
 {
   assert(project);
   
-  if (containers.empty())
+  if (containers.size() < 2)
   {
     node->send(msg::buildStatusMessage("Invalid Preselection For Draft", 2.0));
     return;
@@ -427,22 +439,25 @@ void Factory::newDraftDispatched(const msg::Message&)
   
   ftr::DraftConvey convey;
   const ann::SeerShape &targetSeerShape = project->findFeature(targetFeatureId)->getAnnex<ann::SeerShape>();
+  int targetIndex = 0;
+  tls::Connector connector;
   for (const auto &currentSelection : containers)
   {
     if
     (
       currentSelection.featureId != targetFeatureId ||
-      currentSelection.selectionType != slc::Type::Face //just edges for now.
+      currentSelection.selectionType != slc::Type::Face //just faces for now.
     )
       continue;
-      
+    
     TopoDS_Face face = TopoDS::Face(targetSeerShape.findShape(currentSelection.shapeId));  
-    ftr::Pick pick;
-    pick.setParameter(face, currentSelection.pointLocation);
-    pick.shapeHistory = project->getShapeHistory().createDevolveHistory(currentSelection.shapeId);
+    ftr::Pick pick = tls::convertToPick(currentSelection, targetSeerShape, project->getShapeHistory());
+    pick.tag = ftr::InputType::createIndexedTag(ftr::InputType::target, targetIndex);
+    connector.add(targetFeatureId, pick.tag);
     convey.targets.push_back(pick);
+    targetIndex++;
   }
-  if (convey.targets.empty())
+  if (convey.targets.size() < 2)
   {
     node->send(msg::buildStatusMessage("Invalid Preselection For Draft", 2.0));
     return;
@@ -451,11 +466,14 @@ void Factory::newDraftDispatched(const msg::Message&)
   //for now last pick is the neutral plane.
   convey.neutralPlane = convey.targets.back();
   convey.targets.pop_back();
+  convey.neutralPlane.tag = ftr::Draft::neutral;
+  connector.add(targetFeatureId, convey.neutralPlane.tag);
   
   std::shared_ptr<ftr::Draft> draft(new ftr::Draft());
   draft->setDraft(convey);
   project->addFeature(draft);
-  project->connectInsert(targetFeatureId, draft->getId(), ftr::InputType{ftr::InputType::target});
+  for (const auto &p : connector.pairs)
+    project->connectInsert(p.first, draft->getId(), {p.second});
   
   ftr::Base *targetFeature = project->findFeature(targetFeatureId);
   draft->setColor(targetFeature->getColor());
@@ -483,6 +501,8 @@ void Factory::newHollowDispatched(const msg::Message&)
   const ann::SeerShape &targetSeerShape = targetFeature->getAnnex<ann::SeerShape>();
   
   ftr::Picks hollowPicks;
+  int pickIndex = -1;
+  tls::Connector connector;
   for (const auto &currentSelection : containers)
   {
     if
@@ -492,10 +512,10 @@ void Factory::newHollowDispatched(const msg::Message&)
     )
       continue;
       
-    ftr::Pick hPick;
-    hPick.shapeHistory = project->getShapeHistory().createDevolveHistory(currentSelection.shapeId);
-    TopoDS_Face face = TopoDS::Face(targetSeerShape.findShape(currentSelection.shapeId));
-    hPick.setParameter(face, currentSelection.pointLocation);
+    pickIndex++;
+    ftr::Pick hPick = tls::convertToPick(currentSelection, targetSeerShape, project->getShapeHistory());
+    hPick.tag = ftr::InputType::createIndexedTag(ftr::InputType::target, pickIndex);
+    connector.add(targetFeatureId, hPick.tag);
     hollowPicks.push_back(hPick);
   }
   if (hollowPicks.empty())
@@ -507,7 +527,8 @@ void Factory::newHollowDispatched(const msg::Message&)
   std::shared_ptr<ftr::Hollow> hollow(new ftr::Hollow());
   hollow->setHollowPicks(hollowPicks);
   project->addFeature(hollow);
-  project->connectInsert(targetFeatureId, hollow->getId(), ftr::InputType{ftr::InputType::target});
+  for (const auto &p : connector.pairs)
+    project->connectInsert(p.first, hollow->getId(), {p.second});
   hollow->setColor(targetFeature->getColor());
   
   node->sendBlocked(msg::buildHideThreeD(targetFeatureId));

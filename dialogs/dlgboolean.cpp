@@ -98,105 +98,67 @@ void Boolean::setEditDialog()
   prj::Project *project = app::instance()->getProject();
   assert(project);
   
-  ftr::UpdatePayload::UpdateMap editMap = project->getParentMap(booleanId);
-  std::vector<const ftr::Base*> targets = ftr::UpdatePayload::getFeatures(editMap, ftr::InputType::target);
-  std::vector<const ftr::Base*> tools = ftr::UpdatePayload::getFeatures(editMap, ftr::InputType::tool);
   std::vector<ftr::Pick> targetPicks;
   std::vector<ftr::Pick> toolPicks;
   if (intersect)
   {
-    booleanId = intersect->getId();
     targetPicks = intersect->getTargetPicks();
     toolPicks = intersect->getToolPicks();
   }
   else if (subtract)
   {
-    booleanId = subtract->getId();
     targetPicks = subtract->getTargetPicks();
     toolPicks = subtract->getToolPicks();
   }
   else if (onion)
   {
-    booleanId = onion->getId();
     targetPicks = onion->getTargetPicks();
     toolPicks = onion->getToolPicks();
   }
   
-  auto resolvedTargets = tls::resolvePicks(targets, targetPicks, project->getShapeHistory());
-  auto resolvedTools = tls::resolvePicks(tools, toolPicks, project->getShapeHistory());
+  ftr::UpdatePayload payload = project->getPayload(booleanId);
+  tls::Resolver tResolver(payload);
+  if (!targetPicks.empty())
+    tResolver.resolve(targetPicks.front());
   
-  auto isFeatureValid = [](const ftr::Base *f) -> bool
+  std::vector<tls::Resolver> toolResolvers;
+  for (const auto &tp : toolPicks)
   {
-    if (!f->hasAnnex(ann::Type::SeerShape))
-      return false;
-    const ann::SeerShape &targetSeerShape = f->getAnnex<ann::SeerShape>();
-    if (targetSeerShape.isNull())
-      return false;
-    
-    return true;
-  };
-  
-  //need reference capture to capture the isFeatureValid lambda
-  auto createsMessages = [&](const auto &Resolves) -> slc::Messages
+    toolResolvers.emplace_back(payload);
+    toolResolvers.back().resolve(tp);
+  }
+
+  slc::Messages targetMessages = tResolver.convertToMessages();
+  slc::Messages toolMessages;
+  for (const auto &tr : toolResolvers)
   {
-    slc::Messages out;
-    
-    for (const auto &resolved : Resolves)
-    {
-      const ftr::Base* f = resolved.feature;
-      uuid shapeId = resolved.resultId;
-      if (!isFeatureValid(f)) //this should filter invalid picks.
-        continue;
-      const ann::SeerShape &seerShape = f->getAnnex<ann::SeerShape>();
-      if (!shapeId.is_nil())
-      {
-        assert(seerShape.hasId(shapeId)); //want to know about this.
-        if (!seerShape.hasId(shapeId))
-          continue;
-      }
-      slc::Message cm; //current message.
-      if (shapeId.is_nil())
-        cm.type = slc::Type::Object;
-      else
-        cm.type = slc::Type::Solid;
-      cm.featureType = ftr::Type::Intersect;
-      cm.featureId = f->getId();
-      cm.shapeId = shapeId;
-      
-      out.push_back(cm);
-    }
-    
-    return out;
-  };
-    
-  slc::Messages targetMessages = createsMessages(resolvedTargets);
-  slc::Messages toolMessages = createsMessages(resolvedTools);
+    slc::Messages temp = tr.convertToMessages();
+    std::copy(temp.begin(), temp.end(), std::back_inserter(toolMessages));
+  }
   
   targetButton->setMessages(targetMessages);
   toolButton->setMessages(toolMessages);
   
-  if ((!targetMessages.empty()) && (!targetMessages.front().shapeId.is_nil()))
+  if ((!targetMessages.empty()) && (targetMessages.front().type == slc::Type::Solid))
       targetButton->mask = slc::None | slc::ObjectsEnabled | slc::SolidsEnabled | slc::SolidsSelectable;
-  if ((!toolMessages.empty()) && (!toolMessages.front().shapeId.is_nil()))
+  if ((!toolMessages.empty()) && (toolMessages.front().type == slc::Type::Solid))
       toolButton->mask = slc::None | slc::ObjectsEnabled | slc::SolidsEnabled | slc::SolidsSelectable;
   
   leafChildren.clear();
-  for (const ftr::Base *f : targets)
+
+  auto lc = project->getLeafChildren(tResolver.getFeature()->getId());
+  std::copy(lc.begin(), lc.end(), std::back_inserter(leafChildren));
+  
+  for (const auto &tr : toolResolvers)
   {
-    auto lc = project->getLeafChildren(f->getId());
-    std::copy(lc.begin(), lc.end(), std::back_inserter(leafChildren));
-  }
-  for (const ftr::Base *f : tools)
-  {
-    auto lc = project->getLeafChildren(f->getId());
+    auto lc = project->getLeafChildren(tr.getFeature()->getId());
     std::copy(lc.begin(), lc.end(), std::back_inserter(leafChildren));
   }
   gu::uniquefy(leafChildren);
   
-  for (const ftr::Base *f : targets)
-    project->setCurrentLeaf(f->getId());
-  for (const ftr::Base *f : tools)
-    project->setCurrentLeaf(f->getId());
+  project->setCurrentLeaf(tResolver.getFeature()->getId());
+  for (const auto &tr : toolResolvers)
+    project->setCurrentLeaf(tr.getFeature()->getId());
 }
 
 void Boolean::reject()
@@ -222,6 +184,14 @@ void Boolean::finishDialog()
   };
   
   prj::Project *p = static_cast<app::Application *>(qApp)->getProject();
+  auto getSeerShape = [&](const uuid &idIn) -> const ann::SeerShape&
+  {
+    ftr::Base *f = p->findFeature(idIn);
+    assert(f);
+    assert(f->hasAnnex(ann::Type::SeerShape));
+    return f->getAnnex<ann::SeerShape>();
+  };
+  
   if (isAccepted)
   {
     const slc::Messages &tms = targetButton->getMessages(); //target messages
@@ -230,18 +200,12 @@ void Boolean::finishDialog()
       finishCommand();
       return;
     }
-    ftr::Picks tps; //target picks
-    std::vector<uuid> targetIds;
-    for (const auto &m : tms)
-    {
-      targetIds.push_back(m.featureId);
-      ftr::Pick tp; //target pick
-      if (!m.shapeId.is_nil())
-      {
-        tp.shapeHistory = p->getShapeHistory().createDevolveHistory(m.shapeId);
-        tps.push_back(tp);
-      }
-    }
+    tls::Connector connector; //stores feature ids and tags for later connection.
+    uuid tId = tms.front().featureId;
+    ftr::Pick tp = tls::convertToPick(tms.front(), getSeerShape(tId), p->getShapeHistory());
+    tp.tag = ftr::InputType::target;
+    connector.add(tId, tp.tag);
+    ftr::Picks tps(1, tp); //target picks
     
     const slc::Messages &tlms = toolButton->getMessages(); //tool messages.
     if (tlms.empty())
@@ -250,20 +214,17 @@ void Boolean::finishDialog()
       return;
     }
     ftr::Picks tlps; //tool picks
-    std::vector<uuid> toolIds;
+    int toolIndex = 0;
     for (const auto &m : tlms)
     {
-      toolIds.push_back(m.featureId);
-      ftr::Pick pk;
-      if (!m.shapeId.is_nil())
-      {
-        pk.shapeHistory = p->getShapeHistory().createDevolveHistory(m.shapeId);
-        tlps.push_back(pk);
-      }
+      ftr::Pick pk = tls::convertToPick(tms.front(), getSeerShape(m.featureId), p->getShapeHistory());
+      pk.tag = std::string(ftr::InputType::tool) + std::to_string(toolIndex);
+      tlps.push_back(pk);
+      connector.add(m.featureId, pk.tag);
+      toolIndex++;
     }
-    gu::uniquefy(toolIds);
     
-    osg::Vec4 targetColor = p->findFeature(targetIds.front())->getColor();
+    const osg::Vec4 &targetColor = p->findFeature(tId)->getColor();
     if (intersect)
     {
       booleanId = intersect->getId();
@@ -293,17 +254,12 @@ void Boolean::finishDialog()
     {
       p->clearAllInputs(booleanId);
     }
-    for (const auto &tid : targetIds)
+    
+    for (const auto &cp : connector.pairs)
     {
-      p->connectInsert(tid, booleanId, {ftr::InputType::target});
-      app::instance()->messageSlot(msg::buildHideThreeD(tid));
-      app::instance()->messageSlot(msg::buildHideOverlay(tid));
-    }
-    for (const auto &tid : toolIds)
-    {
-      p->connect(tid, booleanId, {ftr::InputType::tool});
-      app::instance()->messageSlot(msg::buildHideThreeD(tid));
-      app::instance()->messageSlot(msg::buildHideOverlay(tid));
+      p->connectInsert(cp.first, booleanId, {cp.second});
+      app::instance()->messageSlot(msg::buildHideThreeD(cp.first));
+      app::instance()->messageSlot(msg::buildHideOverlay(cp.first));
     }
   }
   else //rejected dialog

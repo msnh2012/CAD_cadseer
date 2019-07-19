@@ -39,30 +39,6 @@
 using namespace cmd;
 using boost::uuids::uuid;
 
-//caller needs to set pick tag.
-static boost::optional<ftr::Pick> buildPlanePick
-(
-  const slc::Container &cIn
-  , const ftr::Base *f
-  , const ftr::ShapeHistory &pHistory
-)
-{
-  if (cIn.shapeId.is_nil())
-    return boost::none;
-  if (!f->hasAnnex(ann::Type::SeerShape))
-    return boost::none;
-  const ann::SeerShape &ss = f->getAnnex<ann::SeerShape>();
-  const TopoDS_Shape &shape = ss.getOCCTShape(cIn.shapeId);
-  if (shape.ShapeType() != TopAbs_FACE)
-    return boost::none;
-  BRepAdaptor_Surface adaptor(TopoDS::Face(shape));
-  if (adaptor.GetType() != GeomAbs_Plane)
-    return boost::none;
-  
-  ftr::Pick p = tls::convertToPick(cIn, ss, pHistory);
-  return p;
-}
-
 DatumPlane::DatumPlane() : Base() {}
 DatumPlane::~DatumPlane() {}
 
@@ -86,90 +62,92 @@ void DatumPlane::deactivate()
 bool DatumPlane::attemptOffset(const slc::Container &cIn)
 {
   const ftr::Base *f = project->findFeature(cIn.featureId);
+  ftr::Pick pick = tls::convertToPick(cIn, *f, project->getShapeHistory());
+  pick.tag = ftr::InputType::create;
   
-  if (f->getType() == ftr::Type::DatumPlane)
+  std::shared_ptr<ftr::DatumPlane> dp(new ftr::DatumPlane());
+  dp->setDPType(ftr::DatumPlane::DPType::POffset);
+  dp->setPicks(ftr::Picks({pick}));
+  dp->setAutoSize(true);
+  
+  auto build = [&]()
   {
-    //offset from another plane.
-    std::shared_ptr<ftr::DatumPlane> dp(new ftr::DatumPlane());
-    dp->setDPType(ftr::DatumPlane::DPType::POffset);
-    dp->setAutoSize(true);
     project->addFeature(dp);
-    project->connectInsert(f->getId(), dp->getId(), ftr::InputType{ftr::InputType::create});
+    project->connectInsert(f->getId(), dp->getId(), {pick.tag});
     node->sendBlocked(msg::buildStatusMessage("Offset datum plane added", 2.0));
     node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+    shouldUpdate = true;
+  };
+  
+  if (cIn.isObjectType() && cIn.featureType == ftr::Type::DatumPlane)
+  {
+    build();
     return true;
   }
-  
-  if (cIn.selectionType != slc::Type::Face)
-    return false;
-  if (!f->hasAnnex(ann::Type::SeerShape))
-    return false;
-  const ann::SeerShape &ss = f->getAnnex<ann::SeerShape>();
-  assert(ss.hasId(cIn.shapeId));
-  const TopoDS_Shape &fs = ss.getOCCTShape(cIn.shapeId);
-  assert(fs.ShapeType() == TopAbs_FACE);
-  BRepAdaptor_Surface sa(TopoDS::Face(fs));
-  if (sa.GetType() == GeomAbs_Plane)
+  if (cIn.selectionType == slc::Type::Face)
   {
-    //a single plane is an offset.
-    std::shared_ptr<ftr::DatumPlane> dp(new ftr::DatumPlane());
-    ftr::Pick pick = tls::convertToPick(cIn, ss, project->getShapeHistory());
-    dp->setPicks(ftr::Picks({pick}));
-    dp->setDPType(ftr::DatumPlane::DPType::POffset);
-    dp->setAutoSize(true);
-    project->addFeature(dp);
-    project->connectInsert(f->getId(), dp->getId(), ftr::InputType{ftr::InputType::create});
-    node->sendBlocked(msg::buildStatusMessage("Offset datum plane added", 2.0));
-    node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
-    return true;
+    if (!f->hasAnnex(ann::Type::SeerShape))
+      return false;
+    const ann::SeerShape &ss = f->getAnnex<ann::SeerShape>();
+    assert(ss.hasId(cIn.shapeId));
+    const TopoDS_Shape &fs = ss.getOCCTShape(cIn.shapeId);
+    assert(fs.ShapeType() == TopAbs_FACE);
+    BRepAdaptor_Surface sa(TopoDS::Face(fs));
+    if (sa.GetType() == GeomAbs_Plane)
+    {
+      build();
+      return true;
+    }
   }
   return false;
 }
 
 bool DatumPlane::attemptCenter(const std::vector<slc::Container> &csIn)
 {
-  int pc = 0;
+  tls::Connector connector;
   ftr::Picks picks;
   std::vector<const ftr::Base*> parents;
   for (const auto &s : csIn)
   {
     const ftr::Base *f = project->findFeature(s.featureId);
-    if (f->getType() == ftr::Type::DatumPlane)
+    assert(f);
+    ftr::Pick tempPick = tls::convertToPick(s, *f, project->getShapeHistory());
+    tempPick.tag = ftr::InputType::createIndexedTag(ftr::DatumPlane::center, picks.size());
+    if (slc::isObjectType(s.selectionType))
     {
-      pc++;
-      parents.push_back(f);
+      if (f->getType() != ftr::Type::DatumPlane)
+        continue;
     }
     else
     {
       if (!f->hasAnnex(ann::Type::SeerShape))
         continue;
       const ann::SeerShape &ss = f->getAnnex<ann::SeerShape>();
+      if (ss.isNull())
+        continue;
       assert(ss.hasId(s.shapeId));
       const TopoDS_Shape &fs = ss.getOCCTShape(s.shapeId);
       if (fs.ShapeType() != TopAbs_FACE)
         continue;
       BRepAdaptor_Surface sa(TopoDS::Face(fs));
-      if (sa.GetType() == GeomAbs_Plane)
-      {
-        pc++;
-        ftr::Pick pick = tls::convertToPick(s, ss, project->getShapeHistory());
-        picks.push_back(pick);
-        parents.push_back(f);
-      }
+      if (sa.GetType() != GeomAbs_Plane)
+        continue;
     }
+    connector.add(f->getId(), tempPick.tag);
+    picks.push_back(tempPick);
   }
-  if (pc == 2)
+  if (picks.size() == 2)
   {
     std::shared_ptr<ftr::DatumPlane> dp(new ftr::DatumPlane());
     dp->setDPType(ftr::DatumPlane::DPType::PCenter);
     dp->setPicks(picks);
     dp->setAutoSize(true);
     project->addFeature(dp);
-    gu::uniquefy(parents);
-    for (const auto &p : parents)
-      project->connectInsert(p->getId(), dp->getId(), ftr::InputType{ftr::InputType::create});
+    for (const auto &p : connector.pairs)
+      project->connectInsert(p.first, dp->getId(), {p.second});
     node->sendBlocked(msg::buildStatusMessage("Center datum plane added", 2.0));
     node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+    shouldUpdate = true;
     return true;
   }
   return false;
@@ -177,213 +155,175 @@ bool DatumPlane::attemptCenter(const std::vector<slc::Container> &csIn)
 
 bool DatumPlane::attemptAxisAngle(const std::vector<slc::Container> &csIn)
 {
-  auto buildAxisPick = [&](const slc::Container &cIn) -> boost::optional<ftr::Pick>
+  boost::optional<ftr::Pick> planePick;
+  boost::optional<ftr::Pick> axisPick;
+  tls::Connector connector;
+  
+  //datum planes and planar face will be for planePick and tried first
+  //everything else will be for axis pick.
+  auto assignPick = [&](const slc::Container &cIn)
   {
     const ftr::Base *f = project->findFeature(cIn.featureId);
-    if (cIn.shapeId.is_nil())
-      return boost::none;
-    if (!f->hasAnnex(ann::Type::SeerShape))
-      return boost::none;
-    const ann::SeerShape &ss = f->getAnnex<ann::SeerShape>();
-    const TopoDS_Shape &shape = ss.getOCCTShape(cIn.shapeId);
-    auto glean = occt::gleanAxis(shape);
-    if (!glean.second)
-      return boost::none;
-    
-    ftr::Pick p = tls::convertToPick(cIn, project->findFeature(cIn.featureId)->getAnnex<ann::SeerShape>(), project->getShapeHistory());
-    p.tag = ftr::DatumPlane::rotationAxis;
-    return p;
-  };
-  
-  typedef boost::optional<std::tuple<ftr::InputType, const ftr::Base*>> Group;
-  Group axis, plane;
-  ftr::Picks aaPicks;
-  for (const auto &s : csIn)
-  {
-    const ftr::Base *f = project->findFeature(s.featureId);
-    if (f->getType() == ftr::Type::DatumAxis)
+    if (cIn.featureType == ftr::Type::DatumPlane)
     {
-      axis = std::make_tuple
-      (
-        ftr::InputType{ftr::InputType::create, ftr::DatumPlane::rotationAxis}
-        , f
-      );
+      if (planePick) //already assigned the planePick, but we have a datum plane? get out.
+        return;
+      planePick = tls::convertToPick(cIn, *f, project->getShapeHistory());
+      planePick.get().tag = ftr::DatumPlane::plane;
+      connector.add(f->getId(), planePick.get().tag);
     }
-    else if (f->getType() == ftr::Type::DatumPlane)
+    else if (cIn.featureType == ftr::Type::DatumAxis)
     {
-      plane = std::make_tuple
-      (
-        ftr::InputType{ftr::InputType::create, ftr::DatumPlane::plane1}
-        , f
-      );
+      if (axisPick) //already assigned the axisPick, but we have a datum axis? get out.
+        return;
+      axisPick = tls::convertToPick(cIn, *f, project->getShapeHistory());
+      axisPick.get().tag = ftr::DatumPlane::axis;
+      connector.add(f->getId(), axisPick.get().tag);
     }
-    else
+    else if (cIn.isShapeType() && !cIn.isPointType())
     {
-      auto p = buildAxisPick(s);
-      if (p)
+      if (!f->hasAnnex(ann::Type::SeerShape))
+        return;
+      const ann::SeerShape &ss = f->getAnnex<ann::SeerShape>();
+      if (ss.isNull())
+        return;
+      assert(ss.hasId(cIn.shapeId));
+      const TopoDS_Shape &s = ss.getOCCTShape(cIn.shapeId);
+      auto localGleanAxis = [&]()
       {
-        aaPicks.push_back(p.get());
-        axis = std::make_tuple
-        (
-          ftr::InputType{ftr::InputType::create, ftr::DatumPlane::rotationAxis}
-          , f
-        );
+        if (!axisPick)
+        {
+          auto glean = occt::gleanAxis(s);
+          if (glean.second)
+          {
+            axisPick = tls::convertToPick(cIn, ss, project->getShapeHistory());
+            axisPick.get().tag = ftr::DatumPlane::axis;
+            connector.add(f->getId(), axisPick.get().tag);
+          }
+        }
+      };
+      if (s.ShapeType() == TopAbs_FACE)
+      {
+        BRepAdaptor_Surface sa(TopoDS::Face(s));
+        if (sa.GetType() == GeomAbs_Plane)
+        {
+          if (!planePick)
+          {
+            planePick = tls::convertToPick(cIn, ss, project->getShapeHistory());
+            planePick.get().tag = ftr::DatumPlane::plane;
+            connector.add(f->getId(), planePick.get().tag);
+          }
+        }
+        else 
+          localGleanAxis();
       }
       else
-      {
-        auto pp = buildPlanePick(s, f, project->getShapeHistory());
-        if (pp)
-        {
-          pp.get().tag = ftr::DatumPlane::plane1;
-          aaPicks.push_back(pp.get());
-          plane = std::make_tuple
-          (
-            ftr::InputType{ftr::InputType::create, ftr::DatumPlane::plane1}
-            , f
-          );
-        }
-      }
+        localGleanAxis();
     }
-  }
+  };
   
-  if (axis && plane)
-  {
-    std::shared_ptr<ftr::DatumPlane> dp(new ftr::DatumPlane());
-    dp->setDPType(ftr::DatumPlane::DPType::AAngleP);
-    
-    dp->setPicks(aaPicks);
-    dp->setAutoSize(true);
-    project->addFeature(dp);
-    project->connectInsert(std::get<1>(axis.get())->getId(), dp->getId(), std::get<0>(axis.get()));
-    project->connectInsert(std::get<1>(plane.get())->getId(), dp->getId(), std::get<0>(plane.get()));
-    node->sendBlocked(msg::buildStatusMessage("Axis angle datum plane added", 2.0));
-    node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
-    return true;
-  }
-  return false;
+  assignPick(csIn.front());
+  assignPick(csIn.back());
+  if (!planePick || !axisPick)
+    return false;
+  
+  std::shared_ptr<ftr::DatumPlane> dp(new ftr::DatumPlane());
+  dp->setDPType(ftr::DatumPlane::DPType::AAngleP);
+  dp->setPicks({planePick.get(), axisPick.get()});
+  dp->setAutoSize(true);
+  project->addFeature(dp);
+  for (const auto &p : connector.pairs)
+    project->connectInsert(p.first, dp->getId(), {p.second});
+  node->sendBlocked(msg::buildStatusMessage("Axis angle datum plane added", 2.0));
+  node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  shouldUpdate = true;
+  return true;
 }
 
 bool DatumPlane::attemptAverage3P(const std::vector<slc::Container> &csIn)
 {
-  typedef boost::optional<std::tuple<ftr::InputType, const ftr::Base*>> Group;
-  Group plane1, plane2, plane3;
   ftr::Picks picks;
-  for (const auto &s : csIn)
+  tls::Connector connector;
+  for (const auto &c : csIn)
   {
-    const ftr::Base *f = project->findFeature(s.featureId);
-    
-    auto createGroup = [&](const char *tag) -> Group
+    const ftr::Base *f = project->findFeature(c.featureId);
+    if (c.isObjectType() && c.featureType == ftr::Type::DatumPlane)
     {
-      return std::make_tuple (ftr::InputType{ftr::InputType::create, tag} , f);
-    };
-    
-    auto assign = [&]() -> const char*
-    {
-      if (!plane1)
-      {
-        plane1 = createGroup(ftr::DatumPlane::plane1);
-        return ftr::DatumPlane::plane1;
-      }
-      else if (!plane2)
-      {
-        plane2 = createGroup(ftr::DatumPlane::plane2);
-        return ftr::DatumPlane::plane2;
-      }
-      plane3 = createGroup(ftr::DatumPlane::plane3);
-      return ftr::DatumPlane::plane3;
-    };
-    
-    if (f->getType() == ftr::Type::DatumPlane)
-    {
-      assign();
+      ftr::Pick p = tls::convertToPick(c, *f, project->getShapeHistory());
+      p.tag = ftr::InputType::createIndexedTag(ftr::DatumPlane::plane, picks.size());
+      connector.add(f->getId(), p.tag);
+      picks.push_back(p);
     }
-    else
+    else if (!c.isPointType())
     {
-      auto pp = buildPlanePick(s, f, project->getShapeHistory());
-      if (pp)
-      {
-        const char *tag = assign();
-        pp.get().tag = tag;
-        picks.push_back(pp.get());
-      }
+      if (!f->hasAnnex(ann::Type::SeerShape))
+        continue;;
+      const ann::SeerShape &ss = f->getAnnex<ann::SeerShape>();
+      if (ss.isNull())
+        continue;
+      const TopoDS_Shape &shape = ss.getOCCTShape(c.shapeId);
+      if (shape.ShapeType() != TopAbs_FACE)
+        continue;
+      BRepAdaptor_Surface adaptor(TopoDS::Face(shape));
+      if (adaptor.GetType() != GeomAbs_Plane)
+        continue;
+      ftr::Pick p = tls::convertToPick(c, ss, project->getShapeHistory());
+      p.tag = ftr::InputType::createIndexedTag(ftr::DatumPlane::plane, picks.size());
+      connector.add(f->getId(), p.tag);
+      picks.push_back(p);
     }
   }
   
-  if (plane1 && plane2 && plane3)
-  {
-    std::shared_ptr<ftr::DatumPlane> dp(new ftr::DatumPlane());
-    dp->setDPType(ftr::DatumPlane::DPType::Average3P);
-    
-    dp->setPicks(picks);
-    dp->setAutoSize(true);
-    project->addFeature(dp);
-    project->connectInsert(std::get<1>(plane1.get())->getId(), dp->getId(), std::get<0>(plane1.get()));
-    project->connectInsert(std::get<1>(plane2.get())->getId(), dp->getId(), std::get<0>(plane2.get()));
-    project->connectInsert(std::get<1>(plane3.get())->getId(), dp->getId(), std::get<0>(plane3.get()));
-    node->sendBlocked(msg::buildStatusMessage("Average datum plane added", 2.0));
-    node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
-    return true;
-  }
-  return false;
+  if (picks.size() != 3)
+    return false;
+  
+  std::shared_ptr<ftr::DatumPlane> dp(new ftr::DatumPlane());
+  dp->setDPType(ftr::DatumPlane::DPType::Average3P);
+  dp->setPicks(picks);
+  dp->setAutoSize(true);
+  project->addFeature(dp);
+  for (const auto &p : connector.pairs)
+    project->connectInsert(p.first, dp->getId(), {p.second});
+  node->sendBlocked(msg::buildStatusMessage("Average datum plane added", 2.0));
+  node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  shouldUpdate = true;
+  return true;
 }
 
 bool DatumPlane::attemptThrough3P(const std::vector<slc::Container> &csIn)
 {
-  typedef boost::optional<std::tuple<ftr::InputType, const ftr::Base*>> Group;
-  Group point1, point2, point3;
   ftr::Picks picks;
-  for (const auto &s : csIn)
+  tls::Connector connector;
+  for (const auto &c : csIn)
   {
-    const ftr::Base *f = project->findFeature(s.featureId);
-    if (!f->hasAnnex(ann::Type::SeerShape))
-      continue;
-    
-    auto createGroup = [&](const char *tag) -> Group
-    {
-      return std::make_tuple (ftr::InputType{ftr::InputType::create, tag} , f);
-    };
-    
-    auto assign = [&]() -> const char*
-    {
-      if (!point1)
-      {
-        point1 = createGroup(ftr::DatumPlane::point1);
-        return ftr::DatumPlane::point1;
-      }
-      else if (!point2)
-      {
-        point2 = createGroup(ftr::DatumPlane::point2);
-        return ftr::DatumPlane::point2;
-      }
-      point3 = createGroup(ftr::DatumPlane::point3);
-      return ftr::DatumPlane::point3;
-    };
-
-    ftr::Pick p = tls::convertToPick(s, project->findFeature(s.featureId)->getAnnex<ann::SeerShape>(), project->getShapeHistory());
-    p.tag = assign();
-    picks.push_back(p);
+    if (!c.isPointType())
+      return false;
+    ftr::Pick temp = tls::convertToPick(c, *project->findFeature(c.featureId), project->getShapeHistory());
+    temp.tag = ftr::InputType::createIndexedTag(ftr::DatumPlane::point, picks.size());
+    connector.add(c.featureId, temp.tag);
+    picks.push_back(temp);
   }
   
-  if (point1 && point2 && point3 && picks.size() == 3)
-  {
-    std::shared_ptr<ftr::DatumPlane> dp(new ftr::DatumPlane());
-    dp->setDPType(ftr::DatumPlane::DPType::Through3P);
-    
-    dp->setPicks(picks);
-    dp->setAutoSize(true);
-    project->addFeature(dp);
-    project->connectInsert(std::get<1>(point1.get())->getId(), dp->getId(), std::get<0>(point1.get()));
-    project->connectInsert(std::get<1>(point2.get())->getId(), dp->getId(), std::get<0>(point2.get()));
-    project->connectInsert(std::get<1>(point3.get())->getId(), dp->getId(), std::get<0>(point3.get()));
-    node->sendBlocked(msg::buildStatusMessage("Average datum plane added", 2.0));
-    node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
-    return true;
-  }
-  return false;
+  if (picks.size() != 3)
+    return false;
+
+  std::shared_ptr<ftr::DatumPlane> dp(new ftr::DatumPlane());
+  dp->setDPType(ftr::DatumPlane::DPType::Through3P);
+  dp->setPicks(picks);
+  dp->setAutoSize(true);
+  project->addFeature(dp);
+  for (const auto &p : connector.pairs)
+    project->connectInsert(p.first, dp->getId(), {p.second});
+  node->sendBlocked(msg::buildStatusMessage("Average datum plane added", 2.0));
+  node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  shouldUpdate = true;
+  return true;
 }
 
 void DatumPlane::go()
 {
+  shouldUpdate = false;
+  
   assert(project);
   const slc::Containers &cs = eventHandler->getSelections();
   
@@ -398,16 +338,13 @@ void DatumPlane::go()
     project->addFeature(dp);
     node->sendBlocked(msg::buildStatusMessage("Constant datum plane added at current system", 2.0));
     node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+    shouldUpdate = true;
     return;
   }
   if (cs.size() == 1)
   {
     if (attemptOffset(cs.front()))
-    {
-      node->sendBlocked(msg::buildStatusMessage("Offset datum plane added", 2.0));
-      node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
       return;
-    }
   }
   if (cs.size() == 2)
   {

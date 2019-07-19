@@ -326,7 +326,8 @@ command_sources = ['command/cmdmanager.cpp'
   , 'command/cmdruled.cpp'
   , 'command/cmdimageplane.cpp'
   , 'command/cmdocctexport.cpp'
-  , 'command/cmdsweep.cpp']
+  , 'command/cmdsweep.cpp'
+  , 'command/cmdboolean.cpp']
   
 law_sources = ['law/lwfcue.cpp']
 

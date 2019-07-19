@@ -598,6 +598,11 @@ std::pair<gp_Vec, bool> occt::gleanVector(const TopoDS_Shape &shapeIn, const gp_
     BRepAdaptor_Surface sa(face);
     if (sa.GetType() == GeomAbs_Plane)
     {
+      gp_Pln plane = sa.Plane();
+      return std::make_pair(plane.Axis().Direction(), true);
+    }
+    else if (sa.GetType() == GeomAbs_Cylinder)
+    {
       double u,v;
       bool results;
       std::tie(u, v, results) = pointToParameter(face, pIn);
@@ -631,6 +636,12 @@ std::pair<gp_Ax1, bool> occt::gleanAxis(const TopoDS_Shape sIn)
     gp_Ax1 axis;
     
     BRepAdaptor_Surface sa(TopoDS::Face(sIn));
+    if (sa.GetType() == GeomAbs_Plane)
+    {
+      gp_Pln plane = sa.Plane();
+      axis = plane.Axis();
+      foundAxis = true;
+    }
     if (sa.GetType() == GeomAbs_Cylinder)
     {
       gp_Cylinder gpc = sa.Cylinder();

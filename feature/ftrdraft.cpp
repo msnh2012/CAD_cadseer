@@ -94,7 +94,7 @@ void Draft::updateModel(const UpdatePayload &payloadIn)
   sShape->reset();
   try
   {
-    std::vector<const Base*> features = payloadIn.getFeatures(InputType::target);
+    std::vector<const Base*> features = payloadIn.getFeatures(std::string());
     if (features.size() != 1)
       throw std::runtime_error("no parent");
     if (!features.front()->hasAnnex(ann::Type::SeerShape))
@@ -118,58 +118,65 @@ void Draft::updateModel(const UpdatePayload &payloadIn)
       throw std::runtime_error("feature is skipped");
     }
     
-    //neutral plane might be outside of target, if so we should have an input with a type of 'tool'
-//     const TopoDS_Shape &tool; //TODO
+    //neutral plane might be outside of target, but we prevent this at feature creation at this time.
     
-    //code here
     //not sure exactly how the pull direction affects the operation, but it does.
     //rotation of planar faces happens around intersection of neutral plane and draft face.
     //multiple target faces and 1 neutral plane.
-    //if neutral plane comes from another feature then we will have another graph edge with tool input type
     //not going to expose pull direction yet. Not sure how useful it is.
     //of course we will have a reverse direction, but the direction will be derived from the neutral plane.
     
     BRepOffsetAPI_DraftAngle dMaker(targetSeerShape.getRootOCCTShape());
     
-    
-    auto resolvedNeutralPicks = tls::resolvePicks(features.front(), neutralPick, payloadIn.shapeHistory);
-    uuid neutralId = gu::createNilId();
-    for (const auto &resolved : resolvedNeutralPicks)
+    tls::Resolver nResolver(payloadIn);
+    if (!nResolver.resolve(neutralPick))
+      throw std::runtime_error("Neutral pick resolution failed");
+    auto rShapes = nResolver.getShapes();
+    if (rShapes.empty())
+      throw std::runtime_error("Neutral pick has no shapes");
+    if (rShapes.size() > 1)
     {
-      if (resolved.resultId.is_nil())
-        continue;
-      neutralId = resolved.resultId;
-      break;
+      std::ostringstream s; s << "Warning: more than 1 neutral face, using first." << std::endl;
+      lastUpdateLog += s.str();
     }
-    if (neutralId.is_nil())
-      throw std::runtime_error("neutral id is nil");
-    TopoDS_Shape neutralShape = targetSeerShape.getOCCTShape(neutralId);
-    gp_Pln plane = derivePlaneFromShape(neutralShape);
+    gp_Pln plane = derivePlaneFromShape(rShapes.front());
     double localAngle = osg::DegreesToRadians(static_cast<double>(*angle));
     gp_Dir direction = plane.Axis().Direction();
-    bool labelDone = false; //set label position to first pick.
     
-    auto resolvedTargetPicks = tls::resolvePicks(features, targetPicks, payloadIn.shapeHistory);
-    for (const auto &resolved : resolvedTargetPicks)
+    bool labelDone = false; //set label position to first pick.
+    tls::Resolver tResolver(payloadIn);
+    for (const auto &p : targetPicks)
     {
-      if (resolved.resultId.is_nil())
-        continue;
-      assert(targetSeerShape.hasId(resolved.resultId)); //project shape history out of sync.
-      const TopoDS_Face &face = TopoDS::Face(targetSeerShape.getOCCTShape(resolved.resultId));
-      
-      dMaker.Add(face, direction, localAngle, plane);
-      if (!dMaker.AddDone())
+      if (!tResolver.resolve(p))
       {
-        std::ostringstream s; s << "Draft failed adding face: " << gu::idToString(resolved.resultId) << ". Removing" << std::endl;
+        std::ostringstream s; s << "Warning: Skipping unresolved target face." << std::endl;
         lastUpdateLog += s.str();
-        dMaker.Remove(face);
+        continue;
       }
-      if (!labelDone)
+      for (const auto &s : tResolver.getShapes())
       {
-        labelDone = true;
-        label->setMatrix(osg::Matrixd::translate(resolved.pick.getPoint(face)));
+        if (s.ShapeType() != TopAbs_FACE)
+        {
+          std::ostringstream s; s << "Warning: Skipping non face shape." << std::endl;
+          lastUpdateLog += s.str();
+          continue;
+        }
+        const TopoDS_Face &face = TopoDS::Face(s);
+        dMaker.Add(face, direction, localAngle, plane);
+        if (!dMaker.AddDone())
+        {
+          std::ostringstream s; s << "Warning: Draft failed adding face. Removing" << std::endl;
+          lastUpdateLog += s.str();
+          dMaker.Remove(face);
+        }
+        if (!labelDone)
+        {
+          labelDone = true;
+          label->setMatrix(osg::Matrixd::translate(p.getPoint(face)));
+        }
       }
     }
+    
     dMaker.Build();
     if (!dMaker.IsDone())
       throw std::runtime_error("draft maker failed");

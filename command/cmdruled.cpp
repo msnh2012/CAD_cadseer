@@ -97,23 +97,16 @@ void Ruled::go()
   const ann::SeerShape &ss1 = bf1->getAnnex<ann::SeerShape>();
   
   ftr::Picks picks;
-  if (cs.front().selectionType != slc::Type::Object)
-  {
-    picks.push_back(tls::convertToPick(cs.front(), ss0, project->getShapeHistory()));
-    picks.back().tag = ftr::Ruled::pickZero;
-  }
-  if (cs.back().selectionType != slc::Type::Object)
-  {
-    picks.push_back(tls::convertToPick(cs.back(), ss1, project->getShapeHistory()));
-    picks.back().shapeHistory = project->getShapeHistory().createDevolveHistory(cs.back().shapeId);
-    picks.back().tag = ftr::Ruled::pickOne;
-  }
+  picks.push_back(tls::convertToPick(cs.front(), ss0, project->getShapeHistory()));
+  picks.back().tag = ftr::Ruled::pickZero;
+  picks.push_back(tls::convertToPick(cs.back(), ss1, project->getShapeHistory()));
+  picks.back().tag = ftr::Ruled::pickOne;
   
   auto f = std::make_shared<ftr::Ruled>();
   f->setPicks(picks);
   project->addFeature(f);
-  project->connectInsert(cs.front().featureId, f->getId(), ftr::InputType{ftr::Ruled::pickZero});
-  project->connectInsert(cs.back().featureId, f->getId(), ftr::InputType{ftr::Ruled::pickOne});
+  project->connectInsert(cs.front().featureId, f->getId(), {picks.front().tag});
+  project->connectInsert(cs.back().featureId, f->getId(), {picks.back().tag});
   
   node->sendBlocked(msg::buildStatusMessage("Ruled created", 2.0));
   node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));

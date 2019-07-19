@@ -58,60 +58,70 @@ void Offset::deactivate()
 
 void Offset::go()
 {
+  shouldUpdate = false;
   const slc::Containers &containers = eventHandler->getSelections();
   if (containers.empty())
   {
-    node->sendBlocked(msg::buildStatusMessage("Wrong pre selection for offset", 2.0));
-    shouldUpdate = false;
+    node->sendBlocked(msg::buildStatusMessage("Empty pre selection for offset", 2.0));
     return;
   }
-  uuid fId = gu::createNilId();
-  ftr::Picks picks;
-  osg::Vec4 color;
-  for (const auto &c : containers)
+  
+  ftr::Base *bf = project->findFeature(containers.front().featureId);
+  if (!bf->hasAnnex(ann::Type::SeerShape) || bf->getAnnex<ann::SeerShape>().isNull())
   {
-    //make sure all selections belong to the same feature.
-    if (fId.is_nil())
-      fId = c.featureId;
-    if (fId != c.featureId)
-      continue;
-    
-    ftr::Base *bf = project->findFeature(c.featureId);
-    if (!bf->hasAnnex(ann::Type::SeerShape))
-      continue;
-    color = bf->getColor();
-    const ann::SeerShape &ss = bf->getAnnex<ann::SeerShape>();
-    if (!c.shapeId.is_nil())
+    node->sendBlocked(msg::buildStatusMessage("No seer shape, wrong pre selection for offset", 2.0));
+    return;
+  }
+  const ann::SeerShape &ss = bf->getAnnex<ann::SeerShape>();
+  
+  ftr::Picks picks;
+  tls::Connector connector;
+  if (containers.size() == 1 && containers.front().isObjectType())
+  {
+    ftr::Base *bf = project->findFeature(containers.front().featureId);
+    if (!bf->hasAnnex(ann::Type::SeerShape) || bf->getAnnex<ann::SeerShape>().isNull())
     {
-      assert(ss.hasId(c.shapeId));
-      if (!ss.hasId(c.shapeId))
-      {
-        std::cerr << "WARNING: seershape doesn't have id from selection in cmd::Offset::go" << std::endl;
+      node->sendBlocked(msg::buildStatusMessage("Offset only works on shape features", 2.0));
+      return;
+    }
+    
+    ftr::Pick p = tls::convertToPick(containers.front(), bf->getAnnex<ann::SeerShape>(), project->getShapeHistory());
+    p.tag = ftr::InputType::createIndexedTag(ftr::InputType::target, picks.size());
+    picks.push_back(p);
+    connector.add(bf->getId(), p.tag);
+  }
+  else
+  {
+    for (const auto &c : containers)
+    {
+      if (c.selectionType != slc::Type::Face)
         continue;
-      }
-      const TopoDS_Shape &fs = ss.getOCCTShape(c.shapeId);
-      assert(fs.ShapeType() == TopAbs_FACE);
-      if (fs.ShapeType() != TopAbs_FACE)
+      //make sure all selections belong to the same feature.
+      if (bf->getId() != c.featureId)
         continue;
       ftr::Pick p = tls::convertToPick(c, ss, project->getShapeHistory());
+      p.tag = ftr::InputType::createIndexedTag(ftr::InputType::target, picks.size());
       picks.push_back(p);
+      connector.add(bf->getId(), p.tag);
     }
   }
-  if (fId.is_nil())
+  
+  if (picks.empty() || connector.pairs.empty())
   {
-    node->sendBlocked(msg::buildStatusMessage("No feature id for offset", 2.0));
-    shouldUpdate = false;
+    node->sendBlocked(msg::buildStatusMessage("Incorrect preselection for offset", 2.0));
     return;
   }
     
   std::shared_ptr<ftr::Offset> offset(new ftr::Offset());
   offset->setPicks(picks);
-  offset->setColor(color);
+  offset->setColor(bf->getColor());
   project->addFeature(offset);
-  project->connectInsert(fId, offset->getId(), ftr::InputType{ftr::InputType::target});
+  for (const auto &p : connector.pairs)
+    project->connectInsert(p.first, offset->getId(), {p.second});
+  shouldUpdate = true;
   
-  node->sendBlocked(msg::buildHideThreeD(fId));
-  node->sendBlocked(msg::buildHideOverlay(fId));
+  node->sendBlocked(msg::buildHideThreeD(bf->getId()));
+  node->sendBlocked(msg::buildHideOverlay(bf->getId()));
   
   node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
 }

@@ -105,6 +105,13 @@ void Squash::updateModel(const UpdatePayload &payloadIn)
   sShape->reset();
   try
   {
+    //no new failure state.
+    if (isSkipped())
+    {
+      setSuccess();
+      throw std::runtime_error("feature is skipped");
+    }
+    
     std::vector<const Base*> tfs = payloadIn.getFeatures(InputType::target);
     if (tfs.size() != 1)
       throw std::runtime_error("wrong number of parents");
@@ -114,12 +121,6 @@ void Squash::updateModel(const UpdatePayload &payloadIn)
     if (tss.isNull())
       throw std::runtime_error("target seer shape is null");
     
-    //no new failure state.
-    if (isSkipped())
-    {
-      setSuccess();
-      throw std::runtime_error("feature is skipped");
-    }
     
     //get the shell
     TopoDS_Shape ss = occt::getFirstNonCompound(tss.getRootOCCTShape());
@@ -134,36 +135,42 @@ void Squash::updateModel(const UpdatePayload &payloadIn)
     bool od = false; //orientation determined.
     bool sr = false; //should reverse.
     
-    auto resolvedPicks = tls::resolvePicks(tfs, picks, payloadIn.shapeHistory);
-    for (const auto &resolved : resolvedPicks)
+    
+    
+    
+    tls::Resolver tResolver(payloadIn);
+    for (const auto &p : picks)
     {
-      if (resolved.resultId.is_nil())
-        continue;
-      assert(tss.hasId(resolved.resultId));
-      if (!tss.hasId(resolved.resultId))
-        continue;
-      const TopoDS_Shape &shape = tss.getOCCTShape(resolved.resultId);
-      if (shape.ShapeType() != TopAbs_FACE)
+      if (!tResolver.resolve(p))
       {
-        std::ostringstream sm; sm << "shape is not a face in Squash::updateModel" << std::endl;
+        std::ostringstream sm; sm << "WARNING: Skipping unresolved a pick." << std::endl;
         lastUpdateLog += sm.str();
         continue;
       }
-      const TopoDS_Face &f = TopoDS::Face(shape);
-      static const gp_Vec zAxis(0.0, 0.0, 1.0);
-      gp_Vec n = occt::getNormal(f, resolved.pick.u, resolved.pick.v);
-      if (!n.IsParallel(zAxis, Precision::Confusion())) //Precision::Angular was too sensitive.
-        throw std::runtime_error("lock face that is not parallel to z axis");
-      if (!od)
+      for (const auto &rs : tResolver.getShapes())
       {
-        od = true;
-        if (n.IsOpposite(zAxis, Precision::Angular()))
-          sr = true;
+        if (rs.ShapeType() != TopAbs_FACE)
+        {
+          std::ostringstream sm; sm << "WARNING: Resolved shape is not a face" << std::endl;
+          lastUpdateLog += sm.str();
+          continue;
+        }
+        const TopoDS_Face &f = TopoDS::Face(rs);
+        static const gp_Vec zAxis(0.0, 0.0, 1.0);
+        gp_Vec n = occt::getNormal(f, p.u, p.v);
+        if (!n.IsParallel(zAxis, Precision::Confusion())) //Precision::Angular was too sensitive.
+          throw std::runtime_error("lock face that is not parallel to z axis");
+        if (!od)
+        {
+          od = true;
+          if (n.IsOpposite(zAxis, Precision::Angular()))
+            sr = true;
+        }
+        if (sr)
+          fs.push_back(TopoDS::Face(f.Reversed())); //might not need to reverse these?
+        else
+          fs.push_back(f);
       }
-      if (sr)
-        fs.push_back(TopoDS::Face(f.Reversed())); //might not need to reverse these?
-      else
-        fs.push_back(f);
     }
     
     if (fs.empty())

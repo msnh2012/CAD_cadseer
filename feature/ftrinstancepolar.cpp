@@ -144,15 +144,6 @@ void InstancePolar::updateModel(const UpdatePayload &payloadIn)
   sShape->reset();
   try
   {
-    std::vector<const Base*> tfs = payloadIn.getFeatures(InputType::target);
-    if (tfs.size() != 1)
-      throw std::runtime_error("wrong number of parents");
-    if (!tfs.front()->hasAnnex(ann::Type::SeerShape))
-      throw std::runtime_error("parent doesn't have seer shape.");
-    const ann::SeerShape &tss = tfs.front()->getAnnex<ann::SeerShape>();
-    if (tss.isNull())
-      throw std::runtime_error("target seer shape is null");
-    
     //no new failure state.
     if (isSkipped())
     {
@@ -160,24 +151,19 @@ void InstancePolar::updateModel(const UpdatePayload &payloadIn)
       throw std::runtime_error("feature is skipped");
     }
     
-    //get the shapes to mirror.
-    occt::ShapeVector tShapes;
-    if (shapePick.shapeHistory.getRootId().is_nil())
+    //get the shapes to array.
+    tls::Resolver resolver(payloadIn);
+    resolver.resolve(shapePick);
+    occt::ShapeVector tShapes = resolver.getShapes();
+    if (tShapes.empty())
+      throw std::runtime_error("invalid shape pick resolution");
+    assert(resolver.getSeerShape());
+    const ann::SeerShape &tss = *resolver.getSeerShape();
+    if (!slc::isShapeType(shapePick.selectionType))
     {
-      tShapes = tss.useGetNonCompoundChildren();
-    }
-    else
-    {
-      auto resolvedPicks = tls::resolvePicks(tfs.front(), shapePick, payloadIn.shapeHistory);
-      for (const auto &resolved : resolvedPicks)
-      {
-        if (resolved.resultId.is_nil())
-          continue;
-        assert(tss.hasId(resolved.resultId));
-        if (!tss.hasId(resolved.resultId))
-          continue;
-        tShapes.push_back(tss.findShape(resolved.resultId));
-      }
+      assert(tShapes.size() == 1);
+      assert(tShapes.front().ShapeType() == TopAbs_COMPOUND);
+      tShapes = occt::getNonCompounds(tShapes.front());
     }
     if (tShapes.empty())
       throw std::runtime_error("No shapes found.");
@@ -185,47 +171,37 @@ void InstancePolar::updateModel(const UpdatePayload &payloadIn)
     boost::optional<osg::Vec3d> newOrigin;
     boost::optional<osg::Vec3d> newDirection;
     std::vector<const Base*> rafs = payloadIn.getFeatures(InstancePolar::rotationAxis);
-    if (rafs.size() == 1)
+    resolver.resolve(axisPick);
+    if (resolver.getFeature())
     {
       //we have a rotation axis selection so make sure the csysdragger is hidden.
       overlaySwitch->removeChild(csysDragger->dragger.get()); //ok if not present.
       
-      if (rafs.front()->getType() == ftr::Type::DatumAxis)
+      if (resolver.getFeature()->getType() == ftr::Type::DatumAxis)
       {
-        const ftr::DatumAxis *da = dynamic_cast<const ftr::DatumAxis*>(rafs.front());
+        const ftr::DatumAxis *da = dynamic_cast<const ftr::DatumAxis*>(resolver.getFeature());
         assert(da);
         newOrigin = da->getOrigin();
         newDirection = da->getDirection();
       }
       else
       {
-        if (!rafs.front()->hasAnnex(ann::Type::SeerShape)) //no datum axis exists at this time.
-          throw std::runtime_error("Input feature doesn't have seershape");
-        if (axisPick.shapeHistory.getRootId().is_nil())
-          throw std::runtime_error("No id for axis pick");
-        const ann::SeerShape &ass = rafs.front()->getAnnex<ann::SeerShape>();
-        
-        TopoDS_Shape dsShape;
-        
-        auto resolvedPicks = tls::resolvePicks(rafs.front(), axisPick, payloadIn.shapeHistory);
-        for (const auto &resolved : resolvedPicks)
+        //can't do 2 points at this time?
+        if (!resolver.getSeerShape())
+          throw std::runtime_error("Input axis feature doesn't have seershape");
+        occt::ShapeVector rShapes = resolver.getShapes();
+        if (rShapes.empty())
+          throw std::runtime_error("No resolved shapes for axis");
+        if (rShapes.size() != 1)
         {
-          if (resolved.resultId.is_nil())
-            continue;
-          assert(ass.hasId(resolved.resultId));
-          if (!ass.hasId(resolved.resultId))
-            continue;
-          dsShape = ass.findShape(resolved.resultId);
-          break;
+          std::ostringstream s; s << "More than 1 axis pick resolution, using first"  << std::endl;
+          lastUpdateLog.append(s.str());
         }
-        if (dsShape.IsNull())
-          throw std::runtime_error("couldn't find occt shape");
-        
         gp_Ax1 axis;
         bool results;
-        std::tie(axis, results) = occt::gleanAxis(dsShape);
+        std::tie(axis, results) = occt::gleanAxis(rShapes.front());
         if (!results)
-          throw std::runtime_error("unsupported occt shape type");
+          throw std::runtime_error("unsupported occt shape type for axis");
         
         newDirection = gu::toOsg(gp_Vec(axis.Direction()));
         newOrigin = gu::toOsg(axis.Location());

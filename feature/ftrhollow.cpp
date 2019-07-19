@@ -99,7 +99,7 @@ void Hollow::updateModel(const UpdatePayload &payloadIn)
   sShape->reset();
   try
   {
-    std::vector<const Base*> tfs = payloadIn.getFeatures(InputType::target);
+    std::vector<const Base*> tfs = payloadIn.getFeatures(std::string());
     if (tfs.size() != 1)
       throw std::runtime_error("no parent for hollow");
     if (!tfs.front()->hasAnnex(ann::Type::SeerShape))
@@ -125,32 +125,31 @@ void Hollow::updateModel(const UpdatePayload &payloadIn)
     
     bool labelSet = false;
     occt::ShapeVector closingFaceShapes;
-    std::vector<uuid> solidIds;
-    auto resolvedPicks = tls::resolvePicks(tfs, hollowPicks, payloadIn.shapeHistory);
-    for (const auto &resolved : resolvedPicks)
+    tls::Resolver resolver(payloadIn);
+    for (const auto &p : hollowPicks)
     {
-      if (resolved.resultId.is_nil())
-        continue;
-      assert(tss.hasId(resolved.resultId));
-      if (!tss.hasId(resolved.resultId))
-        continue;
-      TopoDS_Shape face = tss.findShape(resolved.resultId);
-      if (face.ShapeType() != TopAbs_FACE)
-        continue;
-      closingFaceShapes.push_back(face);
-      std::vector<uuid> sp = tss.useGetParentsOfType(resolved.resultId, TopAbs_SOLID);
-      std::copy(sp.begin(), sp.end(), std::back_inserter(solidIds));
-      if (!labelSet)
+      resolver.resolve(p);
+      if (!resolver.getFeature() || !resolver.getSeerShape() || resolver.getResolvedIds().empty())
       {
-        labelSet = true;
-        label->setMatrix(osg::Matrixd::translate(resolved.pick.getPoint(TopoDS::Face(face))));
+        std::ostringstream s; s << "Failed to resolve a pick." << std::endl;
+        lastUpdateLog += s.str();
+        continue;
+      }
+      for (const auto &rs : resolver.getShapes())
+      {
+        if (rs.ShapeType() != TopAbs_FACE)
+          continue;
+        closingFaceShapes.push_back(rs);
+        if (!labelSet)
+        {
+          labelSet = true;
+          label->setMatrix(osg::Matrixd::translate(p.getPoint(TopoDS::Face(rs))));
+        }
       }
     }
+
     if (closingFaceShapes.empty())
       throw std::runtime_error("no closing faces");
-    gu::uniquefy(solidIds);
-    if (solidIds.size() != 1)
-      throw std::runtime_error("Only works with 1 solid");
     
     BRepOffsetAPI_MakeThickSolid operation;
     operation.MakeThickSolidByJoin

@@ -307,57 +307,47 @@ void DatumPlane::goUpdateConstant()
 
 void DatumPlane::goUpdatePOffset(const UpdatePayload &pli)
 {
-  std::vector<const Base*> features = pli.getFeatures(ftr::InputType::create);
-  if (features.size() != 1)
-    throw std::runtime_error("POffset: Wrong number of 'create' inputs");
+  if (picks.size() != 1)
+    throw std::runtime_error("POffset: Wrong number of picks");
+  
+  tls::Resolver pr(pli);
+  if (!pr.resolve(picks.front()))
+    throw std::runtime_error("POffset: Pick resolution failed");
   
   osg::Matrixd faceSystem;
   faceSystem = osg::Matrixd::identity();
-  if (features.front()->getType() == Type::DatumPlane)
+  if (pr.getFeature()->getType() == ftr::Type::DatumPlane)
   {
-    const DatumPlane *inputPlane = dynamic_cast<const DatumPlane*>(features.front());
+    const DatumPlane *inputPlane = dynamic_cast<const DatumPlane*>(pr.getFeature());
     assert(inputPlane);
-    faceSystem = inputPlane->getSystem();
-    
-    // just size this plane to the source plane.
     cachedSize = inputPlane->getSize();
+    faceSystem = inputPlane->getSystem();
   }
-  else //look for seer shape.
+  else
   {
-    if (picks.empty() || picks.front().shapeHistory.getRootId().is_nil())
-      throw std::runtime_error("POffset: no pick or nil shape id");
-    if (!features.front()->hasAnnex(ann::Type::SeerShape))
-      throw std::runtime_error("POffset: Parent feature doesn't have seer shape.");
-    const ann::SeerShape &shape = features.front()->getAnnex<ann::SeerShape>();
-    
-    auto resolvedPicks = tls::resolvePicks(features.front(), picks.front(), pli.shapeHistory);
-    if (resolvedPicks.front().resultId.is_nil())
+    auto rShapes = pr.getShapes();
+    if (rShapes.empty())
+      throw std::runtime_error("POffset: Resolved shapes are empty");
+    if (rShapes.size() > 1)
     {
-      std::ostringstream stream;
-      stream << "POffset: can't find target face id. Skipping id: " << gu::idToString(picks.front().shapeHistory.getRootId());
-      throw std::runtime_error(stream.str());
+      std::ostringstream s; s << "WARNING: POffset: Multiple resolve shapes. Using first" << std::endl;
+      lastUpdateLog += s.str();
     }
-    assert(shape.hasId(resolvedPicks.front().resultId));
-    if (!shape.hasId(resolvedPicks.front().resultId))
-      throw std::runtime_error("POffset: seer shape doesn't have id");
-      
-    const TopoDS_Shape &faceShape = shape.getOCCTShape(resolvedPicks.front().resultId);
-    assert(faceShape.ShapeType() == TopAbs_FACE);
-    if (faceShape.ShapeType() != TopAbs_FACE)
-      throw std::runtime_error("POffset: shape is not a face");
+    if (rShapes.front().ShapeType() != TopAbs_FACE)
+      throw std::runtime_error("POffset: Resolved shape is not a face.");
     
     //get coordinate system
-    BRepAdaptor_Surface adaptor(TopoDS::Face(faceShape));
+    BRepAdaptor_Surface adaptor(TopoDS::Face(rShapes.front()));
     if (adaptor.GetType() != GeomAbs_Plane)
       throw std::runtime_error("POffset: wrong surface type");
     gp_Ax2 tempSystem = adaptor.Plane().Position().Ax2();
-    if (faceShape.Orientation() == TopAbs_REVERSED)
+    if (rShapes.front().Orientation() == TopAbs_REVERSED)
       tempSystem.SetDirection(tempSystem.Direction().Reversed());
     faceSystem = gu::toOsg(tempSystem);
     
     //calculate parameter boundaries and project onto plane.
     gp_Pnt centerPoint, cornerPoint;
-    centerRadius(getBoundingBox(faceShape), centerPoint, cornerPoint);
+    centerRadius(getBoundingBox(rShapes.front()), centerPoint, cornerPoint);
     double centerDistance = adaptor.Plane().Distance(centerPoint);
     double cornerDistance = adaptor.Plane().Distance(cornerPoint);
     osg::Vec3d workVector = gu::getZVector(faceSystem);
@@ -376,103 +366,50 @@ void DatumPlane::goUpdatePOffset(const UpdatePayload &pli)
 
 void DatumPlane::goUpdatePCenter(const UpdatePayload &pli)
 {
-  std::vector<const Base*> features = pli.getFeatures(InputType::create);
-  if (features.empty() || features.size() > 2)
-    throw std::runtime_error("PCenter: Wrong number of 'create' inputs");
+  if (picks.size() != 2)
+    throw std::runtime_error("Wrong number of picks for center datum");
+  tls::Resolver r0(pli);
+  if (!r0.resolve(picks.front()))
+    throw std::runtime_error("Couldn't resolve pick 0 for center datum");
+  tls::Resolver r1(pli);
+  if (!r1.resolve(picks.back()))
+    throw std::runtime_error("Couldn't resolve pick 1 for center datum");
   
-  boost::optional<osg::Matrixd> face1System, face2System;
+  double tempSize = std::numeric_limits<double>::min();
   
-  if (features.size() == 1)
+  auto getResolvedSystem = [&](const tls::Resolver &r) -> boost::optional<osg::Matrixd>
   {
-    //note: can't do a center with only 1 datum plane. so we know this condition must be a shape.
-    if (!features.front()->hasAnnex(ann::Type::SeerShape))
-      throw std::runtime_error("PCenter: null seer shape");
-    const ann::SeerShape &shape = features.front()->getAnnex<ann::SeerShape>();
-    
-    std::vector<uuid> ids;
-    auto resolvedPicks = tls::resolvePicks(features, picks, pli.shapeHistory);
-    for (const auto &resolved : resolvedPicks)
+    if (r.getFeature()->getType() == ftr::Type::DatumPlane)
     {
-      if (resolved.resultId.is_nil())
-        continue;
-      ids.push_back(resolved.resultId);
+      const DatumPlane *inputPlane = dynamic_cast<const DatumPlane*>(r.getFeature());
+      assert(inputPlane);
+      tempSize = std::max(tempSize, inputPlane->getSize());
+      return inputPlane->getSystem();
     }
-    if (ids.size() != 2)
-      throw std::runtime_error("PCenter: wrong number of resolved ids");
-    assert(shape.hasId(ids.front()) && shape.hasId(ids.back()));
-    if ((!shape.hasId(ids.front())) || (!shape.hasId(ids.back())))
-      throw std::runtime_error("PCenter: ids not in shape.");
-    
-    TopoDS_Shape face1 = shape.getOCCTShape(ids.front()); assert(!face1.IsNull());
-    TopoDS_Shape face2 = shape.getOCCTShape(ids.back()); assert(!face2.IsNull());
-    if (face1.IsNull() || face2.IsNull())
-      throw std::runtime_error("PCenter: null faces");
-    face1System = getFaceSystem(face1);
-    face2System = getFaceSystem(face2);
-    
-    //calculate size.
-    cachedSize = std::max(std::sqrt(getBoundingBox(face1).SquareExtent()), std::sqrt(getBoundingBox(face2).SquareExtent())) / 2.0;
-  }
-  else if (features.size() == 2)
-  {
-    //with 2 inputs, either one can be a face or a datum.
-    double radius1 = std::numeric_limits<float>::epsilon();
-    double radius2 = radius1;
-    
-    std::vector<const ftr::Base*> featuresToResolve;
-    for (const auto &f : features)
+    else
     {
-      if (f->getType() == Type::DatumPlane)
+      auto rShapes = r.getShapes();
+      if (rShapes.empty())
+        throw std::runtime_error("Resolved shapes are empty for center datum");
+      if (rShapes.size() > 1)
       {
-        const DatumPlane *inputPlane = dynamic_cast<const DatumPlane*>(f);
-        assert(inputPlane);
-        if (!face1System)
-        {
-          face1System = inputPlane->getSystem();
-          radius1 = inputPlane->getSize();
-        }
-        else if (!face2System)
-        {
-          face2System = inputPlane->getSystem();
-          radius2 = inputPlane->getSize();
-        }
+        std::ostringstream s; s << "WARNING: Multiple resolve shapes for center datum. Using first" << std::endl;
+        lastUpdateLog += s.str();
       }
-      else if (f->hasAnnex(ann::Type::SeerShape))
-        featuresToResolve.push_back(f);
+      if (rShapes.front().ShapeType() != TopAbs_FACE)
+        throw std::runtime_error("Resolved shape is not a face for center datum.");
+      
+      tempSize = std::max(tempSize, std::sqrt(getBoundingBox(rShapes.front()).SquareExtent()) / 2.0);
+      return getFaceSystem(rShapes.front());
     }
-    
-    auto resolvedPicks = tls::resolvePicks(featuresToResolve, picks, pli.shapeHistory);
-    for (const auto &resolved : resolvedPicks)
-    {
-      const ann::SeerShape &shape = resolved.feature->getAnnex<ann::SeerShape>();
-      assert(shape.hasId(resolved.resultId));
-      if (!shape.hasId(resolved.resultId))
-        throw std::runtime_error("PCenter: expected id not found in seershape.");
-      TopoDS_Shape face = shape.getOCCTShape(resolved.resultId);
-      if (face.IsNull())
-        throw std::runtime_error("PCenter: input has null shape");
-      if (face.ShapeType() != TopAbs_FACE)
-        throw std::runtime_error("PCenter: shape is not of type face");
-      if (!face1System)
-      {
-        face1System = getFaceSystem(face);
-        radius1 = std::sqrt(getBoundingBox(face).SquareExtent()) / 2.0;
-      }
-      else if (!face2System)
-      {
-        face2System = getFaceSystem(face);
-        radius2 = std::sqrt(getBoundingBox(face).SquareExtent()) / 2.0;
-      }
-    }
-    
-    cachedSize = std::max(radius1, radius2);
-  }
-  else
-    throw std::runtime_error("PCenter: wrong number of inputs");
+    return boost::none;
+  };
   
-  if ((!face1System) || (!face2System))
-    throw std::runtime_error("PCenter: couldn't get both systems.");
-  
+  boost::optional<osg::Matrixd> face1System = getResolvedSystem(r0);
+  boost::optional<osg::Matrixd> face2System = getResolvedSystem(r1);
+  if (!face1System || !face2System)
+    throw std::runtime_error("Invalid face systems");
+
   osg::Vec3d normal1 = gu::getZVector(face1System.get());
   osg::Vec3d normal2 = gu::getZVector(face2System.get());
   boost::optional<osg::Matrixd> newSystem;
@@ -547,105 +484,76 @@ void DatumPlane::goUpdatePCenter(const UpdatePayload &pli)
   
   if (!newSystem)
     throw std::runtime_error("PCenter: couldn't derive center datum");
-    
+  cachedSize = tempSize;
   csys->setValueQuiet(newSystem.get());
 }
 
 void DatumPlane::goUpdateAAngleP(const UpdatePayload &pli)
 {
+  if (picks.size() != 2)
+    throw std::runtime_error("AAngleP: Wrong number of picks");
+  
   boost::optional<osg::Vec3d> axisOrigin, axisDirection, planeNormal;
   double tempSize = 0.0;
-  
-  std::vector<const Base*> rfs = pli.getFeatures(DatumPlane::rotationAxis);
-  if (rfs.size() != 1)
-    throw std::runtime_error("AAngleP: Wrong number of 'rotationAxis' inputs");
-  if (rfs.front()->getType() == ftr::Type::DatumAxis)
+  tls::Resolver pr(pli);
+  for (const auto &p : picks)
   {
-    const DatumAxis *da = dynamic_cast<const DatumAxis*>(rfs.front());
-    axisOrigin = da->getOrigin();
-    axisDirection = da->getDirection();
-    tempSize = std::max(tempSize, da->getSize() / 2.0);
-  }
-  else
-  {
-    assert(rfs.front()->hasAnnex(ann::Type::SeerShape));
-    const ann::SeerShape &ss = rfs.front()->getAnnex<ann::SeerShape>();
-    std::vector<tls::Resolved> axisResolves;
-    for (const auto &p : picks)
+    if (!pr.resolve(p))
+      throw std::runtime_error("AAngleP: Failed to resolve pick");
+    if (p.tag == plane)
     {
-      if (p.tag == DatumPlane::rotationAxis)
+      if (slc::isObjectType(p.selectionType) && pr.getFeature()->getType() == ftr::Type::DatumPlane)
       {
-        axisResolves = tls::resolvePicks(rfs.front(), p, pli.shapeHistory);
-        break;
+        const DatumPlane *dp = dynamic_cast<const DatumPlane*>(pr.getFeature());
+        planeNormal = gu::getZVector(dp->getSystem());
+        tempSize = std::max(tempSize, dp->getSize());
+      }
+      else //with a shape pick, resolver verifies we something
+      {
+        auto rShapes = pr.getShapes();
+        if (rShapes.size() > 1)
+        {
+          std::ostringstream s; s << "WARNING: AAngleP: more than one resolved plane. Using first" << std::endl;
+          lastUpdateLog += s.str();
+        }
+        if (rShapes.front().ShapeType() != TopAbs_FACE)
+          throw std::runtime_error("AAngleP: resolved 'plane' shape is not a face");
+        planeNormal = gu::getZVector(getFaceSystem(rShapes.front()));
+        occt::BoundingBox bb(rShapes.front());
+        tempSize = std::max(tempSize, bb.getDiagonal() / 2.0);
       }
     }
-    if (!axisResolves.empty())
+    else if (p.tag == axis)
     {
-      //just use first resolve
-      if (axisResolves.front().resultId.is_nil())
-        throw std::runtime_error("AAngleP: resolved 'rotationAxis' id is nil");
-      assert(ss.hasId(axisResolves.front().resultId));
-      const TopoDS_Shape &axisShape = ss.getOCCTShape(axisResolves.front().resultId);
-      auto glean = occt::gleanAxis(axisShape);
-      if (!glean.second)
-        throw std::runtime_error("AAngleP: couldn't glean 'rotationAxis'");
-      axisOrigin = gu::toOsg(glean.first.Location());
-      axisDirection = gu::toOsg(glean.first.Direction());
-      occt::BoundingBox bb(axisShape);
-      tempSize = std::max(tempSize, bb.getDiagonal() / 2.0);
-    }
-    if (axisResolves.size() > 1)
-    {
-      std::ostringstream s; s << "WARNING: more than one resolved axis in: " << std::endl;
-      lastUpdateLog += s.str();
-    }
-  }
-  
-  std::vector<const Base*> pfs = pli.getFeatures(DatumPlane::plane1);
-  if (pfs.size() != 1)
-    throw std::runtime_error("AAngleP: Wrong number of 'plane' inputs");
-  if (pfs.front()->getType() == ftr::Type::DatumPlane)
-  {
-    const DatumPlane *dp = dynamic_cast<const DatumPlane*>(pfs.front());
-    planeNormal = gu::getZVector(dp->getSystem());
-    tempSize = std::max(tempSize, dp->getSize());
-  }
-  else
-  {
-    assert(pfs.front()->hasAnnex(ann::Type::SeerShape));
-    const ann::SeerShape &ss = pfs.front()->getAnnex<ann::SeerShape>();
-    std::vector<tls::Resolved> planeResolves;
-    
-    for (const auto &p : picks)
-    {
-      if (p.tag == DatumPlane::plane1)
+      if (slc::isObjectType(p.selectionType) && pr.getFeature()->getType() == ftr::Type::DatumAxis)
       {
-        planeResolves = tls::resolvePicks(pfs.front(), p, pli.shapeHistory);
-        break;
+        const DatumAxis *da = dynamic_cast<const DatumAxis*>(pr.getFeature());
+        axisOrigin = da->getOrigin();
+        axisDirection = da->getDirection();
+        tempSize = std::max(tempSize, da->getSize() / 2.0);
       }
-    }
-    if (!planeResolves.empty())
-    {
-      //just use first resolve
-      if (planeResolves.front().resultId.is_nil())
-        throw std::runtime_error("AAngleP: resolved 'plane' id is nil");
-      assert(ss.hasId(planeResolves.front().resultId));
-      const TopoDS_Shape &planeShape = ss.getOCCTShape(planeResolves.front().resultId);
-      if (planeShape.ShapeType() != TopAbs_FACE)
-        throw std::runtime_error("AAngleP: resolved 'plane' shape is not a face");
-      planeNormal = gu::getZVector(getFaceSystem(planeShape));
-      occt::BoundingBox bb(planeShape);
-      tempSize = std::max(tempSize, bb.getDiagonal() / 2.0);
-    }
-    if (planeResolves.size() > 1)
-    {
-      std::ostringstream s; s << "WARNING: more than one resolved plane in: " << std::endl;
-      lastUpdateLog += s.str();
+      else
+      {
+        auto rShapes = pr.getShapes();
+        if (rShapes.size() > 1)
+        {
+          std::ostringstream s; s << "WARNING: AAngleP: more than one resolved axis. Using first" << std::endl;
+          lastUpdateLog += s.str();
+        }
+        const TopoDS_Shape &axisShape = rShapes.front();
+        auto glean = occt::gleanAxis(axisShape);
+        if (!glean.second)
+          throw std::runtime_error("AAngleP: couldn't glean 'axis'");
+        axisOrigin = gu::toOsg(glean.first.Location());
+        axisDirection = gu::toOsg(glean.first.Direction());
+        occt::BoundingBox bb(axisShape);
+        tempSize = std::max(tempSize, bb.getDiagonal() / 2.0);
+      }
     }
   }
   
   if (!axisOrigin || !axisDirection || !planeNormal)
-    throw std::runtime_error("Error: unresolved parents");
+    throw std::runtime_error("AAngleP: missing definition");
   if ((1.0 - std::fabs(planeNormal.get() * axisDirection.get())) < std::numeric_limits<float>::epsilon())
     throw std::runtime_error("AAngleP: edge and face are parallel");
   if (tempSize <= 0.0)
@@ -661,63 +569,13 @@ void DatumPlane::goUpdateAAngleP(const UpdatePayload &pli)
 
 void DatumPlane::goUpdateAverage3P(const UpdatePayload &pli)
 {
-  auto getParentFeature = [&](const char *tagIn) -> const Base*
-  {
-    std::vector<const Base*> t1 = pli.getFeatures(tagIn);
-    if (t1.size() != 1)
-      return nullptr;
-    return t1.front();
-  };
+  if (picks.size() != 3)
+    throw std::runtime_error("Average3P: Wrong number of picks");
   
-  const Base *p1f = getParentFeature(plane1);
-  const Base *p2f = getParentFeature(plane2);
-  const Base *p3f = getParentFeature(plane3);
-  if (!p1f || !p2f || !p3f)
-    throw std::runtime_error("Average3P: invalid inputs");
-  
-  double tSize = 1.0;
   typedef std::vector<opencascade::handle<Geom_Surface>, NCollection_StdAllocator<opencascade::handle<Geom_Surface>>> GeomVector;
   GeomVector planes;
   osg::Vec3d averageNormal(0.0, 0.0, 0.0);
-  
-  auto resolveSystem = [&](const Base *fIn, const char *tagIn)
-  {
-    if (!fIn->hasAnnex(ann::Type::SeerShape))
-      return;
-    boost::optional<Pick> pick;
-    for (const auto &p : picks)
-    {
-      if (p.tag == tagIn)
-        pick = p;
-    }
-    if (!pick)
-      return;
-    auto resolves = tls::resolvePicks(fIn, pick.get(), pli.shapeHistory);
-    if (resolves.empty())
-      return;
-    if (resolves.size() > 2)
-    {
-      std::ostringstream s; s << "WARNING: more than one resolved plane" << std::endl;
-      lastUpdateLog += s.str();
-    }
-    const ann::SeerShape &ss = fIn->getAnnex<ann::SeerShape>();
-    assert(ss.hasId(resolves.front().resultId));
-    const TopoDS_Shape &shape = ss.getOCCTShape(resolves.front().resultId);
-    if (shape.ShapeType() != TopAbs_FACE)
-      return;
-    
-    BRepAdaptor_Surface sa(TopoDS::Face(shape));
-    if (sa.GetType() == GeomAbs_Plane)
-    {
-      planes.push_back(sa.Surface().Surface());
-      averageNormal += gu::toOsg(sa.Plane().Axis().Direction());
-      if (shape.Orientation() == TopAbs_REVERSED)
-        averageNormal *= -1.0;
-      occt::BoundingBox bb(shape);
-      tSize = std::max(tSize, bb.getDiagonal() / 2.0);
-    }
-  };
-  
+  double tSize = 1.0;
   auto resolveDatum = [&](const Base *fIn)
   {
     const DatumPlane *dp = dynamic_cast<const DatumPlane*>(fIn);
@@ -728,24 +586,46 @@ void DatumPlane::goUpdateAverage3P(const UpdatePayload &pli)
     gp_Pnt o = gu::toOcc(dpSys.getTrans()).XYZ();
     gp_Dir d = gu::toOcc(gu::getZVector(dpSys));
     planes.push_back(new Geom_Plane(o, d));
-    
     tSize = std::max(tSize, dp->getSize());
   };
+  auto resolveFace = [&](const TopoDS_Shape &sIn)
+  {
+    assert(sIn.ShapeType() == TopAbs_FACE);
+    BRepAdaptor_Surface sa(TopoDS::Face(sIn));
+    if (sa.GetType() == GeomAbs_Plane)
+    {
+      planes.push_back(sa.Surface().Surface());
+      osg::Vec3d t = gu::toOsg(sa.Plane().Axis().Direction());
+      if (sIn.Orientation() == TopAbs_REVERSED)
+        t *= -1.0;
+      averageNormal += t;
+      occt::BoundingBox bb(sIn);
+      tSize = std::max(tSize, bb.getDiagonal() / 2.0);
+    }
+  };
   
-  if (p1f->getType() == ftr::Type::DatumPlane)
-    resolveDatum(p1f);
-  else
-    resolveSystem(p1f, plane1);
-  
-  if (p2f->getType() == ftr::Type::DatumPlane)
-    resolveDatum(p2f);
-  else
-    resolveSystem(p2f, plane2);
-  
-  if (p3f->getType() == ftr::Type::DatumPlane)
-    resolveDatum(p3f);
-  else
-    resolveSystem(p3f, plane3);
+  tls::Resolver pr(pli);
+  for (const auto &p : picks)
+  {
+    if (!pr.resolve(p))
+      throw std::runtime_error("Average3P: Failed to resolve pick");
+    if (pr.getFeature()->getType() == ftr::Type::DatumPlane)
+      resolveDatum(pr.getFeature());
+    else
+    {
+      auto rShapes = pr.getShapes();
+      if (rShapes.empty())
+        throw std::runtime_error("Average3P: No resolved shapes");
+      if (rShapes.size() > 1)
+      {
+        std::ostringstream s; s << "WARNING: Average3P: more than one resolved shape. Using first" << std::endl;
+        lastUpdateLog += s.str();
+      }
+      if (rShapes.front().ShapeType() != TopAbs_FACE)
+        throw std::runtime_error("Average3P: Shape is not a face");
+      resolveFace(rShapes.front());
+    }
+  }
   
   if (planes.size() != 3)
     throw std::runtime_error("Average3P: Invalid plane count");
@@ -771,56 +651,24 @@ void DatumPlane::goUpdateAverage3P(const UpdatePayload &pli)
 
 void DatumPlane::goUpdateThrough3P(const UpdatePayload &pli)
 {
+  if (picks.size() != 3)
+    throw std::runtime_error("Through3P: Wrong number of picks");
+  
+  tls::Resolver pr(pli);
   std::vector<osg::Vec3d> points;
   for (const auto &p : picks)
   {
-    std::vector<const Base*> features = pli.getFeatures(p.tag);
-    if (features.size() != 1)
-      continue;
-    std::vector<tls::Resolved> res = tls::resolvePicks(features.front(), p, pli.shapeHistory);
-    if (res.empty())
-      continue;
-    if (res.size() > 1)
+    if (!pr.resolve(p))
+      throw std::runtime_error("Through3P: Pick resolution failed");
+    auto tps = pr.getPoints();
+    if (tps.empty())
+      throw std::runtime_error("Through3P: No resolved points");
+    if (tps.size() > 1)
     {
-      std::ostringstream s; s << "WARNING: more than one resolved point" << std::endl;
+      std::ostringstream s; s << "WARNING: Through3P: more than one resolved point. Using first" << std::endl;
       lastUpdateLog += s.str();
     }
-    if (!res.front().feature->hasAnnex(ann::Type::SeerShape))
-      continue;
-    const ann::SeerShape &ss = res.front().feature->getAnnex<ann::SeerShape>();
-    assert(ss.hasId(res.front().resultId));
-    boost::optional<osg::Vec3d> tp;
-    if (res.front().pick.selectionType == slc::Type::StartPoint)
-    {
-      const TopoDS_Shape &v = ss.getOCCTShape(ss.useGetStartVertex(res.front().resultId));
-      assert(v.ShapeType() == TopAbs_VERTEX);
-      if (!(v.ShapeType() == TopAbs_VERTEX))
-        continue;
-      points.push_back(gu::toOsg(BRep_Tool::Pnt(TopoDS::Vertex(v))));
-    }
-    else if (res.front().pick.selectionType == slc::Type::EndPoint)
-    {
-      const TopoDS_Shape &v = ss.getOCCTShape(ss.useGetEndVertex(res.front().resultId));
-      assert(v.ShapeType() == TopAbs_VERTEX);
-      if (v.ShapeType() != TopAbs_VERTEX)
-        continue;
-      points.push_back(gu::toOsg(BRep_Tool::Pnt(TopoDS::Vertex(v))));
-    }
-    else if (res.front().pick.selectionType == slc::Type::CenterPoint)
-    {
-      std::vector<osg::Vec3d> centers = ss.useGetCenterPoint(res.front().resultId);
-      if (centers.empty())
-        continue;
-      points.push_back(centers.front());
-    }
-    else if (res.front().pick.isParameterType())
-    {
-      const TopoDS_Shape &shape = ss.getOCCTShape(res.front().resultId);
-      assert(shape.ShapeType() == TopAbs_EDGE);
-      if (shape.ShapeType() != TopAbs_EDGE)
-        continue;
-      points.push_back(res.front().pick.getPoint(TopoDS::Edge(shape)));
-    }
+    points.push_back(tps.front());
   }
   
   if (points.size() != 3)

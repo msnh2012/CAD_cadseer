@@ -106,9 +106,8 @@ void %CLASSNAME%::updateModel(const UpdatePayload &/*pIn*/)
 //     const Base &tbf1 = getFeature(pickOne);
 //     const ann::SeerShape &tss1 = getSeerShape(tbf1);
 //     
-//     auto resolved0 = tls::resolvePicks(&tbf0, picks.front(), pIn.shapeHistory);
-//     auto resolved1 = tls::resolvePicks(&tbf1, picks.back(), pIn.shapeHistory);
-//     if (resolved0.empty() || resolved1.empty())
+//     tls::Resolver pr(pIn);
+//     if (!pr.resolve(picks.front()))
 //       throw std::runtime_error("invalid pick resolution");
 
     

@@ -70,7 +70,7 @@ void RemoveFaces::updateModel(const UpdatePayload &payloadIn)
   sShape->reset();
   try
   {
-    std::vector<const Base*> tfs = payloadIn.getFeatures(InputType::target);
+    std::vector<const Base*> tfs = payloadIn.getFeatures(std::string());
     if (tfs.size() != 1)
       throw std::runtime_error("wrong number of parents");
     if (!tfs.front()->hasAnnex(ann::Type::SeerShape))
@@ -94,27 +94,23 @@ void RemoveFaces::updateModel(const UpdatePayload &payloadIn)
       throw std::runtime_error("feature is skipped");
     }
     
-    std::vector<tls::Resolved> resolved = tls::resolvePicks(tfs, picks, payloadIn.shapeHistory);
+    tls::Resolver resolver(payloadIn);
     BRepAlgoAPI_Defeaturing algo;
     algo.SetRunParallel(true);
     algo.TrackHistory(true);
     algo.SetShape(tss.getRootOCCTShape());
-    for (const auto &r : resolved)
+    
+    for (const auto &p : picks)
     {
-      if (r.resultId.is_nil())
-        continue;
-      assert(tss.hasId(r.resultId));
-      if (!tss.hasId(r.resultId))
-        continue;
-      const TopoDS_Shape &fs = tss.getOCCTShape(r.resultId);
-      assert(fs.ShapeType() == TopAbs_FACE);
-      if (fs.ShapeType() != TopAbs_FACE)
+      resolver.resolve(p);
+      auto rShapes = resolver.getShapes();
+      for (const auto &rs : rShapes)
       {
-        std::cerr << "WARNING: shape is not a face in remove face" << std::endl;
-        continue;
+        if (rs.ShapeType() == TopAbs_FACE)
+          algo.AddFaceToRemove(rs);
       }
-      algo.AddFaceToRemove(fs);
     }
+    
     algo.Build();
     if (!algo.IsDone())
     {

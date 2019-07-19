@@ -120,15 +120,6 @@ void InstanceMirror::updateModel(const UpdatePayload &payloadIn)
   sShape->reset();
   try
   {
-    std::vector<const Base*> tfs = payloadIn.getFeatures(InputType::target);
-    if (tfs.size() != 1)
-      throw std::runtime_error("wrong number of parents");
-    if (!tfs.front()->hasAnnex(ann::Type::SeerShape))
-      throw std::runtime_error("parent doesn't have seer shape.");
-    const ann::SeerShape &tss = tfs.front()->getAnnex<ann::SeerShape>();
-    if (tss.isNull())
-      throw std::runtime_error("target seer shape is null");
-    
     //no new failure state.
     if (isSkipped())
     {
@@ -137,60 +128,48 @@ void InstanceMirror::updateModel(const UpdatePayload &payloadIn)
     }
     
     //get the shapes to mirror.
-    occt::ShapeVector tShapes;
-    if (shapePick.shapeHistory.getRootId().is_nil())
+    tls::Resolver resolver(payloadIn);
+    resolver.resolve(shapePick);
+    occt::ShapeVector tShapes = resolver.getShapes();
+    if (tShapes.empty())
+      throw std::runtime_error("invalid shape pick resolution");
+    assert(resolver.getSeerShape());
+    const ann::SeerShape &tss = *resolver.getSeerShape();
+    if (!slc::isShapeType(shapePick.selectionType))
     {
-      tShapes = tss.useGetNonCompoundChildren();
-    }
-    else
-    {
-      auto resolvedPicks = tls::resolvePicks(tfs.front(), shapePick, payloadIn.shapeHistory);
-      for (const auto &resolved : resolvedPicks)
-      {
-        if (resolved.resultId.is_nil())
-          continue;
-        assert(tss.hasId(resolved.resultId));
-        if (!tss.hasId(resolved.resultId))
-          continue;
-        tShapes.push_back(tss.findShape(resolved.resultId));
-      }
+      assert(tShapes.size() == 1);
+      assert(tShapes.front().ShapeType() == TopAbs_COMPOUND);
+      tShapes = occt::getNonCompounds(tShapes.front());
     }
     if (tShapes.empty())
       throw std::runtime_error("No shapes found.");
     
-    
     //get the plane
     osg::Matrixd workSystem = static_cast<osg::Matrixd>(*csys);
-    std::vector<const Base*> mfs = payloadIn.getFeatures(InstanceMirror::mirrorPlane);
-    if (mfs.size() == 1)
+    resolver.resolve(planePick);
+    
+    if (resolver.getFeature())
     {
       //we have a mirror plane selection so make sure the csysdragger is hidden.
       overlaySwitch->removeChild(csysDragger->dragger.get()); //ok if not present.
       
-      if (mfs.front()->getType() == Type::DatumPlane)
+      if (!slc::isShapeType(planePick.selectionType) && resolver.getFeature()->getType() == Type::DatumPlane)
       {
-        const DatumPlane *dp = dynamic_cast<const DatumPlane *>(mfs.front());
+        const DatumPlane *dp = dynamic_cast<const DatumPlane *>(resolver.getFeature());
         workSystem = dp->getSystem();
       }
-      else if (mfs.front()->hasAnnex(ann::Type::SeerShape))
+      else if (resolver.getSeerShape())
       {
-        const ann::SeerShape &mss = mfs.front()->getAnnex<ann::SeerShape>();
-        if (planePick.shapeHistory.getRootId().is_nil())
-          throw std::runtime_error("plane pick id is nil");
-
-        TopoDS_Shape dsShape;
-        auto resolvedPicks = tls::resolvePicks(mfs.front(), planePick, payloadIn.shapeHistory);
-        for (const auto &resolved : resolvedPicks)
+        occt::ShapeVector pShapes = resolver.getShapes();
+        if (pShapes.empty())
+          throw std::runtime_error("no mirror plane shape");
+        if (pShapes.size() > 1)
         {
-          if (resolved.resultId.is_nil())
-            continue;
-          assert(mss.hasId(resolved.resultId));
-          if (!mss.hasId(resolved.resultId))
-            continue;
-          dsShape = mss.findShape(resolved.resultId);
-          break;
+          std::ostringstream s; s << "WARNING: more than 1 resolved shape for mirror plane. Using first." << std::endl;
+          lastUpdateLog += s.str();
         }
 
+        TopoDS_Shape dsShape = pShapes.front();
         if (dsShape.IsNull())
           throw std::runtime_error("couldn't find occt shape");
         if(dsShape.ShapeType() == TopAbs_FACE)

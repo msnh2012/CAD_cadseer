@@ -54,68 +54,73 @@ void Extrude::deactivate()
 
 void Extrude::go()
 {
+  shouldUpdate = false;
   const slc::Containers &containers = eventHandler->getSelections();
-  if (containers.empty())
+  if (containers.empty() || containers.size() > 3)
   {
-    node->sendBlocked(msg::buildStatusMessage("Wrong pre selection for extrude", 2.0));
-    shouldUpdate = false;
+    node->sendBlocked(msg::buildStatusMessage("Wrong pre-selection for extrude", 2.0));
     return;
   }
   
-  boost::optional<uuid> fId;
-  boost::optional<uuid> axisId;
-  ftr::Picks picks;
-  boost::optional<osg::Vec4> color;
-  for (const auto &c : containers)
+  //target/shape
+  tls::Connector connector;
+  ftr::Base *tf = project->findFeature(containers.front().featureId);
+  if (!tf->hasAnnex(ann::Type::SeerShape))
   {
-    //any axis definition from shape selection will have to be done in dialog.
-    if (c.featureType == ftr::Type::DatumAxis && !axisId)
+    node->sendBlocked(msg::buildStatusMessage("First pre-selection needs to be shape", 2.0));
+    return;
+  }
+  ftr::Pick shapePick = tls::convertToPick(containers.front(), tf->getAnnex<ann::SeerShape>(), project->getShapeHistory());
+  shapePick.tag = ftr::InputType::createIndexedTag(ftr::InputType::target, 0);
+  connector.add(tf->getId(), shapePick.tag);
+  osg::Vec4 color = tf->getColor();
+  
+  //axis
+  ftr::Picks axisPicks;
+  auto addAxisPick = [&](const slc::Container &cIn, const std::string &tagIn) -> ftr::Base*
+  {
+    ftr::Base *bf = project->findFeature(cIn.featureId);
+    assert(bf);
+    ftr::Pick tp = tls::convertToPick(cIn, *bf, project->getShapeHistory());
+    tp.tag = tagIn;
+    axisPicks.push_back(tp);
+    connector.add(bf->getId(), tp.tag);
+    return bf;
+  };
+  if (containers.size() == 2)
+  {
+    ftr::Base *bf = addAxisPick(containers.at(1), ftr::InputType::createIndexedTag(ftr::Extrude::axisName, 0));
+    if
+    (
+      slc::isObjectType(containers.at(1).selectionType)
+      && bf->getType() != ftr::Type::DatumAxis
+      && bf->getType() != ftr::Type::DatumPlane
+    )
     {
-      axisId = c.featureId;
-      continue;
-    }
-    
-    ftr::Base *bf = project->findFeature(c.featureId);
-    if (!bf->hasAnnex(ann::Type::SeerShape))
-      continue;
-    
-    if (!fId)
-      fId = c.featureId;
-    if (fId.get() != c.featureId)
-      continue;
-    if (!color)
-      color = bf->getColor();
-    const ann::SeerShape &ss = bf->getAnnex<ann::SeerShape>();
-    if (!c.shapeId.is_nil())
-    {
-      assert(ss.hasId(c.shapeId));
-      if (!ss.hasId(c.shapeId))
-        continue;
-      //todo: something to turn end points into vertices.
-      ftr::Pick p = tls::convertToPick(c, ss, project->getShapeHistory());
-      picks.push_back(p);
+      node->sendBlocked(msg::buildStatusMessage("Wrong feature type for 1 pick axis", 2.0));
+      return;
     }
   }
-  if (!fId)
+  else if (containers.size() == 3)//3 picks. need 2 points
   {
-    node->sendBlocked(msg::buildStatusMessage("No feature id for extrude", 2.0));
-    shouldUpdate = false;
-    return;
+    if (!slc::isPointType(containers.at(1).selectionType) || !slc::isPointType(containers.at(2).selectionType))
+    {
+      node->sendBlocked(msg::buildStatusMessage("Need 2 points for 2 pick axis definition", 2.0));
+      return;
+    }
+    addAxisPick(containers.at(1), ftr::InputType::createIndexedTag(ftr::Extrude::axisName, 0));
+    addAxisPick(containers.at(2), ftr::InputType::createIndexedTag(ftr::Extrude::axisName, 1));
   }
   
   std::shared_ptr<ftr::Extrude> extrude(new ftr::Extrude());
-  extrude->setPicks(picks);
-  if (color)
-    extrude->setColor(color.get());
+  extrude->setPicks(ftr::Picks{shapePick});
+  if (!axisPicks.empty())
+    extrude->setAxisPicks(axisPicks); //sets the appropriate type also.
+  extrude->setColor(color);
   project->addFeature(extrude);
-  project->connectInsert(fId.get(), extrude->getId(), ftr::InputType{ftr::InputType::target});
-  if (axisId)
-  {
-    project->connectInsert(axisId.get(), extrude->getId(), ftr::InputType{ftr::Extrude::axisName});
-    extrude->setDirectionType(ftr::Extrude::DirectionType::Picks);
-  }
+  for (const auto &p : connector.pairs)
+    project->connectInsert(p.first, extrude->getId(), {p.second});
   
-  node->sendBlocked(msg::buildHideThreeD(fId.get()));
-  node->sendBlocked(msg::buildHideOverlay(fId.get()));
   node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  shouldUpdate = true;
 }

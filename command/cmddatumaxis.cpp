@@ -78,16 +78,17 @@ void DatumAxis::go()
     
     ftr::Picks picks;
     picks.push_back(tls::convertToPick(cs.front(), parents.front()->getAnnex<ann::SeerShape>(), project->getShapeHistory()));
+    picks.back().tag = std::string(ftr::InputType::create) + std::to_string(0);
     picks.push_back(tls::convertToPick(cs.back(), parents.back()->getAnnex<ann::SeerShape>(), project->getShapeHistory()));
+    picks.back().tag = std::string(ftr::InputType::create) + std::to_string(1);
     
     std::shared_ptr<ftr::DatumAxis> daxis(new ftr::DatumAxis());
     daxis->setAxisType(ftr::DatumAxis::AxisType::Points);
     daxis->setPicks(picks);
     daxis->setAutoSize(true);
     project->addFeature(daxis);
-    gu::uniquefy(parents); //so we don't connect twice.
-    for (const auto &p : parents)
-      project->connectInsert(p->getId(), daxis->getId(), ftr::InputType{ftr::InputType::create});
+    project->connectInsert(parents.front()->getId(), daxis->getId(), {picks.front().tag});
+    project->connectInsert(parents.back()->getId(), daxis->getId(), {picks.back().tag});
     
     node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
     return;
@@ -105,21 +106,21 @@ void DatumAxis::go()
   {
     std::vector<ftr::Base*> parents;
     ftr::Picks picks;
-    for (const auto &c : cs)
-    {
-      parents.push_back(project->findFeature(c.featureId));
-      if (c.selectionType == slc::Type::Face)
-        picks.push_back(tls::convertToPick(c, parents.back()->getAnnex<ann::SeerShape>(), project->getShapeHistory()));
-    }
+
+    parents.push_back(project->findFeature(cs.front().featureId));
+    picks.push_back(tls::convertToPick(cs.front(), *parents.back(), project->getShapeHistory()));
+    picks.back().tag = std::string(ftr::InputType::create) + std::to_string(0);
+    parents.push_back(project->findFeature(cs.back().featureId));
+    picks.push_back(tls::convertToPick(cs.back(), *parents.back(), project->getShapeHistory()));
+    picks.back().tag = std::string(ftr::InputType::create) + std::to_string(1);
     
     std::shared_ptr<ftr::DatumAxis> daxis(new ftr::DatumAxis());
     daxis->setAxisType(ftr::DatumAxis::AxisType::Intersection);
     daxis->setPicks(picks);
     daxis->setAutoSize(true);
     project->addFeature(daxis);
-    gu::uniquefy(parents); //so we don't connect twice.
-    for (const auto &p : parents)
-      project->connectInsert(p->getId(), daxis->getId(), ftr::InputType{ftr::InputType::create});
+    project->connectInsert(parents.front()->getId(), daxis->getId(), {picks.front().tag});
+    project->connectInsert(parents.back()->getId(), daxis->getId(), {picks.back().tag});
     
     node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
     return;
@@ -143,12 +144,13 @@ void DatumAxis::go()
       return;
     }
     ftr::Pick pick = tls::convertToPick(cs.front(), ss, project->getShapeHistory());
+    pick.tag = std::string(ftr::InputType::create) + std::to_string(0);
     std::shared_ptr<ftr::DatumAxis> daxis(new ftr::DatumAxis());
     daxis->setAxisType(ftr::DatumAxis::AxisType::Geometry);
     daxis->setPicks(ftr::Picks({pick}));
     daxis->setAutoSize(true);
     project->addFeature(daxis);
-    project->connectInsert(parent->getId(), daxis->getId(), ftr::InputType{ftr::InputType::create});
+    project->connectInsert(parent->getId(), daxis->getId(), {pick.tag});
     
     node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
     return;

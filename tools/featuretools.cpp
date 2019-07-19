@@ -34,215 +34,7 @@
 #include "tools/featuretools.h"
 
 using boost::uuids::uuid;
-
 using namespace tls;
-
-Resolved::Resolved(const ftr::Base *fIn, const boost::uuids::uuid &idIn, const ftr::Pick &pIn):
-feature(fIn),
-resultId(idIn),
-pick(pIn)
-{}
-
-Resolved::Resolved(const ftr::Base *fIn, const ftr::Pick &pIn):
-feature(fIn),
-pick(pIn)
-{}
-
-Resolved::Resolved(const ftr::Pick &pIn):
-pick(pIn)
-{}
-
-bool Resolved::operator< (const Resolved &other) const
-{
-  if (feature < other.feature)
-    return true;
-  if (resultId < other.resultId)
-    return true;
-  
-  return false;
-}
-
-bool Resolved::operator== (const Resolved &other) const
-{
-  if
-  (
-    (feature == other.feature)
-    && (resultId == other.resultId)
-  )
-  return true;
-  
-  return false;
-}
-
-/*! @brief get occt shapes.
- * 
- * @return can be empty
- * @details assumes Pick::resolvedIds have been filled in.
- * startPoint and endPoints will return a TopoDS_Vertex.
- * other points will return a TopoDS_Edge.
- */
-occt::ShapeVector Resolved::getShapes() const
-{
-  occt::ShapeVector out;
-  
-  if (!feature || !feature->hasAnnex(ann::Type::SeerShape))
-    return out;
-  
-  const ann::SeerShape &ss = feature->getAnnex<ann::SeerShape>();
-  if (ss.isNull())
-    return out;
-  
-  if (pick.selectionType == slc::Type::Object || pick.selectionType == slc::Type::Feature)
-  {
-    const TopoDS_Shape &shape = ss.getRootOCCTShape();
-    if (!shape.IsNull())
-      out.push_back(shape);
-    return out;
-  }
-  
-  for (const auto rid : pick.resolvedIds)
-  {
-    assert(ss.hasId(rid));
-    out.push_back(ss.getOCCTShape(rid));
-  }
-  
-  return out;
-}
-
-boost::optional<osg::Vec3d> Resolved::getPoint(const ann::SeerShape &ssIn) const
-{
-  if (!slc::isPointType(pick.selectionType))
-    return boost::none;
-  assert(ssIn.hasId(resultId));
-  if(!ssIn.hasId(resultId))
-    return boost::none;
-  const TopoDS_Shape &rs = ssIn.getOCCTShape(resultId);
-  if (rs.ShapeType() == TopAbs_VERTEX)
-  {
-    return gu::toOsg(BRep_Tool::Pnt(TopoDS::Vertex(rs)));
-  }
-  if (rs.ShapeType() == TopAbs_EDGE)
-  {
-    boost::optional<osg::Vec3d> p;
-    if (pick.selectionType == slc::Type::StartPoint)
-      p = gu::toOsg(BRep_Tool::Pnt(TopoDS::Vertex(ssIn.getOCCTShape(ssIn.useGetStartVertex(resultId)))));
-    if (pick.selectionType == slc::Type::EndPoint)
-      p = gu::toOsg(BRep_Tool::Pnt(TopoDS::Vertex(ssIn.getOCCTShape(ssIn.useGetEndVertex(resultId)))));
-    if (pick.selectionType == slc::Type::MidPoint)
-    {
-      auto a = ssIn.useGetMidPoint(resultId);
-      if (!a.empty())
-        p = a.front();
-    }
-    if (pick.selectionType == slc::Type::CenterPoint)
-    {
-      auto a = ssIn.useGetCenterPoint(resultId);
-      if (!a.empty())
-        p = a.front();
-    }
-    if (pick.selectionType == slc::Type::QuadrantPoint || pick.selectionType == slc::Type::NearestPoint)
-    {
-      p = pick.getPoint(TopoDS::Edge(rs));
-    }
-    if (!p)
-      return boost::none;
-    
-    return p.get();
-  }
-  
-  return boost::none;
-}
-
-std::vector<Resolved> tls::resolvePicks
-(
-  const std::vector<const ftr::Base*> &features,
-  std::vector<ftr::Pick> picks, //make a work copy of the picks.
-  const ftr::ShapeHistory &pHistory
-)
-{
-  std::vector<Resolved> out;
-  
-  for (const auto *tf : features)
-  {
-    //i can see wrong resolution happening here. the input graph edges don't store the shapeid and the picks
-    //don't store the feature id. When shape history has splits and joins and we have multiple tools with picks,
-    //it will be easy to resolve to a different shape then intended by user. Not sure what to do.
-    assert(tf->hasAnnex(ann::Type::SeerShape)); //caller verifies.
-    if (!tf->hasAnnex(ann::Type::SeerShape))
-      continue;
-    const ann::SeerShape &toolSeerShape = tf->getAnnex<ann::SeerShape>();
-    assert(!toolSeerShape.isNull()); //caller verifies.
-    if (toolSeerShape.isNull())
-      continue;
-    
-    bool foundPick = false;
-    for (auto it = picks.begin(); it != picks.end();)
-    {
-      std::vector<boost::uuids::uuid> rids = pHistory.resolveHistories(it->shapeHistory, tf->getId());
-      if (rids.empty())
-      {
-        ++it;
-        continue;
-      }
-      for (const auto rid : rids)
-      {
-        assert(toolSeerShape.hasId(rid)); //project shape history and the feature shapeid records out of sync.
-        if (!toolSeerShape.hasId(rid))
-          continue;
-        out.push_back(Resolved(tf, rid, *it));
-      }
-      foundPick = true;
-      it = picks.erase(it);
-    }
-    if (!foundPick) //we assume the whole shape.
-      out.push_back(Resolved(tf, gu::createNilId(), ftr::Pick()));
-  }
-  gu::uniquefy(out);
-  
-  return out;
-}
-
-std::vector<Resolved> tls::resolvePicks
-(
-  const ftr::Base *feature,
-  const ftr::Pick &pick,
-  const ftr::ShapeHistory &pHistory
-)
-{
-  std::vector<const ftr::Base*> features(1, feature);
-  ftr::Picks picks(1, pick);
-  return tls::resolvePicks(features, picks, pHistory);
-}
-
-Resolved tls::resolvePick
-(
-  const ftr::Pick &pick
-  , const ftr::UpdatePayload &payload
-)
-{
-  Resolved out(pick);
-  out.pick.resolvedIds.clear();
-  
-  auto features = payload.getFeatures(pick.tag);
-  if (features.empty())
-    return out;
-  //we should have a 1 to 1 mapping between features and picks now. so assert.
-  assert(features.size() == 1);
-  out.feature = features.front();
-  
-  if (pick.isEmpty())
-    return out;
-  
-  if (!out.feature->hasAnnex(ann::Type::SeerShape))
-    return out;
-  const ann::SeerShape &ss = out.feature->getAnnex<ann::SeerShape>();
-  if (ss.isNull())
-    return out;
-  
-  out.pick.resolvedIds = payload.shapeHistory.resolveHistories(pick.shapeHistory, out.feature->getId());
-  
-  return out;
-}
 
 ftr::Pick tls::convertToPick
 (
@@ -254,8 +46,9 @@ ftr::Pick tls::convertToPick
   ftr::Pick out;
   out.selectionType = messageIn.type;
   
-  if ((messageIn.type != slc::Type::Object) && (messageIn.type != slc::Type::Feature))
+  if (slc::isShapeType(messageIn.type))
   {
+    assert(!messageIn.shapeId.is_nil());
     assert(sShapeIn.hasId(messageIn.shapeId)); //don't set me up
     //create devolve history from original pick not resolved
     out.shapeHistory = pHistory.createDevolveHistory(messageIn.shapeId);
@@ -310,8 +103,9 @@ ftr::Pick tls::convertToPick
   ftr::Pick out;
   out.selectionType = containerIn.selectionType;
   
-  if ((containerIn.selectionType != slc::Type::Object) && (containerIn.selectionType != slc::Type::Feature))
+  if (slc::isShapeType(containerIn.selectionType))
   {
+    assert(!containerIn.shapeId.is_nil());
     assert(sShapeIn.hasId(containerIn.shapeId)); //don't set me up
     //create devolve history from original pick not resolved
     out.shapeHistory = pHistory.createDevolveHistory(containerIn.shapeId);
@@ -352,6 +146,25 @@ ftr::Pick tls::convertToPick
     out.highlightIds.push_back(resolvedId);
   }
   
+  return out;
+}
+
+ftr::Pick tls::convertToPick
+(
+  const slc::Container &containerIn
+  , const ftr::Base &feature
+  , const ftr::ShapeHistory &pHistory
+)
+{
+  ftr::Pick out;
+  if
+  (
+    slc::isShapeType(containerIn.selectionType)
+    && feature.hasAnnex(ann::Type::SeerShape)
+    && !feature.getAnnex<ann::SeerShape>().isNull()
+  )
+    out = convertToPick(containerIn, feature.getAnnex<ann::SeerShape>(), pHistory);
+  out.selectionType = containerIn.selectionType;
   return out;
 }
 
@@ -444,3 +257,346 @@ slc::Messages tls::convertToMessage(const ftr::Pick &pickIn, const ftr::Base *fe
   
   return out;
 }
+
+Resolver::Resolver(const ftr::UpdatePayload &pIn)
+: payload(&pIn)
+{}
+
+Resolver::Resolver(const ftr::Base *fIn)
+: feature(fIn)
+{}
+
+/*! @brief resolve for a pick
+ * 
+ * @param pIn to resolve
+ * @return true = success, false = failure
+ * @see hasSucceeded
+ */
+bool Resolver::resolve(const ftr::Pick &pIn)
+{
+  workPick = pIn;
+  workPick.resolvedIds.clear();
+  workPick.highlightIds.clear();
+  
+  if (payload)
+    resolveViaPayload();
+  else if (feature)
+    resolveViaFeature();
+  
+  return hasSucceeded();
+}
+
+/*! @brief returns the current state.
+ * 
+ * @return state from the last call to resolve.
+ * @note With object types only feature pointer is guaranteed.
+ * seer shape has to be validated by caller if needed.
+ * With shape types, feature, seer shape and non-empty
+ * resolvedIds are all validated.
+ */
+bool Resolver::hasSucceeded()
+{
+  if (slc::isObjectType(workPick.selectionType))
+    return feature; //cant do seershape. We have features without it.
+  else
+    return feature && sShape && !workPick.resolvedIds.empty();
+}
+
+/*! @brief resolves pick via the payload and prepares for yield
+ * 
+ * @parameter pIn is the pick for resolution.
+ * @note This method needs object construction with ftr::UpdatePayload parameter
+ */
+void Resolver::resolveViaPayload()
+{
+  feature = nullptr;
+  sShape = nullptr;
+  auto features = payload->getFeatures(workPick.tag);
+  if (features.empty())
+    return;
+  //we should have a 1 to 1 mapping between features and picks now. so assert.
+  assert(features.size() == 1);
+  if (features.size() != 1)
+  {
+    std::cout << "ERROR: pick tags required to match only one feature input, in: " << BOOST_CURRENT_FUNCTION << std::endl;
+    return;
+  }
+  feature = features.front();
+  
+  if (!feature->hasAnnex(ann::Type::SeerShape))
+    return;
+  sShape = &feature->getAnnex<ann::SeerShape>();
+  if (sShape->isNull())
+  {
+    sShape = nullptr;
+    return;
+  }
+  
+  if (!slc::isShapeType(workPick.selectionType) || workPick.isEmpty())
+    return;
+  
+  workPick.resolvedIds = payload->shapeHistory.resolveHistories(workPick.shapeHistory, feature->getId());
+  //someday we will consider accrue type and highlightIds != resolvedIds.
+  std::copy(workPick.resolvedIds.begin(), workPick.resolvedIds.end(), std::back_inserter(workPick.highlightIds));
+}
+
+void Resolver::resolveViaFeature()
+{
+  //this doesn't do much. we will just copy the root id of the shapehistory into resolvedIds and highlightIds,
+  //so internal state will match resolveViaPayload.
+  sShape = nullptr;
+  if (!feature->hasAnnex(ann::Type::SeerShape))
+    return;
+  sShape = &feature->getAnnex<ann::SeerShape>();
+  if (sShape->isNull())
+  {
+    sShape = nullptr;
+    return;
+  }
+  
+  if (!slc::isShapeType(workPick.selectionType) || workPick.isEmpty())
+    return;
+  uuid id = workPick.shapeHistory.getRootId();
+  if (id.is_nil() || !sShape->hasId(id))
+  {
+    std::cout << "Warning: id is not in seershape, in: " << BOOST_CURRENT_FUNCTION << std::endl;
+    return;
+  }
+  workPick.resolvedIds.push_back(id);
+  //someday we will consider accrue type and highlightIds != resolvedIds.
+  workPick.highlightIds.push_back(id);
+}
+
+/* this is basically the same as global function.
+ * except this version only works on the picks resolvedIds vector.
+ * the one above can also work with the shapehistory.
+ */
+slc::Messages Resolver::convertToMessages() const
+{
+  slc::Messages out;
+  
+  if (!feature)
+    return out;
+  
+  slc::Message proto;
+  proto.type = workPick.selectionType;
+  proto.featureType = feature->getType();
+  proto.featureId = feature->getId();
+  
+  if (!slc::isShapeType(workPick.selectionType))
+    return slc::Messages(1, proto);
+  
+  if (!sShape)
+    return out;
+  
+  //lambda to fill add one id to out.
+  for (const auto &rid : workPick.resolvedIds)
+  {
+    slc::Message current = proto;
+    assert(sShape->hasId(rid));
+    if (!sShape->hasId(rid))
+    {
+      std::cout << "ERROR: resolved id is not in seer shape, in: " << BOOST_CURRENT_FUNCTION << std::endl;
+      continue;
+    }
+    current.shapeId = rid; // start and end points will overwrite.
+    const TopoDS_Shape &s = sShape->getOCCTShape(rid);
+    
+    if (workPick.selectionType == slc::Type::StartPoint || workPick.selectionType == slc::Type::EndPoint)
+    {
+      assert(s.ShapeType() == TopAbs_VERTEX);
+      if (s.ShapeType() != TopAbs_VERTEX)
+      {
+        std::cout << "ERROR: start/end point is not a vertex, in: " << BOOST_CURRENT_FUNCTION << std::endl;
+        continue;
+      }
+      
+      std::vector<uuid> parentEdges = sShape->useGetParentsOfType(rid, TopAbs_EDGE);
+      for (const auto &edge : parentEdges)
+      {
+        if
+        (
+          (
+            (workPick.selectionType == slc::Type::StartPoint)
+            && (sShape->useGetStartVertex(edge) == rid)
+          )
+          ||
+          (
+            (workPick.selectionType == slc::Type::EndPoint)
+            && (sShape->useGetEndVertex(edge) == rid)
+          )
+        )
+        {
+          current.shapeId = edge;
+          break;
+        }
+      }
+      if (current.shapeId == rid)
+      {
+        std::cout << "ERROR: couldn't get edge from vertex in: " << BOOST_CURRENT_FUNCTION << std::endl;
+        continue;
+      }
+      current.pointLocation = gu::toOsg(TopoDS::Vertex(s));
+    }
+    if
+    (
+      workPick.selectionType == slc::Type::Edge
+      || workPick.selectionType == slc::Type::MidPoint
+      || workPick.selectionType == slc::Type::NearestPoint
+      || workPick.selectionType == slc::Type::QuadrantPoint
+    )
+    {
+      assert(s.ShapeType() == TopAbs_EDGE);
+      if (s.ShapeType() != TopAbs_EDGE)
+      {
+        std::cout << "ERROR: Shape is not an edge, in: " << BOOST_CURRENT_FUNCTION << std::endl;
+        continue;
+      }
+      current.pointLocation = workPick.getPoint(TopoDS::Edge(s));
+    }
+    if (workPick.selectionType == slc::Type::Face)
+    {
+      assert(s.ShapeType() == TopAbs_FACE);
+      if (s.ShapeType() != TopAbs_FACE)
+      {
+        std::cout << "ERROR: Shape is not a face, in: " << BOOST_CURRENT_FUNCTION << std::endl;
+        continue;
+      }
+      current.pointLocation = workPick.getPoint(TopoDS::Face(s));
+    }
+    
+    out.push_back(current);
+  };
+  
+  return out;
+}
+
+/*! @brief get the occt shapes
+ * 
+ * @param convertEndPoints controls whether endpoints are converted to vertices
+ * or left as edges.
+ * @return vector of shapes.
+ */
+occt::ShapeVector Resolver::getShapes(bool convertEndPoints) const
+{
+  occt::ShapeVector out;
+  if(!feature || !sShape)
+    return out;
+  
+  if (!slc::isShapeType(workPick.selectionType))
+  {
+    //get the whole shape.
+    out.push_back(sShape->getRootOCCTShape());
+  }
+  else
+  {
+    for (const auto &rId : workPick.resolvedIds)
+    {
+      assert(sShape->hasId(rId));
+      if (!sShape->hasId(rId))
+      {
+        std::cout << "ERROR: resolved id is not in seer shape, in: " << BOOST_CURRENT_FUNCTION << std::endl;
+        continue;
+      }
+      TopoDS_Shape theShape = sShape->getOCCTShape(rId);
+      if (convertEndPoints)
+      {
+        if (workPick.selectionType == slc::Type::StartPoint)
+        {
+          assert(theShape.ShapeType() == TopAbs_EDGE);
+          out.push_back(sShape->getOCCTShape(sShape->useGetStartVertex(rId)));
+        }
+        else if (workPick.selectionType == slc::Type::EndPoint)
+        {
+          assert(theShape.ShapeType() == TopAbs_EDGE);
+          out.push_back(sShape->getOCCTShape(sShape->useGetEndVertex(rId)));
+        }
+        else if (!slc::isPointType(workPick.selectionType))
+          out.push_back(theShape);
+      }
+      else
+        out.push_back(theShape);
+    }
+  }
+  
+  return out;
+}
+
+std::vector<osg::Vec3d> Resolver::getPoints() const
+{
+  std::vector<osg::Vec3d> out;
+  
+  if (!slc::isPointType(workPick.selectionType) || !feature || !sShape)
+    return out;
+  
+  for (const auto &rId : workPick.resolvedIds)
+  {
+    assert(sShape->hasId(rId));
+    if(!sShape->hasId(rId))
+    {
+      std::cout << "ERROR: resolved id is not in seer shape, in: " << BOOST_CURRENT_FUNCTION << std::endl;
+      continue;
+    }
+    const TopoDS_Shape &rs = sShape->getOCCTShape(rId);
+    if (rs.ShapeType() == TopAbs_VERTEX)
+    {
+      out.push_back(gu::toOsg(BRep_Tool::Pnt(TopoDS::Vertex(rs))));
+      continue;
+    }
+    if (rs.ShapeType() == TopAbs_EDGE)
+    {
+      boost::optional<osg::Vec3d> p;
+      if (workPick.selectionType == slc::Type::StartPoint)
+        p = gu::toOsg(BRep_Tool::Pnt(TopoDS::Vertex(sShape->getOCCTShape(sShape->useGetStartVertex(rId)))));
+      if (workPick.selectionType == slc::Type::EndPoint)
+        p = gu::toOsg(BRep_Tool::Pnt(TopoDS::Vertex(sShape->getOCCTShape(sShape->useGetEndVertex(rId)))));
+      if (workPick.selectionType == slc::Type::MidPoint)
+      {
+        auto a = sShape->useGetMidPoint(rId);
+        if (!a.empty())
+          p = a.front();
+      }
+      if (workPick.selectionType == slc::Type::CenterPoint)
+      {
+        auto a = sShape->useGetCenterPoint(rId);
+        if (!a.empty())
+          p = a.front();
+      }
+      if (workPick.selectionType == slc::Type::QuadrantPoint || workPick.selectionType == slc::Type::NearestPoint)
+      {
+        p = workPick.getPoint(TopoDS::Edge(rs));
+      }
+      if (!p)
+        continue;
+      
+      out.push_back(p.get());
+    }
+  }
+  
+  return out;
+}
+
+const std::vector<boost::uuids::uuid>& Resolver::getResolvedIds(const ftr::Pick &pIn)
+{
+  resolve(pIn);
+  return getResolvedIds();
+}
+
+slc::Messages Resolver::convertToMessages(const ftr::Pick &pIn)
+{
+  resolve(pIn);
+  return convertToMessages();
+}
+
+occt::ShapeVector Resolver::getShapes(const ftr::Pick &pIn, bool convertEndPoints)
+{
+  resolve(pIn);
+  return getShapes(convertEndPoints);
+}
+
+std::vector<osg::Vec3d> Resolver::getPoints(const ftr::Pick &pIn)
+{
+  resolve(pIn);
+  return getPoints();
+}
+    

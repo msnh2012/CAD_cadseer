@@ -106,7 +106,7 @@ void Chamfer::updateModel(const UpdatePayload &payloadIn)
   sShape->reset();
   try
   {
-    std::vector<const Base*> targetFeatures = payloadIn.getFeatures(InputType::target);
+    std::vector<const Base*> targetFeatures = payloadIn.getFeatures(std::string());
     if (targetFeatures.size() != 1)
       throw std::runtime_error("wrong number of parents");
     const Base* tf = targetFeatures.front();
@@ -131,6 +131,7 @@ void Chamfer::updateModel(const UpdatePayload &payloadIn)
       throw std::runtime_error("feature is skipped");
     }
     
+    tls::Resolver resolver(payloadIn);
     BRepFilletAPI_MakeChamfer chamferMaker(targetSeerShape.getRootOCCTShape());
     for (const auto &chamfer : symChamfers)
     {
@@ -138,23 +139,11 @@ void Chamfer::updateModel(const UpdatePayload &payloadIn)
       bool labelDone = false; //set label position to first pick.
       for (const auto &pick : chamfer.picks)
       {
-        auto resolvedEdgePicks = tls::resolvePicks(tf, pick.edgePick, payloadIn.shapeHistory);
-        std::vector<uuid> edgeIds;
-        for (const auto &resolved : resolvedEdgePicks)
-        {
-          if (resolved.resultId.is_nil())
-            continue;
-          edgeIds.push_back(resolved.resultId);
-        }
+        resolver.resolve(pick.edgePick);
+        std::vector<uuid> edgeIds = resolver.getResolvedIds();
         
-        auto resolvedFacePicks = tls::resolvePicks(tf, pick.facePick, payloadIn.shapeHistory);
-        std::vector<uuid> faceIds;
-        for (const auto &resolved : resolvedFacePicks)
-        {
-          if (resolved.resultId.is_nil())
-            continue;
-          faceIds.push_back(resolved.resultId);
-        }
+        resolver.resolve(pick.facePick);
+        std::vector<uuid> faceIds = resolver.getResolvedIds();
         
         for (const auto &eid : edgeIds)
         {

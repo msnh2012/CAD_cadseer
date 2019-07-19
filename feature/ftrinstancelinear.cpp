@@ -171,15 +171,6 @@ void InstanceLinear::updateModel(const UpdatePayload &payloadIn)
   sShape->reset();
   try
   {
-    std::vector<const Base*> tfs = payloadIn.getFeatures(InputType::target);
-    if (tfs.size() != 1)
-      throw std::runtime_error("wrong number of parents");
-    if (!tfs.front()->hasAnnex(ann::Type::SeerShape))
-      throw std::runtime_error("parent doesn't have seer shape.");
-    const ann::SeerShape &tss = tfs.front()->getAnnex<ann::SeerShape>();
-    if (tss.isNull())
-      throw std::runtime_error("target seer shape is null");
-    
     //no new failure state.
     if (isSkipped())
     {
@@ -187,27 +178,21 @@ void InstanceLinear::updateModel(const UpdatePayload &payloadIn)
       throw std::runtime_error("feature is skipped");
     }
     
-    occt::ShapeVector tShapes;
-    if (pick.shapeHistory.getRootId().is_nil())
+    tls::Resolver resolver(payloadIn);
+    resolver.resolve(pick);
+    occt::ShapeVector tShapes = resolver.getShapes();
+    if (tShapes.empty())
+      throw std::runtime_error("No resolved shapes found.");
+    assert(resolver.getSeerShape());
+    if (!slc::isShapeType(pick.selectionType))
     {
-      tShapes = tss.useGetNonCompoundChildren();
-    }
-    else
-    {
-      auto resolvedPicks = tls::resolvePicks(tfs.front(), pick, payloadIn.shapeHistory);
-      for (const auto &resolved : resolvedPicks)
-      {
-        if (resolved.resultId.is_nil())
-          continue;
-        assert(tss.hasId(resolved.resultId));
-        if (!tss.hasId(resolved.resultId))
-          continue;
-        tShapes.push_back(tss.findShape(resolved.resultId));
-      }
+      assert(tShapes.size() == 1);
+      assert(tShapes.front().ShapeType() == TopAbs_COMPOUND);
+      tShapes = occt::getNonCompounds(tShapes.front());
     }
     if (tShapes.empty())
       throw std::runtime_error("No shapes found.");
-    
+
     occt::ShapeVector out;
     osg::Vec3d xProjection = gu::getXVector(static_cast<osg::Matrixd>(*csys)) * static_cast<double>(*xOffset);
     osg::Vec3d yProjection = gu::getYVector(static_cast<osg::Matrixd>(*csys)) * static_cast<double>(*yOffset);
@@ -250,7 +235,7 @@ void InstanceLinear::updateModel(const UpdatePayload &payloadIn)
     
     for (const auto &s : tShapes)
     {
-      iMapper->startMapping(tss, tss.findId(s),  payloadIn.shapeHistory);
+      iMapper->startMapping(*resolver.getSeerShape(), resolver.getSeerShape()->findId(s),  payloadIn.shapeHistory);
       std::size_t count = 0;
       for (const auto &si : out)
       {

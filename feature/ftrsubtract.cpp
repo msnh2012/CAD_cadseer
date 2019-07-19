@@ -83,60 +83,27 @@ void Subtract::updateModel(const UpdatePayload &payloadIn)
   sShape->reset();
   try
   {
-    //target
-    std::vector<const Base*> targetFeatures = payloadIn.getFeatures(InputType::target);
-    if (targetFeatures.empty())
-      throw std::runtime_error("no target features");
-    for (auto f = targetFeatures.begin(); f != targetFeatures.end();)
-    {
-      assert((*f)->hasAnnex(ann::Type::SeerShape));
-      if (!(*f)->hasAnnex(ann::Type::SeerShape))
-        throw std::runtime_error("target feature doesn't have seer shape");
-      const ann::SeerShape &targetSeerShape = (*f)->getAnnex<ann::SeerShape>();
-      if (targetSeerShape.isNull())
-        f = targetFeatures.erase(f);
-      else
-        f++;
-    }
-    if (targetFeatures.empty())
-      throw std::runtime_error("target features empty after seer shape check");
-    auto resolves = tls::resolvePicks(targetFeatures, targetPicks, payloadIn.shapeHistory);
     occt::ShapeVector targetOCCTShapes;
-    for (const auto &resolved : resolves)
+    std::vector<tls::Resolver> targetResolvers;
+    for (const auto &tp : targetPicks)
     {
-      const ann::SeerShape &tShape = resolved.feature->getAnnex<ann::SeerShape>();
-      if (resolved.resultId.is_nil())
-      {
-        //don't include the compound.
-        const auto &c = tShape.useGetNonCompoundChildren();
-        std::copy(c.begin(), c.end(), std::back_inserter(targetOCCTShapes));
-      }
-      else
-        targetOCCTShapes.push_back(tShape.getOCCTShape(resolved.resultId));
+      targetResolvers.emplace_back(payloadIn);
+      targetResolvers.back().resolve(tp);
+      auto shapes = targetResolvers.back().getShapes();
+      std::copy(shapes.begin(), shapes.end(), std::back_inserter(targetOCCTShapes));
     }
-    occt::uniquefy(targetOCCTShapes); //just in case.
-    for (auto it = targetOCCTShapes.begin(); it != targetOCCTShapes.end();)
-    {
-      //remove anything below a solid.
-      if (it->ShapeType() > TopAbs_SOLID)
-        it = targetOCCTShapes.erase(it);
-      else
-        ++it;
-    }
-    if (targetOCCTShapes.empty())
-      throw std::runtime_error("target shapes is empty");
     
     //set to new failed state.
     TopoDS_Compound tc = occt::ShapeVectorCast(targetOCCTShapes);
     sShape->setOCCTShape(tc, getId());
     BOPAlgo_Builder dummy;
     iMapper->go(payloadIn, dummy, *sShape);
-    for (const auto *it : targetFeatures)
-      sShape->shapeMatch(it->getAnnex<ann::SeerShape>());
-    for (const auto *it : targetFeatures)
-      sShape->uniqueTypeMatch(it->getAnnex<ann::SeerShape>());
-    for (const auto *it : targetFeatures)
-      sShape->outerWireMatch(it->getAnnex<ann::SeerShape>());
+    for (const auto &it : targetResolvers)
+      sShape->shapeMatch(*it.getSeerShape());
+    for (const auto &it : targetResolvers)
+      sShape->uniqueTypeMatch(*it.getSeerShape());
+    for (const auto &it : targetResolvers)
+      sShape->outerWireMatch(*it.getSeerShape());
     sShape->derivedMatch();
     sShape->ensureNoNils(); //just in case
     sShape->ensureNoDuplicates(); //just in case
@@ -148,44 +115,14 @@ void Subtract::updateModel(const UpdatePayload &payloadIn)
     }
     
     //tools
-    std::vector<const Base*> toolFeatures = payloadIn.getFeatures(InputType::tool);
-    if (toolFeatures.empty())
-      throw std::runtime_error("no tool features found");
-    for (auto tf = toolFeatures.begin(); tf != toolFeatures.end();) //do some verfication.
-    {
-      assert((*tf)->hasAnnex(ann::Type::SeerShape)); //make user interface verify the input.
-      if (!(*tf)->hasAnnex(ann::Type::SeerShape))
-        throw std::runtime_error("tool feature has no seer shape");
-      const ann::SeerShape &toolSeerShape = (*tf)->getAnnex<ann::SeerShape>();
-      if (toolSeerShape.isNull())
-        tf = toolFeatures.erase(tf);
-      else
-        tf++;
-    }
-    if (toolFeatures.empty())
-      throw std::runtime_error("tool features empty after seer shape check");
-    auto resolves2 = tls::resolvePicks(toolFeatures, toolPicks, payloadIn.shapeHistory);
     occt::ShapeVector toolOCCTShapes;
-    for (const auto &resolved : resolves2)
+    std::vector<tls::Resolver> toolResolvers;
+    for (const auto &tp : toolPicks)
     {
-      const ann::SeerShape &tShape = resolved.feature->getAnnex<ann::SeerShape>();
-      if (resolved.resultId.is_nil())
-      {
-        //don't include the compound.
-        const auto &c = tShape.useGetNonCompoundChildren();
-        std::copy(c.begin(), c.end(), std::back_inserter(toolOCCTShapes));
-      }
-      else
-        toolOCCTShapes.push_back(tShape.getOCCTShape(resolved.resultId));
-    }
-    occt::uniquefy(toolOCCTShapes); //just in case.
-    for (auto it = toolOCCTShapes.begin(); it != toolOCCTShapes.end();)
-    {
-      //remove anything below a solid.
-      if (it->ShapeType() > TopAbs_SOLID)
-        it = toolOCCTShapes.erase(it);
-      else
-        ++it;
+      toolResolvers.emplace_back(payloadIn);
+      toolResolvers.back().resolve(tp);
+      auto shapes = toolResolvers.back().getShapes();
+      std::copy(shapes.begin(), shapes.end(), std::back_inserter(toolOCCTShapes));
     }
     
     BooleanOperation subtracter(targetOCCTShapes, toolOCCTShapes, BOPAlgo_CUT);
@@ -200,16 +137,16 @@ void Subtract::updateModel(const UpdatePayload &payloadIn)
     
     iMapper->go(payloadIn, subtracter.getBuilder(), *sShape);
     
-    for (const auto *it : targetFeatures)
-      sShape->shapeMatch(it->getAnnex<ann::SeerShape>());
-    for (const auto *it : toolFeatures)
-      sShape->shapeMatch(it->getAnnex<ann::SeerShape>());
-    for (const auto *it : targetFeatures)
-      sShape->uniqueTypeMatch(it->getAnnex<ann::SeerShape>());
-    for (const auto *it : targetFeatures)
-      sShape->outerWireMatch(it->getAnnex<ann::SeerShape>());
-    for (const auto *it : toolFeatures)
-      sShape->outerWireMatch(it->getAnnex<ann::SeerShape>());
+    for (const auto &it : targetResolvers)
+      sShape->shapeMatch(*it.getSeerShape());
+    for (const auto &it : toolResolvers)
+      sShape->shapeMatch(*it.getSeerShape());
+    for (const auto &it : targetResolvers)
+      sShape->uniqueTypeMatch(*it.getSeerShape());
+    for (const auto &it : targetResolvers)
+      sShape->outerWireMatch(*it.getSeerShape());
+    for (const auto &it : toolResolvers)
+      sShape->outerWireMatch(*it.getSeerShape());
     sShape->derivedMatch();
     sShape->dumpNils(getTypeString()); //only if there are shapes with nil ids.
     sShape->dumpDuplicates(getTypeString());

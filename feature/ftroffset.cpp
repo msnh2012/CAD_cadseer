@@ -106,7 +106,7 @@ void Offset::updateModel(const UpdatePayload &payloadIn)
   sShape->reset();
   try
   {
-    std::vector<const Base*> tfs = payloadIn.getFeatures(InputType::target);
+    std::vector<const Base*> tfs = payloadIn.getFeatures(std::string());
     if (tfs.size() != 1)
       throw std::runtime_error("wrong number of parents");
     if (!tfs.front()->hasAnnex(ann::Type::SeerShape))
@@ -130,12 +130,24 @@ void Offset::updateModel(const UpdatePayload &payloadIn)
       throw std::runtime_error("feature is skipped");
     }
     
+    if (picks.empty())
+      throw std::runtime_error("No picks");
+    
     //we basically have 2 modes. 1 is where we offset the whole shape. 2 is where we offset faces.
     osg::Matrixd labelPosition = osg::Matrixd::identity();
-    if (picks.empty())
+    if (slc::isObjectType(picks.front().selectionType))
     {
+      //this offsetting the whole shape.
+      if (picks.size() != 1)
+        throw std::runtime_error("Should have only 1 pick for whole object");
+      tls::Resolver pr(payloadIn);
+      if (!pr.resolve(picks.front()))
+        throw std::runtime_error("Pick resolution failed for whole object");
+      if (!pr.getSeerShape() || pr.getSeerShape()->isNull())
+        throw std::runtime_error("No or invalid seer shape for whole object");
+      
       TopoDS_Shape sto; //shape to offset.
-      for (const auto &s : tss.useGetNonCompoundChildren())
+      for (const auto &s : pr.getSeerShape()->useGetNonCompoundChildren())
       {
         if
         (
@@ -170,11 +182,11 @@ void Offset::updateModel(const UpdatePayload &payloadIn)
         throw std::runtime_error("shapeCheck failed");
       
       sShape->setOCCTShape(builder.Shape(), getId());
-      sShape->shapeMatch(tss);
-      sShape->uniqueTypeMatch(tss);
-      sShape->modifiedMatch(builder, tss);
-      offsetMatch(builder.MakeOffset(), tss);
-      sShape->outerWireMatch(tss);
+      sShape->shapeMatch(*pr.getSeerShape());
+      sShape->uniqueTypeMatch(*pr.getSeerShape());
+      sShape->modifiedMatch(builder, *pr.getSeerShape());
+      offsetMatch(builder.MakeOffset(), *pr.getSeerShape());
+      sShape->outerWireMatch(*pr.getSeerShape());
       sShape->derivedMatch();
       sShape->dumpNils("offset feature");
       sShape->dumpDuplicates("offset feature");
@@ -186,73 +198,11 @@ void Offset::updateModel(const UpdatePayload &payloadIn)
     }
     else
     {
-      std::vector<tls::Resolved> resolved;
-      resolved = tls::resolvePicks(tfs, picks, payloadIn.shapeHistory);
-      std::vector<uuid> rfids; //resolved face ids.
       bool labelDone = false;
-      for (const auto &r : resolved)
-      {
-        if (r.resultId.is_nil())
-          continue;
-        assert(tss.hasId(r.resultId));
-        if (!tss.hasId(r.resultId))
-          continue;
-        const TopoDS_Shape &fs = tss.getOCCTShape(r.resultId);
-        assert(fs.ShapeType() == TopAbs_FACE);
-        if (fs.ShapeType() != TopAbs_FACE)
-        {
-          std::cerr << "WARNING: shape is not a face in offset" << std::endl;
-          continue;
-        }
-        if (!labelDone)
-        {
-          labelDone = true;
-          labelPosition = osg::Matrixd::translate(r.pick.getPoint(TopoDS::Face(fs)));
-        }
-        rfids.push_back(r.resultId);
-      }
-      if (rfids.empty())
-        throw std::runtime_error("no resolved faces");
-      
-      //maybe this should be a function of seershape. something like: 'std::vector<uuid> commonParents(const std::vector<uuid>&)'
-      uuid parentId = gu::createNilId();
-      std::vector<uuid> psids; //parent solid ids
-      for (const auto &rfid : rfids)
-      {
-        std::vector<uuid> pss = tss.useGetParentsOfType(rfid, TopAbs_SOLID);
-        std::copy(pss.begin(), pss.end(), std::back_inserter(psids));
-      }
-      gu::uniquefy(psids);
-      if (psids.size() > 1)
-        throw std::runtime_error("offset faces must belong to same solid");
-      if (psids.size() == 1)
-        parentId = psids.front();
-      else if (psids.empty()) //look for shell
-      {
-        std::vector<uuid> pshids; //parent shell ids
-        for (const auto &rfid : rfids)
-        {
-          std::vector<uuid> pss = tss.useGetParentsOfType(rfid, TopAbs_SHELL);
-          std::copy(pss.begin(), pss.end(), std::back_inserter(pshids));
-        }
-        gu::uniquefy(pshids);
-        if (pshids.size() > 1)
-          throw std::runtime_error("offset faces must belong to same shell");
-        if (pshids.size() == 1)
-          parentId = pshids.front();
-        else
-        {
-          //must have a compound of individual faces
-          parentId = tss.getRootShapeId();
-        }
-      }
-      if (parentId.is_nil())
-        throw std::runtime_error("parent id is nil");
-      
       BRepOffset_MakeOffset builder;
       builder.Initialize
       (
-        tss.getOCCTShape(parentId),
+        tss.getRootOCCTShape(),
         0.0, //actual offsets will be assigned in loop.
         1.0e-06, //same tolerance as the sewing default.
         BRepOffset_Skin, //offset mode
@@ -262,8 +212,27 @@ void Offset::updateModel(const UpdatePayload &payloadIn)
         Standard_False, //thickening.
         Standard_False //remove internal edges
       );
-      for (const auto &rfid : rfids) 
-        builder.SetOffsetOnFace(TopoDS::Face(tss.getOCCTShape(rfid)), static_cast<double>(*distance));
+      
+      tls::Resolver pr(payloadIn);
+      for (const auto &p : picks)
+      {
+        if (p.selectionType != slc::Type::Face)
+          throw std::runtime_error("Non face selection type");
+        if (!pr.resolve(p))
+          throw std::runtime_error("Failed to resolve face pick");
+        for (const auto &s : pr.getShapes())
+        {
+          if (s.ShapeType() != TopAbs_FACE)
+            continue;
+          if (!labelDone)
+          {
+            labelDone = true;
+            labelPosition = osg::Matrixd::translate(p.getPoint(TopoDS::Face(s)));
+          }
+          builder.SetOffsetOnFace(TopoDS::Face(s), static_cast<double>(*distance));
+        }
+      }
+      
       builder.MakeOffsetShape();
       if (!builder.IsDone())
         throw std::runtime_error(getErrorString(builder));
@@ -281,10 +250,8 @@ void Offset::updateModel(const UpdatePayload &payloadIn)
       sShape->dumpDuplicates("offset feature");
       sShape->ensureNoNils();
       sShape->ensureNoDuplicates();
-      
     }
     distanceLabel->setMatrix(labelPosition);
-    
     setSuccess();
   }
   catch (const Standard_Failure &e)

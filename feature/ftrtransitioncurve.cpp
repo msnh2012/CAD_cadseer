@@ -187,69 +187,35 @@ void TransitionCurve::updateModel(const UpdatePayload &pIn)
       throw std::runtime_error("feature is skipped");
     }
     
-    auto getFeature = [&](const std::string& tagIn) -> const Base&
-    {
-      std::vector<const Base*> tfs = pIn.getFeatures(tagIn);
-      if (tfs.size() != 1)
-        throw std::runtime_error("wrong number of parents");
-      return *(tfs.front());
-    };
+    if (picks.size() != 2)
+      throw std::runtime_error("wrong number of picks");
+    tls::Resolver resolver(pIn);
     
-    auto getSeerShape = [&](const Base &bfIn) -> const ann::SeerShape&
-    {
-      if (!bfIn.hasAnnex(ann::Type::SeerShape))
-        throw std::runtime_error("parent doesn't have seer shape.");
-      const ann::SeerShape &tss = bfIn.getAnnex<ann::SeerShape>();
-      if (tss.isNull())
-        throw std::runtime_error("target seer shape is null");
-      return tss;
-    };
-    
-    const Base &tbf0 = getFeature(pickZero);
-    const ann::SeerShape &tss0 = getSeerShape(tbf0);
-    
-    const Base &tbf1 = getFeature(pickOne);
-    const ann::SeerShape &tss1 = getSeerShape(tbf1);
-    
-    auto resolved0 = tls::resolvePicks(&tbf0, picks.front(), pIn.shapeHistory);
-    auto resolved1 = tls::resolvePicks(&tbf1, picks.back(), pIn.shapeHistory);
-    if (resolved0.empty() || resolved1.empty())
-      throw std::runtime_error("invalid pick resolution");
-    
-    const TopoDS_Edge &edge0 = TopoDS::Edge(tss0.getOCCTShape(resolved0.front().resultId));
-    const TopoDS_Edge &edge1 = TopoDS::Edge(tss1.getOCCTShape(resolved1.front().resultId));
-    
+    resolver.resolve(picks.front());
+    auto rShapes0 = resolver.getShapes(false);
+    if (rShapes0.empty())
+      throw std::runtime_error("invalid first pick resolution");
+    if (rShapes0.front().ShapeType() != TopAbs_EDGE)
+      throw std::runtime_error("invalid first pick resolution shape type");
+    const TopoDS_Edge &edge0 = TopoDS::Edge(rShapes0.front());
     BRepAdaptor_Curve adapt0(edge0);
-    BRepAdaptor_Curve adapt1(edge1);
+    auto rPoints0 = resolver.getPoints();
+    if (rPoints0.empty())
+      throw std::runtime_error("invalid first point resolution");
+    gp_Pnt p0 = gu::toOcc(rPoints0.front()).XYZ();
     
-    //pick parameter is parameterized from 0 to 1 and can't be used for occ parameters.
-    gp_Pnt p0, p1;
-    if (resolved0.front().pick.isParameterType())
-    {
-      p0 = gp_Pnt(gu::toOcc(resolved0.front().pick.getPoint(edge0)).XYZ());
-    }
-    else
-    {
-      if (resolved0.front().pick.selectionType == slc::Type::StartPoint)
-        p0 = BRep_Tool::Pnt(TopoDS::Vertex(tss0.getOCCTShape(tss0.useGetStartVertex(resolved0.front().resultId))));
-      else if (resolved0.front().pick.selectionType == slc::Type::EndPoint)
-        p0 = BRep_Tool::Pnt(TopoDS::Vertex(tss0.getOCCTShape(tss0.useGetEndVertex(resolved0.front().resultId))));
-      else
-        throw std::runtime_error("unexpected pick type for resolved0");
-    }
-    if (resolved1.front().pick.isParameterType())
-    {
-      p1 = gp_Pnt(gu::toOcc(resolved1.front().pick.getPoint(edge1)).XYZ());
-    }
-    else
-    {
-      if (resolved1.front().pick.selectionType == slc::Type::StartPoint)
-        p1 = BRep_Tool::Pnt(TopoDS::Vertex(tss1.getOCCTShape(tss1.useGetStartVertex(resolved1.front().resultId))));
-      else if (resolved1.front().pick.selectionType == slc::Type::EndPoint)
-        p1 = BRep_Tool::Pnt(TopoDS::Vertex(tss1.getOCCTShape(tss1.useGetEndVertex(resolved1.front().resultId))));
-      else
-        throw std::runtime_error("unexpected pick type for resolved1");
-    }
+    resolver.resolve(picks.back());
+    auto rShapes1 = resolver.getShapes(false);
+    if (rShapes1.empty())
+      throw std::runtime_error("invalid second pick resolution");
+    if (rShapes1.front().ShapeType() != TopAbs_EDGE)
+      throw std::runtime_error("invalid second pick resolution shape type");
+    const TopoDS_Edge &edge1 = TopoDS::Edge(rShapes1.front());
+    BRepAdaptor_Curve adapt1(edge1);
+    auto rPoints1 = resolver.getPoints();
+    if (rPoints1.empty())
+      throw std::runtime_error("invalid second point resolution");
+    gp_Pnt p1 = gu::toOcc(rPoints1.front()).XYZ();
     
     double prm0, prm1;
     bool result;

@@ -347,13 +347,22 @@ Blend::Blend(ftr::Blend *editBlendIn, QWidget *parent) : QDialog(parent), blend(
   prj::Project *project = app::instance()->getProject();
   assert(project);
   
-  //what if the established feature doesn't have parent??
-  ftr::UpdatePayload::UpdateMap editMap = project->getParentMap(blend->getId());
-  assert(editMap.size() == 1);
-  auto it = editMap.find(ftr::InputType::target);
-  assert(it != editMap.end());
-  blendParent = it->second;
+  ftr::UpdatePayload payload = project->getPayload(blend->getId());
+  auto targetFeatures = payload.getFeatures(std::string());
+  assert(targetFeatures.size() == 1);
+  if (targetFeatures.size() != 1)
+  {
+    std::cout << "ERROR: Wrong number of parents in: " << BOOST_CURRENT_FUNCTION << std::endl;
+    return;
+  }
+  blendParent = targetFeatures.front();
   assert(blendParent->hasAnnex(ann::Type::SeerShape));
+  if (!blendParent->hasAnnex(ann::Type::SeerShape))
+  {
+    std::cout << "ERROR: Blend parent doesn't have seer shape in: " << BOOST_CURRENT_FUNCTION << std::endl;
+    return;
+  }
+  tls::Resolver resolver(payload);
   
   shapeCombo->setCurrentIndex(static_cast<int>(blend->getShape()));
   
@@ -376,14 +385,15 @@ Blend::Blend(ftr::Blend *editBlendIn, QWidget *parent) : QDialog(parent), blend(
       cModel->appendRow(nsbi);
       for (const auto &p : sb.picks)
       {
-        const ann::SeerShape &sShape = blendParent->getAnnex<ann::SeerShape>();
-        PickItem *np = new PickItem(p);
-        std::vector<tls::Resolved> resolved = tls::resolvePicks(blendParent, p, app::instance()->getProject()->getShapeHistory());
-        for (const auto &r : resolved)
+        resolver.resolve(p);
+        ftr::Pick resolvedPick = resolver.getPick();
+        resolvedPick.highlightIds.clear();
+        for (const auto &rId : resolvedPick.resolvedIds)
         {
-          auto ids = getContourIds(sShape, r.resultId);
-          std::copy(ids.begin(), ids.end(), std::back_inserter(np->pick.highlightIds));
+          auto ids = getContourIds(*resolver.getSeerShape(), rId);
+          std::copy(ids.begin(), ids.end(), std::back_inserter(resolvedPick.highlightIds));
         }
+        PickItem *np = new PickItem(resolvedPick);
         QList<QStandardItem*> items;
         items << new QStandardItem() << np;
         nsbi->appendRow(items);
@@ -393,35 +403,25 @@ Blend::Blend(ftr::Blend *editBlendIn, QWidget *parent) : QDialog(parent), blend(
   }
   else //variable blends.
   {
-    const ann::SeerShape &sShape = blendParent->getAnnex<ann::SeerShape>();
+    tls::Resolver resolver(payload);
     const ftr::VariableBlend &vBlend = blend->getVariableBlend();
-    for (auto np : vBlend.picks)
+    for (const auto &np : vBlend.picks)
     {
-      np.resolvedIds.clear();
-      np.highlightIds.clear();
-      std::vector<tls::Resolved> resolved = tls::resolvePicks(blendParent, np, app::instance()->getProject()->getShapeHistory());
-      for (const auto &r : resolved)
+      resolver.resolve(np);
+      ftr::Pick resolvedPick = resolver.getPick();
+      resolvedPick.highlightIds.clear();
+      for (const auto &rId : resolvedPick.resolvedIds)
       {
-        np.resolvedIds.push_back(r.resultId);
-        auto ids = getContourIds(sShape, r.resultId);
-        std::copy(ids.begin(), ids.end(), std::back_inserter(np.highlightIds));
+        auto ids = getContourIds(*resolver.getSeerShape(), rId);
+        std::copy(ids.begin(), ids.end(), std::back_inserter(resolvedPick.highlightIds));
       }
-      vWidget->addContour(np);
+      vWidget->addContour(resolvedPick);
     }
     for (const auto &e : vBlend.entries)
     {
       //make an update for radius item.
-      ftr::Pick np(e.pick);
-      np.resolvedIds.clear();
-      np.highlightIds.clear();
-      std::vector<tls::Resolved> resolved = tls::resolvePicks(blendParent, np, app::instance()->getProject()->getShapeHistory());
-      for (const auto &r : resolved)
-      {
-        np.resolvedIds.push_back(r.resultId);
-        np.highlightIds.push_back(r.resultId);
-      }
-      
-      if (vWidget->addConstraint(std::make_shared<prm::Parameter>(*e.radius), np))
+      resolver.resolve(e.pick);
+      if (vWidget->addConstraint(std::make_shared<prm::Parameter>(*e.radius), resolver.getPick()))
       {
         auto *ct = vWidget->constraintTable;
         auto *ri = dynamic_cast<VariableWidget::RadiusItem*>(ct->item(ct->rowCount() - 1, 0));
@@ -515,10 +515,10 @@ void Blend::finishDialog()
     assert(blendParent);
     assert(blendParent->hasAnnex(ann::Type::SeerShape));
     
+    project->addFeature(blendSmart);
     updateBlendFeature();
     
-    project->addFeature(blendSmart);
-    project->connectInsert(blendParent->getId(), blendSmart->getId(), ftr::InputType{ftr::InputType::target});
+//     project->connectInsert(blendParent->getId(), blendSmart->getId(), ftr::InputType{ftr::InputType::target});
     
     node->sendBlocked(msg::buildHideThreeD(blendParent->getId()));
     node->sendBlocked(msg::buildHideOverlay(blendParent->getId()));
@@ -532,6 +532,7 @@ void Blend::finishDialog()
     assert(blend);
     assert(blendParent);
     
+    project->clearAllInputs(blend->getId());
     updateBlendFeature();
     blend->setModelDirty();
   }
@@ -566,6 +567,7 @@ void Blend::updateBlendFeature()
       eManager.removeParameterLink(e.radius->getId());
   }
   
+  tls::Connector connector;
   blend->setShape(static_cast<ftr::Blend::Shape>(shapeCombo->currentIndex()));
     
   if (typeCombo->currentIndex() == 0) // simple/constant blend
@@ -584,6 +586,8 @@ void Blend::updateBlendFeature()
         PickItem *pi = dynamic_cast<PickItem*>(sbi->child(r2, 1));
         assert(pi);
         sBlend.picks.push_back(pi->pick);
+        sBlend.picks.back().tag = std::string(ftr::InputType::target) + std::to_string(r);
+        connector.add(blendParent->getId(), sBlend.picks.back().tag);
       }
       //either way we going to remove existing expression link if it exists.
       if (eManager.hasParameterLink(sbi->radius->getId()))
@@ -600,9 +604,15 @@ void Blend::updateBlendFeature()
   {
     blend->clearBlends();
     ftr::VariableBlend vBlend;
+    int pickCount = 0;
     for (auto ci : vWidget->getContourItems())
+    {
+      ci->pick.tag = std::string(ftr::InputType::target) + std::to_string(pickCount);
       vBlend.picks.push_back(ci->pick);
-    for (int r = 0; r < vWidget->constraintTable->rowCount(); ++r)
+      connector.add(blendParent->getId(), ci->pick.tag);
+      pickCount++;
+    }
+    for (int r = 0; r < vWidget->constraintTable->rowCount(); ++r, ++pickCount)
     {
       ftr::VariableEntry e;
       
@@ -621,11 +631,16 @@ void Blend::updateBlendFeature()
       VariableWidget::IdItem *ii = dynamic_cast<VariableWidget::IdItem*>(vWidget->constraintTable->item(r, 1));
       assert(ii);
       e.pick = ii->pick;
+      e.pick.tag = std::string(ftr::InputType::target) + std::to_string(pickCount);
+      connector.add(blendParent->getId(), e.pick.tag);
       
       vBlend.entries.push_back(e);
     }
     blend->addVariableBlend(vBlend);
   }
+  
+  for (const auto &p : connector.pairs)
+    app::instance()->getProject()->connectInsert(p.first, blend->getId(), {p.second});
 }
 
 void Blend::addToSelection(const boost::uuids::uuid &shapeIdIn)

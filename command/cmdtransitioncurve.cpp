@@ -110,7 +110,9 @@ void TransitionCurve::go()
   
   ftr::Picks picks;
   picks.push_back(tls::convertToPick(cs.front(), ss0, project->getShapeHistory()));
+  picks.back().tag = ftr::TransitionCurve::pickZero;
   picks.push_back(tls::convertToPick(cs.back(), ss1, project->getShapeHistory()));
+  picks.back().tag = ftr::TransitionCurve::pickOne;
   
   assert(ss0.hasId(cs.front().shapeId));
   assert(ss0.findShape(cs.front().shapeId).ShapeType() == TopAbs_EDGE);

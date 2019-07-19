@@ -26,6 +26,7 @@
 #include "parameter/prmparameter.h"
 #include "feature/ftrinputtype.h"
 #include "feature/ftrinstancepolar.h"
+#include "tools/featuretools.h"
 #include "command/cmdinstancepolar.h"
 
 using namespace cmd;
@@ -52,11 +53,11 @@ void InstancePolar::deactivate()
 
 void InstancePolar::go()
 {
+  shouldUpdate = false;
   const slc::Containers &containers = eventHandler->getSelections();
   if (containers.empty() || (containers.size() > 2))
   {
     node->sendBlocked(msg::buildStatusMessage("wrong selection for instance polar", 2.0));
-    shouldUpdate = false;
     return;
   }
   
@@ -64,14 +65,12 @@ void InstancePolar::go()
   if (!bf->hasAnnex(ann::Type::SeerShape))
   {
     node->sendBlocked(msg::buildStatusMessage("first selection should have shape for instance polar", 2.0));
-    shouldUpdate = false;
     return;
   }
   
   std::shared_ptr<ftr::InstancePolar> instance(new ftr::InstancePolar());
-  ftr::Pick shapePick;
-  if (!containers.front().shapeId.is_nil())
-    shapePick.shapeHistory = project->getShapeHistory().createDevolveHistory(containers.front().shapeId);
+  ftr::Pick shapePick = tls::convertToPick(containers.front(), *bf, project->getShapeHistory());
+  shapePick.tag = ftr::InputType::target;
   instance->setShapePick(shapePick);
   
   project->addFeature(instance);
@@ -87,15 +86,14 @@ void InstancePolar::go()
   else //size == 2
   {
     boost::uuids::uuid fId = containers.back().featureId;
-    ftr::Pick axisPick;
-    if (!containers.back().shapeId.is_nil())
-      axisPick.shapeHistory = project->getShapeHistory().createDevolveHistory(containers.back().shapeId);
+    ftr::Pick axisPick = tls::convertToPick(containers.back(), *project->findFeature(fId), project->getShapeHistory());
+    axisPick.tag = ftr::InstancePolar::rotationAxis;
     instance->setAxisPick(axisPick);
     project->connect(fId, instance->getId(), ftr::InputType{ftr::InstancePolar::rotationAxis});
     
     node->sendBlocked(msg::buildHideThreeD(fId));
     node->sendBlocked(msg::buildHideOverlay(fId));
   }
-  
+  shouldUpdate = true;
   node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
 }

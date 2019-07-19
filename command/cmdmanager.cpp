@@ -51,6 +51,7 @@
 #include "command/cmdintersect.h"
 #include "command/cmdsubtract.h"
 #include "command/cmdunion.h"
+#include "command/cmdboolean.h"
 #include "command/cmdoffset.h"
 #include "command/cmdthicken.h"
 #include "command/cmdsew.h"
@@ -262,17 +263,17 @@ void Manager::setupDispatcher()
       , std::make_pair
       (
         msg::Request | msg::Construct | msg::Intersect
-        , std::bind(&Manager::constructIntersectDispatched, this, std::placeholders::_1)
+        , std::bind(&Manager::constructBooleanDispatched, this, std::placeholders::_1)
       )
       , std::make_pair
       (
         msg::Request | msg::Construct | msg::Subtract
-        , std::bind(&Manager::constructSubtractDispatched, this, std::placeholders::_1)
+        , std::bind(&Manager::constructBooleanDispatched, this, std::placeholders::_1)
       )
       , std::make_pair
       (
         msg::Request | msg::Construct | msg::Union
-        , std::bind(&Manager::constructUnionDispatched, this, std::placeholders::_1)
+        , std::bind(&Manager::constructBooleanDispatched, this, std::placeholders::_1)
       )
       , std::make_pair
       (
@@ -585,19 +586,14 @@ void Manager::constructInstancePolarDispatched(const msg::Message&)
   addCommand(std::make_shared<InstancePolar>());
 }
 
-void Manager::constructIntersectDispatched(const msg::Message&)
+void Manager::constructBooleanDispatched(const msg::Message &mIn)
 {
-  addCommand(std::make_shared<Intersect>());
-}
-
-void Manager::constructSubtractDispatched(const msg::Message&)
-{
-  addCommand(std::make_shared<Subtract>());
-}
-
-void Manager::constructUnionDispatched(const msg::Message&)
-{
-  addCommand(std::make_shared<Union>());
+  if ((mIn.mask & msg::Intersect) != 0)
+    addCommand(std::make_shared<Boolean>(ftr::Type::Intersect));
+  else if ((mIn.mask & msg::Subtract) != 0)
+    addCommand(std::make_shared<Boolean>(ftr::Type::Subtract));
+  else if ((mIn.mask & msg::Union) != 0)
+    addCommand(std::make_shared<Boolean>(ftr::Type::Union));
 }
 
 void Manager::constructOffsetDispatched(const msg::Message&)
@@ -744,17 +740,17 @@ BasePtr editQuote(ftr::Base *feature)
 
 BasePtr editIntersect(ftr::Base *feature)
 {
-  return std::make_shared<IntersectEdit>(feature);
+  return std::make_shared<BooleanEdit>(feature);
 }
 
 BasePtr editSubtract(ftr::Base *feature)
 {
-  return std::make_shared<SubtractEdit>(feature);
+  return std::make_shared<BooleanEdit>(feature);
 }
 
 BasePtr editUnion(ftr::Base *feature)
 {
-  return std::make_shared<UnionEdit>(feature);
+  return std::make_shared<BooleanEdit>(feature);
 }
 
 BasePtr editSketch(ftr::Base *feature)
