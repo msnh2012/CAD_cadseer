@@ -609,6 +609,7 @@ Container EventHandler::messageToContainer(const Message &messageIn)
   
   slc::Container container;
   container.selectionType = messageIn.type;
+  container.accrue = messageIn.accrue;
   container.featureId = messageIn.featureId;
   container.featureType = messageIn.featureType;
   container.shapeId = messageIn.shapeId;
@@ -634,12 +635,16 @@ Container EventHandler::messageToContainer(const Message &messageIn)
     {
       container.selectionIds = seerShape.useGetChildrenOfType(container.shapeId, TopAbs_FACE);
     }
-    else if
-    (
-      (messageIn.type == slc::Type::Face) ||
-      (messageIn.type == slc::Type::Edge)
-    )
+    else if (messageIn.type == slc::Type::Face)
     {
+      if (container.accrue == Accrue::Tangent)
+        container.selectionIds = seerShape.useWalkTangentFaces(container.shapeId, container.accrue.angle);
+      else
+        container.selectionIds.push_back(container.shapeId);
+    }
+    else if (messageIn.type == slc::Type::Edge)
+    {
+      //TODO add tangent accrue for edges
       container.selectionIds.push_back(container.shapeId);
     }
     else if (messageIn.type == slc::Type::Wire)

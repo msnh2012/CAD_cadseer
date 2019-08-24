@@ -39,7 +39,12 @@ bool EnterFilter::eventFilter(QObject *obj, QEvent *event)
       {
         Q_EMIT enterPressed();
         if (shouldClearFocus)
+        {
           widget->clearFocus();
+          QWidget *next = widget->nextInFocusChain();
+          if (next)
+            next->setFocus();
+        }
         return true; // mark the event as handled
       }
     }

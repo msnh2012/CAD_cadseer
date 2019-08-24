@@ -71,6 +71,7 @@
 #include "command/cmdimageplane.h"
 #include "command/cmdsweep.h"
 #include "command/cmdocctexport.h"
+#include "command/cmddraft.h"
 #include "message/msgnode.h"
 #include "message/msgsift.h"
 #include "selection/slcmessage.h"
@@ -103,6 +104,7 @@ Manager::Manager()
   setupEditFunctionMap();
   
   selectionMask = slc::AllEnabled;
+  app::instance()->queuedMessage(msg::Mask(msg::Response | msg::Command | msg::Inactive));
 }
 
 void Manager::setupDispatcher()
@@ -362,6 +364,11 @@ void Manager::setupDispatcher()
       )
       , std::make_pair
       (
+        msg::Request | msg::Construct | msg::Draft
+      , std::bind(&Manager::constructDraftDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
         msg::Request | msg::Export | msg::OCC
         , std::bind(&Manager::occtExportDispatched, this, std::placeholders::_1)
       )
@@ -429,6 +436,7 @@ void Manager::doneSlot()
   {
     sendCommandMessage("Active command count: 0");
     node->send(msg::buildSelectionMask(selectionMask));
+    node->sendBlocked(msg::Mask(msg::Response | msg::Command | msg::Inactive));
   }
 }
 
@@ -442,6 +450,7 @@ void Manager::activateTop()
     "Command: " << stack.top()->getCommandName();
   sendCommandMessage(stream.str());
   
+  node->sendBlocked(msg::Mask(msg::Response | msg::Command | msg::Active));
   stack.top()->activate();
 }
 
@@ -686,6 +695,11 @@ void Manager::constructSweepDispatched(const msg::Message&)
   addCommand(std::make_shared<Sweep>());
 }
 
+void Manager::constructDraftDispatched(const msg::Message&)
+{
+  addCommand(std::make_shared<Draft>());
+}
+
 void Manager::occtExportDispatched(const msg::Message&)
 {
   addCommand(std::make_shared<OCCTExport>());
@@ -763,6 +777,16 @@ BasePtr editSweep(ftr::Base *feature)
   return std::make_shared<SweepEdit>(feature);
 }
 
+BasePtr editDraft(ftr::Base *feature)
+{
+  return std::make_shared<DraftEdit>(feature);
+}
+
+BasePtr editExtract(ftr::Base *feature)
+{
+  return std::make_shared<ExtractEdit>(feature);
+}
+
 void Manager::setupEditFunctionMap()
 {
   editFunctionMap.insert(std::make_pair(ftr::Type::Blend, std::bind(editBlend, std::placeholders::_1)));
@@ -773,4 +797,6 @@ void Manager::setupEditFunctionMap()
   editFunctionMap.insert(std::make_pair(ftr::Type::Union, std::bind(editUnion, std::placeholders::_1)));
   editFunctionMap.insert(std::make_pair(ftr::Type::Sketch, std::bind(editSketch, std::placeholders::_1)));
   editFunctionMap.insert(std::make_pair(ftr::Type::Sweep, std::bind(editSweep, std::placeholders::_1)));
+  editFunctionMap.insert(std::make_pair(ftr::Type::Draft, std::bind(editDraft, std::placeholders::_1)));
+  editFunctionMap.insert(std::make_pair(ftr::Type::Extract, std::bind(editExtract, std::placeholders::_1)));
 }

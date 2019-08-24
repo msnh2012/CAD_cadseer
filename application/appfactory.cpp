@@ -162,11 +162,6 @@ void Factory::setupDispatcher()
       )
       , std::make_pair
       (
-        msg::Request | msg::Construct | msg::Draft
-      , std::bind(&Factory::newDraftDispatched, this, std::placeholders::_1)
-      )
-      , std::make_pair
-      (
         msg::Request | msg::Import | msg::OCC
       , std::bind(&Factory::importOCCDispatched, this, std::placeholders::_1)
       )
@@ -418,65 +413,6 @@ void Factory::newChamferDispatched(const msg::Message&)
   
   ftr::Base *targetFeature = project->findFeature(targetFeatureId);
   chamfer->setColor(targetFeature->getColor());
-  
-  node->sendBlocked(msg::buildHideThreeD(targetFeatureId));
-  node->sendBlocked(msg::buildHideOverlay(targetFeatureId));
-  
-  node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
-  node->send(msg::Mask(msg::Request | msg::Project | msg::Update));
-}
-
-void Factory::newDraftDispatched(const msg::Message&)
-{
-  assert(project);
-  
-  if (containers.size() < 2)
-  {
-    node->send(msg::buildStatusMessage("Invalid Preselection For Draft", 2.0));
-    return;
-  }
-  uuid targetFeatureId = containers.at(0).featureId;
-  
-  ftr::DraftConvey convey;
-  const ann::SeerShape &targetSeerShape = project->findFeature(targetFeatureId)->getAnnex<ann::SeerShape>();
-  int targetIndex = 0;
-  tls::Connector connector;
-  for (const auto &currentSelection : containers)
-  {
-    if
-    (
-      currentSelection.featureId != targetFeatureId ||
-      currentSelection.selectionType != slc::Type::Face //just faces for now.
-    )
-      continue;
-    
-    TopoDS_Face face = TopoDS::Face(targetSeerShape.findShape(currentSelection.shapeId));  
-    ftr::Pick pick = tls::convertToPick(currentSelection, targetSeerShape, project->getShapeHistory());
-    pick.tag = ftr::InputType::createIndexedTag(ftr::InputType::target, targetIndex);
-    connector.add(targetFeatureId, pick.tag);
-    convey.targets.push_back(pick);
-    targetIndex++;
-  }
-  if (convey.targets.size() < 2)
-  {
-    node->send(msg::buildStatusMessage("Invalid Preselection For Draft", 2.0));
-    return;
-  }
-  
-  //for now last pick is the neutral plane.
-  convey.neutralPlane = convey.targets.back();
-  convey.targets.pop_back();
-  convey.neutralPlane.tag = ftr::Draft::neutral;
-  connector.add(targetFeatureId, convey.neutralPlane.tag);
-  
-  std::shared_ptr<ftr::Draft> draft(new ftr::Draft());
-  draft->setDraft(convey);
-  project->addFeature(draft);
-  for (const auto &p : connector.pairs)
-    project->connectInsert(p.first, draft->getId(), {p.second});
-  
-  ftr::Base *targetFeature = project->findFeature(targetFeatureId);
-  draft->setColor(targetFeature->getColor());
   
   node->sendBlocked(msg::buildHideThreeD(targetFeatureId));
   node->sendBlocked(msg::buildHideOverlay(targetFeatureId));

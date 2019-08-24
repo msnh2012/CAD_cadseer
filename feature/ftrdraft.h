@@ -34,14 +34,6 @@ namespace prj{namespace srl{class FeatureDraft;}}
 namespace ann{class SeerShape;}
 namespace ftr
 {
-  struct DraftConvey
-  {
-    Picks targets;
-    Pick neutralPlane;
-    std::shared_ptr<prm::Parameter> angle; //!< parameter containing angle.
-    osg::ref_ptr<lbr::PLabel> label; //!< graphic icon
-  };
-  
   class Draft : public Base
   {
     public:
@@ -58,18 +50,23 @@ namespace ftr
       virtual void serialWrite(const boost::filesystem::path&) override;
       void serialRead(const prj::srl::FeatureDraft &);
       
-      void setDraft(const DraftConvey &);
+      void setTargetPicks(const Picks&);
+      const Picks& getTargetPicks() const {return targetPicks;}
+      void setNeutralPick(const Pick&);
+      const Pick& getNeutralPick() const {return neutralPick;}
       
-      static std::shared_ptr<prm::Parameter> buildAngleParameter();
+      std::shared_ptr<prm::Parameter> getAngleParameter() const {return angle;}
+      void setAngleParameter(std::shared_ptr<prm::Parameter>);
+      
     protected:
       Picks targetPicks;
       Pick neutralPick;
       
-      std::shared_ptr<prm::Parameter> angle; //!< parameter containing draft angle.
-      osg::ref_ptr<lbr::PLabel> label; //!< graphic icon
-      
       std::unique_ptr<ann::SeerShape> sShape;
       
+      std::shared_ptr<prm::Parameter> buildAngleParameter();
+      std::shared_ptr<prm::Parameter> angle; //!< parameter containing draft angle.
+      osg::ref_ptr<lbr::PLabel> label; //!< graphic icon
     private:
       static QIcon icon;
       void generatedMatch(BRepOffsetAPI_DraftAngle&, const ann::SeerShape &);

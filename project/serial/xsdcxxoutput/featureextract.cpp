@@ -44,104 +44,6 @@ namespace prj
 {
   namespace srl
   {
-    // AccruePick
-    // 
-
-    const AccruePick::PicksType& AccruePick::
-    picks () const
-    {
-      return this->picks_.get ();
-    }
-
-    AccruePick::PicksType& AccruePick::
-    picks ()
-    {
-      return this->picks_.get ();
-    }
-
-    void AccruePick::
-    picks (const PicksType& x)
-    {
-      this->picks_.set (x);
-    }
-
-    void AccruePick::
-    picks (::std::unique_ptr< PicksType > x)
-    {
-      this->picks_.set (std::move (x));
-    }
-
-    const AccruePick::ParameterType& AccruePick::
-    parameter () const
-    {
-      return this->parameter_.get ();
-    }
-
-    AccruePick::ParameterType& AccruePick::
-    parameter ()
-    {
-      return this->parameter_.get ();
-    }
-
-    void AccruePick::
-    parameter (const ParameterType& x)
-    {
-      this->parameter_.set (x);
-    }
-
-    void AccruePick::
-    parameter (::std::unique_ptr< ParameterType > x)
-    {
-      this->parameter_.set (std::move (x));
-    }
-
-    const AccruePick::PlabelType& AccruePick::
-    plabel () const
-    {
-      return this->plabel_.get ();
-    }
-
-    AccruePick::PlabelType& AccruePick::
-    plabel ()
-    {
-      return this->plabel_.get ();
-    }
-
-    void AccruePick::
-    plabel (const PlabelType& x)
-    {
-      this->plabel_.set (x);
-    }
-
-    void AccruePick::
-    plabel (::std::unique_ptr< PlabelType > x)
-    {
-      this->plabel_.set (std::move (x));
-    }
-
-
-    // AccruePicks
-    // 
-
-    const AccruePicks::ArraySequence& AccruePicks::
-    array () const
-    {
-      return this->array_;
-    }
-
-    AccruePicks::ArraySequence& AccruePicks::
-    array ()
-    {
-      return this->array_;
-    }
-
-    void AccruePicks::
-    array (const ArraySequence& s)
-    {
-      this->array_ = s;
-    }
-
-
     // FeatureExtract
     // 
 
@@ -169,30 +71,6 @@ namespace prj
       this->featureBase_.set (std::move (x));
     }
 
-    const FeatureExtract::AccruePicksType& FeatureExtract::
-    accruePicks () const
-    {
-      return this->accruePicks_.get ();
-    }
-
-    FeatureExtract::AccruePicksType& FeatureExtract::
-    accruePicks ()
-    {
-      return this->accruePicks_.get ();
-    }
-
-    void FeatureExtract::
-    accruePicks (const AccruePicksType& x)
-    {
-      this->accruePicks_.set (x);
-    }
-
-    void FeatureExtract::
-    accruePicks (::std::unique_ptr< AccruePicksType > x)
-    {
-      this->accruePicks_.set (std::move (x));
-    }
-
     const FeatureExtract::PicksType& FeatureExtract::
     picks () const
     {
@@ -216,6 +94,54 @@ namespace prj
     {
       this->picks_.set (std::move (x));
     }
+
+    const FeatureExtract::AngleType& FeatureExtract::
+    angle () const
+    {
+      return this->angle_.get ();
+    }
+
+    FeatureExtract::AngleType& FeatureExtract::
+    angle ()
+    {
+      return this->angle_.get ();
+    }
+
+    void FeatureExtract::
+    angle (const AngleType& x)
+    {
+      this->angle_.set (x);
+    }
+
+    void FeatureExtract::
+    angle (::std::unique_ptr< AngleType > x)
+    {
+      this->angle_.set (std::move (x));
+    }
+
+    const FeatureExtract::LabelType& FeatureExtract::
+    label () const
+    {
+      return this->label_.get ();
+    }
+
+    FeatureExtract::LabelType& FeatureExtract::
+    label ()
+    {
+      return this->label_.get ();
+    }
+
+    void FeatureExtract::
+    label (const LabelType& x)
+    {
+      this->label_.set (x);
+    }
+
+    void FeatureExtract::
+    label (::std::unique_ptr< LabelType > x)
+    {
+      this->label_.set (std::move (x));
+    }
   }
 }
 
@@ -225,265 +151,32 @@ namespace prj
 {
   namespace srl
   {
-    // AccruePick
-    //
-
-    AccruePick::
-    AccruePick (const PicksType& picks,
-                const ParameterType& parameter,
-                const PlabelType& plabel)
-    : ::xml_schema::Type (),
-      picks_ (picks, this),
-      parameter_ (parameter, this),
-      plabel_ (plabel, this)
-    {
-    }
-
-    AccruePick::
-    AccruePick (::std::unique_ptr< PicksType > picks,
-                ::std::unique_ptr< ParameterType > parameter,
-                ::std::unique_ptr< PlabelType > plabel)
-    : ::xml_schema::Type (),
-      picks_ (std::move (picks), this),
-      parameter_ (std::move (parameter), this),
-      plabel_ (std::move (plabel), this)
-    {
-    }
-
-    AccruePick::
-    AccruePick (const AccruePick& x,
-                ::xml_schema::Flags f,
-                ::xml_schema::Container* c)
-    : ::xml_schema::Type (x, f, c),
-      picks_ (x.picks_, f, this),
-      parameter_ (x.parameter_, f, this),
-      plabel_ (x.plabel_, f, this)
-    {
-    }
-
-    AccruePick::
-    AccruePick (const ::xercesc::DOMElement& e,
-                ::xml_schema::Flags f,
-                ::xml_schema::Container* c)
-    : ::xml_schema::Type (e, f | ::xml_schema::Flags::base, c),
-      picks_ (this),
-      parameter_ (this),
-      plabel_ (this)
-    {
-      if ((f & ::xml_schema::Flags::base) == 0)
-      {
-        ::xsd::cxx::xml::dom::parser< char > p (e, true, false, false);
-        this->parse (p, f);
-      }
-    }
-
-    void AccruePick::
-    parse (::xsd::cxx::xml::dom::parser< char >& p,
-           ::xml_schema::Flags f)
-    {
-      for (; p.more_content (); p.next_content (false))
-      {
-        const ::xercesc::DOMElement& i (p.cur_element ());
-        const ::xsd::cxx::xml::qualified_name< char > n (
-          ::xsd::cxx::xml::dom::name< char > (i));
-
-        // picks
-        //
-        if (n.name () == "picks" && n.namespace_ ().empty ())
-        {
-          ::std::unique_ptr< PicksType > r (
-            PicksTraits::create (i, f, this));
-
-          if (!picks_.present ())
-          {
-            this->picks_.set (::std::move (r));
-            continue;
-          }
-        }
-
-        // parameter
-        //
-        if (n.name () == "parameter" && n.namespace_ ().empty ())
-        {
-          ::std::unique_ptr< ParameterType > r (
-            ParameterTraits::create (i, f, this));
-
-          if (!parameter_.present ())
-          {
-            this->parameter_.set (::std::move (r));
-            continue;
-          }
-        }
-
-        // plabel
-        //
-        if (n.name () == "plabel" && n.namespace_ ().empty ())
-        {
-          ::std::unique_ptr< PlabelType > r (
-            PlabelTraits::create (i, f, this));
-
-          if (!plabel_.present ())
-          {
-            this->plabel_.set (::std::move (r));
-            continue;
-          }
-        }
-
-        break;
-      }
-
-      if (!picks_.present ())
-      {
-        throw ::xsd::cxx::tree::expected_element< char > (
-          "picks",
-          "");
-      }
-
-      if (!parameter_.present ())
-      {
-        throw ::xsd::cxx::tree::expected_element< char > (
-          "parameter",
-          "");
-      }
-
-      if (!plabel_.present ())
-      {
-        throw ::xsd::cxx::tree::expected_element< char > (
-          "plabel",
-          "");
-      }
-    }
-
-    AccruePick* AccruePick::
-    _clone (::xml_schema::Flags f,
-            ::xml_schema::Container* c) const
-    {
-      return new class AccruePick (*this, f, c);
-    }
-
-    AccruePick& AccruePick::
-    operator= (const AccruePick& x)
-    {
-      if (this != &x)
-      {
-        static_cast< ::xml_schema::Type& > (*this) = x;
-        this->picks_ = x.picks_;
-        this->parameter_ = x.parameter_;
-        this->plabel_ = x.plabel_;
-      }
-
-      return *this;
-    }
-
-    AccruePick::
-    ~AccruePick ()
-    {
-    }
-
-    // AccruePicks
-    //
-
-    AccruePicks::
-    AccruePicks ()
-    : ::xml_schema::Type (),
-      array_ (this)
-    {
-    }
-
-    AccruePicks::
-    AccruePicks (const AccruePicks& x,
-                 ::xml_schema::Flags f,
-                 ::xml_schema::Container* c)
-    : ::xml_schema::Type (x, f, c),
-      array_ (x.array_, f, this)
-    {
-    }
-
-    AccruePicks::
-    AccruePicks (const ::xercesc::DOMElement& e,
-                 ::xml_schema::Flags f,
-                 ::xml_schema::Container* c)
-    : ::xml_schema::Type (e, f | ::xml_schema::Flags::base, c),
-      array_ (this)
-    {
-      if ((f & ::xml_schema::Flags::base) == 0)
-      {
-        ::xsd::cxx::xml::dom::parser< char > p (e, true, false, false);
-        this->parse (p, f);
-      }
-    }
-
-    void AccruePicks::
-    parse (::xsd::cxx::xml::dom::parser< char >& p,
-           ::xml_schema::Flags f)
-    {
-      for (; p.more_content (); p.next_content (false))
-      {
-        const ::xercesc::DOMElement& i (p.cur_element ());
-        const ::xsd::cxx::xml::qualified_name< char > n (
-          ::xsd::cxx::xml::dom::name< char > (i));
-
-        // array
-        //
-        if (n.name () == "array" && n.namespace_ ().empty ())
-        {
-          ::std::unique_ptr< ArrayType > r (
-            ArrayTraits::create (i, f, this));
-
-          this->array_.push_back (::std::move (r));
-          continue;
-        }
-
-        break;
-      }
-    }
-
-    AccruePicks* AccruePicks::
-    _clone (::xml_schema::Flags f,
-            ::xml_schema::Container* c) const
-    {
-      return new class AccruePicks (*this, f, c);
-    }
-
-    AccruePicks& AccruePicks::
-    operator= (const AccruePicks& x)
-    {
-      if (this != &x)
-      {
-        static_cast< ::xml_schema::Type& > (*this) = x;
-        this->array_ = x.array_;
-      }
-
-      return *this;
-    }
-
-    AccruePicks::
-    ~AccruePicks ()
-    {
-    }
-
     // FeatureExtract
     //
 
     FeatureExtract::
     FeatureExtract (const FeatureBaseType& featureBase,
-                    const AccruePicksType& accruePicks,
-                    const PicksType& picks)
+                    const PicksType& picks,
+                    const AngleType& angle,
+                    const LabelType& label)
     : ::xml_schema::Type (),
       featureBase_ (featureBase, this),
-      accruePicks_ (accruePicks, this),
-      picks_ (picks, this)
+      picks_ (picks, this),
+      angle_ (angle, this),
+      label_ (label, this)
     {
     }
 
     FeatureExtract::
     FeatureExtract (::std::unique_ptr< FeatureBaseType > featureBase,
-                    ::std::unique_ptr< AccruePicksType > accruePicks,
-                    ::std::unique_ptr< PicksType > picks)
+                    ::std::unique_ptr< PicksType > picks,
+                    ::std::unique_ptr< AngleType > angle,
+                    ::std::unique_ptr< LabelType > label)
     : ::xml_schema::Type (),
       featureBase_ (std::move (featureBase), this),
-      accruePicks_ (std::move (accruePicks), this),
-      picks_ (std::move (picks), this)
+      picks_ (std::move (picks), this),
+      angle_ (std::move (angle), this),
+      label_ (std::move (label), this)
     {
     }
 
@@ -493,8 +186,9 @@ namespace prj
                     ::xml_schema::Container* c)
     : ::xml_schema::Type (x, f, c),
       featureBase_ (x.featureBase_, f, this),
-      accruePicks_ (x.accruePicks_, f, this),
-      picks_ (x.picks_, f, this)
+      picks_ (x.picks_, f, this),
+      angle_ (x.angle_, f, this),
+      label_ (x.label_, f, this)
     {
     }
 
@@ -504,8 +198,9 @@ namespace prj
                     ::xml_schema::Container* c)
     : ::xml_schema::Type (e, f | ::xml_schema::Flags::base, c),
       featureBase_ (this),
-      accruePicks_ (this),
-      picks_ (this)
+      picks_ (this),
+      angle_ (this),
+      label_ (this)
     {
       if ((f & ::xml_schema::Flags::base) == 0)
       {
@@ -538,20 +233,6 @@ namespace prj
           }
         }
 
-        // accruePicks
-        //
-        if (n.name () == "accruePicks" && n.namespace_ ().empty ())
-        {
-          ::std::unique_ptr< AccruePicksType > r (
-            AccruePicksTraits::create (i, f, this));
-
-          if (!accruePicks_.present ())
-          {
-            this->accruePicks_.set (::std::move (r));
-            continue;
-          }
-        }
-
         // picks
         //
         if (n.name () == "picks" && n.namespace_ ().empty ())
@@ -566,6 +247,34 @@ namespace prj
           }
         }
 
+        // angle
+        //
+        if (n.name () == "angle" && n.namespace_ ().empty ())
+        {
+          ::std::unique_ptr< AngleType > r (
+            AngleTraits::create (i, f, this));
+
+          if (!angle_.present ())
+          {
+            this->angle_.set (::std::move (r));
+            continue;
+          }
+        }
+
+        // label
+        //
+        if (n.name () == "label" && n.namespace_ ().empty ())
+        {
+          ::std::unique_ptr< LabelType > r (
+            LabelTraits::create (i, f, this));
+
+          if (!label_.present ())
+          {
+            this->label_.set (::std::move (r));
+            continue;
+          }
+        }
+
         break;
       }
 
@@ -576,17 +285,24 @@ namespace prj
           "");
       }
 
-      if (!accruePicks_.present ())
-      {
-        throw ::xsd::cxx::tree::expected_element< char > (
-          "accruePicks",
-          "");
-      }
-
       if (!picks_.present ())
       {
         throw ::xsd::cxx::tree::expected_element< char > (
           "picks",
+          "");
+      }
+
+      if (!angle_.present ())
+      {
+        throw ::xsd::cxx::tree::expected_element< char > (
+          "angle",
+          "");
+      }
+
+      if (!label_.present ())
+      {
+        throw ::xsd::cxx::tree::expected_element< char > (
+          "label",
           "");
       }
     }
@@ -605,8 +321,9 @@ namespace prj
       {
         static_cast< ::xml_schema::Type& > (*this) = x;
         this->featureBase_ = x.featureBase_;
-        this->accruePicks_ = x.accruePicks_;
         this->picks_ = x.picks_;
+        this->angle_ = x.angle_;
+        this->label_ = x.label_;
       }
 
       return *this;
@@ -904,65 +621,6 @@ namespace prj
   namespace srl
   {
     void
-    operator<< (::xercesc::DOMElement& e, const AccruePick& i)
-    {
-      e << static_cast< const ::xml_schema::Type& > (i);
-
-      // picks
-      //
-      {
-        ::xercesc::DOMElement& s (
-          ::xsd::cxx::xml::dom::create_element (
-            "picks",
-            e));
-
-        s << i.picks ();
-      }
-
-      // parameter
-      //
-      {
-        ::xercesc::DOMElement& s (
-          ::xsd::cxx::xml::dom::create_element (
-            "parameter",
-            e));
-
-        s << i.parameter ();
-      }
-
-      // plabel
-      //
-      {
-        ::xercesc::DOMElement& s (
-          ::xsd::cxx::xml::dom::create_element (
-            "plabel",
-            e));
-
-        s << i.plabel ();
-      }
-    }
-
-    void
-    operator<< (::xercesc::DOMElement& e, const AccruePicks& i)
-    {
-      e << static_cast< const ::xml_schema::Type& > (i);
-
-      // array
-      //
-      for (AccruePicks::ArrayConstIterator
-           b (i.array ().begin ()), n (i.array ().end ());
-           b != n; ++b)
-      {
-        ::xercesc::DOMElement& s (
-          ::xsd::cxx::xml::dom::create_element (
-            "array",
-            e));
-
-        s << *b;
-      }
-    }
-
-    void
     operator<< (::xercesc::DOMElement& e, const FeatureExtract& i)
     {
       e << static_cast< const ::xml_schema::Type& > (i);
@@ -978,17 +636,6 @@ namespace prj
         s << i.featureBase ();
       }
 
-      // accruePicks
-      //
-      {
-        ::xercesc::DOMElement& s (
-          ::xsd::cxx::xml::dom::create_element (
-            "accruePicks",
-            e));
-
-        s << i.accruePicks ();
-      }
-
       // picks
       //
       {
@@ -998,6 +645,28 @@ namespace prj
             e));
 
         s << i.picks ();
+      }
+
+      // angle
+      //
+      {
+        ::xercesc::DOMElement& s (
+          ::xsd::cxx::xml::dom::create_element (
+            "angle",
+            e));
+
+        s << i.angle ();
+      }
+
+      // label
+      //
+      {
+        ::xercesc::DOMElement& s (
+          ::xsd::cxx::xml::dom::create_element (
+            "label",
+            e));
+
+        s << i.label ();
       }
     }
 

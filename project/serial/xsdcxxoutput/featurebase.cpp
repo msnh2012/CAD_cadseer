@@ -2681,34 +2681,28 @@ namespace prj
       this->tag_.set (std::move (x));
     }
 
-    const Pick::AccrueTypeOptional& Pick::
-    accrueType () const
+    const Pick::AccrueOptional& Pick::
+    accrue () const
     {
-      return this->accrueType_;
+      return this->accrue_;
     }
 
-    Pick::AccrueTypeOptional& Pick::
-    accrueType ()
+    Pick::AccrueOptional& Pick::
+    accrue ()
     {
-      return this->accrueType_;
-    }
-
-    void Pick::
-    accrueType (const AccrueTypeType& x)
-    {
-      this->accrueType_.set (x);
+      return this->accrue_;
     }
 
     void Pick::
-    accrueType (const AccrueTypeOptional& x)
+    accrue (const AccrueType& x)
     {
-      this->accrueType_ = x;
+      this->accrue_.set (x);
     }
 
     void Pick::
-    accrueType (::std::unique_ptr< AccrueTypeType > x)
+    accrue (const AccrueOptional& x)
     {
-      this->accrueType_.set (std::move (x));
+      this->accrue_ = x;
     }
 
 
@@ -7529,7 +7523,7 @@ namespace prj
       history_ (this),
       selectionType_ (this),
       tag_ (this),
-      accrueType_ (this)
+      accrue_ (this)
     {
     }
 
@@ -7543,7 +7537,7 @@ namespace prj
       history_ (x.history_, f, this),
       selectionType_ (x.selectionType_, f, this),
       tag_ (x.tag_, f, this),
-      accrueType_ (x.accrueType_, f, this)
+      accrue_ (x.accrue_, f, this)
     {
     }
 
@@ -7557,7 +7551,7 @@ namespace prj
       history_ (this),
       selectionType_ (this),
       tag_ (this),
-      accrueType_ (this)
+      accrue_ (this)
     {
       if ((f & ::xml_schema::Flags::base) == 0)
       {
@@ -7637,16 +7631,13 @@ namespace prj
           }
         }
 
-        // accrueType
+        // accrue
         //
-        if (n.name () == "accrueType" && n.namespace_ ().empty ())
+        if (n.name () == "accrue" && n.namespace_ ().empty ())
         {
-          ::std::unique_ptr< AccrueTypeType > r (
-            AccrueTypeTraits::create (i, f, this));
-
-          if (!this->accrueType_)
+          if (!this->accrue_)
           {
-            this->accrueType_.set (::std::move (r));
+            this->accrue_.set (AccrueTraits::create (i, f, this));
             continue;
           }
         }
@@ -7687,7 +7678,7 @@ namespace prj
         this->history_ = x.history_;
         this->selectionType_ = x.selectionType_;
         this->tag_ = x.tag_;
-        this->accrueType_ = x.accrueType_;
+        this->accrue_ = x.accrue_;
       }
 
       return *this;
@@ -9777,16 +9768,16 @@ namespace prj
         s << *i.tag ();
       }
 
-      // accrueType
+      // accrue
       //
-      if (i.accrueType ())
+      if (i.accrue ())
       {
         ::xercesc::DOMElement& s (
           ::xsd::cxx::xml::dom::create_element (
-            "accrueType",
+            "accrue",
             e));
 
-        s << *i.accrueType ();
+        s << *i.accrue ();
       }
     }
 

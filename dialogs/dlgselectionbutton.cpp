@@ -142,12 +142,14 @@ void SelectionButton::addMessages(const slc::Messages &msIn)
 
 /*! @brief Add all stored to the selection system
  * 
- * @details This doesn't clear the current selection.
+ * @details This clears the current selection.
  */
 void SelectionButton::syncToSelection()
 {
   if (mask != slc::None)
     node->sendBlocked(msg::buildSelectionMask(mask));
+  
+  node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
   
   for (const auto &m : messages)
   {
@@ -167,7 +169,7 @@ void SelectionButton::syncToSelection()
  * 
  * @details This does clear the current selection.
  */
-void SelectionButton::highlightIndex(int index)
+void SelectionButton::highlightIndex(int index) const
 {
   assert(static_cast<std::size_t>(index) < messages.size());
   
@@ -175,6 +177,18 @@ void SelectionButton::highlightIndex(int index)
   
   msg::Message mm(msg::Request | msg::Selection | msg::Add, messages.at(index));
   node->sendBlocked(mm);
+}
+
+void SelectionButton::setAccrue(int index, slc::Accrue accrue)
+{
+  assert(static_cast<std::size_t>(index) < messages.size());
+  messages.at(index).accrue = accrue;
+}
+
+void SelectionButton::setAngle(int index, double angle)
+{
+  assert(static_cast<std::size_t>(index) < messages.size());
+  messages.at(index).accrue.angle = angle;
 }
 
 void SelectionButton::showEvent(QShowEvent *)

@@ -540,6 +540,9 @@ void Extrude::updateModel(const UpdatePayload &pIn)
       if (oldIds.at(count).is_nil())
         continue;
       
+      if (!sShape->hasShape(s))
+        continue; //container shapes like: wire and shell won't be present in the output so skip.
+      
       //this is for original shapes and uses original map.
       //in BRepPrimAPI_MakePrism terminology these are 'FirstShape'
       uuid oldId = oldIds.at(count);

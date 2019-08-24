@@ -51,7 +51,11 @@ using boost::uuids::uuid;
 
 QIcon Draft::icon;
 
-Draft::Draft() : Base(), sShape(new ann::SeerShape())
+Draft::Draft()
+: Base()
+, sShape(new ann::SeerShape())
+, angle(buildAngleParameter())
+, label(new lbr::PLabel(angle.get()))
 {
   if (icon.isNull())
     icon = QIcon(":/resources/images/constructionDraft.svg");
@@ -60,10 +64,60 @@ Draft::Draft() : Base(), sShape(new ann::SeerShape())
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
   
   annexes.insert(std::make_pair(ann::Type::SeerShape, sShape.get()));
+  
+  angle->setConstraint(prm::Constraint::buildNonZeroAngle());
+  angle->connectValue(std::bind(&Draft::setModelDirty, this));
+  parameters.push_back(angle.get());
+  
+  label->showName = true;
+  label->valueHasChanged();
+  label->constantHasChanged();
+  overlaySwitch->addChild(label.get());
 }
 
 Draft::~Draft() //for forward declare with osg::ref_ptr
 {
+}
+
+void Draft::setTargetPicks(const Picks &psIn)
+{
+  targetPicks = psIn;
+  setModelDirty();
+}
+
+void Draft::setNeutralPick(const Pick &pIn)
+{
+  neutralPick = pIn;
+  setModelDirty();
+}
+
+void Draft::setAngleParameter(std::shared_ptr<prm::Parameter> prmIn)
+{
+  assert(prmIn);
+  
+  //remove old
+  auto rit = std::remove_if
+  (
+    parameters.begin()
+    , parameters.end()
+    , [&](prm::Parameter *pic){return pic == angle.get();}
+  );
+  if (angle)
+    parameters.erase(rit, parameters.end());
+  if (label)
+    overlaySwitch->removeChild(label.get());
+  
+  //add new
+  angle = prmIn;
+  angle->connectValue(std::bind(&Draft::setModelDirty, this));
+  parameters.push_back(angle.get());
+  label = new lbr::PLabel(angle.get());
+  label->showName = true;
+  label->valueHasChanged();
+  label->constantHasChanged();
+  overlaySwitch->addChild(label.get());
+  
+  setModelDirty();
 }
 
 std::shared_ptr<prm::Parameter> Draft::buildAngleParameter()
@@ -71,20 +125,6 @@ std::shared_ptr<prm::Parameter> Draft::buildAngleParameter()
   std::shared_ptr<prm::Parameter> out(new prm::Parameter(prm::Names::Angle, prf::manager().rootPtr->features().draft().get().angle()));
   out->setConstraint(prm::Constraint::buildNonZeroAngle());
   return out;
-}
-
-void Draft::setDraft(const DraftConvey &conveyIn)
-{
-  targetPicks = conveyIn.targets;
-  neutralPick = conveyIn.neutralPlane;
-  if (!conveyIn.angle)
-    angle = buildAngleParameter();
-  angle->connectValue(std::bind(&Draft::setModelDirty, this));
-  if (!conveyIn.label)
-    label = new lbr::PLabel(angle.get());
-  label->valueHasChanged();
-  label->constantHasChanged();
-  overlaySwitch->addChild(label.get());
 }
 
 void Draft::updateModel(const UpdatePayload &payloadIn)
@@ -276,11 +316,8 @@ void Draft::serialRead(const prj::srl::FeatureDraft &sDraftIn)
   targetPicks = ::ftr::serialIn(sDraftIn.targetPicks());
   neutralPick.serialIn(sDraftIn.neutralPick());
   
-  angle = buildAngleParameter();
   angle->serialIn(sDraftIn.angle());
   angle->connectValue(std::bind(&Draft::setModelDirty, this));
   
-  label = new lbr::PLabel(angle.get());
   label->serialIn(sDraftIn.plabel());
-  overlaySwitch->addChild(label.get());
 }

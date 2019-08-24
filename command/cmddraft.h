@@ -1,6 +1,6 @@
 /*
  * CadSeer. Parametric Solid Modeling.
- * Copyright (C) %YEAR% Thomas S. Anderson blobfish.at.gmx.com
+ * Copyright (C) 2019 Thomas S. Anderson blobfish.at.gmx.com
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,49 +17,51 @@
  *
  */
 
-#ifndef CMD_%CLASSNAMEUPPERCASE%_H
-#define CMD_%CLASSNAMEUPPERCASE%_H
+#ifndef CMD_DRAFT_H
+#define CMD_DRAFT_H
 
 #include "command/cmdbase.h"
 
-namespace dlg{class %CLASSNAME%;}
-namespace ftr{class %CLASSNAME%;}
+namespace dlg{class Draft;}
+namespace ftr{class Draft;}
 
 namespace cmd
 {
   /**
   * @todo write docs
   */
-  class %CLASSNAME% : public Base
+  class Draft : public Base
   {
   public:
-    %CLASSNAME%();
-    ~%CLASSNAME%() override;
+    Draft();
+    ~Draft() override;
     
-    std::string getCommandName() override{return "%CLASSNAME%";}
+    std::string getCommandName() override{return "Draft";}
     std::string getStatusMessage() override;
     void activate() override;
     void deactivate() override;
   private:
     void go();
+    bool firstRun = true;
+    dlg::Draft *dialog = nullptr;
   };
   
   /**
   * @todo write docs
   */
-  class %CLASSNAME%Edit : public Base
+  class DraftEdit : public Base
   {
   public:
-    %CLASSNAME%Edit(ftr::Base*);
-    ~%CLASSNAME%Edit() override;
+    DraftEdit(ftr::Base*);
+    virtual ~DraftEdit() override;
     
-    std::string getCommandName() override{return "%CLASSNAME% Edit";}
+    std::string getCommandName() override{return "Draft Edit";}
     std::string getStatusMessage() override;
     void activate() override;
     void deactivate() override;
   private:
-    dlg::%CLASSNAME% *dialog = nullptr;
-    ftr::%CLASSNAME% *feature = nullptr;
+    dlg::Draft *dialog = nullptr;
+    ftr::Draft *feature = nullptr;
   };
 }
-#endif // CMD_%CLASSNAMEUPPERCASE%_H
+#endif // CMD_DRAFT_H

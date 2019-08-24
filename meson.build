@@ -188,7 +188,8 @@ selection_sources = ['selection/slceventhandler.cpp'
   , 'selection/slcinterpreter.cpp'
   , 'selection/slcvisitors.cpp'
   , 'selection/slcdefinitions.cpp'
-  , 'selection/slcintersection.cpp']
+  , 'selection/slcintersection.cpp'
+  , 'selection/slcaccrue.cpp']
   
 tools_sources = ['tools/idtools.cpp'
   , 'tools/infotools.cpp'
@@ -214,7 +215,13 @@ dialog_sources = ['dialogs/dlgparameter.cpp'
   , 'dialogs/dlgsketch.cpp'
   , 'dialogs/dlgsweep.cpp'
   , 'dialogs/dlglawfunctionwidget.cpp'
-  , 'dialogs/dlgenterfilter.cpp']
+  , 'dialogs/dlgenterfilter.cpp'
+  , 'dialogs/dlgselectionlist.cpp'
+  , 'dialogs/dlgselectionwidget.cpp'
+  , 'dialogs/dlgparameterwidget.cpp'
+  , 'dialogs/dlgdraft.cpp'
+  , 'dialogs/dlgbase.cpp'
+  , 'dialogs/dlgextract.cpp']
   
 preference_sources = ['preferences/preferencesXML.cpp', 'preferences/prfmanager.cpp']
 
@@ -327,7 +334,8 @@ command_sources = ['command/cmdmanager.cpp'
   , 'command/cmdimageplane.cpp'
   , 'command/cmdocctexport.cpp'
   , 'command/cmdsweep.cpp'
-  , 'command/cmdboolean.cpp']
+  , 'command/cmdboolean.cpp'
+  , 'command/cmddraft.cpp']
   
 law_sources = ['law/lwfcue.cpp']
 
@@ -432,7 +440,13 @@ cadseer_moc_hdrs = ['viewer/vwrwidget.h'
   , 'dialogs/dlgsketch.h'
   , 'dialogs/dlgsweep.h'
   , 'dialogs/dlglawfunctionwidget.h'
-  , 'dialogs/dlgenterfilter.h']
+  , 'dialogs/dlgenterfilter.h'
+  , 'dialogs/dlgselectionlist.h'
+  , 'dialogs/dlgselectionwidget.h'
+  , 'dialogs/dlgparameterwidget.h'
+  , 'dialogs/dlgdraft.h'
+  , 'dialogs/dlgbase.h'
+  , 'dialogs/dlgextract.h']
   
 cadseer_resources = ['resources.qrc']
 

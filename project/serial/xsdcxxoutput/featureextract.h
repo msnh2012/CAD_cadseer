@@ -72,8 +72,6 @@ namespace prj
 {
   namespace srl
   {
-    class AccruePick;
-    class AccruePicks;
     class FeatureExtract;
   }
 }
@@ -103,448 +101,6 @@ namespace prj
    */
   namespace srl
   {
-    /**
-     * @brief Class corresponding to the %AccruePick schema type.
-     *
-     * @nosubgrouping
-     */
-    class AccruePick: public ::xml_schema::Type
-    {
-      public:
-      /**
-       * @name picks
-       *
-       * @brief Accessor and modifier functions for the %picks
-       * required element.
-       */
-      //@{
-
-      /**
-       * @brief Element type.
-       */
-      typedef ::prj::srl::Picks PicksType;
-
-      /**
-       * @brief Element traits type.
-       */
-      typedef ::xsd::cxx::tree::traits< PicksType, char > PicksTraits;
-
-      /**
-       * @brief Return a read-only (constant) reference to the element.
-       *
-       * @return A constant reference to the element.
-       */
-      const PicksType&
-      picks () const;
-
-      /**
-       * @brief Return a read-write reference to the element.
-       *
-       * @return A reference to the element.
-       */
-      PicksType&
-      picks ();
-
-      /**
-       * @brief Set the element value.
-       *
-       * @param x A new value to set.
-       *
-       * This function makes a copy of its argument and sets it as
-       * the new value of the element.
-       */
-      void
-      picks (const PicksType& x);
-
-      /**
-       * @brief Set the element value without copying.
-       *
-       * @param p A new value to use.
-       *
-       * This function will try to use the passed value directly
-       * instead of making a copy.
-       */
-      void
-      picks (::std::unique_ptr< PicksType > p);
-
-      //@}
-
-      /**
-       * @name parameter
-       *
-       * @brief Accessor and modifier functions for the %parameter
-       * required element.
-       */
-      //@{
-
-      /**
-       * @brief Element type.
-       */
-      typedef ::prj::srl::Parameter ParameterType;
-
-      /**
-       * @brief Element traits type.
-       */
-      typedef ::xsd::cxx::tree::traits< ParameterType, char > ParameterTraits;
-
-      /**
-       * @brief Return a read-only (constant) reference to the element.
-       *
-       * @return A constant reference to the element.
-       */
-      const ParameterType&
-      parameter () const;
-
-      /**
-       * @brief Return a read-write reference to the element.
-       *
-       * @return A reference to the element.
-       */
-      ParameterType&
-      parameter ();
-
-      /**
-       * @brief Set the element value.
-       *
-       * @param x A new value to set.
-       *
-       * This function makes a copy of its argument and sets it as
-       * the new value of the element.
-       */
-      void
-      parameter (const ParameterType& x);
-
-      /**
-       * @brief Set the element value without copying.
-       *
-       * @param p A new value to use.
-       *
-       * This function will try to use the passed value directly
-       * instead of making a copy.
-       */
-      void
-      parameter (::std::unique_ptr< ParameterType > p);
-
-      //@}
-
-      /**
-       * @name plabel
-       *
-       * @brief Accessor and modifier functions for the %plabel
-       * required element.
-       */
-      //@{
-
-      /**
-       * @brief Element type.
-       */
-      typedef ::prj::srl::PLabel PlabelType;
-
-      /**
-       * @brief Element traits type.
-       */
-      typedef ::xsd::cxx::tree::traits< PlabelType, char > PlabelTraits;
-
-      /**
-       * @brief Return a read-only (constant) reference to the element.
-       *
-       * @return A constant reference to the element.
-       */
-      const PlabelType&
-      plabel () const;
-
-      /**
-       * @brief Return a read-write reference to the element.
-       *
-       * @return A reference to the element.
-       */
-      PlabelType&
-      plabel ();
-
-      /**
-       * @brief Set the element value.
-       *
-       * @param x A new value to set.
-       *
-       * This function makes a copy of its argument and sets it as
-       * the new value of the element.
-       */
-      void
-      plabel (const PlabelType& x);
-
-      /**
-       * @brief Set the element value without copying.
-       *
-       * @param p A new value to use.
-       *
-       * This function will try to use the passed value directly
-       * instead of making a copy.
-       */
-      void
-      plabel (::std::unique_ptr< PlabelType > p);
-
-      //@}
-
-      /**
-       * @name Constructors
-       */
-      //@{
-
-      /**
-       * @brief Create an instance from the ultimate base and
-       * initializers for required elements and attributes.
-       */
-      AccruePick (const PicksType&,
-                  const ParameterType&,
-                  const PlabelType&);
-
-      /**
-       * @brief Create an instance from the ultimate base and
-       * initializers for required elements and attributes
-       * (::std::unique_ptr version).
-       *
-       * This constructor will try to use the passed values directly
-       * instead of making copies.
-       */
-      AccruePick (::std::unique_ptr< PicksType >,
-                  ::std::unique_ptr< ParameterType >,
-                  ::std::unique_ptr< PlabelType >);
-
-      /**
-       * @brief Create an instance from a DOM element.
-       *
-       * @param e A DOM element to extract the data from.
-       * @param f Flags to create the new instance with.
-       * @param c A pointer to the object that will contain the new
-       * instance.
-       */
-      AccruePick (const ::xercesc::DOMElement& e,
-                  ::xml_schema::Flags f = 0,
-                  ::xml_schema::Container* c = 0);
-
-      /**
-       * @brief Copy constructor.
-       *
-       * @param x An instance to make a copy of.
-       * @param f Flags to create the copy with.
-       * @param c A pointer to the object that will contain the copy.
-       *
-       * For polymorphic object models use the @c _clone function instead.
-       */
-      AccruePick (const AccruePick& x,
-                  ::xml_schema::Flags f = 0,
-                  ::xml_schema::Container* c = 0);
-
-      /**
-       * @brief Copy the instance polymorphically.
-       *
-       * @param f Flags to create the copy with.
-       * @param c A pointer to the object that will contain the copy.
-       * @return A pointer to the dynamically allocated copy.
-       *
-       * This function ensures that the dynamic type of the instance is
-       * used for copying and should be used for polymorphic object
-       * models instead of the copy constructor.
-       */
-      virtual AccruePick*
-      _clone (::xml_schema::Flags f = 0,
-              ::xml_schema::Container* c = 0) const;
-
-      /**
-       * @brief Copy assignment operator.
-       *
-       * @param x An instance to make a copy of.
-       * @return A reference to itself.
-       *
-       * For polymorphic object models use the @c _clone function instead.
-       */
-      AccruePick&
-      operator= (const AccruePick& x);
-
-      //@}
-
-      /**
-       * @brief Destructor.
-       */
-      virtual 
-      ~AccruePick ();
-
-      // Implementation.
-      //
-
-      //@cond
-
-      protected:
-      void
-      parse (::xsd::cxx::xml::dom::parser< char >&,
-             ::xml_schema::Flags);
-
-      protected:
-      ::xsd::cxx::tree::one< PicksType > picks_;
-      ::xsd::cxx::tree::one< ParameterType > parameter_;
-      ::xsd::cxx::tree::one< PlabelType > plabel_;
-
-      //@endcond
-    };
-
-    /**
-     * @brief Class corresponding to the %AccruePicks schema type.
-     *
-     * @nosubgrouping
-     */
-    class AccruePicks: public ::xml_schema::Type
-    {
-      public:
-      /**
-       * @name array
-       *
-       * @brief Accessor and modifier functions for the %array
-       * sequence element.
-       */
-      //@{
-
-      /**
-       * @brief Element type.
-       */
-      typedef ::prj::srl::AccruePick ArrayType;
-
-      /**
-       * @brief Element sequence container type.
-       */
-      typedef ::xsd::cxx::tree::sequence< ArrayType > ArraySequence;
-
-      /**
-       * @brief Element iterator type.
-       */
-      typedef ArraySequence::iterator ArrayIterator;
-
-      /**
-       * @brief Element constant iterator type.
-       */
-      typedef ArraySequence::const_iterator ArrayConstIterator;
-
-      /**
-       * @brief Element traits type.
-       */
-      typedef ::xsd::cxx::tree::traits< ArrayType, char > ArrayTraits;
-
-      /**
-       * @brief Return a read-only (constant) reference to the element
-       * sequence.
-       *
-       * @return A constant reference to the sequence container.
-       */
-      const ArraySequence&
-      array () const;
-
-      /**
-       * @brief Return a read-write reference to the element sequence.
-       *
-       * @return A reference to the sequence container.
-       */
-      ArraySequence&
-      array ();
-
-      /**
-       * @brief Copy elements from a given sequence.
-       *
-       * @param s A sequence to copy elements from.
-       *
-       * For each element in @a s this function makes a copy and adds it 
-       * to the sequence. Note that this operation completely changes the 
-       * sequence and all old elements will be lost.
-       */
-      void
-      array (const ArraySequence& s);
-
-      //@}
-
-      /**
-       * @name Constructors
-       */
-      //@{
-
-      /**
-       * @brief Create an instance from the ultimate base and
-       * initializers for required elements and attributes.
-       */
-      AccruePicks ();
-
-      /**
-       * @brief Create an instance from a DOM element.
-       *
-       * @param e A DOM element to extract the data from.
-       * @param f Flags to create the new instance with.
-       * @param c A pointer to the object that will contain the new
-       * instance.
-       */
-      AccruePicks (const ::xercesc::DOMElement& e,
-                   ::xml_schema::Flags f = 0,
-                   ::xml_schema::Container* c = 0);
-
-      /**
-       * @brief Copy constructor.
-       *
-       * @param x An instance to make a copy of.
-       * @param f Flags to create the copy with.
-       * @param c A pointer to the object that will contain the copy.
-       *
-       * For polymorphic object models use the @c _clone function instead.
-       */
-      AccruePicks (const AccruePicks& x,
-                   ::xml_schema::Flags f = 0,
-                   ::xml_schema::Container* c = 0);
-
-      /**
-       * @brief Copy the instance polymorphically.
-       *
-       * @param f Flags to create the copy with.
-       * @param c A pointer to the object that will contain the copy.
-       * @return A pointer to the dynamically allocated copy.
-       *
-       * This function ensures that the dynamic type of the instance is
-       * used for copying and should be used for polymorphic object
-       * models instead of the copy constructor.
-       */
-      virtual AccruePicks*
-      _clone (::xml_schema::Flags f = 0,
-              ::xml_schema::Container* c = 0) const;
-
-      /**
-       * @brief Copy assignment operator.
-       *
-       * @param x An instance to make a copy of.
-       * @return A reference to itself.
-       *
-       * For polymorphic object models use the @c _clone function instead.
-       */
-      AccruePicks&
-      operator= (const AccruePicks& x);
-
-      //@}
-
-      /**
-       * @brief Destructor.
-       */
-      virtual 
-      ~AccruePicks ();
-
-      // Implementation.
-      //
-
-      //@cond
-
-      protected:
-      void
-      parse (::xsd::cxx::xml::dom::parser< char >&,
-             ::xml_schema::Flags);
-
-      protected:
-      ArraySequence array_;
-
-      //@endcond
-    };
-
     /**
      * @brief Class corresponding to the %FeatureExtract schema type.
      *
@@ -612,64 +168,6 @@ namespace prj
       //@}
 
       /**
-       * @name accruePicks
-       *
-       * @brief Accessor and modifier functions for the %accruePicks
-       * required element.
-       */
-      //@{
-
-      /**
-       * @brief Element type.
-       */
-      typedef ::prj::srl::AccruePicks AccruePicksType;
-
-      /**
-       * @brief Element traits type.
-       */
-      typedef ::xsd::cxx::tree::traits< AccruePicksType, char > AccruePicksTraits;
-
-      /**
-       * @brief Return a read-only (constant) reference to the element.
-       *
-       * @return A constant reference to the element.
-       */
-      const AccruePicksType&
-      accruePicks () const;
-
-      /**
-       * @brief Return a read-write reference to the element.
-       *
-       * @return A reference to the element.
-       */
-      AccruePicksType&
-      accruePicks ();
-
-      /**
-       * @brief Set the element value.
-       *
-       * @param x A new value to set.
-       *
-       * This function makes a copy of its argument and sets it as
-       * the new value of the element.
-       */
-      void
-      accruePicks (const AccruePicksType& x);
-
-      /**
-       * @brief Set the element value without copying.
-       *
-       * @param p A new value to use.
-       *
-       * This function will try to use the passed value directly
-       * instead of making a copy.
-       */
-      void
-      accruePicks (::std::unique_ptr< AccruePicksType > p);
-
-      //@}
-
-      /**
        * @name picks
        *
        * @brief Accessor and modifier functions for the %picks
@@ -728,6 +226,122 @@ namespace prj
       //@}
 
       /**
+       * @name angle
+       *
+       * @brief Accessor and modifier functions for the %angle
+       * required element.
+       */
+      //@{
+
+      /**
+       * @brief Element type.
+       */
+      typedef ::prj::srl::Parameter AngleType;
+
+      /**
+       * @brief Element traits type.
+       */
+      typedef ::xsd::cxx::tree::traits< AngleType, char > AngleTraits;
+
+      /**
+       * @brief Return a read-only (constant) reference to the element.
+       *
+       * @return A constant reference to the element.
+       */
+      const AngleType&
+      angle () const;
+
+      /**
+       * @brief Return a read-write reference to the element.
+       *
+       * @return A reference to the element.
+       */
+      AngleType&
+      angle ();
+
+      /**
+       * @brief Set the element value.
+       *
+       * @param x A new value to set.
+       *
+       * This function makes a copy of its argument and sets it as
+       * the new value of the element.
+       */
+      void
+      angle (const AngleType& x);
+
+      /**
+       * @brief Set the element value without copying.
+       *
+       * @param p A new value to use.
+       *
+       * This function will try to use the passed value directly
+       * instead of making a copy.
+       */
+      void
+      angle (::std::unique_ptr< AngleType > p);
+
+      //@}
+
+      /**
+       * @name label
+       *
+       * @brief Accessor and modifier functions for the %label
+       * required element.
+       */
+      //@{
+
+      /**
+       * @brief Element type.
+       */
+      typedef ::prj::srl::PLabel LabelType;
+
+      /**
+       * @brief Element traits type.
+       */
+      typedef ::xsd::cxx::tree::traits< LabelType, char > LabelTraits;
+
+      /**
+       * @brief Return a read-only (constant) reference to the element.
+       *
+       * @return A constant reference to the element.
+       */
+      const LabelType&
+      label () const;
+
+      /**
+       * @brief Return a read-write reference to the element.
+       *
+       * @return A reference to the element.
+       */
+      LabelType&
+      label ();
+
+      /**
+       * @brief Set the element value.
+       *
+       * @param x A new value to set.
+       *
+       * This function makes a copy of its argument and sets it as
+       * the new value of the element.
+       */
+      void
+      label (const LabelType& x);
+
+      /**
+       * @brief Set the element value without copying.
+       *
+       * @param p A new value to use.
+       *
+       * This function will try to use the passed value directly
+       * instead of making a copy.
+       */
+      void
+      label (::std::unique_ptr< LabelType > p);
+
+      //@}
+
+      /**
        * @name Constructors
        */
       //@{
@@ -737,8 +351,9 @@ namespace prj
        * initializers for required elements and attributes.
        */
       FeatureExtract (const FeatureBaseType&,
-                      const AccruePicksType&,
-                      const PicksType&);
+                      const PicksType&,
+                      const AngleType&,
+                      const LabelType&);
 
       /**
        * @brief Create an instance from the ultimate base and
@@ -749,8 +364,9 @@ namespace prj
        * instead of making copies.
        */
       FeatureExtract (::std::unique_ptr< FeatureBaseType >,
-                      ::std::unique_ptr< AccruePicksType >,
-                      ::std::unique_ptr< PicksType >);
+                      ::std::unique_ptr< PicksType >,
+                      ::std::unique_ptr< AngleType >,
+                      ::std::unique_ptr< LabelType >);
 
       /**
        * @brief Create an instance from a DOM element.
@@ -823,8 +439,9 @@ namespace prj
 
       protected:
       ::xsd::cxx::tree::one< FeatureBaseType > featureBase_;
-      ::xsd::cxx::tree::one< AccruePicksType > accruePicks_;
       ::xsd::cxx::tree::one< PicksType > picks_;
+      ::xsd::cxx::tree::one< AngleType > angle_;
+      ::xsd::cxx::tree::one< LabelType > label_;
 
       //@endcond
     };
@@ -1108,12 +725,6 @@ namespace prj
 {
   namespace srl
   {
-    void
-    operator<< (::xercesc::DOMElement&, const AccruePick&);
-
-    void
-    operator<< (::xercesc::DOMElement&, const AccruePicks&);
-
     void
     operator<< (::xercesc::DOMElement&, const FeatureExtract&);
 

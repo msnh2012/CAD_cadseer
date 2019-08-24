@@ -17,6 +17,8 @@
  *
  */
 
+#include <iostream>
+
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
 
@@ -56,6 +58,11 @@ boost::uuids::uuid gu::stringToId(const std::string &stringIn)
   try
   {
     out = sGen(stringIn);
+  }
+  catch (const std::runtime_error &e)
+  {
+    out = nGen();
+    std::cout << "stringToId: exception in: " << BOOST_CURRENT_FUNCTION << ": " << e.what() << std::endl;
   }
   catch (...)
   {

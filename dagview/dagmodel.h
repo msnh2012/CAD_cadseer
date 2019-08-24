@@ -28,6 +28,7 @@
 #include <QBrush>
 #include <QLineEdit>
 
+#include "selection/slcdefinitions.h"
 // #include "DAGFilter.h"
 
 namespace boost{namespace uuids{class uuid;}}
@@ -99,6 +100,7 @@ namespace dag
     void preselectionSubtractionDispatched(const msg::Message &);
     void selectionAdditionDispatched(const msg::Message &);
     void selectionSubtractionDispatched(const msg::Message &);
+    void selectionMaskDispatched(const msg::Message &);
     void closeProjectDispatched(const msg::Message&);
     void featureStateChangedDispatched(const msg::Message &);
     void projectFeatureStateChangedDispatched(const msg::Message &);
@@ -108,6 +110,8 @@ namespace dag
     void threeDHideDispatched(const msg::Message &);
     void overlayShowDispatched(const msg::Message &);
     void overlayHideDispatched(const msg::Message &);
+    void commandActiveDispatched(const msg::Message &);
+    void commandInactiveDispatched(const msg::Message &);
     
     std::unique_ptr<Stow> stow;
     
@@ -141,6 +145,8 @@ namespace dag
 
     QPointF lastPick;
     bool lastPickValid = false;
+    slc::Mask selectionMask;
+    bool commandActive = false;
     
     QPixmap visiblePixmapEnabled;
     QPixmap visiblePixmapDisabled;

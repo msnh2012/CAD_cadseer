@@ -279,7 +279,7 @@
     <xs:element name="history" type="srl:ShapeHistory"  minOccurs="0" maxOccurs="1"/>
     <xs:element name="selectionType" type="xs:int"  minOccurs="0" maxOccurs="1"/>
     <xs:element name="tag" type="xs:string"  minOccurs="0" maxOccurs="1"/>
-    <xs:element name="accrueType" type="xs:string"  minOccurs="0" maxOccurs="1"/>
+    <xs:element name="accrue" type="xs:int" minOccurs="0" maxOccurs="1"/>
   </xs:all>
 </xs:complexType>
 

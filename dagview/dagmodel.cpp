@@ -160,6 +160,8 @@ Model::Model(QObject *parentIn) : QGraphicsScene(parentIn), stow(new Stow())
   inactivePixmap = inactiveIcon.pixmap(iconSize, iconSize);
   QIcon skippedIcon(":/resources/images/dagViewSkipped.svg");
   skippedPixmap = skippedIcon.pixmap(iconSize, iconSize);
+  
+  selectionMask = slc::All;
 }
 
 Model::~Model()
@@ -408,6 +410,21 @@ void Model::setupDispatcher()
         msg::Response | msg::View | msg::Hide | msg::Overlay
       , std::bind(&Model::overlayHideDispatched, this, std::placeholders::_1)
       )
+      , std::make_pair
+      (
+        msg::Response | msg::Selection | msg::SetMask
+      , std::bind(&Model::selectionMaskDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Response | msg::Command | msg::Active
+      , std::bind(&Model::commandActiveDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Response | msg::Command | msg::Inactive
+      , std::bind(&Model::commandInactiveDispatched, this, std::placeholders::_1)
+      )
     }
   );
   
@@ -571,6 +588,11 @@ void Model::selectionSubtractionDispatched(const msg::Message &messageIn)
   lastPickValid = false;
   
   invalidate();
+}
+
+void Model::selectionMaskDispatched(const msg::Message &mIn)
+{
+  selectionMask = mIn.getSLC().selectionMask;
 }
 
 void Model::closeProjectDispatched(const msg::Message&)
@@ -851,6 +873,16 @@ void Model::overlayHideDispatched(const msg::Message &msgIn)
   stow->graph[vertex].overlayIconShared->setPixmap(overlayPixmapDisabled);
 }
 
+void Model::commandActiveDispatched(const msg::Message &)
+{
+  commandActive = true;
+}
+
+void Model::commandInactiveDispatched(const msg::Message &)
+{
+  commandActive = false;
+}
+
 void Model::removeAllItems()
 {
   for (auto its = boost::vertices(stow->graph); its.first != its.second; ++its.first)
@@ -960,42 +992,45 @@ void Model::mouseMoveEvent(QGraphicsSceneMouseEvent* event)
   }
   else //not in a drag operation
   {
-    auto clearPrehighlight = [this]()
+    auto buildMessage = [&](Vertex vertex)
+    {
+      slc::Message sMessage;
+      sMessage.type = slc::Type::Object;
+      sMessage.featureId = stow->graph[vertex].featureId;
+      sMessage.shapeId = gu::createNilId();
+      return sMessage;
+    };
+    
+    auto clearPrehighlight = [&]()
     {
       if (!currentPrehighlight)
         return;
       Vertex vertex = stow->findVertex(currentPrehighlight);
       if (vertex == NullVertex())
         return;
-      
-      slc::Message sMessage;
-      sMessage.type = slc::Type::Object;
-      sMessage.featureId = stow->graph[vertex].featureId;
-      sMessage.shapeId = gu::createNilId();
-      msg::Message message
-      (
-        msg::Request | msg::Preselection | msg::Remove
-        ,sMessage
-      );
-      node->send(message);
+      node->send(msg::Message(msg::Request | msg::Preselection | msg::Remove, buildMessage(vertex)));
     };
     
-    auto setPrehighlight = [this](RectItem *rectIn)
+    auto setPrehighlight = [&](RectItem *rectIn)
     {
       Vertex vertex = stow->findVertex(rectIn);
       if (vertex == NullVertex())
         return;
       
-      slc::Message sMessage;
-      sMessage.type = slc::Type::Object;
-      sMessage.featureId = stow->graph[vertex].featureId;
-      sMessage.shapeId = gu::createNilId();
-      msg::Message message
-      (
-        msg::Request | msg::Preselection | msg::Add
-        , sMessage
-      );
-      node->send(message);
+      if (commandActive)
+      {
+        //only consider the selection mask when a command is active.
+        if
+        (
+          (selectionMask & slc::ObjectsEnabled).any()
+          && (selectionMask & slc::ObjectsSelectable).any()
+        )
+        {
+          node->send(msg::Message(msg::Request | msg::Preselection | msg::Add, buildMessage(vertex)));
+        }
+      }
+      else
+        node->send(msg::Message(msg::Request | msg::Preselection | msg::Add, buildMessage(vertex)));
     };
     
     if (rect == currentPrehighlight)
@@ -1017,6 +1052,15 @@ void Model::mousePressEvent(QGraphicsSceneMouseEvent* event)
   {
     assert((actionIn == msg::Add) || (actionIn == msg::Remove));
     if (featureIdIn.is_nil())
+      return;
+    if
+    (
+      (
+        (selectionMask & slc::ObjectsEnabled).none()
+        || (selectionMask & slc::ObjectsSelectable).none()
+      )
+      && commandActive
+    )
       return;
     slc::Message sMessage;
     sMessage.type = slc::Type::Object;
@@ -1238,15 +1282,33 @@ void Model::contextMenuEvent(QGraphicsSceneContextMenuEvent* event)
       return;
     if (!rect->isSelected())
     {
-      slc::Message sMessage;
-      sMessage.type = slc::Type::Object;
-      sMessage.featureId = stow->graph[vertex].featureId;
-      msg::Message message
-      (
-        msg::Request | msg::Selection | msg::Add
-        , sMessage
-      );
-      node->send(message);
+      auto localSend = [&]()
+      {
+        slc::Message sMessage;
+        sMessage.type = slc::Type::Object;
+        sMessage.featureId = stow->graph[vertex].featureId;
+        msg::Message message
+        (
+          msg::Request | msg::Selection | msg::Add
+          , sMessage
+        );
+        node->send(message);
+      };
+      
+      if (commandActive)
+      {
+        //consider selection mask only when command active
+        if
+        (
+          (selectionMask & slc::ObjectsEnabled).any()
+          && (selectionMask & slc::ObjectsSelectable).any()
+        )
+        {
+          localSend();
+        }
+      }
+      else
+        localSend();
     }
     
     QMenu contextMenu;

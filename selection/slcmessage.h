@@ -27,6 +27,7 @@
 #include <osg/Vec3d>
 
 #include "feature/ftrtypes.h"
+#include "selection/slcaccrue.h"
 #include "selection/slcdefinitions.h"
 
 namespace slc
@@ -36,6 +37,7 @@ namespace slc
     Message();
     Message(Mask);
     slc::Type type;
+    slc::Accrue accrue;
     ftr::Type featureType;
     boost::uuids::uuid featureId;
     boost::uuids::uuid shapeId;

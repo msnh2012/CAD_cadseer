@@ -22,21 +22,44 @@
 
 #include "command/cmdbase.h"
 
+namespace dlg{class Extract;}
+namespace ftr{class Extract;}
+
 namespace cmd
 {
   class Extract : public Base
   {
   public:
     Extract();
-    virtual ~Extract() override;
+    ~Extract() override;
     
     virtual std::string getCommandName() override{return "Extract";}
     virtual std::string getStatusMessage() override;
     virtual void activate() override;
     virtual void deactivate() override;
   private:
-    bool firstRun = true;
     void go();
+    bool firstRun = true;
+    dlg::Extract *dialog = nullptr;
+    ftr::Extract *feature = nullptr;
+  };
+  
+  /**
+  * @todo write docs
+  */
+  class ExtractEdit : public Base
+  {
+  public:
+    ExtractEdit(ftr::Base*);
+    ~ExtractEdit() override;
+    
+    std::string getCommandName() override{return "Extract Edit";}
+    std::string getStatusMessage() override;
+    void activate() override;
+    void deactivate() override;
+  private:
+    dlg::Extract *dialog = nullptr;
+    ftr::Extract *feature = nullptr;
   };
 }
 

@@ -102,8 +102,6 @@ MainWindow::MainWindow(QWidget *parent) :
   node->setHandler(std::bind(&msg::Sift::receive, sift.get(), std::placeholders::_1));
   
   setupDispatcher();
-  
-  node->send(msg::buildSelectionMask(slc::AllEnabled));
 }
 
 MainWindow::~MainWindow()

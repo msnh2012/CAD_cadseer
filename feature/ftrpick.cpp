@@ -17,10 +17,6 @@
  *
  */
 
-
-#include <boost/bimap.hpp>
-#include <boost/assign/list_of.hpp>
-
 #include <osg/Vec3d>
 
 #include <TopoDS_Face.hxx>
@@ -50,7 +46,7 @@ prj::srl::Pick Pick::serialOut() const
   out.selectionType().set(static_cast<int>(selectionType));
   if (!tag.empty())
     out.tag().set(tag);
-  out.accrueType().set(ftr::findAccrueString(accrueType));
+  out.accrue().set(static_cast<int>(accrue));
   
   return out;
 }
@@ -66,8 +62,8 @@ void Pick::serialIn(const prj::srl::Pick &sPickIn)
     selectionType = static_cast<slc::Type>(sPickIn.selectionType().get());
   if (sPickIn.tag().present())
     tag = sPickIn.tag().get();
-  if (sPickIn.accrueType().present())
-    accrueType = ftr::findAccrueType(sPickIn.accrueType().get());
+  if (sPickIn.accrue().present())
+    accrue = slc::Accrue(sPickIn.accrue().get());
 }
 
 bool Pick::operator==(const Pick &rhs) const
@@ -262,19 +258,4 @@ Picks ftr::serialIn(const prj::srl::Picks &sPicksIn)
   }
   
   return out;
-}
-
-typedef boost::bimap<AccrueType, std::string> AccrueMap;
-static const AccrueMap accrueMap = boost::assign::list_of<AccrueMap::relation>
-(AccrueType::None, "None")
-(AccrueType::Tangent, "Tangent");
-  
-std::string ftr::findAccrueString(AccrueType aType)
-{
-  return accrueMap.left.at(aType);
-}
-
-AccrueType ftr::findAccrueType(std::string aString)
-{
-  return accrueMap.right.at(aString);
 }

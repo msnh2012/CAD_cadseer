@@ -52,7 +52,9 @@ namespace dlg
     
     slc::Mask mask; //!< to control selection.
     void syncToSelection();
-    void highlightIndex(int);
+    void highlightIndex(int) const;
+    void setAccrue(int, slc::Accrue); //call highlight to update selection if needed.
+    void setAngle(int, double); //call highlight to update selection if needed.
     const slc::Messages& getMessages() const {return messages;}
     void setMessages(const slc::Messages&);
     void setMessages(const slc::Message&);

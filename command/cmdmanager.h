@@ -100,6 +100,7 @@ namespace cmd
     void constructRuledDispatched(const msg::Message&);
     void constructImagePlaneDispatched(const msg::Message&);
     void constructSweepDispatched(const msg::Message&);
+    void constructDraftDispatched(const msg::Message&);
     void occtExportDispatched(const msg::Message&);
     void revisionDispatched(const msg::Message&);
     

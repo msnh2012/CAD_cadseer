@@ -254,16 +254,13 @@ QStringList TableModel::mimeTypes() const
 QMimeData* TableModel::mimeData(const QModelIndexList& indexes) const
 {
   QMimeData *mimeData = new QMimeData();
-  std::ostringstream stream;
+  QString out = "ExpressionId";
   for (QModelIndexList::const_iterator it = indexes.constBegin(); it != indexes.constEnd(); ++it)
   {
-    stream
-      << "ExpressionId;"
-      << this->data(this->index(it->row(), 0), Qt::UserRole).toString().toStdString()
-      << std::endl;
+    out += ";";
+    out += this->data(this->index(it->row(), 0), Qt::UserRole).toString();
   }
-  
-  mimeData->setText(QString::fromStdString(stream.str()));
+  mimeData->setText(out);
   return mimeData;
 }
 

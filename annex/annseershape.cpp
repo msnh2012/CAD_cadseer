@@ -980,6 +980,27 @@ occt::ShapeVector SeerShape::useGetNonCompoundChildren() const
   return out;
 }
 
+std::vector<BID::uuid> SeerShape::useWalkTangentFaces(const BID::uuid &fId, double angle) const
+{
+  std::vector<BID::uuid> out;
+  if (!hasId(fId))
+    return out;
+  const TopoDS_Shape &fs = getOCCTShape(fId);
+  if (fs.ShapeType() != TopAbs_FACE)
+    return out;
+  occt::FaceVector faces = occt::walkTangentFaces(getRootOCCTShape(), TopoDS::Face(fs), angle);
+  for (const auto &f : faces)
+    out.push_back(findId(f));
+  return out;
+}
+
+occt::FaceVector SeerShape::useWalkTangentFaces(const TopoDS_Face &fIn, double angle) const
+{
+  if (!hasShape(fIn) || fIn.ShapeType() != TopAbs_FACE)
+    return occt::FaceVector();
+  return occt::walkTangentFaces(getRootOCCTShape(), fIn, angle);
+}
+
 void SeerShape::shapeMatch(const SeerShape &source)
 {
   typedef ShapeIdContainer::index<ShapeIdRecord::ByShape>::type List;

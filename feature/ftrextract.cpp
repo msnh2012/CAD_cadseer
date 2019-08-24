@@ -18,6 +18,7 @@
  */
 
 #include <boost/filesystem/path.hpp>
+#include <boost/optional/optional.hpp>
 
 #include <TopoDS.hxx>
 #include <BRepBuilderAPI_MakeSolid.hxx>
@@ -35,6 +36,7 @@
 #include "tools/featuretools.h"
 #include "feature/ftrinputtype.h"
 #include "parameter/prmparameter.h"
+#include "library/lbrplabel.h"
 #include "feature/ftrextract.h"
 
 using namespace ftr;
@@ -43,7 +45,11 @@ using boost::uuids::uuid;
 
 QIcon Extract::icon;
 
-Extract::Extract() : Base(), sShape(new ann::SeerShape())
+Extract::Extract()
+: Base()
+, sShape(new ann::SeerShape())
+, angle(buildAngleParameter())
+, label(new lbr::PLabel(angle.get()))
 {
   if (icon.isNull())
     icon = QIcon(":/resources/images/constructionExtract.svg");
@@ -52,6 +58,14 @@ Extract::Extract() : Base(), sShape(new ann::SeerShape())
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
   
   annexes.insert(std::make_pair(ann::Type::SeerShape, sShape.get()));
+  
+  angle->connectValue(std::bind(&Extract::setModelDirty, this));
+  parameters.push_back(angle.get());
+  
+  label->showName = true;
+  label->valueHasChanged();
+  label->constantHasChanged();
+//   overlaySwitch->addChild(label.get());
 }
 
 Extract::~Extract(){}
@@ -74,88 +88,39 @@ std::shared_ptr<prm::Parameter> Extract::buildAngleParameter(double deg)
   return out;
 }
 
-void Extract::sync(const Picks &psIn)
+void Extract::setAngleParameter(std::shared_ptr<prm::Parameter> prmIn)
 {
-  picks = psIn;
+  assert(prmIn);
+  
+  //remove old
+  auto rit = std::remove_if
+  (
+    parameters.begin()
+    , parameters.end()
+    , [&](prm::Parameter *pic){return pic == angle.get();}
+  );
+  if (angle)
+    parameters.erase(rit, parameters.end());
+  if (label)
+    overlaySwitch->removeChild(label.get());
+  
+  //add new
+  angle = prmIn;
+  angle->connectValue(std::bind(&Extract::setModelDirty, this));
+  parameters.push_back(angle.get());
+  label = new lbr::PLabel(angle.get());
+  label->showName = true;
+  label->valueHasChanged();
+  label->constantHasChanged();
+  overlaySwitch->addChild(label.get());
+  
+  setModelDirty();
 }
 
-void Extract::sync(const Extract::AccruePicks &apsIn)
+void Extract::setPicks(const Picks &psIn)
 {
-  //figure out what is new and not.
-  std::vector<uuid> ci; //current ids
-  std::vector<uuid> ai; //argument ids
-  for (const auto &ap : accruePicks)
-    ci.push_back(ap.id);
-  for (const auto &ap : apsIn)
-    ai.push_back(ap.id);
-  gu::uniquefy(ci);
-  gu::uniquefy(ai);
-  
-  std::vector<uuid> idsr; //ids to remove
-  std::vector<uuid> idsa; //ids to add.
-  std::vector<uuid> idsu; //ids to update.
-  std::set_difference(ci.begin(), ci.end(), ai.begin(), ai.end(), std::back_inserter(idsr));
-  std::set_difference(ai.begin(), ai.end(), ci.begin(), ci.end(), std::back_inserter(idsa));
-  std::set_intersection(ai.begin(), ai.end(), ci.begin(), ci.end(), std::back_inserter(idsu));
-  
-  for (auto &ap : accruePicks)
-  {
-    if (std::find(idsr.begin(), idsr.end(), ap.id) != idsr.end()) //member of ids to remove.
-    {
-      //remove label from scenegraph.
-      if (ap.label)
-      {
-        //shouldn't be added to more than one parent, but just in case.
-        for (unsigned int i = 0; i < ap.label->getNumParents(); ++i)
-        {
-          osg::Group *parent = ap.label->getParent(i);
-          parent->removeChild(ap.label);
-        }
-      }
-      
-      //remove the parameter from the vector.
-      auto it = std::find(parameters.begin(), parameters.end(), ap.parameter.get());
-      if (it != parameters.end())
-        parameters.erase(it);
-      //shouldn't have to worry about the signal connection between
-      //parameter and this feature. parameter does the call back and
-      //that will be deleted if gone from apsIn.
-    }
-    else if (std::find(idsu.begin(), idsu.end(), ap.id) != idsu.end()) //member of ids to update
-    {
-      for (const auto &apsInPick : apsIn)
-      {
-        if (apsInPick.id == ap.id)
-        {
-          ap.picks = apsInPick.picks;
-          //we assume parameter and labe are the same.
-          assert(ap.parameter == apsInPick.parameter);
-          assert(ap.label == apsInPick.label);
-          break;
-        }
-      }
-    }
-  }
-  
-  for (auto &ap : apsIn)
-  {
-    if (std::find(idsa.begin(), idsa.end(), ap.id) != idsa.end()) //member of ids to add.
-    {
-      accruePicks.push_back(ap);
-      auto &b = accruePicks.back();
-      if(!b.parameter)
-        b.parameter = buildAngleParameter(); //assume angle parameter.
-      b.parameter->connectValue(std::bind(&Extract::setModelDirty, this));
-      //else the parameter should already be connected if it exists.
-      parameters.push_back(b.parameter.get());
-      
-      if (!b.label)
-        b.label = new lbr::PLabel(b.parameter.get());
-      b.label->valueHasChanged();
-      b.label->constantHasChanged();
-      overlaySwitch->addChild(b.label.get());
-    }
-  }
+  picks = psIn;
+  setModelDirty();
 }
 
 void Extract::updateModel(const UpdatePayload &payloadIn)
@@ -165,45 +130,60 @@ void Extract::updateModel(const UpdatePayload &payloadIn)
   sShape->reset();
   try
   {
-    std::vector<const Base*> targetFeatures = payloadIn.getFeatures(InputType::target);
-    if (targetFeatures.size() != 1)
-      throw std::runtime_error("wrong number of parents");
-    if (!targetFeatures.front()->hasAnnex(ann::Type::SeerShape))
-      throw std::runtime_error("parent doesn't have seer shape");
-    const ann::SeerShape &targetSeerShape = targetFeatures.front()->getAnnex<ann::SeerShape>();
-    if (targetSeerShape.isNull())
-      throw std::runtime_error("target seer shape is null");
-    
     //no new failure state.
+    if (isSkipped())
+    {
+      setSuccess();
+      throw std::runtime_error("feature is skipped");
+    }
+    
+    std::vector<const Base*> parents = payloadIn.getFeatures(std::string());
+    if (parents.size() != 1)
+      throw std::runtime_error("Wrong number of parent features");
+    if (!parents.front()->hasAnnex(ann::Type::SeerShape))
+      throw std::runtime_error("Parent feature doesn't have seer shape");
+    const ann::SeerShape &targetSeerShape = parents.front()->getAnnex<ann::SeerShape>();
+    
+    boost::optional<osg::Matrixd> accrueLocation;
     tls::Resolver pr(payloadIn);
     occt::ShapeVector outShapes;
-    for (const auto &ap : accruePicks)
+    occt::FaceVector faces;
+    for (const auto &p : picks)
     {
-      occt::FaceVector faces;
-      bool labelDone = false; //set label position to first pick.
-      
-      for (const auto &p : ap.picks)
+      if (!pr.resolve(p))
+        continue;
+      for (const auto &s : pr.getShapes())
       {
-        if (!pr.resolve(p))
-          continue;
-        for (const auto &s : pr.getShapes())
+        //only supporting tangent accrue of faces at this time.
+        if (s.ShapeType() == TopAbs_FACE)
         {
-          if (s.ShapeType() != TopAbs_FACE)
-            continue; //just faces for now.
           TopoDS_Face f = TopoDS::Face(s);
-          if (p.accrueType == AccrueType::Tangent)
-            faces = occt::walkTangentFaces(pr.getSeerShape()->getRootOCCTShape(), f, static_cast<double>(*(ap.parameter)));
-          else if (p.accrueType == AccrueType::None)
-            faces.push_back(f);
-          if (!labelDone)
+          if (p.accrue == slc::Accrue::Tangent)
           {
-            labelDone = true;
-            ap.label->setMatrix(osg::Matrixd::translate(p.getPoint(f)));
+            if (!accrueLocation)
+              accrueLocation = osg::Matrixd::translate(p.getPoint(f));
+            occt::FaceVector tempFaces = occt::walkTangentFaces(pr.getSeerShape()->getRootOCCTShape(), f, static_cast<double>(*angle));
+            std::copy(tempFaces.begin(), tempFaces.end(), std::back_inserter(faces));
           }
+          else
+            faces.push_back(f);
         }
+        else
+          outShapes.push_back(s);
       }
-      
-      //apparently just throw all faces into the quilter and it will sort it out?
+    }
+    if (accrueLocation)
+      label->setMatrix(accrueLocation.get());
+    
+    //update feature visibility before shape construction in case of error.
+    if (accrueLocation)
+      overlaySwitch->addChild(label.get());
+    else
+      overlaySwitch->removeChild(label.get());
+    
+    //apparently just throw all faces into the quilter and it will sort it out?
+    if (faces.size() > 1)
+    {
       BRepTools_Quilt quilter;
       for (const auto &f : faces)
         quilter.Add(f);
@@ -211,19 +191,18 @@ void Extract::updateModel(const UpdatePayload &payloadIn)
       for (const auto &s : quilts)
         outShapes.push_back(s);
     }
+    else if (!faces.empty())
+      outShapes.push_back(faces.front());
     
-    if (accruePicks.empty())
+    //make sure we don't make a compound containing compounds.
+    occt::ShapeVector nonCompounds;
+    for (const auto &s : outShapes)
     {
-      for (const auto &p : picks)
-      {
-        if (!pr.resolve(p))
-          continue;
-        for (const auto &s : pr.getShapes())
-          outShapes.push_back(s);
-      }
+      occt::ShapeVector temp = occt::getNonCompounds(s);
+      std::copy(temp.begin(), temp.end(), std::back_inserter(nonCompounds));
     }
 
-    TopoDS_Compound out = static_cast<TopoDS_Compound>(occt::ShapeVectorCast(outShapes));
+    TopoDS_Compound out = static_cast<TopoDS_Compound>(occt::ShapeVectorCast(nonCompounds));
     
     if (out.IsNull())
       throw std::runtime_error("null shape");
@@ -267,26 +246,12 @@ void Extract::updateModel(const UpdatePayload &payloadIn)
 
 void Extract::serialWrite(const boost::filesystem::path &dIn)
 {
-  prj::srl::AccruePicks aPicksOut;
-  for (const auto &ap : accruePicks)
-  {
-    aPicksOut.array().push_back
-    (
-      prj::srl::AccruePick
-      (
-        ::ftr::serialOut(ap.picks),
-        ap.parameter->serialOut(),
-        ap.label->serialOut()
-      )
-    );
-  }
-  
-  prj::srl::Picks ePicksOut = ::ftr::serialOut(picks);
   prj::srl::FeatureExtract extractOut
   (
-    Base::serialOut(),
-    aPicksOut,
-    ePicksOut
+    Base::serialOut()
+    , ::ftr::serialOut(picks)
+    , angle->serialOut()
+    , label->serialOut()
   );
   
   xml_schema::NamespaceInfomap infoMap;
@@ -298,21 +263,16 @@ void Extract::serialRead(const prj::srl::FeatureExtract &sExtractIn)
 {
   Base::serialIn(sExtractIn.featureBase());
   picks = ::ftr::serialIn(sExtractIn.picks());
-  AccruePicks aps;
-  for (const auto &ap : sExtractIn.accruePicks().array())
+  angle->serialIn(sExtractIn.angle());
+  label->serialIn(sExtractIn.label());
+  
+  //this sucks!
+  for (const auto &p : picks)
   {
-    AccruePick c;
-    c.picks = ::ftr::serialIn(ap.picks());
-    //here we assume all picks have same accrue value.
-    if (!c.picks.empty() && c.picks.front().accrueType == AccrueType::Tangent)
+    if (p.accrue == slc::Accrue::Tangent)
     {
-      c.parameter = buildAngleParameter(0.0);
-      c.parameter->serialIn(ap.parameter());
-      c.label = new lbr::PLabel(c.parameter.get());
-      c.label->serialIn(ap.plabel());
+      overlaySwitch->addChild(label.get());
+      break;
     }
-    
-    aps.push_back(c);
   }
-  this->sync(aps);
 }

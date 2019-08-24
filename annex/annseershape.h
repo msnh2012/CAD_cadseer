@@ -30,6 +30,7 @@
 
 class BRepBuilderAPI_MakeShape;
 class TopoDS_Shape;
+class TopoDS_Face;
 
 namespace osg{class Vec3d;}
 
@@ -128,6 +129,8 @@ namespace ann
     BID::uuid useGetStartVertex(const BID::uuid &) const;
     BID::uuid useGetEndVertex(const BID::uuid &) const;
     occt::ShapeVector useGetNonCompoundChildren() const;
+    std::vector<BID::uuid> useWalkTangentFaces(const BID::uuid&, double = 0.0) const;
+    occt::FaceVector useWalkTangentFaces(const TopoDS_Face&, double = 0.0) const;
     //@}
     
     //@{

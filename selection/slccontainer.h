@@ -25,6 +25,7 @@
 
 #include "tools/idtools.h"
 #include "feature/ftrtypes.h"
+#include "selection/slcaccrue.h"
 #include "selection/slcdefinitions.h"
 
 namespace osg {class Geometry;}
@@ -40,6 +41,7 @@ namespace slc
   public:
       ~Container();
       Type selectionType = Type::None;
+      Accrue accrue = Accrue::None;
       ftr::Type featureType = ftr::Type::Base;
       boost::uuids::uuid featureId = gu::createNilId();
       boost::uuids::uuid shapeId = gu::createNilId();
@@ -57,6 +59,7 @@ namespace slc
     bool out =
     (
       (lhs.selectionType == rhs.selectionType) &&
+      (lhs.accrue == rhs.accrue) &&
       (lhs.featureId == rhs.featureId) &&
       (lhs.shapeId == rhs.shapeId)
       //we don't consider the selection ids in comparison.
@@ -82,6 +85,7 @@ namespace slc
   bool has(Containers &containersIn, const Container &containerIn);
   void add(Containers &containersIn, const Container &containerIn);
   void remove(Containers &containersIn, const Container &containerIn);
+  std::vector<Containers> split(const Containers &cIn); //!< split container by featureId
 }
 
 #endif // SLC_CONTAINER_H

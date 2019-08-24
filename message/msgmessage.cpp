@@ -58,39 +58,69 @@ Message::Message(const Mask &mIn, const lod::Message &m)
 : mask(mIn)
 , stow(std::make_shared<Stow>(m)){}
 
+bool Message::isPRJ() const
+{
+  return stow && stow->variant.type() == typeid(prj::Message);
+}
+
+bool Message::isAPP() const
+{
+  return stow && stow->variant.type() == typeid(app::Message);
+}
+
+bool Message::isSLC() const
+{
+  return stow && stow->variant.type() == typeid(slc::Message);
+}
+
+bool Message::isVWR() const
+{
+  return stow && stow->variant.type() == typeid(vwr::Message);
+}
+
+bool Message::isFTR() const
+{
+  return stow && stow->variant.type() == typeid(ftr::Message);
+}
+
+bool Message::isLOD() const
+{
+  return stow && stow->variant.type() == typeid(lod::Message);
+}
+
 const prj::Message& Message::getPRJ() const
 {
-  assert(stow->variant.type() == typeid(prj::Message));
+  assert(isPRJ());
   return boost::get<prj::Message>(stow->variant);
 }
 
 const app::Message& Message::getAPP() const
 {
-  assert(stow->variant.type() == typeid(app::Message));
+  assert(isAPP());
   return boost::get<app::Message>(stow->variant);
 }
 
 const slc::Message& Message::getSLC() const
 {
-  assert(stow->variant.type() == typeid(slc::Message));
+  assert(isSLC());
   return boost::get<slc::Message>(stow->variant);
 }
 
 const vwr::Message& Message::getVWR() const
 {
-  assert(stow->variant.type() == typeid(vwr::Message));
+  assert(isVWR());
   return boost::get<vwr::Message>(stow->variant);
 }
 
 const ftr::Message& Message::getFTR() const
 {
-  assert(stow->variant.type() == typeid(ftr::Message));
+  assert(isFTR());
   return boost::get<ftr::Message>(stow->variant);
 }
 
 const lod::Message& Message::getLOD() const
 {
-  assert(stow->variant.type() == typeid(lod::Message));
+  assert(isLOD());
   return boost::get<lod::Message>(stow->variant);
 }
 

@@ -9661,9 +9661,9 @@ namespace prj
       //@}
 
       /**
-       * @name accrueType
+       * @name accrue
        *
-       * @brief Accessor and modifier functions for the %accrueType
+       * @brief Accessor and modifier functions for the %accrue
        * optional element.
        */
       //@{
@@ -9671,17 +9671,17 @@ namespace prj
       /**
        * @brief Element type.
        */
-      typedef ::xml_schema::String AccrueTypeType;
+      typedef ::xml_schema::Int AccrueType;
 
       /**
        * @brief Element optional container type.
        */
-      typedef ::xsd::cxx::tree::optional< AccrueTypeType > AccrueTypeOptional;
+      typedef ::xsd::cxx::tree::optional< AccrueType > AccrueOptional;
 
       /**
        * @brief Element traits type.
        */
-      typedef ::xsd::cxx::tree::traits< AccrueTypeType, char > AccrueTypeTraits;
+      typedef ::xsd::cxx::tree::traits< AccrueType, char > AccrueTraits;
 
       /**
        * @brief Return a read-only (constant) reference to the element
@@ -9689,16 +9689,16 @@ namespace prj
        *
        * @return A constant reference to the optional container.
        */
-      const AccrueTypeOptional&
-      accrueType () const;
+      const AccrueOptional&
+      accrue () const;
 
       /**
        * @brief Return a read-write reference to the element container.
        *
        * @return A reference to the optional container.
        */
-      AccrueTypeOptional&
-      accrueType ();
+      AccrueOptional&
+      accrue ();
 
       /**
        * @brief Set the element value.
@@ -9709,7 +9709,7 @@ namespace prj
        * the new value of the element.
        */
       void
-      accrueType (const AccrueTypeType& x);
+      accrue (const AccrueType& x);
 
       /**
        * @brief Set the element value.
@@ -9721,18 +9721,7 @@ namespace prj
        * Otherwise the element container is set the 'not present' state.
        */
       void
-      accrueType (const AccrueTypeOptional& x);
-
-      /**
-       * @brief Set the element value without copying.
-       *
-       * @param p A new value to use.
-       *
-       * This function will try to use the passed value directly instead
-       * of making a copy.
-       */
-      void
-      accrueType (::std::unique_ptr< AccrueTypeType > p);
+      accrue (const AccrueOptional& x);
 
       //@}
 
@@ -9823,7 +9812,7 @@ namespace prj
       HistoryOptional history_;
       SelectionTypeOptional selectionType_;
       TagOptional tag_;
-      AccrueTypeOptional accrueType_;
+      AccrueOptional accrue_;
 
       //@endcond
     };

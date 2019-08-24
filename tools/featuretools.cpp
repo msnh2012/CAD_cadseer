@@ -45,6 +45,7 @@ ftr::Pick tls::convertToPick
 {
   ftr::Pick out;
   out.selectionType = messageIn.type;
+  out.accrue = messageIn.accrue;
   
   if (slc::isShapeType(messageIn.type))
   {
@@ -102,6 +103,7 @@ ftr::Pick tls::convertToPick
 {
   ftr::Pick out;
   out.selectionType = containerIn.selectionType;
+  out.accrue = containerIn.accrue;
   
   if (slc::isShapeType(containerIn.selectionType))
   {
@@ -163,8 +165,14 @@ ftr::Pick tls::convertToPick
     && feature.hasAnnex(ann::Type::SeerShape)
     && !feature.getAnnex<ann::SeerShape>().isNull()
   )
+  {
     out = convertToPick(containerIn, feature.getAnnex<ann::SeerShape>(), pHistory);
-  out.selectionType = containerIn.selectionType;
+  }
+  else
+  {
+    out.selectionType = containerIn.selectionType;
+    out.accrue = containerIn.accrue;
+  }
   return out;
 }
 
@@ -380,6 +388,7 @@ slc::Messages Resolver::convertToMessages() const
   
   slc::Message proto;
   proto.type = workPick.selectionType;
+  proto.accrue = workPick.accrue;
   proto.featureType = feature->getType();
   proto.featureId = feature->getId();
   

@@ -24,6 +24,7 @@
 #include <utility>
 
 #include "selection/slcdefinitions.h"
+#include "selection/slcaccrue.h"
 #include "feature/ftrshapehistory.h"
 
 class TopoDS_Edge;
@@ -34,18 +35,6 @@ namespace prj{namespace srl{class Pick; class Picks;}}
 
 namespace ftr
 {
-  //! Enum for describing collections from a pick
-  enum class AccrueType
-  {
-    None = 0, //!< no automatic collection. This is the default.
-    Tangent //!< what type edges, faces etc determined by pick.
-  };
-  
-  //! Convert AccrueType enum to a string
-  std::string findAccrueString(AccrueType);
-  //! Convert string to AccrueType enum
-  AccrueType findAccrueType(std::string);
-  
   /*! @struct Pick
    * @brief Selection for a feature.
    * 
@@ -66,7 +55,7 @@ namespace ftr
     std::vector<boost::uuids::uuid> resolvedIds; //!< storage for resolved ids from id and history.
     slc::Type selectionType = slc::Type::None; //!< this is needed for fictious shapes: midpoint, center, quadrant, nearest etc..
     std::string tag; //!< this should us link the pick to input feature for isolated pick resolution.
-    AccrueType accrueType = AccrueType::None;
+    slc::Accrue accrue; //!< defaults to none
     
     bool operator==(const Pick&) const;
     bool isParameterType() const; //!< midpoint, quadrant and nearest are really same pick with different u.

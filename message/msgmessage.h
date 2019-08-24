@@ -165,6 +165,8 @@ namespace msg
     static const Mask Ruled(Mask().set(                        122));//!< command. move up
     static const Mask ImagePlane(Mask().set(                   123));//!< command. move up
     static const Mask Sweep(Mask().set(                        124));//!< command. move up
+    static const Mask Active(Mask().set(                       125));//!< command manager move up
+    static const Mask Inactive(Mask().set(                     126));//!< command manager move up
   
     struct Stow; // forward declare see message/variant.h
     struct Message
@@ -180,6 +182,12 @@ namespace msg
       Message(const Mask&, const lod::Message&);
       Mask mask;
       std::shared_ptr<Stow> stow;
+      bool isPRJ() const;
+      bool isAPP() const;
+      bool isSLC() const;
+      bool isVWR() const;
+      bool isFTR() const;
+      bool isLOD() const;
       const prj::Message& getPRJ() const;
       const app::Message& getAPP() const;
       const slc::Message& getSLC() const;

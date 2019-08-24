@@ -36,16 +36,9 @@ namespace ftr
   class Extract : public Base
   {
   public:
-    struct AccruePick
-    {
-      boost::uuids::uuid id = gu::createRandomId(); //!< just used for runtime sync with dialog. no serial etc...
-      Picks picks; //!< seeds for accrue. all picks should have same accrue value.
-      std::shared_ptr<prm::Parameter> parameter; //!< degrees for tangent tolerance.
-      osg::ref_ptr<lbr::PLabel> label; //!< graphic icon
-    };
-    typedef std::vector<AccruePick> AccruePicks;
-    
     static std::shared_ptr<prm::Parameter> buildAngleParameter(double deg = 0.0); //set up default.
+    std::shared_ptr<prm::Parameter> getAngleParameter() const {return angle;}
+    void setAngleParameter(std::shared_ptr<prm::Parameter>);
     
     Extract();
     virtual ~Extract() override;
@@ -57,17 +50,15 @@ namespace ftr
     virtual void serialWrite(const boost::filesystem::path&) override;
     void serialRead(const prj::srl::FeatureExtract &);
 
+    void setPicks(const Picks&);
     const Picks& getPicks(){return picks;}
-    const AccruePicks& getAccruePicks(){return accruePicks;}
-    void sync(const Picks&);
-    void sync(const AccruePicks&);
-
   private:
     static QIcon icon;
-    Picks picks; //!< 1 to 1 geometry copies.
-    AccruePicks accruePicks; //!< collections of geometries.
+    Picks picks;
     
     std::unique_ptr<ann::SeerShape> sShape;
+    std::shared_ptr<prm::Parameter> angle; //!< parameter containing tangent angle.
+    osg::ref_ptr<lbr::PLabel> label;
   };
 }
 

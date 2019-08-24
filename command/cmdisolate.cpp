@@ -44,8 +44,11 @@ void Isolate::setFromMessage(const msg::Message &mIn)
 {
   mask = mIn.mask;
   
-  vwr::Message vm = mIn.getVWR();
-  id = vm.featureId;
+  if (mIn.isVWR())
+  {
+    vwr::Message vm = mIn.getVWR();
+    id = vm.featureId;
+  }
 }
 
 std::string Isolate::getStatusMessage()

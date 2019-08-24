@@ -20,10 +20,14 @@
 #include <TopoDS_Face.hxx>
 #include <TopoDS.hxx>
 
+#include <osg/Geometry> //yuck
+
+#include "application/appmainwindow.h"
 #include "project/prjproject.h"
 #include "message/msgnode.h"
 #include "selection/slceventhandler.h"
 #include "annex/annseershape.h"
+#include "dialogs/dlgextract.h"
 #include "feature/ftrinputtype.h"
 #include "feature/ftrextract.h"
 #include "tools/featuretools.h"
@@ -34,7 +38,11 @@ using boost::uuids::uuid;
 
 Extract::Extract() : Base() {}
 
-Extract::~Extract() {}
+Extract::~Extract()
+{
+  if (dialog)
+    dialog->deleteLater();
+}
 
 std::string Extract::getStatusMessage()
 {
@@ -54,8 +62,13 @@ void Extract::activate()
     firstRun = false;
     go();
   }
-  
-  sendDone();
+  if (dialog)
+  {
+    dialog->show();
+    dialog->raise();
+    dialog->activateWindow();
+  }
+  else sendDone();
 }
 
 void Extract::deactivate()
@@ -65,57 +78,96 @@ void Extract::deactivate()
 
 void Extract::go()
 {
+  auto goDialog = [&]()
+  {
+    node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
+
+    std::shared_ptr<ftr::Extract> extract = std::make_shared<ftr::Extract>();
+    project->addFeature(extract);
+    dialog = new dlg::Extract(extract.get(), mainWindow);
+
+    node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
+    node->sendBlocked(msg::buildStatusMessage("invalid pre selection", 2.0));
+    shouldUpdate = false;
+  };
+  
   bool created = false;
   const slc::Containers &containers = eventHandler->getSelections();
-  for (const auto &container : containers)
+  std::vector<slc::Containers> splits = slc::split(containers); //grouped by featureId.
+  for (const auto &cs : splits)
   {
-    ftr::Base *baseFeature = project->findFeature(container.featureId);
+    assert(!cs.empty());
+    uuid fId = cs.front().featureId;
+    ftr::Base *baseFeature = project->findFeature(fId);
     assert(baseFeature);
     if (!baseFeature->hasAnnex(ann::Type::SeerShape))
       continue;
-    const ann::SeerShape &targetSeerShape = baseFeature->getAnnex<ann::SeerShape>();
-    ftr::Pick pick = tls::convertToPick(container, targetSeerShape, project->getShapeHistory());
-    pick.tag = ftr::InputType::target;
-    if (container.selectionType == slc::Type::Face)
+    const ann::SeerShape &tss = baseFeature->getAnnex<ann::SeerShape>();
+    int pickCount = -1;
+    ftr::Picks picks;
+    tls::Connector connector;
+    for (const auto c : cs)
     {
-      //for now we just assume face equals tangent accrue.
-      TopoDS_Face face = TopoDS::Face(targetSeerShape.getOCCTShape(container.shapeId));  
-      pick.accrueType = ftr::AccrueType::Tangent;
-      
-      std::shared_ptr<ftr::Extract> extract(new ftr::Extract());
-      ftr::Extract::AccruePick ap;
-      ap.picks = ftr::Picks({pick});
-      ap.parameter = ftr::Extract::buildAngleParameter(10.0);
-      extract->sync(ftr::Extract::AccruePicks({ap}));
-      
-      project->addFeature(extract);
-      project->connect(baseFeature->getId(), extract->getId(), {pick.tag});
-      created = true;
-      
-      node->sendBlocked(msg::buildHideThreeD(baseFeature->getId()));
-      node->sendBlocked(msg::buildHideOverlay(baseFeature->getId()));
-      
-      extract->setColor(baseFeature->getColor());
+      pickCount++;
+      assert(c.featureId == fId);
+      ftr::Pick pick = tls::convertToPick(c, tss, project->getShapeHistory());
+      pick.tag = ftr::InputType::createIndexedTag(ftr::InputType::target, picks.size());
+      connector.add(fId, pick.tag);
+      picks.push_back(pick);
     }
-    else
-    {
-      std::shared_ptr<ftr::Extract> extract(new ftr::Extract());
-      extract->sync({pick});
-      project->addFeature(extract);
-      project->connect(baseFeature->getId(), extract->getId(), {pick.tag});
-      created = true;
-      
-      node->sendBlocked(msg::buildHideThreeD(baseFeature->getId()));
-      node->sendBlocked(msg::buildHideOverlay(baseFeature->getId()));
-      
-      extract->setColor(baseFeature->getColor());
-    }
+    
+    std::shared_ptr<ftr::Extract> extract = std::make_shared<ftr::Extract>();
+    extract->setPicks(picks);
+    project->addFeature(extract);
+    for (const auto &p : connector.pairs)
+      project->connectInsert(p.first, extract->getId(), {p.second});
+    created = true;
+    node->sendBlocked(msg::buildHideThreeD(baseFeature->getId()));
+    node->sendBlocked(msg::buildHideOverlay(baseFeature->getId()));
+    extract->setColor(baseFeature->getColor());
   }
   if (!created)
   {
-    shouldUpdate = false;
-    node->send(msg::buildStatusMessage("Extract: Invalid Preselection", 2.0));
+    goDialog();
   }
   else
     node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
+}
+
+ExtractEdit::ExtractEdit(ftr::Base *in) : Base()
+{
+  feature = dynamic_cast<ftr::Extract*>(in);
+  assert(feature);
+  shouldUpdate = false; //dialog controls.
+}
+
+ExtractEdit::~ExtractEdit()
+{
+  if (dialog)
+    dialog->deleteLater();
+}
+
+std::string ExtractEdit::getStatusMessage()
+{
+  return QObject::tr("Editing draft").toStdString();
+}
+
+void ExtractEdit::activate()
+{
+  isActive = true;
+  if (!dialog)
+  {
+    node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+    dialog = new dlg::Extract(feature, mainWindow, true);
+  }
+
+  dialog->show();
+  dialog->raise();
+  dialog->activateWindow();
+}
+
+void ExtractEdit::deactivate()
+{
+  dialog->hide();
+  isActive = false;
 }

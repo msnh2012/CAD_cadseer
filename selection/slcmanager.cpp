@@ -25,6 +25,7 @@
 
 #include <osg/Node>
 
+#include "application/appapplication.h"
 #include "modelviz/mdvnodemaskdefs.h"
 #include "selection/slcdefinitions.h"
 #include "message/msgnode.h"
@@ -43,6 +44,7 @@ Manager::Manager(QObject *parent) :
   sift->name = "slc::Manager";
   node->setHandler(std::bind(&msg::Sift::receive, sift.get(), std::placeholders::_1));
   setupDispatcher();
+  app::instance()->queuedMessage(msg::buildSelectionMask(slc::AllEnabled));
 }
 
 Manager::~Manager() {}

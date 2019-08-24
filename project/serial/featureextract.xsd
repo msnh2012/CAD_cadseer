@@ -7,25 +7,12 @@
   
 <xs:include schemaLocation="featurebase.xsd"/>
 
-<xs:complexType name="AccruePick">
-  <xs:all>
-    <xs:element name="picks" type="srl:Picks"/>
-    <xs:element name="parameter" type="srl:Parameter"/>
-    <xs:element name="plabel" type="srl:PLabel"/>
-  </xs:all>
-</xs:complexType>
-
-<xs:complexType name="AccruePicks">
-  <xs:sequence minOccurs="0" maxOccurs="unbounded">
-    <xs:element name="array" type="srl:AccruePick"/>
-  </xs:sequence>
-</xs:complexType>
-
 <xs:complexType name="FeatureExtract">
   <xs:all>
     <xs:element name="featureBase" type="srl:FeatureBase"/>
-    <xs:element name="accruePicks" type="srl:AccruePicks"/>
     <xs:element name="picks" type="srl:Picks"/>
+    <xs:element name="angle" type="srl:Parameter"/>
+    <xs:element name="label" type="srl:PLabel"/>
   </xs:all>
 </xs:complexType>
 

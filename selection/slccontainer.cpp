@@ -18,6 +18,7 @@
  */
 
 #include <algorithm>
+#include <boost/optional/optional.hpp>
 
 #include <osg/Geometry>
 #include <osg/io_utils>
@@ -26,16 +27,13 @@
 
 using namespace slc;
 
-Container::~Container()
-{
-
-}
-
+Container::~Container() = default;
 
 std::ostream& slc::operator<<(std::ostream& os, const Container& container)
 {
   os << 
-    "type is: " << getNameOfType(container.selectionType) << 
+    "type is: " << getNameOfType(container.selectionType) <<
+    "      accrue type is: " << static_cast<QString>(container.accrue).toStdString() <<
     "      featureid is: " << gu::idToString(container.featureId) <<
     "      shape id is: " << gu::idToString(container.shapeId) << std::endl <<
     "      point location: " << container.pointLocation << std::endl;
@@ -64,4 +62,27 @@ void slc::remove(Containers& containersIn, const Container& containerIn)
   auto it = std::find(containersIn.begin(), containersIn.end(), containerIn);
   if (it != containersIn.end())
     containersIn.erase(it);
+}
+
+std::vector<Containers> slc::split(const Containers &csIn)
+{
+  std::vector<Containers> out;
+  auto add = [&](const Container &cIn)
+  {
+    for (Containers &c : out)
+    {
+      if (c.front().featureId == cIn.featureId)
+      {
+        c.push_back(cIn);
+        return;
+      }
+    }
+    out.push_back(Containers(1, cIn));
+    return;
+  };
+  
+  for (const auto &c : csIn)
+    add(c);
+  
+  return out;
 }
