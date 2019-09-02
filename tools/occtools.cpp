@@ -27,6 +27,10 @@
 #include <gp_Elips.hxx>
 #include <gp_Hypr.hxx>
 #include <gp_Parab.hxx>
+#include <gp_Pln.hxx>
+#include <gp_Cylinder.hxx>
+#include <gp_Cone.hxx>
+#include <gp_Torus.hxx>
 #include <Geom_Line.hxx>
 #include <GeomAPI_ProjectPointOnCurve.hxx>
 #include <BRep_Builder.hxx>
@@ -46,6 +50,7 @@
 #include <TopExp_Explorer.hxx>
 #include <TopTools_IndexedDataMapOfShapeListOfShape.hxx>
 #include <BRepMesh_IncrementalMesh.hxx>
+#include <BRepMesh_FastDiscret.hxx>
 #include <GeomLib_Tool.hxx>
 #include <ShapeAnalysis_FreeBoundsProperties.hxx>
 

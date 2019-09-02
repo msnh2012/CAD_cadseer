@@ -97,7 +97,7 @@ void RemoveFaces::updateModel(const UpdatePayload &payloadIn)
     tls::Resolver resolver(payloadIn);
     BRepAlgoAPI_Defeaturing algo;
     algo.SetRunParallel(true);
-    algo.TrackHistory(true);
+    algo.SetToFillHistory(true);
     algo.SetShape(tss.getRootOCCTShape());
     
     for (const auto &p : picks)

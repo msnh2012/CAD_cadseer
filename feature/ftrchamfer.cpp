@@ -131,6 +131,7 @@ void Chamfer::updateModel(const UpdatePayload &payloadIn)
       throw std::runtime_error("feature is skipped");
     }
     
+    //note occt above 7.3 no longer needs face for symmetric chamfer. Need to update
     tls::Resolver resolver(payloadIn);
     BRepFilletAPI_MakeChamfer chamferMaker(targetSeerShape.getRootOCCTShape());
     for (const auto &chamfer : symChamfers)
@@ -167,7 +168,7 @@ void Chamfer::updateModel(const UpdatePayload &payloadIn)
           updateShapeMap(faceId, pick.facePick.shapeHistory);
           TopoDS_Edge edge = TopoDS::Edge(targetSeerShape.findShape(eid));
           TopoDS_Face face = TopoDS::Face(targetSeerShape.findShape(faceId));
-          chamferMaker.Add(static_cast<double>(*(chamfer.distance)), edge, face);
+          chamferMaker.Add(static_cast<double>(*(chamfer.distance)), edge/*, face*/);
           //update location of parameter label.
           if (!labelDone)
           {

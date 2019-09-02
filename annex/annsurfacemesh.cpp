@@ -25,8 +25,10 @@
 
 #include <BRepBuilderAPI_Copy.hxx>
 #include <BRepMesh_IncrementalMesh.hxx>
+#include <BRep_Tool.hxx>
 #include <BRepTools.hxx>
 #include <TopoDS.hxx>
+#include <Poly_Triangulation.hxx>
 
 #include <CGAL/Polygon_mesh_processing/repair.h>
 #include <CGAL/Polygon_mesh_processing/stitch_borders.h>

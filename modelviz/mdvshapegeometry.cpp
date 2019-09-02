@@ -20,7 +20,9 @@
 #include <BRepBndLib.hxx>
 #include <TopExp.hxx>
 #include <BRepMesh_IncrementalMesh.hxx>
+#include <BRepMesh_FastDiscret.hxx>
 #include <BRepTools.hxx>
+#include <BRep_Tool.hxx>
 #include <TopoDS.hxx>
 #include <TopoDS_Iterator.hxx>
 #include <Poly_Triangulation.hxx>
