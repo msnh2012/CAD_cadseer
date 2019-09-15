@@ -26,6 +26,7 @@
 #include <QIcon>
 
 #include "selection/slcdefinitions.h"
+#include "selection/slcaccrue.h"
 
 class QAbstractButton;
 
@@ -43,6 +44,8 @@ namespace dlg
   {
     QString name = "Dummy";
     bool singleSelection = false;
+    bool showAccrueColumn = true;
+    slc::Accrue::Type accrueDefault = slc::Accrue::None;
     slc::Mask mask = slc::None;
     QString statusPrompt = "Make Selection";
     QIcon icon; //a default icon will be used if null.

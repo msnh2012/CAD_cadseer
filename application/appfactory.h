@@ -53,7 +53,6 @@ namespace app
     void newCylinderDispatched(const msg::Message&);
     void newSphereDispatched(const msg::Message&);
     void newConeDispatched(const msg::Message&);
-    void newChamferDispatched(const msg::Message&);
     void newHollowDispatched(const msg::Message&);
     void importOCCDispatched(const msg::Message&);
     void importStepDispatched(const msg::Message&);

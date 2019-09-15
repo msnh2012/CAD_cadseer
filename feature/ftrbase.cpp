@@ -504,6 +504,20 @@ prm::Parameter* Base::getParameter(const boost::uuids::uuid &idIn) const
   return nullptr;
 }
 
+void Base::removeParameter(prm::Parameter *pIn)
+{
+  assert(pIn);
+  if (!pIn)
+    return;
+  auto rit = std::remove_if
+  (
+    parameters.begin()
+    , parameters.end()
+    , [&](prm::Parameter *pic){return pic == pIn;}
+  );
+  parameters.erase(rit, parameters.end());
+}
+
 template <> const ann::SeerShape& Base::getAnnex<ann::SeerShape>() const
 {
   ann::SeerShape* out = dynamic_cast<ann::SeerShape*>(annexes.at(ann::Type::SeerShape));

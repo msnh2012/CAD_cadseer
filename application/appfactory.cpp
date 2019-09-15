@@ -157,11 +157,6 @@ void Factory::setupDispatcher()
       )
       , std::make_pair
       (
-        msg::Request | msg::Construct | msg::Chamfer
-      , std::bind(&Factory::newChamferDispatched, this, std::placeholders::_1)
-      )
-      , std::make_pair
-      (
         msg::Request | msg::Import | msg::OCC
       , std::bind(&Factory::importOCCDispatched, this, std::placeholders::_1)
       )
@@ -362,62 +357,6 @@ void Factory::newConeDispatched(const msg::Message&)
   cone->setCSys(currentSystem);
   project->addFeature(cone);
   
-  node->send(msg::Mask(msg::Request | msg::Project | msg::Update));
-}
-
-void Factory::newChamferDispatched(const msg::Message&)
-{
-  assert(project);
-  
-  if (containers.empty())
-    return;
-  uuid targetFeatureId = containers.at(0).featureId;
-  
-  ftr::SymChamfer symChamfer;
-  symChamfer.distance = ftr::Chamfer::buildSymParameter();
-  const ann::SeerShape &targetSeerShape = project->findFeature(targetFeatureId)->getAnnex<ann::SeerShape>();
-  int pickIndex = -1;
-  tls::Connector connector;
-  for (const auto &currentSelection : containers)
-  {
-    if
-    (
-      currentSelection.featureId != targetFeatureId ||
-      currentSelection.selectionType != slc::Type::Edge //just edges for now.
-    )
-      continue;
-      
-    pickIndex++;
-    TopoDS_Edge edge = TopoDS::Edge(targetSeerShape.findShape(currentSelection.shapeId));  
-    ftr::ChamferPick pick;
-    pick.edgePick = tls::convertToPick(currentSelection, targetSeerShape, project->getShapeHistory());
-    pick.edgePick.tag = std::string(ftr::InputType::target) + std::to_string(pickIndex) + "edge";
-    connector.add(targetFeatureId, pick.edgePick.tag);
-    
-    uuid faceId = ftr::Chamfer::referenceFaceId(targetSeerShape, currentSelection.shapeId);
-    //for now user doesn't specify face so we don't worry about u, v of facePick.
-    pick.facePick.selectionType = slc::Type::Face;
-    pick.facePick.shapeHistory = project->getShapeHistory().createDevolveHistory(faceId);
-    pick.facePick.resolvedIds.push_back(faceId);
-    pick.facePick.highlightIds.push_back(faceId);
-    pick.facePick.tag = std::string(ftr::InputType::target) + std::to_string(pickIndex) + "face";
-    connector.add(targetFeatureId, pick.facePick.tag);
-    symChamfer.picks.push_back(pick);
-  }
-  
-  std::shared_ptr<ftr::Chamfer> chamfer(new ftr::Chamfer());
-  chamfer->addSymChamfer(symChamfer);
-  project->addFeature(chamfer);
-  for (const auto &p : connector.pairs)
-    project->connectInsert(p.first, chamfer->getId(), {p.second});
-  
-  ftr::Base *targetFeature = project->findFeature(targetFeatureId);
-  chamfer->setColor(targetFeature->getColor());
-  
-  node->sendBlocked(msg::buildHideThreeD(targetFeatureId));
-  node->sendBlocked(msg::buildHideOverlay(targetFeatureId));
-  
-  node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
   node->send(msg::Mask(msg::Request | msg::Project | msg::Update));
 }
 

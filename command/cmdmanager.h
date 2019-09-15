@@ -101,6 +101,7 @@ namespace cmd
     void constructImagePlaneDispatched(const msg::Message&);
     void constructSweepDispatched(const msg::Message&);
     void constructDraftDispatched(const msg::Message&);
+    void constructChamferDispatched(const msg::Message&);
     void occtExportDispatched(const msg::Message&);
     void revisionDispatched(const msg::Message&);
     

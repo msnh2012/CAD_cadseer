@@ -72,10 +72,8 @@ namespace prj
 {
   namespace srl
   {
-    class ChamferPick;
-    class ChamferPicks;
-    class SymChamfer;
-    class SymChamfers;
+    class Entry;
+    class Cue;
     class FeatureChamfer;
   }
 }
@@ -106,17 +104,17 @@ namespace prj
   namespace srl
   {
     /**
-     * @brief Class corresponding to the %ChamferPick schema type.
+     * @brief Class corresponding to the %Entry schema type.
      *
      * @nosubgrouping
      */
-    class ChamferPick: public ::xml_schema::Type
+    class Entry: public ::xml_schema::Type
     {
       public:
       /**
-       * @name edgePick
+       * @name style
        *
-       * @brief Accessor and modifier functions for the %edgePick
+       * @brief Accessor and modifier functions for the %style
        * required element.
        */
       //@{
@@ -124,28 +122,28 @@ namespace prj
       /**
        * @brief Element type.
        */
-      typedef ::prj::srl::Pick EdgePickType;
+      typedef ::xml_schema::Int StyleType;
 
       /**
        * @brief Element traits type.
        */
-      typedef ::xsd::cxx::tree::traits< EdgePickType, char > EdgePickTraits;
+      typedef ::xsd::cxx::tree::traits< StyleType, char > StyleTraits;
 
       /**
        * @brief Return a read-only (constant) reference to the element.
        *
        * @return A constant reference to the element.
        */
-      const EdgePickType&
-      edgePick () const;
+      const StyleType&
+      style () const;
 
       /**
        * @brief Return a read-write reference to the element.
        *
        * @return A reference to the element.
        */
-      EdgePickType&
-      edgePick ();
+      StyleType&
+      style ();
 
       /**
        * @brief Set the element value.
@@ -156,25 +154,14 @@ namespace prj
        * the new value of the element.
        */
       void
-      edgePick (const EdgePickType& x);
-
-      /**
-       * @brief Set the element value without copying.
-       *
-       * @param p A new value to use.
-       *
-       * This function will try to use the passed value directly
-       * instead of making a copy.
-       */
-      void
-      edgePick (::std::unique_ptr< EdgePickType > p);
+      style (const StyleType& x);
 
       //@}
 
       /**
-       * @name facePick
+       * @name parameter1
        *
-       * @brief Accessor and modifier functions for the %facePick
+       * @brief Accessor and modifier functions for the %parameter1
        * required element.
        */
       //@{
@@ -182,28 +169,28 @@ namespace prj
       /**
        * @brief Element type.
        */
-      typedef ::prj::srl::Pick FacePickType;
+      typedef ::prj::srl::Parameter Parameter1Type;
 
       /**
        * @brief Element traits type.
        */
-      typedef ::xsd::cxx::tree::traits< FacePickType, char > FacePickTraits;
+      typedef ::xsd::cxx::tree::traits< Parameter1Type, char > Parameter1Traits;
 
       /**
        * @brief Return a read-only (constant) reference to the element.
        *
        * @return A constant reference to the element.
        */
-      const FacePickType&
-      facePick () const;
+      const Parameter1Type&
+      parameter1 () const;
 
       /**
        * @brief Return a read-write reference to the element.
        *
        * @return A reference to the element.
        */
-      FacePickType&
-      facePick ();
+      Parameter1Type&
+      parameter1 ();
 
       /**
        * @brief Set the element value.
@@ -214,7 +201,7 @@ namespace prj
        * the new value of the element.
        */
       void
-      facePick (const FacePickType& x);
+      parameter1 (const Parameter1Type& x);
 
       /**
        * @brief Set the element value without copying.
@@ -225,7 +212,333 @@ namespace prj
        * instead of making a copy.
        */
       void
-      facePick (::std::unique_ptr< FacePickType > p);
+      parameter1 (::std::unique_ptr< Parameter1Type > p);
+
+      //@}
+
+      /**
+       * @name parameter2
+       *
+       * @brief Accessor and modifier functions for the %parameter2
+       * optional element.
+       */
+      //@{
+
+      /**
+       * @brief Element type.
+       */
+      typedef ::prj::srl::Parameter Parameter2Type;
+
+      /**
+       * @brief Element optional container type.
+       */
+      typedef ::xsd::cxx::tree::optional< Parameter2Type > Parameter2Optional;
+
+      /**
+       * @brief Element traits type.
+       */
+      typedef ::xsd::cxx::tree::traits< Parameter2Type, char > Parameter2Traits;
+
+      /**
+       * @brief Return a read-only (constant) reference to the element
+       * container.
+       *
+       * @return A constant reference to the optional container.
+       */
+      const Parameter2Optional&
+      parameter2 () const;
+
+      /**
+       * @brief Return a read-write reference to the element container.
+       *
+       * @return A reference to the optional container.
+       */
+      Parameter2Optional&
+      parameter2 ();
+
+      /**
+       * @brief Set the element value.
+       *
+       * @param x A new value to set.
+       *
+       * This function makes a copy of its argument and sets it as
+       * the new value of the element.
+       */
+      void
+      parameter2 (const Parameter2Type& x);
+
+      /**
+       * @brief Set the element value.
+       *
+       * @param x An optional container with the new value to set.
+       *
+       * If the value is present in @a x then this function makes a copy 
+       * of this value and sets it as the new value of the element.
+       * Otherwise the element container is set the 'not present' state.
+       */
+      void
+      parameter2 (const Parameter2Optional& x);
+
+      /**
+       * @brief Set the element value without copying.
+       *
+       * @param p A new value to use.
+       *
+       * This function will try to use the passed value directly instead
+       * of making a copy.
+       */
+      void
+      parameter2 (::std::unique_ptr< Parameter2Type > p);
+
+      //@}
+
+      /**
+       * @name label1
+       *
+       * @brief Accessor and modifier functions for the %label1
+       * required element.
+       */
+      //@{
+
+      /**
+       * @brief Element type.
+       */
+      typedef ::prj::srl::PLabel Label1Type;
+
+      /**
+       * @brief Element traits type.
+       */
+      typedef ::xsd::cxx::tree::traits< Label1Type, char > Label1Traits;
+
+      /**
+       * @brief Return a read-only (constant) reference to the element.
+       *
+       * @return A constant reference to the element.
+       */
+      const Label1Type&
+      label1 () const;
+
+      /**
+       * @brief Return a read-write reference to the element.
+       *
+       * @return A reference to the element.
+       */
+      Label1Type&
+      label1 ();
+
+      /**
+       * @brief Set the element value.
+       *
+       * @param x A new value to set.
+       *
+       * This function makes a copy of its argument and sets it as
+       * the new value of the element.
+       */
+      void
+      label1 (const Label1Type& x);
+
+      /**
+       * @brief Set the element value without copying.
+       *
+       * @param p A new value to use.
+       *
+       * This function will try to use the passed value directly
+       * instead of making a copy.
+       */
+      void
+      label1 (::std::unique_ptr< Label1Type > p);
+
+      //@}
+
+      /**
+       * @name label2
+       *
+       * @brief Accessor and modifier functions for the %label2
+       * optional element.
+       */
+      //@{
+
+      /**
+       * @brief Element type.
+       */
+      typedef ::prj::srl::PLabel Label2Type;
+
+      /**
+       * @brief Element optional container type.
+       */
+      typedef ::xsd::cxx::tree::optional< Label2Type > Label2Optional;
+
+      /**
+       * @brief Element traits type.
+       */
+      typedef ::xsd::cxx::tree::traits< Label2Type, char > Label2Traits;
+
+      /**
+       * @brief Return a read-only (constant) reference to the element
+       * container.
+       *
+       * @return A constant reference to the optional container.
+       */
+      const Label2Optional&
+      label2 () const;
+
+      /**
+       * @brief Return a read-write reference to the element container.
+       *
+       * @return A reference to the optional container.
+       */
+      Label2Optional&
+      label2 ();
+
+      /**
+       * @brief Set the element value.
+       *
+       * @param x A new value to set.
+       *
+       * This function makes a copy of its argument and sets it as
+       * the new value of the element.
+       */
+      void
+      label2 (const Label2Type& x);
+
+      /**
+       * @brief Set the element value.
+       *
+       * @param x An optional container with the new value to set.
+       *
+       * If the value is present in @a x then this function makes a copy 
+       * of this value and sets it as the new value of the element.
+       * Otherwise the element container is set the 'not present' state.
+       */
+      void
+      label2 (const Label2Optional& x);
+
+      /**
+       * @brief Set the element value without copying.
+       *
+       * @param p A new value to use.
+       *
+       * This function will try to use the passed value directly instead
+       * of making a copy.
+       */
+      void
+      label2 (::std::unique_ptr< Label2Type > p);
+
+      //@}
+
+      /**
+       * @name edgePicks
+       *
+       * @brief Accessor and modifier functions for the %edgePicks
+       * required element.
+       */
+      //@{
+
+      /**
+       * @brief Element type.
+       */
+      typedef ::prj::srl::Picks EdgePicksType;
+
+      /**
+       * @brief Element traits type.
+       */
+      typedef ::xsd::cxx::tree::traits< EdgePicksType, char > EdgePicksTraits;
+
+      /**
+       * @brief Return a read-only (constant) reference to the element.
+       *
+       * @return A constant reference to the element.
+       */
+      const EdgePicksType&
+      edgePicks () const;
+
+      /**
+       * @brief Return a read-write reference to the element.
+       *
+       * @return A reference to the element.
+       */
+      EdgePicksType&
+      edgePicks ();
+
+      /**
+       * @brief Set the element value.
+       *
+       * @param x A new value to set.
+       *
+       * This function makes a copy of its argument and sets it as
+       * the new value of the element.
+       */
+      void
+      edgePicks (const EdgePicksType& x);
+
+      /**
+       * @brief Set the element value without copying.
+       *
+       * @param p A new value to use.
+       *
+       * This function will try to use the passed value directly
+       * instead of making a copy.
+       */
+      void
+      edgePicks (::std::unique_ptr< EdgePicksType > p);
+
+      //@}
+
+      /**
+       * @name facePicks
+       *
+       * @brief Accessor and modifier functions for the %facePicks
+       * required element.
+       */
+      //@{
+
+      /**
+       * @brief Element type.
+       */
+      typedef ::prj::srl::Picks FacePicksType;
+
+      /**
+       * @brief Element traits type.
+       */
+      typedef ::xsd::cxx::tree::traits< FacePicksType, char > FacePicksTraits;
+
+      /**
+       * @brief Return a read-only (constant) reference to the element.
+       *
+       * @return A constant reference to the element.
+       */
+      const FacePicksType&
+      facePicks () const;
+
+      /**
+       * @brief Return a read-write reference to the element.
+       *
+       * @return A reference to the element.
+       */
+      FacePicksType&
+      facePicks ();
+
+      /**
+       * @brief Set the element value.
+       *
+       * @param x A new value to set.
+       *
+       * This function makes a copy of its argument and sets it as
+       * the new value of the element.
+       */
+      void
+      facePicks (const FacePicksType& x);
+
+      /**
+       * @brief Set the element value without copying.
+       *
+       * @param p A new value to use.
+       *
+       * This function will try to use the passed value directly
+       * instead of making a copy.
+       */
+      void
+      facePicks (::std::unique_ptr< FacePicksType > p);
 
       //@}
 
@@ -238,8 +551,11 @@ namespace prj
        * @brief Create an instance from the ultimate base and
        * initializers for required elements and attributes.
        */
-      ChamferPick (const EdgePickType&,
-                   const FacePickType&);
+      Entry (const StyleType&,
+             const Parameter1Type&,
+             const Label1Type&,
+             const EdgePicksType&,
+             const FacePicksType&);
 
       /**
        * @brief Create an instance from the ultimate base and
@@ -249,8 +565,11 @@ namespace prj
        * This constructor will try to use the passed values directly
        * instead of making copies.
        */
-      ChamferPick (::std::unique_ptr< EdgePickType >,
-                   ::std::unique_ptr< FacePickType >);
+      Entry (const StyleType&,
+             ::std::unique_ptr< Parameter1Type >,
+             ::std::unique_ptr< Label1Type >,
+             ::std::unique_ptr< EdgePicksType >,
+             ::std::unique_ptr< FacePicksType >);
 
       /**
        * @brief Create an instance from a DOM element.
@@ -260,9 +579,9 @@ namespace prj
        * @param c A pointer to the object that will contain the new
        * instance.
        */
-      ChamferPick (const ::xercesc::DOMElement& e,
-                   ::xml_schema::Flags f = 0,
-                   ::xml_schema::Container* c = 0);
+      Entry (const ::xercesc::DOMElement& e,
+             ::xml_schema::Flags f = 0,
+             ::xml_schema::Container* c = 0);
 
       /**
        * @brief Copy constructor.
@@ -273,9 +592,9 @@ namespace prj
        *
        * For polymorphic object models use the @c _clone function instead.
        */
-      ChamferPick (const ChamferPick& x,
-                   ::xml_schema::Flags f = 0,
-                   ::xml_schema::Container* c = 0);
+      Entry (const Entry& x,
+             ::xml_schema::Flags f = 0,
+             ::xml_schema::Container* c = 0);
 
       /**
        * @brief Copy the instance polymorphically.
@@ -288,7 +607,7 @@ namespace prj
        * used for copying and should be used for polymorphic object
        * models instead of the copy constructor.
        */
-      virtual ChamferPick*
+      virtual Entry*
       _clone (::xml_schema::Flags f = 0,
               ::xml_schema::Container* c = 0) const;
 
@@ -300,8 +619,8 @@ namespace prj
        *
        * For polymorphic object models use the @c _clone function instead.
        */
-      ChamferPick&
-      operator= (const ChamferPick& x);
+      Entry&
+      operator= (const Entry& x);
 
       //@}
 
@@ -309,7 +628,7 @@ namespace prj
        * @brief Destructor.
        */
       virtual 
-      ~ChamferPick ();
+      ~Entry ();
 
       // Implementation.
       //
@@ -322,24 +641,76 @@ namespace prj
              ::xml_schema::Flags);
 
       protected:
-      ::xsd::cxx::tree::one< EdgePickType > edgePick_;
-      ::xsd::cxx::tree::one< FacePickType > facePick_;
+      ::xsd::cxx::tree::one< StyleType > style_;
+      ::xsd::cxx::tree::one< Parameter1Type > parameter1_;
+      Parameter2Optional parameter2_;
+      ::xsd::cxx::tree::one< Label1Type > label1_;
+      Label2Optional label2_;
+      ::xsd::cxx::tree::one< EdgePicksType > edgePicks_;
+      ::xsd::cxx::tree::one< FacePicksType > facePicks_;
 
       //@endcond
     };
 
     /**
-     * @brief Class corresponding to the %ChamferPicks schema type.
+     * @brief Class corresponding to the %Cue schema type.
      *
      * @nosubgrouping
      */
-    class ChamferPicks: public ::xml_schema::Type
+    class Cue: public ::xml_schema::Type
     {
       public:
       /**
-       * @name array
+       * @name mode
        *
-       * @brief Accessor and modifier functions for the %array
+       * @brief Accessor and modifier functions for the %mode
+       * required element.
+       */
+      //@{
+
+      /**
+       * @brief Element type.
+       */
+      typedef ::xml_schema::Int ModeType;
+
+      /**
+       * @brief Element traits type.
+       */
+      typedef ::xsd::cxx::tree::traits< ModeType, char > ModeTraits;
+
+      /**
+       * @brief Return a read-only (constant) reference to the element.
+       *
+       * @return A constant reference to the element.
+       */
+      const ModeType&
+      mode () const;
+
+      /**
+       * @brief Return a read-write reference to the element.
+       *
+       * @return A reference to the element.
+       */
+      ModeType&
+      mode ();
+
+      /**
+       * @brief Set the element value.
+       *
+       * @param x A new value to set.
+       *
+       * This function makes a copy of its argument and sets it as
+       * the new value of the element.
+       */
+      void
+      mode (const ModeType& x);
+
+      //@}
+
+      /**
+       * @name entries
+       *
+       * @brief Accessor and modifier functions for the %entries
        * sequence element.
        */
       //@{
@@ -347,27 +718,27 @@ namespace prj
       /**
        * @brief Element type.
        */
-      typedef ::prj::srl::ChamferPick ArrayType;
+      typedef ::prj::srl::Entry EntriesType;
 
       /**
        * @brief Element sequence container type.
        */
-      typedef ::xsd::cxx::tree::sequence< ArrayType > ArraySequence;
+      typedef ::xsd::cxx::tree::sequence< EntriesType > EntriesSequence;
 
       /**
        * @brief Element iterator type.
        */
-      typedef ArraySequence::iterator ArrayIterator;
+      typedef EntriesSequence::iterator EntriesIterator;
 
       /**
        * @brief Element constant iterator type.
        */
-      typedef ArraySequence::const_iterator ArrayConstIterator;
+      typedef EntriesSequence::const_iterator EntriesConstIterator;
 
       /**
        * @brief Element traits type.
        */
-      typedef ::xsd::cxx::tree::traits< ArrayType, char > ArrayTraits;
+      typedef ::xsd::cxx::tree::traits< EntriesType, char > EntriesTraits;
 
       /**
        * @brief Return a read-only (constant) reference to the element
@@ -375,16 +746,16 @@ namespace prj
        *
        * @return A constant reference to the sequence container.
        */
-      const ArraySequence&
-      array () const;
+      const EntriesSequence&
+      entries () const;
 
       /**
        * @brief Return a read-write reference to the element sequence.
        *
        * @return A reference to the sequence container.
        */
-      ArraySequence&
-      array ();
+      EntriesSequence&
+      entries ();
 
       /**
        * @brief Copy elements from a given sequence.
@@ -396,7 +767,7 @@ namespace prj
        * sequence and all old elements will be lost.
        */
       void
-      array (const ArraySequence& s);
+      entries (const EntriesSequence& s);
 
       //@}
 
@@ -409,7 +780,7 @@ namespace prj
        * @brief Create an instance from the ultimate base and
        * initializers for required elements and attributes.
        */
-      ChamferPicks ();
+      Cue (const ModeType&);
 
       /**
        * @brief Create an instance from a DOM element.
@@ -419,9 +790,9 @@ namespace prj
        * @param c A pointer to the object that will contain the new
        * instance.
        */
-      ChamferPicks (const ::xercesc::DOMElement& e,
-                    ::xml_schema::Flags f = 0,
-                    ::xml_schema::Container* c = 0);
+      Cue (const ::xercesc::DOMElement& e,
+           ::xml_schema::Flags f = 0,
+           ::xml_schema::Container* c = 0);
 
       /**
        * @brief Copy constructor.
@@ -432,9 +803,9 @@ namespace prj
        *
        * For polymorphic object models use the @c _clone function instead.
        */
-      ChamferPicks (const ChamferPicks& x,
-                    ::xml_schema::Flags f = 0,
-                    ::xml_schema::Container* c = 0);
+      Cue (const Cue& x,
+           ::xml_schema::Flags f = 0,
+           ::xml_schema::Container* c = 0);
 
       /**
        * @brief Copy the instance polymorphically.
@@ -447,7 +818,7 @@ namespace prj
        * used for copying and should be used for polymorphic object
        * models instead of the copy constructor.
        */
-      virtual ChamferPicks*
+      virtual Cue*
       _clone (::xml_schema::Flags f = 0,
               ::xml_schema::Container* c = 0) const;
 
@@ -459,8 +830,8 @@ namespace prj
        *
        * For polymorphic object models use the @c _clone function instead.
        */
-      ChamferPicks&
-      operator= (const ChamferPicks& x);
+      Cue&
+      operator= (const Cue& x);
 
       //@}
 
@@ -468,7 +839,7 @@ namespace prj
        * @brief Destructor.
        */
       virtual 
-      ~ChamferPicks ();
+      ~Cue ();
 
       // Implementation.
       //
@@ -481,449 +852,8 @@ namespace prj
              ::xml_schema::Flags);
 
       protected:
-      ArraySequence array_;
-
-      //@endcond
-    };
-
-    /**
-     * @brief Class corresponding to the %SymChamfer schema type.
-     *
-     * @nosubgrouping
-     */
-    class SymChamfer: public ::xml_schema::Type
-    {
-      public:
-      /**
-       * @name chamferPicks
-       *
-       * @brief Accessor and modifier functions for the %chamferPicks
-       * required element.
-       */
-      //@{
-
-      /**
-       * @brief Element type.
-       */
-      typedef ::prj::srl::ChamferPicks ChamferPicksType;
-
-      /**
-       * @brief Element traits type.
-       */
-      typedef ::xsd::cxx::tree::traits< ChamferPicksType, char > ChamferPicksTraits;
-
-      /**
-       * @brief Return a read-only (constant) reference to the element.
-       *
-       * @return A constant reference to the element.
-       */
-      const ChamferPicksType&
-      chamferPicks () const;
-
-      /**
-       * @brief Return a read-write reference to the element.
-       *
-       * @return A reference to the element.
-       */
-      ChamferPicksType&
-      chamferPicks ();
-
-      /**
-       * @brief Set the element value.
-       *
-       * @param x A new value to set.
-       *
-       * This function makes a copy of its argument and sets it as
-       * the new value of the element.
-       */
-      void
-      chamferPicks (const ChamferPicksType& x);
-
-      /**
-       * @brief Set the element value without copying.
-       *
-       * @param p A new value to use.
-       *
-       * This function will try to use the passed value directly
-       * instead of making a copy.
-       */
-      void
-      chamferPicks (::std::unique_ptr< ChamferPicksType > p);
-
-      //@}
-
-      /**
-       * @name distance
-       *
-       * @brief Accessor and modifier functions for the %distance
-       * required element.
-       */
-      //@{
-
-      /**
-       * @brief Element type.
-       */
-      typedef ::prj::srl::Parameter DistanceType;
-
-      /**
-       * @brief Element traits type.
-       */
-      typedef ::xsd::cxx::tree::traits< DistanceType, char > DistanceTraits;
-
-      /**
-       * @brief Return a read-only (constant) reference to the element.
-       *
-       * @return A constant reference to the element.
-       */
-      const DistanceType&
-      distance () const;
-
-      /**
-       * @brief Return a read-write reference to the element.
-       *
-       * @return A reference to the element.
-       */
-      DistanceType&
-      distance ();
-
-      /**
-       * @brief Set the element value.
-       *
-       * @param x A new value to set.
-       *
-       * This function makes a copy of its argument and sets it as
-       * the new value of the element.
-       */
-      void
-      distance (const DistanceType& x);
-
-      /**
-       * @brief Set the element value without copying.
-       *
-       * @param p A new value to use.
-       *
-       * This function will try to use the passed value directly
-       * instead of making a copy.
-       */
-      void
-      distance (::std::unique_ptr< DistanceType > p);
-
-      //@}
-
-      /**
-       * @name plabel
-       *
-       * @brief Accessor and modifier functions for the %plabel
-       * required element.
-       */
-      //@{
-
-      /**
-       * @brief Element type.
-       */
-      typedef ::prj::srl::PLabel PlabelType;
-
-      /**
-       * @brief Element traits type.
-       */
-      typedef ::xsd::cxx::tree::traits< PlabelType, char > PlabelTraits;
-
-      /**
-       * @brief Return a read-only (constant) reference to the element.
-       *
-       * @return A constant reference to the element.
-       */
-      const PlabelType&
-      plabel () const;
-
-      /**
-       * @brief Return a read-write reference to the element.
-       *
-       * @return A reference to the element.
-       */
-      PlabelType&
-      plabel ();
-
-      /**
-       * @brief Set the element value.
-       *
-       * @param x A new value to set.
-       *
-       * This function makes a copy of its argument and sets it as
-       * the new value of the element.
-       */
-      void
-      plabel (const PlabelType& x);
-
-      /**
-       * @brief Set the element value without copying.
-       *
-       * @param p A new value to use.
-       *
-       * This function will try to use the passed value directly
-       * instead of making a copy.
-       */
-      void
-      plabel (::std::unique_ptr< PlabelType > p);
-
-      //@}
-
-      /**
-       * @name Constructors
-       */
-      //@{
-
-      /**
-       * @brief Create an instance from the ultimate base and
-       * initializers for required elements and attributes.
-       */
-      SymChamfer (const ChamferPicksType&,
-                  const DistanceType&,
-                  const PlabelType&);
-
-      /**
-       * @brief Create an instance from the ultimate base and
-       * initializers for required elements and attributes
-       * (::std::unique_ptr version).
-       *
-       * This constructor will try to use the passed values directly
-       * instead of making copies.
-       */
-      SymChamfer (::std::unique_ptr< ChamferPicksType >,
-                  ::std::unique_ptr< DistanceType >,
-                  ::std::unique_ptr< PlabelType >);
-
-      /**
-       * @brief Create an instance from a DOM element.
-       *
-       * @param e A DOM element to extract the data from.
-       * @param f Flags to create the new instance with.
-       * @param c A pointer to the object that will contain the new
-       * instance.
-       */
-      SymChamfer (const ::xercesc::DOMElement& e,
-                  ::xml_schema::Flags f = 0,
-                  ::xml_schema::Container* c = 0);
-
-      /**
-       * @brief Copy constructor.
-       *
-       * @param x An instance to make a copy of.
-       * @param f Flags to create the copy with.
-       * @param c A pointer to the object that will contain the copy.
-       *
-       * For polymorphic object models use the @c _clone function instead.
-       */
-      SymChamfer (const SymChamfer& x,
-                  ::xml_schema::Flags f = 0,
-                  ::xml_schema::Container* c = 0);
-
-      /**
-       * @brief Copy the instance polymorphically.
-       *
-       * @param f Flags to create the copy with.
-       * @param c A pointer to the object that will contain the copy.
-       * @return A pointer to the dynamically allocated copy.
-       *
-       * This function ensures that the dynamic type of the instance is
-       * used for copying and should be used for polymorphic object
-       * models instead of the copy constructor.
-       */
-      virtual SymChamfer*
-      _clone (::xml_schema::Flags f = 0,
-              ::xml_schema::Container* c = 0) const;
-
-      /**
-       * @brief Copy assignment operator.
-       *
-       * @param x An instance to make a copy of.
-       * @return A reference to itself.
-       *
-       * For polymorphic object models use the @c _clone function instead.
-       */
-      SymChamfer&
-      operator= (const SymChamfer& x);
-
-      //@}
-
-      /**
-       * @brief Destructor.
-       */
-      virtual 
-      ~SymChamfer ();
-
-      // Implementation.
-      //
-
-      //@cond
-
-      protected:
-      void
-      parse (::xsd::cxx::xml::dom::parser< char >&,
-             ::xml_schema::Flags);
-
-      protected:
-      ::xsd::cxx::tree::one< ChamferPicksType > chamferPicks_;
-      ::xsd::cxx::tree::one< DistanceType > distance_;
-      ::xsd::cxx::tree::one< PlabelType > plabel_;
-
-      //@endcond
-    };
-
-    /**
-     * @brief Class corresponding to the %SymChamfers schema type.
-     *
-     * @nosubgrouping
-     */
-    class SymChamfers: public ::xml_schema::Type
-    {
-      public:
-      /**
-       * @name array
-       *
-       * @brief Accessor and modifier functions for the %array
-       * sequence element.
-       */
-      //@{
-
-      /**
-       * @brief Element type.
-       */
-      typedef ::prj::srl::SymChamfer ArrayType;
-
-      /**
-       * @brief Element sequence container type.
-       */
-      typedef ::xsd::cxx::tree::sequence< ArrayType > ArraySequence;
-
-      /**
-       * @brief Element iterator type.
-       */
-      typedef ArraySequence::iterator ArrayIterator;
-
-      /**
-       * @brief Element constant iterator type.
-       */
-      typedef ArraySequence::const_iterator ArrayConstIterator;
-
-      /**
-       * @brief Element traits type.
-       */
-      typedef ::xsd::cxx::tree::traits< ArrayType, char > ArrayTraits;
-
-      /**
-       * @brief Return a read-only (constant) reference to the element
-       * sequence.
-       *
-       * @return A constant reference to the sequence container.
-       */
-      const ArraySequence&
-      array () const;
-
-      /**
-       * @brief Return a read-write reference to the element sequence.
-       *
-       * @return A reference to the sequence container.
-       */
-      ArraySequence&
-      array ();
-
-      /**
-       * @brief Copy elements from a given sequence.
-       *
-       * @param s A sequence to copy elements from.
-       *
-       * For each element in @a s this function makes a copy and adds it 
-       * to the sequence. Note that this operation completely changes the 
-       * sequence and all old elements will be lost.
-       */
-      void
-      array (const ArraySequence& s);
-
-      //@}
-
-      /**
-       * @name Constructors
-       */
-      //@{
-
-      /**
-       * @brief Create an instance from the ultimate base and
-       * initializers for required elements and attributes.
-       */
-      SymChamfers ();
-
-      /**
-       * @brief Create an instance from a DOM element.
-       *
-       * @param e A DOM element to extract the data from.
-       * @param f Flags to create the new instance with.
-       * @param c A pointer to the object that will contain the new
-       * instance.
-       */
-      SymChamfers (const ::xercesc::DOMElement& e,
-                   ::xml_schema::Flags f = 0,
-                   ::xml_schema::Container* c = 0);
-
-      /**
-       * @brief Copy constructor.
-       *
-       * @param x An instance to make a copy of.
-       * @param f Flags to create the copy with.
-       * @param c A pointer to the object that will contain the copy.
-       *
-       * For polymorphic object models use the @c _clone function instead.
-       */
-      SymChamfers (const SymChamfers& x,
-                   ::xml_schema::Flags f = 0,
-                   ::xml_schema::Container* c = 0);
-
-      /**
-       * @brief Copy the instance polymorphically.
-       *
-       * @param f Flags to create the copy with.
-       * @param c A pointer to the object that will contain the copy.
-       * @return A pointer to the dynamically allocated copy.
-       *
-       * This function ensures that the dynamic type of the instance is
-       * used for copying and should be used for polymorphic object
-       * models instead of the copy constructor.
-       */
-      virtual SymChamfers*
-      _clone (::xml_schema::Flags f = 0,
-              ::xml_schema::Container* c = 0) const;
-
-      /**
-       * @brief Copy assignment operator.
-       *
-       * @param x An instance to make a copy of.
-       * @return A reference to itself.
-       *
-       * For polymorphic object models use the @c _clone function instead.
-       */
-      SymChamfers&
-      operator= (const SymChamfers& x);
-
-      //@}
-
-      /**
-       * @brief Destructor.
-       */
-      virtual 
-      ~SymChamfers ();
-
-      // Implementation.
-      //
-
-      //@cond
-
-      protected:
-      void
-      parse (::xsd::cxx::xml::dom::parser< char >&,
-             ::xml_schema::Flags);
-
-      protected:
-      ArraySequence array_;
+      ::xsd::cxx::tree::one< ModeType > mode_;
+      EntriesSequence entries_;
 
       //@endcond
     };
@@ -1053,9 +983,9 @@ namespace prj
       //@}
 
       /**
-       * @name symChamfers
+       * @name cue
        *
-       * @brief Accessor and modifier functions for the %symChamfers
+       * @brief Accessor and modifier functions for the %cue
        * required element.
        */
       //@{
@@ -1063,28 +993,28 @@ namespace prj
       /**
        * @brief Element type.
        */
-      typedef ::prj::srl::SymChamfers SymChamfersType;
+      typedef ::prj::srl::Cue CueType;
 
       /**
        * @brief Element traits type.
        */
-      typedef ::xsd::cxx::tree::traits< SymChamfersType, char > SymChamfersTraits;
+      typedef ::xsd::cxx::tree::traits< CueType, char > CueTraits;
 
       /**
        * @brief Return a read-only (constant) reference to the element.
        *
        * @return A constant reference to the element.
        */
-      const SymChamfersType&
-      symChamfers () const;
+      const CueType&
+      cue () const;
 
       /**
        * @brief Return a read-write reference to the element.
        *
        * @return A reference to the element.
        */
-      SymChamfersType&
-      symChamfers ();
+      CueType&
+      cue ();
 
       /**
        * @brief Set the element value.
@@ -1095,7 +1025,7 @@ namespace prj
        * the new value of the element.
        */
       void
-      symChamfers (const SymChamfersType& x);
+      cue (const CueType& x);
 
       /**
        * @brief Set the element value without copying.
@@ -1106,7 +1036,7 @@ namespace prj
        * instead of making a copy.
        */
       void
-      symChamfers (::std::unique_ptr< SymChamfersType > p);
+      cue (::std::unique_ptr< CueType > p);
 
       //@}
 
@@ -1121,7 +1051,7 @@ namespace prj
        */
       FeatureChamfer (const FeatureBaseType&,
                       const ShapeMapType&,
-                      const SymChamfersType&);
+                      const CueType&);
 
       /**
        * @brief Create an instance from the ultimate base and
@@ -1133,7 +1063,7 @@ namespace prj
        */
       FeatureChamfer (::std::unique_ptr< FeatureBaseType >,
                       ::std::unique_ptr< ShapeMapType >,
-                      ::std::unique_ptr< SymChamfersType >);
+                      ::std::unique_ptr< CueType >);
 
       /**
        * @brief Create an instance from a DOM element.
@@ -1207,7 +1137,7 @@ namespace prj
       protected:
       ::xsd::cxx::tree::one< FeatureBaseType > featureBase_;
       ::xsd::cxx::tree::one< ShapeMapType > shapeMap_;
-      ::xsd::cxx::tree::one< SymChamfersType > symChamfers_;
+      ::xsd::cxx::tree::one< CueType > cue_;
 
       //@endcond
     };
@@ -1492,16 +1422,10 @@ namespace prj
   namespace srl
   {
     void
-    operator<< (::xercesc::DOMElement&, const ChamferPick&);
+    operator<< (::xercesc::DOMElement&, const Entry&);
 
     void
-    operator<< (::xercesc::DOMElement&, const ChamferPicks&);
-
-    void
-    operator<< (::xercesc::DOMElement&, const SymChamfer&);
-
-    void
-    operator<< (::xercesc::DOMElement&, const SymChamfers&);
+    operator<< (::xercesc::DOMElement&, const Cue&);
 
     void
     operator<< (::xercesc::DOMElement&, const FeatureChamfer&);

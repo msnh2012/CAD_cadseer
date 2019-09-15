@@ -44,175 +44,221 @@ namespace prj
 {
   namespace srl
   {
-    // ChamferPick
+    // Entry
     // 
 
-    const ChamferPick::EdgePickType& ChamferPick::
-    edgePick () const
+    const Entry::StyleType& Entry::
+    style () const
     {
-      return this->edgePick_.get ();
+      return this->style_.get ();
     }
 
-    ChamferPick::EdgePickType& ChamferPick::
-    edgePick ()
+    Entry::StyleType& Entry::
+    style ()
     {
-      return this->edgePick_.get ();
+      return this->style_.get ();
     }
 
-    void ChamferPick::
-    edgePick (const EdgePickType& x)
+    void Entry::
+    style (const StyleType& x)
     {
-      this->edgePick_.set (x);
+      this->style_.set (x);
     }
 
-    void ChamferPick::
-    edgePick (::std::unique_ptr< EdgePickType > x)
+    const Entry::Parameter1Type& Entry::
+    parameter1 () const
     {
-      this->edgePick_.set (std::move (x));
+      return this->parameter1_.get ();
     }
 
-    const ChamferPick::FacePickType& ChamferPick::
-    facePick () const
+    Entry::Parameter1Type& Entry::
+    parameter1 ()
     {
-      return this->facePick_.get ();
+      return this->parameter1_.get ();
     }
 
-    ChamferPick::FacePickType& ChamferPick::
-    facePick ()
+    void Entry::
+    parameter1 (const Parameter1Type& x)
     {
-      return this->facePick_.get ();
+      this->parameter1_.set (x);
     }
 
-    void ChamferPick::
-    facePick (const FacePickType& x)
+    void Entry::
+    parameter1 (::std::unique_ptr< Parameter1Type > x)
     {
-      this->facePick_.set (x);
+      this->parameter1_.set (std::move (x));
     }
 
-    void ChamferPick::
-    facePick (::std::unique_ptr< FacePickType > x)
+    const Entry::Parameter2Optional& Entry::
+    parameter2 () const
     {
-      this->facePick_.set (std::move (x));
+      return this->parameter2_;
+    }
+
+    Entry::Parameter2Optional& Entry::
+    parameter2 ()
+    {
+      return this->parameter2_;
+    }
+
+    void Entry::
+    parameter2 (const Parameter2Type& x)
+    {
+      this->parameter2_.set (x);
+    }
+
+    void Entry::
+    parameter2 (const Parameter2Optional& x)
+    {
+      this->parameter2_ = x;
+    }
+
+    void Entry::
+    parameter2 (::std::unique_ptr< Parameter2Type > x)
+    {
+      this->parameter2_.set (std::move (x));
+    }
+
+    const Entry::Label1Type& Entry::
+    label1 () const
+    {
+      return this->label1_.get ();
+    }
+
+    Entry::Label1Type& Entry::
+    label1 ()
+    {
+      return this->label1_.get ();
+    }
+
+    void Entry::
+    label1 (const Label1Type& x)
+    {
+      this->label1_.set (x);
+    }
+
+    void Entry::
+    label1 (::std::unique_ptr< Label1Type > x)
+    {
+      this->label1_.set (std::move (x));
+    }
+
+    const Entry::Label2Optional& Entry::
+    label2 () const
+    {
+      return this->label2_;
+    }
+
+    Entry::Label2Optional& Entry::
+    label2 ()
+    {
+      return this->label2_;
+    }
+
+    void Entry::
+    label2 (const Label2Type& x)
+    {
+      this->label2_.set (x);
+    }
+
+    void Entry::
+    label2 (const Label2Optional& x)
+    {
+      this->label2_ = x;
+    }
+
+    void Entry::
+    label2 (::std::unique_ptr< Label2Type > x)
+    {
+      this->label2_.set (std::move (x));
+    }
+
+    const Entry::EdgePicksType& Entry::
+    edgePicks () const
+    {
+      return this->edgePicks_.get ();
+    }
+
+    Entry::EdgePicksType& Entry::
+    edgePicks ()
+    {
+      return this->edgePicks_.get ();
+    }
+
+    void Entry::
+    edgePicks (const EdgePicksType& x)
+    {
+      this->edgePicks_.set (x);
+    }
+
+    void Entry::
+    edgePicks (::std::unique_ptr< EdgePicksType > x)
+    {
+      this->edgePicks_.set (std::move (x));
+    }
+
+    const Entry::FacePicksType& Entry::
+    facePicks () const
+    {
+      return this->facePicks_.get ();
+    }
+
+    Entry::FacePicksType& Entry::
+    facePicks ()
+    {
+      return this->facePicks_.get ();
+    }
+
+    void Entry::
+    facePicks (const FacePicksType& x)
+    {
+      this->facePicks_.set (x);
+    }
+
+    void Entry::
+    facePicks (::std::unique_ptr< FacePicksType > x)
+    {
+      this->facePicks_.set (std::move (x));
     }
 
 
-    // ChamferPicks
+    // Cue
     // 
 
-    const ChamferPicks::ArraySequence& ChamferPicks::
-    array () const
+    const Cue::ModeType& Cue::
+    mode () const
     {
-      return this->array_;
+      return this->mode_.get ();
     }
 
-    ChamferPicks::ArraySequence& ChamferPicks::
-    array ()
+    Cue::ModeType& Cue::
+    mode ()
     {
-      return this->array_;
+      return this->mode_.get ();
     }
 
-    void ChamferPicks::
-    array (const ArraySequence& s)
+    void Cue::
+    mode (const ModeType& x)
     {
-      this->array_ = s;
+      this->mode_.set (x);
     }
 
-
-    // SymChamfer
-    // 
-
-    const SymChamfer::ChamferPicksType& SymChamfer::
-    chamferPicks () const
+    const Cue::EntriesSequence& Cue::
+    entries () const
     {
-      return this->chamferPicks_.get ();
+      return this->entries_;
     }
 
-    SymChamfer::ChamferPicksType& SymChamfer::
-    chamferPicks ()
+    Cue::EntriesSequence& Cue::
+    entries ()
     {
-      return this->chamferPicks_.get ();
+      return this->entries_;
     }
 
-    void SymChamfer::
-    chamferPicks (const ChamferPicksType& x)
+    void Cue::
+    entries (const EntriesSequence& s)
     {
-      this->chamferPicks_.set (x);
-    }
-
-    void SymChamfer::
-    chamferPicks (::std::unique_ptr< ChamferPicksType > x)
-    {
-      this->chamferPicks_.set (std::move (x));
-    }
-
-    const SymChamfer::DistanceType& SymChamfer::
-    distance () const
-    {
-      return this->distance_.get ();
-    }
-
-    SymChamfer::DistanceType& SymChamfer::
-    distance ()
-    {
-      return this->distance_.get ();
-    }
-
-    void SymChamfer::
-    distance (const DistanceType& x)
-    {
-      this->distance_.set (x);
-    }
-
-    void SymChamfer::
-    distance (::std::unique_ptr< DistanceType > x)
-    {
-      this->distance_.set (std::move (x));
-    }
-
-    const SymChamfer::PlabelType& SymChamfer::
-    plabel () const
-    {
-      return this->plabel_.get ();
-    }
-
-    SymChamfer::PlabelType& SymChamfer::
-    plabel ()
-    {
-      return this->plabel_.get ();
-    }
-
-    void SymChamfer::
-    plabel (const PlabelType& x)
-    {
-      this->plabel_.set (x);
-    }
-
-    void SymChamfer::
-    plabel (::std::unique_ptr< PlabelType > x)
-    {
-      this->plabel_.set (std::move (x));
-    }
-
-
-    // SymChamfers
-    // 
-
-    const SymChamfers::ArraySequence& SymChamfers::
-    array () const
-    {
-      return this->array_;
-    }
-
-    SymChamfers::ArraySequence& SymChamfers::
-    array ()
-    {
-      return this->array_;
-    }
-
-    void SymChamfers::
-    array (const ArraySequence& s)
-    {
-      this->array_ = s;
+      this->entries_ = s;
     }
 
 
@@ -267,28 +313,28 @@ namespace prj
       this->shapeMap_.set (std::move (x));
     }
 
-    const FeatureChamfer::SymChamfersType& FeatureChamfer::
-    symChamfers () const
+    const FeatureChamfer::CueType& FeatureChamfer::
+    cue () const
     {
-      return this->symChamfers_.get ();
+      return this->cue_.get ();
     }
 
-    FeatureChamfer::SymChamfersType& FeatureChamfer::
-    symChamfers ()
+    FeatureChamfer::CueType& FeatureChamfer::
+    cue ()
     {
-      return this->symChamfers_.get ();
-    }
-
-    void FeatureChamfer::
-    symChamfers (const SymChamfersType& x)
-    {
-      this->symChamfers_.set (x);
+      return this->cue_.get ();
     }
 
     void FeatureChamfer::
-    symChamfers (::std::unique_ptr< SymChamfersType > x)
+    cue (const CueType& x)
     {
-      this->symChamfers_.set (std::move (x));
+      this->cue_.set (x);
+    }
+
+    void FeatureChamfer::
+    cue (::std::unique_ptr< CueType > x)
+    {
+      this->cue_.set (std::move (x));
     }
   }
 }
@@ -299,44 +345,70 @@ namespace prj
 {
   namespace srl
   {
-    // ChamferPick
+    // Entry
     //
 
-    ChamferPick::
-    ChamferPick (const EdgePickType& edgePick,
-                 const FacePickType& facePick)
+    Entry::
+    Entry (const StyleType& style,
+           const Parameter1Type& parameter1,
+           const Label1Type& label1,
+           const EdgePicksType& edgePicks,
+           const FacePicksType& facePicks)
     : ::xml_schema::Type (),
-      edgePick_ (edgePick, this),
-      facePick_ (facePick, this)
+      style_ (style, this),
+      parameter1_ (parameter1, this),
+      parameter2_ (this),
+      label1_ (label1, this),
+      label2_ (this),
+      edgePicks_ (edgePicks, this),
+      facePicks_ (facePicks, this)
     {
     }
 
-    ChamferPick::
-    ChamferPick (::std::unique_ptr< EdgePickType > edgePick,
-                 ::std::unique_ptr< FacePickType > facePick)
+    Entry::
+    Entry (const StyleType& style,
+           ::std::unique_ptr< Parameter1Type > parameter1,
+           ::std::unique_ptr< Label1Type > label1,
+           ::std::unique_ptr< EdgePicksType > edgePicks,
+           ::std::unique_ptr< FacePicksType > facePicks)
     : ::xml_schema::Type (),
-      edgePick_ (std::move (edgePick), this),
-      facePick_ (std::move (facePick), this)
+      style_ (style, this),
+      parameter1_ (std::move (parameter1), this),
+      parameter2_ (this),
+      label1_ (std::move (label1), this),
+      label2_ (this),
+      edgePicks_ (std::move (edgePicks), this),
+      facePicks_ (std::move (facePicks), this)
     {
     }
 
-    ChamferPick::
-    ChamferPick (const ChamferPick& x,
-                 ::xml_schema::Flags f,
-                 ::xml_schema::Container* c)
+    Entry::
+    Entry (const Entry& x,
+           ::xml_schema::Flags f,
+           ::xml_schema::Container* c)
     : ::xml_schema::Type (x, f, c),
-      edgePick_ (x.edgePick_, f, this),
-      facePick_ (x.facePick_, f, this)
+      style_ (x.style_, f, this),
+      parameter1_ (x.parameter1_, f, this),
+      parameter2_ (x.parameter2_, f, this),
+      label1_ (x.label1_, f, this),
+      label2_ (x.label2_, f, this),
+      edgePicks_ (x.edgePicks_, f, this),
+      facePicks_ (x.facePicks_, f, this)
     {
     }
 
-    ChamferPick::
-    ChamferPick (const ::xercesc::DOMElement& e,
-                 ::xml_schema::Flags f,
-                 ::xml_schema::Container* c)
+    Entry::
+    Entry (const ::xercesc::DOMElement& e,
+           ::xml_schema::Flags f,
+           ::xml_schema::Container* c)
     : ::xml_schema::Type (e, f | ::xml_schema::Flags::base, c),
-      edgePick_ (this),
-      facePick_ (this)
+      style_ (this),
+      parameter1_ (this),
+      parameter2_ (this),
+      label1_ (this),
+      label2_ (this),
+      edgePicks_ (this),
+      facePicks_ (this)
     {
       if ((f & ::xml_schema::Flags::base) == 0)
       {
@@ -345,7 +417,7 @@ namespace prj
       }
     }
 
-    void ChamferPick::
+    void Entry::
     parse (::xsd::cxx::xml::dom::parser< char >& p,
            ::xml_schema::Flags f)
     {
@@ -355,30 +427,97 @@ namespace prj
         const ::xsd::cxx::xml::qualified_name< char > n (
           ::xsd::cxx::xml::dom::name< char > (i));
 
-        // edgePick
+        // style
         //
-        if (n.name () == "edgePick" && n.namespace_ ().empty ())
+        if (n.name () == "style" && n.namespace_ ().empty ())
         {
-          ::std::unique_ptr< EdgePickType > r (
-            EdgePickTraits::create (i, f, this));
-
-          if (!edgePick_.present ())
+          if (!style_.present ())
           {
-            this->edgePick_.set (::std::move (r));
+            this->style_.set (StyleTraits::create (i, f, this));
             continue;
           }
         }
 
-        // facePick
+        // parameter1
         //
-        if (n.name () == "facePick" && n.namespace_ ().empty ())
+        if (n.name () == "parameter1" && n.namespace_ ().empty ())
         {
-          ::std::unique_ptr< FacePickType > r (
-            FacePickTraits::create (i, f, this));
+          ::std::unique_ptr< Parameter1Type > r (
+            Parameter1Traits::create (i, f, this));
 
-          if (!facePick_.present ())
+          if (!parameter1_.present ())
           {
-            this->facePick_.set (::std::move (r));
+            this->parameter1_.set (::std::move (r));
+            continue;
+          }
+        }
+
+        // parameter2
+        //
+        if (n.name () == "parameter2" && n.namespace_ ().empty ())
+        {
+          ::std::unique_ptr< Parameter2Type > r (
+            Parameter2Traits::create (i, f, this));
+
+          if (!this->parameter2_)
+          {
+            this->parameter2_.set (::std::move (r));
+            continue;
+          }
+        }
+
+        // label1
+        //
+        if (n.name () == "label1" && n.namespace_ ().empty ())
+        {
+          ::std::unique_ptr< Label1Type > r (
+            Label1Traits::create (i, f, this));
+
+          if (!label1_.present ())
+          {
+            this->label1_.set (::std::move (r));
+            continue;
+          }
+        }
+
+        // label2
+        //
+        if (n.name () == "label2" && n.namespace_ ().empty ())
+        {
+          ::std::unique_ptr< Label2Type > r (
+            Label2Traits::create (i, f, this));
+
+          if (!this->label2_)
+          {
+            this->label2_.set (::std::move (r));
+            continue;
+          }
+        }
+
+        // edgePicks
+        //
+        if (n.name () == "edgePicks" && n.namespace_ ().empty ())
+        {
+          ::std::unique_ptr< EdgePicksType > r (
+            EdgePicksTraits::create (i, f, this));
+
+          if (!edgePicks_.present ())
+          {
+            this->edgePicks_.set (::std::move (r));
+            continue;
+          }
+        }
+
+        // facePicks
+        //
+        if (n.name () == "facePicks" && n.namespace_ ().empty ())
+        {
+          ::std::unique_ptr< FacePicksType > r (
+            FacePicksTraits::create (i, f, this));
+
+          if (!facePicks_.present ())
+          {
+            this->facePicks_.set (::std::move (r));
             continue;
           }
         }
@@ -386,71 +525,100 @@ namespace prj
         break;
       }
 
-      if (!edgePick_.present ())
+      if (!style_.present ())
       {
         throw ::xsd::cxx::tree::expected_element< char > (
-          "edgePick",
+          "style",
           "");
       }
 
-      if (!facePick_.present ())
+      if (!parameter1_.present ())
       {
         throw ::xsd::cxx::tree::expected_element< char > (
-          "facePick",
+          "parameter1",
+          "");
+      }
+
+      if (!label1_.present ())
+      {
+        throw ::xsd::cxx::tree::expected_element< char > (
+          "label1",
+          "");
+      }
+
+      if (!edgePicks_.present ())
+      {
+        throw ::xsd::cxx::tree::expected_element< char > (
+          "edgePicks",
+          "");
+      }
+
+      if (!facePicks_.present ())
+      {
+        throw ::xsd::cxx::tree::expected_element< char > (
+          "facePicks",
           "");
       }
     }
 
-    ChamferPick* ChamferPick::
+    Entry* Entry::
     _clone (::xml_schema::Flags f,
             ::xml_schema::Container* c) const
     {
-      return new class ChamferPick (*this, f, c);
+      return new class Entry (*this, f, c);
     }
 
-    ChamferPick& ChamferPick::
-    operator= (const ChamferPick& x)
+    Entry& Entry::
+    operator= (const Entry& x)
     {
       if (this != &x)
       {
         static_cast< ::xml_schema::Type& > (*this) = x;
-        this->edgePick_ = x.edgePick_;
-        this->facePick_ = x.facePick_;
+        this->style_ = x.style_;
+        this->parameter1_ = x.parameter1_;
+        this->parameter2_ = x.parameter2_;
+        this->label1_ = x.label1_;
+        this->label2_ = x.label2_;
+        this->edgePicks_ = x.edgePicks_;
+        this->facePicks_ = x.facePicks_;
       }
 
       return *this;
     }
 
-    ChamferPick::
-    ~ChamferPick ()
+    Entry::
+    ~Entry ()
     {
     }
 
-    // ChamferPicks
+    // Cue
     //
 
-    ChamferPicks::
-    ChamferPicks ()
+    Cue::
+    Cue (const ModeType& mode)
     : ::xml_schema::Type (),
-      array_ (this)
+      mode_ (mode, this),
+      entries_ (this)
     {
     }
 
-    ChamferPicks::
-    ChamferPicks (const ChamferPicks& x,
-                  ::xml_schema::Flags f,
-                  ::xml_schema::Container* c)
+    Cue::
+    Cue (const Cue& x,
+         ::xml_schema::Flags f,
+         ::xml_schema::Container* c)
     : ::xml_schema::Type (x, f, c),
-      array_ (x.array_, f, this)
+      mode_ (x.mode_, f, this),
+      entries_ (x.entries_, f, this)
     {
     }
 
-    ChamferPicks::
-    ChamferPicks (const ::xercesc::DOMElement& e,
-                  ::xml_schema::Flags f,
-                  ::xml_schema::Container* c)
+    Cue::
+    Cue (const ::xercesc::DOMElement& e,
+         ::xml_schema::Flags f,
+         ::xml_schema::Container* c)
     : ::xml_schema::Type (e, f | ::xml_schema::Flags::base, c),
-      array_ (this)
+      mode_ (this),
+      entries_ (this)
     {
       if ((f & ::xml_schema::Flags::base) == 0)
       {
@@ -459,7 +627,7 @@ namespace prj
       }
     }
 
-    void ChamferPicks::
+    void Cue::
     parse (::xsd::cxx::xml::dom::parser< char >& p,
            ::xml_schema::Flags f)
     {
@@ -469,279 +637,61 @@ namespace prj
         const ::xsd::cxx::xml::qualified_name< char > n (
           ::xsd::cxx::xml::dom::name< char > (i));
 
-        // array
+        // mode
         //
-        if (n.name () == "array" && n.namespace_ ().empty ())
+        if (n.name () == "mode" && n.namespace_ ().empty ())
         {
-          ::std::unique_ptr< ArrayType > r (
-            ArrayTraits::create (i, f, this));
+          if (!mode_.present ())
+          {
+            this->mode_.set (ModeTraits::create (i, f, this));
+            continue;
+          }
+        }
 
-          this->array_.push_back (::std::move (r));
+        // entries
+        //
+        if (n.name () == "entries" && n.namespace_ ().empty ())
+        {
+          ::std::unique_ptr< EntriesType > r (
+            EntriesTraits::create (i, f, this));
+
+          this->entries_.push_back (::std::move (r));
           continue;
         }
 
         break;
       }
+
+      if (!mode_.present ())
+      {
+        throw ::xsd::cxx::tree::expected_element< char > (
+          "mode",
+          "");
+      }
     }
 
-    ChamferPicks* ChamferPicks::
+    Cue* Cue::
     _clone (::xml_schema::Flags f,
             ::xml_schema::Container* c) const
     {
-      return new class ChamferPicks (*this, f, c);
+      return new class Cue (*this, f, c);
     }
 
-    ChamferPicks& ChamferPicks::
-    operator= (const ChamferPicks& x)
+    Cue& Cue::
+    operator= (const Cue& x)
     {
       if (this != &x)
       {
         static_cast< ::xml_schema::Type& > (*this) = x;
-        this->array_ = x.array_;
+        this->mode_ = x.mode_;
+        this->entries_ = x.entries_;
       }
 
       return *this;
     }
 
-    ChamferPicks::
-    ~ChamferPicks ()
-    {
-    }
-
-    // SymChamfer
-    //
-
-    SymChamfer::
-    SymChamfer (const ChamferPicksType& chamferPicks,
-                const DistanceType& distance,
-                const PlabelType& plabel)
-    : ::xml_schema::Type (),
-      chamferPicks_ (chamferPicks, this),
-      distance_ (distance, this),
-      plabel_ (plabel, this)
-    {
-    }
-
-    SymChamfer::
-    SymChamfer (::std::unique_ptr< ChamferPicksType > chamferPicks,
-                ::std::unique_ptr< DistanceType > distance,
-                ::std::unique_ptr< PlabelType > plabel)
-    : ::xml_schema::Type (),
-      chamferPicks_ (std::move (chamferPicks), this),
-      distance_ (std::move (distance), this),
-      plabel_ (std::move (plabel), this)
-    {
-    }
-
-    SymChamfer::
-    SymChamfer (const SymChamfer& x,
-                ::xml_schema::Flags f,
-                ::xml_schema::Container* c)
-    : ::xml_schema::Type (x, f, c),
-      chamferPicks_ (x.chamferPicks_, f, this),
-      distance_ (x.distance_, f, this),
-      plabel_ (x.plabel_, f, this)
-    {
-    }
-
-    SymChamfer::
-    SymChamfer (const ::xercesc::DOMElement& e,
-                ::xml_schema::Flags f,
-                ::xml_schema::Container* c)
-    : ::xml_schema::Type (e, f | ::xml_schema::Flags::base, c),
-      chamferPicks_ (this),
-      distance_ (this),
-      plabel_ (this)
-    {
-      if ((f & ::xml_schema::Flags::base) == 0)
-      {
-        ::xsd::cxx::xml::dom::parser< char > p (e, true, false, false);
-        this->parse (p, f);
-      }
-    }
-
-    void SymChamfer::
-    parse (::xsd::cxx::xml::dom::parser< char >& p,
-           ::xml_schema::Flags f)
-    {
-      for (; p.more_content (); p.next_content (false))
-      {
-        const ::xercesc::DOMElement& i (p.cur_element ());
-        const ::xsd::cxx::xml::qualified_name< char > n (
-          ::xsd::cxx::xml::dom::name< char > (i));
-
-        // chamferPicks
-        //
-        if (n.name () == "chamferPicks" && n.namespace_ ().empty ())
-        {
-          ::std::unique_ptr< ChamferPicksType > r (
-            ChamferPicksTraits::create (i, f, this));
-
-          if (!chamferPicks_.present ())
-          {
-            this->chamferPicks_.set (::std::move (r));
-            continue;
-          }
-        }
-
-        // distance
-        //
-        if (n.name () == "distance" && n.namespace_ ().empty ())
-        {
-          ::std::unique_ptr< DistanceType > r (
-            DistanceTraits::create (i, f, this));
-
-          if (!distance_.present ())
-          {
-            this->distance_.set (::std::move (r));
-            continue;
-          }
-        }
-
-        // plabel
-        //
-        if (n.name () == "plabel" && n.namespace_ ().empty ())
-        {
-          ::std::unique_ptr< PlabelType > r (
-            PlabelTraits::create (i, f, this));
-
-          if (!plabel_.present ())
-          {
-            this->plabel_.set (::std::move (r));
-            continue;
-          }
-        }
-
-        break;
-      }
-
-      if (!chamferPicks_.present ())
-      {
-        throw ::xsd::cxx::tree::expected_element< char > (
-          "chamferPicks",
-          "");
-      }
-
-      if (!distance_.present ())
-      {
-        throw ::xsd::cxx::tree::expected_element< char > (
-          "distance",
-          "");
-      }
-
-      if (!plabel_.present ())
-      {
-        throw ::xsd::cxx::tree::expected_element< char > (
-          "plabel",
-          "");
-      }
-    }
-
-    SymChamfer* SymChamfer::
-    _clone (::xml_schema::Flags f,
-            ::xml_schema::Container* c) const
-    {
-      return new class SymChamfer (*this, f, c);
-    }
-
-    SymChamfer& SymChamfer::
-    operator= (const SymChamfer& x)
-    {
-      if (this != &x)
-      {
-        static_cast< ::xml_schema::Type& > (*this) = x;
-        this->chamferPicks_ = x.chamferPicks_;
-        this->distance_ = x.distance_;
-        this->plabel_ = x.plabel_;
-      }
-
-      return *this;
-    }
-
-    SymChamfer::
-    ~SymChamfer ()
-    {
-    }
-
-    // SymChamfers
-    //
-
-    SymChamfers::
-    SymChamfers ()
-    : ::xml_schema::Type (),
-      array_ (this)
-    {
-    }
-
-    SymChamfers::
-    SymChamfers (const SymChamfers& x,
-                 ::xml_schema::Flags f,
-                 ::xml_schema::Container* c)
-    : ::xml_schema::Type (x, f, c),
-      array_ (x.array_, f, this)
-    {
-    }
-
-    SymChamfers::
-    SymChamfers (const ::xercesc::DOMElement& e,
-                 ::xml_schema::Flags f,
-                 ::xml_schema::Container* c)
-    : ::xml_schema::Type (e, f | ::xml_schema::Flags::base, c),
-      array_ (this)
-    {
-      if ((f & ::xml_schema::Flags::base) == 0)
-      {
-        ::xsd::cxx::xml::dom::parser< char > p (e, true, false, false);
-        this->parse (p, f);
-      }
-    }
-
-    void SymChamfers::
-    parse (::xsd::cxx::xml::dom::parser< char >& p,
-           ::xml_schema::Flags f)
-    {
-      for (; p.more_content (); p.next_content (false))
-      {
-        const ::xercesc::DOMElement& i (p.cur_element ());
-        const ::xsd::cxx::xml::qualified_name< char > n (
-          ::xsd::cxx::xml::dom::name< char > (i));
-
-        // array
-        //
-        if (n.name () == "array" && n.namespace_ ().empty ())
-        {
-          ::std::unique_ptr< ArrayType > r (
-            ArrayTraits::create (i, f, this));
-
-          this->array_.push_back (::std::move (r));
-          continue;
-        }
-
-        break;
-      }
-    }
-
-    SymChamfers* SymChamfers::
-    _clone (::xml_schema::Flags f,
-            ::xml_schema::Container* c) const
-    {
-      return new class SymChamfers (*this, f, c);
-    }
-
-    SymChamfers& SymChamfers::
-    operator= (const SymChamfers& x)
-    {
-      if (this != &x)
-      {
-        static_cast< ::xml_schema::Type& > (*this) = x;
-        this->array_ = x.array_;
-      }
-
-      return *this;
-    }
-
-    SymChamfers::
-    ~SymChamfers ()
+    Cue::
+    ~Cue ()
     {
     }
 
@@ -751,22 +701,22 @@ namespace prj
     FeatureChamfer::
     FeatureChamfer (const FeatureBaseType& featureBase,
                     const ShapeMapType& shapeMap,
-                    const SymChamfersType& symChamfers)
+                    const CueType& cue)
     : ::xml_schema::Type (),
       featureBase_ (featureBase, this),
       shapeMap_ (shapeMap, this),
-      symChamfers_ (symChamfers, this)
+      cue_ (cue, this)
     {
     }
 
     FeatureChamfer::
     FeatureChamfer (::std::unique_ptr< FeatureBaseType > featureBase,
                     ::std::unique_ptr< ShapeMapType > shapeMap,
-                    ::std::unique_ptr< SymChamfersType > symChamfers)
+                    ::std::unique_ptr< CueType > cue)
     : ::xml_schema::Type (),
       featureBase_ (std::move (featureBase), this),
       shapeMap_ (std::move (shapeMap), this),
-      symChamfers_ (std::move (symChamfers), this)
+      cue_ (std::move (cue), this)
     {
     }
 
@@ -777,7 +727,7 @@ namespace prj
     : ::xml_schema::Type (x, f, c),
       featureBase_ (x.featureBase_, f, this),
       shapeMap_ (x.shapeMap_, f, this),
-      symChamfers_ (x.symChamfers_, f, this)
+      cue_ (x.cue_, f, this)
     {
     }
 
@@ -788,7 +738,7 @@ namespace prj
     : ::xml_schema::Type (e, f | ::xml_schema::Flags::base, c),
       featureBase_ (this),
       shapeMap_ (this),
-      symChamfers_ (this)
+      cue_ (this)
     {
       if ((f & ::xml_schema::Flags::base) == 0)
       {
@@ -835,16 +785,16 @@ namespace prj
           }
         }
 
-        // symChamfers
+        // cue
         //
-        if (n.name () == "symChamfers" && n.namespace_ ().empty ())
+        if (n.name () == "cue" && n.namespace_ ().empty ())
         {
-          ::std::unique_ptr< SymChamfersType > r (
-            SymChamfersTraits::create (i, f, this));
+          ::std::unique_ptr< CueType > r (
+            CueTraits::create (i, f, this));
 
-          if (!symChamfers_.present ())
+          if (!cue_.present ())
           {
-            this->symChamfers_.set (::std::move (r));
+            this->cue_.set (::std::move (r));
             continue;
           }
         }
@@ -866,10 +816,10 @@ namespace prj
           "");
       }
 
-      if (!symChamfers_.present ())
+      if (!cue_.present ())
       {
         throw ::xsd::cxx::tree::expected_element< char > (
-          "symChamfers",
+          "cue",
           "");
       }
     }
@@ -889,7 +839,7 @@ namespace prj
         static_cast< ::xml_schema::Type& > (*this) = x;
         this->featureBase_ = x.featureBase_;
         this->shapeMap_ = x.shapeMap_;
-        this->symChamfers_ = x.symChamfers_;
+        this->cue_ = x.cue_;
       }
 
       return *this;
@@ -1187,106 +1137,115 @@ namespace prj
   namespace srl
   {
     void
-    operator<< (::xercesc::DOMElement& e, const ChamferPick& i)
+    operator<< (::xercesc::DOMElement& e, const Entry& i)
     {
       e << static_cast< const ::xml_schema::Type& > (i);
 
-      // edgePick
+      // style
       //
       {
         ::xercesc::DOMElement& s (
           ::xsd::cxx::xml::dom::create_element (
-            "edgePick",
+            "style",
             e));
 
-        s << i.edgePick ();
+        s << i.style ();
       }
 
-      // facePick
+      // parameter1
       //
       {
         ::xercesc::DOMElement& s (
           ::xsd::cxx::xml::dom::create_element (
-            "facePick",
+            "parameter1",
             e));
 
-        s << i.facePick ();
+        s << i.parameter1 ();
+      }
+
+      // parameter2
+      //
+      if (i.parameter2 ())
+      {
+        ::xercesc::DOMElement& s (
+          ::xsd::cxx::xml::dom::create_element (
+            "parameter2",
+            e));
+
+        s << *i.parameter2 ();
+      }
+
+      // label1
+      //
+      {
+        ::xercesc::DOMElement& s (
+          ::xsd::cxx::xml::dom::create_element (
+            "label1",
+            e));
+
+        s << i.label1 ();
+      }
+
+      // label2
+      //
+      if (i.label2 ())
+      {
+        ::xercesc::DOMElement& s (
+          ::xsd::cxx::xml::dom::create_element (
+            "label2",
+            e));
+
+        s << *i.label2 ();
+      }
+
+      // edgePicks
+      //
+      {
+        ::xercesc::DOMElement& s (
+          ::xsd::cxx::xml::dom::create_element (
+            "edgePicks",
+            e));
+
+        s << i.edgePicks ();
+      }
+
+      // facePicks
+      //
+      {
+        ::xercesc::DOMElement& s (
+          ::xsd::cxx::xml::dom::create_element (
+            "facePicks",
+            e));
+
+        s << i.facePicks ();
       }
     }
 
     void
-    operator<< (::xercesc::DOMElement& e, const ChamferPicks& i)
+    operator<< (::xercesc::DOMElement& e, const Cue& i)
     {
       e << static_cast< const ::xml_schema::Type& > (i);
 
-      // array
+      // mode
       //
-      for (ChamferPicks::ArrayConstIterator
-           b (i.array ().begin ()), n (i.array ().end ());
+      {
+        ::xercesc::DOMElement& s (
+          ::xsd::cxx::xml::dom::create_element (
+            "mode",
+            e));
+
+        s << i.mode ();
+      }
+
+      // entries
+      //
+      for (Cue::EntriesConstIterator
+           b (i.entries ().begin ()), n (i.entries ().end ());
            b != n; ++b)
       {
         ::xercesc::DOMElement& s (
           ::xsd::cxx::xml::dom::create_element (
-            "array",
-            e));
-
-        s << *b;
-      }
-    }
-
-    void
-    operator<< (::xercesc::DOMElement& e, const SymChamfer& i)
-    {
-      e << static_cast< const ::xml_schema::Type& > (i);
-
-      // chamferPicks
-      //
-      {
-        ::xercesc::DOMElement& s (
-          ::xsd::cxx::xml::dom::create_element (
-            "chamferPicks",
-            e));
-
-        s << i.chamferPicks ();
-      }
-
-      // distance
-      //
-      {
-        ::xercesc::DOMElement& s (
-          ::xsd::cxx::xml::dom::create_element (
-            "distance",
-            e));
-
-        s << i.distance ();
-      }
-
-      // plabel
-      //
-      {
-        ::xercesc::DOMElement& s (
-          ::xsd::cxx::xml::dom::create_element (
-            "plabel",
-            e));
-
-        s << i.plabel ();
-      }
-    }
-
-    void
-    operator<< (::xercesc::DOMElement& e, const SymChamfers& i)
-    {
-      e << static_cast< const ::xml_schema::Type& > (i);
-
-      // array
-      //
-      for (SymChamfers::ArrayConstIterator
-           b (i.array ().begin ()), n (i.array ().end ());
-           b != n; ++b)
-      {
-        ::xercesc::DOMElement& s (
-          ::xsd::cxx::xml::dom::create_element (
-            "array",
+            "entries",
             e));
 
         s << *b;
@@ -1320,15 +1279,15 @@ namespace prj
         s << i.shapeMap ();
       }
 
-      // symChamfers
+      // cue
       //
       {
         ::xercesc::DOMElement& s (
           ::xsd::cxx::xml::dom::create_element (
-            "symChamfers",
+            "cue",
             e));
 
-        s << i.symChamfers ();
+        s << i.cue ();
       }
     }
 

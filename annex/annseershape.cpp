@@ -1001,6 +1001,27 @@ occt::FaceVector SeerShape::useWalkTangentFaces(const TopoDS_Face &fIn, double a
   return occt::walkTangentFaces(getRootOCCTShape(), fIn, angle);
 }
 
+std::vector<BID::uuid> SeerShape::useWalkTangentEdges(const BID::uuid &eId) const
+{
+  std::vector<BID::uuid> out;
+  if (!hasId(eId))
+    return out;
+  const TopoDS_Shape &es = getOCCTShape(eId);
+  if (es.ShapeType() != TopAbs_EDGE)
+    return out;
+  occt::EdgeVector edges = occt::walkTangentEdges(getRootOCCTShape(), TopoDS::Edge(es));
+  for (const auto &e : edges)
+    out.push_back(findId(e));
+  return out;
+}
+
+occt::EdgeVector SeerShape::useWalkTangentEdges(const TopoDS_Edge &eIn) const
+{
+  if (!hasShape(eIn) || eIn.ShapeType() != TopAbs_EDGE)
+    return occt::EdgeVector();
+  return occt::walkTangentEdges(getRootOCCTShape(), eIn);
+}
+
 void SeerShape::shapeMatch(const SeerShape &source)
 {
   typedef ShapeIdContainer::index<ShapeIdRecord::ByShape>::type List;

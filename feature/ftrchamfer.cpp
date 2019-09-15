@@ -50,21 +50,125 @@ using boost::uuids::uuid;
 
 QIcon Chamfer::icon;
 
-boost::uuids::uuid Chamfer::referenceFaceId(const ann::SeerShape &seerShapeIn, const boost::uuids::uuid &edgeIdIn)
+Chamfer::Cue::Entry::Entry(const Chamfer::Cue::Entry &other, bool)
 {
-  assert(seerShapeIn.hasId(edgeIdIn));
-  TopoDS_Shape edgeShape = seerShapeIn.findShape(edgeIdIn);
-  assert(edgeShape.ShapeType() == TopAbs_EDGE);
-  
-  std::vector<boost::uuids::uuid> faceIds = seerShapeIn.useGetParentsOfType(edgeIdIn, TopAbs_FACE);
-  assert(!faceIds.empty());
-  return faceIds.front();
+  style = other.style;
+  if (other.parameter1)
+  {
+    parameter1 = std::make_shared<prm::Parameter>(*other.parameter1);
+    label1 = new lbr::PLabel(parameter1.get());
+    label1->showName = true;
+    label1->valueHasChanged();
+    label1->constantHasChanged();
+  }
+  if (other.parameter2)
+  {
+    parameter2 = std::make_shared<prm::Parameter>(*other.parameter2);
+    label2 = new lbr::PLabel(parameter2.get());
+    label2->showName = true;
+    label2->valueHasChanged();
+    label2->constantHasChanged();
+  }
+  edgePicks = other.edgePicks;
+  facePicks = other.facePicks;
 }
 
-std::shared_ptr< prm::Parameter > Chamfer::buildSymParameter()
+Chamfer::Cue::Entry::Entry(const prj::srl::Entry &eIn) : Entry()
 {
-  std::shared_ptr<prm::Parameter> out(new prm::Parameter(prm::Names::Distance, prf::manager().rootPtr->features().chamfer().get().distance()));
-  out->setConstraint(prm::Constraint::buildNonZeroPositive());
+  serialIn(eIn);
+}
+
+prj::srl::Entry Chamfer::Cue::Entry::serialOut() const
+{
+  prj::srl::Entry out
+  (
+    static_cast<int>(style)
+    , parameter1->serialOut()
+    , label1->serialOut()
+    , ::ftr::serialOut(edgePicks)
+    , ::ftr::serialOut(facePicks)
+  );
+  
+  if (parameter2)
+    out.parameter2() = parameter2->serialOut();
+  if (label2)
+    out.label2() = label2->serialOut();
+  
+  return out;
+}
+
+void Chamfer::Cue::Entry::serialIn(const prj::srl::Entry &eIn)
+{
+  style = static_cast<Style>(eIn.style());
+  parameter1 = std::make_shared<prm::Parameter>(eIn.parameter1());
+  label1 = new lbr::PLabel(parameter1.get());
+  label1->serialIn(eIn.label1());
+  label1->showName = true;
+  label1->valueHasChanged();
+  label1->constantHasChanged();
+  edgePicks = ::ftr::serialIn(eIn.edgePicks());
+  facePicks = ::ftr::serialIn(eIn.facePicks());
+  
+  if (eIn.parameter2().present())
+    parameter2 = std::make_shared<prm::Parameter>(eIn.parameter2().get());
+  if (eIn.label2().present() && parameter2)
+  {
+    label2 = new lbr::PLabel(parameter2.get());
+    label2->serialIn(eIn.label2().get());
+    label2->showName = true;
+    label2->valueHasChanged();
+    label2->constantHasChanged();
+  }
+}
+
+Chamfer::Cue::Entry Chamfer::Cue::Entry::buildDefaultSymmetric()
+{
+  Chamfer::Cue::Entry out;
+  out.style = Style::Symmetric;
+  out.parameter1 = std::make_shared<prm::Parameter>(prm::Names::Distance, prf::manager().rootPtr->features().chamfer().get().distance());
+  out.parameter1->setConstraint(prm::Constraint::buildNonZeroPositive());
+  out.label1 = new lbr::PLabel(out.parameter1.get());
+  out.label1->showName = true;
+  out.label1->valueHasChanged();
+  out.label1->constantHasChanged();
+  return out;
+}
+
+Chamfer::Cue::Entry Chamfer::Cue::Entry::buildDefaultTwoDistances()
+{
+  Chamfer::Cue::Entry out;
+  out.style = Style::TwoDistances;
+  out.parameter1 = std::make_shared<prm::Parameter>(prm::Names::Distance, prf::manager().rootPtr->features().chamfer().get().distance());
+  out.parameter1->setConstraint(prm::Constraint::buildNonZeroPositive());
+  out.label1 = new lbr::PLabel(out.parameter1.get());
+  out.label1->showName = true;
+  out.label1->valueHasChanged();
+  out.label1->constantHasChanged();
+  out.parameter2 = std::make_shared<prm::Parameter>(prm::Names::Distance, prf::manager().rootPtr->features().chamfer().get().distance());
+  out.parameter2->setConstraint(prm::Constraint::buildNonZeroPositive());
+  out.label2 = new lbr::PLabel(out.parameter2.get());
+  out.label2->showName = true;
+  out.label2->valueHasChanged();
+  out.label2->constantHasChanged();
+  return out;
+}
+
+Chamfer::Cue::Entry Chamfer::Cue::Entry::buildDefaultDistanceAngle()
+{
+  Chamfer::Cue::Entry out;
+  out.style = Style::DistanceAngle;
+  out.parameter1 = std::make_shared<prm::Parameter>(prm::Names::Distance, prf::manager().rootPtr->features().chamfer().get().distance());
+  out.parameter1->setConstraint(prm::Constraint::buildNonZeroPositive());
+  out.label1 = new lbr::PLabel(out.parameter1.get());
+  out.label1->showName = true;
+  out.label1->valueHasChanged();
+  out.label1->constantHasChanged();
+  out.parameter2 = std::make_shared<prm::Parameter>(prm::Names::Angle, 30.0); //todo add angle to preferences.
+  out.parameter2->setConstraint(prm::Constraint::buildNonZeroPositiveAngle());
+  out.label2 = new lbr::PLabel(out.parameter2.get());
+  out.label2->showName = true;
+  out.label2->valueHasChanged();
+  out.label2->constantHasChanged();
   return out;
 }
 
@@ -81,22 +185,41 @@ Chamfer::Chamfer() : Base(), sShape(new ann::SeerShape())
 
 Chamfer::~Chamfer(){}
 
-void Chamfer::addSymChamfer(const SymChamfer &chamferIn)
+void Chamfer::setCue(const Cue &cIn, bool dirty)
 {
-  symChamfers.push_back(chamferIn);
-  
-  if (!symChamfers.back().distance)
-    symChamfers.back().distance = buildSymParameter();
-  symChamfers.back().distance->connectValue(std::bind(&Chamfer::setModelDirty, this));
-  
-  if (!symChamfers.back().label)
+  for (const auto &e : cue.entries)
   {
-    symChamfers.back().label = new lbr::PLabel(symChamfers.back().distance.get());
-    symChamfers.back().label->showName = true;
+    if (e.parameter1)
+      removeParameter(e.parameter1.get());
+    if (e.parameter2)
+      removeParameter(e.parameter2.get());
+    if (e.label1)
+      overlaySwitch->removeChild(e.label1.get());
+    if (e.label2)
+      overlaySwitch->removeChild(e.label2.get());
   }
-  symChamfers.back().label->valueHasChanged();
-  symChamfers.back().label->constantHasChanged();
-  overlaySwitch->addChild(symChamfers.back().label.get());
+  
+  //we assume here the entry structure has been set accordingly to chamfer style and mode
+  auto setupParameter = [&](prm::Parameter *p)
+  {
+    p->connectValue(std::bind(&Chamfer::setModelDirty, this));
+    parameters.push_back(p);
+  };
+  cue = cIn;
+  for (const auto &e : cue.entries)
+  {
+    if (e.parameter1)
+      setupParameter(e.parameter1.get());
+    if (e.parameter2)
+      setupParameter(e.parameter2.get());
+    if (e.label1)
+      overlaySwitch->addChild(e.label1.get());
+    if (e.label2)
+      overlaySwitch->addChild(e.label2.get());
+  }
+  
+  if (dirty)
+    setModelDirty();
 }
 
 void Chamfer::updateModel(const UpdatePayload &payloadIn)
@@ -131,49 +254,110 @@ void Chamfer::updateModel(const UpdatePayload &payloadIn)
       throw std::runtime_error("feature is skipped");
     }
     
-    //note occt above 7.3 no longer needs face for symmetric chamfer. Need to update
+    auto pairing = [&](const std::vector<uuid> &edges, const std::vector<uuid> &faces) -> std::vector<std::pair<uuid, uuid>>
+    {
+      std::vector<std::pair<uuid, uuid>> out;
+      for (const auto &e : edges)
+      {
+        for (const auto &f : faces)
+        {
+          if (targetSeerShape.useIsEdgeOfFace(e, f))
+          {
+            out.push_back(std::make_pair(e, f));
+          }
+        }
+      }
+      return out;
+    };
+    
     tls::Resolver resolver(payloadIn);
     BRepFilletAPI_MakeChamfer chamferMaker(targetSeerShape.getRootOCCTShape());
-    for (const auto &chamfer : symChamfers)
+    
+    chamferMaker.SetMode(static_cast<ChFiDS_ChamfMode>(cue.mode));
+    for (const auto &e : cue.entries)
     {
-      assert(chamfer.distance);
-      bool labelDone = false; //set label position to first pick.
-      for (const auto &pick : chamfer.picks)
+      if (cue.mode == Mode::Throat && e.style != Style::Symmetric)
+        throw std::runtime_error("Throat mode only uses symmetric style");
+      if (cue.mode == Mode::ThroatPenetration && e.style != Style::TwoDistances)
+        throw std::runtime_error("Throat penetration mode only uses 2 distances style");
+      //classic mode can use any style
+      
+      if (e.style == Style::Symmetric)
       {
-        resolver.resolve(pick.edgePick);
-        std::vector<uuid> edgeIds = resolver.getResolvedIds();
-        
-        resolver.resolve(pick.facePick);
-        std::vector<uuid> faceIds = resolver.getResolvedIds();
-        
-        for (const auto &eid : edgeIds)
+        bool labelDone = false;
+        for (const auto &ep : e.edgePicks)
         {
-          uuid faceId = gu::createNilId();
-          std::vector<uuid> parentFaces = targetSeerShape.useGetParentsOfType(eid, TopAbs_FACE);
-          if (parentFaces.empty())
-            throw std::runtime_error("no parent faces of edge");
-          std::vector<uuid> intersectionSet;
-          std::set_intersection(faceIds.begin(), faceIds.end(), parentFaces.begin(), parentFaces.end(), std::back_inserter(intersectionSet));
-          if (intersectionSet.empty())
-            faceId = parentFaces.front();
-          else
-            faceId = intersectionSet.front();
-          if (intersectionSet.size() > 1)
-            std::cerr << "WARNING: more than 1 reference face in Chamfer::updateModel" << std::endl;
-          
-          assert(targetSeerShape.hasId(eid));
-          assert(targetSeerShape.hasId(faceId));
-          
-          updateShapeMap(eid, pick.edgePick.shapeHistory);
-          updateShapeMap(faceId, pick.facePick.shapeHistory);
-          TopoDS_Edge edge = TopoDS::Edge(targetSeerShape.findShape(eid));
-          TopoDS_Face face = TopoDS::Face(targetSeerShape.findShape(faceId));
-          chamferMaker.Add(static_cast<double>(*(chamfer.distance)), edge/*, face*/);
-          //update location of parameter label.
-          if (!labelDone)
+          if (!resolver.resolve(ep))
+            continue;
+          for (const auto &s : resolver.getShapes())
           {
-            labelDone = true;
-            chamfer.label->setMatrix(osg::Matrixd::translate(pick.edgePick.getPoint(TopoDS::Edge(edge))));
+            if (s.ShapeType() != TopAbs_EDGE)
+            {
+              std::ostringstream s; s << "Warning: Skipping non edge shape." << std::endl;
+              lastUpdateLog += s.str();
+              continue;
+            }
+            chamferMaker.Add(static_cast<double>(*e.parameter1), TopoDS::Edge(s));
+            if (!labelDone)
+            {
+              labelDone = true;
+              e.label1->setMatrix(osg::Matrixd::translate(ep.getPoint(TopoDS::Edge(s))));
+            }
+          }
+        }
+      }
+      else if (e.style == Style::TwoDistances || e.style == Style::DistanceAngle)
+      {
+        if (e.edgePicks.size() != e.facePicks.size())
+          throw std::runtime_error("need same number edges and faces for two distance chamfer");
+        bool labelDone1 = false;
+        bool labelDone2 = false;
+        for (std::size_t index = 0; index < e.edgePicks.size(); ++index)
+        {
+          //we have to resolve multiple edges and faces
+          if (!resolver.resolve(e.edgePicks.at(index)))
+            continue;
+          std::vector<uuid> edgeIds = resolver.getResolvedIds();
+          
+          if (!resolver.resolve(e.facePicks.at(index)))
+            continue;
+          std::vector<uuid> faceIds = resolver.getResolvedIds();
+          
+          std::vector<std::pair<uuid, uuid>> pairs = pairing(edgeIds, faceIds);
+          for (const auto &p : pairs)
+          {
+            const TopoDS_Edge &edge = TopoDS::Edge(targetSeerShape.getOCCTShape(p.first));
+            const TopoDS_Face &face = TopoDS::Face(targetSeerShape.getOCCTShape(p.second));
+            if (e.style == Style::TwoDistances)
+            {
+              chamferMaker.Add
+              (
+                static_cast<double>(*e.parameter1)
+                , static_cast<double>(*e.parameter2)
+                , edge
+                , face
+              );
+            }
+            else if (e.style == Style::DistanceAngle)
+            {
+              chamferMaker.AddDA
+              (
+                static_cast<double>(*e.parameter1)
+                , osg::DegreesToRadians(static_cast<double>(*e.parameter2))
+                , edge
+                , face
+              );
+            }
+            if (!labelDone1)
+            {
+              labelDone1 = true;
+              e.label1->setMatrix(osg::Matrixd::translate(e.facePicks.at(index).getPoint(face)));
+            }
+            if (!labelDone2)
+            {
+              labelDone2 = true;
+              e.label2->setMatrix(osg::Matrixd::translate(e.edgePicks.at(index).getPoint(edge)));
+            }
           }
         }
       }
@@ -287,33 +471,15 @@ void Chamfer::serialWrite(const boost::filesystem::path &dIn)
     shapeMapOut.evolveRecord().push_back(eRecord);
   }
   
-  prj::srl::SymChamfers sSymChamfersOut;
-  for (const auto &sSymChamfer : symChamfers)
-  {
-    prj::srl::ChamferPicks cPicksOut;
-    for (const auto &cPick : sSymChamfer.picks)
-    {
-      prj::srl::ChamferPick cPickOut
-      (
-        cPick.edgePick.serialOut(),
-        cPick.facePick.serialOut()
-      );
-      cPicksOut.array().push_back(cPickOut);
-    }
-    prj::srl::SymChamfer sChamferOut
-    (
-      cPicksOut,
-      sSymChamfer.distance->serialOut(),
-      sSymChamfer.label->serialOut()
-    );
-    sSymChamfersOut.array().push_back(sChamferOut);
-  }
+  prj::srl::Cue cueOut(static_cast<int>(cue.mode));
+  for (const auto &e : cue.entries)
+    cueOut.entries().push_back(e.serialOut());
   
   prj::srl::FeatureChamfer chamferOut
   (
     Base::serialOut(),
     shapeMapOut,
-    sSymChamfersOut
+    cueOut
   );
   
   xml_schema::NamespaceInfomap infoMap;
@@ -334,21 +500,9 @@ void Chamfer::serialRead(const prj::srl::FeatureChamfer &sChamferIn)
     shapeMap.insert(record);
   }
   
-  for (const auto &symChamferIn : sChamferIn.symChamfers().array())
-  {
-    SymChamfer symChamfer;
-    for (const auto &cPickIn : symChamferIn.chamferPicks().array())
-    {
-      ChamferPick pick;
-      pick.edgePick.serialIn(cPickIn.edgePick());
-      pick.facePick.serialIn(cPickIn.facePick());
-      symChamfer.picks.push_back(pick);
-    }
-    symChamfer.distance = buildSymParameter();
-    symChamfer.distance->serialIn(symChamferIn.distance());
-    symChamfer.label = new lbr::PLabel(symChamfer.distance.get());
-    symChamfer.label->showName = true;
-    symChamfer.label->serialIn(symChamferIn.plabel());
-    addSymChamfer(symChamfer);
-  }
+  Cue cueIn;
+  cueIn.mode = static_cast<Mode>(sChamferIn.cue().mode());
+  for (const auto &e : sChamferIn.cue().entries())
+    cueIn.entries.emplace_back(e);
+  setCue(cueIn, false);
 }

@@ -1,6 +1,6 @@
 /*
  * CadSeer. Parametric Solid Modeling.
- * Copyright (C) %YEAR% Thomas S. Anderson blobfish.at.gmx.com
+ * Copyright (C) 2019 Thomas S. Anderson blobfish.at.gmx.com
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,51 +17,51 @@
  *
  */
 
-#ifndef CMD_%CLASSNAMEUPPERCASE%_H
-#define CMD_%CLASSNAMEUPPERCASE%_H
+#ifndef CMD_CHAMFER_H
+#define CMD_CHAMFER_H
 
 #include "command/cmdbase.h"
 
-namespace dlg{class %CLASSNAME%;}
-namespace ftr{class %CLASSNAME%;}
+namespace dlg{class Chamfer;}
+namespace ftr{class Chamfer;}
 
 namespace cmd
 {
   /**
   * @todo write docs
   */
-  class %CLASSNAME% : public Base
+  class Chamfer : public Base
   {
   public:
-    %CLASSNAME%();
-    ~%CLASSNAME%() override;
+    Chamfer();
+    ~Chamfer() override;
     
-    std::string getCommandName() override{return "%CLASSNAME%";}
+    std::string getCommandName() override{return "Chamfer";}
     std::string getStatusMessage() override;
     void activate() override;
     void deactivate() override;
   private:
     void go();
     bool firstRun = true;
-    dlg::%CLASSNAME% *dialog = nullptr;
+    dlg::Chamfer *dialog = nullptr;
   };
   
   /**
   * @todo write docs
   */
-  class %CLASSNAME%Edit : public Base
+  class ChamferEdit : public Base
   {
   public:
-    %CLASSNAME%Edit(ftr::Base*);
-    ~%CLASSNAME%Edit() override;
+    ChamferEdit(ftr::Base*);
+    ~ChamferEdit() override;
     
-    std::string getCommandName() override{return "%CLASSNAME% Edit";}
+    std::string getCommandName() override{return "Chamfer Edit";}
     std::string getStatusMessage() override;
     void activate() override;
     void deactivate() override;
   private:
-    dlg::%CLASSNAME% *dialog = nullptr;
-    ftr::%CLASSNAME% *feature = nullptr;
+    dlg::Chamfer *dialog = nullptr;
+    ftr::Chamfer *feature = nullptr;
   };
 }
-#endif // CMD_%CLASSNAMEUPPERCASE%_H
+#endif // CMD_CHAMFER_H

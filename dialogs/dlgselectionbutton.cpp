@@ -90,15 +90,32 @@ void SelectionButton::selectionAdditionDispatched(const msg::Message &mIn)
   if (!isVisible() || !isChecked())
     return;
   
+  slc::Message message = mIn.getSLC();
+  message.accrue = accrueDefault;
+  
   if (isSingleSelection)
   {
     QTimer::singleShot(0, this, SIGNAL(advance()));
     messages.clear();
+    messages.push_back(message);
     node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
-    node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Add, mIn.getSLC()));
+    node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Add, message));
+  }
+  else
+  {
+    messages.push_back(message);
+    if (mIn.getSLC().accrue != message.accrue)
+    {
+      //we have changed the accrue so we have to re-sync the selection.
+      node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+      for (const auto &m : messages)
+      {
+        msg::Message mm(msg::Request | msg::Selection | msg::Add, m);
+        node->sendBlocked(mm);
+      }
+    }
   }
   
-  messages.push_back(mIn.getSLC());
   dirty();
 }
 

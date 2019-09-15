@@ -38,6 +38,7 @@
 #include <BRep_Tool.hxx>
 #include <BRepBuilderAPI_Copy.hxx>
 #include <BRepBuilderAPI_MakeFace.hxx>
+#include <BRepFilletAPI_MakeFillet.hxx>
 #include <BRepAdaptor_Surface.hxx>
 #include <BRepAdaptor_Curve.hxx>
 #include <BRepExtrema_ExtPF.hxx>
@@ -422,6 +423,21 @@ FaceVector occt::walkTangentFaces(const TopoDS_Shape& parentIn, const TopoDS_Fac
   
   //temp for now.
   return visitor.getResults();
+}
+
+EdgeVector occt::walkTangentEdges(const TopoDS_Shape& parentIn, const TopoDS_Edge &edgeIn)
+{
+  EdgeVector out;
+  BRepFilletAPI_MakeFillet fm(parentIn);
+  fm.Add(edgeIn);
+  for (int i = 1; i <= fm.NbContours(); ++i)
+  {
+    for (int j = 1; j <= fm.NbEdges(i); ++j)
+    {
+      out.push_back(fm.Edge(i, j));
+    }
+  }
+  return out;
 }
 
 TopoDS_Shape occt::getFirstNonCompound(const TopoDS_Shape &shapeIn)

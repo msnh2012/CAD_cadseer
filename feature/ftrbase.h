@@ -162,6 +162,7 @@ protected:
   void setFailure(); //!< set only through virtual update.
   void setSuccess(); //!< set only through virtual update.
   void sendStateMessage(std::size_t); //!< just convenience.
+  void removeParameter(prm::Parameter*); //!< remove parameter from the parameters array.
   
   prj::srl::FeatureBase serialOut(); //!<convert this into serializable object. no const, we update the result container with offset
   void serialIn(const prj::srl::FeatureBase& sBaseIn);

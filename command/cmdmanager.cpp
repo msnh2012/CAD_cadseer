@@ -72,6 +72,7 @@
 #include "command/cmdsweep.h"
 #include "command/cmdocctexport.h"
 #include "command/cmddraft.h"
+#include "command/cmdchamfer.h"
 #include "message/msgnode.h"
 #include "message/msgsift.h"
 #include "selection/slcmessage.h"
@@ -366,6 +367,11 @@ void Manager::setupDispatcher()
       (
         msg::Request | msg::Construct | msg::Draft
       , std::bind(&Manager::constructDraftDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Construct | msg::Chamfer
+      , std::bind(&Manager::constructChamferDispatched, this, std::placeholders::_1)
       )
       , std::make_pair
       (
@@ -700,6 +706,11 @@ void Manager::constructDraftDispatched(const msg::Message&)
   addCommand(std::make_shared<Draft>());
 }
 
+void Manager::constructChamferDispatched(const msg::Message&)
+{
+  addCommand(std::make_shared<Chamfer>());
+}
+
 void Manager::occtExportDispatched(const msg::Message&)
 {
   addCommand(std::make_shared<OCCTExport>());
@@ -787,6 +798,11 @@ BasePtr editExtract(ftr::Base *feature)
   return std::make_shared<ExtractEdit>(feature);
 }
 
+BasePtr editChamfer(ftr::Base *feature)
+{
+  return std::make_shared<ChamferEdit>(feature);
+}
+
 void Manager::setupEditFunctionMap()
 {
   editFunctionMap.insert(std::make_pair(ftr::Type::Blend, std::bind(editBlend, std::placeholders::_1)));
@@ -799,4 +815,5 @@ void Manager::setupEditFunctionMap()
   editFunctionMap.insert(std::make_pair(ftr::Type::Sweep, std::bind(editSweep, std::placeholders::_1)));
   editFunctionMap.insert(std::make_pair(ftr::Type::Draft, std::bind(editDraft, std::placeholders::_1)));
   editFunctionMap.insert(std::make_pair(ftr::Type::Extract, std::bind(editExtract, std::placeholders::_1)));
+  editFunctionMap.insert(std::make_pair(ftr::Type::Chamfer, std::bind(editChamfer, std::placeholders::_1)));
 }

@@ -644,8 +644,10 @@ Container EventHandler::messageToContainer(const Message &messageIn)
     }
     else if (messageIn.type == slc::Type::Edge)
     {
-      //TODO add tangent accrue for edges
-      container.selectionIds.push_back(container.shapeId);
+      if (container.accrue == Accrue::Tangent)
+        container.selectionIds = seerShape.useWalkTangentEdges(container.shapeId);
+      else
+        container.selectionIds.push_back(container.shapeId);
     }
     else if (messageIn.type == slc::Type::Wire)
     {

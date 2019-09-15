@@ -27,27 +27,66 @@
 #include "feature/ftrbase.h"
 
 class BRepFilletAPI_MakeChamfer;
-namespace prj{namespace srl{class FeatureChamfer;}}
+namespace prj{namespace srl{class FeatureChamfer; class Entry;}}
 namespace ann{class SeerShape;}
 
 namespace ftr
 {
-  struct ChamferPick
-  {
-    Pick edgePick; //!< id of picked edge or maybe face?
-    Pick facePick; //!< reference face. set with referenceFaceId.
-  };
-  
-  struct SymChamfer
-  {
-    std::vector<ChamferPick> picks;
-    std::shared_ptr<prm::Parameter> distance; //!< parameter containing distance.
-    osg::ref_ptr<lbr::PLabel> label; //!< graphic icon
-  };
-
   class Chamfer : public Base
   {
   public:
+    constexpr static const char *edge = "edge";
+    constexpr static const char *face = "face";
+    enum class Style
+    {
+      Symmetric = 0
+      , TwoDistances
+      , DistanceAngle
+    };
+    
+    enum class Mode
+    {
+      Classic = 0
+      , Throat
+      , ThroatPenetration
+    };
+    
+    struct Cue
+    {
+      /* symmetric uses only 1 parameter and 1 label and edgePicks.
+       * TwoDistances and DistanceAngle: edgePicks.size() == facePicks.size()
+       */
+      struct Entry
+      {
+        Style style = Style::Symmetric;
+        std::shared_ptr<prm::Parameter> parameter1;
+        std::shared_ptr<prm::Parameter> parameter2;
+        osg::ref_ptr<lbr::PLabel> label1;
+        osg::ref_ptr<lbr::PLabel> label2;
+        Picks edgePicks;
+        Picks facePicks;
+        
+        Entry() = default;
+        Entry(const Entry&) = default;
+        Entry(const Entry&, bool); //makes new parameters with same ids.
+        Entry(const prj::srl::Entry&);
+        
+        prj::srl::Entry serialOut() const;
+        void serialIn(const prj::srl::Entry&);
+        
+        static Entry buildDefaultSymmetric();
+        static Entry buildDefaultTwoDistances();
+        static Entry buildDefaultDistanceAngle();
+      };
+      
+      /* Mode::Classic can have: Style::Symmetric, Style::TwoDistances, Style::DistanceAngle
+       * Mode::Throat can only have: Style::Symmetric
+       * Mode::ThroatPenetration can only have: Style::TwoDistances 
+       */
+      Mode mode = Mode::Classic;
+      std::vector<Entry> entries;
+    };
+    
     Chamfer();
     virtual ~Chamfer() override;
     virtual void updateModel(const UpdatePayload&) override;
@@ -58,18 +97,16 @@ namespace ftr
     virtual void serialWrite(const boost::filesystem::path&) override;
     void serialRead(const prj::srl::FeatureChamfer &);
     
-    static std::shared_ptr<prm::Parameter> buildSymParameter();
-    static boost::uuids::uuid referenceFaceId(const ann::SeerShape&, const boost::uuids::uuid&);
-    
-    void addSymChamfer(const SymChamfer &);
+    void setCue(const Cue&, bool = true); //boolean to set model dirty
+    const Cue& getCue(){return cue;};
   private:
     void generatedMatch(BRepFilletAPI_MakeChamfer&, const ann::SeerShape &);
     
     /*! now that we are 'resolving' picks we need to update the shapemap to ensure
-     * consistant id output of generated faces. duplicate function in blend.
+     * consistent id output of generated faces. duplicate function in blend.
      */
     void updateShapeMap(const boost::uuids::uuid&, const ShapeHistory &);
-    std::vector<SymChamfer> symChamfers;
+    Cue cue;
     std::map<boost::uuids::uuid, boost::uuids::uuid> shapeMap; //!< map edges or vertices to faces
     std::unique_ptr<ann::SeerShape> sShape;
     

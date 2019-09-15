@@ -131,6 +131,8 @@ namespace ann
     occt::ShapeVector useGetNonCompoundChildren() const;
     std::vector<BID::uuid> useWalkTangentFaces(const BID::uuid&, double = 0.0) const;
     occt::FaceVector useWalkTangentFaces(const TopoDS_Face&, double = 0.0) const;
+    std::vector<BID::uuid> useWalkTangentEdges(const BID::uuid&) const;
+    occt::EdgeVector useWalkTangentEdges(const TopoDS_Edge&) const;
     //@}
     
     //@{

@@ -17,51 +17,39 @@
  *
  */
 
-#ifndef CMD_%CLASSNAMEUPPERCASE%_H
-#define CMD_%CLASSNAMEUPPERCASE%_H
+#ifndef DLG_%CLASSNAMEUPPERCASE%_H
+#define DLG_%CLASSNAMEUPPERCASE%_H
 
-#include "command/cmdbase.h"
+#include <memory>
 
-namespace dlg{class %CLASSNAME%;}
+#include "dialogs/dlgbase.h"
+
 namespace ftr{class %CLASSNAME%;}
+namespace msg{struct Node;}
 
-namespace cmd
+namespace dlg
 {
   /**
   * @todo write docs
   */
   class %CLASSNAME% : public Base
   {
+    Q_OBJECT
   public:
-    %CLASSNAME%();
+    %CLASSNAME%(ftr::%CLASSNAME%*, QWidget*, bool = false);
     ~%CLASSNAME%() override;
-    
-    std::string getCommandName() override{return "%CLASSNAME%";}
-    std::string getStatusMessage() override;
-    void activate() override;
-    void deactivate() override;
+  public Q_SLOTS:
+    void reject() override;
+    void accept() override;
   private:
-    void go();
-    bool firstRun = true;
-    dlg::%CLASSNAME% *dialog = nullptr;
-  };
-  
-  /**
-  * @todo write docs
-  */
-  class %CLASSNAME%Edit : public Base
-  {
-  public:
-    %CLASSNAME%Edit(ftr::Base*);
-    ~%CLASSNAME%Edit() override;
+    struct Stow;
+    std::unique_ptr<Stow> stow;
     
-    std::string getCommandName() override{return "%CLASSNAME% Edit";}
-    std::string getStatusMessage() override;
-    void activate() override;
-    void deactivate() override;
-  private:
-    dlg::%CLASSNAME% *dialog = nullptr;
-    ftr::%CLASSNAME% *feature = nullptr;
+    void init();
+    void buildGui();
+    void loadFeatureData();
+    void finishDialog();
   };
 }
-#endif // CMD_%CLASSNAMEUPPERCASE%_H
+
+#endif // DLG_%CLASSNAMEUPPERCASE%_H

@@ -26,6 +26,7 @@
 
 #include "selection/slcmessage.h"
 #include "selection/slcdefinitions.h"
+#include "selection/slcaccrue.h"
 
 class QHideEvent;
 class QShowEvent;
@@ -50,7 +51,6 @@ namespace dlg
     SelectionButton(const QIcon&, const QString&, QWidget*);
     virtual ~SelectionButton() override;
     
-    slc::Mask mask; //!< to control selection.
     void syncToSelection();
     void highlightIndex(int) const;
     void setAccrue(int, slc::Accrue); //call highlight to update selection if needed.
@@ -61,6 +61,8 @@ namespace dlg
     void addMessage(const slc::Message&);
     void addMessages(const slc::Messages&);
     
+    slc::Mask mask; //!< to control selection.
+    slc::Accrue::Type accrueDefault = slc::Accrue::None; //!< new selections will use this.
     bool isSingleSelection = false;
     QString statusPrompt;
     

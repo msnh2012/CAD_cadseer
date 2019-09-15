@@ -115,6 +115,9 @@ namespace occt
   
   /*! @brief collect all faces inside shape that is tangent to face within degree tolerance*/
   FaceVector walkTangentFaces(const TopoDS_Shape&, const TopoDS_Face&, double t = 0.0);
+
+  /*! @brief collect all edges inside shape that is tangent to edge*/
+  EdgeVector walkTangentEdges(const TopoDS_Shape&, const TopoDS_Edge&);
   
   /*! @brief Find the first shape that isn't a compound.
    * 

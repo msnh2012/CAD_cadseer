@@ -221,7 +221,8 @@ dialog_sources = ['dialogs/dlgparameter.cpp'
   , 'dialogs/dlgparameterwidget.cpp'
   , 'dialogs/dlgdraft.cpp'
   , 'dialogs/dlgbase.cpp'
-  , 'dialogs/dlgextract.cpp']
+  , 'dialogs/dlgextract.cpp'
+  , 'dialogs/dlgchamfer.cpp']
   
 preference_sources = ['preferences/preferencesXML.cpp', 'preferences/prfmanager.cpp']
 
@@ -335,7 +336,8 @@ command_sources = ['command/cmdmanager.cpp'
   , 'command/cmdocctexport.cpp'
   , 'command/cmdsweep.cpp'
   , 'command/cmdboolean.cpp'
-  , 'command/cmddraft.cpp']
+  , 'command/cmddraft.cpp'
+  , 'command/cmdchamfer.cpp']
   
 law_sources = ['law/lwfcue.cpp']
 
@@ -446,7 +448,8 @@ cadseer_moc_hdrs = ['viewer/vwrwidget.h'
   , 'dialogs/dlgparameterwidget.h'
   , 'dialogs/dlgdraft.h'
   , 'dialogs/dlgbase.h'
-  , 'dialogs/dlgextract.h']
+  , 'dialogs/dlgextract.h'
+  , 'dialogs/dlgchamfer.h']
   
 cadseer_resources = ['resources.qrc']
 

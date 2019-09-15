@@ -84,6 +84,7 @@ void SelectionWidget::buildGui(const std::vector<SelectionWidgetCue> &cuesIn)
       ti = QIcon(pmap);
     SelectionButton *sb = new SelectionButton(ti, QString(), this);
     sb->isSingleSelection = n.singleSelection;
+    sb->accrueDefault = n.accrueDefault;
     sb->mask = n.mask;
     sb->statusPrompt = n.statusPrompt;
     gridLayout->addWidget(label, index, 0, Qt::AlignVCenter | Qt::AlignRight);
@@ -109,6 +110,8 @@ void SelectionWidget::buildGui(const std::vector<SelectionWidgetCue> &cuesIn)
     sv->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch); //has to be done after the model is set.
     sv->horizontalHeader()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
     sv->setItemDelegateForColumn(1, delegate);
+    if (!cuesIn.at(index).showAccrueColumn)
+      sv->hideColumn(1);
     stow->stackedWidget->addWidget(sv);
     stow->selectionModels.push_back(sm);
   }
