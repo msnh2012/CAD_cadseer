@@ -133,11 +133,13 @@ bool Handler::handle(const osgGA::GUIEventAdapter& eventAdapter,
     }
   }
   
-  /* hot keys are a little different than the spaceball buttons. The keyboard focus can be taken
-   * away from the gesture handler by a command launching a dialog. This results in never receiving
-   * the KEYUP message and the hot key value not reaching -1 as it should. This results in the hotkey
-   * being assigned to the command launched by the menu. To avoid this we set the hotkey to -1 right after
-   * it is used.
+  /* hot keys are a little different than the spaceball buttons. Originally we were launching the hotkey
+   * command when the right mouse button is down, but not dragged combined with the key up event. This was
+   * problematic because the keyboard and mouse focus can be taken away from osg and the gesture handler
+   * by a command launching a dialog. This results in never receiving  the 'key up' and 'right mouse button up'
+   * messages and the hot key value not reaching -1 as it should and we get drag messages as osg thinks
+   * the mouse button is still pressed. So now we are launching the command on the right mouse button up
+   * event and this seems to be working better.
    */
   if (eventAdapter.getEventType() == osgGA::GUIEventAdapter::KEYDOWN)
   {
@@ -150,27 +152,12 @@ bool Handler::handle(const osgGA::GUIEventAdapter& eventAdapter,
       stream << QObject::tr("Link to key ").toStdString() << hotKey;
       node->send(msg::buildStatusMessage(stream.str()));
     }
-    else
+    else //drag not started
     {
-      std::string maskString = prf::manager().getHotKey(hotKey);
-      if (!maskString.empty())
-      {
-        msg::Mask msgMask(maskString);
-        msg::Message messageOut;
-        messageOut.mask = msgMask;
-        app::instance()->queuedMessage(messageOut);
-        rightButtonDown = false; //don't do menu if launching a command.
-      }
-      hotKey = -1;
+      std::ostringstream stream;
+      stream << QObject::tr("Launch command linked to key ").toStdString() << hotKey;
+      node->send(msg::buildStatusMessage(stream.str()));
     }
-    return true;
-  }
-  if (eventAdapter.getEventType() == osgGA::GUIEventAdapter::KEYUP)
-  {
-    hotKey = -1;
-    if (!rightButtonDown)
-      return false;
-    node->send(msg::buildStatusMessage(""));
     return true;
   }
   
@@ -206,7 +193,6 @@ bool Handler::handle(const osgGA::GUIEventAdapter& eventAdapter,
     {
       GestureAllSwitchesOffVisitor visitor;
       gestureCamera->accept(visitor);
-
       rightButtonDown = true;
     }
 
@@ -215,7 +201,21 @@ bool Handler::handle(const osgGA::GUIEventAdapter& eventAdapter,
       clearStatus();
       rightButtonDown = false;
       if (!dragStarted)
+      {
+        if (hotKey != -1)
+        {
+          //launch command
+          std::string maskString = prf::manager().getHotKey(hotKey);
+          if (!maskString.empty())
+          {
+            msg::Mask msgMask(maskString);
+            msg::Message messageOut(msgMask);
+            app::instance()->queuedMessage(messageOut);
+          }
+          hotKey = -1;
+        }
         return false;
+      }
       dragStarted = false;
       gestureSwitch->setAllChildrenOff();
       if (currentNode && (currentNode->getNodeMask() & mdv::gestureCommand))
@@ -243,6 +243,7 @@ bool Handler::handle(const osgGA::GUIEventAdapter& eventAdapter,
         else
           assert(0); //gesture node doesn't have msgMask attribute;
       }
+      hotKey = -1;
     }
   }
 
@@ -254,6 +255,8 @@ bool Handler::handle(const osgGA::GUIEventAdapter& eventAdapter,
     {
       dragStarted = true;
       startDrag(eventAdapter);
+      hotKey = -1;
+      clearStatus();
     }
 
     osg::Matrixd transformation = osg::Matrixd::inverse
