@@ -284,6 +284,12 @@
   </xs:all>
 </xs:complexType>
 
+<xs:complexType name="Menu">
+  <xs:sequence>
+    <xs:element name="configPath" type="xs:string"/>
+  </xs:sequence>
+</xs:complexType>
+
 <xs:complexType name="Root">
   <xs:all>
     <xs:element name="visual" type="Visual"/>
@@ -293,6 +299,7 @@
     <xs:element name="project" type="Project"/>
     <xs:element name="hotKeys" type="HotKeys"/>
     <xs:element name="features" type="Features"/>
+    <xs:element name="menu" type="Menu" minOccurs="0"/>
   </xs:all>
 </xs:complexType>
 

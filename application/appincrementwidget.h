@@ -20,6 +20,9 @@
 #ifndef APP_INCREMENTWIDGET_H
 #define APP_INCREMENTWIDGET_H
 
+#include <memory>
+
+#include <QWidget>
 #include <QWidgetAction>
 
 class QLineEdit;
@@ -28,29 +31,22 @@ namespace dlg{class ExpressionEdit;}
 
 namespace app
 {
-  class IncrementWidgetAction : public QWidgetAction
+  class IncrementWidget : public QWidget
   {
     Q_OBJECT
   public:
-    IncrementWidgetAction(QObject *parent, const QString &title1In, const QString &title2In);
-    dlg::ExpressionEdit *lineEdit1;
-    dlg::ExpressionEdit *lineEdit2;
-  protected:
-    virtual QWidget* createWidget(QWidget* parent) override;
-    QString title1;
-    QString title2;
-    
+    IncrementWidget(QWidget*, const QString&, double&);
+    ~IncrementWidget();
+    void update(); //called when prefs changed externally. like through pref dialog.
   private Q_SLOTS:
-    void textEditedSlot1(const QString&);
-    void textEditedSlot2(const QString&);
-    void editingFinishedSlot1();
-    void editingFinishedSlot2();
-    void returnPressedSlot1();
-    void returnPressedSlot2();
-    
+    void textEditedSlot(const QString&);
+    void returnPressedSlot();
+    void editingFinishedSlot();
   private:
-    void textEditedCommon(const QString&, dlg::ExpressionEdit *);
-    double editingFinishedCommon(dlg::ExpressionEdit *);
+    struct Stow;
+    std::unique_ptr<Stow> stow;
+    
+    void buildGui();
   };
   
   //! a filter to select text when editlines are picked.

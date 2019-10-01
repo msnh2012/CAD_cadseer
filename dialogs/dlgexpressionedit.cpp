@@ -46,20 +46,8 @@ TrafficLabel::TrafficLabel(QWidget* parentIn) : QLabel(parentIn)
   setContextMenuPolicy(Qt::ActionsContextMenu);
   unlinkAction = new QAction(tr("unlink"), this);
   connect(unlinkAction, SIGNAL(triggered()), this, SIGNAL(requestUnlinkSignal()));
-}
-
-void TrafficLabel::resizeEvent(QResizeEvent *event)
-{
-  iconSize = event->size().height();
+  
   updatePixmaps();
-  if (current == 1)
-    setPixmap(trafficRed);
-  else if (current == 2)
-    setPixmap(trafficYellow);
-  else if (current == 3)
-    setPixmap(trafficGreen);
-  else if (current == 4)
-    setPixmap(link);
 }
 
 void TrafficLabel::updatePixmaps()
@@ -129,6 +117,8 @@ void ExpressionEdit::setupGui()
   
   trafficLabel = new TrafficLabel(this);
   trafficLabel->setMinimumSize(1, 1);
+  trafficLabel->setScaledContents(true);
+  trafficLabel->setFixedSize(lineEdit->height(), lineEdit->height());
   layout->addWidget(trafficLabel);
   
   this->setLayout(layout);

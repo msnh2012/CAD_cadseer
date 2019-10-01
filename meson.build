@@ -373,6 +373,8 @@ libreoffice_sources = ['libreoffice/lboodshack.cpp']
 
 lod_sources = ['lod/lodmessage.cpp', 'lod/lodmanager.cpp']
 
+menu_sources = ['menu/mnuserial.cpp', 'menu/mnumanager.cpp']
+
 mesh_sources = ['mesh/mshparameters.cpp']
 
 dagview_sources = ['dagview/dagview.cpp'
@@ -405,10 +407,10 @@ cadseer_sources = ['main.cpp'
   , libreoffice_sources
   , lod_sources
   , mesh_sources
-  , sketch_sources]
+  , sketch_sources
+  , menu_sources]
 
-cadseer_uis = ['application/appmainwindow.ui'
-  , 'dialogs/dlgpreferences.ui'
+cadseer_uis = ['dialogs/dlgpreferences.ui'
   , 'dialogs/dlgproject.ui'
   , 'dialogs/dlgabout.ui']
 

@@ -17,12 +17,15 @@
  *
  */
 
-#include <iostream>
 #include <assert.h>
 #include <limits>
 
 #include <QHBoxLayout>
 #include <QCloseEvent>
+#include <QTabWidget>
+#include <QToolBar>
+#include <QMenu>
+#include <QToolButton>
 
 #include "dagview/dagmodel.h"
 #include "dagview/dagview.h"
@@ -37,36 +40,275 @@
 #include "application/appincrementwidget.h"
 #include "preferences/preferencesXML.h"
 #include "preferences/prfmanager.h"
+#include "menu/mnuserial.h"
+#include "menu/mnumanager.h"
 #include "application/appinfowindow.h"
-#include "ui_appmainwindow.h"
 #include "application/appmainwindow.h"
 
 using boost::uuids::uuid;
 using namespace app;
 
-MainWindow::MainWindow(QWidget *parent) :
-    QMainWindow(parent),
-    ui(new Ui::MainWindow)
+struct MainWindow::Stow
 {
-  ui->setupUi(this);
+  MainWindow *parent;
+  QTabWidget *tabToolWidget;
+  
+  QToolBar *selectionBar;
+  QAction *actionSelectObjects;
+  QAction *actionSelectFeatures;
+  QAction *actionSelectSolids;
+  QAction *actionSelectShells;
+  QAction *actionSelectFaces;
+  QAction *actionSelectWires;
+  QAction *actionSelectEdges;
+  QAction *actionSelectVertices;
+  QAction *actionSelectEndPoints;
+  QAction *actionSelectMidPoints;
+  QAction *actionSelectCenterPoints;
+  QAction *actionSelectQuandrantPoints;
+  QAction *actionSelectNearestPoints;
+  QAction *actionSelectScreenPoints;
+  IncrementWidget *translationEdit;
+  IncrementWidget *rotationEdit;
+  
+  dag::Model *dagModel;
+  dag::View *dagView;
+  expr::Widget *expressionWidget;
+  InfoDialog* infoDialog;
+  vwr::Widget* viewWidget;
+  slc::Manager *selectionManager;
+  const mnu::srl::Cue &menuCue = mnu::manager().getCueRead();
+  
+  msg::Node node;
+  msg::Sift sift;
+  
+  Stow() = delete;
+  Stow(MainWindow *parentIn) : parent(parentIn)
+  {
+    tabToolWidget = new QTabWidget(parent);
+    
+    int tbSize = 32;
+    bool showIcon = true;
+    bool showIconText = false;
+    if (menuCue.toolbarSettings())
+    {
+      tbSize = menuCue.toolbarSettings().get().iconSize();
+      showIcon = menuCue.toolbarSettings().get().showIcon();
+      showIconText = menuCue.toolbarSettings().get().showText();
+    }
+    selectionBar = new QToolBar(parent);
+    if (showIconText) selectionBar->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
+    selectionBar->setFloatable(false);
+    selectionBar->setMovable(false);
+    selectionBar->setIconSize(QSize(tbSize, tbSize));
+    auto ssa = [&](const char *icon, const QString &text, const QString &iconText) -> QAction*
+    {
+      QAction *out = selectionBar->addAction(QString());
+      if (showIcon) out->setIcon(QIcon(icon));
+      if (showIconText) out->setIconText(iconText);
+      out->setCheckable(true);
+      out->setToolTip(text);
+      out->setWhatsThis(text);
+      
+      return out;
+    };
+    actionSelectObjects = ssa(":/resources/images/selectObjects.svg", tr("Select Objects"), tr("Objects"));
+    actionSelectFeatures = ssa(":/resources/images/selectFeatures.svg", tr("Select Features"), tr("Features"));
+    actionSelectSolids = ssa(":/resources/images/selectSolids.svg", tr("Select Solids"), tr("Solids"));
+    actionSelectShells = ssa(":/resources/images/selectShells.svg", tr("Select Shells"), tr("Shells"));
+    actionSelectFaces = ssa(":/resources/images/selectFaces.svg", tr("Select Faces"), tr("Faces"));
+    actionSelectWires = ssa(":/resources/images/selectWires.svg", tr("Select Wires"), tr("Wires"));
+    actionSelectEdges = ssa(":/resources/images/selectEdges.svg", tr("Select Edges"), tr("Edges"));
+    actionSelectVertices = ssa(":/resources/images/selectVertices.svg", tr("Select Vertices"), tr("Vertices"));
+    actionSelectEndPoints = ssa(":/resources/images/selectPointsEnd.svg", tr("Select End Points"), tr("End"));
+    actionSelectMidPoints = ssa(":/resources/images/selectPointsMid.svg", tr("Select Mid Points"), tr("Mid"));
+    actionSelectCenterPoints = ssa(":/resources/images/selectPointsCenter.svg", tr("Select Center Points"), tr("Center"));
+    actionSelectQuandrantPoints = ssa(":/resources/images/selectPointsQuandrant.svg", tr("Select Quadrant Points"), tr("Quadrant"));
+    actionSelectNearestPoints = ssa(":/resources/images/selectPointsNearest.svg", tr("Select Nearest Points"), tr("Nearest"));
+    actionSelectScreenPoints = ssa(":/resources/images/selectPointsScreen.svg", tr("Select Screen Points"), tr("Screen"));
 
-  dagModel = new dag::Model(this);
-  dagView = new dag::View(this);
-  dagView->setScene(dagModel);
-  expressionWidget = new expr::Widget(this);
+    selectionBar->setContentsMargins(0, 0, 0, 0);
+    selectionBar->layout()->setContentsMargins(0, 0, 0, 0); //yes both
+    selectionBar->layout()->setSpacing(0);
+    
+    tabToolWidget->addTab(selectionBar, QIcon(":/resources/images/selectObjects.svg"), "");
+    tabToolWidget->setContentsMargins(0, 0, 0, 0);
+    tabToolWidget->setTabToolTip(0, tr("Selection"));
+    if (menuCue.toolbarSettings())
+    {
+      if (!menuCue.toolbarSettings().get().showIcon())
+        tabToolWidget->setTabIcon(0, QIcon());
+      if (menuCue.toolbarSettings().get().showText())
+        tabToolWidget->setTabText(0, tr("Selection"));
+    }
+    
+    //add increment widgets to toolbar.
+    selectionBar->addSeparator();
+    translationEdit = new IncrementWidget(0, tr("Translation:"), prf::manager().rootPtr->dragger().linearIncrement());
+    translationEdit->setToolTip(tr("Controls The Translation Dragger Increment"));
+    QWidgetAction* translationAction = new QWidgetAction(parent);
+    translationAction->setDefaultWidget(translationEdit);
+    selectionBar->addAction(translationAction);
+    
+    rotationEdit = new IncrementWidget(0, tr("Rotation:"), prf::manager().rootPtr->dragger().angularIncrement());
+    rotationEdit->setToolTip(tr("Controls The Rotation Dragger Increment"));
+    QWidgetAction* rotationAction = new QWidgetAction(parent);
+    rotationAction->setDefaultWidget(rotationEdit);
+    selectionBar->addAction(rotationAction);
+    
+    node.connect(msg::hub());
+    sift.name = "app::MainWindow";
+    node.setHandler(std::bind(&msg::Sift::receive, &sift, std::placeholders::_1));
+  }
+  
+  void buildToolbars()
+  {
+    int size = 32;
+    bool showIcon = true;
+    bool showIconText = false;
+    if (menuCue.toolbarSettings())
+    {
+      size = menuCue.toolbarSettings().get().iconSize();
+      showIcon = menuCue.toolbarSettings().get().showIcon();
+      showIconText = menuCue.toolbarSettings().get().showText();
+    }
+    
+    for (const auto &tb : menuCue.toolbars())
+    {
+      if (tb.entries().empty()) //don't build an empty toolbar
+        continue;
+      QToolBar *bar = new QToolBar(); //addTab reparents so no leak.
+      bar->setFloatable(false);
+      bar->setMovable(false);
+      bar->setIconSize(QSize(size, size));
+      bar->setContentsMargins(0, 0, 0, 0);
+      bar->layout()->setContentsMargins(0, 0, 0, 0);
+      bar->layout()->setSpacing(0);
+      tabToolWidget->addTab(bar, QIcon(QString::fromStdString(tb.icon())), "");
+      if (!showIcon)
+        tabToolWidget->setTabIcon(tabToolWidget->count() - 1, QIcon());
+      if (showIconText)
+      {
+        bar->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
+        tabToolWidget->setTabText(tabToolWidget->count() - 1, QString::fromStdString(tb.text()));
+      }
+      tabToolWidget->setTabToolTip(tabToolWidget->count() - 1, QString::fromStdString(tb.text()));
+      for (const auto &entry : tb.entries())
+      {
+        if (entry.commandIds().empty())
+          continue;
+        
+        auto setupAction = [&](QAction *action, const mnu::srl::Command &cIn)
+        {
+          action->setData(cIn.id());
+          QObject::connect(action, &QAction::triggered, parent, &MainWindow::actionTriggeredSlot);
+          
+          if (!cIn.visual())
+            return;
+          const auto &v = cIn.visual().get();
+          if (showIcon && v.icon())
+            action->setIcon(QIcon(QString::fromStdString(v.icon().get())));
+          if (showIconText && v.iconText())
+            action->setIconText(QString::fromStdString(v.iconText().get()));
+          if (v.toolTipText())
+            action->setToolTip(QString::fromStdString(v.toolTipText().get()));
+          if (v.whatThisText())
+            action->setWhatsThis(QString::fromStdString(v.whatThisText().get()));
+        };
+        
+        if (entry.commandIds().size() == 1)
+        {
+          //build single command action.
+          const auto &srlCommand = mnu::manager().getCommand(entry.commandIds().front());
+          if (srlCommand.id() == 0)
+            continue;
+          QAction *action = bar->addAction(QString());
+          setupAction(action, srlCommand);
+        }
+        else
+        {
+          //build a menu of buttons
+          QMenu *menu = new QMenu(bar);
+          menu->setToolTipsVisible(true);
+          for (const auto &cId : entry.commandIds())
+          {
+            const auto &srlCommand = mnu::manager().getCommand(cId);
+            if (srlCommand.id() == 0)
+              continue;
+            QAction *action = new QAction(bar);
+            setupAction(action, srlCommand);
+            menu->addAction(action); //menu does not take ownership of action.
+            if (!menu->defaultAction())
+              menu->setDefaultAction(action);
+          }
+          QToolButton* toolButton = new QToolButton();
+          toolButton->setMenu(menu);
+          toolButton->setPopupMode(QToolButton::InstantPopup); // QToolButton::MenuButtonPopup QToolButton::DelayedPopup
+          if (showIconText)
+          {
+            toolButton->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
+            tabToolWidget->setTabText(tabToolWidget->count() - 1, QString::fromStdString(tb.text()));
+          }
+          if (!showIcon)
+            toolButton->setToolButtonStyle(Qt::ToolButtonTextOnly);
+          
+          QIcon icon;
+          QString iconText;
+          if (showIcon)
+          {
+            icon = menu->defaultAction()->icon();
+            if (entry.visual() && entry.visual().get().icon())
+              icon = QIcon(QString::fromStdString(entry.visual().get().icon().get()));
+          }
+          if (showIconText)
+          {
+            iconText = menu->defaultAction()->iconText();
+            if (entry.visual() && entry.visual().get().iconText())
+              iconText = QString::fromStdString(entry.visual().get().iconText().get());
+          }
+          QAction *action = new QAction(icon, iconText, bar);
+          if (entry.visual())
+          {
+            if (entry.visual().get().toolTipText())
+              action->setToolTip(QString::fromStdString(entry.visual().get().toolTipText().get()));
+            if (entry.visual().get().whatThisText())
+              action->setWhatsThis(QString::fromStdString(entry.visual().get().whatThisText().get()));
+          }
+          toolButton->setDefaultAction(action);
+          bar->addWidget(toolButton); //bar takes ownership of widget.
+        }
+      }
+    }
+  }
+};
+
+MainWindow::MainWindow(QWidget *parent)
+: QMainWindow(parent)
+, stow(std::make_unique<MainWindow::Stow>(this))
+{
+  this->setWindowIcon(QIcon(":/resources/images/cadSeer.svg"));
+  
+  QVBoxLayout *mainLayout = new QVBoxLayout();
+  mainLayout->addWidget(stow->tabToolWidget);
+  
+  stow->dagModel = new dag::Model(this);
+  stow->dagView = new dag::View(this);
+  stow->dagView->setScene(stow->dagModel);
+  stow->expressionWidget = new expr::Widget(this);
   dlg::SplitterDecorated *subSplitter = new dlg::SplitterDecorated(this);
   subSplitter->setOrientation(Qt::Vertical);
-  subSplitter->addWidget(expressionWidget);
-  subSplitter->addWidget(dagView);
+  subSplitter->addWidget(stow->expressionWidget);
+  subSplitter->addWidget(stow->dagView);
   subSplitter->restoreSettings("mainWindowSubSplitter");
   
-  viewWidget = new vwr::Widget(osgViewer::ViewerBase::SingleThreaded);
-  viewWidget->setGeometry( 100, 100, 800, 600 );
-  viewWidget->setMinimumSize(QSize(100, 100)); //don't collapse view widget. osg nan erros.
+  stow->viewWidget = new vwr::Widget(osgViewer::ViewerBase::SingleThreaded);
+  stow->viewWidget->setGeometry(100, 100, 800, 600);
+  stow->viewWidget->setMinimumSize(QSize(100, 100)); //don't collapse view widget. osg nan erros.
+  stow->viewWidget->layout()->setContentsMargins(1, 1, 1, 1); //thick border around viewer without this. zero was corrupting.
   
   dlg::SplitterDecorated *splitter = new dlg::SplitterDecorated(this);
   splitter->setOpaqueResize(Qt::Horizontal);
-  splitter->addWidget(viewWidget);
+  splitter->addWidget(stow->viewWidget);
   splitter->addWidget(subSplitter);
   //size setup temp.
   QList<int> sizes;
@@ -76,81 +318,100 @@ MainWindow::MainWindow(QWidget *parent) :
   splitter->setCollapsible(0, false); //don't collapse view widget. osg nan erros.
   splitter->restoreSettings("mainWindowSplitter");
   
-  QHBoxLayout *aLayout = new QHBoxLayout();
-  aLayout->addWidget(splitter);
-  ui->centralwidget->setLayout(aLayout);
-
-  selectionManager = new slc::Manager(this);
-  setupSelectionToolbar();
+  //I give up trying to get the tab widget to size itself to the toolbar.
+  //so I will add another splitter and make the user size it.
+  dlg::SplitterDecorated *tbSplitter = new dlg::SplitterDecorated(this);
+  tbSplitter->setOrientation(Qt::Vertical);
+  tbSplitter->addWidget(stow->tabToolWidget);
+  tbSplitter->addWidget(splitter);
+  tbSplitter->restoreSettings("tbSplitter");
+  this->setCentralWidget(tbSplitter);
+  tbSplitter->setChildrenCollapsible(false);
   
-  //add increment widgets to toolbar.
-  ui->toolBar->setContentsMargins(0, 0, 0, 0);
-  ui->toolBar->addSeparator();
-  incrementWidget = new IncrementWidgetAction
-    (this, tr("Translation Increment:"), tr("Rotation Increment:"));
-  ui->toolBar->addAction(incrementWidget);
+  stow->selectionManager = new slc::Manager(this);
   
   //build the info window.
-  infoDialog = new InfoDialog(this);
-  infoDialog->restoreSettings();
-  infoDialog->hide();
+  stow->infoDialog = new InfoDialog(this);
+  stow->infoDialog->restoreSettings();
+  stow->infoDialog->hide();
 
-  node = std::make_unique<msg::Node>();
-  node->connect(msg::hub());
-  sift = std::make_unique<msg::Sift>();
-  sift->name = "app::MainWindow";
-  node->setHandler(std::bind(&msg::Sift::receive, sift.get(), std::placeholders::_1));
-  
   setupDispatcher();
+  setupSelectionToolbar();
+  stow->buildToolbars();
 }
 
-MainWindow::~MainWindow()
+MainWindow::~MainWindow() = default;
+
+vwr::Widget* MainWindow::getViewer()
 {
-  delete ui;
+  return stow->viewWidget;
+}
+
+slc::Manager* MainWindow::getSelectionManager()
+{
+  return stow->selectionManager;
 }
 
 void MainWindow::closeEvent (QCloseEvent *event)
 {
-  node->send(msg::Message(msg::Request | msg::Command | msg::Clear));
+  stow->node.send(msg::Message(msg::Request | msg::Command | msg::Clear));
   QMainWindow::closeEvent(event);
+}
+
+void MainWindow::actionTriggeredSlot()
+{
+  QAction *action = dynamic_cast<QAction *>(QObject::sender());
+  assert(action);
+  if (!action)
+    return;
+  std::size_t commandId = action->data().value<std::size_t>();
+  assert(commandId != 0);
+  if (commandId == 0)
+    return;
+  
+  auto mask = mnu::manager().getMask(commandId);
+  assert(!mask.none());
+  if (mask.none())
+    return;
+  stow->node.send(msg::Message(mask));
 }
 
 void MainWindow::setupSelectionToolbar()
 {
-  selectionManager->actionSelectObjects = ui->actionSelectObjects;
-  selectionManager->actionSelectFeatures = ui->actionSelectFeatures;
-  selectionManager->actionSelectSolids = ui->actionSelectSolids;
-  selectionManager->actionSelectShells = ui->actionSelectShells;
-  selectionManager->actionSelectFaces = ui->actionSelectFaces;
-  selectionManager->actionSelectWires = ui->actionSelectWires;
-  selectionManager->actionSelectEdges = ui->actionSelectEdges;
-  selectionManager->actionSelectVertices = ui->actionSelectVertices;
-  selectionManager->actionSelectEndPoints = ui->actionSelectEndPoints;
-  selectionManager->actionSelectMidPoints = ui->actionSelectMidPoints;
-  selectionManager->actionSelectCenterPoints = ui->actionSelectCenterPoints;
-  selectionManager->actionSelectQuadrantPoints = ui->actionSelectQuandrantPoints;
-  selectionManager->actionSelectNearestPoints = ui->actionSelectNearestPoints;
-  selectionManager->actionSelectScreenPoints = ui->actionSelectScreenPoints;
+  stow->selectionManager->actionSelectObjects = stow->actionSelectObjects;
+  stow->selectionManager->actionSelectFeatures = stow->actionSelectFeatures;
+  stow->selectionManager->actionSelectSolids = stow->actionSelectSolids;
+  stow->selectionManager->actionSelectShells = stow->actionSelectShells;
+  stow->selectionManager->actionSelectFaces = stow->actionSelectFaces;
+  stow->selectionManager->actionSelectWires = stow->actionSelectWires;
+  stow->selectionManager->actionSelectEdges = stow->actionSelectEdges;
+  stow->selectionManager->actionSelectVertices = stow->actionSelectVertices;
+  stow->selectionManager->actionSelectEndPoints = stow->actionSelectEndPoints;
+  stow->selectionManager->actionSelectMidPoints = stow->actionSelectMidPoints;
+  stow->selectionManager->actionSelectCenterPoints = stow->actionSelectCenterPoints;
+  stow->selectionManager->actionSelectQuadrantPoints = stow->actionSelectQuandrantPoints;
+  stow->selectionManager->actionSelectNearestPoints = stow->actionSelectNearestPoints;
+  stow->selectionManager->actionSelectScreenPoints = stow->actionSelectScreenPoints;
 
-  connect(ui->actionSelectObjects, SIGNAL(triggered(bool)), selectionManager, SLOT(triggeredObjects(bool)));
-  connect(ui->actionSelectFeatures, SIGNAL(triggered(bool)), selectionManager, SLOT(triggeredFeatures(bool)));
-  connect(ui->actionSelectSolids, SIGNAL(triggered(bool)), selectionManager, SLOT(triggeredSolids(bool)));
-  connect(ui->actionSelectShells, SIGNAL(triggered(bool)), selectionManager, SLOT(triggeredShells(bool)));
-  connect(ui->actionSelectFaces, SIGNAL(triggered(bool)), selectionManager, SLOT(triggeredFaces(bool)));
-  connect(ui->actionSelectWires, SIGNAL(triggered(bool)), selectionManager, SLOT(triggeredWires(bool)));
-  connect(ui->actionSelectEdges, SIGNAL(triggered(bool)), selectionManager, SLOT(triggeredEdges(bool)));
-  connect(ui->actionSelectVertices, SIGNAL(triggered(bool)), selectionManager, SLOT(triggeredVertices(bool)));
-  connect(ui->actionSelectEndPoints, SIGNAL(triggered(bool)), selectionManager, SLOT(triggeredEndPoints(bool)));
-  connect(ui->actionSelectMidPoints, SIGNAL(triggered(bool)), selectionManager, SLOT(triggeredMidPoints(bool)));
-  connect(ui->actionSelectCenterPoints, SIGNAL(triggered(bool)), selectionManager, SLOT(triggeredCenterPoints(bool)));
-  connect(ui->actionSelectQuandrantPoints, SIGNAL(triggered(bool)), selectionManager, SLOT(triggeredQuadrantPoints(bool)));
-  connect(ui->actionSelectNearestPoints, SIGNAL(triggered(bool)), selectionManager, SLOT(triggeredNearestPoints(bool)));
-  connect(ui->actionSelectScreenPoints, SIGNAL(triggered(bool)), selectionManager, SLOT(triggeredScreenPoints(bool)));
+  connect(stow->actionSelectObjects, SIGNAL(triggered(bool)), stow->selectionManager, SLOT(triggeredObjects(bool)));
+  connect(stow->actionSelectFeatures, SIGNAL(triggered(bool)), stow->selectionManager, SLOT(triggeredFeatures(bool)));
+  connect(stow->actionSelectSolids, SIGNAL(triggered(bool)), stow->selectionManager, SLOT(triggeredSolids(bool)));
+  connect(stow->actionSelectShells, SIGNAL(triggered(bool)), stow->selectionManager, SLOT(triggeredShells(bool)));
+  connect(stow->actionSelectFaces, SIGNAL(triggered(bool)), stow->selectionManager, SLOT(triggeredFaces(bool)));
+  connect(stow->actionSelectWires, SIGNAL(triggered(bool)), stow->selectionManager, SLOT(triggeredWires(bool)));
+  connect(stow->actionSelectEdges, SIGNAL(triggered(bool)), stow->selectionManager, SLOT(triggeredEdges(bool)));
+  connect(stow->actionSelectVertices, SIGNAL(triggered(bool)), stow->selectionManager, SLOT(triggeredVertices(bool)));
+  connect(stow->actionSelectEndPoints, SIGNAL(triggered(bool)), stow->selectionManager, SLOT(triggeredEndPoints(bool)));
+  connect(stow->actionSelectMidPoints, SIGNAL(triggered(bool)), stow->selectionManager, SLOT(triggeredMidPoints(bool)));
+  connect(stow->actionSelectCenterPoints, SIGNAL(triggered(bool)), stow->selectionManager, SLOT(triggeredCenterPoints(bool)));
+  connect(stow->actionSelectQuandrantPoints, SIGNAL(triggered(bool)), stow->selectionManager, SLOT(triggeredQuadrantPoints(bool)));
+  connect(stow->actionSelectNearestPoints, SIGNAL(triggered(bool)), stow->selectionManager, SLOT(triggeredNearestPoints(bool)));
+  connect(stow->actionSelectScreenPoints, SIGNAL(triggered(bool)), stow->selectionManager, SLOT(triggeredScreenPoints(bool)));
 }
 
 void MainWindow::setupDispatcher()
 {
-  sift->insert
+  stow->sift.insert
   (
     {
       std::make_pair
@@ -169,15 +430,13 @@ void MainWindow::setupDispatcher()
 
 void MainWindow::preferencesChanged(const msg::Message&)
 {
-  incrementWidget->lineEdit1->lineEdit->setText(QString::number(prf::manager().rootPtr->dragger().linearIncrement(), 'f', 12));
-  incrementWidget->lineEdit2->lineEdit->setText(QString::number(prf::manager().rootPtr->dragger().angularIncrement(), 'f', 12));
-  incrementWidget->lineEdit1->lineEdit->setCursorPosition(0);
-  incrementWidget->lineEdit2->lineEdit->setCursorPosition(0);
+  stow->translationEdit->update();
+  stow->rotationEdit->update();
 }
 
 void MainWindow::infoTextDispatched(const msg::Message&)
 {
-  infoDialog->show();
-  infoDialog->raise();
-  infoDialog->activateWindow();
+  stow->infoDialog->show();
+  stow->infoDialog->raise();
+  stow->infoDialog->activateWindow();
 }

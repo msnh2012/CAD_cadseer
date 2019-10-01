@@ -42,6 +42,7 @@ namespace prf
     //hot keys
     void setHotKey(int, const std::string&);
     std::string getHotKey(int) const; //!< empty string means not assigned.
+    std::string getMenuConfigPath() const; //!< return maybe empty.
   private:
     bool createDefaultXml();
     bool createDefaultXsd();

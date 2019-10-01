@@ -2729,6 +2729,34 @@ namespace prf
   }
 
 
+  // Menu
+  // 
+
+  const Menu::ConfigPathType& Menu::
+  configPath () const
+  {
+    return this->configPath_.get ();
+  }
+
+  Menu::ConfigPathType& Menu::
+  configPath ()
+  {
+    return this->configPath_.get ();
+  }
+
+  void Menu::
+  configPath (const ConfigPathType& x)
+  {
+    this->configPath_.set (x);
+  }
+
+  void Menu::
+  configPath (::std::unique_ptr< ConfigPathType > x)
+  {
+    this->configPath_.set (std::move (x));
+  }
+
+
   // Root
   // 
 
@@ -2898,6 +2926,36 @@ namespace prf
   features (::std::unique_ptr< FeaturesType > x)
   {
     this->features_.set (std::move (x));
+  }
+
+  const Root::MenuOptional& Root::
+  menu () const
+  {
+    return this->menu_;
+  }
+
+  Root::MenuOptional& Root::
+  menu ()
+  {
+    return this->menu_;
+  }
+
+  void Root::
+  menu (const MenuType& x)
+  {
+    this->menu_.set (x);
+  }
+
+  void Root::
+  menu (const MenuOptional& x)
+  {
+    this->menu_ = x;
+  }
+
+  void Root::
+  menu (::std::unique_ptr< MenuType > x)
+  {
+    this->menu_.set (std::move (x));
   }
 }
 
@@ -7510,6 +7568,98 @@ namespace prf
   {
   }
 
+  // Menu
+  //
+
+  Menu::
+  Menu (const ConfigPathType& configPath)
+  : ::xml_schema::Type (),
+    configPath_ (configPath, this)
+  {
+  }
+
+  Menu::
+  Menu (const Menu& x,
+        ::xml_schema::Flags f,
+        ::xml_schema::Container* c)
+  : ::xml_schema::Type (x, f, c),
+    configPath_ (x.configPath_, f, this)
+  {
+  }
+
+  Menu::
+  Menu (const ::xercesc::DOMElement& e,
+        ::xml_schema::Flags f,
+        ::xml_schema::Container* c)
+  : ::xml_schema::Type (e, f | ::xml_schema::Flags::base, c),
+    configPath_ (this)
+  {
+    if ((f & ::xml_schema::Flags::base) == 0)
+    {
+      ::xsd::cxx::xml::dom::parser< char > p (e, true, false, false);
+      this->parse (p, f);
+    }
+  }
+
+  void Menu::
+  parse (::xsd::cxx::xml::dom::parser< char >& p,
+         ::xml_schema::Flags f)
+  {
+    for (; p.more_content (); p.next_content (false))
+    {
+      const ::xercesc::DOMElement& i (p.cur_element ());
+      const ::xsd::cxx::xml::qualified_name< char > n (
+        ::xsd::cxx::xml::dom::name< char > (i));
+
+      // configPath
+      //
+      if (n.name () == "configPath" && n.namespace_ ().empty ())
+      {
+        ::std::unique_ptr< ConfigPathType > r (
+          ConfigPathTraits::create (i, f, this));
+
+        if (!configPath_.present ())
+        {
+          this->configPath_.set (::std::move (r));
+          continue;
+        }
+      }
+
+      break;
+    }
+
+    if (!configPath_.present ())
+    {
+      throw ::xsd::cxx::tree::expected_element< char > (
+        "configPath",
+        "");
+    }
+  }
+
+  Menu* Menu::
+  _clone (::xml_schema::Flags f,
+          ::xml_schema::Container* c) const
+  {
+    return new class Menu (*this, f, c);
+  }
+
+  Menu& Menu::
+  operator= (const Menu& x)
+  {
+    if (this != &x)
+    {
+      static_cast< ::xml_schema::Type& > (*this) = x;
+      this->configPath_ = x.configPath_;
+    }
+
+    return *this;
+  }
+
+  Menu::
+  ~Menu ()
+  {
+  }
+
   // Root
   //
 
@@ -7528,7 +7678,8 @@ namespace prf
     gesture_ (gesture, this),
     project_ (project, this),
     hotKeys_ (hotKeys, this),
-    features_ (features, this)
+    features_ (features, this),
+    menu_ (this)
   {
   }
 
@@ -7547,7 +7698,8 @@ namespace prf
     gesture_ (std::move (gesture), this),
     project_ (std::move (project), this),
     hotKeys_ (std::move (hotKeys), this),
-    features_ (std::move (features), this)
+    features_ (std::move (features), this),
+    menu_ (this)
   {
   }
 
@@ -7562,7 +7714,8 @@ namespace prf
     gesture_ (x.gesture_, f, this),
     project_ (x.project_, f, this),
     hotKeys_ (x.hotKeys_, f, this),
-    features_ (x.features_, f, this)
+    features_ (x.features_, f, this),
+    menu_ (x.menu_, f, this)
   {
   }
 
@@ -7577,7 +7730,8 @@ namespace prf
     gesture_ (this),
     project_ (this),
     hotKeys_ (this),
-    features_ (this)
+    features_ (this),
+    menu_ (this)
   {
     if ((f & ::xml_schema::Flags::base) == 0)
     {
@@ -7694,6 +7848,20 @@ namespace prf
         }
       }
 
+      // menu
+      //
+      if (n.name () == "menu" && n.namespace_ ().empty ())
+      {
+        ::std::unique_ptr< MenuType > r (
+          MenuTraits::create (i, f, this));
+
+        if (!this->menu_)
+        {
+          this->menu_.set (::std::move (r));
+          continue;
+        }
+      }
+
       break;
     }
 
@@ -7767,6 +7935,7 @@ namespace prf
       this->project_ = x.project_;
       this->hotKeys_ = x.hotKeys_;
       this->features_ = x.features_;
+      this->menu_ = x.menu_;
     }
 
     return *this;
@@ -9399,6 +9568,23 @@ namespace prf
   }
 
   void
+  operator<< (::xercesc::DOMElement& e, const Menu& i)
+  {
+    e << static_cast< const ::xml_schema::Type& > (i);
+
+    // configPath
+    //
+    {
+      ::xercesc::DOMElement& s (
+        ::xsd::cxx::xml::dom::create_element (
+          "configPath",
+          e));
+
+      s << i.configPath ();
+    }
+  }
+
+  void
   operator<< (::xercesc::DOMElement& e, const Root& i)
   {
     e << static_cast< const ::xml_schema::Type& > (i);
@@ -9478,6 +9664,18 @@ namespace prf
           e));
 
       s << i.features ();
+    }
+
+    // menu
+    //
+    if (i.menu ())
+    {
+      ::xercesc::DOMElement& s (
+        ::xsd::cxx::xml::dom::create_element (
+          "menu",
+          e));
+
+      s << *i.menu ();
     }
   }
 

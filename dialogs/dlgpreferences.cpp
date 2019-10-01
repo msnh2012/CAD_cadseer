@@ -50,6 +50,7 @@ Preferences::Preferences(prf::Manager *managerIn, QWidget *parent) : QDialog(par
   connect(ui->buttonBox, SIGNAL(rejected()), this, SLOT(reject()));
   connect(ui->basePathButton, SIGNAL(clicked()), this, SLOT(basePathBrowseSlot()));
   connect(ui->quoteTSheetButton, SIGNAL(clicked()), this, SLOT(quoteTemplateBrowseSlot()));
+  connect(ui->configPathButton, SIGNAL(clicked()), this, SLOT(menuConfigBrowseSlot()));
   
   dlg::WidgetGeometry *filter = new dlg::WidgetGeometry(this, "prf::PreferencesDialog");
   this->installEventFilter(filter);
@@ -131,6 +132,11 @@ void Preferences::initialize()
   ui->gestureSpreadFactorEdit->setText(QString().setNum(manager->rootPtr->gesture().spreadFactor()));
   ui->gestureSprayFactorEdit->setText(QString().setNum(manager->rootPtr->gesture().sprayFactor()));
   
+  if (manager->rootPtr->menu())
+  {
+    ui->configPathEditLine->setText(QString::fromStdString(manager->rootPtr->menu().get().configPath()));
+  }
+  
   ui->blendRadiusEdit->setText(QString().setNum(manager->rootPtr->features().blend().get().radius()));
   ui->boxLengthEdit->setText(QString().setNum(manager->rootPtr->features().box().get().length()));
   ui->boxWidthEdit->setText(QString().setNum(manager->rootPtr->features().box().get().width()));
@@ -183,6 +189,7 @@ void Preferences::accept()
     updateProject();
     updateGesture();
     updateFeature();
+    updateMenu();
     
     manager->saveConfig();
     QDialog::accept();
@@ -575,6 +582,15 @@ void Preferences::updateFeature()
   }
 }
 
+void Preferences::updateMenu()
+{
+  std::string cp = ui->configPathEditLine->text().toStdString();
+  if (!manager->rootPtr->menu())
+    manager->rootPtr->menu() = prf::Menu(cp);
+  else
+    manager->rootPtr->menu().get().configPath() = cp;
+}
+
 void Preferences::basePathBrowseSlot()
 {
   boost::filesystem::path path = ui->basePathEdit->text().toUtf8().constData();
@@ -618,4 +634,26 @@ void Preferences::quoteTemplateBrowseSlot()
   manager->rootPtr->project().lastDirectory() = p.remove_filename().string();
   
   ui->quoteTSheetEdit->setText(fileName);
+}
+
+void Preferences::menuConfigBrowseSlot()
+{
+  //not going to use last directory for this. mistake?
+  namespace bfs = boost::filesystem;
+  bfs::path t = ui->configPathEditLine->text().toStdString();
+  if (!bfs::exists(t))
+    t = app::instance()->getApplicationDirectory();
+  
+  QString fileName = QFileDialog::getOpenFileName
+  (
+    this,
+    tr("Browse For Menu Config"),
+    QString::fromStdString(t.string()),
+    tr("Menu Config (*.xml)")
+  );
+  
+  if (fileName.isEmpty())
+    return;
+  
+  ui->configPathEditLine->setText(fileName);
 }

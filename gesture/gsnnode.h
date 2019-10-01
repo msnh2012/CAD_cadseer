@@ -44,6 +44,7 @@ namespace gsn
     ~NodeBuilder();
     void initialize(); //called by default in constructor.
     osg::MatrixTransform* buildNode(const char*, unsigned int);
+    osg::MatrixTransform* buildNode(const std::string&, unsigned int);
     struct Stow;
     std::unique_ptr<Stow> stow;
   };

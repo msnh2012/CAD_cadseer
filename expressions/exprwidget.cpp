@@ -65,6 +65,7 @@ Widget::~Widget()
 void Widget::setupGui()
 {
   QVBoxLayout *mainLayout = new QVBoxLayout();
+  mainLayout->setContentsMargins(0, 0, 0, 0);
   this->setLayout(mainLayout);
   
   toolbar = new QToolBar(this);

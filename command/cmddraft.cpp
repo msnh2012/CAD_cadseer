@@ -67,7 +67,8 @@ void Draft::activate()
 
 void Draft::deactivate()
 {
-  dialog->hide();
+  if (dialog)
+    dialog->hide();
   isActive = false;
 }
 
@@ -142,10 +143,10 @@ void Draft::go()
   node->sendBlocked(msg::buildStatusMessage("Draft created", 2.0));
   node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
   
-  dlg::Parameter *dialog = new dlg::Parameter(f->getAngleParameter().get(), f->getId());
-  dialog->show();
-  dialog->raise();
-  dialog->activateWindow();
+  dlg::Parameter *pDialog = new dlg::Parameter(f->getAngleParameter().get(), f->getId());
+  pDialog->show();
+  pDialog->raise();
+  pDialog->activateWindow();
 }
 
 DraftEdit::DraftEdit(ftr::Base *in) : Base()

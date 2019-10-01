@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xs:schema
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  targetNamespace="http://www.cadseer.com/mnu/srl"
+  xmlns:mnusrl="http://www.cadseer.com/mnu/srl"
+>
+  
+<xs:simpleType name="DecPositive">
+  <xs:restriction base="xs:double">
+    <xs:minExclusive value="0.0"/>
+  </xs:restriction>
+</xs:simpleType>
+
+<xs:complexType name="Visual">
+  <xs:sequence>
+    <xs:element name="icon" type="xs:string" minOccurs="0"/>
+    <xs:element name="iconText" type="xs:string" minOccurs="0"/>
+    <xs:element name="statusText" type="xs:string" minOccurs="0"/>
+    <xs:element name="whatThisText" type="xs:string" minOccurs="0"/>
+    <xs:element name="toolTipText" type="xs:string" minOccurs="0"/>
+  </xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="Command">
+  <xs:sequence>
+    <xs:element name="id" type="xs:unsignedLong"/>
+    <xs:element name="visual" type="mnusrl:Visual" minOccurs="0"/>
+  </xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="ToolbarEntry">
+  <xs:sequence>
+    <xs:element name="commandIds" type="xs:unsignedLong" minOccurs="1" maxOccurs="unbounded"/>
+    <xs:element name="visual" type="mnusrl:Visual" minOccurs="0"/>
+  </xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="Toolbar">
+  <xs:sequence>
+    <xs:element name="icon" type="xs:string"/>
+    <xs:element name="text" type="xs:string"/>
+    <xs:element name="entries" type="mnusrl:ToolbarEntry" minOccurs="0" maxOccurs="unbounded"/>
+  </xs:sequence>
+</xs:complexType>
+
+<xs:simpleType name="IconSize">
+  <xs:restriction base="xs:int">
+    <xs:enumeration value="16"/>
+    <xs:enumeration value="32"/>
+    <xs:enumeration value="48"/>
+    <xs:enumeration value="64"/>
+  </xs:restriction>
+</xs:simpleType>
+
+<xs:complexType name="ToolbarSettings">
+  <xs:sequence>
+    <xs:element name="showIcon" type="xs:boolean"/>
+    <xs:element name="showText" type="xs:boolean"/>
+    <xs:element name="iconSize" type="mnusrl:IconSize"/>
+  </xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="MenuNode">
+  <xs:sequence>
+    <xs:element name="icon" type="xs:string"/>
+    <xs:element name="text" type="xs:string"/>
+    <xs:element name="subMenus" type="mnusrl:MenuNode" minOccurs="0" maxOccurs="unbounded"/>
+    <xs:element name="commandIds" type="xs:unsignedLong" minOccurs="0" maxOccurs="unbounded"/>
+  </xs:sequence>
+</xs:complexType>
+
+<!--
+  This is duplicated from the preferences xsd and is intended to replace it in the future
+  Note: icon size vs icon radius. Make this icon size in the future.
+-->
+<xs:complexType name="Gesture">
+  <xs:sequence>
+    <xs:element name="animationSeconds" type="mnusrl:DecPositive" default="1.0"/>
+    <xs:element name="iconRadius" type="xs:int" default="32"/>
+    <xs:element name="includeAngle" type="xs:int" default="90"/>
+    <xs:element name="spreadFactor" type="mnusrl:DecPositive" default="0.10"/>
+    <xs:element name="sprayFactor" type="mnusrl:DecPositive" default="1.0"/>
+  </xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="MenuSettings">
+  <xs:sequence>
+    <xs:element name="gesture" type="mnusrl:Gesture"/>
+  </xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="Cue">
+  <xs:sequence>
+    <xs:element name="commands" type="mnusrl:Command" minOccurs="0" maxOccurs="unbounded"/>
+    <xs:element name="toolbarSettings" type="mnusrl:ToolbarSettings" minOccurs="0"/>
+    <xs:element name="toolbars" type="mnusrl:Toolbar" minOccurs="0" maxOccurs="unbounded"/>
+    <xs:element name="menuSettings" type="mnusrl:MenuSettings" minOccurs="0"/>
+    <xs:element name="gestureNode" type="mnusrl:MenuNode" minOccurs="0"/>
+  </xs:sequence>
+</xs:complexType>
+
+<xs:element name="cue" type="mnusrl:Cue"/>
+  
+</xs:schema>

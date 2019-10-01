@@ -41,6 +41,7 @@
 #include "message/msgnode.h"
 #include "message/msgsift.h"
 #include "application/appfactory.h"
+#include "menu/mnumanager.h"
 #include "command/cmdmanager.h"
 #include "lod/lodmanager.h"
 #include "dialogs/dlgproject.h"
@@ -64,23 +65,24 @@ Application::Application(int &argc, char **argv) :
     node->setHandler(std::bind(&msg::Sift::receive, sift.get(), std::placeholders::_1));
     setupDispatcher();
     
-    //didn't have any luck using std::make_shared. weird behavior.
-    std::unique_ptr<MainWindow> tempWindow(new MainWindow());
-    mainWindow = std::move(tempWindow);
+    //some day pass the preferences file from user home directory to the manager constructor.
+    if (!prf::manager().isOk())
+    {
+      QMessageBox::critical(0, tr("CadSeer"), tr("Preferences failed to load"));
+      QTimer::singleShot(0, this, SLOT(quit()));
+      return;
+    }
+    
+    //menu manager has to be done after preferences
+    mnu::manager().loadMenu(prf::manager().getMenuConfigPath());
+    
+    mainWindow = std::make_unique<MainWindow>();
     
     std::unique_ptr<Factory> tempFactory(new Factory());
     factory = std::move(tempFactory);
     
     cmd::manager(); //just to construct the singleton and get it ready for messages.
     
-    //some day pass the preferences file from user home directory to the manager constructor.
-    prf::Manager &manager = prf::manager(); //this should cause preferences file to be read.
-    if (!manager.isOk())
-    {
-      QMessageBox::critical(0, tr("CadSeer"), tr("Preferences failed to load"));
-      QTimer::singleShot(0, this, SLOT(quit()));
-      return;
-    }
     
     setOrganizationName("blobfish");
     setOrganizationDomain("blobfish.org"); //doesn't exist.

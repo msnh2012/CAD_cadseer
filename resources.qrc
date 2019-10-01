@@ -164,5 +164,6 @@
     <file>resources/images/inspectAbout.svg</file>
     <file>preferences/preferences.xml</file>
     <file>preferences/preferencesXML.xsd</file>
+    <file>menu/mnuserial.xsd</file>
   </qresource>
 </RCC>

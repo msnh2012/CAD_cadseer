@@ -42,6 +42,7 @@ namespace dlg
     virtual void accept() override;
     void basePathBrowseSlot();
     void quoteTemplateBrowseSlot();
+    void menuConfigBrowseSlot();
   private:
     void initialize();
     void setupFeatureSplitter();
@@ -50,6 +51,7 @@ namespace dlg
     void updateProject();
     void updateGesture();
     void updateFeature();
+    void updateMenu();
     Ui::dialog* ui;
     prf::Manager *manager;
     bool visualDirty = false;

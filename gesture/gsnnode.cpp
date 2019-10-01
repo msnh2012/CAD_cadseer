@@ -222,3 +222,8 @@ osg::MatrixTransform* NodeBuilder::buildNode(const char *resource, unsigned int 
   
   return mainNode;
 }
+
+osg::MatrixTransform* NodeBuilder::buildNode(const std::string &resource, unsigned int mask)
+{
+  return buildNode(resource.c_str(), mask);
+}

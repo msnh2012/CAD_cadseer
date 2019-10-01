@@ -175,7 +175,7 @@ void Manager::setupDispatcher()
       )
       , std::make_pair
       (
-        msg::Request | msg::Edit | msg::Feature |msg::Color
+        msg::Request | msg::Edit | msg::Feature | msg::Color
         , std::bind(&Manager::editColorDispatched, this, std::placeholders::_1)
       )
       , std::make_pair

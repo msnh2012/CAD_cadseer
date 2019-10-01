@@ -24,54 +24,37 @@
 
 #include <QMainWindow>
 
-#include <osg/Node>
-
 class QCloseEvent;
 
 namespace vwr{class Widget;}
 namespace slc{class Manager;}
-namespace msg{class Message; struct Node; struct Sift;}
-namespace dag{class View; class Model;}
-namespace expr{class Widget;}
-
-namespace Ui {class MainWindow;}
-
-class TopoDS_Face;
-class TopoDS_Shape;
+namespace msg{class Message;}
 
 namespace app
 {
-  class IncrementWidgetAction;
-  class InfoDialog;
   class MainWindow : public QMainWindow
   {
     Q_OBJECT
-      
   public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
-    vwr::Widget* getViewer(){return viewWidget;}
-    slc::Manager* getSelectionManager(){return selectionManager;}
+    vwr::Widget* getViewer();
+    slc::Manager* getSelectionManager();
       
   protected:
     virtual void closeEvent (QCloseEvent*) override;
+    
+  private Q_SLOTS:
+    void actionTriggeredSlot();
 
   private:
-    void setupSelectionToolbar();
-    Ui::MainWindow *ui;
-    vwr::Widget* viewWidget;
-    dag::Model *dagModel;
-    dag::View *dagView;
-    expr::Widget *expressionWidget;
-    slc::Manager *selectionManager;
-    IncrementWidgetAction *incrementWidget;
-    InfoDialog*infoDialog;
+    struct Stow;
+    std::unique_ptr<Stow> stow;
     
-    std::unique_ptr<msg::Node> node;
-    std::unique_ptr<msg::Sift> sift;
     void setupDispatcher();
     void preferencesChanged(const msg::Message&);
     void infoTextDispatched(const msg::Message&);
+    void setupSelectionToolbar();
   };
 }
 

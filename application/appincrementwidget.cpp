@@ -35,74 +35,56 @@
 
 using namespace app;
 
-IncrementWidgetAction::IncrementWidgetAction(QObject* parent, const QString& title1In, const QString& title2In):
-  QWidgetAction(parent), title1(title1In), title2(title2In)
+struct IncrementWidget::Stow
 {
+  dlg::ExpressionEdit *lineEdit = nullptr;
+  QString title;
+  double &prefRef;
+  
+  Stow(const QString &titleIn, double &prefRefIn)
+  : title(titleIn)
+  , prefRef(prefRefIn)
+  {}
+};
 
+IncrementWidget::IncrementWidget(QWidget *parent, const QString &titleIn, double &prefRefIn)
+: QWidget(parent)
+, stow(std::make_unique<Stow>(titleIn, prefRefIn))
+{
+  buildGui();
 }
 
-QWidget* IncrementWidgetAction::createWidget(QWidget* parent)
+IncrementWidget::~IncrementWidget() = default;
+
+void IncrementWidget::buildGui()
 {
-  QWidget *out = new QWidget(parent);
-  
-  QHBoxLayout *hLayout = new QHBoxLayout();
-  
-  QVBoxLayout *vLayout1 = new QVBoxLayout();
-  vLayout1->setSpacing(0);
-  QLabel *label1 = new QLabel(title1, out);
-  vLayout1->addWidget(label1);
-  lineEdit1 = new dlg::ExpressionEdit(out);
-  vLayout1->addWidget(lineEdit1);
-  vLayout1->setContentsMargins(0, 0, 0, 0);
-  hLayout->addLayout(vLayout1);
-  lineEdit1->lineEdit->setText(QString::number(prf::manager().rootPtr->dragger().linearIncrement(), 'f', 12));
-  lineEdit1->lineEdit->setCursorPosition(0);
-  connect(lineEdit1->lineEdit, SIGNAL(textEdited(QString)), this, SLOT(textEditedSlot1(QString)));
-  connect(lineEdit1->lineEdit, SIGNAL(editingFinished()), this, SLOT(editingFinishedSlot1()));
-  connect(lineEdit1->lineEdit, SIGNAL(returnPressed()), this, SLOT(returnPressedSlot1()));
-  
-  QVBoxLayout *vLayout2 = new QVBoxLayout();
-  vLayout2->setSpacing(0);
-  QLabel *label2 = new QLabel(title2, out);
-  vLayout2->addWidget(label2);
-  lineEdit2 = new dlg::ExpressionEdit(out);
-  vLayout2->addWidget(lineEdit2);
-  vLayout2->setContentsMargins(0, 0, 0, 0);
-  hLayout->addLayout(vLayout2);
-  lineEdit2->lineEdit->setText(QString::number(prf::manager().rootPtr->dragger().angularIncrement(), 'f', 12));
-  lineEdit2->lineEdit->setCursorPosition(0);
-  connect(lineEdit2->lineEdit, SIGNAL(textEdited(QString)), this, SLOT(textEditedSlot2(QString)));
-  connect(lineEdit2->lineEdit, SIGNAL(editingFinished()), this, SLOT(editingFinishedSlot2()));
-  connect(lineEdit2->lineEdit, SIGNAL(returnPressed()), this, SLOT(returnPressedSlot2()));
-  
-  hLayout->addStretch();
-  //this gets rid of the extra space from this widget and it's layout.
-  //this needs to be done after widgets added.
-  hLayout->setContentsMargins(0, 0, 0, 0);
-  
-  out->setLayout(hLayout);
-  
-  HighlightOnFocusFilter *filter1 = new HighlightOnFocusFilter(lineEdit1->lineEdit);
-  lineEdit1->lineEdit->installEventFilter(filter1);
-  HighlightOnFocusFilter *filter2 = new HighlightOnFocusFilter(lineEdit2->lineEdit);
-  lineEdit2->lineEdit->installEventFilter(filter2);
-  
-  return out;
+  auto *layout = new QHBoxLayout();
+  layout->setSpacing(0);
+  QLabel *label = new QLabel(stow->title, this);
+  layout->addWidget(label);
+  stow->lineEdit = new dlg::ExpressionEdit(this);
+  layout->addWidget(stow->lineEdit);
+  layout->setContentsMargins(0, 0, 0, 0);
+  this->setLayout(layout);
+  update();
+  connect(stow->lineEdit->lineEdit, SIGNAL(textEdited(QString)), this, SLOT(textEditedSlot(QString)));
+  connect(stow->lineEdit->lineEdit, SIGNAL(editingFinished()), this, SLOT(editingFinishedSlot()));
+  connect(stow->lineEdit->lineEdit, SIGNAL(returnPressed()), this, SLOT(returnPressedSlot()));
+  HighlightOnFocusFilter *filter = new HighlightOnFocusFilter(stow->lineEdit->lineEdit);
+  stow->lineEdit->lineEdit->installEventFilter(filter);
 }
 
-void IncrementWidgetAction::textEditedSlot1(const QString &textIn)
+void IncrementWidget::update()
 {
-  textEditedCommon(textIn, lineEdit1);
+  stow->lineEdit->lineEdit->setText(QString::number(stow->prefRef, 'f', 12));
+  stow->lineEdit->lineEdit->setCursorPosition(0);
 }
 
-void IncrementWidgetAction::textEditedSlot2(const QString &textIn)
+void IncrementWidget::textEditedSlot(const QString &textIn)
 {
-  textEditedCommon(textIn, lineEdit2);
-}
-
-void IncrementWidgetAction::textEditedCommon(const QString &textIn, dlg::ExpressionEdit *editor)
-{
-  editor->trafficLabel->setTrafficYellowSlot();
+  assert(stow->lineEdit);
+  assert(stow->lineEdit->trafficLabel);
+  stow->lineEdit->trafficLabel->setTrafficYellowSlot();
   qApp->processEvents(); //need this or we never see yellow signal.
   
   expr::Manager localManager;
@@ -112,82 +94,41 @@ void IncrementWidgetAction::textEditedCommon(const QString &textIn, dlg::Express
   if (translator.parseString(formula) == expr::StringTranslator::ParseSucceeded)
   {
     localManager.update();
-    editor->trafficLabel->setTrafficGreenSlot();
+    stow->lineEdit->trafficLabel->setTrafficGreenSlot();
     assert(localManager.getFormulaValueType(translator.getFormulaOutId()) == expr::ValueType::Scalar);
     double value = boost::get<double>(localManager.getFormulaValue(translator.getFormulaOutId()));
-    editor->goToolTipSlot(QString::number(value));
+    stow->lineEdit->goToolTipSlot(QString::number(value));
   }
   else
   {
-    editor->trafficLabel->setTrafficRedSlot();
+    stow->lineEdit->trafficLabel->setTrafficRedSlot();
     int position = translator.getFailedPosition() - 8; // 7 chars for 'temp = ' + 1
-    editor->goToolTipSlot(textIn.left(position) + "?");
+    stow->lineEdit->goToolTipSlot(textIn.left(position) + "?");
   }
 }
 
-void IncrementWidgetAction::editingFinishedSlot1()
+void IncrementWidget::returnPressedSlot()
 {
-  lineEdit1->trafficLabel->setPixmap(QPixmap());
-  
-  double parsedValue = editingFinishedCommon(lineEdit1);
-  if (parsedValue > 0.0)
-  {
-    prf::manager().rootPtr->dragger().linearIncrement() = parsedValue;
-    prf::manager().saveConfig();
-  }
-  else
-  {
-    parsedValue = prf::manager().rootPtr->dragger().linearIncrement();
-  }
-  
-  lineEdit1->lineEdit->setText(QString::number(parsedValue, 'f', 12));
+  stow->lineEdit->lineEdit->setCursorPosition(0);
+  QTimer::singleShot(0, stow->lineEdit->lineEdit, SLOT(selectAll()));
 }
 
-void IncrementWidgetAction::editingFinishedSlot2()
+void IncrementWidget::editingFinishedSlot()
 {
-  lineEdit2->trafficLabel->setPixmap(QPixmap());
+  stow->lineEdit->trafficLabel->setPixmap(QPixmap());
   
-  double parsedValue = editingFinishedCommon(lineEdit2);
-  if (parsedValue > 0.0)
-  {
-    prf::manager().rootPtr->dragger().angularIncrement() = parsedValue;
-    prf::manager().saveConfig();
-  }
-  else
-  {
-    parsedValue = prf::manager().rootPtr->dragger().angularIncrement();
-  }
-  
-  lineEdit2->lineEdit->setText(QString::number(parsedValue, 'f', 12));
-}
-
-double IncrementWidgetAction::editingFinishedCommon(dlg::ExpressionEdit *editor)
-{
   expr::Manager localManager;
   expr::StringTranslator translator(localManager);
   std::string formula("temp = ");
-  formula += editor->lineEdit->text().toStdString();
+  formula += stow->lineEdit->lineEdit->text().toStdString();
   if (translator.parseString(formula) == expr::StringTranslator::ParseSucceeded)
   {
     localManager.update();
     assert(localManager.getFormulaValueType(translator.getFormulaOutId()) == expr::ValueType::Scalar);
-    double tempValue = boost::get<double>(localManager.getFormulaValue(translator.getFormulaOutId()));
-    return tempValue;
+    stow->prefRef = boost::get<double>(localManager.getFormulaValue(translator.getFormulaOutId()));
+    prf::manager().saveConfig();
   }
-  
-  return -1.0; //signals failure to parse.
-}
-
-void IncrementWidgetAction::returnPressedSlot1()
-{
-  lineEdit1->lineEdit->setCursorPosition(0);
-  QTimer::singleShot(0, lineEdit1->lineEdit, SLOT(selectAll()));
-}
-
-void IncrementWidgetAction::returnPressedSlot2()
-{
-  lineEdit2->lineEdit->setCursorPosition(0);
-  QTimer::singleShot(0, lineEdit2->lineEdit, SLOT(selectAll()));
+  update();
 }
 
 bool HighlightOnFocusFilter::eventFilter(QObject *obj, QEvent *event)

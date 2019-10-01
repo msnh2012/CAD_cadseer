@@ -242,6 +242,13 @@ std::string Manager::getHotKey(int number) const
   return std::string();
 }
 
+std::string Manager::getMenuConfigPath() const
+{
+  if (!rootPtr->menu())
+    return std::string();
+  return rootPtr->menu().get().configPath();
+}
+
 void Manager::ensureDefaults()
 {
   //project defaults.

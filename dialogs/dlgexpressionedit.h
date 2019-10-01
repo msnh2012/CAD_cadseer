@@ -46,9 +46,8 @@ namespace dlg
   protected:
     void updatePixmaps();
     QPixmap buildPixmap(const QString&);
-    virtual void resizeEvent(QResizeEvent *) override;
     
-    int iconSize = 0;
+    int iconSize = 128; //qlabel will scale.
     QPixmap trafficRed;
     QPixmap trafficYellow;
     QPixmap trafficGreen;
