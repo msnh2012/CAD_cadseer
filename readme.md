@@ -4,47 +4,7 @@ A parametric solid modeler.
 
 ## Getting Started
 
-These instructions may help you get cadseer running on your system.
-
-### Prerequisites
-
-* Qt5 REQUIRED COMPONENTS QtCore QtWidgets Qt5OpenGL Qt5X11Extras Qt5Svg
-* Boost REQUIRED COMPONENTS system graph timer filesystem
-* OpenCasCade REQUIRED
-* OpenSceneGraph REQUIRED
-* OSGQt REQUIRED
-* Eigen3 REQUIRED
-* XercesC REQUIRED
-* Spnav OPTIONAL
-* CGAL COMPONENTS CGAL_Core OPTIONAL
-* zlib REQUIRED
-* Libzip REQUIRED
-* libigl OPTIONAL
-* netgen OPTIONAL
-* solvespace REQUIRED
-
-### Installing
-
-Git (pun intended) a copy of the repository.
-
-```
-git clone --recursive -j8 https://gitlab.com/blobfish/cadseer.git cadseer
-```
-
-Setup for build.
-
-```
-cd cadseer
-mkdir build
-cd build
-```
-
-Build
-
-```
-cmake -DCMAKE_BUILD_TYPE:STRING=Debug ..
-make -j4
-```
+[Building Cadseer](https://gitlab.com/blobfish/cadseer/wikis/developer#compilebuild)
 
 ## Built With
 
