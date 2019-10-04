@@ -64,6 +64,7 @@ private:
     std::unique_ptr<Factory> factory;
     std::unique_ptr<lod::Manager> lodManager;
     bool spaceballPresent = false;
+    bool firstRun = false;
     
     void createNewProject(const std::string &);
     void openProject(const std::string &);

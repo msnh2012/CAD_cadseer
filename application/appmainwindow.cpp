@@ -86,6 +86,7 @@ struct MainWindow::Stow
   Stow(MainWindow *parentIn) : parent(parentIn)
   {
     tabToolWidget = new QTabWidget(parent);
+    tabToolWidget->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
     
     int tbSize = 32;
     bool showIcon = true;
@@ -97,6 +98,7 @@ struct MainWindow::Stow
       showIconText = menuCue.toolbarSettings().get().showText();
     }
     selectionBar = new QToolBar(parent);
+    selectionBar->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
     if (showIconText) selectionBar->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
     selectionBar->setFloatable(false);
     selectionBar->setMovable(false);
@@ -178,6 +180,7 @@ struct MainWindow::Stow
       if (tb.entries().empty()) //don't build an empty toolbar
         continue;
       QToolBar *bar = new QToolBar(); //addTab reparents so no leak.
+      bar->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
       bar->setFloatable(false);
       bar->setMovable(false);
       bar->setIconSize(QSize(size, size));
@@ -295,18 +298,22 @@ MainWindow::MainWindow(QWidget *parent)
   stow->dagView = new dag::View(this);
   stow->dagView->setScene(stow->dagModel);
   stow->expressionWidget = new expr::Widget(this);
+  stow->expressionWidget->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
   dlg::SplitterDecorated *subSplitter = new dlg::SplitterDecorated(this);
   subSplitter->setOrientation(Qt::Vertical);
   subSplitter->addWidget(stow->expressionWidget);
   subSplitter->addWidget(stow->dagView);
+  subSplitter->setSizes(QList<int>({250, 1000}));
   subSplitter->restoreSettings("mainWindowSubSplitter");
   
   stow->viewWidget = new vwr::Widget(osgViewer::ViewerBase::SingleThreaded);
+  stow->viewWidget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   stow->viewWidget->setGeometry(100, 100, 800, 600);
   stow->viewWidget->setMinimumSize(QSize(100, 100)); //don't collapse view widget. osg nan erros.
   stow->viewWidget->layout()->setContentsMargins(1, 1, 1, 1); //thick border around viewer without this. zero was corrupting.
   
   dlg::SplitterDecorated *splitter = new dlg::SplitterDecorated(this);
+  splitter->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   splitter->setOpaqueResize(Qt::Horizontal);
   splitter->addWidget(stow->viewWidget);
   splitter->addWidget(subSplitter);
@@ -318,15 +325,15 @@ MainWindow::MainWindow(QWidget *parent)
   splitter->setCollapsible(0, false); //don't collapse view widget. osg nan erros.
   splitter->restoreSettings("mainWindowSplitter");
   
-  //I give up trying to get the tab widget to size itself to the toolbar.
-  //so I will add another splitter and make the user size it.
-  dlg::SplitterDecorated *tbSplitter = new dlg::SplitterDecorated(this);
-  tbSplitter->setOrientation(Qt::Vertical);
-  tbSplitter->addWidget(stow->tabToolWidget);
-  tbSplitter->addWidget(splitter);
-  tbSplitter->restoreSettings("tbSplitter");
-  this->setCentralWidget(tbSplitter);
-  tbSplitter->setChildrenCollapsible(false);
+  QWidget *centralWidget = new QWidget(this);
+  centralWidget->setContentsMargins(0, 0, 0, 0);
+  QVBoxLayout *cwl = new QVBoxLayout();
+  cwl->setSpacing(0);
+  cwl->setContentsMargins(0, 0, 0, 0);
+  cwl->addWidget(stow->tabToolWidget);
+  cwl->addWidget(splitter);
+  centralWidget->setLayout(cwl);
+  this->setCentralWidget(centralWidget);
   
   stow->selectionManager = new slc::Manager(this);
   

@@ -38,6 +38,7 @@
 #include "project/prjproject.h"
 #include "preferences/preferencesXML.h"
 #include "preferences/prfmanager.h"
+#include "dialogs/dlgpreferences.h"
 #include "message/msgnode.h"
 #include "message/msgsift.h"
 #include "application/appfactory.h"
@@ -53,10 +54,15 @@
 using namespace app;
 
 Application::Application(int &argc, char **argv) :
-  QApplication(argc, argv),
-  lodManager(new lod::Manager(arguments().at(0).toStdString()))
+  QApplication(argc, argv)
 {
     qRegisterMetaType<msg::Message>("msg::Message");
+    
+    //check for first run
+    boost::filesystem::path path = boost::filesystem::path(getenv("HOME"));
+    path /= ".CadSeer";
+    if (!boost::filesystem::exists(path))
+      firstRun = true;
     
     node = std::make_unique<msg::Node>();
     node->connect(msg::hub());
@@ -83,6 +89,7 @@ Application::Application(int &argc, char **argv) :
     
     cmd::manager(); //just to construct the singleton and get it ready for messages.
     
+    lodManager = std::make_unique<lod::Manager>(arguments().at(0).toStdString());
     
     setOrganizationName("blobfish");
     setOrganizationDomain("blobfish.org"); //doesn't exist.
@@ -103,6 +110,14 @@ void Application::appStartSlot()
   //if so then don't do the dialog.
   if (!project)
   {
+    if (firstRun)
+    {
+      firstRun = false;
+      dlg::Preferences dialog(&prf::manager(), mainWindow.get());
+      dialog.setModal(true);
+      dialog.exec();
+    }
+    
     dlg::Project dialog(this->getMainWindow());
     if (dialog.exec() == QDialog::Accepted)
     {

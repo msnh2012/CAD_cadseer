@@ -69,10 +69,12 @@ void Widget::setupGui()
   this->setLayout(mainLayout);
   
   toolbar = new QToolBar(this);
+  toolbar->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
   toolbar->addAction(QIcon(":/resources/images/debugExpressionGraph.svg"), tr("Write Graph"), this, SLOT(writeOutGraphSlot()));
   toolbar->addAction(QIcon(":/resources/images/viewExpressionExamples.svg"), tr("Toggle View Examples"), this, SLOT(goExamplesTabSlot()));
   toolbar->addAction(QIcon(":/resources/images/loadExpressionExamples.svg"), tr("Load Examples"), this, SLOT(fillInTestManagerSlot()));
   toolbar->addAction(tr("Dump Links"), this, SLOT(dumpLinksSlot()));
+  toolbar->setContentsMargins(0, 0, 0, 0);
   
   tabWidget = new QTabWidget(this);
   
@@ -80,6 +82,8 @@ void Widget::setupGui()
   splitter->setOrientation(Qt::Vertical);
   splitter->addWidget(toolbar);
   splitter->addWidget(tabWidget);
+  splitter->setCollapsible(1, false);
+  splitter->setSizes(QList<int>({16, 200}));
   splitter->restoreSettings("ExpressionsSplitter");
   mainLayout->addWidget(splitter);
 }
