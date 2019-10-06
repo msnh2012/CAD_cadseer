@@ -102,8 +102,16 @@ namespace cmd
     void constructSweepDispatched(const msg::Message&);
     void constructDraftDispatched(const msg::Message&);
     void constructChamferDispatched(const msg::Message&);
-    void occtExportDispatched(const msg::Message&);
+    void constructBoxDispatched(const msg::Message&);
+    void constructOblongDispatched(const msg::Message&);
+    void constructTorusDispatched(const msg::Message&);
+    void constructCylinderDispatched(const msg::Message&);
+    void constructSphereDispatched(const msg::Message&);
+    void constructConeDispatched(const msg::Message&);
     void revisionDispatched(const msg::Message&);
+    void importDispatched(const msg::Message&);
+    void exportDispatched(const msg::Message&);
+    void preferencesDispatched(const msg::Message&);
     
     //editing functions
     typedef std::function<BasePtr (ftr::Base *)> EditFunction;

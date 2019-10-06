@@ -124,9 +124,9 @@ QIcon Box::icon;
 
 Box::Box() :
   Base(),
-  length(new prm::Parameter(prm::Names::Length, prf::manager().rootPtr->features().box().get().length())),
-  width(new prm::Parameter(prm::Names::Width, prf::manager().rootPtr->features().box().get().width())),
-  height(new prm::Parameter(prm::Names::Height, prf::manager().rootPtr->features().box().get().height())),
+  length(std::make_shared<prm::Parameter>(prm::Names::Length, prf::manager().rootPtr->features().box().get().length())),
+  width(std::make_shared<prm::Parameter>(prm::Names::Width, prf::manager().rootPtr->features().box().get().width())),
+  height(std::make_shared<prm::Parameter>(prm::Names::Height, prf::manager().rootPtr->features().box().get().height())),
   csys(new prm::Parameter(prm::Names::CSys, osg::Matrixd::identity())),
   csysDragger(new ann::CSysDragger(this, csys.get())),
   sShape(new ann::SeerShape())
@@ -221,26 +221,22 @@ void Box::updateIPGroup()
   heightIP->constantHasChanged();
 }
 
-void Box::setLength(const double &lengthIn)
+void Box::setLength(double vIn)
 {
-  length->setValue(lengthIn);
+  assert(length);
+  length->setValue(vIn);
 }
 
-void Box::setWidth(const double &widthIn)
+void Box::setWidth(double vIn)
 {
-  width->setValue(widthIn);
+  assert(width);
+  width->setValue(vIn);
 }
 
-void Box::setHeight(const double &heightIn)
+void Box::setHeight(double vIn)
 {
-  height->setValue(heightIn);
-}
-
-void Box::setParameters(const double &lengthIn, const double &widthIn, const double &heightIn)
-{
-  setLength(lengthIn);
-  setWidth(widthIn);
-  setHeight(heightIn);
+  assert(height);
+  height->setValue(vIn);
 }
 
 void Box::setCSys(const osg::Matrixd &csysIn)
@@ -252,28 +248,6 @@ void Box::setCSys(const osg::Matrixd &csysIn)
   //apply the same transformation to dragger, so dragger moves with it.
   osg::Matrixd diffMatrix = osg::Matrixd::inverse(oldSystem) * csysIn;
   csysDragger->draggerUpdate(csysDragger->dragger->getMatrix() * diffMatrix);
-}
-
-double Box::getLength() const
-{
-  return static_cast<double>(*length);
-}
-
-double Box::getWidth() const
-{
-  return static_cast<double>(*width);
-}
-
-double Box::getHeight() const
-{
-  return static_cast<double>(*height);
-}
-
-void Box::getParameters(double &lengthOut, double &widthOut, double &heightOut) const
-{
-  lengthOut = static_cast<double>(*length);
-  widthOut = static_cast<double>(*width);
-  heightOut = static_cast<double>(*height);
 }
 
 osg::Matrixd Box::getCSys() const

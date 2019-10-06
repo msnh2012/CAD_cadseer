@@ -17,28 +17,51 @@
  *
  */
 
-#ifndef CMD_OCCTEXPORT_H
-#define CMD_OCCTEXPORT_H
+#ifndef CMD_TORUS_H
+#define CMD_TORUS_H
 
 #include "command/cmdbase.h"
+
+namespace dlg{class Torus;}
+namespace ftr{class Torus;}
 
 namespace cmd
 {
   /**
   * @todo write docs
   */
-  class OCCTExport : public Base
+  class Torus : public Base
   {
   public:
-    OCCTExport();
-    ~OCCTExport() override;
+    Torus();
+    ~Torus() override;
     
-    std::string getCommandName() override{return "OCCTExport";}
+    std::string getCommandName() override{return "Torus";}
     std::string getStatusMessage() override;
     void activate() override;
     void deactivate() override;
   private:
     void go();
+    bool firstRun = true;
+    dlg::Torus *dialog = nullptr;
+  };
+  
+  /**
+  * @todo write docs
+  */
+  class TorusEdit : public Base
+  {
+  public:
+    TorusEdit(ftr::Base*);
+    ~TorusEdit() override;
+    
+    std::string getCommandName() override{return "Torus Edit";}
+    std::string getStatusMessage() override;
+    void activate() override;
+    void deactivate() override;
+  private:
+    dlg::Torus *dialog = nullptr;
+    ftr::Torus *feature = nullptr;
   };
 }
-#endif // CMD_OCCTEXPORT_H
+#endif // CMD_TORUS_H

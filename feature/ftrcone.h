@@ -39,15 +39,13 @@ namespace ftr
   public:
     Cone();
     virtual ~Cone() override;
-    void setRadius1(const double &radius1In);
-    void setRadius2(const double &radius2In);
-    void setHeight(const double &heightIn);
-    void setParameters(const double &radius1In, const double &radius2In, const double &heightIn);
+    void setRadius1(double radius1In);
+    void setRadius2(double radius2In);
+    void setHeight(double heightIn);
     void setCSys(const osg::Matrixd&);
-    double getRadius1() const;
-    double getRadius2() const;
-    double getHeight() const;
-    void getParameters (double &radius1Out, double &radius2Out, double &heightOut) const;
+    const prm::Parameter& getRadius1() const;
+    const prm::Parameter& getRadius2() const;
+    const prm::Parameter& getHeight() const;
     osg::Matrixd getCSys() const;
     
     virtual void updateModel(const UpdatePayload&) override;

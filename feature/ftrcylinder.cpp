@@ -155,20 +155,14 @@ void Cylinder::updateIPGroup()
   radiusIP->constantHasChanged();
 }
 
-void Cylinder::setRadius(const double& radiusIn)
+void Cylinder::setRadius(double radiusIn)
 {
   radius->setValue(radiusIn);
 }
 
-void Cylinder::setHeight(const double& heightIn)
+void Cylinder::setHeight(double heightIn)
 {
   height->setValue(heightIn);
-}
-
-void Cylinder::setParameters(const double& radiusIn, const double& heightIn)
-{
-  setRadius(radiusIn);
-  setHeight(heightIn);
 }
 
 void Cylinder::setCSys(const osg::Matrixd &csysIn)
@@ -182,20 +176,14 @@ void Cylinder::setCSys(const osg::Matrixd &csysIn)
   csysDragger->draggerUpdate(csysDragger->dragger->getMatrix() * diffMatrix);
 }
 
-double Cylinder::getRadius() const
+const prm::Parameter& Cylinder::getRadius() const
 {
-  return static_cast<double>(*radius);
+  return *radius;
 }
 
-double Cylinder::getHeight() const
+const prm::Parameter& Cylinder::getHeight() const
 {
-  return static_cast<double>(*height);
-}
-
-void Cylinder::getParameters(double& radiusOut, double& heightOut) const
-{
-  radiusOut = static_cast<double>(*radius);
-  heightOut = static_cast<double>(*height);
+  return *height;
 }
 
 osg::Matrixd Cylinder::getCSys() const

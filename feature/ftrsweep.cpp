@@ -1047,7 +1047,8 @@ void Sweep::updateModel(const UpdatePayload &pIn)
         if (processed.count(occt::getShapeHash(gwl.First())) == 0)
         {
           processed.insert(occt::getShapeHash(gwl.First()));
-          goIdWire(cv, TopoDS::Wire(gwl.First()));
+          if (gwl.First().ShapeType() == TopAbs_WIRE)
+            goIdWire(cv, TopoDS::Wire(gwl.First()));
         }
         else 
           duplicateVertex = cv;

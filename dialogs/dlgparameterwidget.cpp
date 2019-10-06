@@ -23,6 +23,7 @@
 #include <QGridLayout>
 #include <QLabel>
 #include <QLineEdit>
+#include <QTimer>
 
 #include "application/appapplication.h"
 #include "project/prjproject.h"
@@ -42,6 +43,7 @@ ParameterWidget::ParameterWidget(QWidget *parent, const std::vector<prm::Paramet
 : QWidget(parent)
 , parameters(psIn)
 {
+  assert(!parameters.empty()); //don't pass me an empty vector of parameters.
   buildGui();
 }
 
@@ -61,6 +63,7 @@ void ParameterWidget::buildGui()
     layout->addWidget(c->getLabel(), row, column++, Qt::AlignVCenter | Qt::AlignRight);
     layout->addWidget(c->getEditor(), row++, column--, Qt::AlignVCenter | Qt::AlignLeft);
   }
+  QTimer::singleShot(0, containers.front()->getEditor(), SLOT(setFocus()));
   this->setLayout(layout);
 }
 
@@ -93,7 +96,7 @@ ParameterContainer::ParameterContainer(QWidget *parent, prm::Parameter *paramete
   stow->editor->lineEdit->installEventFilter(ef);
   QObject::connect(filter, SIGNAL(requestLinkSignal(QString)), this, SLOT(requestParameterLinkSlot(QString)));
   QObject::connect(stow->editor->lineEdit, SIGNAL(textEdited(QString)), this, SLOT(textEditedParameterSlot(QString)));
-  QObject::connect(ef, SIGNAL(enterPressed()), this, SLOT(updateParameterSlot()));
+  QObject::connect(stow->editor->lineEdit, SIGNAL(editingFinished()), this, SLOT(updateParameterSlot()));
   QObject::connect(stow->editor->trafficLabel, SIGNAL(requestUnlinkSignal()), this, SLOT(requestParameterUnlinkSlot()));
   
   if (stow->parameter->isConstant())
@@ -229,7 +232,6 @@ void ParameterContainer::updateParameterSlot()
     app::instance()->queuedMessage(msg::buildStatusMessage(QObject::tr("Parsing failed").toStdString(), 2.0));
   }
   stow->editor->lineEdit->setText(QString::number(static_cast<double>(*stow->parameter), 'f', 12));
-  stow->editor->lineEdit->selectAll();
   stow->editor->trafficLabel->setTrafficGreenSlot();
 }
 

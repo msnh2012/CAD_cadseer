@@ -38,9 +38,9 @@ namespace ftr
   public:
     Sphere();
     virtual ~Sphere() override;
-    void setRadius(const double &radiusIn);
+    void setRadius(double radiusIn);
     void setCSys(const osg::Matrixd&);
-    double getRadius() const;
+    const prm::Parameter& getRadius() const;
     osg::Matrixd getCSys() const;
     
     virtual void updateModel(const UpdatePayload&) override;

@@ -415,21 +415,8 @@ void Manager::Stow::setAllMenu()
     
     srl::MenuNode fileBase(":/resources/images/fileBase.svg", QObject::tr("File Menu").toStdString());
     {
-      {
-        srl::MenuNode fileImport(":/resources/images/fileImport.svg", QObject::tr("Import Menu").toStdString());
-        fileImport.commandIds().push_back(67);
-        fileImport.commandIds().push_back(68);
-        fileBase.subMenus().push_back(fileImport);
-      }
-      
-      {
-        srl::MenuNode fileExport(":/resources/images/fileExport.svg", QObject::tr("Export Menu").toStdString());
-        fileExport.commandIds().push_back(69);
-        fileExport.commandIds().push_back(70);
-        fileExport.commandIds().push_back(71);
-        fileBase.subMenus().push_back(fileExport);
-      }
-      
+      fileBase.commandIds().push_back(67);
+      fileBase.commandIds().push_back(69);
       fileBase.commandIds().push_back(64);
       fileBase.commandIds().push_back(65);
       fileBase.commandIds().push_back(66);
@@ -752,11 +739,10 @@ void Manager::Stow::setAllToolbars()
         entry.visual() = srl::Visual();
         entry.visual().get().icon() = ":/resources/images/fileImport.svg";
         entry.visual().get().iconText() = QObject::tr("Import").toStdString();
-        entry.visual().get().statusText() = QObject::tr("Import").toStdString();
-        entry.visual().get().whatThisText() = QObject::tr("Import File Menu").toStdString();
-        entry.visual().get().toolTipText() = QObject::tr("Import").toStdString();
-        entry.commandIds().push_back(67); //brep
-        entry.commandIds().push_back(68); //step
+        entry.visual().get().statusText() = QObject::tr("Import File").toStdString();
+        entry.visual().get().whatThisText() = QObject::tr("Import File").toStdString();
+        entry.visual().get().toolTipText() = QObject::tr("Import File").toStdString();
+        entry.commandIds().push_back(67);
         toolbar.entries().push_back(entry);
       }
       {
@@ -765,12 +751,10 @@ void Manager::Stow::setAllToolbars()
         entry.visual() = srl::Visual();
         entry.visual().get().icon() = ":/resources/images/fileExport.svg";
         entry.visual().get().iconText() = QObject::tr("Export").toStdString();
-        entry.visual().get().statusText() = QObject::tr("Export").toStdString();
-        entry.visual().get().whatThisText() = QObject::tr("Export File Menu").toStdString();
-        entry.visual().get().toolTipText() = QObject::tr("Export").toStdString();
-        entry.commandIds().push_back(69); //OSG
-        entry.commandIds().push_back(71); //brep
-        entry.commandIds().push_back(70); //step
+        entry.visual().get().statusText() = QObject::tr("Export File").toStdString();
+        entry.visual().get().whatThisText() = QObject::tr("Export File").toStdString();
+        entry.visual().get().toolTipText() = QObject::tr("Export File").toStdString();
+        entry.commandIds().push_back(69);
         toolbar.entries().push_back(entry);
       }
 
@@ -1507,52 +1491,22 @@ void Manager::Stow::setAllCommands()
   sc
   (
     67
-    , ":/resources/images/fileOCC.svg"
-    , QObject::tr("Brep").toStdString() //icon text
-    , QObject::tr("Import BRep").toStdString() //status text
-    , QObject::tr("Import OpenCasCades BRep File").toStdString() //whats this text
-    , QObject::tr("Import BRep").toStdString() // toolTipText
-    , msg::Request | msg::Import | msg::OCC
-  );
-  sc
-  (
-    68
-    , ":/resources/images/fileStep.svg"
-    , QObject::tr("Step").toStdString() //icon text
-    , QObject::tr("Import Step").toStdString() //status text
-    , QObject::tr("Imports A Step File").toStdString() //whats this text
-    , QObject::tr("Import Step").toStdString() // toolTipText
-    , msg::Request | msg::Import | msg::Step
+    , ":/resources/images/fileImport.svg"
+    , QObject::tr("Import").toStdString() //icon text
+    , QObject::tr("Import File").toStdString() //status text
+    , QObject::tr("Import File").toStdString() //whats this text
+    , QObject::tr("Import File").toStdString() // toolTipText
+    , msg::Request | msg::Import
   );
   sc
   (
     69
-    , ":/resources/images/fileOSG.svg"
-    , QObject::tr("OSG").toStdString() //icon text
-    , QObject::tr("Export OSG").toStdString() //status text
-    , QObject::tr("Exports An OpenSceneGraph File").toStdString() //whats this text
-    , QObject::tr("Export OSG").toStdString() // toolTipText
-    , msg::Request | msg::Export | msg::OSG
-  );
-  sc
-  (
-    70
-    , ":/resources/images/fileOCC.svg"
-    , QObject::tr("Brep").toStdString() //icon text
-    , QObject::tr("Export BRep").toStdString() //status text
-    , QObject::tr("Exports An OpenCasCade BRep File").toStdString() //whats this text
-    , QObject::tr("Export BRep").toStdString() // toolTipText
-    , msg::Request | msg::Export | msg::OCC
-  );
-  sc
-  (
-    71
-    , ":/resources/images/fileStep.svg"
-    , QObject::tr("Step").toStdString() //icon text
-    , QObject::tr("Export Step").toStdString() //status text
-    , QObject::tr("Exports A Step File").toStdString() //whats this text
-    , QObject::tr("Export Step").toStdString() // toolTipText
-    , msg::Request | msg::Export | msg::Step
+    , ":/resources/images/fileExport.svg"
+    , QObject::tr("Export").toStdString() //icon text
+    , QObject::tr("Export File").toStdString() //status text
+    , QObject::tr("Exports File").toStdString() //whats this text
+    , QObject::tr("Export File").toStdString() // toolTipText
+    , msg::Request | msg::Export
   );
   sc
   (

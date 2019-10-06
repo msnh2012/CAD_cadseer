@@ -60,6 +60,7 @@
 #include "project/prjgitmanager.h"
 #include "project/prjmessage.h"
 #include "tools/graphtools.h"
+#include "tools/tlsnameindexer.h"
 #include "project/prjfeatureload.h"
 #include "project/serial/xsdcxxoutput/shapehistory.h"
 #include "project/serial/xsdcxxoutput/project.h"
@@ -221,7 +222,7 @@ void Project::readOCC(const std::string &fileName)
   BRepTools::Read(base, file, junk);
   
   boost::filesystem::path p = fileName;
-  addOCCShape(base, p.filename().string());
+  addOCCShape(base, p.stem().string());
 }
 
 bool Project::hasFeature(const boost::uuids::uuid &idIn) const
@@ -241,15 +242,37 @@ prm::Parameter* Project::findParameter(const uuid &idIn) const
 
 void Project::addOCCShape(const TopoDS_Shape &shapeIn, std::string name)
 {
-  TopoDS_Shape cleaned = shapeIn;
-  if (cleaned.ShapeType() == TopAbs_COMPOUND)
-    cleaned = occt::getLastUniqueCompound(TopoDS::Compound(shapeIn));
-  if (cleaned.IsNull())
-    cleaned = shapeIn;
-  std::shared_ptr<ftr::Inert> inert(new ftr::Inert(cleaned));
-  addFeature(inert);
-  if (!name.empty())
-    inert->setName(QString::fromStdString(name));
+  if (name.empty())
+    name = QObject::tr("Dummy").toStdString();
+  occt::ShapeVector shapes = occt::getNonCompounds(shapeIn);
+  
+  auto addShape = [&](const TopoDS_Shape &shapeIn, const std::string &nameIn)
+  {
+    auto inert = std::make_shared<ftr::Inert>(shapeIn);
+    addFeature(inert);
+    inert->setName(QString::fromStdString(nameIn));
+  };
+  
+  if (shapes.empty())
+    return;
+  else if (shapes.size() == 1)
+  {
+    if (shapes.front().IsNull())
+      return;
+    addShape(shapes.front(), name);
+    return;
+  }
+  
+  tls::NameIndexer ni(shapes.size());
+  for (const auto &s : shapes)
+  {
+    if (s.IsNull())
+    {
+      ni.bump(); //to show the skipped item.
+      continue;
+    }
+    addShape(s, name + "_" + ni.buildSuffix());
+  }
 }
 
 void Project::addFeature(std::shared_ptr<ftr::Base> feature)

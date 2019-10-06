@@ -168,26 +168,19 @@ void Cone::updateIPGroup()
   radius2IP->constantHasChanged();
 }
 
-void Cone::setRadius1(const double& radius1In)
+void Cone::setRadius1(double radius1In)
 {
   radius1->setValue(radius1In);
 }
 
-void Cone::setRadius2(const double& radius2In)
+void Cone::setRadius2(double radius2In)
 {
   radius2->setValue(radius2In);
 }
 
-void Cone::setHeight(const double& heightIn)
+void Cone::setHeight(double heightIn)
 {
   height->setValue(heightIn);
-}
-
-void Cone::setParameters(const double& radius1In, const double& radius2In, const double& heightIn)
-{
-  setRadius1(radius1In);
-  setRadius2(radius2In);
-  setHeight(heightIn);
 }
 
 void Cone::setCSys(const osg::Matrixd &csysIn)
@@ -201,26 +194,19 @@ void Cone::setCSys(const osg::Matrixd &csysIn)
   csysDragger->draggerUpdate(csysDragger->dragger->getMatrix() * diffMatrix);
 }
 
-double Cone::getRadius1() const
+const prm::Parameter& Cone::getRadius1() const
 {
-  return static_cast<double>(*radius1);
+  return *radius1;
 }
 
-double Cone::getRadius2() const
+const prm::Parameter& Cone::getRadius2() const
 {
-  return static_cast<double>(*radius2);
+  return *radius2;
 }
 
-double Cone::getHeight() const
+const prm::Parameter& Cone::getHeight() const
 {
-  return static_cast<double>(*height);
-}
-
-void Cone::getParameters(double& radius1Out, double& radius2Out, double& heightOut) const
-{
-  radius1Out = static_cast<double>(*radius1);
-  radius2Out = static_cast<double>(*radius2);
-  heightOut = static_cast<double>(*height);
+  return *height;
 }
 
 osg::Matrixd Cone::getCSys() const

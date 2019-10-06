@@ -38,16 +38,13 @@ namespace ftr
     Oblong();
     virtual ~Oblong() override;
     
-    void setLength(const double &lengthIn);
-    void setWidth(const double &widthIn);
-    void setHeight(const double &heightIn);
-    void setParameters(const double &lengthIn, const double &widthIn, const double &heightIn);
+    void setLength(double);
+    const std::shared_ptr<prm::Parameter>& getLength() const {return length;}
+    void setWidth(double);
+    const std::shared_ptr<prm::Parameter>& getWidth() const {return width;}
+    void setHeight(double);
+    const std::shared_ptr<prm::Parameter>& getHeight() const {return height;}
     void setCSys(const osg::Matrixd&);
-    
-    double getLength() const;
-    double getWidth() const;
-    double getHeight() const;
-    void getParameters (double &lengthOut, double &widthOut, double &heightOut) const;
     osg::Matrixd getCSys() const;
     
     virtual void updateModel(const UpdatePayload&) override;
@@ -58,9 +55,9 @@ namespace ftr
     virtual void serialWrite(const boost::filesystem::path&) override; //!< write xml file. not const, might reset a modified flag.
     void serialRead(const prj::srl::FeatureOblong &sOblong);
   protected:
-    std::unique_ptr<prm::Parameter> length;
-    std::unique_ptr<prm::Parameter> width;
-    std::unique_ptr<prm::Parameter> height;
+    std::shared_ptr<prm::Parameter> length;
+    std::shared_ptr<prm::Parameter> width;
+    std::shared_ptr<prm::Parameter> height;
     std::unique_ptr<prm::Parameter> csys;
   
     std::unique_ptr<ann::CSysDragger> csysDragger;

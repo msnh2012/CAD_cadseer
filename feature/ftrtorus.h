@@ -37,12 +37,13 @@ namespace ftr
     Torus();
     virtual ~Torus() override;
     
-    void setRadius1(const double &lengthIn);
-    void setRadius2(const double &lengthIn);
-    void setCSys(const osg::Matrixd&);
+    void setRadius1(double lengthIn);
+    void setRadius2(double lengthIn);
     
-    double getRadius1() const;
-    double getRadius2() const;
+    const prm::Parameter& getRadius1() const;
+    const prm::Parameter& getRadius2() const;
+    
+    void setCSys(const osg::Matrixd&);
     osg::Matrixd getCSys() const;
     
     virtual void serialWrite(const boost::filesystem::path&) override;

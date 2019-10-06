@@ -90,12 +90,12 @@ Torus::~Torus(){}
 
 
 
-void Torus::setRadius1(const double& radius1In)
+void Torus::setRadius1(double radius1In)
 {
   radius1->setValue(radius1In);
 }
 
-void Torus::setRadius2(const double& radius2In)
+void Torus::setRadius2(double radius2In)
 {
   radius2->setValue(radius2In);
 }
@@ -111,14 +111,14 @@ void Torus::setCSys(const osg::Matrixd &csysIn)
   csysDragger->draggerUpdate(csysDragger->dragger->getMatrix() * diffMatrix);
 }
 
-double Torus::getRadius1() const
+const prm::Parameter& Torus::getRadius1() const
 {
-  return static_cast<double>(*radius1);
+  return *radius1;
 }
 
-double Torus::getRadius2() const
+const prm::Parameter& Torus::getRadius2() const
 {
-  return static_cast<double>(*radius2);
+  return *radius2;
 }
 
 osg::Matrixd Torus::getCSys() const

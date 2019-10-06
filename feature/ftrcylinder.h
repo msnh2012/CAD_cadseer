@@ -37,13 +37,11 @@ namespace ftr
   public:
     Cylinder();
     virtual ~Cylinder() override;
-    void setRadius(const double &radiusIn);
-    void setHeight(const double &heightIn);
-    void setParameters(const double &radiusIn, const double &heightIn);
+    void setRadius(double radiusIn);
+    void setHeight(double heightIn);
+    const prm::Parameter& getRadius() const;
+    const prm::Parameter& getHeight() const;
     void setCSys(const osg::Matrixd&);
-    double getRadius() const;
-    double getHeight() const;
-    void getParameters (double &radiusOut, double &heightOut) const;
     osg::Matrixd getCSys() const;
     
     virtual void updateModel(const UpdatePayload&) override;

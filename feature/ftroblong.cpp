@@ -210,26 +210,22 @@ void Oblong::initializeMaps()
   insertIntoFeatureMap(tempIds.at(34), FeatureTag::VertexXNYNZN);
 }
 
-void Oblong::setLength(const double &lengthIn)
+void Oblong::setLength(double vIn)
 {
-  length->setValue(lengthIn);
+  assert(length);
+  length->setValue(vIn);
 }
 
-void Oblong::setWidth(const double &widthIn)
+void Oblong::setWidth(double vIn)
 {
-  width->setValue(widthIn);
+  assert(width);
+  width->setValue(vIn);
 }
 
-void Oblong::setHeight(const double &heightIn)
+void Oblong::setHeight(double vIn)
 {
-  height->setValue(heightIn);
-}
-
-void Oblong::setParameters(const double &lengthIn, const double &widthIn, const double &heightIn)
-{
-  setLength(lengthIn);
-  setWidth(widthIn);
-  setHeight(heightIn);
+  assert(height);
+  height->setValue(vIn);
 }
 
 void Oblong::setCSys(const osg::Matrixd &csysIn)
@@ -241,28 +237,6 @@ void Oblong::setCSys(const osg::Matrixd &csysIn)
   //apply the same transformation to dragger, so dragger moves with it.
   osg::Matrixd diffMatrix = osg::Matrixd::inverse(oldSystem) * csysIn;
   csysDragger->draggerUpdate(csysDragger->dragger->getMatrix() * diffMatrix);
-}
-
-double Oblong::getLength() const
-{
-  return static_cast<double>(*length);
-}
-
-double Oblong::getWidth() const
-{
-  return static_cast<double>(*width);
-}
-
-double Oblong::getHeight() const
-{
-  return static_cast<double>(*height);
-}
-
-void Oblong::getParameters (double &lengthOut, double &widthOut, double &heightOut) const
-{
-  lengthOut = static_cast<double>(*length);
-  widthOut = static_cast<double>(*width);
-  heightOut = static_cast<double>(*height);
 }
 
 osg::Matrixd Oblong::getCSys() const

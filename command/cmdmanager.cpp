@@ -70,9 +70,17 @@
 #include "command/cmdruled.h"
 #include "command/cmdimageplane.h"
 #include "command/cmdsweep.h"
-#include "command/cmdocctexport.h"
 #include "command/cmddraft.h"
 #include "command/cmdchamfer.h"
+#include "command/cmdbox.h"
+#include "command/cmdoblong.h"
+#include "command/cmdtorus.h"
+#include "command/cmdcylinder.h"
+#include "command/cmdsphere.h"
+#include "command/cmdcone.h"
+#include "command/cmdimport.h"
+#include "command/cmdexport.h"
+#include "command/cmdpreferences.h"
 #include "message/msgnode.h"
 #include "message/msgsift.h"
 #include "selection/slcmessage.h"
@@ -375,13 +383,53 @@ void Manager::setupDispatcher()
       )
       , std::make_pair
       (
-        msg::Request | msg::Export | msg::OCC
-        , std::bind(&Manager::occtExportDispatched, this, std::placeholders::_1)
+        msg::Request | msg::Construct | msg::Box
+      , std::bind(&Manager::constructBoxDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Construct | msg::Oblong
+      , std::bind(&Manager::constructOblongDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Construct | msg::Torus
+      , std::bind(&Manager::constructTorusDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Construct | msg::Cylinder
+      , std::bind(&Manager::constructCylinderDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Construct | msg::Sphere
+      , std::bind(&Manager::constructSphereDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Construct | msg::Cone
+      , std::bind(&Manager::constructConeDispatched, this, std::placeholders::_1)
       )
       , std::make_pair
       (
         msg::Request | msg::Project | msg::Revision | msg::Dialog
         , std::bind(&Manager::revisionDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Import
+        , std::bind(&Manager::importDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Export
+        , std::bind(&Manager::exportDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Preferences
+        , std::bind(&Manager::preferencesDispatched, this, std::placeholders::_1)
       )
     }
   );
@@ -711,9 +759,49 @@ void Manager::constructChamferDispatched(const msg::Message&)
   addCommand(std::make_shared<Chamfer>());
 }
 
-void Manager::occtExportDispatched(const msg::Message&)
+void Manager::constructBoxDispatched(const msg::Message&)
 {
-  addCommand(std::make_shared<OCCTExport>());
+  addCommand(std::make_shared<Box>());
+}
+
+void Manager::constructOblongDispatched(const msg::Message&)
+{
+  addCommand(std::make_shared<Oblong>());
+}
+
+void Manager::constructTorusDispatched(const msg::Message&)
+{
+  addCommand(std::make_shared<Torus>());
+}
+
+void Manager::constructCylinderDispatched(const msg::Message&)
+{
+  addCommand(std::make_shared<Cylinder>());
+}
+
+void Manager::constructSphereDispatched(const msg::Message&)
+{
+  addCommand(std::make_shared<Sphere>());
+}
+
+void Manager::constructConeDispatched(const msg::Message&)
+{
+  addCommand(std::make_shared<Cone>());
+}
+
+void Manager::importDispatched(const msg::Message&)
+{
+  addCommand(std::make_shared<Import>());
+}
+
+void Manager::exportDispatched(const msg::Message&)
+{
+  addCommand(std::make_shared<Export>());
+}
+
+void Manager::preferencesDispatched(const msg::Message&)
+{
+  addCommand(std::make_shared<Preferences>());
 }
 
 //editing commands and dispatching.
@@ -803,6 +891,36 @@ BasePtr editChamfer(ftr::Base *feature)
   return std::make_shared<ChamferEdit>(feature);
 }
 
+BasePtr editBox(ftr::Base *feature)
+{
+  return std::make_shared<BoxEdit>(feature);
+}
+
+BasePtr editOblong(ftr::Base *feature)
+{
+  return std::make_shared<OblongEdit>(feature);
+}
+
+BasePtr editTorus(ftr::Base *feature)
+{
+  return std::make_shared<TorusEdit>(feature);
+}
+
+BasePtr editCylinder(ftr::Base *feature)
+{
+  return std::make_shared<CylinderEdit>(feature);
+}
+
+BasePtr editSphere(ftr::Base *feature)
+{
+  return std::make_shared<SphereEdit>(feature);
+}
+
+BasePtr editCone(ftr::Base *feature)
+{
+  return std::make_shared<ConeEdit>(feature);
+}
+
 void Manager::setupEditFunctionMap()
 {
   editFunctionMap.insert(std::make_pair(ftr::Type::Blend, std::bind(editBlend, std::placeholders::_1)));
@@ -816,4 +934,10 @@ void Manager::setupEditFunctionMap()
   editFunctionMap.insert(std::make_pair(ftr::Type::Draft, std::bind(editDraft, std::placeholders::_1)));
   editFunctionMap.insert(std::make_pair(ftr::Type::Extract, std::bind(editExtract, std::placeholders::_1)));
   editFunctionMap.insert(std::make_pair(ftr::Type::Chamfer, std::bind(editChamfer, std::placeholders::_1)));
+  editFunctionMap.insert(std::make_pair(ftr::Type::Box, std::bind(editBox, std::placeholders::_1)));
+  editFunctionMap.insert(std::make_pair(ftr::Type::Oblong, std::bind(editOblong, std::placeholders::_1)));
+  editFunctionMap.insert(std::make_pair(ftr::Type::Torus, std::bind(editTorus, std::placeholders::_1)));
+  editFunctionMap.insert(std::make_pair(ftr::Type::Cylinder, std::bind(editCylinder, std::placeholders::_1)));
+  editFunctionMap.insert(std::make_pair(ftr::Type::Sphere, std::bind(editSphere, std::placeholders::_1)));
+  editFunctionMap.insert(std::make_pair(ftr::Type::Cone, std::bind(editCone, std::placeholders::_1)));
 }

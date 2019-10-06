@@ -96,7 +96,7 @@ Sphere::~Sphere()
 
 }
 
-void Sphere::setRadius(const double& radiusIn)
+void Sphere::setRadius(double radiusIn)
 {
   radius->setValue(radiusIn);
 }
@@ -112,9 +112,9 @@ void Sphere::setCSys(const osg::Matrixd &csysIn)
   csysDragger->draggerUpdate(csysDragger->dragger->getMatrix() * diffMatrix);
 }
 
-double Sphere::getRadius() const
+const prm::Parameter& Sphere::getRadius() const
 {
-  return static_cast<double>(*radius);
+  return *radius;
 }
 
 osg::Matrixd Sphere::getCSys() const

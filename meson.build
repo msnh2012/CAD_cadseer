@@ -194,7 +194,8 @@ selection_sources = ['selection/slceventhandler.cpp'
 tools_sources = ['tools/idtools.cpp'
   , 'tools/infotools.cpp'
   , 'tools/occtools.cpp'
-  , 'tools/featuretools.cpp']
+  , 'tools/featuretools.cpp'
+  , 'tools/tlsnameindexer.cpp']
   
 dialog_sources = ['dialogs/dlgparameter.cpp'
   , 'dialogs/dlgcheckgeometry.cpp'
@@ -222,7 +223,13 @@ dialog_sources = ['dialogs/dlgparameter.cpp'
   , 'dialogs/dlgdraft.cpp'
   , 'dialogs/dlgbase.cpp'
   , 'dialogs/dlgextract.cpp'
-  , 'dialogs/dlgchamfer.cpp']
+  , 'dialogs/dlgchamfer.cpp'
+  , 'dialogs/dlgbox.cpp'
+  , 'dialogs/dlgoblong.cpp'
+  , 'dialogs/dlgtorus.cpp'
+  , 'dialogs/dlgcylinder.cpp'
+  , 'dialogs/dlgsphere.cpp'
+  , 'dialogs/dlgcone.cpp']
   
 preference_sources = ['preferences/preferencesXML.cpp', 'preferences/prfmanager.cpp']
 
@@ -333,11 +340,19 @@ command_sources = ['command/cmdmanager.cpp'
   , 'command/cmdtransitioncurve.cpp'
   , 'command/cmdruled.cpp'
   , 'command/cmdimageplane.cpp'
-  , 'command/cmdocctexport.cpp'
   , 'command/cmdsweep.cpp'
   , 'command/cmdboolean.cpp'
   , 'command/cmddraft.cpp'
-  , 'command/cmdchamfer.cpp']
+  , 'command/cmdchamfer.cpp'
+  , 'command/cmdbox.cpp'
+  , 'command/cmdoblong.cpp'
+  , 'command/cmdtorus.cpp'
+  , 'command/cmdcylinder.cpp'
+  , 'command/cmdsphere.cpp'
+  , 'command/cmdcone.cpp'
+  , 'command/cmdimport.cpp'
+  , 'command/cmdexport.cpp'
+  , 'command/cmdpreferences.cpp']
   
 law_sources = ['law/lwfcue.cpp']
 
@@ -451,7 +466,13 @@ cadseer_moc_hdrs = ['viewer/vwrwidget.h'
   , 'dialogs/dlgdraft.h'
   , 'dialogs/dlgbase.h'
   , 'dialogs/dlgextract.h'
-  , 'dialogs/dlgchamfer.h']
+  , 'dialogs/dlgchamfer.h'
+  , 'dialogs/dlgbox.h'
+  , 'dialogs/dlgoblong.h'
+  , 'dialogs/dlgtorus.h'
+  , 'dialogs/dlgcylinder.h'
+  , 'dialogs/dlgsphere.h'
+  , 'dialogs/dlgcone.h']
   
 cadseer_resources = ['resources.qrc']
 
