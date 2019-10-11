@@ -229,7 +229,8 @@ dialog_sources = ['dialogs/dlgparameter.cpp'
   , 'dialogs/dlgtorus.cpp'
   , 'dialogs/dlgcylinder.cpp'
   , 'dialogs/dlgsphere.cpp'
-  , 'dialogs/dlgcone.cpp']
+  , 'dialogs/dlgcone.cpp'
+  , 'dialogs/dlgremove.cpp']
   
 preference_sources = ['preferences/preferencesXML.cpp', 'preferences/prfmanager.cpp']
 
@@ -352,7 +353,8 @@ command_sources = ['command/cmdmanager.cpp'
   , 'command/cmdcone.cpp'
   , 'command/cmdimport.cpp'
   , 'command/cmdexport.cpp'
-  , 'command/cmdpreferences.cpp']
+  , 'command/cmdpreferences.cpp'
+  , 'command/cmdremove.cpp']
   
 law_sources = ['law/lwfcue.cpp']
 
@@ -472,7 +474,8 @@ cadseer_moc_hdrs = ['viewer/vwrwidget.h'
   , 'dialogs/dlgtorus.h'
   , 'dialogs/dlgcylinder.h'
   , 'dialogs/dlgsphere.h'
-  , 'dialogs/dlgcone.h']
+  , 'dialogs/dlgcone.h'
+  , 'dialogs/dlgremove.h']
   
 cadseer_resources = ['resources.qrc']
 

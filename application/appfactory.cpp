@@ -125,11 +125,6 @@ void Factory::setupDispatcher()
       )
       , std::make_pair
       (
-        msg::Request | msg::Remove
-      , std::bind(&Factory::removeDispatched, this, std::placeholders::_1)
-      )
-      , std::make_pair
-      (
         msg::Request | msg::DebugDump
       , std::bind(&Factory::debugDumpDispatched, this, std::placeholders::_1)
       )
@@ -268,33 +263,6 @@ void Factory::newHollowDispatched(const msg::Message&)
   node->sendBlocked(msg::buildHideOverlay(targetFeatureId));
   
   node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
-  node->send(msg::Mask(msg::Request | msg::Project | msg::Update));
-}
-
-void Factory::removeDispatched(const msg::Message&)
-{
-  //containers is wired up message so it will be changing as we delete(remove from selection)
-  //so cache a copy to work with first.
-  slc::Containers selection = containers;
-  
-  if (selection.empty())
-  {
-    node->send(msg::buildStatusMessage("Invalid Preselection For Remove", 2.0));
-    return;
-  }
-  
-  node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
-  
-  for (const auto &current : selection)
-  {
-    if (current.selectionType != slc::Type::Object)
-      continue;
-    prj::Message payload;
-    payload.featureIds.push_back(current.featureId);
-    msg::Message removeMessage(msg::Request | msg::Remove | msg::Feature, payload);
-    node->send(removeMessage);
-  }
-  
   node->send(msg::Mask(msg::Request | msg::Project | msg::Update));
 }
 

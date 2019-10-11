@@ -1,6 +1,6 @@
 /*
  * CadSeer. Parametric Solid Modeling.
- * Copyright (C) %YEAR% Thomas S. Anderson blobfish.at.gmx.com
+ * Copyright (C) 2019 Thomas S. Anderson blobfish.at.gmx.com
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,38 +17,32 @@
  *
  */
 
-#ifndef DLG_%CLASSNAMEUPPERCASE%_H
-#define DLG_%CLASSNAMEUPPERCASE%_H
+#ifndef CMD_REMOVE_H
+#define CMD_REMOVE_H
 
-#include <memory>
+#include "command/cmdbase.h"
 
-#include "dialogs/dlgbase.h"
+namespace dlg{class Remove;}
 
-namespace ftr{class %CLASSNAME%;}
-
-namespace dlg
+namespace cmd
 {
   /**
   * @todo write docs
   */
-  class %CLASSNAME% : public Base
+  class Remove : public Base
   {
-    Q_OBJECT
   public:
-    %CLASSNAME%(ftr::%CLASSNAME%*, QWidget*, bool = false);
-    ~%CLASSNAME%() override;
-  public Q_SLOTS:
-    void reject() override;
-    void accept() override;
-  private:
-    struct Stow;
-    std::unique_ptr<Stow> stow;
+    Remove();
+    ~Remove() override;
     
-    void init();
-    void buildGui();
-    void loadFeatureData();
-    void finishDialog();
+    std::string getCommandName() override{return "Remove";}
+    std::string getStatusMessage() override;
+    void activate() override;
+    void deactivate() override;
+  private:
+    void go();
+    bool firstRun = true;
+    dlg::Remove *dialog = nullptr;
   };
 }
-
-#endif // DLG_%CLASSNAMEUPPERCASE%_H
+#endif // CMD_REMOVE_H

@@ -1,6 +1,6 @@
 /*
  * CadSeer. Parametric Solid Modeling.
- * Copyright (C) %YEAR% Thomas S. Anderson blobfish.at.gmx.com
+ * Copyright (C) 2019 Thomas S. Anderson blobfish.at.gmx.com
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,26 +17,24 @@
  *
  */
 
-#ifndef DLG_%CLASSNAMEUPPERCASE%_H
-#define DLG_%CLASSNAMEUPPERCASE%_H
+#ifndef DLG_REMOVE_H
+#define DLG_REMOVE_H
 
 #include <memory>
 
-#include "dialogs/dlgbase.h"
-
-namespace ftr{class %CLASSNAME%;}
+#include <QDialog>
 
 namespace dlg
 {
   /**
   * @todo write docs
   */
-  class %CLASSNAME% : public Base
+  class Remove : public QDialog
   {
     Q_OBJECT
   public:
-    %CLASSNAME%(ftr::%CLASSNAME%*, QWidget*, bool = false);
-    ~%CLASSNAME%() override;
+    Remove(QWidget*);
+    ~Remove() override;
   public Q_SLOTS:
     void reject() override;
     void accept() override;
@@ -46,9 +44,7 @@ namespace dlg
     
     void init();
     void buildGui();
-    void loadFeatureData();
-    void finishDialog();
   };
 }
 
-#endif // DLG_%CLASSNAMEUPPERCASE%_H
+#endif // DLG_REMOVE_H
