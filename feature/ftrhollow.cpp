@@ -75,6 +75,23 @@ sShape(new ann::SeerShape())
 
 Hollow::~Hollow(){}
 
+
+void Hollow::setHollowPicks(const Picks &picksIn)
+{
+  hollowPicks = picksIn;
+  setModelDirty();
+}
+
+void Hollow::setOffset(double oIn)
+{
+  offset->setValue(oIn);
+}
+
+prm::Parameter& Hollow::getOffset() const
+{
+  return *offset;
+}
+
 /* as occt v7.1(actually commit 4d97335) there seems to be a tolerance bug
  * in BRepOffsetAPI_MakeThickSolid. to reproduce the bug in drawexe:
  * 
@@ -91,7 +108,6 @@ Hollow::~Hollow(){}
  * 
  * will this work with no removal faces?
  */
-
 void Hollow::updateModel(const UpdatePayload &payloadIn)
 {
   setFailure();
@@ -202,29 +218,6 @@ void Hollow::updateModel(const UpdatePayload &payloadIn)
   setModelClean();
   if (!lastUpdateLog.empty())
     std::cout << std::endl << lastUpdateLog;
-}
-
-void Hollow::setHollowPicks(const Picks &picksIn)
-{
-  hollowPicks = picksIn;
-}
-
-void Hollow::addHollowPick(const Pick &pickIn)
-{
-  hollowPicks.push_back(pickIn);
-}
-
-void Hollow::removeHollowPick(const Pick &pickIn)
-{
-  auto it = std::find(hollowPicks.begin(), hollowPicks.end(), pickIn);
-  if (it == hollowPicks.end())
-  {
-    std::ostringstream s; s << "warning: hollow: trying to remove a pick not in closing faces" << std::endl;
-    lastUpdateLog += s.str();
-    return;
-  }
-  
-  hollowPicks.erase(it);
 }
 
 void Hollow::generatedMatch(BRepOffsetAPI_MakeThickSolid &operationIn, const ann::SeerShape &targetShapeIn)

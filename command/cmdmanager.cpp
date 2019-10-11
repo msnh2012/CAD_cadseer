@@ -78,6 +78,7 @@
 #include "command/cmdcylinder.h"
 #include "command/cmdsphere.h"
 #include "command/cmdcone.h"
+#include "command/cmdhollow.h"
 #include "command/cmdimport.h"
 #include "command/cmdexport.h"
 #include "command/cmdpreferences.h"
@@ -411,6 +412,11 @@ void Manager::setupDispatcher()
       (
         msg::Request | msg::Construct | msg::Cone
       , std::bind(&Manager::constructConeDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Construct | msg::Hollow
+      , std::bind(&Manager::constructHollowDispatched, this, std::placeholders::_1)
       )
       , std::make_pair
       (
@@ -795,6 +801,11 @@ void Manager::constructConeDispatched(const msg::Message&)
   addCommand(std::make_shared<Cone>());
 }
 
+void Manager::constructHollowDispatched(const msg::Message&)
+{
+  addCommand(std::make_shared<Hollow>());
+}
+
 void Manager::importDispatched(const msg::Message&)
 {
   addCommand(std::make_shared<Import>());
@@ -932,6 +943,11 @@ BasePtr editCone(ftr::Base *feature)
   return std::make_shared<ConeEdit>(feature);
 }
 
+BasePtr editHollow(ftr::Base *feature)
+{
+  return std::make_shared<HollowEdit>(feature);
+}
+
 void Manager::setupEditFunctionMap()
 {
   editFunctionMap.insert(std::make_pair(ftr::Type::Blend, std::bind(editBlend, std::placeholders::_1)));
@@ -951,4 +967,5 @@ void Manager::setupEditFunctionMap()
   editFunctionMap.insert(std::make_pair(ftr::Type::Cylinder, std::bind(editCylinder, std::placeholders::_1)));
   editFunctionMap.insert(std::make_pair(ftr::Type::Sphere, std::bind(editSphere, std::placeholders::_1)));
   editFunctionMap.insert(std::make_pair(ftr::Type::Cone, std::bind(editCone, std::placeholders::_1)));
+  editFunctionMap.insert(std::make_pair(ftr::Type::Hollow, std::bind(editHollow, std::placeholders::_1)));
 }

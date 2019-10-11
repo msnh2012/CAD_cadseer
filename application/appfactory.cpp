@@ -155,11 +155,6 @@ void Factory::setupDispatcher()
       )
       , std::make_pair
       (
-        msg::Request | msg::Construct | msg::Hollow
-      , std::bind(&Factory::newHollowDispatched, this, std::placeholders::_1)
-      )
-      , std::make_pair
-      (
         msg::Request | msg::DebugInquiry
       , std::bind(&Factory::bopalgoTestDispatched, this, std::placeholders::_1)
       )
@@ -211,59 +206,6 @@ void Factory::selectionSubtractionDispatched(const msg::Message &messageIn)
   slc::Containers::iterator it = std::find(containers.begin(), containers.end(), aContainer);
   assert(it != containers.end());
   containers.erase(it);
-}
-
-void Factory::newHollowDispatched(const msg::Message&)
-{
-  assert(project);
-  
-  if (containers.empty())
-  {
-    node->send(msg::buildStatusMessage("Invalid Preselection For Hollow", 2.0));
-    return;
-  }
-  
-  uuid targetFeatureId = containers.at(0).featureId;
-  ftr::Base *targetFeature = project->findFeature(targetFeatureId);
-  assert(targetFeature->hasAnnex(ann::Type::SeerShape));
-  const ann::SeerShape &targetSeerShape = targetFeature->getAnnex<ann::SeerShape>();
-  
-  ftr::Picks hollowPicks;
-  int pickIndex = -1;
-  tls::Connector connector;
-  for (const auto &currentSelection : containers)
-  {
-    if
-    (
-      currentSelection.featureId != targetFeatureId ||
-      currentSelection.selectionType != slc::Type::Face
-    )
-      continue;
-      
-    pickIndex++;
-    ftr::Pick hPick = tls::convertToPick(currentSelection, targetSeerShape, project->getShapeHistory());
-    hPick.tag = ftr::InputType::createIndexedTag(ftr::InputType::target, pickIndex);
-    connector.add(targetFeatureId, hPick.tag);
-    hollowPicks.push_back(hPick);
-  }
-  if (hollowPicks.empty())
-  {
-    node->send(msg::buildStatusMessage("Invalid Preselection For Hollow", 2.0));
-    return;
-  }
-  
-  std::shared_ptr<ftr::Hollow> hollow(new ftr::Hollow());
-  hollow->setHollowPicks(hollowPicks);
-  project->addFeature(hollow);
-  for (const auto &p : connector.pairs)
-    project->connectInsert(p.first, hollow->getId(), {p.second});
-  hollow->setColor(targetFeature->getColor());
-  
-  node->sendBlocked(msg::buildHideThreeD(targetFeatureId));
-  node->sendBlocked(msg::buildHideOverlay(targetFeatureId));
-  
-  node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
-  node->send(msg::Mask(msg::Request | msg::Project | msg::Update));
 }
 
 void Factory::debugDumpDispatched(const msg::Message&)

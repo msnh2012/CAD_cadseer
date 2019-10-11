@@ -47,7 +47,6 @@ namespace app
     void newProjectDispatched(const msg::Message&);
     void selectionAdditionDispatched(const msg::Message&);
     void selectionSubtractionDispatched(const msg::Message&);
-    void newHollowDispatched(const msg::Message&);
     void openProjectDispatched(const msg::Message&);
     void closeProjectDispatched(const msg::Message&);
     void debugDumpDispatched(const msg::Message&);

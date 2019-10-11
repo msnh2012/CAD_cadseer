@@ -46,8 +46,9 @@ namespace ftr
     void serialRead(const prj::srl::FeatureHollow &);
     
     void setHollowPicks(const Picks&);
-    void addHollowPick(const Pick&);
-    void removeHollowPick(const Pick&);
+    const Picks& getHollowPicks() const {return hollowPicks;}
+    void setOffset(double);
+    prm::Parameter& getOffset() const;
   private:
     static QIcon icon;
     std::unique_ptr<prm::Parameter> offset;
