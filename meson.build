@@ -356,7 +356,8 @@ command_sources = ['command/cmdmanager.cpp'
   , 'command/cmdexport.cpp'
   , 'command/cmdpreferences.cpp'
   , 'command/cmdremove.cpp'
-  , 'command/cmdhollow.cpp']
+  , 'command/cmdhollow.cpp'
+  , 'command/cmdinfo.cpp']
   
 law_sources = ['law/lwfcue.cpp']
 

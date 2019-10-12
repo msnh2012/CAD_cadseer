@@ -114,6 +114,7 @@ namespace cmd
     void exportDispatched(const msg::Message&);
     void preferencesDispatched(const msg::Message&);
     void removeDispatched(const msg::Message&);
+    void infoDispatched(const msg::Message&);
     
     //editing functions
     typedef std::function<BasePtr (ftr::Base *)> EditFunction;

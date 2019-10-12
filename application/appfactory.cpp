@@ -145,11 +145,6 @@ void Factory::setupDispatcher()
       )
       , std::make_pair
       (
-        msg::Request | msg::Info
-      , std::bind(&Factory::viewInfoDispatched, this, std::placeholders::_1)
-      )
-      , std::make_pair
-      (
         msg::Request | msg::Feature | msg::Model | msg::Dirty
       , std::bind(&Factory::featureModelDirtyDispatched, this, std::placeholders::_1)
       )
@@ -289,103 +284,6 @@ void Factory::debugShapeGraphDispatched(const msg::Message&)
     }
     
     node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
-}
-
-void Factory::viewInfoDispatched(const msg::Message &)
-{
-  QString infoMessage;
-  QTextStream stream(&infoMessage);
-  stream.setRealNumberNotation(QTextStream::FixedNotation);
-  forcepoint(stream) << qSetRealNumberPrecision(12);
-  stream << endl;
-  
-  vwr::Widget *viewer = app::instance()->getMainWindow()->getViewer();
-  osg::Matrixd ics = osg::Matrixd::inverse(viewer->getCurrentSystem()); //inverted current system.
-  
-  auto streamPoint = [&](const osg::Vec3d &p)
-  {
-    stream
-      << "Absolute Point location: "
-      << "["
-      << p.x() << ", "
-      << p.y() << ", "
-      << p.z() << "]"
-      << endl;
-      
-    osg::Vec3d tp = p * ics;
-    stream
-      << "Current System Point location: "
-      << "["
-      << tp.x() << ", "
-      << tp.y() << ", "
-      << tp.z() << "]"
-      << endl;
-  };
-  
-  
-  
-    //maybe if selection is empty we will dump out application information.
-    //or better yet project information or even better yet both. careful
-    //we might want to turn the window on and off keeping information as a 
-    //reference and we don't to fill the window with shit. we will be alright, 
-    //we will have a different facility for show and hiding the info window
-    //other than this command.
-    assert(project);
-    if (containers.empty())
-    {
-      //nothing selected so get app and project information.
-      //TODO get git hash for application version.
-      project->getInfo(stream);
-      app::instance()->getMainWindow()->getViewer()->getInfo(stream);
-    }
-    else
-    {
-      for (const auto &container : containers)
-      {
-          ftr::Base *feature = project->findFeature(container.featureId);
-          stream <<  endl;
-          if
-          (
-              (container.selectionType == slc::Type::Object) ||
-              (container.selectionType == slc::Type::Feature)
-          )
-          {
-              feature->getInfo(stream);
-          }
-          else if
-          (
-              (container.selectionType == slc::Type::Solid) ||
-              (container.selectionType == slc::Type::Shell) ||
-              (container.selectionType == slc::Type::Face) ||
-              (container.selectionType == slc::Type::Wire) ||
-              (container.selectionType == slc::Type::Edge)
-          )
-          {
-              feature->getShapeInfo(stream, container.shapeId);
-          }
-          else if (container.selectionType == slc::Type::StartPoint)
-          {
-              const ann::SeerShape &s = feature->getAnnex<ann::SeerShape>();
-              feature->getShapeInfo(stream, s.useGetStartVertex(container.shapeId));
-              streamPoint(container.pointLocation);
-          }
-          else if (container.selectionType == slc::Type::EndPoint)
-          {
-            const ann::SeerShape &s = feature->getAnnex<ann::SeerShape>();
-            feature->getShapeInfo(stream, s.useGetEndVertex(container.shapeId));
-            streamPoint(container.pointLocation);
-          }
-          else //all other points.
-          {
-            streamPoint(container.pointLocation);
-          }
-      }
-    }
-    
-    app::Message appMessage;
-    appMessage.infoMessage = infoMessage;
-    msg::Message viewInfoMessage(msg::Request | msg::Info | msg::Text, appMessage);
-    msg::hub().send(viewInfoMessage);
 }
 
 void Factory::featureModelDirtyDispatched(const msg::Message&)

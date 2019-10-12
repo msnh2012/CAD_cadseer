@@ -83,6 +83,7 @@
 #include "command/cmdexport.h"
 #include "command/cmdpreferences.h"
 #include "command/cmdremove.h"
+#include "command/cmdinfo.h"
 #include "message/msgnode.h"
 #include "message/msgsift.h"
 #include "selection/slcmessage.h"
@@ -442,6 +443,11 @@ void Manager::setupDispatcher()
       (
         msg::Request | msg::Remove
         , std::bind(&Manager::removeDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Info
+        , std::bind(&Manager::infoDispatched, this, std::placeholders::_1)
       )
     }
   );
@@ -824,6 +830,11 @@ void Manager::preferencesDispatched(const msg::Message&)
 void Manager::removeDispatched(const msg::Message&)
 {
   addCommand(std::make_shared<Remove>());
+}
+
+void Manager::infoDispatched(const msg::Message&)
+{
+  addCommand(std::make_shared<Info>());
 }
 
 //editing commands and dispatching.
