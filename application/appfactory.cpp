@@ -145,11 +145,6 @@ void Factory::setupDispatcher()
       )
       , std::make_pair
       (
-        msg::Request | msg::Feature | msg::Model | msg::Dirty
-      , std::bind(&Factory::featureModelDirtyDispatched, this, std::placeholders::_1)
-      )
-      , std::make_pair
-      (
         msg::Request | msg::DebugInquiry
       , std::bind(&Factory::bopalgoTestDispatched, this, std::placeholders::_1)
       )
@@ -284,13 +279,6 @@ void Factory::debugShapeGraphDispatched(const msg::Message&)
     }
     
     node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
-}
-
-void Factory::featureModelDirtyDispatched(const msg::Message&)
-{
-  assert(project);
-  for (const auto &container : containers)
-    project->findFeature(container.featureId)->setModelDirty();
 }
 
 //! a testing function to analyze run time cost of messages.
