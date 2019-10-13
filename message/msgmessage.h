@@ -39,7 +39,7 @@ namespace msg
 {
     //! Mask is for a key in a function dispatch message handler. We might need a validation routine.
     // no pre and post on requests only on response.
-    typedef std::bitset<128> Mask;
+    typedef std::bitset<192> Mask;
     static const Mask Request(Mask().set(                        0));//!< message classification
     static const Mask Response(Mask().set(                       1));//!< message classification
     static const Mask Pre(Mask().set(                            2));//!< message response timing. think "about to". Data still valid
@@ -114,13 +114,11 @@ namespace msg
     static const Mask FeatureToDragger(Mask().set(              71));//!< command
     static const Mask DatumPlane(Mask().set(                    72));//!< command
     static const Mask CheckShapeIds(Mask().set(                 73));//!< command
-    static const Mask DebugDump(Mask().set(                     74));//!< command
     static const Mask DebugShapeTrackUp(Mask().set(             75));//!< command
     static const Mask DebugShapeTrackDown(Mask().set(           76));//!< command
     static const Mask DebugShapeGraph(Mask().set(               77));//!< command
     static const Mask LinearMeasure(Mask().set(                 78));//!< command
     static const Mask CheckGeometry(Mask().set(                 79));//!< command
-    static const Mask DebugInquiry(Mask().set(                  80));//!< command
     static const Mask Color(Mask().set(                         81));//!< command
     static const Mask Name(Mask().set(                          82));//!< command
     static const Mask DebugDumpProjectGraph(Mask().set(         83));//!< command
@@ -167,7 +165,17 @@ namespace msg
     static const Mask Sweep(Mask().set(                        124));//!< command. move up
     static const Mask Active(Mask().set(                       125));//!< command manager move up
     static const Mask Inactive(Mask().set(                     126));//!< command manager move up
-  
+    static const Mask Dump(Mask().set(                         127));//!< command. move up
+    static const Mask Graph(Mask().set(                        128));//!< command. move up
+    static const Mask Shape(Mask().set(                        129));//!< command. move up
+    static const Mask Track(Mask().set(                        130));//!< command. move up
+    static const Mask Test(Mask().set(                         131));//!< command. move up
+
+
+
+
+
+
     struct Stow; // forward declare see message/variant.h
     struct Message
     {

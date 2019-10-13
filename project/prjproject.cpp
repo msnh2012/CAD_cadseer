@@ -1462,18 +1462,16 @@ void Project::open()
   isLoading = false;
 }
 
-void Project::shapeTrackUp(const uuid& shapeId) const
+void Project::shapeTrackDump(const uuid &shapeId, const path &directory) const
 {
-  //testing shape history.
+  if (!exists(directory) || !is_directory(directory))
+    return;
+  
   ftr::ShapeHistory devolve = shapeHistory->createDevolveHistory(shapeId);
-  devolve.writeGraphViz("/home/tanderson/.CadSeer/devolveHistory.dot");
-}
-
-void Project::shapeTrackDown(const uuid& shapeId) const
-{
-  //testing shape history.
+  devolve.writeGraphViz((directory / "devolveHistory.dot").string());
+  
   ftr::ShapeHistory evolve = shapeHistory->createEvolveHistory(shapeId);
-  evolve.writeGraphViz("/home/tanderson/.CadSeer/evolveHistory.dot");
+  evolve.writeGraphViz((directory / "evolveHistory.dot").string());
 }
 
 ftr::UpdatePayload::UpdateMap Project::getParentMap(const boost::uuids::uuid &idIn) const

@@ -41,7 +41,6 @@
 #include "dialogs/dlgpreferences.h"
 #include "message/msgnode.h"
 #include "message/msgsift.h"
-#include "application/appfactory.h"
 #include "menu/mnumanager.h"
 #include "command/cmdmanager.h"
 #include "lod/lodmanager.h"
@@ -83,9 +82,6 @@ Application::Application(int &argc, char **argv) :
     mnu::manager().loadMenu(prf::manager().getMenuConfigPath());
     
     mainWindow = std::make_unique<MainWindow>();
-    
-    std::unique_ptr<Factory> tempFactory(new Factory());
-    factory = std::move(tempFactory);
     
     cmd::manager(); //just to construct the singleton and get it ready for messages.
     

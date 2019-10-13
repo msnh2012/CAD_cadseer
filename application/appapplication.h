@@ -37,7 +37,6 @@ namespace lod{class Manager;}
 namespace app
 {
 class MainWindow;
-class Factory;
 
 class Application : public QApplication
 {
@@ -61,7 +60,6 @@ public Q_SLOTS:
 private:
     std::unique_ptr<MainWindow> mainWindow;
     std::unique_ptr<prj::Project> project;
-    std::unique_ptr<Factory> factory;
     std::unique_ptr<lod::Manager> lodManager;
     bool spaceballPresent = false;
     bool firstRun = false;

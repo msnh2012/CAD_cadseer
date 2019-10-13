@@ -1,6 +1,6 @@
 /*
  * CadSeer. Parametric Solid Modeling.
- * Copyright (C) 2015  Thomas S. Anderson blobfish.at.gmx.com
+ * Copyright (C) 2019 Thomas S. Anderson blobfish.at.gmx.com
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,272 +17,55 @@
  *
  */
 
-#include <iostream>
-#include <sstream>
-#include <assert.h>
-
-#include <QFileDialog>
-#include <QTextStream>
-#include <QUrl>
-#include <QDesktopServices>
-#include <QMessageBox>
-
-#include <boost/uuid/uuid.hpp>
-#include <boost/timer/timer.hpp>
-#include <boost/filesystem.hpp>
-#include <boost/current_function.hpp>
-
-#include <BRepTools.hxx>
-#include <TopoDS_Edge.hxx>
-#include <TopoDS_Face.hxx>
-#include <TopoDS_Vertex.hxx>
-#include <TopoDS_Shape.hxx>
-#include <TopoDS_Iterator.hxx>
-#include <TopoDS.hxx>
-#include <APIHeaderSection_MakeHeader.hxx>
-#include <BOPAlgo_Builder.hxx>
-
+#include <osg/Switch>
 #include <osgDB/WriteFile>
 
-#include "tools/idtools.h"
+#include <BOPAlgo_Builder.hxx>
+
 #include "tools/occtools.h"
-#include "message/msgsift.h"
-#include "message/msgnode.h"
-#include "project/prjproject.h"
-#include "project/prjmessage.h"
 #include "application/appapplication.h"
-#include "application/appmainwindow.h"
-#include "application/appmessage.h"
-#include "viewer/vwrwidget.h"
-#include "dialogs/dlgpreferences.h"
-#include "preferences/preferencesXML.h"
-#include "preferences/prfmanager.h"
-#include "annex/annseershape.h"
-#include "feature/ftrtypes.h"
-#include "feature/ftrinputtype.h"
-#include "feature/ftrbox.h"
-#include "feature/ftroblong.h"
-#include "feature/ftrtorus.h"
-#include "feature/ftrcylinder.h"
-#include "feature/ftrsphere.h"
-#include "feature/ftrcone.h"
-#include "feature/ftrunion.h"
-#include "feature/ftrsubtract.h"
-#include "feature/ftrintersect.h"
-#include "feature/ftrchamfer.h"
-#include "feature/ftrdraft.h"
-#include "feature/ftrhollow.h"
-#include "feature/ftrinert.h"
-#include "tools/featuretools.h"
+#include "project/prjproject.h"
+#include "message/msgnode.h"
+#include "selection/slceventhandler.h"
 #include "library/lbrlineardimension.h"
-#include "selection/slcmessage.h"
-#include "selection/slcvisitors.h"
-#include "application/appfactory.h"
+#include "annex/annseershape.h"
+#include "feature/ftrbase.h"
+#include "command/cmdtest.h"
 
-using namespace app;
-using boost::uuids::uuid;
+using namespace cmd;
 
-Factory::Factory()
+Test::Test() : Base() {}
+
+Test::~Test() = default;
+
+std::string Test::getStatusMessage()
 {
-  node = std::make_unique<msg::Node>();
-  node->connect(msg::hub());
-  sift = std::make_unique<msg::Sift>();
-  sift->name = "app::Factory";
-  node->setHandler(std::bind(&msg::Sift::receive, sift.get(), std::placeholders::_1));
-    
-  setupDispatcher();
+  return QObject::tr("Select For Test").toStdString();
 }
 
-void Factory::setupDispatcher()
+void Test::activate()
 {
-  sift->insert
-  (
-    {
-      std::make_pair
-      (
-        msg::Response | msg::Post | msg::New | msg::Project
-        , std::bind(&Factory::newProjectDispatched, this, std::placeholders::_1)
-      )
-      , std::make_pair
-      (
-        msg::Response | msg::Post | msg::Open | msg::Project
-      , std::bind(&Factory::openProjectDispatched, this, std::placeholders::_1)
-      )
-      , std::make_pair
-      (
-        msg::Response | msg::Pre | msg::Close | msg::Project
-      , std::bind(&Factory::closeProjectDispatched, this, std::placeholders::_1)
-      )
-      , std::make_pair
-      (
-        msg::Response | msg::Post | msg::Selection | msg::Add
-      , std::bind(&Factory::selectionAdditionDispatched, this, std::placeholders::_1)
-      )
-      , std::make_pair
-      (
-        msg::Response | msg::Pre | msg::Selection | msg::Remove
-      , std::bind(&Factory::selectionSubtractionDispatched, this, std::placeholders::_1)
-      )
-      , std::make_pair
-      (
-        msg::Request | msg::DebugDump
-      , std::bind(&Factory::debugDumpDispatched, this, std::placeholders::_1)
-      )
-      , std::make_pair
-      (
-        msg::Request | msg::DebugShapeTrackUp
-      , std::bind(&Factory::debugShapeTrackUpDispatched, this, std::placeholders::_1)
-      )
-      , std::make_pair
-      (
-        msg::Request | msg::DebugShapeTrackDown
-      , std::bind(&Factory::debugShapeTrackDownDispatched, this, std::placeholders::_1)
-      )
-      , std::make_pair
-      (
-        msg::Request | msg::DebugShapeGraph
-      , std::bind(&Factory::debugShapeGraphDispatched, this, std::placeholders::_1)
-      )
-      , std::make_pair
-      (
-        msg::Request | msg::DebugInquiry
-      , std::bind(&Factory::bopalgoTestDispatched, this, std::placeholders::_1)
-      )
-    }
-  );
-}
-
-void Factory::newProjectDispatched(const msg::Message& /*messageIn*/)
-{
-  app::Application *application = dynamic_cast<app::Application *>(qApp);
-  assert(application);
-  project = application->getProject();
-}
-
-void Factory::openProjectDispatched(const msg::Message&)
-{
-  app::Application *application = dynamic_cast<app::Application *>(qApp);
-  assert(application);
-  project = application->getProject();
-}
-
-void Factory::closeProjectDispatched(const msg::Message&)
-{
-  project = nullptr;
-}
-
-void Factory::selectionAdditionDispatched(const msg::Message &messageIn)
-{
-  slc::Message sMessage = messageIn.getSLC();
-  slc::Container aContainer;
-  aContainer.selectionType = sMessage.type;
-  aContainer.featureId = sMessage.featureId;
-  aContainer.featureType = sMessage.featureType;
-  aContainer.shapeId = sMessage.shapeId;
-  aContainer.pointLocation = sMessage.pointLocation;
-  containers.push_back(aContainer);
-}
-
-void Factory::selectionSubtractionDispatched(const msg::Message &messageIn)
-{
-  slc::Message sMessage = messageIn.getSLC();
-  slc::Container aContainer;
-  aContainer.selectionType = sMessage.type;
-  aContainer.featureId = sMessage.featureId;
-  aContainer.featureType = sMessage.featureType;
-  aContainer.shapeId = sMessage.shapeId;
-  aContainer.pointLocation = sMessage.pointLocation;
+  isActive = true;
   
-  slc::Containers::iterator it = std::find(containers.begin(), containers.end(), aContainer);
-  assert(it != containers.end());
-  containers.erase(it);
+  go();
+  sendDone();
 }
 
-void Factory::debugDumpDispatched(const msg::Message&)
+void Test::deactivate()
 {
-  assert(project);
-  if (containers.empty())
-    return;
-  
-  std::cout << std::endl << std::endl << "begin debug dump:" << std::endl;
-  
-  for (const auto &container : containers)
-  {
-    if (container.selectionType != slc::Type::Object)
-      continue;
-    ftr::Base *feature = project->findFeature(container.featureId);
-    assert(feature);
-    if (!feature->hasAnnex(ann::Type::SeerShape))
-      continue;
-    const ann::SeerShape &seerShape = feature->getAnnex<ann::SeerShape>();
-    std::cout << std::endl;
-    std::cout << "feature name: " << feature->getName().toStdString() << "    feature id: " << gu::idToString(feature->getId()) << std::endl;
-    std::cout << "shape id container:" << std::endl; seerShape.dumpShapeIdContainer(std::cout); std::cout << std::endl;
-    std::cout << "shape evolve container:" << std::endl; seerShape.dumpEvolveContainer(std::cout); std::cout << std::endl;
-    std::cout << "feature tag container:" << std::endl; seerShape.dumpFeatureTagContainer(std::cout); std::cout << std::endl;
-  }
-  
+  isActive = false;
+}
+
+void Test::go()
+{
+  bopalgoTestDispatched();
+  node->sendBlocked(msg::buildStatusMessage("Test executed", 2.0));
   node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
-}
-
-void Factory::debugShapeTrackUpDispatched(const msg::Message&)
-{
-  assert(project);
-  if (containers.empty())
-    return;
-  
-  for (const auto &container : containers)
-  {
-    if (container.shapeId.is_nil())
-      continue;
-    project->shapeTrackUp(container.shapeId);
-  }
-  
-  node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
-}
-
-void Factory::debugShapeTrackDownDispatched(const msg::Message&)
-{
-  assert(project);
-  if (containers.empty())
-    return;
-  
-  for (const auto &container : containers)
-  {
-    if (container.shapeId.is_nil())
-      continue;
-    project->shapeTrackDown(container.shapeId);
-  }
-  
-  node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
-}
-
-void Factory::debugShapeGraphDispatched(const msg::Message&)
-{
-    assert(project);
-    if (containers.empty())
-        return;
-    
-    boost::filesystem::path path = app::instance()->getApplicationDirectory();
-    for (const auto &container : containers)
-    {
-        if (container.selectionType != slc::Type::Object)
-            continue;
-        ftr::Base *feature = project->findFeature(container.featureId);
-        if (!feature->hasAnnex(ann::Type::SeerShape))
-            continue;
-        path /= gu::idToString(feature->getId()) + ".dot";
-        const ann::SeerShape &shape = feature->getAnnex<ann::SeerShape>();
-        shape.dumpGraph(path.string());
-        
-        QDesktopServices::openUrl(QUrl(QString::fromStdString(path.string())));
-    }
-    
-    node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
 }
 
 //! a testing function to analyze run time cost of messages.
-void Factory::messageStressTestDispatched(const msg::Message&)
+//! note this was before Node and Sift refactor, so code is obsolete.
+void Test::messageStressTestDispatched()
 {
   //not updating for switch to new message signals
   /*
@@ -345,9 +128,10 @@ void Factory::messageStressTestDispatched(const msg::Message&)
    */
 }
 
-void Factory::osgToDotTestDispatched(const msg::Message&)
+void Test::osgToDotTestDispatched()
 {
   assert(project);
+  const slc::Containers &containers = eventHandler->getSelections();
   if (containers.empty())
     return;
   
@@ -372,7 +156,7 @@ void Factory::osgToDotTestDispatched(const msg::Message&)
 //   QDesktopServices::openUrl(QUrl(fileName));
 }
 
-void Factory::bopalgoTestDispatched(const msg::Message&)
+void Test::bopalgoTestDispatched()
 {
   auto formatNumber = [](int number) -> std::string
   {
@@ -386,6 +170,7 @@ void Factory::bopalgoTestDispatched(const msg::Message&)
   };
   
   assert(project);
+  const slc::Containers &containers = eventHandler->getSelections();
   if (containers.size() < 2)
     return;
   
@@ -613,6 +398,4 @@ void Factory::bopalgoTestDispatched(const msg::Message&)
   {
     std::cout << "My Error: " << error.what() << std::endl;
   }
-  
-  node->send(msg::Mask(msg::Request | msg::Project | msg::Update));
 }

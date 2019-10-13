@@ -437,7 +437,6 @@ void Manager::Stow::setAllMenu()
         debugBase.commandIds().push_back(81);
         debugBase.commandIds().push_back(82);
         debugBase.commandIds().push_back(83);
-        debugBase.commandIds().push_back(84);
         debugBase.commandIds().push_back(85);
         debugBase.commandIds().push_back(86);
         debugBase.commandIds().push_back(87);
@@ -788,7 +787,6 @@ void Manager::Stow::setAllToolbars()
         entry.commandIds().push_back(81);
         entry.commandIds().push_back(82);
         entry.commandIds().push_back(83);
-        entry.commandIds().push_back(84);
         entry.commandIds().push_back(85);
         entry.commandIds().push_back(86);
         entry.commandIds().push_back(87);
@@ -1616,27 +1614,17 @@ void Manager::Stow::setAllCommands()
     , QObject::tr("Feature Dump").toStdString() //status text
     , QObject::tr("Developer Tool To Dump Feature Internals").toStdString() //whats this text
     , QObject::tr("Feature Dump").toStdString() // toolTipText
-    , msg::Request | msg::DebugDump
+    , msg::Request | msg::Feature | msg::Dump
   );
   sc
   (
     83
     , ":/resources/images/debugShapeTrackUp.svg"
-    , QObject::tr("Track Shape Up").toStdString() //icon text
-    , QObject::tr("Track Shape Up").toStdString() //status text
-    , QObject::tr("Developer Tool To Track Shapes Up The History Graph").toStdString() //whats this text
-    , QObject::tr("Track Shape Up").toStdString() // toolTipText
-    , msg::Request | msg::DebugShapeTrackUp
-  );
-  sc
-  (
-    84
-    , ":/resources/images/debugShapeTrackDown.svg"
-    , QObject::tr("Track Shape Down").toStdString() //icon text
-    , QObject::tr("Track Shape Down").toStdString() //status text
-    , QObject::tr("Developer Tool To Track Shapes Down The History Graph").toStdString() //whats this text
-    , QObject::tr("Track Shape Down").toStdString() // toolTipText
-    , msg::Request | msg::DebugShapeTrackDown
+    , QObject::tr("Track Shape").toStdString() //icon text
+    , QObject::tr("Track Shape").toStdString() //status text
+    , QObject::tr("Developer Tool To Track Shapes Up And Down The History Graph").toStdString() //whats this text
+    , QObject::tr("Track Shape").toStdString() // toolTipText
+    , msg::Request | msg::Shape | msg::Track | msg::Dump
   );
   sc
   (
@@ -1644,9 +1632,9 @@ void Manager::Stow::setAllCommands()
     , ":/resources/images/debugShapeGraph.svg"
     , QObject::tr("Shape dot").toStdString() //icon text
     , QObject::tr("Shape dot").toStdString() //status text
-    , QObject::tr("Developer Tool To Generate Graphviz Shape History").toStdString() //whats this text
+    , QObject::tr("Developer Tool To Generate Shape Topology").toStdString() //whats this text
     , QObject::tr("Shape dot").toStdString() // toolTipText
-    , msg::Request | msg::DebugShapeGraph
+    , msg::Request | msg::Shape | msg::Graph | msg::Dump
   );
   sc
   (
@@ -1676,7 +1664,7 @@ void Manager::Stow::setAllCommands()
     , QObject::tr("Test").toStdString() //status text
     , QObject::tr("Developer Tool To Test Functionality").toStdString() //whats this text
     , QObject::tr("Test").toStdString() // toolTipText
-    , msg::Request | msg::DebugInquiry
+    , msg::Request | msg::Test
   );
   sc
   (

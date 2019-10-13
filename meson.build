@@ -291,7 +291,6 @@ project_sources = ['project/prjproject.cpp'
   
 application_sources = ['application/appmainwindow.cpp'
   , 'application/appapplication.cpp'
-  , 'application/appfactory.cpp'
   , 'application/appmessage.cpp'
   , 'application/appincrementwidget.cpp'
   , 'application/appinfowindow.cpp']
@@ -358,7 +357,11 @@ command_sources = ['command/cmdmanager.cpp'
   , 'command/cmdremove.cpp'
   , 'command/cmdhollow.cpp'
   , 'command/cmdinfo.cpp'
-  , 'command/cmddirty.cpp']
+  , 'command/cmddirty.cpp'
+  , 'command/cmdfeaturedump.cpp'
+  , 'command/cmdshapetrackdump.cpp'
+  , 'command/cmdshapegraphdump.cpp'
+  , 'command/cmdtest.cpp']
   
 law_sources = ['law/lwfcue.cpp']
 

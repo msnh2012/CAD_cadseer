@@ -85,6 +85,10 @@
 #include "command/cmdremove.h"
 #include "command/cmdinfo.h"
 #include "command/cmddirty.h"
+#include "command/cmdfeaturedump.h"
+#include "command/cmdshapetrackdump.h"
+#include "command/cmdshapegraphdump.h"
+#include "command/cmdtest.h"
 #include "message/msgnode.h"
 #include "message/msgsift.h"
 #include "selection/slcmessage.h"
@@ -454,6 +458,26 @@ void Manager::setupDispatcher()
       (
         msg::Request | msg::Feature | msg::Model | msg::Dirty
         , std::bind(&Manager::dirtyDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Feature | msg::Dump
+        , std::bind(&Manager::featureDumpDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Shape | msg::Track | msg::Dump
+        , std::bind(&Manager::shapeTrackDumpDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Shape | msg::Graph | msg::Dump
+        , std::bind(&Manager::shapeGraphDumpDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Test
+        , std::bind(&Manager::testDispatched, this, std::placeholders::_1)
       )
     }
   );
@@ -846,6 +870,26 @@ void Manager::infoDispatched(const msg::Message&)
 void Manager::dirtyDispatched(const msg::Message&)
 {
   addCommand(std::make_shared<Dirty>());
+}
+
+void Manager::featureDumpDispatched(const msg::Message&)
+{
+  addCommand(std::make_shared<FeatureDump>());
+}
+
+void Manager::shapeTrackDumpDispatched(const msg::Message&)
+{
+  addCommand(std::make_shared<ShapeTrackDump>());
+}
+
+void Manager::shapeGraphDumpDispatched(const msg::Message&)
+{
+  addCommand(std::make_shared<ShapeGraphDump>());
+}
+
+void Manager::testDispatched(const msg::Message&)
+{
+  addCommand(std::make_shared<Test>());
 }
 
 //editing commands and dispatching.

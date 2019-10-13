@@ -116,6 +116,10 @@ namespace cmd
     void removeDispatched(const msg::Message&);
     void infoDispatched(const msg::Message&);
     void dirtyDispatched(const msg::Message&);
+    void featureDumpDispatched(const msg::Message&);
+    void shapeTrackDumpDispatched(const msg::Message&);
+    void shapeGraphDumpDispatched(const msg::Message&);
+    void testDispatched(const msg::Message&);
     
     //editing functions
     typedef std::function<BasePtr (ftr::Base *)> EditFunction;
