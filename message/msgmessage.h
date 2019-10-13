@@ -49,132 +49,122 @@ namespace msg
     static const Mask Add(Mask().set(                            6));//!< modifier
     static const Mask Remove(Mask().set(                         7));//!< modifier
     static const Mask Clear(Mask().set(                          8));//!< modifier
-    static const Mask SetCurrentLeaf(Mask().set(                 9));//!< project action
-    static const Mask Feature(Mask().set(                       10));//!< project action & command
-    static const Mask Update(Mask().set(                        11));//!< project action. request only for all: model, visual etc..
-    static const Mask Force(Mask().set(                         12));//!< project action. request only. marks dirty to force updates
-    static const Mask Model(Mask().set(                         13));//!< project action
-    static const Mask Visual(Mask().set(                        14));//!< project action
-    static const Mask Connection(Mask().set(                    15));//!< project action
-    static const Mask Project(Mask().set(                       16));//!< application action
-    static const Mask Dialog(Mask().set(                        17));//!< application action
-    static const Mask Open(Mask().set(                          18));//!< application action
-    static const Mask Close(Mask().set(                         19));//!< application action
-    static const Mask Save(Mask().set(                          20));//!< application action
-    static const Mask New(Mask().set(                           21));//!< application action
-    static const Mask Git(Mask().set(                           22));//!< git project integration
-    static const Mask Freeze(Mask().set(                        23));//!< modifier git message
-    static const Mask Thaw(Mask().set(                          24));//!< modifier git message
-    static const Mask Cancel(Mask().set(                        25));//!< command manager
-    static const Mask Done(Mask().set(                          26));//!< command manager
-    static const Mask Command(Mask().set(                       27));//!< command manager
-    static const Mask Status(Mask().set(                        28));//!< display status
-    static const Mask Text(Mask().set(                          29));//!< text
-    static const Mask Overlay(Mask().set(                       30));//!< visual
-    static const Mask Construct(Mask().set(                     31));//!< build.
-    static const Mask Edit(Mask().set(                          32));//!< modify.
-    static const Mask SetMask(Mask().set(                       33));//!< selection mask.
-    static const Mask Info(Mask().set(                          34));//!< opens info window.
-    static const Mask ThreeD(Mask().set(                        35));//!< visual
-    static const Mask Show(Mask().set(                          36));//!< visual
-    static const Mask Hide(Mask().set(                          37));//!< visual
-    static const Mask Toggle(Mask().set(                        38));//!< visual
-    static const Mask View(Mask().set(                          39));//!< visual
-    static const Mask Top(Mask().set(                           40));//!< command
-    static const Mask Front(Mask().set(                         41));//!< command
-    static const Mask Right(Mask().set(                         42));//!< command
-    static const Mask Iso(Mask().set(                           43));//!< command
-    static const Mask HiddenLine(Mask().set(                    44));//!< command
-    static const Mask Isolate(Mask().set(                       45));//!< command
-    static const Mask Fit(Mask().set(                           46));//!< command
-    static const Mask Fill(Mask().set(                          47));//!< command
-    static const Mask Triangulation(Mask().set(                 48));//!< command
-    static const Mask RenderStyle(Mask().set(                   49));//!< command
-    static const Mask Box(Mask().set(                           50));//!< command
-    static const Mask Sphere(Mask().set(                        51));//!< command
-    static const Mask Cone(Mask().set(                          52));//!< command
-    static const Mask Cylinder(Mask().set(                      53));//!< command
-    static const Mask Blend(Mask().set(                         54));//!< command
-    static const Mask Chamfer(Mask().set(                       55));//!< command
-    static const Mask Draft(Mask().set(                         56));//!< command
-    static const Mask Union(Mask().set(                         57));//!< command
-    static const Mask Subtract(Mask().set(                      58));//!< command
-    static const Mask Intersect(Mask().set(                     59));//!< command
-    static const Mask Import(Mask().set(                        60));//!< command
-    static const Mask Export(Mask().set(                        61));//!< command
-    static const Mask OCC(Mask().set(                           62));//!< command
-    static const Mask Step(Mask().set(                          63));//!< command
-    static const Mask OSG(Mask().set(                           64));//!< command
-    static const Mask Preferences(Mask().set(                   65));//!< command
-    static const Mask SystemReset(Mask().set(                   66));//!< command
-    static const Mask SystemToggle(Mask().set(                  67));//!< command
-    static const Mask FeatureToSystem(Mask().set(               68));//!< command
-    static const Mask SystemToFeature(Mask().set(               69));//!< command
-    static const Mask DraggerToFeature(Mask().set(              70));//!< command
-    static const Mask FeatureToDragger(Mask().set(              71));//!< command
-    static const Mask DatumPlane(Mask().set(                    72));//!< command
-    static const Mask CheckShapeIds(Mask().set(                 73));//!< command
-    static const Mask DebugShapeTrackUp(Mask().set(             75));//!< command
-    static const Mask DebugShapeTrackDown(Mask().set(           76));//!< command
-    static const Mask DebugShapeGraph(Mask().set(               77));//!< command
-    static const Mask LinearMeasure(Mask().set(                 78));//!< command
-    static const Mask CheckGeometry(Mask().set(                 79));//!< command
-    static const Mask Color(Mask().set(                         81));//!< command
-    static const Mask Name(Mask().set(                          82));//!< command
-    static const Mask DebugDumpProjectGraph(Mask().set(         83));//!< command
-    static const Mask DebugDumpDAGViewGraph(Mask().set(         84));//!< command
-    static const Mask Hollow(Mask().set(                        85));//!< command
-    static const Mask Oblong(Mask().set(                        86));//!< command
-    static const Mask Extract(Mask().set(                       87));//!< command
-    static const Mask FeatureReposition(Mask().set(             88));//!< command
-    static const Mask Squash(Mask().set(                        89));//!< command
-    static const Mask Strip(Mask().set(                         90));//!< command
-    static const Mask Nest(Mask().set(                          91));//!< command
-    static const Mask DieSet(Mask().set(                        92));//!< command
-    static const Mask Quote(Mask().set(                         93));//!< command
-    static const Mask DAG(Mask().set(                           94));//!< descriptor move up
-    static const Mask Dirty(Mask().set(                         95));//!< command
-    static const Mask Refine(Mask().set(                        96));//!< command
-    static const Mask Reorder(Mask().set(                       97));//!< project action. move up.
-    static const Mask Current(Mask().set(                       98));//!< modifier referencing current coordinate system.
-    static const Mask InstanceLinear(Mask().set(                99));//!< command, move.
-    static const Mask InstanceMirror(Mask().set(               100));//!< command, move.
-    static const Mask InstancePolar(Mask().set(                101));//!< command, move.
-    static const Mask Skipped(Mask().set(                      102));//!< project action. move up.
-    static const Mask SystemToSelection(Mask().set(            103));//!< command. move up
-    static const Mask Offset(Mask().set(                       104));//!< command. move up
-    static const Mask Thicken(Mask().set(                      105));//!< command. move up
-    static const Mask Sew(Mask().set(                          106));//!< command. move up
-    static const Mask Trim(Mask().set(                         107));//!< command. move up
-    static const Mask Revision(Mask().set(                     108));//!< command. move up
-    static const Mask LOD(Mask().set(                          109));//!< command. move up
-    static const Mask RemoveFaces(Mask().set(                  110));//!< command. move up
-    static const Mask Torus(Mask().set(                        111));//!< command. move up
-    static const Mask Thread(Mask().set(                       112));//!< command. move up
-    static const Mask Dissolve(Mask().set(                     113));//!< command. move up
-    static const Mask About(Mask().set(                        114));//!< command. move up
-    static const Mask DatumAxis(Mask().set(                    115));//!< command. move up
-    static const Mask Sketch(Mask().set(                       116));//!< command. move up
-    static const Mask Extrude(Mask().set(                      117));//!< command. move up
-    static const Mask Revolve(Mask().set(                      118));//!< command. move up
-    static const Mask SurfaceMesh(Mask().set(                  119));//!< command. move up
-    static const Mask Line(Mask().set(                         120));//!< command. move up
-    static const Mask TransitionCurve(Mask().set(              121));//!< command. move up
-    static const Mask Ruled(Mask().set(                        122));//!< command. move up
-    static const Mask ImagePlane(Mask().set(                   123));//!< command. move up
-    static const Mask Sweep(Mask().set(                        124));//!< command. move up
-    static const Mask Active(Mask().set(                       125));//!< command manager move up
-    static const Mask Inactive(Mask().set(                     126));//!< command manager move up
-    static const Mask Dump(Mask().set(                         127));//!< command. move up
-    static const Mask Graph(Mask().set(                        128));//!< command. move up
-    static const Mask Shape(Mask().set(                        129));//!< command. move up
-    static const Mask Track(Mask().set(                        130));//!< command. move up
-    static const Mask Test(Mask().set(                         131));//!< command. move up
-
-
-
-
-
+    static const Mask DAG(Mask().set(                            9));//!< modifier
+    static const Mask Current(Mask().set(                       10));//!< modifier referencing current coordinate system.
+    static const Mask SetCurrentLeaf(Mask().set(                11));//!< project action
+    static const Mask Feature(Mask().set(                       12));//!< project action & command
+    static const Mask Update(Mask().set(                        13));//!< project action. request only for all: model, visual etc..
+    static const Mask Force(Mask().set(                         14));//!< project action. request only. marks dirty to force updates
+    static const Mask Model(Mask().set(                         15));//!< project action
+    static const Mask Visual(Mask().set(                        16));//!< project action
+    static const Mask Connection(Mask().set(                    17));//!< project action
+    static const Mask Reorder(Mask().set(                       18));//!< project action.
+    static const Mask Skipped(Mask().set(                       19));//!< project action.
+    static const Mask Project(Mask().set(                       20));//!< application action
+    static const Mask Dialog(Mask().set(                        21));//!< application action
+    static const Mask Open(Mask().set(                          22));//!< application action
+    static const Mask Close(Mask().set(                         23));//!< application action
+    static const Mask Save(Mask().set(                          24));//!< application action
+    static const Mask New(Mask().set(                           25));//!< application action
+    static const Mask Git(Mask().set(                           26));//!< git project integration
+    static const Mask Freeze(Mask().set(                        27));//!< git modifier
+    static const Mask Thaw(Mask().set(                          28));//!< git modifier
+    static const Mask Cancel(Mask().set(                        29));//!< command manager
+    static const Mask Done(Mask().set(                          30));//!< command manager
+    static const Mask Command(Mask().set(                       31));//!< command manager
+    static const Mask Active(Mask().set(                        32));//!< command manager
+    static const Mask Inactive(Mask().set(                      33));//!< command manager
+    static const Mask Status(Mask().set(                        34));//!< display status
+    static const Mask Text(Mask().set(                          35));//!< text
+    static const Mask Overlay(Mask().set(                       36));//!< visual
+    static const Mask Construct(Mask().set(                     37));//!< build.
+    static const Mask Edit(Mask().set(                          38));//!< modify.
+    static const Mask SetMask(Mask().set(                       39));//!< selection mask.
+    static const Mask Info(Mask().set(                          40));//!< opens info window.
+    static const Mask ThreeD(Mask().set(                        41));//!< visual
+    static const Mask Show(Mask().set(                          42));//!< visual
+    static const Mask Hide(Mask().set(                          43));//!< visual
+    static const Mask Toggle(Mask().set(                        44));//!< visual
+    static const Mask View(Mask().set(                          45));//!< visual
+    static const Mask Top(Mask().set(                           46));//!< command
+    static const Mask Front(Mask().set(                         47));//!< command
+    static const Mask Right(Mask().set(                         48));//!< command
+    static const Mask Iso(Mask().set(                           49));//!< command
+    static const Mask HiddenLine(Mask().set(                    50));//!< command
+    static const Mask Isolate(Mask().set(                       51));//!< command
+    static const Mask Fit(Mask().set(                           52));//!< command
+    static const Mask Fill(Mask().set(                          53));//!< command
+    static const Mask Triangulation(Mask().set(                 54));//!< command
+    static const Mask RenderStyle(Mask().set(                   55));//!< command
+    static const Mask Box(Mask().set(                           56));//!< command
+    static const Mask Sphere(Mask().set(                        57));//!< command
+    static const Mask Cone(Mask().set(                          58));//!< command
+    static const Mask Cylinder(Mask().set(                      59));//!< command
+    static const Mask Blend(Mask().set(                         60));//!< command
+    static const Mask Chamfer(Mask().set(                       61));//!< command
+    static const Mask Draft(Mask().set(                         62));//!< command
+    static const Mask Union(Mask().set(                         63));//!< command
+    static const Mask Subtract(Mask().set(                      64));//!< command
+    static const Mask Intersect(Mask().set(                     65));//!< command
+    static const Mask Import(Mask().set(                        66));//!< command
+    static const Mask Export(Mask().set(                        67));//!< command
+    static const Mask OCC(Mask().set(                           68));//!< command
+    static const Mask Step(Mask().set(                          69));//!< command
+    static const Mask OSG(Mask().set(                           70));//!< command
+    static const Mask Preferences(Mask().set(                   71));//!< command
+    static const Mask SystemReset(Mask().set(                   72));//!< command
+    static const Mask SystemToggle(Mask().set(                  73));//!< command
+    static const Mask FeatureToSystem(Mask().set(               74));//!< command
+    static const Mask SystemToFeature(Mask().set(               75));//!< command
+    static const Mask DraggerToFeature(Mask().set(              76));//!< command
+    static const Mask FeatureToDragger(Mask().set(              77));//!< command
+    static const Mask DatumPlane(Mask().set(                    78));//!< command
+    static const Mask CheckShapeIds(Mask().set(                 79));//!< command
+    static const Mask LinearMeasure(Mask().set(                 80));//!< command
+    static const Mask CheckGeometry(Mask().set(                 81));//!< command
+    static const Mask Color(Mask().set(                         82));//!< command
+    static const Mask Name(Mask().set(                          83));//!< command
+    static const Mask Hollow(Mask().set(                        84));//!< command
+    static const Mask Oblong(Mask().set(                        85));//!< command
+    static const Mask Extract(Mask().set(                       86));//!< command
+    static const Mask FeatureReposition(Mask().set(             87));//!< command
+    static const Mask Squash(Mask().set(                        88));//!< command
+    static const Mask Strip(Mask().set(                         89));//!< command
+    static const Mask Nest(Mask().set(                          90));//!< command
+    static const Mask DieSet(Mask().set(                        91));//!< command
+    static const Mask Quote(Mask().set(                         92));//!< command
+    static const Mask Dirty(Mask().set(                         93));//!< command
+    static const Mask Refine(Mask().set(                        94));//!< command
+    static const Mask InstanceLinear(Mask().set(                95));//!< command
+    static const Mask InstanceMirror(Mask().set(                96));//!< command
+    static const Mask InstancePolar(Mask().set(                 97));//!< command
+    static const Mask SystemToSelection(Mask().set(             98));//!< command
+    static const Mask Offset(Mask().set(                        99));//!< command
+    static const Mask Thicken(Mask().set(                      100));//!< command
+    static const Mask Sew(Mask().set(                          101));//!< command
+    static const Mask Trim(Mask().set(                         102));//!< command
+    static const Mask Revision(Mask().set(                     103));//!< command
+    static const Mask LOD(Mask().set(                          104));//!< command
+    static const Mask RemoveFaces(Mask().set(                  105));//!< command
+    static const Mask Torus(Mask().set(                        106));//!< command
+    static const Mask Thread(Mask().set(                       107));//!< command
+    static const Mask Dissolve(Mask().set(                     108));//!< command
+    static const Mask About(Mask().set(                        109));//!< command
+    static const Mask DatumAxis(Mask().set(                    110));//!< command
+    static const Mask Sketch(Mask().set(                       111));//!< command
+    static const Mask Extrude(Mask().set(                      112));//!< command
+    static const Mask Revolve(Mask().set(                      113));//!< command
+    static const Mask SurfaceMesh(Mask().set(                  114));//!< command
+    static const Mask Line(Mask().set(                         115));//!< command
+    static const Mask TransitionCurve(Mask().set(              116));//!< command
+    static const Mask Ruled(Mask().set(                        117));//!< command
+    static const Mask ImagePlane(Mask().set(                   118));//!< command
+    static const Mask Sweep(Mask().set(                        119));//!< command
+    static const Mask Dump(Mask().set(                         120));//!< command
+    static const Mask Graph(Mask().set(                        121));//!< command
+    static const Mask Shape(Mask().set(                        122));//!< command
+    static const Mask Track(Mask().set(                        123));//!< command
+    static const Mask Test(Mask().set(                         124));//!< command
 
     struct Stow; // forward declare see message/variant.h
     struct Message

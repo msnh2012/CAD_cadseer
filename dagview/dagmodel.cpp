@@ -382,7 +382,7 @@ void Model::setupDispatcher()
       )
       , std::make_pair
       (
-        msg::Request | msg::DebugDumpDAGViewGraph
+        msg::Request | msg::DAG | msg::Graph | msg::Dump
       , std::bind(&Model::dumpDAGViewGraphDispatched, this, std::placeholders::_1)
       )
       , std::make_pair

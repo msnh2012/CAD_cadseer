@@ -621,7 +621,7 @@ void Project::setupDispatcher()
       )
       , std::make_pair
       (
-        msg::Request | msg::DebugDumpProjectGraph
+        msg::Request | msg::Project | msg::Graph | msg::Dump
         , std::bind(&Project::dumpProjectGraphDispatched, this, std::placeholders::_1)
       )
       , std::make_pair

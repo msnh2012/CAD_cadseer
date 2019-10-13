@@ -1644,7 +1644,7 @@ void Manager::Stow::setAllCommands()
     , QObject::tr("Project dot").toStdString() //status text
     , QObject::tr("Developer Tool To Generate Graphviz Project Feature Graph").toStdString() //whats this text
     , QObject::tr("Project dot").toStdString() // toolTipText
-    , msg::Request | msg::DebugDumpProjectGraph
+    , msg::Request | msg::Project | msg::Graph | msg::Dump
   );
   sc
   (
@@ -1654,7 +1654,7 @@ void Manager::Stow::setAllCommands()
     , QObject::tr("DAGView dot").toStdString() //status text
     , QObject::tr("Developer Tool To Generate Graphviz DAGView Feature Graph").toStdString() //whats this text
     , QObject::tr("DAGView dot").toStdString() // toolTipText
-    , msg::Request | msg::DebugDumpDAGViewGraph
+    , msg::Request | msg::DAG | msg::Graph | msg::Dump
   );
   sc
   (
