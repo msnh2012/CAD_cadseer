@@ -8,9 +8,9 @@ A parametric solid modeler.
 
 ## Built With
 
+* [Qt](https://www.qt.io/) - GUI Framework library
 * [OpenCasCade](https://www.opencascade.com/) - Solid modeling kernel
 * [OpenSceneGraph](http://www.openscenegraph.org/) - OpenGL visualization wrapper
-* [Qt](https://www.qt.io/) - GUI Framework library
 * [OSGQt](https://github.com/openscenegraph/osgQt) - Bridge between OpenSceneGraph and Qt
 * [Boost](http://www.boost.org/) - C++ library
 * [Eigen3](http://eigen.tuxfamily.org/index.php?title=Main_Page) - C++ linear algebra library
@@ -23,6 +23,9 @@ A parametric solid modeler.
 * [spnav](http://spacenav.sourceforge.net/) - Connection to the spacenav driver
 * [zlib](https://zlib.net/) - A Massively Spiffy Yet Delicately Unobtrusive Compression Library
 * [libzip](https://libzip.org/) - a C library for reading, creating, and modifying zip archives.
+* [libzippp](https://github.com/ctabin/libzippp) - C++ wrapper for libzip 
+* [libgit2](https://libgit2.org/) - libgit2 is a portable, pure C implementation of the Git core methods 
+* [libgit2pp](https://github.com/marcelocantos/libgit2pp) - C++ convenience wrappers for libgit2 
 
 
 ## License
