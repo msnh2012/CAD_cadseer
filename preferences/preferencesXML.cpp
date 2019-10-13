@@ -1206,28 +1206,22 @@ namespace prf
     this->number_.set (x);
   }
 
-  const SpaceballButton::MaskType& SpaceballButton::
-  mask () const
+  const SpaceballButton::CommandIdType& SpaceballButton::
+  commandId () const
   {
-    return this->mask_.get ();
+    return this->commandId_.get ();
   }
 
-  SpaceballButton::MaskType& SpaceballButton::
-  mask ()
+  SpaceballButton::CommandIdType& SpaceballButton::
+  commandId ()
   {
-    return this->mask_.get ();
-  }
-
-  void SpaceballButton::
-  mask (const MaskType& x)
-  {
-    this->mask_.set (x);
+    return this->commandId_.get ();
   }
 
   void SpaceballButton::
-  mask (::std::unique_ptr< MaskType > x)
+  commandId (const CommandIdType& x)
   {
-    this->mask_.set (std::move (x));
+    this->commandId_.set (x);
   }
 
 
@@ -1274,28 +1268,22 @@ namespace prf
     this->number_.set (x);
   }
 
-  const HotKeyEntry::MaskType& HotKeyEntry::
-  mask () const
+  const HotKeyEntry::CommandIdType& HotKeyEntry::
+  commandId () const
   {
-    return this->mask_.get ();
+    return this->commandId_.get ();
   }
 
-  HotKeyEntry::MaskType& HotKeyEntry::
-  mask ()
+  HotKeyEntry::CommandIdType& HotKeyEntry::
+  commandId ()
   {
-    return this->mask_.get ();
-  }
-
-  void HotKeyEntry::
-  mask (const MaskType& x)
-  {
-    this->mask_.set (x);
+    return this->commandId_.get ();
   }
 
   void HotKeyEntry::
-  mask (::std::unique_ptr< MaskType > x)
+  commandId (const CommandIdType& x)
   {
-    this->mask_.set (std::move (x));
+    this->commandId_.set (x);
   }
 
 
@@ -4815,10 +4803,10 @@ namespace prf
 
   SpaceballButton::
   SpaceballButton (const NumberType& number,
-                   const MaskType& mask)
+                   const CommandIdType& commandId)
   : ::xml_schema::Type (),
     number_ (number, this),
-    mask_ (mask, this)
+    commandId_ (commandId, this)
   {
   }
 
@@ -4828,7 +4816,7 @@ namespace prf
                    ::xml_schema::Container* c)
   : ::xml_schema::Type (x, f, c),
     number_ (x.number_, f, this),
-    mask_ (x.mask_, f, this)
+    commandId_ (x.commandId_, f, this)
   {
   }
 
@@ -4838,7 +4826,7 @@ namespace prf
                    ::xml_schema::Container* c)
   : ::xml_schema::Type (e, f | ::xml_schema::Flags::base, c),
     number_ (this),
-    mask_ (this)
+    commandId_ (this)
   {
     if ((f & ::xml_schema::Flags::base) == 0)
     {
@@ -4868,16 +4856,13 @@ namespace prf
         }
       }
 
-      // mask
+      // commandId
       //
-      if (n.name () == "mask" && n.namespace_ ().empty ())
+      if (n.name () == "commandId" && n.namespace_ ().empty ())
       {
-        ::std::unique_ptr< MaskType > r (
-          MaskTraits::create (i, f, this));
-
-        if (!mask_.present ())
+        if (!commandId_.present ())
         {
-          this->mask_.set (::std::move (r));
+          this->commandId_.set (CommandIdTraits::create (i, f, this));
           continue;
         }
       }
@@ -4892,10 +4877,10 @@ namespace prf
         "");
     }
 
-    if (!mask_.present ())
+    if (!commandId_.present ())
     {
       throw ::xsd::cxx::tree::expected_element< char > (
-        "mask",
+        "commandId",
         "");
     }
   }
@@ -4914,7 +4899,7 @@ namespace prf
     {
       static_cast< ::xml_schema::Type& > (*this) = x;
       this->number_ = x.number_;
-      this->mask_ = x.mask_;
+      this->commandId_ = x.commandId_;
     }
 
     return *this;
@@ -5012,10 +4997,10 @@ namespace prf
 
   HotKeyEntry::
   HotKeyEntry (const NumberType& number,
-               const MaskType& mask)
+               const CommandIdType& commandId)
   : ::xml_schema::Type (),
     number_ (number, this),
-    mask_ (mask, this)
+    commandId_ (commandId, this)
   {
   }
 
@@ -5025,7 +5010,7 @@ namespace prf
                ::xml_schema::Container* c)
   : ::xml_schema::Type (x, f, c),
     number_ (x.number_, f, this),
-    mask_ (x.mask_, f, this)
+    commandId_ (x.commandId_, f, this)
   {
   }
 
@@ -5035,7 +5020,7 @@ namespace prf
                ::xml_schema::Container* c)
   : ::xml_schema::Type (e, f | ::xml_schema::Flags::base, c),
     number_ (this),
-    mask_ (this)
+    commandId_ (this)
   {
     if ((f & ::xml_schema::Flags::base) == 0)
     {
@@ -5065,16 +5050,13 @@ namespace prf
         }
       }
 
-      // mask
+      // commandId
       //
-      if (n.name () == "mask" && n.namespace_ ().empty ())
+      if (n.name () == "commandId" && n.namespace_ ().empty ())
       {
-        ::std::unique_ptr< MaskType > r (
-          MaskTraits::create (i, f, this));
-
-        if (!mask_.present ())
+        if (!commandId_.present ())
         {
-          this->mask_.set (::std::move (r));
+          this->commandId_.set (CommandIdTraits::create (i, f, this));
           continue;
         }
       }
@@ -5089,10 +5071,10 @@ namespace prf
         "");
     }
 
-    if (!mask_.present ())
+    if (!commandId_.present ())
     {
       throw ::xsd::cxx::tree::expected_element< char > (
-        "mask",
+        "commandId",
         "");
     }
   }
@@ -5111,7 +5093,7 @@ namespace prf
     {
       static_cast< ::xml_schema::Type& > (*this) = x;
       this->number_ = x.number_;
-      this->mask_ = x.mask_;
+      this->commandId_ = x.commandId_;
     }
 
     return *this;
@@ -8795,15 +8777,15 @@ namespace prf
       s << i.number ();
     }
 
-    // mask
+    // commandId
     //
     {
       ::xercesc::DOMElement& s (
         ::xsd::cxx::xml::dom::create_element (
-          "mask",
+          "commandId",
           e));
 
-      s << i.mask ();
+      s << i.commandId ();
     }
   }
 
@@ -8843,15 +8825,15 @@ namespace prf
       s << i.number ();
     }
 
-    // mask
+    // commandId
     //
     {
       ::xercesc::DOMElement& s (
         ::xsd::cxx::xml::dom::create_element (
-          "mask",
+          "commandId",
           e));
 
-      s << i.mask ();
+      s << i.commandId ();
     }
   }
 

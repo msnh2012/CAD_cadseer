@@ -37,11 +37,11 @@ namespace prf
     bool isOk(){return ok;}
     
     //spaceball buttons.
-    void setSpaceballButton(int, const std::string&);
-    std::string getSpaceballButton(int) const; //!< empty string means not assigned.
+    void setSpaceballButton(int, unsigned int);
+    unsigned int getSpaceballButton(int) const; //!< empty string means not assigned.
     //hot keys
-    void setHotKey(int, const std::string&);
-    std::string getHotKey(int) const; //!< empty string means not assigned.
+    void setHotKey(int, unsigned int);
+    unsigned int getHotKey(int) const; //!< empty string means not assigned.
     std::string getMenuConfigPath() const; //!< return maybe empty.
   private:
     bool createDefaultXml();

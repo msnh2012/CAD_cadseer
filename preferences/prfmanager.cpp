@@ -181,7 +181,7 @@ bool Manager::readConfig()
   return false;
 }
 
-void Manager::setSpaceballButton(int number, const std::string &maskString)
+void Manager::setSpaceballButton(int number, unsigned int commandId)
 {
   auto &buttons = rootPtr->hotKeys().spaceballButtons().array();
   
@@ -190,15 +190,15 @@ void Manager::setSpaceballButton(int number, const std::string &maskString)
   {
     if (it->number() == number)
     {
-      it->mask() = maskString;
+      it->commandId() = commandId;
       break;
     }
   }
   if (it == buttons.end())
-    buttons.push_back(SpaceballButton(number, maskString));
+    buttons.push_back(SpaceballButton(number, commandId));
 }
 
-std::string Manager::getSpaceballButton(int number) const
+unsigned int Manager::getSpaceballButton(int number) const
 {
   const auto &buttons = rootPtr->hotKeys().spaceballButtons().array();
   
@@ -206,13 +206,13 @@ std::string Manager::getSpaceballButton(int number) const
   for (; it != buttons.end(); ++it)
   {
     if (it->number() == number)
-      return it->mask();
+      return it->commandId();
   }
   
-  return std::string();
+  return 0;
 }
 
-void Manager::setHotKey(int number, const std::string &maskString)
+void Manager::setHotKey(int number, unsigned int commandId)
 {
   auto &keys = rootPtr->hotKeys().hotKeyEntries().array();
   
@@ -221,25 +221,25 @@ void Manager::setHotKey(int number, const std::string &maskString)
   {
     if(it->number() == number)
     {
-      it->mask() = maskString;
+      it->commandId() = commandId;
       break;
     }
   }
   if (it == keys.end())
-    keys.push_back(HotKeyEntry(number, maskString));
+    keys.push_back(HotKeyEntry(number, commandId));
 }
 
-std::string Manager::getHotKey(int number) const
+unsigned int Manager::getHotKey(int number) const
 {
   const auto &keys = rootPtr->hotKeys().hotKeyEntries().array();
   
   for (const auto &k : keys)
   {
     if (k.number() == number)
-      return k.mask();
+      return k.commandId();
   }
   
-  return std::string();
+  return 0;
 }
 
 std::string Manager::getMenuConfigPath() const

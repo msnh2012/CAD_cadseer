@@ -4036,9 +4036,9 @@ namespace prf
     //@}
 
     /**
-     * @name mask
+     * @name commandId
      *
-     * @brief Accessor and modifier functions for the %mask
+     * @brief Accessor and modifier functions for the %commandId
      * required element.
      */
     //@{
@@ -4046,28 +4046,28 @@ namespace prf
     /**
      * @brief Element type.
      */
-    typedef ::xml_schema::String MaskType;
+    typedef ::xml_schema::UnsignedInt CommandIdType;
 
     /**
      * @brief Element traits type.
      */
-    typedef ::xsd::cxx::tree::traits< MaskType, char > MaskTraits;
+    typedef ::xsd::cxx::tree::traits< CommandIdType, char > CommandIdTraits;
 
     /**
      * @brief Return a read-only (constant) reference to the element.
      *
      * @return A constant reference to the element.
      */
-    const MaskType&
-    mask () const;
+    const CommandIdType&
+    commandId () const;
 
     /**
      * @brief Return a read-write reference to the element.
      *
      * @return A reference to the element.
      */
-    MaskType&
-    mask ();
+    CommandIdType&
+    commandId ();
 
     /**
      * @brief Set the element value.
@@ -4078,18 +4078,7 @@ namespace prf
      * the new value of the element.
      */
     void
-    mask (const MaskType& x);
-
-    /**
-     * @brief Set the element value without copying.
-     *
-     * @param p A new value to use.
-     *
-     * This function will try to use the passed value directly
-     * instead of making a copy.
-     */
-    void
-    mask (::std::unique_ptr< MaskType > p);
+    commandId (const CommandIdType& x);
 
     //@}
 
@@ -4103,7 +4092,7 @@ namespace prf
      * initializers for required elements and attributes.
      */
     SpaceballButton (const NumberType&,
-                     const MaskType&);
+                     const CommandIdType&);
 
     /**
      * @brief Create an instance from a DOM element.
@@ -4176,7 +4165,7 @@ namespace prf
 
     protected:
     ::xsd::cxx::tree::one< NumberType > number_;
-    ::xsd::cxx::tree::one< MaskType > mask_;
+    ::xsd::cxx::tree::one< CommandIdType > commandId_;
 
     //@endcond
   };
@@ -4395,9 +4384,9 @@ namespace prf
     //@}
 
     /**
-     * @name mask
+     * @name commandId
      *
-     * @brief Accessor and modifier functions for the %mask
+     * @brief Accessor and modifier functions for the %commandId
      * required element.
      */
     //@{
@@ -4405,28 +4394,28 @@ namespace prf
     /**
      * @brief Element type.
      */
-    typedef ::xml_schema::String MaskType;
+    typedef ::xml_schema::UnsignedInt CommandIdType;
 
     /**
      * @brief Element traits type.
      */
-    typedef ::xsd::cxx::tree::traits< MaskType, char > MaskTraits;
+    typedef ::xsd::cxx::tree::traits< CommandIdType, char > CommandIdTraits;
 
     /**
      * @brief Return a read-only (constant) reference to the element.
      *
      * @return A constant reference to the element.
      */
-    const MaskType&
-    mask () const;
+    const CommandIdType&
+    commandId () const;
 
     /**
      * @brief Return a read-write reference to the element.
      *
      * @return A reference to the element.
      */
-    MaskType&
-    mask ();
+    CommandIdType&
+    commandId ();
 
     /**
      * @brief Set the element value.
@@ -4437,18 +4426,7 @@ namespace prf
      * the new value of the element.
      */
     void
-    mask (const MaskType& x);
-
-    /**
-     * @brief Set the element value without copying.
-     *
-     * @param p A new value to use.
-     *
-     * This function will try to use the passed value directly
-     * instead of making a copy.
-     */
-    void
-    mask (::std::unique_ptr< MaskType > p);
+    commandId (const CommandIdType& x);
 
     //@}
 
@@ -4462,7 +4440,7 @@ namespace prf
      * initializers for required elements and attributes.
      */
     HotKeyEntry (const NumberType&,
-                 const MaskType&);
+                 const CommandIdType&);
 
     /**
      * @brief Create an instance from a DOM element.
@@ -4535,7 +4513,7 @@ namespace prf
 
     protected:
     ::xsd::cxx::tree::one< NumberType > number_;
-    ::xsd::cxx::tree::one< MaskType > mask_;
+    ::xsd::cxx::tree::one< CommandIdType > commandId_;
 
     //@endcond
   };

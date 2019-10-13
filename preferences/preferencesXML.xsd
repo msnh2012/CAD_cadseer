@@ -115,7 +115,7 @@
 <xs:complexType name="SpaceballButton">
   <xs:all>
     <xs:element name="number" type="xs:int"/>
-    <xs:element name="mask" type="xs:string"/>
+    <xs:element name="commandId" type="xs:unsignedInt"/>
   </xs:all>
 </xs:complexType>
 
@@ -128,7 +128,7 @@
 <xs:complexType name="HotKeyEntry">
   <xs:all>
     <xs:element name="number" type="xs:int"/>
-    <xs:element name="mask" type="xs:string"/>
+    <xs:element name="commandId" type="xs:unsignedInt"/>
   </xs:all>
 </xs:complexType>
 

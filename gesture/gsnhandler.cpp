@@ -110,10 +110,10 @@ bool Handler::handle(const osgGA::GUIEventAdapter& eventAdapter,
         spaceballButton = currentButton;
         if (!rightButtonDown)
         {
-          std::string maskString = prf::manager().getSpaceballButton(spaceballButton);
-          if (!maskString.empty())
+          unsigned int commandId = prf::manager().getSpaceballButton(spaceballButton);
+          if (commandId != 0)
           {
-            msg::Mask msgMask(maskString);
+            msg::Mask msgMask = mnu::manager().getMask(commandId);
             msg::Message messageOut;
             messageOut.mask = msgMask;
             app::instance()->queuedMessage(messageOut);
@@ -207,12 +207,15 @@ bool Handler::handle(const osgGA::GUIEventAdapter& eventAdapter,
         if (hotKey != -1)
         {
           //launch command
-          std::string maskString = prf::manager().getHotKey(hotKey);
-          if (!maskString.empty())
+          unsigned int commandId = prf::manager().getHotKey(hotKey);
+          if (commandId != 0)
           {
-            msg::Mask msgMask(maskString);
-            msg::Message messageOut(msgMask);
-            app::instance()->queuedMessage(messageOut);
+            msg::Mask msgMask = mnu::manager().getMask(commandId);
+            if (msgMask.any())
+            {
+              msg::Message messageOut(msgMask);
+              app::instance()->queuedMessage(messageOut);
+            }
           }
           hotKey = -1;
         }
@@ -222,25 +225,27 @@ bool Handler::handle(const osgGA::GUIEventAdapter& eventAdapter,
       gestureSwitch->setAllChildrenOff();
       if (currentNode && (currentNode->getNodeMask() & mdv::gestureCommand))
       {
-        std::string msgMaskString;
-        if (currentNode->getUserValue<std::string>(attributeMask, msgMaskString))
+        unsigned int commandId;
+        if (currentNode->getUserValue<unsigned int>(attributeMask, commandId))
         {
           if (spaceballButton != -1)
           {
-            prf::manager().setSpaceballButton(spaceballButton, msgMaskString);
+            prf::manager().setSpaceballButton(spaceballButton, commandId);
             prf::manager().saveConfig();
           }
           if (hotKey != -1)
           {
-            prf::manager().setHotKey(hotKey, msgMaskString);
+            prf::manager().setHotKey(hotKey, commandId);
             prf::manager().saveConfig();
             hotKey = -1;
           }
-          
-          msg::Mask msgMask(msgMaskString);
-          msg::Message messageOut;
-          messageOut.mask = msgMask;
-          app::instance()->queuedMessage(messageOut);
+          msg::Mask msgMask = mnu::manager().getMask(commandId);
+          if (msgMask.any())
+          {
+            msg::Message messageOut;
+            messageOut.mask = msgMask;
+            app::instance()->queuedMessage(messageOut);
+          }
         }
         else
           assert(0); //gesture node doesn't have msgMask attribute;
@@ -439,7 +444,7 @@ void Handler::constructMenu()
     unsigned int nodeMask,
     const char *resource,
     const std::string &statusText,
-    const std::string &mask,
+    unsigned int commandId,
     osg::MatrixTransform *parent
   ) -> osg::MatrixTransform*
   {
@@ -447,12 +452,12 @@ void Handler::constructMenu()
     assert(!statusText.empty());
     assert(parent);
     if (nodeMask == mdv::gestureCommand)
-      assert(!mask.empty());
+      assert(mnu::manager().getMask(commandId).any());
     
     osg::MatrixTransform *out = builder.buildNode(resource, nodeMask);
     out->setUserValue<std::string>(attributeStatus, statusText);
     if (nodeMask == mdv::gestureCommand)
-      out->setUserValue<std::string>(attributeMask, mask);
+      out->setUserValue<unsigned int>(attributeMask, commandId);
     parent->insertChild(parent->getNumChildren() - 1, out);
     
     return out;
@@ -477,7 +482,7 @@ void Handler::constructMenu()
         mdv::gestureMenu,
         sn.icon().c_str(),
         sn.text(),
-        std::string(),
+        0,
         oCNode
       );
       recurse(&sn, subMenuNode);
@@ -496,15 +501,14 @@ void Handler::constructMenu()
         if (cc.visual()->statusText())
           text = cc.visual()->statusText().get();
       }
-      msg::Mask mask = mnu::manager().getMask(cId);
-      if (mask.none())
+      if (mnu::manager().getMask(cId).none())
         continue;
       constructNode
       (
         mdv::gestureCommand,
         icon.c_str(),
         text,
-        mask.to_string(),
+        cId,
         oCNode
       );
     }
