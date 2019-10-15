@@ -511,13 +511,20 @@ void Sketch::addWhereDragged()
 
 void Sketch::remove()
 {
-  pEdit->lineEdit->clear();
-  pEdit->setDisabled(true);
-  parameter = nullptr;
+  if (parameter)
+  {
+    uint32_t h = sketch->getHPHandle(parameter);
+    if (h != 0)
+      sketch->removeHPPair(h);
+    parameter = nullptr;
+    pEdit->lineEdit->clear();
+    pEdit->setDisabled(true);
+  }
   
   if (sketch->getVisual()->getState() != skt::State::selection)
     sketch->getVisual()->cancel();
   sketch->getVisual()->remove();
+  sketch->cleanHPPair();
 }
 
 void Sketch::cancel()

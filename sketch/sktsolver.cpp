@@ -384,19 +384,40 @@ Slvs_hEntity Solver::addCubicBezier(Slvs_hEntity p1, Slvs_hEntity p2, Slvs_hEnti
 /*! @details remove an entity from the system.
  * 
  * @param eh is the handle of the entity to remove.
- * @note This is just removal of the entity. No reference validation is performed.
+ * @note This is just removal of the entities. No reference validation is performed.
  * @see clean.
  */
 void Solver::removeEntity(Slvs_hEntity eh)
 {
-  for (auto it = entities.begin(); it != entities.end(); ++it)
+  std::vector<Slvs_hEntity> htr(1, eh); //handles to remove
+  auto oe = findEntity(eh); //optional entity
+  if (!oe)
+    return;
+  
+  if (oe.get().type == SLVS_E_LINE_SEGMENT)
   {
-    if (it->h == eh)
-    {
-      entities.erase(it);
-      break;
-    }
+    //remove endpoints.
+    htr.push_back(oe.get().point[0]);
+    htr.push_back(oe.get().point[1]);
   }
+  else if (oe.get().type == SLVS_E_ARC_OF_CIRCLE)
+  {
+    //remove endpoints and center.
+    htr.push_back(oe.get().point[0]);
+    htr.push_back(oe.get().point[1]);
+    htr.push_back(oe.get().point[2]);
+  }
+  else if (oe.get().type == SLVS_E_CIRCLE)
+  {
+    //remove center point and distance.
+    htr.push_back(oe.get().point[0]);
+    htr.push_back(oe.get().distance);
+  }
+  
+  auto ptei = entities.end(); //past the end iterator
+  for (const auto &rh : htr)
+    ptei = std::remove_if(entities.begin(), ptei, [&rh](const Slvs_Entity& e){return e.h == rh;});
+  entities.erase(ptei, entities.end());
 }
 
 /*! @details Get all the orphaned entities. An orphaned entity is one 
@@ -420,7 +441,7 @@ std::vector<Slvs_hEntity> Solver::getOrphanedEntities() const
   std::vector<Slvs_hEntity> out;
   for (const auto &e : entities)
   {
-    std::vector<Slvs_hParam> cph; //current entity handles
+    std::vector<Slvs_hParam> cph; //current parameter handles
     cph.push_back(e.param[0]);
     cph.push_back(e.param[1]);
     cph.push_back(e.param[2]);
@@ -1801,6 +1822,20 @@ Slvs_hConstraint Solver::addDiameter(double value, Slvs_hEntity e)
       , 0
     )
   );
+}
+
+/*! @details Does a constraint exist
+ * 
+ * @param ch is the handle of the constraint to find.
+ */
+bool Solver::hasConstraint(Slvs_hConstraint ch)
+{
+  for (const auto &c : constraints)
+  {
+    if (c.h == ch)
+      return true;
+  }
+  return false;
 }
 
 /*! @details remove a constraint from the system.

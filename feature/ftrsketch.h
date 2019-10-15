@@ -61,6 +61,7 @@ namespace ftr
     void removeHPPair(uint32_t);
     prm::Parameter* getHPParameter(uint32_t);
     uint32_t getHPHandle(const prm::Parameter*);
+    void cleanHPPair(); //!< ensure handle of pair exists in solver.
     
   protected:
     std::unique_ptr<ann::SeerShape> sShape;

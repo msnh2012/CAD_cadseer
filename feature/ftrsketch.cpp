@@ -189,6 +189,17 @@ uint32_t Sketch::getHPHandle(const prm::Parameter *pIn)
   return 0;
 }
 
+void Sketch::cleanHPPair()
+{
+  for (auto it = hpPairs.begin(); it != hpPairs.end();)
+  {
+    if (!solver->hasConstraint(it->first))
+      it = hpPairs.erase(it);
+    else
+      it++;
+  }
+}
+
 void Sketch::updateModel(const UpdatePayload &/*payloadIn*/)
 {
   setFailure();
@@ -470,6 +481,9 @@ void Sketch::updateSeerShape()
     wires.push_back(wm.Wire());
   }
   
+  if (wires.empty())
+    throw std::runtime_error("No wires from sketch");
+  
   sShape->setOCCTShape(static_cast<TopoDS_Compound>(occt::ShapeVectorCast(wires)), getId());
   if (!sShape->hasEvolveRecord(gu::createNilId(), sShape->getRootShapeId()))
   {
@@ -567,10 +581,10 @@ void Sketch::serialRead(const prj::srl::FeatureSketch &sIn)
   {
     std::shared_ptr<prm::Parameter> p = std::make_shared<prm::Parameter>(QString(), 0.0);
     p->serialIn(pair.parameter());
-    hpPairs.push_back(std::make_pair(pair.handle(), p));
-    auto location = findLocation(hpPairs.back().first);
+    addHPPair(pair.handle(), p);
+    auto location = findLocation(pair.handle());
     if (location)
-      visual->connect(hpPairs.back().first, p.get(), location.get());
+      visual->connect(pair.handle(), p.get(), location.get());
     else
       std::cout << "ERROR: in finding location of constraint in: " << BOOST_CURRENT_FUNCTION << std::endl;
   }

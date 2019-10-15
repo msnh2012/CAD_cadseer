@@ -201,6 +201,7 @@ namespace skt
     
     Slvs_hConstraint addDiameter(double, Slvs_hEntity);
     
+    bool hasConstraint(Slvs_hConstraint);
     void removeConstraint(Slvs_hConstraint);
     std::vector<Slvs_hConstraint> getOrphanedConstraints() const;
     int removeOrphanedConstraints();

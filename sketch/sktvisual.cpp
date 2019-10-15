@@ -392,7 +392,7 @@ void Visual::update()
           setEntityColor(point, data->entityColor);
         record.get().node = point;
         record.get().node->setNodeMask(Entity.to_ulong());
-        record.get().node->setName(boost::uuids::to_string(record.get().id));
+        record.get().node->setUserValue<std::string>("id", boost::uuids::to_string(record.get().id));
         data->entityGroup->addChild(record.get().node);
       }
       osg::Geometry *geometry = dynamic_cast<osg::Geometry*>(record.get().node.get());
@@ -415,7 +415,7 @@ void Visual::update()
           setEntityColor(line, data->entityColor);
         record.get().node = line;
         record.get().node->setNodeMask(Entity.to_ulong());
-        record.get().node->setName(boost::uuids::to_string(record.get().id));
+        record.get().node->setUserValue<std::string>("id", boost::uuids::to_string(record.get().id));
         data->entityGroup->addChild(record.get().node);
       }
       osg::Geometry *geometry = dynamic_cast<osg::Geometry*>(record.get().node.get());
@@ -439,7 +439,7 @@ void Visual::update()
           setEntityColor(arc, data->entityColor);
         record.get().node = arc;
         record.get().node->setNodeMask(Entity.to_ulong());
-        record.get().node->setName(boost::uuids::to_string(record.get().id));
+        record.get().node->setUserValue<std::string>("id", boost::uuids::to_string(record.get().id));
         data->entityGroup->addChild(record.get().node);
       }
       osg::Geometry *geometry = dynamic_cast<osg::Geometry*>(record.get().node.get());
@@ -461,7 +461,7 @@ void Visual::update()
           setEntityColor(circle, data->entityColor);
         record.get().node = circle;
         record.get().node->setNodeMask(Entity.to_ulong());
-        record.get().node->setName(boost::uuids::to_string(record.get().id));
+        record.get().node->setUserValue<std::string>("id", boost::uuids::to_string(record.get().id));
         data->entityGroup->addChild(record.get().node);
       }
       osg::Geometry *geometry = dynamic_cast<osg::Geometry*>(record.get().node.get());
@@ -851,8 +851,6 @@ void Visual::move(const osgUtil::PolytopeIntersector::Intersections &is)
     osg::Geometry *tg = dynamic_cast<osg::Geometry*>(i.drawable.get());
     if (tg)
     {
-      if (tg->getName().empty())
-        continue;
       if(tg->getName() == "selectionPlane")
       {
         continue;
@@ -880,7 +878,11 @@ void Visual::move(const osgUtil::PolytopeIntersector::Intersections &is)
       else if (tg->getName() == "planeLines")
         continue;
       
-      uuid id = gu::stringToId(tg->getName());
+      std::string sid;
+      bool result = tg->getUserValue<std::string>("id", sid);
+      if (!result)
+        continue;
+      uuid id = gu::stringToId(sid);
       if (id.is_nil())
         continue;
       
