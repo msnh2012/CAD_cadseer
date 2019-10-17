@@ -19,6 +19,7 @@
 
 #include <boost/filesystem/path.hpp>
 
+#include <Precision.hxx>
 #include <ShapeUpgrade_UnifySameDomain.hxx>
 #include <BRepTools_History.hxx>
 

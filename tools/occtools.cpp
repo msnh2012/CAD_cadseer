@@ -51,7 +51,7 @@
 #include <TopExp_Explorer.hxx>
 #include <TopTools_IndexedDataMapOfShapeListOfShape.hxx>
 #include <BRepMesh_IncrementalMesh.hxx>
-#include <BRepMesh_FastDiscret.hxx>
+#include <IMeshTools_Parameters.hxx>
 #include <GeomLib_Tool.hxx>
 #include <ShapeAnalysis_FreeBoundsProperties.hxx>
 
@@ -345,7 +345,7 @@ bool TangentFaceVisitor::discoverEdge(const TopoDS_Edge& edgeIn)
   
   //get a set of points along edge. copy the shape so we don't mess with the mesh.
   TopoDS_Shape c = BRepBuilderAPI_Copy(edgeIn);
-  BRepMesh_FastDiscret::Parameters mp;
+  IMeshTools_Parameters mp;
   mp.Deflection = 0.5;
   mp.Angle = 1.0;
   mp.Relative = Standard_True;

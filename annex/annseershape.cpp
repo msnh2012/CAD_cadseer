@@ -325,13 +325,13 @@ std::ostream& ann::operator<<(std::ostream& os, const ShapeIdContainer& containe
   return os;
 }
 
-ostream& ann::operator<<(ostream& os, const EvolveRecord& record)
+std::ostream& ann::operator<<(std::ostream& os, const EvolveRecord& record)
 {
   os << gu::idToString(record.inId) << "      " << gu::idToString(record.outId) << std::endl;
   return os;
 }
 
-ostream& ann::operator<<(ostream& os, const EvolveContainer& container)
+std::ostream& ann::operator<<(std::ostream& os, const EvolveContainer& container)
 {
   typedef EvolveContainer::index<EvolveRecord::ByInId>::type List;
   const List &list = container.get<EvolveRecord::ByInId>();
@@ -342,13 +342,13 @@ ostream& ann::operator<<(ostream& os, const EvolveContainer& container)
 
 
 
-ostream& ann::operator<<(ostream& os, const FeatureTagRecord& record)
+std::ostream& ann::operator<<(std::ostream& os, const FeatureTagRecord& record)
 {
   os << gu::idToString(record.id) << "      " << record.tag << std::endl;
   return os;
 }
 
-ostream& ann::operator<<(ostream& os, const FeatureTagContainer& container)
+std::ostream& ann::operator<<(std::ostream& os, const FeatureTagContainer& container)
 {
   typedef FeatureTagContainer::index<FeatureTagRecord::ById>::type List;
   const List &list = container.get<FeatureTagRecord::ById>();

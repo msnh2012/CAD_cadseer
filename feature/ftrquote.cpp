@@ -173,7 +173,7 @@ void Quote::updateModel(const UpdatePayload &payloadIn)
         }
         lbo::replace(contents, map);
         
-        fstream stream;
+        std::fstream stream;
         stream.open(temp.string(), std::ios::out);
         stream << contents;
         stream.close();

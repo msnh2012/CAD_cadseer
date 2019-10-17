@@ -20,7 +20,7 @@
 #include <BRepBndLib.hxx>
 #include <TopExp.hxx>
 #include <BRepMesh_IncrementalMesh.hxx>
-#include <BRepMesh_FastDiscret.hxx>
+#include <IMeshTools_Parameters.hxx>
 #include <BRepTools.hxx>
 #include <BRep_Tool.hxx>
 #include <TopoDS.hxx>
@@ -264,30 +264,41 @@ void ShapeGeometryBuilder::go(double deflection, double angle)
     processed.Clear();
     
     /* default constructor values for parameters.
-            Parameters()
-              :
-            Angle(0.1),
-            Deflection(0.001),
-            MinSize(Precision::Confusion()),
-            InParallel(Standard_False),
-            Relative(Standard_False),
-            AdaptiveMin(Standard_False),
-            InternalVerticesMode(Standard_True),
-            ControlSurfaceDeflection(Standard_True)
-            {
-            }
+        Angle(0.5),
+        Deflection(0.001),
+        AngleInterior(-1.0),
+        DeflectionInterior(-1.0),
+        MinSize (-1.0),
+        InParallel (Standard_False),
+        Relative (Standard_False),
+        InternalVerticesMode (Standard_True),
+        ControlSurfaceDeflection (Standard_True),
+        CleanModel (Standard_True),
+        AdjustMinSize (Standard_False)
+        
+        occt 7.4 BRepMesh_FastDiscret::Parameters replaced with IMeshTools_Parameters
+        new in IMeshTools_Parameters are AngleInterior and DelfectionInterior. They are relative to faces and
+          I am guessing they allow you to have different criteria for the faces and face edges.
+          They default to a value of -1.0. I am guessing this means to use the Angle and Deflection values.
+        CleanModel is also new in IMeshTools_Parameters. Sounds good! Hopefully it will be.
+        Guessing AdjustMinSize is just a rename of AdaptiveMin.
+          However, the old AdaptiveMin defaulted to true. Where the new AdjustMinSize defaults to false?
+        
      */
-    BRepMesh_FastDiscret::Parameters prms;
-    prms.Angle = angle;
-    prms.Deflection = deflection;
-//     prms.MinSize = Precision::Confusion(); //leave default
-    prms.InParallel = Standard_True;
-//     prms.Relative = Standard_False; //leave default
-//     prms.AdaptiveMin = Standard_True; //leave default
-//     prms.InternalVerticesMode = Standard_True; //leave default
-//     prms.ControlSurfaceDeflection = Standard_True; //leave default
+    IMeshTools_Parameters mprms;
+    mprms.Deflection = deflection;
+    mprms.Angle = angle;
+//     mprms.AngleInterior = -1.0;                      //leave default
+//     mprms.DeflectionInterior = -1.0;                 //leave default
+//     mprms.MinSize = -1.0;                            //leave default
+    mprms.InParallel = Standard_True;
+//     mprms.Relative = Standard_False;                 //leave default
+//     mprms.InternalVerticesMode = Standard_True;      //leave default
+//     mprms.ControlSurfaceDeflection = Standard_True;  //leave default
+//     mprms.CleanModel = Standard_True;                //leave default
+//     mprms.AdjustMinSize = Standard_False;            //leave default
     
-    BRepMesh_IncrementalMesh(copiedShape, prms);
+    BRepMesh_IncrementalMesh(copiedShape, mprms);
 
     processed.Add(copiedShape);
     if (copiedShape.ShapeType() == TopAbs_FACE)
