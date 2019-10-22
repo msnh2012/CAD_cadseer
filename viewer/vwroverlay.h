@@ -25,15 +25,13 @@
 #include <osg/Camera>
 #include <osg/Switch>
 
-namespace osgViewer{class GraphicsWindow;}
-
 namespace msg{class Message; struct Node; struct Sift;}
 namespace vwr
 {
 class Overlay : public osg::Camera
 {
 public:
-    Overlay(osgViewer::GraphicsWindow *);
+    Overlay();
 
 private:
   std::unique_ptr<msg::Node> node;

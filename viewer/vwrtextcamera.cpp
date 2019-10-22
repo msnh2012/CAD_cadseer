@@ -24,12 +24,13 @@
 #include <boost/current_function.hpp>
 
 #include <QApplication>
+#include <QFont>
 
 #include <osg/Switch>
 #include <osg/PolygonMode>
 #include <osgViewer/GraphicsWindow>
 #include <osgText/Text>
-#include <osgQt/QFontImplementation>
+#include <osgQOpenGL/QFontImplementation>
 #include <osgAnimation/EaseMotion>
 
 #include "tools/idtools.h"
@@ -126,7 +127,7 @@ bool ResizeEventHandler::handle(const osgGA::GUIEventAdapter& eventAdapter, osgG
   return false;
 }
 
-TextCamera::TextCamera(osgViewer::GraphicsWindow *windowIn) : osg::Camera()
+TextCamera::TextCamera() : osg::Camera()
 {
   node = std::make_unique<msg::Node>();
   node->connect(msg::hub());
@@ -135,8 +136,6 @@ TextCamera::TextCamera(osgViewer::GraphicsWindow *windowIn) : osg::Camera()
   node->setHandler(std::bind(&msg::Sift::receive, sift.get(), std::placeholders::_1));
   setupDispatcher();
   
-  setGraphicsContext(windowIn);
-  setProjectionMatrix(osg::Matrix::ortho2D(0, windowIn->getTraits()->width, 0, windowIn->getTraits()->width));
   setReferenceFrame(osg::Transform::ABSOLUTE_RF);
   setRenderOrder(osg::Camera::NESTED_RENDER, 3);
   setAllowEventFocus(false);
@@ -159,7 +158,7 @@ TextCamera::TextCamera(osgViewer::GraphicsWindow *windowIn) : osg::Camera()
   
   selectionLabel = new osgText::Text();
   selectionLabel->setName("selection");
-  osg::ref_ptr<osgQt::QFontImplementation> fontImplement(new osgQt::QFontImplementation(qApp->font()));
+  osg::ref_ptr<QFontImplementation> fontImplement(new QFontImplementation(qApp->font()));
   osg::ref_ptr<osgText::Font> textFont(new osgText::Font(fontImplement.get()));
   selectionLabel->setFont(textFont);
   selectionLabel->setFontResolution(qApp->font().pointSize(), qApp->font().pointSize());

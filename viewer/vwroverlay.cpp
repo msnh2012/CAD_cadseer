@@ -42,7 +42,7 @@
 
 using namespace vwr;
 
-Overlay::Overlay(osgViewer::GraphicsWindow *windowIn) : osg::Camera()
+Overlay::Overlay() : osg::Camera()
 {
   node = std::make_unique<msg::Node>();
   node->connect(msg::hub());
@@ -56,22 +56,8 @@ Overlay::Overlay(osgViewer::GraphicsWindow *windowIn) : osg::Camera()
   setNodeMask(mdv::overlay);
   setName("overlay");
   setupDispatcher();
-  setGraphicsContext(windowIn);
   setClearMask(GL_DEPTH_BUFFER_BIT);
   setRenderOrder(osg::Camera::NESTED_RENDER, 2);
-  
-  osg::Camera *mainCamera = nullptr;
-  const osg::GraphicsContext::Cameras &cameras = windowIn->getCameras();
-  for (const auto it : cameras)
-  {
-    if (it->getName() == "main")
-    {
-      mainCamera = it;
-      break;
-    }
-  }
-  assert(mainCamera); //couldn't find main camera
-  setViewport(new osg::Viewport(*mainCamera->getViewport()));
   
   this->getOrCreateStateSet()->setMode(GL_MULTISAMPLE_ARB, osg::StateAttribute::ON);
 }

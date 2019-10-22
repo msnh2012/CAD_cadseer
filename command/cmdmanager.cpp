@@ -94,6 +94,7 @@
 #include "selection/slcmessage.h"
 #include "selection/slccontainer.h"
 #include "selection/slcdefinitions.h"
+#include "selection/slceventhandler.h"
 #include "preferences/preferencesXML.h"
 #include "preferences/prfmanager.h"
 #include "viewer/vwrmessage.h"
@@ -897,7 +898,7 @@ void Manager::editFeatureDispatched(const msg::Message&)
 {
   app::Application *application = app::instance();
   const slc::Containers &selections = application->
-    getMainWindow()->getViewer()->getSelections();
+    getMainWindow()->getViewer()->getSelectionEventHandler()->getSelections();
     
   //edit feature only works with 1 object pre-selection.
   if (selections.size() != 1)

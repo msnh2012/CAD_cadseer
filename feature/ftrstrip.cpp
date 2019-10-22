@@ -26,7 +26,7 @@
 #include <BRepBuilderAPI_MakeEdge.hxx>
 
 #include <osg/AutoTransform>
-#include <osgQt/QFontImplementation>
+#include <osgQOpenGL/QFontImplementation>
 #include <osgText/Text>
 #include <osg/Switch>
 
@@ -155,7 +155,7 @@ osg::Node* buildStationLabel(const std::string &sIn)
   osgText::Text *text = new osgText::Text();
   text->setName(sIn);
   text->setText(sIn);
-  osg::ref_ptr<osgQt::QFontImplementation> fontImplement(new osgQt::QFontImplementation(qApp->font()));
+  osg::ref_ptr<QFontImplementation> fontImplement(new QFontImplementation(qApp->font()));
   osg::ref_ptr<osgText::Font> textFont(new osgText::Font(fontImplement.get()));
   text->setFont(textFont.get());
   text->setColor(osg::Vec4(1.0, 1.0, 1.0, 1.0));

@@ -68,6 +68,7 @@ public:
     void dump();
     void setView(const osg::Vec3d &lookDirection, const osg::Vec3d &upDirection);
     void viewFit();
+    void computeHome();
 
 protected:
     //both ortho and perspective contain some magic numbers. translations and rotations

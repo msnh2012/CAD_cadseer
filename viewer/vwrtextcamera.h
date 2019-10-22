@@ -27,7 +27,6 @@
 
 #include "selection/slcmessage.h"
 
-namespace osgViewer{class GraphicsWindow;}
 namespace osg{class Switch; class Group;}
 namespace osgText{class osgText;}
 
@@ -53,7 +52,7 @@ protected:
 class TextCamera : public osg::Camera
 {
 public:
-    TextCamera(osgViewer::GraphicsWindow *);
+    TextCamera();
     virtual ~TextCamera() override;
     bool cleanFade(); //return true if something was changed.
     void layoutStatus(); //position the text on screen

@@ -32,7 +32,7 @@
 #include <osg/Material>
 #include <osg/ComputeBoundsVisitor>
 #include <osgText/Text>
-#include <osgQt/QFontImplementation>
+#include <osgQOpenGL/QFontImplementation>
 
 #include "application/appapplication.h"
 #include "preferences/preferencesXML.h"
@@ -321,7 +321,7 @@ void LinearDimension::build()
   
   text = new osgText::Text();
   text->setName("text");
-  osg::ref_ptr<osgQt::QFontImplementation> fontImplement(new osgQt::QFontImplementation(qApp->font()));
+  osg::ref_ptr<QFontImplementation> fontImplement(new QFontImplementation(qApp->font()));
   osg::ref_ptr<osgText::Font> textFont(new osgText::Font(fontImplement.get()));
   text->setFont(textFont);
   text->setColor(osg::Vec4(0.0, 0.0, 1.0, 1.0));

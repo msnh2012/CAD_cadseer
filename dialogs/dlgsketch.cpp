@@ -20,6 +20,8 @@
 #include <iostream>
 #include <boost/optional/optional.hpp>
 
+#include <osgViewer/Viewer>
+
 #include <QTabWidget>
 #include <QToolBar>
 #include <QDialogButtonBox>
@@ -135,7 +137,7 @@ void Sketch::accept()
 
 void Sketch::sketchSelectionGo()
 {
-  osgViewer::View* view = app::instance()->getMainWindow()->getViewer()->getView(0);
+  osgViewer::View* view = app::instance()->getMainWindow()->getViewer()->getOsgViewer();
   assert(view);
   view->addEventHandler(selection.get());
   sketch->getVisual()->setActiveSketch();
@@ -144,7 +146,7 @@ void Sketch::sketchSelectionGo()
 
 void Sketch::sketchSelectionStop()
 {
-  osgViewer::View* view = app::instance()->getMainWindow()->getViewer()->getView(0);
+  osgViewer::View* view = app::instance()->getMainWindow()->getViewer()->getOsgViewer();
   assert(view);
   view->removeEventHandler(selection.get());
   sketch->getVisual()->clearActiveSketch();

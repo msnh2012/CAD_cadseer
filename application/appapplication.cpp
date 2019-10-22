@@ -27,7 +27,7 @@
 #include <QMessageBox>
 #include <QSettings>
 
-#include <global.hpp> //for git start and shutdown.
+#include "subprojects/libgit2pp/src/global.hpp" //for git start and shutdown.
 
 #include "application/appapplication.h"
 #include "application/appmainwindow.h"
@@ -133,7 +133,7 @@ void Application::appStartSlot()
     }
   }
   
-  getMainWindow()->getViewer()->getGraphicsWidget()->setFocus();
+  getMainWindow()->getViewer()->setFocus();
 }
 
 void Application::quittingSlot()
@@ -178,7 +178,7 @@ bool Application::notify(QObject* receiver, QEvent* e)
       vwr::MotionEvent *newEvent = new vwr::MotionEvent(*motionEvent);
       QObject *theParent = receiver->parent();
       if (!theParent || theParent == mainWindow.get())
-        postEvent(mainWindow->getViewer()->getGraphicsWidget(), newEvent);
+        postEvent(mainWindow->getViewer(), newEvent);
       else
         postEvent(theParent, newEvent);
       return true;
@@ -197,7 +197,7 @@ bool Application::notify(QObject* receiver, QEvent* e)
       vwr::ButtonEvent *newEvent = new vwr::ButtonEvent(*buttonEvent);
       QObject *theParent = receiver->parent();
       if (!theParent || theParent == mainWindow.get())
-        postEvent(mainWindow->getViewer()->getGraphicsWidget(), newEvent);
+        postEvent(mainWindow->getViewer(), newEvent);
       else
         postEvent(theParent, newEvent);
       return true;

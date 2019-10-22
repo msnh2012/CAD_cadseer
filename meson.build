@@ -23,9 +23,7 @@ boost = dependency('boost', modules : ['system', 'graph', 'timer', 'filesystem']
 occt = dependency('OpenCASCADE', version : '>=7.3')
 
 osg = dependency('openscenegraph', version : '>=3.6', modules : ['OpenThreads', 'osg',
-  'osgDB', 'osgUtil', 'osgViewer', 'osgGA', 'osgText', 'osgManipulator', 'osgFX', 'osgQt5'])
-  
-osgqt = dependency('openscenegraph-osgQt5', version : '>=3.6')
+  'osgDB', 'osgUtil', 'osgViewer', 'osgGA', 'osgText', 'osgManipulator', 'osgFX'])
   
 eigen = dependency('eigen3', version : '>=3.3.7')
 
@@ -72,6 +70,9 @@ solvespace = solvespace_proj.get_variable('libsolvespace_dep')
 
 libzippp_proj = subproject('libzippp')
 libzippp = libzippp_proj.get_variable('libzippp_static_dep')
+
+osgqt_proj = subproject('osgQt')
+osgqt = osgqt_proj.get_variable('libosgqt_dep')
 
 #libigl has some problems. See myBuild.txt in subproject/libigl for description.
 #libigl = dependency('libigl', version : '>=3.3.7', modules : ['igl::core'])
@@ -387,7 +388,6 @@ library_sources = ['library/lbrcirclebuilder.cpp'
 viewer_sources = ['viewer/vwrwidget.cpp'
   , 'viewer/vwrspaceballmanipulator.cpp'
   , 'viewer/vwrspaceballqevent.cpp'
-  , 'viewer/vwrgleventwidget.cpp'
   , 'viewer/vwrspaceballosgevent.cpp'
   , 'viewer/vwrtextcamera.cpp'
   , 'viewer/vwroverlay.cpp'

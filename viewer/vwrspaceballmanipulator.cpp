@@ -124,6 +124,7 @@ void SpaceballManipulator::computeHomePosition(const osg::Camera *, bool useBoun
       // (bounding box computes model center more precisely than bounding sphere)
       osg::ComputeBoundsVisitor cbVisitor(osg::ComputeBoundsVisitor::TRAVERSE_ACTIVE_CHILDREN);
       cbVisitor.setTraversalMask(~(mdv::csys));
+      assert(_node);
       _node->accept(cbVisitor);
       osg::BoundingBox &boundingBox = cbVisitor.getBoundingBox();
       if (boundingBox.valid())
@@ -154,6 +155,11 @@ void SpaceballManipulator::computeHomePosition(const osg::Camera *, bool useBoun
         //possibly
         //camera->setComputeNearFar(osg::CullSettings::DO_NOT_COMPUTE_NEAR_FAR);
     }
+}
+
+void SpaceballManipulator::computeHome()
+{
+  computeHomePosition(cam, true);
 }
 
 void SpaceballManipulator::scaleView(double scaleFactor)
@@ -287,7 +293,7 @@ bool SpaceballManipulator::handleMouse(const osgGA::GUIEventAdapter& ea, osgGA::
       
     getProjectionData();
     
-    static const double scrollFactor = 0.05;
+    static const double scrollFactor = 0.1;
     double directionFactor = 1.0; //assume scroll down.
     
     //establish 2 screen points. 1 will be viewport center and the other

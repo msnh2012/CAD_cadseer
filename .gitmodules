@@ -10,3 +10,6 @@
 [submodule "subprojects/libigl"]
 	path = subprojects/libigl
 	url = https://github.com/libigl/libigl.git
+[submodule "subprojects/osgQt"]
+	path = subprojects/osgQt
+	url = https://github.com/openscenegraph/osgQt.git

@@ -26,6 +26,7 @@
 #include <QToolBar>
 #include <QMenu>
 #include <QToolButton>
+#include <QSurfaceFormat>
 
 #include "dagview/dagmodel.h"
 #include "dagview/dagview.h"
@@ -306,11 +307,32 @@ MainWindow::MainWindow(QWidget *parent)
   subSplitter->setSizes(QList<int>({250, 1000}));
   subSplitter->restoreSettings("mainWindowSubSplitter");
   
-  stow->viewWidget = new vwr::Widget(osgViewer::ViewerBase::SingleThreaded);
+  QSurfaceFormat format = QSurfaceFormat::defaultFormat();
+  
+//   format.setVersion(3, 2);
+//   format.setProfile(QSurfaceFormat::CoreProfile);
+//   format.setRenderableType(QSurfaceFormat::OpenGL);
+//   format.setOption(QSurfaceFormat::DebugContext);
+  
+  format.setVersion(2, 0);
+  format.setProfile(QSurfaceFormat::CompatibilityProfile);
+  format.setRenderableType(QSurfaceFormat::OpenGL);
+  format.setOption(QSurfaceFormat::DebugContext);
+  
+  format.setDepthBufferSize(24);
+  //format.setAlphaBufferSize(8);
+  format.setSamples(8);
+  format.setStencilBufferSize(8);
+  format.setSwapBehavior(QSurfaceFormat::DoubleBuffer);
+  int samples = prf::manager().rootPtr->visual().display().samples().get();
+  if (samples > 0)
+    format.setSamples(samples); //big slowdown.
+  QSurfaceFormat::setDefaultFormat(format);
+  osg::DisplaySettings::instance()->setTextShaderTechnique("SIGNED_DISTANCE_FUNCTION");
+  stow->viewWidget = new vwr::Widget(this);
   stow->viewWidget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   stow->viewWidget->setGeometry(100, 100, 800, 600);
   stow->viewWidget->setMinimumSize(QSize(100, 100)); //don't collapse view widget. osg nan erros.
-  stow->viewWidget->layout()->setContentsMargins(1, 1, 1, 1); //thick border around viewer without this. zero was corrupting.
   
   dlg::SplitterDecorated *splitter = new dlg::SplitterDecorated(this);
   splitter->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
