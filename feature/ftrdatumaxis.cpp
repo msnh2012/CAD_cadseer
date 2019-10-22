@@ -256,7 +256,8 @@ void DatumAxis::goUpdateIntersection(const UpdatePayload &pli)
       BRepAdaptor_Surface sa(TopoDS::Face(rShapes.front()));
       if (sa.GetType() != GeomAbs_Plane)
         continue;
-      planes.push_back(sa.Surface().Surface());
+      const auto &gsa = sa.Surface(); //geometry surface adaptor.
+      planes.push_back(opencascade::handle<Geom_Surface>::DownCast(gsa.Surface()->Transformed(sa.Trsf())));
       occt::BoundingBox fbb(rShapes.front());
       if (fbb.getDiagonal() > tSize)
       {
