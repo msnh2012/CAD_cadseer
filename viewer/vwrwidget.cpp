@@ -769,6 +769,11 @@ struct Widget::Stow
     spaceballManipulator->computeHome();
   }
 
+  void projectNewDispatched(const msg::Message &)
+  {
+    spaceballManipulator->computeHome();
+  }
+
   void projectUpdatedDispatched(const msg::Message &)
   {
     serialWrite();
@@ -971,6 +976,11 @@ struct Widget::Stow
         (
           msg::Response | msg::Post | msg::Open | msg::Project
           , std::bind(&Stow::projectOpenedDispatched, this, std::placeholders::_1)
+        )
+        , std::make_pair
+        (
+          msg::Response | msg::Post | msg::New | msg::Project
+          , std::bind(&Stow::projectNewDispatched, this, std::placeholders::_1)
         )
         , std::make_pair
         (
