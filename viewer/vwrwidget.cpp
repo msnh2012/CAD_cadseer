@@ -233,6 +233,12 @@ struct Widget::Stow
     mc->setCullingMode(mc->getCullingMode() & ~osg::CullSettings::SMALL_FEATURE_CULLING); //always show points
     spaceballManipulator = new vwr::SpaceballManipulator(mc);
     widget->getOsgViewer()->setCameraManipulator(spaceballManipulator);
+    mc->setProjectionMatrixAsOrtho
+    (
+      0.0, static_cast<double>(widget->width()),
+      0.0, static_cast<double>(widget->height()),
+      1.0, 10000.0
+    );
   }
   
   void setupBackgroundCamera()
