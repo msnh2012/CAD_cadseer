@@ -127,7 +127,8 @@ void Manager::readyReadStdOutSlot()
         break;
       else
       {
-        std::cout << "WARNING: unrecognized response from child process in Manager::readyReadStdOutSlot" << std::endl;
+        std::cout << "WARNING: unrecognized response from child process in Manager::readyReadStdOutSlot: "
+        << lineBuffer.toStdString() << std::endl;
         lineBuffer.clear();
         continue;
       }
