@@ -330,11 +330,15 @@ void Manager::Stow::setAllMenu()
         constructionUtility.commandIds().push_back(34);
         constructionUtility.commandIds().push_back(35);
         constructionUtility.commandIds().push_back(36);
-        constructionUtility.commandIds().push_back(32);
-        constructionUtility.commandIds().push_back(33);
-        constructionUtility.commandIds().push_back(93);
         constructionUtility.commandIds().push_back(40);
         constructionBase.subMenus().push_back(constructionUtility);
+      }
+      {
+        srl::MenuNode constructionDatum(":/resources/images/constructionDatum.svg", QObject::tr("Datum Menu").toStdString());
+        constructionDatum.commandIds().push_back(33);
+        constructionDatum.commandIds().push_back(32);
+        constructionDatum.commandIds().push_back(93);
+        constructionBase.subMenus().push_back(constructionDatum);
       }
       {
         srl::MenuNode constructionBoolean(":/resources/images/constructionBoolean.svg", QObject::tr("Boolean Menu").toStdString());
@@ -576,10 +580,21 @@ void Manager::Stow::setAllToolbars()
       entry.commandIds().push_back(34);
       entry.commandIds().push_back(35);
       entry.commandIds().push_back(36);
-      entry.commandIds().push_back(32);
-      entry.commandIds().push_back(33);
-      entry.commandIds().push_back(93);
       entry.commandIds().push_back(40);
+      toolbar.entries().push_back(entry);
+    }
+    {
+      //datum
+      srl::ToolbarEntry entry;
+      entry.visual() = srl::Visual();
+      entry.visual().get().icon() = ":/resources/images/constructionDatum.svg";
+      entry.visual().get().iconText() = QObject::tr("Datum").toStdString();
+      entry.visual().get().statusText() = QObject::tr("Datum").toStdString();
+      entry.visual().get().whatThisText() = QObject::tr("Datum Menu").toStdString();
+      entry.visual().get().toolTipText() = QObject::tr("Datum").toStdString();
+      entry.commandIds().push_back(33); //axis
+      entry.commandIds().push_back(32); //plane
+      entry.commandIds().push_back(93); //system
       toolbar.entries().push_back(entry);
     }
     {
