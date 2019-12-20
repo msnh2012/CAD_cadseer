@@ -23,6 +23,7 @@
 #include "message/msgnode.h"
 #include "selection/slceventhandler.h"
 #include "viewer/vwrwidget.h"
+#include "tools/tlsosgtools.h"
 #include "feature/ftrdatumplane.h"
 #include "command/cmdsystemtoselection.h"
 
@@ -41,28 +42,7 @@ static boost::optional<osg::Matrixd> from3Points(const slc::Containers &csIn)
   osg::Vec3d xPoint = csIn.at(1).pointLocation;
   osg::Vec3d yPoint = csIn.at(2).pointLocation;
   
-  osg::Vec3d xVector = xPoint - origin;
-  osg::Vec3d yVector = yPoint - origin;
-  if (xVector.isNaN() || yVector.isNaN())
-    return boost::none;
-  xVector.normalize();
-  yVector.normalize();
-  if ((1 - std::fabs(xVector * yVector)) < std::numeric_limits<float>::epsilon())
-    return boost::none;
-  osg::Vec3d zVector = xVector ^ yVector;
-  if (zVector.isNaN())
-    return boost::none;
-  zVector.normalize();
-  yVector = zVector ^ xVector;
-  yVector.normalize();
-
-  osg::Matrixd fm;
-  fm(0,0) = xVector.x(); fm(0,1) = xVector.y(); fm(0,2) = xVector.z();
-  fm(1,0) = yVector.x(); fm(1,1) = yVector.y(); fm(1,2) = yVector.z();
-  fm(2,0) = zVector.x(); fm(2,1) = zVector.y(); fm(2,2) = zVector.z();
-  fm.setTrans(origin);
-  
-  return fm;
+  return tls::matrixFrom3Points(origin, xPoint, yPoint);
 }
 
 SystemToSelection::SystemToSelection() : Base()

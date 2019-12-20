@@ -247,7 +247,7 @@ void InstancePolar::updateModel(const UpdatePayload &payloadIn)
     
     for (int index = 0; index < ac; ++index)
     {
-      if (index == 0 && !(static_cast<bool>(includeSource)))
+      if (index == 0 && !(static_cast<bool>(*includeSource)))
         continue;
       gp_Trsf rotation;
       rotation.SetRotation(ra, osg::DegreesToRadians(static_cast<double>(index) * aa));

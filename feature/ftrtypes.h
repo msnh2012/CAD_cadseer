@@ -72,7 +72,8 @@ namespace ftr
     TransitionCurve, //!< feature for lines
     Ruled, //!< feature for ruled surfaces
     ImagePlane, //!< feature for image planes
-    Sweep //!< feature for sweep surfaces
+    Sweep, //!< feature for sweep surfaces
+    DatumSystem //!< feature for datum coordinate systems
   };
   
   inline const static std::string& toString(Type typeIn)
@@ -123,7 +124,8 @@ namespace ftr
       {Type::TransitionCurve, "TransitionCurve"},
       {Type::Ruled, "Ruled"},
       {Type::ImagePlane, "ImagePlane"},
-      {Type::Sweep, "Sweep"}
+      {Type::Sweep, "Sweep"},
+      {Type::DatumSystem, "DatumSystem"}
     };
     
     assert(strings.count(typeIn) > 0);

@@ -63,6 +63,7 @@
 #include "feature/ftrruled.h"
 #include "feature/ftrimageplane.h"
 #include "feature/ftrsweep.h"
+#include "feature/ftrdatumsystem.h"
 #include "project/serial/xsdcxxoutput/featurebox.h"
 #include "project/serial/xsdcxxoutput/featurecylinder.h"
 #include "project/serial/xsdcxxoutput/featuresphere.h"
@@ -104,6 +105,7 @@
 #include "project/serial/xsdcxxoutput/featureruled.h"
 #include "project/serial/xsdcxxoutput/featureimageplane.h"
 #include "project/serial/xsdcxxoutput/featuresweep.h"
+#include "project/serial/xsdcxxoutput/featuredatumsystem.h"
 
 #include "project/prjfeatureload.h"
 
@@ -171,6 +173,7 @@ FeatureLoad::FeatureLoad(const path& directoryIn, const TopoDS_Shape &masterShap
   functionMap.insert(std::make_pair(ftr::toString(ftr::Type::Ruled), std::bind(&FeatureLoad::loadRuled, this, std::placeholders::_1, std::placeholders::_2)));
   functionMap.insert(std::make_pair(ftr::toString(ftr::Type::ImagePlane), std::bind(&FeatureLoad::loadImagePlane, this, std::placeholders::_1, std::placeholders::_2)));
   functionMap.insert(std::make_pair(ftr::toString(ftr::Type::Sweep), std::bind(&FeatureLoad::loadSweep, this, std::placeholders::_1, std::placeholders::_2)));
+  functionMap.insert(std::make_pair(ftr::toString(ftr::Type::DatumSystem), std::bind(&FeatureLoad::loadDatumSystem, this, std::placeholders::_1, std::placeholders::_2)));
 }
 
 std::shared_ptr< ftr::Base > FeatureLoad::load(const std::string& idIn, const std::string& typeIn, std::size_t shapeOffsetIn)
@@ -685,4 +688,15 @@ std::shared_ptr<ftr::Base> FeatureLoad::loadSweep(const std::string &fileNameIn,
   sf->serialRead(*ss);
   
   return sf;
+}
+
+std::shared_ptr<ftr::Base> FeatureLoad::loadDatumSystem(const std::string &fileNameIn, std::size_t)
+{
+  auto sds = srl::datumsystem(fileNameIn, flags);
+  assert(sds);
+  
+  auto daf = std::make_shared<ftr::DatumSystem::Feature>();
+  daf->serialRead(*sds);
+  
+  return daf;
 }

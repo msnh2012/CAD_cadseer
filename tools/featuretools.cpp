@@ -413,39 +413,48 @@ slc::Messages Resolver::convertToMessages() const
     
     if (workPick.selectionType == slc::Type::StartPoint || workPick.selectionType == slc::Type::EndPoint)
     {
-      assert(s.ShapeType() == TopAbs_VERTEX);
-      if (s.ShapeType() != TopAbs_VERTEX)
+      /* Selection doesn't support vertices. It uses endpoints of an edge. I haven't
+       * established a standard on what happens when converting end point selections
+       * into picks and shape history. Do we use edge or do we resolve it to
+       * a vertex? Not sure, so here we will test shape and try derive expected results.
+       */
+      if (s.ShapeType() == TopAbs_VERTEX)
       {
-        std::cout << "ERROR: start/end point is not a vertex, in: " << BOOST_CURRENT_FUNCTION << std::endl;
-        continue;
-      }
-      
-      std::vector<uuid> parentEdges = sShape->useGetParentsOfType(rid, TopAbs_EDGE);
-      for (const auto &edge : parentEdges)
-      {
-        if
-        (
-          (
-            (workPick.selectionType == slc::Type::StartPoint)
-            && (sShape->useGetStartVertex(edge) == rid)
-          )
-          ||
-          (
-            (workPick.selectionType == slc::Type::EndPoint)
-            && (sShape->useGetEndVertex(edge) == rid)
-          )
-        )
+        std::vector<uuid> parentEdges = sShape->useGetParentsOfType(rid, TopAbs_EDGE);
+        for (const auto &edge : parentEdges)
         {
-          current.shapeId = edge;
-          break;
+          if
+          (
+            (
+              (workPick.selectionType == slc::Type::StartPoint)
+              && (sShape->useGetStartVertex(edge) == rid)
+            )
+            ||
+            (
+              (workPick.selectionType == slc::Type::EndPoint)
+              && (sShape->useGetEndVertex(edge) == rid)
+            )
+          )
+          {
+            current.shapeId = edge;
+            break;
+          }
         }
+        if (current.shapeId == rid)
+        {
+          std::cout << "ERROR: couldn't get edge from vertex in: " << BOOST_CURRENT_FUNCTION << std::endl;
+          continue;
+        }
+        current.pointLocation = gu::toOsg(TopoDS::Vertex(s));
       }
-      if (current.shapeId == rid)
+      else if (s.ShapeType() == TopAbs_EDGE)
       {
-        std::cout << "ERROR: couldn't get edge from vertex in: " << BOOST_CURRENT_FUNCTION << std::endl;
-        continue;
+        auto eps = sShape->useGetEndPoints(rid);
+        if (workPick.selectionType == slc::Type::StartPoint)
+          current.pointLocation = eps.front();
+        else
+          current.pointLocation = eps.back();
       }
-      current.pointLocation = gu::toOsg(TopoDS::Vertex(s));
     }
     if
     (

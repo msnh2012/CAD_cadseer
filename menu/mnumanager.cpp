@@ -332,6 +332,7 @@ void Manager::Stow::setAllMenu()
         constructionUtility.commandIds().push_back(36);
         constructionUtility.commandIds().push_back(32);
         constructionUtility.commandIds().push_back(33);
+        constructionUtility.commandIds().push_back(93);
         constructionUtility.commandIds().push_back(40);
         constructionBase.subMenus().push_back(constructionUtility);
       }
@@ -577,6 +578,7 @@ void Manager::Stow::setAllToolbars()
       entry.commandIds().push_back(36);
       entry.commandIds().push_back(32);
       entry.commandIds().push_back(33);
+      entry.commandIds().push_back(93);
       entry.commandIds().push_back(40);
       toolbar.entries().push_back(entry);
     }
@@ -1705,5 +1707,15 @@ void Manager::Stow::setAllCommands()
     , QObject::tr("Trim Solids With Shells Or Face").toStdString() //whats this text
     , QObject::tr("Trim Solid").toStdString() // toolTipText
     , msg::Request | msg::Construct | msg::Trim
+  );
+  sc
+  (
+    93
+    , ":/resources/images/constructionDatumSystem.svg"
+    , QObject::tr("Datum System").toStdString() //icon text
+    , QObject::tr("Datum System").toStdString() //status text
+    , QObject::tr("Create A Datum Coordinate System").toStdString() //whats this text
+    , QObject::tr("Datum System").toStdString() // toolTipText
+    , msg::Request | msg::Construct | msg::DatumSystem
   );
 }

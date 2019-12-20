@@ -31,11 +31,87 @@
 #include "expressions/exprstringtranslator.h"
 #include "expressions/exprvalue.h"
 #include "message/msgmessage.h"
+#include "parameter/prmvariant.h"
 #include "parameter/prmparameter.h"
 #include "tools/idtools.h"
 #include "dialogs/dlgenterfilter.h"
 #include "dialogs/dlgexpressionedit.h"
 #include "dialogs/dlgparameterwidget.h"
+
+static bool isMatch(const prm::Parameter *pIn, const expr::ValueType &evtIn)
+{
+  const auto &pvtIn = pIn->getValueType();
+  if (pvtIn == typeid(double) && evtIn == expr::ValueType::Scalar)
+    return true;
+  if (pvtIn == typeid(int) && evtIn == expr::ValueType::Scalar)
+    return true;
+  if (pvtIn == typeid(osg::Vec3d) && evtIn == expr::ValueType::Vector)
+    return true;
+  if (pvtIn == typeid(osg::Quat) && evtIn == expr::ValueType::Quat)
+    return true;
+  if (pvtIn == typeid(osg::Matrixd) && evtIn == expr::ValueType::CSys)
+    return true;
+  
+  return false;
+}
+
+namespace dlg
+{
+  class SetParameterValueVisitor : public boost::static_visitor<bool>
+  {
+    prm::Parameter *parameter = nullptr;
+    const expr::Value &ev;
+  public:
+    SetParameterValueVisitor(prm::Parameter *pIn, const expr::Value& evIn): parameter(pIn), ev(evIn){}
+    
+    bool operator()(double) const
+    {
+      expr::DoubleVisitor edv;
+      double newValue = boost::apply_visitor(edv, ev);
+      if (!parameter->isValidValue(newValue))
+        return false;
+      parameter->setValue(newValue);
+      return true;
+    }
+    
+    bool operator()(int) const
+    {
+      expr::DoubleVisitor edv;
+      int newValue = static_cast<int>(boost::apply_visitor(edv, ev));
+      if (!parameter->isValidValue(newValue))
+        return false;
+      parameter->setValue(newValue);
+      return true;
+    }
+    bool operator()(bool) const {assert(0); return false;} //currently unsupported formula type.
+    bool operator()(const std::string&) const {assert(0); return false;} //currently unsupported formula type.
+    bool operator()(const boost::filesystem::path&) const {assert(0); return false;} //currently unsupported formula type.
+    bool operator()(const osg::Vec3d&) const
+    {
+      expr::VectorVisitor evv;
+      osg::Vec3d newValue = boost::apply_visitor(evv, ev);
+      parameter->setValue(newValue);
+      return true;
+    }
+    bool operator()(const osg::Quat&) const
+    {
+      //parameters not supporting Quaternions at this time.
+      return false;
+      
+//       expr::QuatVisitor eqv;
+//       osg::Quat newValue = boost::apply_visitor(eqv, ev);
+//       parameter->setValue(newValue);
+//       return true;
+    }
+    bool operator()(const osg::Matrixd&) const
+    {
+      expr::MatrixVisitor emv;
+      osg::Matrixd newValue = boost::apply_visitor(emv, ev);
+      parameter->setValue(newValue);
+      return true;
+    }
+  };
+}
 
 using namespace dlg;
 
@@ -53,6 +129,7 @@ void ParameterWidget::buildGui()
 {
   this->setContentsMargins(0, 0, 0, 0);
   QGridLayout *layout = new QGridLayout();
+  layout->setContentsMargins(0, 0, 0, 0);
   
   int row = 0;
   int column = 0;
@@ -61,7 +138,7 @@ void ParameterWidget::buildGui()
     auto *c = new ParameterContainer(this, p);
     containers.push_back(c);
     layout->addWidget(c->getLabel(), row, column++, Qt::AlignVCenter | Qt::AlignRight);
-    layout->addWidget(c->getEditor(), row++, column--, Qt::AlignVCenter | Qt::AlignLeft);
+    layout->addWidget(c->getEditor(), row++, column--); //don't use alignment or won't stretch to fill area.
   }
   QTimer::singleShot(0, containers.front()->getEditor(), SLOT(setFocus()));
   this->setLayout(layout);
@@ -149,18 +226,23 @@ void ParameterContainer::requestParameterLinkSlot(const QString &stringIn)
   boost::uuids::uuid eId = gu::stringToId(stringIn.toStdString());
   assert(!eId.is_nil()); //project asserts on presence of expression eId.
   prj::Project *project = app::instance()->getProject();
-  double eValue = boost::get<double>(project->getManager().getFormulaValue(eId));
-  
-  if (stow->parameter->isValidValue(eValue))
+  if (isMatch(stow->parameter, project->getManager().getFormulaValueType(eId)))
   {
-//     project->expressionLink(stow->parameter->getId(), eId);
-    stow->linkId = eId;
-    stow->parameter->setConstant(false);
-    setEditLinked();
+    //we don't really need to set the value but the visitor also does the 'isValidValue' check
+    //and that is what we want.
+    SetParameterValueVisitor v(stow->parameter, project->getManager().getFormulaValue(eId));
+    if (boost::apply_visitor(v, stow->parameter->getStow().variant))
+    {
+      stow->linkId = eId;
+      stow->parameter->setConstant(false);
+      setEditLinked();
+    }
+    else
+      app::instance()->queuedMessage(msg::buildStatusMessage(QObject::tr("Value out of range").toStdString(), 2.0));
   }
   else
   {
-    app::instance()->queuedMessage(msg::buildStatusMessage(QObject::tr("Value out of range").toStdString(), 2.0));
+    app::instance()->queuedMessage(msg::buildStatusMessage(QObject::tr("Type Mismatch").toStdString(), 2.0));
   }
   
   stow->label->activateWindow();
@@ -197,7 +279,7 @@ void ParameterContainer::setEditUnlinked()
   
   stow->editor->trafficLabel->setTrafficGreenSlot();
   stow->editor->lineEdit->setReadOnly(false);
-  stow->editor->lineEdit->setText(QString::number(static_cast<double>(*stow->parameter), 'f', 12));
+  stow->editor->lineEdit->setText(static_cast<QString>(*stow->parameter));
   stow->editor->lineEdit->selectAll();
   stow->editor->setFocus();
 }
@@ -216,22 +298,20 @@ void ParameterContainer::updateParameterSlot()
   if (translator.parseString(formula) == expr::StringTranslator::ParseSucceeded)
   {
     localManager.update();
-    assert(localManager.getFormulaValueType(translator.getFormulaOutId()) == expr::ValueType::Scalar);
-    double value = boost::get<double>(localManager.getFormulaValue(translator.getFormulaOutId()));
-    if (stow->parameter->isValidValue(value))
+    if (isMatch(stow->parameter, localManager.getFormulaValueType(translator.getFormulaOutId())))
     {
-      stow->parameter->setValue(value);
+      SetParameterValueVisitor v(stow->parameter, localManager.getFormulaValue(translator.getFormulaOutId()));
+      if (!boost::apply_visitor(v, stow->parameter->getStow().variant))
+        app::instance()->queuedMessage(msg::buildStatusMessage(QObject::tr("Value out of range").toStdString(), 2.0));
     }
     else
-    {
-      app::instance()->queuedMessage(msg::buildStatusMessage(QObject::tr("Value out of range").toStdString(), 2.0));
-    }
+      app::instance()->queuedMessage(msg::buildStatusMessage(QObject::tr("Type Mismatch").toStdString(), 2.0));
   }
   else
   {
     app::instance()->queuedMessage(msg::buildStatusMessage(QObject::tr("Parsing failed").toStdString(), 2.0));
   }
-  stow->editor->lineEdit->setText(QString::number(static_cast<double>(*stow->parameter), 'f', 12));
+  stow->editor->lineEdit->setText(static_cast<QString>(*stow->parameter));
   stow->editor->trafficLabel->setTrafficGreenSlot();
 }
 
@@ -249,10 +329,21 @@ void ParameterContainer::textEditedParameterSlot(const QString &textIn)
   if (translator.parseString(formula) == expr::StringTranslator::ParseSucceeded)
   {
     localManager.update();
-    stow->editor->trafficLabel->setTrafficGreenSlot();
-    assert(localManager.getFormulaValueType(translator.getFormulaOutId()) == expr::ValueType::Scalar);
-    double value = boost::get<double>(localManager.getFormulaValue(translator.getFormulaOutId()));
-    stow->editor->goToolTipSlot(QString::number(value));
+    if (isMatch(stow->parameter, localManager.getFormulaValueType(translator.getFormulaOutId())))
+    {
+      stow->editor->trafficLabel->setTrafficGreenSlot();
+      if (localManager.getFormulaValueType(translator.getFormulaOutId()) == expr::ValueType::Scalar)
+      {
+        double value = boost::get<double>(localManager.getFormulaValue(translator.getFormulaOutId()));
+        stow->editor->goToolTipSlot(QString::number(value));
+      }
+      //other types?
+    }
+    else
+    {
+      stow->editor->trafficLabel->setTrafficRedSlot();
+      stow->editor->goToolTipSlot(tr("Type Mismatch"));
+    }
   }
   else
   {

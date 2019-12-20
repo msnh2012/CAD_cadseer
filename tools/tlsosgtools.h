@@ -17,39 +17,18 @@
  *
  */
 
-#ifndef DLG_BOX_H
-#define DLG_BOX_H
+#ifndef TLS_OSGTOOLS_H
+#define TLS_OSGTOOLS_H
 
-#include <memory>
+#include <boost/optional/optional.hpp>
 
-#include "dialogs/dlgbase.h"
+#include <osg/Vec3d>
+#include <osg/Matrixd>
 
-namespace ftr{class Box;}
-namespace msg{struct Node;}
-
-namespace dlg
+namespace tls
 {
-  /**
-  * @todo write docs
-  */
-  class Box : public Base
-  {
-    Q_OBJECT
-  public:
-    Box(ftr::Box*, QWidget*, bool = false);
-    ~Box() override;
-  public Q_SLOTS:
-    void reject() override;
-    void accept() override;
-  private:
-    struct Stow;
-    std::unique_ptr<Stow> stow;
-    
-    void init();
-    void buildGui();
-    void finishDialog();
-    void currentTabChanged(int);
-  };
+  boost::optional<osg::Matrixd> matrixFrom3Points(const osg::Vec3d&, const osg::Vec3d&, const osg::Vec3d&);
+  boost::optional<osg::Matrixd> matrixFrom3Points(const std::vector<osg::Vec3d>&);
 }
 
-#endif // DLG_BOX_H
+#endif //TLS_OSGTOOLS_H

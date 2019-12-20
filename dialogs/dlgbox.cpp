@@ -20,12 +20,17 @@
 #include <QSettings>
 #include <QDialogButtonBox>
 #include <QVBoxLayout>
+#include <QTabWidget>
 
 #include <osg/Switch>
 
 #include "application/appapplication.h"
 #include "project/prjproject.h"
+#include "feature/ftrinputtype.h"
+#include "tools/idtools.h"
+#include "message/msgnode.h"
 #include "dialogs/dlgparameterwidget.h"
+#include "dialogs/dlgcsyswidget.h"
 #include "parameter/prmparameter.h"
 #include "feature/ftrbox.h"
 #include "dialogs/dlgbox.h"
@@ -41,14 +46,18 @@ struct Box::Stow
   , length(std::make_shared<prm::Parameter>(*feature->getLength()))
   , width(std::make_shared<prm::Parameter>(*feature->getWidth()))
   , height(std::make_shared<prm::Parameter>(*feature->getHeight()))
+  , csys(std::make_shared<prm::Parameter>(*feature->getParameter(prm::Names::CSys)))
   , overlayWasOn(feature->isVisibleOverlay())
   {}
   
   ftr::Box *feature;
+  QTabWidget *tabWidget = nullptr;
   ParameterWidget *parameterWidget = nullptr;
+  CSysWidget *csysWidget = nullptr;
   std::shared_ptr<prm::Parameter> length;
   std::shared_ptr<prm::Parameter> width;
   std::shared_ptr<prm::Parameter> height;
+  std::shared_ptr<prm::Parameter> csys;
   bool overlayWasOn = true;
 };
 
@@ -75,16 +84,35 @@ void Box::init()
 
 void Box::buildGui()
 {
+  stow->tabWidget = new QTabWidget(this);
+  connect(stow->tabWidget, &QTabWidget::currentChanged, this, &Box::currentTabChanged);
+  
   std::vector<prm::Parameter*> prms({stow->length.get(), stow->width.get(), stow->height.get()});
   stow->parameterWidget = new ParameterWidget(this, prms);
+  QWidget *dummy = new QWidget(this);
+  dummy->setContentsMargins(0, 0, 0, 0);
+  QVBoxLayout *dummyLayout =  new QVBoxLayout();
+  dummyLayout->setContentsMargins(0, 0, 0, 0);
+  dummy->setLayout(dummyLayout);
+  dummyLayout->addWidget(stow->parameterWidget);
+  dummyLayout->addStretch();
+  stow->tabWidget->addTab(dummy, tr("Parameters"));
+  
+  stow->csysWidget = new CSysWidget(this, stow->csys.get());
+  ftr::UpdatePayload payload = project->getPayload(stow->feature->getId());
+  std::vector<const ftr::Base*> inputs = payload.getFeatures(ftr::InputType::linkCSys);
+  if (inputs.empty())
+    stow->csysWidget->setCSysLinkId(gu::createNilId());
+  else
+    stow->csysWidget->setCSysLinkId(inputs.front()->getId());
+  stow->tabWidget->addTab(stow->csysWidget, tr("CSys"));
   
   QDialogButtonBox *buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, Qt::Horizontal, this);
   connect(buttons, SIGNAL(accepted()), this, SLOT(accept()));
   connect(buttons, SIGNAL(rejected()), this, SLOT(reject()));
   
   QVBoxLayout *l = new QVBoxLayout();
-  l->addWidget(stow->parameterWidget);
-  l->addStretch();
+  l->addWidget(stow->tabWidget);
   l->addWidget(buttons);
   
   this->setLayout(l);
@@ -135,11 +163,34 @@ void Box::finishDialog()
   }
   
   stow->parameterWidget->syncLinks();
+  stow->csysWidget->syncLinks();
   stow->feature->setLength(static_cast<double>(*stow->length));
   stow->feature->setWidth(static_cast<double>(*stow->width));
   stow->feature->setHeight(static_cast<double>(*stow->height));
+  stow->feature->setCSys(static_cast<osg::Matrixd>(*stow->csys));
+  
+  std::vector<const ftr::Base*> inputs = project->getPayload(stow->feature->getId()).getFeatures(ftr::InputType::linkCSys);
+  uuid oldLink = gu::createNilId();
+  if (!inputs.empty())
+    oldLink = inputs.front()->getId();
+  
+  uuid newLinked = stow->csysWidget->getCSysLinkId();
+  if (newLinked != oldLink)
+  {
+    stow->feature->setModelDirty();
+    project->clearAllInputs(stow->feature->getId());
+    if (!newLinked.is_nil())
+      project->connectInsert(newLinked, stow->feature->getId(), ftr::InputType{ftr::InputType::linkCSys});
+  }
   
   queueUpdate();
   commandDone();
   restoreState();
+}
+
+void Box::currentTabChanged(int index)
+{
+  if (index == 0)
+    node->sendBlocked(msg::buildSelectionMask(slc::None));
+  //we let csys widget handle when it is shown.
 }

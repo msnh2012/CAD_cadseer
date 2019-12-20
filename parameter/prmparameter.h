@@ -268,6 +268,11 @@ namespace prm
     //@}
     
     //@{
+    //! QString support functions. We don't store QString, only for conversion out.
+    explicit operator QString() const;
+    //@}
+    
+    //@{
     //! boost::filesystem::path support functions.
     bool setValue(const boost::filesystem::path&); //<! true = value was changed.
     bool setValueQuiet(const boost::filesystem::path&);

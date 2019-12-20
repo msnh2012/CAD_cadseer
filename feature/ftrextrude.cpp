@@ -31,6 +31,7 @@
 
 #include "globalutilities.h"
 #include "tools/occtools.h"
+#include "tools/tlsosgtools.h"
 #include "annex/annseershape.h"
 #include "library/lbrplabel.h"
 #include "library/lbripgroup.h"
@@ -73,40 +74,14 @@ static boost::optional<osg::Vec3d> inferDirection(const occt::ShapeVector &svIn)
     osg::Vec3d p1 = gu::toOsg(BRep_Tool::Pnt(TopoDS::Vertex(*it++)));
     osg::Vec3d p2 = gu::toOsg(BRep_Tool::Pnt(TopoDS::Vertex(*it)));
     
-    osg::Vec3d v1 = p1 - p0;
-    osg::Vec3d v2 = p2 - p0;
-    if (v1.isNaN() || v2.isNaN())
-    {
-      vertices.Remove(*(vertices.cbegin()));
-      return boost::none;
-    }
-    if (v1.length() < std::numeric_limits<float>::epsilon())
-    {
-      vertices.Remove(*(vertices.cbegin()));
-      return boost::none;
-    }
-    if (v2.length() < std::numeric_limits<float>::epsilon())
-    {
-      vertices.Remove(*(vertices.cbegin()));
-      return boost::none;
-    }
-    v1.normalize();
-    v2.normalize();
-    
-    if ((1 - std::fabs(v1 * v2)) < std::numeric_limits<float>::epsilon())
+    auto ocsys = tls::matrixFrom3Points(p0, p1, p2);
+    if (!ocsys)
     {
       vertices.Remove(*(vertices.cbegin()));
       return boost::none;
     }
     
-    osg::Vec3d cross(v1 ^ v2);
-    if (cross.isNaN() || cross.length() < std::numeric_limits<float>::epsilon())
-    {
-      vertices.Remove(*(vertices.cbegin()));
-      return boost::none;
-    }
-    cross.normalize();
-    return cross;
+    return gu::getZVector(ocsys.get());
   };
   
   auto checkEdge = [&](const TopoDS_Edge &eIn) -> boost::optional<osg::Vec3d>

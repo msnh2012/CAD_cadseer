@@ -32,6 +32,7 @@
 #include "annex/anncsysdragger.h"
 #include "project/serial/xsdcxxoutput/featurebox.h"
 #include "feature/ftrupdatepayload.h"
+#include "feature/ftrinputtype.h"
 #include "parameter/prmparameter.h"
 #include "feature/ftrbox.h"
 
@@ -255,7 +256,7 @@ osg::Matrixd Box::getCSys() const
   return static_cast<osg::Matrixd>(*csys);
 }
 
-void Box::updateModel(const UpdatePayload&)
+void Box::updateModel(const UpdatePayload &plIn)
 {
   setFailure();
   lastUpdateLog.clear();
@@ -267,6 +268,17 @@ void Box::updateModel(const UpdatePayload&)
       setSuccess();
       throw std::runtime_error("feature is skipped");
     }
+    
+    std::vector<const Base*> tfs = plIn.getFeatures(ftr::InputType::linkCSys);
+    if (!tfs.empty() && tfs.front()->hasParameter(prm::Names::CSys))
+    {
+      csys->setValueQuiet(static_cast<osg::Matrixd>(*(tfs.front()->getParameter(prm::Names::CSys))));
+      csysDragger->draggerUpdate();
+      if (overlaySwitch->containsNode(csysDragger->dragger))
+        overlaySwitch->removeChild(csysDragger->dragger);
+    }
+    else if (!overlaySwitch->containsNode(csysDragger->dragger))
+      overlaySwitch->addChild(csysDragger->dragger);
     
     BoxBuilder boxMaker
     (

@@ -17,6 +17,8 @@
  *
  */
 
+#include <cassert>
+
 #include <boost/variant/variant.hpp>
 #include <boost/variant/static_visitor.hpp>
 #include <boost/variant/get.hpp>
@@ -50,6 +52,42 @@ namespace expr
     osg::Quat,     //!< orientation
     osg::Matrixd   //!< coordinate system
   > Value;
+  
+  class DoubleVisitor : public boost::static_visitor<double>
+  {
+  public:
+    double operator()(const double &dIn) const {return dIn;}
+    double operator()(const osg::Vec3d&) const {assert(0); return 0.0;}
+    double operator()(const osg::Quat&) const {assert(0); return 0.0;}
+    double operator()(const osg::Matrixd&) const {assert(0); return 0.0;}
+  };
+  
+  class VectorVisitor : public boost::static_visitor<osg::Vec3d>
+  {
+  public:
+    osg::Vec3d operator()(const double&) const {assert(0); return osg::Vec3d();}
+    osg::Vec3d operator()(const osg::Vec3d &vIn) const {return vIn;}
+    osg::Vec3d operator()(const osg::Quat&) const {assert(0); return osg::Vec3d();}
+    osg::Vec3d operator()(const osg::Matrixd&) const {assert(0); return osg::Vec3d();}
+  };
+  
+  class QuatVisitor : public boost::static_visitor<osg::Quat>
+  {
+  public:
+    osg::Quat operator()(const double&) const {assert(0); return osg::Quat();}
+    osg::Quat operator()(const osg::Vec3d&) const {assert(0); return osg::Quat();}
+    osg::Quat operator()(const osg::Quat &qIn) const {return qIn;}
+    osg::Quat operator()(const osg::Matrixd&) const {assert(0); return osg::Quat();}
+  };
+  
+  class MatrixVisitor : public boost::static_visitor<osg::Matrixd>
+  {
+  public:
+    osg::Matrixd operator()(const double&) const {assert(0); return osg::Matrixd();}
+    osg::Matrixd operator()(const osg::Vec3d&) const {assert(0); return osg::Matrixd();}
+    osg::Matrixd operator()(const osg::Quat&) const {assert(0); return osg::Matrixd();}
+    osg::Matrixd operator()(const osg::Matrixd &mIn) const {return mIn;}
+  };
   
   class ValueStreamVisitor : public boost::static_visitor<>
   {

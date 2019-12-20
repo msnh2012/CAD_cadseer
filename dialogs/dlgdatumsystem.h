@@ -17,39 +17,41 @@
  *
  */
 
-#ifndef DLG_BOX_H
-#define DLG_BOX_H
+#ifndef DLG_DATUMSYSTEM_H
+#define DLG_DATUMSYSTEM_H
 
 #include <memory>
 
 #include "dialogs/dlgbase.h"
 
-namespace ftr{class Box;}
-namespace msg{struct Node;}
+namespace ftr{namespace DatumSystem{class Feature;}}
 
 namespace dlg
 {
   /**
   * @todo write docs
   */
-  class Box : public Base
+  class DatumSystem : public Base
   {
     Q_OBJECT
   public:
-    Box(ftr::Box*, QWidget*, bool = false);
-    ~Box() override;
+    DatumSystem(ftr::DatumSystem::Feature*, QWidget*, bool = false);
+    ~DatumSystem() override;
   public Q_SLOTS:
     void reject() override;
     void accept() override;
+  private Q_SLOTS:
+    void comboChanged(int);
+    void tabChanged(int);
   private:
     struct Stow;
     std::unique_ptr<Stow> stow;
     
     void init();
     void buildGui();
+    void loadFeatureData();
     void finishDialog();
-    void currentTabChanged(int);
   };
 }
 
-#endif // DLG_BOX_H
+#endif // DLG_DATUMSYSTEM_H

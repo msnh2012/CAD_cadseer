@@ -35,6 +35,7 @@ namespace ftr
     constexpr static const char *target = "Target";
     constexpr static const char *tool = "Tool";
     constexpr static const char *create = "Create";
+    constexpr static const char *linkCSys = "LinkCSys";
     //@}
     
     //@{

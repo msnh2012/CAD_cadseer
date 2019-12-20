@@ -89,6 +89,7 @@
 #include "command/cmdshapetrackdump.h"
 #include "command/cmdshapegraphdump.h"
 #include "command/cmdtest.h"
+#include "command/cmddatumsystem.h"
 #include "message/msgnode.h"
 #include "message/msgsift.h"
 #include "selection/slcmessage.h"
@@ -424,6 +425,11 @@ void Manager::setupDispatcher()
       (
         msg::Request | msg::Construct | msg::Hollow
       , std::bind(&Manager::constructHollowDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Construct | msg::DatumSystem
+      , std::bind(&Manager::constructDatumSystemDispatched, this, std::placeholders::_1)
       )
       , std::make_pair
       (
@@ -843,6 +849,11 @@ void Manager::constructHollowDispatched(const msg::Message&)
   addCommand(std::make_shared<Hollow>());
 }
 
+void Manager::constructDatumSystemDispatched(const msg::Message&)
+{
+  addCommand(std::make_shared<DatumSystem>());
+}
+
 void Manager::importDispatched(const msg::Message&)
 {
   addCommand(std::make_shared<Import>());
@@ -1015,6 +1026,11 @@ BasePtr editHollow(ftr::Base *feature)
   return std::make_shared<HollowEdit>(feature);
 }
 
+BasePtr editDatumSystem(ftr::Base *feature)
+{
+  return std::make_shared<DatumSystemEdit>(feature);
+}
+
 void Manager::setupEditFunctionMap()
 {
   editFunctionMap.insert(std::make_pair(ftr::Type::Blend, std::bind(editBlend, std::placeholders::_1)));
@@ -1035,4 +1051,5 @@ void Manager::setupEditFunctionMap()
   editFunctionMap.insert(std::make_pair(ftr::Type::Sphere, std::bind(editSphere, std::placeholders::_1)));
   editFunctionMap.insert(std::make_pair(ftr::Type::Cone, std::bind(editCone, std::placeholders::_1)));
   editFunctionMap.insert(std::make_pair(ftr::Type::Hollow, std::bind(editHollow, std::placeholders::_1)));
+  editFunctionMap.insert(std::make_pair(ftr::Type::DatumSystem, std::bind(editDatumSystem, std::placeholders::_1)));
 }

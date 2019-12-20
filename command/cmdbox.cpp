@@ -21,9 +21,12 @@
 
 #include "application/appmainwindow.h"
 #include "viewer/vwrwidget.h"
+#include "selection/slceventhandler.h"
 #include "project/prjproject.h"
 #include "message/msgnode.h"
 #include "dialogs/dlgbox.h"
+#include "feature/ftrinputtype.h"
+#include "parameter/prmparameter.h"
 #include "feature/ftrbox.h"
 #include "command/cmdbox.h"
 
@@ -70,11 +73,20 @@ void Box::deactivate()
 
 void Box::go()
 {
-  node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
-  
   std::shared_ptr<ftr::Box> box = std::make_shared<ftr::Box>();
   box->setCSys(viewer->getCurrentSystem());
   project->addFeature(box);
+  
+  for (const auto &c : eventHandler->getSelections())
+  {
+    ftr::Base *tf = project->findFeature(c.featureId);
+    if (!tf || !tf->hasParameter(prm::Names::CSys))
+      continue;
+    project->connectInsert(tf->getId(), box->getId(), ftr::InputType{ftr::InputType::linkCSys});
+    break;
+  }
+  
+  node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
   node->sendBlocked(msg::buildStatusMessage("Box created", 2.0));
   box->updateModel(project->getPayload(box->getId()));
   box->updateVisual();

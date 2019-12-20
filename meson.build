@@ -96,7 +96,8 @@ modelviz_sources = ['modelviz/mdvbase.cpp'
   , 'modelviz/mdvhiddenlinetechnique.cpp'
   , 'modelviz/mdvdatumaxis.cpp'
   , 'modelviz/mdvsurfacemesh.cpp'
-  , 'modelviz/mdvlawfunction.cpp']
+  , 'modelviz/mdvlawfunction.cpp'
+  , 'modelviz/mdvdatumsystem.cpp']
   
 gesture_sources = ['gesture/gsnhandler.cpp'
   , 'gesture/gsnnode.cpp'
@@ -159,7 +160,8 @@ feature_sources = ['feature/ftrinputtype.cpp'
   , 'feature/ftrtransitioncurve.cpp'
   , 'feature/ftrruled.cpp'
   , 'feature/ftrimageplane.cpp'
-  , 'feature/ftrsweep.cpp']
+  , 'feature/ftrsweep.cpp'
+  , 'feature/ftrdatumsystem.cpp']
   
 parameter_sources = ['parameter/prmparameter.cpp']
 
@@ -196,7 +198,8 @@ tools_sources = ['tools/idtools.cpp'
   , 'tools/infotools.cpp'
   , 'tools/occtools.cpp'
   , 'tools/featuretools.cpp'
-  , 'tools/tlsnameindexer.cpp']
+  , 'tools/tlsnameindexer.cpp'
+  , 'tools/tlsosgtools.cpp']
   
 dialog_sources = ['dialogs/dlgparameter.cpp'
   , 'dialogs/dlgcheckgeometry.cpp'
@@ -232,7 +235,9 @@ dialog_sources = ['dialogs/dlgparameter.cpp'
   , 'dialogs/dlgsphere.cpp'
   , 'dialogs/dlgcone.cpp'
   , 'dialogs/dlgremove.cpp'
-  , 'dialogs/dlghollow.cpp']
+  , 'dialogs/dlghollow.cpp'
+  , 'dialogs/dlgdatumsystem.cpp'
+  , 'dialogs/dlgcsyswidget.cpp']
   
 preference_sources = ['preferences/preferencesXML.cpp', 'preferences/prfmanager.cpp']
 
@@ -288,7 +293,8 @@ project_sources = ['project/prjproject.cpp'
   , 'project/serial/xsdcxxoutput/featureruled.cpp'
   , 'project/serial/xsdcxxoutput/featureimageplane.cpp'
   , 'project/serial/xsdcxxoutput/lawfunction.cpp'
-  , 'project/serial/xsdcxxoutput/featuresweep.cpp']
+  , 'project/serial/xsdcxxoutput/featuresweep.cpp'
+  , 'project/serial/xsdcxxoutput/featuredatumsystem.cpp']
   
 application_sources = ['application/appmainwindow.cpp'
   , 'application/appapplication.cpp'
@@ -362,7 +368,8 @@ command_sources = ['command/cmdmanager.cpp'
   , 'command/cmdfeaturedump.cpp'
   , 'command/cmdshapetrackdump.cpp'
   , 'command/cmdshapegraphdump.cpp'
-  , 'command/cmdtest.cpp']
+  , 'command/cmdtest.cpp'
+  , 'command/cmddatumsystem.cpp']
   
 law_sources = ['law/lwfcue.cpp']
 
@@ -483,7 +490,9 @@ cadseer_moc_hdrs = ['viewer/vwrwidget.h'
   , 'dialogs/dlgsphere.h'
   , 'dialogs/dlgcone.h'
   , 'dialogs/dlgremove.h'
-  , 'dialogs/dlghollow.h']
+  , 'dialogs/dlghollow.h'
+  , 'dialogs/dlgdatumsystem.h'
+  , 'dialogs/dlgcsyswidget.h']
   
 cadseer_resources = ['resources.qrc']
 

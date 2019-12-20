@@ -109,6 +109,7 @@ namespace cmd
     void constructSphereDispatched(const msg::Message&);
     void constructConeDispatched(const msg::Message&);
     void constructHollowDispatched(const msg::Message&);
+    void constructDatumSystemDispatched(const msg::Message&);
     void revisionDispatched(const msg::Message&);
     void importDispatched(const msg::Message&);
     void exportDispatched(const msg::Message&);

@@ -22,7 +22,10 @@
 
 #include <boost/signals2.hpp>
 
+#include <QObject>
+
 #include "tools/idtools.h"
+#include "tools/infotools.h"
 #include "project/serial/xsdcxxoutput/featurebase.h"
 #include "parameter/prmvariant.h"
 #include "parameter/prmparameter.h"
@@ -366,6 +369,19 @@ public:
   bool operator()(const osg::Vec3d&) const {assert(0); return false;}
   bool operator()(const osg::Quat&) const {assert(0); return false;}
   bool operator()(const osg::Matrixd&) const {assert(0); return false;}
+};
+
+class QStringVisitor : public boost::static_visitor<QString>
+{
+public:
+  QString operator()(double dIn) const {return QString::number(dIn, 'f', 12);}
+  QString operator()(int iIn) const {return QString::number(iIn);}
+  QString operator()(bool b) const {return (b) ? QObject::tr("True") : QObject::tr("False");}
+  QString operator()(const std::string &sIn) const {return QString::fromStdString(sIn);}
+  QString operator()(const boost::filesystem::path &pIn) const {return QString::fromStdString(pIn.string());}
+  QString operator()(const osg::Vec3d &vIn) const {return gu::osgVectorOut(vIn);}
+  QString operator()(const osg::Quat &qIn) const {return gu::osgQuatOut(qIn);}
+  QString operator()(const osg::Matrixd &mIn) const {return gu::osgMatrixOut(mIn);}
 };
 
 class PathVisitor : public boost::static_visitor<path>
@@ -809,14 +825,16 @@ Parameter::operator osg::Matrixd() const
   return boost::apply_visitor(MatrixdVisitor(), stow->variant);
 }
 
-
 //todo
 Parameter::operator std::string() const{return std::string();}
+
+Parameter::operator QString() const
+{
+  return boost::apply_visitor(QStringVisitor(), stow->variant);
+}
+
+//todo
 Parameter::operator osg::Quat() const{return osg::Quat();}
-
-
-
-
 
 prj::srl::Parameter Parameter::serialOut() const
 {
