@@ -31,6 +31,7 @@
 #include "dialogs/dlgselectionbutton.h"
 #include "dialogs/dlgparameterwidget.h"
 #include "dialogs/dlgselectionwidget.h"
+#include "dialogs/dlgvizfilter.h"
 #include "dialogs/dlgcsyswidget.h"
 
 namespace dlg
@@ -77,6 +78,10 @@ namespace dlg
       dummyLayout->addWidget(parameterWidget);
       dummyLayout->addStretch();
       dummy->setLayout(dummyLayout);
+      VizFilter *vFilter = new VizFilter(parameterWidget);
+      parameterWidget->installEventFilter(vFilter);
+      connect(vFilter, &VizFilter::shown, [](){app::instance()->messageSlot(msg::buildSelectionMask(slc::None));});
+      connect(vFilter, &VizFilter::shown, [](){app::instance()->messageSlot(msg::buildStatusMessage(tr("Enter Coordinate System Values").toStdString()));});
       
       selectionWidget = new SelectionWidget(parent, std::vector<SelectionWidgetCue>(1, cue));
       stackLayout = new QStackedLayout();
@@ -148,10 +153,7 @@ void CSysWidget::radioSlot()
   //gets called when states of both buttons change.
   //so we need both tests and can't use 'else'
   if (stow->byConstant->isChecked())
-  {
     stow->stackLayout->setCurrentIndex(0);
-    app::instance()->messageSlot(msg::buildSelectionMask(slc::None));
-  }
   if (stow->byFeature->isChecked())
     stow->stackLayout->setCurrentIndex(1);
 }

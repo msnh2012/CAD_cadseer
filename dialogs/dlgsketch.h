@@ -31,7 +31,7 @@ class QTabWidget;
 namespace prm{class Parameter;}
 namespace ftr{class Sketch;}
 namespace skt{class Selection;}
-namespace msg{class Message; struct Node; struct Sift;}
+namespace msg{class Message;}
 
 namespace dlg
 {
@@ -43,20 +43,6 @@ namespace dlg
   public:
     EditPage(QWidget*);
     virtual ~EditPage() override;
-  Q_SIGNALS:
-    void shown();
-    void hidden();
-  protected:
-    virtual void showEvent(QShowEvent *) override;
-    virtual void hideEvent(QHideEvent *) override;
-  };
-  
-  class PositionPage : public QWidget
-  {
-    Q_OBJECT
-  public:
-    PositionPage(QWidget*);
-    virtual ~PositionPage() override;
   Q_SIGNALS:
     void shown();
     void hidden();
@@ -79,22 +65,13 @@ namespace dlg
     virtual void reject() override;
     virtual void accept() override;
   protected:
-    ftr::Sketch *sketch;
-    osg::ref_ptr<skt::Selection> selection;
-    bool isAccepted = false;
-    bool wasVisible3d = false;
-    bool wasVisibleOverlay = false;
-    std::unique_ptr<msg::Node> node;
-    std::unique_ptr<msg::Sift> sift;
+    struct Stow;
+    std::unique_ptr<Stow> stow;
+    
     void setupDispatcher();
     void selectParameterDispatched(const msg::Message &);
     
-    QTabWidget *tabWidget = nullptr;
-    ExpressionEdit *pEdit = nullptr;
-    prm::Parameter *parameter = nullptr; //!< currently selected parameter or nullptr
-    
     void buildGui();
-    QWidget* buildPositionPage();
     QWidget* buildEditPage();
     void initGui();
     void finishDialog();

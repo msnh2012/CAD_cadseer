@@ -49,13 +49,45 @@
 #include "dialogs/dlgwidgetgeometry.h"
 #include "dialogs/dlgenterfilter.h"
 #include "dialogs/dlgexpressionedit.h"
+#include "dialogs/dlgcsyswidget.h"
+#include "dialogs/dlgvizfilter.h"
 #include "parameter/prmparameter.h"
+#include "feature/ftrinputtype.h"
 #include "feature/ftrsketch.h"
 #include "sketch/sktsolver.h"
 #include "sketch/sktnodemasks.h"
 #include "sketch/sktselection.h"
 #include "sketch/sktvisual.h"
 #include "dialogs/dlgsketch.h"
+
+using boost::uuids::uuid;
+
+namespace dlg
+{
+  struct Sketch::Stow
+  {
+    ftr::Sketch *feature = nullptr;
+    std::shared_ptr<prm::Parameter> csys;
+    osg::ref_ptr<skt::Selection> selection;
+    CSysWidget *csysWidget = nullptr;
+    QTabWidget *tabWidget = nullptr;
+    ExpressionEdit *pEdit = nullptr;
+    prm::Parameter *parameter = nullptr; //!< currently selected parameter or nullptr
+    std::unique_ptr<msg::Node> node;
+    std::unique_ptr<msg::Sift> sift;
+    bool isAccepted = false;
+    bool wasVisible3d = false;
+    bool wasVisibleOverlay = false;
+    
+    Stow (ftr::Sketch *fIn)
+    : feature(fIn)
+    , csys(std::make_shared<prm::Parameter>(*feature->getParameter(prm::Names::CSys)))
+    , selection(new skt::Selection(feature->getVisual()))
+    {
+      
+    }
+  };
+}
 
 using namespace dlg;
 
@@ -75,35 +107,17 @@ void EditPage::hideEvent(QHideEvent *e)
   hidden();
 }
 
-PositionPage::PositionPage(QWidget *parent) : QWidget(parent) {}
-
-PositionPage::~PositionPage() {}
-
-void PositionPage::showEvent(QShowEvent *e)
-{
-  QWidget::showEvent(e);
-  shown();
-}
-
-void PositionPage::hideEvent(QHideEvent *e)
-{
-  QWidget::hideEvent(e);
-  hidden();
-}
-
-
 Sketch::Sketch(ftr::Sketch *sIn, QWidget *parent):
 QDialog(parent)
-, sketch(sIn)
-, selection(new skt::Selection(sketch->getVisual()))
+, stow(std::make_unique<Stow>(sIn))
 {
-  node = std::make_unique<msg::Node>();
-  node->connect(msg::hub());
-  sift = std::make_unique<msg::Sift>();
-  sift->name = "dlg::Sketch";
-  node->setHandler(std::bind(&msg::Sift::receive, sift.get(), std::placeholders::_1));
+  stow->node = std::make_unique<msg::Node>();
+  stow->node->connect(msg::hub());
+  stow->sift = std::make_unique<msg::Sift>();
+  stow->sift->name = "dlg::Sketch";
+  stow->node->setHandler(std::bind(&msg::Sift::receive, stow->sift.get(), std::placeholders::_1));
   
-  node->sendBlocked(msg::Message(msg::Request | msg::Overlay | msg::Selection | msg::Freeze));
+  stow->node->sendBlocked(msg::Message(msg::Request | msg::Overlay | msg::Selection | msg::Freeze));
   
   buildGui();
   initGui();
@@ -116,19 +130,19 @@ QDialog(parent)
 
 Sketch::~Sketch()
 {
-  node->sendBlocked(msg::Message(msg::Request | msg::Overlay | msg::Selection | msg::Thaw));
+  stow->node->sendBlocked(msg::Message(msg::Request | msg::Overlay | msg::Selection | msg::Thaw));
 }
 
 void Sketch::reject()
 {
-  isAccepted = false;
+  stow->isAccepted = false;
   finishDialog();
   QDialog::reject();
 }
 
 void Sketch::accept()
 {
-  isAccepted = true;
+  stow->isAccepted = true;
   finishDialog();
   QDialog::accept();
   if (prf::manager().rootPtr->dragger().triggerUpdateOnFinish())
@@ -139,43 +153,43 @@ void Sketch::sketchSelectionGo()
 {
   osgViewer::View* view = app::instance()->getMainWindow()->getViewer()->getOsgViewer();
   assert(view);
-  view->addEventHandler(selection.get());
-  sketch->getVisual()->setActiveSketch();
-  sketch->getOverlaySwitch()->setNodeMask(sketch->getOverlaySwitch()->getNodeMask() | skt::ActiveSketch.to_ulong());
+  view->addEventHandler(stow->selection.get());
+  stow->feature->getVisual()->setActiveSketch();
+  stow->feature->getOverlaySwitch()->setNodeMask(stow->feature->getOverlaySwitch()->getNodeMask() | skt::ActiveSketch.to_ulong());
 }
 
 void Sketch::sketchSelectionStop()
 {
   osgViewer::View* view = app::instance()->getMainWindow()->getViewer()->getOsgViewer();
   assert(view);
-  view->removeEventHandler(selection.get());
-  sketch->getVisual()->clearActiveSketch();
-  sketch->getOverlaySwitch()->setNodeMask(sketch->getOverlaySwitch()->getNodeMask() & (~skt::ActiveSketch).to_ulong());
+  view->removeEventHandler(stow->selection.get());
+  stow->feature->getVisual()->clearActiveSketch();
+  stow->feature->getOverlaySwitch()->setNodeMask(stow->feature->getOverlaySwitch()->getNodeMask() & (~skt::ActiveSketch).to_ulong());
 }
 
 void Sketch::selectionGo()
 {
-  node->sendBlocked(msg::buildSelectionMask(slc::AllEnabled));
+  stow->node->sendBlocked(msg::buildSelectionMask(slc::AllEnabled));
 }
 
 void Sketch::selectionStop()
 {
-  node->sendBlocked(msg::buildSelectionMask(~slc::AllEnabled));
+  stow->node->sendBlocked(msg::buildSelectionMask(~slc::All));
 }
 
 void Sketch::draggerShow()
 {
-  sketch->draggerShow();
+  stow->feature->draggerShow();
 }
 
 void Sketch::draggerHide()
 {
-  sketch->draggerHide();
+  stow->feature->draggerHide();
 }
 
 void Sketch::setupDispatcher()
 {
-  sift->insert
+  stow->sift->insert
   (
     msg::Response | msg::Sketch | msg::Selection | msg::Add
     , std::bind(&Sketch::selectParameterDispatched, this, std::placeholders::_1)
@@ -185,17 +199,17 @@ void Sketch::setupDispatcher()
 void Sketch::selectParameterDispatched(const msg::Message &mIn)
 {
   boost::uuids::uuid pId = mIn.getSLC().shapeId;
-  if (pId.is_nil() || (!sketch->hasParameter(pId)))
+  if (pId.is_nil() || (!stow->feature->hasParameter(pId)))
   {
-    pEdit->lineEdit->clear();
-    pEdit->setDisabled(true);
-    parameter = nullptr;
+    stow->pEdit->lineEdit->clear();
+    stow->pEdit->setDisabled(true);
+    stow->parameter = nullptr;
     return;
   }
-  parameter = sketch->getParameter(pId);
+  stow->parameter = stow->feature->getParameter(pId);
   activateWindow();
-  pEdit->setEnabled(true);
-  if (parameter->isConstant())
+  stow->pEdit->setEnabled(true);
+  if (stow->parameter->isConstant())
     setEditUnlinked();
   else
     setEditLinked();
@@ -203,19 +217,31 @@ void Sketch::selectParameterDispatched(const msg::Message &mIn)
 
 void Sketch::initGui()
 {
-  wasVisible3d = sketch->isVisible3D();
-  wasVisibleOverlay = sketch->isVisibleOverlay();
-  node->sendBlocked(msg::buildHideThreeD(sketch->getId()));
-  node->sendBlocked(msg::buildShowOverlay(sketch->getId()));
-  selection->setMask(skt::WorkPlaneOrigin | skt::WorkPlaneAxis | skt::Entity | skt::Constraint | skt::SelectionPlane);
+  stow->wasVisible3d = stow->feature->isVisible3D();
+  stow->wasVisibleOverlay = stow->feature->isVisibleOverlay();
+  stow->node->sendBlocked(msg::buildHideThreeD(stow->feature->getId()));
+  stow->node->sendBlocked(msg::buildShowOverlay(stow->feature->getId()));
+  stow->selection->setMask(skt::WorkPlaneOrigin | skt::WorkPlaneAxis | skt::Entity | skt::Constraint | skt::SelectionPlane);
   draggerHide();
+  selectionStop();
 }
     
 void Sketch::buildGui()
 {
-  tabWidget = new QTabWidget(this);
-  tabWidget->addTab(buildEditPage(), tr("Edit"));
-  tabWidget->addTab(buildPositionPage(), tr("Position"));
+  stow->tabWidget = new QTabWidget(this);
+  stow->tabWidget->addTab(buildEditPage(), tr("Edit"));
+  VizFilter *vf = new VizFilter(stow->tabWidget->widget(0));
+  stow->tabWidget->widget(0)->installEventFilter(vf);
+  connect(vf, &VizFilter::shown, this, &Sketch::selectionStop);
+  
+  stow->csysWidget = new CSysWidget(this, stow->csys.get());
+  ftr::UpdatePayload payload = app::instance()->getProject()->getPayload(stow->feature->getId());
+  std::vector<const ftr::Base*> inputs = payload.getFeatures(ftr::InputType::linkCSys);
+  if (inputs.empty())
+    stow->csysWidget->setCSysLinkId(gu::createNilId());
+  else
+    stow->csysWidget->setCSysLinkId(inputs.front()->getId());
+  stow->tabWidget->addTab(stow->csysWidget, tr("CSys"));
   
   QDialogButtonBox *buttons = new QDialogButtonBox
     (QDialogButtonBox::Ok | QDialogButtonBox::Cancel, Qt::Horizontal, this);
@@ -226,27 +252,14 @@ void Sketch::buildGui()
   connect(buttons, SIGNAL(rejected()), this, SLOT(reject()));
   
   QVBoxLayout *vl = new QVBoxLayout();
-  vl->addWidget(tabWidget);
+  vl->addWidget(stow->tabWidget);
   vl->addLayout(buttonLayout);
   this->setLayout(vl);
 }
 
-QWidget* Sketch::buildPositionPage()
-{
-  //nothing yet.
-  PositionPage *out = new PositionPage(tabWidget);
-  
-  connect(out, &PositionPage::shown, this, &Sketch::selectionGo);
-  connect(out, &PositionPage::shown, this, &Sketch::draggerShow);
-  connect(out, &PositionPage::hidden, this, &Sketch::selectionStop);
-  connect(out, &PositionPage::hidden, this, &Sketch::draggerHide);
-  
-  return out;
-}
-
 QWidget* Sketch::buildEditPage()
 {
-  EditPage *out = new EditPage(tabWidget);
+  EditPage *out = new EditPage(stow->tabWidget);
   
   QToolBar *etb = new QToolBar(out); //entity tool bar
   QAction *spa = new QAction(QIcon(":resources/images/sketchPoint.svg"), tr("Point"), out);
@@ -326,22 +339,22 @@ QWidget* Sketch::buildEditPage()
   connect(angleAction, &QAction::triggered, this, &Sketch::addAngle);
   dtb->addAction(angleAction);
   
-  pEdit = new ExpressionEdit(this);
-  pEdit->lineEdit->clear();
-  pEdit->setDisabled(true);
+  stow->pEdit = new ExpressionEdit(this);
+  stow->pEdit->lineEdit->clear();
+  stow->pEdit->setDisabled(true);
   ExpressionEditFilter *filter = new ExpressionEditFilter(this);
-  pEdit->lineEdit->installEventFilter(filter);
+  stow->pEdit->lineEdit->installEventFilter(filter);
   EnterFilter *ef = new EnterFilter(this);
-  pEdit->lineEdit->installEventFilter(ef);
+  stow->pEdit->lineEdit->installEventFilter(ef);
   QObject::connect(filter, SIGNAL(requestLinkSignal(QString)), this, SLOT(requestParameterLinkSlot(QString)));
-  QObject::connect(pEdit->lineEdit, SIGNAL(textEdited(QString)), this, SLOT(textEditedParameterSlot(QString)));
+  QObject::connect(stow->pEdit->lineEdit, SIGNAL(textEdited(QString)), this, SLOT(textEditedParameterSlot(QString)));
   QObject::connect(ef, SIGNAL(enterPressed()), this, SLOT(updateParameterSlot()));
-  QObject::connect(pEdit->trafficLabel, SIGNAL(requestUnlinkSignal()), this, SLOT(requestParameterUnlinkSlot()));
+  QObject::connect(stow->pEdit->trafficLabel, SIGNAL(requestUnlinkSignal()), this, SLOT(requestParameterUnlinkSlot()));
   
   QHBoxLayout *dtbLayout = new QHBoxLayout();
   dtbLayout->addWidget(dtb);
   dtbLayout->addStretch();
-  dtbLayout->addWidget(pEdit);
+  dtbLayout->addWidget(stow->pEdit);
   
   QVBoxLayout *vl = new QVBoxLayout();
   vl->addLayout(el);
@@ -351,6 +364,7 @@ QWidget* Sketch::buildEditPage()
   out->setLayout(vl);
   
   connect(out, &EditPage::shown, this, &Sketch::sketchSelectionGo);
+  connect(out, &EditPage::shown, [this](){stow->node->sendBlocked(msg::buildStatusMessage(QObject::tr("Edit sketch feature").toStdString()));});
   connect(out, &EditPage::hidden, this, &Sketch::sketchSelectionStop);
   
   return out;
@@ -358,19 +372,41 @@ QWidget* Sketch::buildEditPage()
 
 void Sketch::finishDialog()
 {
-  sketch->getVisual()->clearSelection();
+  stow->feature->getVisual()->clearSelection();
   sketchSelectionStop();
   selectionGo();
-  sketch->draggerShow();
+  stow->feature->draggerShow();
   
-  if (wasVisible3d)
-    node->sendBlocked(msg::buildShowThreeD(sketch->getId()));
+  if (stow->isAccepted)
+  {
+    //this might be inconsistent, because we have no transaction for sketch.
+    stow->csysWidget->syncLinks();
+    stow->feature->setCSys(static_cast<osg::Matrixd>(*stow->csys));
+    
+    prj::Project *project = app::instance()->getProject();
+    std::vector<const ftr::Base*> inputs = project->getPayload(stow->feature->getId()).getFeatures(ftr::InputType::linkCSys);
+    uuid oldLink = gu::createNilId();
+    if (!inputs.empty())
+      oldLink = inputs.front()->getId();
+    
+    uuid newLinked = stow->csysWidget->getCSysLinkId();
+    if (newLinked != oldLink)
+    {
+      stow->feature->setModelDirty();
+      project->clearAllInputs(stow->feature->getId());
+      if (!newLinked.is_nil())
+        project->connectInsert(newLinked, stow->feature->getId(), ftr::InputType{ftr::InputType::linkCSys});
+    }
+  }
+  
+  if (stow->wasVisible3d)
+    stow->node->sendBlocked(msg::buildShowThreeD(stow->feature->getId()));
   else
-    node->sendBlocked(msg::buildHideThreeD(sketch->getId()));
-  if (wasVisibleOverlay)
-    node->sendBlocked(msg::buildShowOverlay(sketch->getId()));
+    stow->node->sendBlocked(msg::buildHideThreeD(stow->feature->getId()));
+  if (stow->wasVisibleOverlay)
+    stow->node->sendBlocked(msg::buildShowOverlay(stow->feature->getId()));
   else
-    node->sendBlocked(msg::buildHideOverlay(sketch->getId()));
+    stow->node->sendBlocked(msg::buildHideOverlay(stow->feature->getId()));
   
   msg::Message mOut(msg::Mask(msg::Request | msg::Command | msg::Done));
   app::instance()->queuedMessage(mOut);
@@ -378,190 +414,190 @@ void Sketch::finishDialog()
 
 void Sketch::addPoint()
 {
-  if (sketch->getVisual()->getState() != skt::State::selection)
-    sketch->getVisual()->cancel();
-  sketch->getVisual()->addPoint();
+  if (stow->feature->getVisual()->getState() != skt::State::selection)
+    stow->feature->getVisual()->cancel();
+  stow->feature->getVisual()->addPoint();
 }
 
 void Sketch::addLine()
 {
-  if (sketch->getVisual()->getState() != skt::State::selection)
-    sketch->getVisual()->cancel();
-  sketch->getVisual()->addLine();
+  if (stow->feature->getVisual()->getState() != skt::State::selection)
+    stow->feature->getVisual()->cancel();
+  stow->feature->getVisual()->addLine();
 }
 
 void Sketch::addArc()
 {
-  if (sketch->getVisual()->getState() != skt::State::selection)
-    sketch->getVisual()->cancel();
-  sketch->getVisual()->addArc();
+  if (stow->feature->getVisual()->getState() != skt::State::selection)
+    stow->feature->getVisual()->cancel();
+  stow->feature->getVisual()->addArc();
 }
 
 void Sketch::addCircle()
 {
-  if (sketch->getVisual()->getState() != skt::State::selection)
-    sketch->getVisual()->cancel();
-  sketch->getVisual()->addCircle();
+  if (stow->feature->getVisual()->getState() != skt::State::selection)
+    stow->feature->getVisual()->cancel();
+  stow->feature->getVisual()->addCircle();
 }
 
 void Sketch::addCoincident()
 {
-  if (sketch->getVisual()->getState() != skt::State::selection)
-    sketch->getVisual()->cancel();
-  sketch->getVisual()->addCoincident();
+  if (stow->feature->getVisual()->getState() != skt::State::selection)
+    stow->feature->getVisual()->cancel();
+  stow->feature->getVisual()->addCoincident();
 }
 
 void Sketch::addHorizontal()
 {
-  if (sketch->getVisual()->getState() != skt::State::selection)
-    sketch->getVisual()->cancel();
-  sketch->getVisual()->addHorizontal();
+  if (stow->feature->getVisual()->getState() != skt::State::selection)
+    stow->feature->getVisual()->cancel();
+  stow->feature->getVisual()->addHorizontal();
 }
 
 void Sketch::addVertical()
 {
-  if (sketch->getVisual()->getState() != skt::State::selection)
-    sketch->getVisual()->cancel();
-  sketch->getVisual()->addVertical();
+  if (stow->feature->getVisual()->getState() != skt::State::selection)
+    stow->feature->getVisual()->cancel();
+  stow->feature->getVisual()->addVertical();
 }
 
 void Sketch::addTangent()
 {
-  if (sketch->getVisual()->getState() != skt::State::selection)
-    sketch->getVisual()->cancel();
-  sketch->getVisual()->addTangent();
+  if (stow->feature->getVisual()->getState() != skt::State::selection)
+    stow->feature->getVisual()->cancel();
+  stow->feature->getVisual()->addTangent();
 }
 
 void Sketch::addDistance()
 {
-  if (sketch->getVisual()->getState() != skt::State::selection)
-    sketch->getVisual()->cancel();
+  if (stow->feature->getVisual()->getState() != skt::State::selection)
+    stow->feature->getVisual()->cancel();
   
-  auto p = sketch->getVisual()->addDistance();
+  auto p = stow->feature->getVisual()->addDistance();
   if (p)
-    sketch->addHPPair(p.get().first, p.get().second);
+    stow->feature->addHPPair(p.get().first, p.get().second);
 }
 
 void Sketch::addDiameter()
 {
-  if (sketch->getVisual()->getState() != skt::State::selection)
-    sketch->getVisual()->cancel();
+  if (stow->feature->getVisual()->getState() != skt::State::selection)
+    stow->feature->getVisual()->cancel();
   
-  auto p = sketch->getVisual()->addDiameter();
+  auto p = stow->feature->getVisual()->addDiameter();
   if (p)
-    sketch->addHPPair(p.get().first, p.get().second);
+    stow->feature->addHPPair(p.get().first, p.get().second);
 }
 
 void Sketch::addAngle()
 {
-  if (sketch->getVisual()->getState() != skt::State::selection)
-    sketch->getVisual()->cancel();
+  if (stow->feature->getVisual()->getState() != skt::State::selection)
+    stow->feature->getVisual()->cancel();
   
-  auto p = sketch->getVisual()->addAngle();
+  auto p = stow->feature->getVisual()->addAngle();
   if (p)
-    sketch->addHPPair(p.get().first, p.get().second);
+    stow->feature->addHPPair(p.get().first, p.get().second);
 }
 
 void Sketch::addSymmetric()
 {
-  if (sketch->getVisual()->getState() != skt::State::selection)
-    sketch->getVisual()->cancel();
-  sketch->getVisual()->addSymmetric();
+  if (stow->feature->getVisual()->getState() != skt::State::selection)
+    stow->feature->getVisual()->cancel();
+  stow->feature->getVisual()->addSymmetric();
 }
 
 void Sketch::addParallel()
 {
-  if (sketch->getVisual()->getState() != skt::State::selection)
-    sketch->getVisual()->cancel();
-  sketch->getVisual()->addParallel();
+  if (stow->feature->getVisual()->getState() != skt::State::selection)
+    stow->feature->getVisual()->cancel();
+  stow->feature->getVisual()->addParallel();
 }
 
 void Sketch::addPerpendicular()
 {
-  if (sketch->getVisual()->getState() != skt::State::selection)
-    sketch->getVisual()->cancel();
-  sketch->getVisual()->addPerpendicular();
+  if (stow->feature->getVisual()->getState() != skt::State::selection)
+    stow->feature->getVisual()->cancel();
+  stow->feature->getVisual()->addPerpendicular();
 }
 
 void Sketch::addEqual()
 {
-  if (sketch->getVisual()->getState() != skt::State::selection)
-    sketch->getVisual()->cancel();
-  sketch->getVisual()->addEqual();
+  if (stow->feature->getVisual()->getState() != skt::State::selection)
+    stow->feature->getVisual()->cancel();
+  stow->feature->getVisual()->addEqual();
 }
 
 void Sketch::addEqualAngle()
 {
-  if (sketch->getVisual()->getState() != skt::State::selection)
-    sketch->getVisual()->cancel();
-  sketch->getVisual()->addEqualAngle();
+  if (stow->feature->getVisual()->getState() != skt::State::selection)
+    stow->feature->getVisual()->cancel();
+  stow->feature->getVisual()->addEqualAngle();
 }
 
 void Sketch::addMidpoint()
 {
-  if (sketch->getVisual()->getState() != skt::State::selection)
-    sketch->getVisual()->cancel();
-  sketch->getVisual()->addMidpoint();
+  if (stow->feature->getVisual()->getState() != skt::State::selection)
+    stow->feature->getVisual()->cancel();
+  stow->feature->getVisual()->addMidpoint();
 }
 
 void Sketch::addWhereDragged()
 {
-  if (sketch->getVisual()->getState() != skt::State::selection)
-    sketch->getVisual()->cancel();
-  sketch->getVisual()->addWhereDragged();
+  if (stow->feature->getVisual()->getState() != skt::State::selection)
+    stow->feature->getVisual()->cancel();
+  stow->feature->getVisual()->addWhereDragged();
 }
 
 void Sketch::remove()
 {
-  if (parameter)
+  if (stow->parameter)
   {
-    uint32_t h = sketch->getHPHandle(parameter);
+    uint32_t h = stow->feature->getHPHandle(stow->parameter);
     if (h != 0)
-      sketch->removeHPPair(h);
-    parameter = nullptr;
-    pEdit->lineEdit->clear();
-    pEdit->setDisabled(true);
+      stow->feature->removeHPPair(h);
+    stow->parameter = nullptr;
+    stow->pEdit->lineEdit->clear();
+    stow->pEdit->setDisabled(true);
   }
   
-  if (sketch->getVisual()->getState() != skt::State::selection)
-    sketch->getVisual()->cancel();
-  sketch->getVisual()->remove();
-  sketch->cleanHPPair();
+  if (stow->feature->getVisual()->getState() != skt::State::selection)
+    stow->feature->getVisual()->cancel();
+  stow->feature->getVisual()->remove();
+  stow->feature->cleanHPPair();
 }
 
 void Sketch::cancel()
 {
-  sketch->getVisual()->cancel();
+  stow->feature->getVisual()->cancel();
 }
 
 void Sketch::toggleConstruction()
 {
-  sketch->getVisual()->toggleConstruction();
+  stow->feature->getVisual()->toggleConstruction();
 }
 
 void Sketch::requestParameterLinkSlot(const QString &stringIn)
 {
-  assert(parameter);
-  assert(pEdit);
+  assert(stow->parameter);
+  assert(stow->pEdit);
   
   boost::uuids::uuid eId = gu::stringToId(stringIn.toStdString());
   assert(!eId.is_nil()); //project asserts on presence of expression eId.
   prj::Project *project = app::instance()->getProject();
   double eValue = boost::get<double>(project->getManager().getFormulaValue(eId));
   
-  if (parameter->isValidValue(eValue))
+  if (stow->parameter->isValidValue(eValue))
   {
-    project->expressionLink(parameter->getId(), eId);
+    project->expressionLink(stow->parameter->getId(), eId);
     setEditLinked();
-    sketch->getVisual()->reHighlight();
+    stow->feature->getVisual()->reHighlight();
     
-    sketch->getSolver()->updateConstraintValue(sketch->getHPHandle(parameter), eValue);
-    sketch->getSolver()->solve(sketch->getSolver()->getGroup(), true);
-    sketch->getVisual()->update();
+    stow->feature->getSolver()->updateConstraintValue(stow->feature->getHPHandle(stow->parameter), eValue);
+    stow->feature->getSolver()->solve(stow->feature->getSolver()->getGroup(), true);
+    stow->feature->getVisual()->update();
   }
   else
   {
-    node->send(msg::buildStatusMessage(QObject::tr("Value out of range").toStdString(), 2.0));
+    stow->node->send(msg::buildStatusMessage(QObject::tr("Value out of range").toStdString(), 2.0));
   }
   
   this->activateWindow();
@@ -569,87 +605,87 @@ void Sketch::requestParameterLinkSlot(const QString &stringIn)
 
 void Sketch::requestParameterUnlinkSlot()
 {
-  assert(parameter);
-  assert(pEdit);
+  assert(stow->parameter);
+  assert(stow->pEdit);
   
-  app::instance()->getProject()->expressionUnlink(parameter->getId());
+  app::instance()->getProject()->expressionUnlink(stow->parameter->getId());
   
   setEditUnlinked();
-  sketch->getVisual()->reHighlight();
+  stow->feature->getVisual()->reHighlight();
   //don't need to update, because unlinking doesn't change parameter value.
 }
 
 void Sketch::setEditLinked()
 {
-  assert(parameter);
-  assert(pEdit);
-  assert(!parameter->isConstant());
+  assert(stow->parameter);
+  assert(stow->pEdit);
+  assert(!stow->parameter->isConstant());
   
-  pEdit->trafficLabel->setLinkSlot();
-  pEdit->clearFocus();
-  pEdit->lineEdit->deselect();
-  pEdit->lineEdit->setReadOnly(true);
+  stow->pEdit->trafficLabel->setLinkSlot();
+  stow->pEdit->clearFocus();
+  stow->pEdit->lineEdit->deselect();
+  stow->pEdit->lineEdit->setReadOnly(true);
   
   expr::Manager &manager = app::instance()->getProject()->getManager();
-  pEdit->lineEdit->setText(QString::fromStdString(manager.getFormulaName(manager.getFormulaLink(parameter->getId()))));
+  stow->pEdit->lineEdit->setText(QString::fromStdString(manager.getFormulaName(manager.getFormulaLink(stow->parameter->getId()))));
 }
 
 void Sketch::setEditUnlinked()
 {
-  assert(parameter);
-  assert(pEdit);
-  assert(parameter->isConstant());
+  assert(stow->parameter);
+  assert(stow->pEdit);
+  assert(stow->parameter->isConstant());
   
-  pEdit->trafficLabel->setTrafficGreenSlot();
-  pEdit->lineEdit->setReadOnly(false);
-  pEdit->lineEdit->setText(QString::number(static_cast<double>(*parameter), 'f', 12));
-  pEdit->lineEdit->selectAll();
-  pEdit->setFocus();
+  stow->pEdit->trafficLabel->setTrafficGreenSlot();
+  stow->pEdit->lineEdit->setReadOnly(false);
+  stow->pEdit->lineEdit->setText(QString::number(static_cast<double>(*stow->parameter), 'f', 12));
+  stow->pEdit->lineEdit->selectAll();
+  stow->pEdit->setFocus();
 }
 
 void Sketch::updateParameterSlot()
 {
-  assert(pEdit);
-  assert(parameter);
+  assert(stow->pEdit);
+  assert(stow->parameter);
   
-  if (!parameter->isConstant())
+  if (!stow->parameter->isConstant())
     return;
 
   expr::Manager localManager;
   expr::StringTranslator translator(localManager);
   std::string formula("temp = ");
-  formula += pEdit->lineEdit->text().toStdString();
+  formula += stow->pEdit->lineEdit->text().toStdString();
   if (translator.parseString(formula) == expr::StringTranslator::ParseSucceeded)
   {
     localManager.update();
     assert(localManager.getFormulaValueType(translator.getFormulaOutId()) == expr::ValueType::Scalar);
     double value = boost::get<double>(localManager.getFormulaValue(translator.getFormulaOutId()));
-    if (parameter->isValidValue(value))
+    if (stow->parameter->isValidValue(value))
     {
-      parameter->setValue(value);
-      sketch->getSolver()->updateConstraintValue(sketch->getHPHandle(parameter), value);
-      sketch->getSolver()->solve(sketch->getSolver()->getGroup(), true);
-      sketch->getVisual()->update();
+      stow->parameter->setValue(value);
+      stow->feature->getSolver()->updateConstraintValue(stow->feature->getHPHandle(stow->parameter), value);
+      stow->feature->getSolver()->solve(stow->feature->getSolver()->getGroup(), true);
+      stow->feature->getVisual()->update();
     }
     else
     {
-      node->send(msg::buildStatusMessage(QObject::tr("Value out of range").toStdString(), 2.0));
+      stow->node->send(msg::buildStatusMessage(QObject::tr("Value out of range").toStdString(), 2.0));
     }
   }
   else
   {
-    node->send(msg::buildStatusMessage(QObject::tr("Parsing failed").toStdString(), 2.0));
+    stow->node->send(msg::buildStatusMessage(QObject::tr("Parsing failed").toStdString(), 2.0));
   }
-  pEdit->lineEdit->setText(QString::number(static_cast<double>(*parameter), 'f', 12));
-  pEdit->lineEdit->selectAll();
-  pEdit->trafficLabel->setTrafficGreenSlot();
+  stow->pEdit->lineEdit->setText(QString::number(static_cast<double>(*stow->parameter), 'f', 12));
+  stow->pEdit->lineEdit->selectAll();
+  stow->pEdit->trafficLabel->setTrafficGreenSlot();
 }
 
 void Sketch::textEditedParameterSlot(const QString &textIn)
 {
-  assert(pEdit);
+  assert(stow->pEdit);
   
-  pEdit->trafficLabel->setTrafficYellowSlot();
+  stow->pEdit->trafficLabel->setTrafficYellowSlot();
   qApp->processEvents(); //need this or we never see yellow signal.
   
   expr::Manager localManager;
@@ -659,15 +695,15 @@ void Sketch::textEditedParameterSlot(const QString &textIn)
   if (translator.parseString(formula) == expr::StringTranslator::ParseSucceeded)
   {
     localManager.update();
-    pEdit->trafficLabel->setTrafficGreenSlot();
+    stow->pEdit->trafficLabel->setTrafficGreenSlot();
     assert(localManager.getFormulaValueType(translator.getFormulaOutId()) == expr::ValueType::Scalar);
     double value = boost::get<double>(localManager.getFormulaValue(translator.getFormulaOutId()));
-    pEdit->goToolTipSlot(QString::number(value));
+    stow->pEdit->goToolTipSlot(QString::number(value));
   }
   else
   {
-    pEdit->trafficLabel->setTrafficRedSlot();
+    stow->pEdit->trafficLabel->setTrafficRedSlot();
     int position = translator.getFailedPosition() - 8; // 7 chars for 'temp = ' + 1
-    pEdit->goToolTipSlot(textIn.left(position) + "?");
+    stow->pEdit->goToolTipSlot(textIn.left(position) + "?");
   }
 }

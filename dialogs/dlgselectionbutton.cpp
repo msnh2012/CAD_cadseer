@@ -226,6 +226,8 @@ void SelectionButton::hideEvent(QHideEvent *)
 
 void SelectionButton::toggledSlot(bool cState)
 {
+  if (!isVisible())
+    return;
   if (cState)
     syncToSelection();
   else

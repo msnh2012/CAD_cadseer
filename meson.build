@@ -492,7 +492,8 @@ cadseer_moc_hdrs = ['viewer/vwrwidget.h'
   , 'dialogs/dlgremove.h'
   , 'dialogs/dlghollow.h'
   , 'dialogs/dlgdatumsystem.h'
-  , 'dialogs/dlgcsyswidget.h']
+  , 'dialogs/dlgcsyswidget.h'
+  , 'dialogs/dlgvizfilter.h']
   
 cadseer_resources = ['resources.qrc']
 

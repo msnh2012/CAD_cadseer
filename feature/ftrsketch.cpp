@@ -45,6 +45,8 @@
 #include "sketch/sktvisual.h"
 #include "project/serial/xsdcxxoutput/featuresketch.h"
 #include "parameter/prmparameter.h"
+#include "feature/ftrupdatepayload.h"
+#include "feature/ftrinputtype.h"
 #include "feature/ftrshapecheck.h"
 #include "feature/ftrsketch.h"
 
@@ -200,7 +202,7 @@ void Sketch::cleanHPPair()
   }
 }
 
-void Sketch::updateModel(const UpdatePayload &/*payloadIn*/)
+void Sketch::updateModel(const UpdatePayload &plIn)
 {
   setFailure();
   lastUpdateLog.clear();
@@ -212,6 +214,17 @@ void Sketch::updateModel(const UpdatePayload &/*payloadIn*/)
       setSuccess();
       throw std::runtime_error("feature is skipped");
     }
+    
+    //set csys if linked.
+    std::vector<const Base*> tfs = plIn.getFeatures(ftr::InputType::linkCSys);
+    if (!tfs.empty() && tfs.front()->hasParameter(prm::Names::CSys))
+    {
+      csys->setValueQuiet(static_cast<osg::Matrixd>(*(tfs.front()->getParameter(prm::Names::CSys))));
+      csysDragger->draggerUpdate();
+      draggerHide();
+    }
+    else
+      draggerShow();
     
     //set solver constraints to parameters.
     for (const auto &p : hpPairs)
