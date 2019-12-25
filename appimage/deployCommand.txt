@@ -1,0 +1,10 @@
+//run from 'this' directory. 'linuxdeploy' is a symlink to linuxdeploy-x86_64.AppImage
+
+linuxdeploy \
+--plugin=qt \
+--appdir=theappdir \
+--executable=../build/release/cadseer \
+--executable=../build/release/lodgenerator \
+--desktop-file=cadseer.desktop \
+--icon-file=../resources/images/cadSeer.svg \
+--output appimage

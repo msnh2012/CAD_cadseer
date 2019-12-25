@@ -505,7 +505,8 @@ qt5_processed = qt5process.preprocess(
 
 cadseer_exe = executable('cadseer', [cadseer_sources, qt5_processed]
   , dependencies : [qt5, boost, occt, osg, osgqt, eigen, xerces, cgal, threads, libzippp, spnav, gmsh, netgen, git2pp, solvespace, libigl]
-  , cpp_args : [defines, extra_args])
+  , cpp_args : [defines, extra_args]
+  , install : true)
   
 lodgenerator_sources = ['lod/lodmain.cpp'
   , 'tools/occtools.cpp'
@@ -518,4 +519,5 @@ lodgenerator_sources = ['lod/lodmain.cpp'
 
 lodgenerator_exe = executable('lodgenerator', lodgenerator_sources
   , dependencies : [boost, osg, occt]
-  , cpp_args : [defines, extra_args])
+  , cpp_args : [defines, extra_args]
+  , install : true)

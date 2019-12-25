@@ -3,13 +3,13 @@
 	url = https://gitlab.com/blobfish/libgit2pp.git
 [submodule "libreoffice/libzippp"]
 	path = subprojects/libzippp
-	url = https://github.com/ctabin/libzippp.git
+	url = https://gitlab.com/blobfish/libzippp.git
 [submodule "sketch/solvespace"]
 	path = subprojects/solvespace
 	url = https://gitlab.com/blobfish/solvespace.git
 [submodule "subprojects/libigl"]
 	path = subprojects/libigl
-	url = https://github.com/libigl/libigl.git
+	url = https://gitlab.com/blobfish/libigl.git
 [submodule "subprojects/osgQt"]
 	path = subprojects/osgQt
-	url = https://github.com/openscenegraph/osgQt.git
+	url = https://gitlab.com/blobfish/osgqt.git
