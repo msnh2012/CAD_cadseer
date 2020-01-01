@@ -42,6 +42,7 @@ if(host_machine.system() == 'linux' or host_machine.system() == 'darwin')
   endif
 endif
 
+#I cannot link both gmsh and netgen at this time or netgen goes all segfaulty
 gmsh = dependency('', required:false)
 if (get_option('gmsh'))
   gmsh = comp.find_library('gmsh', required : false)

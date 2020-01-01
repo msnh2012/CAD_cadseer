@@ -37,7 +37,7 @@
 #define OCCGEOMETRY
 namespace nglib //what the fuck is this nonsense!
 {
-  #include <netgen/nglib.h>
+  #include <nglib.h>
 }
 using namespace nglib;
 #endif
@@ -400,5 +400,10 @@ void SurfaceMesh::serialIn(const prj::srl::msh::Surface &smIn)
     m.add_vertex(msh::srf::Point(pIn.x(), pIn.y(), pIn.z()));
   
   for (const auto &fIn : smIn.faces().array())
-    m.add_face(fIn.indexes().array());
+  {
+    msh::srf::Vertices vertices;
+    for (const auto &i : fIn.indexes().array())
+      vertices.push_back(static_cast<msh::srf::Vertex>(i));
+    m.add_face(vertices);
+  }
 }

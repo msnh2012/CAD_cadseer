@@ -26,7 +26,7 @@
 #define OCCGEOMETRY
 namespace nglib //what the fuck is this nonsense!
 {
-#include <netgen/nglib.h>
+#include <nglib.h>
 }
 using namespace nglib;
 #endif
