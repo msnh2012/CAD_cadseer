@@ -7,10 +7,17 @@
   
 <xs:complexType name="ParametersOCCT">
   <xs:all>
-    <xs:element name="linearDeflection" type="xs:double"/>
-    <xs:element name="angularDeflection" type="xs:double"/>
+    <xs:element name="angle" type="xs:double"/>
+    <xs:element name="deflection" type="xs:double"/>
+    <xs:element name="angleInterior" type="xs:double"/>
+    <xs:element name="deflectionInterior" type="xs:double"/>
+    <xs:element name="minSize" type="xs:double"/>
+    <xs:element name="inParallel" type="xs:boolean"/>
     <xs:element name="relative" type="xs:boolean"/>
-    <xs:element name="minArea" type="xs:double"/>
+    <xs:element name="internalVerticesMode" type="xs:boolean"/>
+    <xs:element name="controlSurfaceDeflection" type="xs:boolean"/>
+    <xs:element name="cleanModel" type="xs:boolean"/>
+    <xs:element name="adjustMinSize" type="xs:boolean"/>
   </xs:all>
 </xs:complexType>
 

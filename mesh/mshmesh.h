@@ -48,7 +48,7 @@ namespace msh
     typedef std::vector<HalfEdge> HalfEdges;
     typedef std::vector<Edge> Edges;
     typedef std::vector<Face> Faces;
-    typedef CGAL::Min_sphere_of_points_d_traits_3<Kernel, double, CGAL::Tag_true, CGAL::Default_algorithm> SphereTraits;
+    typedef CGAL::Min_sphere_of_points_d_traits_3<Kernel, Kernel::FT, CGAL::Tag_true, CGAL::Default_algorithm> SphereTraits;
     typedef CGAL::Min_sphere_of_spheres_d<SphereTraits> BSphere;
     
     struct Stow

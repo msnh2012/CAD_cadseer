@@ -123,9 +123,9 @@ namespace prj
       {
         public:
         /**
-         * @name linearDeflection
+         * @name angle
          *
-         * @brief Accessor and modifier functions for the %linearDeflection
+         * @brief Accessor and modifier functions for the %angle
          * required element.
          */
         //@{
@@ -133,28 +133,28 @@ namespace prj
         /**
          * @brief Element type.
          */
-        typedef ::xml_schema::Double LinearDeflectionType;
+        typedef ::xml_schema::Double AngleType;
 
         /**
          * @brief Element traits type.
          */
-        typedef ::xsd::cxx::tree::traits< LinearDeflectionType, char, ::xsd::cxx::tree::schema_type::double_ > LinearDeflectionTraits;
+        typedef ::xsd::cxx::tree::traits< AngleType, char, ::xsd::cxx::tree::schema_type::double_ > AngleTraits;
 
         /**
          * @brief Return a read-only (constant) reference to the element.
          *
          * @return A constant reference to the element.
          */
-        const LinearDeflectionType&
-        linearDeflection () const;
+        const AngleType&
+        angle () const;
 
         /**
          * @brief Return a read-write reference to the element.
          *
          * @return A reference to the element.
          */
-        LinearDeflectionType&
-        linearDeflection ();
+        AngleType&
+        angle ();
 
         /**
          * @brief Set the element value.
@@ -165,14 +165,14 @@ namespace prj
          * the new value of the element.
          */
         void
-        linearDeflection (const LinearDeflectionType& x);
+        angle (const AngleType& x);
 
         //@}
 
         /**
-         * @name angularDeflection
+         * @name deflection
          *
-         * @brief Accessor and modifier functions for the %angularDeflection
+         * @brief Accessor and modifier functions for the %deflection
          * required element.
          */
         //@{
@@ -180,28 +180,28 @@ namespace prj
         /**
          * @brief Element type.
          */
-        typedef ::xml_schema::Double AngularDeflectionType;
+        typedef ::xml_schema::Double DeflectionType;
 
         /**
          * @brief Element traits type.
          */
-        typedef ::xsd::cxx::tree::traits< AngularDeflectionType, char, ::xsd::cxx::tree::schema_type::double_ > AngularDeflectionTraits;
+        typedef ::xsd::cxx::tree::traits< DeflectionType, char, ::xsd::cxx::tree::schema_type::double_ > DeflectionTraits;
 
         /**
          * @brief Return a read-only (constant) reference to the element.
          *
          * @return A constant reference to the element.
          */
-        const AngularDeflectionType&
-        angularDeflection () const;
+        const DeflectionType&
+        deflection () const;
 
         /**
          * @brief Return a read-write reference to the element.
          *
          * @return A reference to the element.
          */
-        AngularDeflectionType&
-        angularDeflection ();
+        DeflectionType&
+        deflection ();
 
         /**
          * @brief Set the element value.
@@ -212,7 +212,195 @@ namespace prj
          * the new value of the element.
          */
         void
-        angularDeflection (const AngularDeflectionType& x);
+        deflection (const DeflectionType& x);
+
+        //@}
+
+        /**
+         * @name angleInterior
+         *
+         * @brief Accessor and modifier functions for the %angleInterior
+         * required element.
+         */
+        //@{
+
+        /**
+         * @brief Element type.
+         */
+        typedef ::xml_schema::Double AngleInteriorType;
+
+        /**
+         * @brief Element traits type.
+         */
+        typedef ::xsd::cxx::tree::traits< AngleInteriorType, char, ::xsd::cxx::tree::schema_type::double_ > AngleInteriorTraits;
+
+        /**
+         * @brief Return a read-only (constant) reference to the element.
+         *
+         * @return A constant reference to the element.
+         */
+        const AngleInteriorType&
+        angleInterior () const;
+
+        /**
+         * @brief Return a read-write reference to the element.
+         *
+         * @return A reference to the element.
+         */
+        AngleInteriorType&
+        angleInterior ();
+
+        /**
+         * @brief Set the element value.
+         *
+         * @param x A new value to set.
+         *
+         * This function makes a copy of its argument and sets it as
+         * the new value of the element.
+         */
+        void
+        angleInterior (const AngleInteriorType& x);
+
+        //@}
+
+        /**
+         * @name deflectionInterior
+         *
+         * @brief Accessor and modifier functions for the %deflectionInterior
+         * required element.
+         */
+        //@{
+
+        /**
+         * @brief Element type.
+         */
+        typedef ::xml_schema::Double DeflectionInteriorType;
+
+        /**
+         * @brief Element traits type.
+         */
+        typedef ::xsd::cxx::tree::traits< DeflectionInteriorType, char, ::xsd::cxx::tree::schema_type::double_ > DeflectionInteriorTraits;
+
+        /**
+         * @brief Return a read-only (constant) reference to the element.
+         *
+         * @return A constant reference to the element.
+         */
+        const DeflectionInteriorType&
+        deflectionInterior () const;
+
+        /**
+         * @brief Return a read-write reference to the element.
+         *
+         * @return A reference to the element.
+         */
+        DeflectionInteriorType&
+        deflectionInterior ();
+
+        /**
+         * @brief Set the element value.
+         *
+         * @param x A new value to set.
+         *
+         * This function makes a copy of its argument and sets it as
+         * the new value of the element.
+         */
+        void
+        deflectionInterior (const DeflectionInteriorType& x);
+
+        //@}
+
+        /**
+         * @name minSize
+         *
+         * @brief Accessor and modifier functions for the %minSize
+         * required element.
+         */
+        //@{
+
+        /**
+         * @brief Element type.
+         */
+        typedef ::xml_schema::Double MinSizeType;
+
+        /**
+         * @brief Element traits type.
+         */
+        typedef ::xsd::cxx::tree::traits< MinSizeType, char, ::xsd::cxx::tree::schema_type::double_ > MinSizeTraits;
+
+        /**
+         * @brief Return a read-only (constant) reference to the element.
+         *
+         * @return A constant reference to the element.
+         */
+        const MinSizeType&
+        minSize () const;
+
+        /**
+         * @brief Return a read-write reference to the element.
+         *
+         * @return A reference to the element.
+         */
+        MinSizeType&
+        minSize ();
+
+        /**
+         * @brief Set the element value.
+         *
+         * @param x A new value to set.
+         *
+         * This function makes a copy of its argument and sets it as
+         * the new value of the element.
+         */
+        void
+        minSize (const MinSizeType& x);
+
+        //@}
+
+        /**
+         * @name inParallel
+         *
+         * @brief Accessor and modifier functions for the %inParallel
+         * required element.
+         */
+        //@{
+
+        /**
+         * @brief Element type.
+         */
+        typedef ::xml_schema::Boolean InParallelType;
+
+        /**
+         * @brief Element traits type.
+         */
+        typedef ::xsd::cxx::tree::traits< InParallelType, char > InParallelTraits;
+
+        /**
+         * @brief Return a read-only (constant) reference to the element.
+         *
+         * @return A constant reference to the element.
+         */
+        const InParallelType&
+        inParallel () const;
+
+        /**
+         * @brief Return a read-write reference to the element.
+         *
+         * @return A reference to the element.
+         */
+        InParallelType&
+        inParallel ();
+
+        /**
+         * @brief Set the element value.
+         *
+         * @param x A new value to set.
+         *
+         * This function makes a copy of its argument and sets it as
+         * the new value of the element.
+         */
+        void
+        inParallel (const InParallelType& x);
 
         //@}
 
@@ -264,9 +452,9 @@ namespace prj
         //@}
 
         /**
-         * @name minArea
+         * @name internalVerticesMode
          *
-         * @brief Accessor and modifier functions for the %minArea
+         * @brief Accessor and modifier functions for the %internalVerticesMode
          * required element.
          */
         //@{
@@ -274,28 +462,28 @@ namespace prj
         /**
          * @brief Element type.
          */
-        typedef ::xml_schema::Double MinAreaType;
+        typedef ::xml_schema::Boolean InternalVerticesModeType;
 
         /**
          * @brief Element traits type.
          */
-        typedef ::xsd::cxx::tree::traits< MinAreaType, char, ::xsd::cxx::tree::schema_type::double_ > MinAreaTraits;
+        typedef ::xsd::cxx::tree::traits< InternalVerticesModeType, char > InternalVerticesModeTraits;
 
         /**
          * @brief Return a read-only (constant) reference to the element.
          *
          * @return A constant reference to the element.
          */
-        const MinAreaType&
-        minArea () const;
+        const InternalVerticesModeType&
+        internalVerticesMode () const;
 
         /**
          * @brief Return a read-write reference to the element.
          *
          * @return A reference to the element.
          */
-        MinAreaType&
-        minArea ();
+        InternalVerticesModeType&
+        internalVerticesMode ();
 
         /**
          * @brief Set the element value.
@@ -306,7 +494,148 @@ namespace prj
          * the new value of the element.
          */
         void
-        minArea (const MinAreaType& x);
+        internalVerticesMode (const InternalVerticesModeType& x);
+
+        //@}
+
+        /**
+         * @name controlSurfaceDeflection
+         *
+         * @brief Accessor and modifier functions for the %controlSurfaceDeflection
+         * required element.
+         */
+        //@{
+
+        /**
+         * @brief Element type.
+         */
+        typedef ::xml_schema::Boolean ControlSurfaceDeflectionType;
+
+        /**
+         * @brief Element traits type.
+         */
+        typedef ::xsd::cxx::tree::traits< ControlSurfaceDeflectionType, char > ControlSurfaceDeflectionTraits;
+
+        /**
+         * @brief Return a read-only (constant) reference to the element.
+         *
+         * @return A constant reference to the element.
+         */
+        const ControlSurfaceDeflectionType&
+        controlSurfaceDeflection () const;
+
+        /**
+         * @brief Return a read-write reference to the element.
+         *
+         * @return A reference to the element.
+         */
+        ControlSurfaceDeflectionType&
+        controlSurfaceDeflection ();
+
+        /**
+         * @brief Set the element value.
+         *
+         * @param x A new value to set.
+         *
+         * This function makes a copy of its argument and sets it as
+         * the new value of the element.
+         */
+        void
+        controlSurfaceDeflection (const ControlSurfaceDeflectionType& x);
+
+        //@}
+
+        /**
+         * @name cleanModel
+         *
+         * @brief Accessor and modifier functions for the %cleanModel
+         * required element.
+         */
+        //@{
+
+        /**
+         * @brief Element type.
+         */
+        typedef ::xml_schema::Boolean CleanModelType;
+
+        /**
+         * @brief Element traits type.
+         */
+        typedef ::xsd::cxx::tree::traits< CleanModelType, char > CleanModelTraits;
+
+        /**
+         * @brief Return a read-only (constant) reference to the element.
+         *
+         * @return A constant reference to the element.
+         */
+        const CleanModelType&
+        cleanModel () const;
+
+        /**
+         * @brief Return a read-write reference to the element.
+         *
+         * @return A reference to the element.
+         */
+        CleanModelType&
+        cleanModel ();
+
+        /**
+         * @brief Set the element value.
+         *
+         * @param x A new value to set.
+         *
+         * This function makes a copy of its argument and sets it as
+         * the new value of the element.
+         */
+        void
+        cleanModel (const CleanModelType& x);
+
+        //@}
+
+        /**
+         * @name adjustMinSize
+         *
+         * @brief Accessor and modifier functions for the %adjustMinSize
+         * required element.
+         */
+        //@{
+
+        /**
+         * @brief Element type.
+         */
+        typedef ::xml_schema::Boolean AdjustMinSizeType;
+
+        /**
+         * @brief Element traits type.
+         */
+        typedef ::xsd::cxx::tree::traits< AdjustMinSizeType, char > AdjustMinSizeTraits;
+
+        /**
+         * @brief Return a read-only (constant) reference to the element.
+         *
+         * @return A constant reference to the element.
+         */
+        const AdjustMinSizeType&
+        adjustMinSize () const;
+
+        /**
+         * @brief Return a read-write reference to the element.
+         *
+         * @return A reference to the element.
+         */
+        AdjustMinSizeType&
+        adjustMinSize ();
+
+        /**
+         * @brief Set the element value.
+         *
+         * @param x A new value to set.
+         *
+         * This function makes a copy of its argument and sets it as
+         * the new value of the element.
+         */
+        void
+        adjustMinSize (const AdjustMinSizeType& x);
 
         //@}
 
@@ -319,10 +648,17 @@ namespace prj
          * @brief Create an instance from the ultimate base and
          * initializers for required elements and attributes.
          */
-        ParametersOCCT (const LinearDeflectionType&,
-                        const AngularDeflectionType&,
+        ParametersOCCT (const AngleType&,
+                        const DeflectionType&,
+                        const AngleInteriorType&,
+                        const DeflectionInteriorType&,
+                        const MinSizeType&,
+                        const InParallelType&,
                         const RelativeType&,
-                        const MinAreaType&);
+                        const InternalVerticesModeType&,
+                        const ControlSurfaceDeflectionType&,
+                        const CleanModelType&,
+                        const AdjustMinSizeType&);
 
         /**
          * @brief Create an instance from a DOM element.
@@ -394,10 +730,17 @@ namespace prj
                ::xml_schema::Flags);
 
         protected:
-        ::xsd::cxx::tree::one< LinearDeflectionType > linearDeflection_;
-        ::xsd::cxx::tree::one< AngularDeflectionType > angularDeflection_;
+        ::xsd::cxx::tree::one< AngleType > angle_;
+        ::xsd::cxx::tree::one< DeflectionType > deflection_;
+        ::xsd::cxx::tree::one< AngleInteriorType > angleInterior_;
+        ::xsd::cxx::tree::one< DeflectionInteriorType > deflectionInterior_;
+        ::xsd::cxx::tree::one< MinSizeType > minSize_;
+        ::xsd::cxx::tree::one< InParallelType > inParallel_;
         ::xsd::cxx::tree::one< RelativeType > relative_;
-        ::xsd::cxx::tree::one< MinAreaType > minArea_;
+        ::xsd::cxx::tree::one< InternalVerticesModeType > internalVerticesMode_;
+        ::xsd::cxx::tree::one< ControlSurfaceDeflectionType > controlSurfaceDeflection_;
+        ::xsd::cxx::tree::one< CleanModelType > cleanModel_;
+        ::xsd::cxx::tree::one< AdjustMinSizeType > adjustMinSize_;
 
         //@endcond
       };

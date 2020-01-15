@@ -49,40 +49,112 @@ namespace prj
       // ParametersOCCT
       // 
 
-      const ParametersOCCT::LinearDeflectionType& ParametersOCCT::
-      linearDeflection () const
+      const ParametersOCCT::AngleType& ParametersOCCT::
+      angle () const
       {
-        return this->linearDeflection_.get ();
+        return this->angle_.get ();
       }
 
-      ParametersOCCT::LinearDeflectionType& ParametersOCCT::
-      linearDeflection ()
+      ParametersOCCT::AngleType& ParametersOCCT::
+      angle ()
       {
-        return this->linearDeflection_.get ();
-      }
-
-      void ParametersOCCT::
-      linearDeflection (const LinearDeflectionType& x)
-      {
-        this->linearDeflection_.set (x);
-      }
-
-      const ParametersOCCT::AngularDeflectionType& ParametersOCCT::
-      angularDeflection () const
-      {
-        return this->angularDeflection_.get ();
-      }
-
-      ParametersOCCT::AngularDeflectionType& ParametersOCCT::
-      angularDeflection ()
-      {
-        return this->angularDeflection_.get ();
+        return this->angle_.get ();
       }
 
       void ParametersOCCT::
-      angularDeflection (const AngularDeflectionType& x)
+      angle (const AngleType& x)
       {
-        this->angularDeflection_.set (x);
+        this->angle_.set (x);
+      }
+
+      const ParametersOCCT::DeflectionType& ParametersOCCT::
+      deflection () const
+      {
+        return this->deflection_.get ();
+      }
+
+      ParametersOCCT::DeflectionType& ParametersOCCT::
+      deflection ()
+      {
+        return this->deflection_.get ();
+      }
+
+      void ParametersOCCT::
+      deflection (const DeflectionType& x)
+      {
+        this->deflection_.set (x);
+      }
+
+      const ParametersOCCT::AngleInteriorType& ParametersOCCT::
+      angleInterior () const
+      {
+        return this->angleInterior_.get ();
+      }
+
+      ParametersOCCT::AngleInteriorType& ParametersOCCT::
+      angleInterior ()
+      {
+        return this->angleInterior_.get ();
+      }
+
+      void ParametersOCCT::
+      angleInterior (const AngleInteriorType& x)
+      {
+        this->angleInterior_.set (x);
+      }
+
+      const ParametersOCCT::DeflectionInteriorType& ParametersOCCT::
+      deflectionInterior () const
+      {
+        return this->deflectionInterior_.get ();
+      }
+
+      ParametersOCCT::DeflectionInteriorType& ParametersOCCT::
+      deflectionInterior ()
+      {
+        return this->deflectionInterior_.get ();
+      }
+
+      void ParametersOCCT::
+      deflectionInterior (const DeflectionInteriorType& x)
+      {
+        this->deflectionInterior_.set (x);
+      }
+
+      const ParametersOCCT::MinSizeType& ParametersOCCT::
+      minSize () const
+      {
+        return this->minSize_.get ();
+      }
+
+      ParametersOCCT::MinSizeType& ParametersOCCT::
+      minSize ()
+      {
+        return this->minSize_.get ();
+      }
+
+      void ParametersOCCT::
+      minSize (const MinSizeType& x)
+      {
+        this->minSize_.set (x);
+      }
+
+      const ParametersOCCT::InParallelType& ParametersOCCT::
+      inParallel () const
+      {
+        return this->inParallel_.get ();
+      }
+
+      ParametersOCCT::InParallelType& ParametersOCCT::
+      inParallel ()
+      {
+        return this->inParallel_.get ();
+      }
+
+      void ParametersOCCT::
+      inParallel (const InParallelType& x)
+      {
+        this->inParallel_.set (x);
       }
 
       const ParametersOCCT::RelativeType& ParametersOCCT::
@@ -103,22 +175,76 @@ namespace prj
         this->relative_.set (x);
       }
 
-      const ParametersOCCT::MinAreaType& ParametersOCCT::
-      minArea () const
+      const ParametersOCCT::InternalVerticesModeType& ParametersOCCT::
+      internalVerticesMode () const
       {
-        return this->minArea_.get ();
+        return this->internalVerticesMode_.get ();
       }
 
-      ParametersOCCT::MinAreaType& ParametersOCCT::
-      minArea ()
+      ParametersOCCT::InternalVerticesModeType& ParametersOCCT::
+      internalVerticesMode ()
       {
-        return this->minArea_.get ();
+        return this->internalVerticesMode_.get ();
       }
 
       void ParametersOCCT::
-      minArea (const MinAreaType& x)
+      internalVerticesMode (const InternalVerticesModeType& x)
       {
-        this->minArea_.set (x);
+        this->internalVerticesMode_.set (x);
+      }
+
+      const ParametersOCCT::ControlSurfaceDeflectionType& ParametersOCCT::
+      controlSurfaceDeflection () const
+      {
+        return this->controlSurfaceDeflection_.get ();
+      }
+
+      ParametersOCCT::ControlSurfaceDeflectionType& ParametersOCCT::
+      controlSurfaceDeflection ()
+      {
+        return this->controlSurfaceDeflection_.get ();
+      }
+
+      void ParametersOCCT::
+      controlSurfaceDeflection (const ControlSurfaceDeflectionType& x)
+      {
+        this->controlSurfaceDeflection_.set (x);
+      }
+
+      const ParametersOCCT::CleanModelType& ParametersOCCT::
+      cleanModel () const
+      {
+        return this->cleanModel_.get ();
+      }
+
+      ParametersOCCT::CleanModelType& ParametersOCCT::
+      cleanModel ()
+      {
+        return this->cleanModel_.get ();
+      }
+
+      void ParametersOCCT::
+      cleanModel (const CleanModelType& x)
+      {
+        this->cleanModel_.set (x);
+      }
+
+      const ParametersOCCT::AdjustMinSizeType& ParametersOCCT::
+      adjustMinSize () const
+      {
+        return this->adjustMinSize_.get ();
+      }
+
+      ParametersOCCT::AdjustMinSizeType& ParametersOCCT::
+      adjustMinSize ()
+      {
+        return this->adjustMinSize_.get ();
+      }
+
+      void ParametersOCCT::
+      adjustMinSize (const AdjustMinSizeType& x)
+      {
+        this->adjustMinSize_.set (x);
       }
 
 
@@ -836,15 +962,29 @@ namespace prj
       //
 
       ParametersOCCT::
-      ParametersOCCT (const LinearDeflectionType& linearDeflection,
-                      const AngularDeflectionType& angularDeflection,
+      ParametersOCCT (const AngleType& angle,
+                      const DeflectionType& deflection,
+                      const AngleInteriorType& angleInterior,
+                      const DeflectionInteriorType& deflectionInterior,
+                      const MinSizeType& minSize,
+                      const InParallelType& inParallel,
                       const RelativeType& relative,
-                      const MinAreaType& minArea)
+                      const InternalVerticesModeType& internalVerticesMode,
+                      const ControlSurfaceDeflectionType& controlSurfaceDeflection,
+                      const CleanModelType& cleanModel,
+                      const AdjustMinSizeType& adjustMinSize)
       : ::xml_schema::Type (),
-        linearDeflection_ (linearDeflection, this),
-        angularDeflection_ (angularDeflection, this),
+        angle_ (angle, this),
+        deflection_ (deflection, this),
+        angleInterior_ (angleInterior, this),
+        deflectionInterior_ (deflectionInterior, this),
+        minSize_ (minSize, this),
+        inParallel_ (inParallel, this),
         relative_ (relative, this),
-        minArea_ (minArea, this)
+        internalVerticesMode_ (internalVerticesMode, this),
+        controlSurfaceDeflection_ (controlSurfaceDeflection, this),
+        cleanModel_ (cleanModel, this),
+        adjustMinSize_ (adjustMinSize, this)
       {
       }
 
@@ -853,10 +993,17 @@ namespace prj
                       ::xml_schema::Flags f,
                       ::xml_schema::Container* c)
       : ::xml_schema::Type (x, f, c),
-        linearDeflection_ (x.linearDeflection_, f, this),
-        angularDeflection_ (x.angularDeflection_, f, this),
+        angle_ (x.angle_, f, this),
+        deflection_ (x.deflection_, f, this),
+        angleInterior_ (x.angleInterior_, f, this),
+        deflectionInterior_ (x.deflectionInterior_, f, this),
+        minSize_ (x.minSize_, f, this),
+        inParallel_ (x.inParallel_, f, this),
         relative_ (x.relative_, f, this),
-        minArea_ (x.minArea_, f, this)
+        internalVerticesMode_ (x.internalVerticesMode_, f, this),
+        controlSurfaceDeflection_ (x.controlSurfaceDeflection_, f, this),
+        cleanModel_ (x.cleanModel_, f, this),
+        adjustMinSize_ (x.adjustMinSize_, f, this)
       {
       }
 
@@ -865,10 +1012,17 @@ namespace prj
                       ::xml_schema::Flags f,
                       ::xml_schema::Container* c)
       : ::xml_schema::Type (e, f | ::xml_schema::Flags::base, c),
-        linearDeflection_ (this),
-        angularDeflection_ (this),
+        angle_ (this),
+        deflection_ (this),
+        angleInterior_ (this),
+        deflectionInterior_ (this),
+        minSize_ (this),
+        inParallel_ (this),
         relative_ (this),
-        minArea_ (this)
+        internalVerticesMode_ (this),
+        controlSurfaceDeflection_ (this),
+        cleanModel_ (this),
+        adjustMinSize_ (this)
       {
         if ((f & ::xml_schema::Flags::base) == 0)
         {
@@ -887,24 +1041,68 @@ namespace prj
           const ::xsd::cxx::xml::qualified_name< char > n (
             ::xsd::cxx::xml::dom::name< char > (i));
 
-          // linearDeflection
+          // angle
           //
-          if (n.name () == "linearDeflection" && n.namespace_ ().empty ())
+          if (n.name () == "angle" && n.namespace_ ().empty ())
           {
-            if (!linearDeflection_.present ())
+            if (!angle_.present ())
             {
-              this->linearDeflection_.set (LinearDeflectionTraits::create (i, f, this));
+              this->angle_.set (AngleTraits::create (i, f, this));
               continue;
             }
           }
 
-          // angularDeflection
+          // deflection
           //
-          if (n.name () == "angularDeflection" && n.namespace_ ().empty ())
+          if (n.name () == "deflection" && n.namespace_ ().empty ())
           {
-            if (!angularDeflection_.present ())
+            if (!deflection_.present ())
             {
-              this->angularDeflection_.set (AngularDeflectionTraits::create (i, f, this));
+              this->deflection_.set (DeflectionTraits::create (i, f, this));
+              continue;
+            }
+          }
+
+          // angleInterior
+          //
+          if (n.name () == "angleInterior" && n.namespace_ ().empty ())
+          {
+            if (!angleInterior_.present ())
+            {
+              this->angleInterior_.set (AngleInteriorTraits::create (i, f, this));
+              continue;
+            }
+          }
+
+          // deflectionInterior
+          //
+          if (n.name () == "deflectionInterior" && n.namespace_ ().empty ())
+          {
+            if (!deflectionInterior_.present ())
+            {
+              this->deflectionInterior_.set (DeflectionInteriorTraits::create (i, f, this));
+              continue;
+            }
+          }
+
+          // minSize
+          //
+          if (n.name () == "minSize" && n.namespace_ ().empty ())
+          {
+            if (!minSize_.present ())
+            {
+              this->minSize_.set (MinSizeTraits::create (i, f, this));
+              continue;
+            }
+          }
+
+          // inParallel
+          //
+          if (n.name () == "inParallel" && n.namespace_ ().empty ())
+          {
+            if (!inParallel_.present ())
+            {
+              this->inParallel_.set (InParallelTraits::create (i, f, this));
               continue;
             }
           }
@@ -920,13 +1118,46 @@ namespace prj
             }
           }
 
-          // minArea
+          // internalVerticesMode
           //
-          if (n.name () == "minArea" && n.namespace_ ().empty ())
+          if (n.name () == "internalVerticesMode" && n.namespace_ ().empty ())
           {
-            if (!minArea_.present ())
+            if (!internalVerticesMode_.present ())
             {
-              this->minArea_.set (MinAreaTraits::create (i, f, this));
+              this->internalVerticesMode_.set (InternalVerticesModeTraits::create (i, f, this));
+              continue;
+            }
+          }
+
+          // controlSurfaceDeflection
+          //
+          if (n.name () == "controlSurfaceDeflection" && n.namespace_ ().empty ())
+          {
+            if (!controlSurfaceDeflection_.present ())
+            {
+              this->controlSurfaceDeflection_.set (ControlSurfaceDeflectionTraits::create (i, f, this));
+              continue;
+            }
+          }
+
+          // cleanModel
+          //
+          if (n.name () == "cleanModel" && n.namespace_ ().empty ())
+          {
+            if (!cleanModel_.present ())
+            {
+              this->cleanModel_.set (CleanModelTraits::create (i, f, this));
+              continue;
+            }
+          }
+
+          // adjustMinSize
+          //
+          if (n.name () == "adjustMinSize" && n.namespace_ ().empty ())
+          {
+            if (!adjustMinSize_.present ())
+            {
+              this->adjustMinSize_.set (AdjustMinSizeTraits::create (i, f, this));
               continue;
             }
           }
@@ -934,17 +1165,45 @@ namespace prj
           break;
         }
 
-        if (!linearDeflection_.present ())
+        if (!angle_.present ())
         {
           throw ::xsd::cxx::tree::expected_element< char > (
-            "linearDeflection",
+            "angle",
             "");
         }
 
-        if (!angularDeflection_.present ())
+        if (!deflection_.present ())
         {
           throw ::xsd::cxx::tree::expected_element< char > (
-            "angularDeflection",
+            "deflection",
+            "");
+        }
+
+        if (!angleInterior_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "angleInterior",
+            "");
+        }
+
+        if (!deflectionInterior_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "deflectionInterior",
+            "");
+        }
+
+        if (!minSize_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "minSize",
+            "");
+        }
+
+        if (!inParallel_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "inParallel",
             "");
         }
 
@@ -955,10 +1214,31 @@ namespace prj
             "");
         }
 
-        if (!minArea_.present ())
+        if (!internalVerticesMode_.present ())
         {
           throw ::xsd::cxx::tree::expected_element< char > (
-            "minArea",
+            "internalVerticesMode",
+            "");
+        }
+
+        if (!controlSurfaceDeflection_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "controlSurfaceDeflection",
+            "");
+        }
+
+        if (!cleanModel_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "cleanModel",
+            "");
+        }
+
+        if (!adjustMinSize_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "adjustMinSize",
             "");
         }
       }
@@ -976,10 +1256,17 @@ namespace prj
         if (this != &x)
         {
           static_cast< ::xml_schema::Type& > (*this) = x;
-          this->linearDeflection_ = x.linearDeflection_;
-          this->angularDeflection_ = x.angularDeflection_;
+          this->angle_ = x.angle_;
+          this->deflection_ = x.deflection_;
+          this->angleInterior_ = x.angleInterior_;
+          this->deflectionInterior_ = x.deflectionInterior_;
+          this->minSize_ = x.minSize_;
+          this->inParallel_ = x.inParallel_;
           this->relative_ = x.relative_;
-          this->minArea_ = x.minArea_;
+          this->internalVerticesMode_ = x.internalVerticesMode_;
+          this->controlSurfaceDeflection_ = x.controlSurfaceDeflection_;
+          this->cleanModel_ = x.cleanModel_;
+          this->adjustMinSize_ = x.adjustMinSize_;
         }
 
         return *this;
@@ -2496,26 +2783,70 @@ namespace prj
       {
         e << static_cast< const ::xml_schema::Type& > (i);
 
-        // linearDeflection
+        // angle
         //
         {
           ::xercesc::DOMElement& s (
             ::xsd::cxx::xml::dom::create_element (
-              "linearDeflection",
+              "angle",
               e));
 
-          s << ::xml_schema::AsDouble(i.linearDeflection ());
+          s << ::xml_schema::AsDouble(i.angle ());
         }
 
-        // angularDeflection
+        // deflection
         //
         {
           ::xercesc::DOMElement& s (
             ::xsd::cxx::xml::dom::create_element (
-              "angularDeflection",
+              "deflection",
               e));
 
-          s << ::xml_schema::AsDouble(i.angularDeflection ());
+          s << ::xml_schema::AsDouble(i.deflection ());
+        }
+
+        // angleInterior
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "angleInterior",
+              e));
+
+          s << ::xml_schema::AsDouble(i.angleInterior ());
+        }
+
+        // deflectionInterior
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "deflectionInterior",
+              e));
+
+          s << ::xml_schema::AsDouble(i.deflectionInterior ());
+        }
+
+        // minSize
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "minSize",
+              e));
+
+          s << ::xml_schema::AsDouble(i.minSize ());
+        }
+
+        // inParallel
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "inParallel",
+              e));
+
+          s << i.inParallel ();
         }
 
         // relative
@@ -2529,15 +2860,48 @@ namespace prj
           s << i.relative ();
         }
 
-        // minArea
+        // internalVerticesMode
         //
         {
           ::xercesc::DOMElement& s (
             ::xsd::cxx::xml::dom::create_element (
-              "minArea",
+              "internalVerticesMode",
               e));
 
-          s << ::xml_schema::AsDouble(i.minArea ());
+          s << i.internalVerticesMode ();
+        }
+
+        // controlSurfaceDeflection
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "controlSurfaceDeflection",
+              e));
+
+          s << i.controlSurfaceDeflection ();
+        }
+
+        // cleanModel
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "cleanModel",
+              e));
+
+          s << i.cleanModel ();
+        }
+
+        // adjustMinSize
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "adjustMinSize",
+              e));
+
+          s << i.adjustMinSize ();
         }
       }
 

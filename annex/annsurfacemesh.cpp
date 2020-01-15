@@ -23,15 +23,17 @@
 
 #include <boost/filesystem/operations.hpp>
 
+#include <CGAL/Polygon_mesh_processing/repair.h>
+#include <CGAL/Polygon_mesh_processing/repair_polygon_soup.h>
+#include <CGAL/Polygon_mesh_processing/orient_polygon_soup.h>
+#include <CGAL/Polygon_mesh_processing/polygon_soup_to_polygon_mesh.h>
+
 #include <BRepBuilderAPI_Copy.hxx>
 #include <BRepMesh_IncrementalMesh.hxx>
 #include <BRep_Tool.hxx>
 #include <BRepTools.hxx>
 #include <TopoDS.hxx>
 #include <Poly_Triangulation.hxx>
-
-#include <CGAL/Polygon_mesh_processing/repair.h>
-#include <CGAL/Polygon_mesh_processing/stitch_borders.h>
 
 #ifdef NETGEN_PRESENT
 #define OCCGEOMETRY
@@ -69,6 +71,65 @@ const msh::srf::Stow& SurfaceMesh::getStow() const
   return *stow;
 }
 
+
+/*! @brief Add a mesh from an OFF formated file.
+ * 
+ * @param file ascii OFF file to read and append.
+ * @return success state of operation.
+ * @note does not clear any existing mesh data
+ */
+bool SurfaceMesh::readOFF(const boost::filesystem::path &file)
+{
+  std::ifstream stream(file.string(), std::ios_base::in);
+  if (!stream.is_open())
+    return false;
+  return CGAL::read_off(stream, stow->mesh);
+}
+
+/*! @brief Write mesh to an OFF formated file.
+ * 
+ * @param file OFF file to write 'this' mesh.
+ * @return success state of operation.
+ */
+bool SurfaceMesh::writeOFF(const boost::filesystem::path &file) const
+{
+  std::ofstream stream(file.string(), std::ios_base::out | std::ios_base::trunc);
+  if (!stream.is_open())
+    return false;
+  return CGAL::write_off(stream, stow->mesh);
+}
+
+/*! @brief Add a mesh from an OFF formated file.
+ * 
+ * @param file ascii or binary PLY file to read and append.
+ * @return success state of operation.
+ * @note does not clear any existing mesh data
+ */
+bool SurfaceMesh::readPLY(const boost::filesystem::path &file)
+{
+  std::ifstream stream(file.string(), std::ios_base::in);
+  if (!stream.is_open())
+    return false;
+  return CGAL::read_ply(stream, stow->mesh);
+}
+
+/*! @brief Write mesh to a PLY formated file.
+ * 
+ * @param file PLY file to write 'this' mesh.
+ * @return success state of operation.
+ */
+bool SurfaceMesh::writePLY(const boost::filesystem::path &file) const
+{
+  std::ofstream stream(file.string(), std::ios_base::out | std::ios_base::trunc);
+  if (!stream.is_open())
+    return false;
+  return CGAL::write_ply(stream, stow->mesh);
+}
+
+
+
+
+
 /*! @brief Generate a mesh from a face with parameters.
  * 
  * @param faceIn The source face for a surface mesh. Expects not null
@@ -102,13 +163,11 @@ std::unique_ptr<SurfaceMesh> SurfaceMesh::generate(const TopoDS_Shape &shapeIn, 
   //don't copy geometry or mesh.
   BRepBuilderAPI_Copy copier(shapeIn, Standard_False, Standard_False);
   TopoDS_Shape copy(copier.Shape());
-  BRepMesh_IncrementalMesh(copy, prmsIn.linearDeflection, prmsIn.relative, prmsIn.angularDeflection, Standard_True);
+  BRepMesh_IncrementalMesh(copy, prmsIn);
   
-  //just going to build mesh ignoring how occ treats each face border points
-  //in isolation. Meaning the faces will be disconnected with duplicate points.
-  //We hope that cgal can fix it.
-  auto &m = out->stow->mesh;
-  using Vertex = msh::srf::Mesh::Vertex_index;
+  std::vector<msh::srf::Point> points;
+  std::vector<std::vector<std::size_t>> polygons;
+  
   for (const auto &face : occt::mapShapes(copy))
   {
     if (face.ShapeType() != TopAbs_FACE)
@@ -123,53 +182,50 @@ std::unique_ptr<SurfaceMesh> SurfaceMesh::generate(const TopoDS_Shape &shapeIn, 
       std::cout << "warning null triangulation in face. " << BOOST_CURRENT_FUNCTION << std::endl;
       continue;
     }
-    gp_Trsf transformation = location.Transformation();;
+    gp_Trsf transformation = location.Transformation();
     
-    //vertices.
-    std::size_t offset = CGAL::vertices(m).size();
+    std::size_t offset = points.size();
     const TColgp_Array1OfPnt& nodes = triangulation->Nodes();
-    for (int index(nodes.Lower()); index < nodes.Upper() + 1; ++index)
+    for (int index(nodes.Lower()); index <= nodes.Upper(); ++index)
     {
       gp_Pnt point = nodes.Value(index);
       point.Transform(transformation);
-      m.add_vertex(msh::srf::Point(point.X(), point.Y(), point.Z()));
+      points.emplace_back(msh::srf::Point(point.X(), point.Y(), point.Z()));
     }
     
-    //should not have to worry about normals.
     const Poly_Array1OfTriangle& triangles = triangulation->Triangles();
     for (int index(triangles.Lower()); index < triangles.Upper() + 1; ++index)
     {
       int N1, N2, N3;
       triangles(index).Get(N1, N2, N3);
-      
-      Vertex v1 = static_cast<Vertex>(N1 - 1 + offset);
-      Vertex v2 = static_cast<Vertex>(N2 - 1 + offset);
-      Vertex v3 = static_cast<Vertex>(N3 - 1 + offset);
-      
-      if (msh::srf::Kernel::Compute_area_3()(m.point(v1), m.point(v2), m.point(v3)) < prmsIn.minArea)
-      {
-        std::cout << "skipping small triangle in " << BOOST_CURRENT_FUNCTION << std::endl;
-        continue;
-      }
-
+      std::vector<std::size_t> polygon;
       if (face.Orientation() == TopAbs_FORWARD)
-        m.add_face(v1, v2, v3);
+      {
+        polygon.push_back(N1 - 1 + offset);
+        polygon.push_back(N2 - 1 + offset);
+        polygon.push_back(N3 - 1 + offset);
+      }
       else
-        m.add_face(v3, v2, v1);
+      {
+        polygon.push_back(N1 - 1 + offset);
+        polygon.push_back(N3 - 1 + offset);
+        polygon.push_back(N2 - 1 + offset);
+      }
+      polygons.push_back(polygon);
     }
   }
   
-  //clean mesh
-  CGAL::Polygon_mesh_processing::remove_isolated_vertices(m);
-  CGAL::Polygon_mesh_processing::stitch_borders(m);
-  m.collect_garbage();
-  
-  if (!m.is_valid())
+  CGAL::Polygon_mesh_processing::repair_polygon_soup(points, polygons);
+  CGAL::Polygon_mesh_processing::orient_polygon_soup(points, polygons);
+  if (!CGAL::Polygon_mesh_processing::is_polygon_soup_a_polygon_mesh(polygons))
   {
-    std::cout << "Mesh is invalid in: " << BOOST_CURRENT_FUNCTION << std::endl;
-    out->stow->mesh = msh::srf::Mesh();
+    std::cout << "INVALID polygon soup" << std::endl;
+    return out;
   }
+  CGAL::Polygon_mesh_processing::polygon_soup_to_polygon_mesh(points, polygons, out->stow->mesh);
   
+  CGAL::Polygon_mesh_processing::remove_isolated_vertices(out->stow->mesh);
+  out->stow->mesh.collect_garbage();
   return out;
 }
 

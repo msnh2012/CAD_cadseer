@@ -28,7 +28,9 @@
 #include "preferences/preferencesXML.h"
 #include "preferences/prfmanager.h"
 #include "message/msgnode.h"
+#include "annex/annsurfacemesh.h"
 #include "feature/ftrinert.h"
+#include "feature/ftrsurfacemesh.h"
 #include "tools/occtools.h"
 #include "tools/tlsnameindexer.h"
 #include "command/cmdimport.h"
@@ -65,7 +67,8 @@ void Import::go()
   (
     "brep (*.brep *.brp)"
     ";;step (*.step *.stp)"
-//     ";;Scene (*.osgt *.osgx *.osgb *.osg *.ive)"
+    ";;off (*.off)"
+    ";;ply (*.ply)"
   );
   
   QStringList fileNames = QFileDialog::getOpenFileNames
@@ -168,6 +171,22 @@ void Import::go()
         outputShape(i, currentName);
         node->sendBlocked(msg::buildStatusMessage("Step Imported", 2.0));
       }
+    }
+    else if (fn.endsWith(QObject::tr(".off")) || fn.endsWith(QObject::tr(".ply")))
+    {
+      std::shared_ptr<ftr::SurfaceMesh> meshFeature(new ftr::SurfaceMesh());
+      project->addFeature(meshFeature);
+      meshFeature->setName(QString::fromStdString(baseName));
+      
+      std::unique_ptr<ann::SurfaceMesh> mesh = std::make_unique<ann::SurfaceMesh>();
+      if (fn.endsWith(QObject::tr(".off")))
+        mesh->readOFF(cp);
+      else
+        mesh->readPLY(cp);
+      meshFeature->setMesh(std::move(mesh));
+      
+      node->sendBlocked(msg::buildStatusMessage("Surface Mesh Imported", 2.0));
+      shouldUpdate = true;
     }
   }
 }

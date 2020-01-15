@@ -24,6 +24,8 @@
 
 #include "annex/annbase.h"
 
+namespace boost{namespace filesystem{class path;}}
+
 class TopoDS_Shape;
 class TopoDS_Shell;
 class TopoDS_Face;
@@ -56,6 +58,10 @@ namespace ann
     virtual Type getType() override {return Type::SurfaceMesh;}
     
     const msh::srf::Stow& getStow() const;
+    bool readOFF(const boost::filesystem::path&);
+    bool writeOFF(const boost::filesystem::path&) const;
+    bool readPLY(const boost::filesystem::path&);
+    bool writePLY(const boost::filesystem::path&) const;
     
     static std::unique_ptr<SurfaceMesh> generate(const TopoDS_Face&, const msh::prm::OCCT&);
     static std::unique_ptr<SurfaceMesh> generate(const TopoDS_Shell&, const msh::prm::OCCT&);

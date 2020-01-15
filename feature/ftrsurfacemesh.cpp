@@ -89,15 +89,15 @@ void SurfaceMesh::setMesh(std::unique_ptr<ann::SurfaceMesh> mIn, bool setToInert
 void SurfaceMesh::setOcctParameters(const msh::prm::OCCT &prmsIn)
 {
   occtParameters = prmsIn;
-  if (meshType == MeshType::occt)
-    setModelDirty();
+  meshType = MeshType::occt;
+  setModelDirty();
 }
 
 void SurfaceMesh::setNetgenParameters(const msh::prm::Netgen &prmsIn)
 {
   netgenParameters = prmsIn;
-  if (meshType == MeshType::netgen)
-    setModelDirty();
+  meshType = MeshType::netgen;
+  setModelDirty();
 }
 
 void SurfaceMesh::updateModel(const UpdatePayload &pIn)
@@ -144,6 +144,9 @@ void SurfaceMesh::updateModel(const UpdatePayload &pIn)
       }
       else if (meshType == MeshType::netgen)
       {
+#ifndef NETGEN_PRESENT
+        throw std::runtime_error("Netgen not available.");
+#endif
         netgenParameters.filePath = boost::filesystem::temp_directory_path();
         netgenParameters.filePath /= boost::filesystem::path(gu::idToString(getId()) + ".brep");
         if (!stm.IsNull())

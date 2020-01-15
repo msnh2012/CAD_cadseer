@@ -23,6 +23,9 @@
 
 #include "command/cmdbase.h"
 
+namespace ftr{class SurfaceMesh;}
+namespace dlg{class SurfaceMesh;}
+
 namespace cmd
 {
   /**
@@ -40,6 +43,24 @@ namespace cmd
     virtual void deactivate() override;
   private:
     void go();
+  };
+  
+  /**
+  * @todo write docs
+  */
+  class SurfaceMeshEdit : public Base
+  {
+  public:
+    SurfaceMeshEdit(ftr::Base*);
+    ~SurfaceMeshEdit() override;
+    
+    std::string getCommandName() override{return "SurfaceMesh Edit";}
+    std::string getStatusMessage() override;
+    void activate() override;
+    void deactivate() override;
+  private:
+    dlg::SurfaceMesh *dialog = nullptr;
+    ftr::SurfaceMesh *feature = nullptr;
   };
 }
 

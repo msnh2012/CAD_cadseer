@@ -238,7 +238,10 @@ dialog_sources = ['dialogs/dlgparameter.cpp'
   , 'dialogs/dlgremove.cpp'
   , 'dialogs/dlghollow.cpp'
   , 'dialogs/dlgdatumsystem.cpp'
-  , 'dialogs/dlgcsyswidget.cpp']
+  , 'dialogs/dlgcsyswidget.cpp'
+  , 'dialogs/dlgsurfacemesh.cpp'
+  , 'dialogs/dlgnetgenparameters.cpp'
+  , 'dialogs/dlgocctparameters.cpp']
   
 preference_sources = ['preferences/preferencesXML.cpp', 'preferences/prfmanager.cpp']
 
@@ -494,7 +497,10 @@ cadseer_moc_hdrs = ['viewer/vwrwidget.h'
   , 'dialogs/dlghollow.h'
   , 'dialogs/dlgdatumsystem.h'
   , 'dialogs/dlgcsyswidget.h'
-  , 'dialogs/dlgvizfilter.h']
+  , 'dialogs/dlgvizfilter.h'
+  , 'dialogs/dlgsurfacemesh.h'
+  , 'dialogs/dlgnetgenparameters.h'
+  , 'dialogs/dlgocctparameters.h']
   
 cadseer_resources = ['resources.qrc']
 

@@ -146,13 +146,18 @@ static std::vector<HalfEdges> getBoundaries(const msh::srf::Mesh &mIn)
 
 std::pair<int, int> fillHoles(msh::srf::Mesh &mIn)
 {
-  //try to fill holes.
-  std::vector<HalfEdges> boundaries = getBoundaries(mIn);
-  boundaries.pop_back(); //get boundaries puts the largest boundary at the end. so just remove it.
+  //with this loop structure, we might try boundaries more than once.
+  //so these stats could be wrong.
   int holesFilled = 0;
   int holesFailed = 0;
-  for (const auto &b : boundaries)
+  
+  std::vector<HalfEdges> boundaries = getBoundaries(mIn);
+  boundaries.pop_back(); //remove outer boundary.
+  
+  while(!boundaries.empty())
   {
+    std::size_t sizePrior = boundaries.size();
+    
     Faces nf; //new faces
     Vertices nv; //new vertices
     bool success = CGAL::cpp11::get<0>
@@ -160,15 +165,33 @@ std::pair<int, int> fillHoles(msh::srf::Mesh &mIn)
       CGAL::Polygon_mesh_processing::triangulate_refine_and_fair_hole
       (
         mIn,
-        b.front(),
+        //this is weird. if I use 'boundaries.back().front()' I get holes that don't fill.
+        //I believe this is a bug in cgal as I have visually inspected the boundaries.
+        boundaries.back().front(),
         std::back_inserter(nf),
         std::back_inserter(nv)
       )
     );
     if (success)
-      holesFilled++;
+    {
+      std::vector<HalfEdges> tb = getBoundaries(mIn); //temp boundaries
+      tb.pop_back(); //remove outer boundary.
+      if (tb.size() != sizePrior)
+      {
+        //worked.
+        holesFilled++;
+        boundaries = tb;
+      }
+      else
+      {
+        boundaries.pop_back(); //remove boundary that didn't work
+      }
+    }
     else
+    {
       holesFailed++;
+      boundaries.pop_back();
+    }
   }
   
   return std::make_pair(holesFilled, holesFailed);
@@ -328,10 +351,7 @@ void sqs::squash(sqs::Parameters &ps)
     ps.mesh3d = std::make_shared<ann::SurfaceMesh>(msh::srf::Stow(mIn));
   };
   
-  //Just going to use a fine setting for occt.
   msh::prm::OCCT occtSettings;
-  occtSettings.linearDeflection = 0.05;
-  occtSettings.angularDeflection = 0.1;
   auto surfaceMeshPtr = ann::SurfaceMesh::generate(ps.s, occtSettings);
   msh::srf::Mesh baseMesh = surfaceMeshPtr->getStow().mesh;
   set3dMesh(baseMesh); ps.message = "Last operation: occt mesh\n";

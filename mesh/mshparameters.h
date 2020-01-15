@@ -23,6 +23,8 @@
 #include <limits>
 #include <boost/filesystem/path.hpp>
 
+#include <IMeshTools_Parameters.hxx>
+
 namespace nglib{class Ng_Meshing_Parameters;}
 namespace prj
 {
@@ -45,13 +47,9 @@ namespace msh
     * @struct OCCT
     * @brief Parameters for generating mesh using occt
     */
-    struct OCCT
+    struct OCCT : public IMeshTools_Parameters
     {
-      double linearDeflection = 0.25;
-      double angularDeflection = 0.5;
-      bool relative = false; //<! edge linear deflection is relative to edge bounding box size.
-      double minArea = std::numeric_limits<float>::epsilon(); //minimum area of allowed triangle.
-      
+      OCCT();
       void serialIn(const prj::srl::msh::ParametersOCCT&);
       prj::srl::msh::ParametersOCCT serialOut() const;
     };
@@ -103,7 +101,8 @@ namespace msh
 #ifdef NETGEN_PRESENT
       nglib::Ng_Meshing_Parameters convert() const;
 #endif
-      
+      void resetValues();
+      void ensureValidValues();
       void serialIn(const prj::srl::msh::ParametersNetgen&);
       prj::srl::msh::ParametersNetgen serialOut() const;
     };

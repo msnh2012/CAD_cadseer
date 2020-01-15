@@ -1031,6 +1031,11 @@ BasePtr editDatumSystem(ftr::Base *feature)
   return std::make_shared<DatumSystemEdit>(feature);
 }
 
+BasePtr editSurfaceMesh(ftr::Base *feature)
+{
+  return std::make_shared<SurfaceMeshEdit>(feature);
+}
+
 void Manager::setupEditFunctionMap()
 {
   editFunctionMap.insert(std::make_pair(ftr::Type::Blend, std::bind(editBlend, std::placeholders::_1)));
@@ -1052,4 +1057,5 @@ void Manager::setupEditFunctionMap()
   editFunctionMap.insert(std::make_pair(ftr::Type::Cone, std::bind(editCone, std::placeholders::_1)));
   editFunctionMap.insert(std::make_pair(ftr::Type::Hollow, std::bind(editHollow, std::placeholders::_1)));
   editFunctionMap.insert(std::make_pair(ftr::Type::DatumSystem, std::bind(editDatumSystem, std::placeholders::_1)));
+  editFunctionMap.insert(std::make_pair(ftr::Type::SurfaceMesh, std::bind(editSurfaceMesh, std::placeholders::_1)));
 }

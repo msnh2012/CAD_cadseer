@@ -18,8 +18,10 @@
  */
 
 #include "message/msgnode.h"
+#include "application/appmainwindow.h"
 #include "project/prjproject.h"
 #include "selection/slceventhandler.h"
+#include "dialogs/dlgsurfacemesh.h"
 #include "feature/ftrinputtype.h"
 #include "feature/ftrsurfacemesh.h"
 #include "command/cmdsurfacemesh.h"
@@ -73,4 +75,43 @@ void SurfaceMesh::go()
   project->connectInsert(bf->getId(), sfm->getId(), ftr::InputType{ftr::InputType::target});
   
   node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
+}
+
+SurfaceMeshEdit::SurfaceMeshEdit(ftr::Base *in) : Base()
+{
+  //command manager edit dispatcher dispatches on ftr::type, so we know the type of 'in'
+  feature = dynamic_cast<ftr::SurfaceMesh*>(in);
+  assert(feature);
+  shouldUpdate = false; //dialog controls.
+}
+
+SurfaceMeshEdit::~SurfaceMeshEdit()
+{
+  if (dialog)
+    dialog->deleteLater();
+}
+
+std::string SurfaceMeshEdit::getStatusMessage()
+{
+  return QObject::tr("Editing SurfaceMesh").toStdString();
+}
+
+void SurfaceMeshEdit::activate()
+{
+  isActive = true;
+  if (!dialog)
+  {
+    node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+    dialog = new dlg::SurfaceMesh(feature, mainWindow, true);
+  }
+
+  dialog->show();
+  dialog->raise();
+  dialog->activateWindow();
+}
+
+void SurfaceMeshEdit::deactivate()
+{
+  dialog->hide();
+  isActive = false;
 }

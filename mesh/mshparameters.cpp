@@ -37,22 +37,58 @@ using namespace nglib;
 
 using namespace msh::prm;
 
+/*
+    IMeshTools_Parameters defaults:
+    Angle(0.5),
+    Deflection(0.001),
+    AngleInterior(-1.0),
+    DeflectionInterior(-1.0),
+    MinSize (-1.0),
+    InParallel (Standard_False),
+    Relative (Standard_False),
+    InternalVerticesMode (Standard_True),
+    ControlSurfaceDeflection (Standard_True),
+    CleanModel (Standard_True),
+    AdjustMinSize (Standard_False)
+*/
+OCCT::OCCT()
+: IMeshTools_Parameters()
+{
+  //changing some defaults.
+  Deflection = 0.25;
+  InParallel = Standard_True;
+}
+
 void OCCT::serialIn(const prj::srl::msh::ParametersOCCT &psIn)
 {
-  linearDeflection = psIn.linearDeflection();
-  angularDeflection = psIn.angularDeflection();
-  relative = psIn.relative();
-  minArea = psIn.minArea();
+  Angle = psIn.angle();
+  Deflection = psIn.deflection();
+  AngleInterior = psIn.angleInterior();
+  DeflectionInterior = psIn.deflectionInterior();
+  MinSize = psIn.minSize();
+  InParallel = psIn.inParallel();
+  Relative = psIn.relative();
+  InternalVerticesMode = psIn.internalVerticesMode();
+  ControlSurfaceDeflection = psIn.controlSurfaceDeflection();
+  CleanModel = psIn.cleanModel();
+  AdjustMinSize = psIn.adjustMinSize();
 }
 
 prj::srl::msh::ParametersOCCT OCCT::serialOut() const
 {
   return prj::srl::msh::ParametersOCCT
   (
-    linearDeflection
-    , angularDeflection
-    , relative
-    , minArea
+    Angle
+    , Deflection
+    , AngleInterior
+    , DeflectionInterior
+    , MinSize
+    , InParallel
+    , Relative
+    , InternalVerticesMode
+    , ControlSurfaceDeflection
+    , CleanModel
+    , AdjustMinSize
   );
 }
 
@@ -60,6 +96,7 @@ prj::srl::msh::ParametersOCCT OCCT::serialOut() const
 nglib::Ng_Meshing_Parameters Netgen::convert() const
 {
   Ng_Meshing_Parameters out;
+  out.uselocalh = static_cast<int>(useLocalH);
   out.maxh = maxH;
   out.minh = minH;
   out.fineness = fineness;
@@ -84,6 +121,26 @@ nglib::Ng_Meshing_Parameters Netgen::convert() const
   return out;
 }
 #endif
+
+void Netgen::resetValues()
+{
+  *this = Netgen();
+}
+
+void Netgen::ensureValidValues()
+{
+  //this isn't complete. just fixing as I am getting problems.
+  minH = std::max(0.0, minH);
+  maxH = std::max(minH, maxH);
+  fineness = std::min(std::max(0.0, fineness), 1.0);
+  grading = std::min(std::max(0.1, grading), 1.0);
+  elementsPerEdge = std::min(std::max(0.2, elementsPerEdge), 5.0);
+  elementsPerCurve = std::min(std::max(0.2, elementsPerCurve), 5.0);
+  closeEdgeFactor = std::min(std::max(0.2, closeEdgeFactor), 8.0);
+  minEdgeLen = std::min(std::max(0.2, minEdgeLen), 5.0);
+  optSteps2d = std::max(0, optSteps2d);
+  optSteps3d = std::max(0, optSteps3d);
+}
 
 void Netgen::serialIn(const prj::srl::msh::ParametersNetgen &psIn)
 {

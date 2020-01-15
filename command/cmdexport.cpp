@@ -32,6 +32,8 @@
 #include "message/msgnode.h"
 #include "selection/slceventhandler.h"
 #include "annex/annseershape.h"
+#include "annex/annsurfacemesh.h"
+#include "mesh/mshmesh.h"
 #include "feature/ftrbase.h"
 #include "tools/occtools.h"
 #include "command/cmdexport.h"
@@ -67,6 +69,8 @@ void Export::go()
   (
     "brep (*.brep *.brp)"
     ";;step (*.step *.stp)"
+    ";;off (*.off)"
+    ";;ply (*.ply)"
 //     ";;Scene (*.osgt *.osgx *.osgb *.osg *.ive)"
   );
   
@@ -185,6 +189,41 @@ void Export::go()
       return;
     }
     node->sendBlocked(msg::buildStatusMessage("Step Exported", 2.0));
+    node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
+    return;
+  }
+  
+  if (fileName.endsWith(QObject::tr(".off")) || fileName.endsWith(QObject::tr(".ply")))
+  {
+    msh::srf::Mesh totalMesh;
+    for (const auto &s : cs)
+    {
+      ftr::Base *feature = project->findFeature(s.featureId);
+      if (!feature->hasAnnex(ann::Type::SurfaceMesh))
+        continue;
+      const ann::SurfaceMesh &sf = feature->getAnnex<ann::SurfaceMesh>(ann::Type::SurfaceMesh);
+      totalMesh += sf.getStow().mesh;
+      
+    }
+    if (!totalMesh.is_valid() || totalMesh.is_empty())
+    {
+      node->sendBlocked(msg::buildStatusMessage("Couldn't export invalid mesh", 2.0));
+      return;
+    }
+    std::ofstream stream(fileName.toStdString().c_str(), std::ios_base::out | std::ios_base::trunc);
+    stream.precision(12);
+    if (!stream.is_open())
+    {
+      node->sendBlocked(msg::buildStatusMessage("Couldn't open file for OFF export", 2.0));
+      return;
+    }
+    
+    if (fileName.endsWith(QObject::tr(".off")))
+      CGAL::write_off(stream, totalMesh);
+    else if (fileName.endsWith(QObject::tr(".ply")))
+      CGAL::write_ply(stream, totalMesh);
+    
+    node->sendBlocked(msg::buildStatusMessage("off file Exported", 2.0));
     node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
     return;
   }
