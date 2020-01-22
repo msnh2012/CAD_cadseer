@@ -80,6 +80,7 @@
     <file>resources/images/constructionMesh.svg</file>
     <file>resources/images/constructionSurfaceMesh.svg</file>
     <file>resources/images/constructionSurfaceReMesh.svg</file>
+    <file>resources/images/constructionSurfaceMeshFill.svg</file>
     <file>resources/images/constructionCurves.svg</file>
     <file>resources/images/constructionSurface.svg</file>
     <file>resources/images/constructionRuled.svg</file>
