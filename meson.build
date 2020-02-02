@@ -2,7 +2,7 @@
 project('cadseer_project', 'cpp',
   version : '0.1.0',
   license : 'GPL-3+',
-  meson_version : '>=0.49.999',
+  meson_version : '>=0.51.0',
   default_options : ['warning_level=3', 'cpp_std=c++14']
 )
 
@@ -20,7 +20,29 @@ qt5 = dependency('Qt5', version : '>=5.11.3', modules : ['Core', 'Widgets', 'Ope
 
 boost = dependency('boost', modules : ['system', 'graph', 'timer', 'filesystem'])
 
-occt = dependency('OpenCASCADE', version : '>=7.3')
+occt = dependency('OpenCASCADE', method : 'cmake', version : '>=7.4'
+  , modules : [
+    'TKernel'
+    , 'TKMath'
+    , 'TKG2d'
+    , 'TKG3d'
+    , 'TKGeomBase'
+    , 'TKBRep'
+    , 'TKGeomAlgo'
+    , 'TKTopAlgo'
+    , 'TKPrim'
+    , 'TKBO'
+    , 'TKShHealing'
+    , 'TKBool'
+    , 'TKHLR'
+    , 'TKFillet'
+    , 'TKOffset'
+    , 'TKFeat'
+    , 'TKMesh'
+    , 'TKXMesh'
+    , 'TKSTEP'
+  ]
+)
 
 osg = dependency('openscenegraph', version : '>=3.6', modules : ['OpenThreads', 'osg',
   'osgDB', 'osgUtil', 'osgViewer', 'osgGA', 'osgText', 'osgManipulator', 'osgFX'])
@@ -511,7 +533,8 @@ qt5_processed = qt5process.preprocess(
 )
 
 cadseer_exe = executable('cadseer', [cadseer_sources, qt5_processed]
-  , dependencies : [qt5, boost, occt, osg, osgqt, eigen, xerces, cgal, threads, libzippp, spnav, gmsh, netgen, git2pp, solvespace, libigl]
+  , dependencies : [qt5, boost, occt, osg, osgqt, eigen, xerces, cgal, threads, libzippp, spnav, gmsh, netgen, git2pp, solvespace, libigl, pmp]
+  , include_directories : include_directories(occt.get_variable(cmake : 'OpenCASCADE_INCLUDE_DIR'))
   , cpp_args : [defines, extra_args]
   , install : true)
   
@@ -526,5 +549,6 @@ lodgenerator_sources = ['lod/lodmain.cpp'
 
 lodgenerator_exe = executable('lodgenerator', lodgenerator_sources
   , dependencies : [boost, osg, occt]
+  , include_directories : include_directories(occt.get_variable(cmake : 'OpenCASCADE_INCLUDE_DIR'))
   , cpp_args : [defines, extra_args]
   , install : true)
