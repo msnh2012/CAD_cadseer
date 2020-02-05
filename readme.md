@@ -19,6 +19,7 @@ A parametric solid modeler.
 * [CGAL](https://www.cgal.org/) - Computational Geometry Algorithms Library
 * [libigl](http://libigl.github.io/libigl/) - Simple C++ geometry processing library
 * [netgen](https://sourceforge.net/projects/netgen-mesher/) - Automatic 3d tetrahedral mesh generator
+* [gmsh](http://gmsh.info/) - A three-dimensional finite element mesh generator
 * [solvespace](http://solvespace.com/index.pl/) - Geometric constraint solver
 * [spnav](http://spacenav.sourceforge.net/) - Connection to the spacenav driver
 * [zlib](https://zlib.net/) - A Massively Spiffy Yet Delicately Unobtrusive Compression Library
@@ -26,6 +27,7 @@ A parametric solid modeler.
 * [libzippp](https://github.com/ctabin/libzippp) - C++ wrapper for libzip 
 * [libgit2](https://libgit2.org/) - libgit2 is a portable, pure C implementation of the Git core methods 
 * [libgit2pp](https://github.com/marcelocantos/libgit2pp) - C++ convenience wrappers for libgit2 
+* [pmp-library](http://www.pmp-library.org/) - Polygon Mesh Processing library. 
 
 
 ## License

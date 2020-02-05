@@ -372,6 +372,8 @@ void Manager::Stow::setAllMenu()
       {
         srl::MenuNode constructionMesh(":/resources/images/constructionMesh.svg", QObject::tr("Mesh Menu").toStdString());
         constructionMesh.commandIds().push_back(45);
+        constructionMesh.commandIds().push_back(94);
+        constructionMesh.commandIds().push_back(95);
         constructionBase.subMenus().push_back(constructionMesh);
       }
       {
@@ -664,6 +666,8 @@ void Manager::Stow::setAllToolbars()
       entry.visual().get().whatThisText() = QObject::tr("Mesh Menu").toStdString();
       entry.visual().get().toolTipText() = QObject::tr("Mesh").toStdString();
       entry.commandIds().push_back(45);
+      entry.commandIds().push_back(94);
+      entry.commandIds().push_back(95);
       toolbar.entries().push_back(entry);
     }
     {
@@ -1732,5 +1736,25 @@ void Manager::Stow::setAllCommands()
     , QObject::tr("Create A Datum Coordinate System").toStdString() //whats this text
     , QObject::tr("Datum System").toStdString() // toolTipText
     , msg::Request | msg::Construct | msg::DatumSystem
+  );
+  sc
+  (
+    94
+    , ":/resources/images/constructionSurfaceReMesh.svg"
+    , QObject::tr("Surface ReMesh").toStdString() //icon text
+    , QObject::tr("Surface ReMesh").toStdString() //status text
+    , QObject::tr("ReMesh A Surface Mesh").toStdString() //whats this text
+    , QObject::tr("Surface ReMesh").toStdString() // toolTipText
+    , msg::Request | msg::Construct | msg::SurfaceReMesh
+  );
+  sc
+  (
+    95
+    , ":/resources/images/constructionSurfaceMeshFill.svg"
+    , QObject::tr("Surface Mesh Fill").toStdString() //icon text
+    , QObject::tr("Surface Mesh Fill").toStdString() //status text
+    , QObject::tr("Remove All Interal Holes In A Surface Mesh").toStdString() //whats this text
+    , QObject::tr("Surface Mesh Fill").toStdString() // toolTipText
+    , msg::Request | msg::Construct | msg::SurfaceMeshFill
   );
 }

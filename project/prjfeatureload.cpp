@@ -64,6 +64,8 @@
 #include "feature/ftrimageplane.h"
 #include "feature/ftrsweep.h"
 #include "feature/ftrdatumsystem.h"
+#include "feature/ftrsurfaceremesh.h"
+#include "feature/ftrsurfacemeshfill.h"
 #include "project/serial/xsdcxxoutput/featurebox.h"
 #include "project/serial/xsdcxxoutput/featurecylinder.h"
 #include "project/serial/xsdcxxoutput/featuresphere.h"
@@ -106,6 +108,8 @@
 #include "project/serial/xsdcxxoutput/featureimageplane.h"
 #include "project/serial/xsdcxxoutput/featuresweep.h"
 #include "project/serial/xsdcxxoutput/featuredatumsystem.h"
+#include "project/serial/xsdcxxoutput/featuresurfaceremesh.h"
+#include "project/serial/xsdcxxoutput/featuresurfacemeshfill.h"
 
 #include "project/prjfeatureload.h"
 
@@ -174,6 +178,8 @@ FeatureLoad::FeatureLoad(const path& directoryIn, const TopoDS_Shape &masterShap
   functionMap.insert(std::make_pair(ftr::toString(ftr::Type::ImagePlane), std::bind(&FeatureLoad::loadImagePlane, this, std::placeholders::_1, std::placeholders::_2)));
   functionMap.insert(std::make_pair(ftr::toString(ftr::Type::Sweep), std::bind(&FeatureLoad::loadSweep, this, std::placeholders::_1, std::placeholders::_2)));
   functionMap.insert(std::make_pair(ftr::toString(ftr::Type::DatumSystem), std::bind(&FeatureLoad::loadDatumSystem, this, std::placeholders::_1, std::placeholders::_2)));
+  functionMap.insert(std::make_pair(ftr::toString(ftr::Type::SurfaceReMesh), std::bind(&FeatureLoad::loadSurfaceReMesh, this, std::placeholders::_1, std::placeholders::_2)));
+  functionMap.insert(std::make_pair(ftr::toString(ftr::Type::SurfaceMeshFill), std::bind(&FeatureLoad::loadSurfaceMeshFill, this, std::placeholders::_1, std::placeholders::_2)));
 }
 
 std::shared_ptr< ftr::Base > FeatureLoad::load(const std::string& idIn, const std::string& typeIn, std::size_t shapeOffsetIn)
@@ -697,6 +703,28 @@ std::shared_ptr<ftr::Base> FeatureLoad::loadDatumSystem(const std::string &fileN
   
   auto daf = std::make_shared<ftr::DatumSystem::Feature>();
   daf->serialRead(*sds);
+  
+  return daf;
+}
+
+std::shared_ptr<ftr::Base> FeatureLoad::loadSurfaceReMesh(const std::string &fileNameIn, std::size_t)
+{
+  auto ssrm = srl::surfaceremesh(fileNameIn, flags);
+  assert(ssrm);
+  
+  auto daf = std::make_shared<ftr::SurfaceReMesh>();
+  daf->serialRead(*ssrm);
+  
+  return daf;
+}
+
+std::shared_ptr<ftr::Base> FeatureLoad::loadSurfaceMeshFill(const std::string &fileNameIn, std::size_t)
+{
+  auto ssrm = srl::surfacemeshfill(fileNameIn, flags);
+  assert(ssrm);
+  
+  auto daf = std::make_shared<ftr::SurfaceMeshFill>();
+  daf->serialRead(*ssrm);
   
   return daf;
 }

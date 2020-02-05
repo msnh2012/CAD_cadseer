@@ -73,7 +73,9 @@ namespace ftr
     Ruled, //!< feature for ruled surfaces
     ImagePlane, //!< feature for image planes
     Sweep, //!< feature for sweep surfaces
-    DatumSystem //!< feature for datum coordinate systems
+    DatumSystem, //!< feature for datum coordinate systems
+    SurfaceReMesh, //!< feature for surface remesh
+    SurfaceMeshFill //!< feature for surface remesh
   };
   
   inline const static std::string& toString(Type typeIn)
@@ -125,7 +127,9 @@ namespace ftr
       {Type::Ruled, "Ruled"},
       {Type::ImagePlane, "ImagePlane"},
       {Type::Sweep, "Sweep"},
-      {Type::DatumSystem, "DatumSystem"}
+      {Type::DatumSystem, "DatumSystem"},
+      {Type::SurfaceReMesh, "SurfaceReMesh"},
+      {Type::SurfaceMeshFill, "SurfaceMeshFill"}
     };
     
     assert(strings.count(typeIn) > 0);

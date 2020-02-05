@@ -90,6 +90,8 @@
 #include "command/cmdshapegraphdump.h"
 #include "command/cmdtest.h"
 #include "command/cmddatumsystem.h"
+#include "command/cmdsurfaceremesh.h"
+#include "command/cmdsurfacemeshfill.h"
 #include "message/msgnode.h"
 #include "message/msgsift.h"
 #include "selection/slcmessage.h"
@@ -430,6 +432,16 @@ void Manager::setupDispatcher()
       (
         msg::Request | msg::Construct | msg::DatumSystem
       , std::bind(&Manager::constructDatumSystemDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Construct | msg::SurfaceReMesh
+      , std::bind(&Manager::constructSurfaceReMeshDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Construct | msg::SurfaceMeshFill
+      , std::bind(&Manager::constructSurfaceMeshFillDispatched, this, std::placeholders::_1)
       )
       , std::make_pair
       (
@@ -852,6 +864,16 @@ void Manager::constructHollowDispatched(const msg::Message&)
 void Manager::constructDatumSystemDispatched(const msg::Message&)
 {
   addCommand(std::make_shared<DatumSystem>());
+}
+
+void Manager::constructSurfaceReMeshDispatched(const msg::Message&)
+{
+  addCommand(std::make_shared<SurfaceReMesh>());
+}
+
+void Manager::constructSurfaceMeshFillDispatched(const msg::Message&)
+{
+  addCommand(std::make_shared<SurfaceMeshFill>());
 }
 
 void Manager::importDispatched(const msg::Message&)

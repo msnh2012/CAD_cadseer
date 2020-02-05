@@ -35,6 +35,8 @@
 #include "feature/ftrinputtype.h"
 #include "annex/annseershape.h"
 #include "annex/annsurfacemesh.h"
+#include "mesh/mshocct.h"
+#include "mesh/mshmesh.h"
 #include "modelviz/mdvsurfacemesh.h"
 #include "project/serial/xsdcxxoutput/featuresurfacemesh.h"
 #include "feature/ftrsurfacemesh.h"
@@ -138,9 +140,9 @@ void SurfaceMesh::updateModel(const UpdatePayload &pIn)
       if (meshType == MeshType::occt)
       {
         if (!stm.IsNull())
-          setMesh(ann::SurfaceMesh::generate(stm, occtParameters), false);
+          setMesh(std::make_unique<ann::SurfaceMesh>(msh::srf::generate(stm, occtParameters)), false);
         else
-          setMesh(ann::SurfaceMesh::generate(ftm, occtParameters), false);
+          setMesh(std::make_unique<ann::SurfaceMesh>(msh::srf::generate(ftm, occtParameters)), false);
       }
       else if (meshType == MeshType::netgen)
       {
@@ -150,9 +152,9 @@ void SurfaceMesh::updateModel(const UpdatePayload &pIn)
         netgenParameters.filePath = boost::filesystem::temp_directory_path();
         netgenParameters.filePath /= boost::filesystem::path(gu::idToString(getId()) + ".brep");
         if (!stm.IsNull())
-          setMesh(ann::SurfaceMesh::generate(stm, netgenParameters), false);
+          setMesh(std::make_unique<ann::SurfaceMesh>(msh::srf::generate(stm, netgenParameters)), false);
         else
-          setMesh(ann::SurfaceMesh::generate(ftm, netgenParameters), false);
+          setMesh(std::make_unique<ann::SurfaceMesh>(msh::srf::generate(ftm, netgenParameters)), false);
       }
       else if (meshType == MeshType::gmsh)
       {
@@ -162,9 +164,9 @@ void SurfaceMesh::updateModel(const UpdatePayload &pIn)
         gmshParameters.filePath = boost::filesystem::temp_directory_path();
         gmshParameters.filePath /= boost::filesystem::path(gu::idToString(getId()) + ".brep");
         if (!stm.IsNull())
-          setMesh(ann::SurfaceMesh::generate(stm, gmshParameters), false);
+          setMesh(std::make_unique<ann::SurfaceMesh>(msh::srf::generate(stm, gmshParameters)), false);
         else
-          setMesh(ann::SurfaceMesh::generate(ftm, gmshParameters), false);
+          setMesh(std::make_unique<ann::SurfaceMesh>(msh::srf::generate(ftm, gmshParameters)), false);
       }
     }
     

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xs:schema
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  targetNamespace="http://www.cadseer.com/prj/srl"
+  xmlns:srl="http://www.cadseer.com/prj/srl"
+  xmlns:srlmsh="http://www.cadseer.com/prj/srl/msh"
+>
+  
+<xs:import
+  namespace="http://www.cadseer.com/prj/srl/msh"
+  schemaLocation="mesh.xsd"
+/>
+
+<xs:include schemaLocation="featurebase.xsd"/>
+
+<xs:complexType name="FeatureSurfaceReMesh">
+  <xs:all>
+    <xs:element name="featureBase" type="srl:FeatureBase"/>
+    <xs:element name="mesh" type="srlmsh:Surface"/>
+    <xs:element name="reMeshType" type="srl:Parameter"/>
+    <xs:element name="minEdgeLength" type="srl:Parameter"/>
+    <xs:element name="maxEdgeLength" type="srl:Parameter"/>
+    <xs:element name="iterations" type="srl:Parameter"/>
+    <xs:element name="reMeshTypeLabel" type="srl:PLabel"/>
+    <xs:element name="minEdgeLengthLabel" type="srl:PLabel"/>
+    <xs:element name="maxEdgeLengthLabel" type="srl:PLabel"/>
+    <xs:element name="iterationsLabel" type="srl:PLabel"/>
+  </xs:all>
+</xs:complexType>
+
+<xs:element name="surfaceremesh" type="srl:FeatureSurfaceReMesh"/>
+  
+</xs:schema> 

@@ -28,21 +28,14 @@
 #include <igl/map_vertices_to_circle.h>
 #include <igl/massmatrix.h>
 
-// cgal bug diagnosis
-// #define CGAL_PMP_REMESHING_VERBOSE_PROGRESS
-//cgal 4.13 has bug.
-#define CGAL_NO_ASSERTIONS
-
-#include <CGAL/Polygon_mesh_processing/triangulate_hole.h>
-#include <CGAL/Polygon_mesh_processing/remesh.h>
 #include <CGAL/Polygon_mesh_processing/border.h>
-#include <CGAL/boost/graph/Euler_operations.h>
 
 #include "tools/idtools.h"
 #include "squash/sqsigl.h"
 #include "squash/sqssquash.h"
 #include "mesh/mshparameters.h"
 #include "mesh/mshmesh.h"
+#include "mesh/mshocct.h"
 #include "annex/annsurfacemesh.h"
 #include "globalutilities.h"
 
@@ -72,13 +65,6 @@ using Point = msh::srf::Point;
 using Kernel = msh::srf::Kernel;
 
 Parameters::~Parameters(){}
-
-std::string writeShellOut(const TopoDS_Shell& sIn)
-{
-  path sPath = temp_directory_path() / (gu::idToString(gu::createRandomId()) + ".brep");
-  BRepTools::Write(sIn, sPath.string().c_str());
-  return sPath.string();
-}
 
 static double getBSphereRadius(const Mesh &mIn, const HalfEdges &hesIn)
 {
@@ -144,59 +130,6 @@ static std::vector<HalfEdges> getBoundaries(const msh::srf::Mesh &mIn)
   return bheso;
 }
 
-std::pair<int, int> fillHoles(msh::srf::Mesh &mIn)
-{
-  //with this loop structure, we might try boundaries more than once.
-  //so these stats could be wrong.
-  int holesFilled = 0;
-  int holesFailed = 0;
-  
-  std::vector<HalfEdges> boundaries = getBoundaries(mIn);
-  boundaries.pop_back(); //remove outer boundary.
-  
-  while(!boundaries.empty())
-  {
-    std::size_t sizePrior = boundaries.size();
-    
-    Faces nf; //new faces
-    Vertices nv; //new vertices
-    bool success = CGAL::cpp11::get<0>
-    (
-      CGAL::Polygon_mesh_processing::triangulate_refine_and_fair_hole
-      (
-        mIn,
-        //this is weird. if I use 'boundaries.back().front()' I get holes that don't fill.
-        //I believe this is a bug in cgal as I have visually inspected the boundaries.
-        boundaries.back().front(),
-        std::back_inserter(nf),
-        std::back_inserter(nv)
-      )
-    );
-    if (success)
-    {
-      std::vector<HalfEdges> tb = getBoundaries(mIn); //temp boundaries
-      tb.pop_back(); //remove outer boundary.
-      if (tb.size() != sizePrior)
-      {
-        //worked.
-        holesFilled++;
-        boundaries = tb;
-      }
-      else
-      {
-        boundaries.pop_back(); //remove boundary that didn't work
-      }
-    }
-    else
-    {
-      holesFailed++;
-      boundaries.pop_back();
-    }
-  }
-  
-  return std::make_pair(holesFilled, holesFailed);
-}
-
 static double getFaceArea(const msh::srf::Mesh &mIn, const Face &fIn)
 {
   std::vector<Point> ps;
@@ -233,7 +166,7 @@ static double getMeshEdgeLength(const msh::srf::Mesh &mIn)
   return out;
 }
 
-void remesh(msh::srf::Mesh &mIn, int granularity = 0, int tCount = 0, double clength = 0.0)
+double inferEdgeLength(const msh::srf::Mesh &mIn, int granularity = 0, int tCount = 0, double clength = 0.0)
 {
   //remeshing.
   //get collapse length.
@@ -272,26 +205,7 @@ void remesh(msh::srf::Mesh &mIn, int granularity = 0, int tCount = 0, double cle
   else
     clength = calculateCLength(5000);
   
-  namespace pmp = CGAL::Polygon_mesh_processing;
-  pmp::isotropic_remeshing
-  (
-    CGAL::faces(mIn),
-    clength, //target edge length
-    mIn,
-    pmp::parameters::number_of_iterations(3)
-    .protect_constraints(false)//false = don't protect border
-  );
-
-//   Faces nf;
-//   Vertices nv;
-//   pmp::refine
-//   (
-//     mIn,
-//     sqs::obtuse(mIn, 170),
-//     std::back_inserter(nf),
-//     std::back_inserter(nv),
-//     pmp::parameters::density_control_factor(2.0)
-//   );
+  return clength;
 }
 
 Vertices getBaseVertices(const msh::srf::Mesh &mIn, const occt::FaceVector &fvIn)
@@ -345,29 +259,21 @@ static msh::srf::Point convertPoint(const osg::Vec3d &pIn)
 
 void sqs::squash(sqs::Parameters &ps)
 {
-  //set the out 3d mesh. used for snapshots of the mesh during operations.
-  auto set3dMesh = [&](const msh::srf::Mesh &mIn)
-  {
-    ps.mesh3d = std::make_shared<ann::SurfaceMesh>(msh::srf::Stow(mIn));
-  };
+  ps.mesh3d = std::make_shared<ann::SurfaceMesh>();
   
   msh::prm::OCCT occtSettings;
-  auto surfaceMeshPtr = ann::SurfaceMesh::generate(ps.s, occtSettings);
-  msh::srf::Mesh baseMesh = surfaceMeshPtr->getStow().mesh;
-  set3dMesh(baseMesh); ps.message = "Last operation: occt mesh\n";
+  *ps.mesh3d = msh::srf::generate(ps.s, occtSettings).mesh;
+  ps.message = "Last operation: occt mesh\n";
   
-  remesh(baseMesh, ps.granularity);
-  set3dMesh(baseMesh); ps.message = "Last operation: isotropic remesh\n";
-  fillHoles(baseMesh);
-  set3dMesh(baseMesh); ps.message = "Last operation: fill holes\n";
+  ps.mesh3d->remeshCGAL(inferEdgeLength(ps.mesh3d->getStow().mesh, ps.granularity), 3);
+  ps.message = "Last operation: isotropic remesh\n";
+  ps.mesh3d->fillHolesPMP();
+  ps.message = "Last operation: fill holes\n";
   
-  baseMesh.collect_garbage();
-  set3dMesh(baseMesh);
-  msh::srf::Mesh baseMeshCopy = baseMesh; //we alter the base mesh, so make a copy for use later.
+  //we alter the mesh, so make a copy.
+  msh::srf::Mesh workMesh = ps.mesh3d->getStow().mesh;
   
-  ps.mesh3d = std::make_shared<ann::SurfaceMesh>(msh::srf::Stow(baseMesh));
-  
-  msh::srf::Vertices baseVertices = getBaseVertices(baseMesh, ps.fs);
+  msh::srf::Vertices baseVertices = getBaseVertices(workMesh, ps.fs);
   
   /* going to scale and translate mesh so it fits in parametric
    * range (0,1). arap solver appears to need it.
@@ -375,9 +281,9 @@ void sqs::squash(sqs::Parameters &ps)
   osg::Matrixd bmpt;
   {
     msh::srf::BSphere tbmbs; //temp base mesh bounding sphere.
-    for (const auto &v : baseMesh.vertices())
-      tbmbs.insert(baseMesh.point(v));
-//     sqs::getBSphere(baseMesh, tbmbs);
+    for (const auto &v : workMesh.vertices())
+      tbmbs.insert(workMesh.point(v));
+//     sqs::getBSphere(workMesh, tbmbs);
     osg::BoundingSphered bmbs = convertBoundSphere(tbmbs); //base mesh bounding sphere.
     osg::Vec3d ap = bmbs.center(); //anchor point.
     ap.z() = 0.0;
@@ -388,16 +294,16 @@ void sqs::squash(sqs::Parameters &ps)
   }
 
   //transform base mesh.
-  for (const auto &v : CGAL::vertices(baseMesh))
+  for (const auto &v : CGAL::vertices(workMesh))
   {
-    osg::Vec3d op = convertPoint(baseMesh.point(v));
+    osg::Vec3d op = convertPoint(workMesh.point(v));
     op = op * bmpt;
-    baseMesh.point(v) = convertPoint(op);
+    workMesh.point(v) = convertPoint(op);
   }
   
   Eigen::MatrixXd iglVs;
   Eigen::MatrixXi iglFs;
-  std::tie(iglVs, iglFs) = sqs::toIgl(baseMesh);
+  std::tie(iglVs, iglFs) = sqs::toIgl(workMesh);
   Eigen::SparseMatrix<double> massIgl;
   igl::massmatrix(iglVs,iglFs,igl::MASSMATRIX_TYPE_DEFAULT,massIgl);
   
@@ -423,8 +329,8 @@ void sqs::squash(sqs::Parameters &ps)
   for (const auto &v : baseVertices)
   {
     b(brow) = static_cast<int>(v);
-    bc(brow, 0) = baseMesh.point(v).x();
-    bc(brow, 1) = baseMesh.point(v).y();
+    bc(brow, 0) = workMesh.point(v).x();
+    bc(brow, 1) = workMesh.point(v).y();
     brow++;
   }
 
@@ -450,8 +356,8 @@ void sqs::squash(sqs::Parameters &ps)
   
   ps.mesh2d = std::make_shared<ann::SurfaceMesh>(msh::srf::Stow(uvMesh));
   
-  double baseMeshArea = getMeshFaceArea(baseMeshCopy);
-  double baseMeshEdgeLength = getMeshEdgeLength(baseMeshCopy);
+  double baseMeshArea = getMeshFaceArea(ps.mesh3d->getStow().mesh);
+  double baseMeshEdgeLength = getMeshEdgeLength(ps.mesh3d->getStow().mesh);
   double faceError = std::fabs(baseMeshArea - getMeshFaceArea(uvMesh)) / baseMeshArea;
   double edgeError = std::fabs(baseMeshEdgeLength - getMeshEdgeLength(uvMesh)) / baseMeshEdgeLength;
   std::ostringstream stream;

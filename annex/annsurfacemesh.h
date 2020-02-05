@@ -26,10 +26,6 @@
 
 namespace boost{namespace filesystem{class path;}}
 
-class TopoDS_Shape;
-class TopoDS_Shell;
-class TopoDS_Face;
-
 namespace prj{namespace srl{namespace msh{class Surface;}}}
 
 namespace msh
@@ -54,6 +50,8 @@ namespace ann
   public:
     SurfaceMesh();
     SurfaceMesh(const msh::srf::Stow&);
+    SurfaceMesh& operator=(const SurfaceMesh&);
+    SurfaceMesh& operator=(const msh::srf::Stow&);
     virtual ~SurfaceMesh() override;
     virtual Type getType() override {return Type::SurfaceMesh;}
     
@@ -63,20 +61,16 @@ namespace ann
     bool readPLY(const boost::filesystem::path&);
     bool writePLY(const boost::filesystem::path&) const;
     
-    static std::unique_ptr<SurfaceMesh> generate(const TopoDS_Face&, const msh::prm::OCCT&);
-    static std::unique_ptr<SurfaceMesh> generate(const TopoDS_Shell&, const msh::prm::OCCT&);
-    static std::unique_ptr<SurfaceMesh> generate(const TopoDS_Face&, const msh::prm::Netgen&);
-    static std::unique_ptr<SurfaceMesh> generate(const TopoDS_Shell&, const msh::prm::Netgen&);
-    static std::unique_ptr<SurfaceMesh> generate(const TopoDS_Face&, const msh::prm::GMSH&);
-    static std::unique_ptr<SurfaceMesh> generate(const TopoDS_Shell&, const msh::prm::GMSH&);
+    void remeshCGAL(double, int);
+    void remeshPMPUniform(double, int);
+    
+    void fillHolesCGAL();
+    void fillHolesPMP();
     
     prj::srl::msh::Surface serialOut();
     void serialIn(const prj::srl::msh::Surface&);
   private:
     std::unique_ptr<msh::srf::Stow> stow;
-    static std::unique_ptr<SurfaceMesh> generate(const TopoDS_Shape&, const msh::prm::OCCT&);
-    static std::unique_ptr<SurfaceMesh> generate(const TopoDS_Shape&, const msh::prm::Netgen&);
-    static std::unique_ptr<SurfaceMesh> generate(const TopoDS_Shape&, const msh::prm::GMSH&);
   };
 }
 

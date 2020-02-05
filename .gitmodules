@@ -13,3 +13,6 @@
 [submodule "subprojects/osgQt"]
 	path = subprojects/osgQt
 	url = https://gitlab.com/blobfish/osgqt.git
+[submodule "subprojects/pmp-library"]
+	path = subprojects/pmp-library
+	url = https://gitlab.com/blobfish/pmp-library.git

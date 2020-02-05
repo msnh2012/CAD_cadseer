@@ -105,6 +105,9 @@ defines += '-DLIBIGL_USE_STATIC_LIBRARY=OFF'
 #static igl library needs to link to threads even in header only mode.
 threads = dependency('threads')
 
+pmp_proj = subproject('pmp-library')
+pmp = pmp_proj.get_variable('libpmp_dep')
+
 squash_sources = ['squash/sqssquash.cpp'
   , 'squash/sqsigl.cpp']
   
@@ -184,7 +187,9 @@ feature_sources = ['feature/ftrinputtype.cpp'
   , 'feature/ftrruled.cpp'
   , 'feature/ftrimageplane.cpp'
   , 'feature/ftrsweep.cpp'
-  , 'feature/ftrdatumsystem.cpp']
+  , 'feature/ftrdatumsystem.cpp'
+  , 'feature/ftrsurfaceremesh.cpp'
+  , 'feature/ftrsurfacemeshfill.cpp']
   
 parameter_sources = ['parameter/prmparameter.cpp']
 
@@ -320,7 +325,9 @@ project_sources = ['project/prjproject.cpp'
   , 'project/serial/xsdcxxoutput/featureimageplane.cpp'
   , 'project/serial/xsdcxxoutput/lawfunction.cpp'
   , 'project/serial/xsdcxxoutput/featuresweep.cpp'
-  , 'project/serial/xsdcxxoutput/featuredatumsystem.cpp']
+  , 'project/serial/xsdcxxoutput/featuredatumsystem.cpp'
+  , 'project/serial/xsdcxxoutput/featuresurfaceremesh.cpp'
+  , 'project/serial/xsdcxxoutput/featuresurfacemeshfill.cpp']
   
 application_sources = ['application/appmainwindow.cpp'
   , 'application/appapplication.cpp'
@@ -395,7 +402,9 @@ command_sources = ['command/cmdmanager.cpp'
   , 'command/cmdshapetrackdump.cpp'
   , 'command/cmdshapegraphdump.cpp'
   , 'command/cmdtest.cpp'
-  , 'command/cmddatumsystem.cpp']
+  , 'command/cmddatumsystem.cpp'
+  , 'command/cmdsurfaceremesh.cpp'
+  , 'command/cmdsurfacemeshfill.cpp']
   
 law_sources = ['law/lwfcue.cpp']
 
@@ -432,7 +441,12 @@ lod_sources = ['lod/lodmessage.cpp', 'lod/lodmanager.cpp']
 
 menu_sources = ['menu/mnuserial.cpp', 'menu/mnumanager.cpp']
 
-mesh_sources = ['mesh/mshparameters.cpp']
+mesh_sources = ['mesh/mshparameters.cpp'
+  , 'mesh/mshconvert.cpp'
+  , 'mesh/mshocct.cpp'
+  , 'mesh/mshfillholescgal.cpp'
+  , 'mesh/mshfillholespmp.cpp'
+]
 
 dagview_sources = ['dagview/dagview.cpp'
   , 'dagview/dagview.cpp'

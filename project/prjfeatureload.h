@@ -98,6 +98,8 @@ namespace prj
     std::shared_ptr<ftr::Base> loadImagePlane(const std::string &, std::size_t);
     std::shared_ptr<ftr::Base> loadSweep(const std::string &, std::size_t);
     std::shared_ptr<ftr::Base> loadDatumSystem(const std::string &, std::size_t);
+    std::shared_ptr<ftr::Base> loadSurfaceReMesh(const std::string &, std::size_t);
+    std::shared_ptr<ftr::Base> loadSurfaceMeshFill(const std::string &, std::size_t);
   };
 }
 
