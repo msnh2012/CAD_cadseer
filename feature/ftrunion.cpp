@@ -30,7 +30,7 @@
 #include <osg/Switch>
 
 #include "globalutilities.h"
-#include "project/serial/xsdcxxoutput/featureunion.h"
+#include "project/serial/generated/prjsrlunnsunion.h"
 #include "feature/ftrbooleanoperation.h"
 #include "feature/ftrshapecheck.h"
 #include "tools/featuretools.h"
@@ -177,23 +177,29 @@ void Union::updateModel(const UpdatePayload &payloadIn)
 
 void Union::serialWrite(const boost::filesystem::path &dIn)
 {
-  prj::srl::FeatureUnion unionOut
+  prj::srl::unns::Union unionOut
   (
     Base::serialOut(),
-    iMapper->serialOut(),
-    ftr::serialOut(targetPicks),
-    ftr::serialOut(toolPicks)
+    sShape->serialOut(),
+    iMapper->serialOut()
   );
+  for (const auto &p : targetPicks)
+    unionOut.targetPicks().push_back(p);
+  for (const auto &p : toolPicks)
+    unionOut.toolPicks().push_back(p);
   
   xml_schema::NamespaceInfomap infoMap;
   std::ofstream stream(buildFilePathName(dIn).string());
-  prj::srl::fUnion(stream, unionOut, infoMap);
+  prj::srl::unns::fUnion(stream, unionOut, infoMap);
 }
 
-void Union::serialRead(const prj::srl::FeatureUnion& sUnionIn)
+void Union::serialRead(const prj::srl::unns::Union& sUnionIn)
 {
-  Base::serialIn(sUnionIn.featureBase());
+  Base::serialIn(sUnionIn.base());
+  sShape->serialIn(sUnionIn.seerShape());
   iMapper->serialIn(sUnionIn.intersectionMapper());
-  targetPicks = ftr::serialIn(sUnionIn.targetPicks());
-  toolPicks = ftr::serialIn(sUnionIn.toolPicks());
+  for (const auto &p : sUnionIn.targetPicks())
+    targetPicks.emplace_back(p);
+  for (const auto &p : sUnionIn.toolPicks())
+    toolPicks.emplace_back(p);
 }

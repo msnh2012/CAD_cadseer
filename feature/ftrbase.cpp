@@ -59,7 +59,7 @@
 #include "feature/ftrmessage.h"
 #include "feature/ftrshapehistory.h"
 #include "feature/ftrseershapeinfo.h"
-#include "project/serial/xsdcxxoutput/featurebase.h"
+#include "project/serial/generated/prjsrlsptbase.h"
 #include "feature/ftrbase.h"
 
 
@@ -394,38 +394,23 @@ void Base::serialWrite(const boost::filesystem::path&)
   assert(0); //missing override in subclass?
 }
 
-prj::srl::FeatureBase Base::serialOut()
+prj::srl::spt::Base Base::serialOut()
 {
-    
-  prj::srl::FeatureBase out
-  (
-    name.toStdString(),
-    gu::idToString(id)
-  );
-  
-  if (hasAnnex(ann::Type::SeerShape))
-    out.seerShape() = getAnnex<ann::SeerShape>().serialOut();
-  
-  prj::srl::Color colorOut
-  (
-    color.r(),
-    color.g(),
-    color.b(),
-    color.a()
-  );
-  out.color() = colorOut;
-  
   //currently we don't serialize anything for visual.
   //so always set visualDirty so viz gets generated when
   //needed after project open.
   State temp = state;
   temp.set(StateOffset::VisualDirty);
-  out.state() = temp.to_string();
-  
-  return out;
+  return prj::srl::spt::Base
+  (
+    name.toStdString()
+    , gu::idToString(id)
+    , prj::srl::spt::Color(color.r(), color.g(), color.b(), color.a())
+    , temp.to_string()
+  );
 }
 
-void Base::serialIn(const prj::srl::FeatureBase& sBaseIn)
+void Base::serialIn(const prj::srl::spt::Base &sBaseIn)
 {
   name = QString::fromStdString(sBaseIn.name());
   id = gu::stringToId(sBaseIn.id());
@@ -433,19 +418,12 @@ void Base::serialIn(const prj::srl::FeatureBase& sBaseIn)
   mainSwitch->setUserValue<std::string>(gu::idAttributeTitle, gu::idToString(id));
   overlaySwitch->setUserValue<std::string>(gu::idAttributeTitle, gu::idToString(id));
   
-  if (sBaseIn.seerShape().present())
-    getAnnex<ann::SeerShape>().serialIn(sBaseIn.seerShape().get());
+  color.r() = sBaseIn.color().r();
+  color.g() = sBaseIn.color().g();
+  color.b() = sBaseIn.color().b();
+  color.a() = sBaseIn.color().a();
   
-  if (sBaseIn.color().present())
-  {
-    color.r() = sBaseIn.color().get().r();
-    color.g() = sBaseIn.color().get().g();
-    color.b() = sBaseIn.color().get().b();
-    color.a() = sBaseIn.color().get().a();
-  }
-  
-  if (sBaseIn.state().present())
-    state = State(sBaseIn.state().get());
+  state = State(sBaseIn.state());
   
   if (isVisible3D())
     mainSwitch->setAllChildrenOn();

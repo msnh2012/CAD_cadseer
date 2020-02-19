@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xs:schema
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  xmlns:spt="http://www.cadseer.com/prj/srl/spt"
+  xmlns:thks="http://www.cadseer.com/prj/srl/thks"
+  targetNamespace="http://www.cadseer.com/prj/srl/thks"
+>
+  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptseershape.xsd"/>
+  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptparameter.xsd"/>
+  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptoverlay.xsd"/>
+  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptbase.xsd"/>
+
+<xs:complexType name="Thicken">
+  <xs:sequence>
+    <xs:element name="base" type="spt:Base"/>
+    <xs:element name="seerShape" type="spt:SeerShape"/>
+    <xs:element name="distance" type="spt:Parameter"/>
+    <xs:element name="distanceLabel" type="spt:PLabel"/>
+    <xs:element name="faceMap" type="spt:EvolveRecord" minOccurs="0" maxOccurs="unbounded"/>
+    <xs:element name="edgeMap" type="spt:EvolveRecord" minOccurs="0" maxOccurs="unbounded"/>
+    <xs:element name="boundaryMap" type="spt:EvolveRecord" minOccurs="0" maxOccurs="unbounded"/>
+    <xs:element name="oWireMap" type="spt:EvolveRecord" minOccurs="0" maxOccurs="unbounded"/>
+    <xs:element name="solidId" type="xs:string" default="00000000-0000-0000-0000-000000000000"/>
+    <xs:element name="shellId" type="xs:string" default="00000000-0000-0000-0000-000000000000"/>
+  </xs:sequence>
+</xs:complexType>
+
+<xs:element name="thicken" type="thks:Thicken"/>
+  
+</xs:schema> 

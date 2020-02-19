@@ -32,7 +32,7 @@
 #include "annex/anninstancemapper.h"
 #include "feature/ftrdatumplane.h"
 #include "parameter/prmparameter.h"
-#include "project/serial/xsdcxxoutput/featureinstancemirror.h"
+#include "project/serial/generated/prjsrlinmsinstancemirror.h"
 #include "tools/featuretools.h"
 #include "feature/ftrshapecheck.h"
 #include "feature/ftrinputtype.h"
@@ -261,9 +261,10 @@ void InstanceMirror::updateModel(const UpdatePayload &payloadIn)
 
 void InstanceMirror::serialWrite(const boost::filesystem::path &dIn)
 {
-  prj::srl::FeatureInstanceMirror so
+  prj::srl::inms::InstanceMirror so
   (
     Base::serialOut(),
+    sShape->serialOut(),
     iMapper->serialOut(),
     csysDragger->serialOut(),
     csys->serialOut(),
@@ -276,13 +277,14 @@ void InstanceMirror::serialWrite(const boost::filesystem::path &dIn)
   
   xml_schema::NamespaceInfomap infoMap;
   std::ofstream stream(buildFilePathName(dIn).string());
-  prj::srl::instanceMirror(stream, so, infoMap);
+  prj::srl::inms::instanceMirror(stream, so, infoMap);
 }
 
-void InstanceMirror::serialRead(const prj::srl::FeatureInstanceMirror &sim)
+void InstanceMirror::serialRead(const prj::srl::inms::InstanceMirror &sim)
 {
-  Base::serialIn(sim.featureBase());
-  iMapper->serialIn(sim.instanceMapper());
+  Base::serialIn(sim.base());
+  sShape->serialIn(sim.seerShape());
+  iMapper->serialIn(sim.instanceMaps());
   csysDragger->serialIn(sim.csysDragger());
   csys->serialIn(sim.csys());
   includeSource->serialIn(sim.includeSource());

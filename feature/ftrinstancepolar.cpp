@@ -36,7 +36,7 @@
 #include "annex/anncsysdragger.h"
 #include "annex/anninstancemapper.h"
 #include "parameter/prmparameter.h"
-#include "project/serial/xsdcxxoutput/featureinstancepolar.h"
+#include "project/serial/generated/prjsrlinpsinstancepolar.h"
 #include "tools/featuretools.h"
 #include "feature/ftrshapecheck.h"
 #include "feature/ftrinputtype.h"
@@ -323,9 +323,10 @@ void InstancePolar::updateModel(const UpdatePayload &payloadIn)
 
 void InstancePolar::serialWrite(const boost::filesystem::path &dIn)
 {
-  prj::srl::FeatureInstancePolar sip
+  prj::srl::inps::InstancePolar sip
   (
     Base::serialOut(),
+    sShape->serialOut(),
     iMapper->serialOut(),
     csysDragger->serialOut(),
     csys->serialOut(),
@@ -344,13 +345,14 @@ void InstancePolar::serialWrite(const boost::filesystem::path &dIn)
   
   xml_schema::NamespaceInfomap infoMap;
   std::ofstream stream(buildFilePathName(dIn).string());
-  prj::srl::instancePolar(stream, sip, infoMap);
+  prj::srl::inps::instancePolar(stream, sip, infoMap);
 }
 
-void InstancePolar::serialRead(const prj::srl::FeatureInstancePolar &sip)
+void InstancePolar::serialRead(const prj::srl::inps::InstancePolar &sip)
 {
-  Base::serialIn(sip.featureBase());
-  iMapper->serialIn(sip.instanceMapper());
+  Base::serialIn(sip.base());
+  sShape->serialIn(sip.seerShape());
+  iMapper->serialIn(sip.instanceMaps());
   csysDragger->serialIn(sip.csysDragger());
   csys->serialIn(sip.csys());
   count->serialIn(sip.count());
@@ -366,4 +368,3 @@ void InstancePolar::serialRead(const prj::srl::FeatureInstancePolar &sip)
   if (sip.draggerVisible())
     overlaySwitch->addChild(csysDragger->dragger.get());
 }
-

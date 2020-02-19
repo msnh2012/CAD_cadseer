@@ -42,7 +42,7 @@
 #include "annex/annseershape.h"
 #include "feature/ftrshapecheck.h"
 #include "feature/ftrnest.h"
-#include "project/serial/xsdcxxoutput/featurestrip.h"
+#include "project/serial/generated/prjsrlstpsstrip.h"
 #include "feature/ftrupdatepayload.h"
 #include "feature/ftrinputtype.h"
 #include "feature/ftrstrip.h"
@@ -422,29 +422,11 @@ void Strip::goAutoCalc(const TopoDS_Shape &sIn, occt::BoundingBox &bbbox)
 void Strip::serialWrite(const boost::filesystem::path &dIn)
 {
   assert(stations.size() == stationLabels.size());
-  prj::srl::FeatureStrip::StationsType so;
-  for (std::size_t index = 0; index < stations.size(); ++index)
-  {
-    const osg::Matrixd &m = stationLabels.at(index)->getMatrix();
-    prj::srl::Matrixd mOut
-    (
-      m(0,0), m(0,1), m(0,2), m(0,3),
-      m(1,0), m(1,1), m(1,2), m(1,3),
-      m(2,0), m(2,1), m(2,2), m(2,3),
-      m(3,0), m(3,1), m(3,2), m(3,3)
-    );
-    
-    prj::srl::Station stationOut
-    (
-      stations.at(index).toStdString(),
-      mOut
-    );
-    so.array().push_back(stationOut);
-  }
   
-  prj::srl::FeatureStrip stripOut
+  prj::srl::stps::Strip stripOut
   (
     Base::serialOut(),
+    sShape->serialOut(),
     feedDirection->serialOut(),
     pitch->serialOut(),
     width->serialOut(),
@@ -457,18 +439,31 @@ void Strip::serialWrite(const boost::filesystem::path &dIn)
     widthLabel->serialOut(),
     widthOffsetLabel->serialOut(),
     gapLabel->serialOut(),
-    autoCalcLabel->serialOut(),
-    so
+    autoCalcLabel->serialOut()
   );
+  
+  for (std::size_t index = 0; index < stations.size(); ++index)
+  {
+    const osg::Matrixd &m = stationLabels.at(index)->getMatrix();
+    prj::srl::spt::Matrixd mOut
+    (
+      m(0,0), m(0,1), m(0,2), m(0,3),
+      m(1,0), m(1,1), m(1,2), m(1,3),
+      m(2,0), m(2,1), m(2,2), m(2,3),
+      m(3,0), m(3,1), m(3,2), m(3,3)
+    );
+    stripOut.stations().push_back(prj::srl::stps::Station(stations.at(index).toStdString(), mOut));
+  }
   
   xml_schema::NamespaceInfomap infoMap;
   std::ofstream stream(buildFilePathName(dIn).string());
-  prj::srl::strip(stream, stripOut, infoMap);
+  prj::srl::stps::strip(stream, stripOut, infoMap);
 }
 
-void Strip::serialRead(const prj::srl::FeatureStrip &sIn)
+void Strip::serialRead(const prj::srl::stps::Strip &sIn)
 {
-  Base::serialIn(sIn.featureBase());
+  Base::serialIn(sIn.base());
+  sShape->serialIn(sIn.seerShape());
   feedDirection->serialIn(sIn.feedDirection());
   pitch->serialIn(sIn.pitch());
   width->serialIn(sIn.width());
@@ -485,7 +480,7 @@ void Strip::serialRead(const prj::srl::FeatureStrip &sIn)
   
   stations.clear();
   stationLabels.clear();
-  for (const auto &stationIn : sIn.stations().array())
+  for (const auto &stationIn : sIn.stations())
   {
     stations.push_back(QString::fromStdString(stationIn.text()));
     

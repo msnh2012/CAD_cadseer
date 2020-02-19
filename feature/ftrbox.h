@@ -26,7 +26,7 @@
 #include "feature/ftrbase.h"
 
 namespace lbr{class IPGroup;}
-namespace prj{namespace srl{class FeatureBox;}}
+namespace prj{namespace srl{namespace bxs{class Box;}}}
 namespace ann{class CSysDragger; class SeerShape;}
 
 namespace ftr
@@ -54,7 +54,7 @@ public:
   virtual const QIcon& getIcon() const override {return icon;}
   virtual Descriptor getDescriptor() const override {return Descriptor::Create;}
   virtual void serialWrite(const boost::filesystem::path&) override; //!< write xml file. not const, might reset a modified flag.
-  void serialRead(const prj::srl::FeatureBox &sBox); //!<initializes this from sBox. not virtual, type already known.
+  void serialRead(const prj::srl::bxs::Box &sBox); //!<initializes this from sBox. not virtual, type already known.
   
 protected:
   std::shared_ptr<prm::Parameter> length;

@@ -40,7 +40,7 @@
 #include "annex/anncsysdragger.h"
 #include "library/lbrplabel.h"
 #include "library/lbrcsysdragger.h"
-#include "project/serial/xsdcxxoutput/featurethread.h"
+#include "project/serial/generated/prjsrlthdsthread.h"
 #include "preferences/preferencesXML.h"
 #include "preferences/prfmanager.h"
 #include "feature/ftrbooleanoperation.h"
@@ -515,13 +515,10 @@ void Thread::updateLabels()
 
 void Thread::serialWrite(const boost::filesystem::path &dIn)
 {
-  prj::srl::Ids idsOut;
-  for (const auto &idOut : ids)
-    idsOut.id().push_back(gu::idToString(idOut));
-  
-  prj::srl::FeatureThread to //thread out.
+  prj::srl::thds::Thread to //thread out.
   (
     Base::serialOut(),
+    sShape->serialOut(),
     diameter->serialOut(),
     pitch->serialOut(),
     length->serialOut(),
@@ -538,18 +535,21 @@ void Thread::serialWrite(const boost::filesystem::path &dIn)
     fakeLabel->serialOut(),
     leftHandedLabel->serialOut(),
     csysDragger->serialOut(),
-    gu::idToString(solidId),
-    idsOut
+    gu::idToString(solidId)
   );
+  
+  for (const auto &idOut : ids)
+    to.ids().push_back(gu::idToString(idOut));
   
   xml_schema::NamespaceInfomap infoMap;
   std::ofstream stream(buildFilePathName(dIn).string());
-  prj::srl::thread(stream, to, infoMap);
+  prj::srl::thds::thread(stream, to, infoMap);
 }
 
-void Thread::serialRead(const prj::srl::FeatureThread &ti)
+void Thread::serialRead(const prj::srl::thds::Thread &ti)
 {
-  Base::serialIn(ti.featureBase());
+  Base::serialIn(ti.base());
+  sShape->serialIn(ti.seerShape());
   diameter->serialIn(ti.diameter());
   pitch->serialIn(ti.pitch());
   length->serialIn(ti.length());
@@ -568,6 +568,6 @@ void Thread::serialRead(const prj::srl::FeatureThread &ti)
   csysDragger->serialIn(ti.csysDragger());
   solidId = gu::stringToId(ti.solidId());
   
-  for (const auto &idIn : ti.ids().id())
+  for (const auto &idIn : ti.ids())
     ids.push_back(gu::stringToId(idIn));
 }

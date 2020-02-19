@@ -26,7 +26,7 @@
 #include "feature/ftrbase.h"
 
 namespace ann{class SeerShape;}
-namespace prj{namespace srl{class FeatureRuled;}}
+namespace prj{namespace srl{namespace rlds{class Ruled;}}}
 
 namespace ftr
 {
@@ -53,7 +53,7 @@ namespace ftr
     Descriptor getDescriptor() const override {return Descriptor::Create;}
     
     void serialWrite(const boost::filesystem::path&) override;
-    void serialRead(const prj::srl::FeatureRuled&);
+    void serialRead(const prj::srl::rlds::Ruled&);
     
     void setPicks(const Picks&);
     const Picks& getPicks() const {return picks;}

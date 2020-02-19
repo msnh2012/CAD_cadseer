@@ -28,7 +28,7 @@
 
 namespace osg{class Switch; class AutoTransform;}
 namespace prm{class Parameter;}
-namespace prj{namespace srl{class IPGroup;}}
+namespace prj{namespace srl{namespace spt{class IPGroup;}}}
 
 namespace lbr
 {
@@ -67,8 +67,8 @@ namespace lbr
     void setMatrixDragger(const osg::Matrixd &matrixIn);
     void setDimsFlipped(bool flippedIn);
     
-    prj::srl::IPGroup serialOut() const;
-    void serialIn(const prj::srl::IPGroup&);
+    prj::srl::spt::IPGroup serialOut() const; //serial rename
+    void serialIn(const prj::srl::spt::IPGroup&); //serial rename
     
   protected:
     IPGroup();

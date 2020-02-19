@@ -27,7 +27,7 @@
 
 #include "tools/idtools.h"
 #include "globalutilities.h"
-#include "project/serial/xsdcxxoutput/featurerefine.h"
+#include "project/serial/generated/prjsrlrfnsrefine.h"
 #include "annex/annseershape.h"
 #include "feature/ftrupdatepayload.h"
 #include "feature/ftrinputtype.h"
@@ -152,38 +152,26 @@ void Refine::historyMatch(const BRepTools_History &hIn , const ann::SeerShape &t
 
 void Refine::serialWrite(const boost::filesystem::path &dIn)
 {
-  prj::srl::FeatureRefine::ShapeMapType shapeMapOut;
-  for (const auto &p : shapeMap)
-  {
-    prj::srl::EvolveRecord eRecord
-    (
-      gu::idToString(p.first),
-      gu::idToString(p.second)
-    );
-    shapeMapOut.evolveRecord().push_back(eRecord);
-  }
-  
-  prj::srl::FeatureRefine ro
+  prj::srl::rfns::Refine ro
   (
     Base::serialOut(),
-    shapeMapOut
+    sShape->serialOut()
   );
+  
+  for (const auto &p : shapeMap)
+    ro.shapeMap().push_back(prj::srl::spt::EvolveRecord(gu::idToString(p.first), gu::idToString(p.second)));
   
   xml_schema::NamespaceInfomap infoMap;
   std::ofstream stream(buildFilePathName(dIn).string());
-  prj::srl::refine(stream, ro, infoMap);
+  prj::srl::rfns::refine(stream, ro, infoMap);
 }
 
-void Refine::serialRead(const prj::srl::FeatureRefine &rfIn)
+void Refine::serialRead(const prj::srl::rfns::Refine &rfIn)
 {
-  Base::serialIn(rfIn.featureBase());
+  Base::serialIn(rfIn.base());
+  sShape->serialIn(rfIn.seerShape());
   
   shapeMap.clear();
-  for (const prj::srl::EvolveRecord &sERecord : rfIn.shapeMap().evolveRecord())
-  {
-    std::pair<uuid, uuid> record;
-    record.first = gu::stringToId(sERecord.idIn());
-    record.second = gu::stringToId(sERecord.idOut());
-    shapeMap.insert(record);
-  }
+  for (const auto &r : rfIn.shapeMap())
+    shapeMap.insert(std::make_pair(gu::stringToId(r.idIn()), gu::stringToId(r.idOut())));
 }

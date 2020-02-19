@@ -2,7 +2,7 @@
 project('cadseer_project', 'cpp',
   version : '0.1.0',
   license : 'GPL-3+',
-  meson_version : '>=0.51.0',
+  meson_version : '>=0.52.0',
   default_options : ['warning_level=3', 'cpp_std=c++14']
 )
 
@@ -16,7 +16,7 @@ defines = []
 
 #Just using versions on my computer. Not necessarily accurate.
 qt5process = import('qt5')
-qt5 = dependency('Qt5', version : '>=5.11.3', modules : ['Core', 'Widgets', 'OpenGL', 'Svg'])
+qt5 = dependency('Qt5', version : '>=5.11.3', modules : ['Core', 'Widgets', 'OpenGL', 'Svg'], include_type : 'system')
 
 boost = dependency('boost', modules : ['system', 'graph', 'timer', 'filesystem'])
 
@@ -42,17 +42,18 @@ occt = dependency('OpenCASCADE', method : 'cmake', version : '>=7.4'
     , 'TKXMesh'
     , 'TKSTEP'
   ]
+  , include_type : 'system'
 )
 
-osg = dependency('openscenegraph', version : '>=3.6', modules : ['OpenThreads', 'osg',
-  'osgDB', 'osgUtil', 'osgViewer', 'osgGA', 'osgText', 'osgManipulator', 'osgFX'])
+osg = dependency('openscenegraph', version : '>=3.6', modules : ['OpenThreads', 'osg', 'osgDB', 'osgUtil'
+, 'osgViewer', 'osgGA', 'osgText', 'osgManipulator', 'osgFX'], include_type : 'system')
   
-eigen = dependency('eigen3', version : '>=3.3.7')
+eigen = dependency('eigen3', version : '>=3.3.7', include_type : 'system')
 
-xerces = dependency('xerces-c', version : '>=3.2.2')
+xerces = dependency('xerces-c', version : '>=3.2.2', include_type : 'system')
 
 #I had comment out call to 'CGAL_detect_if_Boost_Thread_is_required()' in /usr/lib/x86_64-linux-gnu/cmake/CGAL/CGAL_SetupBoost.cmake:46
-cgal = dependency('CGAL', version : '>=4.13')
+cgal = dependency('CGAL', version : '>=4.13', include_type : 'system')
 
 if(host_machine.system() == 'linux' or host_machine.system() == 'darwin')
   spnav = comp.find_library('spnav', required : false)
@@ -276,58 +277,68 @@ project_sources = ['project/prjproject.cpp'
   , 'project/prjstow.cpp'
   , 'project/prjmessage.cpp'
   , 'project/prjgitmanager.cpp'
-  , 'project/prjfeatureload.cpp'
-  , 'project/serial/xsdcxxoutput/shapehistory.cpp'
-  , 'project/serial/xsdcxxoutput/project.cpp'
-  , 'project/serial/xsdcxxoutput/view.cpp'
-  , 'project/serial/xsdcxxoutput/featurebase.cpp'
-  , 'project/serial/xsdcxxoutput/featurebox.cpp'
-  , 'project/serial/xsdcxxoutput/featurecylinder.cpp'
-  , 'project/serial/xsdcxxoutput/featuresphere.cpp'
-  , 'project/serial/xsdcxxoutput/featurecone.cpp'
-  , 'project/serial/xsdcxxoutput/featureunion.cpp'
-  , 'project/serial/xsdcxxoutput/featureintersect.cpp'
-  , 'project/serial/xsdcxxoutput/featuresubtract.cpp'
-  , 'project/serial/xsdcxxoutput/featureinert.cpp'
-  , 'project/serial/xsdcxxoutput/featureblend.cpp'
-  , 'project/serial/xsdcxxoutput/featurechamfer.cpp'
-  , 'project/serial/xsdcxxoutput/featuredraft.cpp'
-  , 'project/serial/xsdcxxoutput/featuredatumplane.cpp'
-  , 'project/serial/xsdcxxoutput/featurehollow.cpp'
-  , 'project/serial/xsdcxxoutput/featureoblong.cpp'
-  , 'project/serial/xsdcxxoutput/featureextract.cpp'
-  , 'project/serial/xsdcxxoutput/featuresquash.cpp'
-  , 'project/serial/xsdcxxoutput/featurenest.cpp'
-  , 'project/serial/xsdcxxoutput/featuredieset.cpp'
-  , 'project/serial/xsdcxxoutput/featurestrip.cpp'
-  , 'project/serial/xsdcxxoutput/featurequote.cpp'
-  , 'project/serial/xsdcxxoutput/featurerefine.cpp'
-  , 'project/serial/xsdcxxoutput/instancemapper.cpp'
-  , 'project/serial/xsdcxxoutput/featureinstancelinear.cpp'
-  , 'project/serial/xsdcxxoutput/featureinstancemirror.cpp'
-  , 'project/serial/xsdcxxoutput/featureinstancepolar.cpp'
-  , 'project/serial/xsdcxxoutput/featureoffset.cpp'
-  , 'project/serial/xsdcxxoutput/featurethicken.cpp'
-  , 'project/serial/xsdcxxoutput/featuresew.cpp'
-  , 'project/serial/xsdcxxoutput/featuretrim.cpp'
-  , 'project/serial/xsdcxxoutput/featureremovefaces.cpp'
-  , 'project/serial/xsdcxxoutput/featuretorus.cpp'
-  , 'project/serial/xsdcxxoutput/featurethread.cpp'
-  , 'project/serial/xsdcxxoutput/featuredatumaxis.cpp'
-  , 'project/serial/xsdcxxoutput/featureextrude.cpp'
-  , 'project/serial/xsdcxxoutput/featurerevolve.cpp'
-  , 'project/serial/xsdcxxoutput/featuresketch.cpp'
-  , 'project/serial/xsdcxxoutput/featureline.cpp'
-  , 'project/serial/xsdcxxoutput/mesh.cpp'
-  , 'project/serial/xsdcxxoutput/featuresurfacemesh.cpp'
-  , 'project/serial/xsdcxxoutput/featuretransitioncurve.cpp'
-  , 'project/serial/xsdcxxoutput/featureruled.cpp'
-  , 'project/serial/xsdcxxoutput/featureimageplane.cpp'
-  , 'project/serial/xsdcxxoutput/lawfunction.cpp'
-  , 'project/serial/xsdcxxoutput/featuresweep.cpp'
-  , 'project/serial/xsdcxxoutput/featuredatumsystem.cpp'
-  , 'project/serial/xsdcxxoutput/featuresurfaceremesh.cpp'
-  , 'project/serial/xsdcxxoutput/featuresurfacemeshfill.cpp']
+  , 'project/prjfeatureload.cpp']
+
+project_serial_sources = [
+  'project/serial/generated/prjsrlsptcolor.cpp'
+  , 'project/serial/generated/prjsrlsptvectormath.cpp'
+  , 'project/serial/generated/prjsrlsptparameter.cpp'
+  , 'project/serial/generated/prjsrlsptshapehistory.cpp'
+  , 'project/serial/generated/prjsrlsptpick.cpp'
+  , 'project/serial/generated/prjsrlsptintersectionmapping.cpp'
+  , 'project/serial/generated/prjsrlsptinstancemapping.cpp'
+  , 'project/serial/generated/prjsrlsptseershape.cpp'
+  , 'project/serial/generated/prjsrlsptoverlay.cpp'
+  , 'project/serial/generated/prjsrlsptbase.cpp'
+  , 'project/serial/generated/prjsrlbxsbox.cpp'
+  , 'project/serial/generated/prjsrlblnsblend.cpp'
+  , 'project/serial/generated/prjsrlchmschamfer.cpp'
+  , 'project/serial/generated/prjsrlcnscone.cpp'
+  , 'project/serial/generated/prjsrlcylscylinder.cpp'
+  , 'project/serial/generated/prjsrldtasdatumaxis.cpp'
+  , 'project/serial/generated/prjsrldtpsdatumplane.cpp'
+  , 'project/serial/generated/prjsrldtmsdatumsystem.cpp'
+  , 'project/serial/generated/prjsrldstsdieset.cpp'
+  , 'project/serial/generated/prjsrldrfsdraft.cpp'
+  , 'project/serial/generated/prjsrlextsextract.cpp'
+  , 'project/serial/generated/prjsrlexrsextrude.cpp'
+  , 'project/serial/generated/prjsrlhllshollow.cpp'
+  , 'project/serial/generated/prjsrlimpsimageplane.cpp'
+  , 'project/serial/generated/prjsrlintsinert.cpp'
+  , 'project/serial/generated/prjsrlinlsinstancelinear.cpp'
+  , 'project/serial/generated/prjsrlinmsinstancemirror.cpp'
+  , 'project/serial/generated/prjsrlinpsinstancepolar.cpp'
+  , 'project/serial/generated/prjsrlinssintersect.cpp'
+  , 'project/serial/generated/prjsrllnsline.cpp'
+  , 'project/serial/generated/prjsrlnstsnest.cpp'
+  , 'project/serial/generated/prjsrloblsoblong.cpp'
+  , 'project/serial/generated/prjsrloffsoffset.cpp'
+  , 'project/serial/generated/prjsrlqtsquote.cpp'
+  , 'project/serial/generated/prjsrlrfnsrefine.cpp'
+  , 'project/serial/generated/prjsrlrmfsremovefaces.cpp'
+  , 'project/serial/generated/prjsrlrvlsrevolve.cpp'
+  , 'project/serial/generated/prjsrlrldsruled.cpp'
+  , 'project/serial/generated/prjsrlswssew.cpp'
+  , 'project/serial/generated/prjsrlsktssketch.cpp'
+  , 'project/serial/generated/prjsrlsprssphere.cpp'
+  , 'project/serial/generated/prjsrlsqsssquash.cpp'
+  , 'project/serial/generated/prjsrlstpsstrip.cpp'
+  , 'project/serial/generated/prjsrlsbtssubtract.cpp'
+  , 'project/serial/generated/prjsrlmshsmesh.cpp'
+  , 'project/serial/generated/prjsrlsfmssurfacemesh.cpp'
+  , 'project/serial/generated/prjsrlsmfssurfacemeshfill.cpp'
+  , 'project/serial/generated/prjsrlsrmssurfaceremesh.cpp'
+  , 'project/serial/generated/prjsrllwfslawfunction.cpp'
+  , 'project/serial/generated/prjsrlswpssweep.cpp'
+  , 'project/serial/generated/prjsrlthksthicken.cpp'
+  , 'project/serial/generated/prjsrlthdsthread.cpp'
+  , 'project/serial/generated/prjsrltrsstorus.cpp'
+  , 'project/serial/generated/prjsrltscstransitioncurve.cpp'
+  , 'project/serial/generated/prjsrltrmstrim.cpp'
+  , 'project/serial/generated/prjsrlunnsunion.cpp'
+  , 'project/serial/generated/prjsrlprjsproject.cpp'
+  , 'project/serial/generated/prjsrlvwsview.cpp'
+]
   
 application_sources = ['application/appmainwindow.cpp'
   , 'application/appapplication.cpp'
@@ -469,6 +480,7 @@ cadseer_sources = ['main.cpp'
   , dialog_sources
   , preference_sources
   , project_sources
+  , project_serial_sources
   , application_sources
   , law_sources
   , library_sources

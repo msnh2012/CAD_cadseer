@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xs:schema
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  xmlns:spt="http://www.cadseer.com/prj/srl/spt"
+  xmlns:imps="http://www.cadseer.com/prj/srl/imps"
+  targetNamespace="http://www.cadseer.com/prj/srl/imps"
+>
+  
+<xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptparameter.xsd"/>
+<xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptoverlay.xsd"/>
+<xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptbase.xsd"/>
+
+<xs:complexType name="ImagePlane">
+  <xs:sequence>
+    <xs:element name="base" type="spt:Base"/>
+    <xs:element name="scale" type="spt:Parameter"/>
+    <xs:element name="csys" type="spt:Parameter"/>
+    <xs:element name="csysDragger" type="spt:CSysDragger"/>
+    <xs:element name="scaleLabel" type="spt:PLabel"/>
+    <xs:element name="cornerVec" type="spt:Vec3d"/>
+    <xs:element name="geometry" type="xs:string"/>
+  </xs:sequence>
+</xs:complexType>
+
+<xs:element name="imageplane" type="imps:ImagePlane"/>
+  
+</xs:schema> 

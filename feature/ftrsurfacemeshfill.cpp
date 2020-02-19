@@ -29,7 +29,7 @@
 #include "modelviz/mdvsurfacemesh.h"
 #include "feature/ftrupdatepayload.h"
 #include "feature/ftrinputtype.h"
-#include "project/serial/xsdcxxoutput/featuresurfacemeshfill.h"
+#include "project/serial/generated/prjsrlsmfssurfacemeshfill.h"
 #include "feature/ftrsurfacemeshfill.h"
 
 using namespace ftr;
@@ -156,7 +156,7 @@ void SurfaceMeshFill::updateVisual()
 
 void SurfaceMeshFill::serialWrite(const boost::filesystem::path &dIn)
 {
-  prj::srl::FeatureSurfaceMeshFill so
+  prj::srl::smfs::SurfaceMeshFill so
   (
     Base::serialOut()
     , mesh->serialOut()
@@ -166,12 +166,12 @@ void SurfaceMeshFill::serialWrite(const boost::filesystem::path &dIn)
   
   xml_schema::NamespaceInfomap infoMap;
   std::ofstream stream(buildFilePathName(dIn).string());
-  prj::srl::surfacemeshfill(stream, so, infoMap);
+  prj::srl::smfs::surfacemeshfill(stream, so, infoMap);
 }
 
-void SurfaceMeshFill::serialRead(const prj::srl::FeatureSurfaceMeshFill &so)
+void SurfaceMeshFill::serialRead(const prj::srl::smfs::SurfaceMeshFill &so)
 {
-  Base::serialIn(so.featureBase());
+  Base::serialIn(so.base());
   mesh->serialIn(so.mesh());
   algorithm->serialIn(so.algorithm());
   algorithmLabel->serialIn(so.algorithmLabel());

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xs:schema
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  xmlns:spt="http://www.cadseer.com/prj/srl/spt"
+  xmlns:stps="http://www.cadseer.com/prj/srl/stps"
+  targetNamespace="http://www.cadseer.com/prj/srl/stps"
+>
+  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptparameter.xsd"/>  
+  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptseershape.xsd"/>
+  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptbase.xsd"/>
+  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptoverlay.xsd"/>
+
+  <xs:complexType name="Station">
+    <xs:sequence>
+      <xs:element name="text" type="xs:string"/>
+      <xs:element name="matrix" type="spt:Matrixd"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="Strip">
+    <xs:sequence>
+      <xs:element name="base" type="spt:Base"/>
+      <xs:element name="seerShape" type="spt:SeerShape"/>
+      <xs:element name="feedDirection" type="spt:Parameter"/>
+      <xs:element name="pitch" type="spt:Parameter"/>
+      <xs:element name="width" type="spt:Parameter"/>
+      <xs:element name="widthOffset" type="spt:Parameter"/>
+      <xs:element name="gap" type="spt:Parameter"/>
+      <xs:element name="autoCalc" type="spt:Parameter"/>
+      <xs:element name="stripHeight" type="xs:double"/>
+      <xs:element name="feedDirectionLabel" type="spt:PLabel"/>
+      <xs:element name="pitchLabel" type="spt:PLabel"/>
+      <xs:element name="widthLabel" type="spt:PLabel"/>
+      <xs:element name="widthOffsetLabel" type="spt:PLabel"/>
+      <xs:element name="gapLabel" type="spt:PLabel"/>
+      <xs:element name="autoCalcLabel" type="spt:PLabel"/>
+      <xs:element name="stations" type="stps:Station" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:element name="strip" type="stps:Strip"/>
+  
+</xs:schema> 

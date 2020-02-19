@@ -166,7 +166,7 @@ void %CLASSNAME%::serialWrite(const boost::filesystem::path &/*dIn*/)
 //   prj::srl::%CLASSNAMELOWERCASE%(stream, so, infoMap);
 }
 
-// void %CLASSNAME%::serialRead(const prj::srl::Feature%CLASSNAME% &so)
+// void %CLASSNAME%::serialRead(const prj::srl::FIXME::%CLASSNAME% &so)
 // {
 //   Base::serialIn(so.featureBase());
 //   picks = ftr::serialIn(so.picks());

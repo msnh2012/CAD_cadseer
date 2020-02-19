@@ -28,42 +28,42 @@
 
 #include "tools/idtools.h"
 #include "globalutilities.h"
-#include "project/serial/xsdcxxoutput/featurebase.h"
+#include "project/serial/generated/prjsrlsptpick.h"
 #include "feature/ftrpick.h"
 
 using namespace ftr;
 using boost::uuids::uuid;
 
-prj::srl::Pick Pick::serialOut() const
+Pick::Pick(const prj::srl::spt::Pick &spIn) : Pick()
 {
-  prj::srl::Pick out
-  (
-    u,
-    v
-  );
-  
-  out.history().set(shapeHistory.serialOut());
-  out.selectionType().set(static_cast<int>(selectionType));
-  if (!tag.empty())
-    out.tag().set(tag);
-  out.accrue().set(static_cast<int>(accrue));
-  
-  return out;
+  serialIn(spIn);
 }
 
-void Pick::serialIn(const prj::srl::Pick &sPickIn)
+prj::srl::spt::Pick Pick::serialOut() const
+{
+  return prj::srl::spt::Pick
+  (
+    u, v
+    , shapeHistory.serialOut()
+    , static_cast<int>(selectionType)
+    , tag
+    , static_cast<int>(accrue)
+  );
+}
+
+Pick::operator prj::srl::spt::Pick() const
+{
+  return serialOut();
+}
+
+void Pick::serialIn(const prj::srl::spt::Pick &sPickIn)
 {
   u = sPickIn.u();
   v = sPickIn.v();
-  
-  if (sPickIn.history().present())
-    shapeHistory.serialIn(sPickIn.history().get());
-  if (sPickIn.selectionType().present())
-    selectionType = static_cast<slc::Type>(sPickIn.selectionType().get());
-  if (sPickIn.tag().present())
-    tag = sPickIn.tag().get();
-  if (sPickIn.accrue().present())
-    accrue = slc::Accrue(sPickIn.accrue().get());
+  shapeHistory.serialIn(sPickIn.history());
+  selectionType = static_cast<slc::Type>(sPickIn.selectionType());
+  tag = sPickIn.tag();
+  accrue = slc::Accrue(sPickIn.accrue());
 }
 
 bool Pick::operator==(const Pick &rhs) const
@@ -235,27 +235,4 @@ osg::Vec3d Pick::point(const TopoDS_Face &faceIn, double uIn, double vIn)
   gp_Pnt occPoint;
   surface->D0(uIn, vIn, occPoint);
   return gu::toOsg(occPoint);
-}
-
-
-prj::srl::Picks ftr::serialOut(const Picks &picksIn)
-{
-  prj::srl::Picks out;
-  for (const auto &pick : picksIn)
-    out.array().push_back(pick.serialOut());
-  
-  return out;
-}
-
-Picks ftr::serialIn(const prj::srl::Picks &sPicksIn)
-{
-  Picks out;
-  for (const auto &sPick : sPicksIn.array())
-  {
-    Pick temp;
-    temp.serialIn(sPick);
-    out.push_back(temp);
-  }
-  
-  return out;
 }

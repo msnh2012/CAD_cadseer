@@ -25,7 +25,7 @@
 class BOPAlgo_Builder;
 
 namespace ftr{class UpdatePayload;}
-namespace prj{namespace srl{class IntersectionMapper;}}
+namespace prj{namespace srl{namespace spt{class IntersectionMapper;}}}
 
 namespace ann
 {
@@ -42,8 +42,8 @@ namespace ann
     virtual ~IntersectionMapper() override;
     virtual Type getType(){return Type::IntersectionMapper;}
     
-    prj::srl::IntersectionMapper serialOut(); //!<convert this into serializable object.
-    void serialIn(const prj::srl::IntersectionMapper &); //intialize this from serial object.
+    prj::srl::spt::IntersectionMapper serialOut(); //serial rename
+    void serialIn(const prj::srl::spt::IntersectionMapper&); //serial rename
     
     void go(const ftr::UpdatePayload&, BOPAlgo_Builder&, SeerShape&);
   private:

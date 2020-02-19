@@ -30,7 +30,7 @@
 
 namespace boost{namespace filesystem{class path;}}
 namespace osg{class Vec3d; class Quat; class Matrixd;}
-namespace prj{namespace srl{class Parameter;}}
+namespace prj{namespace srl{namespace spt{class Parameter;}}}
 
 namespace prm
 {
@@ -211,7 +211,7 @@ namespace prm
   {
   public:
     Parameter() = delete;
-    Parameter(const prj::srl::Parameter&);
+    Parameter(const prj::srl::spt::Parameter&);
     Parameter(const QString &nameIn, double valueIn);
     Parameter(const QString &nameIn, int valueIn);
     Parameter(const QString &nameIn, bool valueIn);
@@ -305,8 +305,8 @@ namespace prm
     void connectConstant(Handler);
     //@}
     
-    prj::srl::Parameter serialOut() const;
-    void serialIn(const prj::srl::Parameter &sParameterIn);
+    prj::srl::spt::Parameter serialOut() const; //serial rename
+    void serialIn(const prj::srl::spt::Parameter&); //serial rename
     
   private:
     bool constant = true;

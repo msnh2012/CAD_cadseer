@@ -22,7 +22,7 @@
 
 #include <memory>
 
-namespace prj{namespace srl{class ShapeHistory;}}
+namespace prj{namespace srl{namespace spt{class ShapeHistory;}}}
 
 namespace ftr
 {
@@ -124,17 +124,13 @@ namespace ftr
     bool operator==(const ShapeHistory&) const;
     bool operator!=(const ShapeHistory&) const;
     
-    prj::srl::ShapeHistory serialOut() const;
-    void serialIn(const prj::srl::ShapeHistory&);
+    prj::srl::spt::ShapeHistory serialOut() const; //serial rename
+    void serialIn(const prj::srl::spt::ShapeHistory&); //serial rename
     
     
   private:
     std::shared_ptr<ShapeHistoryStow> shapeHistoryStow;
   };
-  
 }
-
-
-
 
 #endif // FTR_SHAPEHISTORY_H

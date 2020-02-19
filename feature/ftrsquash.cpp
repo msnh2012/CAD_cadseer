@@ -31,7 +31,7 @@
 #include "squash/sqssquash.h"
 #include "annex/annseershape.h"
 #include "feature/ftrshapecheck.h"
-#include "project/serial/xsdcxxoutput/featuresquash.h"
+#include "project/serial/generated/prjsrlsqsssquash.h"
 #include "tools/featuretools.h"
 #include "modelviz/mdvsurfacemesh.h"
 #include "feature/ftrupdatepayload.h"
@@ -262,27 +262,31 @@ void Squash::updateModel(const UpdatePayload &payloadIn)
 
 void Squash::serialWrite(const boost::filesystem::path &dIn)
 {
-  prj::srl::FeatureSquash so
+  prj::srl::sqss::Squash so
   (
     Base::serialOut(),
-    ::ftr::serialOut(picks),
+    sShape->serialOut(),
     gu::idToString(faceId),
     gu::idToString(wireId),
     granularity->serialOut(),
     label->serialOut()
   );
+  for (const auto &p : picks)
+    so.picks().push_back(p);
   
   xml_schema::NamespaceInfomap infoMap;
   std::ofstream stream(buildFilePathName(dIn).string());
-  prj::srl::squash(stream, so, infoMap);
+  prj::srl::sqss::squash(stream, so, infoMap);
 }
 
-void Squash::serialRead(const prj::srl::FeatureSquash &sSquashIn)
+void Squash::serialRead(const prj::srl::sqss::Squash &sSquashIn)
 {
-  Base::serialIn(sSquashIn.featureBase());
-  picks = ::ftr::serialIn(sSquashIn.picks());
+  Base::serialIn(sSquashIn.base());
+  sShape->serialIn(sSquashIn.seerShape());
   faceId = gu::stringToId(sSquashIn.faceId());
   wireId = gu::stringToId(sSquashIn.wireId());
   granularity->serialIn(sSquashIn.granularity());
   label->serialIn(sSquashIn.label());
+  for (const auto &p : sSquashIn.picks())
+    picks.emplace_back(p);
 }

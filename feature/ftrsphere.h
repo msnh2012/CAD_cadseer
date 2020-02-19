@@ -28,7 +28,7 @@
 
 class BRepPrimAPI_MakeSphere;
 namespace lbr{class IPGroup;}
-namespace prj{namespace srl{class FeatureSphere;}}
+namespace prj{namespace srl{namespace sprs{class Sphere;}}}
 namespace ann{class CSysDragger; class SeerShape;}
 
 namespace ftr
@@ -49,7 +49,7 @@ namespace ftr
     virtual const QIcon& getIcon() const override {return icon;}
     virtual Descriptor getDescriptor() const override {return Descriptor::Create;}
     virtual void serialWrite(const boost::filesystem::path&) override; //!< write xml file. not const, might reset a modified flag.
-    void serialRead(const prj::srl::FeatureSphere &sSphere); //!<initializes this from sBox. not virtual, type already known.
+    void serialRead(const prj::srl::sprs::Sphere &sSphere); //!<initializes this from sBox. not virtual, type already known.
     
   protected:
     std::unique_ptr<prm::Parameter> radius;

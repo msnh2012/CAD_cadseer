@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xs:schema
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  xmlns:spt="http://www.cadseer.com/prj/srl/spt"
+  xmlns:prjs="http://www.cadseer.com/prj/srl/prjs"
+  targetNamespace="http://www.cadseer.com/prj/srl/prjs"
+>
+  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptshapehistory.xsd"/>
+
+  <xs:complexType name="Feature">
+    <xs:sequence>
+      <xs:element name="id" type="xs:string" default="00000000-0000-0000-0000-000000000000"/>
+      <xs:element name="type" type="xs:string" default="None"/>
+      <xs:element name="shapeOffset" type="xs:unsignedLong" default="18446744073709551615"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="FeatureState">
+    <xs:sequence>
+      <xs:element name="id" type="xs:string" default="00000000-0000-0000-0000-000000000000"/>
+      <xs:element name="state" type="xs:string"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="Connection">
+    <xs:sequence>
+      <xs:element name="sourceId" type="xs:string" default="00000000-0000-0000-0000-000000000000"/>
+      <xs:element name="targetId" type="xs:string" default="00000000-0000-0000-0000-000000000000"/>
+      <xs:element name="inputType" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="AppVersion">
+    <xs:sequence>
+      <xs:element name="major" type="xs:int" default="0"/>
+      <xs:element name="minor" type="xs:int" default="0"/>
+      <xs:element name="maintenance" type="xs:int" default="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="Expression">
+    <xs:sequence>
+      <xs:element name="id" type="xs:string" default="00000000-0000-0000-0000-000000000000"/>
+      <xs:element name="stringForm" type="xs:string" default="name=1"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="ExpressionLink">
+    <xs:sequence>
+      <xs:element name="parameterId" type="xs:string" default="00000000-0000-0000-0000-000000000000"/>
+      <xs:element name="expressionId" type="xs:string" default="00000000-0000-0000-0000-000000000000"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="ExpressionGroup">
+    <xs:sequence>
+      <xs:element name="id" type="xs:string" default="00000000-0000-0000-0000-000000000000"/>
+      <xs:element name="name" type="xs:string" default="noName"/>
+      <xs:element name="entries" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="Project">
+    <xs:sequence>
+      <xs:element name="appVersion" type="prjs:AppVersion"/>
+      <xs:element name="fileVersion" type="xs:int" default="0"/>
+      <xs:element name="features" type="prjs:Feature" minOccurs="0" maxOccurs="unbounded"/>
+      <xs:element name="states" type="prjs:FeatureState" minOccurs="0" maxOccurs="unbounded"/>
+      <xs:element name="connections" type="prjs:Connection" minOccurs="0" maxOccurs="unbounded"/>
+      <xs:element name="expressions" type="prjs:Expression" minOccurs="0" maxOccurs="unbounded"/>
+      <xs:element name="expressionLinks" type="prjs:ExpressionLink" minOccurs="0" maxOccurs="unbounded"/>
+      <xs:element name="expressionGroups" type="prjs:ExpressionGroup"  minOccurs="0" maxOccurs="unbounded"/>
+      <xs:element name="shapeHistory" type="spt:ShapeHistory"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:element name="project" type="prjs:Project"/>
+</xs:schema> 

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xs:schema
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  xmlns:spt="http://www.cadseer.com/prj/srl/spt"
+  xmlns:trss="http://www.cadseer.com/prj/srl/trss"
+  targetNamespace="http://www.cadseer.com/prj/srl/trss"
+>
+  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptseershape.xsd"/>
+  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptparameter.xsd"/>
+  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptoverlay.xsd"/>
+  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptbase.xsd"/>
+
+  <xs:complexType name="Torus">
+    <xs:sequence>
+      <xs:element name="base" type="spt:Base"/>
+      <xs:element name="seerShape" type="spt:SeerShape"/>
+      <xs:element name="radius1" type="spt:Parameter"/>
+      <xs:element name="radius2" type="spt:Parameter"/>
+      <xs:element name="seam" type="spt:Parameter"/>
+      <xs:element name="csys" type="spt:Parameter"/>
+      <xs:element name="radius1IP" type="spt:IPGroup"/>
+      <xs:element name="radius2IP" type="spt:IPGroup"/>
+      <xs:element name="seamLabel" type="spt:PLabel"/>
+      <xs:element name="csysDragger" type="spt:CSysDragger"/>
+      <xs:element name="offsetIds" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:element name="torus" type="trss:Torus"/>
+</xs:schema> 

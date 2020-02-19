@@ -32,7 +32,7 @@
 #include "globalutilities.h"
 #include "feature/ftrbooleanoperation.h"
 #include "feature/ftrshapecheck.h"
-#include "project/serial/xsdcxxoutput/featuresubtract.h"
+#include "project/serial/generated/prjsrlsbtssubtract.h"
 #include "annex/annseershape.h"
 #include "annex/annintersectionmapper.h"
 #include "tools/featuretools.h"
@@ -177,24 +177,29 @@ void Subtract::updateModel(const UpdatePayload &payloadIn)
 
 void Subtract::serialWrite(const boost::filesystem::path &dIn)
 {
-  prj::srl::FeatureSubtract subtractOut
+  prj::srl::sbts::Subtract subtractOut
   (
     Base::serialOut(),
-    iMapper->serialOut(),
-    ftr::serialOut(targetPicks),
-    ftr::serialOut(toolPicks)
+    sShape->serialOut(),
+    iMapper->serialOut()
   );
+  for (const auto &p : targetPicks)
+    subtractOut.targetPicks().push_back(p);
+  for (const auto &p : toolPicks)
+    subtractOut.toolPicks().push_back(p);
   
   xml_schema::NamespaceInfomap infoMap;
   std::ofstream stream(buildFilePathName(dIn).string());
-  prj::srl::subtract(stream, subtractOut, infoMap);
+  prj::srl::sbts::subtract(stream, subtractOut, infoMap);
 }
 
-void Subtract::serialRead(const prj::srl::FeatureSubtract& sSubtractIn)
+void Subtract::serialRead(const prj::srl::sbts::Subtract &sSubtractIn)
 {
-  Base::serialIn(sSubtractIn.featureBase());
+  Base::serialIn(sSubtractIn.base());
+  sShape->serialIn(sSubtractIn.seerShape());
   iMapper->serialIn(sSubtractIn.intersectionMapper());
-  targetPicks = ftr::serialIn(sSubtractIn.targetPicks());
-  toolPicks = ftr::serialIn(sSubtractIn.toolPicks());
+  for (const auto &p : sSubtractIn.targetPicks())
+    targetPicks.emplace_back(p);
+  for (const auto &p : sSubtractIn.toolPicks())
+    toolPicks.emplace_back(p);
 }
-

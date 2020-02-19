@@ -43,7 +43,7 @@
 #include "annex/anncsysdragger.h"
 #include "sketch/sktsolver.h"
 #include "sketch/sktvisual.h"
-#include "project/serial/xsdcxxoutput/featuresketch.h"
+#include "project/serial/generated/prjsrlsktssketch.h"
 #include "parameter/prmparameter.h"
 #include "feature/ftrupdatepayload.h"
 #include "feature/ftrinputtype.h"
@@ -545,52 +545,50 @@ void Sketch::updateSeerShape()
 
 void Sketch::serialWrite(const boost::filesystem::path &dIn)
 {
-  prj::srl::WireIds wIds;
-  for (const auto &wId : wireIds)
-    wIds.array().push_back(gu::idToString(wId));
-  
-  prj::srl::HandleParameterPairs sHPPairs;
-  for (const auto &hp : hpPairs)
-    sHPPairs.array().push_back(prj::srl::HandleParameterPair(hp.first, hp.second->serialOut()));
-  
-  prj::srl::FeatureSketch so
+  prj::srl::skts::Sketch so
   (
     Base::serialOut()
+    , sShape->serialOut()
     , solver->serialOut()
     , visual->serialOut()
     , csys->serialOut()
     , csysDragger->serialOut()
-    , wIds
-    , sHPPairs
   );
+  
+  for (const auto &wId : wireIds)
+    so.wireIds().push_back(gu::idToString(wId));
+  
+  for (const auto &hp : hpPairs)
+    so.handleParameterPairs().push_back(prj::srl::skts::HandleParameterPair(hp.first, hp.second->serialOut()));
   
   xml_schema::NamespaceInfomap infoMap;
   std::ofstream stream(buildFilePathName(dIn).string());
-  prj::srl::sketch(stream, so, infoMap);
+  prj::srl::skts::sketch(stream, so, infoMap);
 }
 
-void Sketch::serialRead(const prj::srl::FeatureSketch &sIn)
+void Sketch::serialRead(const prj::srl::skts::Sketch &sIn)
 {
-  Base::serialIn(sIn.featureBase());
+  Base::serialIn(sIn.base());
+  sShape->serialIn(sIn.seerShape());
   solver->serialIn(sIn.solver());
   visual->serialIn(sIn.visual());
   csys->serialIn(sIn.csys());
   csysDragger->serialIn(sIn.csysDragger());
   
-  for (const auto &wId : sIn.wireIds().array())
+  for (const auto &wId : sIn.wireIds())
     wireIds.push_back(gu::stringToId(wId));
   
   //kind of a hack, having to look up location.
   auto findLocation = [&](skt::SSHandle h) -> boost::optional<osg::Vec3d>
   {
-    for (const auto &r : sIn.visual().constraintMap().array())
+    for (const auto &r : sIn.visual().constraintMap())
     {
       if (r.handle() == h)
         return osg::Vec3d(r.location().x(), r.location().y(), r.location().z());
     }
     return boost::none;
   };
-  for (const auto &pair : sIn.handleParameterPairs().array())
+  for (const auto &pair : sIn.handleParameterPairs())
   {
     std::shared_ptr<prm::Parameter> p = std::make_shared<prm::Parameter>(QString(), 0.0);
     p->serialIn(pair.parameter());

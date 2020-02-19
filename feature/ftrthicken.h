@@ -28,7 +28,7 @@ class BRepOffset_MakeOffset;
 
 namespace lbr{class PLabel;}
 namespace ann{class SeerShape;}
-namespace prj{namespace srl{class FeatureThicken;}}
+namespace prj{namespace srl{namespace thks{class Thicken;}}}
 
 namespace ftr
 {
@@ -49,7 +49,7 @@ namespace ftr
     virtual Descriptor getDescriptor() const override {return Descriptor::Create;}
     
     virtual void serialWrite(const boost::filesystem::path&) override;
-    void serialRead(const prj::srl::FeatureThicken&);
+    void serialRead(const prj::srl::thks::Thicken&);
     
   protected:
     std::unique_ptr<prm::Parameter> distance;

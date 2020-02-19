@@ -45,7 +45,7 @@
 #include "tools/featuretools.h"
 #include "preferences/preferencesXML.h"
 #include "preferences/prfmanager.h"
-#include "project/serial/xsdcxxoutput/featureblend.h"
+#include "project/serial/generated/prjsrlblnsblend.h"
 #include "parameter/prmparameter.h"
 #include "feature/ftrshapecheck.h"
 #include "annex/annseershape.h"
@@ -590,34 +590,37 @@ void Blend::dumpInfo(ChFi3d_FilBuilder &blendMakerIn, const ann::SeerShape &targ
 
 void Blend::serialWrite(const boost::filesystem::path &dIn)
 {
-  prj::srl::FeatureBlend::ShapeMapType shapeMapOut;
+  namespace serial = prj::srl::blns;
+  serial::Blend::ShapeMapSequence shapeMapOut;
   for (const auto &p : shapeMap)
   {
-    prj::srl::EvolveRecord eRecord
+    serial::Blend::ShapeMapType eRecord
     (
       gu::idToString(p.first),
       gu::idToString(p.second)
     );
-    shapeMapOut.evolveRecord().push_back(eRecord);
+    shapeMapOut.push_back(eRecord);
   }
   
-  prj::srl::SimpleBlends sBlendsOut;
+  serial::Blend::SimpleBlendsSequence sBlendsOut;
   for (const auto &sBlend : simpleBlends)
   {
-    prj::srl::Picks bPicksOut = ::ftr::serialOut(sBlend.picks);
-    prj::srl::SimpleBlend sBlendOut
+    serial::SimpleBlend::BlendPicksSequence bPicksOut;
+    for (const auto &sbp : sBlend.picks)
+      bPicksOut.push_back(sbp);
+    serial::SimpleBlend sBlendOut
     (
-      bPicksOut,
       sBlend.radius->serialOut(),
       sBlend.label->serialOut()
     );
-    sBlendsOut.array().push_back(sBlendOut);
+    sBlendOut.blendPicks() = bPicksOut;
+    sBlendsOut.push_back(sBlendOut);
   }
 
-  prj::srl::VariableEntries vEntriesOut;
+  serial::VariableBlend::VariableEntriesSequence vEntriesOut;
   for (const auto vEntry : variableBlend.entries)
   {
-    prj::srl::VariableEntry vEntryOut
+    serial::VariableEntry vEntryOut
     (
       vEntry.pick.serialOut(),
       vEntry.position->serialOut(),
@@ -625,35 +628,38 @@ void Blend::serialWrite(const boost::filesystem::path &dIn)
       vEntry.label->serialOut(),
       vEntry.positionLabel->serialOut()
     );
-    vEntriesOut.array().push_back(vEntryOut);
+    vEntriesOut.push_back(vEntryOut);
   }
+  serial::VariableBlend::BlendPicksSequence vPicksOut;
+  for (const auto &vbp : variableBlend.picks)
+    vPicksOut.push_back(vbp.serialOut());
   
-  prj::srl::VariableBlend vBlendOut
-  (
-    ::ftr::serialOut(variableBlend.picks),
-    vEntriesOut
-  );
+  serial::VariableBlend vBlendOut;
+  vBlendOut.variableEntries() = vEntriesOut;
+  vBlendOut.blendPicks() = vPicksOut;
   
-  prj::srl::FeatureBlend blendOut
+  serial::Blend blendOut
   (
-    Base::serialOut(),
-    shapeMapOut,
-    sBlendsOut,
-    vBlendOut,
-    static_cast<int>(filletShape)
+    Base::serialOut()
+    , sShape->serialOut()
+    , vBlendOut
+    , static_cast<int>(filletShape)
   );
+  blendOut.shapeMap() = shapeMapOut;
+  blendOut.simpleBlends() = sBlendsOut;
   
   xml_schema::NamespaceInfomap infoMap;
   std::ofstream stream(buildFilePathName(dIn).string());
-  prj::srl::blend(stream, blendOut, infoMap);
+  serial::blend(stream, blendOut, infoMap);
 }
 
-void Blend::serialRead(const prj::srl::FeatureBlend& sBlendIn)
+void Blend::serialRead(const prj::srl::blns::Blend& sBlendIn)
 {
-  Base::serialIn(sBlendIn.featureBase());
+  Base::serialIn(sBlendIn.base());
+  sShape->serialIn(sBlendIn.seerShape());
   
   shapeMap.clear();
-  for (const prj::srl::EvolveRecord &sERecord : sBlendIn.shapeMap().evolveRecord())
+  for (const auto &sERecord : sBlendIn.shapeMap())
   {
     std::pair<uuid, uuid> record;
     record.first = gu::stringToId(sERecord.idIn());
@@ -661,15 +667,11 @@ void Blend::serialRead(const prj::srl::FeatureBlend& sBlendIn)
     shapeMap.insert(record);
   }
   
-  for (const auto &simpleBlendIn : sBlendIn.simpleBlends().array())
+  for (const auto &simpleBlendIn : sBlendIn.simpleBlends())
   {
     SimpleBlend simpleBlend;
-    for (const auto &bPickIn : simpleBlendIn.blendPicks().array())
-    {
-      Pick pick;
-      pick.serialIn(bPickIn);
-      simpleBlend.picks.push_back(pick);
-    }
+    for (const auto &bPickIn : simpleBlendIn.blendPicks())
+      simpleBlend.picks.emplace_back(bPickIn);
     simpleBlend.radius = buildRadiusParameter();
     simpleBlend.radius->serialIn(simpleBlendIn.radius());
     simpleBlend.label = new lbr::PLabel(simpleBlend.radius.get());
@@ -679,8 +681,9 @@ void Blend::serialRead(const prj::srl::FeatureBlend& sBlendIn)
   }
   
   VariableBlend vBlend;
-  vBlend.picks = ::ftr::serialIn(sBlendIn.variableBlend().blendPicks());
-  for (const auto &entryIn : sBlendIn.variableBlend().variableEntries().array())
+  for (const auto &vbpIn : sBlendIn.variableBlend().blendPicks())
+    vBlend.picks.emplace_back(vbpIn);
+  for (const auto &entryIn : sBlendIn.variableBlend().variableEntries())
   {
     VariableEntry entry;
     entry.pick.serialIn(entryIn.blendPick());

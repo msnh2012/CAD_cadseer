@@ -35,7 +35,7 @@
 #include "annex/annseershape.h"
 #include "feature/ftrshapecheck.h"
 #include "library/lbrplabel.h"
-#include "project/serial/xsdcxxoutput/featurehollow.h"
+#include "project/serial/generated/prjsrlhllshollow.h"
 #include "tools/featuretools.h"
 #include "tools/idtools.h"
 #include "tools/occtools.h"
@@ -238,7 +238,7 @@ void Hollow::generatedMatch(BRepOffsetAPI_MakeThickSolid &operationIn, const ann
     const TopoDS_Shape &newShape = list.First();
     assert(!newShape.IsNull());
     
-    //if think generated is returning all the geometry from operation
+    //I think generated is returning all the geometry from operation
     //so we have to skip non-existing geometry. like other half of a split.
     if (!sShape->hasShape(newShape))
       continue;
@@ -247,7 +247,11 @@ void Hollow::generatedMatch(BRepOffsetAPI_MakeThickSolid &operationIn, const ann
       continue; //only set ids for shapes with nil ids.
       
     //should only have faces left to assign. why don't nil wires come through?
-    assert(newShape.ShapeType() == TopAbs_FACE);
+    //occt 7.4 started producing vertices here. Just going to skip for now.
+    //but maybe we want to map those also.
+//     assert(newShape.ShapeType() == TopAbs_FACE);
+    if(newShape.ShapeType() != TopAbs_FACE)
+      continue;
       
     uuid freshFaceId = gu::createRandomId();
     bool results;
@@ -275,24 +279,33 @@ void Hollow::generatedMatch(BRepOffsetAPI_MakeThickSolid &operationIn, const ann
 
 void Hollow::serialWrite(const boost::filesystem::path &dIn)
 {
-  prj::srl::Picks hPicksOut = ::ftr::serialOut(hollowPicks);
-  prj::srl::FeatureHollow hollowOut
+  namespace serial = prj::srl::hlls;
+  
+  serial::Hollow hollowOut
   (
     Base::serialOut(),
-    hPicksOut,
+    sShape->serialOut(),
     offset->serialOut(),
     label->serialOut()
   );
+  for (const auto &p : hollowPicks)
+    hollowOut.hollowPicks().push_back(p);
+  for (const auto &p : shapeMap)
+    hollowOut.shapeMap().push_back(serial::Hollow::ShapeMapType(gu::idToString(p.first), gu::idToString(p.second)));
   
   xml_schema::NamespaceInfomap infoMap;
   std::ofstream stream(buildFilePathName(dIn).string());
-  prj::srl::hollow(stream, hollowOut, infoMap);
+  serial::hollow(stream, hollowOut, infoMap);
 }
 
-void Hollow::serialRead(const prj::srl::FeatureHollow &sHollowIn)
+void Hollow::serialRead(const prj::srl::hlls::Hollow &sHollowIn)
 {
-  Base::serialIn(sHollowIn.featureBase());
-  hollowPicks = ::ftr::serialIn(sHollowIn.hollowPicks());
+  Base::serialIn(sHollowIn.base());
+  sShape->serialIn(sHollowIn.seerShape());
   offset->serialIn(sHollowIn.offset());
   label->serialIn(sHollowIn.plabel());
+  for (const auto &p : sHollowIn.hollowPicks())
+    hollowPicks.emplace_back(p);
+  for (const auto &p : sHollowIn.shapeMap())
+    shapeMap.insert(std::make_pair(gu::stringToId(p.idIn()), gu::stringToId(p.idOut())));
 }

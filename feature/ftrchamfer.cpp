@@ -36,7 +36,7 @@
 #include "tools/idtools.h"
 #include "preferences/preferencesXML.h"
 #include "preferences/prfmanager.h"
-#include "project/serial/xsdcxxoutput/featurechamfer.h"
+#include "project/serial/generated/prjsrlchmschamfer.h"
 #include "annex/annseershape.h"
 #include "feature/ftrshapecheck.h"
 #include "feature/ftrinputtype.h"
@@ -73,21 +73,23 @@ Chamfer::Cue::Entry::Entry(const Chamfer::Cue::Entry &other, bool)
   facePicks = other.facePicks;
 }
 
-Chamfer::Cue::Entry::Entry(const prj::srl::Entry &eIn) : Entry()
+Chamfer::Cue::Entry::Entry(const prj::srl::chms::Entry &eIn) : Entry()
 {
   serialIn(eIn);
 }
 
-prj::srl::Entry Chamfer::Cue::Entry::serialOut() const
+prj::srl::chms::Entry Chamfer::Cue::Entry::serialOut() const
 {
-  prj::srl::Entry out
+  prj::srl::chms::Entry out
   (
     static_cast<int>(style)
     , parameter1->serialOut()
     , label1->serialOut()
-    , ::ftr::serialOut(edgePicks)
-    , ::ftr::serialOut(facePicks)
   );
+  for(const auto &ep : edgePicks)
+    out.edgePicks().push_back(ep);
+  for(const auto &fp : facePicks)
+    out.facePicks().push_back(fp);
   
   if (parameter2)
     out.parameter2() = parameter2->serialOut();
@@ -97,7 +99,7 @@ prj::srl::Entry Chamfer::Cue::Entry::serialOut() const
   return out;
 }
 
-void Chamfer::Cue::Entry::serialIn(const prj::srl::Entry &eIn)
+void Chamfer::Cue::Entry::serialIn(const prj::srl::chms::Entry &eIn)
 {
   style = static_cast<Style>(eIn.style());
   parameter1 = std::make_shared<prm::Parameter>(eIn.parameter1());
@@ -106,8 +108,11 @@ void Chamfer::Cue::Entry::serialIn(const prj::srl::Entry &eIn)
   label1->showName = true;
   label1->valueHasChanged();
   label1->constantHasChanged();
-  edgePicks = ::ftr::serialIn(eIn.edgePicks());
-  facePicks = ::ftr::serialIn(eIn.facePicks());
+  prj::srl::chms::Entry::EdgePicksSequence edgePicksOut;
+  for (const auto &epi : eIn.edgePicks())
+    edgePicks.emplace_back(epi);
+  for (const auto &fpi : eIn.facePicks())
+    facePicks.emplace_back(fpi);
   
   if (eIn.parameter2().present())
     parameter2 = std::make_shared<prm::Parameter>(eIn.parameter2().get());
@@ -460,39 +465,42 @@ void Chamfer::updateShapeMap(const boost::uuids::uuid &resolvedId, const ShapeHi
 
 void Chamfer::serialWrite(const boost::filesystem::path &dIn)
 {
-  prj::srl::FeatureChamfer::ShapeMapType shapeMapOut;
+  namespace serial = prj::srl::chms;
+  serial::Chamfer::ShapeMapSequence shapeMapOut;
   for (const auto &p : shapeMap)
   {
-    prj::srl::EvolveRecord eRecord
+    serial::Chamfer::ShapeMapType eRecord
     (
       gu::idToString(p.first),
       gu::idToString(p.second)
     );
-    shapeMapOut.evolveRecord().push_back(eRecord);
+    shapeMapOut.push_back(eRecord);
   }
   
-  prj::srl::Cue cueOut(static_cast<int>(cue.mode));
+  serial::Cue cueOut(static_cast<int>(cue.mode));
   for (const auto &e : cue.entries)
     cueOut.entries().push_back(e.serialOut());
   
-  prj::srl::FeatureChamfer chamferOut
+  serial::Chamfer chamferOut
   (
-    Base::serialOut(),
-    shapeMapOut,
-    cueOut
+    Base::serialOut()
+    , sShape->serialOut()
+    , cueOut
   );
+  chamferOut.shapeMap() = shapeMapOut;
   
   xml_schema::NamespaceInfomap infoMap;
   std::ofstream stream(buildFilePathName(dIn).string());
-  prj::srl::chamfer(stream, chamferOut, infoMap);
+  serial::chamfer(stream, chamferOut, infoMap);
 }
 
-void Chamfer::serialRead(const prj::srl::FeatureChamfer &sChamferIn)
+void Chamfer::serialRead(const prj::srl::chms::Chamfer &sChamferIn)
 {
-  Base::serialIn(sChamferIn.featureBase());
+  Base::serialIn(sChamferIn.base());
+  sShape->serialIn(sChamferIn.seerShape());
   
   shapeMap.clear();
-  for (const prj::srl::EvolveRecord &sERecord : sChamferIn.shapeMap().evolveRecord())
+  for (const auto &sERecord : sChamferIn.shapeMap())
   {
     std::pair<uuid, uuid> record;
     record.first = gu::stringToId(sERecord.idIn());

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xs:schema
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  xmlns:spt="http://www.cadseer.com/prj/srl/spt"
+  xmlns:vws="http://www.cadseer.com/prj/srl/vws"
+  targetNamespace="http://www.cadseer.com/prj/srl/vws"
+>
+  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptvectormath.xsd"/>
+
+  <xs:complexType name="State">
+    <xs:sequence>
+      <xs:element name="id" type="xs:string" default="00000000-0000-0000-0000-000000000000"/>
+      <xs:element name="visible" type="xs:boolean" default="false"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="Ortho">
+    <xs:sequence>
+      <xs:element name="left" type="xs:double"/>
+      <xs:element name="right" type="xs:double"/>
+      <xs:element name="bottom" type="xs:double"/>
+      <xs:element name="top" type="xs:double"/>
+      <xs:element name="near" type="xs:double"/>
+      <xs:element name="far" type="xs:double"/>
+    </xs:sequence>
+  </xs:complexType>
+    
+  <xs:complexType name="View">
+    <xs:sequence>
+      <xs:element name="states" type="vws:State" minOccurs="0" maxOccurs="unbounded"/>
+      <xs:element name="csys" type="spt:Matrixd"/>
+      <xs:element name="ortho" type="vws:Ortho" minOccurs="0" maxOccurs="1"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:element name="view" type="vws:View"/>
+</xs:schema> 

@@ -38,7 +38,7 @@
 #include "feature/ftrshapecheck.h"
 #include "feature/ftrupdatepayload.h"
 #include "feature/ftrinputtype.h"
-#include "project/serial/xsdcxxoutput/featureruled.h"
+#include "project/serial/generated/prjsrlrldsruled.h"
 #include "feature/ftrruled.h"
 
 using namespace ftr;
@@ -331,63 +331,58 @@ void Ruled::goRuledMapping()
 
 void Ruled::serialWrite(const boost::filesystem::path &dIn)
 {
-  auto setToIdMapOut = [&](const SetToIdMap &mapIn) -> prj::srl::DerivedContainer
-  {
-    prj::srl::DerivedContainer out;
-    for (const auto &ef : mapIn)
-    {
-      prj::srl::IdSet eIdsOut;
-      for (const auto &eId : ef.first)
-        eIdsOut.id().push_back(gu::idToString(eId));
-      out.derivedRecord().push_back(prj::srl::DerivedRecord(eIdsOut, gu::idToString(ef.second)));
-    }
-    
-    return out;
-  };
-  prj::srl::DerivedContainer efMapOut = setToIdMapOut(efMap);
-  prj::srl::DerivedContainer veMapOut = setToIdMapOut(veMap);
-  
-  prj::srl::EvolveContainer oWireOut;
-  for (const auto &owe : outerWireMap)
-    oWireOut.evolveRecord().push_back(prj::srl::EvolveRecord(gu::idToString(owe.first), gu::idToString(owe.second)));
-  
-  prj::srl::FeatureRuled so
+  prj::srl::rlds::Ruled so
   (
     Base::serialOut()
-    , ftr::serialOut(picks)
+    , sShape->serialOut()
     , gu::idToString(parentId)
-    , efMapOut
-    , veMapOut
-    , oWireOut
   );
-  
+  for (const auto &p : picks)
+    so.picks().push_back(p);
+  for (const auto &r : efMap)
+  {
+    prj::srl::spt::DerivedRecord ro(gu::idToString(r.second));
+    for (const auto &s : r.first)
+      ro.idSet().push_back(gu::idToString(s));
+    so.efMap().push_back(ro);
+  }
+  for (const auto &r : veMap)
+  {
+    prj::srl::spt::DerivedRecord ro(gu::idToString(r.second));
+    for (const auto &s : r.first)
+      ro.idSet().push_back(gu::idToString(s));
+    so.veMap().push_back(ro);
+  }
+  for (const auto &p : outerWireMap)
+    so.outerWireMap().push_back(prj::srl::spt::EvolveRecord(gu::idToString(p.first), gu::idToString(p.second)));
+
   xml_schema::NamespaceInfomap infoMap;
   std::ofstream stream(buildFilePathName(dIn).string());
-  prj::srl::ruled(stream, so, infoMap);
+  prj::srl::rlds::ruled(stream, so, infoMap);
 }
 
-void Ruled::serialRead(const prj::srl::FeatureRuled &so)
+void Ruled::serialRead(const prj::srl::rlds::Ruled &so)
 {
-  Base::serialIn(so.featureBase());
-  picks = ftr::serialIn(so.picks());
+  Base::serialIn(so.base());
+  sShape->serialIn(so.seerShape());
   parentId = gu::stringToId(so.parentId());
   
-  auto setToIdMapIn = [&](const prj::srl::DerivedContainer &mapIn) -> SetToIdMap
+  for (const auto &p : so.picks())
+    picks.emplace_back(p);
+  for (const auto &p : so.efMap())
   {
-    SetToIdMap out;
-    for (const auto &ef : mapIn.derivedRecord())
-    {
-      IdSet eIdsOut;
-      for (const auto &eId : ef.idSet().id())
-        eIdsOut.insert(gu::stringToId(eId));
-      out.insert(std::make_pair(eIdsOut, gu::stringToId(ef.id())));
-    }
-    
-    return out;
-  };
-  efMap = setToIdMapIn(so.efMap());
-  veMap = setToIdMapIn(so.veMap());
-  
-  for (const auto &owm : so.outerWireMap().evolveRecord())
+    IdSet set;
+    for (const auto &sids : p.idSet())
+      set.insert(gu::stringToId(sids));
+    efMap.insert(std::make_pair(set, gu::stringToId(p.id())));
+  }
+  for (const auto &p : so.veMap())
+  {
+    IdSet set;
+    for (const auto &sids : p.idSet())
+      set.insert(gu::stringToId(sids));
+    veMap.insert(std::make_pair(set, gu::stringToId(p.id())));
+  }
+  for (const auto &owm : so.outerWireMap())
     outerWireMap.insert(std::make_pair(gu::stringToId(owm.idIn()), gu::stringToId(owm.idOut())));
 }

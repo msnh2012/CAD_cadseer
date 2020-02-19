@@ -300,7 +300,8 @@ void ParameterContainer::updateParameterSlot()
     localManager.update();
     if (isMatch(stow->parameter, localManager.getFormulaValueType(translator.getFormulaOutId())))
     {
-      SetParameterValueVisitor v(stow->parameter, localManager.getFormulaValue(translator.getFormulaOutId()));
+      auto eValue = localManager.getFormulaValue(translator.getFormulaOutId());
+      SetParameterValueVisitor v(stow->parameter, eValue);
       if (!boost::apply_visitor(v, stow->parameter->getStow().variant))
         app::instance()->queuedMessage(msg::buildStatusMessage(QObject::tr("Value out of range").toStdString(), 2.0));
     }

@@ -28,7 +28,7 @@
 class BRepOffsetAPI_MakeThickSolid;
 
 namespace lbr{class PLabel;}
-namespace prj{namespace srl{class FeatureHollow;}}
+namespace prj{namespace srl{namespace hlls{class Hollow;}}}
 namespace ann{class SeerShape;}
 namespace ftr
 {
@@ -43,7 +43,7 @@ namespace ftr
     virtual const QIcon& getIcon() const override {return icon;}
     virtual Descriptor getDescriptor() const override {return Descriptor::Alter;}
     virtual void serialWrite(const boost::filesystem::path&) override;
-    void serialRead(const prj::srl::FeatureHollow &);
+    void serialRead(const prj::srl::hlls::Hollow&);
     
     void setHollowPicks(const Picks&);
     const Picks& getHollowPicks() const {return hollowPicks;}

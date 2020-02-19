@@ -26,7 +26,7 @@
 namespace ann{class SeerShape;}
 namespace lbr{class IPGroup; class PLabel;}
 namespace occt{class BoundingBox;}
-namespace prj{namespace srl{class FeatureExtrude;}}
+namespace prj{namespace srl{namespace exrs{class Extrude;}}}
 
 namespace ftr
 {
@@ -55,7 +55,7 @@ namespace ftr
     virtual Descriptor getDescriptor() const override {return Descriptor::Create;}
     
     virtual void serialWrite(const boost::filesystem::path&) override;
-    void serialRead(const prj::srl::FeatureExtrude&);
+    void serialRead(const prj::srl::exrs::Extrude&);
     
     void setPicks(const Picks&);
     const Picks& getPicks() const {return picks;}

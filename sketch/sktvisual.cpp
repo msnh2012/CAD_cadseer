@@ -54,7 +54,7 @@
 #include "library/lbrdiameterdimension.h"
 #include "library/lbrplabel.h"
 #include "library/lbrchildnamevisitor.h"
-#include "project/serial/xsdcxxoutput/featuresketch.h"
+#include "project/serial/generated/prjsrlsktssketch.h"
 #include "parameter/prmparameter.h"
 #include "sketch/sktsolver.h"
 #include "sketch/sktvisual.h"
@@ -3212,11 +3212,19 @@ void Visual::placeDiameterDimension(SSHandle ch)
   }
 }
 
-prj::srl::Visual Visual::serialOut() const
+prj::srl::skts::Visual Visual::serialOut() const
 {
-  auto serialMap = [](const Map& mapIn) -> prj::srl::VisualMap
+  prj::srl::skts::Visual out
+  (
+    autoSize
+    , size
+  );
+  
+  //both entitymap and constraintmap are typed as follows.
+  typedef ::xsd::cxx::tree::sequence<::prj::srl::skts::VisualMapRecord> SequenceType;
+  auto serialMap = [](const Map& mapIn) -> SequenceType
   {
-    prj::srl::VisualMap out;
+    SequenceType emout;
     for (const auto &e : mapIn.records)
     {
       osg::Vec3d location;
@@ -3231,38 +3239,32 @@ prj::srl::Visual Visual::serialOut() const
           location = l->getMatrix().getTrans();
         }
       }
-      out.array().push_back
+      emout.push_back
       (
-        prj::srl::VisualMapRecord
+        prj::srl::skts::VisualMapRecord
         (
           e.handle
           , gu::idToString(e.id)
-          , prj::srl::Vec3d(location.x(), location.y(), location.z())
+          , prj::srl::spt::Vec3d(location.x(), location.y(), location.z())
           , e.construction
         )
       );
     }
-    return out;
+    return emout;
   };
   
-  prj::srl::VisualMap evm = serialMap(data->eMap);
-  prj::srl::VisualMap cvm = serialMap(data->cMap);
+  out.entityMap() = serialMap(data->eMap);
+  out.constraintMap() = serialMap(data->cMap);
   
-  return prj::srl::Visual
-  (
-    autoSize
-    , size
-    , evm
-    , cvm
-  );
+  return out;
 }
 
-void Visual::serialIn(const prj::srl::Visual &sIn)
+void Visual::serialIn(const prj::srl::skts::Visual &sIn)
 {
   autoSize = sIn.autoSize();
   size = sIn.size();
   
-  for (const auto &e : sIn.entityMap().array())
+  for (const auto &e : sIn.entityMap())
   {
     Map::Record record;
     record.handle = e.handle();
@@ -3272,7 +3274,7 @@ void Visual::serialIn(const prj::srl::Visual &sIn)
     data->eMap.records.push_back(record);
   }
   
-  for (const auto &c : sIn.constraintMap().array())
+  for (const auto &c : sIn.constraintMap())
   {
     Map::Record record;
     record.handle = c.handle();

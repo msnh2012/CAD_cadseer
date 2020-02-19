@@ -43,7 +43,7 @@
 #include "feature/ftrdatumplane.h"
 #include "tools/featuretools.h"
 #include "tools/idtools.h"
-#include "project/serial/xsdcxxoutput/featureextrude.h"
+#include "project/serial/generated/prjsrlexrsextrude.h"
 #include "feature/ftrextrude.h"
 
 using namespace ftr;
@@ -639,57 +639,59 @@ void Extrude::updateModel(const UpdatePayload &pIn)
 
 void Extrude::serialWrite(const boost::filesystem::path &dIn)
 {
-  auto serializeMap = [](const std::map<uuid, uuid> &map) -> prj::srl::EvolveContainer
+  auto serializeMap = [](const std::map<uuid, uuid> &map) -> prj::srl::spt::SeerShape::EvolveContainerSequence
   {
-    prj::srl::EvolveContainer out;
+    prj::srl::spt::SeerShape::EvolveContainerSequence out;
     for (const auto &p : map)
     {
-      prj::srl::EvolveRecord r
+      prj::srl::spt::SeerShape::EvolveContainerType r
       (
         gu::idToString(p.first),
         gu::idToString(p.second)
       );
-      out.evolveRecord().push_back(r);
+      out.push_back(r);
     }
     return out;
   };
   
-  prj::srl::FeatureExtrude so
+  prj::srl::exrs::Extrude so
   (
     Base::serialOut(),
-    ftr::serialOut(picks),
-    ftr::serialOut(axisPicks),
+    sShape->serialOut(),
     direction->serialOut(),
     directionLabel->serialOut(),
     distance->serialOut(),
     distanceLabel->serialOut(),
     offset->serialOut(),
     offsetLabel->serialOut(),
-    static_cast<int>(directionType),
-    serializeMap(originalMap),
-    serializeMap(generatedMap),
-    serializeMap(lastMap),
-    serializeMap(oWireMap)
+    static_cast<int>(directionType)
   );
+  for (const auto &p : picks)
+    so.picks().push_back(p);
+  for (const auto &p : axisPicks)
+    so.axisPicks().push_back(p);
+  so.originalMap() = serializeMap(originalMap);
+  so.generatedMap() = serializeMap(generatedMap);
+  so.lastMap() = serializeMap(lastMap);
+  so.oWireMap() = serializeMap(oWireMap);
   
   xml_schema::NamespaceInfomap infoMap;
   std::ofstream stream(buildFilePathName(dIn).string());
-  prj::srl::extrude(stream, so, infoMap);
+  prj::srl::exrs::extrude(stream, so, infoMap);
 }
 
-void Extrude::serialRead(const prj::srl::FeatureExtrude &so)
+void Extrude::serialRead(const prj::srl::exrs::Extrude &so)
 {
-  auto serializeMap = [](const prj::srl::EvolveContainer &container) -> std::map<uuid, uuid>
+  auto serializeMap = [](const prj::srl::spt::SeerShape::EvolveContainerSequence &container) -> std::map<uuid, uuid>
   {
     std::map<uuid, uuid> out;
-    for (const auto &r : container.evolveRecord())
+    for (const auto &r : container)
       out.insert(std::make_pair(gu::stringToId(r.idIn()), gu::stringToId(r.idOut())));
     return out;
   };
   
-  Base::serialIn(so.featureBase());
-  picks = ftr::serialIn(so.picks());
-  axisPicks = ftr::serialIn(so.axisPicks());
+  Base::serialIn(so.base());
+  sShape->serialIn(so.seerShape());
   direction->serialIn(so.direction());
   directionLabel->serialIn(so.directionLabel());
   distance->serialIn(so.distance());
@@ -697,6 +699,10 @@ void Extrude::serialRead(const prj::srl::FeatureExtrude &so)
   offset->serialIn(so.offset());
   offsetLabel->serialIn(so.offsetLabel());
   directionType = static_cast<DirectionType>(so.directionType());
+  for (const auto &p : so.picks())
+    picks.emplace_back(p);
+  for (const auto &p : so.axisPicks())
+    axisPicks.emplace_back(p);
   originalMap = serializeMap(so.originalMap());
   generatedMap = serializeMap(so.generatedMap());
   lastMap = serializeMap(so.lastMap());

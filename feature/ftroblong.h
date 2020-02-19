@@ -25,7 +25,7 @@
 #include "feature/ftrbase.h"
 
 namespace lbr{class IPGroup;}
-namespace prj{namespace srl{class FeatureOblong;}}
+namespace prj{namespace srl{namespace obls{class Oblong;}}}
 namespace ann{class CSysDragger; class SeerShape;}
 
 namespace ftr
@@ -53,7 +53,7 @@ namespace ftr
     virtual const QIcon& getIcon() const override {return icon;}
     virtual Descriptor getDescriptor() const override {return Descriptor::Create;}
     virtual void serialWrite(const boost::filesystem::path&) override; //!< write xml file. not const, might reset a modified flag.
-    void serialRead(const prj::srl::FeatureOblong &sOblong);
+    void serialRead(const prj::srl::obls::Oblong &sOblong);
   protected:
     std::shared_ptr<prm::Parameter> length;
     std::shared_ptr<prm::Parameter> width;

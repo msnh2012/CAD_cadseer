@@ -26,7 +26,7 @@
 
 class TopoDS_Shape;
 
-namespace prj{namespace srl{class FeatureStrip;}}
+namespace prj{namespace srl{namespace stps{class Strip;}}}
 namespace ann{class SeerShape;}
 namespace occt{class BoundingBox;}
 namespace ftr
@@ -47,7 +47,7 @@ namespace ftr
     virtual const QIcon& getIcon() const override {return icon;}
     virtual Descriptor getDescriptor() const override {return Descriptor::Create;}
     virtual void serialWrite(const boost::filesystem::path&) override;
-    void serialRead(const prj::srl::FeatureStrip &);
+    void serialRead(const prj::srl::stps::Strip&);
     
     void setAutoCalc(bool acIn){autoCalc->setValue(acIn);}
     bool isAutoCalc(){return static_cast<bool>(*autoCalc);}

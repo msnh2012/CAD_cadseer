@@ -53,7 +53,7 @@
 #include "feature/ftrupdatepayload.h"
 #include "feature/ftrinputtype.h"
 #include "feature/ftrdatumaxis.h"
-#include "project/serial/xsdcxxoutput/featuresweep.h"
+#include "project/serial/generated/prjsrlswpssweep.h"
 #include "feature/ftrsweep.h"
 
 using namespace ftr;
@@ -79,7 +79,7 @@ SweepProfile::SweepProfile(const Pick &pIn, bool contactIn, bool correctionIn)
   correctionLabel->constantHasChanged();
 }
 SweepProfile::~SweepProfile(){}
-SweepProfile::SweepProfile(const prj::srl::SweepProfile &pfIn) : SweepProfile()
+SweepProfile::SweepProfile(const prj::srl::swps::SweepProfile &pfIn) : SweepProfile()
 {
   pick.serialIn(pfIn.pick());
   contact->serialIn(pfIn.contact());
@@ -87,9 +87,9 @@ SweepProfile::SweepProfile(const prj::srl::SweepProfile &pfIn) : SweepProfile()
   contactLabel->serialIn(pfIn.contactLabel());
   correctionLabel->serialIn(pfIn.correctionLabel());
 }
-prj::srl::SweepProfile SweepProfile::serialOut() const
+prj::srl::swps::SweepProfile SweepProfile::serialOut() const
 {
-  return prj::srl::SweepProfile
+  return prj::srl::swps::SweepProfile
   (
     pick.serialOut()
     , contact->serialOut()
@@ -97,20 +97,6 @@ prj::srl::SweepProfile SweepProfile::serialOut() const
     , contactLabel->serialOut()
     , correctionLabel->serialOut()
   );
-}
-prj::srl::SweepProfiles ftr::serialOut(const SweepProfiles &pfsIn)
-{
-  prj::srl::SweepProfiles out;
-  for (const auto &pf : pfsIn)
-    out.array().push_back(pf.serialOut());
-  return out;
-}
-SweepProfiles ftr::serialIn(const prj::srl::SweepProfiles &pfsIn)
-{
-  SweepProfiles out;
-  for (const auto &pf : pfsIn.array())
-    out.emplace_back(pf);
-  return out;
 }
 
 SweepAuxiliary::SweepAuxiliary(): SweepAuxiliary(Pick()){}
@@ -141,14 +127,14 @@ SweepAuxiliary::SweepAuxiliary(const Pick &pIn, bool ceIn, int contactIn)
   contactTypeLabel->valueHasChanged();
   contactTypeLabel->constantHasChanged();
 }
-SweepAuxiliary::SweepAuxiliary(const prj::srl::SweepAuxiliary &auxIn)
+SweepAuxiliary::SweepAuxiliary(const prj::srl::swps::SweepAuxiliary &auxIn)
 {
   serialIn(auxIn);
 }
 SweepAuxiliary::~SweepAuxiliary(){}
-prj::srl::SweepAuxiliary ftr::SweepAuxiliary::serialOut() const
+prj::srl::swps::SweepAuxiliary ftr::SweepAuxiliary::serialOut() const
 {
-  return prj::srl::SweepAuxiliary
+  return prj::srl::swps::SweepAuxiliary
   (
     pick.serialOut()
     , curvilinearEquivalence->serialOut()
@@ -157,7 +143,7 @@ prj::srl::SweepAuxiliary ftr::SweepAuxiliary::serialOut() const
     , contactTypeLabel->serialOut()
   );
 }
-void SweepAuxiliary::serialIn(const prj::srl::SweepAuxiliary &auxIn)
+void SweepAuxiliary::serialIn(const prj::srl::swps::SweepAuxiliary &auxIn)
 {
   pick.serialIn(auxIn.pick());
   curvilinearEquivalence->serialIn(auxIn.curvilinearEquivalence());
@@ -184,20 +170,24 @@ SweepBinormal::SweepBinormal(const Picks &psIn, const osg::Vec3d &vIn)
 , binormalLabel(new lbr::PLabel(binormal.get()))
 {}
 SweepBinormal::~SweepBinormal() = default;
-prj::srl::SweepBinormal SweepBinormal::serialOut() const
+prj::srl::swps::SweepBinormal SweepBinormal::serialOut() const
 {
-  return prj::srl::SweepBinormal
+  prj::srl::swps::SweepBinormal out
   (
-    ::ftr::serialOut(picks)
-    , binormal->serialOut()
+    binormal->serialOut()
     , binormalLabel->serialOut()
   );
+  for (const auto &p : picks)
+    out.picks().push_back(p);
+  
+  return out;
 }
-void SweepBinormal::serialIn(const prj::srl::SweepBinormal &bnIn)
+void SweepBinormal::serialIn(const prj::srl::swps::SweepBinormal &bnIn)
 {
-  picks = ::ftr::serialIn(bnIn.picks());
   binormal->serialIn(bnIn.binormal());
   binormalLabel->serialIn(bnIn.binormalLabel());
+  for (const auto &p : bnIn.picks())
+    picks.emplace_back(p);
 }
 
 Sweep::Sweep():
@@ -1270,7 +1260,7 @@ void Sweep::serialWrite(const boost::filesystem::path &dIn)
     m = ocb->getMatrix(lawSwitch.get());
     scale = ocb->getScale();
   }
-  prj::srl::Matrixd mOut
+  prj::srl::spt::Matrixd mOut
   (
     m(0,0), m(0,1), m(0,2), m(0,3),
     m(1,0), m(1,1), m(1,2), m(1,3),
@@ -1278,30 +1268,10 @@ void Sweep::serialWrite(const boost::filesystem::path &dIn)
     m(3,0), m(3,1), m(3,2), m(3,3)
   );
   
-  prj::srl::EvolveContainer outerWireMapOut;
-  for (const auto &p : outerWireMap)
-    outerWireMapOut.evolveRecord().push_back(prj::srl::EvolveRecord(gu::idToString(p.first), gu::idToString(p.second)));
-  
-  prj::srl::InstanceMap instanceMapOut;
-  for (const auto &p : instanceMap)
-  {
-    prj::srl::InstanceValues instanceValuesOut;
-    for (const auto &id : p.second)
-      instanceValuesOut.array().push_back(gu::idToString(id));
-    instanceMapOut.array().push_back(prj::srl::Instance(gu::idToString(p.first), instanceValuesOut));
-  }
-  
-  prj::srl::EvolveContainer firstShapeMapOut;
-  for (const auto &p : firstShapeMap)
-    firstShapeMapOut.evolveRecord().push_back(prj::srl::EvolveRecord(gu::idToString(p.first), gu::idToString(p.second)));
-  
-  prj::srl::EvolveContainer lastShapeMapOut;
-  for (const auto &p : lastShapeMap)
-    lastShapeMapOut.evolveRecord().push_back(prj::srl::EvolveRecord(gu::idToString(p.first), gu::idToString(p.second)));
-  
-  prj::srl::FeatureSweep so
+  prj::srl::swps::Sweep so
   (
     Base::serialOut()
+    , sShape->serialOut()
     , lawFunction->getCue().serialOut()
     , trihedron->serialOut()
     , transition->serialOut()
@@ -1309,7 +1279,6 @@ void Sweep::serialWrite(const boost::filesystem::path &dIn)
     , solid->serialOut()
     , useLaw->serialOut()
     , spine.serialOut()
-    , ftr::serialOut(profiles)
     , auxiliary.serialOut()
     , support.serialOut()
     , binormal.serialOut()
@@ -1324,20 +1293,47 @@ void Sweep::serialWrite(const boost::filesystem::path &dIn)
     , gu::idToString(shellId)
     , gu::idToString(firstFaceId)
     , gu::idToString(lastFaceId)
-    , outerWireMapOut
-    , instanceMapOut
-    , firstShapeMapOut
-    , lastShapeMapOut
   );
+  
+  for (const auto &p : profiles)
+    so.profiles().push_back(p.serialOut());
+  
+  auto serializeMap = [](const std::map<uuid, uuid> &map) -> prj::srl::spt::SeerShape::EvolveContainerSequence
+  {
+    prj::srl::spt::SeerShape::EvolveContainerSequence out;
+    for (const auto &p : map)
+    {
+      prj::srl::spt::SeerShape::EvolveContainerType r
+      (
+        gu::idToString(p.first),
+        gu::idToString(p.second)
+      );
+      out.push_back(r);
+    }
+    return out;
+  };
+  
+  so.outerWireMap() = serializeMap(outerWireMap);
+  so.firstShapeMap() = serializeMap(firstShapeMap);
+  so.lastShapeMap() = serializeMap(lastShapeMap);
+  
+  for (const auto &p : instanceMap)
+  {
+    prj::srl::swps::Instance instanceOut(gu::idToString(p.first));
+    for (const auto &id : p.second)
+      instanceOut.values().push_back(gu::idToString(id));
+    so.instanceMap().push_back(instanceOut);
+  }
   
   xml_schema::NamespaceInfomap infoMap;
   std::ofstream stream(buildFilePathName(dIn).string());
-  prj::srl::sweep(stream, so, infoMap);
+  prj::srl::swps::sweep(stream, so, infoMap);
 }
 
-void Sweep::serialRead(const prj::srl::FeatureSweep &so)
+void Sweep::serialRead(const prj::srl::swps::Sweep &so)
 {
-  Base::serialIn(so.featureBase());
+  Base::serialIn(so.base());
+  sShape->serialIn(so.seerShape());
   lawFunction->setCue(lwf::Cue(so.lawFunction()));
   trihedron->serialIn(so.trihedron());
   transition->serialIn(so.transition());
@@ -1345,7 +1341,6 @@ void Sweep::serialRead(const prj::srl::FeatureSweep &so)
   solid->serialIn(so.solid());
   useLaw->serialIn(so.useLaw());
   spine.serialIn(so.spine());
-  profiles = ftr::serialIn(so.profiles());
   auxiliary.serialIn(so.auxiliary());
   support.serialIn(so.support());
   binormal.serialIn(so.binormal());
@@ -1359,22 +1354,27 @@ void Sweep::serialRead(const prj::srl::FeatureSweep &so)
   firstFaceId = gu::stringToId(so.firstFaceId());
   lastFaceId = gu::stringToId(so.lastFaceId());
   
-  for (const auto &r : so.outerWireMap().evolveRecord())
-    outerWireMap.insert(std::make_pair(gu::stringToId(r.idIn()), gu::stringToId(r.idOut())));
+  for (const auto &p : so.profiles())
+    profiles.emplace_back(p);
   
-  for (const auto &p : so.instanceMap().array())
+  auto serializeMap = [](const prj::srl::spt::SeerShape::EvolveContainerSequence &container) -> std::map<uuid, uuid>
+  {
+    std::map<uuid, uuid> out;
+    for (const auto &r : container)
+      out.insert(std::make_pair(gu::stringToId(r.idIn()), gu::stringToId(r.idOut())));
+    return out;
+  };
+  outerWireMap = serializeMap(so.outerWireMap());
+  firstShapeMap = serializeMap(so.firstShapeMap());
+  lastShapeMap = serializeMap(so.lastShapeMap());
+  
+  for (const auto &p : so.instanceMap())
   {
     std::vector<uuid> valuesIn;
-    for (const auto &v : p.values().array())
+    for (const auto &v : p.values())
       valuesIn.push_back(gu::stringToId(v));
     instanceMap.insert(std::make_pair(gu::stringToId(p.key()), valuesIn));
   }
-  
-  for (const auto &r : so.firstShapeMap().evolveRecord())
-    firstShapeMap.insert(std::make_pair(gu::stringToId(r.idIn()), gu::stringToId(r.idOut())));
-  
-  for (const auto &r : so.lastShapeMap().evolveRecord())
-    lastShapeMap.insert(std::make_pair(gu::stringToId(r.idIn()), gu::stringToId(r.idOut())));
   
   regenerateLawViz();
   const auto &mIn = so.lawVizMatrix();

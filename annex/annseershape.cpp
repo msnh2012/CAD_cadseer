@@ -53,7 +53,7 @@
 #include "tools/idtools.h"
 #include "tools/occtools.h"
 #include "annex/annshapeidhelper.h"
-#include "project/serial/xsdcxxoutput/featurebase.h"
+#include "project/serial/generated/prjsrlsptseershape.h"
 #include "feature/ftrshapehistory.h"
 #include "annex/annseershape.h"
 
@@ -1487,10 +1487,12 @@ void SeerShape::dumpFeatureTagContainer(std::ostream &streamIn) const
   streamIn << stow->featureTags << std::endl;
 }
 
-prj::srl::SeerShape SeerShape::serialOut()
+prj::srl::spt::SeerShape SeerShape::serialOut()
 {
-  prj::srl::ShapeIdContainer shapeIdContainerOut;
-  if (!rootShapeId.is_nil())
+  prj::srl::spt::SeerShape out(gu::idToString(getRootShapeId()));
+  
+  prj::srl::spt::SeerShape::ShapeIdContainerSequence shapeIdsOut;
+  if (!getRootShapeId().is_nil())
   {
     const TopoDS_Shape &shape = getRootOCCTShape();
     if (!shape.IsNull())
@@ -1506,77 +1508,69 @@ prj::srl::SeerShape SeerShape::serialOut()
           count++;
           continue;
         }
-        prj::srl::ShapeIdRecord rRecord
+        prj::srl::spt::ShapeIdRecord rRecord
         (
           gu::idToString(findId(s)),
           count
         );
-        shapeIdContainerOut.shapeIdRecord().push_back(rRecord);
+        shapeIdsOut.push_back(rRecord);
         count++;
       }
     }
   }
+  out.shapeIdContainer() = shapeIdsOut;
   
-  prj::srl::EvolveContainer eContainerOut;
+  prj::srl::spt::SeerShape::EvolveContainerSequence evolvesOut;
   typedef EvolveContainer::index<EvolveRecord::ByInId>::type EList;
   const EList &eList = stow->evolves.get<EvolveRecord::ByInId>();
   for (EList::const_iterator it = eList.begin(); it != eList.end(); ++it)
   {
-    prj::srl::EvolveRecord eRecord
+    prj::srl::spt::EvolveRecord eRecord
     (
       gu::idToString(it->inId),
       gu::idToString(it->outId)
     );
-    eContainerOut.evolveRecord().push_back(eRecord);
+    evolvesOut.push_back(eRecord);
   }
+  out.evolveContainer() = evolvesOut;
   
-  prj::srl::FeatureTagContainer fContainerOut;
+  prj::srl::spt::SeerShape::FeatureTagContainerSequence tagsOut;
   typedef FeatureTagContainer::index<FeatureTagRecord::ById>::type FList;
   const FList &fList = stow->featureTags.get<FeatureTagRecord::ById>();
   for (FList::const_iterator it = fList.begin(); it != fList.end(); ++it)
   {
-    prj::srl::FeatureTagRecord fRecord
+    prj::srl::spt::FeatureTagRecord fRecord
     (
       gu::idToString(it->id),
       it->tag
     );
-    fContainerOut.featureTagRecord().push_back(fRecord);
+    tagsOut.push_back(fRecord);
   }
+  out.featureTagContainer() = tagsOut;
   
-  prj::srl::DerivedContainer dContainerOut;
+  prj::srl::spt::SeerShape::DerivedContainerSequence DerivesOut;
   for (DerivedContainer::const_iterator dIt = stow->derives.begin(); dIt != stow->derives.end(); ++dIt)
   {
-    prj::srl::IdSet setIn;
+    prj::srl::spt::DerivedRecord record(gu::idToString(dIt->second));
+    prj::srl::spt::DerivedRecord::IdSetSequence setOut;
     for (IdSet::const_iterator sIt = dIt->first.begin(); sIt != dIt->first.end(); ++sIt)
-      setIn.id().push_back(gu::idToString(*sIt));
-    prj::srl::DerivedRecord::IdType mId(gu::idToString(dIt->second));
-    prj::srl::DerivedRecord record
-    (
-      setIn,
-      mId
-    );
-    
-    dContainerOut.derivedRecord().push_back(record);
+      setOut.push_back(gu::idToString(*sIt));
+    record.idSet() = setOut;
+    DerivesOut.push_back(record);
   }
+  out.derivedContainer() = DerivesOut;
   
-  return prj::srl::SeerShape
-  (
-    gu::idToString(rootShapeId),
-    shapeIdContainerOut,
-    eContainerOut,
-    fContainerOut,
-    dContainerOut
-  ); 
+  return out;
 }
 
-void SeerShape::serialIn(const prj::srl::SeerShape &sSeerShapeIn)
+void SeerShape::serialIn(const prj::srl::spt::SeerShape &ssIn)
 {
-  //note: shape has already been set through setOCCTShape, so shapeIdContainer has been populated and don't clear.
+  //note: shape has already been set through setOCCTShape, so shapeIdContainer has been populated, so don't clear.
   //setOCCTShape assigns an id for the root, so that is valid.
   
   //fill in shapeId container.
   occt::ShapeVector shapes = occt::mapShapes(getRootOCCTShape());
-  for (const prj::srl::ShapeIdRecord &sRRecord : sSeerShapeIn.shapeIdContainer().shapeIdRecord())
+  for (const auto &sRRecord : ssIn.shapeIdContainer())
   {
     std::size_t offset = sRRecord.shapeOffset();
     assert(offset < shapes.size());
@@ -1589,7 +1583,7 @@ void SeerShape::serialIn(const prj::srl::SeerShape &sSeerShapeIn)
   }
   
   stow->evolves.get<EvolveRecord::ByInId>().clear();
-  for (const prj::srl::EvolveRecord &sERecord : sSeerShapeIn.evolveContainer().evolveRecord())
+  for (const auto &sERecord : ssIn.evolveContainer())
   {
     EvolveRecord record;
     record.inId = gu::stringToId(sERecord.idIn());
@@ -1598,7 +1592,7 @@ void SeerShape::serialIn(const prj::srl::SeerShape &sSeerShapeIn)
   }
   
   stow->featureTags.get<FeatureTagRecord::ById>().clear();
-  for (const prj::srl::FeatureTagRecord &sFRecord : sSeerShapeIn.featureTagContainer().featureTagRecord())
+  for (const auto &sFRecord : ssIn.featureTagContainer())
   {
     FeatureTagRecord record;
     record.id = gu::stringToId(sFRecord.id());
@@ -1607,16 +1601,15 @@ void SeerShape::serialIn(const prj::srl::SeerShape &sSeerShapeIn)
   }
   
   stow->derives.clear();
-  for (const prj::srl::DerivedRecord &sDRecord : sSeerShapeIn.derivedContainer().derivedRecord())
+  for (const auto &sDRecord : ssIn.derivedContainer())
   {
     IdSet setIn;
-    for (const auto &idSet : sDRecord.idSet().id())
-      setIn.insert(gu::stringToId(idSet));
-    boost::uuids::uuid mId = gu::stringToId(sDRecord.id());
-    stow->derives.insert(std::make_pair(setIn, mId));
+    for (const auto &id : sDRecord.idSet())
+      setIn.insert(gu::stringToId(id));
+    stow->derives.insert(std::make_pair(setIn, gu::stringToId(sDRecord.id())));
   }
   
-  rootShapeId = gu::stringToId(sSeerShapeIn.rootShapeId());
+  rootShapeId = gu::stringToId(ssIn.rootShapeId());
 }
 
 std::unique_ptr<SeerShape> SeerShape::createWorkCopy() const

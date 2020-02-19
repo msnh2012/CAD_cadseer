@@ -28,7 +28,7 @@ class TopoDS_Solid;
 
 namespace lbr{class PLabel;}
 namespace ann{class SeerShape; class IntersectionMapper;}
-namespace prj{namespace srl{class FeatureTrim;}}
+namespace prj{namespace srl{namespace trms{class Trim;}}}
 
 namespace ftr
 {
@@ -48,7 +48,7 @@ namespace ftr
       virtual Descriptor getDescriptor() const override {return Descriptor::Alter;}
       
       virtual void serialWrite(const boost::filesystem::path&) override;
-      void serialRead(const prj::srl::FeatureTrim&);
+      void serialRead(const prj::srl::trms::Trim&);
       
     protected:
       std::unique_ptr<prm::Parameter> reversed;

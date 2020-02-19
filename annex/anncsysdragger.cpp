@@ -28,7 +28,7 @@
 #include "message/msgmessage.h"
 #include "preferences/preferencesXML.h"
 #include "preferences/prfmanager.h"
-#include "project/serial/xsdcxxoutput/featurebase.h"
+#include "project/serial/generated/prjsrlsptoverlay.h"
 #include "annex/anncsysdragger.h"
 
 namespace ann
@@ -188,10 +188,10 @@ void CSysDragger::setCSys(const osg::Matrixd &mIn)
   draggerUpdate(dragger->getMatrix() * diffMatrix);
 }
 
-prj::srl::CSysDragger CSysDragger::serialOut()
+prj::srl::spt::CSysDragger CSysDragger::serialOut()
 {
   osg::Matrixd m = dragger->getMatrix();
-  prj::srl::Matrixd mOut
+  prj::srl::spt::Matrixd mOut
   (
     m(0,0), m(0,1), m(0,2), m(0,3),
     m(1,0), m(1,1), m(1,2), m(1,3),
@@ -202,10 +202,10 @@ prj::srl::CSysDragger CSysDragger::serialOut()
   bool results = dragger->getUserValue<std::string>(gu::idAttributeTitle, featureId);
   assert(results);
   
-  return prj::srl::CSysDragger(mOut, dragger->isLinked(), featureId);
+  return prj::srl::spt::CSysDragger(mOut, dragger->isLinked(), featureId);
 }
 
-void CSysDragger::serialIn(const prj::srl::CSysDragger &si)
+void CSysDragger::serialIn(const prj::srl::spt::CSysDragger &si)
 {
   const auto &mIn = si.matrix();
   osg::Matrixd m

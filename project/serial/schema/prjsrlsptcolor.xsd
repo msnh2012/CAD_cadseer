@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xs:schema
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  xmlns:spt="http://www.cadseer.com/prj/srl/spt"
+  targetNamespace="http://www.cadseer.com/prj/srl/spt"
+>
+  <xs:simpleType name="ColorValue">
+    <xs:restriction base="xs:decimal">
+      <xs:minInclusive value="0.0"/>
+      <xs:maxInclusive value="1.0"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:complexType name="Color">
+    <xs:sequence>
+      <xs:element name="r" type="spt:ColorValue"/>
+      <xs:element name="g" type="spt:ColorValue"/>
+      <xs:element name="b" type="spt:ColorValue"/>
+      <xs:element name="a" type="spt:ColorValue"/>
+    </xs:sequence>
+  </xs:complexType>
+</xs:schema> 

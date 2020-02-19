@@ -28,7 +28,7 @@
 #include "tools/idtools.h"
 #include "tools/featuretools.h"
 #include "feature/ftrshapecheck.h"
-#include "project/serial/xsdcxxoutput/featureremovefaces.h"
+#include "project/serial/generated/prjsrlrmfsremovefaces.h"
 #include "feature/ftrupdatepayload.h"
 #include "feature/ftrinputtype.h"
 #include "feature/ftrshapecheck.h"
@@ -164,19 +164,23 @@ void RemoveFaces::updateModel(const UpdatePayload &payloadIn)
 
 void RemoveFaces::serialWrite(const boost::filesystem::path &dIn)
 {
-  prj::srl::FeatureRemoveFaces srf
+  prj::srl::rmfs::RemoveFaces srf
   (
     Base::serialOut(),
-    ftr::serialOut(picks)
+    sShape->serialOut()
   );
+  for (const auto &p : picks)
+    srf.picks().push_back(p);
   
   xml_schema::NamespaceInfomap infoMap;
   std::ofstream stream(buildFilePathName(dIn).string());
-  prj::srl::removeFaces(stream, srf, infoMap);
+  prj::srl::rmfs::removeFaces(stream, srf, infoMap);
 }
 
-void RemoveFaces::serialRead(const prj::srl::FeatureRemoveFaces &srf)
+void RemoveFaces::serialRead(const prj::srl::rmfs::RemoveFaces &srf)
 {
-  Base::serialIn(srf.featureBase());
-  picks = ftr::serialIn(srf.picks());
+  Base::serialIn(srf.base());
+  sShape->serialIn(srf.seerShape());
+  for (const auto &p : srf.picks())
+    picks.emplace_back(p);
 }

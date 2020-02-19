@@ -34,7 +34,7 @@
 #include "feature/ftrstrip.h"
 #include "feature/ftrdieset.h"
 #include "annex/annseershape.h"
-#include "project/serial/xsdcxxoutput/featurequote.h"
+#include "project/serial/generated/prjsrlqtsquote.h"
 #include "feature/ftrupdatepayload.h"
 #include "feature/ftrinputtype.h"
 #include "parameter/prmparameter.h"
@@ -226,7 +226,7 @@ void Quote::updateModel(const UpdatePayload &payloadIn)
 
 void Quote::serialWrite(const boost::filesystem::path &dIn)
 {
-  prj::srl::FeatureQuote qo
+  prj::srl::qts::Quote qo
   (
     Base::serialOut(),
     tFile->serialOut(),
@@ -249,12 +249,12 @@ void Quote::serialWrite(const boost::filesystem::path &dIn)
   
   xml_schema::NamespaceInfomap infoMap;
   std::ofstream stream(buildFilePathName(dIn).string());
-  prj::srl::quote(stream, qo, infoMap);
+  prj::srl::qts::quote(stream, qo, infoMap);
 }
 
-void Quote::serialRead(const prj::srl::FeatureQuote &qIn)
+void Quote::serialRead(const prj::srl::qts::Quote &qIn)
 {
-  Base::serialIn(qIn.featureBase());
+  Base::serialIn(qIn.base());
   tFile->serialIn(qIn.templateFile());
   oFile->serialIn(qIn.outFile());
   pFile = qIn.pictureFile();

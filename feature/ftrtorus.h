@@ -22,7 +22,7 @@
 
 #include "feature/ftrbase.h"
 
-namespace prj{namespace srl{class FeatureTorus;}}
+namespace prj{namespace srl{namespace trss{class Torus;}}}
 namespace ann{class CSysDragger; class SeerShape;}
 namespace lbr{class IPGroup; class PLabel;}
 
@@ -47,7 +47,7 @@ namespace ftr
     osg::Matrixd getCSys() const;
     
     virtual void serialWrite(const boost::filesystem::path&) override;
-    void serialRead(const prj::srl::FeatureTorus&);
+    void serialRead(const prj::srl::trss::Torus&);
     
     virtual void updateModel(const UpdatePayload&) override;
     virtual Type getType() const override {return Type::Torus;}

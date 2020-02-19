@@ -1,0 +1,34 @@
+<xs:schema
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  xmlns:spt="http://www.cadseer.com/prj/srl/spt"
+  xmlns:dsts="http://www.cadseer.com/prj/srl/dsts"
+  targetNamespace="http://www.cadseer.com/prj/srl/dsts"
+>
+  
+<xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptparameter.xsd"/>
+<xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptoverlay.xsd"/>
+<xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptseershape.xsd"/>
+<xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptbase.xsd"/>
+
+<xs:complexType name="DieSet">
+  <xs:sequence>
+    <xs:element name="base" type="spt:Base"/>
+    <xs:element name="seerShape" type="spt:SeerShape"/>
+    <xs:element name="length" type="spt:Parameter"/>
+    <xs:element name="lengthPadding" type="spt:Parameter"/>
+    <xs:element name="width" type="spt:Parameter"/>
+    <xs:element name="widthPadding" type="spt:Parameter"/>
+    <xs:element name="origin" type="spt:Parameter"/>
+    <xs:element name="autoCalc" type="spt:Parameter"/>
+    <xs:element name="lengthPLabel" type="spt:PLabel"/>
+    <xs:element name="widthPLabel" type="spt:PLabel"/>
+    <xs:element name="lengthPaddingPLabel" type="spt:PLabel"/>
+    <xs:element name="widthPaddingPLabel" type="spt:PLabel"/>
+    <xs:element name="originPLabel" type="spt:PLabel"/>
+    <xs:element name="autoCalcPLabel" type="spt:PLabel"/>
+  </xs:sequence>
+</xs:complexType>
+
+<xs:element name="dieset" type="dsts:DieSet"/>
+  
+</xs:schema> 

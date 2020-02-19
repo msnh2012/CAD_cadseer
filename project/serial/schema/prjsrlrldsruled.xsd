@@ -1,0 +1,25 @@
+<xs:schema
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  xmlns:spt="http://www.cadseer.com/prj/srl/spt"
+  xmlns:rlds="http://www.cadseer.com/prj/srl/rlds"
+  targetNamespace="http://www.cadseer.com/prj/srl/rlds"
+>
+  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptseershape.xsd"/>
+  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptpick.xsd"/>
+  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptbase.xsd"/>
+
+<xs:complexType name="Ruled">
+  <xs:sequence>
+    <xs:element name="base" type="spt:Base"/>
+    <xs:element name="seerShape" type="spt:SeerShape"/>
+    <xs:element name="picks" type="spt:Pick" minOccurs="0" maxOccurs="unbounded"/>
+    <xs:element name="parentId" type="xs:string" default="00000000-0000-0000-0000-000000000000"/>
+    <xs:element name="efMap" type="spt:DerivedRecord" minOccurs="0" maxOccurs="unbounded"/>
+    <xs:element name="veMap" type="spt:DerivedRecord" minOccurs="0" maxOccurs="unbounded"/>
+    <xs:element name="outerWireMap" type="spt:EvolveRecord" minOccurs="0" maxOccurs="unbounded"/>
+  </xs:sequence>
+</xs:complexType>
+
+<xs:element name="ruled" type="rlds:Ruled"/>
+  
+</xs:schema> 

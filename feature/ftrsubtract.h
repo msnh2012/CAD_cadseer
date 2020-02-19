@@ -23,7 +23,7 @@
 #include "feature/ftrpick.h"
 #include "feature/ftrbase.h"
 
-namespace prj{namespace srl{class FeatureSubtract;}}
+namespace prj{namespace srl{namespace sbts{class Subtract;}}}
 namespace ann{class SeerShape; class IntersectionMapper;}
 
 namespace ftr
@@ -40,7 +40,7 @@ namespace ftr
     virtual Descriptor getDescriptor() const override {return Descriptor::Alter;}
     
     virtual void serialWrite(const boost::filesystem::path&) override;
-    void serialRead(const prj::srl::FeatureSubtract &);
+    void serialRead(const prj::srl::sbts::Subtract&);
     
     void setTargetPicks(const Picks&);
     const Picks& getTargetPicks(){return targetPicks;}

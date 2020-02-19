@@ -30,7 +30,7 @@ namespace osg{class Node;}
 
 namespace ann{class SeerShape; class InstanceMapper; class CSysDragger;}
 namespace lbr{class PLabel;}
-namespace prj{namespace srl{class FeatureInstanceLinear;}}
+namespace prj{namespace srl{namespace inls{class InstanceLinear;}}}
 
 namespace ftr
 {
@@ -52,7 +52,7 @@ namespace ftr
     virtual Descriptor getDescriptor() const override {return Descriptor::Create;}
     
     virtual void serialWrite(const boost::filesystem::path&) override;
-    void serialRead(const prj::srl::FeatureInstanceLinear &);
+    void serialRead(const prj::srl::inls::InstanceLinear&);
     
     const Pick& getPick(){return pick;}
     void setPick(const Pick&);

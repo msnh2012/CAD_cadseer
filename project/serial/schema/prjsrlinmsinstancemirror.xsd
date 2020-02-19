@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xs:schema
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  xmlns:spt="http://www.cadseer.com/prj/srl/spt"
+  xmlns:inms="http://www.cadseer.com/prj/srl/inms"
+  targetNamespace="http://www.cadseer.com/prj/srl/inms"
+>
+  
+<xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptparameter.xsd"/>
+<xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptoverlay.xsd"/>
+<xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptpick.xsd"/>
+<xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptseershape.xsd"/>
+<xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptinstancemapping.xsd"/>
+<xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptbase.xsd"/>
+
+<xs:complexType name="InstanceMirror">
+  <xs:sequence>
+    <xs:element name="base" type="spt:Base"/>
+    <xs:element name="seerShape" type="spt:SeerShape"/>
+    <xs:element name="instanceMaps" type="spt:InstanceMaps"/>
+    <xs:element name="csysDragger" type="spt:CSysDragger"/>
+    
+    <xs:element name="csys" type="spt:Parameter"/>
+    <xs:element name="includeSource" type="spt:Parameter"/>
+    
+    <xs:element name="shapePick" type="spt:Pick"/>
+    <xs:element name="planePick" type="spt:Pick"/>
+    
+    <xs:element name="includeSourceLabel" type="spt:PLabel"/>
+    
+    <xs:element name="draggerVisible" type="xs:boolean"/>
+  </xs:sequence>
+</xs:complexType>
+
+<xs:element name="instanceMirror" type="inms:InstanceMirror"/>
+  
+</xs:schema> 

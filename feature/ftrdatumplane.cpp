@@ -54,7 +54,7 @@
 #include "annex/annseershape.h"
 #include "feature/ftrupdatepayload.h"
 #include "feature/ftrinputtype.h"
-#include "project/serial/xsdcxxoutput/featuredatumplane.h"
+#include "project/serial/generated/prjsrldtpsdatumplane.h"
 #include "tools/featuretools.h"
 #include "tools/occtools.h"
 #include "parameter/prmparameter.h"
@@ -756,11 +756,10 @@ QTextStream& DatumPlane::getInfo(QTextStream &streamIn) const
 void DatumPlane::serialWrite(const boost::filesystem::path &dIn)
 {
 
-  prj::srl::FeatureDatumPlane datumPlaneOut
+  prj::srl::dtps::DatumPlane datumPlaneOut
   (
     Base::serialOut(),
     static_cast<int>(dpType),
-    ::ftr::serialOut(picks),
     csys->serialOut(),
     flip->serialOut(),
     autoSize->serialOut(),
@@ -770,19 +769,22 @@ void DatumPlane::serialWrite(const boost::filesystem::path &dIn)
     csysDragger->serialOut(),
     flipLabel->serialOut(),
     autoSizeLabel->serialOut(),
-    angleLabel->serialOut()
+    angleLabel->serialOut(),
+    sizeIP->serialOut(),
+    offsetIP->serialOut()
   );
+  for (const auto &p : picks)
+    datumPlaneOut.picks().push_back(p);
   
   xml_schema::NamespaceInfomap infoMap;
   std::ofstream stream(buildFilePathName(dIn).string());
-  prj::srl::datumPlane(stream, datumPlaneOut, infoMap);
+  prj::srl::dtps::datumPlane(stream, datumPlaneOut, infoMap);
 }
 
-void DatumPlane::serialRead(const prj::srl::FeatureDatumPlane &dpi)
+void DatumPlane::serialRead(const prj::srl::dtps::DatumPlane &dpi)
 {
-  Base::serialIn(dpi.featureBase());
+  Base::serialIn(dpi.base());
   dpType = static_cast<DPType>(dpi.dpType());
-  picks = ::ftr::serialIn(dpi.picks());
   csys->serialIn(dpi.csys());
   flip->serialIn(dpi.flip());
   autoSize->serialIn(dpi.autoSize());
@@ -793,14 +795,13 @@ void DatumPlane::serialRead(const prj::srl::FeatureDatumPlane &dpi)
   flipLabel->serialIn(dpi.flipLabel());
   autoSizeLabel->serialIn(dpi.autoSizeLabel());
   angleLabel->serialIn(dpi.angleLabel());
+  for (const auto &p : dpi.picks())
+    picks.emplace_back(p);
+  sizeIP->serialIn(dpi.sizeIP());
+  offsetIP->serialIn(dpi.offsetIP());
 
   cachedSize = static_cast<double>(*size);
   mainTransform->setMatrix(static_cast<osg::Matrixd>(*csys));
-  
-  sizeIP->valueHasChanged();
-  sizeIP->constantHasChanged();
-  offsetIP->valueHasChanged();
-  offsetIP->constantHasChanged();
   
   updateOverlayViz();
   updateLabelPositions();

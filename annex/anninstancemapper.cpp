@@ -23,7 +23,7 @@
 #include "tools/occtools.h"
 #include "feature/ftrshapehistory.h"
 #include "annex/annseershape.h"
-#include "project/serial/xsdcxxoutput/instancemapper.h"
+#include "project/serial/generated/prjsrlsptinstancemapping.h"
 #include "annex/anninstancemapper.h"
 
 using boost::uuids::uuid;
@@ -144,27 +144,27 @@ void InstanceMapper::mapIndex(SeerShape &sShape, const TopoDS_Shape &dsShape, st
   }
 }
 
-prj::srl::InstanceData InstanceMapper::serialOut()
+prj::srl::spt::InstanceMaps InstanceMapper::serialOut()
 {
-  prj::srl::HistoryOuts hos;
+  prj::srl::spt::InstanceMaps out;
   for (const auto &historyOut : data->historyOuts)
   {
-    prj::srl::OutIds oids;
+    prj::srl::spt::InstanceMap mapOut(historyOut.history.serialOut());
     for (const auto &oid : historyOut.outIds)
-      oids.array().push_back(gu::idToString(oid));
-    hos.array().push_back(prj::srl::HistoryOut(historyOut.history.serialOut(), oids));
+      mapOut.outIds().push_back(gu::idToString(oid));
+    out.instanceMaps().push_back(mapOut);
   }
-  return prj::srl::InstanceData(hos);
+  return out;
 }
 
-void InstanceMapper::serialIn(const prj::srl::InstanceData &dataIn)
+void InstanceMapper::serialIn(const prj::srl::spt::InstanceMaps &mapsIn)
 {
-  for (const auto &hos : dataIn.historyOuts().array())
+  for (const auto &m : mapsIn.instanceMaps())
   {
     ftr::ShapeHistory t;
-    t.serialIn(hos.history());
+    t.serialIn(m.history());
     Data::HistoryOut historyOut(t);
-    for (const auto &id : hos.outIds().array())
+    for (const auto &id : m.outIds())
       historyOut.outIds.push_back(gu::stringToId(id));
     data->historyOuts.push_back(historyOut);
   }

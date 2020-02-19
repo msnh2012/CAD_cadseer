@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xs:schema
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  xmlns:spt="http://www.cadseer.com/prj/srl/spt"
+  xmlns:blns="http://www.cadseer.com/prj/srl/blns"
+  targetNamespace="http://www.cadseer.com/prj/srl/blns"
+>
+
+<xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptparameter.xsd"/>
+<xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptpick.xsd"/>
+<xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptoverlay.xsd"/>
+<xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptseershape.xsd"/>
+<xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptbase.xsd"/>
+
+<xs:complexType name="SimpleBlend">
+  <xs:sequence>
+    <xs:element name="blendPicks" type="spt:Pick" minOccurs="0" maxOccurs="unbounded"/>
+    <xs:element name="radius" type="spt:Parameter"/>
+    <xs:element name="plabel" type="spt:PLabel"/>
+  </xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="VariableEntry">
+  <xs:sequence>
+    <xs:element name="blendPick" type="spt:Pick"/>
+    <xs:element name="position" type="spt:Parameter"/>
+    <xs:element name="radius" type="spt:Parameter"/>
+    <xs:element name="plabel" type="spt:PLabel"/>
+    <xs:element name="positionLabel" type="spt:PLabel"/>
+  </xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="VariableBlend">
+  <xs:sequence>
+    <xs:element name="blendPicks" type="spt:Pick" minOccurs="0" maxOccurs="unbounded"/>
+    <xs:element name="variableEntries" type="blns:VariableEntry" minOccurs="0" maxOccurs="unbounded"/>
+  </xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="Blend">
+  <xs:sequence>
+    <xs:element name="base" type="spt:Base"/>
+    <xs:element name="seerShape" type="spt:SeerShape"/>
+    <xs:element name="shapeMap" type="spt:EvolveRecord" minOccurs="0" maxOccurs="unbounded"/>
+    <xs:element name="simpleBlends" type="blns:SimpleBlend" minOccurs="0" maxOccurs="unbounded"/>
+    <xs:element name="variableBlend" type="blns:VariableBlend"/>
+    <xs:element name="filletShape" type="xs:int"/>
+  </xs:sequence>
+</xs:complexType>
+
+<xs:element name="blend" type="blns:Blend"/>
+  
+</xs:schema> 

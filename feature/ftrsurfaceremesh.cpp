@@ -30,7 +30,7 @@
 #include "modelviz/mdvsurfacemesh.h"
 #include "feature/ftrupdatepayload.h"
 #include "feature/ftrinputtype.h"
-#include "project/serial/xsdcxxoutput/featuresurfaceremesh.h"
+#include "project/serial/generated/prjsrlsrmssurfaceremesh.h"
 #include "feature/ftrsurfaceremesh.h"
 
 using namespace ftr;
@@ -186,7 +186,7 @@ void SurfaceReMesh::updateVisual()
 
 void SurfaceReMesh::serialWrite(const boost::filesystem::path &dIn)
 {
-  prj::srl::FeatureSurfaceReMesh so
+  prj::srl::srms::SurfaceReMesh so
   (
     Base::serialOut()
     , mesh->serialOut()
@@ -202,12 +202,12 @@ void SurfaceReMesh::serialWrite(const boost::filesystem::path &dIn)
   
   xml_schema::NamespaceInfomap infoMap;
   std::ofstream stream(buildFilePathName(dIn).string());
-  prj::srl::surfaceremesh(stream, so, infoMap);
+  prj::srl::srms::surfaceremesh(stream, so, infoMap);
 }
 
-void SurfaceReMesh::serialRead(const prj::srl::FeatureSurfaceReMesh &so)
+void SurfaceReMesh::serialRead(const prj::srl::srms::SurfaceReMesh &so)
 {
-  Base::serialIn(so.featureBase());
+  Base::serialIn(so.base());
   mesh->serialIn(so.mesh());
   reMeshType->serialIn(so.reMeshType());
   minEdgeLength->serialIn(so.minEdgeLength());

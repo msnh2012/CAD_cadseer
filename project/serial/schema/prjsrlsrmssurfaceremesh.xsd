@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xs:schema
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  xmlns:spt="http://www.cadseer.com/prj/srl/spt"
+  xmlns:mshs="http://www.cadseer.com/prj/srl/mshs"
+  xmlns:srms="http://www.cadseer.com/prj/srl/srms"
+  targetNamespace="http://www.cadseer.com/prj/srl/srms"
+>
+  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptbase.xsd"/>
+  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptparameter.xsd"/>
+  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptoverlay.xsd"/>
+  <xs:import namespace = "http://www.cadseer.com/prj/srl/mshs" schemaLocation="prjsrlmshsmesh.xsd"/>
+
+  <xs:complexType name="SurfaceReMesh">
+    <xs:sequence>
+      <xs:element name="base" type="spt:Base"/>
+      <xs:element name="mesh" type="mshs:Surface"/>
+      <xs:element name="reMeshType" type="spt:Parameter"/>
+      <xs:element name="minEdgeLength" type="spt:Parameter"/>
+      <xs:element name="maxEdgeLength" type="spt:Parameter"/>
+      <xs:element name="iterations" type="spt:Parameter"/>
+      <xs:element name="reMeshTypeLabel" type="spt:PLabel"/>
+      <xs:element name="minEdgeLengthLabel" type="spt:PLabel"/>
+      <xs:element name="maxEdgeLengthLabel" type="spt:PLabel"/>
+      <xs:element name="iterationsLabel" type="spt:PLabel"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:element name="surfaceremesh" type="srms:SurfaceReMesh"/>
+</xs:schema> 

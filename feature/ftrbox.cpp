@@ -30,7 +30,7 @@
 #include "feature/ftrboxbuilder.h"
 #include "annex/annseershape.h"
 #include "annex/anncsysdragger.h"
-#include "project/serial/xsdcxxoutput/featurebox.h"
+#include "project/serial/generated/prjsrlbxsbox.h"
 #include "feature/ftrupdatepayload.h"
 #include "feature/ftrinputtype.h"
 #include "parameter/prmparameter.h"
@@ -424,29 +424,35 @@ void Box::updateResult(const BoxBuilder& boxMakerIn)
 
 void Box::serialWrite(const boost::filesystem::path &dIn)
 {
-  prj::srl::FeatureBox boxOut
+  prj::srl::bxs::Box boxOut
   (
     Base::serialOut(),
+    sShape->serialOut(),
     length->serialOut(),
     width->serialOut(),
     height->serialOut(),
     csys->serialOut(),
-    csysDragger->serialOut()
+    csysDragger->serialOut(),
+    lengthIP->serialOut(),
+    widthIP->serialOut(),
+    heightIP->serialOut()
   );
   
   xml_schema::NamespaceInfomap infoMap;
   std::ofstream stream(buildFilePathName(dIn).string());
-  prj::srl::box(stream, boxOut, infoMap);
+  prj::srl::bxs::box(stream, boxOut, infoMap);
 }
 
-void Box::serialRead(const prj::srl::FeatureBox& sBox)
+void Box::serialRead(const prj::srl::bxs::Box& sBox)
 {
-  Base::serialIn(sBox.featureBase());
+  Base::serialIn(sBox.base());
+  sShape->serialIn(sBox.seerShape());
   length->serialIn(sBox.length());
   width->serialIn(sBox.width());
   height->serialIn(sBox.height());
   csys->serialIn(sBox.csys());
   csysDragger->serialIn(sBox.csysDragger());
-  
-  updateIPGroup();
+  lengthIP->serialIn(sBox.lengthIP());
+  widthIP->serialIn(sBox.widthIP());
+  heightIP->serialIn(sBox.heightIP());
 }

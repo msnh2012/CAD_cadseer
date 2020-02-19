@@ -26,7 +26,7 @@
 
 namespace boost{namespace filesystem{class path;}}
 
-namespace prj{namespace srl{namespace msh{class Surface;}}}
+namespace prj{namespace srl{namespace mshs{class Surface;}}}
 
 namespace msh
 {
@@ -67,8 +67,8 @@ namespace ann
     void fillHolesCGAL();
     void fillHolesPMP();
     
-    prj::srl::msh::Surface serialOut();
-    void serialIn(const prj::srl::msh::Surface&);
+    prj::srl::mshs::Surface serialOut();
+    void serialIn(const prj::srl::mshs::Surface&);
   private:
     std::unique_ptr<msh::srf::Stow> stow;
   };

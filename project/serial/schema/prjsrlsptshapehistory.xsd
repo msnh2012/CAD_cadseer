@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xs:schema
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  xmlns:spt="http://www.cadseer.com/prj/srl/spt"
+  targetNamespace="http://www.cadseer.com/prj/srl/spt"
+>
+  <xs:complexType name="HistoryVertex">
+    <xs:sequence>
+      <xs:element name="featureId" type="xs:string" default="00000000-0000-0000-0000-000000000000"/>
+      <xs:element name="shapeId" type="xs:string" default="00000000-0000-0000-0000-000000000000"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="HistoryEdge">
+    <xs:sequence>
+      <xs:element name="sourceShapeId" type="xs:string" default="00000000-0000-0000-0000-000000000000"/>
+      <xs:element name="targetShapeId" type="xs:string" default="00000000-0000-0000-0000-000000000000"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="ShapeHistory">
+    <xs:sequence>
+      <xs:element name="vertices" type="spt:HistoryVertex" minOccurs="0" maxOccurs="unbounded"/>
+      <xs:element name="edges" type="spt:HistoryEdge" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+</xs:schema> 

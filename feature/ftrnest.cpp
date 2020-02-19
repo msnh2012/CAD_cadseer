@@ -31,7 +31,7 @@
 #include "annex/annseershape.h"
 #include "feature/ftrshapecheck.h"
 #include "tools/occtools.h"
-#include "project/serial/xsdcxxoutput/featurenest.h"
+#include "project/serial/generated/prjsrlnstsnest.h"
 #include "feature/ftrupdatepayload.h"
 #include "feature/ftrinputtype.h"
 #include "feature/ftrnest.h"
@@ -256,9 +256,10 @@ void Nest::updateModel(const UpdatePayload &payloadIn)
 
 void Nest::serialWrite(const boost::filesystem::path &dIn)
 {
-  prj::srl::FeatureNest so
+  prj::srl::nsts::Nest so
   (
     Base::serialOut(),
+    sShape->serialOut(),
     gap->serialOut(),
     feedDirection->serialOut(),
     gapLabel->serialOut(),
@@ -268,12 +269,13 @@ void Nest::serialWrite(const boost::filesystem::path &dIn)
   
   xml_schema::NamespaceInfomap infoMap;
   std::ofstream stream(buildFilePathName(dIn).string());
-  prj::srl::nest(stream, so, infoMap);
+  prj::srl::nsts::nest(stream, so, infoMap);
 }
 
-void Nest::serialRead(const prj::srl::FeatureNest &sNestIn)
+void Nest::serialRead(const prj::srl::nsts::Nest &sNestIn)
 {
-  Base::serialIn(sNestIn.featureBase());
+  Base::serialIn(sNestIn.base());
+  sShape->serialIn(sNestIn.seerShape());
   gap->serialIn(sNestIn.gap());
   feedDirection->serialIn(sNestIn.feedDirection());
   gapLabel->serialIn(sNestIn.gapLabel());

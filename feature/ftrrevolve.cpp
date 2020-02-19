@@ -36,7 +36,7 @@
 #include "feature/ftrdatumaxis.h"
 #include "tools/featuretools.h"
 #include "tools/idtools.h"
-#include "project/serial/xsdcxxoutput/featurerevolve.h"
+#include "project/serial/generated/prjsrlrvlsrevolve.h"
 #include "feature/ftrrevolve.h"
 
 using namespace ftr;
@@ -383,56 +383,39 @@ void Revolve::updateModel(const UpdatePayload &pIn)
 
 void Revolve::serialWrite(const boost::filesystem::path &dIn)
 {
-  auto serializeMap = [](const std::map<uuid, uuid> &map) -> prj::srl::EvolveContainer
-  {
-    prj::srl::EvolveContainer out;
-    for (const auto &p : map)
-    {
-      prj::srl::EvolveRecord r
-      (
-        gu::idToString(p.first),
-        gu::idToString(p.second)
-      );
-      out.evolveRecord().push_back(r);
-    }
-    return out;
-  };
-  
-  prj::srl::FeatureRevolve so
+  prj::srl::rvls::Revolve so
   (
     Base::serialOut(),
-    ftr::serialOut(picks),
-    ftr::serialOut(axisPicks),
+    sShape->serialOut(),
     axisOrigin->serialOut(),
     axisOriginLabel->serialOut(),
     axisDirection->serialOut(),
     axisDirectionLabel->serialOut(),
     angle->serialOut(),
     angleLabel->serialOut(),
-    static_cast<int>(axisType),
-    serializeMap(generatedMap),
-    serializeMap(lastMap),
-    serializeMap(oWireMap)
+    static_cast<int>(axisType)
   );
+  
+  for (const auto &p : picks)
+    so.picks().push_back(p);
+  for (const auto &p : axisPicks)
+    so.axisPicks().push_back(p);
+  for (const auto &p : generatedMap)
+    so.generatedMap().push_back(prj::srl::spt::EvolveRecord(gu::idToString(p.first), gu::idToString(p.second)));
+  for (const auto &p : lastMap)
+    so.lastMap().push_back(prj::srl::spt::EvolveRecord(gu::idToString(p.first), gu::idToString(p.second)));
+  for (const auto &p : oWireMap)
+    so.oWireMap().push_back(prj::srl::spt::EvolveRecord(gu::idToString(p.first), gu::idToString(p.second)));
   
   xml_schema::NamespaceInfomap infoMap;
   std::ofstream stream(buildFilePathName(dIn).string());
-  prj::srl::revolve(stream, so, infoMap);
+  prj::srl::rvls::revolve(stream, so, infoMap);
 }
 
-void Revolve::serialRead(const prj::srl::FeatureRevolve &so)
+void Revolve::serialRead(const prj::srl::rvls::Revolve &so)
 {
-  auto serializeMap = [](const prj::srl::EvolveContainer &container) -> std::map<uuid, uuid>
-  {
-    std::map<uuid, uuid> out;
-    for (const auto &r : container.evolveRecord())
-      out.insert(std::make_pair(gu::stringToId(r.idIn()), gu::stringToId(r.idOut())));
-    return out;
-  };
-  
-  Base::serialIn(so.featureBase());
-  picks = ftr::serialIn(so.picks());
-  axisPicks = ftr::serialIn(so.axisPicks());
+  Base::serialIn(so.base());
+  sShape->serialIn(so.seerShape());
   axisOrigin->serialIn(so.axisOrigin());
   axisOriginLabel->serialIn(so.axisOriginLabel());
   axisDirection->serialIn(so.axisDirection());
@@ -440,9 +423,17 @@ void Revolve::serialRead(const prj::srl::FeatureRevolve &so)
   angle->serialIn(so.angle());
   angleLabel->serialIn(so.angleLabel());
   axisType = static_cast<AxisType>(so.axisType());
-  generatedMap = serializeMap(so.generatedMap());
-  lastMap = serializeMap(so.lastMap());
-  oWireMap = serializeMap(so.oWireMap());
+  
+  for (const auto &p : so.picks())
+    picks.emplace_back(p);
+  for (const auto &p : so.axisPicks())
+    axisPicks.emplace_back(p);
+  for (const auto &p : so.generatedMap())
+    generatedMap.insert(std::make_pair(gu::stringToId(p.idIn()), gu::stringToId(p.idOut())));
+  for (const auto &p : so.lastMap())
+    lastMap.insert(std::make_pair(gu::stringToId(p.idIn()), gu::stringToId(p.idOut())));
+  for (const auto &p : so.oWireMap())
+    oWireMap.insert(std::make_pair(gu::stringToId(p.idIn()), gu::stringToId(p.idOut())));
   
   axisOriginLabel->valueHasChanged();
   axisOriginLabel->constantHasChanged();

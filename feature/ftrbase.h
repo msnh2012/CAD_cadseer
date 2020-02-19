@@ -42,7 +42,7 @@ class TopoDS_Shape;
 class QTextStream;
 
 namespace osg{class Switch; class MatrixTransform; class PagedLOD;}
-namespace prj{namespace srl{class FeatureBase;}}
+namespace prj{namespace srl{namespace spt{class Base;}}}
 namespace prm{class Parameter; typedef std::vector<Parameter*> Parameters;}
 namespace ann{class SeerShape;}
 namespace ftr
@@ -164,8 +164,9 @@ protected:
   void sendStateMessage(std::size_t); //!< just convenience.
   void removeParameter(prm::Parameter*); //!< remove parameter from the parameters array.
   
-  prj::srl::FeatureBase serialOut(); //!<convert this into serializable object. no const, we update the result container with offset
-  void serialIn(const prj::srl::FeatureBase& sBaseIn);
+ //serial rename
+  prj::srl::spt::Base serialOut(); //!<convert this into serializable object. no const, we update the result container with offset
+  void serialIn(const prj::srl::spt::Base&);
   
   QString name;
   prm::Parameters parameters;

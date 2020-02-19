@@ -31,7 +31,7 @@ class TopoDS_Edge;
 class TopoDS_Face;
 namespace osg{class Vec3d;}
 
-namespace prj{namespace srl{class Pick; class Picks;}}
+namespace prj{namespace srl{namespace spt{class Pick;}}}
 
 namespace ftr
 {
@@ -48,6 +48,8 @@ namespace ftr
    */
   struct Pick
   {
+    Pick() = default;
+    Pick(const prj::srl::spt::Pick&);
     double u = 0.0; //!< u parameter on edge or face
     double v = 0.0;//!< v parameter on face
     ShapeHistory shapeHistory;
@@ -67,8 +69,9 @@ namespace ftr
     osg::Vec3d getPoint(const TopoDS_Edge&) const;
     osg::Vec3d getPoint(const TopoDS_Face&) const;
     
-    prj::srl::Pick serialOut() const;
-    void serialIn(const prj::srl::Pick&);
+    operator prj::srl::spt::Pick() const;
+    prj::srl::spt::Pick serialOut() const; //serial rename
+    void serialIn(const prj::srl::spt::Pick&); //serial rename
     
     static double parameter(const TopoDS_Edge&, const osg::Vec3d&);
     static std::pair<double, double> parameter(const TopoDS_Face&, const osg::Vec3d&);
@@ -78,8 +81,6 @@ namespace ftr
   };
   
   typedef std::vector<Pick> Picks;
-  prj::srl::Picks serialOut(const Picks&);
-  Picks serialIn(const prj::srl::Picks&);
 }
 
 #endif // FTR_PICK_H

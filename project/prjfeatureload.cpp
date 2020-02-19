@@ -66,50 +66,50 @@
 #include "feature/ftrdatumsystem.h"
 #include "feature/ftrsurfaceremesh.h"
 #include "feature/ftrsurfacemeshfill.h"
-#include "project/serial/xsdcxxoutput/featurebox.h"
-#include "project/serial/xsdcxxoutput/featurecylinder.h"
-#include "project/serial/xsdcxxoutput/featuresphere.h"
-#include "project/serial/xsdcxxoutput/featurecone.h"
-#include "project/serial/xsdcxxoutput/featureunion.h"
-#include "project/serial/xsdcxxoutput/featureintersect.h"
-#include "project/serial/xsdcxxoutput/featuresubtract.h"
-#include "project/serial/xsdcxxoutput/featureinert.h"
-#include "project/serial/xsdcxxoutput/featureblend.h"
-#include "project/serial/xsdcxxoutput/featurechamfer.h"
-#include "project/serial/xsdcxxoutput/featuredraft.h"
-#include "project/serial/xsdcxxoutput/featuredatumplane.h"
-#include "project/serial/xsdcxxoutput/featurehollow.h"
-#include "project/serial/xsdcxxoutput/featureoblong.h"
-#include "project/serial/xsdcxxoutput/featureextract.h"
-#include "project/serial/xsdcxxoutput/featuresquash.h"
-#include "project/serial/xsdcxxoutput/featurenest.h"
-#include "project/serial/xsdcxxoutput/featuredieset.h"
-#include "project/serial/xsdcxxoutput/featurestrip.h"
-#include "project/serial/xsdcxxoutput/featurequote.h"
-#include "project/serial/xsdcxxoutput/featurerefine.h"
-#include "project/serial/xsdcxxoutput/featureinstancelinear.h"
-#include "project/serial/xsdcxxoutput/featureinstancemirror.h"
-#include "project/serial/xsdcxxoutput/featureinstancepolar.h"
-#include "project/serial/xsdcxxoutput/featureoffset.h"
-#include "project/serial/xsdcxxoutput/featurethicken.h"
-#include "project/serial/xsdcxxoutput/featuresew.h"
-#include "project/serial/xsdcxxoutput/featuretrim.h"
-#include "project/serial/xsdcxxoutput/featureremovefaces.h"
-#include "project/serial/xsdcxxoutput/featuretorus.h"
-#include "project/serial/xsdcxxoutput/featurethread.h"
-#include "project/serial/xsdcxxoutput/featuredatumaxis.h"
-#include "project/serial/xsdcxxoutput/featureextrude.h"
-#include "project/serial/xsdcxxoutput/featurerevolve.h"
-#include "project/serial/xsdcxxoutput/featuresketch.h"
-#include "project/serial/xsdcxxoutput/featureline.h"
-#include "project/serial/xsdcxxoutput/featuresurfacemesh.h"
-#include "project/serial/xsdcxxoutput/featuretransitioncurve.h"
-#include "project/serial/xsdcxxoutput/featureruled.h"
-#include "project/serial/xsdcxxoutput/featureimageplane.h"
-#include "project/serial/xsdcxxoutput/featuresweep.h"
-#include "project/serial/xsdcxxoutput/featuredatumsystem.h"
-#include "project/serial/xsdcxxoutput/featuresurfaceremesh.h"
-#include "project/serial/xsdcxxoutput/featuresurfacemeshfill.h"
+#include "project/serial/generated/prjsrlbxsbox.h"
+#include "project/serial/generated/prjsrlblnsblend.h"
+#include "project/serial/generated/prjsrlchmschamfer.h"
+#include "project/serial/generated/prjsrlcnscone.h"
+#include "project/serial/generated/prjsrlcylscylinder.h"
+#include "project/serial/generated/prjsrldtasdatumaxis.h"
+#include "project/serial/generated/prjsrldtpsdatumplane.h"
+#include "project/serial/generated/prjsrldtmsdatumsystem.h"
+#include "project/serial/generated/prjsrldstsdieset.h"
+#include "project/serial/generated/prjsrldrfsdraft.h"
+#include "project/serial/generated/prjsrlextsextract.h"
+#include "project/serial/generated/prjsrlexrsextrude.h"
+#include "project/serial/generated/prjsrlhllshollow.h"
+#include "project/serial/generated/prjsrlimpsimageplane.h"
+#include "project/serial/generated/prjsrlintsinert.h"
+#include "project/serial/generated/prjsrlinlsinstancelinear.h"
+#include "project/serial/generated/prjsrlinmsinstancemirror.h"
+#include "project/serial/generated/prjsrlinpsinstancepolar.h"
+#include "project/serial/generated/prjsrlinssintersect.h"
+#include "project/serial/generated/prjsrllnsline.h"
+#include "project/serial/generated/prjsrlnstsnest.h"
+#include "project/serial/generated/prjsrloblsoblong.h"
+#include "project/serial/generated/prjsrloffsoffset.h"
+#include "project/serial/generated/prjsrlqtsquote.h"
+#include "project/serial/generated/prjsrlrfnsrefine.h"
+#include "project/serial/generated/prjsrlrmfsremovefaces.h"
+#include "project/serial/generated/prjsrlrvlsrevolve.h"
+#include "project/serial/generated/prjsrlrldsruled.h"
+#include "project/serial/generated/prjsrlswssew.h"
+#include "project/serial/generated/prjsrlsktssketch.h"
+#include "project/serial/generated/prjsrlsprssphere.h"
+#include "project/serial/generated/prjsrlsqsssquash.h"
+#include "project/serial/generated/prjsrlstpsstrip.h"
+#include "project/serial/generated/prjsrlsbtssubtract.h"
+#include "project/serial/generated/prjsrlsfmssurfacemesh.h"
+#include "project/serial/generated/prjsrlsmfssurfacemeshfill.h"
+#include "project/serial/generated/prjsrlsrmssurfaceremesh.h"
+#include "project/serial/generated/prjsrlswpssweep.h"
+#include "project/serial/generated/prjsrlthksthicken.h"
+#include "project/serial/generated/prjsrlthdsthread.h"
+#include "project/serial/generated/prjsrltrsstorus.h"
+#include "project/serial/generated/prjsrltscstransitioncurve.h"
+#include "project/serial/generated/prjsrltrmstrim.h"
+#include "project/serial/generated/prjsrlunnsunion.h"
 
 #include "project/prjfeatureload.h"
 
@@ -212,7 +212,7 @@ std::shared_ptr< ftr::Base > FeatureLoad::load(const std::string& idIn, const st
 
 std::shared_ptr< ftr::Base > FeatureLoad::loadBox(const std::string& fileNameIn, std::size_t shapeOffsetIn)
 {
-  auto box = srl::box(fileNameIn, flags);
+  auto box = srl::bxs::box(fileNameIn, flags);
   assert(box);
   
   auto freshBox = std::make_shared<ftr::Box>();
@@ -224,7 +224,7 @@ std::shared_ptr< ftr::Base > FeatureLoad::loadBox(const std::string& fileNameIn,
 
 std::shared_ptr< ftr::Base > FeatureLoad::loadCylinder(const std::string& fileNameIn, std::size_t shapeOffsetIn)
 {
-  auto sCylinder = srl::cylinder(fileNameIn, flags);
+  auto sCylinder = srl::cyls::cylinder(fileNameIn, flags);
   assert(sCylinder);
   
   auto freshCylinder = std::make_shared<ftr::Cylinder>();
@@ -236,7 +236,7 @@ std::shared_ptr< ftr::Base > FeatureLoad::loadCylinder(const std::string& fileNa
 
 std::shared_ptr< ftr::Base > FeatureLoad::loadSphere(const std::string& fileNameIn, std::size_t shapeOffsetIn)
 {
-  auto sSphere = srl::sphere(fileNameIn, flags);
+  auto sSphere = srl::sprs::sphere(fileNameIn, flags);
   assert(sSphere);
   
   auto freshSphere = std::make_shared<ftr::Sphere>();
@@ -248,7 +248,7 @@ std::shared_ptr< ftr::Base > FeatureLoad::loadSphere(const std::string& fileName
 
 std::shared_ptr< ftr::Base > FeatureLoad::loadCone(const std::string& fileNameIn, std::size_t shapeOffsetIn)
 {
-  auto sCone = srl::cone(fileNameIn, flags);
+  auto sCone = srl::cns::cone(fileNameIn, flags);
   assert(sCone);
   
   auto freshCone = std::make_shared<ftr::Cone>();
@@ -260,7 +260,7 @@ std::shared_ptr< ftr::Base > FeatureLoad::loadCone(const std::string& fileNameIn
 
 std::shared_ptr< ftr::Base > FeatureLoad::loadUnion(const std::string& fileNameIn, std::size_t shapeOffsetIn)
 {
-  auto sUnion = srl::fUnion(fileNameIn, flags);
+  auto sUnion = srl::unns::fUnion(fileNameIn, flags);
   assert(sUnion);
   
   auto freshUnion = std::make_shared<ftr::Union>();
@@ -272,7 +272,7 @@ std::shared_ptr< ftr::Base > FeatureLoad::loadUnion(const std::string& fileNameI
 
 std::shared_ptr< ftr::Base > FeatureLoad::loadIntersect(const std::string& fileNameIn, std::size_t shapeOffsetIn)
 {
-  auto sIntersect = srl::intersect(fileNameIn, flags);
+  auto sIntersect = srl::inss::intersect(fileNameIn, flags);
   assert(sIntersect);
   
   auto freshIntersect = std::make_shared<ftr::Intersect>();
@@ -284,7 +284,7 @@ std::shared_ptr< ftr::Base > FeatureLoad::loadIntersect(const std::string& fileN
 
 std::shared_ptr< ftr::Base > FeatureLoad::loadSubtract(const std::string& fileNameIn, std::size_t shapeOffsetIn)
 {
-  auto sSubtract = srl::subtract(fileNameIn, flags);
+  auto sSubtract = srl::sbts::subtract(fileNameIn, flags);
   assert(sSubtract);
   
   auto freshSubtract = std::make_shared<ftr::Subtract>();
@@ -296,7 +296,7 @@ std::shared_ptr< ftr::Base > FeatureLoad::loadSubtract(const std::string& fileNa
 
 std::shared_ptr< ftr::Base > FeatureLoad::loadInert(const std::string &fileNameIn, std::size_t shapeOffsetIn)
 {
-  auto sInert = srl::inert(fileNameIn, flags);
+  auto sInert = srl::ints::inert(fileNameIn, flags);
   assert(sInert);
   
   auto freshInert = std::make_shared<ftr::Inert>(shapeVector.at(shapeOffsetIn));
@@ -307,7 +307,7 @@ std::shared_ptr< ftr::Base > FeatureLoad::loadInert(const std::string &fileNameI
 
 std::shared_ptr< ftr::Base > FeatureLoad::loadBlend(const std::string& fileNameIn, std::size_t shapeOffsetIn)
 {
-  auto sBlend = srl::blend(fileNameIn, flags);
+  auto sBlend = srl::blns::blend(fileNameIn, flags);
   assert(sBlend);
   
   auto freshBlend = std::make_shared<ftr::Blend>();
@@ -319,7 +319,7 @@ std::shared_ptr< ftr::Base > FeatureLoad::loadBlend(const std::string& fileNameI
 
 std::shared_ptr< ftr::Base > FeatureLoad::loadChamfer(const std::string &fileNameIn, std::size_t shapeOffsetIn)
 {
-  auto sChamfer = srl::chamfer(fileNameIn, flags);
+  auto sChamfer = srl::chms::chamfer(fileNameIn, flags);
   assert(sChamfer);
   
   auto freshChamfer = std::make_shared<ftr::Chamfer>();
@@ -331,7 +331,7 @@ std::shared_ptr< ftr::Base > FeatureLoad::loadChamfer(const std::string &fileNam
 
 std::shared_ptr< ftr::Base > FeatureLoad::loadDraft(const std::string &fileNameIn, std::size_t shapeOffsetIn)
 {
-  auto sDraft = srl::draft(fileNameIn, flags);
+  auto sDraft = srl::drfs::draft(fileNameIn, flags);
   assert(sDraft);
   
   auto freshDraft = std::make_shared<ftr::Draft>();
@@ -343,7 +343,7 @@ std::shared_ptr< ftr::Base > FeatureLoad::loadDraft(const std::string &fileNameI
 
 std::shared_ptr< ftr::Base > FeatureLoad::loadDatumPlane(const std::string &fileNameIn, std::size_t)
 {
-  auto sDatumPlane = srl::datumPlane(fileNameIn, flags);
+  auto sDatumPlane = srl::dtps::datumPlane(fileNameIn, flags);
   assert(sDatumPlane);
   
   auto freshDatumPlane = std::make_shared<ftr::DatumPlane>();
@@ -354,7 +354,7 @@ std::shared_ptr< ftr::Base > FeatureLoad::loadDatumPlane(const std::string &file
 
 std::shared_ptr< ftr::Base > FeatureLoad::loadHollow(const std::string &fileNameIn, std::size_t shapeOffsetIn)
 {
-  auto sHollow = srl::hollow(fileNameIn, flags);
+  auto sHollow = srl::hlls::hollow(fileNameIn, flags);
   assert(sHollow);
   
   auto freshHollow = std::make_shared<ftr::Hollow>();
@@ -366,7 +366,7 @@ std::shared_ptr< ftr::Base > FeatureLoad::loadHollow(const std::string &fileName
 
 std::shared_ptr<ftr::Base> FeatureLoad::loadOblong(const std::string &fileNameIn, std::size_t shapeOffsetIn)
 {
-  auto sOblong = srl::oblong(fileNameIn, flags);
+  auto sOblong = srl::obls::oblong(fileNameIn, flags);
   assert(sOblong);
   
   auto freshOblong = std::make_shared<ftr::Oblong>();
@@ -378,7 +378,7 @@ std::shared_ptr<ftr::Base> FeatureLoad::loadOblong(const std::string &fileNameIn
 
 std::shared_ptr<ftr::Base> FeatureLoad::loadExtract(const std::string &fileNameIn, std::size_t shapeOffsetIn)
 {
-  auto sExtract = srl::extract(fileNameIn, flags);
+  auto sExtract = srl::exts::extract(fileNameIn, flags);
   assert(sExtract);
   
   auto freshExtract = std::make_shared<ftr::Extract>();
@@ -390,7 +390,7 @@ std::shared_ptr<ftr::Base> FeatureLoad::loadExtract(const std::string &fileNameI
 
 std::shared_ptr<ftr::Base> FeatureLoad::loadSquash(const std::string &fileNameIn, std::size_t shapeOffsetIn)
 {
-  auto sSquash = srl::squash(fileNameIn, flags);
+  auto sSquash = srl::sqss::squash(fileNameIn, flags);
   assert(sSquash);
   
   auto freshSquash = std::make_shared<ftr::Squash>();
@@ -402,7 +402,7 @@ std::shared_ptr<ftr::Base> FeatureLoad::loadSquash(const std::string &fileNameIn
 
 std::shared_ptr<ftr::Base> FeatureLoad::loadNest(const std::string &fileNameIn, std::size_t shapeOffsetIn)
 {
-  auto sNest = srl::nest(fileNameIn, flags);
+  auto sNest = srl::nsts::nest(fileNameIn, flags);
   assert(sNest);
   
   auto freshNest = std::make_shared<ftr::Nest>();
@@ -414,7 +414,7 @@ std::shared_ptr<ftr::Base> FeatureLoad::loadNest(const std::string &fileNameIn, 
 
 std::shared_ptr<ftr::Base> FeatureLoad::loadDieSet(const std::string &fileNameIn, std::size_t shapeOffsetIn)
 {
-  auto sds = srl::dieset(fileNameIn, flags);
+  auto sds = srl::dsts::dieset(fileNameIn, flags);
   assert(sds);
   
   auto freshDieSet = std::make_shared<ftr::DieSet>();
@@ -426,7 +426,7 @@ std::shared_ptr<ftr::Base> FeatureLoad::loadDieSet(const std::string &fileNameIn
 
 std::shared_ptr<ftr::Base> FeatureLoad::loadStrip(const std::string &fileNameIn, std::size_t shapeOffsetIn)
 {
-  auto ss = srl::strip(fileNameIn, flags);
+  auto ss = srl::stps::strip(fileNameIn, flags);
   assert(ss);
   
   auto freshStrip = std::make_shared<ftr::Strip>();
@@ -438,7 +438,7 @@ std::shared_ptr<ftr::Base> FeatureLoad::loadStrip(const std::string &fileNameIn,
 
 std::shared_ptr<ftr::Base> FeatureLoad::loadQuote(const std::string &fileNameIn, std::size_t)
 {
-  auto sq = srl::quote(fileNameIn, flags);
+  auto sq = srl::qts::quote(fileNameIn, flags);
   assert(sq);
   
   auto freshQuote = std::make_shared<ftr::Quote>();
@@ -449,7 +449,7 @@ std::shared_ptr<ftr::Base> FeatureLoad::loadQuote(const std::string &fileNameIn,
 
 std::shared_ptr<ftr::Base> FeatureLoad::loadRefine(const std::string &fileNameIn, std::size_t shapeOffsetIn)
 {
-  auto sr = srl::refine(fileNameIn, flags);
+  auto sr = srl::rfns::refine(fileNameIn, flags);
   assert(sr);
   
   auto freshRefine = std::make_shared<ftr::Refine>();
@@ -461,7 +461,7 @@ std::shared_ptr<ftr::Base> FeatureLoad::loadRefine(const std::string &fileNameIn
 
 std::shared_ptr<ftr::Base> FeatureLoad::loadInstanceLinear(const std::string &fileNameIn, std::size_t shapeOffsetIn)
 {
-  auto sr = srl::instanceLinear(fileNameIn, flags);
+  auto sr = srl::inls::instanceLinear(fileNameIn, flags);
   assert(sr);
   
   auto freshInstanceLinear = std::make_shared<ftr::InstanceLinear>();
@@ -473,7 +473,7 @@ std::shared_ptr<ftr::Base> FeatureLoad::loadInstanceLinear(const std::string &fi
 
 std::shared_ptr<ftr::Base> FeatureLoad::loadInstanceMirror(const std::string &fileNameIn, std::size_t shapeOffsetIn)
 {
-  auto sr = srl::instanceMirror(fileNameIn, flags);
+  auto sr = srl::inms::instanceMirror(fileNameIn, flags);
   assert(sr);
   
   auto freshInstanceMirror = std::make_shared<ftr::InstanceMirror>();
@@ -485,7 +485,7 @@ std::shared_ptr<ftr::Base> FeatureLoad::loadInstanceMirror(const std::string &fi
 
 std::shared_ptr<ftr::Base> FeatureLoad::loadInstancePolar(const std::string &fileNameIn, std::size_t shapeOffsetIn)
 {
-  auto sr = srl::instancePolar(fileNameIn, flags);
+  auto sr = srl::inps::instancePolar(fileNameIn, flags);
   assert(sr);
   
   auto freshInstancePolar = std::make_shared<ftr::InstancePolar>();
@@ -497,7 +497,7 @@ std::shared_ptr<ftr::Base> FeatureLoad::loadInstancePolar(const std::string &fil
 
 std::shared_ptr<ftr::Base> FeatureLoad::loadOffset(const std::string &fileNameIn, std::size_t shapeOffsetIn)
 {
-  auto sr = srl::offset(fileNameIn, flags);
+  auto sr = srl::offs::offset(fileNameIn, flags);
   assert(sr);
   
   auto offset = std::make_shared<ftr::Offset>();
@@ -509,7 +509,7 @@ std::shared_ptr<ftr::Base> FeatureLoad::loadOffset(const std::string &fileNameIn
 
 std::shared_ptr<ftr::Base> FeatureLoad::loadThicken(const std::string &fileNameIn, std::size_t shapeOffsetIn)
 {
-  auto sr = srl::thicken(fileNameIn, flags);
+  auto sr = srl::thks::thicken(fileNameIn, flags);
   assert(sr);
   
   auto thicken = std::make_shared<ftr::Thicken>();
@@ -521,7 +521,7 @@ std::shared_ptr<ftr::Base> FeatureLoad::loadThicken(const std::string &fileNameI
 
 std::shared_ptr<ftr::Base> FeatureLoad::loadSew(const std::string &fileNameIn, std::size_t shapeOffsetIn)
 {
-  auto sr = srl::sew(fileNameIn, flags);
+  auto sr = srl::sws::sew(fileNameIn, flags);
   assert(sr);
   
   auto sew = std::make_shared<ftr::Sew>();
@@ -533,7 +533,7 @@ std::shared_ptr<ftr::Base> FeatureLoad::loadSew(const std::string &fileNameIn, s
 
 std::shared_ptr<ftr::Base> FeatureLoad::loadTrim(const std::string &fileNameIn, std::size_t shapeOffsetIn)
 {
-  auto sr = srl::trim(fileNameIn, flags);
+  auto sr = srl::trms::trim(fileNameIn, flags);
   assert(sr);
   
   auto trim = std::make_shared<ftr::Trim>();
@@ -545,7 +545,7 @@ std::shared_ptr<ftr::Base> FeatureLoad::loadTrim(const std::string &fileNameIn, 
 
 std::shared_ptr<ftr::Base> FeatureLoad::loadRemoveFaces(const std::string &fileNameIn, std::size_t shapeOffsetIn)
 {
-  auto sr = srl::removeFaces(fileNameIn, flags);
+  auto sr = srl::rmfs::removeFaces(fileNameIn, flags);
   assert(sr);
   
   auto rfs = std::make_shared<ftr::RemoveFaces>();
@@ -557,7 +557,7 @@ std::shared_ptr<ftr::Base> FeatureLoad::loadRemoveFaces(const std::string &fileN
 
 std::shared_ptr<ftr::Base> FeatureLoad::loadTorus(const std::string &fileNameIn, std::size_t shapeOffsetIn)
 {
-  auto st = srl::torus(fileNameIn, flags);
+  auto st = srl::trss::torus(fileNameIn, flags);
   assert(st);
   
   auto tf = std::make_shared<ftr::Torus>();
@@ -569,7 +569,7 @@ std::shared_ptr<ftr::Base> FeatureLoad::loadTorus(const std::string &fileNameIn,
 
 std::shared_ptr<ftr::Base> FeatureLoad::loadThread(const std::string &fileNameIn, std::size_t shapeOffsetIn)
 {
-  auto st = srl::thread(fileNameIn, flags);
+  auto st = srl::thds::thread(fileNameIn, flags);
   assert(st);
   
   auto tf = std::make_shared<ftr::Thread>();
@@ -581,7 +581,7 @@ std::shared_ptr<ftr::Base> FeatureLoad::loadThread(const std::string &fileNameIn
 
 std::shared_ptr<ftr::Base> FeatureLoad::loadDatumAxis(const std::string &fileNameIn, std::size_t)
 {
-  auto sda = srl::datumAxis(fileNameIn, flags);
+  auto sda = srl::dtas::datumAxis(fileNameIn, flags);
   assert(sda);
   
   auto daf = std::make_shared<ftr::DatumAxis>();
@@ -592,7 +592,7 @@ std::shared_ptr<ftr::Base> FeatureLoad::loadDatumAxis(const std::string &fileNam
 
 std::shared_ptr<ftr::Base> FeatureLoad::loadExtrude(const std::string &fileNameIn, std::size_t shapeOffsetIn)
 {
-  auto se = srl::extrude(fileNameIn, flags);
+  auto se = srl::exrs::extrude(fileNameIn, flags);
   assert(se);
   
   auto ef = std::make_shared<ftr::Extrude>();
@@ -604,7 +604,7 @@ std::shared_ptr<ftr::Base> FeatureLoad::loadExtrude(const std::string &fileNameI
 
 std::shared_ptr<ftr::Base> FeatureLoad::loadRevolve(const std::string &fileNameIn, std::size_t shapeOffsetIn)
 {
-  auto se = srl::revolve(fileNameIn, flags);
+  auto se = srl::rvls::revolve(fileNameIn, flags);
   assert(se);
   
   auto ef = std::make_shared<ftr::Revolve>();
@@ -616,7 +616,7 @@ std::shared_ptr<ftr::Base> FeatureLoad::loadRevolve(const std::string &fileNameI
 
 std::shared_ptr<ftr::Base> FeatureLoad::loadSketch(const std::string &fileNameIn, std::size_t shapeOffsetIn)
 {
-  auto ss = srl::sketch(fileNameIn, flags);
+  auto ss = srl::skts::sketch(fileNameIn, flags);
   assert(ss);
   
   auto sf = std::make_shared<ftr::Sketch>();
@@ -628,7 +628,7 @@ std::shared_ptr<ftr::Base> FeatureLoad::loadSketch(const std::string &fileNameIn
 
 std::shared_ptr<ftr::Base> FeatureLoad::loadLine(const std::string &fileNameIn, std::size_t shapeOffsetIn)
 {
-  auto ss = srl::line(fileNameIn, flags);
+  auto ss = srl::lns::line(fileNameIn, flags);
   assert(ss);
   
   auto sf = std::make_shared<ftr::Line>();
@@ -640,7 +640,7 @@ std::shared_ptr<ftr::Base> FeatureLoad::loadLine(const std::string &fileNameIn, 
 
 std::shared_ptr<ftr::Base> FeatureLoad::loadSurfaceMesh(const std::string &fileNameIn, std::size_t)
 {
-  auto ss = srl::surfaceMesh(fileNameIn, flags);
+  auto ss = srl::sfms::surfaceMesh(fileNameIn, flags);
   assert(ss);
   
   auto sf = std::make_shared<ftr::SurfaceMesh>();
@@ -651,7 +651,7 @@ std::shared_ptr<ftr::Base> FeatureLoad::loadSurfaceMesh(const std::string &fileN
 
 std::shared_ptr<ftr::Base> FeatureLoad::loadTransitionCurve(const std::string &fileNameIn, std::size_t shapeOffsetIn)
 {
-  auto ss = srl::transitionCurve(fileNameIn, flags);
+  auto ss = srl::tscs::transitionCurve(fileNameIn, flags);
   assert(ss);
   
   auto sf = std::make_shared<ftr::TransitionCurve>();
@@ -663,7 +663,7 @@ std::shared_ptr<ftr::Base> FeatureLoad::loadTransitionCurve(const std::string &f
 
 std::shared_ptr<ftr::Base> FeatureLoad::loadRuled(const std::string &fileNameIn, std::size_t shapeOffsetIn)
 {
-  auto ss = srl::ruled(fileNameIn, flags);
+  auto ss = srl::rlds::ruled(fileNameIn, flags);
   assert(ss);
   
   auto sf = std::make_shared<ftr::Ruled>();
@@ -675,7 +675,7 @@ std::shared_ptr<ftr::Base> FeatureLoad::loadRuled(const std::string &fileNameIn,
 
 std::shared_ptr<ftr::Base> FeatureLoad::loadImagePlane(const std::string &fileNameIn, std::size_t)
 {
-  auto ss = srl::imageplane(fileNameIn, flags);
+  auto ss = srl::imps::imageplane(fileNameIn, flags);
   assert(ss);
   
   auto sf = std::make_shared<ftr::ImagePlane>();
@@ -686,7 +686,7 @@ std::shared_ptr<ftr::Base> FeatureLoad::loadImagePlane(const std::string &fileNa
 
 std::shared_ptr<ftr::Base> FeatureLoad::loadSweep(const std::string &fileNameIn, std::size_t shapeOffsetIn)
 {
-  auto ss = srl::sweep(fileNameIn, flags);
+  auto ss = srl::swps::sweep(fileNameIn, flags);
   assert(ss);
   
   auto sf = std::make_shared<ftr::Sweep>();
@@ -698,7 +698,7 @@ std::shared_ptr<ftr::Base> FeatureLoad::loadSweep(const std::string &fileNameIn,
 
 std::shared_ptr<ftr::Base> FeatureLoad::loadDatumSystem(const std::string &fileNameIn, std::size_t)
 {
-  auto sds = srl::datumsystem(fileNameIn, flags);
+  auto sds = srl::dtms::datumsystem(fileNameIn, flags);
   assert(sds);
   
   auto daf = std::make_shared<ftr::DatumSystem::Feature>();
@@ -709,7 +709,7 @@ std::shared_ptr<ftr::Base> FeatureLoad::loadDatumSystem(const std::string &fileN
 
 std::shared_ptr<ftr::Base> FeatureLoad::loadSurfaceReMesh(const std::string &fileNameIn, std::size_t)
 {
-  auto ssrm = srl::surfaceremesh(fileNameIn, flags);
+  auto ssrm = srl::srms::surfaceremesh(fileNameIn, flags);
   assert(ssrm);
   
   auto daf = std::make_shared<ftr::SurfaceReMesh>();
@@ -720,7 +720,7 @@ std::shared_ptr<ftr::Base> FeatureLoad::loadSurfaceReMesh(const std::string &fil
 
 std::shared_ptr<ftr::Base> FeatureLoad::loadSurfaceMeshFill(const std::string &fileNameIn, std::size_t)
 {
-  auto ssrm = srl::surfacemeshfill(fileNameIn, flags);
+  auto ssrm = srl::smfs::surfacemeshfill(fileNameIn, flags);
   assert(ssrm);
   
   auto daf = std::make_shared<ftr::SurfaceMeshFill>();

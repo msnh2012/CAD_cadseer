@@ -25,7 +25,7 @@
 #include "preferences/prfmanager.h"
 #include "library/lbripgroup.h"
 #include "library/lbrcsysdragger.h"
-#include "project/serial/xsdcxxoutput/featuresphere.h"
+#include "project/serial/generated/prjsrlsprssphere.h"
 #include "annex/anncsysdragger.h"
 #include "annex/annseershape.h"
 #include "parameter/prmparameter.h"
@@ -242,25 +242,27 @@ void Sphere::updateResult(BRepPrimAPI_MakeSphere &sphereMaker)
 
 void Sphere::serialWrite(const boost::filesystem::path &dIn)
 {
-  prj::srl::FeatureSphere sphereOut
+  prj::srl::sprs::Sphere sphereOut
   (
     Base::serialOut(),
+    sShape->serialOut(),
     radius->serialOut(),
     csys->serialOut(),
-    csysDragger->serialOut()
+    csysDragger->serialOut(),
+    radiusIP->serialOut()
   );
   
   xml_schema::NamespaceInfomap infoMap;
   std::ofstream stream(buildFilePathName(dIn).string());
-  prj::srl::sphere(stream, sphereOut, infoMap);
+  prj::srl::sprs::sphere(stream, sphereOut, infoMap);
 }
 
-void Sphere::serialRead(const prj::srl::FeatureSphere& sSphereIn)
+void Sphere::serialRead(const prj::srl::sprs::Sphere& sSphereIn)
 {
-  Base::serialIn(sSphereIn.featureBase());
+  Base::serialIn(sSphereIn.base());
+  sShape->serialIn(sSphereIn.seerShape());
   radius->serialIn(sSphereIn.radius());
   csys->serialIn(sSphereIn.csys());
   csysDragger->serialIn(sSphereIn.csysDragger());
-  
-  updateIPGroup();
+  radiusIP->serialIn(sSphereIn.radiusIP());
 }

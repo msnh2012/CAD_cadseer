@@ -30,7 +30,7 @@ class TopoDS_Face;
 class gp_Pln;
 
 namespace lbr{class PLabel;}
-namespace prj{namespace srl{class FeatureDraft;}}
+namespace prj{namespace srl{namespace drfs{class Draft;}}}
 namespace ann{class SeerShape;}
 namespace ftr
 {
@@ -48,7 +48,7 @@ namespace ftr
       virtual const QIcon& getIcon() const override {return icon;}
       virtual Descriptor getDescriptor() const override {return Descriptor::Alter;}
       virtual void serialWrite(const boost::filesystem::path&) override;
-      void serialRead(const prj::srl::FeatureDraft &);
+      void serialRead(const prj::srl::drfs::Draft&);
       
       void setTargetPicks(const Picks&);
       const Picks& getTargetPicks() const {return targetPicks;}

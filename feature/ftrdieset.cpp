@@ -28,7 +28,7 @@
 #include "annex/annseershape.h"
 #include "feature/ftrshapecheck.h"
 #include "feature/ftrboxbuilder.h"
-#include "project/serial/xsdcxxoutput/featuredieset.h"
+#include "project/serial/generated/prjsrldstsdieset.h"
 #include "feature/ftrinputtype.h"
 #include "feature/ftrupdatepayload.h"
 #include "feature/ftrdieset.h"
@@ -285,9 +285,10 @@ void DieSet::updateLabelColors()
 
 void DieSet::serialWrite(const boost::filesystem::path &dIn)
 {
-  prj::srl::FeatureDieSet dso
+  prj::srl::dsts::DieSet dso
   (
     Base::serialOut(),
+    sShape->serialOut(),
     length->serialOut(),
     lengthPadding->serialOut(),
     width->serialOut(),
@@ -304,12 +305,13 @@ void DieSet::serialWrite(const boost::filesystem::path &dIn)
   
   xml_schema::NamespaceInfomap infoMap;
   std::ofstream stream(buildFilePathName(dIn).string());
-  prj::srl::dieset(stream, dso, infoMap);
+  prj::srl::dsts::dieset(stream, dso, infoMap);
 }
 
-void DieSet::serialRead(const prj::srl::FeatureDieSet &dsIn)
+void DieSet::serialRead(const prj::srl::dsts::DieSet &dsIn)
 {
-  Base::serialIn(dsIn.featureBase());
+  Base::serialIn(dsIn.base());
+  sShape->serialIn(dsIn.seerShape());
   length->serialIn(dsIn.length());
   lengthPadding->serialIn(dsIn.lengthPadding());
   width->serialIn(dsIn.width());

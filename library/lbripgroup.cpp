@@ -33,7 +33,7 @@
 #include "preferences/preferencesXML.h"
 #include "preferences/prfmanager.h"
 #include "message/msgmessage.h"
-#include "project/serial/xsdcxxoutput/featurebase.h"
+#include "project/serial/generated/prjsrlsptoverlay.h"
 #include "library/lbrlineardimension.h"
 #include "library/lbrlineardragger.h"
 #include "library/lbripgroup.h"
@@ -181,11 +181,11 @@ void IPGroup::draggerHide()
   draggerSwitch->setAllChildrenOff();
 }
 
-prj::srl::IPGroup IPGroup::serialOut() const
+prj::srl::spt::IPGroup IPGroup::serialOut() const
 {
-  auto matrixOut = [](const osg::Matrixd &m) -> prj::srl::Matrixd
+  auto matrixOut = [](const osg::Matrixd &m) -> prj::srl::spt::Matrixd
   {
-    return prj::srl::Matrixd
+    return prj::srl::spt::Matrixd
     (
       m(0,0), m(0,1), m(0,2), m(0,3),
       m(1,0), m(1,1), m(1,2), m(1,3),
@@ -194,12 +194,12 @@ prj::srl::IPGroup IPGroup::serialOut() const
     );
   };
   
-  auto vecOut = [](const osg::Vec3d &v) -> prj::srl::Vec3d
+  auto vecOut = [](const osg::Vec3d &v) -> prj::srl::spt::Vec3d
   {
-    return prj::srl::Vec3d(v.x(), v.y(), v.z());
+    return prj::srl::spt::Vec3d(v.x(), v.y(), v.z());
   };
   
-  return prj::srl::IPGroup
+  return prj::srl::spt::IPGroup
   (
     matrixOut(this->getMatrix())
     , matrixOut(mainDim->getMatrix())
@@ -209,13 +209,13 @@ prj::srl::IPGroup IPGroup::serialOut() const
     , mainDim->isFlipped()
     , static_cast<bool>(rotation->getNumChildren())
     , draggerSwitch->getChildValue(dragger.get())
-    , prj::srl::Color(1.0, 0.0, 0.0, 1.0) //don't currently need.
+    , prj::srl::spt::Color(1.0, 0.0, 0.0, 1.0) //don't currently need.
   );
 }
 
-void IPGroup::serialIn(const prj::srl::IPGroup &sgi)
+void IPGroup::serialIn(const prj::srl::spt::IPGroup &sgi)
 {
-  auto matrixIn = [](const prj::srl::Matrixd &mIn) -> osg::Matrixd
+  auto matrixIn = [](const prj::srl::spt::Matrixd &mIn) -> osg::Matrixd
   {
     return osg::Matrixd
     (
@@ -226,7 +226,7 @@ void IPGroup::serialIn(const prj::srl::IPGroup &sgi)
     );
   };
   
-  auto vecIn = [](const prj::srl::Vec3d &v) -> osg::Vec3d
+  auto vecIn = [](const prj::srl::spt::Vec3d &v) -> osg::Vec3d
   {
     return osg::Vec3d(v.x(), v.y(), v.z());
   };

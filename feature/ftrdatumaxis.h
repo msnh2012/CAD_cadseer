@@ -37,7 +37,7 @@
 namespace mdv{class DatumAxis;}
 namespace ann{class CSysDragger;}
 namespace lbr{class PLabel;}
-namespace prj{namespace srl{class FeatureDatumAxis;}}
+namespace prj{namespace srl{namespace dtas{class DatumAxis;}}}
 
 namespace ftr
 {
@@ -66,7 +66,7 @@ namespace ftr
     virtual const QIcon& getIcon() const override {return icon;}
     virtual Descriptor getDescriptor() const override {return Descriptor::Create;}
     virtual void serialWrite(const boost::filesystem::path&) override;
-    void serialRead(const prj::srl::FeatureDatumAxis &);
+    void serialRead(const prj::srl::dtas::DatumAxis &);
     
     void setAxisType(AxisType);
     AxisType getAxisType() const {return axisType;}

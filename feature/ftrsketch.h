@@ -22,10 +22,9 @@
 
 #include "feature/ftrbase.h"
 
-namespace prj{namespace srl{class FeatureSketch;}}
+namespace prj{namespace srl{namespace skts{class Sketch;}}}
 namespace skt{struct Solver; class Visual;}
 namespace ann{class SeerShape; class CSysDragger;}
-namespace prj{namespace srl{class FeatureSketch;}}
 
 namespace ftr
 {
@@ -45,7 +44,7 @@ namespace ftr
     virtual Descriptor getDescriptor() const override {return Descriptor::Create;}
     
     virtual void serialWrite(const boost::filesystem::path&) override;
-    void serialRead(const prj::srl::FeatureSketch&);
+    void serialRead(const prj::srl::skts::Sketch&);
     
     skt::Solver* getSolver(){return solver.get();}
     skt::Visual* getVisual(){return visual.get();}

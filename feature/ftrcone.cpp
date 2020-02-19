@@ -24,7 +24,7 @@
 #include "library/lbrlineardimension.h"
 #include "library/lbripgroup.h"
 #include "library/lbrcsysdragger.h"
-#include "project/serial/xsdcxxoutput/featurecone.h"
+#include "project/serial/generated/prjsrlcnscone.h"
 #include "annex/annseershape.h"
 #include "annex/anncsysdragger.h"
 #include "feature/ftrconebuilder.h"
@@ -334,29 +334,35 @@ void Cone::initializeMaps()
 
 void Cone::serialWrite(const boost::filesystem::path &dIn)
 {
-  prj::srl::FeatureCone coneOut
+  prj::srl::cns::Cone coneOut
   (
     Base::serialOut(),
+    sShape->serialOut(),
     radius1->serialOut(),
     radius2->serialOut(),
     height->serialOut(),
     csys->serialOut(),
-    csysDragger->serialOut()
+    csysDragger->serialOut(),
+    heightIP->serialOut(),
+    radius1IP->serialOut(),
+    radius2IP->serialOut()
   );
   
   xml_schema::NamespaceInfomap infoMap;
   std::ofstream stream(buildFilePathName(dIn).string());
-  prj::srl::cone(stream, coneOut, infoMap);
+  prj::srl::cns::cone(stream, coneOut, infoMap);
 }
 
-void Cone::serialRead(const prj::srl::FeatureCone& sCone)
+void Cone::serialRead(const prj::srl::cns::Cone& sCone)
 {
-  Base::serialIn(sCone.featureBase());
+  Base::serialIn(sCone.base());
+  sShape->serialIn(sCone.seerShape());
   radius1->serialIn(sCone.radius1());
   radius2->serialIn(sCone.radius2());
   height->serialIn(sCone.height());
   csys->serialIn(sCone.csys());
   csysDragger->serialIn(sCone.csysDragger());
-  
-  updateIPGroup();
+  heightIP->serialIn(sCone.heightIP());
+  radius1IP->serialIn(sCone.radius1IP());
+  radius2IP->serialIn(sCone.radius2IP());
 }

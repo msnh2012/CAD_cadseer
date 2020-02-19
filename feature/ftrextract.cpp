@@ -31,7 +31,7 @@
 #include "tools/occtools.h"
 #include "annex/annseershape.h"
 #include "feature/ftrshapecheck.h"
-#include "project/serial/xsdcxxoutput/featureextract.h"
+#include "project/serial/generated/prjsrlextsextract.h"
 #include "feature/ftrupdatepayload.h"
 #include "tools/featuretools.h"
 #include "feature/ftrinputtype.h"
@@ -246,25 +246,29 @@ void Extract::updateModel(const UpdatePayload &payloadIn)
 
 void Extract::serialWrite(const boost::filesystem::path &dIn)
 {
-  prj::srl::FeatureExtract extractOut
+  prj::srl::exts::Extract extractOut
   (
     Base::serialOut()
-    , ::ftr::serialOut(picks)
+    , sShape->serialOut()
     , angle->serialOut()
     , label->serialOut()
   );
+  for (const auto &p : picks)
+    extractOut.picks().push_back(p);
   
   xml_schema::NamespaceInfomap infoMap;
   std::ofstream stream(buildFilePathName(dIn).string());
-  prj::srl::extract(stream, extractOut, infoMap);
+  prj::srl::exts::extract(stream, extractOut, infoMap);
 }
 
-void Extract::serialRead(const prj::srl::FeatureExtract &sExtractIn)
+void Extract::serialRead(const prj::srl::exts::Extract &sExtractIn)
 {
-  Base::serialIn(sExtractIn.featureBase());
-  picks = ::ftr::serialIn(sExtractIn.picks());
+  Base::serialIn(sExtractIn.base());
+  sShape->serialIn(sExtractIn.seerShape());
   angle->serialIn(sExtractIn.angle());
   label->serialIn(sExtractIn.label());
+  for (const auto &p : sExtractIn.picks())
+    picks.emplace_back(p);
   
   //this sucks!
   for (const auto &p : picks)

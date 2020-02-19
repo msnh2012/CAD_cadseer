@@ -32,7 +32,7 @@ using namespace nglib;
 #endif
 
 
-#include "project/serial/xsdcxxoutput/mesh.h"
+#include "project/serial/generated/prjsrlmshsmesh.h"
 #include "mesh/mshparameters.h"
 
 using namespace msh::prm;
@@ -59,7 +59,7 @@ OCCT::OCCT()
   InParallel = Standard_True;
 }
 
-void OCCT::serialIn(const prj::srl::msh::ParametersOCCT &psIn)
+void OCCT::serialIn(const prj::srl::mshs::ParametersOCCT &psIn)
 {
   Angle = psIn.angle();
   Deflection = psIn.deflection();
@@ -74,9 +74,9 @@ void OCCT::serialIn(const prj::srl::msh::ParametersOCCT &psIn)
   AdjustMinSize = psIn.adjustMinSize();
 }
 
-prj::srl::msh::ParametersOCCT OCCT::serialOut() const
+prj::srl::mshs::ParametersOCCT OCCT::serialOut() const
 {
-  return prj::srl::msh::ParametersOCCT
+  return prj::srl::mshs::ParametersOCCT
   (
     Angle
     , Deflection
@@ -142,7 +142,7 @@ void Netgen::ensureValidValues()
   optSteps3d = std::max(0, optSteps3d);
 }
 
-void Netgen::serialIn(const prj::srl::msh::ParametersNetgen &psIn)
+void Netgen::serialIn(const prj::srl::mshs::ParametersNetgen &psIn)
 {
     useLocalH = psIn.useLocalH();
     maxH = psIn.maxH();
@@ -167,9 +167,9 @@ void Netgen::serialIn(const prj::srl::msh::ParametersNetgen &psIn)
     checkOverlappingBoundary = psIn.checkOverlappingBoundary();
 }
 
-prj::srl::msh::ParametersNetgen Netgen::serialOut() const
+prj::srl::mshs::ParametersNetgen Netgen::serialOut() const
 {
-  return prj::srl::msh::ParametersNetgen
+  return prj::srl::mshs::ParametersNetgen
   (
     useLocalH
     , maxH
@@ -936,21 +936,17 @@ void GMSH::setOption(const std::string &keyIn, const std::string &eIn)
   }
 }
 
-void GMSH::serialIn(const prj::srl::msh::ParametersGMSH &psIn)
+void GMSH::serialIn(const prj::srl::mshs::ParametersGMSH &psIn)
 {
   refine = psIn.refine();
-  for (const auto &p : psIn.options().array())
+  for (const auto &p : psIn.options())
     setOption(p.key(), p.value());
 }
 
-prj::srl::msh::ParametersGMSH GMSH::serialOut() const
+prj::srl::mshs::ParametersGMSH GMSH::serialOut() const
 {
-  prj::srl::msh::ParametersGMSHOptions serialOptions;
+  prj::srl::mshs::ParametersGMSH out(refine);
   for (const auto &option : options)
-    serialOptions.array().push_back(prj::srl::msh::ParametersGMSHOption(option.getKey(), option.getValue()));
-  return prj::srl::msh::ParametersGMSH
-  (
-    serialOptions
-    , refine
-  );
+    out.options().push_back(prj::srl::mshs::ParametersGMSHOption(option.getKey(), option.getValue()));
+  return out;
 }

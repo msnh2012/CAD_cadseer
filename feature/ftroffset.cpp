@@ -30,7 +30,7 @@
 #include "library/lbrplabel.h"
 #include "annex/annseershape.h"
 #include "tools/featuretools.h"
-#include "project/serial/xsdcxxoutput/featureoffset.h"
+#include "project/serial/generated/prjsrloffsoffset.h"
 #include "feature/ftrshapecheck.h"
 #include "feature/ftrupdatepayload.h"
 #include "feature/ftrinputtype.h"
@@ -338,23 +338,27 @@ void Offset::offsetMatch(const BRepOffset_MakeOffset &offseter, const ann::SeerS
 
 void Offset::serialWrite(const boost::filesystem::path &dIn)
 {
-  prj::srl::FeatureOffset so
+  prj::srl::offs::Offset so
   (
     Base::serialOut(),
-    ftr::serialOut(picks),
+    sShape->serialOut(),
     distance->serialOut(),
     distanceLabel->serialOut()
   );
+  for (const auto &p : picks)
+    so.picks().push_back(p);
   
   xml_schema::NamespaceInfomap infoMap;
   std::ofstream stream(buildFilePathName(dIn).string());
-  prj::srl::offset(stream, so, infoMap);
+  prj::srl::offs::offset(stream, so, infoMap);
 }
 
-void Offset::serialRead(const prj::srl::FeatureOffset &so)
+void Offset::serialRead(const prj::srl::offs::Offset &so)
 {
-  Base::serialIn(so.featureBase());
+  Base::serialIn(so.base());
+  sShape->serialIn(so.seerShape());
   distance->serialIn(so.distance());
-  picks = ftr::serialIn(so.picks());
   distanceLabel->serialIn(so.distanceLabel());
+  for (const auto &p : so.picks())
+    picks.emplace_back(p);
 }

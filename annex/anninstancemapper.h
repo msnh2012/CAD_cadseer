@@ -23,7 +23,7 @@
 #include "annex/annbase.h"
 
 namespace ftr{class ShapeHistory;}
-namespace prj{namespace srl{class InstanceData;}}
+namespace prj{namespace srl{namespace spt{class InstanceMaps;}}}
 namespace ann
 {
   class SeerShape;
@@ -57,8 +57,8 @@ namespace ann
    */
     void mapIndex(SeerShape &sShape, const TopoDS_Shape &dsShape, std::size_t instance);
     
-    prj::srl::InstanceData serialOut();
-    void serialIn(const prj::srl::InstanceData&);
+    prj::srl::spt::InstanceMaps serialOut(); //serial rename
+    void serialIn(const prj::srl::spt::InstanceMaps&); //serial rename
     
   private:
     struct Data;

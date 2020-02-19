@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xs:schema
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  xmlns:spt="http://www.cadseer.com/prj/srl/spt"
+  xmlns:skts="http://www.cadseer.com/prj/srl/skts"
+  targetNamespace="http://www.cadseer.com/prj/srl/skts"
+>
+  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptparameter.xsd"/>  
+  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptseershape.xsd"/>
+  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptbase.xsd"/>
+  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptoverlay.xsd"/>
+
+  <xs:complexType name="SSParameter">
+    <xs:sequence>
+      <xs:element name="handle" type="xs:unsignedInt"/>
+      <xs:element name="group" type="xs:unsignedInt"/>
+      <xs:element name="value" type="xs:double"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="SSEntity">
+    <xs:sequence>
+      <xs:element name="handle" type="xs:unsignedInt"/>
+      <xs:element name="group" type="xs:unsignedInt"/>
+      <xs:element name="type" type="xs:int"/>
+      <xs:element name="workPlane" type="xs:unsignedInt"/>
+      <xs:element name="points" type="xs:unsignedInt" minOccurs="4" maxOccurs="4"/>
+      <xs:element name="normal" type="xs:unsignedInt"/>
+      <xs:element name="distance" type="xs:unsignedInt"/>
+      <xs:element name="parameters" type="xs:unsignedInt" minOccurs="4" maxOccurs="4"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="SSConstraint">
+    <xs:sequence>
+      <xs:element name="handle" type="xs:unsignedInt"/>
+      <xs:element name="group" type="xs:unsignedInt"/>
+      <xs:element name="type" type="xs:int"/>
+      <xs:element name="workPlane" type="xs:unsignedInt"/>
+      <xs:element name="value" type="xs:double"/>
+      <xs:element name="pointA" type="xs:unsignedInt"/>
+      <xs:element name="pointB" type="xs:unsignedInt"/>
+      <xs:element name="entityA" type="xs:unsignedInt"/>
+      <xs:element name="entityB" type="xs:unsignedInt"/>
+      <xs:element name="entityC" type="xs:unsignedInt"/>
+      <xs:element name="entityD" type="xs:unsignedInt"/>
+      <xs:element name="other" type="xs:int"/>
+      <xs:element name="other2" type="xs:int"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="Solver">
+    <xs:sequence>
+      <xs:element name="parameters" type="skts:SSParameter" minOccurs="0" maxOccurs="unbounded"/>
+      <xs:element name="entities" type="skts:SSEntity" minOccurs="0" maxOccurs="unbounded"/>
+      <xs:element name="constraints" type="skts:SSConstraint" minOccurs="0" maxOccurs="unbounded"/>
+      
+      <xs:element name="nextParameterHandle" type="xs:unsignedInt"/>
+      <xs:element name="nextEntityHandle" type="xs:unsignedInt"/>
+      <xs:element name="nextConstraintHandle" type="xs:unsignedInt"/>
+      
+      <xs:element name="currentGroup" type="xs:unsignedInt"/>
+      <xs:element name="currentWorkPlane" type="xs:unsignedInt"/>
+      <xs:element name="currentXAxis" type="xs:unsignedInt"/>
+      <xs:element name="currentYAxis" type="xs:unsignedInt"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="VisualMapRecord">
+    <xs:sequence>
+      <xs:element name="handle" type="xs:unsignedInt"/>
+      <xs:element name="id" type="xs:string"/>
+      <xs:element name="location" type="spt:Vec3d"/>
+      <xs:element name="construction" type="xs:boolean"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="Visual">
+    <xs:sequence>
+      <xs:element name="autoSize" type="xs:boolean"/>
+      <xs:element name="size" type="xs:double"/>
+      <xs:element name="entityMap" type="skts:VisualMapRecord" minOccurs="0" maxOccurs="unbounded"/>
+      <xs:element name="constraintMap" type="skts:VisualMapRecord" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="HandleParameterPair">
+    <xs:sequence>
+      <xs:element name="handle" type="xs:unsignedInt"/>
+      <xs:element name="parameter" type="spt:Parameter"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="Sketch">
+    <xs:sequence>
+      <xs:element name="base" type="spt:Base"/>
+      <xs:element name="seerShape" type="spt:SeerShape"/>
+      <xs:element name="solver" type="skts:Solver"/>
+      <xs:element name="visual" type="skts:Visual"/>
+      <xs:element name="csys" type="spt:Parameter"/>
+      <xs:element name="csysDragger" type="spt:CSysDragger"/>
+      <xs:element name="wireIds" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+      <xs:element name="handleParameterPairs" type="skts:HandleParameterPair" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:element name="sketch" type="skts:Sketch"/>
+</xs:schema> 

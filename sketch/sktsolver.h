@@ -29,7 +29,7 @@
 
 #include "subprojects/solvespace/include/slvs.h"
 
-namespace prj{namespace srl{class Solver;}}
+namespace prj{namespace srl{namespace skts{class Solver;}}}
 
 /*! @namespace skt
  * @brief sketcher namespace
@@ -250,8 +250,8 @@ namespace skt
      * @name Serial
      */
     ///@{
-    prj::srl::Solver serialOut() const;
-    void serialIn(const prj::srl::Solver&);
+    prj::srl::skts::Solver serialOut() const;
+    void serialIn(const prj::srl::skts::Solver&);
     ///@}
     
   private:

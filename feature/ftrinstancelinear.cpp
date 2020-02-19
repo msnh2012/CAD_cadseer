@@ -30,7 +30,7 @@
 #include "feature/ftrdatumplane.h"
 #include "parameter/prmparameter.h"
 #include "feature/ftrshapecheck.h"
-#include "project/serial/xsdcxxoutput/featureinstancelinear.h"
+#include "project/serial/generated/prjsrlinlsinstancelinear.h"
 #include "tools/featuretools.h"
 #include "feature/ftrinputtype.h"
 #include "feature/ftrupdatepayload.h"
@@ -290,9 +290,10 @@ void InstanceLinear::updateModel(const UpdatePayload &payloadIn)
 
 void InstanceLinear::serialWrite(const boost::filesystem::path &dIn)
 {
-  prj::srl::FeatureInstanceLinear so
+  prj::srl::inls::InstanceLinear so
   (
     Base::serialOut(),
+    sShape->serialOut(),
     iMapper->serialOut(),
     csysDragger->serialOut(),
     xOffset->serialOut(),
@@ -315,13 +316,14 @@ void InstanceLinear::serialWrite(const boost::filesystem::path &dIn)
   
   xml_schema::NamespaceInfomap infoMap;
   std::ofstream stream(buildFilePathName(dIn).string());
-  prj::srl::instanceLinear(stream, so, infoMap);
+  prj::srl::inls::instanceLinear(stream, so, infoMap);
 }
 
-void InstanceLinear::serialRead(const prj::srl::FeatureInstanceLinear &sil)
+void InstanceLinear::serialRead(const prj::srl::inls::InstanceLinear &sil)
 {
-  Base::serialIn(sil.featureBase());
-  iMapper->serialIn(sil.instanceMapper());
+  Base::serialIn(sil.base());
+  sShape->serialIn(sil.seerShape());
+  iMapper->serialIn(sil.instanceMaps());
   csysDragger->serialIn(sil.csysDragger());
   xOffset->serialIn(sil.xOffset());
   yOffset->serialIn(sil.yOffset());

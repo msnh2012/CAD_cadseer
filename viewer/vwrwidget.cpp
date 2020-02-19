@@ -67,7 +67,7 @@
 #include "gesture/gsnhandler.h"
 #include "preferences/preferencesXML.h"
 #include "preferences/prfmanager.h"
-#include "project/serial/xsdcxxoutput/view.h"
+#include "project/serial/generated/prjsrlvwsview.h"
 #include "viewer/vwrspaceballmanipulator.h"
 #include "viewer/vwrspaceballqevent.h"
 #include "viewer/vwrspaceballosgevent.h"
@@ -116,24 +116,24 @@ namespace vwr
   class SerialOutVisitor : public osg::NodeVisitor
   {
   public:
-    SerialOutVisitor(prj::srl::States &statesIn) : NodeVisitor(osg::NodeVisitor::TRAVERSE_ALL_CHILDREN), states(statesIn){}
+    SerialOutVisitor(prj::srl::vws::View &viewIn) : NodeVisitor(osg::NodeVisitor::TRAVERSE_ALL_CHILDREN), view(viewIn){}
     virtual void apply(osg::Switch &switchIn) override
     {
       std::string userValue;
       if (switchIn.getUserValue<std::string>(gu::idAttributeTitle, userValue))
-        states.array().push_back(prj::srl::State(userValue, switchIn.getNewChildDefaultValue()));
+        view.states().push_back(prj::srl::vws::State(userValue, switchIn.getNewChildDefaultValue()));
       
       //only interested in top level children, so don't need to call traverse here.
     }
   protected:
-    prj::srl::States &states;
+    prj::srl::vws::View &view;
   };
   
   //restore states from serialize
   class SerialInViewVisitor : public osg::NodeVisitor
   {
   public:
-    SerialInViewVisitor(const prj::srl::States &statesIn) :
+    SerialInViewVisitor(const prj::srl::vws::View::StatesSequence &statesIn) :
     NodeVisitor(osg::NodeVisitor::TRAVERSE_ALL_CHILDREN),
     states(statesIn)
     {
@@ -143,7 +143,7 @@ namespace vwr
       std::string userValue;
       if (switchIn.getUserValue<std::string>(gu::idAttributeTitle, userValue))
       {
-        for (const auto &s : states.array())
+        for (const auto &s : states)
         {
           if (userValue == s.id())
           {
@@ -166,7 +166,7 @@ namespace vwr
       //only interested in top level children, so don't need to call traverse here.
     }
   protected:
-    const prj::srl::States &states;
+    const prj::srl::vws::View::StatesSequence &states;
   };
 }
 
@@ -565,22 +565,19 @@ struct Widget::Stow
     if (!boost::filesystem::exists(file))
       return;
     
-    auto sView = prj::srl::view(file.string(), ::xml_schema::Flags::dont_validate);
+    auto sView = prj::srl::vws::view(file.string(), ::xml_schema::Flags::dont_validate);
     SerialInViewVisitor v(sView->states());
     root->accept(v);
     
-    if (sView->csys().present())
-    {
-      const auto &mIn = sView->csys().get();
-      osg::Matrixd m
-      (
-        mIn.i0j0(), mIn.i0j1(), mIn.i0j2(), mIn.i0j3(),
-        mIn.i1j0(), mIn.i1j1(), mIn.i1j2(), mIn.i1j3(),
-        mIn.i2j0(), mIn.i2j1(), mIn.i2j2(), mIn.i2j3(),
-        mIn.i3j0(), mIn.i3j1(), mIn.i3j2(), mIn.i3j3()
-      );
-      spaceballManipulator->setByMatrix(m);
-    }
+    const auto &mIn = sView->csys();
+    osg::Matrixd m
+    (
+      mIn.i0j0(), mIn.i0j1(), mIn.i0j2(), mIn.i0j3(),
+      mIn.i1j0(), mIn.i1j1(), mIn.i1j2(), mIn.i1j3(),
+      mIn.i2j0(), mIn.i2j1(), mIn.i2j2(), mIn.i2j3(),
+      mIn.i3j0(), mIn.i3j1(), mIn.i3j2(), mIn.i3j3()
+    );
+    spaceballManipulator->setByMatrix(m);
     
     if (sView->ortho().present())
     {
@@ -591,30 +588,29 @@ struct Widget::Stow
 
   void serialWrite()
   {
-    prj::srl::States states;
-    SerialOutVisitor v(states);
-    root->accept(v);
-    prj::srl::View svOut(states);
-    
     osg::Matrixd m = getMainCamera()->getViewMatrix();
-    prj::srl::Matrixd mOut
+    prj::srl::spt::Matrixd mOut
     (
       m(0,0), m(0,1), m(0,2), m(0,3),
       m(1,0), m(1,1), m(1,2), m(1,3),
       m(2,0), m(2,1), m(2,2), m(2,3),
       m(3,0), m(3,1), m(3,2), m(3,3)
     );
-    svOut.csys() = mOut;
+    
+    prj::srl::vws::View svOut(mOut);
     
     double left, right, bottom, top, near, far;
     if (getMainCamera()->getProjectionMatrixAsOrtho(left, right, bottom, top, near, far))
-      svOut.ortho() = prj::srl::Ortho(left, right, bottom, top, near, far);
+      svOut.ortho() = prj::srl::vws::Ortho(left, right, bottom, top, near, far);
+    
+    SerialOutVisitor v(svOut);
+    root->accept(v);
     
     boost::filesystem::path file = app::instance()->getProject()->getSaveDirectory();
     file /= "view.xml";
     xml_schema::NamespaceInfomap infoMap;
     std::ofstream stream(file.string());
-    prj::srl::view(stream, svOut, infoMap);
+    prj::srl::vws::view(stream, svOut, infoMap);
   }
   
   void featureAddedDispatched(const msg::Message &messageIn)

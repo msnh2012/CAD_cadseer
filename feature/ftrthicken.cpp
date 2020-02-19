@@ -31,7 +31,7 @@
 #include "library/lbrplabel.h"
 #include "annex/annseershape.h"
 #include "tools/featuretools.h"
-#include "project/serial/xsdcxxoutput/featurethicken.h"
+#include "project/serial/generated/prjsrlthksthicken.h"
 #include "feature/ftrshapecheck.h"
 #include "feature/ftrupdatepayload.h"
 #include "parameter/prmparameter.h"
@@ -355,56 +355,45 @@ void Thicken::thickenMatch(const BRepOffset_MakeOffset &offseter)
 
 void Thicken::serialWrite(const boost::filesystem::path &dIn)
 {
-  auto serializeMap = [](const std::map<uuid, uuid> &map) -> prj::srl::EvolveContainer
-  {
-    prj::srl::EvolveContainer out;
-    for (const auto &p : map)
-    {
-      prj::srl::EvolveRecord r
-      (
-        gu::idToString(p.first),
-        gu::idToString(p.second)
-      );
-      out.evolveRecord().push_back(r);
-    }
-    return out;
-  };
-  
-  prj::srl::FeatureThicken so
+  prj::srl::thks::Thicken so
   (
     Base::serialOut(),
+    sShape->serialOut(),
     distance->serialOut(),
     distanceLabel->serialOut(),
-    serializeMap(faceMap),
-    serializeMap(edgeMap),
-    serializeMap(boundaryMap),
-    serializeMap(oWireMap),
     gu::idToString(solidId),
     gu::idToString(shellId)
   );
   
+  for (const auto &p : faceMap)
+    so.faceMap().push_back(prj::srl::spt::EvolveRecord(gu::idToString(p.first), gu::idToString(p.second)));
+  for (const auto &p : edgeMap)
+    so.edgeMap().push_back(prj::srl::spt::EvolveRecord(gu::idToString(p.first), gu::idToString(p.second)));
+  for (const auto &p : boundaryMap)
+    so.boundaryMap().push_back(prj::srl::spt::EvolveRecord(gu::idToString(p.first), gu::idToString(p.second)));
+  for (const auto &p : oWireMap)
+    so.oWireMap().push_back(prj::srl::spt::EvolveRecord(gu::idToString(p.first), gu::idToString(p.second)));
+  
   xml_schema::NamespaceInfomap infoMap;
   std::ofstream stream(buildFilePathName(dIn).string());
-  prj::srl::thicken(stream, so, infoMap);
+  prj::srl::thks::thicken(stream, so, infoMap);
 }
 
-void Thicken::serialRead(const prj::srl::FeatureThicken &so)
+void Thicken::serialRead(const prj::srl::thks::Thicken &so)
 {
-  auto serializeMap = [](const prj::srl::EvolveContainer &container) -> std::map<uuid, uuid>
-  {
-    std::map<uuid, uuid> out;
-    for (const auto &r : container.evolveRecord())
-      out.insert(std::make_pair(gu::stringToId(r.idIn()), gu::stringToId(r.idOut())));
-    return out;
-  };
-  
-  Base::serialIn(so.featureBase());
+  Base::serialIn(so.base());
+  sShape->serialIn(so.seerShape());
   distance->serialIn(so.distance());
   distanceLabel->serialIn(so.distanceLabel());
-  faceMap = serializeMap(so.faceMap());
-  edgeMap = serializeMap(so.edgeMap());
-  boundaryMap = serializeMap(so.boundaryMap());
-  oWireMap = serializeMap(so.oWireMap());
   solidId = gu::stringToId(so.solidId());
   shellId = gu::stringToId(so.shellId());
+  
+  for (const auto &p : so.faceMap())
+    faceMap.insert(std::make_pair(gu::stringToId(p.idIn()), gu::stringToId(p.idOut())));
+  for (const auto &p : so.edgeMap())
+    edgeMap.insert(std::make_pair(gu::stringToId(p.idIn()), gu::stringToId(p.idOut())));
+  for (const auto &p : so.boundaryMap())
+    boundaryMap.insert(std::make_pair(gu::stringToId(p.idIn()), gu::stringToId(p.idOut())));
+  for (const auto &p : so.oWireMap())
+    oWireMap.insert(std::make_pair(gu::stringToId(p.idIn()), gu::stringToId(p.idOut())));
 }

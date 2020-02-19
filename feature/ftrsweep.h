@@ -28,11 +28,14 @@ namespace prj
 {
   namespace srl
   {
-    class SweepProfile;
-    class SweepProfiles;
-    class SweepAuxiliary;
-    class SweepBinormal;
-    class FeatureSweep;
+    namespace swps
+    {
+      class SweepProfile;
+      class SweepProfiles;
+      class SweepAuxiliary;
+      class SweepBinormal;
+      class Sweep;
+    }
   }
 }
 namespace lbr{class PLabel;}
@@ -47,9 +50,9 @@ namespace ftr
     SweepProfile();
     SweepProfile(const Pick&);
     SweepProfile(const Pick&, bool, bool);
-    SweepProfile(const prj::srl::SweepProfile&);
+    SweepProfile(const prj::srl::swps::SweepProfile&);
     ~SweepProfile();
-    prj::srl::SweepProfile serialOut() const;
+    prj::srl::swps::SweepProfile serialOut() const;
     Pick pick;
     std::shared_ptr<prm::Parameter> contact;
     std::shared_ptr<prm::Parameter> correction;
@@ -57,10 +60,6 @@ namespace ftr
     osg::ref_ptr<lbr::PLabel> correctionLabel;
   };
   typedef std::vector<SweepProfile> SweepProfiles;
-  prj::srl::SweepProfiles serialOut(const SweepProfiles&);
-  SweepProfiles serialIn(const prj::srl::SweepProfiles&);
-  
-  
   
   /*! @struct SweepAuxilary
    * @brief value class to exchange auxiliary data to and from dialog
@@ -70,10 +69,10 @@ namespace ftr
     SweepAuxiliary();
     SweepAuxiliary(const Pick&);
     SweepAuxiliary(const Pick&, bool, int);
-    SweepAuxiliary(const prj::srl::SweepAuxiliary&);
+    SweepAuxiliary(const prj::srl::swps::SweepAuxiliary&);
     ~SweepAuxiliary();
-    prj::srl::SweepAuxiliary serialOut() const;
-    void serialIn(const prj::srl::SweepAuxiliary&);
+    prj::srl::swps::SweepAuxiliary serialOut() const;
+    void serialIn(const prj::srl::swps::SweepAuxiliary&);
     Pick pick;
     std::shared_ptr<prm::Parameter> curvilinearEquivalence;
     std::shared_ptr<prm::Parameter> contactType;
@@ -89,8 +88,8 @@ namespace ftr
     SweepBinormal(const osg::Vec3d&);
     SweepBinormal(const Picks&, const osg::Vec3d&); //!< don't use. just initializer for constructor delegation
     ~SweepBinormal();
-    prj::srl::SweepBinormal serialOut() const;
-    void serialIn(const prj::srl::SweepBinormal&);
+    prj::srl::swps::SweepBinormal serialOut() const;
+    void serialIn(const prj::srl::swps::SweepBinormal&);
     Picks picks;
     std::shared_ptr<prm::Parameter> binormal;
     osg::ref_ptr<lbr::PLabel> binormalLabel;
@@ -136,7 +135,7 @@ namespace ftr
     Descriptor getDescriptor() const override {return Descriptor::Create;}
     
     void serialWrite(const boost::filesystem::path&) override;
-    void serialRead(const prj::srl::FeatureSweep&);
+    void serialRead(const prj::srl::swps::Sweep&);
     
     void setSweepData(const SweepData&);
     SweepData getSweepData() const;

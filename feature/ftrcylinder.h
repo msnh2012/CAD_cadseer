@@ -25,7 +25,7 @@
 #include "feature/ftrbase.h"
 
 namespace lbr{class IPGroup;}
-namespace prj{namespace srl{class FeatureCylinder;}}
+namespace prj{namespace srl{namespace cyls{class Cylinder;}}}
 namespace ann{class CSysDragger; class SeerShape;}
 
 namespace ftr
@@ -50,7 +50,7 @@ namespace ftr
     virtual const QIcon& getIcon() const override {return icon;}
     virtual Descriptor getDescriptor() const override {return Descriptor::Create;}
     virtual void serialWrite(const boost::filesystem::path&) override; //!< write xml file. not const, might reset a modified flag.
-    void serialRead(const prj::srl::FeatureCylinder &sCylinderIn); //!<initializes this from sBox. not virtual, type already known.
+    void serialRead(const prj::srl::cyls::Cylinder &sCylinderIn); //!<initializes this from sBox. not virtual, type already known.
   
   protected:
     std::unique_ptr<prm::Parameter> radius;

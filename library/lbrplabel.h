@@ -29,7 +29,7 @@ namespace osg{class AutoTransform;}
 namespace osgText{class Text;}
 
 namespace prm{class Parameter; class Observer;}
-namespace prj{namespace srl{class PLabel;}}
+namespace prj{namespace srl{namespace spt{class PLabel;}}}
 
 namespace lbr
 {
@@ -48,8 +48,8 @@ namespace lbr
     
     bool showName = false;
     
-    prj::srl::PLabel serialOut() const;
-    void serialIn(const prj::srl::PLabel&);
+    prj::srl::spt::PLabel serialOut() const; //serial rename
+    void serialIn(const prj::srl::spt::PLabel&); //serial rename
     
   protected:
     PLabel(); //needed for META_Node

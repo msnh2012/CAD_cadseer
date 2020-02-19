@@ -41,7 +41,7 @@
 #include "library/lbrcsysdragger.h"
 #include "library/lbrplabel.h"
 #include "annex/anncsysdragger.h"
-#include "project/serial/xsdcxxoutput/featuredatumaxis.h"
+#include "project/serial/generated/prjsrldtasdatumaxis.h"
 #include "parameter/prmparameter.h"
 #include "feature/ftrinputtype.h"
 #include "feature/ftrupdatepayload.h"
@@ -380,13 +380,12 @@ void DatumAxis::updateLabelViz()
 
 void DatumAxis::serialWrite(const boost::filesystem::path &dIn)
 {
-  prj::srl::FeatureDatumAxis dao
+  prj::srl::dtas::DatumAxis dao
   (
     Base::serialOut(),
     static_cast<int>(axisType),
-    ::ftr::serialOut(picks),
-    prj::srl::Vec3d(origin.x(), origin.y(), origin.z()),
-    prj::srl::Vec3d(direction.x(), direction.y(), direction.z()),
+    prj::srl::spt::Vec3d(origin.x(), origin.y(), origin.z()),
+    prj::srl::spt::Vec3d(direction.x(), direction.y(), direction.z()),
     csys->serialOut(),
     autoSize->serialOut(),
     size->serialOut(),
@@ -394,17 +393,18 @@ void DatumAxis::serialWrite(const boost::filesystem::path &dIn)
     autoSizeLabel->serialOut(),
     sizeLabel->serialOut()
   );
+  for (const auto &p : picks)
+    dao.picks().push_back(p);
   
   xml_schema::NamespaceInfomap infoMap;
   std::ofstream stream(buildFilePathName(dIn).string());
-  prj::srl::datumAxis(stream, dao, infoMap);
+  prj::srl::dtas::datumAxis(stream, dao, infoMap);
 }
 
-void DatumAxis::serialRead(const prj::srl::FeatureDatumAxis &dai)
+void DatumAxis::serialRead(const prj::srl::dtas::DatumAxis &dai)
 {
-  Base::serialIn(dai.featureBase());
+  Base::serialIn(dai.base());
   axisType = static_cast<AxisType>(dai.axisType());
-  picks = ftr::serialIn(dai.picks());
   origin = osg::Vec3d(dai.origin().x(), dai.origin().y(), dai.origin().z());
   direction = osg::Vec3d(dai.direction().x(), dai.direction().y(), dai.direction().z());
   csys->serialIn(dai.csys());
@@ -413,6 +413,8 @@ void DatumAxis::serialRead(const prj::srl::FeatureDatumAxis &dai)
   csysDragger->serialIn(dai.csysDragger());
   autoSizeLabel->serialIn(dai.autoSizeLabel());
   sizeLabel->serialIn(dai.sizeLabel());
+  for (const auto &pIn : dai.picks())
+    picks.emplace_back(pIn);
   
   cachedSize = static_cast<double>(*size);
   updateDraggerViz();

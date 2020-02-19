@@ -25,7 +25,7 @@
 #include "library/lbrplabel.h"
 #include "feature/ftrbase.h"
 
-namespace prj{namespace srl{class FeatureSquash;}}
+namespace prj{namespace srl{namespace sqss{class Squash;}}}
 namespace ann{class SeerShape;}
 
 namespace ftr
@@ -47,7 +47,7 @@ namespace ftr
     virtual const QIcon& getIcon() const override {return icon;}
     virtual Descriptor getDescriptor() const override {return Descriptor::Create;}
     virtual void serialWrite(const boost::filesystem::path&) override;
-    void serialRead(const prj::srl::FeatureSquash &);
+    void serialRead(const prj::srl::sqss::Squash&);
     
     void setPicks(const Picks &psIn){picks = psIn;}
     

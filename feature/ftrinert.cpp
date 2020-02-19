@@ -25,7 +25,7 @@
 #include <gp_Trsf.hxx>
 #include <TopLoc_Location.hxx>
 
-#include "project/serial/xsdcxxoutput/featureinert.h"
+#include "project/serial/generated/prjsrlintsinert.h"
 #include "globalutilities.h"
 #include "tools/idtools.h"
 #include "tools/occtools.h"
@@ -164,21 +164,23 @@ void Inert::updateModel(const UpdatePayload&)
 
 void Inert::serialWrite(const boost::filesystem::path &dIn)
 {
-  prj::srl::FeatureInert inertOut
+  prj::srl::ints::Inert inertOut
   (
     Base::serialOut(),
+    sShape->serialOut(),
     csys->serialOut(),
     csysDragger->serialOut()
   );
   
   xml_schema::NamespaceInfomap infoMap;
   std::ofstream stream(buildFilePathName(dIn).string());
-  prj::srl::inert(stream, inertOut, infoMap);
+  prj::srl::ints::inert(stream, inertOut, infoMap);
 }
 
-void Inert::serialRead(const prj::srl::FeatureInert& inert)
+void Inert::serialRead(const prj::srl::ints::Inert& inert)
 {
-  Base::serialIn(inert.featureBase());
+  Base::serialIn(inert.base());
+  sShape->serialIn(inert.seerShape());
   csys->serialIn(inert.csys());
   csysDragger->serialIn(inert.csysDragger());
 }

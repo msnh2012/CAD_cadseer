@@ -36,7 +36,7 @@
 #include "library/lbrcsysdragger.h"
 #include "library/lbrplabel.h"
 #include "annex/anncsysdragger.h"
-#include "project/serial/xsdcxxoutput/featureimageplane.h"
+#include "project/serial/generated/prjsrlimpsimageplane.h"
 #include "feature/ftrimageplane.h"
 
 using namespace ftr;
@@ -174,25 +174,25 @@ void ImagePlane::serialWrite(const boost::filesystem::path &dIn)
 //   fs.open("/home/tanderson/temp/test.osgt");
 //   rw->writeNode(*geometry, fs, options.get());
   
-  prj::srl::FeatureImagePlane so
+  prj::srl::imps::ImagePlane so
   (
     Base::serialOut()
     , scale->serialOut()
     , csys->serialOut()
     , csysDragger->serialOut()
     , scaleLabel->serialOut()
-    , prj::srl::Vec3d(cornerVec.x(), cornerVec.y(), cornerVec.z())
+    , prj::srl::spt::Vec3d(cornerVec.x(), cornerVec.y(), cornerVec.z())
     , nodeStream.str()
   );
   
   xml_schema::NamespaceInfomap infoMap;
   std::ofstream stream(buildFilePathName(dIn).string());
-  prj::srl::imageplane(stream, so, infoMap);
+  prj::srl::imps::imageplane(stream, so, infoMap);
 }
 
-void ImagePlane::serialRead(const prj::srl::FeatureImagePlane &so)
+void ImagePlane::serialRead(const prj::srl::imps::ImagePlane &so)
 {
-  Base::serialIn(so.featureBase());
+  Base::serialIn(so.base());
   scale->serialIn(so.scale());
   csys->serialIn(so.csys());
   csysDragger->serialIn(so.csysDragger());

@@ -27,7 +27,7 @@
 #include "feature/ftrbase.h"
 
 class BRepFilletAPI_MakeChamfer;
-namespace prj{namespace srl{class FeatureChamfer; class Entry;}}
+namespace prj{namespace srl{namespace chms{class Chamfer; class Entry;}}}
 namespace ann{class SeerShape;}
 
 namespace ftr
@@ -69,10 +69,10 @@ namespace ftr
         Entry() = default;
         Entry(const Entry&) = default;
         Entry(const Entry&, bool); //makes new parameters with same ids.
-        Entry(const prj::srl::Entry&);
+        Entry(const prj::srl::chms::Entry&);
         
-        prj::srl::Entry serialOut() const;
-        void serialIn(const prj::srl::Entry&);
+        prj::srl::chms::Entry serialOut() const;
+        void serialIn(const prj::srl::chms::Entry&);
         
         static Entry buildDefaultSymmetric();
         static Entry buildDefaultTwoDistances();
@@ -95,7 +95,7 @@ namespace ftr
     virtual const QIcon& getIcon() const override {return icon;}
     virtual Descriptor getDescriptor() const override {return Descriptor::Alter;}
     virtual void serialWrite(const boost::filesystem::path&) override;
-    void serialRead(const prj::srl::FeatureChamfer &);
+    void serialRead(const prj::srl::chms::Chamfer&);
     
     void setCue(const Cue&, bool = true); //boolean to set model dirty
     const Cue& getCue(){return cue;};

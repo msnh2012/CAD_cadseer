@@ -39,7 +39,7 @@
 #include "feature/ftrshapecheck.h"
 #include "feature/ftrupdatepayload.h"
 #include "feature/ftrinputtype.h"
-#include "project/serial/xsdcxxoutput/featuretransitioncurve.h"
+#include "project/serial/generated/prjsrltscstransitioncurve.h"
 #include "feature/ftrtransitioncurve.h"
 
 using namespace ftr;
@@ -304,10 +304,10 @@ void TransitionCurve::updateModel(const UpdatePayload &pIn)
 
 void TransitionCurve::serialWrite(const boost::filesystem::path &dIn)
 {
-  prj::srl::FeatureTransitionCurve so
+  prj::srl::tscs::TransitionCurve so
   (
     Base::serialOut()
-    , ftr::serialOut(picks)
+    , sShape->serialOut()
     , pick0Direction->serialOut()
     , pick1Direction->serialOut()
     , pick0Magnitude->serialOut()
@@ -320,16 +320,18 @@ void TransitionCurve::serialWrite(const boost::filesystem::path &dIn)
     , gu::idToString(vertex0Id)
     , gu::idToString(vertex1Id)
   );
+  for (const auto &p : picks)
+    so.picks().push_back(p);
   
   xml_schema::NamespaceInfomap infoMap;
   std::ofstream stream(buildFilePathName(dIn).string());
-  prj::srl::transitionCurve(stream, so, infoMap);
+  prj::srl::tscs::transitionCurve(stream, so, infoMap);
 }
 
-void TransitionCurve::serialRead(const prj::srl::FeatureTransitionCurve &so)
+void TransitionCurve::serialRead(const prj::srl::tscs::TransitionCurve &so)
 {
-  Base::serialIn(so.featureBase());
-  picks = ftr::serialIn(so.picks());
+  Base::serialIn(so.base());
+  sShape->serialIn(so.seerShape());
   pick0Direction->serialIn(so.pick0Direction());
   pick1Direction->serialIn(so.pick1Direction());
   pick0Magnitude->serialIn(so.pick0Magnitude());
@@ -341,4 +343,6 @@ void TransitionCurve::serialRead(const prj::srl::FeatureTransitionCurve &so)
   curveId = gu::stringToId(so.curveId());
   vertex0Id = gu::stringToId(so.vertex0Id());
   vertex1Id = gu::stringToId(so.vertex1Id());
+  for (const auto &p : so.picks())
+    picks.emplace_back(p);
 }

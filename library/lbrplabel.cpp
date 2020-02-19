@@ -31,7 +31,7 @@
 #include "preferences/prfmanager.h"
 #include "parameter/prmvariant.h"
 #include "parameter/prmparameter.h"
-#include "project/serial/xsdcxxoutput/featurebase.h"
+#include "project/serial/generated/prjsrlsptoverlay.h"
 #include "library/lbrplabel.h"
 
 using namespace lbr;
@@ -173,10 +173,10 @@ void PLabel::constantHasChanged()
   setTextColor();
 }
 
-prj::srl::PLabel PLabel::serialOut() const
+prj::srl::spt::PLabel PLabel::serialOut() const
 {
   const osg::Matrixd &m = this->getMatrix();
-  prj::srl::Matrixd mOut
+  prj::srl::spt::Matrixd mOut
   (
     m(0,0), m(0,1), m(0,2), m(0,3),
     m(1,0), m(1,1), m(1,2), m(1,3),
@@ -185,12 +185,12 @@ prj::srl::PLabel PLabel::serialOut() const
   );
   
   const osg::Vec4 &c = text->getColor();
-  prj::srl::Color cOut(c.x(), c.y(), c.z(), c.w());
+  prj::srl::spt::Color cOut(c.x(), c.y(), c.z(), c.w());
   
-  return prj::srl::PLabel(mOut, cOut);
+  return prj::srl::spt::PLabel(mOut, cOut);
 }
 
-void PLabel::serialIn(const prj::srl::PLabel &sIn)
+void PLabel::serialIn(const prj::srl::spt::PLabel &sIn)
 {
   const auto &mIn = sIn.matrix();
   osg::Matrixd m

@@ -37,7 +37,7 @@
 #include "library/lbrplabel.h"
 #include "annex/annseershape.h"
 #include "annex/annintersectionmapper.h"
-#include "project/serial/xsdcxxoutput/featuretrim.h"
+#include "project/serial/generated/prjsrltrmstrim.h"
 #include "feature/ftrbooleanoperation.h"
 #include "feature/ftrshapecheck.h"
 #include "feature/ftrupdatepayload.h"
@@ -274,9 +274,10 @@ void Trim::datumPlaneId(const uuid &bId)
 
 void Trim::serialWrite(const boost::filesystem::path &dIn)
 {
-  prj::srl::FeatureTrim so
+  prj::srl::trms::Trim so
   (
     Base::serialOut(),
+    sShape->serialOut(),
     reversed->serialOut(),
     reversedLabel->serialOut(),
     iMapper->serialOut(),
@@ -286,12 +287,13 @@ void Trim::serialWrite(const boost::filesystem::path &dIn)
   
   xml_schema::NamespaceInfomap infoMap;
   std::ofstream stream(buildFilePathName(dIn).string());
-  prj::srl::trim(stream, so, infoMap);
+  prj::srl::trms::trim(stream, so, infoMap);
 }
 
-void Trim::serialRead(const prj::srl::FeatureTrim &si)
+void Trim::serialRead(const prj::srl::trms::Trim &si)
 {
-  Base::serialIn(si.featureBase());
+  Base::serialIn(si.base());
+  sShape->serialIn(si.seerShape());
   reversed->serialIn(si.reversed());
   reversedLabel->serialIn(si.reversedLabel());
   iMapper->serialIn(si.intersectionMapper());

@@ -30,7 +30,7 @@ namespace prj
 {
   namespace srl
   {
-    namespace msh
+    namespace mshs
     {
       class ParametersOCCT;
       class ParametersNetgen;
@@ -50,8 +50,8 @@ namespace msh
     struct OCCT : public IMeshTools_Parameters
     {
       OCCT();
-      void serialIn(const prj::srl::msh::ParametersOCCT&);
-      prj::srl::msh::ParametersOCCT serialOut() const;
+      void serialIn(const prj::srl::mshs::ParametersOCCT&);
+      prj::srl::mshs::ParametersOCCT serialOut() const;
     };
     
     /**
@@ -103,8 +103,8 @@ namespace msh
 #endif
       void resetValues();
       void ensureValidValues();
-      void serialIn(const prj::srl::msh::ParametersNetgen&);
-      prj::srl::msh::ParametersNetgen serialOut() const;
+      void serialIn(const prj::srl::mshs::ParametersNetgen&);
+      prj::srl::mshs::ParametersNetgen serialOut() const;
     };
     
     /**
@@ -145,8 +145,8 @@ namespace msh
       bool refine = false;
       boost::filesystem::path filePath;
       
-      void serialIn(const prj::srl::msh::ParametersGMSH&);
-      prj::srl::msh::ParametersGMSH serialOut() const;
+      void serialIn(const prj::srl::mshs::ParametersGMSH&);
+      prj::srl::mshs::ParametersGMSH serialOut() const;
     };
   }
 }

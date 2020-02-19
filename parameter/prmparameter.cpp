@@ -26,7 +26,7 @@
 
 #include "tools/idtools.h"
 #include "tools/infotools.h"
-#include "project/serial/xsdcxxoutput/featurebase.h"
+#include "project/serial/generated/prjsrlsptparameter.h"
 #include "parameter/prmvariant.h"
 #include "parameter/prmparameter.h"
 
@@ -436,55 +436,57 @@ public:
   std::string operator()(const osg::Matrixd&) const {return "Matrixd";}
 };
 
-class SrlVisitor : public boost::static_visitor<prj::srl::ParameterValue>
+ //serial rename
+class SrlVisitor2 : public boost::static_visitor<prj::srl::spt::ParameterValue>
 {
+  using SPV = prj::srl::spt::ParameterValue;
 public:
-  prj::srl::ParameterValue operator()(double d) const
+  SPV operator()(double d) const
   {
-    prj::srl::ParameterValue out;
+    SPV out;
     out.aDouble() = d;
     return out;
   }
-  prj::srl::ParameterValue operator()(int i) const
+  SPV operator()(int i) const
   {
-    prj::srl::ParameterValue out;
+    SPV out;
     out.anInteger() = i;
     return out;
   }
-  prj::srl::ParameterValue operator()(bool b) const
+  SPV operator()(bool b) const
   {
-    prj::srl::ParameterValue out;
+    SPV out;
     out.aBool() = b;
     return out;
   }
-  prj::srl::ParameterValue operator()(const std::string &s) const
+  SPV operator()(const std::string &s) const
   {
-    prj::srl::ParameterValue out;
+    SPV out;
     out.aString() = s;
     return out;
   }
-  prj::srl::ParameterValue operator()(const boost::filesystem::path &p) const
+  SPV operator()(const boost::filesystem::path &p) const
   {
-    prj::srl::ParameterValue out;
+    SPV out;
     out.aPath() = p.string();
     return out;
   }
-  prj::srl::ParameterValue operator()(const osg::Vec3d &v) const
+  SPV operator()(const osg::Vec3d &v) const
   {
-    prj::srl::ParameterValue out;
-    out.aVec3d() = prj::srl::Vec3d(v.x(), v.y(), v.z());
+    SPV out;
+    out.aVec3d() = prj::srl::spt::Vec3d(v.x(), v.y(), v.z());
     return out;
   }
-  prj::srl::ParameterValue operator()(const osg::Quat &q) const
+  SPV operator()(const osg::Quat &q) const
   {
-    prj::srl::ParameterValue out;
-    out.aQuat() = prj::srl::Quat(q.x(), q.y(), q.z(), q.z());
+    SPV out;
+    out.aQuat() = prj::srl::spt::Quat(q.x(), q.y(), q.z(), q.z());
     return out;
   }
-  prj::srl::ParameterValue operator()(const osg::Matrixd &m) const
+  SPV operator()(const osg::Matrixd &m) const
   {
-    prj::srl::ParameterValue out;
-    out.aMatrixd() = prj::srl::Matrixd
+    SPV out;
+    out.aMatrixd() = prj::srl::spt::Matrixd
     (
       m(0,0), m(0,1), m(0,2), m(0,3),
       m(1,0), m(1,1), m(1,2), m(1,3),
@@ -499,7 +501,7 @@ public:
  * 
  * @warning constraints are not serialized.
  */
-Parameter::Parameter(const prj::srl::Parameter &pIn)
+Parameter::Parameter(const prj::srl::spt::Parameter &pIn)
 : name(QString())
 , stow(new Stow(1.0))
 , id(gu::createNilId())
@@ -836,53 +838,49 @@ Parameter::operator QString() const
 //todo
 Parameter::operator osg::Quat() const{return osg::Quat();}
 
-prj::srl::Parameter Parameter::serialOut() const
+ //serial rename
+prj::srl::spt::Parameter Parameter::serialOut() const
 {
-  prj::srl::Parameter out(name.toStdString(), constant, gu::idToString(id));
-  out.pValue() = boost::apply_visitor(SrlVisitor(), stow->variant);
-  
-  return out;
+  return prj::srl::spt::Parameter
+  (
+    name.toStdString()
+    , constant
+    , gu::idToString(id)
+    , boost::apply_visitor(SrlVisitor2(), stow->variant)
+  );
 }
 
-void Parameter::serialIn(const prj::srl::Parameter& sParameterIn)
+ //serial rename
+void Parameter::serialIn(const prj::srl::spt::Parameter &spIn)
 {
-  name = QString::fromStdString(sParameterIn.name());
-  constant = sParameterIn.constant();
-  id = gu::stringToId(sParameterIn.id());
+  name = QString::fromStdString(spIn.name());
+  constant = spIn.constant();
+  id = gu::stringToId(spIn.id());
   
-  if (sParameterIn.pValue().present())
-  {
-    const auto &vIn = sParameterIn.pValue().get();
-    if (vIn.aDouble().present())
+  const auto &vIn = spIn.pValue(); //variant in
+  if (vIn.aDouble().present())
       stow->variant = vIn.aDouble().get();
-    else if (vIn.anInteger().present())
+  else if (vIn.anInteger().present())
       stow->variant = vIn.anInteger().get();
-    else if (vIn.aBool().present())
-      stow->variant = vIn.aBool().get();
-    else if (vIn.aString().present())
-      stow->variant = vIn.aString().get();
-    else if (vIn.aPath().present())
-      stow->variant = boost::filesystem::path(vIn.aPath().get());
-    else if (vIn.aVec3d().present())
-      stow->variant = osg::Vec3d(vIn.aVec3d().get().x(), vIn.aVec3d().get().y(), vIn.aVec3d().get().z());
-    else if (vIn.aQuat().present())
-      stow->variant = osg::Quat(vIn.aQuat().get().x(), vIn.aQuat().get().y(), vIn.aQuat().get().z(), vIn.aQuat().get().w());
-    else if (vIn.aMatrixd().present())
-    {
-      const auto &mIn = vIn.aMatrixd().get();
-      stow->variant = osg::Matrixd
-      (
-        mIn.i0j0(), mIn.i0j1(), mIn.i0j2(), mIn.i0j3(),
-        mIn.i1j0(), mIn.i1j1(), mIn.i1j2(), mIn.i1j3(),
-        mIn.i2j0(), mIn.i2j1(), mIn.i2j2(), mIn.i2j3(),
-        mIn.i3j0(), mIn.i3j1(), mIn.i3j2(), mIn.i3j3()
-      );
-    }
-  }
-  else if (sParameterIn.value().present())
+  else if (vIn.aBool().present())
+    stow->variant = vIn.aBool().get();
+  else if (vIn.aString().present())
+    stow->variant = vIn.aString().get();
+  else if (vIn.aPath().present())
+    stow->variant = boost::filesystem::path(vIn.aPath().get());
+  else if (vIn.aVec3d().present())
+    stow->variant = osg::Vec3d(vIn.aVec3d().get().x(), vIn.aVec3d().get().y(), vIn.aVec3d().get().z());
+  else if (vIn.aQuat().present())
+    stow->variant = osg::Quat(vIn.aQuat().get().x(), vIn.aQuat().get().y(), vIn.aQuat().get().z(), vIn.aQuat().get().w());
+  else if (vIn.aMatrixd().present())
   {
-    stow->variant = sParameterIn.value().get();
+    const auto &mIn = vIn.aMatrixd().get();
+    stow->variant = osg::Matrixd
+    (
+      mIn.i0j0(), mIn.i0j1(), mIn.i0j2(), mIn.i0j3(),
+      mIn.i1j0(), mIn.i1j1(), mIn.i1j2(), mIn.i1j3(),
+      mIn.i2j0(), mIn.i2j1(), mIn.i2j2(), mIn.i2j3(),
+      mIn.i3j0(), mIn.i3j1(), mIn.i3j2(), mIn.i3j3()
+    );
   }
-  else
-    assert(0);
 }

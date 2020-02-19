@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xs:schema
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  xmlns:spt="http://www.cadseer.com/prj/srl/spt"
+  xmlns:cyls="http://www.cadseer.com/prj/srl/cyls"
+  targetNamespace="http://www.cadseer.com/prj/srl/cyls"
+>
+  
+<xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptparameter.xsd"/>
+<xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptoverlay.xsd"/>
+<xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptseershape.xsd"/>
+<xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptbase.xsd"/>
+
+<xs:complexType name="Cylinder">
+  <xs:sequence>
+    <xs:element name="base" type="spt:Base"/>
+    <xs:element name="seerShape" type="spt:SeerShape"/>
+    <xs:element name="radius" type="spt:Parameter"/>
+    <xs:element name="height" type="spt:Parameter"/>
+    <xs:element name="csys" type="spt:Parameter"/>
+    <xs:element name="csysDragger" type="spt:CSysDragger"/>
+    <xs:element name="heightIP" type="spt:IPGroup"/>
+    <xs:element name="radiusIP" type="spt:IPGroup"/>
+  </xs:sequence>
+</xs:complexType>
+
+<xs:element name="cylinder" type="cyls:Cylinder"/>
+
+</xs:schema> 

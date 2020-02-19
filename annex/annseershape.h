@@ -34,7 +34,7 @@ class TopoDS_Face;
 
 namespace osg{class Vec3d;}
 
-namespace prj{namespace srl{class SeerShape;}}
+namespace prj{namespace srl{namespace spt{class SeerShape;}}}
 namespace ftr{class ShapeHistory;}
 
 namespace BID = boost::uuids;
@@ -203,8 +203,8 @@ namespace ann
     void dumpFeatureTagContainer(std::ostream &) const;
     //@}
     
-    prj::srl::SeerShape serialOut(); //!<convert this into serializable object.
-    void serialIn(const prj::srl::SeerShape &); //intialize this from serial object.
+    prj::srl::spt::SeerShape serialOut(); //!<convert this into serializable object. //serial rename
+    void serialIn(const prj::srl::spt::SeerShape &); //intialize this from serial object. //serial rename
     
     /*! @brief Create a copy to work on.
      * 

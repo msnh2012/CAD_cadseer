@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xs:schema
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  xmlns:spt="http://www.cadseer.com/prj/srl/spt"
+  targetNamespace="http://www.cadseer.com/prj/srl/spt"
+>
+  <xs:include schemaLocation="prjsrlsptvectormath.xsd"/>
+  <xs:include schemaLocation="prjsrlsptcolor.xsd"/>
+  
+  <xs:complexType name="PLabel">
+    <xs:sequence>
+      <xs:element name="matrix" type="spt:Matrixd"/>
+      <xs:element name="color" type="spt:Color"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="IPGroup">
+    <xs:sequence>
+      <xs:element name="matrixRoot" type="spt:Matrixd"/>
+      <xs:element name="matrixDims" type="spt:Matrixd"/>
+      <xs:element name="matrixDragger" type="spt:Matrixd"/>
+      <xs:element name="rotationAxis" type="spt:Vec3d"/>
+      <xs:element name="rotationNormal" type="spt:Vec3d"/>
+      <xs:element name="dimsFlipped" type="xs:boolean"/>
+      <xs:element name="rotateDragger" type="xs:boolean"/>
+      <xs:element name="visibleDragger" type="xs:boolean"/>
+      <xs:element name="color" type="spt:Color"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="CSysDragger">
+    <xs:sequence>
+      <xs:element name="matrix" type="spt:Matrixd"/>
+      <xs:element name="linked" type="xs:boolean"/>
+      <xs:element name="featureId" type="xs:string" default="00000000-0000-0000-0000-000000000000"/>
+    </xs:sequence>
+  </xs:complexType>
+</xs:schema> 

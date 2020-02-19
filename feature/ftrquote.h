@@ -27,7 +27,7 @@
 #include "feature/ftrbase.h"
 
 namespace lbr{class PLabel;}
-namespace prj{namespace srl{class FeatureQuote;}}
+namespace prj{namespace srl{namespace qts{class Quote;}}}
 
 namespace ftr
 {
@@ -62,7 +62,7 @@ namespace ftr
     virtual const QIcon& getIcon() const override {return icon;}
     virtual Descriptor getDescriptor() const override {return Descriptor::Create;}
     virtual void serialWrite(const boost::filesystem::path&) override;
-    void serialRead(const prj::srl::FeatureQuote &);
+    void serialRead(const prj::srl::qts::Quote&);
     
     std::unique_ptr<prm::Parameter> tFile; //!< template file.
     std::unique_ptr<prm::Parameter> oFile; //!< output file.

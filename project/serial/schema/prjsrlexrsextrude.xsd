@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xs:schema
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  xmlns:spt="http://www.cadseer.com/prj/srl/spt"
+  xmlns:exrs="http://www.cadseer.com/prj/srl/exrs"
+  targetNamespace="http://www.cadseer.com/prj/srl/exrs"
+>
+  
+<xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptparameter.xsd"/>
+<xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptoverlay.xsd"/>
+<xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptpick.xsd"/>
+<xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptseershape.xsd"/>
+<xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptbase.xsd"/>
+
+<xs:complexType name="Extrude">
+  <xs:sequence>
+    <xs:element name="base" type="spt:Base"/>
+    <xs:element name="seerShape" type="spt:SeerShape"/>
+    <xs:element name="picks" type="spt:Pick" minOccurs="0" maxOccurs="unbounded"/>
+    <xs:element name="axisPicks" type="spt:Pick" minOccurs="0" maxOccurs="unbounded"/>
+    <xs:element name="direction" type="spt:Parameter"/>
+    <xs:element name="directionLabel" type="spt:PLabel"/>
+    <xs:element name="distance" type="spt:Parameter"/>
+    <xs:element name="distanceLabel" type="spt:IPGroup"/>
+    <xs:element name="offset" type="spt:Parameter"/>
+    <xs:element name="offsetLabel" type="spt:IPGroup"/>
+    <xs:element name="directionType" type="xs:int"/>
+    <xs:element name="originalMap" type="spt:EvolveRecord" minOccurs="0" maxOccurs="unbounded"/>
+    <xs:element name="generatedMap" type="spt:EvolveRecord" minOccurs="0" maxOccurs="unbounded"/>
+    <xs:element name="lastMap" type="spt:EvolveRecord" minOccurs="0" maxOccurs="unbounded"/>
+    <xs:element name="oWireMap" type="spt:EvolveRecord" minOccurs="0" maxOccurs="unbounded"/>
+  </xs:sequence>
+</xs:complexType>
+
+<xs:element name="extrude" type="exrs:Extrude"/>
+  
+</xs:schema> 

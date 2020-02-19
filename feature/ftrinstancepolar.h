@@ -27,7 +27,7 @@
 
 namespace ann{class SeerShape; class InstanceMapper; class CSysDragger;}
 namespace lbr{class PLabel;}
-namespace prj{namespace srl{class FeatureInstancePolar;}}
+namespace prj{namespace srl{namespace inps{class InstancePolar;}}}
 
 namespace ftr
 {
@@ -49,7 +49,7 @@ namespace ftr
     virtual Descriptor getDescriptor() const override {return Descriptor::Create;}
     
     virtual void serialWrite(const boost::filesystem::path&) override;
-    void serialRead(const prj::srl::FeatureInstancePolar&);
+    void serialRead(const prj::srl::inps::InstancePolar&);
     
     const Pick& getShapePick(){return shapePick;}
     void setShapePick(const Pick&);

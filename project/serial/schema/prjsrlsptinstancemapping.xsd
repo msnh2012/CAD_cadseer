@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xs:schema
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  xmlns:spt="http://www.cadseer.com/prj/srl/spt"
+  targetNamespace="http://www.cadseer.com/prj/srl/spt"
+>
+  <xs:include schemaLocation="prjsrlsptshapehistory.xsd"/>
+
+  <xs:complexType name="InstanceMap">
+    <xs:sequence>
+      <xs:element name="history" type="spt:ShapeHistory"/>
+      <xs:element name="outIds" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+  
+  <xs:complexType name="InstanceMaps">
+    <xs:sequence>
+      <xs:element name="instanceMaps" type="spt:InstanceMap" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+</xs:schema> 

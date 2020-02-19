@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xs:schema
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  xmlns:spt="http://www.cadseer.com/prj/srl/spt"
+  xmlns:rmfs="http://www.cadseer.com/prj/srl/rmfs"
+  targetNamespace="http://www.cadseer.com/prj/srl/rmfs"
+>
+  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptseershape.xsd"/>
+  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptbase.xsd"/>
+  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptpick.xsd"/>
+
+  <xs:complexType name="RemoveFaces">
+    <xs:sequence>
+      <xs:element name="base" type="spt:Base"/>
+      <xs:element name="seerShape" type="spt:SeerShape"/>
+      <xs:element name="picks" type="spt:Pick" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:element name="removeFaces" type="rmfs:RemoveFaces"/>
+</xs:schema> 

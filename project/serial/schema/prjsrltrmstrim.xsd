@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xs:schema
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  xmlns:spt="http://www.cadseer.com/prj/srl/spt"
+  xmlns:trms="http://www.cadseer.com/prj/srl/trms"
+  targetNamespace="http://www.cadseer.com/prj/srl/trms"
+>
+  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptseershape.xsd"/>
+  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptintersectionmapping.xsd"/>
+  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptparameter.xsd"/>
+  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptoverlay.xsd"/>
+  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptbase.xsd"/>
+
+  <xs:complexType name="Trim">
+    <xs:sequence>
+      <xs:element name="base" type="spt:Base"/>
+      <xs:element name="seerShape" type="spt:SeerShape"/>
+      <xs:element name="reversed" type="spt:Parameter"/>
+      <xs:element name="reversedLabel" type="spt:PLabel"/>
+      <xs:element name="intersectionMapper" type="spt:IntersectionMapper"/>
+      <xs:element name="dpFaceId" type="xs:string"/>
+      <xs:element name="dpWireId" type="xs:string"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:element name="trim" type="trms:Trim"/>
+</xs:schema> 

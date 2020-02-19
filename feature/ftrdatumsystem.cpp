@@ -32,7 +32,7 @@
 #include "tools/tlsosgtools.h"
 #include "feature/ftrupdatepayload.h"
 #include "feature/ftrinputtype.h"
-#include "project/serial/xsdcxxoutput/featuredatumsystem.h"
+#include "project/serial/generated/prjsrldtmsdatumsystem.h"
 #include "modelviz/mdvdatumsystem.h"
 #include "feature/ftrdatumsystem.h"
 
@@ -316,11 +316,10 @@ void Feature::updateVisualInternal()
 
 void Feature::serialWrite(const boost::filesystem::path &dIn)
 {
-  prj::srl::FeatureDatumSystem so
+  prj::srl::dtms::DatumSystem so
   (
     Base::serialOut()
     , static_cast<int>(cue.systemType)
-    , ftr::serialOut(cue.picks)
     , csys->serialOut()
     , autoSize->serialOut()
     , size->serialOut()
@@ -330,17 +329,18 @@ void Feature::serialWrite(const boost::filesystem::path &dIn)
     , sizeLabel->serialOut()
     , offsetVectorLabel->serialOut()
   );
+  for (const auto &p : cue.picks)
+    so.picks().push_back(p);
   
   xml_schema::NamespaceInfomap infoMap;
   std::ofstream stream(buildFilePathName(dIn).string());
-  prj::srl::datumsystem(stream, so, infoMap);
+  prj::srl::dtms::datumsystem(stream, so, infoMap);
 }
 
-void Feature::serialRead(const prj::srl::FeatureDatumSystem &so)
+void Feature::serialRead(const prj::srl::dtms::DatumSystem &so)
 {
-  Base::serialIn(so.featureBase());
+  Base::serialIn(so.base());
   cue.systemType = static_cast<DatumSystem::SystemType>(so.systemType());
-  cue.picks = ftr::serialIn(so.picks());
   csys->serialIn(so.csys());
   autoSize->serialIn(so.autoSize());
   size->serialIn(so.size());
@@ -349,6 +349,8 @@ void Feature::serialRead(const prj::srl::FeatureDatumSystem &so)
   autoSizeLabel->serialIn(so.autoSizeLabel());
   sizeLabel->serialIn(so.sizeLabel());
   offsetVectorLabel->serialIn(so.offsetVectorLabel());
+  for (const auto &p : so. picks())
+    cue.picks.emplace_back(p);
   
   updateVisualInternal();
 }

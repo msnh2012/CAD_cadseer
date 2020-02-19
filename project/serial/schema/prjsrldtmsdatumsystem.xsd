@@ -1,0 +1,31 @@
+<xs:schema
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  xmlns:spt="http://www.cadseer.com/prj/srl/spt"
+  xmlns:dtms="http://www.cadseer.com/prj/srl/dtms"
+  targetNamespace="http://www.cadseer.com/prj/srl/dtms"
+>
+  
+<xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptparameter.xsd"/>
+<xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptpick.xsd"/>
+<xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptoverlay.xsd"/>
+<xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptbase.xsd"/>
+
+<xs:complexType name="DatumSystem">
+  <xs:sequence>
+    <xs:element name="base" type="spt:Base"/>
+    <xs:element name="systemType" type="xs:int"/>
+    <xs:element name="picks" type="spt:Pick" minOccurs="0" maxOccurs="unbounded"/>
+    <xs:element name="csys" type="spt:Parameter"/>
+    <xs:element name="autoSize" type="spt:Parameter"/>
+    <xs:element name="size" type="spt:Parameter"/>
+    <xs:element name="offsetVector" type="spt:Parameter"/>
+    <xs:element name="csysDragger" type="spt:CSysDragger"/>
+    <xs:element name="autoSizeLabel" type="spt:PLabel"/>
+    <xs:element name="sizeLabel" type="spt:PLabel"/>
+    <xs:element name="offsetVectorLabel" type="spt:PLabel"/>
+  </xs:sequence>
+</xs:complexType>
+
+<xs:element name="datumsystem" type="dtms:DatumSystem"/>
+  
+</xs:schema> 

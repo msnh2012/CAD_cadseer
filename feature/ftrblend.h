@@ -31,7 +31,7 @@
 class ChFi3d_FilBuilder;
 class TopoDS_Edge;
 
-namespace prj{namespace srl{class FeatureBlend;}}
+namespace prj{namespace srl{namespace blns{class Blend;}}}
 namespace ann{class SeerShape;}
 namespace ftr
 {
@@ -90,7 +90,7 @@ class Blend : public Base
     virtual const QIcon& getIcon() const override {return icon;}
     virtual Descriptor getDescriptor() const override {return Descriptor::Alter;}
     virtual void serialWrite(const boost::filesystem::path&) override; //!< write xml file. not const, might reset a modified flag.
-    void serialRead(const prj::srl::FeatureBlend &); //!<initializes this from serial. not virtual, type already known.
+    void serialRead(const prj::srl::blns::Blend&); //!<initializes this from serial. not virtual, type already known.
   
   protected:
     std::vector<SimpleBlend> simpleBlends;

@@ -29,7 +29,7 @@ class BRepOffset_MakeOffset;
 
 namespace lbr{class PLabel;}
 namespace ann{class SeerShape;}
-namespace prj{namespace srl{class FeatureOffset;}}
+namespace prj{namespace srl{namespace offs{class Offset;}}}
 
 namespace ftr
 {
@@ -49,7 +49,7 @@ namespace ftr
     virtual Descriptor getDescriptor() const override {return Descriptor::Alter;}
     
     virtual void serialWrite(const boost::filesystem::path&) override;
-    void serialRead(const prj::srl::FeatureOffset &);
+    void serialRead(const prj::srl::offs::Offset&);
     
     void setPicks(const Picks&);
     Picks getPicks(){return picks;}

@@ -31,7 +31,7 @@
 #include "tools/occtools.h"
 #include "tools/idtools.h"
 #include "annex/annseershape.h"
-#include "project/serial/xsdcxxoutput/featuresew.h"
+#include "project/serial/generated/prjsrlswssew.h"
 #include "feature/ftrshapecheck.h"
 #include "feature/ftrupdatepayload.h"
 #include "feature/ftrinputtype.h"
@@ -254,21 +254,23 @@ void Sew::sewModifiedMatch(const BRepBuilderAPI_Sewing &builder, const ann::Seer
 
 void Sew::serialWrite(const boost::filesystem::path &dIn)
 {
-  prj::srl::FeatureSew so
+  prj::srl::sws::Sew so
   (
     Base::serialOut(),
+    sShape->serialOut(),
     gu::idToString(solidId),
     gu::idToString(shellId)
   );
   
   xml_schema::NamespaceInfomap infoMap;
   std::ofstream stream(buildFilePathName(dIn).string());
-  prj::srl::sew(stream, so, infoMap);
+  prj::srl::sws::sew(stream, so, infoMap);
 }
 
-void Sew::serialRead(const prj::srl::FeatureSew &si)
+void Sew::serialRead(const prj::srl::sws::Sew &si)
 {
-  Base::serialIn(si.featureBase());
+  Base::serialIn(si.base());
+  sShape->serialIn(si.seerShape());
   solidId = gu::stringToId(si.solidId());
   shellId = gu::stringToId(si.shellId());
 }

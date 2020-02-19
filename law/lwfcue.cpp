@@ -26,7 +26,7 @@
 #include <Law_Interpol.hxx>
 #include <Law_Composite.hxx>
 
-#include "project/serial/xsdcxxoutput/lawfunction.h"
+#include "project/serial/generated/prjsrllwfslawfunction.h"
 #include "law/lwfcue.h"
 
 using namespace lwf;
@@ -34,18 +34,19 @@ using namespace lwf;
 using prm::Parameter;
 using prm::Names::Position;
 
-prj::srl::lwf::Data Data::serialOut() const
+prj::srl::lwfs::Data Data::serialOut() const
 {
-  prj::srl::lwf::Parameters psOut;
+  prj::srl::lwfs::Data out(static_cast<int>(subType));
+  
   for (const auto &ip : internalParameters)
-    psOut.array().push_back(ip.serialOut());
-  return prj::srl::lwf::Data(static_cast<int>(subType), psOut);
+    out.internalParameters().push_back(ip.serialOut());
+  return out;
 }
 
-void Data::serialIn(const prj::srl::lwf::Data &dataIn)
+void Data::serialIn(const prj::srl::lwfs::Data &dataIn)
 {
   subType = static_cast<lwf::Type>(dataIn.subType());
-  for (const auto &ipIn : dataIn.internalParameters().array())
+  for (const auto &ipIn : dataIn.internalParameters())
     internalParameters.emplace_back(ipIn);
 }
 
@@ -55,7 +56,7 @@ Cue::Cue()
   setConstant(1.0);
 }
 
-Cue::Cue(const prj::srl::lwf::Cue &cIn)
+Cue::Cue(const prj::srl::lwfs::Cue &cIn)
 {
   serialIn(cIn);
 }
@@ -609,31 +610,25 @@ opencascade::handle<Law_Function> Cue::buildLawFunction() const
   return out;
 }
 
-prj::srl::lwf::Cue Cue::serialOut() const
+prj::srl::lwfs::Cue Cue::serialOut() const
 {
-  prj::srl::lwf::Parameters bo;
+  prj::srl::lwfs::Cue out(static_cast<int>(type), periodic);
+  
   for (const auto &b : boundaries)
-    bo.array().push_back(b.serialOut());
+    out.boundaries().push_back(b.serialOut());
   
-  prj::srl::lwf::Datas datasOut;
   for (const auto &d : datas)
-    datasOut.array().push_back(d.serialOut());
+    out.datas().push_back(d.serialOut());
   
-  return prj::srl::lwf::Cue
-  (
-    static_cast<int>(type)
-    , bo
-    , datasOut
-    , periodic
-  );
+  return out;
 }
 
-void Cue::serialIn(const prj::srl::lwf::Cue &cueIn)
+void Cue::serialIn(const prj::srl::lwfs::Cue &cueIn)
 {
-  for (const auto &bsIn : cueIn.boundaries().array())
+  for (const auto &bsIn : cueIn.boundaries())
     boundaries.emplace_back(bsIn);
   
-  for (const auto &dsIn : cueIn.datas().array())
+  for (const auto &dsIn : cueIn.datas())
   {
     datas.emplace_back();
     datas.back().serialIn(dsIn);

@@ -62,8 +62,8 @@
 #include "tools/graphtools.h"
 #include "tools/tlsnameindexer.h"
 #include "project/prjfeatureload.h"
-#include "project/serial/xsdcxxoutput/shapehistory.h"
-#include "project/serial/xsdcxxoutput/project.h"
+// #include "project/serial/xsdcxxoutput/shapehistory.h"
+#include "project/serial/generated/prjsrlprjsproject.h"
 #include "project/prjstow.h"
 #include "project/prjproject.h"
 
@@ -1203,14 +1203,20 @@ void Project::serialWrite()
   
   RemovedGraph removedGraph = buildRemovedGraph(stow->graph);
   
-  prj::srl::Features features;
-  prj::srl::FeatureStates states;
+  srl::prjs::AppVersion version(0, 0, 0);
+  srl::prjs::Project po
+  (
+    version,
+    0,
+    shapeHistory->serialOut()
+  );
+  
   for (auto its = boost::vertices(removedGraph); its.first != its.second; ++its.first)
   {
     ftr::Base *f = removedGraph[*its.first].feature.get();
     
     //save the state
-    states.array().push_back(prj::srl::FeatureState(gu::idToString(f->getId()), removedGraph[*its.first].state.to_string()));
+    po.states().push_back(srl::prjs::FeatureState(gu::idToString(f->getId()), removedGraph[*its.first].state.to_string()));
     
     //we can't add a null shape to the compound.
     //so we check for null and add 1 vertex as a place holder.
@@ -1226,7 +1232,7 @@ void Project::serialWrite()
     if (shapeOut.IsNull())
       shapeOut = BRepBuilderAPI_MakeVertex(gp_Pnt(0.0, 0.0, 0.0)).Vertex();
     
-    features.feature().push_back(prj::srl::Feature(gu::idToString(f->getId()), f->getTypeString(), offset));
+    po.features().push_back(srl::prjs::Feature(gu::idToString(f->getId()), f->getTypeString(), offset));
     
     //add to master compound
     builder.Add(compound, shapeOut);
@@ -1239,64 +1245,45 @@ void Project::serialWrite()
   BRepTools::Clean(compound);
   BRepTools::Write(compound, cPath.string().c_str());
   
-  prj::srl::Connections connections;
   for (auto its = boost::edges(removedGraph); its.first != its.second; ++its.first)
   {
-    prj::srl::InputTypes inputTypes;
+    srl::prjs::Connection connection
+    (
+      gu::idToString(removedGraph[boost::source(*its.first, removedGraph)].feature.get()->getId())
+      , gu::idToString(removedGraph[boost::target(*its.first, removedGraph)].feature.get()->getId())
+    );
     for (const auto &tag : removedGraph[*its.first].inputType.getTags())
-      inputTypes.array().push_back(tag);
-    ftr::Base *s = removedGraph[boost::source(*its.first, removedGraph)].feature.get();
-    ftr::Base *t = removedGraph[boost::target(*its.first, removedGraph)].feature.get();
-    connections.connection().push_back(prj::srl::Connection(gu::idToString(s->getId()), gu::idToString(t->getId()), inputTypes));
+      connection.inputType().push_back(tag);
+    po.connections().push_back(connection);
   }
   
   expr::StringTranslator sTranslator(*expressionManager);
-  prj::srl::Expressions expressions;
   std::vector<uuid> formulaIds = expressionManager->getAllFormulaIdsSorted();
   for (const auto& fId : formulaIds)
   {
     std::string eString = sTranslator.buildStringAll(fId);
-    prj::srl::Expression expression(gu::idToString(fId), eString);
-    expressions.array().push_back(expression);
+    srl::prjs::Expression expression(gu::idToString(fId), eString);
+    po.expressions().push_back(expression);
   }
   
-  prj::srl::ExpressionLinks eLinks;
   for (const auto& link : expressionManager->getLinkContainer().container)
   {
-    prj::srl::ExpressionLink sLink(gu::idToString(link.parameterId), gu::idToString(link.formulaId));
-    eLinks.array().push_back(sLink);
+    srl::prjs::ExpressionLink sLink(gu::idToString(link.parameterId), gu::idToString(link.formulaId));
+    po.expressionLinks().push_back(sLink);
   }
   
-  prj::srl::ExpressionGroups eGroups;
   for (const auto &group : expressionManager->userDefinedGroups)
   {
-    prj::srl::ExpressionGroupEntries entries;
+    srl::prjs::ExpressionGroup groupOut(gu::idToString(group.id), group.name);
     for (const auto &eId : group.formulaIds)
-      entries.array().push_back(gu::idToString(eId));
-    prj::srl::ExpressionGroup eGroup(gu::idToString(group.id), group.name, entries);
-    eGroups.array().push_back(eGroup);
+      groupOut.entries().push_back(gu::idToString(eId));
+    po.expressionGroups().push_back(groupOut);
   }
   
-  prj::srl::AppVersion version(0, 0, 0);
   path pPath = saveDirectory / "project.prjt";
-  srl::Project p
-  (
-    version,
-    0,
-    features,
-    states,
-    connections,
-    expressions
-  );
-  if (!eLinks.array().empty())
-    p.expressionLinks().set(eLinks);
-  if (!eGroups.array().empty())
-    p.expressionGroups().set(eGroups);
-  p.shapeHistory().set(shapeHistory->serialOut());
-  
-  xml_schema::NamespaceInfomap infoMap;
   std::ofstream stream(pPath.string());
-  srl::project(stream, p, infoMap);
+  xml_schema::NamespaceInfomap infoMap;
+  srl::prjs::project(stream, po, infoMap);
 }
 
 void Project::save()
@@ -1334,9 +1321,9 @@ void Project::open()
     std::fstream file(sPath.string());
     BRepTools::Read(masterShape, file, junk);
     
-    auto project = srl::project(pPath.string(), ::xml_schema::Flags::dont_validate);
+    auto project = srl::prjs::project(pPath.string(), ::xml_schema::Flags::dont_validate);
     FeatureLoad fLoader(saveDirectory, masterShape);
-    for (const auto &feature : project->features().feature())
+    for (const auto &feature : project->features())
     {
       std::ostringstream messageStream;
       messageStream << "Loading: " << feature.type() << "    Id: " << feature.id();
@@ -1357,7 +1344,7 @@ void Project::open()
     
     node->sendBlocked(msg::buildStatusMessage("Loading: Project States"));
     qApp->processEvents();
-    for (const auto &state : project->states().array())
+    for (const auto &state : project->states())
     {
       uuid fId = gu::stringToId(state.id());
       ftr::State fState(state.state());
@@ -1371,13 +1358,13 @@ void Project::open()
     
     node->sendBlocked(msg::buildStatusMessage("Loading: Feature Connections"));
     qApp->processEvents();
-    for (const auto &fConnection : project->connections().connection())
+    for (const auto &fConnection : project->connections())
     {
       uuid source = gu::stringToId(fConnection.sourceId());
       uuid target = gu::stringToId(fConnection.targetId());
       
       ftr::InputType inputType;
-      for (const auto &sInputType : fConnection.inputType().array())
+      for (const auto &sInputType : fConnection.inputType())
         inputType.add(sInputType);
       connect(source, target, inputType);
     }
@@ -1385,7 +1372,7 @@ void Project::open()
     node->sendBlocked(msg::buildStatusMessage("Loading: Expressions"));
     qApp->processEvents();
     expr::StringTranslator sTranslator(*expressionManager);
-    for (const auto &sExpression : project->expressions().array())
+    for (const auto &sExpression : project->expressions())
     {
       if (sTranslator.parseString(sExpression.stringForm()) != expr::StringTranslator::ParseSucceeded)
       {
@@ -1411,35 +1398,26 @@ void Project::open()
       expressionManager->update();
     }
     
-    if (project->expressionLinks().present())
+    for (const auto &sLink : project->expressionLinks())
     {
-      for (const auto &sLink : project->expressionLinks().get().array())
-      {
-        prm::Parameter *parameter = findParameter(gu::stringToId(sLink.parameterId()));
-        assert(parameter);
-        expressionManager->addLink(parameter->getId(), gu::stringToId(sLink.expressionId()));
-      }
+      prm::Parameter *parameter = findParameter(gu::stringToId(sLink.parameterId()));
+      assert(parameter);
+      expressionManager->addLink(parameter->getId(), gu::stringToId(sLink.expressionId()));
     }
     
-    if (project->expressionGroups().present())
+    for (const auto &sGroup : project->expressionGroups())
     {
-      for (const auto &sGroup : project->expressionGroups().get().array())
-      {
-        expr::Group eGroup;
-        eGroup.id = gu::stringToId(sGroup.id());
-        eGroup.name = sGroup.name();
-        for (const auto &entry : sGroup.entries().array())
-        {
-          eGroup.formulaIds.push_back(gu::stringToId(entry));
-        }
-        expressionManager->userDefinedGroups.push_back(eGroup);
-      }
+      expr::Group eGroup;
+      eGroup.id = gu::stringToId(sGroup.id());
+      eGroup.name = sGroup.name();
+      for (const auto &entry : sGroup.entries())
+        eGroup.formulaIds.push_back(gu::stringToId(entry));
+      expressionManager->userDefinedGroups.push_back(eGroup);
     }
     
     node->sendBlocked(msg::buildStatusMessage("Loading: Shape History"));
     qApp->processEvents();
-    if (project->shapeHistory().present())
-      shapeHistory->serialIn(project->shapeHistory().get());
+    shapeHistory->serialIn(project->shapeHistory());
     
     node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
     node->sendBlocked(msg::buildStatusMessage(std::string()));

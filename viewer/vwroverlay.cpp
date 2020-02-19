@@ -37,7 +37,7 @@
 #include "message/msgsift.h"
 #include "viewer/vwrmessage.h"
 #include "selection/slcvisitors.h"
-#include "project/serial/xsdcxxoutput/view.h"
+#include "project/serial/generated/prjsrlvwsview.h"
 #include "viewer/vwroverlay.h"
 
 using namespace vwr;
@@ -226,7 +226,7 @@ void Overlay::projectUpdatedDispatched(const msg::Message &)
 class SerialInOverlayVisitor : public osg::NodeVisitor
 {
 public:
-  SerialInOverlayVisitor(const prj::srl::States &statesIn) :
+  SerialInOverlayVisitor(const prj::srl::vws::View::StatesSequence &statesIn) :
   NodeVisitor(osg::NodeVisitor::TRAVERSE_ALL_CHILDREN),
   states(statesIn)
   {
@@ -236,7 +236,7 @@ public:
     std::string userValue;
     if (switchIn.getUserValue<std::string>(gu::idAttributeTitle, userValue))
     {
-      for (const auto &s : states.array())
+      for (const auto &s : states)
       {
         if (userValue == s.id())
         {
@@ -259,7 +259,7 @@ public:
     //only interested in top level children, so don't need to call traverse here.
   }
 protected:
-  const prj::srl::States &states;
+  const prj::srl::vws::View::StatesSequence &states;
 };
 
 void Overlay::serialRead()
@@ -269,7 +269,7 @@ void Overlay::serialRead()
   if (!boost::filesystem::exists(file))
     return;
   
-  auto sView = prj::srl::view(file.string(), ::xml_schema::Flags::dont_validate);
+  auto sView = prj::srl::vws::view(file.string(), ::xml_schema::Flags::dont_validate);
   SerialInOverlayVisitor v(sView->states());
   this->accept(v);
 }
@@ -278,29 +278,32 @@ void Overlay::serialRead()
 class SerialOutVisitor : public osg::NodeVisitor
 {
 public:
-  SerialOutVisitor(prj::srl::States &statesIn) : NodeVisitor(osg::NodeVisitor::TRAVERSE_ALL_CHILDREN), states(statesIn){}
+  SerialOutVisitor(prj::srl::vws::View::StatesSequence &statesIn) : NodeVisitor(osg::NodeVisitor::TRAVERSE_ALL_CHILDREN), states(statesIn){}
   virtual void apply(osg::Switch &switchIn) override
   {
     std::string userValue;
     if (switchIn.getUserValue<std::string>(gu::idAttributeTitle, userValue))
-      states.array().push_back(prj::srl::State(userValue, switchIn.getNewChildDefaultValue()));
+      states.push_back(prj::srl::vws::State(userValue, switchIn.getNewChildDefaultValue()));
     
     //only interested in top level children, so don't need to call traverse here.
   }
 protected:
-  prj::srl::States &states;
+  prj::srl::vws::View::StatesSequence &states;
 };
 
 void Overlay::serialWrite()
 {
-  prj::srl::States states;
+  prj::srl::spt::Matrixd dummy(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+  
+  prj::srl::vws::View::StatesSequence states;
   SerialOutVisitor v(states);
   this->accept(v);
-  prj::srl::View svOut(states);
+  prj::srl::vws::View svOut(dummy);
+  svOut.states() = states;
   
   boost::filesystem::path file = app::instance()->getProject()->getSaveDirectory();
   file /= "overlay.xml";
   xml_schema::NamespaceInfomap infoMap;
   std::ofstream stream(file.string());
-  prj::srl::view(stream, svOut, infoMap);
+  prj::srl::vws::view(stream, svOut, infoMap);
 }

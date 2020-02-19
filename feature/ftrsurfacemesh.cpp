@@ -38,7 +38,7 @@
 #include "mesh/mshocct.h"
 #include "mesh/mshmesh.h"
 #include "modelviz/mdvsurfacemesh.h"
-#include "project/serial/xsdcxxoutput/featuresurfacemesh.h"
+#include "project/serial/generated/prjsrlsfmssurfacemesh.h"
 #include "feature/ftrsurfacemesh.h"
 
 
@@ -200,7 +200,7 @@ void SurfaceMesh::updateVisual()
 
 void SurfaceMesh::serialWrite(const boost::filesystem::path &dIn)
 {
-  prj::srl::FeatureSurfaceMesh so
+  prj::srl::sfms::SurfaceMesh so
   (
     Base::serialOut()
     , mesh->serialOut()
@@ -212,12 +212,12 @@ void SurfaceMesh::serialWrite(const boost::filesystem::path &dIn)
   
   xml_schema::NamespaceInfomap infoMap;
   std::ofstream stream(buildFilePathName(dIn).string());
-  prj::srl::surfaceMesh(stream, so, infoMap);
+  prj::srl::sfms::surfaceMesh(stream, so, infoMap);
 }
 
-void SurfaceMesh::serialRead(const prj::srl::FeatureSurfaceMesh &smIn)
+void SurfaceMesh::serialRead(const prj::srl::sfms::SurfaceMesh &smIn)
 {
-  Base::serialIn(smIn.featureBase());
+  Base::serialIn(smIn.base());
   mesh->serialIn(smIn.surface());
   occtParameters.serialIn(smIn.parametersOCCT());
   netgenParameters.serialIn(smIn.parametersNetgen());

@@ -26,7 +26,7 @@
 #include "library/lbrlineardimension.h"
 #include "library/lbripgroup.h"
 #include "library/lbrcsysdragger.h"
-#include "project/serial/xsdcxxoutput/featurecylinder.h"
+#include "project/serial/generated/prjsrlcylscylinder.h"
 #include "annex/anncsysdragger.h"
 #include "feature/ftrcylinderbuilder.h"
 #include "annex/annseershape.h"
@@ -307,27 +307,31 @@ void Cylinder::updateResult(const CylinderBuilder &cylinderBuilderIn)
 
 void Cylinder::serialWrite(const boost::filesystem::path &dIn)
 {
-  prj::srl::FeatureCylinder cylinderOut
+  prj::srl::cyls::Cylinder cylinderOut
   (
     Base::serialOut(),
+    sShape->serialOut(),
     radius->serialOut(),
     height->serialOut(),
     csys->serialOut(),
-    csysDragger->serialOut()
+    csysDragger->serialOut(),
+    heightIP->serialOut(),
+    radiusIP->serialOut()
   );
   
   xml_schema::NamespaceInfomap infoMap;
   std::ofstream stream(buildFilePathName(dIn).string());
-  prj::srl::cylinder(stream, cylinderOut, infoMap);
+  prj::srl::cyls::cylinder(stream, cylinderOut, infoMap);
 }
 
-void Cylinder::serialRead(const prj::srl::FeatureCylinder& sCylinderIn)
+void Cylinder::serialRead(const prj::srl::cyls::Cylinder& sCylinderIn)
 {
-  Base::serialIn(sCylinderIn.featureBase());
+  Base::serialIn(sCylinderIn.base());
+  sShape->serialIn(sCylinderIn.seerShape());
   radius->serialIn(sCylinderIn.radius());
   height->serialIn(sCylinderIn.height());
   csys->serialIn(sCylinderIn.csys());
   csysDragger->serialIn(sCylinderIn.csysDragger());
-  
-  updateIPGroup();
+  heightIP->serialIn(sCylinderIn.heightIP());
+  radiusIP->serialIn(sCylinderIn.radiusIP());
 }

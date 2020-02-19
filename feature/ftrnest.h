@@ -28,7 +28,7 @@
 #include "feature/ftrbase.h"
 
 namespace lbr{class PLabel;}
-namespace prj{namespace srl{class FeatureNest;}}
+namespace prj{namespace srl{namespace nsts{class Nest;}}}
 namespace ann{class SeerShape;}
 
 namespace ftr
@@ -47,7 +47,7 @@ namespace ftr
     virtual const QIcon& getIcon() const override {return icon;}
     virtual Descriptor getDescriptor() const override {return Descriptor::Create;}
     virtual void serialWrite(const boost::filesystem::path&) override;
-    void serialRead(const prj::srl::FeatureNest &);
+    void serialRead(const prj::srl::nsts::Nest&);
     
     double getPitch() const;
     double getGap() const;

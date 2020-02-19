@@ -25,7 +25,7 @@
 class BRepTools_History;
 
 namespace ann{class SeerShape;}
-namespace prj{namespace srl{class FeatureRefine;}}
+namespace prj{namespace srl{namespace rfns{class Refine;}}}
 
 namespace ftr
 {
@@ -44,7 +44,7 @@ namespace ftr
     virtual const QIcon& getIcon() const override {return icon;}
     virtual Descriptor getDescriptor() const override {return Descriptor::Alter;}
     virtual void serialWrite(const boost::filesystem::path&) override;
-    void serialRead(const prj::srl::FeatureRefine &);
+    void serialRead(const prj::srl::rfns::Refine&);
     
   protected:
     std::unique_ptr<ann::SeerShape> sShape;

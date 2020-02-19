@@ -47,7 +47,7 @@ namespace osgText
 }
 namespace lbr{class AngularDimension;}
 namespace prm{class Parameter;}
-namespace prj{namespace srl{class Visual;}}
+namespace prj{namespace srl{namespace skts{class Visual;}}}
 
 namespace skt
 {
@@ -187,8 +187,8 @@ namespace skt
      * @name Serial
      */
     ///@{
-    prj::srl::Visual serialOut() const;
-    void serialIn(const prj::srl::Visual&);
+    prj::srl::skts::Visual serialOut() const;
+    void serialIn(const prj::srl::skts::Visual&);
     ///@}
     
   private:

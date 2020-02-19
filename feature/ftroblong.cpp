@@ -24,7 +24,7 @@
 #include "annex/annseershape.h"
 #include "library/lbripgroup.h"
 #include "library/lbrcsysdragger.h"
-#include "project/serial/xsdcxxoutput/featureoblong.h"
+#include "project/serial/generated/prjsrloblsoblong.h"
 #include "annex/anncsysdragger.h"
 #include "feature/ftroblongbuilder.h"
 #include "feature/ftrupdatepayload.h"
@@ -398,29 +398,35 @@ void Oblong::updateIPGroup()
 
 void Oblong::serialWrite(const boost::filesystem::path &dIn)
 {
-  prj::srl::FeatureOblong oblongOut
+  prj::srl::obls::Oblong oblongOut
   (
     Base::serialOut(),
+    sShape->serialOut(),
     length->serialOut(),
     width->serialOut(),
     height->serialOut(),
     csys->serialOut(),
-    csysDragger->serialOut()
+    csysDragger->serialOut(),
+    lengthIP->serialOut(),
+    widthIP->serialOut(),
+    heightIP->serialOut()
   );
   
   xml_schema::NamespaceInfomap infoMap;
   std::ofstream stream(buildFilePathName(dIn).string());
-  prj::srl::oblong(stream, oblongOut, infoMap);
+  prj::srl::obls::oblong(stream, oblongOut, infoMap);
 }
 
-void Oblong::serialRead(const prj::srl::FeatureOblong &sOblong)
+void Oblong::serialRead(const prj::srl::obls::Oblong &sOblong)
 {
-  Base::serialIn(sOblong.featureBase());
+  Base::serialIn(sOblong.base());
+  sShape->serialIn(sOblong.seerShape());
   length->serialIn(sOblong.length());
   width->serialIn(sOblong.width());
   height->serialIn(sOblong.height());
   csys->serialIn(sOblong.csys());
   csysDragger->serialIn(sOblong.csysDragger());
-  
-  updateIPGroup();
+  lengthIP->serialIn(sOblong.lengthIP());
+  widthIP->serialIn(sOblong.widthIP());
+  heightIP->serialIn(sOblong.heightIP());
 }

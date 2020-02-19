@@ -24,7 +24,7 @@
 #include "feature/ftrbase.h"
 
 namespace ann{class SurfaceMesh;}
-namespace prj{namespace srl{class FeatureSurfaceMesh;}}
+namespace prj{namespace srl{namespace sfms{class SurfaceMesh;}}}
 
 namespace ftr
 {
@@ -59,7 +59,7 @@ namespace ftr
     void setNetgenParameters(const msh::prm::Netgen&);
     
     virtual void serialWrite(const boost::filesystem::path&) override;
-    void serialRead(const prj::srl::FeatureSurfaceMesh&);
+    void serialRead(const prj::srl::sfms::SurfaceMesh&);
     
   protected:
     MeshType meshType = MeshType::inert;

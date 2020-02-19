@@ -26,7 +26,7 @@
 namespace ann{class SeerShape;}
 namespace lbr{class PLabel;}
 namespace occt{class BoundingBox;}
-namespace prj{namespace srl{class FeatureRevolve;}}
+namespace prj{namespace srl{namespace rvls{class Revolve;}}}
 
 namespace ftr
 {
@@ -54,7 +54,7 @@ namespace ftr
     virtual Descriptor getDescriptor() const override {return Descriptor::Create;}
     
     virtual void serialWrite(const boost::filesystem::path&) override;
-    void serialRead(const prj::srl::FeatureRevolve&);
+    void serialRead(const prj::srl::rvls::Revolve&);
     
     void setPicks(const Picks&);
     const Picks& getPicks() const {return picks;}

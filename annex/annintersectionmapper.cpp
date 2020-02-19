@@ -36,7 +36,7 @@
 #include "feature/ftrupdatepayload.h"
 #include "feature/ftrinputtype.h"
 #include "annex/annseershape.h"
-#include "project/serial/xsdcxxoutput/featurebase.h"
+#include "project/serial/generated/prjsrlsptintersectionmapping.h"
 #include "annex/annintersectionmapper.h"
 
 
@@ -870,18 +870,19 @@ IntersectionMapper::IntersectionMapper() : Base(), data(new IntersectionMapper::
 
 IntersectionMapper::~IntersectionMapper() {}
 
-prj::srl::IntersectionMapper IntersectionMapper::serialOut()
+prj::srl::spt::IntersectionMapper IntersectionMapper::serialOut()
 {
-  prj::srl::EdgeIntersections eiOut;
+  prj::srl::spt::IntersectionMapper out;
+  
   for (const auto &es : data->edgeIntersections)
   {
-    prj::srl::IntersectionNodes ensOut;
+    prj::srl::spt::EdgeIntersection eio(es.faceHistory1.serialOut(), es.faceHistory2.serialOut());
     for (const auto &ens : es.nodes)
     {
       assert(ens.type == Node::Type::Old);
-      ensOut.array().push_back
+      eio.nodes().push_back
       (
-        prj::srl::IntersectionNode
+        prj::srl::spt::IntersectionNode
         (
           gu::idToString(ens.edgeId),
           ens.center.X(),
@@ -890,27 +891,18 @@ prj::srl::IntersectionMapper IntersectionMapper::serialOut()
         )
       );
     }
-    eiOut.array().push_back
-    (
-      prj::srl::EdgeIntersection
-      (
-        es.faceHistory1.serialOut(),
-        es.faceHistory2.serialOut(),
-        ensOut
-      )
-    );
+    out.edgeIntersections().push_back(eio);
   }
   
-  prj::srl::FaceSplits fSplitsOut;
   for (const auto &fs : data->faceSplits)
   {
-    prj::srl::FaceNodes fnsOut;
+    prj::srl::spt::FaceSplit fSplitsOut(fs.faceHistory.serialOut());
     for (const auto &fns : fs.nodes)
     {
       assert(fns.type == Node::Type::Old);
-      fnsOut.array().push_back
+      fSplitsOut.nodes().push_back
       (
-        prj::srl::FaceNode
+        prj::srl::spt::FaceNode
         (
           gu::idToString(fns.faceId),
           gu::idToString(fns.wireId),
@@ -920,26 +912,18 @@ prj::srl::IntersectionMapper IntersectionMapper::serialOut()
         )
       );
     }
-    fSplitsOut.array().push_back
-    (
-      prj::srl::FaceSplit
-      (
-        fs.faceHistory.serialOut(),
-        fnsOut
-      )
-    );
+    out.faceSplits().push_back(fSplitsOut);
   }
   
-  prj::srl::EdgeSplits eSplitsOut;
   for (const auto &ens : data->edgeSplits)
   {
-    prj::srl::EdgeNodes ensOut;
+    prj::srl::spt::EdgeSplit eSplitOut(ens.edgeHistory.serialOut());
     for (const auto &en : ens.nodes)
     {
       assert(en.type == Node::Type::Old);
-      ensOut.array().push_back
+      eSplitOut.nodes().push_back
       (
-        prj::srl::EdgeNode
+        prj::srl::spt::EdgeNode
         (
           gu::idToString(en.edgeId),
           en.center,
@@ -947,37 +931,28 @@ prj::srl::IntersectionMapper IntersectionMapper::serialOut()
         )
       );
     }
-    eSplitsOut.array().push_back
-    (
-      prj::srl::EdgeSplit
-      (
-        ens.edgeHistory.serialOut(),
-        ensOut
-      )
-    );
+    out.edgeSplits().push_back(eSplitOut);
   }
   
-  prj::srl::SameDomains sdso; //same domains out.
   for (const auto &sds : data->sameDomains)
   {
-    prj::srl::ShapeHistories sdhs; //same domain histories
+    prj::srl::spt::SameDomain sdo(gu::idToString(sds.id));
     for (const auto &h : sds.histories)
-      sdhs.array().push_back(h.serialOut());
-    sdso.array().push_back(prj::srl::SameDomain(gu::idToString(sds.id), sdhs));
+      sdo.histories().push_back(h.serialOut());
+    out.sameDomains().push_back(sdo);
   }
   
-  
-  return prj::srl::IntersectionMapper(eiOut, fSplitsOut, eSplitsOut, sdso);
+  return out;
 }
 
-void IntersectionMapper::serialIn(const prj::srl::IntersectionMapper &sIn)
+void IntersectionMapper::serialIn(const prj::srl::spt::IntersectionMapper &sIn)
 {
-  for (const auto &eisIn : sIn.edgeIntersections().array())
+  for (const auto &eisIn : sIn.edgeIntersections())
   {
     EdgeIntersection ei;
     ei.faceHistory1.serialIn(eisIn.faceHistory1());
     ei.faceHistory2.serialIn(eisIn.faceHistory2());
-    for (const auto &enIn : eisIn.nodes().array())
+    for (const auto &enIn : eisIn.nodes())
     {
       IntersectionNode en;
       en.edgeId = gu::stringToId(enIn.edgeId());
@@ -989,11 +964,11 @@ void IntersectionMapper::serialIn(const prj::srl::IntersectionMapper &sIn)
     data->edgeIntersections.push_back(ei);
   }
   
-  for (const auto &fsIn : sIn.faceSplits().array())
+  for (const auto &fsIn : sIn.faceSplits())
   {
     FaceSplit fs;
     fs.faceHistory.serialIn(fsIn.faceHistory());
-    for (const auto &fnIn : fsIn.nodes().array())
+    for (const auto &fnIn : fsIn.nodes())
     {
       FaceNode fn;
       fn.faceId = gu::stringToId(fnIn.faceId());
@@ -1006,11 +981,11 @@ void IntersectionMapper::serialIn(const prj::srl::IntersectionMapper &sIn)
     data->faceSplits.push_back(fs);
   }
   
-  for (const auto &ess : sIn.edgeSplits().array())
+  for (const auto &ess : sIn.edgeSplits())
   {
     EdgeSplit es;
     es.edgeHistory.serialIn(ess.edgeHistory());
-    for (const auto &enIn : ess.nodes().array())
+    for (const auto &enIn : ess.nodes())
     {
       EdgeNode en;
       en.edgeId = gu::stringToId(enIn.edgeId());
@@ -1022,11 +997,11 @@ void IntersectionMapper::serialIn(const prj::srl::IntersectionMapper &sIn)
     data->edgeSplits.push_back(es);
   }
   
-  for (const auto &sdIn : sIn.sameDomains().array())
+  for (const auto &sdIn : sIn.sameDomains())
   {
     SameDomain sd;
     sd.id = gu::stringToId(sdIn.id());
-    for (const auto &hIn : sdIn.histories().array())
+    for (const auto &hIn : sdIn.histories())
     {
       ftr::ShapeHistory h;
       h.serialIn(hIn);

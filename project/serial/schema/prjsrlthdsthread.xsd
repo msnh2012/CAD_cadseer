@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xs:schema
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  xmlns:spt="http://www.cadseer.com/prj/srl/spt"
+  xmlns:thds="http://www.cadseer.com/prj/srl/thds"
+  targetNamespace="http://www.cadseer.com/prj/srl/thds"
+>
+  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptseershape.xsd"/>
+  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptparameter.xsd"/>
+  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptoverlay.xsd"/>
+  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptbase.xsd"/>
+
+  <xs:complexType name="Thread">
+    <xs:sequence>
+      <xs:element name="base" type="spt:Base"/>
+      <xs:element name="seerShape" type="spt:SeerShape"/>
+      <xs:element name="diameter" type="spt:Parameter"/>
+      <xs:element name="pitch" type="spt:Parameter"/>
+      <xs:element name="length" type="spt:Parameter"/>
+      <xs:element name="angle" type="spt:Parameter"/>
+      <xs:element name="internal" type="spt:Parameter"/>
+      <xs:element name="fake" type="spt:Parameter"/>
+      <xs:element name="leftHanded" type="spt:Parameter"/>
+      <xs:element name="csys" type="spt:Parameter"/>
+
+      <xs:element name="diameterLabel" type="spt:PLabel"/>
+      <xs:element name="pitchLabel" type="spt:PLabel"/>
+      <xs:element name="lengthLabel" type="spt:PLabel"/>
+      <xs:element name="angleLabel" type="spt:PLabel"/>
+      <xs:element name="internalLabel" type="spt:PLabel"/>
+      <xs:element name="fakeLabel" type="spt:PLabel"/>
+      <xs:element name="leftHandedLabel" type="spt:PLabel"/>
+      <xs:element name="csysDragger" type="spt:CSysDragger"/>
+      
+      <xs:element name="solidId" type="xs:string" default="00000000-0000-0000-0000-000000000000"/>
+      <xs:element name="ids" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:element name="thread" type="thds:Thread"/>
+</xs:schema> 

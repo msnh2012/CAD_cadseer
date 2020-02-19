@@ -26,7 +26,7 @@
 #include "subprojects/pmp-library/src/pmp/SurfaceMesh.h"
 #include "subprojects/pmp-library/src/pmp/algorithms/SurfaceRemeshing.h"
 
-#include "project/serial/xsdcxxoutput/mesh.h"
+#include "project/serial/generated/prjsrlsfmssurfacemesh.h"
 #include "mesh/mshparameters.h"
 #include "mesh/mshmesh.h"
 #include "mesh/mshconvert.h"
@@ -165,41 +165,43 @@ void SurfaceMesh::fillHolesPMP()
   stow->mesh = msh::srf::convert(pmpMesh);
 }
 
-prj::srl::msh::Surface SurfaceMesh::serialOut()
+prj::srl::mshs::Surface SurfaceMesh::serialOut()
 {
   msh::srf::Mesh m = stow->mesh;
   m.collect_garbage();
   
-  prj::srl::msh::Points mps;
-  for (const msh::srf::Vertex &v : m.vertices())
+  auto convertOut = [&](const msh::srf::Vertex &vIn) -> prj::srl::spt::Vec3d
   {
-    const msh::srf::Point &p = m.point(v);
-    mps.array().push_back(prj::srl::msh::Point(p.x(), p.y(), p.z()));
-  }
+    const msh::srf::Point &p = m.point(vIn);
+    return prj::srl::spt::Vec3d(p.x(), p.y(), p.z());
+  };
   
-  prj::srl::msh::Faces mfs;
+  prj::srl::mshs::Surface out;
+  for (const msh::srf::Vertex &v : m.vertices())
+    out.points().push_back(convertOut(v));
+  
   for (const msh::srf::Face &f : m.faces())
   {
-    prj::srl::msh::Indexes mi;
+    prj::srl::mshs::Face fo;
     for(const msh::srf::Vertex &vd : vertices_around_face(m.halfedge(f), m))
-      mi.array().push_back(vd);
-    mfs.array().push_back(prj::srl::msh::Face(mi));
+      fo.indexes().push_back(vd);
+    out.faces().push_back(fo);
   }
   
-  return prj::srl::msh::Surface(mps, mfs);
+  return out;
 }
 
-void SurfaceMesh::serialIn(const prj::srl::msh::Surface &smIn)
+void SurfaceMesh::serialIn(const prj::srl::mshs::Surface &smIn)
 {
   msh::srf::Mesh &m = stow->mesh;
   
-  for (const auto &pIn : smIn.points().array())
+  for (const auto &pIn : smIn.points())
     m.add_vertex(msh::srf::Point(pIn.x(), pIn.y(), pIn.z()));
   
-  for (const auto &fIn : smIn.faces().array())
+  for (const auto &fIn : smIn.faces())
   {
     msh::srf::Vertices vertices;
-    for (const auto &i : fIn.indexes().array())
+    for (const auto &i : fIn.indexes())
       vertices.push_back(static_cast<msh::srf::Vertex>(i));
     m.add_face(vertices);
   }

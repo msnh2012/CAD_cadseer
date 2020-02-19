@@ -29,7 +29,7 @@
 
 #include <parameter/prmparameter.h>
 
-namespace prj{namespace srl{namespace lwf{class Cue; class Data;}}}
+namespace prj{namespace srl{namespace lwfs{class Cue; class Data;}}}
 
 /*! @namespace lwf
  * @brief Law Function Namespace
@@ -66,8 +66,8 @@ namespace lwf
     Data(Type tIn, const Parameters &psIn): subType(tIn), internalParameters(psIn){}
     Type subType = Type::none; //sub-law type. only for composite.
     Parameters internalParameters; //only for interpolate and derivative is ignored.
-    prj::srl::lwf::Data serialOut() const;
-    void serialIn(const prj::srl::lwf::Data&);
+    prj::srl::lwfs::Data serialOut() const;
+    void serialIn(const prj::srl::lwfs::Data&);
   };
   
   /*! @struct Cue
@@ -80,7 +80,7 @@ namespace lwf
   struct Cue
   {
     Cue();
-    Cue(const prj::srl::lwf::Cue&);
+    Cue(const prj::srl::lwfs::Cue&);
     Type type = Type::none; //overall type.
     Parameters boundaries; //size() = 2 except for composite laws.
     std::vector<Data> datas; //for composite laws.
@@ -201,8 +201,8 @@ namespace lwf
     
     opencascade::handle<Law_Function> buildLawFunction() const;
     
-    prj::srl::lwf::Cue serialOut() const;
-    void serialIn(const prj::srl::lwf::Cue&);
+    prj::srl::lwfs::Cue serialOut() const;
+    void serialIn(const prj::srl::lwfs::Cue&);
   };
   
   /*! @brief build points along law curve for visual

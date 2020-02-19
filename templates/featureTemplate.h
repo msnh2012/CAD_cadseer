@@ -24,7 +24,7 @@
 #include "feature/ftrbase.h"
 
 // namespace ann{class SeerShape;}
-// namespace prj{namespace srl{class Feature%CLASSNAME%;}}
+// namespace prj{namespace srl{namespace FIXME{class Feature%CLASSNAME%;}}}
 // namespace lbr{class IPGroup; class PLabel;}
 
 namespace ftr
@@ -42,7 +42,7 @@ namespace ftr
     Descriptor getDescriptor() const override {return Descriptor::Create;}
     
     void serialWrite(const boost::filesystem::path&) override;
-//     void serialRead(const prj::srl::Feature%CLASSNAME%&);
+//     void serialRead(const prj::srl::FIXME::%CLASSNAME%&);
     
 //     void setPicks(const Picks&);
 //     const Picks& getPicks() const {return picks;}

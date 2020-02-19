@@ -28,7 +28,7 @@ namespace osg{class Matrixd; class PositionAttitudeTransform;}
 namespace mdv{class DatumSystem;}
 namespace lbr{class PLabel;}
 namespace ann{class CSysDragger;}
-namespace prj{namespace srl{class FeatureDatumSystem;}}
+namespace prj{namespace srl{namespace dtms{class DatumSystem;}}}
 
 /* right now the only offset is just a 3d vector offsetVector. This is only temporary.
  * We will add an orientation of promote it to a full blown matrixd.
@@ -69,7 +69,7 @@ namespace ftr
       Descriptor getDescriptor() const override {return Descriptor::Create;}
       
       void serialWrite(const boost::filesystem::path&) override;
-      void serialRead(const prj::srl::FeatureDatumSystem&);
+      void serialRead(const prj::srl::dtms::DatumSystem&);
       
       void setCue(const Cue&);
       const Cue& getCue() const {return cue;}

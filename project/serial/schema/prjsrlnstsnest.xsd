@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xs:schema
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  xmlns:spt="http://www.cadseer.com/prj/srl/spt"
+  xmlns:nsts="http://www.cadseer.com/prj/srl/nsts"
+  targetNamespace="http://www.cadseer.com/prj/srl/nsts"
+>
+
+<xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptparameter.xsd"/>  
+<xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptseershape.xsd"/>
+<xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptbase.xsd"/>
+<xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptoverlay.xsd"/>
+
+<xs:complexType name="Nest">
+  <xs:sequence>
+    <xs:element name="base" type="spt:Base"/>
+    <xs:element name="seerShape" type="spt:SeerShape"/>
+    <xs:element name="gap" type="spt:Parameter"/>
+    <xs:element name="feedDirection" type="spt:Parameter"/>
+    <xs:element name="gapLabel" type="spt:PLabel"/>
+    <xs:element name="feedDirectionLabel" type="spt:PLabel"/>
+    <xs:element name="pitch" type="xs:double"/>
+  </xs:sequence>
+</xs:complexType>
+
+<xs:element name="nest" type="nsts:Nest"/>
+  
+</xs:schema> 

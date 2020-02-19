@@ -32,7 +32,7 @@
 #include "feature/ftrupdatepayload.h"
 #include "feature/ftrinputtype.h"
 #include "annex/annseershape.h"
-#include "project/serial/xsdcxxoutput/featureline.h"
+#include "project/serial/generated/prjsrllnsline.h"
 #include "feature/ftrline.h"
 
 using namespace ftr;
@@ -131,21 +131,25 @@ void Line::updateModel(const UpdatePayload &pIn)
 
 void Line::serialWrite(const boost::filesystem::path &dIn)
 {
-  prj::srl::FeatureLine so
+  prj::srl::lns::Line so
   (
     Base::serialOut()
-    , ftr::serialOut(picks)
+    , sShape->serialOut()
     , gu::idToString(lineId)
   );
+  for (const auto &p : picks)
+    so.picks().push_back(p);
   
   xml_schema::NamespaceInfomap infoMap;
   std::ofstream stream(buildFilePathName(dIn).string());
-  prj::srl::line(stream, so, infoMap);
+  prj::srl::lns::line(stream, so, infoMap);
 }
 
-void Line::serialRead(const prj::srl::FeatureLine &sli)
+void Line::serialRead(const prj::srl::lns::Line &sli)
 {
-  Base::serialIn(sli.featureBase());
-  picks = ftr::serialIn(sli.picks());
+  Base::serialIn(sli.base());
+  sShape->serialIn(sli.seerShape());
   lineId = gu::stringToId(sli.lineId());
+  for (const auto &p : sli.picks())
+    picks.emplace_back(p);
 }

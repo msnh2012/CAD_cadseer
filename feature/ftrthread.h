@@ -25,7 +25,7 @@
 
 namespace osg{class Matrixd;}
 
-namespace prj{namespace srl{class FeatureThread;}}
+namespace prj{namespace srl{namespace thds{class Thread;}}}
 namespace ann{class CSysDragger; class SeerShape;}
 namespace lbr{class PLabel;}
 
@@ -65,7 +65,7 @@ namespace ftr
     osg::Matrixd getCSys() const;
     
     virtual void serialWrite(const boost::filesystem::path&) override;
-    void serialRead(const prj::srl::FeatureThread&);
+    void serialRead(const prj::srl::thds::Thread&);
     
     virtual void updateModel(const UpdatePayload&) override;
     virtual Type getType() const override {return Type::Thread;}

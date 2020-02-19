@@ -22,7 +22,7 @@
 
 #include "feature/ftrbase.h"
 
-namespace prj{namespace srl{class FeatureInert;}}
+namespace prj{namespace srl{namespace ints{class Inert;}}}
 namespace ann{class CSysDragger;}
 
 namespace ftr
@@ -44,7 +44,7 @@ namespace ftr
     virtual const QIcon& getIcon() const override {return icon;}
     virtual Descriptor getDescriptor() const override {return Descriptor::Create;}
     virtual void serialWrite(const boost::filesystem::path&) override;
-    void serialRead(const prj::srl::FeatureInert &sBox);
+    void serialRead(const prj::srl::ints::Inert &sBox);
     
     void setCSys(const osg::Matrixd&);
     osg::Matrixd getCSys() const;

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xs:schema
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  xmlns:spt="http://www.cadseer.com/prj/srl/spt"
+  xmlns:chf="http://www.cadseer.com/prj/srl/chms"
+  targetNamespace="http://www.cadseer.com/prj/srl/chms"
+>
+  
+<xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptparameter.xsd"/>
+<xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptpick.xsd"/>
+<xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptoverlay.xsd"/>
+<xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptseershape.xsd"/>
+<xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptbase.xsd"/>
+
+<xs:complexType name="Entry">
+  <xs:sequence>
+    <xs:element name="style" type="xs:int"/>
+    <xs:element name="parameter1" type="spt:Parameter"/>
+    <xs:element name="parameter2" type="spt:Parameter" minOccurs="0"/>
+    <xs:element name="label1" type="spt:PLabel"/>
+    <xs:element name="label2" type="spt:PLabel" minOccurs="0"/>
+    <xs:element name="edgePicks" type="spt:Pick" minOccurs="0" maxOccurs="unbounded"/>
+    <xs:element name="facePicks" type="spt:Pick" minOccurs="0" maxOccurs="unbounded"/>
+  </xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="Cue">
+  <xs:sequence>
+    <xs:element name="mode" type="xs:int"/>
+    <xs:element name="entries" type="chf:Entry" minOccurs="0" maxOccurs="unbounded"/>
+  </xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="Chamfer">
+  <xs:sequence>
+    <xs:element name="base" type="spt:Base"/>
+    <xs:element name="seerShape" type="spt:SeerShape"/>
+    <xs:element name="shapeMap" type="spt:EvolveRecord" minOccurs="0" maxOccurs="unbounded"/>
+    <xs:element name="cue" type="chf:Cue"/>
+  </xs:sequence>
+</xs:complexType>
+
+<xs:element name="chamfer" type="chf:Chamfer"/>
+  
+</xs:schema> 

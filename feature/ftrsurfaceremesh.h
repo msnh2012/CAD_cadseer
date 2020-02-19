@@ -23,7 +23,7 @@
 #include "feature/ftrbase.h"
 
 namespace ann{class SurfaceMesh;}
-namespace prj{namespace srl{class FeatureSurfaceReMesh;}}
+namespace prj{namespace srl{namespace srms{class SurfaceReMesh;}}}
 namespace lbr{class PLabel;}
 
 namespace ftr
@@ -42,7 +42,7 @@ namespace ftr
     Descriptor getDescriptor() const override {return Descriptor::Create;}
     
     void serialWrite(const boost::filesystem::path&) override;
-    void serialRead(const prj::srl::FeatureSurfaceReMesh&);
+    void serialRead(const prj::srl::srms::SurfaceReMesh&);
     
   private:
     std::unique_ptr<ann::SurfaceMesh> mesh;

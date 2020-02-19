@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xs:schema
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  xmlns:spt="http://www.cadseer.com/prj/srl/spt"
+  xmlns:lwfs="http://www.cadseer.com/prj/srl/lwfs"
+  xmlns:swps="http://www.cadseer.com/prj/srl/swps"
+  targetNamespace="http://www.cadseer.com/prj/srl/swps"
+>
+  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptseershape.xsd"/>
+  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptpick.xsd"/>
+  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptparameter.xsd"/>
+  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptoverlay.xsd"/>
+  <xs:import namespace = "http://www.cadseer.com/prj/srl/lwfs" schemaLocation="prjsrllwfslawfunction.xsd"/>
+  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptbase.xsd"/>
+
+  <xs:complexType name="SweepProfile">
+    <xs:sequence>
+      <xs:element name="pick" type="spt:Pick"/>
+      <xs:element name="contact" type="spt:Parameter"/>
+      <xs:element name="correction" type="spt:Parameter"/>
+      <xs:element name="contactLabel" type="spt:PLabel"/>
+      <xs:element name="correctionLabel" type="spt:PLabel"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="SweepAuxiliary">
+    <xs:sequence>
+      <xs:element name="pick" type="spt:Pick"/>
+      <xs:element name="curvilinearEquivalence" type="spt:Parameter"/>
+      <xs:element name="contactType" type="spt:Parameter"/>
+      <xs:element name="curvilinearEquivalenceLabel" type="spt:PLabel"/>
+      <xs:element name="contactTypeLabel" type="spt:PLabel"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="SweepBinormal">
+    <xs:sequence>
+      <xs:element name="picks" type="spt:Pick" minOccurs="0" maxOccurs="unbounded"/>
+      <xs:element name="binormal" type="spt:Parameter"/>
+      <xs:element name="binormalLabel" type="spt:PLabel"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="Instance">
+    <xs:sequence>
+      <xs:element name="key" type="xs:string"/>
+      <xs:element name="values" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="Sweep">
+    <xs:sequence>
+      <xs:element name="base" type="spt:Base"/>
+      <xs:element name="seerShape" type="spt:SeerShape"/>
+      <xs:element name="lawFunction" type="lwfs:Cue"/>
+      <xs:element name="trihedron" type="spt:Parameter"/>
+      <xs:element name="transition" type="spt:Parameter"/>
+      <xs:element name="forceC1" type="spt:Parameter"/>
+      <xs:element name="solid" type="spt:Parameter"/>
+      <xs:element name="useLaw" type="spt:Parameter"/>
+      <xs:element name="spine" type="spt:Pick"/>
+      <xs:element name="profiles" type="swps:SweepProfile" minOccurs="0" maxOccurs="unbounded"/>
+      <xs:element name="auxiliary" type="swps:SweepAuxiliary"/>
+      <xs:element name="support" type="spt:Pick"/>
+      <xs:element name="binormal" type="swps:SweepBinormal"/>
+      <xs:element name="trihedronLabel" type="spt:PLabel"/>
+      <xs:element name="transitionLabel" type="spt:PLabel"/>
+      <xs:element name="forceC1Label" type="spt:PLabel"/>
+      <xs:element name="solidLabel" type="spt:PLabel"/>
+      <xs:element name="useLawLabel" type="spt:PLabel"/>
+      <xs:element name="lawVizMatrix" type="spt:Matrixd"/>
+      <xs:element name="lawVizScale" type="xs:double"/>
+      <xs:element name="solidId" type="xs:string"/>
+      <xs:element name="shellId" type="xs:string"/>
+      <xs:element name="firstFaceId" type="xs:string"/>
+      <xs:element name="lastFaceId" type="xs:string"/>
+      <xs:element name="outerWireMap" type="spt:EvolveRecord" minOccurs="0" maxOccurs="unbounded"/>
+      <xs:element name="instanceMap" type="swps:Instance" minOccurs="0" maxOccurs="unbounded"/>
+      <xs:element name="firstShapeMap" type="spt:EvolveRecord" minOccurs="0" maxOccurs="unbounded"/>
+      <xs:element name="lastShapeMap" type="spt:EvolveRecord" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:element name="sweep" type="swps:Sweep"/>
+</xs:schema> 

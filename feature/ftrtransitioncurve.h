@@ -27,7 +27,7 @@ class TopoDS_Edge;
 
 namespace ann{class SeerShape;}
 namespace lbr{class PLabel;}
-namespace prj{namespace srl{class FeatureTransitionCurve;}}
+namespace prj{namespace srl{namespace tscs{class TransitionCurve;}}}
 
 namespace ftr
 {
@@ -47,7 +47,7 @@ namespace ftr
     Descriptor getDescriptor() const override {return Descriptor::Create;}
     
     void serialWrite(const boost::filesystem::path&) override;
-    void serialRead(const prj::srl::FeatureTransitionCurve&);
+    void serialRead(const prj::srl::tscs::TransitionCurve&);
     
     void setPicks(const Picks&);
     const Picks& getPicks() const {return picks;}

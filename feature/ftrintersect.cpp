@@ -29,7 +29,7 @@
 #include "globalutilities.h"
 #include "tools/featuretools.h"
 #include "feature/ftrbooleanoperation.h"
-#include "project/serial/xsdcxxoutput/featureintersect.h"
+#include "project/serial/generated/prjsrlinssintersect.h"
 #include "feature/ftrshapecheck.h"
 #include "annex/annseershape.h"
 #include "annex/annintersectionmapper.h"
@@ -174,23 +174,29 @@ void Intersect::updateModel(const UpdatePayload &payloadIn)
 
 void Intersect::serialWrite(const boost::filesystem::path &dIn)
 {
-  prj::srl::FeatureIntersect intersectOut
+  prj::srl::inss::Intersect intersectOut
   (
     Base::serialOut(),
-    iMapper->serialOut(),
-    ftr::serialOut(targetPicks),
-    ftr::serialOut(toolPicks)
+    sShape->serialOut(),
+    iMapper->serialOut()
   );
+  for (const auto &tp : targetPicks)
+    intersectOut.targetPicks().push_back(tp);
+  for (const auto &tp : toolPicks)
+    intersectOut.toolPicks().push_back(tp);
   
   xml_schema::NamespaceInfomap infoMap;
   std::ofstream stream(buildFilePathName(dIn).string());
-  prj::srl::intersect(stream, intersectOut, infoMap);
+  prj::srl::inss::intersect(stream, intersectOut, infoMap);
 }
 
-void Intersect::serialRead(const prj::srl::FeatureIntersect& sIntersectIn)
+void Intersect::serialRead(const prj::srl::inss::Intersect& sIntersectIn)
 {
-  Base::serialIn(sIntersectIn.featureBase());
+  Base::serialIn(sIntersectIn.base());
+  sShape->serialIn(sIntersectIn.seerShape());
   iMapper->serialIn(sIntersectIn.intersectionMapper());
-  targetPicks = ftr::serialIn(sIntersectIn.targetPicks());
-  toolPicks = ftr::serialIn(sIntersectIn.toolPicks());
+  for (const auto &tp : sIntersectIn.targetPicks())
+    targetPicks.emplace_back(tp);
+  for (const auto &tp : sIntersectIn.toolPicks())
+    toolPicks.emplace_back(tp);
 }

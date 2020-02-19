@@ -27,7 +27,7 @@
 #include "feature/ftrpick.h"
 #include "feature/ftrbase.h"
 
-namespace prj{namespace srl{class FeatureExtract;}}
+namespace prj{namespace srl{namespace exts{class Extract;}}}
 namespace ann{class SeerShape;}
 namespace prm{class Parameter;}
 
@@ -48,7 +48,7 @@ namespace ftr
     virtual const QIcon& getIcon() const override {return icon;}
     virtual Descriptor getDescriptor() const override {return Descriptor::Create;}
     virtual void serialWrite(const boost::filesystem::path&) override;
-    void serialRead(const prj::srl::FeatureExtract &);
+    void serialRead(const prj::srl::exts::Extract&);
 
     void setPicks(const Picks&);
     const Picks& getPicks(){return picks;}

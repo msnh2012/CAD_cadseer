@@ -1,23 +1,26 @@
-<?xml version="1.0" encoding="UTF-8" ?>
 <xs:schema
   xmlns:xs="http://www.w3.org/2001/XMLSchema"
-  targetNamespace="http://www.cadseer.com/prj/srl"
-  xmlns:srl="http://www.cadseer.com/prj/srl"
+  xmlns:spt="http://www.cadseer.com/prj/srl/spt"
+  xmlns:FIXME="http://www.cadseer.com/prj/srl/FIXME"
+  targetNamespace="http://www.cadseer.com/prj/srl/FIXME"
 >
-  
-<xs:include schemaLocation="featurebase.xsd"/>
+  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptparameter.xsd"/>
+  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptoverlay.xsd"/>
+  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptseershape.xsd"/>
+  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptpick.xsd"/>
+  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptbase.xsd"/>
 
-<xs:complexType name="Feature%CLASSNAME%">
-  <xs:all>
-    <xs:element name="featureBase" type="srl:FeatureBase"/>
-    <xs:element name="picks" type="srl:Picks"/>
-    <xs:element name="parameter" type="srl:Parameter"/>
-    <xs:element name="plabel" type="srl:PLabel"/>
-    <xs:element name="csysDragger" type="srl:CSysDragger"/>
-    <xs:element name="ipGroup" type="srl:IPGroup"/>
-  </xs:all>
+<xs:complexType name="%CLASSNAME%">
+  <xs:sequence>
+    <xs:element name="base" type="spt:Base"/>
+    <xs:element name="picks" type="spt:Pick" minOccurs="0" maxOccurs="unbounded"/>
+    <xs:element name="parameter" type="spt:Parameter"/>
+    <xs:element name="plabel" type="spt:PLabel"/>
+    <xs:element name="csysDragger" type="spt:CSysDragger"/>
+    <xs:element name="ipGroup" type="spt:IPGroup"/>
+  </xs:sequence>
 </xs:complexType>
 
-<xs:element name="%CLASSNAMELOWERCASE%" type="srl:Feature%CLASSNAME%"/>
+<xs:element name="%CLASSNAMELOWERCASE%" type="FIXME:%CLASSNAME%"/>
   
 </xs:schema> 

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xs:schema
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  xmlns:spt="http://www.cadseer.com/prj/srl/spt"
+  xmlns:mshs="http://www.cadseer.com/prj/srl/mshs"
+  xmlns:smfs="http://www.cadseer.com/prj/srl/smfs"
+  targetNamespace="http://www.cadseer.com/prj/srl/smfs"
+>
+  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptbase.xsd"/>
+  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptparameter.xsd"/>
+  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptoverlay.xsd"/>
+  <xs:import namespace = "http://www.cadseer.com/prj/srl/mshs" schemaLocation="prjsrlmshsmesh.xsd"/>
+
+  <xs:complexType name="SurfaceMeshFill">
+    <xs:sequence>
+      <xs:element name="base" type="spt:Base"/>
+      <xs:element name="mesh" type="mshs:Surface"/>
+      <xs:element name="algorithm" type="spt:Parameter"/>
+      <xs:element name="algorithmLabel" type="spt:PLabel"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:element name="surfacemeshfill" type="smfs:SurfaceMeshFill"/>
+</xs:schema> 

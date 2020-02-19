@@ -28,7 +28,7 @@ namespace osg{class Geometry; class PositionAttitudeTransform;}
 
 namespace ann{class CSysDragger;}
 namespace lbr{class PLabel;}
-namespace prj{namespace srl{class FeatureImagePlane;}}
+namespace prj{namespace srl{namespace imps{class ImagePlane;}}}
 
 namespace ftr
 {
@@ -46,7 +46,7 @@ namespace ftr
     Descriptor getDescriptor() const override {return Descriptor::Create;}
     
     void serialWrite(const boost::filesystem::path&) override;
-    void serialRead(const prj::srl::FeatureImagePlane&);
+    void serialRead(const prj::srl::imps::ImagePlane&);
     
     std::string setImage(const boost::filesystem::path&);
     void setScale(double);

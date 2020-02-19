@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xs:schema
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  xmlns:spt="http://www.cadseer.com/prj/srl/spt"
+  xmlns:sprs="http://www.cadseer.com/prj/srl/sprs"
+  targetNamespace="http://www.cadseer.com/prj/srl/sprs"
+>
+
+<xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptparameter.xsd"/>  
+<xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptseershape.xsd"/>
+<xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptbase.xsd"/>
+<xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptoverlay.xsd"/>
+
+<xs:complexType name="Sphere">
+  <xs:sequence>
+    <xs:element name="base" type="spt:Base"/>
+    <xs:element name="seerShape" type="spt:SeerShape"/>
+    <xs:element name="radius" type="spt:Parameter"/>
+    <xs:element name="csys" type="spt:Parameter"/>
+    <xs:element name="csysDragger" type="spt:CSysDragger"/>
+    <xs:element name="radiusIP" type="spt:IPGroup"/>
+  </xs:sequence>
+</xs:complexType>
+
+<xs:element name="sphere" type="sprs:Sphere"/>
+  
+</xs:schema> 

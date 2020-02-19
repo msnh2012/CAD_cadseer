@@ -32,7 +32,7 @@
 #include "library/lbrcsysdragger.h"
 #include "annex/annseershape.h"
 #include "annex/anncsysdragger.h"
-#include "project/serial/xsdcxxoutput/featuretorus.h"
+#include "project/serial/generated/prjsrltrsstorus.h"
 #include "parameter/prmparameter.h"
 #include "feature/ftrtorus.h"
 
@@ -257,39 +257,41 @@ void Torus::updateResult()
 
 void Torus::serialWrite(const boost::filesystem::path &dIn)
 {
-  prj::srl::OffsetIds oids; //offset ids.
-  for (const auto &idOut : offsetIds)
-    oids.id().push_back(gu::idToString(idOut));
-  
-  prj::srl::FeatureTorus to //torus out.
+  prj::srl::trss::Torus to //torus out.
   (
     Base::serialOut(),
+    sShape->serialOut(),
     radius1->serialOut(),
     radius2->serialOut(),
     seam->serialOut(),
     csys->serialOut(),
-    csysDragger->serialOut(),
-    oids
+    radius1IP->serialOut(),
+    radius2IP->serialOut(),
+    seamLabel->serialOut(),
+    csysDragger->serialOut()
   );
+  
+  for (const auto &idOut : offsetIds)
+    to.offsetIds().push_back(gu::idToString(idOut));
   
   xml_schema::NamespaceInfomap infoMap;
   std::ofstream stream(buildFilePathName(dIn).string());
-  prj::srl::torus(stream, to, infoMap);
+  prj::srl::trss::torus(stream, to, infoMap);
 }
 
-void Torus::serialRead(const prj::srl::FeatureTorus &ti)
+void Torus::serialRead(const prj::srl::trss::Torus &ti)
 {
-  Base::serialIn(ti.featureBase());
+  Base::serialIn(ti.base());
+  sShape->serialIn(ti.seerShape());
   radius1->serialIn(ti.radius1());
   radius2->serialIn(ti.radius2());
   seam->serialIn(ti.seam());
   csys->serialIn(ti.csys());
+  radius1IP->serialIn(ti.radius1IP());
+  radius2IP->serialIn(ti.radius2IP());
+  seamLabel->serialIn(ti.seamLabel()),
   csysDragger->serialIn(ti.csysDragger());
   
-  for (const auto &idIn : ti.offsetIds().id())
+  for (const auto &idIn : ti.offsetIds())
     offsetIds.push_back(gu::stringToId(idIn));
-  
-  updateIPGroup();
-  seamLabel->valueHasChanged();
-  seamLabel->constantHasChanged();
 }

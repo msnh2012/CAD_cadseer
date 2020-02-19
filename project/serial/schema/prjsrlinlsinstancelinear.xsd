@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xs:schema
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  xmlns:spt="http://www.cadseer.com/prj/srl/spt"
+  xmlns:inls="http://www.cadseer.com/prj/srl/inls"
+  targetNamespace="http://www.cadseer.com/prj/srl/inls"
+>
+  
+<xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptparameter.xsd"/>
+<xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptoverlay.xsd"/>
+<xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptpick.xsd"/>
+<xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptseershape.xsd"/>
+<xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptinstancemapping.xsd"/>
+<xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptbase.xsd"/>
+
+<xs:complexType name="InstanceLinear">
+  <xs:sequence>
+    <xs:element name="base" type="spt:Base"/>
+    <xs:element name="seerShape" type="spt:SeerShape"/>
+    <xs:element name="instanceMaps" type="spt:InstanceMaps"/>
+    <xs:element name="csysDragger" type="spt:CSysDragger"/>
+    
+    <xs:element name="xOffset" type="spt:Parameter"/>
+    <xs:element name="yOffset" type="spt:Parameter"/>
+    <xs:element name="zOffset" type="spt:Parameter"/>
+    <xs:element name="xCount" type="spt:Parameter"/>
+    <xs:element name="yCount" type="spt:Parameter"/>
+    <xs:element name="zCount" type="spt:Parameter"/>
+    <xs:element name="csys" type="spt:Parameter"/>
+    <xs:element name="includeSource" type="spt:Parameter"/>
+    
+    <xs:element name="pick" type="spt:Pick"/>
+    
+    <xs:element name="xOffsetLabel" type="spt:PLabel"/>
+    <xs:element name="yOffsetLabel" type="spt:PLabel"/>
+    <xs:element name="zOffsetLabel" type="spt:PLabel"/>
+    
+    <xs:element name="xCountLabel" type="spt:PLabel"/>
+    <xs:element name="yCountLabel" type="spt:PLabel"/>
+    <xs:element name="zCountLabel" type="spt:PLabel"/>
+    
+    <xs:element name="includeSourceLabel" type="spt:PLabel"/>
+  </xs:sequence>
+</xs:complexType>
+
+<xs:element name="instanceLinear" type="inls:InstanceLinear"/>
+  
+</xs:schema> 

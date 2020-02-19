@@ -23,7 +23,7 @@
 #include "feature/ftrpick.h"
 #include "feature/ftrbase.h"
 
-namespace prj{namespace srl{class FeatureRemoveFaces;}}
+namespace prj{namespace srl{namespace rmfs{class RemoveFaces;}}}
 
 namespace ftr
 {
@@ -43,7 +43,7 @@ namespace ftr
       virtual Descriptor getDescriptor() const override {return Descriptor::Alter;}
       
       virtual void serialWrite(const boost::filesystem::path&) override;
-      void serialRead(const prj::srl::FeatureRemoveFaces&);
+      void serialRead(const prj::srl::rmfs::RemoveFaces&);
       
       void setPicks(const Picks&);
       Picks getPicks(){return picks;}

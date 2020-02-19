@@ -38,7 +38,7 @@
 #include "preferences/prfmanager.h"
 #include "feature/ftrshapecheck.h"
 #include "library/lbrplabel.h"
-#include "project/serial/xsdcxxoutput/featuredraft.h"
+#include "project/serial/generated/prjsrldrfsdraft.h"
 #include "annex/annseershape.h"
 #include "tools/featuretools.h"
 #include "feature/ftrupdatepayload.h"
@@ -293,31 +293,30 @@ void Draft::generatedMatch(BRepOffsetAPI_DraftAngle &dMaker, const ann::SeerShap
 
 void Draft::serialWrite(const boost::filesystem::path &dIn)
 {
-  prj::srl::Picks targetPicksOut = ::ftr::serialOut(targetPicks);
-  prj::srl::Pick neutralPickOut = neutralPick.serialOut();
-  prj::srl::FeatureDraft draftOut
+  prj::srl::spt::Pick neutralPickOut = neutralPick.serialOut();
+  prj::srl::drfs::Draft draftOut
   (
     Base::serialOut(),
-    targetPicksOut,
+    sShape->serialOut(),
     neutralPickOut,
     angle->serialOut(),
     label->serialOut()
   );
+  for (const auto &p : targetPicks)
+    draftOut.targetPicks().push_back(p);
   
   xml_schema::NamespaceInfomap infoMap;
   std::ofstream stream(buildFilePathName(dIn).string());
-  prj::srl::draft(stream, draftOut, infoMap);
+  prj::srl::drfs::draft(stream, draftOut, infoMap);
 }
 
-void Draft::serialRead(const prj::srl::FeatureDraft &sDraftIn)
+void Draft::serialRead(const prj::srl::drfs::Draft &sDraftIn)
 {
-  Base::serialIn(sDraftIn.featureBase());
-  
-  targetPicks = ::ftr::serialIn(sDraftIn.targetPicks());
+  Base::serialIn(sDraftIn.base());
+  sShape->serialIn(sDraftIn.seerShape());
   neutralPick.serialIn(sDraftIn.neutralPick());
-  
   angle->serialIn(sDraftIn.angle());
-  angle->connectValue(std::bind(&Draft::setModelDirty, this));
-  
+  for (const auto &p : sDraftIn.targetPicks())
+    targetPicks.emplace_back(p);
   label->serialIn(sDraftIn.plabel());
 }

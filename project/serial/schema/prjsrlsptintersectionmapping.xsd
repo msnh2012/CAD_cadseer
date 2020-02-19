@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xs:schema
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  xmlns:spt="http://www.cadseer.com/prj/srl/spt"
+  targetNamespace="http://www.cadseer.com/prj/srl/spt"
+>
+  <xs:include schemaLocation="prjsrlsptshapehistory.xsd"/>
+  
+  <xs:complexType name="EdgeNode">
+    <xs:sequence>
+      <xs:element name="edgeId" type="xs:string" default="00000000-0000-0000-0000-000000000000"/>
+      <xs:element name="center" type="xs:double"/>
+      <xs:element name="alive" type="xs:boolean"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="EdgeSplit">
+    <xs:sequence>
+      <xs:element name="edgeHistory" type="spt:ShapeHistory"/>
+      <xs:element name="nodes" type="spt:EdgeNode" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="IntersectionNode">
+    <xs:sequence>
+      <xs:element name="edgeId" type="xs:string" default="00000000-0000-0000-0000-000000000000"/>
+      <xs:element name="centerX" type="xs:double"/>
+      <xs:element name="centerY" type="xs:double"/>
+      <xs:element name="alive" type="xs:boolean"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="EdgeIntersection">
+    <xs:sequence>
+      <xs:element name="faceHistory1" type="spt:ShapeHistory"/>
+      <xs:element name="faceHistory2" type="spt:ShapeHistory"/>
+      <xs:element name="nodes" type="spt:IntersectionNode" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="FaceNode">
+    <xs:sequence>
+      <xs:element name="faceId" type="xs:string" default="00000000-0000-0000-0000-000000000000"/>
+      <xs:element name="wireId" type="xs:string" default="00000000-0000-0000-0000-000000000000"/>
+      <xs:element name="centerX" type="xs:double"/>
+      <xs:element name="centerY" type="xs:double"/>
+      <xs:element name="alive" type="xs:boolean"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="FaceSplit">
+    <xs:sequence>
+      <xs:element name="faceHistory" type="spt:ShapeHistory"/>
+      <xs:element name="nodes" type="spt:FaceNode" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="SameDomain">
+    <xs:sequence>
+      <xs:element name="id" type="xs:string" default="00000000-0000-0000-0000-000000000000"/>
+      <xs:element name="histories" type="spt:ShapeHistory" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="IntersectionMapper">
+    <xs:sequence>
+      <xs:element name="edgeIntersections" type="spt:EdgeIntersection" minOccurs="0" maxOccurs="unbounded"/>
+      <xs:element name="faceSplits" type="spt:FaceSplit" minOccurs="0" maxOccurs="unbounded"/>
+      <xs:element name="edgeSplits" type="spt:EdgeSplit" minOccurs="0" maxOccurs="unbounded"/>
+      <xs:element name="sameDomains" type="spt:SameDomain" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+</xs:schema> 
+

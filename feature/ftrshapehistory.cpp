@@ -33,7 +33,7 @@
 #include "globalutilities.h"
 #include "tools/idtools.h"
 #include "tools/graphtools.h"
-#include "project/serial/xsdcxxoutput/featurebase.h"
+#include "project/serial/generated/prjsrlsptshapehistory.h"
 #include "feature/ftrshapehistory.h"
 
 using namespace ftr;
@@ -422,46 +422,45 @@ bool ShapeHistory::operator!=(const ShapeHistory &rhs) const
   return !(*this == rhs);
 }
 
-prj::srl::ShapeHistory ShapeHistory::serialOut() const
+prj::srl::spt::ShapeHistory ShapeHistory::serialOut() const
 {
-  prj::srl::HistoryVertices vertsOut;
+  prj::srl::spt::ShapeHistory::VerticesSequence vertsOut;
   VertexIterator it, itEnd;
   std::tie(it, itEnd) = boost::vertices(shapeHistoryStow->graph);
   for (; it != itEnd; ++it)
   {
-    prj::srl::HistoryVertex vOut
+    prj::srl::spt::HistoryVertex vOut
     (
       gu::idToString(shapeHistoryStow->graph[*it].featureId),
       gu::idToString(shapeHistoryStow->graph[*it].shapeId)
     );
-    vertsOut.array().push_back(vOut);
+    vertsOut.push_back(vOut);
   }
   
-  prj::srl::HistoryEdges edgesOut;
+  prj::srl::spt::ShapeHistory::EdgesSequence edgesOut;
   EdgeIterator eIt, eItEnd;
   std::tie(eIt, eItEnd) = boost::edges(shapeHistoryStow->graph);
   for (; eIt != eItEnd; ++eIt)
   {
-    prj::srl::HistoryEdge eOut
+    prj::srl::spt::HistoryEdge eOut
     (
       gu::idToString(shapeHistoryStow->graph[boost::source(*eIt, shapeHistoryStow->graph)].shapeId),
       gu::idToString(shapeHistoryStow->graph[boost::target(*eIt, shapeHistoryStow->graph)].shapeId)
     );
-    edgesOut.array().push_back(eOut);
+    edgesOut.push_back(eOut);
   }
   
   //idmap doesn't need serial support.
   
-  return prj::srl::ShapeHistory
-  (
-    vertsOut,
-    edgesOut
-  );
+  prj::srl::spt::ShapeHistory out;
+  out.vertices() = vertsOut;
+  out.edges() = edgesOut;
+  return out;
 }
 
-void ShapeHistory::serialIn(const prj::srl::ShapeHistory &historyIn)
+void ShapeHistory::serialIn(const prj::srl::spt::ShapeHistory &historyIn)
 {
-  for (const auto &sv : historyIn.vertices().array())
+  for (const auto &sv : historyIn.vertices())
   {
     Vertex v = boost::add_vertex(shapeHistoryStow->graph);
     shapeHistoryStow->graph[v].featureId = gu::stringToId(sv.featureId());
@@ -469,7 +468,7 @@ void ShapeHistory::serialIn(const prj::srl::ShapeHistory &historyIn)
     shapeHistoryStow->idMap.insert(ShapeIdRecord(shapeHistoryStow->graph[v].shapeId, v));
   }
   
-  for (const auto &se : historyIn.edges().array())
+  for (const auto &se : historyIn.edges())
   {
     Vertex source = shapeHistoryStow->findVertex(gu::stringToId(se.sourceShapeId()));
     Vertex target = shapeHistoryStow->findVertex(gu::stringToId(se.targetShapeId()));

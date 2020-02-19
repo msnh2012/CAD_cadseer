@@ -1,0 +1,35 @@
+<xs:schema
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  xmlns:spt="http://www.cadseer.com/prj/srl/spt"
+  xmlns:dtps="http://www.cadseer.com/prj/srl/dtps"
+  targetNamespace="http://www.cadseer.com/prj/srl/dtps"
+>
+  
+<xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptparameter.xsd"/>
+<xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptpick.xsd"/>
+<xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptoverlay.xsd"/>
+<xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptbase.xsd"/>
+
+<xs:complexType name="DatumPlane">
+  <xs:sequence>
+    <xs:element name="base" type="spt:Base"/>
+    <xs:element name="dpType" type="xs:int"/>
+    <xs:element name="picks" type="spt:Pick" minOccurs="0" maxOccurs="unbounded"/>
+    <xs:element name="csys" type="spt:Parameter"/>
+    <xs:element name="flip" type="spt:Parameter"/>
+    <xs:element name="autoSize" type="spt:Parameter"/>
+    <xs:element name="size" type="spt:Parameter"/>
+    <xs:element name="offset" type="spt:Parameter"/>
+    <xs:element name="angle" type="spt:Parameter"/>
+    <xs:element name="csysDragger" type="spt:CSysDragger"/>
+    <xs:element name="flipLabel" type="spt:PLabel"/>
+    <xs:element name="autoSizeLabel" type="spt:PLabel"/>
+    <xs:element name="angleLabel" type="spt:PLabel"/>
+    <xs:element name="sizeIP" type="spt:IPGroup"/>
+    <xs:element name="offsetIP" type="spt:IPGroup"/>
+  </xs:sequence>
+</xs:complexType>
+
+<xs:element name="datumPlane" type="dtps:DatumPlane"/>
+  
+</xs:schema> 

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xs:schema
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  xmlns:spt="http://www.cadseer.com/prj/srl/spt"
+  targetNamespace="http://www.cadseer.com/prj/srl/spt"
+>
+  <xs:include schemaLocation="prjsrlsptshapehistory.xsd"/>
+  
+  <xs:complexType name="Pick">
+    <xs:sequence>
+      <xs:element name="u" type="xs:double" default="0.0"/>
+      <xs:element name="v" type="xs:double" default="0.0"/>
+      <xs:element name="history" type="spt:ShapeHistory"/>
+      <xs:element name="selectionType" type="xs:int"/>
+      <xs:element name="tag" type="xs:string"/>
+      <xs:element name="accrue" type="xs:int"/>
+    </xs:sequence>
+  </xs:complexType>
+</xs:schema> 
+

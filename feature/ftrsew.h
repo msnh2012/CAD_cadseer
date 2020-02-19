@@ -25,7 +25,7 @@
 class BRepBuilderAPI_Sewing;
 
 namespace ann{class SeerShape;}
-namespace prj{namespace srl{class FeatureSew;}}
+namespace prj{namespace srl{namespace sws{class Sew;}}}
 
 namespace ftr
 {
@@ -45,7 +45,7 @@ namespace ftr
     virtual Descriptor getDescriptor() const override {return Descriptor::Create;}
     
     virtual void serialWrite(const boost::filesystem::path&) override;
-    void serialRead(const prj::srl::FeatureSew&);
+    void serialRead(const prj::srl::sws::Sew&);
     
   protected:
     std::unique_ptr<ann::SeerShape> sShape;
