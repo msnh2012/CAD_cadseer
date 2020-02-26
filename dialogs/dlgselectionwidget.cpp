@@ -43,6 +43,10 @@ SelectionWidget::SelectionWidget(QWidget *parent, const std::vector<SelectionWid
 : QWidget(parent)
 , stow(std::make_unique<SelectionWidget::Stow>())
 {
+  QSizePolicy adjust(sizePolicy());
+  adjust.setVerticalPolicy(QSizePolicy::Maximum);
+  setSizePolicy(adjust);
+  
   buildGui(cuesIn);
 }
 
@@ -68,6 +72,8 @@ const slc::Messages& SelectionWidget::getMessages(int index) const
 void SelectionWidget::buildGui(const std::vector<SelectionWidgetCue> &cuesIn)
 {
   QHBoxLayout *mainLayout = new QHBoxLayout();
+  this->setLayout(mainLayout);
+  this->setContentsMargins(0, 0, 0, 0);
   mainLayout->setContentsMargins(0, 0, 0, 0);
   
   //labels and buttons
@@ -95,29 +101,35 @@ void SelectionWidget::buildGui(const std::vector<SelectionWidgetCue> &cuesIn)
   }
   auto *buttonLayout = new QVBoxLayout();
   buttonLayout->addLayout(gridLayout);
-  buttonLayout->addStretch();
+  buttonLayout->addItem(new QSpacerItem(20, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
   mainLayout->addLayout(buttonLayout);
   
   //stackedWidgets
+  int slw = 17 * fontMetrics().averageCharWidth(); //selection width
   AccrueDelegate *delegate = new AccrueDelegate(this);
   stow->stackedWidget = new QStackedWidget(this);
+  QSizePolicy adjust(stow->stackedWidget->sizePolicy());
+  adjust.setVerticalPolicy(QSizePolicy::Maximum);
+  stow->stackedWidget->setSizePolicy(adjust);
+  
   for (int index = 0; index < static_cast<int>(cuesIn.size()); ++index)
   {
     SelectionModel *sm = new SelectionModel(this, static_cast<SelectionButton*>(stow->buttonGroup->button(index)));
     connect(sm, &SelectionModel::accrueChanged, this, &SelectionWidget::accrueChanged);
-    SelectionView *sv = new SelectionView(this);
+    SelectionView *sv = new SelectionView(this, gridLayout);
     sv->setModel(sm);
     sv->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch); //has to be done after the model is set.
     sv->horizontalHeader()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
     sv->setItemDelegateForColumn(1, delegate);
     if (!cuesIn.at(index).showAccrueColumn)
       sv->hideColumn(1);
+    sv->setMinimumWidth(slw);
     stow->stackedWidget->addWidget(sv);
     stow->selectionModels.push_back(sm);
   }
-  mainLayout->addWidget(stow->stackedWidget);
-  
-  this->setLayout(mainLayout);
+  auto *stackLayout = new QVBoxLayout();
+  stackLayout->addWidget(stow->stackedWidget);
+  mainLayout->addLayout(stackLayout);
 }
 
 /*! @brief move to the next button.
@@ -130,7 +142,10 @@ void SelectionWidget::advance()
   if (cb < 0)
     return;
   if (cb >= stow->buttonGroup->buttons().size() - 1)
+  {
+    finishedSignal();
     return;
+  }
   cb++;
   stow->buttonGroup->button(cb)->setChecked(true);
 }
@@ -164,4 +179,15 @@ void SelectionWidget::setAngle(double aIn)
       m->setData(m->index(i, 0), aIn, Qt::UserRole);
     }
   }
+}
+
+void SelectionWidget::reset()
+{
+  for (auto *b : stow->buttonGroup->buttons())
+  {
+    SelectionButton *sb = dynamic_cast<SelectionButton*>(b);
+    assert(sb);
+    sb->clear();
+  }
+  activate(0);
 }

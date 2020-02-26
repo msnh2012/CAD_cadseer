@@ -34,6 +34,7 @@ namespace slc {struct Message;}
 namespace vwr {struct Message;}
 namespace ftr {struct Message;}
 namespace lod {struct Message;}
+namespace cmv {struct Message;}
 
 namespace msg
 {
@@ -69,7 +70,7 @@ namespace msg
     static const Mask Git(Mask().set(                           26));//!< git project integration
     static const Mask Freeze(Mask().set(                        27));//!< git modifier
     static const Mask Thaw(Mask().set(                          28));//!< git modifier
-    static const Mask Cancel(Mask().set(                        29));//!< command manager
+//     static const Mask Cancel(Mask().set(                        29));//!< UNUSED
     static const Mask Done(Mask().set(                          30));//!< command manager
     static const Mask Command(Mask().set(                       31));//!< command manager
     static const Mask Active(Mask().set(                        32));//!< command manager
@@ -181,6 +182,7 @@ namespace msg
       Message(const Mask&, const vwr::Message&);
       Message(const Mask&, const ftr::Message&);
       Message(const Mask&, const lod::Message&);
+      Message(const Mask&, const cmv::Message&);
       Mask mask;
       std::shared_ptr<Stow> stow;
       bool isPRJ() const;
@@ -189,12 +191,14 @@ namespace msg
       bool isVWR() const;
       bool isFTR() const;
       bool isLOD() const;
+      bool isCMV() const;
       const prj::Message& getPRJ() const;
       const app::Message& getAPP() const;
       const slc::Message& getSLC() const;
       const vwr::Message& getVWR() const;
       const ftr::Message& getFTR() const;
       const lod::Message& getLOD() const;
+      const cmv::Message& getCMV() const;
     };
 
     typedef std::function<void (const Message&)> Handler;

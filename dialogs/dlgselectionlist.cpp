@@ -19,6 +19,7 @@
 
 #include <QHeaderView>
 #include <QComboBox>
+#include <QLayout>
 
 #include "tools/idtools.h"
 #include "selection/slcaccrue.h"
@@ -135,8 +136,18 @@ SelectionView::SelectionView(QWidget *parent)
   this->horizontalHeader()->hide();
   this->verticalHeader()->hide();
   
+  QSizePolicy adjust(sizePolicy());
+  adjust.setVerticalPolicy(QSizePolicy::Expanding);
+  setSizePolicy(adjust);
+  
   setSelectionMode(QAbstractItemView::SingleSelection);
   connect(this, &QTableView::clicked, this, &SelectionView::clickedSlot);
+}
+
+SelectionView::SelectionView(QWidget *parent, QLayout *lIn)
+: SelectionView(parent)
+{
+  layout = lIn;
 }
 
 void SelectionView::clickedSlot(const QModelIndex &index)
@@ -147,6 +158,44 @@ void SelectionView::clickedSlot(const QModelIndex &index)
   assert(m);
   if (m->flags(index) & Qt::ItemIsSelectable)
     m->getButton()->highlightIndex(index.row());
+}
+
+void SelectionView::reset()
+{
+  updateGeometry();
+  QTableView::reset();
+}
+
+QSize SelectionView::sizeHint() const
+{
+  //ref
+  //https://forum.qt.io/topic/40717/set-size-of-the-qlistview-to-fit-to-it-s-content/6
+  
+  int heightOut = (layout) ? layout->sizeHint().height() : 32;
+  if (model())
+  {
+    // Determine the vertical space allocated beyond the viewport
+    const int extraHeight = height() - viewport()->height() + 2; //extra 2 to ensure no scroll
+
+    // Find the bounding rect of the last list item
+    const QModelIndex index = model()->index(model()->rowCount() - 1, 0);
+    const QRect r = visualRect(index);
+
+    // Size the widget to the height of the bottom of the last item
+    // plus the extra determined earlier
+    int temp = r.y() + r.height() + extraHeight;
+    heightOut = std::max(temp, heightOut);
+  }
+  return QSize(0, heightOut);
+}
+
+QSize SelectionView::minimumSizeHint() const
+{
+  QSize out = QTableView::minimumSizeHint();
+  if (layout)
+    out.setHeight(layout->sizeHint().height());
+  
+  return out;
 }
 
 AccrueDelegate::AccrueDelegate(QObject *parent): QStyledItemDelegate(parent)

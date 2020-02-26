@@ -62,6 +62,8 @@ namespace slc
   static const Mask All(Mask().set(                                   )); //set with no parameters sets all bits
   static const Mask AllEnabled(ObjectsEnabled | FeaturesEnabled | SolidsEnabled
     | ShellsEnabled | FacesEnabled | WiresEnabled | EdgesEnabled | PointsEnabled);
+  static const Mask AllPointsEnabled(EndPointsEnabled | MidPointsEnabled
+    | CenterPointsEnabled | QuadrantPointsEnabled | NearestPointsEnabled);
 
   enum class Type
   {

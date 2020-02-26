@@ -62,8 +62,10 @@ namespace dlg
     const slc::Messages& getMessages(int) const;
     void activate(int); //!< Send timed click
     void setAngle(double); //!< tangent accrue for all buttons and all messages.
+    void reset(); //!< clear all buttons and select the first button.
   Q_SIGNALS:
     void accrueChanged();
+    void finishedSignal(); //!< when last button is single selection and a selection was made.
   private Q_SLOTS:
     void advance();
     void buttonToggled(QAbstractButton *, bool);

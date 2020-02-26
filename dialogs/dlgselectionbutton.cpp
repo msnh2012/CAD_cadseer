@@ -157,6 +157,12 @@ void SelectionButton::addMessages(const slc::Messages &msIn)
   dirty();
 }
 
+void SelectionButton::clear()
+{
+  messages.clear();
+  dirty();
+}
+
 /*! @brief Add all stored to the selection system
  * 
  * @details This clears the current selection.

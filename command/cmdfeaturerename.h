@@ -22,8 +22,6 @@
 
 #include "command/cmdbase.h"
 
-namespace msg{struct Sift;}
-
 namespace cmd
 {
   class FeatureRename : public Base
@@ -42,7 +40,6 @@ namespace cmd
     QString name;
     
   private:
-    std::unique_ptr<msg::Sift> sift;
     void setupDispatcher();
     void selectionAdditionDispatched(const msg::Message&);
     void go();

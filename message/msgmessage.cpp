@@ -58,6 +58,10 @@ Message::Message(const Mask &mIn, const lod::Message &m)
 : mask(mIn)
 , stow(std::make_shared<Stow>(m)){}
 
+Message::Message(const Mask &mIn, const cmv::Message &m)
+: mask(mIn)
+, stow(std::make_shared<Stow>(m)){}
+
 bool Message::isPRJ() const
 {
   return stow && stow->variant.type() == typeid(prj::Message);
@@ -86,6 +90,11 @@ bool Message::isFTR() const
 bool Message::isLOD() const
 {
   return stow && stow->variant.type() == typeid(lod::Message);
+}
+
+bool Message::isCMV() const
+{
+  return stow && stow->variant.type() == typeid(cmv::Message);
 }
 
 const prj::Message& Message::getPRJ() const
@@ -122,6 +131,12 @@ const lod::Message& Message::getLOD() const
 {
   assert(isLOD());
   return boost::get<lod::Message>(stow->variant);
+}
+
+const cmv::Message& Message::getCMV() const
+{
+  assert(isCMV());
+  return boost::get<cmv::Message>(stow->variant);
 }
 
 msg::Message msg::buildGitMessage(const std::string &messageIn)

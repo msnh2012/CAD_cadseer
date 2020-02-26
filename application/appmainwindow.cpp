@@ -37,8 +37,10 @@
 #include "selection/slcmanager.h"
 #include "message/msgnode.h"
 #include "message/msgsift.h"
+#include "commandview/cmvmessage.h"
 #include "dialogs/dlgexpressionedit.h"
 #include "application/appincrementwidget.h"
+#include "commandview/cmvpane.h"
 #include "preferences/preferencesXML.h"
 #include "preferences/prfmanager.h"
 #include "menu/mnuserial.h"
@@ -78,6 +80,8 @@ struct MainWindow::Stow
   InfoDialog* infoDialog;
   vwr::Widget* viewWidget;
   slc::Manager *selectionManager;
+  cmv::Pane *pane;
+  dlg::SplitterDecorated *splitter;
   const mnu::srl::Cue &menuCue = mnu::manager().getCueRead();
   
   msg::Node node;
@@ -334,18 +338,24 @@ MainWindow::MainWindow(QWidget *parent)
   stow->viewWidget->setGeometry(100, 100, 800, 600);
   stow->viewWidget->setMinimumSize(QSize(100, 100)); //don't collapse view widget. osg nan erros.
   
-  dlg::SplitterDecorated *splitter = new dlg::SplitterDecorated(this);
+  stow->pane = new cmv::Pane();
+  
+  stow->splitter = new dlg::SplitterDecorated(this);
+  dlg::SplitterDecorated *splitter = stow->splitter;
   splitter->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   splitter->setOpaqueResize(Qt::Horizontal);
+  splitter->addWidget(stow->pane);
   splitter->addWidget(stow->viewWidget);
   splitter->addWidget(subSplitter);
   //size setup temp.
   QList<int> sizes;
+  sizes.append(0); //start collasped
   sizes.append(1000);
   sizes.append(300);
   splitter->setSizes(sizes);
-  splitter->setCollapsible(0, false); //don't collapse view widget. osg nan erros.
+  splitter->setCollapsible(1, false); //don't collapse view widget. osg nan erros.
   splitter->restoreSettings("mainWindowSplitter");
+  connect(stow->splitter, &dlg::SplitterDecorated::splitterMoved, this, &MainWindow::commandViewWidth);
   
   QWidget *centralWidget = new QWidget(this);
   centralWidget->setContentsMargins(0, 0, 0, 0);
@@ -453,6 +463,16 @@ void MainWindow::setupDispatcher()
         msg::Response | msg::Preferences
         , std::bind(&MainWindow::preferencesChanged, this, std::placeholders::_1)
       )
+      , std::make_pair
+      (
+        msg::Request | msg::Command | msg::View | msg::Show
+        , std::bind(&MainWindow::showCommandViewDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Command | msg::View | msg::Hide
+        , std::bind(&MainWindow::hideCommandViewDispatched, this, std::placeholders::_1)
+      )
     }
   );
 }
@@ -468,4 +488,34 @@ void MainWindow::infoTextDispatched(const msg::Message&)
   stow->infoDialog->show();
   stow->infoDialog->raise();
   stow->infoDialog->activateWindow();
+}
+
+void MainWindow::showCommandViewDispatched(const msg::Message &mIn)
+{
+  assert(mIn.isCMV());
+  if (!mIn.isCMV())
+    return;
+  const cmv::Message &m = mIn.getCMV();
+  
+  //this sucks. This should be done for me...like everything.
+  auto sizes = stow->splitter->sizes();
+  int difference = sizes.at(0) - m.paneWidth;
+  sizes[0] = m.paneWidth;
+  sizes[1] = sizes.at(1) + difference;
+  stow->splitter->setSizes(sizes);
+}
+
+void MainWindow::hideCommandViewDispatched(const msg::Message&)
+{
+  auto sizes = stow->splitter->sizes();
+  sizes[1] = sizes.at(0) + sizes.at(1);
+  sizes[0] = 0;
+  stow->splitter->setSizes(sizes);
+}
+
+void MainWindow::commandViewWidth(int, int)
+{
+  cmv::Message vm(nullptr, stow->splitter->sizes().front());
+  msg::Message out(msg::Response | msg::Command | msg::View | msg::Update, vm);
+  stow->node.sendBlocked(out);
 }

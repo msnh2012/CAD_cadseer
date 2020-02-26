@@ -1355,7 +1355,7 @@ void Manager::Stow::setAllCommands()
     , QObject::tr("Cancel Current Command").toStdString() //status text
     , QObject::tr("Cancel Current Command").toStdString() //whats this text
     , QObject::tr("Cancel Current Command").toStdString() // toolTipText
-    , msg::Request | msg::Command | msg::Cancel
+    , msg::Request | msg::Command | msg::Done
   );
   sc
   (

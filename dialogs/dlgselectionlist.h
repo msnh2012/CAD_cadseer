@@ -24,6 +24,8 @@
 #include <QAbstractTableModel>
 #include <QStyledItemDelegate>
 
+// class QLayout;
+
 namespace dlg
 {
   class SelectionButton;
@@ -55,9 +57,14 @@ namespace dlg
     Q_OBJECT
   public:
     SelectionView(QWidget *);
+    SelectionView(QWidget*, QLayout*);
+    QSize sizeHint() const override;
+    QSize minimumSizeHint() const override;
   public Q_SLOTS:
     void clickedSlot(const QModelIndex&);
-    
+    void reset() override;
+  private:
+    QLayout *layout = nullptr;
   };
   
 //! @brief Delegate for editing accrue types.

@@ -36,14 +36,9 @@ using namespace cmd;
 
 using boost::uuids::uuid;
 
-FeatureRename::FeatureRename() : Base(), id(gu::createNilId()), name()
+FeatureRename::FeatureRename() : Base("cmd::FeatureRename"), id(gu::createNilId()), name()
 {
-  sift = std::make_unique<msg::Sift>();
-  sift->name = "cmd::FeatureRename";
-  node->setHandler(std::bind(&msg::Sift::receive, sift.get(), std::placeholders::_1));
-  
   setupDispatcher();
-  
   shouldUpdate = false;
 }
 
@@ -67,9 +62,18 @@ void FeatureRename::deactivate()
 
 void FeatureRename::setFromMessage(const msg::Message &mIn)
 {
-  ftr::Message fm = mIn.getFTR();
-  id = fm.featureId;
-  name = fm.string;
+  /* command manager always call this function.
+   * We signalled from 2 different places:
+   * 1) The dagview with a proper ftr::Message.
+   * 2) MainWindow toolbutton press without a proper ftr::Message.
+   * So we need to test.
+   */
+  if (mIn.isFTR())
+  {
+    ftr::Message fm = mIn.getFTR();
+    id = fm.featureId;
+    name = fm.string;
+  }
 }
 
 void FeatureRename::go() //re-enters from dispatch.

@@ -27,14 +27,32 @@
 #include "selection/slceventhandler.h"
 #include "selection/slcmessage.h"
 #include "message/msgnode.h"
+#include "message/msgsift.h"
+#include "message/msgmessage.h"
+#include "commandview/cmvmessage.h"
+#include "commandview/cmvbase.h"
 #include "command/cmdbase.h"
 
 using namespace cmd;
 
 Base::Base()
+: node(std::make_unique<msg::Node>())
+, sift(std::make_unique<msg::Sift>())
 {
-  node = std::make_unique<msg::Node>();
   node->connect(msg::hub());
+  node->setHandler(std::bind(&msg::Sift::receive, sift.get(), std::placeholders::_1));
+  sift->name = "cmd::Base"; //set derived class or use other constructor
+  
+  sift->insert
+  (
+    {
+      std::make_pair
+      (
+        msg::Response | msg::Command | msg::View | msg::Update
+        , std::bind(&Base::splitterDispatched, this, std::placeholders::_1)
+      )
+    }
+  );
   
   application = app::instance(); assert(application);
   mainWindow = application->getMainWindow(); assert(mainWindow);
@@ -46,8 +64,22 @@ Base::Base()
   isActive = false;
 }
 
+Base::Base(const std::string &siftNameIn)
+: Base()
+{
+  sift->name = siftNameIn;
+}
+
 Base::~Base()
 {
+}
+
+void Base::splitterDispatched(const msg::Message &mIn)
+{
+  if (!viewBase || !isActive)
+    return;
+  assert(mIn.isCMV());
+  viewBase->setPaneWidth(mIn.getCMV().paneWidth);
 }
 
 void Base::sendDone()

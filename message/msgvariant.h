@@ -28,6 +28,7 @@
 #include "viewer/vwrmessage.h"
 #include "feature/ftrmessage.h"
 #include "lod/lodmessage.h"
+#include "commandview/cmvmessage.h"
 
 namespace msg
 {
@@ -38,7 +39,8 @@ namespace msg
     app::Message,
     vwr::Message,
     ftr::Message,
-    lod::Message
+    lod::Message,
+    cmv::Message
   > Variant;
   
   struct Stow
@@ -51,6 +53,7 @@ namespace msg
     Stow(const vwr::Message &mIn) : variant(mIn){}
     Stow(const ftr::Message &mIn) : variant(mIn){}
     Stow(const lod::Message &mIn) : variant(mIn){}
+    Stow(const cmv::Message &mIn) : variant(mIn){}
   };
 }
 

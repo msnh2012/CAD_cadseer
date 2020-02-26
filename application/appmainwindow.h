@@ -54,6 +54,9 @@ namespace app
     void setupDispatcher();
     void preferencesChanged(const msg::Message&);
     void infoTextDispatched(const msg::Message&);
+    void showCommandViewDispatched(const msg::Message&);
+    void hideCommandViewDispatched(const msg::Message&);
+    void commandViewWidth(int, int);
     void setupSelectionToolbar();
   };
 }

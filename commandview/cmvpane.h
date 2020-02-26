@@ -1,6 +1,6 @@
 /*
  * CadSeer. Parametric Solid Modeling.
- * Copyright (C) 2016  Thomas S. Anderson blobfish.at.gmx.com
+ * Copyright (C) 2020 Thomas S. Anderson blobfish.at.gmx.com
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,33 +17,35 @@
  *
  */
 
-#ifndef CMD_CHECKGEOMETRYCOMMAND_H
-#define CMD_CHECKGEOMETRYCOMMAND_H
+#ifndef CMV_PANE_H
+#define CMV_PANE_H
 
-#include "command/cmdbase.h"
+#include <memory>
 
-namespace dlg{class CheckGeometry;}
+#include <QWidget>
 
-namespace cmd
+namespace cmv
 {
-  class CheckGeometry : public Base
+  /*! @class Pane 
+   * @brief Widget for containing command views.
+   * @details controlled by command manager and displayed
+   * in the main window under the splitter. No parent widget
+   * for constructor as the splitter will take ownership 
+   * of the one, and only one, instance of this object. 
+   */
+  class Pane : public QWidget
   {
+    Q_OBJECT
   public:
-    CheckGeometry();
-    virtual ~CheckGeometry() override;
-    virtual std::string getCommandName() override{return "Check Geometry";}
-    virtual std::string getStatusMessage() override;
-    virtual void activate() override;
-    virtual void deactivate() override;
-    
+    Pane();
+    ~Pane() override;
   private:
-    dlg::CheckGeometry *dialog = nullptr;
-    bool hasRan = false;
+    struct Stow;
+    std::unique_ptr<Stow> stow;
     
-    void go();
-    void setupDispatcher();
-    void selectionAdditionDispatched(const msg::Message&);
+    void buildGui();
+    void doneSlot();
   };
 }
 
-#endif // CMD_CHECKGEOMETRYCOMMAND_H
+#endif //CMV_PANE_H

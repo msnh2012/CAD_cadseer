@@ -1,6 +1,6 @@
 /*
  * CadSeer. Parametric Solid Modeling.
- * Copyright (C) 2016  Thomas S. Anderson blobfish.at.gmx.com
+ * Copyright (C) 2020 Thomas S. Anderson blobfish.at.gmx.com
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,33 +17,32 @@
  *
  */
 
-#ifndef CMD_CHECKGEOMETRYCOMMAND_H
-#define CMD_CHECKGEOMETRYCOMMAND_H
+#ifndef CMV_MEASURELINEAR_H
+#define CMV_MEASURELINEAR_H
 
-#include "command/cmdbase.h"
+#include <memory>
 
-namespace dlg{class CheckGeometry;}
+#include "commandview/cmvbase.h"
 
-namespace cmd
+namespace osg{class Vec3d;}
+namespace dlg{class SelectionWidget;}
+
+namespace cmv
 {
-  class CheckGeometry : public Base
+  class MeasureLinear : public Base
   {
+    Q_OBJECT
   public:
-    CheckGeometry();
-    virtual ~CheckGeometry() override;
-    virtual std::string getCommandName() override{return "Check Geometry";}
-    virtual std::string getStatusMessage() override;
-    virtual void activate() override;
-    virtual void deactivate() override;
-    
+    MeasureLinear();
+    ~MeasureLinear() override;
   private:
-    dlg::CheckGeometry *dialog = nullptr;
-    bool hasRan = false;
+    dlg::SelectionWidget *selectionWidget = nullptr;
     
+    void buildGui();
+    void selectionDone(); //!< when second selection is made.
     void go();
-    void setupDispatcher();
-    void selectionAdditionDispatched(const msg::Message&);
+    void build(const osg::Vec3d&, const osg::Vec3d&);
   };
 }
 
-#endif // CMD_CHECKGEOMETRYCOMMAND_H
+#endif //CMV_MEASURELINEAR_H

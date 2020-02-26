@@ -30,12 +30,8 @@
 
 using namespace cmd;
 
-CheckGeometry::CheckGeometry() : Base()
+CheckGeometry::CheckGeometry() : Base("cmd::CheckGeometry")
 {
-  sift = std::make_unique<msg::Sift>();
-  sift->name = "cmd::CheckGeometry";
-  node->setHandler(std::bind(&msg::Sift::receive, sift.get(), std::placeholders::_1));
-    
   setupDispatcher();
   shouldUpdate = false;
 }

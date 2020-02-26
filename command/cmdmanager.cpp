@@ -135,11 +135,6 @@ void Manager::setupDispatcher()
     {
       std::make_pair
       (
-        msg::Request | msg::Command | msg::Cancel
-        , std::bind(&Manager::cancelCommandDispatched, this, std::placeholders::_1)
-      )
-      , std::make_pair
-      (
         msg::Request | msg::Command | msg::Clear
         , std::bind(&Manager::clearCommandDispatched, this, std::placeholders::_1)
       )
@@ -502,16 +497,8 @@ void Manager::setupDispatcher()
   );
 }
 
-void Manager::cancelCommandDispatched(const msg::Message &)
-{
-  //we might not want the update triggered inside done slot
-  //from this handler? but leave for now.
-  doneSlot();
-}
-
 void Manager::doneCommandDispatched(const msg::Message&)
 {
-  //same as above for now, but might be different in the future.
   doneSlot();
 }
 

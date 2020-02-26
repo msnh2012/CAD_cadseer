@@ -165,7 +165,7 @@ bool EventHandler::handle(const osgGA::GUIEventAdapter& eventAdapter,
   {
     if (eventAdapter.getKey() == osgGA::GUIEventAdapter::KEY_Escape)
     {
-      node->send(msg::Message(msg::Request | msg::Command | msg::Cancel));
+      node->send(msg::Message(msg::Request | msg::Command | msg::Done));
       return true;
     }
   }

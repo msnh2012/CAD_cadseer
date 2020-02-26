@@ -28,12 +28,8 @@
 
 using namespace cmd;
 
-Isolate::Isolate() : Base(), id(gu::createNilId()), mask(msg::ThreeD | msg::Overlay)
+Isolate::Isolate() : Base("cmd::Isolate"), id(gu::createNilId()), mask(msg::ThreeD | msg::Overlay)
 {
-  sift = std::make_unique<msg::Sift>();
-  sift->name = "cmd::Isolate";
-  node->setHandler(std::bind(&msg::Sift::receive, sift.get(), std::placeholders::_1));
-  
   setupDispatcher();
   shouldUpdate = false;
 }

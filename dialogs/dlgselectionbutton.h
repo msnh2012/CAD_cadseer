@@ -60,6 +60,7 @@ namespace dlg
     void setMessages(const slc::Message&);
     void addMessage(const slc::Message&);
     void addMessages(const slc::Messages&);
+    void clear();
     
     slc::Mask mask; //!< to control selection.
     slc::Accrue::Type accrueDefault = slc::Accrue::None; //!< new selections will use this.

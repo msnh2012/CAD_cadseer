@@ -416,6 +416,13 @@ command_sources = ['command/cmdmanager.cpp'
   , 'command/cmddatumsystem.cpp'
   , 'command/cmdsurfaceremesh.cpp'
   , 'command/cmdsurfacemeshfill.cpp']
+
+commandview_sources = [
+  'commandview/cmvpane.cpp'
+  , 'commandview/cmvbase.cpp'
+  , 'commandview/cmvmessage.cpp'
+  , 'commandview/cmvmeasurelinear.cpp'
+]
   
 law_sources = ['law/lwfcue.cpp']
 
@@ -485,6 +492,7 @@ cadseer_sources = ['main.cpp'
   , law_sources
   , library_sources
   , command_sources
+  , commandview_sources
   , viewer_sources
   , squash_sources
   , libreoffice_sources
@@ -548,7 +556,11 @@ cadseer_moc_hdrs = ['viewer/vwrwidget.h'
   , 'dialogs/dlgvizfilter.h'
   , 'dialogs/dlgsurfacemesh.h'
   , 'dialogs/dlgnetgenparameters.h'
-  , 'dialogs/dlgocctparameters.h']
+  , 'dialogs/dlgocctparameters.h'
+  , 'commandview/cmvpane.h'
+  , 'commandview/cmvbase.h'
+  , 'commandview/cmvmeasurelinear.h'
+]
   
 cadseer_resources = ['resources.qrc']
 

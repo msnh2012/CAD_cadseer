@@ -36,12 +36,8 @@
 
 using namespace cmd;
 
-CSysEdit::CSysEdit() : Base()
+CSysEdit::CSysEdit() : Base("cmd::CSysEdit")
 {
-  sift = std::make_unique<msg::Sift>();
-  sift->name = "cmd::CSysEdit";
-  node->setHandler(std::bind(&msg::Sift::receive, sift.get(), std::placeholders::_1));
-  
   setupDispatcher();
 }
 

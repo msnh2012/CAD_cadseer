@@ -1,6 +1,6 @@
 /*
  * CadSeer. Parametric Solid Modeling.
- * Copyright (C) 2017  Thomas S. Anderson blobfish.at.gmx.com
+ * Copyright (C) 2020 Thomas S. Anderson blobfish.at.gmx.com
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,25 +17,12 @@
  *
  */
 
-#ifndef CMD_MEASURELINEAR_H
-#define CMD_MEASURELINEAR_H
 
-#include "selection/slcdefinitions.h"
-#include "command/cmdbase.h"
+#include "commandview/cmvmessage.h"
 
-namespace cmd
-{
-  class MeasureLinear :  public Base
-  {
-  public:
-    MeasureLinear();
-    virtual ~MeasureLinear() override;
-    
-    std::string getCommandName() override{return "Measure Linear";}
-    std::string getStatusMessage() override;
-    void activate() override;
-    void deactivate() override;
-  };
-}
+using namespace cmv;
 
-#endif // CMD_MEASURELINEAR_H
+Message::Message(Base *wIn, int wdIn)
+: widget(wIn)
+, paneWidth(wdIn)
+{}

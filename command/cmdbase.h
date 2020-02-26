@@ -30,8 +30,9 @@
 namespace app{class Application; class MainWindow;}
 namespace prj{class Project;}
 namespace slc{class Manager; class EventHandler;}
-namespace msg{class Message; struct Node;}
+namespace msg{class Message; struct Node; struct Sift;}
 namespace vwr{class Widget;}
+namespace cmv{class Base;}
 
 namespace cmd
 {
@@ -42,6 +43,7 @@ namespace cmd
   {
   public:
     Base();
+    Base(const std::string&);
     virtual ~Base();
     virtual std::string getCommandName() = 0;
     virtual std::string getStatusMessage() = 0;
@@ -52,6 +54,9 @@ namespace cmd
     
   protected:
     std::unique_ptr<msg::Node> node;
+    std::unique_ptr<msg::Sift> sift; //rename
+    void splitterDispatched(const msg::Message&);
+    
     void sendDone();
     
     app::Application *application;
@@ -60,6 +65,8 @@ namespace cmd
     slc::Manager *selectionManager;
     slc::EventHandler *eventHandler;
     vwr::Widget *viewer;
+    
+    std::unique_ptr<cmv::Base> viewBase; //set in derived class
     
     bool isActive;
     bool shouldUpdate = true;
