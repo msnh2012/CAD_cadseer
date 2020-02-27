@@ -15,7 +15,7 @@ def commandMessage():
   print ('  python ./feature.py FeatureName')
   print ('  python ./feature.py FeatureName --feature')
   print ('  python ./feature.py FeatureName --command')
-  print ('  python ./feature.py FeatureName --feature --command --serial --dialog')
+  print ('  python ./feature.py FeatureName --feature --command --serial --commandView')
 
 if (len(sys.argv) < 2):
   print >> sys.stderr, 'ERROR: Wrong number of arguments. Need at least classname'
@@ -44,12 +44,12 @@ if not path.isfile("./commandTemplate.cpp"):
   print >> sys.stderr, 'ERROR: No commandTemplate.cpp file'
   sys.exit()
   
-if not path.isfile("./dialogTemplate.h"):
+if not path.isfile("./commandViewTemplate.h"):
   print >> sys.stderr, 'ERROR: No dialogTemplate.h file'
   sys.exit()
   
-if not path.isfile("./dialogTemplate.cpp"):
-  print >> sys.stderr, 'ERROR: No dialogTemplate.cpp file'
+if not path.isfile("./commandViewTemplate.cpp"):
+  print >> sys.stderr, 'ERROR: No commandViewTemplate.cpp file'
   sys.exit()
 
 className = sys.argv[1]
@@ -101,15 +101,15 @@ entries.append(Entry('./commandTemplate.h',
 entries.append(Entry('./serialTemplate.xsd',
                      '',
                      '../project/serial/feature' + classNameLowerCase + '.xsd',
-                     '../dialog/dlg' + classNameLowerCase + '.cpp',
+                     '',
                      '--serial',
                      'true'
                      ))
-entries.append(Entry('./dialogTemplate.h',
-                     './dialogTemplate.cpp',
-                     '../dialogs/dlg' + classNameLowerCase + '.h',
-                     '../dialogs/dlg' + classNameLowerCase + '.cpp',
-                     '--dialog',
+entries.append(Entry('./commandViewTemplate.h',
+                     './commandViewTemplate.cpp',
+                     '../commandView/cmv' + classNameLowerCase + '.h',
+                     '../commandView/cmv' + classNameLowerCase + '.cpp',
+                     '--commandView',
                      'true'
                      ))
 

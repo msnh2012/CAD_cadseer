@@ -17,16 +17,16 @@
  *
  */
 
-#ifndef DLG_%CLASSNAMEUPPERCASE%_H
-#define DLG_%CLASSNAMEUPPERCASE%_H
+#ifndef CMV_%CLASSNAMEUPPERCASE%_H
+#define CMV_%CLASSNAMEUPPERCASE%_H
 
 #include <memory>
 
-#include "dialogs/dlgbase.h"
+#include "commandview/cmvbase.h"
 
 namespace ftr{class %CLASSNAME%;}
 
-namespace dlg
+namespace cmv
 {
   /**
   * @todo write docs
@@ -35,20 +35,12 @@ namespace dlg
   {
     Q_OBJECT
   public:
-    %CLASSNAME%(ftr::%CLASSNAME%*, QWidget*, bool = false);
+    %CLASSNAME%(ftr::%CLASSNAME%*);
     ~%CLASSNAME%() override;
-  public Q_SLOTS:
-    void reject() override;
-    void accept() override;
   private:
     struct Stow;
     std::unique_ptr<Stow> stow;
-    
-    void init();
-    void buildGui();
-    void loadFeatureData();
-    void finishDialog();
   };
 }
 
-#endif // DLG_%CLASSNAMEUPPERCASE%_H
+#endif // CMV_%CLASSNAMEUPPERCASE%_H

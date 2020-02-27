@@ -43,103 +43,44 @@
 // #include "tools/idtools.h"
 // #include "feature/ftrinputtype.h"
 #include "feature/ftr%CLASSNAMELOWERCASE%.h"
-#include "dialogs/dlg%CLASSNAMELOWERCASE%.h"
+#include "commandview/cmv%CLASSNAMELOWERCASE%.h"
 
 using boost::uuids::uuid;
 
-using namespace dlg;
+using namespace cmv;
 
 struct %CLASSNAME%::Stow
 {
-  Stow(ftr::%CLASSNAME% *fIn)
-  : feature(fIn)
-//   , parameter(std::make_shared<prm::Parameter>(*feature->getParameter()))
-  {}
-  
   ftr::%CLASSNAME% *feature;
 //   SelectionWidget *selectionWidget = nullptr;
 //   ParameterWidget *parameterWidget = nullptr;
 //   std::shared_ptr<prm::Parameter> parameter;
+  
+  Stow(ftr::%CLASSNAME% *fIn)
+  : feature(fIn)
+//   , parameter(std::make_shared<prm::Parameter>(*feature->getParameter()))
+  {
+    buildGui();
+    
+    QSettings &settings = app::instance()->getUserSettings();
+    settings.beginGroup("cmv::%CLASSNAME%");
+    //load settings
+    settings.endGroup();
+    
+    loadFeatureData();
+//     stow->selectionWidget->activate(0);
+  }
+  
+  void buildGui()
+  {}
+  
+  void loadFeatureData()
+  {}
 };
 
-%CLASSNAME%::%CLASSNAME%(ftr::%CLASSNAME% *fIn, QWidget *pIn, bool isEditIn)
-: Base(fIn, pIn, isEditIn)
+%CLASSNAME%::%CLASSNAME%(ftr::%CLASSNAME% *fIn)
+: Base()
 , stow(new Stow(fIn))
-{
-  init();
-}
+{}
 
 %CLASSNAME%::~%CLASSNAME%() = default;
-
-void %CLASSNAME%::init()
-{
-  buildGui();
-  
-  QSettings &settings = app::instance()->getUserSettings();
-  settings.beginGroup("dlg::%CLASSNAME%");
-
-  settings.endGroup();
-  
-  loadFeatureData();
-//   stow->selectionWidget->activate(0);
-}
-
-void %CLASSNAME%::buildGui()
-{
-
-}
-
-void %CLASSNAME%::loadFeatureData()
-{
-  if (isEditDialog)
-  {
-
-  }
-}
-
-void %CLASSNAME%::reject()
-{
-  isAccepted = false;
-  finishDialog();
-  QDialog::reject();
-}
-
-void %CLASSNAME%::accept()
-{
-  isAccepted = true;
-  finishDialog();
-  QDialog::accept();
-}
-
-void %CLASSNAME%::finishDialog()
-{
-  prj::Project *p = app::instance()->getProject();
-  
-  auto restoreState = [&]()
-  {
-    if (isEditDialog)
-    {
-      for (const auto &id : leafChildren)
-        p->setCurrentLeaf(id);
-    }
-  };
-  auto bail = [&]()
-  {
-    if (!isEditDialog)
-      p->removeFeature(stow->feature->getId());
-    commandDone();
-    restoreState();
-  };
-  
-  if(!isAccepted)
-  {
-    bail();
-    return;
-  }
-  
-
-  
-  queueUpdate();
-  commandDone();
-  restoreState();
-}
