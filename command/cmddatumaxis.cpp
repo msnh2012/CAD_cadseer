@@ -23,18 +23,37 @@
 #include "viewer/vwrwidget.h"
 #include "message/msgnode.h"
 #include "selection/slceventhandler.h"
+#include "selection/slcmessage.h"
 #include "project/prjproject.h"
 #include "annex/annseershape.h"
 #include "tools/featuretools.h"
 #include "tools/occtools.h"
 #include "feature/ftrinputtype.h"
 #include "feature/ftrdatumaxis.h"
+#include "commandview/cmvmessage.h"
+#include "commandview/cmvdatumaxis.h"
 #include "command/cmddatumaxis.h"
 
 using boost::uuids::uuid;
 using namespace cmd;
 
-DatumAxis::DatumAxis() : Base() {}
+DatumAxis::DatumAxis() : Base()
+{
+  std::shared_ptr<ftr::DatumAxis> daxis(new ftr::DatumAxis());
+  feature = daxis.get();
+  project->addFeature(daxis);
+  node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
+}
+
+DatumAxis::DatumAxis(ftr::Base *fIn) : Base()
+{
+  feature = dynamic_cast<ftr::DatumAxis*>(fIn);
+  assert(feature);
+  firstRun = false; //bypass go() in activate.
+  viewBase = std::make_unique<cmv::DatumAxis>(this);
+  node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+}
+
 DatumAxis::~DatumAxis() {}
 
 std::string DatumAxis::getStatusMessage()
@@ -45,13 +64,30 @@ std::string DatumAxis::getStatusMessage()
 void DatumAxis::activate()
 {
   isActive = true;
-  go();
-  sendDone();
+  if (firstRun)
+  {
+    firstRun = false;
+    go();
+  }
+  if (viewBase)
+  {
+    cmv::Message vm(viewBase.get(), viewBase->getPaneWidth());
+    msg::Message out(msg::Mask(msg::Request | msg::Command | msg::View | msg::Show), vm);
+    node->sendBlocked(out);
+  }
+  else
+    sendDone();
 }
 
 void DatumAxis::deactivate()
 {
   isActive = false;
+  
+  if (viewBase)
+  {
+    msg::Message out(msg::Mask(msg::Request | msg::Command | msg::View | msg::Hide));
+    node->sendBlocked(out);
+  }
 }
 
 void DatumAxis::go()
@@ -61,110 +97,138 @@ void DatumAxis::go()
   const slc::Containers &cs = eventHandler->getSelections();
   if (cs.size() == 2 && slc::isPointType(cs.front().selectionType) && slc::isPointType(cs.back().selectionType))
   {
-    std::vector<ftr::Base*> parents;
-    parents.push_back(project->findFeature(cs.front().featureId));
-    parents.push_back(project->findFeature(cs.back().featureId));
-    
-    for (const auto &p : parents) //overkill?
-    {
-      assert(p->hasAnnex(ann::Type::SeerShape));
-      if (!p->hasAnnex(ann::Type::SeerShape))
-      {
-        node->sendBlocked(msg::buildStatusMessage("Error: selection not valid", 2.0));
-        shouldUpdate = false;
-        return;
-      }
-    }
-    
-    ftr::Picks picks;
-    picks.push_back(tls::convertToPick(cs.front(), parents.front()->getAnnex<ann::SeerShape>(), project->getShapeHistory()));
-    picks.back().tag = std::string(ftr::InputType::create) + std::to_string(0);
-    picks.push_back(tls::convertToPick(cs.back(), parents.back()->getAnnex<ann::SeerShape>(), project->getShapeHistory()));
-    picks.back().tag = std::string(ftr::InputType::create) + std::to_string(1);
-    
-    std::shared_ptr<ftr::DatumAxis> daxis(new ftr::DatumAxis());
-    daxis->setAxisType(ftr::DatumAxis::AxisType::Points);
-    daxis->setPicks(picks);
-    daxis->setAutoSize(true);
-    project->addFeature(daxis);
-    project->connectInsert(parents.front()->getId(), daxis->getId(), {picks.front().tag});
-    project->connectInsert(parents.back()->getId(), daxis->getId(), {picks.back().tag});
-    
+    std::vector<slc::Message> msgs;
+    msgs.push_back(slc::EventHandler::containerToMessage(cs.front()));
+    msgs.push_back(slc::EventHandler::containerToMessage(cs.back()));
+    setToPoints(msgs);
+    node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
+    return;
+  }
+
+  if (cs.size() == 2)
+  {
+    std::vector<slc::Message> msgs;
+    msgs.push_back(slc::EventHandler::containerToMessage(cs.front()));
+    msgs.push_back(slc::EventHandler::containerToMessage(cs.back()));
+    setToIntersection(msgs);
     node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
     return;
   }
   
+  if (cs.size() == 1 && (cs.front().selectionType == slc::Type::Face || cs.front().selectionType == slc::Type::Edge))
+  {
+    std::vector<slc::Message> msgs;
+    msgs.push_back(slc::EventHandler::containerToMessage(cs.front()));
+    setToGeometry(msgs);
+    node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
+    return;
+  }
+  
+  //create a constant type. and launch command view
+  node->sendBlocked(msg::buildStatusMessage("invalid pre selection", 2.0));
+  feature->setAxisType(ftr::DatumAxis::AxisType::Constant);
+  osg::Matrixd current = viewer->getCurrentSystem();
+  feature->setOrigin(current.getTrans());
+  feature->setDirection(gu::getZVector(current));
+  node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  viewBase = std::make_unique<cmv::DatumAxis>(this);
+}
+
+void DatumAxis::setToConstant()
+{
+  project->clearAllInputs(feature->getId());
+  feature->setAxisType(ftr::DatumAxis::AxisType::Constant);
+  
+  localUpdate();
+}
+
+void DatumAxis::setToPoints(const std::vector<slc::Message> &msIn)
+{
+  assert(msIn.size() == 2); //caller to verify
+  assert(slc::isPointType(msIn.front().type));
+  assert(slc::isPointType(msIn.back().type));
+  std::vector<ftr::Base*> parents;
+  parents.push_back(project->findFeature(msIn.front().featureId));
+  parents.push_back(project->findFeature(msIn.back().featureId));
+  
+  for (const auto &p : parents) //overkill?
+  {
+    assert(p->hasAnnex(ann::Type::SeerShape));
+    if (!p->hasAnnex(ann::Type::SeerShape))
+      return;
+  }
+  
+  ftr::Picks picks;
+  picks.push_back(tls::convertToPick(msIn.front(), parents.front()->getAnnex<ann::SeerShape>(), project->getShapeHistory()));
+  picks.back().tag = ftr::InputType::createIndexedTag(ftr::InputType::create, 0);
+  picks.push_back(tls::convertToPick(msIn.back(), parents.back()->getAnnex<ann::SeerShape>(), project->getShapeHistory()));
+  picks.back().tag = ftr::InputType::createIndexedTag(ftr::InputType::create, 1);
+  
+  feature->setAxisType(ftr::DatumAxis::AxisType::Points);
+  feature->setPicks(picks);
+  project->clearAllInputs(feature->getId());
+  project->connectInsert(parents.front()->getId(), feature->getId(), {picks.front().tag});
+  project->connectInsert(parents.back()->getId(), feature->getId(), {picks.back().tag});
+  
+  localUpdate();
+}
+
+void DatumAxis::setToIntersection(const std::vector<slc::Message> &msIn)
+{
+  assert(msIn.size() == 2); //caller to verify
+  
   int planarCount = 0;
-  for (const auto &c : cs)
+  for (const auto &c : msIn)
   {
     if (c.featureType == ftr::Type::DatumPlane)
       planarCount++;
-    if (c.selectionType == slc::Type::Face)
+    if (c.type == slc::Type::Face)
       planarCount++;
   }
-  if (cs.size() == 2 && planarCount == 2)
-  {
-    std::vector<ftr::Base*> parents;
-    ftr::Picks picks;
+  if (planarCount != 2)
+    return;
+  
+  std::vector<ftr::Base*> parents;
+  ftr::Picks picks;
+  parents.push_back(project->findFeature(msIn.front().featureId));
+  picks.push_back(tls::convertToPick(msIn.front(), parents.front()->getAnnex<ann::SeerShape>(), project->getShapeHistory()));
+  picks.back().tag = ftr::InputType::createIndexedTag(ftr::InputType::create, 0);
+  parents.push_back(project->findFeature(msIn.back().featureId));
+  picks.push_back(tls::convertToPick(msIn.back(), parents.back()->getAnnex<ann::SeerShape>(), project->getShapeHistory()));
+  picks.back().tag = ftr::InputType::createIndexedTag(ftr::InputType::create, 1);
 
-    parents.push_back(project->findFeature(cs.front().featureId));
-    picks.push_back(tls::convertToPick(cs.front(), *parents.back(), project->getShapeHistory()));
-    picks.back().tag = std::string(ftr::InputType::create) + std::to_string(0);
-    parents.push_back(project->findFeature(cs.back().featureId));
-    picks.push_back(tls::convertToPick(cs.back(), *parents.back(), project->getShapeHistory()));
-    picks.back().tag = std::string(ftr::InputType::create) + std::to_string(1);
-    
-    std::shared_ptr<ftr::DatumAxis> daxis(new ftr::DatumAxis());
-    daxis->setAxisType(ftr::DatumAxis::AxisType::Intersection);
-    daxis->setPicks(picks);
-    daxis->setAutoSize(true);
-    project->addFeature(daxis);
-    project->connectInsert(parents.front()->getId(), daxis->getId(), {picks.front().tag});
-    project->connectInsert(parents.back()->getId(), daxis->getId(), {picks.back().tag});
-    
-    node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  feature->setAxisType(ftr::DatumAxis::AxisType::Intersection);
+  feature->setPicks(picks);
+  project->clearAllInputs(feature->getId());
+  project->connectInsert(parents.front()->getId(), feature->getId(), {picks.front().tag});
+  project->connectInsert(parents.back()->getId(), feature->getId(), {picks.back().tag});
+  
+  localUpdate();
+}
+
+void DatumAxis::setToGeometry(const std::vector<slc::Message> &msIn)
+{
+  const ftr::Base *parent = project->findFeature(msIn.front().featureId);
+  if (!parent->hasAnnex(ann::Type::SeerShape))
     return;
-  }
-  if (cs.size() == 1 && (cs.front().selectionType == slc::Type::Face || cs.front().selectionType == slc::Type::Edge))
-  {
-    const ftr::Base *parent = project->findFeature(cs.front().featureId);
-    if (!parent->hasAnnex(ann::Type::SeerShape))
-    {
-      node->sendBlocked(msg::buildStatusMessage("Error: no seer shape", 2.0));
-      shouldUpdate = false;
-      return;
-    }
-    const ann::SeerShape &ss = parent->getAnnex<ann::SeerShape>();
-    const TopoDS_Shape &s = ss.getOCCTShape(cs.front().shapeId);
-    auto axisPair = occt::gleanAxis(s);
-    if (!axisPair.second)
-    {
-      node->sendBlocked(msg::buildStatusMessage("Error: couldn't glean axis", 2.0));
-      shouldUpdate = false;
-      return;
-    }
-    ftr::Pick pick = tls::convertToPick(cs.front(), ss, project->getShapeHistory());
-    pick.tag = std::string(ftr::InputType::create) + std::to_string(0);
-    std::shared_ptr<ftr::DatumAxis> daxis(new ftr::DatumAxis());
-    daxis->setAxisType(ftr::DatumAxis::AxisType::Geometry);
-    daxis->setPicks(ftr::Picks({pick}));
-    daxis->setAutoSize(true);
-    project->addFeature(daxis);
-    project->connectInsert(parent->getId(), daxis->getId(), {pick.tag});
-    
-    node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  const ann::SeerShape &ss = parent->getAnnex<ann::SeerShape>();
+  const TopoDS_Shape &s = ss.getOCCTShape(msIn.front().shapeId);
+  auto axisPair = occt::gleanAxis(s);
+  if (!axisPair.second)
     return;
-  }
+  ftr::Pick pick = tls::convertToPick(msIn.front(), ss, project->getShapeHistory());
+  pick.tag = ftr::InputType::createIndexedTag(ftr::InputType::create, 0);
+  feature->setAxisType(ftr::DatumAxis::AxisType::Geometry);
+  feature->setPicks(ftr::Picks({pick}));
+  project->clearAllInputs(feature->getId());
+  project->connectInsert(parent->getId(), feature->getId(), {pick.tag});
   
-  //here is where we might launch a dialog, but for now I will just create a constant type.
-  std::shared_ptr<ftr::DatumAxis> daxis(new ftr::DatumAxis());
-  daxis->setAxisType(ftr::DatumAxis::AxisType::Constant);
-  daxis->setAutoSize(false);
-  
-  osg::Matrixd current = app::instance()->getMainWindow()->getViewer()->getCurrentSystem();
-  daxis->setOrigin(current.getTrans());
-  daxis->setDirection(gu::getZVector(current));
-  
-  project->addFeature(daxis);
-  return;
+  localUpdate();
+}
+
+void DatumAxis::localUpdate()
+{
+  feature->updateModel(project->getPayload(feature->getId()));
+  feature->updateVisual();
+  feature->setModelDirty();
 }

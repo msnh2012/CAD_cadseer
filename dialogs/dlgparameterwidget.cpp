@@ -256,6 +256,8 @@ void ParameterContainer::requestParameterUnlinkSlot()
   stow->linkId = gu::createNilId();
   stow->parameter->setConstant(true);
   setEditUnlinked();
+  stow->editor->lineEdit->selectAll();
+  stow->editor->setFocus();
 }
 
 void ParameterContainer::setEditLinked()
@@ -280,8 +282,6 @@ void ParameterContainer::setEditUnlinked()
   stow->editor->trafficLabel->setTrafficGreenSlot();
   stow->editor->lineEdit->setReadOnly(false);
   stow->editor->lineEdit->setText(static_cast<QString>(*stow->parameter));
-  stow->editor->lineEdit->selectAll();
-  stow->editor->setFocus();
 }
 
 void ParameterContainer::updateParameterSlot()

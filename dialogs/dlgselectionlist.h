@@ -46,7 +46,7 @@ namespace dlg
     
   Q_SIGNALS:
     void accrueChanged();
-  private Q_SLOTS:
+  public Q_SLOTS:
     void populateList();
   private:
     SelectionButton *button;

@@ -54,7 +54,7 @@ namespace cmd
     
   protected:
     std::unique_ptr<msg::Node> node;
-    std::unique_ptr<msg::Sift> sift; //rename
+    std::unique_ptr<msg::Sift> sift;
     void splitterDispatched(const msg::Message&);
     
     void sendDone();

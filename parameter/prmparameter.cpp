@@ -436,8 +436,7 @@ public:
   std::string operator()(const osg::Matrixd&) const {return "Matrixd";}
 };
 
- //serial rename
-class SrlVisitor2 : public boost::static_visitor<prj::srl::spt::ParameterValue>
+class SrlVisitor : public boost::static_visitor<prj::srl::spt::ParameterValue>
 {
   using SPV = prj::srl::spt::ParameterValue;
 public:
@@ -617,6 +616,13 @@ void Parameter::setEnumeration(const QStringList &lIn)
 {
   assert(getValueType() == typeid(int));
   enumeration = lIn;
+  
+  Boundary lower(0.0, Boundary::End::Closed);
+  Boundary upper(enumeration.size(), Boundary::End::Closed);
+  Interval interval(lower, upper);
+  Constraint out;
+  out.intervals.push_back(interval);
+  setConstraint(out);
 }
 
 const QStringList& Parameter::getEnumeration() const
@@ -846,7 +852,7 @@ prj::srl::spt::Parameter Parameter::serialOut() const
     name.toStdString()
     , constant
     , gu::idToString(id)
-    , boost::apply_visitor(SrlVisitor2(), stow->variant)
+    , boost::apply_visitor(SrlVisitor(), stow->variant)
   );
 }
 

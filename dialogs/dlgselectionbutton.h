@@ -58,6 +58,8 @@ namespace dlg
     const slc::Messages& getMessages() const {return messages;}
     void setMessages(const slc::Messages&);
     void setMessages(const slc::Message&);
+    void setMessagesQuietly(const slc::Messages&);
+    void setMessagesQuietly(const slc::Message&);
     void addMessage(const slc::Message&);
     void addMessages(const slc::Messages&);
     void clear();

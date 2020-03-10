@@ -71,6 +71,7 @@ namespace ftr
     void setAxisType(AxisType);
     AxisType getAxisType() const {return axisType;}
     void setPicks(const Picks &pIn);
+    const Picks& getPicks(){return picks;}
     void setAutoSize(bool);
     
     void setOrigin(const osg::Vec3d&); //!< makes type constant
@@ -79,6 +80,10 @@ namespace ftr
     osg::Vec3d getDirection() const {return direction;}
     
     double getSize() const;
+    
+    prm::Parameter* getCSysParameter();
+    prm::Parameter* getAutoSizeParameter();
+    prm::Parameter* getSizeParameter();
     
   protected:
     void goUpdateConstant();

@@ -17,45 +17,35 @@
  *
  */
 
-#ifndef CMV_BASE_H
-#define CMV_BASE_H
+#ifndef CMV_DATUMAXIS_H
+#define CMV_DATUMAXIS_H
 
 #include <memory>
 
-#include <QWidget>
+#include "commandview/cmvbase.h"
 
-namespace ftr{class Base;}
-namespace msg{struct Node; struct Sift;}
-namespace prj{class Project;}
+namespace cmd{class DatumAxis;}
 
 namespace cmv
 {
-  /*! @class Base 
-   * @brief Base Widget for command views.
-   * @details No parent widget for constructor as the 
-   * command will own them.
-   * 
-   * Managing feature states to be handeled by editing commands not gui views.
-   */
-  class Base : public QWidget
+  /**
+  * @todo write docs
+  */
+  class DatumAxis : public Base
   {
     Q_OBJECT
   public:
-    Base() = delete;
-    Base(const QString&);
-    ~Base() override;
-    void setPaneWidth(int);
-    int getPaneWidth(){return paneWidth;};
-    
-    static void clearContentMargins(QWidget*);
-  protected:
-    std::unique_ptr<msg::Node> node;
-    std::unique_ptr<msg::Sift> sift;
-    prj::Project *project = nullptr;
-    QString name; //<! should be unique
-    int paneWidth = 100;
+    DatumAxis(cmd::DatumAxis*);
+    ~DatumAxis() override;
+  public Q_SLOTS:
+    void stackedChanged(int);
+    void pointSelectionChanged();
+    void intersectionSelectionChanged();
+    void geometrySelectionChanged();
+  private:
+    struct Stow;
+    std::unique_ptr<Stow> stow;
   };
 }
 
-#endif //CMV_BASE_H
-
+#endif // CMV_DATUMAXIS_H

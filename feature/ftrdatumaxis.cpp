@@ -60,7 +60,7 @@ DatumAxis::DatumAxis() : Base()
 , origin(0.0, 0.0, 0.0)
 , direction(0.0, 0.0, 1.0)
 , csys(new prm::Parameter(prm::Names::CSys, osg::Matrixd::identity()))
-, autoSize(new prm::Parameter(QObject::tr("Auto Size"), false))
+, autoSize(new prm::Parameter(QObject::tr("Auto Size"), true))
 , size(new prm::Parameter(QObject::tr("Size"), 20.0))
 , csysDragger(new ann::CSysDragger(this, csys.get()))
 , cachedSize(20.0)
@@ -109,6 +109,7 @@ void DatumAxis::setAxisType(AxisType tIn)
     //update dragger and parameter to current axis. origin and direction always up to date.
     csysDragger->setCSys(osg::Matrixd::rotate(osg::Vec3d(0.0, 0.0, 1.0), direction) * osg::Matrixd::translate(origin));
     autoSize->setValue(false);
+    picks.clear();
   }
   
   updateDraggerViz();
@@ -145,6 +146,21 @@ void DatumAxis::setPicks(const Picks &pIn)
 void DatumAxis::setAutoSize(bool vIn)
 {
   autoSize->setValue(vIn);
+}
+
+prm::Parameter* DatumAxis::getCSysParameter()
+{
+  return csys.get();
+}
+
+prm::Parameter* DatumAxis::getAutoSizeParameter()
+{
+  return autoSize.get();
+}
+
+prm::Parameter* DatumAxis::getSizeParameter()
+{
+  return size.get();
 }
 
 void DatumAxis::updateModel(const UpdatePayload &pli)

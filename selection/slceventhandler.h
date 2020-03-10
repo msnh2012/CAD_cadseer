@@ -41,6 +41,9 @@ namespace slc
     const Containers& getSelections() const {return selectionContainers;}
     void clearSelections();
 
+    static slc::Container messageToContainer(const slc::Message &);
+    static slc::Message containerToMessage(const slc::Container &);
+    
   protected:
     virtual bool handle(const osgGA::GUIEventAdapter& eventAdapter,
                         osgGA::GUIActionAdapter& actionAdapter, osg::Object *object,
@@ -54,7 +57,7 @@ namespace slc
     osg::Vec4 preHighlightColor;
     osg::Vec4 selectionColor;
     Containers selectionContainers;
-    osg::Geometry* buildTempPoint(const osg::Vec3d &pointIn);
+    static osg::Geometry* buildTempPoint(const osg::Vec3d &pointIn);
 
     unsigned int nodeMask;
     Mask selectionMask;
@@ -70,9 +73,6 @@ namespace slc
     void requestSelectionSubtractionDispatched(const msg::Message &);
     void requestSelectionClearDispatched(const msg::Message &);
     void selectionMaskDispatched(const msg::Message&);
-    
-    slc::Container messageToContainer(const slc::Message &);
-    slc::Message containerToMessage(const slc::Container &);
   };
 }
 

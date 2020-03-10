@@ -69,12 +69,40 @@ const slc::Messages& SelectionWidget::getMessages(int index) const
   return static_cast<SelectionButton*>(stow->buttonGroup->button(index))->getMessages();
 }
 
+/*! @brief Setup the button and list without triggering signals.
+ * 
+ * @parameter index of the button.
+ * @parameter msIn is the new selection messages for the button.
+ */
+void SelectionWidget::initializeButton(int index, const slc::Message &mIn)
+{
+  assert(index >= 0 && index < stow->buttonGroup->buttons().size());
+  static_cast<SelectionButton*>(stow->buttonGroup->button(index))->setMessagesQuietly(mIn);
+  stow->selectionModels.at(index)->populateList();
+}
+
+/*! @brief Setup the button and list without triggering signals.
+ * 
+ * @parameter index of the button.
+ * @parameter msIn is the new selection messages for the button.
+ */
+void SelectionWidget::initializeButton(int index, const slc::Messages &msIn)
+{
+  assert(index >= 0 && index < stow->buttonGroup->buttons().size());
+  static_cast<SelectionButton*>(stow->buttonGroup->button(index))->setMessagesQuietly(msIn);
+  stow->selectionModels.at(index)->populateList();
+}
+
 void SelectionWidget::buildGui(const std::vector<SelectionWidgetCue> &cuesIn)
 {
-  QHBoxLayout *mainLayout = new QHBoxLayout();
+  QVBoxLayout *mainLayout = new QVBoxLayout();
   this->setLayout(mainLayout);
   this->setContentsMargins(0, 0, 0, 0);
   mainLayout->setContentsMargins(0, 0, 0, 0);
+  QHBoxLayout *nestedLayout = new QHBoxLayout();
+  nestedLayout->setContentsMargins(0, 0, 0, 0);
+  mainLayout->addLayout(nestedLayout);
+  mainLayout->addItem(new QSpacerItem(20, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
   
   //labels and buttons
   QPixmap pmap = QPixmap(":resources/images/cursor.svg").scaled(32, 32, Qt::KeepAspectRatio);
@@ -102,7 +130,7 @@ void SelectionWidget::buildGui(const std::vector<SelectionWidgetCue> &cuesIn)
   auto *buttonLayout = new QVBoxLayout();
   buttonLayout->addLayout(gridLayout);
   buttonLayout->addItem(new QSpacerItem(20, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
-  mainLayout->addLayout(buttonLayout);
+  nestedLayout->addLayout(buttonLayout);
   
   //stackedWidgets
   int slw = 17 * fontMetrics().averageCharWidth(); //selection width
@@ -129,7 +157,7 @@ void SelectionWidget::buildGui(const std::vector<SelectionWidgetCue> &cuesIn)
   }
   auto *stackLayout = new QVBoxLayout();
   stackLayout->addWidget(stow->stackedWidget);
-  mainLayout->addLayout(stackLayout);
+  nestedLayout->addLayout(stackLayout);
 }
 
 /*! @brief move to the next button.

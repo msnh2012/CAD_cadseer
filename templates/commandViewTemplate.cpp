@@ -43,6 +43,7 @@
 // #include "tools/idtools.h"
 // #include "feature/ftrinputtype.h"
 #include "feature/ftr%CLASSNAMELOWERCASE%.h"
+#include "command/cmd%CLASSNAMELOWERCASE%.h"
 #include "commandview/cmv%CLASSNAMELOWERCASE%.h"
 
 using boost::uuids::uuid;
@@ -51,14 +52,14 @@ using namespace cmv;
 
 struct %CLASSNAME%::Stow
 {
-  ftr::%CLASSNAME% *feature;
+  cmd::%CLASSNAME% *command;
+  cmv::%CLASSNAME% *view;
 //   SelectionWidget *selectionWidget = nullptr;
 //   ParameterWidget *parameterWidget = nullptr;
-//   std::shared_ptr<prm::Parameter> parameter;
   
-  Stow(ftr::%CLASSNAME% *fIn)
-  : feature(fIn)
-//   , parameter(std::make_shared<prm::Parameter>(*feature->getParameter()))
+  Stow(cmd::%CLASSNAME% *cIn, cmv::%CLASSNAME% *vIn)
+  : command(fIn)
+  , view(vIn)
   {
     buildGui();
     
@@ -79,8 +80,8 @@ struct %CLASSNAME%::Stow
 };
 
 %CLASSNAME%::%CLASSNAME%(ftr::%CLASSNAME% *fIn)
-: Base()
-, stow(new Stow(fIn))
+: Base("cmv::%CLASSNAME%")
+, stow(new Stow(fIn), this)
 {}
 
 %CLASSNAME%::~%CLASSNAME%() = default;

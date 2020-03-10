@@ -22,6 +22,8 @@
 
 #include "command/cmdbase.h"
 
+namespace ftr{class DatumAxis;}
+
 namespace cmd
 {
   /**
@@ -30,15 +32,25 @@ namespace cmd
   class DatumAxis : public Base
   {
     public:
-      DatumAxis();
-      virtual ~DatumAxis() override;
+      ftr::DatumAxis *feature = nullptr;
       
-      virtual std::string getCommandName() override{return "DatumAxis";}
-      virtual std::string getStatusMessage() override;
-      virtual void activate() override;
-      virtual void deactivate() override;
+      DatumAxis();
+      DatumAxis(ftr::Base*);
+      ~DatumAxis() override;
+      
+      std::string getCommandName() override{return "DatumAxis";}
+      std::string getStatusMessage() override;
+      void activate() override;
+      void deactivate() override;
+      
+      void setToConstant();
+      void setToPoints(const std::vector<slc::Message>&);
+      void setToIntersection(const std::vector<slc::Message>&);
+      void setToGeometry(const std::vector<slc::Message>&);
+      void localUpdate();
     private:
       void go();
+      bool firstRun = true;
   };
 }
 

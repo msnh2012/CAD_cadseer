@@ -141,8 +141,31 @@ void SelectionButton::setMessages(const slc::Messages &msIn)
 void SelectionButton::setMessages(const slc::Message &mIn)
 {
   messages.clear();
-  addMessage(mIn);
-  dirty();
+  addMessage(mIn); //sends dirty signal
+}
+
+/*! @brief Set the selection of the button.
+ * 
+ * @parameter msIn are the new selection messages for the button.
+ * @details This method does not emit the dirty signal. This
+ * is beneficial for setting the initial state where we don't
+ * want to trigger an update.
+ */
+void SelectionButton::setMessagesQuietly(const slc::Messages &msIn)
+{
+  messages = msIn;
+}
+
+/*! @brief Set the selection of the button.
+ * 
+ * @parameter mIn is the new selection message for the button.
+ * @details This method does not emit the dirty signal. This
+ * is beneficial for setting the initial state where we don't
+ * want to trigger an update.
+ */
+void SelectionButton::setMessagesQuietly(const slc::Message &mIn)
+{
+  messages = slc::Messages(1, mIn);
 }
 
 void SelectionButton::addMessage(const slc::Message &mIn)

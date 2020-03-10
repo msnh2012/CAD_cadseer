@@ -60,6 +60,8 @@ namespace dlg
     int getButtonCount() const;
     SelectionButton* getButton(int) const;
     const slc::Messages& getMessages(int) const;
+    void initializeButton(int, const slc::Message&);
+    void initializeButton(int, const slc::Messages&);
     void activate(int); //!< Send timed click
     void setAngle(double); //!< tangent accrue for all buttons and all messages.
     void reset(); //!< clear all buttons and select the first button.

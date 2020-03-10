@@ -1,6 +1,6 @@
 /*
  * CadSeer. Parametric Solid Modeling.
- * Copyright (C) %YEAR% Thomas S. Anderson blobfish.at.gmx.com
+ * Copyright (C) 2020 Thomas S. Anderson blobfish.at.gmx.com
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,30 +17,21 @@
  *
  */
 
-#ifndef CMV_%CLASSNAMEUPPERCASE%_H
-#define CMV_%CLASSNAMEUPPERCASE%_H
+#ifndef PRM_EXPRESSIONLINK_H
+#define PRM_EXPRESSIONLINK_H
 
-#include <memory>
+namespace boost{namespace uuids{struct uuid;}}
 
-#include "commandview/cmvbase.h"
+namespace expr{class Manager;}
 
-namespace cmd{class %CLASSNAME%;}
-
-namespace cmv
+namespace prm
 {
-  /**
-  * @todo write docs
-  */
-  class %CLASSNAME% : public Base
-  {
-    Q_OBJECT
-  public:
-    %CLASSNAME%(cmd::%CLASSNAME%*);
-    ~%CLASSNAME%() override;
-  private:
-    struct Stow;
-    std::unique_ptr<Stow> stow;
-  };
+  class Parameter;
+  
+  bool canLinkExpression(expr::Manager&, Parameter*, const boost::uuids::uuid&);
+  bool canLinkExpression(Parameter*, const boost::uuids::uuid&);
+  bool linkExpression(Parameter*, const boost::uuids::uuid&);
+  void unLinkExpression(Parameter*);
 }
 
-#endif // CMV_%CLASSNAMEUPPERCASE%_H
+#endif // PRM_EXPRESSIONLINK_H

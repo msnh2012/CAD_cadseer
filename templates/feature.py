@@ -107,8 +107,8 @@ entries.append(Entry('./serialTemplate.xsd',
                      ))
 entries.append(Entry('./commandViewTemplate.h',
                      './commandViewTemplate.cpp',
-                     '../commandView/cmv' + classNameLowerCase + '.h',
-                     '../commandView/cmv' + classNameLowerCase + '.cpp',
+                     '../commandview/cmv' + classNameLowerCase + '.h',
+                     '../commandview/cmv' + classNameLowerCase + '.cpp',
                      '--commandView',
                      'true'
                      ))

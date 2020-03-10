@@ -18,6 +18,7 @@
  */
 
 #include <QSettings>
+#include <QLayout>
 
 #include "application/appapplication.h"
 #include "project/prjproject.h"
@@ -57,4 +58,13 @@ void Base::setPaneWidth(int nw)
   settings.beginGroup(name);
   settings.setValue("paneWidth", paneWidth);
   settings.endGroup();
+}
+
+void Base::clearContentMargins(QWidget *w)
+{
+  assert(w); // don't set me up
+  w->setContentsMargins(0, 0, 0, 0);
+  QLayout *l = w->layout();
+  if (l)
+    l->setContentsMargins(0, 0, 0, 0);
 }

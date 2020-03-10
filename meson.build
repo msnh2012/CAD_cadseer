@@ -192,7 +192,7 @@ feature_sources = ['feature/ftrinputtype.cpp'
   , 'feature/ftrsurfaceremesh.cpp'
   , 'feature/ftrsurfacemeshfill.cpp']
   
-parameter_sources = ['parameter/prmparameter.cpp']
+parameter_sources = ['parameter/prmparameter.cpp', 'parameter/prmexpressionlink.cpp']
 
 annex_sources = ['annex/annbase.cpp'
   , 'annex/anncsysdragger.cpp'
@@ -422,6 +422,9 @@ commandview_sources = [
   , 'commandview/cmvbase.cpp'
   , 'commandview/cmvmessage.cpp'
   , 'commandview/cmvmeasurelinear.cpp'
+  , 'commandview/cmvdatumaxis.cpp'
+  , 'commandview/cmvtrafficsignal.cpp'
+  , 'commandview/cmvparameterwidgets.cpp'
 ]
   
 law_sources = ['law/lwfcue.cpp']
@@ -560,6 +563,9 @@ cadseer_moc_hdrs = ['viewer/vwrwidget.h'
   , 'commandview/cmvpane.h'
   , 'commandview/cmvbase.h'
   , 'commandview/cmvmeasurelinear.h'
+  , 'commandview/cmvdatumaxis.h'
+  , 'commandview/cmvtrafficsignal.h'
+  , 'commandview/cmvparameterwidgets.h'
 ]
   
 cadseer_resources = ['resources.qrc']

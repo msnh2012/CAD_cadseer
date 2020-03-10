@@ -31,6 +31,7 @@ class QAction;
 namespace dlg
 {
   //! just a widget to show green, yellow, red on a traffic signal.
+  //this is deprecated use cmv::TrafficSignal
   class TrafficLabel : public QLabel
   {
     Q_OBJECT
