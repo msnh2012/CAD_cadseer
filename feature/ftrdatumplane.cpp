@@ -241,6 +241,26 @@ void DatumPlane::setAutoSize(bool vIn)
   autoSize->setValue(vIn);
 }
 
+prm::Parameter* DatumPlane::getAutoSizeParameter()
+{
+  return autoSize.get();
+}
+
+prm::Parameter* DatumPlane::getSizeParameter()
+{
+  return size.get();
+}
+
+prm::Parameter* DatumPlane::getOffsetParameter()
+{
+  return offset.get();
+}
+
+prm::Parameter* DatumPlane::getAngleParameter()
+{
+  return angle.get();
+}
+
 void DatumPlane::updateModel(const UpdatePayload &pli)
 {
   setFailure();
@@ -337,6 +357,7 @@ void DatumPlane::goUpdatePOffset(const UpdatePayload &pli)
       throw std::runtime_error("POffset: Resolved shape is not a face.");
     
     //get coordinate system
+    //TODO GeomLib_IsPlanarSurface
     BRepAdaptor_Surface adaptor(TopoDS::Face(rShapes.front()));
     if (adaptor.GetType() != GeomAbs_Plane)
       throw std::runtime_error("POffset: wrong surface type");

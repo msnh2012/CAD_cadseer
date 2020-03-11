@@ -79,6 +79,7 @@ namespace ftr
     void setDirection(const osg::Vec3d&); //!< makes type constant
     osg::Vec3d getDirection() const {return direction;}
     
+    void setSize(double);
     double getSize() const;
     
     prm::Parameter* getCSysParameter();

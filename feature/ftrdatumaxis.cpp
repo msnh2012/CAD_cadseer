@@ -60,7 +60,7 @@ DatumAxis::DatumAxis() : Base()
 , origin(0.0, 0.0, 0.0)
 , direction(0.0, 0.0, 1.0)
 , csys(new prm::Parameter(prm::Names::CSys, osg::Matrixd::identity()))
-, autoSize(new prm::Parameter(QObject::tr("Auto Size"), true))
+, autoSize(new prm::Parameter(QObject::tr("Auto Size"), false))
 , size(new prm::Parameter(QObject::tr("Size"), 20.0))
 , csysDragger(new ann::CSysDragger(this, csys.get()))
 , cachedSize(20.0)
@@ -121,6 +121,7 @@ void DatumAxis::setOrigin(const osg::Vec3d &oIn)
 {
   axisType = AxisType::Constant;
   origin = oIn;
+  csysDragger->setCSys(osg::Matrixd::rotate(osg::Vec3d(0.0, 0.0, 1.0), direction) * osg::Matrixd::translate(origin)); //does both parameter and dragger
 }
 
 void DatumAxis::setDirection(const osg::Vec3d &dIn)
@@ -130,6 +131,12 @@ void DatumAxis::setDirection(const osg::Vec3d &dIn)
   osg::Vec3d dn = dIn;
   dn.normalize();
   direction = dn;
+  csysDragger->setCSys(osg::Matrixd::rotate(osg::Vec3d(0.0, 0.0, 1.0), direction) * osg::Matrixd::translate(origin)); //does both parameter and dragger
+}
+
+void DatumAxis::setSize(double sIn)
+{
+  size->setValue(sIn);
 }
 
 double DatumAxis::getSize() const
@@ -364,8 +371,7 @@ void DatumAxis::updateVisualInternal()
   
   display->setHeight(ts);
   osg::Matrixd rotation = osg::Matrixd::rotate(osg::Vec3d(0.0, 0.0, 1.0), direction);
-  if (axisType != AxisType::Constant) //dragger will update main transform.
-    mainTransform->setMatrix(osg::Matrixd::translate(osg::Vec3d(0.0, 0.0, ts * -0.5)) * rotation * osg::Matrixd::translate(origin));
+  mainTransform->setMatrix(osg::Matrixd::translate(osg::Vec3d(0.0, 0.0, ts * -0.5)) * rotation * osg::Matrixd::translate(origin));
   
   sizeLabel->setMatrix(osg::Matrixd::translate(osg::Vec3d(0.0, 0.0, ts) * mainTransform->getMatrix()));
   autoSizeLabel->setMatrix(osg::Matrixd::translate(osg::Vec3d(0.0, 0.0, ts * 0.5) * mainTransform->getMatrix()));

@@ -1050,6 +1050,11 @@ BasePtr editDatumAxis(ftr::Base *feature)
   return std::make_shared<DatumAxis>(feature);
 }
 
+BasePtr editDatumPlane(ftr::Base *feature)
+{
+  return std::make_shared<DatumPlane>(feature);
+}
+
 void Manager::setupEditFunctionMap()
 {
   editFunctionMap.insert(std::make_pair(ftr::Type::Blend, std::bind(editBlend, std::placeholders::_1)));
@@ -1073,4 +1078,5 @@ void Manager::setupEditFunctionMap()
   editFunctionMap.insert(std::make_pair(ftr::Type::DatumSystem, std::bind(editDatumSystem, std::placeholders::_1)));
   editFunctionMap.insert(std::make_pair(ftr::Type::SurfaceMesh, std::bind(editSurfaceMesh, std::placeholders::_1)));
   editFunctionMap.insert(std::make_pair(ftr::Type::DatumAxis, std::bind(editDatumAxis, std::placeholders::_1)));
+  editFunctionMap.insert(std::make_pair(ftr::Type::DatumPlane, std::bind(editDatumPlane, std::placeholders::_1)));
 }

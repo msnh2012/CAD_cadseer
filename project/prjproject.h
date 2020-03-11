@@ -34,7 +34,7 @@
 class QTextStream;
 class TopoDS_Shape;
 
-namespace msg{class Message; struct Node; struct Sift;}
+namespace msg{struct Message; struct Node; struct Sift;}
 namespace expr{class Manager;}
 namespace prm{class Parameter;}
 namespace ftr{class ShapeHistory; class InputType;}

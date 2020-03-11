@@ -101,6 +101,7 @@ void DatumAxis::go()
     msgs.push_back(slc::EventHandler::containerToMessage(cs.front()));
     msgs.push_back(slc::EventHandler::containerToMessage(cs.back()));
     setToPoints(msgs);
+    feature->setAutoSize(true);
     node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
     return;
   }
@@ -111,6 +112,7 @@ void DatumAxis::go()
     msgs.push_back(slc::EventHandler::containerToMessage(cs.front()));
     msgs.push_back(slc::EventHandler::containerToMessage(cs.back()));
     setToIntersection(msgs);
+    feature->setAutoSize(true);
     node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
     return;
   }
@@ -120,17 +122,20 @@ void DatumAxis::go()
     std::vector<slc::Message> msgs;
     msgs.push_back(slc::EventHandler::containerToMessage(cs.front()));
     setToGeometry(msgs);
+    feature->setAutoSize(true);
     node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
     return;
   }
   
   //create a constant type. and launch command view
-  node->sendBlocked(msg::buildStatusMessage("invalid pre selection", 2.0));
   feature->setAxisType(ftr::DatumAxis::AxisType::Constant);
   osg::Matrixd current = viewer->getCurrentSystem();
   feature->setOrigin(current.getTrans());
   feature->setDirection(gu::getZVector(current));
-  node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  feature->setSize(viewer->getDiagonalLength() / 4.0);
+  localUpdate();
+  node->sendBlocked(msg::buildStatusMessage("Constant datum added at current system z axis", 2.0));
+  node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
   viewBase = std::make_unique<cmv::DatumAxis>(this);
 }
 
@@ -138,8 +143,6 @@ void DatumAxis::setToConstant()
 {
   project->clearAllInputs(feature->getId());
   feature->setAxisType(ftr::DatumAxis::AxisType::Constant);
-  
-  localUpdate();
 }
 
 void DatumAxis::setToPoints(const std::vector<slc::Message> &msIn)
@@ -169,8 +172,6 @@ void DatumAxis::setToPoints(const std::vector<slc::Message> &msIn)
   project->clearAllInputs(feature->getId());
   project->connectInsert(parents.front()->getId(), feature->getId(), {picks.front().tag});
   project->connectInsert(parents.back()->getId(), feature->getId(), {picks.back().tag});
-  
-  localUpdate();
 }
 
 void DatumAxis::setToIntersection(const std::vector<slc::Message> &msIn)
@@ -191,10 +192,10 @@ void DatumAxis::setToIntersection(const std::vector<slc::Message> &msIn)
   std::vector<ftr::Base*> parents;
   ftr::Picks picks;
   parents.push_back(project->findFeature(msIn.front().featureId));
-  picks.push_back(tls::convertToPick(msIn.front(), parents.front()->getAnnex<ann::SeerShape>(), project->getShapeHistory()));
+  picks.push_back(tls::convertToPick(msIn.front(), *parents.front(), project->getShapeHistory()));
   picks.back().tag = ftr::InputType::createIndexedTag(ftr::InputType::create, 0);
   parents.push_back(project->findFeature(msIn.back().featureId));
-  picks.push_back(tls::convertToPick(msIn.back(), parents.back()->getAnnex<ann::SeerShape>(), project->getShapeHistory()));
+  picks.push_back(tls::convertToPick(msIn.back(), *parents.back(), project->getShapeHistory()));
   picks.back().tag = ftr::InputType::createIndexedTag(ftr::InputType::create, 1);
 
   feature->setAxisType(ftr::DatumAxis::AxisType::Intersection);
@@ -202,8 +203,6 @@ void DatumAxis::setToIntersection(const std::vector<slc::Message> &msIn)
   project->clearAllInputs(feature->getId());
   project->connectInsert(parents.front()->getId(), feature->getId(), {picks.front().tag});
   project->connectInsert(parents.back()->getId(), feature->getId(), {picks.back().tag});
-  
-  localUpdate();
 }
 
 void DatumAxis::setToGeometry(const std::vector<slc::Message> &msIn)
@@ -222,8 +221,6 @@ void DatumAxis::setToGeometry(const std::vector<slc::Message> &msIn)
   feature->setPicks(ftr::Picks({pick}));
   project->clearAllInputs(feature->getId());
   project->connectInsert(parent->getId(), feature->getId(), {pick.tag});
-  
-  localUpdate();
 }
 
 void DatumAxis::localUpdate()

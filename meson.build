@@ -425,6 +425,7 @@ commandview_sources = [
   , 'commandview/cmvdatumaxis.cpp'
   , 'commandview/cmvtrafficsignal.cpp'
   , 'commandview/cmvparameterwidgets.cpp'
+  , 'commandview/cmvdatumplane.cpp'
 ]
   
 law_sources = ['law/lwfcue.cpp']
@@ -566,6 +567,7 @@ cadseer_moc_hdrs = ['viewer/vwrwidget.h'
   , 'commandview/cmvdatumaxis.h'
   , 'commandview/cmvtrafficsignal.h'
   , 'commandview/cmvparameterwidgets.h'
+  , 'commandview/cmvdatumplane.h'
 ]
   
 cadseer_resources = ['resources.qrc']

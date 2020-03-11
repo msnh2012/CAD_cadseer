@@ -24,6 +24,8 @@
 
 namespace slc{class Container;}
 
+namespace ftr{class DatumPlane;}
+
 namespace cmd
 {
   /**
@@ -32,15 +34,29 @@ namespace cmd
   class DatumPlane : public Base
   {
   public:
+    ftr::DatumPlane *feature = nullptr;
+    
     DatumPlane();
-    virtual ~DatumPlane() override;
+    DatumPlane(ftr::Base*);
+    ~DatumPlane() override;
     
     virtual std::string getCommandName() override{return "DatumPlane";}
     virtual std::string getStatusMessage() override;
     virtual void activate() override;
     virtual void deactivate() override;
+    
+    void setToConstant();
+    void setToPlanarOffset(const std::vector<slc::Message>&);
+    void setToPlanarCenter(const std::vector<slc::Message>&);
+    void setToAxisAngle(const std::vector<slc::Message>&);
+    void setToAverage3Plane(const std::vector<slc::Message>&);
+    void setToThrough3Points(const std::vector<slc::Message>&);
+    void localUpdate();
   private:
+    bool firstRun = true;
     void go();
+    bool isPlanarFace(const slc::Container&);
+    bool isAxis(const slc::Container&);
     bool attemptOffset(const slc::Container&);
     bool attemptCenter(const std::vector<slc::Container>&);
     bool attemptAxisAngle(const std::vector<slc::Container>&);

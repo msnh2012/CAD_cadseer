@@ -30,7 +30,7 @@
 namespace app{class Application; class MainWindow;}
 namespace prj{class Project;}
 namespace slc{class Manager; class EventHandler;}
-namespace msg{class Message; struct Node; struct Sift;}
+namespace msg{struct Message; struct Node; struct Sift;}
 namespace vwr{class Widget;}
 namespace cmv{class Base;}
 

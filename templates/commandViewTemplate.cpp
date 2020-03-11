@@ -18,7 +18,6 @@
  */
 
 #include <QSettings>
-// #include <QDialogButtonBox>
 // #include <QVBoxLayout>
 // #include <QHBoxLayout>
 // #include <QLineEdit>
@@ -33,7 +32,7 @@
 // #include "dialogs/dlgselectionbutton.h"
 // #include "dialogs/dlgselectionlist.h"
 // #include "dialogs/dlgselectionwidget.h"
-// #include "dialogs/dlgparameterwidget.h"
+// #include "commandview/cmvparameterwidget.h"
 // #include "parameter/prmparameter.h"
 // #include "expressions/exprmanager.h"
 // #include "expressions/exprstringtranslator.h"
@@ -54,11 +53,11 @@ struct %CLASSNAME%::Stow
 {
   cmd::%CLASSNAME% *command;
   cmv::%CLASSNAME% *view;
-//   SelectionWidget *selectionWidget = nullptr;
-//   ParameterWidget *parameterWidget = nullptr;
+//   dlg::SelectionWidget *selectionWidget = nullptr;
+//   dlg::ParameterWidget *parameterWidget = nullptr;
   
   Stow(cmd::%CLASSNAME% *cIn, cmv::%CLASSNAME% *vIn)
-  : command(fIn)
+  : command(cIn)
   , view(vIn)
   {
     buildGui();
@@ -79,9 +78,9 @@ struct %CLASSNAME%::Stow
   {}
 };
 
-%CLASSNAME%::%CLASSNAME%(ftr::%CLASSNAME% *fIn)
+%CLASSNAME%::%CLASSNAME%(cmd::%CLASSNAME% *cIn)
 : Base("cmv::%CLASSNAME%")
-, stow(new Stow(fIn), this)
+, stow(new Stow(cIn, this))
 {}
 
 %CLASSNAME%::~%CLASSNAME%() = default;

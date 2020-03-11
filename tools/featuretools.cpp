@@ -39,6 +39,21 @@ using namespace tls;
 ftr::Pick tls::convertToPick
 (
   const slc::Message &messageIn
+  , const ftr::Base &featureIn
+  , const ftr::ShapeHistory &pHistory
+)
+{
+  if (slc::isShapeType(messageIn.type) && featureIn.hasAnnex(ann::Type::SeerShape))
+    return convertToPick(messageIn, featureIn.getAnnex<ann::SeerShape>(), pHistory);
+  ftr::Pick out;
+  out.selectionType = messageIn.type;
+  out.accrue = messageIn.accrue;
+  return out;
+}
+
+ftr::Pick tls::convertToPick
+(
+  const slc::Message &messageIn
   , const ann::SeerShape &sShapeIn
   , const ftr::ShapeHistory &pHistory
 )

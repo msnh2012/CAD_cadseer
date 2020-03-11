@@ -212,7 +212,10 @@ struct DatumAxis::Stow
     std::vector<slc::Message> msgs1 = pointsSelectionWidget->getMessages(1);
     msgs0.insert(msgs0.end(), msgs1.begin(), msgs1.end());
     if (msgs0.size() == 2)
+    {
       command->setToPoints(msgs0);
+      command->localUpdate();
+    }
   }
   
   void goIntersection()
@@ -221,14 +224,20 @@ struct DatumAxis::Stow
     std::vector<slc::Message> msgs1 = intersectionSelectionWidget->getMessages(1);
     msgs0.insert(msgs0.end(), msgs1.begin(), msgs1.end());
     if (msgs0.size() == 2)
+    {
       command->setToIntersection(msgs0);
+      command->localUpdate();
+    }
   }
   
   void goGeometry()
   {
     std::vector<slc::Message> msgs = geometrySelectionWidget->getMessages(0);
     if (msgs.size() == 1)
+    {
       command->setToGeometry(msgs);
+      command->localUpdate();
+    }
   }
   
   void parameterChanged()
@@ -259,7 +268,10 @@ void DatumAxis::stackedChanged(int index)
   stow->activate(index);
   
   if (index == 0) //constant
+  {
     stow->command->setToConstant();
+    stow->command->localUpdate();
+  }
   else if (index == 1) //points
     stow->goPoints();
   else if (index == 2) //intersection

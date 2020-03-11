@@ -30,7 +30,7 @@
 #include "feature/ftrtypes.h"
 #include "command/cmdbase.h"
 
-namespace msg{class Message; struct Node; struct Sift;}
+namespace msg{struct Message; struct Node; struct Sift;}
 namespace ftr{class Base;}
 
 namespace cmd

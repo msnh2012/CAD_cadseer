@@ -37,6 +37,21 @@ namespace tls
   /*! @brief Convert a selection message to a feature pick.
     * 
     * @param messageIn message to convert.
+    * @param featureIn seer shape that is the target of the selection
+    * @param pHistory project history used to generate pick history.
+    * @return ftr:Pick representing the selection message.
+    * @note will call convertToPick with SeerShape if applicable.
+   */
+  ftr::Pick convertToPick
+  (
+    const slc::Message &messageIn
+    , const ftr::Base &featureIn
+    , const ftr::ShapeHistory &pHistory
+  );
+  
+  /*! @brief Convert a selection message to a feature pick.
+    * 
+    * @param messageIn message to convert.
     * @param sShapeIn seer shape that is the target of the selection
     * @param pHistory project history used to generate pick history.
     * @return ftr:Pick representing the selection message.

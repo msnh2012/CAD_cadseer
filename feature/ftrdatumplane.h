@@ -77,11 +77,17 @@ namespace ftr
     double getSize() const;
     
     void setPicks(const Picks&);
+    const Picks& getPicks(){return picks;}
     
     void setDPType(DPType);
     DPType getDPType(){return dpType;}
     
     void setAutoSize(bool);
+    
+    prm::Parameter* getAutoSizeParameter();
+    prm::Parameter* getSizeParameter();
+    prm::Parameter* getOffsetParameter();
+    prm::Parameter* getAngleParameter();
   private:
     typedef Base Inherited;
     static QIcon icon;
