@@ -69,6 +69,7 @@ void Import::go()
     ";;step (*.step *.stp)"
     ";;off (*.off)"
     ";;ply (*.ply)"
+    ";;stl (*.stl)"
   );
   
   QStringList fileNames = QFileDialog::getOpenFileNames
@@ -172,7 +173,7 @@ void Import::go()
         node->sendBlocked(msg::buildStatusMessage("Step Imported", 2.0));
       }
     }
-    else if (fn.endsWith(QObject::tr(".off")) || fn.endsWith(QObject::tr(".ply")))
+    else if (fn.endsWith(QObject::tr(".off")) || fn.endsWith(QObject::tr(".ply")) || fn.endsWith(QObject::tr(".stl")))
     {
       std::shared_ptr<ftr::SurfaceMesh> meshFeature(new ftr::SurfaceMesh());
       project->addFeature(meshFeature);
@@ -181,8 +182,10 @@ void Import::go()
       std::unique_ptr<ann::SurfaceMesh> mesh = std::make_unique<ann::SurfaceMesh>();
       if (fn.endsWith(QObject::tr(".off")))
         mesh->readOFF(cp);
-      else
+      else if (fn.endsWith(QObject::tr(".ply")))
         mesh->readPLY(cp);
+      else if (fn.endsWith(QObject::tr(".stl")))
+        mesh->readSTL(cp);
       meshFeature->setMesh(std::move(mesh));
       
       node->sendBlocked(msg::buildStatusMessage("Surface Mesh Imported", 2.0));

@@ -23,7 +23,9 @@
 
 #include <CGAL/Polygon_mesh_processing/remesh.h>
 
+#include "subprojects/pmp-library/src/pmp/Types.h"
 #include "subprojects/pmp-library/src/pmp/SurfaceMesh.h"
+#include "subprojects/pmp-library/src/pmp/SurfaceMeshIO.h"
 #include "subprojects/pmp-library/src/pmp/algorithms/SurfaceRemeshing.h"
 
 #include "project/serial/generated/prjsrlsfmssurfacemesh.h"
@@ -87,10 +89,11 @@ bool SurfaceMesh::writeOFF(const boost::filesystem::path &file) const
   std::ofstream stream(file.string(), std::ios_base::out | std::ios_base::trunc);
   if (!stream.is_open())
     return false;
+  stream.precision(12);
   return CGAL::write_off(stream, stow->mesh);
 }
 
-/*! @brief Add a mesh from an OFF formated file.
+/*! @brief Add a mesh from an PLY formated file.
  * 
  * @param file ascii or binary PLY file to read and append.
  * @return success state of operation.
@@ -114,9 +117,39 @@ bool SurfaceMesh::writePLY(const boost::filesystem::path &file) const
   std::ofstream stream(file.string(), std::ios_base::out | std::ios_base::trunc);
   if (!stream.is_open())
     return false;
+  stream.precision(12);
   return CGAL::write_ply(stream, stow->mesh);
 }
 
+/*! @brief Add a mesh from an STL formated file.
+ * 
+ * @param file ascii or binary STL file to read and append.
+ * @return success state of operation.
+ * @note clears any existing mesh data
+ */
+bool SurfaceMesh::readSTL(const boost::filesystem::path &file)
+{
+  pmp::SurfaceMesh meshRead;
+  pmp::SurfaceMeshIO reader(file.string(), pmp::IOFlags());
+  if (reader.read(meshRead))
+  {
+    stow->mesh = msh::srf::convert(meshRead);
+    return true;
+  }
+  return false;
+}
+
+/*! @brief Write mesh to a STL formated file.
+ * 
+ * @param file STL file to write 'this' mesh.
+ * @return success state of operation.
+ */
+bool SurfaceMesh::writeSTL(const boost::filesystem::path &file) const
+{
+  pmp::SurfaceMesh meshWrite = msh::srf::convert(stow->mesh);
+  pmp::SurfaceMeshIO writer(file.string(), pmp::IOFlags());
+  return writer.write(meshWrite);
+}
 
 /*! @brief Remesh the contained mesh
  * 

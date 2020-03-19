@@ -34,6 +34,7 @@
 #include "annex/annseershape.h"
 #include "annex/annsurfacemesh.h"
 #include "mesh/mshmesh.h"
+#include "mesh/mshconvert.h"
 #include "feature/ftrbase.h"
 #include "tools/occtools.h"
 #include "command/cmdexport.h"
@@ -71,6 +72,7 @@ void Export::go()
     ";;step (*.step *.stp)"
     ";;off (*.off)"
     ";;ply (*.ply)"
+    ";;stl (*.stl)"
 //     ";;Scene (*.osgt *.osgx *.osgb *.osg *.ive)"
   );
   
@@ -193,7 +195,7 @@ void Export::go()
     return;
   }
   
-  if (fileName.endsWith(QObject::tr(".off")) || fileName.endsWith(QObject::tr(".ply")))
+  if (fileName.endsWith(QObject::tr(".off")) || fileName.endsWith(QObject::tr(".ply")) || fileName.endsWith(QObject::tr(".stl")))
   {
     msh::srf::Mesh totalMesh;
     for (const auto &s : cs)
@@ -210,20 +212,30 @@ void Export::go()
       node->sendBlocked(msg::buildStatusMessage("Couldn't export invalid mesh", 2.0));
       return;
     }
-    std::ofstream stream(fileName.toStdString().c_str(), std::ios_base::out | std::ios_base::trunc);
-    stream.precision(12);
-    if (!stream.is_open())
+    
+    ann::SurfaceMesh tempMesh((msh::srf::Stow(totalMesh))); //vexing parse
+    if (fileName.endsWith(QObject::tr(".off")))
     {
-      node->sendBlocked(msg::buildStatusMessage("Couldn't open file for OFF export", 2.0));
-      return;
+      if (tempMesh.writeOFF(fileName.toStdString().c_str()))
+        node->sendBlocked(msg::buildStatusMessage("off file exported", 2.0));
+      else
+        node->sendBlocked(msg::buildStatusMessage("off file NOT exported", 2.0));
+    }
+    else if (fileName.endsWith(QObject::tr(".ply")))
+    {
+      if (tempMesh.writePLY(fileName.toStdString().c_str()))
+        node->sendBlocked(msg::buildStatusMessage("ply file exported", 2.0));
+      else
+        node->sendBlocked(msg::buildStatusMessage("ply file NOT exported", 2.0));
+    }
+    else if (fileName.endsWith(QObject::tr(".stl")))
+    {
+      if (tempMesh.writeSTL(fileName.toStdString().c_str()))
+        node->sendBlocked(msg::buildStatusMessage("stl file exported", 2.0));
+      else
+        node->sendBlocked(msg::buildStatusMessage("stl file NOT exported", 2.0));
     }
     
-    if (fileName.endsWith(QObject::tr(".off")))
-      CGAL::write_off(stream, totalMesh);
-    else if (fileName.endsWith(QObject::tr(".ply")))
-      CGAL::write_ply(stream, totalMesh);
-    
-    node->sendBlocked(msg::buildStatusMessage("off file Exported", 2.0));
     node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
     return;
   }

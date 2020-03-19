@@ -60,6 +60,8 @@ namespace ann
     bool writeOFF(const boost::filesystem::path&) const;
     bool readPLY(const boost::filesystem::path&);
     bool writePLY(const boost::filesystem::path&) const;
+    bool readSTL(const boost::filesystem::path&);
+    bool writeSTL(const boost::filesystem::path&) const;
     
     void remeshCGAL(double, int);
     void remeshPMPUniform(double, int);
