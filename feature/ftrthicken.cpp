@@ -237,7 +237,11 @@ void Thicken::thickenMatch(const BRepOffset_MakeOffset &offseter)
     if (edgeId.is_nil())
       continue;
     occt::ShapeVector parentFaces = sShape->useGetParentsOfType(s, TopAbs_FACE);
-    assert(parentFaces.size() == 2);
+    /* TODO following was an assert that was triggering with a closed periodic surface (cylindrical). Seam edge.
+     * switched to condition with continue for now. Not sure what to do with this.
+     */
+    if (parentFaces.size() != 2)
+      continue;
     TopoDS_Shape nilParent;
     TopoDS_Shape nonNilParent;
     for (const auto &pf : parentFaces)

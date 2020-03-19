@@ -52,7 +52,7 @@ using namespace cmd;
  * where no rewind or fast forward is needed.
  */
 LeafManager::LeafManager()
-: LeafManager(boost::uuids::nil_uuid())
+: stow(std::make_unique<Stow>(boost::uuids::nil_uuid()))
 {}
 
 /*! @brief Construct with feature id

@@ -25,6 +25,7 @@
 #include <cassert>
 
 #include <gp_Ax1.hxx>
+#include <gp_Ax2.hxx>
 #include <TopoDS_Compound.hxx>
 #include <TopTools_IndexedMapOfShape.hxx>
 #include <TopTools_MapOfShape.hxx>
@@ -182,7 +183,15 @@ namespace occt
    * @return pair with axis bool status if worked.
    * @note origin of axis will be center point of bounding box of shape projected onto axis.
    */
-  std::pair<gp_Ax1, bool> gleanAxis(const TopoDS_Shape sIn);
+  std::pair<gp_Ax1, bool> gleanAxis(const TopoDS_Shape &sIn);
+  
+  /*! @brief Derive a coordinate system from input
+   * 
+   * @param sIn shape to infer
+   * @return pair with axis bool status if worked.
+   * @note origin of axis will be center point of bounding box of shape projected onto axis.
+   */
+  std::pair<gp_Ax2, bool> gleanSystem(const TopoDS_Shape &sIn);
   
   /*! @brief gets and edge parameter closest to a point.
    * 

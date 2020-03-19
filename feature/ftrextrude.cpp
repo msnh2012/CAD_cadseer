@@ -95,6 +95,13 @@ static boost::optional<osg::Vec3d> inferDirection(const occt::ShapeVector &svIn)
     return normal;
   };
   
+  if (svIn.size() == 1)
+  {
+    auto result = occt::gleanAxis(svIn.front());
+    if (result.second)
+      return gu::toOsg(result.first.Direction());
+  }
+  
   for (const auto &s : svIn)
   {
     if (s.ShapeType() == TopAbs_SHELL)

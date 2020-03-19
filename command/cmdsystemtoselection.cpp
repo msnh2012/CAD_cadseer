@@ -19,11 +19,14 @@
 
 #include <boost/optional.hpp>
 
+#include "globalutilities.h"
 #include "project/prjproject.h"
 #include "message/msgnode.h"
 #include "selection/slceventhandler.h"
 #include "viewer/vwrwidget.h"
 #include "tools/tlsosgtools.h"
+#include "tools/occtools.h"
+#include "annex/annseershape.h"
 #include "feature/ftrdatumplane.h"
 #include "command/cmdsystemtoselection.h"
 
@@ -78,21 +81,41 @@ void SystemToSelection::go()
     return;
   }
   
-  boost::optional<osg::Matrixd> ocsys;
-  ocsys = from3Points(containers);
-  if (ocsys)
+  if (containers.size() == 1)
   {
-    node->sendBlocked(msg::buildStatusMessage("Current system set to 3 points", 2.0));
-    viewer->setCurrentSystem(*ocsys);
-    return;
+    if (containers.front().featureType == ftr::Type::DatumPlane)
+    {
+      const ftr::DatumPlane *dp = dynamic_cast<const ftr::DatumPlane*>(project->findFeature(containers.front().featureId));
+      assert(dp);
+      viewer->setCurrentSystem(dp->getSystem());
+      node->sendBlocked(msg::buildStatusMessage("Current system set to datum plane", 2.0));
+      return;
+    }
+    else if (containers.front().selectionType == slc::Type::Edge)
+    {
+      const ftr::Base *f = project->findFeature(containers.front().featureId);
+      assert(f->hasAnnex(ann::Type::SeerShape));
+      const ann::SeerShape &ss = f->getAnnex<ann::SeerShape>();
+      assert(ss.hasId(containers.front().shapeId));
+      const TopoDS_Shape &edge = ss.getOCCTShape(containers.front().shapeId);
+      auto sp = occt::gleanSystem(edge);
+      if (sp.second)
+      {
+        viewer->setCurrentSystem(gu::toOsg(sp.first));
+        node->sendBlocked(msg::buildStatusMessage("Current system set to edge", 2.0));
+        return;
+      }
+    }
   }
-  if (containers.size() == 1 && containers.front().featureType == ftr::Type::DatumPlane)
+  else if (containers.size() == 3)
   {
-    const ftr::DatumPlane *dp = dynamic_cast<const ftr::DatumPlane*>(project->findFeature(containers.front().featureId));
-    assert(dp);
-    viewer->setCurrentSystem(dp->getSystem());
-    node->sendBlocked(msg::buildStatusMessage("Current system set to datum plane", 2.0));
-    return;
+    boost::optional<osg::Matrixd> ocsys = from3Points(containers);
+    if (ocsys)
+    {
+      node->sendBlocked(msg::buildStatusMessage("Current system set to 3 points", 2.0));
+      viewer->setCurrentSystem(*ocsys);
+      return;
+    }
   }
   
   node->sendBlocked(msg::buildStatusMessage("Selection not supported for system derivation", 2.0));

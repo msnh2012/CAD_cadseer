@@ -637,7 +637,7 @@ std::pair<gp_Vec, bool> occt::gleanVector(const TopoDS_Shape &shapeIn, const gp_
   return std::make_pair(gp_Vec(), false);
 }
 
-std::pair<gp_Ax1, bool> occt::gleanAxis(const TopoDS_Shape sIn)
+std::pair<gp_Ax1, bool> occt::gleanAxis(const TopoDS_Shape &sIn)
 {
   auto axisOriginToCenter = [&](const gp_Ax1 &aIn) -> gp_Ax1
   {
@@ -728,6 +728,26 @@ std::pair<gp_Ax1, bool> occt::gleanAxis(const TopoDS_Shape sIn)
   }
   
   return std::make_pair(gp_Ax1(), false);
+}
+
+std::pair<gp_Ax2, bool> occt::gleanSystem(const TopoDS_Shape &sIn)
+{
+  auto out = std::make_pair(gp_Ax2(), false);
+  
+  if(sIn.ShapeType() == TopAbs_EDGE)
+  {
+    BRepAdaptor_Curve ca(TopoDS::Edge(sIn));
+    if (ca.GetType() == GeomAbs_Circle)
+      out = std::make_pair(ca.Circle().Position(), true);
+    else if (ca.GetType() == GeomAbs_Ellipse)
+      out = std::make_pair(ca.Ellipse().Position(), true);
+    else if (ca.GetType() == GeomAbs_Hyperbola)
+      out = std::make_pair(ca.Hyperbola().Position(), true);
+    else if (ca.GetType() == GeomAbs_Parabola)
+      out = std::make_pair(ca.Parabola().Position(), true);
+  }
+  
+  return out;
 }
 
 std::pair<double, bool> occt::pointToParameter(const TopoDS_Edge &eIn, const gp_Pnt &pIn)
