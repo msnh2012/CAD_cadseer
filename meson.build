@@ -415,7 +415,9 @@ command_sources = ['command/cmdmanager.cpp'
   , 'command/cmdtest.cpp'
   , 'command/cmddatumsystem.cpp'
   , 'command/cmdsurfaceremesh.cpp'
-  , 'command/cmdsurfacemeshfill.cpp']
+  , 'command/cmdsurfacemeshfill.cpp'
+  , 'command/cmdleafmanager.cpp'
+]
 
 commandview_sources = [
   'commandview/cmvpane.cpp'
@@ -426,6 +428,8 @@ commandview_sources = [
   , 'commandview/cmvtrafficsignal.cpp'
   , 'commandview/cmvparameterwidgets.cpp'
   , 'commandview/cmvdatumplane.cpp'
+  , 'commandview/cmvextrude.cpp'
+  , 'commandview/cmvcsyswidget.cpp'
 ]
   
 law_sources = ['law/lwfcue.cpp']
@@ -568,6 +572,8 @@ cadseer_moc_hdrs = ['viewer/vwrwidget.h'
   , 'commandview/cmvtrafficsignal.h'
   , 'commandview/cmvparameterwidgets.h'
   , 'commandview/cmvdatumplane.h'
+  , 'commandview/cmvextrude.h'
+  , 'commandview/cmvcsyswidget.h'
 ]
   
 cadseer_resources = ['resources.qrc']

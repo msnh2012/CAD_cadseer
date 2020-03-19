@@ -22,6 +22,8 @@
 
 #include "command/cmdbase.h"
 
+namespace ftr{class Extrude; struct Pick; typedef std::vector<Pick> Picks;}
+
 namespace cmd
 {
   /**
@@ -30,15 +32,25 @@ namespace cmd
   class Extrude : public Base
   {
   public:
+    ftr::Extrude *feature = nullptr;
+    
     Extrude();
-    virtual ~Extrude() override;
+    Extrude(ftr::Base*);
+    ~Extrude() override;
     
     virtual std::string getCommandName() override{return "Extrude";}
     virtual std::string getStatusMessage() override;
     virtual void activate() override;
     virtual void deactivate() override;
+    
+    void setToAxisInfer(const std::vector<slc::Message>&);
+    void setToAxisPicks(const std::vector<slc::Message>&, const std::vector<slc::Message>&);
+    void setToAxisParameter(const std::vector<slc::Message>&);
+    void localUpdate();
   private:
+    bool firstRun = true;
     void go();
+    ftr::Picks connect(const std::vector<slc::Message>&, const std::string&);
   };
 }
 

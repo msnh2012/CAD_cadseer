@@ -51,6 +51,7 @@ namespace ftr
     void remove(std::initializer_list<std::string> listIn);
     bool has(const std::string &tagIn) const;
     bool isEmpty(){return tags.empty();}
+    InputType& operator =(const InputType &other);
     InputType& operator +=(const InputType &other);
     
     const std::vector<std::string>& getTags() const {return tags;}

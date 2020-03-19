@@ -66,6 +66,15 @@ void InputType::remove(std::initializer_list<std::string> listIn)
   tags = temp;
 }
 
+InputType& InputType::operator =(const InputType &other)
+{
+  tags.clear();
+  for (const auto &t : other.tags)
+    tags.push_back(t);
+  gu::uniquefy(tags);
+  return *this;
+}
+
 InputType& InputType::operator +=(const InputType &other)
 {
   for (const auto &t : other.tags)

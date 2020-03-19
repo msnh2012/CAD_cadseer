@@ -17,6 +17,8 @@
  *
  */
 
+#include <boost/optional/optional.hpp>
+
 #include <QButtonGroup>
 #include <QStackedWidget>
 #include <QGridLayout>
@@ -34,18 +36,32 @@ using namespace dlg;
 
 struct SelectionWidget::Stow
 {
-  QButtonGroup *buttonGroup = nullptr;
+  QButtonGroup *buttonGroup = nullptr; //obsolete
   QStackedWidget *stackedWidget = nullptr;
+  std::vector<SelectionButton*> selectionButtons;
   std::vector<SelectionModel*> selectionModels;
+  
+  boost::optional<int> findButtonIndex(const SelectionButton *sbIn)
+  {
+    auto it = std::find(selectionButtons.begin(), selectionButtons.end(), sbIn);
+    if (it != selectionButtons.end())
+      return static_cast<int>(std::distance(selectionButtons.begin(), it));
+    return boost::none;
+  }
 };
 
-SelectionWidget::SelectionWidget(QWidget *parent, const std::vector<SelectionWidgetCue> &cuesIn)
+SelectionWidget::SelectionWidget(QWidget *parent, const std::vector<SelectionWidgetCue> &cuesIn, QButtonGroup *buttonGroupIn)
 : QWidget(parent)
 , stow(std::make_unique<SelectionWidget::Stow>())
 {
   QSizePolicy adjust(sizePolicy());
   adjust.setVerticalPolicy(QSizePolicy::Maximum);
   setSizePolicy(adjust);
+  
+  if (buttonGroupIn)
+    stow->buttonGroup = buttonGroupIn;
+  else
+    stow->buttonGroup = new QButtonGroup(this);
   
   buildGui(cuesIn);
 }
@@ -54,19 +70,19 @@ SelectionWidget::~SelectionWidget() = default;
 
 int SelectionWidget::getButtonCount() const
 {
-  return stow->buttonGroup->buttons().size();
+  return static_cast<int>(stow->selectionButtons.size());
 }
 
 SelectionButton* SelectionWidget::getButton(int index) const
 {
-  assert(index >= 0 && index < stow->buttonGroup->buttons().size());
-  return static_cast<SelectionButton*>(stow->buttonGroup->button(index));
+  assert(index >= 0 && index < static_cast<int>(stow->selectionButtons.size()));
+  return stow->selectionButtons.at(index);
 }
 
 const slc::Messages& SelectionWidget::getMessages(int index) const
 {
-  assert(index >= 0 && index < stow->buttonGroup->buttons().size());
-  return static_cast<SelectionButton*>(stow->buttonGroup->button(index))->getMessages();
+  assert(index >= 0 && index < static_cast<int>(stow->selectionButtons.size()));
+  return stow->selectionButtons.at(index)->getMessages();
 }
 
 /*! @brief Setup the button and list without triggering signals.
@@ -76,8 +92,8 @@ const slc::Messages& SelectionWidget::getMessages(int index) const
  */
 void SelectionWidget::initializeButton(int index, const slc::Message &mIn)
 {
-  assert(index >= 0 && index < stow->buttonGroup->buttons().size());
-  static_cast<SelectionButton*>(stow->buttonGroup->button(index))->setMessagesQuietly(mIn);
+  assert(index >= 0 && index < static_cast<int>(stow->selectionButtons.size()));
+  stow->selectionButtons.at(index)->setMessagesQuietly(mIn);
   stow->selectionModels.at(index)->populateList();
 }
 
@@ -88,8 +104,8 @@ void SelectionWidget::initializeButton(int index, const slc::Message &mIn)
  */
 void SelectionWidget::initializeButton(int index, const slc::Messages &msIn)
 {
-  assert(index >= 0 && index < stow->buttonGroup->buttons().size());
-  static_cast<SelectionButton*>(stow->buttonGroup->button(index))->setMessagesQuietly(msIn);
+  assert(index >= 0 && index < static_cast<int>(stow->selectionButtons.size()));
+  stow->selectionButtons.at(index)->setMessagesQuietly(msIn);
   stow->selectionModels.at(index)->populateList();
 }
 
@@ -107,8 +123,6 @@ void SelectionWidget::buildGui(const std::vector<SelectionWidgetCue> &cuesIn)
   //labels and buttons
   QPixmap pmap = QPixmap(":resources/images/cursor.svg").scaled(32, 32, Qt::KeepAspectRatio);
   QGridLayout *gridLayout = new QGridLayout();
-  stow->buttonGroup = new QButtonGroup(this);
-  connect(stow->buttonGroup, SIGNAL(buttonToggled(QAbstractButton*, bool)), this, SLOT(buttonToggled(QAbstractButton*, bool)));
   int index = 0;
   for (const auto &n : cuesIn)
   {
@@ -123,8 +137,10 @@ void SelectionWidget::buildGui(const std::vector<SelectionWidgetCue> &cuesIn)
     sb->statusPrompt = n.statusPrompt;
     gridLayout->addWidget(label, index, 0, Qt::AlignVCenter | Qt::AlignRight);
     gridLayout->addWidget(sb, index, 1, Qt::AlignVCenter | Qt::AlignCenter);
-    stow->buttonGroup->addButton(sb, index);
+    stow->selectionButtons.push_back(sb);
+    stow->buttonGroup->addButton(sb);
     connect(sb, &SelectionButton::advance, this, &SelectionWidget::advance);
+    connect(sb, &SelectionButton::toggled, this, &SelectionWidget::buttonToggled);
     index++;
   }
   auto *buttonLayout = new QVBoxLayout();
@@ -142,7 +158,7 @@ void SelectionWidget::buildGui(const std::vector<SelectionWidgetCue> &cuesIn)
   
   for (int index = 0; index < static_cast<int>(cuesIn.size()); ++index)
   {
-    SelectionModel *sm = new SelectionModel(this, static_cast<SelectionButton*>(stow->buttonGroup->button(index)));
+    SelectionModel *sm = new SelectionModel(this, stow->selectionButtons.at(index));
     connect(sm, &SelectionModel::accrueChanged, this, &SelectionWidget::accrueChanged);
     SelectionView *sv = new SelectionView(this, gridLayout);
     sv->setModel(sm);
@@ -166,36 +182,51 @@ void SelectionWidget::buildGui(const std::vector<SelectionWidgetCue> &cuesIn)
  */
 void SelectionWidget::advance()
 {
-  int cb = stow->buttonGroup->checkedId();
-  if (cb < 0)
+  SelectionButton *sb = dynamic_cast<SelectionButton *>(sender());
+  assert(sb);
+  if (!sb)
     return;
-  if (cb >= stow->buttonGroup->buttons().size() - 1)
+  assert(sb->isChecked());
+  if(!sb->isChecked())
+    return;
+  auto oi = stow->findButtonIndex(sb); //optional index
+  assert(oi);
+  if (!oi)
+    return;
+  
+  if (oi.get() >= static_cast<int>(stow->selectionButtons.size()) - 1)
   {
     finishedSignal();
     return;
   }
-  cb++;
-  stow->buttonGroup->button(cb)->setChecked(true);
+  stow->selectionButtons.at(oi.get() + 1)->setChecked(true);
 }
 
-void SelectionWidget::buttonToggled(QAbstractButton *bIn, bool bState)
+void SelectionWidget::buttonToggled(bool bState)
 {
-  SelectionButton *sButton = qobject_cast<SelectionButton*>(bIn);
-  if (!sButton)
+  //we don't care about button unchecked
+  if (!bState)
     return;
   
-  int bi = stow->buttonGroup->id(bIn);
-  assert (bi >= 0 && bi < stow->stackedWidget->count());
+  SelectionButton *sb = dynamic_cast<SelectionButton *>(sender());
+  assert(sb);
+  if (!sb)
+    return;
+  auto oi = stow->findButtonIndex(sb); //optional index
+  assert(oi);
+  if (!oi)
+    return;
+  assert(oi.get() >= 0 && oi.get() < stow->stackedWidget->count());
   if (bState)
-    stow->stackedWidget->setCurrentIndex(bi);
+    stow->stackedWidget->setCurrentIndex(oi.get());
 }
 
 void SelectionWidget::activate(int index)
 {
-  if (index < 0 || index >= stow->buttonGroup->buttons().size())
+  if (index < 0 || index >= static_cast<int>(stow->selectionButtons.size()))
     return;
-  QTimer::singleShot(0, stow->buttonGroup->button(index), SLOT(setFocus()));
-  QTimer::singleShot(0, stow->buttonGroup->button(index), &QPushButton::click);
+  QTimer::singleShot(0, stow->selectionButtons.at(index), SLOT(setFocus()));
+  QTimer::singleShot(0, stow->selectionButtons.at(index), &QPushButton::click);
 }
 
 void SelectionWidget::setAngle(double aIn)
@@ -211,11 +242,7 @@ void SelectionWidget::setAngle(double aIn)
 
 void SelectionWidget::reset()
 {
-  for (auto *b : stow->buttonGroup->buttons())
-  {
-    SelectionButton *sb = dynamic_cast<SelectionButton*>(b);
-    assert(sb);
-    sb->clear();
-  }
+  for (auto *b : stow->selectionButtons)
+    b->clear();
   activate(0);
 }

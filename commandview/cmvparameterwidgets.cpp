@@ -40,6 +40,7 @@
 #include "expressions/exprmanager.h"
 #include "expressions/exprstringtranslator.h"
 #include "tools/idtools.h"
+#include "commandview/cmvcsyswidget.h"
 #include "commandview/cmvtrafficsignal.h"
 #include "commandview/cmvparameterwidgets.h"
 
@@ -707,9 +708,8 @@ namespace cmv
     
     QWidget* buildMatrix() const
     {
-      ExpressionEdit *ee = new ExpressionEdit(parent, parameter);
-      ee->setDisabled(true); //can't parse yet
-      return ee;
+      cmv::CSysWidget *cw = new cmv::CSysWidget(parent, parameter);
+      return cw;
     }
   };
 }
@@ -717,7 +717,7 @@ namespace cmv
 struct cmv::ParameterWidget::Stow
 {
   ParameterWidget *parentWidget;
-  const std::vector<prm::Parameter*> &parameters;
+  std::vector<prm::Parameter*> parameters;
   QGridLayout *layout;
   
   Stow() = delete;

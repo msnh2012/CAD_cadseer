@@ -29,6 +29,7 @@
 #include "selection/slcaccrue.h"
 
 class QAbstractButton;
+class QButtonGroup;
 
 namespace slc{struct Message; typedef std::vector<Message> Messages;}
 
@@ -51,11 +52,22 @@ namespace dlg
     QIcon icon; //a default icon will be used if null.
   };
   
+  /*! @class SelectionWidget
+   * @brief buttons and lists for selection management.
+   * @details buttons will not work as expected when more than one
+   * button is active. This is true across entire widget hierarchy.
+   * So buttons constructed here will be in a QButtonGroup to ensure
+   * one button active at a time. In situations where multiple
+   * SelectionWidgets will be visible and active at one time, A common
+   * ButtonGroup pointer can be passed into the constructor for all
+   * SelectionWidgets.
+   * 
+   */
   class SelectionWidget : public QWidget
   {
     Q_OBJECT
   public:
-    SelectionWidget(QWidget*, const std::vector<SelectionWidgetCue>&);
+    SelectionWidget(QWidget*, const std::vector<SelectionWidgetCue>&, QButtonGroup* = nullptr);
     ~SelectionWidget() override;
     int getButtonCount() const;
     SelectionButton* getButton(int) const;
@@ -70,7 +82,7 @@ namespace dlg
     void finishedSignal(); //!< when last button is single selection and a selection was made.
   private Q_SLOTS:
     void advance();
-    void buttonToggled(QAbstractButton *, bool);
+    void buttonToggled(bool);
   private:
     struct Stow;
     std::unique_ptr<Stow> stow;

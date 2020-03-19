@@ -54,7 +54,7 @@ struct %CLASSNAME%::Stow
   cmd::%CLASSNAME% *command;
   cmv::%CLASSNAME% *view;
 //   dlg::SelectionWidget *selectionWidget = nullptr;
-//   dlg::ParameterWidget *parameterWidget = nullptr;
+//   cmv::ParameterWidget *parameterWidget = nullptr;
   
   Stow(cmd::%CLASSNAME% *cIn, cmv::%CLASSNAME% *vIn)
   : command(cIn)

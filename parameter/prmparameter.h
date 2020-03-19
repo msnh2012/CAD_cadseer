@@ -129,6 +129,13 @@ namespace prm
     Handler constantHandler;
   };
   
+  /*! @struct ObserverBlocker
+  * @brief blocks the observer upon construction
+  * and unblocks upon destruction
+  * 
+  * @note not std::vector friendly. need to wrap
+  * in unique_ptr to add to vector. Yes even emplace_back.
+  */
   struct ObserverBlocker
   {
     ObserverBlocker(Observer &oIn):o(oIn){o.block();}

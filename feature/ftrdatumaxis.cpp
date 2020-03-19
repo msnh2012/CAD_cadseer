@@ -70,15 +70,15 @@ DatumAxis::DatumAxis() : Base()
   name = QObject::tr("Datum Axis");
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
   
-  parameters.push_back(csys.get()); //should we add and remove this when type switching? PIA
-  csys->connectValue(std::bind(&DatumAxis::setModelDirty, this));
-  overlaySwitch->addChild(csysDragger->dragger);
-  
   parameters.push_back(autoSize.get());
   autoSize->connectValue(std::bind(&DatumAxis::setVisualDirty, this));
   
   parameters.push_back(size.get());
   size->connectValue(std::bind(&DatumAxis::setVisualDirty, this));
+  
+  parameters.push_back(csys.get()); //should we add and remove this when type switching? PIA
+  csys->connectValue(std::bind(&DatumAxis::setModelDirty, this));
+  overlaySwitch->addChild(csysDragger->dragger);
   
   autoSizeLabel = new lbr::PLabel(autoSize.get());
   autoSizeLabel->showName = true;

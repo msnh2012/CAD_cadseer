@@ -24,6 +24,7 @@
 #include "feature/ftrbase.h"
 
 namespace ann{class SeerShape;}
+namespace prm{struct Observer;}
 namespace lbr{class IPGroup; class PLabel;}
 namespace occt{class BoundingBox;}
 namespace prj{namespace srl{namespace exrs{class Extrude;}}}
@@ -71,6 +72,8 @@ namespace ftr
     std::unique_ptr<prm::Parameter> direction;
     std::unique_ptr<prm::Parameter> distance;
     std::unique_ptr<prm::Parameter> offset;
+    
+    std::unique_ptr<prm::Observer> directionObserver;
     
     osg::ref_ptr<lbr::PLabel> directionLabel;
     osg::ref_ptr<lbr::IPGroup> distanceLabel;

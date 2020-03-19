@@ -36,7 +36,7 @@ namespace boost{namespace uuids{class uuid;}}
 class QGraphicsProxyWidget;
 class QFocusEvent;
 
-namespace msg{class Message; struct Node; struct Sift;}
+namespace msg{struct Message; struct Node; struct Sift;}
 
 namespace dag
 {

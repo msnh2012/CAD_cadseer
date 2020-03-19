@@ -119,9 +119,11 @@ struct DatumAxis::Stow
     geometrySelectionWidget->setObjectName("selection");
     stackedWidget->addWidget(geometrySelectionWidget);
     
-    parameterWidget = new cmv::ParameterWidget(view, command->feature->getParameters());
+    //we don't want to show the csys widget yet.
+    prm::Parameters prmsToShow = {command->feature->getAutoSizeParameter(), command->feature->getSizeParameter()};
+    parameterWidget = new cmv::ParameterWidget(view, prmsToShow);
     mainLayout->addWidget(parameterWidget);
-    for (auto *p : command->feature->getParameters())
+    for (auto *p : prmsToShow)
     {
       observers.emplace_back(std::bind(&Stow::parameterChanged, this));
       p->connect(observers.back());

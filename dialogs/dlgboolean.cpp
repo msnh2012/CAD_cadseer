@@ -154,7 +154,6 @@ void Boolean::setEditDialog()
     auto lc = project->getLeafChildren(tr.getFeature()->getId());
     std::copy(lc.begin(), lc.end(), std::back_inserter(leafChildren));
   }
-  gu::uniquefy(leafChildren);
   
   project->setCurrentLeaf(tResolver.getFeature()->getId());
   for (const auto &tr : toolResolvers)

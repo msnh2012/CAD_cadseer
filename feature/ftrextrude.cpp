@@ -145,6 +145,7 @@ Base()
 , direction(new prm::Parameter(prm::Names::Direction, osg::Vec3d(0.0, 0.0, 1.0)))
 , distance(new prm::Parameter(prm::Names::Distance, 1.0))
 , offset(new prm::Parameter(prm::Names::Offset, 0.0))
+, directionObserver(new prm::Observer(std::bind(&Extrude::setModelDirty, this)))
 , directionLabel(new lbr::PLabel(direction.get()))
 , distanceLabel(new lbr::IPGroup(distance.get()))
 , offsetLabel(new lbr::IPGroup(offset.get()))
@@ -156,7 +157,7 @@ Base()
   name = QObject::tr("Extrude");
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
   
-  direction->connectValue(std::bind(&Extrude::setModelDirty, this));
+  direction->connect(*directionObserver);
   parameters.push_back(direction.get());
   
   distance->connectValue(std::bind(&Extrude::setModelDirty, this));
@@ -278,6 +279,8 @@ void Extrude::updateModel(const UpdatePayload &pIn)
       throw std::runtime_error("feature is skipped");
     }
     
+    prm::ObserverBlocker directionBlock(*directionObserver);
+    
     if (picks.size() != 1) //only 1 for now.
       throw std::runtime_error("wrong number of target picks.");
     tls::Resolver tResolver(pIn);
@@ -293,7 +296,7 @@ void Extrude::updateModel(const UpdatePayload &pIn)
     if (td.length() < std::numeric_limits<float>::epsilon())
       throw std::runtime_error("direction is zero vector");
     td.normalize();
-    direction->setValueQuiet(td);
+    direction->setValue(td);
     
     occt::ShapeVector ste; //shapes to extrude
     if (slc::isObjectType(picks.front().selectionType))
@@ -317,7 +320,7 @@ void Extrude::updateModel(const UpdatePayload &pIn)
           assert(tResolver.getFeature()->hasParameter(prm::Names::CSys));
           const prm::Parameter *sketchSys = tResolver.getFeature()->getParameter(prm::Names::CSys);
           osg::Matrixd sm = static_cast<osg::Matrixd>(*sketchSys);
-          direction->setValueQuiet(gu::getZVector(sm));
+          direction->setValue(gu::getZVector(sm));
         }
       }
       else //not a sketch
@@ -342,7 +345,7 @@ void Extrude::updateModel(const UpdatePayload &pIn)
         {
           auto tempDirection = inferDirection(ste);
           if (tempDirection)
-            direction->setValueQuiet(tempDirection.get());
+            direction->setValue(tempDirection.get());
           else
             throw std::runtime_error("couldn't determine direction from geometry");
         }
@@ -355,7 +358,7 @@ void Extrude::updateModel(const UpdatePayload &pIn)
       {
         auto tempDirection = inferDirection(ste);
         if (tempDirection)
-          direction->setValueQuiet(tempDirection.get());
+          direction->setValue(tempDirection.get());
         else
           throw std::runtime_error("couldn't determine direction from pick geometry");
       }
@@ -422,13 +425,13 @@ void Extrude::updateModel(const UpdatePayload &pIn)
           {
             const DatumAxis *da = dynamic_cast<const DatumAxis*>(aResolver.getFeature());
             assert(da);
-            direction->setValueQuiet(da->getDirection());
+            direction->setValue(da->getDirection());
           }
           else if (aResolver.getFeature()->getType() == Type::DatumPlane)
           {
             const DatumPlane *dp = dynamic_cast<const DatumPlane*>(aResolver.getFeature());
             assert(dp);
-            direction->setValueQuiet(gu::getZVector(dp->getSystem()));
+            direction->setValue(gu::getZVector(dp->getSystem()));
           }
         }
         else 
@@ -443,7 +446,7 @@ void Extrude::updateModel(const UpdatePayload &pIn)
           }
           auto glean = occt::gleanAxis(shapes.front());
           if (glean.second)
-            direction->setValueQuiet(gu::toOsg(gp_Vec(glean.first.Direction())));
+            direction->setValue(gu::toOsg(gp_Vec(glean.first.Direction())));
           else
             throw std::runtime_error("Couldn't glean direction for 1 axis pick");
         }
@@ -466,7 +469,7 @@ void Extrude::updateModel(const UpdatePayload &pIn)
         }
         osg::Vec3d tAxis = points0.front() - points1.front();
         tAxis.normalize();
-        direction->setValueQuiet(tAxis);
+        direction->setValue(tAxis);
       }
     }
     

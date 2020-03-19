@@ -37,15 +37,19 @@
 using boost::uuids::uuid;
 using namespace cmd;
 
-DatumAxis::DatumAxis() : Base()
+DatumAxis::DatumAxis()
+: Base()
+, leafManager()
 {
-  std::shared_ptr<ftr::DatumAxis> daxis(new ftr::DatumAxis());
-  feature = daxis.get();
+  auto daxis = std::make_shared<ftr::DatumAxis>();
   project->addFeature(daxis);
+  feature = daxis.get();
   node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
 }
 
-DatumAxis::DatumAxis(ftr::Base *fIn) : Base()
+DatumAxis::DatumAxis(ftr::Base *fIn)
+: Base()
+, leafManager(fIn)
 {
   feature = dynamic_cast<ftr::DatumAxis*>(fIn);
   assert(feature);
@@ -64,6 +68,7 @@ std::string DatumAxis::getStatusMessage()
 void DatumAxis::activate()
 {
   isActive = true;
+  leafManager.rewind();
   if (firstRun)
   {
     firstRun = false;
@@ -82,7 +87,7 @@ void DatumAxis::activate()
 void DatumAxis::deactivate()
 {
   isActive = false;
-  
+  leafManager.fastForward();
   if (viewBase)
   {
     msg::Message out(msg::Mask(msg::Request | msg::Command | msg::View | msg::Hide));

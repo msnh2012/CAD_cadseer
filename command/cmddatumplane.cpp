@@ -43,9 +43,9 @@ using boost::uuids::uuid;
 
 DatumPlane::DatumPlane() : Base()
 {
-  std::shared_ptr<ftr::DatumPlane> dPlane(new ftr::DatumPlane());
-  feature = dPlane.get();
+  auto dPlane = std::make_shared<ftr::DatumPlane>();
   project->addFeature(dPlane);
+  feature = dPlane.get();
   node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
 }
 

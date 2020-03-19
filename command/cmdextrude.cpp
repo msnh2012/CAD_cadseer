@@ -17,14 +17,15 @@
  *
  */
 
-#include <boost/optional.hpp>
-
 #include "tools/featuretools.h"
+#include "tools/occtools.h"
 #include "message/msgnode.h"
 #include "project/prjproject.h"
 #include "selection/slceventhandler.h"
 #include "annex/annseershape.h"
 #include "feature/ftrinputtype.h"
+#include "commandview/cmvmessage.h"
+#include "commandview/cmvextrude.h"
 #include "feature/ftrextrude.h"
 #include "command/cmdextrude.h"
 
@@ -32,7 +33,23 @@ using boost::uuids::uuid;
 
 using namespace cmd;
 
-Extrude::Extrude() : Base() {}
+Extrude::Extrude() : Base()
+{
+  auto extrude = std::make_shared<ftr::Extrude>();
+  project->addFeature(extrude);
+  feature = extrude.get();
+  node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
+}
+
+Extrude::Extrude(ftr::Base *fIn) : Base()
+{
+  feature = dynamic_cast<ftr::Extrude*>(fIn);
+  assert(feature);
+  firstRun = false; //bypass go() in activate.
+  viewBase = std::make_unique<cmv::Extrude>(this);
+  node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+}
+
 Extrude::~Extrude() {}
 
 std::string Extrude::getStatusMessage()
@@ -43,84 +60,144 @@ std::string Extrude::getStatusMessage()
 void Extrude::activate()
 {
   isActive = true;
-  go();
-  sendDone();
+  if (firstRun)
+  {
+    firstRun = false;
+    go();
+  }
+  if (viewBase)
+  {
+    cmv::Message vm(viewBase.get(), viewBase->getPaneWidth());
+    msg::Message out(msg::Mask(msg::Request | msg::Command | msg::View | msg::Show), vm);
+    node->sendBlocked(out);
+  }
+  else
+    sendDone();
 }
 
 void Extrude::deactivate()
 {
   isActive = false;
+  
+  if (viewBase)
+  {
+    msg::Message out(msg::Mask(msg::Request | msg::Command | msg::View | msg::Hide));
+    node->sendBlocked(out);
+  }
+}
+
+void Extrude::localUpdate()
+{
+  feature->updateModel(project->getPayload(feature->getId()));
+  feature->updateVisual();
+  feature->setModelDirty();
 }
 
 void Extrude::go()
 {
-  shouldUpdate = false;
+  /* We can have more than 1 selection for profile geometry and 
+   * we can use geometry for extrude direction. So there is no good way
+   * to glean the purpose of the pre-selections. So for pre-selection,
+   * we are going to force the first selection as the profile geometry
+   * and any further selections as the direction. Note with a commandview
+   * we can have more than one selection for the profile geometry.
+   */
+  
   const slc::Containers &containers = eventHandler->getSelections();
-  if (containers.empty() || containers.size() > 3)
+  if (!containers.empty())
   {
-    node->sendBlocked(msg::buildStatusMessage("Wrong pre-selection for extrude", 2.0));
-    return;
-  }
-  
-  //target/shape
-  tls::Connector connector;
-  ftr::Base *tf = project->findFeature(containers.front().featureId);
-  if (!tf->hasAnnex(ann::Type::SeerShape))
-  {
-    node->sendBlocked(msg::buildStatusMessage("First pre-selection needs to be shape", 2.0));
-    return;
-  }
-  ftr::Pick shapePick = tls::convertToPick(containers.front(), tf->getAnnex<ann::SeerShape>(), project->getShapeHistory());
-  shapePick.tag = ftr::InputType::createIndexedTag(ftr::InputType::target, 0);
-  connector.add(tf->getId(), shapePick.tag);
-  osg::Vec4 color = tf->getColor();
-  
-  //axis
-  ftr::Picks axisPicks;
-  auto addAxisPick = [&](const slc::Container &cIn, const std::string &tagIn) -> ftr::Base*
-  {
-    ftr::Base *bf = project->findFeature(cIn.featureId);
-    assert(bf);
-    ftr::Pick tp = tls::convertToPick(cIn, *bf, project->getShapeHistory());
-    tp.tag = tagIn;
-    axisPicks.push_back(tp);
-    connector.add(bf->getId(), tp.tag);
-    return bf;
-  };
-  if (containers.size() == 2)
-  {
-    ftr::Base *bf = addAxisPick(containers.at(1), ftr::InputType::createIndexedTag(ftr::Extrude::axisName, 0));
-    if
-    (
-      slc::isObjectType(containers.at(1).selectionType)
-      && bf->getType() != ftr::Type::DatumAxis
-      && bf->getType() != ftr::Type::DatumPlane
-    )
+    slc::Messages profiles;
+    const ftr::Base *pfIn = project->findFeature(containers.front().featureId);
+    if (pfIn->hasAnnex(ann::Type::SeerShape))
+      profiles.push_back(slc::EventHandler::containerToMessage(containers.front()));
+    
+    slc::Messages directions;
+    if (containers.size() == 2)
     {
-      node->sendBlocked(msg::buildStatusMessage("Wrong feature type for 1 pick axis", 2.0));
-      return;
+      if (containers.back().featureType == ftr::Type::DatumAxis || containers.back().featureType == ftr::Type::DatumPlane)
+        directions.push_back(slc::EventHandler::containerToMessage(containers.back()));
+      else if (!containers.back().isPointType())
+      {
+        const ftr::Base *dfIn = project->findFeature(containers.back().featureId);
+        if (dfIn->hasAnnex(ann::Type::SeerShape))
+        {
+          TopoDS_Shape ds;
+          const ann::SeerShape &ss = dfIn->getAnnex<ann::SeerShape>();
+          if (containers.back().shapeId.is_nil())
+          {
+            auto ncc = ss.useGetNonCompoundChildren();
+            if (!ncc.empty())
+              ds = ncc.front();
+          }
+          else
+            ds = ss.getOCCTShape(containers.back().shapeId);
+          auto result = occt::gleanAxis(ds);
+          if (result.second)
+            directions.push_back(slc::EventHandler::containerToMessage(containers.back()));
+        }
+      }
+    }
+    else if (containers.size() == 3 && containers.at(1).isPointType() && containers.at(2).isPointType())
+    {
+      directions.push_back(slc::EventHandler::containerToMessage(containers.at(1)));
+      directions.push_back(slc::EventHandler::containerToMessage(containers.at(2)));
+    }
+    
+    if (!profiles.empty())
+    {
+      if (directions.empty())
+      {
+        setToAxisInfer(profiles);
+        node->sendBlocked(msg::buildStatusMessage("Extrude added with inferred axis", 2.0));
+        node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+        return;
+      }
+      if (directions.size() == 1 || directions.size() == 2)
+      {
+        setToAxisPicks(profiles, directions);
+        node->sendBlocked(msg::buildStatusMessage("Extrude added with picked axis", 2.0));
+        node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+        return;
+      }
     }
   }
-  else if (containers.size() == 3)//3 picks. need 2 points
-  {
-    if (!slc::isPointType(containers.at(1).selectionType) || !slc::isPointType(containers.at(2).selectionType))
-    {
-      node->sendBlocked(msg::buildStatusMessage("Need 2 points for 2 pick axis definition", 2.0));
-      return;
-    }
-    addAxisPick(containers.at(1), ftr::InputType::createIndexedTag(ftr::Extrude::axisName, 0));
-    addAxisPick(containers.at(2), ftr::InputType::createIndexedTag(ftr::Extrude::axisName, 1));
-  }
-  
-  std::shared_ptr<ftr::Extrude> extrude(new ftr::Extrude());
-  extrude->setPicks(ftr::Picks{shapePick});
-  if (!axisPicks.empty())
-    extrude->setAxisPicks(axisPicks); //sets the appropriate type also.
-  extrude->setColor(color);
-  project->addFeature(extrude);
-  for (const auto &p : connector.pairs)
-    project->connectInsert(p.first, extrude->getId(), {p.second});
   
   node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
-  shouldUpdate = true;
+  viewBase = std::make_unique<cmv::Extrude>(this);
+}
+
+ftr::Picks Extrude::connect(const std::vector<slc::Message> &msIn, const std::string &prefix)
+{
+  ftr::Picks out;
+  for (const auto &mIn : msIn)
+  {
+    const ftr::Base *f = project->findFeature(mIn.featureId);
+    ftr::Pick pick = tls::convertToPick(mIn, *f, project->getShapeHistory());
+    pick.tag = ftr::InputType::createIndexedTag(prefix, out.size());
+    out.push_back(pick);
+    project->connectInsert(f->getId(), feature->getId(), {pick.tag});
+  };
+  return out;
+}
+
+void Extrude::setToAxisInfer(const std::vector<slc::Message> &profileMessages)
+{
+  project->clearAllInputs(feature->getId());
+  feature->setPicks(connect(profileMessages, ftr::InputType::target));
+  feature->setDirectionType(ftr::Extrude::DirectionType::Infer);
+}
+
+void Extrude::setToAxisPicks(const std::vector<slc::Message> &profileMessages, const std::vector<slc::Message> &axisMessages)
+{
+  project->clearAllInputs(feature->getId());
+  feature->setPicks(connect(profileMessages, ftr::InputType::target));
+  feature->setAxisPicks(connect(axisMessages, ftr::Extrude::axisName));
+  feature->setDirectionType(ftr::Extrude::DirectionType::Picks);
+}
+
+void Extrude::setToAxisParameter(const std::vector<slc::Message> &profileMessages)
+{
+  project->clearAllInputs(feature->getId());
+  feature->setPicks(connect(profileMessages, ftr::InputType::target));
+  feature->setDirectionType(ftr::Extrude::DirectionType::Parameter);
 }

@@ -1491,27 +1491,27 @@ public:
   template <typename GraphT >
   void discover_vertex(VertexT vertexIn, const GraphT & graphIn) const
   {
-    if (foundLeaf)
-      return;
+//     if (foundLeaf)
+//       return;
     if (vertexIn == startVertex)
       return;
     if (!graphIn[vertexIn].state.test(ftr::StateOffset::NonLeaf))
     {
-      foundLeaf = true;
+//       foundLeaf = true;
       leafChildren.push_back(vertexIn);
     }
   }
   
-  template <typename GraphT >
-  void finish_vertex(VertexT vertexIn, const GraphT &graphIn) const
-  {
-    if (!graphIn[vertexIn].state.test(ftr::StateOffset::Inactive))
-      foundLeaf = false;
-  }
+//   template <typename GraphT >
+//   void finish_vertex(VertexT vertexIn, const GraphT &graphIn) const
+//   {
+//     if (!graphIn[vertexIn].state.test(ftr::StateOffset::Inactive))
+//       foundLeaf = false;
+//   }
   
 private:
   std::vector<VertexT> &leafChildren;
-  mutable bool foundLeaf = false;
+//   mutable bool foundLeaf = false;
   mutable VertexT startVertex;
 };
 
@@ -1524,15 +1524,16 @@ private:
 std::vector<uuid> Project::getLeafChildren(const uuid &parentIn) const
 {
   Vertex startVertex = stow->findVertex(parentIn);
+  RemovedGraph removedGraph = buildRemovedGraph(stow->graph);
   
   Vertices limitVertices;
   gu::BFSLimitVisitor<Vertex>limitVisitor(limitVertices);
-  boost::breadth_first_search(stow->graph, startVertex, visitor(limitVisitor));
+  boost::breadth_first_search(removedGraph, startVertex, visitor(limitVisitor));
   
-  gu::SubsetFilter<Graph> filter(stow->graph, limitVertices);
-  typedef boost::filtered_graph<Graph, boost::keep_all, gu::SubsetFilter<Graph> > FilteredGraph;
+  gu::SubsetFilter<RemovedGraph> filter(removedGraph, limitVertices);
+  typedef boost::filtered_graph<RemovedGraph, boost::keep_all, gu::SubsetFilter<RemovedGraph> > FilteredGraph;
   typedef boost::graph_traits<FilteredGraph>::vertex_descriptor FilteredVertex;
-  FilteredGraph filteredGraph(stow->graph, boost::keep_all(), filter);
+  FilteredGraph filteredGraph(removedGraph, boost::keep_all(), filter);
   
   std::vector<Vertex> leafChildren;
   LeafChildrenVisitor<FilteredVertex> leafVisitor(leafChildren);

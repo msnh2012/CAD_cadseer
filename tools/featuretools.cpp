@@ -532,23 +532,14 @@ occt::ShapeVector Resolver::getShapes(bool convertEndPoints) const
         continue;
       }
       TopoDS_Shape theShape = sShape->getOCCTShape(rId);
-      if (convertEndPoints)
+      if (convertEndPoints && theShape.ShapeType() == TopAbs_EDGE)
       {
         if (workPick.selectionType == slc::Type::StartPoint)
-        {
-          assert(theShape.ShapeType() == TopAbs_EDGE);
-          out.push_back(sShape->getOCCTShape(sShape->useGetStartVertex(rId)));
-        }
+          theShape = sShape->getOCCTShape(sShape->useGetStartVertex(rId));
         else if (workPick.selectionType == slc::Type::EndPoint)
-        {
-          assert(theShape.ShapeType() == TopAbs_EDGE);
-          out.push_back(sShape->getOCCTShape(sShape->useGetEndVertex(rId)));
-        }
-        else if (!slc::isPointType(workPick.selectionType))
-          out.push_back(theShape);
+          theShape = sShape->getOCCTShape(sShape->useGetEndVertex(rId));
       }
-      else
-        out.push_back(theShape);
+      out.push_back(theShape);
     }
   }
   

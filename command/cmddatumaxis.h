@@ -20,6 +20,7 @@
 #ifndef CMD_DATUMAXIS_H
 #define CMD_DATUMAXIS_H
 
+#include "command/cmdleafmanager.h"
 #include "command/cmdbase.h"
 
 namespace ftr{class DatumAxis;}
@@ -50,6 +51,7 @@ namespace cmd
       void localUpdate();
     private:
       void go();
+      cmd::LeafManager leafManager;
       bool firstRun = true;
   };
 }
