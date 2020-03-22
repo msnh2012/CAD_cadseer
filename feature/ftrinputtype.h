@@ -32,10 +32,11 @@ namespace ftr
   public:
     //@{
     //! Convenient string constants that may apply to more than one feature.
-    constexpr static const char *target = "Target";
-    constexpr static const char *tool = "Tool";
-    constexpr static const char *create = "Create";
-    constexpr static const char *linkCSys = "LinkCSys";
+    constexpr static const char *target = "Target"; //!< Obsolete don't use
+    constexpr static const char *tool = "Tool"; //!< Obsolete don't use
+    constexpr static const char *create = "Create"; //!< Obsolete don't use
+    constexpr static const char *linkCSys = "LinkCSys"; //!< Signify feature is inheriting the system.
+    constexpr static const char *sever = "Sever"; //<! Signify that a path is stopping
     //@}
     
     //@{

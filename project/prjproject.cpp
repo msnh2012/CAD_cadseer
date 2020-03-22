@@ -1519,7 +1519,9 @@ private:
  * when feature was created. When editing is done we want to return
  * leaf states to previous state before editing. this is where this
  * function comes in. It gets leaf status of each path so it can be
- * 'reset' after editing'
+ * 'reset' after editing'. doesn't work. We can't call this function
+ * on each input independently. We need to do all at once with a DFS.
+ * see editWithRewind.svg
  */
 std::vector<uuid> Project::getLeafChildren(const uuid &parentIn) const
 {
@@ -1542,6 +1544,36 @@ std::vector<uuid> Project::getLeafChildren(const uuid &parentIn) const
   std::vector<uuid> out;
   for (const auto &v : leafChildren)
     out.push_back(stow->graph[v].feature->getId());
+  
+  return out;
+}
+
+/*! @brief Get the current leaf id of all related paths.
+ * 
+ * @param editFeature is the source of exploration.
+ * @return input leaf ids topo sorted.
+ */
+std::vector<uuid> Project::getRelatedLeafs(const uuid &editFeatureId) const
+{
+  assert(stow->hasFeature(editFeatureId));
+  Vertex editFeatureVertex = stow->findVertex(editFeatureId);
+  
+  auto weakGraphVertices = weakComponents(stow->graph, editFeatureVertex);
+  
+  RemovedGraph baseGraph = buildRemovedGraph(stow->graph);
+  gu::SubsetFilter<decltype(baseGraph)> filter(baseGraph, weakGraphVertices);
+  boost::filtered_graph<decltype(baseGraph), boost::keep_all, decltype(filter)> filteredGraph(baseGraph, boost::keep_all(), filter);
+  
+  std::vector<Vertex> temp;
+  boost::topological_sort(filteredGraph, std::back_inserter(temp));
+  std::reverse(temp.begin(), temp.end()); //topo sort is reversed.
+  
+  std::vector<uuid> out;
+  for (const auto &v : temp)
+  {
+    if (!stow->graph[v].state.test(ftr::StateOffset::NonLeaf))
+      out.push_back(stow->graph[v].feature->getId());
+  }
   
   return out;
 }

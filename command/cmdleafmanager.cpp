@@ -90,27 +90,18 @@ void LeafManager::rewind()
   assert(p->hasFeature(stow->featureId));
   
   //store current state
-  //what happens to children belonging to the same path and we set the earlier one leaf last.
-  //then the later one is inactive?????? see 'editing with rewind' in document.svg
-  //TODO fix this bug.
   stow->leafStates.clear();
-  ftr::UpdatePayload payload = p->getPayload(stow->featureId);
-  auto features = payload.getFeatures("");
-  for (const auto *f : features)
+  auto leafIds = p->getRelatedLeafs(stow->featureId);
+  for (const auto &fId : leafIds)
   {
-    auto lc = p->getLeafChildren(f->getId());
-    for (const uuid &id : lc)
-    {
-      assert(p->hasFeature(id));
-      const ftr::Base *f = p->findFeature(id);
-      stow->leafStates.push_back({id, f->isVisible3D(), f->isVisibleOverlay()});
-      app::instance()->messageSlot(msg::buildHideOverlay(f->getId()));
-    }
+    assert(p->hasFeature(fId));
+    const ftr::Base *f = p->findFeature(fId);
+    stow->leafStates.push_back({fId, f->isVisible3D(), f->isVisibleOverlay()});
+    app::instance()->messageSlot(msg::buildHideOverlay(f->getId()));
   }
-  //TODO remove duplicates. But keep same order! Don't use gu::uniquefy.
   
   //set current state.
-  for (const auto *f : features)
+  for (const auto *f : p->getPayload(stow->featureId).getFeatures(""))
     p->setCurrentLeaf(f->getId());
   //editing feature is hidden by call setCurrentLeaf on inputs, so turn it back on for user.
   app::instance()->messageSlot(msg::buildShowThreeD(stow->featureId));
@@ -135,13 +126,13 @@ void LeafManager::fastForward()
     {
       p->setCurrentLeaf(lf.leafId);
       if (lf.isVisible3d)
-        app::instance()->messageSlot(msg::buildShowThreeD(lf.leafId));
+        app::instance()->queuedMessage(msg::buildShowThreeD(lf.leafId));
       else
-        app::instance()->messageSlot(msg::buildHideThreeD(lf.leafId));
+        app::instance()->queuedMessage(msg::buildHideThreeD(lf.leafId));
       if (lf.isVisibleOverlay)
-        app::instance()->messageSlot(msg::buildShowOverlay(lf.leafId));
+        app::instance()->queuedMessage(msg::buildShowOverlay(lf.leafId));
       else
-        app::instance()->messageSlot(msg::buildHideOverlay(lf.leafId));
+        app::instance()->queuedMessage(msg::buildHideOverlay(lf.leafId));
     }
   }
 }

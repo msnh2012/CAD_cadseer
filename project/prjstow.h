@@ -137,6 +137,35 @@ namespace prj
   
   typedef boost::reverse_graph<RemovedGraph, RemovedGraph&> ReversedGraph;
   
+  inline std::vector<Vertex> weakComponents(Graph& gIn, Vertex v)
+  {
+    RemovedGraph baseGraph = buildRemovedGraph(gIn);
+    ReversedGraph rBaseGraph = boost::make_reverse_graph(baseGraph);
+    std::vector<Vertex> vertices;
+    gu::BFSLimitVisitor<Vertex> limitVisitor(vertices);
+    boost::breadth_first_search(rBaseGraph, v, boost::visitor(limitVisitor));
+    
+    //find the leafs in the reversed graph = roots in forward graph. 
+    std::vector<Vertex> roots;
+    for (const auto &v : vertices)
+    {
+      if (boost::out_degree(v, rBaseGraph) == 0)
+        roots.push_back(v);
+    }
+    
+    //travel all forward roots to get all components
+    std::vector<Vertex> all;
+    for (const auto &v : roots)
+    {
+      std::vector<Vertex> current;
+      gu::BFSLimitVisitor<Vertex> visitor(current);
+      boost::breadth_first_search(baseGraph, v, boost::visitor(visitor));
+      all.insert(all.end(), current.begin(), current.end());
+    }
+    gu::uniquefy(all);
+    return all;
+  }
+  
   
   template <typename GraphTypeIn>
   struct ActiveFilter

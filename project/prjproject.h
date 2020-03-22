@@ -96,7 +96,8 @@ public:
     void shapeTrackDump(const boost::uuids::uuid &shapeId, const boost::filesystem::path &directory) const;
     ftr::UpdatePayload::UpdateMap getParentMap(const boost::uuids::uuid&) const;
     ftr::UpdatePayload getPayload(const boost::uuids::uuid&) const;
-    std::vector<boost::uuids::uuid> getLeafChildren(const boost::uuids::uuid&) const;
+    std::vector<boost::uuids::uuid> getLeafChildren(const boost::uuids::uuid&) const; //obsolete
+    std::vector<boost::uuids::uuid> getRelatedLeafs(const boost::uuids::uuid&) const;
     
     expr::Manager& getManager(){return *expressionManager;}
     GitManager& getGitManager(){return *gitManager;}
