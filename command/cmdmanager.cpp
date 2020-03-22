@@ -1060,6 +1060,11 @@ BasePtr editExtrude(ftr::Base *feature)
   return std::make_shared<Extrude>(feature);
 }
 
+BasePtr editRevolve(ftr::Base *feature)
+{
+  return std::make_shared<Revolve>(feature);
+}
+
 void Manager::setupEditFunctionMap()
 {
   editFunctionMap.insert(std::make_pair(ftr::Type::Blend, std::bind(editBlend, std::placeholders::_1)));
@@ -1085,4 +1090,5 @@ void Manager::setupEditFunctionMap()
   editFunctionMap.insert(std::make_pair(ftr::Type::DatumAxis, std::bind(editDatumAxis, std::placeholders::_1)));
   editFunctionMap.insert(std::make_pair(ftr::Type::DatumPlane, std::bind(editDatumPlane, std::placeholders::_1)));
   editFunctionMap.insert(std::make_pair(ftr::Type::Extrude, std::bind(editExtrude, std::placeholders::_1)));
+  editFunctionMap.insert(std::make_pair(ftr::Type::Revolve, std::bind(editRevolve, std::placeholders::_1)));
 }

@@ -17,10 +17,18 @@
  *
  */
 
+// #include <cassert>
+// #include <boost/optional/optional.hpp>
+
 #include <QSettings>
+// #include <QComboBox>
+// #include <QPushButton>
+// #include <QLabel>
+// #include <QLineEdit>
+// #include <QStackedWidget>
+// #include <QGridLayout>
 // #include <QVBoxLayout>
 // #include <QHBoxLayout>
-// #include <QLineEdit>
 
 #include "application/appapplication.h"
 #include "project/prjproject.h"
@@ -32,7 +40,7 @@
 // #include "dialogs/dlgselectionbutton.h"
 // #include "dialogs/dlgselectionlist.h"
 // #include "dialogs/dlgselectionwidget.h"
-// #include "commandview/cmvparameterwidget.h"
+// #include "commandview/cmvparameterwidgets.h"
 // #include "parameter/prmparameter.h"
 // #include "expressions/exprmanager.h"
 // #include "expressions/exprstringtranslator.h"

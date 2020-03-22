@@ -19,44 +19,56 @@
 
 #include <QSettings>
 #include <QComboBox>
+// #include <QStackedWidget>
 #include <QVBoxLayout>
-#include <QStackedWidget>
+// #include <QHBoxLayout>
+// #include <QLineEdit>
 
 #include "application/appapplication.h"
 #include "project/prjproject.h"
-#include "dialogs/dlgselectionbutton.h"
+// #include "annex/annseershape.h"
+// #include "preferences/preferencesXML.h"
+// #include "preferences/prfmanager.h"
+// #include "message/msgmessage.h"
+// #include "message/msgnode.h"
+// #include "dialogs/dlgselectionbutton.h"
+// #include "dialogs/dlgselectionlist.h"
 #include "dialogs/dlgselectionwidget.h"
+#include "dialogs/dlgselectionbutton.h"
 #include "commandview/cmvparameterwidgets.h"
 #include "parameter/prmparameter.h"
+// #include "expressions/exprmanager.h"
+// #include "expressions/exprstringtranslator.h"
+// #include "expressions/exprvalue.h"
+// #include "library/lbrplabel.h"
 #include "tools/featuretools.h"
-#include "feature/ftrextrude.h"
-#include "command/cmdextrude.h"
-#include "commandview/cmvextrude.h"
+// #include "tools/idtools.h"
+// #include "feature/ftrinputtype.h"
+#include "feature/ftrrevolve.h"
+#include "command/cmdrevolve.h"
+#include "commandview/cmvrevolve.h"
 
 using boost::uuids::uuid;
 
 using namespace cmv;
 
-struct Extrude::Stow
+struct Revolve::Stow
 {
-  cmd::Extrude *command;
-  cmv::Extrude *view;
+  cmd::Revolve *command;
+  cmv::Revolve *view;
   QComboBox *combo = nullptr;
-  QStackedWidget *stackedWidget = nullptr;
-  dlg::SelectionWidget *inferSelection = nullptr; //used by parameter also
-  dlg::SelectionWidget *picksSelection = nullptr;
+  dlg::SelectionWidget *selection = nullptr;
   cmv::ParameterWidget *parameterWidget = nullptr;
   std::vector<prm::Observer> observers;
-  int lastComboIndex = 0; // used to sync profile selections between selection widgets.
   
-  Stow(cmd::Extrude *cIn, cmv::Extrude *vIn)
+  Stow(cmd::Revolve *cIn, cmv::Revolve *vIn)
   : command(cIn)
   , view(vIn)
   {
     buildGui();
     
     QSettings &settings = app::instance()->getUserSettings();
-    settings.beginGroup("cmv::Extrude");
+    settings.beginGroup("cmv::Revolve");
     //load settings
     settings.endGroup();
     
@@ -73,13 +85,9 @@ struct Extrude::Stow
     view->setLayout(mainLayout);
     
     combo = new QComboBox(view);
-    combo->addItem(QObject::tr("Infer Direction"));
-    combo->addItem(QObject::tr("Pick Direction"));
-    combo->addItem(QObject::tr("Parameter Direction"));
+    combo->addItem(QObject::tr("Pick Axis"));
+    combo->addItem(QObject::tr("Parameter Axis"));
     mainLayout->addWidget(combo);
-    
-    stackedWidget = new QStackedWidget(view);
-    mainLayout->addWidget(stackedWidget);
     
     std::vector<dlg::SelectionWidgetCue> cues;
     dlg::SelectionWidgetCue cue;
@@ -90,17 +98,15 @@ struct Extrude::Stow
     cue.statusPrompt = tr("Select Profile Geometry");
     cue.showAccrueColumn = false;
     cues.push_back(cue);
-    inferSelection = new dlg::SelectionWidget(stackedWidget, cues);
-    stackedWidget->addWidget(inferSelection);
     
     cue.name = tr("Axis");
     cue.singleSelection = false;
-    cue.mask = slc::ObjectsEnabled | slc::ObjectsSelectable | slc::FacesEnabled  | slc::FacesSelectable
+    cue.mask = slc::ObjectsEnabled | slc::ObjectsSelectable | slc::FacesEnabled | slc::EdgesEnabled | slc::EdgesSelectable
       | slc::PointsEnabled | slc::PointsSelectable | slc::AllPointsEnabled;
-    cue.statusPrompt = tr("Select Points, Face Or Datum For Axis");
+    cue.statusPrompt = tr("Select Points, Edge, Face Or Datum For Axis");
     cues.push_back(cue);
-    picksSelection = new dlg::SelectionWidget(stackedWidget, cues);
-    stackedWidget->addWidget(picksSelection);
+    selection = new dlg::SelectionWidget(view, cues);
+    mainLayout->addWidget(selection);
     
     parameterWidget = new cmv::ParameterWidget(view, command->feature->getParameters());
     mainLayout->addWidget(parameterWidget);
@@ -113,9 +119,8 @@ struct Extrude::Stow
     mainLayout->addItem(new QSpacerItem(20, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
     
     QObject::connect(combo, SIGNAL(currentIndexChanged(int)), view, SLOT(comboChanged(int)));
-    QObject::connect(inferSelection->getButton(0), &dlg::SelectionButton::dirty, view, &Extrude::profileSelectionChanged);
-    QObject::connect(picksSelection->getButton(0), &dlg::SelectionButton::dirty, view, &Extrude::profileSelectionChanged);
-    QObject::connect(picksSelection->getButton(1), &dlg::SelectionButton::dirty, view, &Extrude::axisSelectionChanged);
+    QObject::connect(selection->getButton(0), &dlg::SelectionButton::dirty, view, &Revolve::profileSelectionChanged);
+    QObject::connect(selection->getButton(1), &dlg::SelectionButton::dirty, view, &Revolve::axisSelectionChanged);
   }
   
   void loadFeatureData()
@@ -137,58 +142,41 @@ struct Extrude::Stow
       return out;
     };
     
-    inferSelection->initializeButton(0, picksToMessages(command->feature->getPicks()));
-    picksSelection->initializeButton(0, picksToMessages(command->feature->getPicks()));
+    selection->initializeButton(0, picksToMessages(command->feature->getPicks()));
     
-    ftr::Extrude::DirectionType dt = command->feature->getDirectionType();
-    if (dt == ftr::Extrude::DirectionType::Picks)
-    {
-      picksSelection->initializeButton(1, picksToMessages(command->feature->getAxisPicks()));
-      stackedWidget->setCurrentIndex(1);
-      picksSelection->activate(0);
-    }
+    ftr::Revolve::AxisType at = command->feature->getAxisType();
+    if (at == ftr::Revolve::AxisType::Parameter)
+      selection->hideEntry(1);
     else
-    {
-      stackedWidget->setCurrentIndex(0);
-      inferSelection->activate(0);
-    }
+      selection->initializeButton(1, picksToMessages(command->feature->getAxisPicks()));
     
     QSignalBlocker stackBlocker(combo);
-    combo->setCurrentIndex(static_cast<int>(dt));
-    lastComboIndex = combo->currentIndex();
+    combo->setCurrentIndex(static_cast<int>(at));
+    selection->activate(0);
   }
   
   void parameterChanged()
   {
-//     updateWidgetState();
-      
-    // lets make sure we don't trigger updates 'behind the scenes'
     if (!parameterWidget->isVisible())
       return;
     goUpdate();
   }
   
-  void goAxisInfer()
-  {
-    command->setToAxisInfer(inferSelection->getMessages(0));
-    goUpdate();
-  }
-  
   void goAxisPicks()
   {
-    command->setToAxisPicks(picksSelection->getMessages(0), picksSelection->getMessages(1));
+    command->setToAxisPicks(selection->getMessages(0), selection->getMessages(1));
     goUpdate();
   }
   
   void goAxisParameter()
   {
-    command->setToAxisParameter(inferSelection->getMessages(0));
+    command->setToAxisParameter(selection->getMessages(0));
     goUpdate();
   }
   
   void goUpdate()
   {
-    //extrude can and will change the direction parameter. Break cycle.
+    //Break cycle.
     std::vector<std::unique_ptr<prm::ObserverBlocker>> blockers;
     for (auto &o : observers)
       blockers.push_back(std::make_unique<prm::ObserverBlocker>(o));
@@ -196,69 +184,40 @@ struct Extrude::Stow
   }
 };
 
-Extrude::Extrude(cmd::Extrude *cIn)
-: Base("cmv::Extrude")
+Revolve::Revolve(cmd::Revolve *cIn)
+: Base("cmv::Revolve")
 , stow(new Stow(cIn, this))
 {}
 
-Extrude::~Extrude() = default;
+Revolve::~Revolve() = default;
 
-void Extrude::comboChanged(int cIndex)
+void Revolve::comboChanged(int cIndex)
 {
-  //we have 2 selection widgets with distinct profile selections.
-  //we want to keep these in sync for a better user experience.
   if (cIndex == 0)
   {
-    if (stow->lastComboIndex == 1)
-    {
-      stow->inferSelection->getButton(0)->setMessages(stow->picksSelection->getButton(0)->getMessages());
-      stow->inferSelection->getButton(0)->mask = stow->picksSelection->getButton(0)->mask;
-      stow->inferSelection->activate(0);
-    }
-    stow->stackedWidget->setCurrentIndex(0);
-    stow->goAxisInfer();
+    stow->selection->showEntry(1);
+    stow->goAxisPicks();
   }
   else if (cIndex == 1)
   {
-    if (stow->lastComboIndex != 1)
-    {
-      stow->picksSelection->getButton(0)->setMessages(stow->inferSelection->getButton(0)->getMessages());
-      stow->picksSelection->getButton(0)->mask = stow->inferSelection->getButton(0)->mask;
-      stow->picksSelection->activate(0);
-    }
-    stow->stackedWidget->setCurrentIndex(1);
-    stow->goAxisPicks();
-  }
-  else if (cIndex == 2)
-  {
-    if (stow->lastComboIndex == 1)
-    {
-      stow->inferSelection->getButton(0)->setMessages(stow->picksSelection->getButton(0)->getMessages());
-      stow->inferSelection->getButton(0)->mask = stow->picksSelection->getButton(0)->mask;
-      stow->inferSelection->activate(0);
-    }
-    stow->stackedWidget->setCurrentIndex(0);
+    stow->selection->hideEntry(1);
     stow->goAxisParameter();
   }
-  
-  stow->lastComboIndex = cIndex;
   
   //we will want to enable/disable the direction parameter.
   //we can't parse vectors yet, so will leave it disabled.
 }
 
-void Extrude::profileSelectionChanged()
+void Revolve::profileSelectionChanged()
 {
   int current = stow->combo->currentIndex();
   if (current == 0)
-    stow->goAxisInfer();
-  else if (current == 1)
     stow->goAxisPicks();
-  else if (current == 2)
+  else if (current == 1)
     stow->goAxisParameter();
 }
 
-void Extrude::axisSelectionChanged()
+void Revolve::axisSelectionChanged()
 {
   stow->goAxisPicks();
 }

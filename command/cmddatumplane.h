@@ -20,6 +20,7 @@
 #ifndef CMD_DATUMPLANE_H
 #define CMD_DATUMPLANE_H
 
+#include "command/cmdleafmanager.h"
 #include "command/cmdbase.h"
 
 namespace slc{class Container;}
@@ -54,6 +55,7 @@ namespace cmd
     void localUpdate();
   private:
     bool firstRun = true;
+    cmd::LeafManager leafManager;
     void go();
     bool isPlanarFace(const slc::Container&);
     bool isAxis(const slc::Container&);

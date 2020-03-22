@@ -33,7 +33,9 @@ using boost::uuids::uuid;
 
 using namespace cmd;
 
-Extrude::Extrude() : Base()
+Extrude::Extrude()
+: Base()
+, leafManager()
 {
   auto extrude = std::make_shared<ftr::Extrude>();
   project->addFeature(extrude);
@@ -41,7 +43,9 @@ Extrude::Extrude() : Base()
   node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
 }
 
-Extrude::Extrude(ftr::Base *fIn) : Base()
+Extrude::Extrude(ftr::Base *fIn)
+: Base()
+, leafManager(fIn)
 {
   feature = dynamic_cast<ftr::Extrude*>(fIn);
   assert(feature);
@@ -60,6 +64,7 @@ std::string Extrude::getStatusMessage()
 void Extrude::activate()
 {
   isActive = true;
+  leafManager.rewind();
   if (firstRun)
   {
     firstRun = false;
@@ -78,12 +83,12 @@ void Extrude::activate()
 void Extrude::deactivate()
 {
   isActive = false;
-  
   if (viewBase)
   {
     msg::Message out(msg::Mask(msg::Request | msg::Command | msg::View | msg::Hide));
     node->sendBlocked(out);
   }
+  leafManager.fastForward();
 }
 
 void Extrude::localUpdate()
@@ -91,6 +96,7 @@ void Extrude::localUpdate()
   feature->updateModel(project->getPayload(feature->getId()));
   feature->updateVisual();
   feature->setModelDirty();
+  node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
 }
 
 void Extrude::go()

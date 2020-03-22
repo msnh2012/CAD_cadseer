@@ -77,6 +77,8 @@ namespace dlg
     void activate(int); //!< Send timed click
     void setAngle(double); //!< tangent accrue for all buttons and all messages.
     void reset(); //!< clear all buttons and select the first button.
+    void showEntry(int);
+    void hideEntry(int);
   Q_SIGNALS:
     void accrueChanged();
     void finishedSignal(); //!< when last button is single selection and a selection was made.
@@ -87,6 +89,7 @@ namespace dlg
     struct Stow;
     std::unique_ptr<Stow> stow;
     
+    void addButton(const SelectionWidgetCue&);
     void buildGui(const std::vector<SelectionWidgetCue>&);
   };
 }

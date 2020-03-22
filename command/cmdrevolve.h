@@ -20,7 +20,10 @@
 #ifndef CMD_REVOLVE_H
 #define CMD_REVOLVE_H
 
+#include "command/cmdleafmanager.h"
 #include "command/cmdbase.h"
+
+namespace ftr{class Revolve; struct Pick; typedef std::vector<Pick> Picks;}
 
 namespace cmd
 {
@@ -30,15 +33,25 @@ namespace cmd
   class Revolve : public Base
   {
   public:
+    ftr::Revolve *feature = nullptr;
+    
     Revolve();
+    Revolve(ftr::Base*);
     virtual ~Revolve() override;
     
     virtual std::string getCommandName() override{return "Revolve";}
     virtual std::string getStatusMessage() override;
     virtual void activate() override;
     virtual void deactivate() override;
+    
+    void localUpdate();
+    void setToAxisPicks(const std::vector<slc::Message>&, const std::vector<slc::Message>&);
+    void setToAxisParameter(const std::vector<slc::Message>&);
   private:
+    bool firstRun = true;
+    cmd::LeafManager leafManager;
     void go();
+    ftr::Picks connect(const std::vector<slc::Message>&, const std::string&);
   };
 }
 

@@ -87,12 +87,12 @@ void DatumAxis::activate()
 void DatumAxis::deactivate()
 {
   isActive = false;
-  leafManager.fastForward();
   if (viewBase)
   {
     msg::Message out(msg::Mask(msg::Request | msg::Command | msg::View | msg::Hide));
     node->sendBlocked(out);
   }
+  leafManager.fastForward();
 }
 
 void DatumAxis::go()
@@ -233,4 +233,5 @@ void DatumAxis::localUpdate()
   feature->updateModel(project->getPayload(feature->getId()));
   feature->updateVisual();
   feature->setModelDirty();
+  node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
 }

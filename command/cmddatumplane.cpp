@@ -41,7 +41,9 @@
 using namespace cmd;
 using boost::uuids::uuid;
 
-DatumPlane::DatumPlane() : Base()
+DatumPlane::DatumPlane()
+: Base()
+, leafManager()
 {
   auto dPlane = std::make_shared<ftr::DatumPlane>();
   project->addFeature(dPlane);
@@ -49,7 +51,9 @@ DatumPlane::DatumPlane() : Base()
   node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
 }
 
-DatumPlane::DatumPlane(ftr::Base *fIn) : Base()
+DatumPlane::DatumPlane(ftr::Base *fIn)
+: Base()
+, leafManager(fIn)
 {
   feature = dynamic_cast<ftr::DatumPlane*>(fIn);
   assert(feature);
@@ -68,6 +72,7 @@ std::string DatumPlane::getStatusMessage()
 void DatumPlane::activate()
 {
   isActive = true;
+  leafManager.rewind();
   if (firstRun)
   {
     firstRun = false;
@@ -86,12 +91,12 @@ void DatumPlane::activate()
 void DatumPlane::deactivate()
 {
   isActive = false;
-  
   if (viewBase)
   {
     msg::Message out(msg::Mask(msg::Request | msg::Command | msg::View | msg::Hide));
     node->sendBlocked(out);
   }
+  leafManager.fastForward();
 }
 
 void DatumPlane::setToConstant()
@@ -213,6 +218,7 @@ void DatumPlane::localUpdate()
   feature->updateModel(project->getPayload(feature->getId()));
   feature->updateVisual();
   feature->setModelDirty();
+  node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
 }
 
 void DatumPlane::go()

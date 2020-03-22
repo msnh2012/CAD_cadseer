@@ -20,19 +20,42 @@
 #include <boost/optional.hpp>
 
 #include "tools/featuretools.h"
+#include "tools/occtools.h"
 #include "message/msgnode.h"
 #include "project/prjproject.h"
 #include "selection/slceventhandler.h"
 #include "annex/annseershape.h"
 #include "feature/ftrinputtype.h"
 #include "feature/ftrrevolve.h"
+#include "commandview/cmvmessage.h"
+#include "commandview/cmvrevolve.h"
 #include "command/cmdrevolve.h"
 
 using boost::uuids::uuid;
 
 using namespace cmd;
 
-Revolve::Revolve() : Base() {}
+Revolve::Revolve()
+: Base()
+, leafManager()
+{
+  auto revolve = std::make_shared<ftr::Revolve>();
+  project->addFeature(revolve);
+  feature = revolve.get();
+  node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
+}
+
+Revolve::Revolve(ftr::Base *fIn)
+: Base()
+, leafManager(fIn)
+{
+  feature = dynamic_cast<ftr::Revolve*>(fIn);
+  assert(feature);
+  firstRun = false; //bypass go() in activate.
+  viewBase = std::make_unique<cmv::Revolve>(this);
+  node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+}
+
 Revolve::~Revolve() {}
 
 std::string Revolve::getStatusMessage()
@@ -43,83 +66,132 @@ std::string Revolve::getStatusMessage()
 void Revolve::activate()
 {
   isActive = true;
-  go();
-  sendDone();
+  leafManager.rewind();
+  if (firstRun)
+  {
+    firstRun = false;
+    go();
+  }
+  if (viewBase)
+  {
+    cmv::Message vm(viewBase.get(), viewBase->getPaneWidth());
+    msg::Message out(msg::Mask(msg::Request | msg::Command | msg::View | msg::Show), vm);
+    node->sendBlocked(out);
+  }
+  else
+    sendDone();
 }
 
 void Revolve::deactivate()
 {
   isActive = false;
+  if (viewBase)
+  {
+    msg::Message out(msg::Mask(msg::Request | msg::Command | msg::View | msg::Hide));
+    node->sendBlocked(out);
+  }
+  leafManager.fastForward(); //do after the view is hidden
+}
+
+void Revolve::localUpdate()
+{
+  feature->updateModel(project->getPayload(feature->getId()));
+  feature->updateVisual();
+  feature->setModelDirty();
+  node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
+}
+
+ftr::Picks Revolve::connect(const std::vector<slc::Message> &msIn, const std::string &prefix)
+{
+  ftr::Picks out;
+  for (const auto &mIn : msIn)
+  {
+    const ftr::Base *f = project->findFeature(mIn.featureId);
+    ftr::Pick pick = tls::convertToPick(mIn, *f, project->getShapeHistory());
+    pick.tag = ftr::InputType::createIndexedTag(prefix, out.size());
+    out.push_back(pick);
+    project->connectInsert(f->getId(), feature->getId(), {pick.tag});
+  };
+  return out;
+}
+
+void Revolve::setToAxisPicks(const std::vector<slc::Message> &profileMessages, const std::vector<slc::Message> &axisMessages)
+{
+  project->clearAllInputs(feature->getId());
+  feature->setAxisType(ftr::Revolve::AxisType::Picks);
+  feature->setPicks(connect(profileMessages, ftr::InputType::target));
+  feature->setAxisPicks(connect(axisMessages, ftr::Revolve::axisName));
+}
+
+
+void Revolve::setToAxisParameter(const std::vector<slc::Message> &profileMessages)
+{
+  project->clearAllInputs(feature->getId());
+  feature->setAxisType(ftr::Revolve::AxisType::Parameter);
+  feature->setPicks(connect(profileMessages, ftr::InputType::target));
 }
 
 void Revolve::go()
 {
-  shouldUpdate = false;
   const slc::Containers &containers = eventHandler->getSelections();
-  if (containers.empty())
+  if (!containers.empty())
   {
-    node->sendBlocked(msg::buildStatusMessage("Wrong pre selection for revolve", 2.0));
-    return;
-  }
-  
-  //target/shape
-  tls::Connector connector;
-  ftr::Base *tf = project->findFeature(containers.front().featureId);
-  if (!tf->hasAnnex(ann::Type::SeerShape))
-  {
-    node->sendBlocked(msg::buildStatusMessage("First pre-selection needs to be shape", 2.0));
-    return;
-  }
-  ftr::Pick shapePick = tls::convertToPick(containers.front(), tf->getAnnex<ann::SeerShape>(), project->getShapeHistory());
-  shapePick.tag = ftr::InputType::createIndexedTag(ftr::InputType::target, 0);
-  connector.add(tf->getId(), shapePick.tag);
-  osg::Vec4 color = tf->getColor();
-  
-  //axis
-  ftr::Picks axisPicks;
-  auto addAxisPick = [&](const slc::Container &cIn, const std::string &tagIn) -> ftr::Base*
-  {
-    ftr::Base *bf = project->findFeature(cIn.featureId);
-    assert(bf);
-    ftr::Pick tp = tls::convertToPick(cIn, *bf, project->getShapeHistory());
-    tp.tag = tagIn;
-    axisPicks.push_back(tp);
-    connector.add(bf->getId(), tp.tag);
-    return bf;
-  };
-  if (containers.size() == 2)
-  {
-    ftr::Base *bf = addAxisPick(containers.at(1), ftr::InputType::createIndexedTag(ftr::Revolve::axisName, 0));
-    if
-    (
-      slc::isObjectType(containers.at(1).selectionType)
-      && bf->getType() != ftr::Type::DatumAxis
-    )
+    slc::Messages profiles;
+    const ftr::Base *pfIn = project->findFeature(containers.front().featureId);
+    if (pfIn->hasAnnex(ann::Type::SeerShape))
+      profiles.push_back(slc::EventHandler::containerToMessage(containers.front()));
+    
+    slc::Messages directions;
+    if (containers.size() == 2)
     {
-      node->sendBlocked(msg::buildStatusMessage("Wrong feature type for 1 pick axis", 2.0));
-      return;
+      if (containers.back().featureType == ftr::Type::DatumAxis)
+        directions.push_back(slc::EventHandler::containerToMessage(containers.back()));
+      else if (!containers.back().isPointType())
+      {
+        const ftr::Base *dfIn = project->findFeature(containers.back().featureId);
+        if (dfIn->hasAnnex(ann::Type::SeerShape))
+        {
+          TopoDS_Shape ds;
+          const ann::SeerShape &ss = dfIn->getAnnex<ann::SeerShape>();
+          if (containers.back().shapeId.is_nil())
+          {
+            auto ncc = ss.useGetNonCompoundChildren();
+            if (!ncc.empty())
+              ds = ncc.front();
+          }
+          else
+            ds = ss.getOCCTShape(containers.back().shapeId);
+          auto result = occt::gleanAxis(ds);
+          if (result.second)
+            directions.push_back(slc::EventHandler::containerToMessage(containers.back()));
+        }
+      }
+    }
+    else if (containers.size() == 3 && containers.at(1).isPointType() && containers.at(2).isPointType())
+    {
+      directions.push_back(slc::EventHandler::containerToMessage(containers.at(1)));
+      directions.push_back(slc::EventHandler::containerToMessage(containers.at(2)));
+    }
+    
+    if (!profiles.empty())
+    {
+      if (directions.empty())
+      {
+        setToAxisParameter(profiles);
+        node->sendBlocked(msg::buildStatusMessage("Revolve added with parameter axis", 2.0));
+        node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+        return;
+      }
+      if (directions.size() == 1 || directions.size() == 2)
+      {
+        setToAxisPicks(profiles, directions);
+        node->sendBlocked(msg::buildStatusMessage("Revolve added with picked axis", 2.0));
+        node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+        return;
+      }
     }
   }
-  else if (containers.size() == 3)//3 picks. need 2 points
-  {
-    if (!slc::isPointType(containers.at(1).selectionType) || !slc::isPointType(containers.at(2).selectionType))
-    {
-      node->sendBlocked(msg::buildStatusMessage("Need 2 points for 2 pick axis definition", 2.0));
-      return;
-    }
-    addAxisPick(containers.at(1), ftr::InputType::createIndexedTag(ftr::Revolve::axisName, 0));
-    addAxisPick(containers.at(2), ftr::InputType::createIndexedTag(ftr::Revolve::axisName, 1));
-  }
-  
-  std::shared_ptr<ftr::Revolve> revolve(new ftr::Revolve());
-  revolve->setPicks(ftr::Picks{shapePick});
-  if (!axisPicks.empty())
-    revolve->setAxisPicks(axisPicks); //sets the appropriate type also.
-  revolve->setColor(color);
-  project->addFeature(revolve);
-  for (const auto &p : connector.pairs)
-    project->connectInsert(p.first, revolve->getId(), {p.second});
   
   node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
-  shouldUpdate = true;
+  viewBase = std::make_unique<cmv::Revolve>(this);
 }

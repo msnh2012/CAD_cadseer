@@ -20,6 +20,7 @@
 #ifndef CMD_EXTRUDE_H
 #define CMD_EXTRUDE_H
 
+#include "command/cmdleafmanager.h"
 #include "command/cmdbase.h"
 
 namespace ftr{class Extrude; struct Pick; typedef std::vector<Pick> Picks;}
@@ -49,6 +50,7 @@ namespace cmd
     void localUpdate();
   private:
     bool firstRun = true;
+    cmd::LeafManager leafManager;
     void go();
     ftr::Picks connect(const std::vector<slc::Message>&, const std::string&);
   };
