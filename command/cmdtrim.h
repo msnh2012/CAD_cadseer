@@ -20,7 +20,10 @@
 #ifndef CMD_TRIM_H
 #define CMD_TRIM_H
 
+#include "command/cmdleafmanager.h"
 #include "command/cmdbase.h"
+
+namespace ftr{class Trim;}
 
 namespace cmd
 {
@@ -30,14 +33,22 @@ namespace cmd
   class Trim : public Base
   {
     public:
+      ftr::Trim *feature = nullptr;
+      
       Trim();
+      Trim(ftr::Base*);
       virtual ~Trim() override;
       
       virtual std::string getCommandName() override{return "Trim";}
       virtual std::string getStatusMessage() override;
       virtual void activate() override;
       virtual void deactivate() override;
+      
+      void setSelections(const std::vector<slc::Message>&, const std::vector<slc::Message>&);
+      void localUpdate();
     private:
+      bool firstRun = true;
+      cmd::LeafManager leafManager;
       void go();
   };
 }

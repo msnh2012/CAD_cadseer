@@ -101,8 +101,13 @@ void LeafManager::rewind()
   }
   
   //set current state.
-  for (const auto *f : p->getPayload(stow->featureId).getFeatures(""))
-    p->setCurrentLeaf(f->getId());
+  for (const auto &id : p->getRewindInputs(stow->featureId))
+    p->setCurrentLeaf(id);
+  
+  //rewind inputs are cleansed to remove redundant calls, so it can't be used it for setting visibility.
+  for (const auto *ple : p->getPayload(stow->featureId).getFeatures(""))
+    app::instance()->messageSlot(msg::buildShowThreeD(ple->getId()));
+  
   //editing feature is hidden by call setCurrentLeaf on inputs, so turn it back on for user.
   app::instance()->messageSlot(msg::buildShowThreeD(stow->featureId));
 }

@@ -63,6 +63,7 @@ struct %CLASSNAME%::Stow
   cmv::%CLASSNAME% *view;
 //   dlg::SelectionWidget *selectionWidget = nullptr;
 //   cmv::ParameterWidget *parameterWidget = nullptr;
+//   std::vector<prm::Observer> observers;
   
   Stow(cmd::%CLASSNAME% *cIn, cmv::%CLASSNAME% *vIn)
   : command(cIn)
@@ -76,7 +77,7 @@ struct %CLASSNAME%::Stow
     settings.endGroup();
     
     loadFeatureData();
-//     stow->selectionWidget->activate(0);
+//     selectionWidget->activate(0);
   }
   
   void buildGui()

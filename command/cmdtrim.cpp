@@ -26,30 +26,97 @@
 #include "parameter/prmparameter.h"
 #include "feature/ftrinputtype.h"
 #include "feature/ftrtrim.h"
+#include "commandview/cmvmessage.h"
+#include "commandview/cmvtrim.h"
 #include "command/cmdtrim.h"
 
 using boost::uuids::uuid;
 
 using namespace cmd;
 
-Trim::Trim() : Base() {}
-Trim::~Trim() {}
+Trim::Trim()
+: Base()
+, leafManager()
+{
+  auto trim = std::make_shared<ftr::Trim>();
+  project->addFeature(trim);
+  feature = trim.get();
+  node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
+}
+
+Trim::Trim(ftr::Base *fIn)
+: Base()
+, leafManager(fIn)
+{
+  feature = dynamic_cast<ftr::Trim*>(fIn);
+  assert(feature);
+  firstRun = false; //bypass go() in activate.
+  viewBase = std::make_unique<cmv::Trim>(this);
+  node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+}
+
+Trim::~Trim() = default;
 
 std::string Trim::getStatusMessage()
 {
-  return QObject::tr("Select feature or geometry for trim feature").toStdString();
+  return QObject::tr("Select object for trim feature").toStdString();
 }
 
 void Trim::activate()
 {
   isActive = true;
-  go();
-  sendDone();
+  leafManager.rewind();
+  if (firstRun)
+  {
+    firstRun = false;
+    go();
+  }
+  if (viewBase)
+  {
+    feature->setEditing();
+    cmv::Message vm(viewBase.get(), viewBase->getPaneWidth());
+    msg::Message out(msg::Mask(msg::Request | msg::Command | msg::View | msg::Show), vm);
+    node->sendBlocked(out);
+  }
+  else
+    sendDone();
 }
 
 void Trim::deactivate()
 {
   isActive = false;
+  if (viewBase)
+  {
+    feature->setNotEditing();
+    msg::Message out(msg::Mask(msg::Request | msg::Command | msg::View | msg::Hide));
+    node->sendBlocked(out);
+  }
+  leafManager.fastForward();
+}
+
+void Trim::setSelections(const std::vector<slc::Message> &target, const std::vector<slc::Message> &tool)
+{
+  project->clearAllInputs(feature->getId());
+  
+  if (target.empty() || tool.empty())
+    return;
+  
+  project->connectInsert(target.front().featureId, feature->getId(), {ftr::InputType::target});
+  project->connect(tool.front().featureId, feature->getId(), {ftr::InputType::tool});
+  project->connect(tool.front().featureId, feature->getId(), {ftr::InputType::sever}); //break alter chain
+  
+  node->sendBlocked(msg::buildHideThreeD(target.front().featureId));
+  node->sendBlocked(msg::buildHideOverlay(target.front().featureId));
+  ftr::Base *t = project->findFeature(target.front().featureId);
+  feature->setColor(t->getColor());
+}
+
+void Trim::localUpdate()
+{
+  feature->updateModel(project->getPayload(feature->getId()));
+  feature->updateVisual();
+  feature->setModelDirty();
+  node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
 }
 
 void Trim::go()
@@ -61,23 +128,16 @@ void Trim::go()
     if (c.selectionType == slc::Type::Object)
       filtered.push_back(c);
   }
-  if (filtered.size() < 2)
+  if (filtered.size() == 2)
   {
-    node->sendBlocked(msg::buildStatusMessage("Wrong pre selection for trim", 2.0));
-    shouldUpdate = false;
+    std::vector<slc::Message> targets(1, slc::EventHandler::containerToMessage(filtered.front()));
+    std::vector<slc::Message> tools(1, slc::EventHandler::containerToMessage(filtered.back()));
+    setSelections(targets, tools);
+    node->sendBlocked(msg::buildStatusMessage("Trim added", 2.0));
+    node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
     return;
   }
   
-  std::shared_ptr<ftr::Trim> trim(new ftr::Trim());
-  project->addFeature(trim);
-  ftr::InputType iType{ftr::InputType::target};
-  for (const auto &c : filtered)
-  {
-    project->connect(c.featureId, trim->getId(), iType);
-    node->sendBlocked(msg::buildHideThreeD(c.featureId));
-    node->sendBlocked(msg::buildHideOverlay(c.featureId));
-    iType = ftr::InputType{ftr::InputType::tool};
-  }
-  
   node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  viewBase = std::make_unique<cmv::Trim>(this);
 }

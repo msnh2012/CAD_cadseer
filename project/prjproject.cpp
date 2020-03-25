@@ -470,9 +470,10 @@ void Project::updateLeafStatus()
     stow->setFeatureNonLeaf(*its.first);
   
   ActiveFilter<RemovedGraph> activeFilter(removedGraph);
+  SeverEdgeFilter<RemovedGraph> severFilter(removedGraph);
   
-  typedef boost::filtered_graph<RemovedGraph, boost::keep_all, ActiveFilter<RemovedGraph> > FilteredGraphType;
-  FilteredGraphType filteredGraph(removedGraph, boost::keep_all(), activeFilter);
+  typedef boost::filtered_graph<RemovedGraph, decltype(severFilter), decltype(activeFilter) > FilteredGraphType;
+  FilteredGraphType filteredGraph(removedGraph, severFilter, activeFilter);
   
   for (auto its = boost::vertices(filteredGraph); its.first != its.second; ++its.first)
   {
@@ -1550,7 +1551,7 @@ std::vector<uuid> Project::getLeafChildren(const uuid &parentIn) const
 
 /*! @brief Get the current leaf id of all related paths.
  * 
- * @param editFeature is the source of exploration.
+ * @param editFeatureId is the source of exploration.
  * @return input leaf ids topo sorted.
  */
 std::vector<uuid> Project::getRelatedLeafs(const uuid &editFeatureId) const
@@ -1576,6 +1577,72 @@ std::vector<uuid> Project::getRelatedLeafs(const uuid &editFeatureId) const
   }
   
   return out;
+}
+
+/*! @brief Get the 'rewind' ids of input features.
+ * 
+ * @param editFeatureId is the feature that is being edited.
+ * @return Input ids to make current. Not topo sorted, but shouldn't need to be.
+ * 
+ * @details When rewinding for editing a feature, we need to 
+ * 'setCurrentLeaf' on the inputs so selection is intuitive (not hidden).
+ * A problem arises when feature inputs are dependent on each other. We can
+ * end up having inactive inputs and confusion. So we can topo sort the inputs
+ * so we always 'make current' the 'closest' input to ensure inputs active state.
+ * That works, however there is some fallout by 'making current' an older input than
+ * needed. We can end up having inactive features later in the graph. Not a huge deal
+ * but ugly and unnecessary. So we filter a reversed graph for each input, topo sort
+ * and look for other inputs to avoid. see 'editWithRewind.svg'
+ */
+std::vector<uuid> Project::getRewindInputs(const uuid &editFeatureId) const
+{
+  assert(stow->hasFeature(editFeatureId));
+  Vertex editFeatureVertex = stow->findVertex(editFeatureId);
+  
+  RemovedGraph baseGraph = buildRemovedGraph(stow->graph);
+  ReversedGraph rBaseGraph = boost::make_reverse_graph(baseGraph);
+  
+  //get a topo sorted list from the reverse graph. passed in vertex is an input of the editing feature.
+  auto sortedInput = [&](Vertex v) -> std::vector<Vertex>
+  {
+    Vertices limitVertices;
+    gu::BFSLimitVisitor<Vertex>limitVisitor(limitVertices);
+    boost::breadth_first_search(rBaseGraph, v, visitor(limitVisitor));
+    gu::SubsetFilter<decltype(rBaseGraph)> filter(rBaseGraph, limitVertices);
+    boost::filtered_graph<decltype(rBaseGraph), boost::keep_all, decltype(filter)> filteredGraph(rBaseGraph, boost::keep_all(), filter);
+    
+    std::vector<Vertex> sorted;
+    boost::topological_sort(filteredGraph, std::back_inserter(sorted));
+    //topo sort is reversed so remove back to remove the edit feature input
+    assert(v == sorted.back());
+    sorted.pop_back();
+    return sorted;
+  };
+  
+  //get input vertices.
+  std::vector<Vertex> adjVertices;
+  for (auto its = boost::adjacent_vertices(editFeatureVertex, rBaseGraph); its.first != its.second; ++its.first)
+    adjVertices.push_back(*its.first);
+  
+  //cleansed
+  std::vector<Vertex> adjVerticesCleansed = adjVertices;
+  auto clean = [&](Vertex v)
+  {
+    auto it = std::find(adjVerticesCleansed.begin(), adjVerticesCleansed.end(), v);
+    if (it != adjVerticesCleansed.end())
+      adjVerticesCleansed.erase(it);
+  };
+  for (auto v : adjVertices)
+  {
+    for (auto s : sortedInput(v))
+      clean(s);
+  }
+  
+  //get output ids
+  std::vector<uuid> outIds;
+  for (const auto &v : adjVerticesCleansed)
+    outIds.push_back(baseGraph[v].feature->getId());
+  return outIds;
 }
 
 void Project::setFeatureActive(const boost::uuids::uuid &idIn)

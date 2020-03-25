@@ -27,8 +27,8 @@ namespace ftr
   //note feature state data is divided between each feature
   //and the project. project stores Inactive and NonLeaf.
   //Feature stores the rest. Both use this type. 
-  //feature uses 00xxxx
-  //project uses xx0000
+  //feature uses 000xxxxx
+  //project uses xxx00000
   //dagview combines them.
   typedef std::bitset<8> State;
   namespace StateOffset
@@ -37,13 +37,13 @@ namespace ftr
     static const std::size_t VisualDirty =      1;
     static const std::size_t Failure =          2;
     static const std::size_t Skipped =          3;
-    static const std::size_t Inactive =         4;
-    static const std::size_t NonLeaf =          5;
-    static const std::size_t Unused =           6;
-    static const std::size_t Loading =          7;
+    static const std::size_t Editing =          4;
+    static const std::size_t Inactive =         5; //stored in project
+    static const std::size_t NonLeaf =          6; //stored in project
+    static const std::size_t Loading =          7; //used in project
     
-    static const State FeatureMask("00001111");
-    static const State ProjectMask("00110000");
+    static const State FeatureMask("00011111");
+    static const State ProjectMask("01100000");
   }
 }
 

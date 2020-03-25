@@ -477,7 +477,7 @@ void Model::stateUpdate(Vertex vIn)
   else
     stow->graph[vIn].stateIconShared->setPixmap(passPixmap);
 
-  if (cState.test(ftr::StateOffset::NonLeaf))
+  if (cState.test(ftr::StateOffset::NonLeaf) && (!cState.test(ftr::StateOffset::Editing)))
   {
     if (stow->graph[vIn].visibleIconShared->scene())
       removeItem(stow->graph[vIn].visibleIconShared.get());

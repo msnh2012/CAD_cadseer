@@ -93,6 +93,9 @@ public:
   bool isHiddenOverlay() const;
   bool isSuccess() const {return !(state.test(ftr::StateOffset::Failure));}
   bool isFailure() const {return state.test(ftr::StateOffset::Failure);}
+  void setEditing();
+  void setNotEditing();
+  bool isEditing() const {return state.test(ftr::StateOffset::Editing);}
   void setName(const QString &nameIn);
   QString getName() const {return name;}
   ftr::State getState() const {return state;}

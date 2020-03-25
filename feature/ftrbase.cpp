@@ -181,6 +181,22 @@ void Base::setNotSkipped()
   sendStateMessage(StateOffset::Skipped);
 }
 
+void Base::setEditing()
+{
+  if (isEditing())
+    return;
+  state.set(StateOffset::Editing, true);
+  sendStateMessage(StateOffset::Editing);
+}
+
+void Base::setNotEditing()
+{
+  if (!isEditing())
+    return;
+  state.set(StateOffset::Editing, false);
+  sendStateMessage(StateOffset::Editing);
+}
+
 void Base::sendStateMessage(std::size_t stateOffset)
 {
   ftr::Message fMessage(id, state, stateOffset);

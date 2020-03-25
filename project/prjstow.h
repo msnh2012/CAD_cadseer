@@ -183,16 +183,16 @@ namespace prj
   };
   
   template <typename GraphTypeIn>
-  struct TargetEdgeFilter
+  struct SeverEdgeFilter
   {
-    TargetEdgeFilter() : graph(nullptr) {}
-    TargetEdgeFilter(const GraphTypeIn &graphIn) : graph(&graphIn) {}
+    SeverEdgeFilter() : graph(nullptr) {}
+    SeverEdgeFilter(const GraphTypeIn &graphIn) : graph(&graphIn) {}
     template <typename EdgeType>
     bool operator()(const EdgeType& edgeIn) const
     {
       if (!graph)
         return false;
-      return (*graph)[edgeIn].inputType.has(ftr::InputType::target);
+      return !(*graph)[edgeIn].inputType.has(ftr::InputType::sever);
     }
     const GraphTypeIn *graph;
   };

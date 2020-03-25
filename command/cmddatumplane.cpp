@@ -80,6 +80,7 @@ void DatumPlane::activate()
   }
   if (viewBase)
   {
+    feature->setEditing();
     cmv::Message vm(viewBase.get(), viewBase->getPaneWidth());
     msg::Message out(msg::Mask(msg::Request | msg::Command | msg::View | msg::Show), vm);
     node->sendBlocked(out);
@@ -93,6 +94,7 @@ void DatumPlane::deactivate()
   isActive = false;
   if (viewBase)
   {
+    feature->setNotEditing();
     msg::Message out(msg::Mask(msg::Request | msg::Command | msg::View | msg::Hide));
     node->sendBlocked(out);
   }

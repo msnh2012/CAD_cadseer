@@ -98,6 +98,7 @@ public:
     ftr::UpdatePayload getPayload(const boost::uuids::uuid&) const;
     std::vector<boost::uuids::uuid> getLeafChildren(const boost::uuids::uuid&) const; //obsolete
     std::vector<boost::uuids::uuid> getRelatedLeafs(const boost::uuids::uuid&) const;
+    std::vector<boost::uuids::uuid> getRewindInputs(const boost::uuids::uuid&) const;
     
     expr::Manager& getManager(){return *expressionManager;}
     GitManager& getGitManager(){return *gitManager;}
