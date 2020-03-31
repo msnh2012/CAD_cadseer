@@ -37,7 +37,7 @@ namespace ftr
     virtual Type getType() const override {return Type::Subtract;}
     virtual const std::string& getTypeString() const override {return toString(Type::Subtract);}
     virtual const QIcon& getIcon() const override {return icon;}
-    virtual Descriptor getDescriptor() const override {return Descriptor::Alter;}
+    virtual Descriptor getDescriptor() const override {return Descriptor::Create;}
     
     virtual void serialWrite(const boost::filesystem::path&) override;
     void serialRead(const prj::srl::sbts::Subtract&);

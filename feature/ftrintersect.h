@@ -37,7 +37,7 @@ namespace ftr
     virtual Type getType() const override {return Type::Intersect;}
     virtual const std::string& getTypeString() const override {return toString(Type::Intersect);}
     virtual const QIcon& getIcon() const override {return icon;}
-    virtual Descriptor getDescriptor() const override {return Descriptor::Alter;}
+    virtual Descriptor getDescriptor() const override {return Descriptor::Create;}
     
     virtual void serialWrite(const boost::filesystem::path&) override;
     void serialRead(const prj::srl::inss::Intersect&);

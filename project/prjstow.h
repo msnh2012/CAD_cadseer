@@ -23,11 +23,13 @@
 #include <memory>
 #include <vector>
 
+#include <boost/graph/graphviz.hpp>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/filtered_graph.hpp>
 #include <boost/graph/reverse_graph.hpp>
 #include <boost/graph/breadth_first_search.hpp>
 #include <boost/graph/depth_first_search.hpp>
+#include <boost/graph/connected_components.hpp>
 #include <boost/uuid/uuid.hpp>
 
 #include "feature/ftrstates.h"
@@ -35,6 +37,8 @@
 #include "feature/ftrupdatepayload.h"
 #include "tools/graphtools.h"
 #include "globalutilities.h"
+
+using boost::uuids::uuid;
 
 namespace prm{class Parameter;}
 namespace ftr{class Base;}
@@ -70,8 +74,10 @@ namespace prj
     ~Stow();
     
     Vertex addFeature(std::shared_ptr<ftr::Base> feature);
+    void removeFeature(Vertex);
     Edge connect(const Vertex &parentIn, const Vertex &childIn, const ftr::InputType &type);
     void sendConnectMessage(const Vertex&, const Vertex&, const ftr::InputType&) const;
+    void clearVertex(const Vertex&);
     void disconnect(const Edge&);
     void sendDisconnectMessage(const Vertex&, const Vertex&, const ftr::InputType&) const;
     void removeEdges(Edges);
@@ -98,6 +104,48 @@ namespace prj
     void sendStateMessage(const Vertex&, std::size_t);
   };
   
+  template <class GraphEW>
+  class Edge_writer {
+  public:
+    Edge_writer(const GraphEW &graphEWIn) : graphEW(graphEWIn) {}
+    template <class EdgeW>
+    void operator()(std::ostream& out, const EdgeW& edgeW) const
+    {
+      out << "[label=\"";
+      for (const auto &input : graphEW[edgeW].inputType.getTags())
+        out << input << "\\n";
+      out << "\"]";
+    }
+  private:
+    const GraphEW &graphEW;
+  };
+
+  template <class GraphVW>
+  class Vertex_writer {
+  public:
+    Vertex_writer(const GraphVW &graphVWIn) : graphVW(graphVWIn) {}
+    template <class VertexW>
+    void operator()(std::ostream& out, const VertexW& vertexW) const
+    {
+      out << 
+          "[label=\"" <<
+          graphVW[vertexW].feature->getName().toUtf8().data() << "\\n" <<
+          gu::idToString(graphVW[vertexW].feature->getId()) << "\\n" <<
+          "Descriptor: " << ftr::getDescriptorString(graphVW[vertexW].feature->getDescriptor()) << 
+          "\"]";
+    }
+  private:
+    const GraphVW &graphVW;
+  };
+  
+  template <class GraphIn>
+  void outputGraphviz(const GraphIn &graphIn, const std::string &filePath)
+  {
+    std::ofstream file(filePath.c_str());
+    boost::write_graphviz(file, graphIn, Vertex_writer<GraphIn>(graphIn),
+                          Edge_writer<GraphIn>(graphIn));
+  }
+  
   //works with straight adjacency iterator. if parent map wanted, pass in reversed graph.
   //dont forget to filter out removed features.
   template<typename G, typename V>
@@ -113,89 +161,156 @@ namespace prj
     }
     return out;
   }
-  
+    
   template <typename G>
-  struct RemovedFilter
+  struct ComboFilterVertex
   {
-    RemovedFilter() : g(nullptr) { }
-    RemovedFilter(const G &gIn) : g(&gIn) { }
+    ComboFilterVertex() : g(nullptr) { }
+    ComboFilterVertex(const G &gIn) : g(&gIn) { }
     template <typename V>
     bool operator()(const V &vIn) const
     {
       if(!g)
         return false;
-      return (*g)[vIn].alive;
+      
+      bool localRemove = true;
+      if (removed)
+        localRemove = (*g)[vIn].alive;
+      
+      bool localActive = true;
+      if (active)
+        localActive = !(*g)[vIn].state.test(ftr::StateOffset::Inactive);
+      
+      bool localSubset = true;
+      if (!vertexSubset.empty())
+        localSubset = std::find(vertexSubset.begin(), vertexSubset.end(), vIn) != vertexSubset.end();
+      
+      return localRemove && localActive && localSubset;
     }
     const G *g = nullptr;
+    bool removed = true; //filter for alive vertices. always yes.
+    bool active = false; //filter for active vertices. no by default.
+    std::vector<typename G::vertex_descriptor> vertexSubset; //vertices to keep. if empty keeping all.
   };
-  typedef boost::filtered_graph<Graph, boost::keep_all, RemovedFilter<Graph>>RemovedGraph;
+    
+  template <typename G>
+  struct ComboFilterEdge
+  {
+    ComboFilterEdge() : g(nullptr) { }
+    ComboFilterEdge(const G &gIn) : g(&gIn) { }
+    template <typename E>
+    bool operator()(const E &eIn) const
+    {
+      if(!g)
+        return false;
+      
+      bool localSever = true;
+      if (sever)
+        localSever = !(*g)[eIn].inputType.has(ftr::InputType::sever);
+      
+      bool localSubset = true;
+      if (!edgeSubset.empty())
+        localSubset = std::find(edgeSubset.begin(), edgeSubset.end(), eIn) != edgeSubset.end();
+      
+      return localSever && localSubset;
+    }
+    const G *g = nullptr;
+    bool sever = false; //filter sever edges out. no by default
+    std::vector<typename G::edge_descriptor> edgeSubset; //edges to keep. if empty keeping all.
+  };
+  
+  using RemovedGraph = boost::filtered_graph<Graph, boost::keep_all, ComboFilterVertex<Graph>>;
   inline RemovedGraph buildRemovedGraph(Graph& gIn)
   {
-    RemovedFilter<Graph> f(gIn);
-    return RemovedGraph(gIn, boost::keep_all(), f);
+    ComboFilterVertex<Graph> f(gIn); //filters for alive vertices by default.
+    RemovedGraph out(gIn, boost::keep_all(), f);
+    return out;
   }
   
-  typedef boost::reverse_graph<RemovedGraph, RemovedGraph&> ReversedGraph;
-  
-  inline std::vector<Vertex> weakComponents(Graph& gIn, Vertex v)
+  using RemovedSeveredGraph = boost::filtered_graph<Graph, ComboFilterEdge<Graph>, ComboFilterVertex<Graph>>;
+  inline RemovedSeveredGraph buildRemovedSeveredGraph(Graph &gIn)
   {
-    RemovedGraph baseGraph = buildRemovedGraph(gIn);
-    ReversedGraph rBaseGraph = boost::make_reverse_graph(baseGraph);
-    std::vector<Vertex> vertices;
-    gu::BFSLimitVisitor<Vertex> limitVisitor(vertices);
-    boost::breadth_first_search(rBaseGraph, v, boost::visitor(limitVisitor));
-    
-    //find the leafs in the reversed graph = roots in forward graph. 
-    std::vector<Vertex> roots;
-    for (const auto &v : vertices)
-    {
-      if (boost::out_degree(v, rBaseGraph) == 0)
-        roots.push_back(v);
-    }
-    
-    //travel all forward roots to get all components
-    std::vector<Vertex> all;
-    for (const auto &v : roots)
-    {
-      std::vector<Vertex> current;
-      gu::BFSLimitVisitor<Vertex> visitor(current);
-      boost::breadth_first_search(baseGraph, v, boost::visitor(visitor));
-      all.insert(all.end(), current.begin(), current.end());
-    }
-    gu::uniquefy(all);
-    return all;
+    ComboFilterVertex<Graph> vf(gIn);
+    ComboFilterEdge<Graph> ef(gIn);
+    ef.sever = true;
+    RemovedSeveredGraph out(gIn, ef, vf);
+    return out;
   }
   
+  using ReversedGraph = boost::reverse_graph<RemovedGraph, RemovedGraph&>;
   
-  template <typename GraphTypeIn>
-  struct ActiveFilter
-  {
-    ActiveFilter() : graph(nullptr) { }
-    ActiveFilter(const GraphTypeIn &graphIn) : graph(&graphIn) { }
-    template <typename VertexType>
-    bool operator()(const VertexType& vertexIn) const
-    {
-      if(!graph)
-        return false;
-      return !(*graph)[vertexIn].state.test(ftr::StateOffset::Inactive);
-    }
-    const GraphTypeIn *graph;
-  };
   
-  template <typename GraphTypeIn>
-  struct SeverEdgeFilter
+  template <typename G>
+  std::vector<typename boost::graph_traits<G>::vertex_descriptor> getWeakComponents(const G& gIn, typename boost::graph_traits<G>::vertex_descriptor vIn)
   {
-    SeverEdgeFilter() : graph(nullptr) {}
-    SeverEdgeFilter(const GraphTypeIn &graphIn) : graph(&graphIn) {}
-    template <typename EdgeType>
-    bool operator()(const EdgeType& edgeIn) const
+    //this sucks! the template nightmare that is boost graph
+    //and they don't have an adapter for directed to undirected.
+    //so we copy to a temp undirected graph so we can use connected_components.
+    //should we map ids to vertex for fast lookup?
+    boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, uuid> localGraph;
+    auto findNewVertex = [&](const uuid &idIn) -> decltype(localGraph)::vertex_descriptor
     {
-      if (!graph)
-        return false;
-      return !(*graph)[edgeIn].inputType.has(ftr::InputType::sever);
+      auto dummy = decltype(localGraph)::null_vertex();
+      for (auto nv : boost::make_iterator_range(boost::vertices(localGraph)))
+      {
+        if (localGraph[nv] == idIn)
+          return nv;
+      }
+      //we shouldn't get here.
+      assert(dummy != decltype(localGraph)::null_vertex());
+      return dummy;
+    };
+    
+    for (auto ov : boost::make_iterator_range(boost::vertices(gIn)))
+    {
+      auto nv = boost::add_vertex(localGraph);
+      localGraph[nv] = gIn[ov].feature->getId();
     }
-    const GraphTypeIn *graph;
-  };
+    for (auto oe : boost::make_iterator_range(boost::edges(gIn)))
+    {
+      uuid sourceId = gIn[boost::source(oe, gIn)].feature->getId();
+      uuid targetId = gIn[boost::target(oe, gIn)].feature->getId();
+      auto sourceVertex = findNewVertex(sourceId);
+      auto targetVertex = findNewVertex(targetId);
+      boost::add_edge(sourceVertex, targetVertex, localGraph);
+    }
+    
+    //now we should have a duplicate undirected graph
+    auto baseVertex = findNewVertex(gIn[vIn].feature->getId());
+    //types with component map are kind of FUBAR.
+    //vertex_descriptor are indexes of map and value is the group index.
+    std::vector<std::size_t> component(boost::num_vertices(localGraph));
+    std::size_t cc = connected_components(localGraph, &component[0]);
+    std::vector<std::vector<std::size_t>> components(cc);
+    boost::optional<std::size_t> theGroup;
+    for (std::size_t index = 0; index < component.size(); ++index)
+    {
+      components[component[index]].push_back(index);
+      if (index == baseVertex)
+        theGroup = component[index];
+    }
+    assert(theGroup);
+    
+    std::vector<decltype(vIn)> out;
+    auto findOldVertex = [&](const uuid& idIn)
+    {
+      boost::optional<decltype(vIn)> dummy;
+      for (auto v : boost::make_iterator_range(boost::vertices(gIn)))
+      {
+        if (gIn[v].feature->getId() == idIn)
+        {
+          dummy = v;
+          break;
+        }
+      }
+      assert(dummy);
+      out.push_back(dummy.get());
+    };
+    for (auto v : components[theGroup.get()])
+      findOldVertex(localGraph[v]);
+    
+    return out;
+  }
   
   template <typename G, typename V>
   std::vector<std::vector<V>> getAllPaths(V source, V target, G graph)

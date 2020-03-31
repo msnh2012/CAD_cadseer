@@ -301,107 +301,181 @@ void Project::addFeature(std::shared_ptr<ftr::Base> feature)
 void Project::removeFeature(const uuid& idIn)
 {
   Vertex vertex = stow->findVertex(idIn);
-  std::shared_ptr<ftr::Base> feature = stow->graph[vertex].feature;
-  
-  //don't block before this dirty call or this won't trigger the dirty children.
-  feature->setModelDirty(); //this will make all children dirty.
+  stow->graph[vertex].feature->setModelDirty(); //this will make all children dirty. Do before block.
   
   //shouldn't need anymore messages into project for this function call.
   auto block = node->createBlocker().front();
   
-  RemovedGraph removedGraph = buildRemovedGraph(stow->graph); //children
-  ReversedGraph reversedGraph = boost::make_reverse_graph(removedGraph); //parents
+  auto workGraph = buildRemovedSeveredGraph(stow->graph); //removed and Severed
+  auto workGraphReversed = boost::make_reverse_graph(workGraph);
   
-  //for now all children get connected to target parent.
-  if (boost::in_degree(vertex, stow->graph) > 0)
+  //results are based upon parent and child count and create vs alter feature. See delete.svg
+  //note that we counting from a 'severed' graph.
+  auto parentCount = boost::in_degree(vertex, workGraph);
+  std::cout << "parent count: " << parentCount << std::endl;
+//   auto childCount = boost::out_degree(vertex, workGraph);
+  
+  
+  //edge from parent to self will be deleted.
+  //edge from self to child will be removed and replace with edge from parent to child with copied tags.
+  //parent child refer to forward graph.
+  //only one level deep! No skipping of 'generations'.
+  auto switchChildToParent = [&](Vertex parent, Vertex self, Vertex child)
   {
-    //default to first parent.
-    Vertex targetParent = NullVertex();
-    for (auto its = boost::adjacent_vertices(vertex, reversedGraph); its.first != its.second; ++its.first)
-    {
-      if (targetParent == NullVertex())
-        targetParent = *its.first;
-      auto ce = boost::edge(vertex, *its.first, reversedGraph);
-      assert(ce.second);
-      if (reversedGraph[ce.first].inputType.has(ftr::InputType::target))
-      {
-        targetParent = *its.first;
-        break;
-      }
-    }
-    for (auto its = boost::adjacent_vertices(vertex, removedGraph); its.first != its.second; ++its.first)
-    {
-      auto ce = boost::edge(vertex, *its.first, removedGraph);
-      assert(ce.second);
-      
-      stow->connect(targetParent, *its.first, removedGraph[ce.first].inputType);
-      if (!feature->hasAnnex(ann::Type::SeerShape))
-        continue;
-      //update ids.
-      for (const uuid &staleId : feature->getAnnex<ann::SeerShape>().getAllShapeIds())
-      {
-        uuid freshId = shapeHistory->devolve(stow->graph[targetParent].feature->getId(), staleId);
-        if (freshId.is_nil())
-          continue;
-        stow->graph[*its.first].feature->replaceId(staleId, freshId, *shapeHistory);
-      }
-    }
-  }
-  
-  for (auto its = boost::adjacent_vertices(vertex, reversedGraph); its.first != its.second; ++its.first)
-  {
-    auto ce = boost::edge(vertex, *its.first, reversedGraph);
-    assert(ce.second);
+    auto parentEdgePair = boost::edge(parent, self, workGraph);
+    assert(parentEdgePair.second); //don't set me up
+    Edge parentEdge = parentEdgePair.first;
+    auto childEdgePair = boost::edge(self, child, workGraph);
+    assert(childEdgePair.second); //don't set me up
+    Edge childEdge = childEdgePair.first;
     
-    stow->sendDisconnectMessage(*its.first, vertex, reversedGraph[ce.first].inputType);
-    
-    //make parents have same visible state as the feature being removed.
-    if (feature->isVisible3D())
-    {
-      block.unblock();
-      node->send(msg::buildShowThreeD(reversedGraph[*its.first].feature->getId()));
-      block.block();
-    }
-    else
-      node->send(msg::buildHideThreeD(reversedGraph[*its.first].feature->getId()));
-  }
-  
-  for (auto its = boost::adjacent_vertices(vertex, removedGraph); its.first != its.second; ++its.first)
-  {
-    auto ce = boost::edge(vertex, *its.first, removedGraph);
-    assert(ce.second);
-    
-    stow->sendDisconnectMessage(vertex, *its.first, removedGraph[ce.first].inputType);
-  }
-  
-  prj::Message pMessage;
-  pMessage.feature = feature;
-  msg::Message preMessage
-  (
-    msg::Response | msg::Pre | msg::Remove | msg::Feature
-    , pMessage
-  );
-  node->send(preMessage);
-  
-  //remove file if exists.
-  assert(exists(saveDirectory));
-  path filePath = saveDirectory / feature->getFileName();
-  if (exists(filePath))
-    remove(filePath);
-  
-  boost::clear_vertex(vertex, stow->graph);
-  stow->graph[vertex].alive = false;
+    auto input = workGraph[childEdge].inputType;
+    stow->disconnect(parentEdge);
+    stow->disconnect(childEdge);
+    stow->connect(parent, child, input);
+  };
   
   //log action to git.
-  std::ostringstream gitMessage;
-  gitMessage
-    << QObject::tr("Removing feature ").toStdString()
-    << feature->getName().toStdString()
-    << ". With id: "
-    << gu::idToShortString(feature->getId());
-  gitManager->appendGitMessage(gitMessage.str());
+  auto removeGitMessage = [&](Vertex vIn)
+  {
+    std::ostringstream gitMessage;
+    const auto *lf = stow->graph[vIn].feature.get();
+    gitMessage
+      << QObject::tr("Removing feature ").toStdString()
+      << lf->getName().toStdString()
+      << ". With id: "
+      << gu::idToShortString(lf->getId());
+    gitManager->appendGitMessage(gitMessage.str());
+  };
+  
+  //remove file if exists.
+  auto removeFile = [&](Vertex vIn)
+  {
+    assert(exists(saveDirectory));
+    path filePath = saveDirectory / stow->graph[vIn].feature->getFileName();
+    if (exists(filePath))
+      remove(filePath);
+  };
+  
+  //bundle of calls for remove operation
+  auto localRemove = [&](Vertex vIn)
+  {
+    removeGitMessage(vIn);
+    stow->clearVertex(vIn);
+    stow->removeFeature(vIn);
+    removeFile(vIn);
+  };
+  
+  //we are not considering 'sever' edges with counts.
+  //so there maybe actual 'sever' parents and or children and we have to clear those.
+  if (parentCount == 0)
+  {
+    //we can't assume a feature with no parents is a create.
+    //It might be an alter in a bad state and we don't want to walk an alter path like we do for create.
+    if (workGraph[vertex].feature->getDescriptor() == ftr::Descriptor::Create)
+    {
+      std::vector<Vertex> alters(1, vertex); //also has the root vertex which is create.
+      AlterVisitor av(alters, AlterVisitor::Create::Exclusion);
+      boost::depth_first_search(workGraph, visitor(av).root_vertex(vertex));
+      for (auto v : alters)
+        localRemove(v);
+    }
+    else if (workGraph[vertex].feature->getDescriptor() == ftr::Descriptor::Alter) //what else could it be. future proof
+    {
+      //an alter with no parents is in a bad state. just delete it and don't walk alter path
+      localRemove(vertex);
+    }
+  }
+  else if (parentCount == 1)
+  {
+    Vertex parent = Graph::null_vertex();
+    for (auto v : boost::make_iterator_range(boost::adjacent_vertices(vertex, workGraphReversed)))
+    {
+      parent = v;
+      break;
+    }
+    assert(parent != Graph::null_vertex());
+    
+    if (workGraph[vertex].feature->getDescriptor() == ftr::Descriptor::Create)
+    {
+      std::vector<Vertex> alters(1, vertex); //also has the root vertex which is create.
+      AlterVisitor av(alters, AlterVisitor::Create::Exclusion);
+      boost::depth_first_search(workGraph, visitor(av).root_vertex(vertex));
+      
+      auto isAlter = [&](Vertex vIn) -> bool
+      {
+        for (auto v : alters)
+        {
+          if (v == vIn)
+            return true;
+        }
+        return false;
+      };
+      
+      //look for all child vertices of alters to connect back to parent.
+      //notice we are using the original graph as we want 'sever' also.
+      std::vector<std::pair<Edge, Vertex>> newChildren;
+      for (auto v : alters)
+      {
+        for (auto oe : boost::make_iterator_range(boost::out_edges(v, stow->graph)))
+        {
+          auto cv = boost::target(oe, stow->graph);
+          if (!isAlter(cv))
+            newChildren.push_back(std::make_pair(oe, cv));
+        }
+      }
+      
+      for (auto p : newChildren)
+        stow->connect(vertex, p.second, stow->graph[p.first].inputType);
+      for (auto a : alters)
+        localRemove(a);
+    }
+    else if (workGraph[vertex].feature->getDescriptor() == ftr::Descriptor::Alter) //what else could it be. future proof
+    {
+      for (auto cv : boost::make_iterator_range(boost::adjacent_vertices(vertex, workGraph)))
+        switchChildToParent(parent, vertex, cv);
+      localRemove(vertex);
+    }
+  }
+  else //parent count > 1 and we don't know who to connect to. see delete.svg
+  {
+    if (workGraph[vertex].feature->getDescriptor() == ftr::Descriptor::Create)
+    {
+      std::vector<Vertex> alters(1, vertex); //also has the root vertex which is create.
+      AlterVisitor av(alters, AlterVisitor::Create::Exclusion);
+      boost::depth_first_search(workGraph, visitor(av).root_vertex(vertex));
+      for (auto v : alters)
+        localRemove(v);
+    }
+    else if (workGraph[vertex].feature->getDescriptor() == ftr::Descriptor::Alter) //what else could it be. future proof
+    {
+      //just remove the one alter and let features fail. User has to sort out.
+      localRemove(vertex);
+    }
+  }
   
   //no post message.
+  
+  /* notes about rewrite 3/27/2020
+   * 
+   * Originally I had:
+      //make parents have same visible state as the feature being removed.
+      if (feature->isVisible3D())
+      {
+        block.unblock();
+        node->send(msg::buildShowThreeD(reversedGraph[*its.first].feature->getId()));
+        block.block();
+      }
+      else
+        node->send(msg::buildHideThreeD(reversedGraph[*its.first].feature->getId()));
+   * 
+   * I don't think this was correct. How can we know what should be shown as we don't
+   * know leaf status of other features. Left this out for now. Notice the call to 'unblock'
+   * this is explained in 'setCurrentLeaf'.
+   *
+   * Originally I was using 'replaceId' from feature and seerShape. I believe this is
+   * obsolete see "Id mapping:" in todo.txt
+   */
 }
 
 void Project::setCurrentLeaf(const uuid& idIn)
@@ -463,36 +537,36 @@ void Project::updateLeafStatus()
   //we end up in here twice when set current leaf from dag view.
   //once when make the change and once when we call an update.
   
-  RemovedGraph removedGraph = buildRemovedGraph(stow->graph);
-  
   //first set all features to non leaf.
-  for (auto its = boost::vertices(removedGraph); its.first != its.second; ++its.first)
-    stow->setFeatureNonLeaf(*its.first);
+  RemovedGraph removedGraph = buildRemovedGraph(stow->graph);
+  for (auto v : boost::make_iterator_range(boost::vertices(removedGraph)))
+    stow->setFeatureNonLeaf(v);
   
-  ActiveFilter<RemovedGraph> activeFilter(removedGraph);
-  SeverEdgeFilter<RemovedGraph> severFilter(removedGraph);
+  //build filtered graph for active features and no sever edges.
+  ComboFilterVertex<Graph> vf(stow->graph); //filters for alive vertices by default.
+  vf.active = true;
+  ComboFilterEdge<Graph> ef(stow->graph);
+  ef.sever = true;
+  boost::filtered_graph<Graph, decltype(ef), decltype(vf)> filteredGraph(stow->graph, ef, vf);
   
-  typedef boost::filtered_graph<RemovedGraph, decltype(severFilter), decltype(activeFilter) > FilteredGraphType;
-  FilteredGraphType filteredGraph(removedGraph, severFilter, activeFilter);
-  
-  for (auto its = boost::vertices(filteredGraph); its.first != its.second; ++its.first)
+  for (auto v : boost::make_iterator_range(boost::vertices(filteredGraph)))
   {
-    if (boost::out_degree(*its.first, filteredGraph) == 0)
-      stow->setFeatureLeaf(*its.first);
+    if (boost::out_degree(v, filteredGraph) == 0)
+      stow->setFeatureLeaf(v);
     else
     {
       //if all children are of the type 'create' then it is also considered leaf.
       bool allCreate = true;
-      for (auto nits = boost::adjacent_vertices(*its.first, filteredGraph); nits.first != nits.second; ++nits.first)
+      for (auto av : boost::make_iterator_range(boost::adjacent_vertices(v, filteredGraph)))
       {
-        if (filteredGraph[*nits.first].feature->getDescriptor() != ftr::Descriptor::Create)
+        if (filteredGraph[av].feature->getDescriptor() != ftr::Descriptor::Create)
         {
           allCreate = false;
           break;
         }
       }
       if (allCreate)
-        stow->setFeatureLeaf(*its.first);
+        stow->setFeatureLeaf(v);
     }
   }
 }
@@ -504,44 +578,33 @@ void Project::connect(const boost::uuids::uuid& parentIn, const boost::uuids::uu
   stow->connect(parent, child, type);
 }
 
+//inserts child between all parents current children that are 'alters'. note this uses a severed graph. Maybe it shouldn't?
 void Project::connectInsert(const uuid& parentIn, const uuid& childIn, const ftr::InputType &type)
 {
   Vertex parent = stow->findVertex(parentIn);
   Vertex child = stow->findVertex(childIn);
-  if
-  (
-    (boost::out_degree(parent, stow->graph) == 0)
-    || (stow->graph[child].feature->getDescriptor() != ftr::Descriptor::Alter)
-  )
+  
+  ComboFilterVertex<Graph> vf(stow->graph); //filters for alive vertices by default.
+  ComboFilterEdge<Graph> ef(stow->graph);
+  ef.sever = true;
+  boost::filtered_graph<Graph, decltype(ef), decltype(vf)> fg(stow->graph, ef, vf);
+  
+  //creation features don't get inserted
+  if (fg[child].feature->getDescriptor() == ftr::Descriptor::Alter)
   {
-    stow->connect(parent, child, type);
-    return;
-  }
-  Vertex insertTarget = NullVertex();
-  Edge insertEdge;
-  for (auto its = boost::adjacent_vertices(parent, stow->graph); its.first != its.second; ++its.first)
-  {
-    if (stow->graph[*its.first].feature->getDescriptor() == ftr::Descriptor::Alter)
+    std::vector<Edge> edgesToRemove;
+    for (auto av : boost::make_iterator_range(boost::adjacent_vertices(parent, fg)))
     {
-      bool r;
-      std::tie(insertEdge, r) = boost::edge(parent, *its.first, stow->graph);
-      assert(r);
-      if (stow->graph[insertEdge].inputType.has(ftr::InputType::target))
-      {
-        insertTarget = *its.first;
-        break;
-      }
+      auto mce = boost::edge(parent, av, fg);
+      assert(mce.second);
+      Edge ce = mce.first;
+      edgesToRemove.push_back(ce);
+      stow->connect(child, av, fg[ce].inputType);
     }
+    stow->removeEdges(edgesToRemove);
   }
-  if (insertTarget == NullVertex())
-  {
-    stow->connect(parent, child, type);
-    return;
-  }
-  stow->connect(child, insertTarget, stow->graph[insertEdge].inputType);
-  stow->disconnect(insertEdge);
   stow->connect(parent, child, type);
-  stow->graph[insertTarget].feature->setModelDirty();
+  stow->graph[child].feature->setModelDirty();
 }
 
 void Project::removeParentTag(const uuid &targetIn, const std::string &tagIn)
@@ -1115,45 +1178,57 @@ void Project::setAllVisualDirty()
 
 void Project::setColor(const boost::uuids::uuid &featureIdIn, const osg::Vec4 &colorIn)
 {
-  //switching away from edge property 'target' to feature descriptors create and alter.
-  
+  //this doesn't work can't go up and down and call it good. See document.svg
   Vertex baseVertex = stow->findVertex(featureIdIn);
-  auto rmg = buildRemovedGraph(stow->graph); //removed graph
-  Vertices alters;
-  alters.push_back(baseVertex);
+  auto rmg = buildRemovedSeveredGraph(stow->graph);
+  auto rvg = boost::make_reverse_graph(rmg);
   
-  //forward
+  //walk down alters and filter and get leaves
+  Vertices downVertices(1, baseVertex); //filter vertices.
+  AlterVisitor downVisitor(downVertices, AlterVisitor::Create::Exclusion);
+  boost::depth_first_search(rmg, visitor(downVisitor).root_vertex(baseVertex));
+  ComboFilterVertex <decltype(rmg)> downFilter(rmg);
+  downFilter.removed = false; //already done
+  downFilter.vertexSubset = downVertices;
+  boost::filtered_graph<decltype(rmg), boost::keep_all, decltype(downFilter)> downGraph(rmg, boost::keep_all(), downFilter);
+  Vertices downLeaves;
+  for (auto v : boost::make_iterator_range(boost::vertices(downGraph)))
   {
-    Vertices fvs; //filter vertices.
-    gu::BFSLimitVisitor<Vertex> fvis(fvs);
-    boost::breadth_first_search(rmg, baseVertex, visitor(fvis));
-    
-    gu::SubsetFilter<RemovedGraph> ssf(rmg, fvs); //subset filter
-    typedef boost::filtered_graph<RemovedGraph, boost::keep_all, gu::SubsetFilter<RemovedGraph> > SubsetGraph;
-    SubsetGraph fg(rmg, boost::keep_all(), ssf);
-    
-    AlterVisitor apv(alters, AlterVisitor::Create::Exclusion);
-    boost::depth_first_search(fg, visitor(apv).root_vertex(baseVertex));
+    if (boost::out_degree(v, downGraph) == 0)
+      downLeaves.push_back(v);
   }
   
-  //reversed. don't walk up if feature is create.
-  if (stow->graph[baseVertex].feature->getDescriptor() != ftr::Descriptor::Create)
+  //walk up from down leaves and filter using bfs.
+  Vertices upFilterVertices;
+  for (auto v : downLeaves)
   {
-    auto rvg = boost::make_reverse_graph(rmg);
-    Vertices fvs; //filter vertices.
-    gu::BFSLimitVisitor<Vertex> fvis(fvs);
-    boost::breadth_first_search(rvg, baseVertex, visitor(fvis));
-    
-    gu::SubsetFilter<decltype(rvg)> ssf(rvg, fvs); //subset filter
-    typedef boost::filtered_graph<decltype(rvg), boost::keep_all, decltype(ssf) > SubsetGraph;
-    SubsetGraph fg(rvg, boost::keep_all(), ssf);
-    
-    AlterVisitor apv(alters, AlterVisitor::Create::Inclusion);
-    boost::depth_first_search(fg, visitor(apv).root_vertex(baseVertex));
+    gu::BFSLimitVisitor<Vertex> upLimitVisitor(upFilterVertices);
+    boost::breadth_first_search(rvg, v, visitor(upLimitVisitor));
   }
+  gu::uniquefy(upFilterVertices);
+  ComboFilterVertex <decltype(rvg)> upFilter(rvg);
+  upFilter.removed = false; //already done
+  upFilter.vertexSubset = upFilterVertices;
+  boost::filtered_graph<decltype(rvg), boost::keep_all, decltype(upFilter)> upGraph(rvg, boost::keep_all(), upFilter);
   
-  //set color of all objects.
-  for (auto v : alters)
+  //now we can do a alter dfs on the filtered reversed graph.
+  Vertices changeVertices;
+  for (auto v : downLeaves)
+  {
+    if (upGraph[v].feature->getDescriptor() == ftr::Descriptor::Create)
+    {
+      changeVertices.push_back(v);
+      continue; //we want create leaf but we don't want to walk it up.
+    }
+    Vertices upTemp;
+    upTemp.push_back(v);
+    AlterVisitor apv(upTemp, AlterVisitor::Create::Inclusion);
+    boost::depth_first_search(upGraph, visitor(apv).root_vertex(v));
+    changeVertices.insert(changeVertices.end(), upTemp.begin(), upTemp.end());
+  }
+  gu::uniquefy(changeVertices);
+  
+  for (auto v : changeVertices)
   {
     stow->graph[v].feature->setColor(colorIn);
     //this is a hack. Currently, in order for this color change to be serialized
@@ -1162,15 +1237,15 @@ void Project::setColor(const boost::uuids::uuid &featureIdIn, const osg::Vec4 &c
     //object color. So here we just serialize the changed features to 'sneak' the
     //color change into the git commit.
     stow->graph[v].feature->serialWrite(saveDirectory);
+    
+    //log action to git.
+    std::ostringstream gitMessage;
+    gitMessage << QObject::tr("Changing color of feature: ").toStdString()
+      << findFeature(featureIdIn)->getName().toStdString()
+      << "    Id: "
+      << gu::idToShortString(featureIdIn);
+    gitManager->appendGitMessage(gitMessage.str());
   }
-  
-  //log action to git.
-  std::ostringstream gitMessage;
-  gitMessage << QObject::tr("Changing color of feature: ").toStdString()
-    << findFeature(featureIdIn)->getName().toStdString()
-    << "    Id: "
-    << gu::idToShortString(featureIdIn);
-  gitManager->appendGitMessage(gitMessage.str());
 }
 
 std::vector<boost::uuids::uuid> Project::getAllFeatureIds() const
@@ -1559,7 +1634,7 @@ std::vector<uuid> Project::getRelatedLeafs(const uuid &editFeatureId) const
   assert(stow->hasFeature(editFeatureId));
   Vertex editFeatureVertex = stow->findVertex(editFeatureId);
   
-  auto weakGraphVertices = weakComponents(stow->graph, editFeatureVertex);
+  auto weakGraphVertices = getWeakComponents<decltype(stow->graph)>(stow->graph, editFeatureVertex);
   
   RemovedGraph baseGraph = buildRemovedGraph(stow->graph);
   gu::SubsetFilter<decltype(baseGraph)> filter(baseGraph, weakGraphVertices);

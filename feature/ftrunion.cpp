@@ -88,7 +88,11 @@ void Union::updateModel(const UpdatePayload &payloadIn)
     for (const auto &tp : targetPicks)
     {
       targetResolvers.emplace_back(payloadIn);
-      targetResolvers.back().resolve(tp);
+      if (!targetResolvers.back().resolve(tp))
+      {
+        targetResolvers.pop_back();
+        continue;
+      }
       auto shapes = targetResolvers.back().getShapes();
       std::copy(shapes.begin(), shapes.end(), std::back_inserter(targetOCCTShapes));
     }

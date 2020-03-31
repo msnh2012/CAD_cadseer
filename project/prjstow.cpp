@@ -17,8 +17,6 @@
  *
  */
 
-#include <boost/graph/graphviz.hpp>
-
 #include <osg/Node> //yuck
 
 #include "tools/idtools.h"
@@ -39,6 +37,22 @@ Vertex Stow::addFeature(std::shared_ptr<ftr::Base> feature)
   Vertex newVertex = boost::add_vertex(graph);
   graph[newVertex].feature = feature;
   return newVertex;
+}
+
+void Stow::removeFeature(Vertex remove)
+{
+  prj::Message pMessage;
+  pMessage.feature = graph[remove].feature;
+  msg::Message preMessage
+  (
+    msg::Response | msg::Pre | msg::Remove | msg::Feature
+    , pMessage
+  );
+  msg::hub().send(preMessage);
+  
+  //edges should already be cleared with appropriate messages. Just in case.
+  boost::clear_vertex(remove, graph);
+  graph[remove].alive = false;
 }
 
 Edge Stow::connect(const Vertex &parentIn, const Vertex &childIn, const ftr::InputType &type)
@@ -74,6 +88,14 @@ void Stow::sendConnectMessage(const Vertex &parentIn, const Vertex &childIn, con
     , pMessage
   );
   msg::hub().sendBlocked(postMessage);
+}
+
+void Stow::clearVertex(const Vertex &vIn)
+{
+  for (auto ie : boost::make_iterator_range(boost::in_edges(vIn, graph)))
+    disconnect(ie);
+  for (auto ie : boost::make_iterator_range(boost::out_edges(vIn, graph)))
+    disconnect(ie);
 }
 
 void Stow::disconnect(const Edge &eIn)
@@ -214,49 +236,6 @@ void Stow::sendStateMessage(const Vertex &v, std::size_t stateOffset)
   ftr::Message fMessage(graph[v].feature->getId(), graph[v].state, stateOffset);
   msg::Message mMessage(msg::Response | msg::Project | msg::Feature | msg::Status, fMessage);
   msg::hub().sendBlocked(mMessage);
-}
-
-
-template <class GraphEW>
-class Edge_writer {
-public:
-  Edge_writer(const GraphEW &graphEWIn) : graphEW(graphEWIn) {}
-  template <class EdgeW>
-  void operator()(std::ostream& out, const EdgeW& edgeW) const
-  {
-    out << "[label=\"";
-    for (const auto &input : graphEW[edgeW].inputType.getTags())
-      out << input << "\\n";
-    out << "\"]";
-  }
-private:
-  const GraphEW &graphEW;
-};
-
-template <class GraphVW>
-class Vertex_writer {
-public:
-  Vertex_writer(const GraphVW &graphVWIn) : graphVW(graphVWIn) {}
-  template <class VertexW>
-  void operator()(std::ostream& out, const VertexW& vertexW) const
-  {
-    out << 
-        "[label=\"" <<
-        graphVW[vertexW].feature->getName().toUtf8().data() << "\\n" <<
-        gu::idToString(graphVW[vertexW].feature->getId()) << "\\n" <<
-        "Descriptor: " << ftr::getDescriptorString(graphVW[vertexW].feature->getDescriptor()) << 
-        "\"]";
-  }
-private:
-  const GraphVW &graphVW;
-};
-
-template <class GraphIn>
-void outputGraphviz(const GraphIn &graphIn, const std::string &filePath)
-{
-  std::ofstream file(filePath.c_str());
-  boost::write_graphviz(file, graphIn, Vertex_writer<GraphIn>(graphIn),
-                        Edge_writer<GraphIn>(graphIn));
 }
 
 void Stow::writeGraphViz(const std::string &fileName)

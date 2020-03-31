@@ -312,7 +312,7 @@ void GitManager::appendGitMessage(const std::string& message)
   
   if (commitMessage.empty())
   {
-    commitMessage = message;
+    commitMessage = message + "\n";
   }
   else
   {

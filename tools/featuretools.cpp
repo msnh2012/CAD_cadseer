@@ -320,7 +320,14 @@ bool Resolver::resolve(const ftr::Pick &pIn)
 bool Resolver::hasSucceeded()
 {
   if (slc::isObjectType(workPick.selectionType))
-    return feature; //cant do seershape. We have features without it.
+  {
+    //cant do seershape. We have features without it.
+    //that is true but if we have an object selection feature with a seershape,
+    //we want to test for a null seershape.
+    if (feature->hasAnnex(ann::Type::SeerShape))
+      return feature && sShape;
+    return feature;
+  }
   else
     return feature && sShape && !workPick.resolvedIds.empty();
 }
