@@ -24,6 +24,8 @@
 #include <algorithm>
 #include <cassert>
 
+#include <boost/optional/optional.hpp>
+
 #include <gp_Ax1.hxx>
 #include <gp_Ax2.hxx>
 #include <TopoDS_Compound.hxx>
@@ -262,6 +264,14 @@ namespace occt
    * @return a Face or Null if failed
    */
   TopoDS_Face buildFace(WireVector &wv);
+  
+  /*! @brief Make a solid from a shell
+   * 
+   * @param shapeIn is the shell to make solid.
+   * @return a Face or Null if failed
+   * @note return still needs a 'shape check'.
+   */
+  boost::optional<TopoDS_Solid> buildSolid(const TopoDS_Shape &shapeIn);
   
   class BoundingBox
   {

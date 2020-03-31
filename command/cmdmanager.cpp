@@ -1070,6 +1070,11 @@ BasePtr editTrim(ftr::Base *feature)
   return std::make_shared<Trim>(feature);
 }
 
+BasePtr editOffset(ftr::Base *feature)
+{
+  return std::make_shared<Offset>(feature);
+}
+
 void Manager::setupEditFunctionMap()
 {
   editFunctionMap.insert(std::make_pair(ftr::Type::Blend, std::bind(editBlend, std::placeholders::_1)));
@@ -1097,4 +1102,5 @@ void Manager::setupEditFunctionMap()
   editFunctionMap.insert(std::make_pair(ftr::Type::Extrude, std::bind(editExtrude, std::placeholders::_1)));
   editFunctionMap.insert(std::make_pair(ftr::Type::Revolve, std::bind(editRevolve, std::placeholders::_1)));
   editFunctionMap.insert(std::make_pair(ftr::Type::Trim, std::bind(editTrim, std::placeholders::_1)));
+  editFunctionMap.insert(std::make_pair(ftr::Type::Offset, std::bind(editOffset, std::placeholders::_1)));
 }

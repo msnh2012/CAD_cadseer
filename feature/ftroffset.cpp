@@ -236,11 +236,20 @@ void Offset::updateModel(const UpdatePayload &payloadIn)
       builder.MakeOffsetShape();
       if (!builder.IsDone())
         throw std::runtime_error(getErrorString(builder));
-      ShapeCheck check(builder.Shape());
+      
+      TopoDS_Shape workShape = builder.Shape();
+      if (workShape.Closed() && workShape.ShapeType() == TopAbs_SHELL)
+      {
+        auto os = occt::buildSolid(workShape);
+        if (os)
+          workShape = os.get();
+      }
+      
+      ShapeCheck check(workShape);
       if (!check.isValid())
         throw std::runtime_error("shapeCheck failed");
       
-      sShape->setOCCTShape(builder.Shape(), getId());
+      sShape->setOCCTShape(workShape, getId());
       sShape->shapeMatch(tss);
       sShape->uniqueTypeMatch(tss);
       offsetMatch(builder, tss);

@@ -21,7 +21,6 @@
 #include <boost/optional/optional.hpp>
 
 #include <TopoDS.hxx>
-#include <BRepBuilderAPI_MakeSolid.hxx>
 #include <BRepLib.hxx>
 #include <BRepTools_Quilt.hxx>
 

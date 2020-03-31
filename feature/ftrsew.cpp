@@ -21,9 +21,7 @@
 
 #include <TopoDS.hxx>
 #include <BRepClass3d.hxx>
-#include <BRepLib.hxx>
 #include <BRepBuilderAPI_Sewing.hxx>
-#include <BRepBuilderAPI_MakeSolid.hxx>
 
 #include <osg/Switch>
 
@@ -130,16 +128,9 @@ void Sew::updateModel(const UpdatePayload &payloadIn)
     //try to make a solid.
     if (nc.Closed())
     {
-      BRepBuilderAPI_MakeSolid solidMaker(TopoDS::Shell(nc));
-      if (solidMaker.IsDone())
-      {
-        TopoDS_Solid temp = solidMaker.Solid();
-        //contrary to the occ docs the return value OrientCloseSolid doesn't
-        //indicate whether the shell was open or not. It returns true with an
-        //open shell and we end up with an invalid solid.
-        if (BRepLib::OrientClosedSolid(temp))
-          out = temp;
-      }
+      auto os = occt::buildSolid(nc);
+      if (os)
+        out = os.get();
     }
     
     ShapeCheck check(out);

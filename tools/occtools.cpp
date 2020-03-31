@@ -36,8 +36,10 @@
 #include <BRep_Builder.hxx>
 #include <BRepBndLib.hxx>
 #include <BRep_Tool.hxx>
+#include <BRepLib.hxx>
 #include <BRepBuilderAPI_Copy.hxx>
 #include <BRepBuilderAPI_MakeFace.hxx>
+#include <BRepBuilderAPI_MakeSolid.hxx>
 #include <BRepFilletAPI_MakeFillet.hxx>
 #include <BRepAdaptor_Surface.hxx>
 #include <BRepAdaptor_Curve.hxx>
@@ -1014,4 +1016,22 @@ TopoDS_Face occt::buildFace(WireVector &wv)
       return TopoDS_Face();
   }
   return fm;
+}
+
+boost::optional<TopoDS_Solid> occt::buildSolid(const TopoDS_Shape &shapeIn)
+{
+  if (shapeIn.ShapeType() == TopAbs_SHELL && shapeIn.Closed())
+  {
+    BRepBuilderAPI_MakeSolid solidMaker(TopoDS::Shell(shapeIn));
+    if (solidMaker.IsDone())
+    {
+      TopoDS_Solid temp = solidMaker.Solid();
+      //contrary to the occ docs the return value OrientCloseSolid doesn't
+      //indicate whether the shell was open or not. It returns true with an
+      //open shell and we end up with an invalid solid.
+      if (BRepLib::OrientClosedSolid(temp))
+        return temp;
+    }
+  }
+  return boost::none;
 }

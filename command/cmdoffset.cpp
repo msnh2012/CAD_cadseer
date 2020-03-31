@@ -30,14 +30,36 @@
 #include "parameter/prmparameter.h"
 #include "feature/ftrinputtype.h"
 #include "feature/ftroffset.h"
+#include "commandview/cmvmessage.h"
+#include "commandview/cmvoffset.h"
 #include "command/cmdoffset.h"
 
 using boost::uuids::uuid;
 
 using namespace cmd;
 
-Offset::Offset() : Base() {}
-Offset::~Offset() {}
+Offset::Offset()
+: Base()
+, leafManager()
+{
+  auto offset = std::make_shared<ftr::Offset>();
+  project->addFeature(offset);
+  feature = offset.get();
+  node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
+}
+
+Offset::Offset(ftr::Base *fIn)
+: Base("cmd::Offset")
+, leafManager(fIn)
+{
+  feature = dynamic_cast<ftr::Offset*>(fIn);
+  assert(feature);
+  firstRun = false; //bypass go() in activate.
+  viewBase = std::make_unique<cmv::Offset>(this);
+  node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+}
+
+Offset::~Offset() = default;
 
 std::string Offset::getStatusMessage()
 {
@@ -47,81 +69,104 @@ std::string Offset::getStatusMessage()
 void Offset::activate()
 {
   isActive = true;
-  go();
-  sendDone();
+  leafManager.rewind();
+  if (firstRun)
+  {
+    firstRun = false;
+    go();
+  }
+  if (viewBase)
+  {
+    feature->setEditing();
+    cmv::Message vm(viewBase.get(), viewBase->getPaneWidth());
+    msg::Message out(msg::Mask(msg::Request | msg::Command | msg::View | msg::Show), vm);
+    node->sendBlocked(out);
+  }
+  else
+    sendDone();
 }
 
 void Offset::deactivate()
 {
   isActive = false;
+  if (viewBase)
+  {
+    feature->setNotEditing();
+    msg::Message out(msg::Mask(msg::Request | msg::Command | msg::View | msg::Hide));
+    node->sendBlocked(out);
+  }
+  leafManager.fastForward();
+}
+
+void Offset::setSelections(const std::vector<slc::Message> &targets)
+{
+  project->clearAllInputs(feature->getId());
+  feature->setPicks(ftr::Picks());
+  
+  if (targets.empty())
+    return;
+  
+  auto validFeature = [&](const ftr::Base *fIn)
+  {
+    if (fIn->hasAnnex(ann::Type::SeerShape) && !fIn->getAnnex<ann::SeerShape>().isNull())
+      return true;
+    return false;
+  };
+  
+  const ftr::Base *tf = project->findFeature(targets.front().featureId);
+  if (!validFeature(tf))
+    return;
+  
+  ftr::Picks freshPicks;
+  for (const auto &m : targets)
+  {
+    if (m.featureId != tf->getId()) //ensure offset is working on only one input.
+      continue;
+    const ftr::Base *lf = project->findFeature(m.featureId);
+    if (!validFeature(lf))
+      continue;
+    freshPicks.push_back(tls::convertToPick(m, *lf, project->getShapeHistory()));
+  }
+  feature->setPicks(freshPicks);
+  feature->setColor(tf->getColor());
+  project->connectInsert(tf->getId(), feature->getId(), {ftr::InputType::target});
+}
+
+void Offset::localUpdate()
+{
+  feature->updateModel(project->getPayload(feature->getId()));
+  feature->updateVisual();
+  feature->setModelDirty();
+  node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
 }
 
 void Offset::go()
 {
-  shouldUpdate = false;
   const slc::Containers &containers = eventHandler->getSelections();
-  if (containers.empty())
-  {
-    node->sendBlocked(msg::buildStatusMessage("Empty pre selection for offset", 2.0));
-    return;
-  }
   
-  ftr::Base *bf = project->findFeature(containers.front().featureId);
-  if (!bf->hasAnnex(ann::Type::SeerShape) || bf->getAnnex<ann::SeerShape>().isNull())
+  std::vector<slc::Message> tm; //target messages
+  for (const auto &c : containers)
   {
-    node->sendBlocked(msg::buildStatusMessage("No seer shape, wrong pre selection for offset", 2.0));
-    return;
-  }
-  const ann::SeerShape &ss = bf->getAnnex<ann::SeerShape>();
-  
-  ftr::Picks picks;
-  tls::Connector connector;
-  if (containers.size() == 1 && containers.front().isObjectType())
-  {
-    ftr::Base *bf = project->findFeature(containers.front().featureId);
-    if (!bf->hasAnnex(ann::Type::SeerShape) || bf->getAnnex<ann::SeerShape>().isNull())
+    //accept object offset if it is first. then we ignore the rest.
+    if (c.selectionType == slc::Type::Object && tm.empty())
     {
-      node->sendBlocked(msg::buildStatusMessage("Offset only works on shape features", 2.0));
-      return;
+      tm.push_back(slc::EventHandler::containerToMessage(c));
+      break;
     }
-    
-    ftr::Pick p = tls::convertToPick(containers.front(), bf->getAnnex<ann::SeerShape>(), project->getShapeHistory());
-    p.tag = ftr::InputType::createIndexedTag(ftr::InputType::target, picks.size());
-    picks.push_back(p);
-    connector.add(bf->getId(), p.tag);
-  }
-  else
-  {
-    for (const auto &c : containers)
-    {
-      if (c.selectionType != slc::Type::Face)
-        continue;
-      //make sure all selections belong to the same feature.
-      if (bf->getId() != c.featureId)
-        continue;
-      ftr::Pick p = tls::convertToPick(c, ss, project->getShapeHistory());
-      p.tag = ftr::InputType::createIndexedTag(ftr::InputType::target, picks.size());
-      picks.push_back(p);
-      connector.add(bf->getId(), p.tag);
-    }
+    else if (c.selectionType == slc::Type::Face)
+      tm.push_back(slc::EventHandler::containerToMessage(c));
   }
   
-  if (picks.empty() || connector.pairs.empty())
+  if (!tm.empty())
   {
-    node->sendBlocked(msg::buildStatusMessage("Incorrect preselection for offset", 2.0));
+    setSelections(tm);
+    node->sendBlocked(msg::buildStatusMessage("Offset added", 2.0));
+    node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+    node->sendBlocked(msg::buildHideThreeD(tm.front().featureId));
+    node->sendBlocked(msg::buildHideOverlay(tm.front().featureId));
     return;
   }
-    
-  std::shared_ptr<ftr::Offset> offset(new ftr::Offset());
-  offset->setPicks(picks);
-  offset->setColor(bf->getColor());
-  project->addFeature(offset);
-  for (const auto &p : connector.pairs)
-    project->connectInsert(p.first, offset->getId(), {p.second});
-  shouldUpdate = true;
-  
-  node->sendBlocked(msg::buildHideThreeD(bf->getId()));
-  node->sendBlocked(msg::buildHideOverlay(bf->getId()));
   
   node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  viewBase = std::make_unique<cmv::Offset>(this);
 }

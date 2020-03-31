@@ -1,6 +1,6 @@
 /*
  * CadSeer. Parametric Solid Modeling.
- * Copyright (C) 2018  Thomas S. Anderson blobfish.at.gmx.com
+ * Copyright (C) 2020 Thomas S. Anderson blobfish.at.gmx.com
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,40 +17,32 @@
  *
  */
 
-#ifndef CMD_OFFSET_H
-#define CMD_OFFSET_H
+#ifndef CMV_OFFSET_H
+#define CMV_OFFSET_H
 
-#include "command/cmdleafmanager.h"
-#include "command/cmdbase.h"
+#include <memory>
 
-namespace ftr{class Offset;}
+#include "commandview/cmvbase.h"
 
-namespace cmd
+namespace cmd{class Offset;}
+
+namespace cmv
 {
   /**
   * @todo write docs
   */
   class Offset : public Base
   {
+    Q_OBJECT
   public:
-    ftr::Offset *feature = nullptr;
-    
-    Offset();
-    Offset(ftr::Base*);
+    Offset(cmd::Offset*);
     ~Offset() override;
-    
-    std::string getCommandName() override{return "Offset";}
-    std::string getStatusMessage() override;
-    void activate() override;
-    void deactivate() override;
-    
-    void setSelections(const std::vector<slc::Message>&);
-    void localUpdate();
+  public Q_SLOTS:
+    void selectionChanged();
   private:
-    bool firstRun = true;
-    cmd::LeafManager leafManager;
-    void go();
+    struct Stow;
+    std::unique_ptr<Stow> stow;
   };
 }
 
-#endif // CMD_OFFSET_H
+#endif // CMV_OFFSET_H
