@@ -126,10 +126,11 @@ void Offset::setSelections(const std::vector<slc::Message> &targets)
     if (!validFeature(lf))
       continue;
     freshPicks.push_back(tls::convertToPick(m, *lf, project->getShapeHistory()));
+    freshPicks.back().tag = ftr::InputType::createIndexedTag(ftr::InputType::target, freshPicks.size() - 1);
+    project->connectInsert(tf->getId(), feature->getId(), {freshPicks.back().tag});
   }
   feature->setPicks(freshPicks);
   feature->setColor(tf->getColor());
-  project->connectInsert(tf->getId(), feature->getId(), {ftr::InputType::target});
 }
 
 void Offset::localUpdate()
@@ -168,5 +169,7 @@ void Offset::go()
   }
   
   node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  node->sendBlocked(msg::buildHideThreeD(feature->getId()));
+  node->sendBlocked(msg::buildHideOverlay(feature->getId()));
   viewBase = std::make_unique<cmv::Offset>(this);
 }

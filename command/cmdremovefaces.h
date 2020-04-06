@@ -20,7 +20,10 @@
 #ifndef CMD_REMOVEFACES_H
 #define CMD_REMOVEFACES_H
 
+#include "command/cmdleafmanager.h"
 #include "command/cmdbase.h"
+
+namespace ftr{class RemoveFaces;}
 
 namespace cmd
 {
@@ -30,14 +33,23 @@ namespace cmd
   class RemoveFaces : public Base
   {
     public:
-      RemoveFaces();
-      virtual ~RemoveFaces() override;
+      ftr::RemoveFaces *feature = nullptr;
       
-      virtual std::string getCommandName() override{return "Remove faces";}
-      virtual std::string getStatusMessage() override;
-      virtual void activate() override;
-      virtual void deactivate() override;
+      RemoveFaces();
+      RemoveFaces(ftr::Base*);
+      ~RemoveFaces() override;
+      
+      std::string getCommandName() override{return "Remove faces";}
+      std::string getStatusMessage() override;
+      void activate() override;
+      void deactivate() override;
+      
+      void setSelections(const std::vector<slc::Message>&);
+      void localUpdate();
     private:
+      bool firstRun = true;
+      bool isEdit = false;
+      cmd::LeafManager leafManager;
       void go();
   };
 }

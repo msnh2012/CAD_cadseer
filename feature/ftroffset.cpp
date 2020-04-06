@@ -238,6 +238,8 @@ void Offset::updateModel(const UpdatePayload &payloadIn)
         throw std::runtime_error(getErrorString(builder));
       
       TopoDS_Shape workShape = builder.Shape();
+      if (workShape.IsNull())
+        throw std::runtime_error("Null shape result from offset");
       if (workShape.Closed() && workShape.ShapeType() == TopAbs_SHELL)
       {
         auto os = occt::buildSolid(workShape);

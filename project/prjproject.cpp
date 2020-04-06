@@ -595,6 +595,8 @@ void Project::connectInsert(const uuid& parentIn, const uuid& childIn, const ftr
     std::vector<Edge> edgesToRemove;
     for (auto av : boost::make_iterator_range(boost::adjacent_vertices(parent, fg)))
     {
+      if (av == child)
+        continue;
       auto mce = boost::edge(parent, av, fg);
       assert(mce.second);
       Edge ce = mce.first;
@@ -1718,6 +1720,29 @@ std::vector<uuid> Project::getRewindInputs(const uuid &editFeatureId) const
   for (const auto &v : adjVerticesCleansed)
     outIds.push_back(baseGraph[v].feature->getId());
   return outIds;
+}
+
+/*! @brief Hide parents features.
+ * 
+ * @param childIdIn is the target for parent search.
+ * 
+ * @details When creating a new feature we want to hide the
+ * 'non-sever' inputs/parent features of an 'alter'.
+ */
+void Project::hideAlterParents(const boost::uuids::uuid &childIdIn) const
+{
+  assert(stow->hasFeature(childIdIn));
+  Vertex editFeatureVertex = stow->findVertex(childIdIn);
+  if (stow->graph[editFeatureVertex].feature->getDescriptor() != ftr::Descriptor::Alter)
+    return;
+  
+  auto baseGraph = buildRemovedSeveredGraph(stow->graph);
+  auto rBaseGraph = boost::make_reverse_graph(baseGraph);
+  for (auto p : boost::make_iterator_range(boost::adjacent_vertices(editFeatureVertex, rBaseGraph)))
+  {
+    node->send(msg::buildHideThreeD(stow->graph[p].feature->getId()));
+    node->send(msg::buildHideOverlay(stow->graph[p].feature->getId()));
+  }
 }
 
 void Project::setFeatureActive(const boost::uuids::uuid &idIn)

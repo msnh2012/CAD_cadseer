@@ -26,14 +26,38 @@
 #include "annex/annseershape.h"
 #include "feature/ftrinputtype.h"
 #include "feature/ftrremovefaces.h"
+#include "commandview/cmvmessage.h"
+#include "commandview/cmvremovefaces.h"
 #include "command/cmdremovefaces.h"
 
 using boost::uuids::uuid;
 
 using namespace cmd;
 
-RemoveFaces::RemoveFaces() : Base() {}
-RemoveFaces::~RemoveFaces() {}
+RemoveFaces::RemoveFaces()
+: Base()
+, leafManager()
+{
+  auto nf = std::make_shared<ftr::RemoveFaces>();
+  project->addFeature(nf);
+  feature = nf.get();
+  node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
+  isEdit = false;
+}
+
+RemoveFaces::RemoveFaces(ftr::Base *fIn)
+: Base("cmd::RemoveFaces")
+, leafManager(fIn)
+{
+  feature = dynamic_cast<ftr::RemoveFaces*>(fIn);
+  assert(feature);
+  firstRun = false; //bypass go() in activate.
+  viewBase = std::make_unique<cmv::RemoveFaces>(this);
+  node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  isEdit = true;
+}
+
+RemoveFaces::~RemoveFaces() = default;
 
 std::string RemoveFaces::getStatusMessage()
 {
@@ -43,71 +67,107 @@ std::string RemoveFaces::getStatusMessage()
 void RemoveFaces::activate()
 {
   isActive = true;
-  go();
-  sendDone();
+  leafManager.rewind();
+  if (firstRun)
+  {
+    firstRun = false;
+    go();
+  }
+  if (viewBase)
+  {
+    feature->setEditing();
+    cmv::Message vm(viewBase.get(), viewBase->getPaneWidth());
+    msg::Message out(msg::Mask(msg::Request | msg::Command | msg::View | msg::Show), vm);
+    node->sendBlocked(out);
+  }
+  else
+    sendDone();
 }
 
 void RemoveFaces::deactivate()
 {
   isActive = false;
+  if (viewBase)
+  {
+    feature->setNotEditing();
+    msg::Message out(msg::Mask(msg::Request | msg::Command | msg::View | msg::Hide));
+    node->sendBlocked(out);
+  }
+  leafManager.fastForward();
+  if (!isEdit)
+  {
+    project->hideAlterParents(feature->getId());
+    node->sendBlocked(msg::buildShowThreeD(feature->getId()));
+    node->sendBlocked(msg::buildShowOverlay(feature->getId()));
+  }
+}
+
+void RemoveFaces::setSelections(const std::vector<slc::Message> &targets)
+{
+  project->clearAllInputs(feature->getId());
+  feature->setPicks(ftr::Picks());
+  
+  if (targets.empty())
+    return;
+  
+  auto validFeature = [&](const ftr::Base *fIn)
+  {
+    if (fIn->hasAnnex(ann::Type::SeerShape) && !fIn->getAnnex<ann::SeerShape>().isNull())
+      return true;
+    return false;
+  };
+  
+  const ftr::Base *tf = project->findFeature(targets.front().featureId);
+  if (!validFeature(tf))
+    return;
+  
+  ftr::Picks freshPicks;
+  for (const auto &m : targets)
+  {
+    if (m.featureId != tf->getId()) //ensure offset is working on only one input.
+      continue;
+    const ftr::Base *lf = project->findFeature(m.featureId);
+    if (!validFeature(lf))
+      continue;
+    freshPicks.push_back(tls::convertToPick(m, *lf, project->getShapeHistory()));
+    freshPicks.back().tag = ftr::InputType::createIndexedTag(ftr::InputType::target, freshPicks.size() - 1);
+    project->connectInsert(tf->getId(), feature->getId(), {freshPicks.back().tag});
+  }
+  feature->setPicks(freshPicks);
+  feature->setColor(tf->getColor());
+}
+
+void RemoveFaces::localUpdate()
+{
+  feature->updateModel(project->getPayload(feature->getId()));
+  feature->updateVisual();
+  feature->setModelDirty();
+  node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
 }
 
 void RemoveFaces::go()
 {
   const slc::Containers &containers = eventHandler->getSelections();
-  if (containers.empty())
-  {
-    node->sendBlocked(msg::buildStatusMessage("Wrong pre selection for remove faces", 2.0));
-    shouldUpdate = false;
-    return;
-  }
-  uuid fId = gu::createNilId();
-  ftr::Picks picks;
-  tls::Connector connector;
+  
+  std::vector<slc::Message> tm; //target messages
   for (const auto &c : containers)
   {
-    //make sure all selections belong to the same feature.
-    if (fId.is_nil())
-      fId = c.featureId;
-    if (fId != c.featureId)
-      continue;
-    
-    ftr::Base *bf = project->findFeature(c.featureId);
-    if (!bf->hasAnnex(ann::Type::SeerShape))
-      continue;
-    const ann::SeerShape &ss = bf->getAnnex<ann::SeerShape>();
-    if (c.shapeId.is_nil())
-      continue;
-    assert(ss.hasId(c.shapeId));
-    if (!ss.hasId(c.shapeId))
-    {
-      std::cerr << "WARNING: seershape doesn't have id from selection in cmd::RemoveFaces::go" << std::endl;
-      continue;
-    }
-    const TopoDS_Shape &fs = ss.getOCCTShape(c.shapeId);
-    assert(fs.ShapeType() == TopAbs_FACE);
-    if (fs.ShapeType() != TopAbs_FACE)
-      continue;
-    ftr::Pick p = tls::convertToPick(c, ss, project->getShapeHistory());
-    p.tag = std::string(ftr::InputType::target) + std::to_string(picks.size());
-    connector.add(fId, p.tag);
-    picks.push_back(p);
+    if (c.selectionType == slc::Type::Face)
+      tm.push_back(slc::EventHandler::containerToMessage(c));
   }
-  if (fId.is_nil() || picks.empty())
+  
+  if (!tm.empty())
   {
-    node->sendBlocked(msg::buildStatusMessage("No feature id for remove face", 2.0));
-    shouldUpdate = false;
+    setSelections(tm);
+    node->sendBlocked(msg::buildStatusMessage("Remove Faces Added", 2.0));
+    node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+    node->sendBlocked(msg::buildHideThreeD(tm.front().featureId));
+    node->sendBlocked(msg::buildHideOverlay(tm.front().featureId));
     return;
   }
-    
-  std::shared_ptr<ftr::RemoveFaces> remove(new ftr::RemoveFaces());
-  remove->setPicks(picks);
-  project->addFeature(remove);
-  for (const auto &p : connector.pairs)
-    project->connectInsert(p.first, remove->getId(), {p.second});
-  
-  node->sendBlocked(msg::buildHideThreeD(fId));
-  node->sendBlocked(msg::buildHideOverlay(fId));
   
   node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  node->sendBlocked(msg::buildHideThreeD(feature->getId()));
+  node->sendBlocked(msg::buildHideOverlay(feature->getId()));
+  viewBase = std::make_unique<cmv::RemoveFaces>(this);
 }
