@@ -45,6 +45,8 @@ DatumAxis::DatumAxis()
   project->addFeature(daxis);
   feature = daxis.get();
   node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
+  isEdit = false;
+  isFirstRun = true;
 }
 
 DatumAxis::DatumAxis(ftr::Base *fIn)
@@ -53,9 +55,10 @@ DatumAxis::DatumAxis(ftr::Base *fIn)
 {
   feature = dynamic_cast<ftr::DatumAxis*>(fIn);
   assert(feature);
-  firstRun = false; //bypass go() in activate.
   viewBase = std::make_unique<cmv::DatumAxis>(this);
   node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  isEdit = true;
+  isFirstRun = false;
 }
 
 DatumAxis::~DatumAxis() {}
@@ -69,9 +72,9 @@ void DatumAxis::activate()
 {
   isActive = true;
   leafManager.rewind();
-  if (firstRun)
+  if (isFirstRun.get())
   {
-    firstRun = false;
+    isFirstRun = false;
     go();
   }
   if (viewBase)
@@ -87,7 +90,6 @@ void DatumAxis::activate()
 
 void DatumAxis::deactivate()
 {
-  isActive = false;
   if (viewBase)
   {
     feature->setNotEditing();
@@ -95,6 +97,12 @@ void DatumAxis::deactivate()
     node->sendBlocked(out);
   }
   leafManager.fastForward();
+  if (!isEdit.get())
+  {
+    node->sendBlocked(msg::buildShowThreeD(feature->getId()));
+    node->sendBlocked(msg::buildShowOverlay(feature->getId()));
+  }
+  isActive = false;
 }
 
 void DatumAxis::go()
@@ -183,6 +191,7 @@ void DatumAxis::setToPoints(const std::vector<slc::Message> &msIn)
 
 void DatumAxis::setToIntersection(const std::vector<slc::Message> &msIn)
 {
+  assert(isActive);
   assert(msIn.size() == 2); //caller to verify
   
   int planarCount = 0;
@@ -214,6 +223,7 @@ void DatumAxis::setToIntersection(const std::vector<slc::Message> &msIn)
 
 void DatumAxis::setToGeometry(const std::vector<slc::Message> &msIn)
 {
+  assert(isActive);
   const ftr::Base *parent = project->findFeature(msIn.front().featureId);
   if (!parent->hasAnnex(ann::Type::SeerShape))
     return;
@@ -232,6 +242,7 @@ void DatumAxis::setToGeometry(const std::vector<slc::Message> &msIn)
 
 void DatumAxis::localUpdate()
 {
+  assert(isActive);
   feature->updateModel(project->getPayload(feature->getId()));
   feature->updateVisual();
   feature->setModelDirty();

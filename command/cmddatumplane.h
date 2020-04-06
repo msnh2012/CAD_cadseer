@@ -54,7 +54,6 @@ namespace cmd
     void setToThrough3Points(const std::vector<slc::Message>&);
     void localUpdate();
   private:
-    bool firstRun = true;
     cmd::LeafManager leafManager;
     void go();
     bool isPlanarFace(const slc::Container&);

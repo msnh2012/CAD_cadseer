@@ -41,6 +41,8 @@ Extrude::Extrude()
   project->addFeature(extrude);
   feature = extrude.get();
   node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
+  isEdit = false;
+  isFirstRun = true;
 }
 
 Extrude::Extrude(ftr::Base *fIn)
@@ -49,9 +51,10 @@ Extrude::Extrude(ftr::Base *fIn)
 {
   feature = dynamic_cast<ftr::Extrude*>(fIn);
   assert(feature);
-  firstRun = false; //bypass go() in activate.
   viewBase = std::make_unique<cmv::Extrude>(this);
   node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  isEdit = true;
+  isFirstRun = false;
 }
 
 Extrude::~Extrude() {}
@@ -65,9 +68,9 @@ void Extrude::activate()
 {
   isActive = true;
   leafManager.rewind();
-  if (firstRun)
+  if (isFirstRun.get())
   {
-    firstRun = false;
+    isFirstRun = false;
     go();
   }
   if (viewBase)
@@ -83,7 +86,6 @@ void Extrude::activate()
 
 void Extrude::deactivate()
 {
-  isActive = false;
   if (viewBase)
   {
     feature->setNotEditing();
@@ -91,10 +93,17 @@ void Extrude::deactivate()
     node->sendBlocked(out);
   }
   leafManager.fastForward();
+  if (!isEdit.get())
+  {
+    node->sendBlocked(msg::buildShowThreeD(feature->getId()));
+    node->sendBlocked(msg::buildShowOverlay(feature->getId()));
+  }
+  isActive = false;
 }
 
 void Extrude::localUpdate()
 {
+  assert(isActive);
   feature->updateModel(project->getPayload(feature->getId()));
   feature->updateVisual();
   feature->setModelDirty();
@@ -190,6 +199,7 @@ ftr::Picks Extrude::connect(const std::vector<slc::Message> &msIn, const std::st
 
 void Extrude::setToAxisInfer(const std::vector<slc::Message> &profileMessages)
 {
+  assert(isActive);
   project->clearAllInputs(feature->getId());
   feature->setPicks(connect(profileMessages, ftr::InputType::target));
   feature->setDirectionType(ftr::Extrude::DirectionType::Infer);
@@ -197,6 +207,7 @@ void Extrude::setToAxisInfer(const std::vector<slc::Message> &profileMessages)
 
 void Extrude::setToAxisPicks(const std::vector<slc::Message> &profileMessages, const std::vector<slc::Message> &axisMessages)
 {
+  assert(isActive);
   project->clearAllInputs(feature->getId());
   feature->setPicks(connect(profileMessages, ftr::InputType::target));
   feature->setAxisPicks(connect(axisMessages, ftr::Extrude::axisName));
@@ -205,6 +216,7 @@ void Extrude::setToAxisPicks(const std::vector<slc::Message> &profileMessages, c
 
 void Extrude::setToAxisParameter(const std::vector<slc::Message> &profileMessages)
 {
+  assert(isActive);
   project->clearAllInputs(feature->getId());
   feature->setPicks(connect(profileMessages, ftr::InputType::target));
   feature->setDirectionType(ftr::Extrude::DirectionType::Parameter);

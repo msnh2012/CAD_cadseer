@@ -49,6 +49,8 @@ DatumPlane::DatumPlane()
   project->addFeature(dPlane);
   feature = dPlane.get();
   node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
+  isEdit = false;
+  isFirstRun = true;
 }
 
 DatumPlane::DatumPlane(ftr::Base *fIn)
@@ -57,9 +59,10 @@ DatumPlane::DatumPlane(ftr::Base *fIn)
 {
   feature = dynamic_cast<ftr::DatumPlane*>(fIn);
   assert(feature);
-  firstRun = false; //bypass go() in activate.
   viewBase = std::make_unique<cmv::DatumPlane>(this);
   node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  isEdit = true;
+  isFirstRun = false;
 }
 
 DatumPlane::~DatumPlane() {}
@@ -73,9 +76,9 @@ void DatumPlane::activate()
 {
   isActive = true;
   leafManager.rewind();
-  if (firstRun)
+  if (isFirstRun.get())
   {
-    firstRun = false;
+    isFirstRun = false;
     go();
   }
   if (viewBase)
@@ -91,7 +94,6 @@ void DatumPlane::activate()
 
 void DatumPlane::deactivate()
 {
-  isActive = false;
   if (viewBase)
   {
     feature->setNotEditing();
@@ -99,6 +101,12 @@ void DatumPlane::deactivate()
     node->sendBlocked(out);
   }
   leafManager.fastForward();
+  if (!isEdit.get())
+  {
+    node->sendBlocked(msg::buildShowThreeD(feature->getId()));
+    node->sendBlocked(msg::buildShowOverlay(feature->getId()));
+  }
+  isActive = false;
 }
 
 void DatumPlane::setToConstant()
@@ -109,6 +117,7 @@ void DatumPlane::setToConstant()
 
 void DatumPlane::setToPlanarOffset(const std::vector<slc::Message> &msIn)
 {
+  assert(isActive);
   assert(msIn.size() == 1);
   assert(project->hasFeature(msIn.front().featureId));
   if (msIn.size() != 1)
@@ -126,6 +135,7 @@ void DatumPlane::setToPlanarOffset(const std::vector<slc::Message> &msIn)
 
 void DatumPlane::setToPlanarCenter(const std::vector<slc::Message> &msIn)
 {
+  assert(isActive);
   assert(msIn.size() == 2);
   assert(project->hasFeature(msIn.front().featureId));
   assert(project->hasFeature(msIn.back().featureId));
@@ -148,6 +158,7 @@ void DatumPlane::setToPlanarCenter(const std::vector<slc::Message> &msIn)
 
 void DatumPlane::setToAxisAngle(const std::vector<slc::Message> &msIn)
 {
+  assert(isActive);
   assert(msIn.size() == 2);
   assert(project->hasFeature(msIn.front().featureId));
   assert(project->hasFeature(msIn.back().featureId));
@@ -171,6 +182,7 @@ void DatumPlane::setToAxisAngle(const std::vector<slc::Message> &msIn)
 
 void DatumPlane::setToAverage3Plane(const std::vector<slc::Message> &msIn)
 {
+  assert(isActive);
   assert(msIn.size() == 3);
   assert(project->hasFeature(msIn.at(0).featureId));
   assert(project->hasFeature(msIn.at(1).featureId));
@@ -194,6 +206,7 @@ void DatumPlane::setToAverage3Plane(const std::vector<slc::Message> &msIn)
 
 void DatumPlane::setToThrough3Points(const std::vector<slc::Message> &msIn)
 {
+  assert(isActive);
   assert(msIn.size() == 3);
   assert(project->hasFeature(msIn.at(0).featureId));
   assert(project->hasFeature(msIn.at(1).featureId));
@@ -217,6 +230,7 @@ void DatumPlane::setToThrough3Points(const std::vector<slc::Message> &msIn)
 
 void DatumPlane::localUpdate()
 {
+  assert(isActive);
   feature->updateModel(project->getPayload(feature->getId()));
   feature->updateVisual();
   feature->setModelDirty();

@@ -43,6 +43,7 @@ RemoveFaces::RemoveFaces()
   feature = nf.get();
   node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
   isEdit = false;
+  isFirstRun = true;
 }
 
 RemoveFaces::RemoveFaces(ftr::Base *fIn)
@@ -51,10 +52,10 @@ RemoveFaces::RemoveFaces(ftr::Base *fIn)
 {
   feature = dynamic_cast<ftr::RemoveFaces*>(fIn);
   assert(feature);
-  firstRun = false; //bypass go() in activate.
   viewBase = std::make_unique<cmv::RemoveFaces>(this);
   node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
   isEdit = true;
+  isFirstRun = false; //bypass go() in activate.
 }
 
 RemoveFaces::~RemoveFaces() = default;
@@ -68,9 +69,9 @@ void RemoveFaces::activate()
 {
   isActive = true;
   leafManager.rewind();
-  if (firstRun)
+  if (isFirstRun.get())
   {
-    firstRun = false;
+    isFirstRun = false;
     go();
   }
   if (viewBase)
@@ -86,7 +87,6 @@ void RemoveFaces::activate()
 
 void RemoveFaces::deactivate()
 {
-  isActive = false;
   if (viewBase)
   {
     feature->setNotEditing();
@@ -94,16 +94,18 @@ void RemoveFaces::deactivate()
     node->sendBlocked(out);
   }
   leafManager.fastForward();
-  if (!isEdit)
+  if (!isEdit.get())
   {
     project->hideAlterParents(feature->getId());
     node->sendBlocked(msg::buildShowThreeD(feature->getId()));
     node->sendBlocked(msg::buildShowOverlay(feature->getId()));
   }
+  isActive = false;
 }
 
 void RemoveFaces::setSelections(const std::vector<slc::Message> &targets)
 {
+  assert(isActive);
   project->clearAllInputs(feature->getId());
   feature->setPicks(ftr::Picks());
   
@@ -139,6 +141,7 @@ void RemoveFaces::setSelections(const std::vector<slc::Message> &targets)
 
 void RemoveFaces::localUpdate()
 {
+  assert(isActive);
   feature->updateModel(project->getPayload(feature->getId()));
   feature->updateVisual();
   feature->setModelDirty();

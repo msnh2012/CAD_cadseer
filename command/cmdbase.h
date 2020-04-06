@@ -23,6 +23,8 @@
 #include <string>
 #include <memory>
 
+#include <boost/optional/optional.hpp>
+
 #include <QObject> //for string translation.
 
 #include "selection/slcmessage.h" //for derived classes
@@ -68,8 +70,12 @@ namespace cmd
     
     std::unique_ptr<cmv::Base> viewBase; //set in derived class
     
-    bool isActive;
-    bool shouldUpdate = true;
+    bool isActive = false;
+    bool shouldUpdate = true; //not real useful anymore.
+    
+    //using optional to force derived class to set a meaningful value in constructors
+    boost::optional<bool> isEdit;
+    boost::optional<bool> isFirstRun;
   };
   
   typedef std::shared_ptr<Base> BasePtr;

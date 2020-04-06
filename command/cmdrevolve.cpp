@@ -43,6 +43,8 @@ Revolve::Revolve()
   project->addFeature(revolve);
   feature = revolve.get();
   node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
+  isEdit = false;
+  isFirstRun = true;
 }
 
 Revolve::Revolve(ftr::Base *fIn)
@@ -51,9 +53,10 @@ Revolve::Revolve(ftr::Base *fIn)
 {
   feature = dynamic_cast<ftr::Revolve*>(fIn);
   assert(feature);
-  firstRun = false; //bypass go() in activate.
   viewBase = std::make_unique<cmv::Revolve>(this);
   node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  isEdit = true;
+  isFirstRun = false;
 }
 
 Revolve::~Revolve() {}
@@ -67,9 +70,9 @@ void Revolve::activate()
 {
   isActive = true;
   leafManager.rewind();
-  if (firstRun)
+  if (isFirstRun.get())
   {
-    firstRun = false;
+    isFirstRun = false;
     go();
   }
   if (viewBase)
@@ -85,7 +88,6 @@ void Revolve::activate()
 
 void Revolve::deactivate()
 {
-  isActive = false;
   if (viewBase)
   {
     feature->setNotEditing();
@@ -93,10 +95,17 @@ void Revolve::deactivate()
     node->sendBlocked(out);
   }
   leafManager.fastForward(); //do after the view is hidden
+  if (!isEdit.get())
+  {
+    node->sendBlocked(msg::buildShowThreeD(feature->getId()));
+    node->sendBlocked(msg::buildShowOverlay(feature->getId()));
+  }
+  isActive = false;
 }
 
 void Revolve::localUpdate()
 {
+  assert(isActive);
   feature->updateModel(project->getPayload(feature->getId()));
   feature->updateVisual();
   feature->setModelDirty();
@@ -119,6 +128,7 @@ ftr::Picks Revolve::connect(const std::vector<slc::Message> &msIn, const std::st
 
 void Revolve::setToAxisPicks(const std::vector<slc::Message> &profileMessages, const std::vector<slc::Message> &axisMessages)
 {
+  assert(isActive);
   project->clearAllInputs(feature->getId());
   feature->setAxisType(ftr::Revolve::AxisType::Picks);
   feature->setPicks(connect(profileMessages, ftr::InputType::target));
@@ -128,6 +138,7 @@ void Revolve::setToAxisPicks(const std::vector<slc::Message> &profileMessages, c
 
 void Revolve::setToAxisParameter(const std::vector<slc::Message> &profileMessages)
 {
+  assert(isActive);
   project->clearAllInputs(feature->getId());
   feature->setAxisType(ftr::Revolve::AxisType::Parameter);
   feature->setPicks(connect(profileMessages, ftr::InputType::target));

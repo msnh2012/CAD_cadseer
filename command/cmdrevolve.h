@@ -48,7 +48,6 @@ namespace cmd
     void setToAxisPicks(const std::vector<slc::Message>&, const std::vector<slc::Message>&);
     void setToAxisParameter(const std::vector<slc::Message>&);
   private:
-    bool firstRun = true;
     cmd::LeafManager leafManager;
     void go();
     ftr::Picks connect(const std::vector<slc::Message>&, const std::string&);

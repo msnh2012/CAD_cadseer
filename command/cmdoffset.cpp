@@ -46,6 +46,8 @@ Offset::Offset()
   project->addFeature(offset);
   feature = offset.get();
   node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
+  isEdit = false;
+  isFirstRun = true;
 }
 
 Offset::Offset(ftr::Base *fIn)
@@ -54,9 +56,10 @@ Offset::Offset(ftr::Base *fIn)
 {
   feature = dynamic_cast<ftr::Offset*>(fIn);
   assert(feature);
-  firstRun = false; //bypass go() in activate.
   viewBase = std::make_unique<cmv::Offset>(this);
   node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  isEdit = true;
+  isFirstRun = false;
 }
 
 Offset::~Offset() = default;
@@ -70,9 +73,9 @@ void Offset::activate()
 {
   isActive = true;
   leafManager.rewind();
-  if (firstRun)
+  if (isFirstRun.get())
   {
-    firstRun = false;
+    isFirstRun = false;
     go();
   }
   if (viewBase)
@@ -88,7 +91,6 @@ void Offset::activate()
 
 void Offset::deactivate()
 {
-  isActive = false;
   if (viewBase)
   {
     feature->setNotEditing();
@@ -96,10 +98,18 @@ void Offset::deactivate()
     node->sendBlocked(out);
   }
   leafManager.fastForward();
+  if (!isEdit.get())
+  {
+    project->hideAlterParents(feature->getId());
+    node->sendBlocked(msg::buildShowThreeD(feature->getId()));
+    node->sendBlocked(msg::buildShowOverlay(feature->getId()));
+  }
+  isActive = false;
 }
 
 void Offset::setSelections(const std::vector<slc::Message> &targets)
 {
+  assert(isActive);
   project->clearAllInputs(feature->getId());
   feature->setPicks(ftr::Picks());
   
@@ -135,6 +145,7 @@ void Offset::setSelections(const std::vector<slc::Message> &targets)
 
 void Offset::localUpdate()
 {
+  assert(isActive);
   feature->updateModel(project->getPayload(feature->getId()));
   feature->updateVisual();
   feature->setModelDirty();

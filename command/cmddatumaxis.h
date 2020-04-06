@@ -52,7 +52,6 @@ namespace cmd
     private:
       void go();
       cmd::LeafManager leafManager;
-      bool firstRun = true;
   };
 }
 

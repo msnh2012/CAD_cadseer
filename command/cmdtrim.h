@@ -47,7 +47,6 @@ namespace cmd
       void setSelections(const std::vector<slc::Message>&, const std::vector<slc::Message>&);
       void localUpdate();
     private:
-      bool firstRun = true;
       cmd::LeafManager leafManager;
       void go();
   };

@@ -42,6 +42,8 @@ Trim::Trim()
   project->addFeature(trim);
   feature = trim.get();
   node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
+  isEdit = false;
+  isFirstRun = true;
 }
 
 Trim::Trim(ftr::Base *fIn)
@@ -50,9 +52,10 @@ Trim::Trim(ftr::Base *fIn)
 {
   feature = dynamic_cast<ftr::Trim*>(fIn);
   assert(feature);
-  firstRun = false; //bypass go() in activate.
   viewBase = std::make_unique<cmv::Trim>(this);
   node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  isEdit = true;
+  isFirstRun = false;
 }
 
 Trim::~Trim() = default;
@@ -66,9 +69,9 @@ void Trim::activate()
 {
   isActive = true;
   leafManager.rewind();
-  if (firstRun)
+  if (isFirstRun.get())
   {
-    firstRun = false;
+    isFirstRun = false;
     go();
   }
   if (viewBase)
@@ -84,7 +87,6 @@ void Trim::activate()
 
 void Trim::deactivate()
 {
-  isActive = false;
   if (viewBase)
   {
     feature->setNotEditing();
@@ -92,10 +94,18 @@ void Trim::deactivate()
     node->sendBlocked(out);
   }
   leafManager.fastForward();
+  if (!isEdit.get())
+  {
+    project->hideAlterParents(feature->getId());
+    node->sendBlocked(msg::buildShowThreeD(feature->getId()));
+    node->sendBlocked(msg::buildShowOverlay(feature->getId()));
+  }
+  isActive = false;
 }
 
 void Trim::setSelections(const std::vector<slc::Message> &target, const std::vector<slc::Message> &tool)
 {
+  assert(isActive);
   project->clearAllInputs(feature->getId());
   
   if (target.empty() || tool.empty())
@@ -113,6 +123,7 @@ void Trim::setSelections(const std::vector<slc::Message> &target, const std::vec
 
 void Trim::localUpdate()
 {
+  assert(isActive);
   feature->updateModel(project->getPayload(feature->getId()));
   feature->updateVisual();
   feature->setModelDirty();
