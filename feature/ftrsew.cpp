@@ -28,6 +28,7 @@
 #include "globalutilities.h"
 #include "tools/occtools.h"
 #include "tools/idtools.h"
+#include "tools/featuretools.h"
 #include "annex/annseershape.h"
 #include "project/serial/generated/prjsrlswssew.h"
 #include "feature/ftrshapecheck.h"
@@ -57,7 +58,13 @@ sShape(new ann::SeerShape())
   shellId = gu::createRandomId();
 }
 
-Sew::~Sew(){}
+Sew::~Sew() = default;
+
+void Sew::setPicks(const Picks &pIn)
+{
+  picks = pIn;
+  setModelDirty();
+}
 
 void Sew::updateModel(const UpdatePayload &payloadIn)
 {
@@ -72,39 +79,50 @@ void Sew::updateModel(const UpdatePayload &payloadIn)
       throw std::runtime_error("feature is skipped");
     }
     
-    //we use inputs of type 'target' to apply preference to target feature.
-    //we don't value any inputs of a sew more than others so they are all tools.
-    std::vector<const Base*> tfs = payloadIn.getFeatures(InputType::tool);
+    tls::Resolver pr(payloadIn);
     std::vector<std::reference_wrapper<const ann::SeerShape>> seerShapes;
-    //filter out invalid inputs.
-    for (const Base *f : tfs)
+    occt::ShapeVector shapes;
+    for (const auto &p : picks)
     {
-      assert(f->hasAnnex(ann::Type::SeerShape)); //shouldn't happen.
-      if (!f->hasAnnex(ann::Type::SeerShape))
+      if (!pr.resolve(p))
       {
-        std::ostringstream stream;
-        stream << "WARNING: removing target without seer shape" << std::endl;
-        lastUpdateLog += stream.str();
+        //just going to warn about resolution failure.
+        std::ostringstream s; s << "Warning: Pick resolution failure" << std::endl;
+        lastUpdateLog += s.str();
         continue;
       }
-      const ann::SeerShape &tss = f->getAnnex<ann::SeerShape>();
-      if (tss.isNull())
-        continue; //no warning. null seer shapes are normal with skipping used.
-      seerShapes.push_back(tss);
+      const ann::SeerShape *ss = pr.getSeerShape();
+      if (!ss)
+      {
+        std::ostringstream s; s << "Warning: No seershape from resolution" << std::endl;
+        lastUpdateLog += s.str();
+        continue;
+      }
+      occt::ShapeVector sv = pr.getShapes();
+      occt::ShapeVector cleaned;
+      //make sure we only have shells and faces.
+      for (auto s : sv)
+      {
+        if (s.ShapeType() == TopAbs_COMPOUND)
+          s = occt::getFirstNonCompound(s);
+        if (s.ShapeType() == TopAbs_SHELL || s.ShapeType() == TopAbs_FACE)
+          cleaned.push_back(s);
+      }
+      if (cleaned.empty())
+      {
+        std::ostringstream s; s << "Warning: No occt shapes from resolution" << std::endl;
+        lastUpdateLog += s.str();
+        continue;
+      }
+      seerShapes.push_back(*ss);
+      shapes.insert(shapes.end(), cleaned.begin(), cleaned.end());
     }
-    if (seerShapes.empty())
-      throw std::runtime_error("no parents");
+    if (shapes.empty())
+      throw std::runtime_error("No shapes to sew");
     
     BRepBuilderAPI_Sewing builder(0.000001, true, true, true, false);
-    for (const auto &ss : seerShapes)
-    {
-      occt::ShapeVector shapes = ss.get().useGetNonCompoundChildren();
-      for (const auto &shape : shapes)
-      {
-        if (shape.ShapeType() == TopAbs_SHELL || shape.ShapeType() == TopAbs_FACE)
-          builder.Add(shape);
-      }
-    }
+    for (const auto &s : shapes)
+      builder.Add(s);
     builder.Perform(); //Perform Sewing
   //   builder.Dump();
     
@@ -252,6 +270,8 @@ void Sew::serialWrite(const boost::filesystem::path &dIn)
     gu::idToString(solidId),
     gu::idToString(shellId)
   );
+  for (const auto &p : picks)
+    so.picks().push_back(p);
   
   xml_schema::NamespaceInfomap infoMap;
   std::ofstream stream(buildFilePathName(dIn).string());
@@ -264,6 +284,8 @@ void Sew::serialRead(const prj::srl::sws::Sew &si)
   sShape->serialIn(si.seerShape());
   solidId = gu::stringToId(si.solidId());
   shellId = gu::stringToId(si.shellId());
+  for (const auto &p : si.picks())
+    picks.emplace_back(p);
 }
 
 

@@ -1,6 +1,6 @@
 /*
  * CadSeer. Parametric Solid Modeling.
- * Copyright (C) 2018  Thomas S. Anderson blobfish.at.gmx.com
+ * Copyright (C) 2020 Thomas S. Anderson blobfish.at.gmx.com
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,40 +17,32 @@
  *
  */
 
-#ifndef CMD_SEW_H
-#define CMD_SEW_H
+#ifndef CMV_SEW_H
+#define CMV_SEW_H
 
-#include "command/cmdleafmanager.h"
-#include "command/cmdbase.h"
+#include <memory>
 
-namespace ftr{class Sew;}
+#include "commandview/cmvbase.h"
 
-namespace cmd
+namespace cmd{class Sew;}
+
+namespace cmv
 {
   /**
   * @todo write docs
   */
   class Sew : public Base
   {
-    public:
-      ftr::Sew *feature = nullptr;
-      
-      Sew();
-      Sew(ftr::Base*);
-      ~Sew() override;
-      
-      std::string getCommandName() override{return "Sew";}
-      std::string getStatusMessage() override;
-      void activate() override;
-      void deactivate() override;
-      
-      void setSelections(const std::vector<slc::Message>&);
-      void localUpdate();
-    private:
-      cmd::LeafManager leafManager;
-      void go();
-      bool isValidSelection(const slc::Message&);
+    Q_OBJECT
+  public:
+    Sew(cmd::Sew*);
+    ~Sew() override;
+  public Q_SLOTS:
+    void selectionChanged();
+  private:
+    struct Stow;
+    std::unique_ptr<Stow> stow;
   };
 }
 
-#endif // CMD_SEW_H
+#endif // CMV_SEW_H

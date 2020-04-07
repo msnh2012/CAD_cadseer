@@ -435,6 +435,7 @@ commandview_sources = [
   , 'commandview/cmvoffset.cpp'
   , 'commandview/cmvremovefaces.cpp'
   , 'commandview/cmvruled.cpp'
+  , 'commandview/cmvsew.cpp'
 ]
   
 law_sources = ['law/lwfcue.cpp']
@@ -584,6 +585,7 @@ cadseer_moc_hdrs = ['viewer/vwrwidget.h'
   , 'commandview/cmvoffset.h'
   , 'commandview/cmvremovefaces.h'
   , 'commandview/cmvruled.h'
+  , 'commandview/cmvsew.h'
 ]
   
 cadseer_resources = ['resources.qrc']

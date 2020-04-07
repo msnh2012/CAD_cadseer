@@ -20,6 +20,7 @@
 #ifndef FTR_SEW_H
 #define FTR_SEW_H
 
+#include "feature/ftrpick.h"
 #include "feature/ftrbase.h"
 
 class BRepBuilderAPI_Sewing;
@@ -47,8 +48,12 @@ namespace ftr
     virtual void serialWrite(const boost::filesystem::path&) override;
     void serialRead(const prj::srl::sws::Sew&);
     
+    void setPicks(const Picks&);
+    const Picks& getPicks(){return picks;}
+    
   protected:
     std::unique_ptr<ann::SeerShape> sShape;
+    Picks picks;
     
     void assignSolidShell();
     void sewModifiedMatch(const BRepBuilderAPI_Sewing&, const ann::SeerShape&);

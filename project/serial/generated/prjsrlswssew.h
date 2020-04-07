@@ -93,6 +93,8 @@ namespace prj
 
 #include "prjsrlsptbase.h"
 
+#include "prjsrlsptpick.h"
+
 namespace prj
 {
   namespace srl
@@ -135,6 +137,23 @@ namespace prj
 
         void
         seerShape (::std::unique_ptr< SeerShapeType > p);
+
+        // picks
+        //
+        typedef ::prj::srl::spt::Pick PicksType;
+        typedef ::xsd::cxx::tree::sequence< PicksType > PicksSequence;
+        typedef PicksSequence::iterator PicksIterator;
+        typedef PicksSequence::const_iterator PicksConstIterator;
+        typedef ::xsd::cxx::tree::traits< PicksType, char > PicksTraits;
+
+        const PicksSequence&
+        picks () const;
+
+        PicksSequence&
+        picks ();
+
+        void
+        picks (const PicksSequence& s);
 
         // solidId
         //
@@ -216,6 +235,7 @@ namespace prj
         protected:
         ::xsd::cxx::tree::one< BaseType > base_;
         ::xsd::cxx::tree::one< SeerShapeType > seerShape_;
+        PicksSequence picks_;
         ::xsd::cxx::tree::one< SolidIdType > solidId_;
         static const SolidIdType solidId_default_value_;
         ::xsd::cxx::tree::one< ShellIdType > shellId_;

@@ -52,7 +52,7 @@ namespace ftr
     void serialRead(const prj::srl::offs::Offset&);
     
     void setPicks(const Picks&);
-    Picks getPicks(){return picks;}
+    const Picks& getPicks(){return picks;}
     
   protected:
     std::unique_ptr<prm::Parameter> distance;

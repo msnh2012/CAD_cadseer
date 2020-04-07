@@ -26,14 +26,40 @@
 #include "parameter/prmparameter.h"
 #include "feature/ftrinputtype.h"
 #include "feature/ftrsew.h"
+#include "tools/featuretools.h"
+#include "commandview/cmvmessage.h"
+#include "commandview/cmvsew.h"
 #include "command/cmdsew.h"
 
 using boost::uuids::uuid;
 
 using namespace cmd;
 
-Sew::Sew() : Base() {}
-Sew::~Sew() {}
+Sew::Sew()
+: Base("cmd::Sew")
+, leafManager()
+{
+  auto nf = std::make_shared<ftr::Sew>();
+  project->addFeature(nf);
+  feature = nf.get();
+  node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
+  isEdit = false;
+  isFirstRun = true;
+}
+
+Sew::Sew(ftr::Base *fIn)
+: Base("cmd::Sew")
+, leafManager(fIn)
+{
+  feature = dynamic_cast<ftr::Sew*>(fIn);
+  assert(feature);
+  viewBase = std::make_unique<cmv::Sew>(this);
+  node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  isEdit = true;
+  isFirstRun = false;
+}
+
+Sew::~Sew() = default;
 
 std::string Sew::getStatusMessage()
 {
@@ -43,40 +69,110 @@ std::string Sew::getStatusMessage()
 void Sew::activate()
 {
   isActive = true;
-  go();
-  sendDone();
+  leafManager.rewind();
+  if (isFirstRun.get())
+  {
+    isFirstRun = false;
+    go();
+  }
+  if (viewBase)
+  {
+    feature->setEditing();
+    cmv::Message vm(viewBase.get(), viewBase->getPaneWidth());
+    msg::Message out(msg::Mask(msg::Request | msg::Command | msg::View | msg::Show), vm);
+    node->sendBlocked(out);
+  }
+  else
+    sendDone();
 }
 
 void Sew::deactivate()
 {
+  if (viewBase)
+  {
+    feature->setNotEditing();
+    msg::Message out(msg::Mask(msg::Request | msg::Command | msg::View | msg::Hide));
+    node->sendBlocked(out);
+  }
+  leafManager.fastForward();
+  if (!isEdit.get())
+  {
+    node->sendBlocked(msg::buildShowThreeD(feature->getId()));
+    node->sendBlocked(msg::buildShowOverlay(feature->getId()));
+  }
   isActive = false;
+}
+
+bool Sew::isValidSelection(const slc::Message &mIn)
+{
+  const ftr::Base *lf = project->findFeature(mIn.featureId);
+  if (!lf->hasAnnex(ann::Type::SeerShape) || lf->getAnnex<ann::SeerShape>().isNull())
+    return false;
+  
+  auto t = mIn.type;
+  if
+  (
+    (t != slc::Type::Object)
+    && (t != slc::Type::Shell)
+    && (t != slc::Type::Face)
+  )
+    return false;
+  return true;
+}
+
+void Sew::setSelections(const std::vector<slc::Message> &targets)
+{
+  assert(isActive);
+  project->clearAllInputs(feature->getId());
+  feature->setPicks(ftr::Picks());
+  
+  if (targets.empty())
+    return;
+  
+  ftr::Picks freshPicks;
+  for (const auto &m : targets)
+  {
+    if (!isValidSelection(m))
+      continue;
+
+    const ftr::Base *lf = project->findFeature(m.featureId);
+    freshPicks.push_back(tls::convertToPick(m, *lf, project->getShapeHistory()));
+    freshPicks.back().tag = ftr::InputType::createIndexedTag(ftr::InputType::target, freshPicks.size() - 1);
+    project->connect(lf->getId(), feature->getId(), {freshPicks.back().tag});
+  }
+  feature->setPicks(freshPicks);
+}
+
+void Sew::localUpdate()
+{
+  assert(isActive);
+  feature->updateModel(project->getPayload(feature->getId()));
+  feature->updateVisual();
+  feature->setModelDirty();
+  node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
 }
 
 void Sew::go()
 {
-  slc::Containers filtered;
   const slc::Containers &containers = eventHandler->getSelections();
+  std::vector<slc::Message> tm; //target messages
   for (const auto &c : containers)
   {
-    if (c.selectionType == slc::Type::Object)
-      filtered.push_back(c);
+    auto m = slc::EventHandler::containerToMessage(c);
+    if (isValidSelection(m))
+      tm.push_back(m);
   }
-  if (filtered.size() < 2)
+  
+  if (tm.size() > 1)
   {
-    node->sendBlocked(msg::buildStatusMessage("Wrong pre selection for sew", 2.0));
-    shouldUpdate = false;
+    setSelections(tm);
+    node->sendBlocked(msg::buildStatusMessage("Sew Added", 2.0));
+    node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
     return;
   }
   
-  std::shared_ptr<ftr::Sew> sew(new ftr::Sew());
-  project->addFeature(sew);
-  for (const auto &c : filtered)
-  {
-    project->connect(c.featureId, sew->getId(), ftr::InputType{ftr::InputType::tool});
-    node->sendBlocked(msg::buildHideThreeD(c.featureId));
-    node->sendBlocked(msg::buildHideOverlay(c.featureId));
-  }
-  
   node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  node->sendBlocked(msg::buildShowThreeD(feature->getId()));
+  node->sendBlocked(msg::buildShowOverlay(feature->getId()));
+  viewBase = std::make_unique<cmv::Sew>(this);
 }
-
