@@ -17,9 +17,6 @@
  *
  */
 
-// #include <cassert>
-// #include <boost/optional/optional.hpp>
-
 #include <QSettings>
 #include <QVBoxLayout>
 
@@ -28,28 +25,28 @@
 #include "dialogs/dlgselectionbutton.h"
 #include "dialogs/dlgselectionwidget.h"
 #include "tools/featuretools.h"
-#include "feature/ftrremovefaces.h"
-#include "command/cmdremovefaces.h"
-#include "commandview/cmvremovefaces.h"
+#include "feature/ftrruled.h"
+#include "command/cmdruled.h"
+#include "commandview/cmvruled.h"
 
 using boost::uuids::uuid;
 
 using namespace cmv;
 
-struct RemoveFaces::Stow
+struct Ruled::Stow
 {
-  cmd::RemoveFaces *command;
-  cmv::RemoveFaces *view;
+  cmd::Ruled *command;
+  cmv::Ruled *view;
   dlg::SelectionWidget *selectionWidget = nullptr;
   
-  Stow(cmd::RemoveFaces *cIn, cmv::RemoveFaces *vIn)
+  Stow(cmd::Ruled *cIn, cmv::Ruled *vIn)
   : command(cIn)
   , view(vIn)
   {
     buildGui();
     
     QSettings &settings = app::instance()->getUserSettings();
-    settings.beginGroup("cmv::RemoveFaces");
+    settings.beginGroup("cmv::Ruled");
     //load settings
     settings.endGroup();
     
@@ -67,18 +64,23 @@ struct RemoveFaces::Stow
     
     std::vector<dlg::SelectionWidgetCue> cues;
     dlg::SelectionWidgetCue cue;
-    cue.name = tr("Faces");
-    cue.singleSelection = false;
-    cue.mask = slc::FacesEnabled | slc::FacesSelectable;
-    cue.statusPrompt = tr("Select Faces To Remove");
-    cue.showAccrueColumn = false; //true in future
+    cue.name = tr("Item 1");
+    cue.singleSelection = true;
+    cue.mask = slc::ObjectsEnabled | slc::ObjectsSelectable | slc::WiresEnabled | slc::WiresSelectable | slc::EdgesEnabled | slc::EdgesSelectable;
+    cue.statusPrompt = tr("Select Item 1");
+    cue.showAccrueColumn = false;
     cues.push_back(cue);
+    cue.name = tr("Item 2");
+    cue.statusPrompt = tr("Select Item 2");
+    cues.push_back(cue);
+    
     selectionWidget = new dlg::SelectionWidget(view, cues);
     mainLayout->addWidget(selectionWidget);
     
     mainLayout->addItem(new QSpacerItem(20, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
     
-    QObject::connect(selectionWidget->getButton(0), &dlg::SelectionButton::dirty, view, &RemoveFaces::selectionChanged);
+    QObject::connect(selectionWidget->getButton(0), &dlg::SelectionButton::dirty, view, &Ruled::selectionChanged);
+    QObject::connect(selectionWidget->getButton(1), &dlg::SelectionButton::dirty, view, &Ruled::selectionChanged);
   }
   
   void loadFeatureData()
@@ -86,39 +88,42 @@ struct RemoveFaces::Stow
     ftr::UpdatePayload up = view->project->getPayload(command->feature->getId());
     tls::Resolver resolver(up);
     
-    auto picksToMessages = [&](const ftr::Picks &pIn) -> slc::Messages
+    auto pickToMessages = [&](const ftr::Pick &pIn) -> slc::Messages
     {
       slc::Messages out;
-      for (const auto &p : pIn)
+      if (resolver.resolve(pIn))
       {
-        if (resolver.resolve(p))
-        {
-          auto msgs = resolver.convertToMessages();
-          out.insert(out.end(), msgs.begin(), msgs.end());
-        }
+        auto msgs = resolver.convertToMessages();
+        out.insert(out.end(), msgs.begin(), msgs.end());
       }
       return out;
     };
     
-    selectionWidget->initializeButton(0, picksToMessages(command->feature->getPicks()));
+    const auto &cp = command->feature->getPicks();
+    if (!cp.empty())
+      selectionWidget->initializeButton(0, pickToMessages(cp.front()));
+    if (cp.size() > 1)
+      selectionWidget->initializeButton(1, pickToMessages(cp.at(1)));
     selectionWidget->activate(0);
   }
   
   void goSelections()
   {
-    command->setSelections(selectionWidget->getMessages(0));
+    auto msgs = selectionWidget->getMessages(0);
+    msgs.insert(msgs.begin(), selectionWidget->getMessages(1).begin(), selectionWidget->getMessages(1).end());
+    command->setSelections(msgs);
     command->localUpdate();
   }
 };
 
-RemoveFaces::RemoveFaces(cmd::RemoveFaces *cIn)
-: Base("cmv::RemoveFaces")
+Ruled::Ruled(cmd::Ruled *cIn)
+: Base("cmv::Ruled")
 , stow(new Stow(cIn, this))
 {}
 
-RemoveFaces::~RemoveFaces() = default;
+Ruled::~Ruled() = default;
 
-void RemoveFaces::selectionChanged()
+void Ruled::selectionChanged()
 {
   stow->goSelections();
 }

@@ -37,12 +37,12 @@ namespace cmd
     
     Revolve();
     Revolve(ftr::Base*);
-    virtual ~Revolve() override;
+    ~Revolve() override;
     
-    virtual std::string getCommandName() override{return "Revolve";}
-    virtual std::string getStatusMessage() override;
-    virtual void activate() override;
-    virtual void deactivate() override;
+    std::string getCommandName() override{return "Revolve";}
+    std::string getStatusMessage() override;
+    void activate() override;
+    void deactivate() override;
     
     void localUpdate();
     void setToAxisPicks(const std::vector<slc::Message>&, const std::vector<slc::Message>&);
