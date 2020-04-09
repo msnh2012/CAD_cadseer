@@ -73,6 +73,12 @@ sShape(new ann::SeerShape())
 
 Thicken::~Thicken(){}
 
+void Thicken::setPicks(const Picks &pIn)
+{
+  picks = pIn;
+  setModelDirty();
+}
+
 //duplicated in offset
 static std::string getErrorString(const BRepOffset_MakeOffset &bIn)
 {
@@ -99,14 +105,15 @@ void Thicken::updateModel(const UpdatePayload &payloadIn)
   sShape->reset();
   try
   {
-    std::vector<const Base*> tfs = payloadIn.getFeatures(InputType::target);
-    if (tfs.size() != 1)
-      throw std::runtime_error("wrong number of parents");
-    if (!tfs.front()->hasAnnex(ann::Type::SeerShape))
-      throw std::runtime_error("parent doesn't have seer shape.");
-    const ann::SeerShape &tss = tfs.front()->getAnnex<ann::SeerShape>();
-    if (tss.isNull())
-      throw std::runtime_error("target seer shape is null");
+    if (picks.empty())
+      throw std::runtime_error("No input features");
+    tls::Resolver pr(payloadIn);
+    if (!pr.resolve(picks.front()))
+      throw std::runtime_error("Resolution of pick failed");
+    const ann::SeerShape *tempss = pr.getSeerShape();
+    if (!tempss)
+      throw std::runtime_error("Invalid seer shape");
+    const ann::SeerShape &tss = *tempss;
     
     //setup failure state.
     sShape->setOCCTShape(tss.getRootOCCTShape(), getId());
@@ -123,26 +130,27 @@ void Thicken::updateModel(const UpdatePayload &payloadIn)
       throw std::runtime_error("feature is skipped");
     }
     
-    std::vector<uuid> targetShapes = tss.useGetChildrenOfType(tss.getRootShapeId(), TopAbs_SHELL);
-    if (targetShapes.empty())
+    occt::ShapeVector filtered;
+    for (const auto &s : pr.getShapes())
     {
-      targetShapes = tss.useGetChildrenOfType(tss.getRootShapeId(), TopAbs_FACE);
-      if (targetShapes.empty())
-        throw std::runtime_error("target seer shape has no shells or faces");
+      occt::ShapeVector subShapes = occt::getNonCompounds(s);
+      for (const auto &subShape : subShapes)
+      {
+        if (subShape.ShapeType() == TopAbs_SHELL || subShape.ShapeType() == TopAbs_FACE)
+          filtered.push_back(subShape);
+      }
     }
-    if (targetShapes.size() > 1)
-    {
-      std::ostringstream s; s << "WARNING: target has more than 1 target shape" << std::endl;
-      lastUpdateLog += s.str();
-    }
-    const TopoDS_Shape &targetShape = tss.getOCCTShape(targetShapes.front());
-    if (targetShape.Closed())
-      throw std::runtime_error("target shape is closed");
+    if (filtered.empty())
+      throw std::runtime_error("No shapes");
+    TopoDS_Shape shapeToThicken = filtered.front();
+    //I have not test this compound wrap of multiples to see if it is going to work
+    if (filtered.size() > 1)
+      shapeToThicken = static_cast<TopoDS_Compound>(occt::ShapeVectorCast(filtered));
     
     BRepOffset_MakeOffset builder;
     builder.Initialize
     (
-      targetShape,
+      shapeToThicken,
       static_cast<double>(*distance), //offset
       1.0e-06, //same tolerance as the sewing default.
       BRepOffset_Skin, //offset mode
@@ -378,6 +386,9 @@ void Thicken::serialWrite(const boost::filesystem::path &dIn)
   for (const auto &p : oWireMap)
     so.oWireMap().push_back(prj::srl::spt::EvolveRecord(gu::idToString(p.first), gu::idToString(p.second)));
   
+  for (const auto &p : picks)
+    so.picks().push_back(p);
+  
   xml_schema::NamespaceInfomap infoMap;
   std::ofstream stream(buildFilePathName(dIn).string());
   prj::srl::thks::thicken(stream, so, infoMap);
@@ -400,4 +411,7 @@ void Thicken::serialRead(const prj::srl::thks::Thicken &so)
     boundaryMap.insert(std::make_pair(gu::stringToId(p.idIn()), gu::stringToId(p.idOut())));
   for (const auto &p : so.oWireMap())
     oWireMap.insert(std::make_pair(gu::stringToId(p.idIn()), gu::stringToId(p.idOut())));
+  
+  for (const auto &p : so.picks())
+    picks.emplace_back(p);
 }

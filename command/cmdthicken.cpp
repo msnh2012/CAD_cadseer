@@ -24,6 +24,9 @@
 #include "parameter/prmparameter.h"
 #include "feature/ftrinputtype.h"
 #include "feature/ftrthicken.h"
+#include "tools/featuretools.h"
+#include "commandview/cmvmessage.h"
+#include "commandview/cmvthicken.h"
 #include "command/cmdthicken.h"
 
 
@@ -31,8 +34,31 @@ using boost::uuids::uuid;
 
 using namespace cmd;
 
-Thicken::Thicken() : Base() {}
-Thicken::~Thicken() {}
+Thicken::Thicken()
+: Base("cmd::Thicken")
+, leafManager()
+{
+  auto nf = std::make_shared<ftr::Thicken>();
+  project->addFeature(nf);
+  feature = nf.get();
+  node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
+  isEdit = false;
+  isFirstRun = true;
+}
+
+Thicken::Thicken(ftr::Base *fIn)
+: Base("cmd::Thicken")
+, leafManager(fIn)
+{
+  feature = dynamic_cast<ftr::Thicken*>(fIn);
+  assert(feature);
+  viewBase = std::make_unique<cmv::Thicken>(this);
+  node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  isEdit = true;
+  isFirstRun = false;
+}
+
+Thicken::~Thicken() = default;
 
 std::string Thicken::getStatusMessage()
 {
@@ -42,39 +68,112 @@ std::string Thicken::getStatusMessage()
 void Thicken::activate()
 {
   isActive = true;
-  go();
-  sendDone();
+  leafManager.rewind();
+  if (isFirstRun.get())
+  {
+    isFirstRun = false;
+    go();
+  }
+  if (viewBase)
+  {
+    feature->setEditing();
+    cmv::Message vm(viewBase.get(), viewBase->getPaneWidth());
+    msg::Message out(msg::Mask(msg::Request | msg::Command | msg::View | msg::Show), vm);
+    node->sendBlocked(out);
+  }
+  else
+    sendDone();
 }
 
 void Thicken::deactivate()
 {
+  if (viewBase)
+  {
+    feature->setNotEditing();
+    msg::Message out(msg::Mask(msg::Request | msg::Command | msg::View | msg::Hide));
+    node->sendBlocked(out);
+  }
+  leafManager.fastForward();
+  if (!isEdit.get())
+  {
+    node->sendBlocked(msg::buildShowThreeD(feature->getId()));
+    node->sendBlocked(msg::buildShowOverlay(feature->getId()));
+  }
   isActive = false;
+}
+
+bool Thicken::isValidSelection(const slc::Message &mIn)
+{
+  const ftr::Base *lf = project->findFeature(mIn.featureId);
+  if (!lf->hasAnnex(ann::Type::SeerShape) || lf->getAnnex<ann::SeerShape>().isNull())
+    return false;
+  
+  auto t = mIn.type;
+  if
+  (
+    (t != slc::Type::Object)
+    && (t != slc::Type::Shell)
+    && (t != slc::Type::Face)
+  )
+    return false;
+  return true;
+}
+
+void Thicken::setSelections(const std::vector<slc::Message> &targets)
+{
+  assert(isActive);
+  
+  project->clearAllInputs(feature->getId());
+  feature->setPicks(ftr::Picks());
+  
+  if (targets.empty())
+    return;
+  
+  ftr::Picks freshPicks;
+  for (const auto &m : targets)
+  {
+    if (!isValidSelection(m))
+      continue;
+
+    const ftr::Base *lf = project->findFeature(m.featureId);
+    freshPicks.push_back(tls::convertToPick(m, *lf, project->getShapeHistory()));
+    freshPicks.back().tag = ftr::InputType::createIndexedTag(ftr::InputType::target, freshPicks.size() - 1);
+    project->connect(lf->getId(), feature->getId(), {freshPicks.back().tag});
+  }
+  feature->setPicks(freshPicks);
+}
+
+void Thicken::localUpdate()
+{
+  assert(isActive);
+  feature->updateModel(project->getPayload(feature->getId()));
+  feature->updateVisual();
+  feature->setModelDirty();
+  node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
 }
 
 void Thicken::go()
 {
-  const slc::Containers &containers = eventHandler->getSelections();
-  if (containers.empty())
+  const slc::Containers &cs = eventHandler->getSelections();
+  
+  std::vector<slc::Message> tm; //target messages
+  for (const auto &c : cs)
   {
-    node->sendBlocked(msg::buildStatusMessage("Wrong pre selection for thicken", 2.0));
-    shouldUpdate = false;
-    return;
-  }
-
-  ftr::Base *bf = project->findFeature(containers.front().featureId);
-  if (!bf->hasAnnex(ann::Type::SeerShape))
-  {
-    node->sendBlocked(msg::buildStatusMessage("Wrong pre selection for thicken", 2.0));
-    shouldUpdate = false;
-    return;
+    auto m = slc::EventHandler::containerToMessage(c);
+    if (isValidSelection(m))
+      tm.push_back(m);
   }
   
-  std::shared_ptr<ftr::Thicken> thicken(new ftr::Thicken());
-  project->addFeature(thicken);
-  project->connectInsert(bf->getId(), thicken->getId(), ftr::InputType{ftr::InputType::target});
-  
-  node->sendBlocked(msg::buildHideThreeD(bf->getId()));
-  node->sendBlocked(msg::buildHideOverlay(bf->getId()));
+  if (!tm.empty())
+  {
+    setSelections(tm);
+    node->sendBlocked(msg::buildStatusMessage("Thicken Added", 2.0));
+    node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+    return;
+  }
   
   node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  node->sendBlocked(msg::buildShowThreeD(feature->getId()));
+  node->sendBlocked(msg::buildShowOverlay(feature->getId()));
+  viewBase = std::make_unique<cmv::Thicken>(this);
 }

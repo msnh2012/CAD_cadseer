@@ -7,6 +7,7 @@
 >
   <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptseershape.xsd"/>
   <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptparameter.xsd"/>
+  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptpick.xsd"/>
   <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptoverlay.xsd"/>
   <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptbase.xsd"/>
 
@@ -14,6 +15,7 @@
   <xs:sequence>
     <xs:element name="base" type="spt:Base"/>
     <xs:element name="seerShape" type="spt:SeerShape"/>
+    <xs:element name="picks" type="spt:Pick" minOccurs="0" maxOccurs="unbounded"/>
     <xs:element name="distance" type="spt:Parameter"/>
     <xs:element name="distanceLabel" type="spt:PLabel"/>
     <xs:element name="faceMap" type="spt:EvolveRecord" minOccurs="0" maxOccurs="unbounded"/>

@@ -93,6 +93,8 @@ namespace prj
 
 #include "prjsrlsptparameter.h"
 
+#include "prjsrlsptpick.h"
+
 #include "prjsrlsptoverlay.h"
 
 #include "prjsrlsptbase.h"
@@ -139,6 +141,23 @@ namespace prj
 
         void
         seerShape (::std::unique_ptr< SeerShapeType > p);
+
+        // picks
+        //
+        typedef ::prj::srl::spt::Pick PicksType;
+        typedef ::xsd::cxx::tree::sequence< PicksType > PicksSequence;
+        typedef PicksSequence::iterator PicksIterator;
+        typedef PicksSequence::const_iterator PicksConstIterator;
+        typedef ::xsd::cxx::tree::traits< PicksType, char > PicksTraits;
+
+        const PicksSequence&
+        picks () const;
+
+        PicksSequence&
+        picks ();
+
+        void
+        picks (const PicksSequence& s);
 
         // distance
         //
@@ -326,6 +345,7 @@ namespace prj
         protected:
         ::xsd::cxx::tree::one< BaseType > base_;
         ::xsd::cxx::tree::one< SeerShapeType > seerShape_;
+        PicksSequence picks_;
         ::xsd::cxx::tree::one< DistanceType > distance_;
         ::xsd::cxx::tree::one< DistanceLabelType > distanceLabel_;
         FaceMapSequence faceMap_;

@@ -22,6 +22,7 @@
 
 #include <osg/ref_ptr>
 
+#include "feature/ftrpick.h"
 #include "feature/ftrbase.h"
 
 class BRepOffset_MakeOffset;
@@ -51,7 +52,11 @@ namespace ftr
     virtual void serialWrite(const boost::filesystem::path&) override;
     void serialRead(const prj::srl::thks::Thicken&);
     
+    const ftr::Picks& getPicks(){return picks;}
+    void setPicks(const ftr::Picks&);
+    
   protected:
+    ftr::Picks picks; //only going to use one, but empty will be null.
     std::unique_ptr<prm::Parameter> distance;
     
     std::unique_ptr<ann::SeerShape> sShape;

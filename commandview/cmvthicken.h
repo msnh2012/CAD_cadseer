@@ -1,6 +1,6 @@
 /*
  * CadSeer. Parametric Solid Modeling.
- * Copyright (C) 2018  Thomas S. Anderson blobfish.at.gmx.com
+ * Copyright (C) 2020 Thomas S. Anderson blobfish.at.gmx.com
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,40 +17,32 @@
  *
  */
 
-#ifndef CMD_THICKEN_H
-#define CMD_THICKEN_H
+#ifndef CMV_THICKEN_H
+#define CMV_THICKEN_H
 
-#include "command/cmdleafmanager.h"
-#include "command/cmdbase.h"
+#include <memory>
 
-namespace ftr{class Thicken;}
+#include "commandview/cmvbase.h"
 
-namespace cmd
+namespace cmd{class Thicken;}
+
+namespace cmv
 {
   /**
   * @todo write docs
   */
   class Thicken : public Base
   {
+    Q_OBJECT
   public:
-    ftr::Thicken *feature = nullptr;
-    
-    Thicken();
-    Thicken(ftr::Base*);
+    Thicken(cmd::Thicken*);
     ~Thicken() override;
-    
-    std::string getCommandName() override{return "Thicken";}
-    std::string getStatusMessage() override;
-    void activate() override;
-    void deactivate() override;
-    
-    void setSelections(const std::vector<slc::Message>&);
-    void localUpdate();
+  public Q_SLOTS:
+    void selectionChanged();
   private:
-    cmd::LeafManager leafManager;
-    void go();
-    bool isValidSelection(const slc::Message&);
+    struct Stow;
+    std::unique_ptr<Stow> stow;
   };
 }
 
-#endif // CMD_THICKEN_H
+#endif // CMV_THICKEN_H

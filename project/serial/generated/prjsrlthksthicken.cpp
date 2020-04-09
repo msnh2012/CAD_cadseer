@@ -97,6 +97,24 @@ namespace prj
         this->seerShape_.set (std::move (x));
       }
 
+      const Thicken::PicksSequence& Thicken::
+      picks () const
+      {
+        return this->picks_;
+      }
+
+      Thicken::PicksSequence& Thicken::
+      picks ()
+      {
+        return this->picks_;
+      }
+
+      void Thicken::
+      picks (const PicksSequence& s)
+      {
+        this->picks_ = s;
+      }
+
       const Thicken::DistanceType& Thicken::
       distance () const
       {
@@ -307,6 +325,7 @@ namespace prj
       : ::xml_schema::Type (),
         base_ (base, this),
         seerShape_ (seerShape, this),
+        picks_ (this),
         distance_ (distance, this),
         distanceLabel_ (distanceLabel, this),
         faceMap_ (this),
@@ -328,6 +347,7 @@ namespace prj
       : ::xml_schema::Type (),
         base_ (std::move (base), this),
         seerShape_ (std::move (seerShape), this),
+        picks_ (this),
         distance_ (std::move (distance), this),
         distanceLabel_ (std::move (distanceLabel), this),
         faceMap_ (this),
@@ -346,6 +366,7 @@ namespace prj
       : ::xml_schema::Type (x, f, c),
         base_ (x.base_, f, this),
         seerShape_ (x.seerShape_, f, this),
+        picks_ (x.picks_, f, this),
         distance_ (x.distance_, f, this),
         distanceLabel_ (x.distanceLabel_, f, this),
         faceMap_ (x.faceMap_, f, this),
@@ -364,6 +385,7 @@ namespace prj
       : ::xml_schema::Type (e, f | ::xml_schema::Flags::base, c),
         base_ (this),
         seerShape_ (this),
+        picks_ (this),
         distance_ (this),
         distanceLabel_ (this),
         faceMap_ (this),
@@ -416,6 +438,17 @@ namespace prj
               this->seerShape_.set (::std::move (r));
               continue;
             }
+          }
+
+          // picks
+          //
+          if (n.name () == "picks" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< PicksType > r (
+              PicksTraits::create (i, f, this));
+
+            this->picks_.push_back (::std::move (r));
+            continue;
           }
 
           // distance
@@ -579,6 +612,7 @@ namespace prj
           static_cast< ::xml_schema::Type& > (*this) = x;
           this->base_ = x.base_;
           this->seerShape_ = x.seerShape_;
+          this->picks_ = x.picks_;
           this->distance_ = x.distance_;
           this->distanceLabel_ = x.distanceLabel_;
           this->faceMap_ = x.faceMap_;
@@ -914,6 +948,20 @@ namespace prj
               e));
 
           s << i.seerShape ();
+        }
+
+        // picks
+        //
+        for (Thicken::PicksConstIterator
+             b (i.picks ().begin ()), n (i.picks ().end ());
+             b != n; ++b)
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "picks",
+              e));
+
+          s << *b;
         }
 
         // distance
