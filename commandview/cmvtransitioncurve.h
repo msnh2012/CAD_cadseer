@@ -1,6 +1,6 @@
 /*
  * CadSeer. Parametric Solid Modeling.
- * Copyright (C) 2019 Thomas S. Anderson blobfish.at.gmx.com
+ * Copyright (C) 2020 Thomas S. Anderson blobfish.at.gmx.com
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,40 +17,32 @@
  *
  */
 
-#ifndef CMD_TRANSITIONCURVE_H
-#define CMD_TRANSITIONCURVE_H
+#ifndef CMV_TRANSITIONCURVE_H
+#define CMV_TRANSITIONCURVE_H
 
-#include "command/cmdleafmanager.h"
-#include "command/cmdbase.h"
+#include <memory>
 
-namespace ftr{class TransitionCurve;}
+#include "commandview/cmvbase.h"
 
-namespace cmd
+namespace cmd{class TransitionCurve;}
+
+namespace cmv
 {
   /**
   * @todo write docs
   */
   class TransitionCurve : public Base
   {
+    Q_OBJECT
   public:
-    ftr::TransitionCurve *feature = nullptr;
-    
-    TransitionCurve();
-    TransitionCurve(ftr::Base*);
+    TransitionCurve(cmd::TransitionCurve*);
     ~TransitionCurve() override;
-    
-    std::string getCommandName() override{return "Transition Curve";}
-    std::string getStatusMessage() override;
-    void activate() override;
-    void deactivate() override;
-    
-    void setSelections(const std::vector<slc::Message>&);
-    void localUpdate();
+  public Q_SLOTS:
+    void selectionChanged();
   private:
-    cmd::LeafManager leafManager;
-    bool gleanDirection = false;
-    void go();
-    bool isValidSelection(const slc::Message&);
+    struct Stow;
+    std::unique_ptr<Stow> stow;
   };
 }
-#endif // CMD_TRANSITIONCURVE_H
+
+#endif // CMV_TRANSITIONCURVE_H

@@ -437,6 +437,7 @@ commandview_sources = [
   , 'commandview/cmvruled.cpp'
   , 'commandview/cmvsew.cpp'
   , 'commandview/cmvthicken.cpp'
+  , 'commandview/cmvtransitioncurve.cpp'
 ]
   
 law_sources = ['law/lwfcue.cpp']
@@ -588,6 +589,7 @@ cadseer_moc_hdrs = ['viewer/vwrwidget.h'
   , 'commandview/cmvruled.h'
   , 'commandview/cmvsew.h'
   , 'commandview/cmvthicken.h'
+  , 'commandview/cmvtransitioncurve.h'
 ]
   
 cadseer_resources = ['resources.qrc']

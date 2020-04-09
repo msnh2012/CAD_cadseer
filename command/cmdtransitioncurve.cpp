@@ -28,13 +28,39 @@
 #include "annex/annseershape.h"
 #include "feature/ftrinputtype.h"
 #include "feature/ftrtransitioncurve.h"
+#include "commandview/cmvmessage.h"
+#include "commandview/cmvtransitioncurve.h"
 #include "command/cmdtransitioncurve.h"
 
 using namespace cmd;
 
-TransitionCurve::TransitionCurve() : Base() {}
+TransitionCurve::TransitionCurve()
+: Base("cmd::TransitionCurve")
+, leafManager()
+{
+  auto nf = std::make_shared<ftr::TransitionCurve>();
+  project->addFeature(nf);
+  feature = nf.get();
+  node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
+  isEdit = false;
+  isFirstRun = true;
+  gleanDirection = true;
+}
 
-TransitionCurve::~TransitionCurve() {}
+TransitionCurve::TransitionCurve(ftr::Base *fIn)
+: Base("cmd::TransitionCurve")
+, leafManager(fIn)
+{
+  feature = dynamic_cast<ftr::TransitionCurve*>(fIn);
+  assert(feature);
+  viewBase = std::make_unique<cmv::TransitionCurve>(this);
+  node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  isEdit = true;
+  isFirstRun = false;
+  gleanDirection = false;
+}
+
+TransitionCurve::~TransitionCurve() = default;
 
 std::string TransitionCurve::getStatusMessage()
 {
@@ -44,91 +70,145 @@ std::string TransitionCurve::getStatusMessage()
 void TransitionCurve::activate()
 {
   isActive = true;
-  go();
-  sendDone();
+  leafManager.rewind();
+  if (isFirstRun.get())
+  {
+    isFirstRun = false;
+    go();
+  }
+  if (viewBase)
+  {
+    feature->setEditing();
+    cmv::Message vm(viewBase.get(), viewBase->getPaneWidth());
+    msg::Message out(msg::Mask(msg::Request | msg::Command | msg::View | msg::Show), vm);
+    node->sendBlocked(out);
+  }
+  else
+    sendDone();
 }
 
 void TransitionCurve::deactivate()
 {
+  if (viewBase)
+  {
+    feature->setNotEditing();
+    msg::Message out(msg::Mask(msg::Request | msg::Command | msg::View | msg::Hide));
+    node->sendBlocked(out);
+  }
+  leafManager.fastForward();
+  if (!isEdit.get())
+  {
+    node->sendBlocked(msg::buildShowThreeD(feature->getId()));
+    node->sendBlocked(msg::buildShowOverlay(feature->getId()));
+  }
   isActive = false;
+}
+
+bool TransitionCurve::isValidSelection(const slc::Message &mIn)
+{
+  const ftr::Base *lf = project->findFeature(mIn.featureId);
+  if (!lf->hasAnnex(ann::Type::SeerShape) || lf->getAnnex<ann::SeerShape>().isNull())
+    return false;
+  
+  if
+  (
+    mIn.type == slc::Type::StartPoint
+    || mIn.type == slc::Type::EndPoint
+    || mIn.type == slc::Type::MidPoint
+    || mIn.type == slc::Type::QuadrantPoint
+    || mIn.type == slc::Type::NearestPoint
+  )
+    return true;
+    
+  return false;
+}
+
+void TransitionCurve::setSelections(const std::vector<slc::Message> &targets)
+{
+  assert(isActive);
+  
+  auto reset = [&]()
+  {
+    project->clearAllInputs(feature->getId());
+    feature->setPicks(ftr::Picks());
+  };
+  reset();
+  
+  if (targets.size() != 2)
+    return;
+  
+  ftr::Picks freshPicks;
+  for (const auto &m : targets)
+  {
+    if (!isValidSelection(m))
+      continue;
+
+    const ftr::Base *lf = project->findFeature(m.featureId);
+    freshPicks.push_back(tls::convertToPick(m, *lf, project->getShapeHistory()));
+    freshPicks.back().tag = ftr::InputType::createIndexedTag(ftr::InputType::target, freshPicks.size() - 1);
+    //conversion to pick will resolve shape history to vertices for end points.
+    //we can't have that because transition needs edge also.
+    //so here we will hack back in the edge history.
+    //are we trying to do too much with one pick?
+    if (m.type == slc::Type::StartPoint || m.type == slc::Type::EndPoint)
+      freshPicks.back().shapeHistory = project->getShapeHistory().createDevolveHistory(m.shapeId);
+    
+    project->connect(lf->getId(), feature->getId(), {freshPicks.back().tag});
+  }
+  if (freshPicks.size() != 2)
+  {
+    reset();
+    return;
+  }
+  
+  feature->setPicks(freshPicks);
+  if (gleanDirection)
+  {
+    gleanDirection = false;
+     auto getEdge = [&](const slc::Message &mIn) -> TopoDS_Edge
+    {
+      const ftr::Base *lf = project->findFeature(mIn.featureId);
+      const ann::SeerShape &ss = lf->getAnnex<ann::SeerShape>();
+      return TopoDS::Edge(ss.getOCCTShape(mIn.shapeId));
+    };
+    feature->gleanDirection0(getEdge(targets.front()));
+    feature->gleanDirection1(getEdge(targets.back()));
+  }
+}
+
+void TransitionCurve::localUpdate()
+{
+  assert(isActive);
+  feature->updateModel(project->getPayload(feature->getId()));
+  feature->updateVisual();
+  feature->setModelDirty();
+  node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
 }
 
 void TransitionCurve::go()
 {
   const slc::Containers &cs = eventHandler->getSelections();
-  if (cs.size() != 2)
+  
+  std::vector<slc::Message> tm;
+  for (const auto &c : cs)
   {
-    node->sendBlocked(msg::buildStatusMessage("Incorrect selection for TransitionCurve", 2.0));
-    shouldUpdate = false;
+    auto m = slc::EventHandler::containerToMessage(c);
+    if (isValidSelection(m))
+      tm.push_back(m);
+  }
+  
+  if (tm.size() == 2)
+  {
+    gleanDirection = true;
+    setSelections(tm);
+    
+    node->sendBlocked(msg::buildStatusMessage("Transition Curve Added", 2.0));
+    node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
     return;
   }
   
-  auto isValidPoint = [](const slc::Container &cIn) -> bool
-  {
-    if
-    (
-      cIn.selectionType == slc::Type::StartPoint
-      || cIn.selectionType == slc::Type::EndPoint
-      || cIn.selectionType == slc::Type::MidPoint
-      || cIn.selectionType == slc::Type::QuadrantPoint
-      || cIn.selectionType == slc::Type::NearestPoint
-    )
-      return true;
-      
-    return false;
-  };
-  if (!isValidPoint(cs.front()))
-  {
-    node->sendBlocked(msg::buildStatusMessage("Incorrect first selection for TransitionCurve", 2.0));
-    shouldUpdate = false;
-    return;
-  }
-  if (!isValidPoint(cs.back()))
-  {
-    node->sendBlocked(msg::buildStatusMessage("Incorrect last selection for TransitionCurve", 2.0));
-    shouldUpdate = false;
-    return;
-  }
-  
-  const ftr::Base *bf0 = project->findFeature(cs.front().featureId);
-  if (!bf0 || !bf0->hasAnnex(ann::Type::SeerShape))
-  {
-    node->sendBlocked(msg::buildStatusMessage("Invalid first selection for TransitionCurve", 2.0));
-    shouldUpdate = false;
-    return;
-  }
-  const ann::SeerShape &ss0 = bf0->getAnnex<ann::SeerShape>();
-  
-  ftr::Base const *bf1 = project->findFeature(cs.back().featureId);
-  if (!bf1 || !bf1->hasAnnex(ann::Type::SeerShape))
-  {
-    node->sendBlocked(msg::buildStatusMessage("Invalid second selection for TransitionCurve", 2.0));
-    shouldUpdate = false;
-    return;
-  }
-  const ann::SeerShape &ss1 = bf1->getAnnex<ann::SeerShape>();
-  
-  ftr::Picks picks;
-  picks.push_back(tls::convertToPick(cs.front(), ss0, project->getShapeHistory()));
-  picks.back().tag = ftr::TransitionCurve::pickZero;
-  picks.push_back(tls::convertToPick(cs.back(), ss1, project->getShapeHistory()));
-  picks.back().tag = ftr::TransitionCurve::pickOne;
-  
-  assert(ss0.hasId(cs.front().shapeId));
-  assert(ss0.findShape(cs.front().shapeId).ShapeType() == TopAbs_EDGE);
-  assert(ss1.hasId(cs.back().shapeId));
-  assert(ss1.findShape(cs.back().shapeId).ShapeType() == TopAbs_EDGE);
-  TopoDS_Edge e0 = TopoDS::Edge(ss0.getOCCTShape(cs.front().shapeId));
-  TopoDS_Edge e1 = TopoDS::Edge(ss1.getOCCTShape(cs.back().shapeId));
-  
-  auto f = std::make_shared<ftr::TransitionCurve>();
-  f->setPicks(picks);
-  f->gleanDirection0(e0);
-  f->gleanDirection1(e1);
-  project->addFeature(f);
-  project->connectInsert(bf0->getId(), f->getId(), ftr::InputType{ftr::TransitionCurve::pickZero});
-  project->connectInsert(bf1->getId(), f->getId(), ftr::InputType{ftr::TransitionCurve::pickOne});
-  
-  node->sendBlocked(msg::buildStatusMessage("TransitionCurve created", 2.0));
   node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  node->sendBlocked(msg::buildShowThreeD(feature->getId()));
+  node->sendBlocked(msg::buildShowOverlay(feature->getId()));
+  viewBase = std::make_unique<cmv::TransitionCurve>(this);
 }

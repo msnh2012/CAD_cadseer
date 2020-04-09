@@ -1095,6 +1095,11 @@ BasePtr editThicken(ftr::Base *feature)
   return std::make_shared<Thicken>(feature);
 }
 
+BasePtr editTransitionCurve(ftr::Base *feature)
+{
+  return std::make_shared<TransitionCurve>(feature);
+}
+
 void Manager::setupEditFunctionMap()
 {
   editFunctionMap.insert(std::make_pair(ftr::Type::Blend, std::bind(editBlend, std::placeholders::_1)));
@@ -1127,4 +1132,5 @@ void Manager::setupEditFunctionMap()
   editFunctionMap.insert(std::make_pair(ftr::Type::Ruled, std::bind(editRuled, std::placeholders::_1)));
   editFunctionMap.insert(std::make_pair(ftr::Type::Sew, std::bind(editSew, std::placeholders::_1)));
   editFunctionMap.insert(std::make_pair(ftr::Type::Thicken, std::bind(editThicken, std::placeholders::_1)));
+  editFunctionMap.insert(std::make_pair(ftr::Type::TransitionCurve, std::bind(editTransitionCurve, std::placeholders::_1)));
 }

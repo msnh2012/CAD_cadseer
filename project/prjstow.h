@@ -130,8 +130,8 @@ namespace prj
       out << 
           "[label=\"" <<
           graphVW[vertexW].feature->getName().toUtf8().data() << "\\n" <<
-          gu::idToString(graphVW[vertexW].feature->getId()) << "\\n" <<
-          "Descriptor: " << ftr::getDescriptorString(graphVW[vertexW].feature->getDescriptor()) << 
+          gu::idToShortString(graphVW[vertexW].feature->getId()) << "\\n" <<
+          ftr::getDescriptorString(graphVW[vertexW].feature->getDescriptor()) << 
           "\"]";
     }
   private:

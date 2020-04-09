@@ -66,8 +66,6 @@ ftr::Pick tls::convertToPick
   {
     assert(!messageIn.shapeId.is_nil());
     assert(sShapeIn.hasId(messageIn.shapeId)); //don't set me up
-    //create devolve history from original pick not resolved
-    out.shapeHistory = pHistory.createDevolveHistory(messageIn.shapeId);
     
     uuid resolvedId = messageIn.shapeId; //this mutates upon points to vertices.
     /* currently picks don't support parameters for anything higher than faces.

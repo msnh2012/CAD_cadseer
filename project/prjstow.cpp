@@ -92,10 +92,13 @@ void Stow::sendConnectMessage(const Vertex &parentIn, const Vertex &childIn, con
 
 void Stow::clearVertex(const Vertex &vIn)
 {
+  Edges etr; //edges to remove
   for (auto ie : boost::make_iterator_range(boost::in_edges(vIn, graph)))
-    disconnect(ie);
+    etr.push_back(ie);
   for (auto ie : boost::make_iterator_range(boost::out_edges(vIn, graph)))
-    disconnect(ie);
+    etr.push_back(ie);
+  
+  removeEdges(etr);
 }
 
 void Stow::disconnect(const Edge &eIn)
