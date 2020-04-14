@@ -115,6 +115,7 @@ namespace cmv
     ~ParameterWidget();
     void enableWidget(prm::Parameter*);
     void disableWidget(prm::Parameter*);
+    QWidget* getWidget(prm::Parameter*); // maybe nullptr
   private:
     struct Stow;
     std::unique_ptr<Stow> stow;

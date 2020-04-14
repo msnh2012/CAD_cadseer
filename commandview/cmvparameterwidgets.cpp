@@ -789,3 +789,12 @@ void ParameterWidget::disableWidget(prm::Parameter *pIn)
     return;
   widget.get()->setDisabled(true);
 }
+
+QWidget* ParameterWidget::getWidget(prm::Parameter *pIn)
+{
+  auto widget = stow->findWidget(pIn);
+  assert(widget);
+  if (!widget)
+    return nullptr;
+  return widget.get();
+}

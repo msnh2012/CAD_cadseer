@@ -45,6 +45,8 @@
 #include "preferences/prfmanager.h"
 #include "feature/ftrbooleanoperation.h"
 #include "feature/ftrshapecheck.h"
+#include "feature/ftrupdatepayload.h"
+#include "feature/ftrinputtype.h"
 #include "parameter/prmparameter.h"
 #include "feature/ftrthread.h"
 
@@ -240,7 +242,7 @@ TopoDS_Edge buildOneHelix(double dia, double p)
 //ref:
 //https://en.wikipedia.org/wiki/ISO_metric_screw_thread
 //tried using BRepBuilderAPI_FastSewing but it didn't work. FYI
-void Thread::updateModel(const UpdatePayload&)
+void Thread::updateModel(const UpdatePayload &plIn)
 {
   setFailure();
   lastUpdateLog.clear();
@@ -252,6 +254,17 @@ void Thread::updateModel(const UpdatePayload&)
       setSuccess();
       throw std::runtime_error("feature is skipped");
     }
+    
+    std::vector<const Base*> tfs = plIn.getFeatures(ftr::InputType::linkCSys);
+    if (!tfs.empty() && tfs.front()->hasParameter(prm::Names::CSys))
+    {
+      csys->setValueQuiet(static_cast<osg::Matrixd>(*(tfs.front()->getParameter(prm::Names::CSys))));
+      csysDragger->draggerUpdate();
+      if (overlaySwitch->containsNode(csysDragger->dragger))
+        overlaySwitch->removeChild(csysDragger->dragger);
+    }
+    else if (!overlaySwitch->containsNode(csysDragger->dragger))
+      overlaySwitch->addChild(csysDragger->dragger);
     
     double d = static_cast<double>(*diameter);
     double p = static_cast<double>(*pitch);

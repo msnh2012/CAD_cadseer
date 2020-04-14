@@ -29,6 +29,7 @@
 #include "project/serial/generated/prjsrlcylscylinder.h"
 #include "annex/anncsysdragger.h"
 #include "feature/ftrcylinderbuilder.h"
+#include "feature/ftrinputtype.h"
 #include "annex/annseershape.h"
 #include "feature/ftrupdatepayload.h"
 #include "parameter/prmparameter.h"
@@ -191,7 +192,7 @@ osg::Matrixd Cylinder::getCSys() const
   return static_cast<osg::Matrixd>(*csys);
 }
 
-void Cylinder::updateModel(const UpdatePayload&)
+void Cylinder::updateModel(const UpdatePayload &plIn)
 {
   setFailure();
   lastUpdateLog.clear();
@@ -203,6 +204,17 @@ void Cylinder::updateModel(const UpdatePayload&)
       setSuccess();
       throw std::runtime_error("feature is skipped");
     }
+    
+    std::vector<const Base*> tfs = plIn.getFeatures(ftr::InputType::linkCSys);
+    if (!tfs.empty() && tfs.front()->hasParameter(prm::Names::CSys))
+    {
+      csys->setValueQuiet(static_cast<osg::Matrixd>(*(tfs.front()->getParameter(prm::Names::CSys))));
+      csysDragger->draggerUpdate();
+      if (overlaySwitch->containsNode(csysDragger->dragger))
+        overlaySwitch->removeChild(csysDragger->dragger);
+    }
+    else if (!overlaySwitch->containsNode(csysDragger->dragger))
+      overlaySwitch->addChild(csysDragger->dragger);
     
     CylinderBuilder cylinderMaker
     (

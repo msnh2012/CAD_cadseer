@@ -25,6 +25,13 @@
 #include "application/appmainwindow.h"
 #include "project/prjproject.h"
 #include "feature/ftrbase.h"
+#include "feature/ftrbox.h"
+#include "feature/ftrcylinder.h"
+#include "feature/ftroblong.h"
+#include "feature/ftrtorus.h"
+#include "feature/ftrsphere.h"
+#include "feature/ftrcone.h"
+#include "feature/ftrthread.h"
 #include "command/cmdfeaturetosystem.h"
 #include "command/cmdsystemtofeature.h"
 #include "command/cmdfeaturetodragger.h"
@@ -58,7 +65,6 @@
 #include "command/cmdtrim.h"
 #include "command/cmdrevision.h"
 #include "command/cmdremovefaces.h"
-#include "command/cmdthread.h"
 #include "command/cmddatumaxis.h"
 #include "command/cmddatumplane.h"
 #include "command/cmdsketch.h"
@@ -72,12 +78,6 @@
 #include "command/cmdsweep.h"
 #include "command/cmddraft.h"
 #include "command/cmdchamfer.h"
-#include "command/cmdbox.h"
-#include "command/cmdoblong.h"
-#include "command/cmdtorus.h"
-#include "command/cmdcylinder.h"
-#include "command/cmdsphere.h"
-#include "command/cmdcone.h"
 #include "command/cmdhollow.h"
 #include "command/cmdimport.h"
 #include "command/cmdexport.h"
@@ -92,6 +92,7 @@
 #include "command/cmddatumsystem.h"
 #include "command/cmdsurfaceremesh.h"
 #include "command/cmdsurfacemeshfill.h"
+#include "command/cmdprimitive.h"
 #include "message/msgnode.h"
 #include "message/msgsift.h"
 #include "selection/slcmessage.h"
@@ -745,7 +746,10 @@ void Manager::constructRemoveFacesDispatched(const msg::Message&)
 
 void Manager::constructThreadDispatched(const msg::Message&)
 {
-  addCommand(std::make_shared<Thread>());
+  auto nf = std::make_shared<ftr::Thread>();
+  app::instance()->getProject()->addFeature(nf);
+  auto c = std::make_shared<Primitive>(nf.get(), false);
+  addCommand(c);
 }
 
 void Manager::constructDatumAxisDispatched(const msg::Message&)
@@ -815,32 +819,50 @@ void Manager::constructChamferDispatched(const msg::Message&)
 
 void Manager::constructBoxDispatched(const msg::Message&)
 {
-  addCommand(std::make_shared<Box>());
+  auto nf = std::make_shared<ftr::Box>();
+  app::instance()->getProject()->addFeature(nf);
+  auto c = std::make_shared<Primitive>(nf.get(), false);
+  addCommand(c);
 }
 
 void Manager::constructOblongDispatched(const msg::Message&)
 {
-  addCommand(std::make_shared<Oblong>());
+  auto nf = std::make_shared<ftr::Oblong>();
+  app::instance()->getProject()->addFeature(nf);
+  auto c = std::make_shared<Primitive>(nf.get(), false);
+  addCommand(c);
 }
 
 void Manager::constructTorusDispatched(const msg::Message&)
 {
-  addCommand(std::make_shared<Torus>());
+  auto nf = std::make_shared<ftr::Torus>();
+  app::instance()->getProject()->addFeature(nf);
+  auto c = std::make_shared<Primitive>(nf.get(), false);
+  addCommand(c);
 }
 
 void Manager::constructCylinderDispatched(const msg::Message&)
 {
-  addCommand(std::make_shared<Cylinder>());
+  auto nf = std::make_shared<ftr::Cylinder>();
+  app::instance()->getProject()->addFeature(nf);
+  auto c = std::make_shared<Primitive>(nf.get(), false);
+  addCommand(c);
 }
 
 void Manager::constructSphereDispatched(const msg::Message&)
 {
-  addCommand(std::make_shared<Sphere>());
+  auto nf = std::make_shared<ftr::Sphere>();
+  app::instance()->getProject()->addFeature(nf);
+  auto c = std::make_shared<Primitive>(nf.get(), false);
+  addCommand(c);
 }
 
 void Manager::constructConeDispatched(const msg::Message&)
 {
-  addCommand(std::make_shared<Cone>());
+  auto nf = std::make_shared<ftr::Cone>();
+  app::instance()->getProject()->addFeature(nf);
+  auto c = std::make_shared<Primitive>(nf.get(), false);
+  addCommand(c);
 }
 
 void Manager::constructHollowDispatched(const msg::Message&)
@@ -1000,34 +1022,9 @@ BasePtr editChamfer(ftr::Base *feature)
   return std::make_shared<ChamferEdit>(feature);
 }
 
-BasePtr editBox(ftr::Base *feature)
+BasePtr editPrimitive(ftr::Base *feature)
 {
-  return std::make_shared<BoxEdit>(feature);
-}
-
-BasePtr editOblong(ftr::Base *feature)
-{
-  return std::make_shared<OblongEdit>(feature);
-}
-
-BasePtr editTorus(ftr::Base *feature)
-{
-  return std::make_shared<TorusEdit>(feature);
-}
-
-BasePtr editCylinder(ftr::Base *feature)
-{
-  return std::make_shared<CylinderEdit>(feature);
-}
-
-BasePtr editSphere(ftr::Base *feature)
-{
-  return std::make_shared<SphereEdit>(feature);
-}
-
-BasePtr editCone(ftr::Base *feature)
-{
-  return std::make_shared<ConeEdit>(feature);
+  return std::make_shared<Primitive>(feature, true);
 }
 
 BasePtr editHollow(ftr::Base *feature)
@@ -1113,12 +1110,13 @@ void Manager::setupEditFunctionMap()
   editFunctionMap.insert(std::make_pair(ftr::Type::Draft, std::bind(editDraft, std::placeholders::_1)));
   editFunctionMap.insert(std::make_pair(ftr::Type::Extract, std::bind(editExtract, std::placeholders::_1)));
   editFunctionMap.insert(std::make_pair(ftr::Type::Chamfer, std::bind(editChamfer, std::placeholders::_1)));
-  editFunctionMap.insert(std::make_pair(ftr::Type::Box, std::bind(editBox, std::placeholders::_1)));
-  editFunctionMap.insert(std::make_pair(ftr::Type::Oblong, std::bind(editOblong, std::placeholders::_1)));
-  editFunctionMap.insert(std::make_pair(ftr::Type::Torus, std::bind(editTorus, std::placeholders::_1)));
-  editFunctionMap.insert(std::make_pair(ftr::Type::Cylinder, std::bind(editCylinder, std::placeholders::_1)));
-  editFunctionMap.insert(std::make_pair(ftr::Type::Sphere, std::bind(editSphere, std::placeholders::_1)));
-  editFunctionMap.insert(std::make_pair(ftr::Type::Cone, std::bind(editCone, std::placeholders::_1)));
+  editFunctionMap.insert(std::make_pair(ftr::Type::Box, std::bind(editPrimitive, std::placeholders::_1)));
+  editFunctionMap.insert(std::make_pair(ftr::Type::Oblong, std::bind(editPrimitive, std::placeholders::_1)));
+  editFunctionMap.insert(std::make_pair(ftr::Type::Torus, std::bind(editPrimitive, std::placeholders::_1)));
+  editFunctionMap.insert(std::make_pair(ftr::Type::Cylinder, std::bind(editPrimitive, std::placeholders::_1)));
+  editFunctionMap.insert(std::make_pair(ftr::Type::Sphere, std::bind(editPrimitive, std::placeholders::_1)));
+  editFunctionMap.insert(std::make_pair(ftr::Type::Cone, std::bind(editPrimitive, std::placeholders::_1)));
+  editFunctionMap.insert(std::make_pair(ftr::Type::Thread, std::bind(editPrimitive, std::placeholders::_1)));
   editFunctionMap.insert(std::make_pair(ftr::Type::Hollow, std::bind(editHollow, std::placeholders::_1)));
   editFunctionMap.insert(std::make_pair(ftr::Type::DatumSystem, std::bind(editDatumSystem, std::placeholders::_1)));
   editFunctionMap.insert(std::make_pair(ftr::Type::SurfaceMesh, std::bind(editSurfaceMesh, std::placeholders::_1)));

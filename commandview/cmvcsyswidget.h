@@ -48,6 +48,8 @@ namespace cmv
     ~CSysWidget();
     void setCSysLinkId(const boost::uuids::uuid&); //!< pass nil for no feature link.
     boost::uuids::uuid getCSysLinkId() const; //!< returns nil id if no feature link.
+  Q_SIGNALS:
+    void dirty(); //!< called when something has changed.
   private:
     struct Stow;
     std::unique_ptr<Stow> stow;

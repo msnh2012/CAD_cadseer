@@ -1,6 +1,6 @@
 /*
  * CadSeer. Parametric Solid Modeling.
- * Copyright (C) 2019 Thomas S. Anderson blobfish.at.gmx.com
+ * Copyright (C) 2020 Thomas S. Anderson blobfish.at.gmx.com
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,39 +17,32 @@
  *
  */
 
-#ifndef DLG_BOX_H
-#define DLG_BOX_H
+#ifndef CMV_PRIMITIVE_H
+#define CMV_PRIMITIVE_H
 
 #include <memory>
 
-#include "dialogs/dlgbase.h"
+#include "commandview/cmvbase.h"
 
-namespace ftr{class Box;}
-namespace msg{struct Node;}
+namespace ftr{class Base;}
 
-namespace dlg
+namespace cmv
 {
   /**
   * @todo write docs
   */
-  class Box : public Base
+  class Primitive : public Base
   {
     Q_OBJECT
   public:
-    Box(ftr::Box*, QWidget*, bool = false);
-    ~Box() override;
+    Primitive(ftr::Base*);
+    ~Primitive() override;
   public Q_SLOTS:
-    void reject() override;
-    void accept() override;
+    void linkedCSysChanged();
   private:
     struct Stow;
     std::unique_ptr<Stow> stow;
-    
-    void init();
-    void buildGui();
-    void finishDialog();
-    void currentTabChanged(int);
   };
 }
 
-#endif // DLG_BOX_H
+#endif // CMV_PRIMITIVE_H

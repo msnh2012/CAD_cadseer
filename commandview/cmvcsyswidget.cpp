@@ -108,15 +108,20 @@ CSysWidget::CSysWidget(QWidget *parentIn, prm::Parameter *parameterIn)
 {
   connect(stow->byConstant, &QRadioButton::toggled, this, &CSysWidget::radioSlot);
   connect(stow->byFeature, &QRadioButton::toggled, this, &CSysWidget::radioSlot);
+  connect(stow->selectionWidget->getButton(0), &dlg::SelectionButton::dirty, this, &CSysWidget::dirty);
 }
 
 CSysWidget::~CSysWidget() = default;
 
 void CSysWidget::setCSysLinkId(const boost::uuids::uuid &idIn)
 {
+  QSignalBlocker cBlocker(stow->byConstant);
+  QSignalBlocker fBlocker(stow->byFeature);
+  
   if (idIn.is_nil())
   {
     stow->byConstant->setChecked(true);
+    stow->stackLayout->setCurrentIndex(0);
     return;
   }
   //else
@@ -128,8 +133,9 @@ void CSysWidget::setCSysLinkId(const boost::uuids::uuid &idIn)
   s.shapeId = gu::createNilId();
   //don't care about point location
   //don't care about selection mask
-  stow->selectionWidget->getButton(0)->setMessages(s);
+  stow->selectionWidget->initializeButton(0, s); //don't send 'dirty'
   stow->byFeature->setChecked(true);
+  stow->stackLayout->setCurrentIndex(1);
 }
 
 boost::uuids::uuid CSysWidget::getCSysLinkId() const
@@ -145,7 +151,13 @@ void CSysWidget::radioSlot()
   //gets called when states of both buttons change.
   //so we need both tests and can't use 'else'
   if (stow->byConstant->isChecked())
+  {
     stow->stackLayout->setCurrentIndex(0);
+    dirty();
+  }
   if (stow->byFeature->isChecked())
+  {
     stow->stackLayout->setCurrentIndex(1);
+    dirty();
+  }
 }

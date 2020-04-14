@@ -20,132 +20,160 @@
 // #include "tools/featuretools.h"
 // #include "application/appmainwindow.h"
 // #include "application/appapplication.h"
-// #include "project/prjproject.h"
 // #include "viewer/vwrwidget.h"
-// #include "message/msgnode.h"
-// #include "selection/slceventhandler.h"
-// #include "parameter/prmparameter.h"
-// #include "dialogs/dlgparameter.h"
-// #include "dialogs/dlg%CLASSNAMELOWERCASE%.h"
-// #include "annex/annseershape.h"
-// #include "feature/ftrinputtype.h"
+#include "project/prjproject.h"
+#include "annex/annseershape.h"
+#include "message/msgnode.h"
+#include "selection/slceventhandler.h"
+#include "parameter/prmparameter.h"
+#include "feature/ftrinputtype.h"
 #include "feature/ftr%CLASSNAMELOWERCASE%.h"
+#include "commandview/cmvmessage.h"
+#include "commandview/cmv%CLASSNAMELOWERCASE%.h"
 #include "command/cmd%CLASSNAMELOWERCASE%.h"
 
 using namespace cmd;
 
-%CLASSNAME%::%CLASSNAME%() : Base() {}
-
-%CLASSNAME%::~%CLASSNAME%()
+%CLASSNAME%::%CLASSNAME%()
+: Base("cmd::%CLASSNAME%")
+, leafManager()
 {
-  if (dialog)
-    dialog->deleteLater();
+  auto nf = std::make_shared<ftr::%CLASSNAME%>();
+  project->addFeature(nf);
+  feature = nf.get();
+  node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
+  isEdit = false;
+  isFirstRun = true;
 }
+
+%CLASSNAME%::%CLASSNAME%(ftr::Base *fIn)
+: Base("cmd::%CLASSNAME%")
+, leafManager(fIn)
+{
+  feature = dynamic_cast<ftr::%CLASSNAME%*>(fIn);
+  assert(feature);
+  viewBase = std::make_unique<cmv::%CLASSNAME%>(this);
+  node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  isEdit = true;
+  isFirstRun = false;
+}
+
+%CLASSNAME%::~%CLASSNAME%() = default;
 
 std::string %CLASSNAME%::getStatusMessage()
 {
-  return QObject::tr("Select geometry for %CLASSNAME% feature").toStdString();
+  return QObject::tr("Select geometry for %CLASSNAMELOWERCASE% feature").toStdString();
 }
 
 void %CLASSNAME%::activate()
 {
   isActive = true;
-  
-  if (firstRun)
+  leafManager.rewind();
+  if (isFirstRun.get())
   {
-    firstRun = false;
+    isFirstRun = false;
     go();
   }
-  
-  if (dialog)
+  if (viewBase)
   {
-    dialog->show();
-    dialog->raise();
-    dialog->activateWindow();
+    feature->setEditing();
+    cmv::Message vm(viewBase.get(), viewBase->getPaneWidth());
+    msg::Message out(msg::Mask(msg::Request | msg::Command | msg::View | msg::Show), vm);
+    node->sendBlocked(out);
   }
-  else sendDone();
+  else
+    sendDone();
 }
 
 void %CLASSNAME%::deactivate()
 {
-  if (dialog)
-    dialog->hide();
+  if (viewBase)
+  {
+    feature->setNotEditing();
+    msg::Message out(msg::Mask(msg::Request | msg::Command | msg::View | msg::Hide));
+    node->sendBlocked(out);
+  }
+  leafManager.fastForward();
+  if (!isEdit.get())
+  {
+    node->sendBlocked(msg::buildShowThreeD(feature->getId()));
+    node->sendBlocked(msg::buildShowOverlay(feature->getId()));
+  }
   isActive = false;
+}
+
+bool %CLASSNAME%::isValidSelection(const slc::Message &mIn)
+{
+//   const ftr::Base *lf = project->findFeature(mIn.featureId);
+//   if (!lf->hasAnnex(ann::Type::SeerShape) || lf->getAnnex<ann::SeerShape>().isNull())
+//     return false;
+//   
+//   auto t = mIn.type;
+//   if
+//   (
+//     (t != slc::Type::Object)
+//     && (t != slc::Type::Shell)
+//     && (t != slc::Type::Face)
+//   )
+//     return false;
+  return true;
+}
+
+void %CLASSNAME%::setSelections(const std::vector<slc::Message> &targets)
+{
+  assert(isActive);
+  
+//   project->clearAllInputs(feature->getId());
+//   feature->setPicks(ftr::Picks());
+//   
+//   if (targets.empty())
+//     return;
+//   
+//   ftr::Picks freshPicks;
+//   for (const auto &m : targets)
+//   {
+//     if (!isValidSelection(m))
+//       continue;
+// 
+//     const ftr::Base *lf = project->findFeature(m.featureId);
+//     freshPicks.push_back(tls::convertToPick(m, *lf, project->getShapeHistory()));
+//     freshPicks.back().tag = ftr::InputType::createIndexedTag(ftr::InputType::target, freshPicks.size() - 1);
+//     project->connect(lf->getId(), feature->getId(), {freshPicks.back().tag});
+//   }
+//   feature->setPicks(freshPicks);
+}
+
+void %CLASSNAME%::localUpdate()
+{
+  assert(isActive);
+  feature->updateModel(project->getPayload(feature->getId()));
+  feature->updateVisual();
+  feature->setModelDirty();
+  node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
 }
 
 void %CLASSNAME%::go()
 {
 //   const slc::Containers &cs = eventHandler->getSelections();
-//   if (cs.size() != 2)
+//   
+//   std::vector<slc::Message> tm; //target messages
+//   for (const auto &c : cs)
 //   {
-//     node->sendBlocked(msg::buildStatusMessage("Incorrect selection for %CLASSNAME%", 2.0));
-//     shouldUpdate = false;
+//     auto m = slc::EventHandler::containerToMessage(c);
+//     if (isValidSelection(m))
+//       tm.push_back(m);
+//   }
+//   
+//   if (!tm.empty())
+//   {
+//     setSelections(tm);
+//     node->sendBlocked(msg::buildStatusMessage("%CLASSNAME% Added", 2.0));
+//     node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
 //     return;
 //   }
 //   
-//   const ftr::Base *bf = project->findFeature(cs.front().featureId);
-//   if (!bf || !bf->hasAnnex(ann::Type::SeerShape))
-//   {
-//     node->sendBlocked(msg::buildStatusMessage("Invalid first selection for %CLASSNAME%", 2.0));
-//     shouldUpdate = false;
-//     return;
-//   }
-//   const ann::SeerShape &ss = bf->getAnnex<ann::SeerShape>();
-//   if (ss.isNull())
-//   {
-//     node->sendBlocked(msg::buildStatusMessage("Seershape is null for %CLASSNAME%", 2.0));
-//     shouldUpdate = false;
-//     return;
-//   }
-//   
-//   ftr::Picks picks;
-//   picks.push_back(tls::convertToPick(cs.front(), ss0, project->getShapeHistory()));
-//   picks.back().tag = "something";
-//   
-//   auto f = std::make_shared<ftr::%CLASSNAME%>();
-//   f->setPicks(picks);
-//   project->addFeature(f);
-//   project->connectInsert(cs.front().featureId, f->getId(), ftr::InputType{"something"});
-//   
-//   node->sendBlocked(msg::buildStatusMessage("%CLASSNAME% created", 2.0));
 //   node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
-}
-
-%CLASSNAME%Edit::%CLASSNAME%Edit(ftr::Base *in) : Base()
-{
-  //command manager edit dispatcher dispatches on ftr::type, so we know the type of 'in'
-  feature = dynamic_cast<ftr::%CLASSNAME%*>(in);
-  assert(feature);
-  shouldUpdate = false; //dialog controls.
-}
-
-%CLASSNAME%Edit::~%CLASSNAME%Edit()
-{
-  if (dialog)
-    dialog->deleteLater();
-}
-
-std::string %CLASSNAME%Edit::getStatusMessage()
-{
-  return QObject::tr("Editing %CLASSNAMELOWERCASE%").toStdString();
-}
-
-void %CLASSNAME%Edit::activate()
-{
-  isActive = true;
-  if (!dialog)
-  {
-    node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
-    dialog = new dlg::%CLASSNAME%(feature, mainWindow, true);
-  }
-
-  dialog->show();
-  dialog->raise();
-  dialog->activateWindow();
-}
-
-void %CLASSNAME%Edit::deactivate()
-{
-  dialog->hide();
-  isActive = false;
+//   node->sendBlocked(msg::buildShowThreeD(feature->getId()));
+//   node->sendBlocked(msg::buildShowOverlay(feature->getId()));
+//   viewBase = std::make_unique<cmv::%CLASSNAME%>(this);
 }

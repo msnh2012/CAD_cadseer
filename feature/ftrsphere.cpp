@@ -28,6 +28,7 @@
 #include "project/serial/generated/prjsrlsprssphere.h"
 #include "annex/anncsysdragger.h"
 #include "annex/annseershape.h"
+#include "feature/ftrinputtype.h"
 #include "parameter/prmparameter.h"
 #include "feature/ftrupdatepayload.h"
 #include "feature/ftrsphere.h"
@@ -142,7 +143,7 @@ void Sphere::updateIPGroup()
   radiusIP->constantHasChanged();
 }
 
-void Sphere::updateModel(const UpdatePayload&)
+void Sphere::updateModel(const UpdatePayload &plIn)
 {
   setFailure();
   lastUpdateLog.clear();
@@ -154,6 +155,17 @@ void Sphere::updateModel(const UpdatePayload&)
       setSuccess();
       throw std::runtime_error("feature is skipped");
     }
+    
+    std::vector<const Base*> tfs = plIn.getFeatures(ftr::InputType::linkCSys);
+    if (!tfs.empty() && tfs.front()->hasParameter(prm::Names::CSys))
+    {
+      csys->setValueQuiet(static_cast<osg::Matrixd>(*(tfs.front()->getParameter(prm::Names::CSys))));
+      csysDragger->draggerUpdate();
+      if (overlaySwitch->containsNode(csysDragger->dragger))
+        overlaySwitch->removeChild(csysDragger->dragger);
+    }
+    else if (!overlaySwitch->containsNode(csysDragger->dragger))
+      overlaySwitch->addChild(csysDragger->dragger);
     
     BRepPrimAPI_MakeSphere sphereMaker(gu::toOcc(static_cast<osg::Matrixd>(*csys)), static_cast<double>(*radius));
     sphereMaker.Build();

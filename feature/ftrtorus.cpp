@@ -34,6 +34,8 @@
 #include "annex/anncsysdragger.h"
 #include "project/serial/generated/prjsrltrsstorus.h"
 #include "parameter/prmparameter.h"
+#include "feature/ftrupdatepayload.h"
+#include "feature/ftrinputtype.h"
 #include "feature/ftrtorus.h"
 
 using namespace ftr;
@@ -184,7 +186,7 @@ void Torus::initializeMaps()
   }
 }
 
-void Torus::updateModel(const UpdatePayload&)
+void Torus::updateModel(const UpdatePayload &plIn)
 {
   setFailure();
   lastUpdateLog.clear();
@@ -196,6 +198,17 @@ void Torus::updateModel(const UpdatePayload&)
       setSuccess();
       throw std::runtime_error("feature is skipped");
     }
+    
+    std::vector<const Base*> tfs = plIn.getFeatures(ftr::InputType::linkCSys);
+    if (!tfs.empty() && tfs.front()->hasParameter(prm::Names::CSys))
+    {
+      csys->setValueQuiet(static_cast<osg::Matrixd>(*(tfs.front()->getParameter(prm::Names::CSys))));
+      csysDragger->draggerUpdate();
+      if (overlaySwitch->containsNode(csysDragger->dragger))
+        overlaySwitch->removeChild(csysDragger->dragger);
+    }
+    else if (!overlaySwitch->containsNode(csysDragger->dragger))
+      overlaySwitch->addChild(csysDragger->dragger);
     
     if (!(static_cast<double>(*radius1) > static_cast<double>(*radius2)))
       throw std::runtime_error("radius1 must be bigger than radius2");

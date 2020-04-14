@@ -28,6 +28,7 @@
 #include "annex/anncsysdragger.h"
 #include "feature/ftroblongbuilder.h"
 #include "feature/ftrupdatepayload.h"
+#include "feature/ftrinputtype.h"
 #include "parameter/prmparameter.h"
 #include "feature/ftroblong.h"
 
@@ -244,7 +245,7 @@ osg::Matrixd Oblong::getCSys() const
   return static_cast<osg::Matrixd>(*csys);
 }
 
-void Oblong::updateModel(const UpdatePayload&)
+void Oblong::updateModel(const UpdatePayload &plIn)
 {
   setFailure();
   lastUpdateLog.clear();
@@ -256,6 +257,17 @@ void Oblong::updateModel(const UpdatePayload&)
       setSuccess();
       throw std::runtime_error("feature is skipped");
     }
+    
+    std::vector<const Base*> tfs = plIn.getFeatures(ftr::InputType::linkCSys);
+    if (!tfs.empty() && tfs.front()->hasParameter(prm::Names::CSys))
+    {
+      csys->setValueQuiet(static_cast<osg::Matrixd>(*(tfs.front()->getParameter(prm::Names::CSys))));
+      csysDragger->draggerUpdate();
+      if (overlaySwitch->containsNode(csysDragger->dragger))
+        overlaySwitch->removeChild(csysDragger->dragger);
+    }
+    else if (!overlaySwitch->containsNode(csysDragger->dragger))
+      overlaySwitch->addChild(csysDragger->dragger);
     
     if (!(static_cast<double>(*length) > static_cast<double>(*width)))
       throw std::runtime_error("length must be greater than width");

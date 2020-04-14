@@ -20,48 +20,33 @@
 #ifndef CMD_%CLASSNAMEUPPERCASE%_H
 #define CMD_%CLASSNAMEUPPERCASE%_H
 
+#include "command/cmdleafmanager.h"
 #include "command/cmdbase.h"
 
-namespace dlg{class %CLASSNAME%;}
 namespace ftr{class %CLASSNAME%;}
 
 namespace cmd
 {
-  /**
-  * @todo write docs
-  */
   class %CLASSNAME% : public Base
   {
   public:
+    ftr::%CLASSNAME% *feature = nullptr;
+    
     %CLASSNAME%();
+    %CLASSNAME%(ftr::Base*);
     ~%CLASSNAME%() override;
     
     std::string getCommandName() override{return "%CLASSNAME%";}
     std::string getStatusMessage() override;
     void activate() override;
     void deactivate() override;
-  private:
-    void go();
-    bool firstRun = true;
-    dlg::%CLASSNAME% *dialog = nullptr;
-  };
-  
-  /**
-  * @todo write docs
-  */
-  class %CLASSNAME%Edit : public Base
-  {
-  public:
-    %CLASSNAME%Edit(ftr::Base*);
-    ~%CLASSNAME%Edit() override;
     
-    std::string getCommandName() override{return "%CLASSNAME% Edit";}
-    std::string getStatusMessage() override;
-    void activate() override;
-    void deactivate() override;
+    void setSelections(const std::vector<slc::Message>&);
+    void localUpdate();
   private:
-    dlg::%CLASSNAME% *dialog = nullptr;
-    ftr::%CLASSNAME% *feature = nullptr;
+    cmd::LeafManager leafManager;
+    void go();
+    bool isValidSelection(const slc::Message&);
   };
 }
 #endif // CMD_%CLASSNAMEUPPERCASE%_H
