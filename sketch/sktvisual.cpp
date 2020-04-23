@@ -1054,6 +1054,7 @@ void Visual::pick(const osgUtil::LineSegmentIntersector::Intersections &is)
     solver.addPoint2d(point.get().x(), point.get().y());
     data->state = State::selection;
     solver.solve(solver.getGroup(), true);
+    app::instance()->messageSlot(msg::buildStatusMessage("Point Added", 2.0));
     update();
     return;
   }
@@ -1078,6 +1079,7 @@ void Visual::pick(const osgUtil::LineSegmentIntersector::Intersections &is)
       (*v)[1] = point.get();
       v->dirty();
       data->transform->addChild(data->dynamic);
+      app::instance()->messageSlot(msg::buildStatusMessage("Pick Line End Point"));
       return;
     }
     else
@@ -1110,6 +1112,7 @@ void Visual::pick(const osgUtil::LineSegmentIntersector::Intersections &is)
       data->transform->removeChild(data->dynamic);
       data->dynamic.release();
       solver.solve(solver.getGroup(), true);
+      app::instance()->messageSlot(msg::buildStatusMessage("Line Added", 2.0));
       update();
       return;
     }
@@ -1136,6 +1139,7 @@ void Visual::pick(const osgUtil::LineSegmentIntersector::Intersections &is)
       (*v)[1] = point.get();
       v->dirty();
       data->transform->addChild(data->dynamic);
+      app::instance()->messageSlot(msg::buildStatusMessage("Pick Arc End Point"));
       return;
     }
     else
@@ -1171,6 +1175,7 @@ void Visual::pick(const osgUtil::LineSegmentIntersector::Intersections &is)
       data->transform->removeChild(data->dynamic);
       data->dynamic.release();
       solver.solve(solver.getGroup(), true);
+      app::instance()->messageSlot(msg::buildStatusMessage("Arc Added", 2.0));
       update();
       return;
     }
@@ -1197,6 +1202,7 @@ void Visual::pick(const osgUtil::LineSegmentIntersector::Intersections &is)
       (*v)[1] = point.get();
       v->dirty();
       data->transform->addChild(data->dynamic);
+      app::instance()->messageSlot(msg::buildStatusMessage("Pick Circle Radius"));
       return;
     }
     else
@@ -1231,6 +1237,7 @@ void Visual::pick(const osgUtil::LineSegmentIntersector::Intersections &is)
       data->transform->removeChild(data->dynamic);
       data->dynamic.release();
       solver.solve(solver.getGroup(), true);
+      app::instance()->messageSlot(msg::buildStatusMessage("Circle Added", 2.0));
       update();
       return;
     }
@@ -1628,6 +1635,7 @@ void Visual::addPoint()
   data->dynamic.release();
   
   data->statusText->setText("Point");
+  app::instance()->messageSlot(msg::buildStatusMessage("Pick Point"));
 }
 
 //! @brief Set state to add a line through picks.
@@ -1640,6 +1648,7 @@ void Visual::addLine()
   data->dynamic.release();
   
   data->statusText->setText("Line");
+  app::instance()->messageSlot(msg::buildStatusMessage("Pick Line Start Point"));
 }
 
 //! @brief Set state to add an arc through picks.
@@ -1652,6 +1661,7 @@ void Visual::addArc()
   data->dynamic.release();
   
   data->statusText->setText("Arc");
+  app::instance()->messageSlot(msg::buildStatusMessage("Pick Arc Start Point"));
 }
 
 //! @brief Set state to add a circle through picks.
@@ -1664,6 +1674,7 @@ void Visual::addCircle()
   data->dynamic.release();
   
   data->statusText->setText("Circle");
+  app::instance()->messageSlot(msg::buildStatusMessage("Pick Circle Center Point"));
 }
 
 //! @brief Add a 'points coincident' constraint from 2 currently entities, if possible.
@@ -1671,7 +1682,7 @@ void Visual::addCoincident()
 {
   if (data->highlights.size() != 2)
   {
-    std::cout << "incorrect selection count for coincident" << std::endl;
+    app::instance()->messageSlot(msg::buildStatusMessage("Coincident Rejected. Wrong Selection Count", 2.0));
     return;
   }
   
@@ -1687,32 +1698,39 @@ void Visual::addCoincident()
     solver.addPointOnCircle(points.front(), circles.front());
   else
   {
-    std::cout << "unsupported combination for coincident constraint" << std::endl;
+    app::instance()->messageSlot(msg::buildStatusMessage("Coincident Rejected. Unsupported Entity Type Combination", 2.0));
     return;
   }
   
   solver.solve(solver.getGroup(), true);
+  app::instance()->messageSlot(msg::buildStatusMessage("Coincident Added", 2.0));
   update();
   clearSelection();
 }
 
-//! @brief Add a horizontal constraint to the 1 currently selected line segment.
+//! @brief Add a horizontal constraint to each selected line segment.
 void Visual::addHorizontal()
 {
   std::vector<SSHandle> lines = getSelectedLines(false);
   for (const auto &l : lines)
+  {
     solver.addHorizontal(l);
+    app::instance()->messageSlot(msg::buildStatusMessage("Horizontal Added", 2.0));
+  }
   solver.solve(solver.getGroup(), true);
   update();
   clearSelection();
 }
 
-//! @brief Add a vertical constraint to the 1 currently selected line segment.
+//! @brief Add a vertical constraint to each selected line segment.
 void Visual::addVertical()
 {
   std::vector<SSHandle> lines = getSelectedLines(false);
   for (const auto &l : lines)
+  {
     solver.addVertical(l);
+    app::instance()->messageSlot(msg::buildStatusMessage("Vertical Added", 2.0));
+  }
   solver.solve(solver.getGroup(), true);
   update();
   clearSelection();
@@ -1723,7 +1741,7 @@ void Visual::addTangent()
 {
   if (data->highlights.size() != 2)
   {
-    std::cout << "wrong selection count for tangent" << std::endl;
+    app::instance()->messageSlot(msg::buildStatusMessage("Tangent Rejected. Wrong Selection Count", 2.0));
     return;
   }
   std::vector<SSHandle> lines;
@@ -1744,10 +1762,12 @@ void Visual::addTangent()
     if (tc != 0)
     {
       solver.solve(solver.getGroup(), true);
+      app::instance()->messageSlot(msg::buildStatusMessage("Tangent Added", 2.0));
       update();
       clearSelection();
     }
-    // else warning about no common points coincidently constrained.
+    else
+      app::instance()->messageSlot(msg::buildStatusMessage("Tangent Rejected. End Points Need Coincident", 2.0));
     return;
   }
   if (arcs.size() == 2)
@@ -1756,10 +1776,12 @@ void Visual::addTangent()
     if (tc != 0)
     {
       solver.solve(solver.getGroup(), true);
+      app::instance()->messageSlot(msg::buildStatusMessage("Tangent Added", 2.0));
       update();
       clearSelection();
     }
-    // else warning about no common points coincidently constrained.
+    else
+      app::instance()->messageSlot(msg::buildStatusMessage("Tangent Rejected. End Points Need Coincident", 2.0));
     return;
   }
 }
@@ -1803,7 +1825,7 @@ boost::optional<std::pair<SSHandle, std::shared_ptr<prm::Parameter>>> Visual::ad
   }
   else
   {
-    std::cout << "unsupported combination for distance" << std::endl;
+    app::instance()->messageSlot(msg::buildStatusMessage("Distance Rejected. Unsupported Entity Type Combination", 2.0));
     return boost::none;
   }
   solver.solve(solver.getGroup(), true);
@@ -1816,6 +1838,7 @@ boost::optional<std::pair<SSHandle, std::shared_ptr<prm::Parameter>>> Visual::ad
   record.id = gu::createRandomId();
   connectDistance(dh, parameter.get(), osg::Vec3d(length / 2.0, -0.1, 0.0));
   
+  app::instance()->messageSlot(msg::buildStatusMessage("Distance Added", 2.0));
   update();
   clearSelection();
   
@@ -1928,10 +1951,11 @@ void Visual::addEqual()
   }
   else
   {
-    std::cout << "unsupported selection for equality" << std::endl;
+    app::instance()->messageSlot(msg::buildStatusMessage("Equality Rejected. Unsupported Entity Type Combination", 2.0));
     return;
   }
   solver.solve(solver.getGroup(), true);
+  app::instance()->messageSlot(msg::buildStatusMessage("Equality Added", 2.0));
   update();
   clearSelection();
 }
@@ -1951,7 +1975,7 @@ void Visual::addEqualAngle()
   std::vector<SSHandle> lines = getSelectedLines();
   if (data->highlights.size() != lines.size())
   {
-    std::cout << "wrong types selected. need just lines." << std::endl;
+    app::instance()->messageSlot(msg::buildStatusMessage("Equal Angle Rejected. Only Lines Supported", 2.0));
     return;
   }
   if (lines.size() == 3)
@@ -1960,10 +1984,11 @@ void Visual::addEqualAngle()
     solver.addEqualAngle(lines.at(0), lines.at(1), lines.at(2), lines.at(3));
   else
   {
-    std::cout << "invalid selection for adding equal angles." << std::endl;
+    app::instance()->messageSlot(msg::buildStatusMessage("Equal Angle Rejected. Only 3 or 4 Lines Accepted", 2.0));
     return;
   }
   solver.solve(solver.getGroup(), true);
+  app::instance()->messageSlot(msg::buildStatusMessage("Equal Angle Added", 2.0));
   update();
   clearSelection();
 }
@@ -1973,7 +1998,10 @@ boost::optional<std::pair<SSHandle, std::shared_ptr<prm::Parameter>>> Visual::ad
 {
   std::vector<SSHandle> circles = getSelectedCircles();
   if (circles.size() != 1)
+  {
+    app::instance()->messageSlot(msg::buildStatusMessage("Diameter Rejected. Only Circles Supported", 2.0));
     return boost::none;
+  }
   
   SSHandle c = circles.front();
   auto oe = solver.findEntity(c);
@@ -2010,11 +2038,12 @@ boost::optional<std::pair<SSHandle, std::shared_ptr<prm::Parameter>>> Visual::ad
     record.id = gu::createRandomId();
     connectDiameter(dh, parameter.get(), position * 1.5);
 
+    app::instance()->messageSlot(msg::buildStatusMessage("Diameter Added", 2.0));
     update();
     clearSelection();
     return std::make_pair(dh, parameter);
   }
-  
+  app::instance()->messageSlot(msg::buildStatusMessage("Distance Rejected. Invalid Radius", 2.0));
   return boost::none;
 }
 
@@ -2054,11 +2083,12 @@ void Visual::addSymmetric()
   if (nc)
   {
     solver.solve(solver.getGroup(), true);
+    app::instance()->messageSlot(msg::buildStatusMessage("Symmetric Added", 2.0));
     update();
     clearSelection();
   }
   else
-    std::cout << "couldn't construct new symmetric constraint from selection" << std::endl;
+    app::instance()->messageSlot(msg::buildStatusMessage("Symmetric Rejected. Unsupported Entity Type Combination", 2.0));
 }
 
 //! @brief Add angle constraint to the currently selected objects.
@@ -2109,7 +2139,7 @@ boost::optional<std::pair<SSHandle, std::shared_ptr<prm::Parameter>>> Visual::ad
       || (std::fabs(osg::PI * 2.0 - angle) < std::numeric_limits<float>::epsilon())
     )
     {
-      std::cout << "angle to close to parallel" << std::endl;
+      app::instance()->messageSlot(msg::buildStatusMessage("Angle Rejected. Parallel Lines", 2.0));
       return boost::none;
     }
     SSHandle ah = solver.addAngle(osg::RadiansToDegrees(angle), lines.front(), lines.back(), reversedSense);
@@ -2129,7 +2159,7 @@ boost::optional<std::pair<SSHandle, std::shared_ptr<prm::Parameter>>> Visual::ad
       std::cout << "WARNING: couldn't calculate matrix for SLVS_C_ANGLE in: " << BOOST_CURRENT_FUNCTION << std::endl;
     
     connectAngle(ah, parameter.get(), np);
-    
+    app::instance()->messageSlot(msg::buildStatusMessage("Angle added", 2.0));
     update();
     clearSelection();
     
@@ -2145,11 +2175,12 @@ void Visual::addParallel()
   std::vector<SSHandle> lines = getSelectedLines();
   if (lines.size() != 2)
   {
-    std::cout << "invalid selection for parallel" << std::endl;
+    app::instance()->messageSlot(msg::buildStatusMessage("Parallel Rejected. Only Lines Supported", 2.0));
     return;
   }
   solver.addParallel(lines.front(), lines.back());
   solver.solve(solver.getGroup(), true);
+  app::instance()->messageSlot(msg::buildStatusMessage("Parallel Added", 2.0));
   update();
   clearSelection();
 }
@@ -2160,11 +2191,12 @@ void Visual::addPerpendicular()
   std::vector<SSHandle> lines = getSelectedLines();
   if (lines.size() != 2)
   {
-    std::cout << "invalid selection for perpendicualr" << std::endl;
+    app::instance()->messageSlot(msg::buildStatusMessage("Perpendicular Rejected. Only Lines Supported", 2.0));
     return;
   }
   solver.addPerpendicular(lines.front(), lines.back());
   solver.solve(solver.getGroup(), true);
+  app::instance()->messageSlot(msg::buildStatusMessage("Perpendicular Added", 2.0));
   update();
   clearSelection();
 }
@@ -2177,17 +2209,18 @@ void Visual::addMidpoint()
   
   if (data->highlights.size() != 2)
   {
-    std::cout << "invalid selection count for midpoint" << std::endl;
+    app::instance()->messageSlot(msg::buildStatusMessage("Midpoint Rejected. Need 2 Entities", 2.0));
     return;
   }
   if (lines.size() != 1 || points.size() != 1)
   {
-    std::cout << "invalid selection for midpoint" << std::endl;
+    app::instance()->messageSlot(msg::buildStatusMessage("Midpoint Rejected. Need 1 point and 1 line", 2.0));
     return;
   }
   
   solver.addMidpointLine(points.front(), lines.front());
   solver.solve(solver.getGroup(), true);
+  app::instance()->messageSlot(msg::buildStatusMessage("Midpoint Added", 2.0));
   update();
   clearSelection();
 }
@@ -2198,13 +2231,14 @@ void Visual::addWhereDragged()
   std::vector<SSHandle> points = getSelectedPoints(false);
   if (points.empty())
   {
-    std::cout << "invalid selection for where dragged" << std::endl;
+    app::instance()->messageSlot(msg::buildStatusMessage("Where Dragged Rejected. Need At Least 1 Point", 2.0));
     return;
   }
   
   for (const auto &h : points)
     solver.addWhereDragged(h);
   solver.solve(solver.getGroup(), true);
+  app::instance()->messageSlot(msg::buildStatusMessage("Where Dragged Added", 2.0));
   update();
   clearSelection();
 }
@@ -2237,6 +2271,7 @@ void Visual::remove()
   }
   solver.clean();
   solver.solve(solver.getGroup(), true);
+  app::instance()->messageSlot(msg::buildStatusMessage("Constraints Removed", 2.0));
   update();
   data->highlights.clear(); //items gone so no need to unhighlight, just remove.
 }
@@ -2273,6 +2308,7 @@ void Visual::toggleConstruction()
         e.get().construction = true;
     }
   }
+  app::instance()->messageSlot(msg::buildStatusMessage("Construction Toggled", 2.0));
   clearSelection();
 }
 
@@ -2734,16 +2770,25 @@ void Visual::updatePlane()
 void Visual::updateText()
 {
   std::ostringstream t;
-  
+  t << solver.getResultMessage() << ". ";
   if(solver.getSys().result == SLVS_RESULT_OKAY)
   {
-    t << "solver success. " << solver.getSys().dof << " DOF";
+    t << solver.getSys().dof << " DOF";
   }
   else
   {
-    t << "solver failed. ";
+    auto failed = solver.getFailed();
+    for (const auto &h :failed)
+    {
+      auto oc = solver.findConstraint(h);
+      if (!oc)
+        continue;
+//       t << oc.get().type << " ";
+      t << h << " ";
+    }
   }
   data->statusText->setText(t.str());
+  app::instance()->messageSlot(msg::buildStatusMessage(t.str()));
   
   double corner = size - size * 0.005;
   double scale = size * 0.002;

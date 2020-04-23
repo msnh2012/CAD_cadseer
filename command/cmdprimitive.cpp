@@ -17,9 +17,6 @@
  *
  */
 
-// #include "tools/featuretools.h"
-// #include "application/appmainwindow.h"
-// #include "application/appapplication.h"
 #include "viewer/vwrwidget.h"
 #include "project/prjproject.h"
 #include "annex/annseershape.h"
@@ -113,6 +110,6 @@ void Primitive::go()
   }
   
   node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
-  node->sendBlocked(msg::buildStatusMessage("Box created", 2.0));
+  node->sendBlocked(msg::buildStatusMessage("Primitive created", 2.0));
   //not going to launch view
 }

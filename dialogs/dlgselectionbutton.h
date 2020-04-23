@@ -74,8 +74,9 @@ namespace dlg
     void advance(); //!< used in single selection mode to advance to next button.
     
   protected:
-    virtual void hideEvent(QHideEvent *) override;
-    virtual void showEvent(QShowEvent *) override;
+    void hideEvent(QHideEvent*) override;
+    void showEvent(QShowEvent*) override;
+    void changeEvent(QEvent*) override;
     
   private Q_SLOTS:
     void toggledSlot(bool);
@@ -83,6 +84,7 @@ namespace dlg
   private:
     std::unique_ptr<msg::Node> node;
     std::unique_ptr<msg::Sift> sift;
+    bool isLive();
     void setupDispatcher();
     void selectionAdditionDispatched(const msg::Message&);
     void selectionSubtractionDispatched(const msg::Message&);

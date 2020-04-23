@@ -999,7 +999,7 @@ BasePtr editUnion(ftr::Base *feature)
 
 BasePtr editSketch(ftr::Base *feature)
 {
-  return std::make_shared<SketchEdit>(feature);
+  return std::make_shared<Sketch>(feature);
 }
 
 BasePtr editSweep(ftr::Base *feature)

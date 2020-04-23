@@ -21,6 +21,7 @@
 #define DLG_VIZFILTER_H
 
 #include <QObject>
+#include <QWidget>
 #include <QEvent>
 
 namespace dlg
@@ -53,12 +54,23 @@ namespace dlg
         shown();
       else if (event->type() == QEvent::Hide)
         hidden();
+      else if (event->type() == QEvent::EnabledChange)
+      {
+        QWidget *w = dynamic_cast<QWidget*>(obj);
+        assert(w);
+        if (w->isEnabled())
+          enabled();
+        else
+          disabled();
+      }
       return QObject::eventFilter(obj, event);
     }
     
   Q_SIGNALS:
     void shown();
     void hidden();
+    void enabled();
+    void disabled();
   };
 }
 

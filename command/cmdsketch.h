@@ -20,9 +20,9 @@
 #ifndef CMD_SKETCH_H
 #define CMD_SKETCH_H
 
+#include "command/cmdleafmanager.h"
 #include "command/cmdbase.h"
 
-namespace dlg{class Sketch;}
 namespace ftr{class Sketch;}
 
 namespace cmd
@@ -33,31 +33,21 @@ namespace cmd
   class Sketch : public Base
   {
     public:
-      Sketch();
-      virtual ~Sketch() override;
+      ftr::Sketch *feature = nullptr;
       
-      virtual std::string getCommandName() override{return "Sketch";}
-      virtual std::string getStatusMessage() override;
-      virtual void activate() override;
-      virtual void deactivate() override;
+      Sketch();
+      Sketch(ftr::Base*);
+      ~Sketch() override;
+      
+      std::string getCommandName() override{return "Sketch";}
+      std::string getStatusMessage() override;
+      void activate() override;
+      void deactivate() override;
+      
+      void localUpdate();
     private:
-      dlg::Sketch *dialog = nullptr;
+      cmd::LeafManager leafManager;
       void go();
-  };
-  
-  class SketchEdit : public Base
-  {
-  public:
-    SketchEdit(ftr::Base*);
-    virtual ~SketchEdit() override;
-    virtual std::string getCommandName() override{return "Sketch Edit";}
-    virtual std::string getStatusMessage() override;
-    virtual void activate() override;
-    virtual void deactivate() override;
-  private:
-    ftr::Sketch *feature = nullptr;
-    dlg::Sketch *dialog = nullptr;
-    void go();
   };
 }
 

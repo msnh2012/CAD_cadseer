@@ -87,7 +87,7 @@ void SelectionButton::setupDispatcher()
  */
 void SelectionButton::selectionAdditionDispatched(const msg::Message &mIn)
 {
-  if (!isVisible() || !isChecked())
+  if (!isLive())
     return;
   
   slc::Message message = mIn.getSLC();
@@ -121,7 +121,7 @@ void SelectionButton::selectionAdditionDispatched(const msg::Message &mIn)
 
 void SelectionButton::selectionSubtractionDispatched(const msg::Message &mIn)
 {
-  if (!isVisible() || !isChecked())
+  if (!isLive())
     return;
   
   const slc::Message& sm = mIn.getSLC();
@@ -237,25 +237,46 @@ void SelectionButton::setAngle(int index, double angle)
   messages.at(index).accrue.angle = angle;
 }
 
-void SelectionButton::showEvent(QShowEvent *)
+bool SelectionButton::isLive()
 {
-  if (!isChecked())
-    return;
-  
-  syncToSelection();
+  if (!isVisible() || !isChecked() || !isEnabled())
+    return false;
+  return true;
 }
 
-void SelectionButton::hideEvent(QHideEvent *)
+void SelectionButton::showEvent(QShowEvent *e)
 {
-  if (!isChecked())
+  //here: isVisible() here = true. state already changed. calling parent just in case.
+  QPushButton::showEvent(e);
+  if (isLive())
+    syncToSelection();
+}
+
+void SelectionButton::hideEvent(QHideEvent *e)
+{
+  //here: isVisible() here = false. state already changed. calling parent just in case.
+  QPushButton::hideEvent(e);
+  //isLive won't work here, because button is already hidden before hideEvent is called.
+  if (isChecked() && isEnabled())
+    node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+}
+
+void SelectionButton::changeEvent(QEvent *e)
+{
+  //same as above state already changed before this function gets called. calling parent just in case.
+  QPushButton::changeEvent(e);
+  if (e->type() != QEvent::EnabledChange)
     return;
-  
-  node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  if (isLive())
+    syncToSelection();
+  else if (isChecked() && isVisible())
+    node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
 }
 
 void SelectionButton::toggledSlot(bool cState)
 {
-  if (!isVisible())
+  //can't use isLive
+  if (!isVisible() || !isEnabled())
     return;
   if (cState)
     syncToSelection();
@@ -265,7 +286,7 @@ void SelectionButton::toggledSlot(bool cState)
 
 void SelectionButton::selectionMaskDispatched(const msg::Message &messageIn)
 {
-  if (!isVisible() || !isChecked())
+  if (!isLive())
     return;
   
   mask = messageIn.getSLC().selectionMask;

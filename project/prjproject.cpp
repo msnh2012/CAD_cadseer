@@ -597,6 +597,8 @@ void Project::connectInsert(const uuid& parentIn, const uuid& childIn, const ftr
     {
       if (av == child)
         continue;
+      if (fg[av].feature->getDescriptor() != ftr::Descriptor::Alter)
+        continue;
       auto mce = boost::edge(parent, av, fg);
       assert(mce.second);
       Edge ce = mce.first;

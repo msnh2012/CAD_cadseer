@@ -50,6 +50,8 @@ namespace cmv
     boost::uuids::uuid getCSysLinkId() const; //!< returns nil id if no feature link.
   Q_SIGNALS:
     void dirty(); //!< called when something has changed.
+  public Q_SLOTS:
+    void statusChanged(); //!< called when shown or enabled through viz filter.
   private:
     struct Stow;
     std::unique_ptr<Stow> stow;

@@ -84,10 +84,6 @@ struct cmv::CSysWidget::Stow
     dummyLayout->addWidget(expressionWidget);
     dummyLayout->addStretch();
     dummy->setLayout(dummyLayout);
-    dlg::VizFilter *vFilter = new dlg::VizFilter(expressionWidget);
-    expressionWidget->installEventFilter(vFilter);
-    connect(vFilter, &dlg::VizFilter::shown, [](){app::instance()->messageSlot(msg::buildSelectionMask(slc::None));});
-    connect(vFilter, &dlg::VizFilter::shown, [](){app::instance()->messageSlot(msg::buildStatusMessage(tr("Enter Coordinate System Values").toStdString()));});
     
     selectionWidget = new dlg::SelectionWidget(parent, std::vector<dlg::SelectionWidgetCue>(1, cue));
     stackLayout = new QStackedLayout();
@@ -106,6 +102,10 @@ CSysWidget::CSysWidget(QWidget *parentIn, prm::Parameter *parameterIn)
 : QWidget(parentIn)
 , stow(std::make_unique<Stow>(this, parameterIn))
 {
+  dlg::VizFilter *vFilter = new dlg::VizFilter(this);
+  this->installEventFilter(vFilter);
+  connect(vFilter, &dlg::VizFilter::shown, this, &CSysWidget::statusChanged);
+  connect(vFilter, &dlg::VizFilter::enabled, this, &CSysWidget::statusChanged);
   connect(stow->byConstant, &QRadioButton::toggled, this, &CSysWidget::radioSlot);
   connect(stow->byFeature, &QRadioButton::toggled, this, &CSysWidget::radioSlot);
   connect(stow->selectionWidget->getButton(0), &dlg::SelectionButton::dirty, this, &CSysWidget::dirty);
@@ -153,6 +153,7 @@ void CSysWidget::radioSlot()
   if (stow->byConstant->isChecked())
   {
     stow->stackLayout->setCurrentIndex(0);
+    statusChanged();
     dirty();
   }
   if (stow->byFeature->isChecked())
@@ -160,4 +161,14 @@ void CSysWidget::radioSlot()
     stow->stackLayout->setCurrentIndex(1);
     dirty();
   }
+}
+
+void CSysWidget::statusChanged()
+{
+  if (isVisible() && isEnabled() && stow->byConstant->isChecked())
+  {
+    app::instance()->messageSlot(msg::buildSelectionMask(slc::None));
+    app::instance()->messageSlot(msg::buildStatusMessage(tr("Enter Coordinate System Values").toStdString()));
+  }
+  //button on feature link should take care of itself
 }

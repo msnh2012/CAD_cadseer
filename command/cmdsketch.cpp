@@ -19,95 +19,115 @@
 
 #include "application/appapplication.h"
 #include "application/appmainwindow.h"
+#include "selection/slceventhandler.h"
 #include "viewer/vwrwidget.h"
 #include "message/msgnode.h"
 #include "project/prjproject.h"
+#include "parameter/prmparameter.h"
 #include "feature/ftrinputtype.h"
 #include "feature/ftrsketch.h"
-#include "dialogs/dlgsketch.h"
+#include "commandview/cmvmessage.h"
+#include "commandview/cmvsketch.h"
 #include "command/cmdsketch.h"
 
 using boost::uuids::uuid;
 
 using namespace cmd;
 
-Sketch::Sketch() : Base() {}
-Sketch::~Sketch()
+Sketch::Sketch()
+: Base("cmd::Sketch")
+, leafManager()
 {
-  if (dialog)
-    dialog->deleteLater();
+  auto nf = std::make_shared<ftr::Sketch>();
+  project->addFeature(nf);
+  feature = nf.get();
+  node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
+  isEdit = false;
+  isFirstRun = true;
 }
+
+Sketch::Sketch(ftr::Base *fIn)
+: Base("cmd::Sketch")
+, leafManager(fIn)
+{
+  feature = dynamic_cast<ftr::Sketch*>(fIn);
+  assert(feature);
+  viewBase = std::make_unique<cmv::Sketch>(this);
+  node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  isEdit = true;
+  isFirstRun = false;
+}
+
+Sketch::~Sketch() = default;
 
 std::string Sketch::getStatusMessage()
 {
-  return QObject::tr("Select plane for sketch").toStdString();
+  return QObject::tr("Select feature or geometry for sketch feature").toStdString();
 }
 
 void Sketch::activate()
 {
   isActive = true;
-  
-  if (!dialog)
+  leafManager.rewind();
+  if (isFirstRun.get())
+  {
+    isFirstRun = false;
     go();
-  
-  dialog->show();
-  dialog->raise();
-  dialog->activateWindow();
+  }
+  if (viewBase)
+  {
+    feature->setEditing();
+    cmv::Message vm(viewBase.get(), viewBase->getPaneWidth());
+    msg::Message out(msg::Mask(msg::Request | msg::Command | msg::View | msg::Show), vm);
+    node->sendBlocked(out);
+    static_cast<cmv::Sketch*>(viewBase.get())->activate();
+  }
+  else
+    sendDone();
 }
 
 void Sketch::deactivate()
 {
+  if (viewBase)
+  {
+    static_cast<cmv::Sketch*>(viewBase.get())->deactivate();
+    msg::Message out(msg::Mask(msg::Request | msg::Command | msg::View | msg::Hide));
+    node->sendBlocked(out);
+    feature->setNotEditing();
+  }
+  leafManager.fastForward();
+  if (!isEdit.get())
+  {
+    node->sendBlocked(msg::buildShowThreeD(feature->getId()));
+    node->sendBlocked(msg::buildShowOverlay(feature->getId()));
+  }
   isActive = false;
+}
+
+void Sketch::localUpdate()
+{
+  assert(isActive);
+  feature->updateModel(project->getPayload(feature->getId()));
+  feature->updateVisual();
+  feature->setModelDirty();
+  node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
 }
 
 void Sketch::go()
 {
-  std::shared_ptr<ftr::Sketch> nf(new ftr::Sketch());
-  nf->buildDefault(viewer->getCurrentSystem(), viewer->getDiagonalLength() / 5.0);
-  project->addFeature(nf);
-  node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
-  
-  shouldUpdate = false;
-  
-  dialog = new dlg::Sketch(nf.get(), mainWindow);
-}
-
-
-SketchEdit::SketchEdit(ftr::Base *fIn) : Base()
-{
-  feature = dynamic_cast<ftr::Sketch*>(fIn);
-  assert(feature);
-}
-
-SketchEdit::~SketchEdit()
-{
-  if (dialog)
-    dialog->deleteLater();
-}
-
-std::string SketchEdit::getStatusMessage()
-{
-  return QObject::tr("Edit sketch feature").toStdString();
-}
-
-void SketchEdit::activate()
-{
-  if (!dialog)
+  assert (feature->hasParameter(prm::Names::CSys));
+  feature->buildDefault(viewer->getCurrentSystem(), viewer->getDiagonalLength() / 5.0);
+  for (const auto &c : eventHandler->getSelections())
   {
-    feature->setModelDirty();
-    dialog = new dlg::Sketch(feature, mainWindow);
+    ftr::Base *tf = project->findFeature(c.featureId);
+    if (!tf || !tf->hasParameter(prm::Names::CSys))
+      continue;
+    project->connectInsert(tf->getId(), feature->getId(), ftr::InputType{ftr::InputType::linkCSys});
+    node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
+    break;
   }
   
-  isActive = true;
-  dialog->show();
-  dialog->raise();
-  dialog->activateWindow();
-  
-  shouldUpdate = false;
-}
-
-void SketchEdit::deactivate()
-{
-  dialog->hide();
-  isActive = false;
+  node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  node->sendBlocked(msg::buildStatusMessage("Sketch created", 2.0));
+  viewBase = std::make_unique<cmv::Sketch>(this);
 }
