@@ -43,14 +43,17 @@ namespace cmv
   private Q_SLOTS:
     void buttonToggled(int, bool);
     void linkedCSysChanged();
+    
   private:
     struct Stow;
     std::unique_ptr<Stow> stow;
     
-    void addPoint();
-    void addLine();
-    void addArc();
-    void addCircle();
+    void chainToggled(bool);
+    void addPoint(bool);
+    void addLine(bool);
+    void addArc(bool);
+    void addCircle(bool);
+    void addBezier(bool);
     
     void remove();
     void cancel();
@@ -77,6 +80,13 @@ namespace cmv
     void requestParameterUnlinkSlot();
     void updateParameterSlot();
     void textEditedParameterSlot(const QString&);
+    
+    void viewEntitiesToggled(bool);
+    void viewConstraintsToggled(bool);
+    void viewWorkToggled(bool);
+    void selectEntitiesToggled(bool);
+    void selectConstraintsToggled(bool);
+    void selectWorkToggled(bool);
   };
 }
 

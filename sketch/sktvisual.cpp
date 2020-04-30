@@ -27,6 +27,13 @@
 
 #include <GCE2d_MakeLine.hxx>
 #include <Geom2dAPI_InterCurveCurve.hxx>
+#include <Geom_BezierCurve.hxx>
+#include <TopoDS_Edge.hxx>
+#include <BRepBuilderAPI_MakeEdge.hxx>
+#include <BRepMesh_IncrementalMesh.hxx>
+#include <IMeshTools_Parameters.hxx>
+#include <BRep_Tool.hxx>
+#include <TopoDS.hxx>
 
 #include <osg/PositionAttitudeTransform>
 #include <osg/MatrixTransform>
@@ -237,6 +244,19 @@ namespace skt
     osg::ref_ptr<osg::Depth> planeDepth; //!< Depth offset for plane
     osg::ref_ptr<osg::Depth> curveDepth; //!< Depth offset for curve geometry
     osg::ref_ptr<osg::Depth> pointDepth; //!< Depth offset for point geometry
+    
+    void clearDynamic()
+    {
+      if (dynamic)
+        transform->removeChild(dynamic.get());
+      dynamic.release();
+    }
+    
+    void clearPrevious()
+    {
+      previousPoint = boost::none;
+      previousPick.release();
+    }
   };
 }
   
@@ -359,7 +379,17 @@ Visual::Visual(Solver &sIn)
 }
 
 //! @brief destroy object
-Visual::~Visual(){}
+Visual::~Visual() = default;
+
+void Visual::setChainOn()
+{
+  chain = true;
+}
+
+void Visual::setChainOff()
+{
+  chain = false;
+}
 
 //! @brief update visual to new state of solver.
 void Visual::update()
@@ -472,6 +502,30 @@ void Visual::update()
       updateArcGeometry(geometry, center, se, se);
       geometry->dirtyBound();
     }
+    else if (e.type == SLVS_E_CUBIC)
+    {
+      if (!record.get().node)
+      {
+        //just use cirle as updateBezierGeometry will make the actual shape
+        osg::Geometry *bezier = buildCircle();
+        if (record.get().construction)
+          setEntityColor(bezier, data->constructionColor);
+        else
+          setEntityColor(bezier, data->entityColor);
+        record.get().node = bezier;
+        record.get().node->setNodeMask(Entity.to_ulong());
+        record.get().node->setUserValue<std::string>("id", boost::uuids::to_string(record.get().id));
+        data->entityGroup->addChild(record.get().node);
+      }
+      osg::Geometry *geometry = dynamic_cast<osg::Geometry*>(record.get().node.get());
+      assert(geometry);
+      osg::Vec3d p0 = convert(e.point[0]);
+      osg::Vec3d p1 = convert(e.point[1]);
+      osg::Vec3d p2 = convert(e.point[2]);
+      osg::Vec3d p3 = convert(e.point[3]);
+      updateBezierGeometry(geometry, p0, p1, p2, p3);
+      geometry->dirtyBound();
+    }
     record.get().referenced = true;
   }
   //clean up unreferenced.
@@ -509,6 +563,7 @@ void Visual::update()
     , std::make_pair(SLVS_C_AT_MIDPOINT, std::make_pair("midpoint", "M"))
     , std::make_pair(SLVS_C_WHERE_DRAGGED, std::make_pair("whereDragged", "G"))
     , std::make_pair(SLVS_C_CURVE_CURVE_TANGENT, std::make_pair("tangent", "T"))
+    , std::make_pair(SLVS_C_CUBIC_LINE_TANGENT, std::make_pair("tangent", "T"))
   };
   
   data->cMap.setAllUnreferenced();
@@ -569,7 +624,7 @@ void Visual::update()
       double s = lastSize / 500.0;
       p->setScale(osg::Vec3d(s, s, s));
     }
-    if (c.type == SLVS_C_ARC_LINE_TANGENT || c.type == SLVS_C_CURVE_CURVE_TANGENT)
+    if (c.type == SLVS_C_ARC_LINE_TANGENT || c.type == SLVS_C_CURVE_CURVE_TANGENT || c.type == SLVS_C_CUBIC_LINE_TANGENT)
     {
       if (!record.get().node)
       {
@@ -582,12 +637,26 @@ void Visual::update()
       assert(oc);
       auto oe = solver.findEntity(oc.get().entityA);
       assert(oe);
-      osg::Vec3d point1 = convert(oe.get().point[1]);
-      if (oc.get().other)
-        point1 = convert(oe.get().point[2]);
+      //default to arc
+      boost::optional<osg::Vec3d> placement;
+      if (oe.get().type == SLVS_E_ARC_OF_CIRCLE)
+      {
+        if (oc.get().other)
+          placement = convert(oe.get().point[2]);
+        else
+          placement = convert(oe.get().point[1]);
+      }
+      else if (oe.get().type == SLVS_E_CUBIC)
+      {
+        if (oc.get().other)
+          placement = convert(oe.get().point[3]);
+        else
+          placement = convert(oe.get().point[0]);
+      }
+      assert(placement);
       
-      point1.z() = 0.002;
-      p->setPosition(point1);
+      placement.get().z() = 0.002;
+      p->setPosition(placement.get());
       double s = lastSize / 500.0;
       p->setScale(osg::Vec3d(s, s, s));
     }
@@ -903,6 +972,7 @@ void Visual::move(const osgUtil::PolytopeIntersector::Intersections &is)
           e.get().type == SLVS_E_LINE_SEGMENT
           || e.get().type == SLVS_E_ARC_OF_CIRCLE
           || e.get().type == SLVS_E_CIRCLE
+          || e.get().type == SLVS_E_CUBIC
         )
         {
           curves.push_back(i);
@@ -996,6 +1066,22 @@ void Visual::move(const osgUtil::LineSegmentIntersector::Intersections &is)
     osg::Vec3d poc = point.get();
     updateArcGeometry(a, cc, poc, poc);
   }
+  else if (data->state == State::cubicBezier)
+  {
+    if (!data->dynamic) //haven't picked first point yet.
+      return;
+    boost::optional<osg::Vec3d> point = getPlanePoint(is);
+    if (!point)
+      return;
+    
+    osg::Geometry *l = data->dynamic->asGeometry();
+    osg::Vec3Array *v = dynamic_cast<osg::Vec3Array*>(l->getVertexArray());
+    assert(v);
+    (*v)[1] = point.get();
+    v->dirty();
+    
+    return;
+  }
 }
 
 //! @brief Response to mouse pick with a polytope intersector
@@ -1006,7 +1092,10 @@ void Visual::pick(const osgUtil::PolytopeIntersector::Intersections&)
     if (!data->preHighlight.valid())
       return;
     
-    if (data->preHighlight->getName() == "lbr::PLabel::Text" && data->highlights.size() == 0)
+    data->highlights.push_back(data->preHighlight);
+    goHighlight(data->highlights.back().get());
+    
+    if (data->preHighlight->getName() == "lbr::PLabel::Text" && data->highlights.size() == 1) //only 1 selected dimension
     {
       ParentNameVisitor v("lbr::PLabel");
       data->preHighlight->accept(v);
@@ -1015,13 +1104,12 @@ void Visual::pick(const osgUtil::PolytopeIntersector::Intersections&)
       assert(pl);
       slc::Message sm;
       sm.shapeId = pl->getParameter()->getId(); //lie: parameter id, not shape id.
+      
       app::instance()->messageSlot(msg::Message(msg::Response | msg::Sketch | msg::Selection | msg::Add, sm));
     }
     else
       app::instance()->messageSlot(msg::Message(msg::Response | msg::Sketch | msg::Selection | msg::Add, slc::Message()));
     
-    data->highlights.push_back(data->preHighlight);
-    goHighlight(data->highlights.back().get());
     data->preHighlight.release();
   }
 }
@@ -1043,6 +1131,18 @@ void Visual::pick(const osgUtil::LineSegmentIntersector::Intersections &is)
     return record.get().handle;
   };
   
+  auto setFirstPick = [&](SSHandle ph, osg::Geometry *dynamicGeometry)
+  {
+    auto record = data->eMap.getRecord(ph);
+    assert(record);
+    assert(solver.isEntityType(record.get().handle, SLVS_E_POINT_IN_2D));
+    data->previousPoint = convert(ph);
+    data->previousPick = dynamic_cast<osg::Drawable*>(record.get().node.get());
+    
+    data->dynamic = dynamicGeometry;
+    data->transform->addChild(data->dynamic);
+  };
+  
   if (data->state == State::point)
   {
     boost::optional<osg::Vec3d> point = getPlanePoint(is);
@@ -1056,6 +1156,15 @@ void Visual::pick(const osgUtil::LineSegmentIntersector::Intersections &is)
     solver.solve(solver.getGroup(), true);
     app::instance()->messageSlot(msg::buildStatusMessage("Point Added", 2.0));
     update();
+    
+    if (chain)
+    {
+      data->state = State::point;
+      app::instance()->messageSlot(msg::buildStatusMessage("Pick Point"));
+    }
+    else
+      app::instance()->messageSlot(msg::Message(msg::Response | msg::Sketch | msg::Shape | msg::Done));
+    
     return;
   }
   else if (data->state == State::line)
@@ -1070,12 +1179,15 @@ void Visual::pick(const osgUtil::LineSegmentIntersector::Intersections &is)
     {
       data->previousPoint = point.get();
       if (data->preHighlight.valid())
+      {
         data->previousPick = data->preHighlight;
+        setPreviousPoint();
+      }
       data->dynamic = buildLine();
       osg::Geometry *l = data->dynamic->asGeometry();
       osg::Vec3Array *v = dynamic_cast<osg::Vec3Array*>(l->getVertexArray());
       assert(v);
-      (*v)[0] = point.get();
+      (*v)[0] = data->previousPoint.get();
       (*v)[1] = point.get();
       v->dirty();
       data->transform->addChild(data->dynamic);
@@ -1107,13 +1219,29 @@ void Visual::pick(const osgUtil::LineSegmentIntersector::Intersections &is)
       }
       
       data->state = State::selection;
-      data->previousPoint = boost::none;
-      data->previousPick.release();
-      data->transform->removeChild(data->dynamic);
-      data->dynamic.release();
+      data->clearDynamic();
+      data->clearPrevious();
       solver.solve(solver.getGroup(), true);
       app::instance()->messageSlot(msg::buildStatusMessage("Line Added", 2.0));
       update();
+      
+      if (chain)
+      {
+        data->state = State::line;
+        
+        osg::Geometry *l = buildLine();
+        setFirstPick(p2, l);
+        osg::Vec3Array *v = dynamic_cast<osg::Vec3Array*>(l->getVertexArray());
+        assert(v);
+        (*v)[0] = data->previousPoint.get();
+        (*v)[1] = data->previousPoint.get();
+        v->dirty();
+        
+        app::instance()->messageSlot(msg::buildStatusMessage("Pick Line End Point"));
+      }
+      else
+        app::instance()->messageSlot(msg::Message(msg::Response | msg::Sketch | msg::Shape | msg::Done));
+      
       return;
     }
   }
@@ -1130,12 +1258,15 @@ void Visual::pick(const osgUtil::LineSegmentIntersector::Intersections &is)
     {
       data->previousPoint = point.get();
       if (data->preHighlight.valid())
+      {
         data->previousPick = data->preHighlight;
+        setPreviousPoint();
+      }
       data->dynamic = buildArc();
       osg::Geometry *a = data->dynamic->asGeometry();
       osg::Vec3Array *v = dynamic_cast<osg::Vec3Array*>(a->getVertexArray());
       assert(v);
-      (*v)[0] = point.get();
+      (*v)[0] = data->previousPoint.get();
       (*v)[1] = point.get();
       v->dirty();
       data->transform->addChild(data->dynamic);
@@ -1170,13 +1301,29 @@ void Visual::pick(const osgUtil::LineSegmentIntersector::Intersections &is)
       }
       
       data->state = State::selection;
-      data->previousPoint = boost::none;
-      data->previousPick.release();
-      data->transform->removeChild(data->dynamic);
-      data->dynamic.release();
+      data->clearDynamic();
+      data->clearPrevious();
       solver.solve(solver.getGroup(), true);
       app::instance()->messageSlot(msg::buildStatusMessage("Arc Added", 2.0));
       update();
+      
+      if (chain)
+      {
+        data->state = State::arc;
+        
+        osg::Geometry *l = buildArc();
+        setFirstPick(afh, l);
+        osg::Vec3Array *v = dynamic_cast<osg::Vec3Array*>(l->getVertexArray());
+        assert(v);
+        (*v)[0] = data->previousPoint.get();
+        (*v)[1] = data->previousPoint.get();
+        v->dirty();
+        
+        app::instance()->messageSlot(msg::buildStatusMessage("Pick Arc End Point"));
+      }
+      else
+        app::instance()->messageSlot(msg::Message(msg::Response | msg::Sketch | msg::Shape | msg::Done));
+      
       return;
     }
   }
@@ -1193,12 +1340,15 @@ void Visual::pick(const osgUtil::LineSegmentIntersector::Intersections &is)
     {
       data->previousPoint = point.get();
       if (data->preHighlight.valid())
+      {
         data->previousPick = data->preHighlight;
+        setPreviousPoint();
+      }
       data->dynamic = buildCircle();
       osg::Geometry *a = data->dynamic->asGeometry();
       osg::Vec3Array *v = dynamic_cast<osg::Vec3Array*>(a->getVertexArray());
       assert(v);
-      (*v)[0] = point.get();
+      (*v)[0] = data->previousPoint.get();
       (*v)[1] = point.get();
       v->dirty();
       data->transform->addChild(data->dynamic);
@@ -1232,15 +1382,118 @@ void Visual::pick(const osgUtil::LineSegmentIntersector::Intersections &is)
 //       }
       
       data->state = State::selection;
-      data->previousPoint = boost::none;
-      data->previousPick.release();
-      data->transform->removeChild(data->dynamic);
-      data->dynamic.release();
+      data->clearDynamic();
+      data->clearPrevious();
       solver.solve(solver.getGroup(), true);
       app::instance()->messageSlot(msg::buildStatusMessage("Circle Added", 2.0));
       update();
+      
+      if (chain)
+      {
+        data->state = State::circle;
+        //no actual connection when chaining circles
+        app::instance()->messageSlot(msg::buildStatusMessage("Pick Circle Center Point"));
+      }
+      else
+        app::instance()->messageSlot(msg::Message(msg::Response | msg::Sketch | msg::Shape | msg::Done));
+      
       return;
     }
+  }
+  else if (data->state == State::cubicBezier)
+  {
+    boost::optional<osg::Vec3d> point = getPlanePoint(is);
+    if (!point)
+    {
+      std::cout << "couldn't find pick point on selectionPlane" << std::endl;
+      return;
+    }
+    //just going to draw a line for dynamic.
+    if (!data->previousPoint)
+    {
+      data->previousPoint = point.get();
+      if (data->preHighlight.valid())
+      {
+        data->previousPick = data->preHighlight;
+        setPreviousPoint();
+      }
+      data->dynamic = buildLine();
+      osg::Geometry *l = data->dynamic->asGeometry();
+      osg::Vec3Array *v = dynamic_cast<osg::Vec3Array*>(l->getVertexArray());
+      assert(v);
+      (*v)[0] = data->previousPoint.get();
+      (*v)[1] = point.get();
+      v->dirty();
+      data->transform->addChild(data->dynamic);
+      app::instance()->messageSlot(msg::buildStatusMessage("Pick Bezier End Point"));
+      return;
+    }
+    
+    double distance = (point.get() - data->previousPoint.get()).length();
+    if (distance < std::numeric_limits<float>::epsilon())
+    {
+      std::cout << "points to close, bezier not created" << std::endl;
+      return;
+    }
+    
+    //going to add 2 middle points evenly spaced.
+    osg::Vec3d point0 = data->previousPoint.get();
+    osg::Vec3d point3 = point.get();
+    osg::Vec3d projection = point3 - point0;
+    double mag = projection.length() / 3.0;
+    projection.normalize();
+    osg::Vec3d point1 = point0 + projection * mag;
+    osg::Vec3d point2 = point0 + projection * 2.0 * mag;
+    
+    auto buildPoint = [&](const osg::Vec3d &pIn) -> SSHandle
+    {
+      return solver.addPoint2d(pIn.x(), pIn.y());
+    };
+    SSHandle point0Handle = buildPoint(point0);
+    SSHandle point1Handle = buildPoint(point1);
+    SSHandle point2Handle = buildPoint(point2);
+    SSHandle point3Handle = buildPoint(point3);
+    
+    if (data->previousPick.valid())
+    {
+      auto pp = getPointHandle(data->previousPick);
+      if (pp)
+        solver.addPointsCoincident(point0Handle, pp.get());
+    }
+    if (data->preHighlight.valid())
+    {
+      auto cp = getPointHandle(data->preHighlight);
+      if (cp)
+        solver.addPointsCoincident(point3Handle, cp.get());
+    }
+    
+    solver.addCubicBezier(point0Handle, point1Handle, point2Handle, point3Handle);
+    
+    data->state = State::selection;
+    data->clearDynamic();
+    data->clearPrevious();
+    solver.solve(solver.getGroup(), true);
+    app::instance()->messageSlot(msg::buildStatusMessage("Cubic Bezier Added", 2.0));
+    update();
+    
+    if (chain)
+    {
+      data->state = State::cubicBezier;
+      
+      osg::Geometry *l = buildLine();
+      setFirstPick(point3Handle, l);
+      osg::Vec3Array *v = dynamic_cast<osg::Vec3Array*>(l->getVertexArray());
+      assert(v);
+      (*v)[0] = data->previousPoint.get();
+      (*v)[1] = data->previousPoint.get();
+      v->dirty();
+      
+      app::instance()->messageSlot(msg::buildStatusMessage("Pick Bezier End Point"));
+    }
+    else
+      app::instance()->messageSlot(msg::Message(msg::Response | msg::Sketch | msg::Shape | msg::Done));
+    
+    return;
   }
 }
 
@@ -1286,6 +1539,8 @@ void Visual::drag(const osgUtil::LineSegmentIntersector::Intersections &is)
     if (projection.length() < std::numeric_limits<float>::epsilon())
       return;
     SSHandle ph = record.get().handle;
+    auto oe = solver.findEntity(ph);
+    assert(oe);
     std::vector<Slvs_hParam> draggedParameters;
     auto projectPoint = [&](Slvs_hParam x, Slvs_hParam y)
     {
@@ -1296,33 +1551,28 @@ void Visual::drag(const osgUtil::LineSegmentIntersector::Intersections &is)
       draggedParameters.push_back(x);
       draggedParameters.push_back(y);
     };
+    
+    auto pPoint = [&](boost::optional<const Slvs_Entity&> opIn)
+    {
+      assert(opIn);
+      assert(opIn.get().type == SLVS_E_POINT_IN_2D);
+      projectPoint(opIn.get().param[0], opIn.get().param[1]);
+    };
+    
     if (solver.isEntityType(ph, SLVS_E_POINT_IN_2D))
     {
-      auto oe = solver.findEntity(ph);
-      assert(oe);
-      projectPoint(oe.get().param[0], oe.get().param[1]);
+      pPoint(oe);
     }
     if (solver.isEntityType(ph, SLVS_E_LINE_SEGMENT))
     {
-      auto ols = solver.findEntity(ph);
-      assert(ols);
-      auto p1 = solver.findEntity(ols.get().point[0]);
-      assert(p1);
-      projectPoint(p1.get().param[0], p1.get().param[1]);
-      auto p2 = solver.findEntity(ols.get().point[1]);
-      assert(p2);
-      projectPoint(p2.get().param[0], p2.get().param[1]);
+      pPoint(solver.findEntity(oe.get().point[0]));
+      pPoint(solver.findEntity(oe.get().point[1]));
     }
     if (solver.isEntityType(ph, SLVS_E_ARC_OF_CIRCLE))
     {
-      auto oac = solver.findEntity(ph);
-      assert(oac);
-      auto p1 = solver.findEntity(oac.get().point[1]);
-      assert(p1);
-      projectPoint(p1.get().param[0], p1.get().param[1]);
-      auto p2 = solver.findEntity(oac.get().point[2]);
-      assert(p2);
-      projectPoint(p2.get().param[0], p2.get().param[1]);
+      pPoint(solver.findEntity(oe.get().point[0]));
+      pPoint(solver.findEntity(oe.get().point[1]));
+      pPoint(solver.findEntity(oe.get().point[2]));
     }
     if (solver.isEntityType(ph, SLVS_E_CIRCLE))
     {
@@ -1345,6 +1595,14 @@ void Visual::drag(const osgUtil::LineSegmentIntersector::Intersections &is)
       solver.setParameterValue(od.get().param[0], opv.get() + adjustment);
       draggedParameters.push_back(od.get().param[0]);
     }
+    if (solver.isEntityType(ph, SLVS_E_CUBIC))
+    {
+      pPoint(solver.findEntity(oe.get().point[0]));
+      pPoint(solver.findEntity(oe.get().point[1]));
+      pPoint(solver.findEntity(oe.get().point[2]));
+      pPoint(solver.findEntity(oe.get().point[3]));
+    }
+    
     solver.dragSet(draggedParameters);
     solver.solve(solver.getGroup(), true);
     update();
@@ -1400,8 +1658,7 @@ void Visual::drag(const osgUtil::LineSegmentIntersector::Intersections &is)
 void Visual::finishDrag(const osgUtil::LineSegmentIntersector::Intersections&)
 {
   data->state = State::selection;
-  data->previousPoint = boost::none;
-  data->previousPick.release();
+  data->clearPrevious();
 }
 
 //! @brief Clear the current selection.
@@ -1414,6 +1671,7 @@ void Visual::clearSelection()
     clearHighlight(d.get());
   
   data->highlights.clear();
+  app::instance()->messageSlot(msg::Message(msg::Response | msg::Sketch | msg::Selection | msg::Clear));
 }
 
 //! @brief Prehighlight the previously set preHighlight data member.
@@ -1625,14 +1883,16 @@ osg::Vec4 Visual::getHighlightColor()
   return data->highlightColor;
 }
 
-//! @brief Set state to add a point through a pick.
+/*! @brief Set state to add a point through a pick.
+ * 
+ * @details Makes no sense to chain points, so we skip all that.
+ */
 void Visual::addPoint()
 {
-  clearSelection();
   data->state = State::point;
-  data->previousPoint = boost::none;
-  data->previousPick.release();
-  data->dynamic.release();
+  clearSelection();
+  data->clearDynamic();
+  data->clearPrevious();
   
   data->statusText->setText("Point");
   app::instance()->messageSlot(msg::buildStatusMessage("Pick Point"));
@@ -1641,40 +1901,118 @@ void Visual::addPoint()
 //! @brief Set state to add a line through picks.
 void Visual::addLine()
 {
-  clearSelection();
   data->state = State::line;
-  data->previousPoint = boost::none;
-  data->previousPick.release();
-  data->dynamic.release();
+  clearSelection();
+  data->clearDynamic();
+  
+  if (chain && data->previousPoint)
+  {
+    app::instance()->messageSlot(msg::buildStatusMessage("Pick Line End Point"));
+    data->dynamic = buildLine();
+    osg::Geometry *l = data->dynamic->asGeometry();
+    osg::Vec3Array *v = dynamic_cast<osg::Vec3Array*>(l->getVertexArray());
+    assert(v);
+    (*v)[0] = data->previousPoint.get();
+    (*v)[1] = data->previousPoint.get();
+    v->dirty();
+    data->transform->addChild(data->dynamic);
+  }
+  else
+  {
+    data->clearPrevious();
+    app::instance()->messageSlot(msg::buildStatusMessage("Pick Line Start Point"));
+  }
   
   data->statusText->setText("Line");
-  app::instance()->messageSlot(msg::buildStatusMessage("Pick Line Start Point"));
 }
 
 //! @brief Set state to add an arc through picks.
 void Visual::addArc()
 {
-  clearSelection();
   data->state = State::arc;
-  data->previousPoint = boost::none;
-  data->previousPick.release();
-  data->dynamic.release();
+  clearSelection();
+  data->clearDynamic();
+  
+  if (chain && data->previousPoint)
+  {
+    app::instance()->messageSlot(msg::buildStatusMessage("Pick Arc End Point"));
+    data->dynamic = buildArc();
+    osg::Geometry *l = data->dynamic->asGeometry();
+    osg::Vec3Array *v = dynamic_cast<osg::Vec3Array*>(l->getVertexArray());
+    assert(v);
+    (*v)[0] = data->previousPoint.get();
+    (*v)[1] = data->previousPoint.get();
+    v->dirty();
+    data->transform->addChild(data->dynamic);
+  }
+  else
+  {
+    data->clearPrevious();
+    app::instance()->messageSlot(msg::buildStatusMessage("Pick Arc Start Point"));
+  }
   
   data->statusText->setText("Arc");
-  app::instance()->messageSlot(msg::buildStatusMessage("Pick Arc Start Point"));
 }
 
-//! @brief Set state to add a circle through picks.
+/*! @brief Set state to add a circle through picks.
+ * 
+ * @details Makes no sense to chain circles. so we skip all that
+ */
 void Visual::addCircle()
 {
-  clearSelection();
   data->state = State::circle;
-  data->previousPoint = boost::none;
-  data->previousPick.release();
-  data->dynamic.release();
+  clearSelection();
+  data->clearDynamic();
+  data->clearPrevious();
   
   data->statusText->setText("Circle");
   app::instance()->messageSlot(msg::buildStatusMessage("Pick Circle Center Point"));
+}
+
+void Visual::addCubicBezier()
+{
+  data->state = State::cubicBezier;
+  clearSelection();
+  data->clearDynamic();
+  
+  if (chain && data->previousPoint)
+  {
+    app::instance()->messageSlot(msg::buildStatusMessage("Pick Bezier End Point"));
+    data->dynamic = buildLine();
+    osg::Geometry *l = data->dynamic->asGeometry();
+    osg::Vec3Array *v = dynamic_cast<osg::Vec3Array*>(l->getVertexArray());
+    assert(v);
+    (*v)[0] = data->previousPoint.get();
+    (*v)[1] = data->previousPoint.get();
+    v->dirty();
+    data->transform->addChild(data->dynamic);
+  }
+  else
+  {
+    data->clearPrevious();
+    app::instance()->messageSlot(msg::buildStatusMessage("Pick Bezier Start Point"));
+  }
+  
+  data->statusText->setText("Bezier");
+}
+
+bool Visual::canCoincident()
+{
+  if (data->highlights.size() != 2)
+    return false;
+  
+  std::vector<SSHandle> points = getSelectedPoints();
+  std::vector<SSHandle> lines = getSelectedLines();
+  std::vector<SSHandle> circles = getSelectedCircles();
+  
+  if (points.size() == 2)
+    return true;
+  else if (points.size() == 1 && lines.size() == 1)
+    return true;
+  else if (points.size() == 1 && circles.size() == 1)
+    return true;
+  
+  return false;
 }
 
 //! @brief Add a 'points coincident' constraint from 2 currently entities, if possible.
@@ -1708,10 +2046,26 @@ void Visual::addCoincident()
   clearSelection();
 }
 
+bool Visual::canHorizontal()
+{
+  std::vector<SSHandle> lines = getSelectedLines(false);
+  
+  if (data->highlights.size() != lines.size() || lines.empty())
+    return false;
+
+  return true;
+}
+
 //! @brief Add a horizontal constraint to each selected line segment.
 void Visual::addHorizontal()
 {
   std::vector<SSHandle> lines = getSelectedLines(false);
+  if (data->highlights.size() != lines.size() || lines.empty())
+  {
+    app::instance()->messageSlot(msg::buildStatusMessage("Horizontal Rejected", 2.0));
+    return;
+  }
+  
   for (const auto &l : lines)
   {
     solver.addHorizontal(l);
@@ -1722,10 +2076,26 @@ void Visual::addHorizontal()
   clearSelection();
 }
 
+bool Visual::canVertical()
+{
+  std::vector<SSHandle> lines = getSelectedLines(false);
+  
+  if (data->highlights.size() != lines.size() || lines.empty())
+    return false;
+
+  return true;
+}
+
 //! @brief Add a vertical constraint to each selected line segment.
 void Visual::addVertical()
 {
   std::vector<SSHandle> lines = getSelectedLines(false);
+  if (data->highlights.size() != lines.size() || lines.empty())
+  {
+    app::instance()->messageSlot(msg::buildStatusMessage("Vertical Rejected", 2.0));
+    return;
+  }
+  
   for (const auto &l : lines)
   {
     solver.addVertical(l);
@@ -1736,6 +2106,30 @@ void Visual::addVertical()
   clearSelection();
 }
 
+bool Visual::canTangent()
+{
+  //note this is not testing for the coincident constraint needed on end points.
+  if (data->highlights.size() != 2)
+    return false;
+  
+  std::vector<SSHandle> lines = getSelectedLines();
+  std::vector<SSHandle> arcs = getSelectedArcs();
+  std::vector<SSHandle> cubics = getSelectedBeziers();
+  
+  if (lines.size() == 1 && arcs.size() == 1)
+    return true;
+  if (arcs.size() == 2)
+    return true;
+  if (lines.size() == 1 && cubics.size() == 1)
+    return true;
+  if (cubics.size() == 1 && arcs.size() == 1)
+    return true;
+  if (cubics.size() == 2)
+    return true;
+  
+  return false;
+}
+
 //! @brief Add a tangent constraint to the 2 currently selected objects.
 void Visual::addTangent()
 {
@@ -1744,46 +2138,46 @@ void Visual::addTangent()
     app::instance()->messageSlot(msg::buildStatusMessage("Tangent Rejected. Wrong Selection Count", 2.0));
     return;
   }
-  std::vector<SSHandle> lines;
-  std::vector<SSHandle> arcs;
-  for (const auto &h : data->highlights)
-  {
-    auto e = data->eMap.getRecord(h);
-    if (!e)
-      continue;
-    if (solver.isEntityType(e.get().handle, SLVS_E_LINE_SEGMENT))
-      lines.push_back(e.get().handle);
-    if (solver.isEntityType(e.get().handle, SLVS_E_ARC_OF_CIRCLE))
-      arcs.push_back(e.get().handle);
-  }
+  std::vector<SSHandle> lines = getSelectedLines();
+  std::vector<SSHandle> arcs = getSelectedArcs();
+  std::vector<SSHandle> cubics = getSelectedBeziers();
+  
+  SSHandle tc = 0;
   if (lines.size() == 1 && arcs.size() == 1)
+    tc = solver.addArcLineTangent(arcs.front(), lines.front());
+  else if (arcs.size() == 2)
+    tc = solver.addCurveCurveTangent(arcs.front(), arcs.back());
+  else if (lines.size() == 1 && cubics.size() == 1)
+    tc = solver.addCubicLineTangent(cubics.front(), lines.front());
+  else if (cubics.size() == 1 && arcs.size() == 1)
+    tc = solver.addCurveCurveTangent(cubics.front(), arcs.front());
+  else if (cubics.size() == 2)
+    tc = solver.addCurveCurveTangent(cubics.front(), cubics.back());
+  
+  if (tc != 0)
   {
-    SSHandle tc = solver.addArcLineTangent(arcs.front(), lines.front());
-    if (tc != 0)
-    {
-      solver.solve(solver.getGroup(), true);
-      app::instance()->messageSlot(msg::buildStatusMessage("Tangent Added", 2.0));
-      update();
-      clearSelection();
-    }
-    else
-      app::instance()->messageSlot(msg::buildStatusMessage("Tangent Rejected. End Points Need Coincident", 2.0));
-    return;
+    solver.solve(solver.getGroup(), true);
+    app::instance()->messageSlot(msg::buildStatusMessage("Tangent Added", 2.0));
+    update();
+    clearSelection();
   }
-  if (arcs.size() == 2)
-  {
-    SSHandle tc = solver.addCurveCurveTangent(arcs.front(), arcs.back());
-    if (tc != 0)
-    {
-      solver.solve(solver.getGroup(), true);
-      app::instance()->messageSlot(msg::buildStatusMessage("Tangent Added", 2.0));
-      update();
-      clearSelection();
-    }
-    else
-      app::instance()->messageSlot(msg::buildStatusMessage("Tangent Rejected. End Points Need Coincident", 2.0));
-    return;
-  }
+  else
+    app::instance()->messageSlot(msg::buildStatusMessage("Tangent Rejected. End Points Need Coincident", 2.0));
+}
+
+bool Visual::canDistance()
+{
+  std::vector<SSHandle> points = getSelectedPoints(true);
+  std::vector<SSHandle> lines = getSelectedLines(true);
+  
+  if (data->highlights.size() == 2 && points.size() == 2)
+    return true;
+  if (data->highlights.size() == 1 && lines.size() == 1)
+    return true;
+  if (data->highlights.size() == 2 && lines.size() == 1 && points.size() == 1)
+    return true;
+  
+  return false;
 }
 
 //! @brief Add a distance constraint to the currently selected objects.
@@ -1792,8 +2186,9 @@ boost::optional<std::pair<SSHandle, std::shared_ptr<prm::Parameter>>> Visual::ad
   SSHandle dh = 0;
   double length = 0.0;
   
-  std::vector<SSHandle> points = getSelectedPoints();
-  std::vector<SSHandle> lines = getSelectedLines();
+  //we can use both work origin and axes.
+  std::vector<SSHandle> points = getSelectedPoints(true);
+  std::vector<SSHandle> lines = getSelectedLines(true);
   
   if (data->highlights.size() == 2 && points.size() == 2)
   {
@@ -1934,6 +2329,18 @@ void Visual::connectAngle(SSHandle cHandle, prm::Parameter *parameter, const osg
   data->constraintGroup->addChild(record.node);
 }
 
+bool Visual::canEqual()
+{
+  std::vector<SSHandle> lines = getSelectedLines(false);
+  std::vector<SSHandle> arcs = getSelectedCircles();
+  if (data->highlights.size() == lines.size() && lines.size() > 1)
+    return true;
+  if (data->highlights.size() == arcs.size() && arcs.size() > 1)
+    return true;
+  
+  return false;
+}
+
 //! @brief Add a equality constraint to the currently selected objects.
 void Visual::addEqual()
 {
@@ -1958,6 +2365,17 @@ void Visual::addEqual()
   app::instance()->messageSlot(msg::buildStatusMessage("Equality Added", 2.0));
   update();
   clearSelection();
+}
+
+bool Visual::canEqualAngle()
+{
+  std::vector<SSHandle> lines = getSelectedLines();
+  if (data->highlights.size() != lines.size())
+    return false;
+  if (lines.size() != 3 && lines.size() != 4)
+    return false;
+  
+  return true;
 }
 
 /*! @brief Add a equal angle constraint to the currently selected objects.
@@ -1991,6 +2409,15 @@ void Visual::addEqualAngle()
   app::instance()->messageSlot(msg::buildStatusMessage("Equal Angle Added", 2.0));
   update();
   clearSelection();
+}
+
+bool Visual::canDiameter()
+{
+  //can only do one at a time.
+  std::vector<SSHandle> circles = getSelectedCircles();
+  if (circles.size() != 1 || data->highlights.size() != circles.size())
+    return false;
+  return true;
 }
 
 //! @brief Add a diameter constraint to the currently selected objects.
@@ -2047,6 +2474,39 @@ boost::optional<std::pair<SSHandle, std::shared_ptr<prm::Parameter>>> Visual::ad
   return boost::none;
 }
 
+bool Visual::canSymmetry()
+{
+  std::vector<SSHandle> lines = getSelectedLines();
+  std::vector<SSHandle> notAxes;
+  std::vector<SSHandle> points = getSelectedPoints(false);
+  boost::optional<SSHandle> xAxis;
+  boost::optional<SSHandle> yAxis;
+  for (const auto &l : lines)
+  {
+    if (l == solver.getXAxis())
+      xAxis = l;
+    else if (l == solver.getYAxis())
+      yAxis = l;
+    else
+      notAxes.push_back(l);
+  }
+  
+  if (data->highlights.size() == 2 && lines.size() == 2 && notAxes.size() == 1 && xAxis)
+    return true;
+  if (data->highlights.size() == 2 && lines.size() == 2 && notAxes.size() == 1 && yAxis)
+    return true;
+  if (data->highlights.size() == 3 && points.size() == 2 && xAxis)
+    return true;
+  if (data->highlights.size() == 3 && points.size() == 2 && yAxis)
+    return true;
+  if (data->highlights.size() == 2 && notAxes.size() == 2)
+    return true;
+  if (data->highlights.size() == 3 && notAxes.size() == 1 && points.size() == 2)
+    return true;
+  
+  return false;
+}
+
 //! @brief Add a symmetric constraint to the currently selected objects.
 void Visual::addSymmetric()
 {
@@ -2091,10 +2551,19 @@ void Visual::addSymmetric()
     app::instance()->messageSlot(msg::buildStatusMessage("Symmetric Rejected. Unsupported Entity Type Combination", 2.0));
 }
 
+bool Visual::canAngle()
+{
+  std::vector<SSHandle> lines = getSelectedLines(true);
+  if (data->highlights.size() == 2 && lines.size() == 2)
+    return true;
+  return false;
+}
+
 //! @brief Add angle constraint to the currently selected objects.
 boost::optional<std::pair<SSHandle, std::shared_ptr<prm::Parameter>>> Visual::addAngle()
 {
-  std::vector<SSHandle> lines = getSelectedLines();
+  //we can use work lines. what about 2 work lines?
+  std::vector<SSHandle> lines = getSelectedLines(true);
   if (data->highlights.size() == 2 && lines.size() == 2)
   {
     osg::Vec3d l0p0, l0p1, l1p0, l1p1;
@@ -2169,6 +2638,14 @@ boost::optional<std::pair<SSHandle, std::shared_ptr<prm::Parameter>>> Visual::ad
   return boost::none;
 }
 
+bool Visual::canParallel()
+{
+  std::vector<SSHandle> lines = getSelectedLines();
+  if (data->highlights.size() == 2 && lines.size() == 2)
+    return true;
+  return false;
+}
+
 //! @brief Add parallel constraint to the currently selected lines.
 void Visual::addParallel()
 {
@@ -2183,6 +2660,14 @@ void Visual::addParallel()
   app::instance()->messageSlot(msg::buildStatusMessage("Parallel Added", 2.0));
   update();
   clearSelection();
+}
+
+bool Visual::canPerpendicular()
+{
+  std::vector<SSHandle> lines = getSelectedLines();
+  if (data->highlights.size() == 2 && lines.size() == 2)
+    return true;
+  return false;
 }
 
 //! @brief Add perpendicular constraint to the currently selected lines.
@@ -2201,11 +2686,26 @@ void Visual::addPerpendicular()
   clearSelection();
 }
 
+bool Visual::canMidPoint()
+{
+  if (data->highlights.size() != 2)
+    return false;
+  
+  std::vector<SSHandle> lines = getSelectedLines(false);
+  std::vector<SSHandle> points = getSelectedPoints(true);
+  if (lines.size() != 1 || points.size() != 1)
+    return false;
+  
+  return true;
+}
+
 //! @brief Add midpoint constraint to the currently selected line and point.
 void Visual::addMidpoint()
 {
-  std::vector<SSHandle> lines = getSelectedLines();
-  std::vector<SSHandle> points = getSelectedPoints();
+  //using the work axis line as a line makes no sense. That midpoint should be origin, so just use that.
+  //using work origin as point does make sense. 
+  std::vector<SSHandle> lines = getSelectedLines(false);
+  std::vector<SSHandle> points = getSelectedPoints(true);
   
   if (data->highlights.size() != 2)
   {
@@ -2225,6 +2725,15 @@ void Visual::addMidpoint()
   clearSelection();
 }
 
+bool Visual::canWhereDragged()
+{
+   std::vector<SSHandle> points = getSelectedPoints(false);
+   if (points.empty() || data->highlights.size() != points.size())
+     return false;
+   
+   return true;
+}
+
 //! @brief Add where dragged constraint to the currently selected points.
 void Visual::addWhereDragged()
 {
@@ -2241,6 +2750,35 @@ void Visual::addWhereDragged()
   app::instance()->messageSlot(msg::buildStatusMessage("Where Dragged Added", 2.0));
   update();
   clearSelection();
+}
+
+bool Visual::canRemove()
+{
+  if (data->highlights.empty())
+    return false;
+  
+  for (const auto &h : data->highlights)
+  {
+    //look for constraint.
+    auto c = data->cMap.getRecord(h);
+    if (!c)
+    {
+      ParentMapVisitor v(data->cMap);
+      h->accept(v);
+      c = v.out;
+    }
+    if (c)
+      continue;
+    
+    auto e = data->eMap.getRecord(h.get());
+    if (e)
+      continue;
+    
+    //if we make it here, we have found something not an entity or constraint.
+    return false;
+  }
+  
+  return true;
 }
 
 //! @brief Remove currently selected objects.
@@ -2271,7 +2809,7 @@ void Visual::remove()
   }
   solver.clean();
   solver.solve(solver.getGroup(), true);
-  app::instance()->messageSlot(msg::buildStatusMessage("Constraints Removed", 2.0));
+  app::instance()->messageSlot(msg::buildStatusMessage("Items Removed", 2.0));
   update();
   data->highlights.clear(); //items gone so no need to unhighlight, just remove.
 }
@@ -2279,19 +2817,27 @@ void Visual::remove()
 //! @brief Cancel the current command.
 void Visual::cancel()
 {
-  if (data->state == State::point)
-  {
-    data->state = State::selection;
-  }
-  else if (data->state == State::line || data->state == State::arc || data->state == State::circle)
-  {
-    data->state = State::selection;
-    data->previousPoint = boost::none;
-    data->previousPick.release();
-    data->transform->removeChild(data->dynamic);
-    data->dynamic.release();
-  }
+  data->state = State::selection;
+  data->clearDynamic();
+  data->clearPrevious();
+
   updateText();
+}
+
+bool Visual::canToggleConstruction()
+{
+  if (data->highlights.empty())
+    return false;
+  
+  //just make sure of just non-work geometry.
+  auto pc = getSelectedPoints(false).size();
+  auto lc = getSelectedLines(false).size();
+  auto cc = getSelectedCircles().size(); //includes arcs
+  auto bc = getSelectedBeziers().size();
+  if ((pc + lc + cc + bc) == data->highlights.size())
+    return true;
+  
+  return false;
 }
 
 //! @brief Make current selected entities construction or not.
@@ -2846,6 +3392,64 @@ void Visual::updateArcGeometry(osg::Geometry *geometry, const osg::Vec3d &ac, co
   verts->dirty();
 }
 
+//! @brief Update polygon representation of an bezier. No LOD.
+void Visual::updateBezierGeometry(osg::Geometry *g, const osg::Vec3d &p0, const osg::Vec3d &p1, const osg::Vec3d &p2, const osg::Vec3d &p3)
+{
+  //JFC occt sucks!
+  TColgp_Array1OfPnt occtPoints(1, 4);
+  auto pConvert = [](const osg::Vec3d &vIn) -> gp_Pnt
+  {
+    return gp_Pnt(vIn.x(), vIn.y(), vIn.z());
+  };
+  occtPoints.SetValue(1, pConvert(p0));
+  occtPoints.SetValue(2, pConvert(p1));
+  occtPoints.SetValue(3, pConvert(p2));
+  occtPoints.SetValue(4, pConvert(p3));
+  
+  opencascade::handle<Geom_BezierCurve> c = new Geom_BezierCurve(occtPoints);
+  auto edge = BRepBuilderAPI_MakeEdge(c).Edge();
+  
+  IMeshTools_Parameters mp;
+  mp.Deflection = 0.1;
+  mp.Angle = 0.25;
+  mp.Relative = Standard_True;
+  BRepMesh_IncrementalMesh mesh(edge, mp);
+  mesh.Perform();
+  assert(mesh.IsDone());
+  
+  TopLoc_Location location;
+  const opencascade::handle<Poly_Polygon3D>& poly = BRep_Tool::Polygon3D(TopoDS::Edge(edge), location);
+  if (poly.IsNull())
+    return;
+  //we shouldn't have any transformation.
+  const TColgp_Array1OfPnt& nodes = poly->Nodes();
+  
+  assert(g);
+  osg::Vec3Array *verts = dynamic_cast<osg::Vec3Array*>(g->getVertexArray());
+  assert(verts);
+  verts->resizeArray(nodes.Length());
+  
+  int index = 0;
+  for (const auto &p : nodes)
+  {
+    (*verts)[index] = osg::Vec3d(p.X(), p.Y(), p.Z());
+    ++index;
+  }
+  dynamic_cast<osg::DrawArrays*>(g->getPrimitiveSet(0))->setCount(verts->size());
+  verts->dirty();
+}
+
+//! set the previousPoint to previousPick if it is a point.
+void Visual::setPreviousPoint()
+{
+  auto record = data->eMap.getRecord(data->previousPick);
+  if (!record)
+    return;
+  
+  if (solver.isEntityType(record.get().handle, SLVS_E_POINT_IN_2D) || solver.isEntityType(record.get().handle, SLVS_E_POINT_IN_3D))
+    data->previousPoint = convert(record.get().handle);
+}
+
 /*! @brief Convert a solvespace point into an openscenegraph one.
  * 
  * @param ph A handle to a solvespace point.
@@ -2974,6 +3578,42 @@ std::vector<SSHandle> Visual::getSelectedCircles()
       solver.isEntityType(e.get().handle, SLVS_E_CIRCLE)
       || solver.isEntityType(e.get().handle, SLVS_E_ARC_OF_CIRCLE)
     )
+      out.push_back(e.get().handle);
+  }
+  
+  return out;
+}
+
+/*! @brief Filter current selection for all circles and arcs.
+ * 
+ * @return A vector of handles for the currently arcs
+ */
+std::vector<SSHandle> Visual::getSelectedArcs()
+{
+  std::vector<SSHandle> out;
+  
+  for (const auto &h : data->highlights)
+  {
+    auto e = data->eMap.getRecord(h);
+    if (!e)
+      continue;
+    if (solver.isEntityType(e.get().handle, SLVS_E_ARC_OF_CIRCLE))
+      out.push_back(e.get().handle);
+  }
+  
+  return out;
+}
+
+std::vector<SSHandle> Visual::getSelectedBeziers()
+{
+  std::vector<SSHandle> out;
+  
+  for (const auto &h : data->highlights)
+  {
+    auto e = data->eMap.getRecord(h);
+    if (!e)
+      continue;
+    if (solver.isEntityType(e.get().handle, SLVS_E_CUBIC))
       out.push_back(e.get().handle);
   }
   

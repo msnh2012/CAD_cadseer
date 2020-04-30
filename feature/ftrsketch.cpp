@@ -30,6 +30,7 @@
 #include <TopExp.hxx>
 #include <TopoDS.hxx>
 #include <ShapeFix_Wire.hxx>
+#include <Geom_BezierCurve.hxx>
 
 #include <osg/Switch>
 #include <osg/MatrixTransform>
@@ -450,7 +451,17 @@ void Sketch::updateSeerShape()
     }
     if (entity.get().type == SLVS_E_CUBIC)
     {
-      //todo
+      TColgp_Array1OfPnt occtPoints(1, 4);
+      occtPoints.SetValue(1, gp_Pnt(gu::toOcc(convertPoint(entity.get().point[0])).XYZ()));
+      occtPoints.SetValue(2, gp_Pnt(gu::toOcc(convertPoint(entity.get().point[1])).XYZ()));
+      occtPoints.SetValue(3, gp_Pnt(gu::toOcc(convertPoint(entity.get().point[2])).XYZ()));
+      occtPoints.SetValue(4, gp_Pnt(gu::toOcc(convertPoint(entity.get().point[3])).XYZ()));
+      opencascade::handle<Geom_BezierCurve> c = new Geom_BezierCurve(occtPoints);
+      
+      assert(vMap.count(entity.get().point[0]) == 1);
+      assert(vMap.count(entity.get().point[3]) == 1);
+      
+      return BRepBuilderAPI_MakeEdge(c, vMap[entity.get().point[0]], vMap[entity.get().point[3]]).Edge();
     }
     return boost::none;
   };

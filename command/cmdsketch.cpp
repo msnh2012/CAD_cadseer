@@ -88,6 +88,10 @@ void Sketch::activate()
 
 void Sketch::deactivate()
 {
+  //we do a shitty job of keeping track of changes during sketch editing.
+  //so we just hack in update here.
+  localUpdate(); //assume dirty
+    
   if (viewBase)
   {
     static_cast<cmv::Sketch*>(viewBase.get())->deactivate();
@@ -108,6 +112,7 @@ void Sketch::localUpdate()
 {
   assert(isActive);
   feature->updateModel(project->getPayload(feature->getId()));
+  feature->draggerHide(); //update will turn it on.
   feature->updateVisual();
   feature->setModelDirty();
   node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);

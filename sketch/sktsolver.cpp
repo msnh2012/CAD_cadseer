@@ -413,6 +413,14 @@ void Solver::removeEntity(Slvs_hEntity eh)
     htr.push_back(oe.get().point[0]);
     htr.push_back(oe.get().distance);
   }
+  else if (oe.get().type == SLVS_E_CUBIC)
+  {
+    //remove pointS.
+    htr.push_back(oe.get().point[0]);
+    htr.push_back(oe.get().point[1]);
+    htr.push_back(oe.get().point[2]);
+    htr.push_back(oe.get().point[3]);
+  }
   
   auto ptei = entities.end(); //past the end iterator
   for (const auto &rh : htr)

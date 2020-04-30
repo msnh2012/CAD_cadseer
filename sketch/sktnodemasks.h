@@ -49,6 +49,7 @@ namespace skt
     , arc //!< the arc command is running.
     , drag //!< drag operation is commencing.
     , circle //!< the circle command is running.
+    , cubicBezier //!< the cubic bezier command is running.
   };
 }
 

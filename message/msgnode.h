@@ -36,7 +36,7 @@ namespace msg
    * Where nodes are equal and connected as needed.
    * https://en.wikipedia.org/wiki/Mesh_networking
    * 
-   * Can be used as a start network. Where one and only one node
+   * Can be used as a star network. Where one and only one node
    * is a hub and all others node connect to the hub only.
    * A node is NOT a hub by default.
    * https://en.wikipedia.org/wiki/Star_network

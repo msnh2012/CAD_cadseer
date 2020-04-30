@@ -312,7 +312,7 @@ void Project::removeFeature(const uuid& idIn)
   //results are based upon parent and child count and create vs alter feature. See delete.svg
   //note that we counting from a 'severed' graph.
   auto parentCount = boost::in_degree(vertex, workGraph);
-  std::cout << "parent count: " << parentCount << std::endl;
+//   std::cout << "parent count: " << parentCount << std::endl;
 //   auto childCount = boost::out_degree(vertex, workGraph);
   
   

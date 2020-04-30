@@ -118,10 +118,14 @@ namespace skt
      * Functions for adding and removing.
      */
     ///@{
+    void setChainOn();
+    void setChainOff();
+    bool isChainOn(){return chain;}
     void addPoint();
     void addLine();
     void addArc();
     void addCircle();
+    void addCubicBezier();
     void addCoincident();
     void addHorizontal();
     void addVertical();
@@ -139,6 +143,29 @@ namespace skt
     void remove();
     void cancel();
     void toggleConstruction();
+    ///@}
+    
+    /** @anchor SelectionTesting
+     * @name Selection Testing 
+     * Test viability of command based upon current selection.
+     */
+    ///@{
+    bool canCoincident();
+    bool canHorizontal();
+    bool canVertical();
+    bool canTangent();
+    bool canSymmetry();
+    bool canParallel();
+    bool canPerpendicular();
+    bool canEqual();
+    bool canEqualAngle();
+    bool canMidPoint();
+    bool canWhereDragged();
+    bool canDistance();
+    bool canDiameter();
+    bool canAngle();
+    bool canToggleConstruction();
+    bool canRemove();
     ///@}
     
     /** @anchor Sizing
@@ -198,6 +225,7 @@ namespace skt
     bool autoSize; //!< @brief Size the visible plane automatically. @ref Sizing
     double size; //!< @brief Radius of the visible plane. @ref Sizing
     double lastSize; //!< @brief Last size used to update the visible plane.
+    bool chain = false; //!< @brief continues geometry creations
     
     void buildPlane();
     osg::Geometry* buildGeometry();
@@ -214,12 +242,16 @@ namespace skt
     void updatePlane();
     void updateText();
     void updateArcGeometry(osg::Geometry*, const osg::Vec3d&, const osg::Vec3d&, const osg::Vec3d&);
+    void updateBezierGeometry(osg::Geometry*, const osg::Vec3d&, const osg::Vec3d&, const osg::Vec3d&, const osg::Vec3d&);
     
+    void setPreviousPoint();
     osg::Vec3d convert(SSHandle);
     boost::optional<osg::Vec3d> getPlanePoint(const osgUtil::LineSegmentIntersector::Intersections&);
     std::vector<SSHandle> getSelectedPoints(bool includeWork = true);
     std::vector<SSHandle> getSelectedLines(bool includeWork = true);
     std::vector<SSHandle> getSelectedCircles();
+    std::vector<SSHandle> getSelectedArcs();
+    std::vector<SSHandle> getSelectedBeziers();
     osg::Vec3d parameterPoint(SSHandle, double);
     double vectorAngle(osg::Vec3d, osg::Vec3d);
     osg::Vec3d lineVector(SSHandle);

@@ -26,6 +26,8 @@
 #include <osg/Geometry>
 #include <osg/io_utils>
 
+#include "application/appapplication.h"
+#include "message/msgmessage.h"
 #include "modelviz/mdvnodemaskdefs.h"
 #include "sketch/sktvisual.h"
 #include "sketch/sktselection.h"
@@ -268,7 +270,13 @@ bool Selection::handle(const osgGA::GUIEventAdapter &ea, osgGA::GUIActionAdapter
   
   if (ea.getEventType() == osgGA::GUIEventAdapter::RELEASE && ea.getButton() == osgGA::GUIEventAdapter::MIDDLE_MOUSE_BUTTON)
   {
-    visual->clearSelection();
+    if (visual->getState() == State::selection)
+      visual->clearSelection();
+    else
+    {
+      visual->cancel();
+      app::instance()->messageSlot(msg::Message(msg::Response | msg::Sketch | msg::Shape | msg::Done));
+    }
   }
   
   if (leftButtonDown && ea.getEventType() == osgGA::GUIEventAdapter::DRAG)
