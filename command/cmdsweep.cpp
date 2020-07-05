@@ -20,24 +20,48 @@
 #include <boost/optional.hpp>
 
 #include "tools/featuretools.h"
+#include "application/appapplication.h"
 #include "application/appmainwindow.h"
 #include "project/prjproject.h"
 #include "message/msgnode.h"
 #include "selection/slceventhandler.h"
 #include "library/lbrplabel.h"
-#include "dialogs/dlgsweep.h"
 #include "annex/annseershape.h"
 #include "feature/ftrinputtype.h"
 #include "feature/ftrsweep.h"
+#include "commandview/cmvmessage.h"
+#include "commandview/cmvsweep.h"
 #include "command/cmdsweep.h"
 
 using boost::uuids::uuid;
 
 using namespace cmd;
 
-Sweep::Sweep() : Base() {}
+Sweep::Sweep()
+: Base("cmd::Sweep")
+, leafManager()
+{
+  auto nf = std::make_shared<ftr::Sweep>();
+  project->addFeature(nf);
+  feature = nf.get();
+  node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
+  isEdit = false;
+  isFirstRun = true;
+}
 
-Sweep::~Sweep() {}
+Sweep::Sweep(ftr::Base *fIn)
+: Base("cmd::Sweep")
+, leafManager(fIn)
+{
+  feature = dynamic_cast<ftr::Sweep*>(fIn);
+  assert(feature);
+  viewBase = std::make_unique<cmv::Sweep>(this);
+  node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  isEdit = true;
+  isFirstRun = false;
+}
+
+Sweep::~Sweep() = default;
 
 std::string Sweep::getStatusMessage()
 {
@@ -47,147 +71,208 @@ std::string Sweep::getStatusMessage()
 void Sweep::activate()
 {
   isActive = true;
-  
-  if (firstRun)
+  leafManager.rewind();
+  if (isFirstRun.get())
   {
-    firstRun = false;
+    isFirstRun = false;
     go();
   }
-  
-  if (dialog)
+  if (viewBase)
   {
-    dialog->show();
-    dialog->raise();
-    dialog->activateWindow();
+    feature->setEditing();
+    cmv::Message vm(viewBase.get(), viewBase->getPaneWidth());
+    msg::Message out(msg::Mask(msg::Request | msg::Command | msg::View | msg::Show), vm);
+    node->sendBlocked(out);
   }
-  else sendDone();
+  else
+    sendDone();
 }
 
 void Sweep::deactivate()
 {
-  if (dialog)
-    dialog->hide();
+  if (viewBase)
+  {
+    feature->setNotEditing();
+    msg::Message out(msg::Mask(msg::Request | msg::Command | msg::View | msg::Hide));
+    node->sendBlocked(out);
+  }
+  leafManager.fastForward();
+  if (!isEdit.get())
+  {
+    node->sendBlocked(msg::buildShowThreeD(feature->getId()));
+    node->sendBlocked(msg::buildShowOverlay(feature->getId()));
+  }
   isActive = false;
+}
+
+boost::optional<std::tuple<const ftr::Base*, const ann::SeerShape*>> getTuple(const slc::Message &mIn)
+{
+  const ftr::Base *feature = nullptr;
+  const ann::SeerShape *seerShape = nullptr;
+  
+  auto *p = app::instance()->getProject();
+  
+  if (!p->hasFeature(mIn.featureId))
+    return boost::none;
+  feature = p->findFeature(mIn.featureId);
+  
+  if (!feature->hasAnnex(ann::Type::SeerShape))
+    return boost::none;
+  seerShape = &feature->getAnnex<ann::SeerShape>();
+  if (seerShape->isNull())
+    return boost::none;
+  
+  return std::make_tuple(feature, seerShape);
+}
+
+void Sweep::connectCommon(const slc::Message &spine, const Profiles &profiles)
+{
+  project->clearAllInputs(feature->getId());
+  
+  auto st = getTuple(spine);
+  if (st)
+  {
+    const ftr::Base *spineFeature = nullptr;
+    const ann::SeerShape *spineSeerShape = nullptr;
+    std::tie(spineFeature, spineSeerShape) = st.get();
+    
+    ftr::Pick sp = tls::convertToPick(spine, *spineSeerShape, project->getShapeHistory());
+    sp.tag = ftr::Sweep::spineTag;
+    feature->setSpine(sp);
+    project->connectInsert(spineFeature->getId(), feature->getId(), ftr::InputType{sp.tag});
+  }
+  ftr::SweepProfiles sps;
+  for (const auto &p : profiles)
+  {
+    const auto &m = std::get<0>(p);
+    auto pt = getTuple(m);
+    if (!pt)
+      continue;
+    const ftr::Base *pf = nullptr;
+    const ann::SeerShape *pss = nullptr;
+    std::tie(pf, pss) = pt.get();
+
+    ftr::Pick pp = tls::convertToPick(m, *pss, project->getShapeHistory());
+    pp.tag = ftr::Sweep::profileTag + std::to_string(sps.size());
+    sps.emplace_back(pp, std::get<1>(p), std::get<2>(p));
+    project->connectInsert(pf->getId(), feature->getId(), ftr::InputType{pp.tag});
+  }
+  feature->setProfiles(sps);
+}
+
+// Corrected Frenet, Frenet, Discrete, Fixed
+void Sweep::setCommon(const slc::Message &spine, const Profiles &profiles, int trihedron)
+{
+  assert(trihedron >=0 && trihedron <= 3);
+  feature->setTrihedron(trihedron);
+  connectCommon(spine, profiles);
+}
+
+void Sweep::setBinormal(const slc::Message &spine, const Profiles &profiles, const slc::Messages &bms)
+{
+  //trihedron is set by 'setBinormal'
+  connectCommon(spine, profiles);
+  
+  ftr::Picks bps;
+  for (const auto &m : bms)
+  {
+    //not using getTuple because we might have a datum axis with no seer shape.
+    const ftr::Base *aFeature = project->findFeature(m.featureId);
+    assert(aFeature);
+    
+    std::string tag = std::string(ftr::Sweep::binormalTag) + std::to_string(bps.size());
+    ftr::Pick ap = tls::convertToPick(m, *project->findFeature(m.featureId), project->getShapeHistory());
+    ap.tag = tag;
+    project->connectInsert(aFeature->getId(), feature->getId(), ftr::InputType{ap.tag});
+    bps.push_back(ap);
+  }
+  feature->setBinormal(ftr::SweepBinormal(bps));
+}
+
+void Sweep::setSupport(const slc::Message &spine, const Profiles &profiles, const slc::Message &support)
+{
+  //trihedron is set by 'setSupport'
+  connectCommon(spine, profiles);
+  
+  auto st = getTuple(support);
+  if (!st)
+    return;
+  ftr::Pick sp = tls::convertToPick(support, *std::get<1>(st.get()), project->getShapeHistory());
+  sp.tag = ftr::Sweep::supportTag;
+  project->connectInsert(support.featureId, feature->getId(), ftr::InputType{sp.tag});
+  feature->setSupport(sp);
+}
+
+void Sweep::setAuxiliary(const slc::Message &spine, const Profiles &profiles, const Auxiliary &auxiliary)
+{
+  //trihedron is set by 'setAuxiliary'
+  connectCommon(spine, profiles);
+  
+  auto st = getTuple(std::get<0>(auxiliary));
+  if (!st)
+    return;
+  
+  ftr::Pick ap = tls::convertToPick(std::get<0>(auxiliary), *std::get<1>(st.get()), project->getShapeHistory());
+  ap.tag = ftr::Sweep::auxiliaryTag;
+  project->connectInsert(std::get<0>(auxiliary).featureId, feature->getId(), ftr::InputType{ap.tag});
+  feature->setAuxiliary(ftr::SweepAuxiliary(ap, std::get<1>(auxiliary), std::get<2>(auxiliary)));
+}
+
+
+void Sweep::localUpdate()
+{
+  assert(isActive);
+  feature->updateModel(project->getPayload(feature->getId()));
+  feature->updateVisual();
+  feature->setModelDirty();
+  node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
+}
+
+bool Sweep::isValidSelection(const slc::Message &mIn)
+{
+  const ftr::Base *lf = project->findFeature(mIn.featureId);
+  if (!lf->hasAnnex(ann::Type::SeerShape) || lf->getAnnex<ann::SeerShape>().isNull())
+    return false;
+  
+  auto t = mIn.type;
+  if
+  (
+    (t != slc::Type::Object)
+    && (t != slc::Type::Wire)
+    && (t != slc::Type::Edge)
+  )
+    return false;
+  return true;
 }
 
 void Sweep::go()
 {
-  auto goDialog = [&]()
-  {
-    shouldUpdate = false;
-    node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
-    auto sweep = std::make_shared<ftr::Sweep>();
-    project->addFeature(sweep);
-    node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
-    node->sendBlocked(msg::buildHideOverlay(sweep->getId()));
-    dialog = new dlg::Sweep(sweep.get(), mainWindow);
-    node->sendBlocked(msg::buildStatusMessage("invalid pre selection", 2.0));
-  };
-  
   const slc::Containers &cs = eventHandler->getSelections();
-  if (cs.size() < 2)
+  boost::optional<slc::Message> spine;
+  Profiles profiles;
+  
+  for (const auto &c : cs)
   {
-    goDialog();
+    auto m = slc::EventHandler::containerToMessage(c);
+    if (!isValidSelection(m))
+      continue;
+    if (!spine)
+    {
+      spine = m;
+      continue;
+    }
+    profiles.push_back({m, false, false});
+  }
+  if (spine && !profiles.empty())
+  {
+    setCommon(spine.get(), profiles, 0);
+    node->sendBlocked(msg::buildStatusMessage("Sweep Added", 2.0));
+    node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
     return;
   }
   
-  std::vector<std::pair<uuid, std::string>> inputStringPair; //feature id and input tag
-  boost::optional<ftr::Pick> spinePick;
-  ftr::Picks profiles;
-  for (const auto &s : cs)
-  {
-    if
-    (
-      (s.selectionType != slc::Type::Object)
-      && (s.selectionType != slc::Type::Wire)
-      && (s.selectionType != slc::Type::Edge)
-//       && (!slc::isPointType(s.selectionType)) //profile can be a point, but not now.
-    )
-    {
-      goDialog();
-      return;
-    }
-    const ftr::Base *bf = project->findFeature(s.featureId);
-    if (!bf || !bf->hasAnnex(ann::Type::SeerShape))
-    {
-      goDialog();
-      return;
-    }
-    const ann::SeerShape &ss = bf->getAnnex<ann::SeerShape>();
-    if (ss.isNull())
-    {
-      goDialog();
-      return;
-    }
-    
-    ftr::Pick cp = tls::convertToPick(s, ss, project->getShapeHistory());
-    if (!spinePick)
-    {
-      cp.tag = ftr::Sweep::spineTag;
-      spinePick = cp;
-    }
-    else
-    {
-      cp.tag = ftr::Sweep::profileTag + std::to_string(profiles.size());
-      profiles.push_back(cp);
-    }
-    inputStringPair.push_back(std::make_pair(s.featureId, cp.tag));
-  }
-  
-  if (!spinePick || profiles.empty())
-  {
-    goDialog();
-    return;
-  }
-  
-  auto f = std::make_shared<ftr::Sweep>();
-  ftr::SweepData data;
-  data.spine = spinePick.get();
-  ftr::SweepProfiles sp;
-  for (const auto &prof : profiles)
-    data.profiles.push_back(ftr::SweepProfile(prof));
-  f->setSweepData(data);
-  project->addFeature(f);
-  
-  for (const auto &p : inputStringPair)
-    project->connectInsert(p.first, f->getId(), ftr::InputType{p.second});
-  
-  node->sendBlocked(msg::buildStatusMessage("Sweep created", 2.0));
   node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
-}
-
-SweepEdit::SweepEdit(ftr::Base *feature) : Base()
-{
-  sweep = dynamic_cast<ftr::Sweep*>(feature);
-  assert(sweep);
-}
-
-SweepEdit::~SweepEdit()
-{
-  if (sweepDialog)
-    sweepDialog->deleteLater();
-}
-
-std::string SweepEdit::getStatusMessage()
-{
-  return "Editing Sweep Feature";
-}
-
-void SweepEdit::activate()
-{
-  if (!sweepDialog)
-    sweepDialog = new dlg::Sweep(sweep, mainWindow, true);
-  
-  isActive = true;
-  sweepDialog->show();
-  sweepDialog->raise();
-  sweepDialog->activateWindow();
-  
-  shouldUpdate = false;
-}
-
-void SweepEdit::deactivate()
-{
-  sweepDialog->hide();
-  isActive = false;
+  node->sendBlocked(msg::buildShowThreeD(feature->getId()));
+  node->sendBlocked(msg::buildShowOverlay(feature->getId()));
+  viewBase = std::make_unique<cmv::Sweep>(this);
 }

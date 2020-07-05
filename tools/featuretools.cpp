@@ -317,17 +317,18 @@ bool Resolver::resolve(const ftr::Pick &pIn)
  */
 bool Resolver::hasSucceeded()
 {
+  if (!feature)
+    return false;
   if (slc::isObjectType(workPick.selectionType))
   {
     //cant do seershape. We have features without it.
     //that is true but if we have an object selection feature with a seershape,
     //we want to test for a null seershape.
     if (feature->hasAnnex(ann::Type::SeerShape))
-      return feature && sShape;
-    return feature;
+      return sShape;
+    return true;
   }
-  else
-    return feature && sShape && !workPick.resolvedIds.empty();
+  return sShape && !workPick.resolvedIds.empty();
 }
 
 /*! @brief resolves pick via the payload and prepares for yield

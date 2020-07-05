@@ -39,6 +39,7 @@ namespace prj
   }
 }
 namespace lbr{class PLabel;}
+namespace lwf{struct Cue;}
 
 namespace ftr
 {
@@ -140,6 +141,34 @@ namespace ftr
     void setSweepData(const SweepData&);
     SweepData getSweepData() const;
     
+    
+    
+    
+    void setSpine(const Pick&);
+    void setProfiles(const SweepProfiles&);
+    void setAuxiliary(const SweepAuxiliary&); //sets trihedron value
+    void setSupport(const Pick&); //sets trihedron value
+    void setBinormal(const SweepBinormal&); //sets trihedron value
+    void setTrihedron(int);
+    void setTransition(int);
+    void setForceC1(bool);
+    void setSolid(bool);
+    void setUseLaw(bool);
+    void setLaw(const lwf::Cue&); //doesn't change useLaw
+    
+    const Pick& getSpine(){return spine;}
+    const SweepProfiles& getProfiles(){return profiles;}
+    const SweepAuxiliary& getAuxiliary(){return auxiliary;}
+    const Pick& getSupport(){return support;}
+    const SweepBinormal& getBinormal(){return binormal;}
+    
+    int getTrihedron();
+    int getTransition();
+    bool getForceC1();
+    bool getSolid();
+    bool getUseLaw();
+    
+    
     //! remove associations between law and feature
     void severLaw();
     //! add associations between law and feature
@@ -183,6 +212,8 @@ namespace ftr
     std::map<boost::uuids::uuid, boost::uuids::uuid> lastShapeMap; //faceId to edgeId for last shapes.
     
     static QIcon icon;
+    
+    void cleanTrihedron();
   };
 }
 

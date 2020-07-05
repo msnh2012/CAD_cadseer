@@ -381,6 +381,154 @@ SweepData Sweep::getSweepData() const
   return out;
 }
 
+void Sweep::setSpine(const Pick &pickIn)
+{
+  spine = pickIn;
+  setModelDirty();
+}
+
+void Sweep::setProfiles(const SweepProfiles &in)
+{
+  //remove all current profile data.
+  for (const auto &p : profiles)
+  {
+    auto rit = std::remove_if
+    (
+      parameters.begin()
+      , parameters.end()
+      , [&](prm::Parameter *pic){return pic == p.contact.get() || pic == p.correction.get();}
+    );
+    parameters.erase(rit, parameters.end());
+    overlaySwitch->removeChild(p.contactLabel.get());
+    overlaySwitch->removeChild(p.correctionLabel.get());
+  }
+  //add new profile data.
+  profiles = in;
+  for (const auto &p : profiles)
+  {
+    p.contact->connectValue(std::bind(&Sweep::setModelDirty, this));
+    p.correction->connectValue(std::bind(&Sweep::setModelDirty, this));
+    parameters.push_back(p.contact.get());
+    parameters.push_back(p.correction.get());
+    overlaySwitch->addChild(p.contactLabel.get());
+    overlaySwitch->addChild(p.correctionLabel.get());
+  }
+  
+  setModelDirty();
+}
+
+void Sweep::cleanTrihedron()
+{
+  int ct = static_cast<int>(*trihedron);
+  if (ct == 4) //binormal
+  {
+    auto rit = std::remove_if
+    (
+      parameters.begin()
+      , parameters.end()
+      , [&](prm::Parameter *pic){return pic == binormal.binormal.get();}
+    );
+    parameters.erase(rit, parameters.end());
+    binormalSwitch->removeChild(binormal.binormalLabel.get());
+  }
+  //support doesn't have any parameters
+  else if (ct == 6) //auxiliary
+  {
+    auto rit = std::remove_if
+    (
+      parameters.begin()
+      , parameters.end()
+      , [&](prm::Parameter *pic){return pic == auxiliary.curvilinearEquivalence.get() || pic == auxiliary.contactType.get();}
+    );
+    parameters.erase(rit, parameters.end());
+    auxiliarySwitch->removeChild(auxiliary.curvilinearEquivalenceLabel.get());
+    auxiliarySwitch->removeChild(auxiliary.contactTypeLabel.get());
+  }
+}
+
+void Sweep::setAuxiliary(const SweepAuxiliary &aIn)
+{
+  cleanTrihedron();
+  trihedron->setValue(6);
+  auxiliary = aIn;
+  
+  auxiliary.curvilinearEquivalence->connectValue(std::bind(&Sweep::setModelDirty, this));
+  auxiliary.contactType->connectValue(std::bind(&Sweep::setModelDirty, this));
+  parameters.push_back(auxiliary.curvilinearEquivalence.get());
+  parameters.push_back(auxiliary.contactType.get());
+  auxiliarySwitch->addChild(auxiliary.curvilinearEquivalenceLabel.get());
+  auxiliarySwitch->addChild(auxiliary.contactTypeLabel.get());
+  
+  setModelDirty();
+}
+
+void Sweep::setSupport(const Pick &sIn)
+{
+  cleanTrihedron();
+  trihedron->setValue(5);
+  support = sIn;
+  setModelDirty();
+}
+
+void Sweep::setBinormal(const SweepBinormal &bnIn)
+{
+  cleanTrihedron();
+  trihedron->setValue(4);
+  binormal = bnIn;
+  
+  binormal.binormal->connectValue(std::bind(&Sweep::setModelDirty, this));
+  parameters.push_back(binormal.binormal.get());
+  binormalSwitch->addChild(binormal.binormalLabel.get());
+  
+  setModelDirty();
+}
+
+void Sweep::setTrihedron(int tIn)
+{
+  cleanTrihedron();
+  trihedron->setValue(tIn);
+}
+
+void Sweep::setTransition(int tIn)
+{
+  transition->setValue(tIn);
+}
+
+void Sweep::setForceC1(bool fIn)
+{
+  forceC1->setValue(fIn);
+}
+
+void Sweep::setSolid(bool sIn)
+{
+  solid->setValue(sIn);
+}
+
+void Sweep::setUseLaw(bool lIn)
+{
+  severLaw();
+  useLaw->setValue(lIn); //will trigger dirty if changes.
+  if (lIn)
+    attachLaw();
+}
+
+void Sweep::setLaw(const lwf::Cue &cIn)
+{
+  severLaw();
+  ann::LawFunction &alf = getAnnex<ann::LawFunction>(ann::Type::LawFunction);
+  alf.setCue(cIn);
+  attachLaw();
+  regenerateLawViz();
+  
+  setModelDirty();
+}
+
+int Sweep::getTrihedron(){return static_cast<int>(*trihedron);}
+int Sweep::getTransition(){return static_cast<int>(*transition);}
+bool Sweep::getForceC1(){return static_cast<bool>(*forceC1);}
+bool Sweep::getSolid(){return static_cast<bool>(*solid);}
+bool Sweep::getUseLaw(){return static_cast<bool>(*useLaw);}
+
 void Sweep::severLaw()
 {
   const lwf::Cue &lfc = lawFunction->getCue();

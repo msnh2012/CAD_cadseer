@@ -1,6 +1,6 @@
 /*
  * CadSeer. Parametric Solid Modeling.
- * Copyright (C) 2019 Thomas S. Anderson blobfish.at.gmx.com
+ * Copyright (C) 2020 Thomas S. Anderson blobfish.at.gmx.com
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,64 +17,52 @@
  *
  */
 
-#ifndef DLG_SWEEP_H
-#define DLG_SWEEP_H
+#ifndef CMV_SWEEP_H
+#define CMV_SWEEP_H
 
 #include <memory>
 
-#include <boost/uuid/uuid.hpp>
+#include "commandview/cmvbase.h"
 
-#include <QDialog>
-
-class QComboBox;
-class QButtonGroup;
-class QListWidget;
-class QLabel;
 class QAbstractButton;
-class QCheckBox;
 
-namespace ftr{class Sweep;}
-namespace dlg{class SelectionButton;}
-namespace msg{struct Node;}
+namespace cmd{class Sweep;}
 
-namespace dlg
+namespace cmv
 {
   /**
   * @todo write docs
   */
-  class Sweep : public QDialog
+  class Sweep : public Base
   {
     Q_OBJECT
   public:
-    Sweep() = delete;
-    Sweep(ftr::Sweep*, QWidget*, bool = false);
+    Sweep(cmd::Sweep*);
     ~Sweep() override;
-    
-  public Q_SLOTS:
-    virtual void reject() override;
-    virtual void accept() override;
-    
+    void lawChanged();
   private:
-    std::unique_ptr<msg::Node> node;
-    ftr::Sweep *sweep = nullptr;
-    
     struct Stow;
     std::unique_ptr<Stow> stow;
-    
-    bool isAccepted = false;
-    bool isEditDialog = false;
-    
-    void init();
-    void loadFeatureData();
-    void buildGui();
-    void finishDialog();
-    
+  public Q_SLOTS:
+    void lawCheckToggled(bool);
+    void auxCurvilinearToggled(bool);
+    void auxCombo(int);
   private Q_SLOTS:
     void advanceSlot(); //!< move to next button in selection group.
-    void comboSlot(int); //!< selection changed in combobox
+    void comboTriSlot(int); //!< selection changed in combobox
+    void comboTransitionSlot(int); //!< selection changed in combobox
     void buttonToggled(QAbstractButton *, bool);
     void profileSelectionDirtySlot();
+    void spineSelectionDirtySlot();
+    void solidCheckToggled(bool);
+    void forceC1CheckToggled(bool);
+    void auxSelectionDirtySlot();
+    void binormalSelectionDirtySlot();
+    void supportSelectionDirtySlot();
+    void lawDirtySlot();
+    void lawValueChangedSlot();
+    
   };
 }
 
-#endif // DLG_SWEEP_H
+#endif // CMV_SWEEP_H

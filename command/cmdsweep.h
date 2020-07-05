@@ -20,48 +20,42 @@
 #ifndef CMD_SWEEP_H
 #define CMD_SWEEP_H
 
+#include "command/cmdleafmanager.h"
 #include "command/cmdbase.h"
 
-namespace dlg{class Sweep;}
 namespace ftr{class Sweep;}
 
 namespace cmd
 {
-  /**
-  * @todo write docs
-  */
   class Sweep : public Base
   {
   public:
+    ftr::Sweep *feature = nullptr;
+    
+    using Profile = std::tuple<slc::Message, bool, bool>;
+    using Profiles = std::vector<Profile>;
+    
+    using Auxiliary = std::tuple<const slc::Message&, bool, int>;
+    
     Sweep();
+    Sweep(ftr::Base*);
     ~Sweep() override;
     
     std::string getCommandName() override{return "Sweep";}
     std::string getStatusMessage() override;
     void activate() override;
     void deactivate() override;
+    
+    void setCommon(const slc::Message&, const Profiles&, int);
+    void setBinormal(const slc::Message&, const Profiles&, const slc::Messages&);
+    void setSupport(const slc::Message&, const Profiles&, const slc::Message&);
+    void setAuxiliary(const slc::Message&, const Profiles&, const Auxiliary&);
+    void localUpdate();
   private:
+    cmd::LeafManager leafManager;
     void go();
-    bool firstRun = true;
-    dlg::Sweep *dialog = nullptr;
+    void connectCommon(const slc::Message&, const Profiles&);
+    bool isValidSelection(const slc::Message&);
   };
-  
-  class SweepEdit : public Base
-  {
-  public:
-    SweepEdit(ftr::Base*);
-    virtual ~SweepEdit() override;
-    
-    virtual std::string getCommandName() override{return "Sweep Edit";}
-    virtual std::string getStatusMessage() override;
-    virtual void activate() override;
-    virtual void deactivate() override;
-    
-  private:
-    dlg::Sweep *sweepDialog = nullptr;
-    ftr::Sweep *sweep;
-  };
-  
-  
 }
 #endif // CMD_SWEEP_H

@@ -246,7 +246,6 @@ dialog_sources = ['dialogs/dlgparameter.cpp'
   , 'dialogs/dlgtagwidget.cpp'
   , 'dialogs/dlgabout.cpp'
   , 'dialogs/dlgsplitterdecorated.cpp'
-  , 'dialogs/dlgsweep.cpp'
   , 'dialogs/dlglawfunctionwidget.cpp'
   , 'dialogs/dlgenterfilter.cpp'
   , 'dialogs/dlgselectionlist.cpp'
@@ -427,6 +426,8 @@ commandview_sources = [
   , 'commandview/cmvtransitioncurve.cpp'
   , 'commandview/cmvprimitive.cpp'
   , 'commandview/cmvsketch.cpp'
+  , 'commandview/cmvsweep.cpp'
+  , 'commandview/cmvlawfunctionwidget.cpp'
 ]
   
 law_sources = ['law/lwfcue.cpp']
@@ -537,7 +538,6 @@ cadseer_moc_hdrs = ['viewer/vwrwidget.h'
   , 'dialogs/dlgcommitwidget.h'
   , 'lod/lodmanager.h'
   , 'dialogs/dlgabout.h'
-  , 'dialogs/dlgsweep.h'
   , 'dialogs/dlglawfunctionwidget.h'
   , 'dialogs/dlgenterfilter.h'
   , 'dialogs/dlgselectionlist.h'
@@ -574,6 +574,8 @@ cadseer_moc_hdrs = ['viewer/vwrwidget.h'
   , 'commandview/cmvtransitioncurve.h'
   , 'commandview/cmvprimitive.h'
   , 'commandview/cmvsketch.h'
+  , 'commandview/cmvsweep.h'
+  , 'commandview/cmvlawfunctionwidget.h'
 ]
   
 cadseer_resources = ['resources.qrc']
