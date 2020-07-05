@@ -147,9 +147,16 @@ void SeerShapeInfo::faceInfo(QTextStream &streamIn, const TopoDS_Shape &shapeIn)
     
     streamIn << qSetRealNumberPrecision(12) << fixed
     << "    Shape type: face" << endl
-    << "    Tolerance: " << BRep_Tool::Tolerance(TopoDS::Face(shapeIn)) << endl
-    << "    Surface type: " << gu::surfaceTypeStrings.at(surfaceAdaptor.GetType()) << endl;
-    
+    << "    Tolerance: " << BRep_Tool::Tolerance(TopoDS::Face(shapeIn)) << endl;
+    if (surfaceAdaptor.IsUPeriodic())
+      streamIn << "    Is U periodic: True. Period = " << surfaceAdaptor.UPeriod() << endl;
+    else
+      streamIn << "    Is U periodic: False" << endl;
+    if (surfaceAdaptor.IsVPeriodic())
+      streamIn << "    Is V periodic: True. Period = " << surfaceAdaptor.VPeriod() << endl;
+    else
+      streamIn << "    Is V periodic: False" << endl;
+    streamIn << "    Surface type: " << gu::surfaceTypeStrings.at(surfaceAdaptor.GetType()) << endl;
     if (surfaceAdaptor.GetType() == GeomAbs_Plane)
     {
       gp_Pln plane = surfaceAdaptor.Plane();
