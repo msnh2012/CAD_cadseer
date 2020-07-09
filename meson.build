@@ -190,7 +190,9 @@ feature_sources = ['feature/ftrinputtype.cpp'
   , 'feature/ftrsweep.cpp'
   , 'feature/ftrdatumsystem.cpp'
   , 'feature/ftrsurfaceremesh.cpp'
-  , 'feature/ftrsurfacemeshfill.cpp']
+  , 'feature/ftrsurfacemeshfill.cpp'
+  , 'feature/ftrmappcurve.cpp'
+  ]
   
 parameter_sources = ['parameter/prmparameter.cpp', 'parameter/prmexpressionlink.cpp']
 
@@ -228,7 +230,9 @@ tools_sources = ['tools/idtools.cpp'
   , 'tools/occtools.cpp'
   , 'tools/featuretools.cpp'
   , 'tools/tlsnameindexer.cpp'
-  , 'tools/tlsosgtools.cpp']
+  , 'tools/tlsosgtools.cpp'
+  , 'tools/tlsshapeid.cpp'
+  ]
   
 dialog_sources = ['dialogs/dlgparameter.cpp'
   , 'dialogs/dlgcheckgeometry.cpp'
@@ -330,6 +334,7 @@ project_serial_sources = [
   , 'project/serial/generated/prjsrlunnsunion.cpp'
   , 'project/serial/generated/prjsrlprjsproject.cpp'
   , 'project/serial/generated/prjsrlvwsview.cpp'
+  , 'project/serial/generated/prjsrlmpcmappcurve.cpp'
 ]
   
 application_sources = ['application/appmainwindow.cpp'
@@ -403,6 +408,7 @@ command_sources = ['command/cmdmanager.cpp'
   , 'command/cmdsurfacemeshfill.cpp'
   , 'command/cmdleafmanager.cpp'
   , 'command/cmdprimitive.cpp'
+  , 'command/cmdmappcurve.cpp'
 ]
 
 commandview_sources = [
@@ -428,6 +434,7 @@ commandview_sources = [
   , 'commandview/cmvsketch.cpp'
   , 'commandview/cmvsweep.cpp'
   , 'commandview/cmvlawfunctionwidget.cpp'
+  , 'commandview/cmvmappcurve.cpp'
 ]
   
 law_sources = ['law/lwfcue.cpp']
@@ -576,6 +583,7 @@ cadseer_moc_hdrs = ['viewer/vwrwidget.h'
   , 'commandview/cmvsketch.h'
   , 'commandview/cmvsweep.h'
   , 'commandview/cmvlawfunctionwidget.h'
+  , 'commandview/cmvmappcurve.h'
 ]
   
 cadseer_resources = ['resources.qrc']

@@ -32,7 +32,7 @@
 // #include "feature/ftrshapecheck.h"
 #include "feature/ftrupdatepayload.h"
 // #include "feature/ftrinputtype.h"
-// #include "project/serial/xsdcxxoutput/feature%CLASSNAMELOWERCASE%.h"
+// #include "project/serial/generated/prjsrl_FIX_%CLASSNAMELOWERCASE%.h"
 #include "feature/ftr%CLASSNAMELOWERCASE%.h"
 
 using namespace ftr;
@@ -156,20 +156,28 @@ void %CLASSNAME%::updateModel(const UpdatePayload &/*pIn*/)
 
 void %CLASSNAME%::serialWrite(const boost::filesystem::path &/*dIn*/)
 {
-//   prj::srl::Feature%CLASSNAME% so
+//   prj::srl::FIX::%CLASSNAME% so
 //   (
-// 
+//     Base::serialOut()
+//     , sShape->serialOut()
+//     , pick.serialOut()
+//     , direction->serialOut()
+//     , directionLabel->serialOut()
 //   );
+//   for (const auto &p : picks)
+//     so.picks().push_back(p);
 //   
 //   xml_schema::NamespaceInfomap infoMap;
 //   std::ofstream stream(buildFilePathName(dIn).string());
-//   prj::srl::%CLASSNAMELOWERCASE%(stream, so, infoMap);
+//   prj::srl::FIX::%CLASSNAMELOWERCASE%(stream, so, infoMap);
 }
 
 // void %CLASSNAME%::serialRead(const prj::srl::FIXME::%CLASSNAME% &so)
 // {
-//   Base::serialIn(so.featureBase());
-//   picks = ftr::serialIn(so.picks());
+//   Base::serialIn(so.base());
+//   pick.serialIn(so.pick());
+//   for (const auto &p : so.picks())
+//     picks.emplace_back(p);
 //   direction->serialIn(so.direction());
 //   directionLabel->serialIn(so.directionLabel());
 //   distanceLabel->serialIn(so.distanceLabel());

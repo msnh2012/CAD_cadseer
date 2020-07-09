@@ -75,7 +75,8 @@ namespace ftr
     Sweep, //!< feature for sweep surfaces
     DatumSystem, //!< feature for datum coordinate systems
     SurfaceReMesh, //!< feature for surface remesh
-    SurfaceMeshFill //!< feature for surface remesh
+    SurfaceMeshFill, //!< feature for surface remesh
+    MapPCurve //!< feature for mapping 2d pcurves to 3d surface curves
   };
   
   inline const static std::string& toString(Type typeIn)
@@ -129,7 +130,8 @@ namespace ftr
       {Type::Sweep, "Sweep"},
       {Type::DatumSystem, "DatumSystem"},
       {Type::SurfaceReMesh, "SurfaceReMesh"},
-      {Type::SurfaceMeshFill, "SurfaceMeshFill"}
+      {Type::SurfaceMeshFill, "SurfaceMeshFill"},
+      {Type::MapPCurve, "MapPCurve"}
     };
     
     assert(strings.count(typeIn) > 0);

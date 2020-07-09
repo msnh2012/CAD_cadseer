@@ -45,7 +45,7 @@ if not path.isfile("./commandTemplate.cpp"):
   sys.exit()
   
 if not path.isfile("./commandViewTemplate.h"):
-  print >> sys.stderr, 'ERROR: No dialogTemplate.h file'
+  print >> sys.stderr, 'ERROR: No commandViewTemplate.h file'
   sys.exit()
   
 if not path.isfile("./commandViewTemplate.cpp"):
@@ -100,7 +100,7 @@ entries.append(Entry('./commandTemplate.h',
                      ))
 entries.append(Entry('./serialTemplate.xsd',
                      '',
-                     '../project/serial/feature' + classNameLowerCase + '.xsd',
+                     '../project/serial/schema/prjsrl_FIX_/' + classNameLowerCase + '.xsd',
                      '',
                      '--serial',
                      'true'

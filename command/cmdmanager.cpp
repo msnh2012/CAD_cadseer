@@ -93,6 +93,7 @@
 #include "command/cmdsurfaceremesh.h"
 #include "command/cmdsurfacemeshfill.h"
 #include "command/cmdprimitive.h"
+#include "command/cmdmappcurve.h"
 #include "message/msgnode.h"
 #include "message/msgsift.h"
 #include "selection/slcmessage.h"
@@ -438,6 +439,11 @@ void Manager::setupDispatcher()
       (
         msg::Request | msg::Construct | msg::SurfaceMeshFill
       , std::bind(&Manager::constructSurfaceMeshFillDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Construct | msg::MapPCurve
+      , std::bind(&Manager::constructMapPCurveDispatched, this, std::placeholders::_1)
       )
       , std::make_pair
       (
@@ -885,6 +891,11 @@ void Manager::constructSurfaceMeshFillDispatched(const msg::Message&)
   addCommand(std::make_shared<SurfaceMeshFill>());
 }
 
+void Manager::constructMapPCurveDispatched(const msg::Message&)
+{
+  addCommand(std::make_shared<MapPCurve>());
+}
+
 void Manager::importDispatched(const msg::Message&)
 {
   addCommand(std::make_shared<Import>());
@@ -1097,6 +1108,11 @@ BasePtr editTransitionCurve(ftr::Base *feature)
   return std::make_shared<TransitionCurve>(feature);
 }
 
+BasePtr editMapPCurve(ftr::Base *feature)
+{
+  return std::make_shared<MapPCurve>(feature);
+}
+
 void Manager::setupEditFunctionMap()
 {
   editFunctionMap.insert(std::make_pair(ftr::Type::Blend, std::bind(editBlend, std::placeholders::_1)));
@@ -1131,4 +1147,5 @@ void Manager::setupEditFunctionMap()
   editFunctionMap.insert(std::make_pair(ftr::Type::Sew, std::bind(editSew, std::placeholders::_1)));
   editFunctionMap.insert(std::make_pair(ftr::Type::Thicken, std::bind(editThicken, std::placeholders::_1)));
   editFunctionMap.insert(std::make_pair(ftr::Type::TransitionCurve, std::bind(editTransitionCurve, std::placeholders::_1)));
+  editFunctionMap.insert(std::make_pair(ftr::Type::MapPCurve, std::bind(editMapPCurve, std::placeholders::_1)));
 }

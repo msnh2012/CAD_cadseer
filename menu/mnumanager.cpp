@@ -358,6 +358,7 @@ void Manager::Stow::setAllMenu()
         srl::MenuNode constructionCurves(":/resources/images/constructionCurves.svg", QObject::tr("Curves Menu").toStdString());
         constructionCurves.commandIds().push_back(41);
         constructionCurves.commandIds().push_back(42);
+        constructionCurves.commandIds().push_back(96);
         constructionBase.subMenus().push_back(constructionCurves);
       }
       {
@@ -638,6 +639,7 @@ void Manager::Stow::setAllToolbars()
       entry.visual().get().toolTipText() = QObject::tr("Curves").toStdString();
       entry.commandIds().push_back(41);
       entry.commandIds().push_back(42);
+      entry.commandIds().push_back(96);
       toolbar.entries().push_back(entry);
     }
     {
@@ -1756,5 +1758,15 @@ void Manager::Stow::setAllCommands()
     , QObject::tr("Remove All Interal Holes In A Surface Mesh").toStdString() //whats this text
     , QObject::tr("Surface Mesh Fill").toStdString() // toolTipText
     , msg::Request | msg::Construct | msg::SurfaceMeshFill
+  );
+  sc
+  (
+    96
+    , ":/resources/images/constructionMapPCurve.svg"
+    , QObject::tr("Map P Curve").toStdString() //icon text
+    , QObject::tr("Map P Curve").toStdString() //status text
+    , QObject::tr("Construct 3d Curve From A Parametric 2d Curve.").toStdString() //whats this text
+    , QObject::tr("Map P Curve").toStdString() // toolTipText
+    , msg::Request | msg::Construct | msg::MapPCurve
   );
 }

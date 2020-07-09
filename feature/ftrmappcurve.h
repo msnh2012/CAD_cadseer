@@ -1,6 +1,6 @@
 /*
  * CadSeer. Parametric Solid Modeling.
- * Copyright (C) %YEAR% Thomas S. Anderson blobfish.at.gmx.com
+ * Copyright (C) 2020 Thomas S. Anderson blobfish.at.gmx.com
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,46 +17,46 @@
  *
  */
 
-#ifndef FTR_%CLASSNAMEUPPERCASE%_H
-#define FTR_%CLASSNAMEUPPERCASE%_H
+#ifndef FTR_MAPPCURVE_H
+#define FTR_MAPPCURVE_H
 
-// #include "feature/ftrpick.h"
+#include "feature/ftrpick.h"
 #include "feature/ftrbase.h"
 
-// namespace ann{class SeerShape;}
-// namespace prj{namespace srl{namespace FIXME{class %CLASSNAME%;}}}
-// namespace lbr{class IPGroup; class PLabel;}
+namespace ann{class SeerShape;}
+namespace prj{namespace srl{namespace mpc{class MapPCurve;}}}
 
 namespace ftr
 {
-  class %CLASSNAME% : public Base
+  class MapPCurve : public Base
   {
   public:
-    %CLASSNAME%();
-    ~%CLASSNAME%() override;
+    constexpr static const char *faceTag = "face";
+    constexpr static const char *curveTag = "curve";
+    
+    MapPCurve();
+    ~MapPCurve() override;
     
     void updateModel(const UpdatePayload&) override;
-    Type getType() const override {return Type::%CLASSNAME%;}
-    const std::string& getTypeString() const override {return toString(Type::%CLASSNAME%);}
+    Type getType() const override {return Type::MapPCurve;}
+    const std::string& getTypeString() const override {return toString(Type::MapPCurve);}
     const QIcon& getIcon() const override {return icon;}
     Descriptor getDescriptor() const override {return Descriptor::Create;}
     
     void serialWrite(const boost::filesystem::path&) override;
-//     void serialRead(const prj::srl::FIXME::%CLASSNAME%&);
+    void serialRead(const prj::srl::mpc::MapPCurve&);
     
-//     void setPicks(const Picks&);
-//     const Picks& getPicks() const {return picks;}
+    void setFacePick(const Pick&);
+    const Pick& getFacePick() const {return facePick;}
+    void setEdgePicks(const Picks&);
+    const Picks& getEdgePicks() const {return edgePicks;}
     
   private:
-//     std::unique_ptr<ann::SeerShape> sShape;
-//     std::unique_ptr<prm::Parameter> direction;
-//     Picks picks;
-    
-//     osg::ref_ptr<lbr::PLabel> directionLabel;
-//     osg::ref_ptr<lbr::IPGroup> distanceLabel;
-    
+    std::unique_ptr<ann::SeerShape> sShape;
+    Pick facePick;
+    Picks edgePicks;
     static QIcon icon;
   };
 }
 
-#endif //FTR_%CLASSNAMEUPPERCASE%_H
+#endif //FTR_MAPPCURVE_H

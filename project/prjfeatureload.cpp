@@ -66,6 +66,7 @@
 #include "feature/ftrdatumsystem.h"
 #include "feature/ftrsurfaceremesh.h"
 #include "feature/ftrsurfacemeshfill.h"
+#include "feature/ftrmappcurve.h"
 #include "project/serial/generated/prjsrlbxsbox.h"
 #include "project/serial/generated/prjsrlblnsblend.h"
 #include "project/serial/generated/prjsrlchmschamfer.h"
@@ -110,6 +111,7 @@
 #include "project/serial/generated/prjsrltscstransitioncurve.h"
 #include "project/serial/generated/prjsrltrmstrim.h"
 #include "project/serial/generated/prjsrlunnsunion.h"
+#include "project/serial/generated/prjsrlmpcmappcurve.h"
 
 #include "project/prjfeatureload.h"
 
@@ -180,6 +182,7 @@ FeatureLoad::FeatureLoad(const path& directoryIn, const TopoDS_Shape &masterShap
   functionMap.insert(std::make_pair(ftr::toString(ftr::Type::DatumSystem), std::bind(&FeatureLoad::loadDatumSystem, this, std::placeholders::_1, std::placeholders::_2)));
   functionMap.insert(std::make_pair(ftr::toString(ftr::Type::SurfaceReMesh), std::bind(&FeatureLoad::loadSurfaceReMesh, this, std::placeholders::_1, std::placeholders::_2)));
   functionMap.insert(std::make_pair(ftr::toString(ftr::Type::SurfaceMeshFill), std::bind(&FeatureLoad::loadSurfaceMeshFill, this, std::placeholders::_1, std::placeholders::_2)));
+  functionMap.insert(std::make_pair(ftr::toString(ftr::Type::MapPCurve), std::bind(&FeatureLoad::loadMapPCurve, this, std::placeholders::_1, std::placeholders::_2)));
 }
 
 std::shared_ptr< ftr::Base > FeatureLoad::load(const std::string& idIn, const std::string& typeIn, std::size_t shapeOffsetIn)
@@ -727,4 +730,16 @@ std::shared_ptr<ftr::Base> FeatureLoad::loadSurfaceMeshFill(const std::string &f
   daf->serialRead(*ssrm);
   
   return daf;
+}
+
+std::shared_ptr<ftr::Base> FeatureLoad::loadMapPCurve(const std::string &fileNameIn, std::size_t shapeOffsetIn)
+{
+  auto ss = srl::mpc::mappcurve(fileNameIn, flags);
+  assert(ss);
+  
+  auto sf = std::make_shared<ftr::MapPCurve>();
+  sf->getAnnex<ann::SeerShape>().setOCCTShape(shapeVector.at(shapeOffsetIn), featureId);
+  sf->serialRead(*ss);
+  
+  return sf;
 }
