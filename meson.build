@@ -263,7 +263,6 @@ dialog_sources = ['dialogs/dlgparameter.cpp'
   , 'dialogs/dlghollow.cpp'
   , 'dialogs/dlgdatumsystem.cpp'
   , 'dialogs/dlgcsyswidget.cpp'
-  , 'dialogs/dlgsurfacemesh.cpp'
   , 'dialogs/dlgnetgenparameters.cpp'
   , 'dialogs/dlgocctparameters.cpp']
   
@@ -435,6 +434,7 @@ commandview_sources = [
   , 'commandview/cmvsweep.cpp'
   , 'commandview/cmvlawfunctionwidget.cpp'
   , 'commandview/cmvmappcurve.cpp'
+  , 'commandview/cmvsurfacemesh.cpp'
 ]
   
 law_sources = ['law/lwfcue.cpp']
@@ -559,7 +559,6 @@ cadseer_moc_hdrs = ['viewer/vwrwidget.h'
   , 'dialogs/dlgdatumsystem.h'
   , 'dialogs/dlgcsyswidget.h'
   , 'dialogs/dlgvizfilter.h'
-  , 'dialogs/dlgsurfacemesh.h'
   , 'dialogs/dlgnetgenparameters.h'
   , 'dialogs/dlgocctparameters.h'
   , 'commandview/cmvpane.h'
@@ -584,6 +583,7 @@ cadseer_moc_hdrs = ['viewer/vwrwidget.h'
   , 'commandview/cmvsweep.h'
   , 'commandview/cmvlawfunctionwidget.h'
   , 'commandview/cmvmappcurve.h'
+  , 'commandview/cmvsurfacemesh.h'
 ]
   
 cadseer_resources = ['resources.qrc']

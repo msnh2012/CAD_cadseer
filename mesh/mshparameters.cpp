@@ -140,6 +140,7 @@ void Netgen::ensureValidValues()
   minEdgeLen = std::min(std::max(0.2, minEdgeLen), 5.0);
   optSteps2d = std::max(0, optSteps2d);
   optSteps3d = std::max(0, optSteps3d);
+  quadDominated = false; //mesh struct only supports triangles.
 }
 
 void Netgen::serialIn(const prj::srl::mshs::ParametersNetgen &psIn)

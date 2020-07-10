@@ -43,8 +43,12 @@ namespace dlg
     void setOCCT(const msh::prm::OCCT &prms);
     msh::prm::OCCT getParameters() const;
     
-  public Q_SLOTS:
+  Q_SIGNALS:
+    void dirty();
+    
+  private Q_SLOTS:
     void resetParameters();
+    void comboChanged(int);
     
   private:
     void buildGui(const msh::prm::OCCT&);

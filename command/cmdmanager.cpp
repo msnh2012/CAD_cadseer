@@ -1050,7 +1050,7 @@ BasePtr editDatumSystem(ftr::Base *feature)
 
 BasePtr editSurfaceMesh(ftr::Base *feature)
 {
-  return std::make_shared<SurfaceMeshEdit>(feature);
+  return std::make_shared<SurfaceMesh>(feature);
 }
 
 BasePtr editDatumAxis(ftr::Base *feature)

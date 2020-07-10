@@ -41,8 +41,12 @@ namespace dlg
     void setParameters(const msh::prm::Netgen&);
     msh::prm::Netgen getParameters() const;
     
+  Q_SIGNALS:
+    void dirty();
+    
   public Q_SLOTS:
     void resetParameters();
+    void comboChanged(int);
     
   private:
     struct Stow;

@@ -21,10 +21,10 @@
 #ifndef CMD_SURFACEMESH_H
 #define CMD_SURFACEMESH_H
 
+#include "command/cmdleafmanager.h"
 #include "command/cmdbase.h"
 
 namespace ftr{class SurfaceMesh;}
-namespace dlg{class SurfaceMesh;}
 
 namespace cmd
 {
@@ -34,33 +34,23 @@ namespace cmd
   class SurfaceMesh : public Base
   {
   public:
+    ftr::SurfaceMesh *feature = nullptr;
+    
     SurfaceMesh();
+    SurfaceMesh(ftr::Base*);
     virtual ~SurfaceMesh() override;
     
     virtual std::string getCommandName() override{return "Surface Mesh";}
     virtual std::string getStatusMessage() override;
     virtual void activate() override;
     virtual void deactivate() override;
-  private:
-    void go();
-  };
-  
-  /**
-  * @todo write docs
-  */
-  class SurfaceMeshEdit : public Base
-  {
-  public:
-    SurfaceMeshEdit(ftr::Base*);
-    ~SurfaceMeshEdit() override;
     
-    std::string getCommandName() override{return "SurfaceMesh Edit";}
-    std::string getStatusMessage() override;
-    void activate() override;
-    void deactivate() override;
+    bool isValidSelection(const slc::Message&);
+    void setSelection(const slc::Message&);
+    void localUpdate();
   private:
-    dlg::SurfaceMesh *dialog = nullptr;
-    ftr::SurfaceMesh *feature = nullptr;
+    cmd::LeafManager leafManager;
+    void go();
   };
 }
 

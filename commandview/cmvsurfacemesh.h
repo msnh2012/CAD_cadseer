@@ -17,20 +17,16 @@
  *
  */
 
-#ifndef DLG_SURFACEMESH_H
-#define DLG_SURFACEMESH_H
+#ifndef CMV_SURFACEMESH_H
+#define CMV_SURFACEMESH_H
 
 #include <memory>
 
-#include "dialogs/dlgbase.h"
+#include "commandview/cmvbase.h"
 
-class QGridLayout;
-class QPushButton;
+namespace cmd{class SurfaceMesh;}
 
-namespace ftr{class SurfaceMesh;}
-namespace msh{namespace prm{struct OCCT;}}
-
-namespace dlg
+namespace cmv
 {
   /**
   * @todo write docs
@@ -39,20 +35,17 @@ namespace dlg
   {
     Q_OBJECT
   public:
-    SurfaceMesh(ftr::SurfaceMesh*, QWidget*, bool = false);
+    SurfaceMesh(cmd::SurfaceMesh*);
     ~SurfaceMesh() override;
   public Q_SLOTS:
-    void reject() override;
-    void accept() override;
-    void comboChanged(int);
+    void typeChanged(int);
+    void selectionChanged();
+    void occtValueChanged();
+    void netgenValueChanged();
   private:
     struct Stow;
     std::unique_ptr<Stow> stow;
-    
-    void init();
-    void loadFeatureData();
-    void finishDialog();
   };
 }
 
-#endif // DLG_SURFACEMESH_H
+#endif // CMV_SURFACEMESH_H

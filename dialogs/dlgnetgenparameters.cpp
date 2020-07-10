@@ -40,7 +40,7 @@ struct NetgenParameters::Stow
   
   Stow(){}
   
-  void buildGui(QWidget *parent)
+  void buildGui(NetgenParameters *parent)
   {
     resetButton = new QPushButton(tr("Reset"), parent);
     QHBoxLayout *buttonLayout = new QHBoxLayout();
@@ -56,6 +56,7 @@ struct NetgenParameters::Stow
       edit->setText(QString::number(value));
       layout->addWidget(label, row, 0, Qt::AlignVCenter | Qt::AlignRight);
       layout->addWidget(edit, row, 1);
+      connect(edit, &QLineEdit::editingFinished, parent, &NetgenParameters::dirty);
     };
     
     auto addInt = [&](const QString &name, int value, int row)
@@ -65,6 +66,7 @@ struct NetgenParameters::Stow
       edit->setText(QString::number(value));
       layout->addWidget(label, row, 0, Qt::AlignVCenter | Qt::AlignRight);
       layout->addWidget(edit, row, 1);
+      connect(edit, &QLineEdit::editingFinished, parent, &NetgenParameters::dirty);
     };
 
     auto addBoolean = [&](const QString &name, bool value, int row)
@@ -79,13 +81,14 @@ struct NetgenParameters::Stow
         box->setCurrentIndex(1);
       layout->addWidget(label, row, 0, Qt::AlignVCenter | Qt::AlignRight);
       layout->addWidget(box, row, 1);
+      connect(box, SIGNAL(activated(int)), parent, SLOT(comboChanged(int)));
     };
     
     msh::prm::Netgen prms;
     addBoolean(tr("Use Local"), prms.useLocalH, 0);
     addDouble(tr("Maximum Height"), prms.maxH, 1);
     addDouble(tr("Minimum Height"), prms.minH, 2);
-    addDouble(tr("Fineness (0.0, 1.0)"), prms.fineness, 3);
+    addDouble(tr("Fineness (0.0, 1.0)"), prms.fineness, 3); //nglib never transfers to actual mesher. See notes.
     addDouble(tr("Grading (0.1, 1.0)"), prms.grading, 4);
     addDouble(tr("Elements Per Edge (0.2, 5.0)"), prms.elementsPerEdge, 5);
     addDouble(tr("Elements Per Curve (0.2, 5.0)"), prms.elementsPerCurve, 6);
@@ -247,4 +250,10 @@ msh::prm::Netgen NetgenParameters::getParameters() const
 void NetgenParameters::resetParameters()
 {
   stow->setParameters(msh::prm::Netgen());
+  dirty();
+}
+
+void NetgenParameters::comboChanged(int)
+{
+  dirty();
 }

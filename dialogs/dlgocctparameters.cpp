@@ -57,6 +57,8 @@ void OCCTParameters::buildGui(const msh::prm::OCCT &prms)
     edit->setText(QString::number(value));
     layout->addWidget(label, row, 0, Qt::AlignVCenter | Qt::AlignRight);
     layout->addWidget(edit, row, 1);
+    
+    connect(edit, &QLineEdit::editingFinished, this, &OCCTParameters::dirty);
   };
   
   auto addBoolean = [&](const QString &name, bool value, int row)
@@ -71,6 +73,12 @@ void OCCTParameters::buildGui(const msh::prm::OCCT &prms)
       box->setCurrentIndex(1);
     layout->addWidget(label, row, 0, Qt::AlignVCenter | Qt::AlignRight);
     layout->addWidget(box, row, 1);
+    
+    //activated is nice because it is only triggered by user interaction
+    //so when we change it programmatically it won't trigger dirty calls.
+    //however user can select the same entry, essentially not changing the
+    //value, and activated will still be called. we will live with that behavior. 
+    connect(box, SIGNAL(activated(int)), this, SLOT(comboChanged(int)));
   };
   
   addDouble(tr("Angle"), prms.Angle, 0);
@@ -105,6 +113,7 @@ void OCCTParameters::buildGui(const msh::prm::OCCT &prms)
 void OCCTParameters::resetParameters()
 {
   setOCCT(msh::prm::OCCT());
+  dirty();
 }
 
 void OCCTParameters::setOCCT(const msh::prm::OCCT &prms)
@@ -171,4 +180,9 @@ msh::prm::OCCT OCCTParameters::getParameters() const
   out.AdjustMinSize = toBoolean(10);
   
   return out;
+}
+
+void OCCTParameters::comboChanged(int)
+{
+  dirty();
 }

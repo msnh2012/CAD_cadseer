@@ -20,16 +20,41 @@
 #include "message/msgnode.h"
 #include "application/appmainwindow.h"
 #include "project/prjproject.h"
+#include "annex/annseershape.h"
 #include "selection/slceventhandler.h"
-#include "dialogs/dlgsurfacemesh.h"
+#include "commandview/cmvmessage.h"
+#include "commandview/cmvsurfacemesh.h"
 #include "feature/ftrinputtype.h"
 #include "feature/ftrsurfacemesh.h"
 #include "command/cmdsurfacemesh.h"
 
 using namespace cmd;
 
-SurfaceMesh::SurfaceMesh() : Base() {}
-SurfaceMesh::~SurfaceMesh() {}
+SurfaceMesh::SurfaceMesh()
+: Base("cmd::SurfaceMesh")
+, leafManager()
+{
+  auto nf = std::make_shared<ftr::SurfaceMesh>();
+  project->addFeature(nf);
+  feature = nf.get();
+  node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
+  isEdit = false;
+  isFirstRun = true;
+}
+
+SurfaceMesh::SurfaceMesh(ftr::Base *fIn)
+: Base("cmd::SurfaceMesh")
+, leafManager(fIn)
+{
+  feature = dynamic_cast<ftr::SurfaceMesh*>(fIn);
+  assert(feature);
+  viewBase = std::make_unique<cmv::SurfaceMesh>(this);
+  node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  isEdit = true;
+  isFirstRun = false;
+}
+
+SurfaceMesh::~SurfaceMesh() = default;
 
 std::string SurfaceMesh::getStatusMessage()
 {
@@ -39,79 +64,95 @@ std::string SurfaceMesh::getStatusMessage()
 void SurfaceMesh::activate()
 {
   isActive = true;
-  go();
-  sendDone();
+  leafManager.rewind();
+  if (isFirstRun.get())
+  {
+    isFirstRun = false;
+    go();
+  }
+  if (viewBase)
+  {
+    feature->setEditing();
+    cmv::Message vm(viewBase.get(), viewBase->getPaneWidth());
+    msg::Message out(msg::Mask(msg::Request | msg::Command | msg::View | msg::Show), vm);
+    node->sendBlocked(out);
+  }
+  else
+    sendDone();
 }
 
 void SurfaceMesh::deactivate()
 {
+  if (viewBase)
+  {
+    feature->setNotEditing();
+    msg::Message out(msg::Mask(msg::Request | msg::Command | msg::View | msg::Hide));
+    node->sendBlocked(out);
+  }
+  leafManager.fastForward();
+  if (!isEdit.get())
+  {
+    node->sendBlocked(msg::buildShowThreeD(feature->getId()));
+    node->sendBlocked(msg::buildShowOverlay(feature->getId()));
+  }
   isActive = false;
+}
+
+bool SurfaceMesh::isValidSelection(const slc::Message &mIn)
+{
+  if (slc::isObjectType(mIn.type))
+  {
+    const ftr::Base *lf = project->findFeature(mIn.featureId);
+    if (lf->hasAnnex(ann::Type::SeerShape) && !lf->getAnnex<ann::SeerShape>().isNull())
+      return true;
+  }
+  
+  return false;
+}
+
+void SurfaceMesh::setSelection(const slc::Message &mIn)
+{
+  assert(isActive);
+  
+  project->clearAllInputs(feature->getId());
+  if (isValidSelection(mIn))
+    project->connect(mIn.featureId, feature->getId(), {ftr::InputType::target});
+}
+
+void SurfaceMesh::localUpdate()
+{
+  assert(isActive);
+  feature->updateModel(project->getPayload(feature->getId()));
+  feature->updateVisual();
+  feature->setModelDirty();
+  node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
 }
 
 void SurfaceMesh::go()
 {
-  const slc::Containers &containers = eventHandler->getSelections();
-  if (containers.empty())
+  const slc::Containers &cs = eventHandler->getSelections();
+  
+  boost::optional<slc::Message> target;
+  for (const auto &c : cs)
   {
-    //this temp. if no selection, import mesh.
-    node->sendBlocked(msg::buildStatusMessage("No selection for surface mesh", 2.0));
-    shouldUpdate = false;
-    return;
-  }
-  //only considering first feature
-  ftr::Base *bf = project->findFeature(containers.front().featureId);
-  if (!bf->hasAnnex(ann::Type::SeerShape))
-  {
-    node->sendBlocked(msg::buildStatusMessage("Feature doesn't have seer shape", 2.0));
-    shouldUpdate = false;
-    return;
+    auto m = slc::EventHandler::containerToMessage(c);
+    if (isValidSelection(m))
+    {
+      target = m;
+      break;
+    }
   }
   
-  std::shared_ptr<ftr::SurfaceMesh> sfm(new ftr::SurfaceMesh());
-  sfm->setMeshType(ftr::SurfaceMesh::MeshType::occt);
-//   sfm->setMeshType(ftr::SurfaceMesh::MeshType::netgen);
-//   sfm->setMeshType(ftr::SurfaceMesh::MeshType::gmsh);
-  project->addFeature(sfm);
-  project->connectInsert(bf->getId(), sfm->getId(), ftr::InputType{ftr::InputType::target});
+  if (target)
+  {
+    setSelection(target.get());
+    node->sendBlocked(msg::buildStatusMessage("SurfaceMesh Added", 2.0));
+    node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+    return;
+  }
   
   node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
-}
-
-SurfaceMeshEdit::SurfaceMeshEdit(ftr::Base *in) : Base()
-{
-  //command manager edit dispatcher dispatches on ftr::type, so we know the type of 'in'
-  feature = dynamic_cast<ftr::SurfaceMesh*>(in);
-  assert(feature);
-  shouldUpdate = false; //dialog controls.
-}
-
-SurfaceMeshEdit::~SurfaceMeshEdit()
-{
-  if (dialog)
-    dialog->deleteLater();
-}
-
-std::string SurfaceMeshEdit::getStatusMessage()
-{
-  return QObject::tr("Editing SurfaceMesh").toStdString();
-}
-
-void SurfaceMeshEdit::activate()
-{
-  isActive = true;
-  if (!dialog)
-  {
-    node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
-    dialog = new dlg::SurfaceMesh(feature, mainWindow, true);
-  }
-
-  dialog->show();
-  dialog->raise();
-  dialog->activateWindow();
-}
-
-void SurfaceMeshEdit::deactivate()
-{
-  dialog->hide();
-  isActive = false;
+  node->sendBlocked(msg::buildShowThreeD(feature->getId()));
+  node->sendBlocked(msg::buildShowOverlay(feature->getId()));
+  viewBase = std::make_unique<cmv::SurfaceMesh>(this);
 }
