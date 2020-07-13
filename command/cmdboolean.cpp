@@ -17,12 +17,16 @@
  *
  */
 
+#include <optional>
+
 #include "application/appmainwindow.h"
 #include "project/prjproject.h"
 #include "viewer/vwrwidget.h"
 #include "message/msgnode.h"
 #include "selection/slceventhandler.h"
-#include "dialogs/dlgboolean.h"
+#include "annex/annseershape.h"
+#include "commandview/cmvmessage.h"
+#include "commandview/cmvboolean.h"
 #include "tools/featuretools.h"
 #include "feature/ftrinputtype.h"
 #include "feature/ftrintersect.h"
@@ -30,32 +34,125 @@
 #include "feature/ftrunion.h"
 #include "command/cmdboolean.h"
 
-using namespace cmd;
-
-Boolean::Boolean(const ftr::Type &tIn)
-: Base()
-, ftrType(tIn)
+namespace
 {
-  assert
-  (
-    (ftrType == ftr::Type::Intersect)
-    || (ftrType == ftr::Type::Subtract)
-    || (ftrType == ftr::Type::Union)
-  );
+  struct SetPickVisitor
+  {
+    const ftr::Picks &targets;
+    const ftr::Picks &tools;
+    SetPickVisitor(const ftr::Picks &targetsIn, ftr::Picks &toolsIn):targets(targetsIn),tools(toolsIn){}
+
+    void operator()(ftr::Intersect *iIn)
+    {
+      iIn->setTargetPicks(targets);
+      iIn->setToolPicks(tools);
+    }
+    
+    void operator()(ftr::Subtract *sIn)
+    {
+      sIn->setTargetPicks(targets);
+      sIn->setToolPicks(tools);
+    }
+    
+    void operator()(ftr::Union *uIn)
+    {
+      uIn->setTargetPicks(targets);
+      uIn->setToolPicks(tools);
+    }
+  };
+  
+  struct GetPickVisitor
+  {
+    ftr::Picks &targets;
+    ftr::Picks &tools;
+    GetPickVisitor(ftr::Picks &targetsIn, ftr::Picks &toolsIn):targets(targetsIn),tools(toolsIn){}
+
+    void operator()(ftr::Intersect *iIn)
+    {
+      targets = iIn->getTargetPicks();
+      tools = iIn->getToolPicks();
+    }
+    
+    void operator()(ftr::Subtract *sIn)
+    {
+      targets = sIn->getTargetPicks();
+      tools = sIn->getToolPicks();
+    }
+    
+    void operator()(ftr::Union *uIn)
+    {
+      targets = uIn->getTargetPicks();
+      tools = uIn->getToolPicks();
+    }
+  };
 }
 
-Boolean::~Boolean() {}
+using namespace cmd;
+
+Boolean::Boolean(ftr::Type tIn) //new feature
+: Base("cmd::Boolean")
+, leafManager()
+{
+  if (tIn == ftr::Type::Intersect)
+  {
+    auto nf = std::make_shared<ftr::Intersect>();
+    project->addFeature(nf);
+    feature = nf.get();
+    basePtr = nf.get();
+  }
+  else if (tIn == ftr::Type::Subtract)
+  {
+    auto nf = std::make_shared<ftr::Subtract>();
+    project->addFeature(nf);
+    feature = nf.get();
+    basePtr = nf.get();
+  }
+  else if (tIn == ftr::Type::Union)
+  {
+    auto nf = std::make_shared<ftr::Union>();
+    project->addFeature(nf);
+    feature = nf.get();
+    basePtr = nf.get();
+  }
+  else
+  {
+    assert(0); //wrong type to cmd boolean constructor.
+  }
+  node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
+  isEdit = false;
+  isFirstRun = true;
+}
+
+Boolean::Boolean(ftr::Base *fIn) //edit feature
+: Base("cmd::Boolean")
+, basePtr(fIn)
+, leafManager(fIn)
+{
+  ftr::Type tIn = fIn->getType();
+  if (tIn == ftr::Type::Intersect)
+    feature = static_cast<ftr::Intersect*>(fIn);
+  else if (tIn == ftr::Type::Subtract)
+    feature = static_cast<ftr::Subtract*>(fIn);
+  else if (tIn == ftr::Type::Union)
+    feature = static_cast<ftr::Union*>(fIn);
+  else
+    assert(0); //wrong type to cmd boolean constructor.
+  
+  viewBase = std::make_unique<cmv::Boolean>(this);
+  node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  isEdit = true;
+  isFirstRun = false;
+}
+
+Boolean::~Boolean() = default;
 
 std::string Boolean::getCommandName()
 {
-  if (ftrType == ftr::Type::Intersect)
-    return "Intersect";
-  else if (ftrType == ftr::Type::Subtract)
-    return "Subtract";
-  else if (ftrType == ftr::Type::Union)
-    return "Union";
+  std::string out = QObject::tr("Create ").toStdString();
+  if (isEdit)
+    out = QObject::tr("Edit ").toStdString();
   
-  return "ERROR";
+  return out + basePtr->getTypeString();
 }
 
 std::string Boolean::getStatusMessage()
@@ -67,193 +164,147 @@ std::string Boolean::getStatusMessage()
 void Boolean::activate()
 {
   isActive = true;
-  
-  if (firstRun)
+  leafManager.rewind();
+  if (isFirstRun.get())
   {
-    firstRun = false;
+    isFirstRun = false;
     go();
   }
-  
-  if (dialog)
+  if (viewBase)
   {
-    dialog->show();
-    dialog->raise();
-    dialog->activateWindow();
+    basePtr->setEditing();
+    cmv::Message vm(viewBase.get(), viewBase->getPaneWidth());
+    msg::Message out(msg::Mask(msg::Request | msg::Command | msg::View | msg::Show), vm);
+    node->sendBlocked(out);
   }
-  else sendDone();
+  else
+    sendDone();
 }
 
 void Boolean::deactivate()
 {
-  if (dialog)
-    dialog->hide();
+  if (viewBase)
+  {
+    basePtr->setNotEditing();
+    msg::Message out(msg::Mask(msg::Request | msg::Command | msg::View | msg::Hide));
+    node->sendBlocked(out);
+  }
+  leafManager.fastForward();
+  if (!isEdit.get())
+  {
+    node->sendBlocked(msg::buildShowThreeD(basePtr->getId()));
+    node->sendBlocked(msg::buildShowOverlay(basePtr->getId()));
+  }
   isActive = false;
+}
+
+bool Boolean::isValidSelection(const slc::Message &mIn)
+{
+  if (mIn.type == slc::Type::Solid)
+    return true;
+  if (slc::isObjectType(mIn.type))
+  {
+    const ftr::Base *lf = project->findFeature(mIn.featureId);
+    if (lf->hasAnnex(ann::Type::SeerShape) && !lf->getAnnex<ann::SeerShape>().isNull())
+      return true;
+  }
+  
+  return false;
+}
+
+void Boolean::setSelections(const slc::Messages &targets, const slc::Messages &tools)
+{
+  assert(isActive);
+  
+  project->clearAllInputs(basePtr->getId());
+  
+  auto connect = [&](const slc::Messages &msgs, const std::string &tag) -> ftr::Picks
+  {
+    ftr::Picks picks;
+    for (const auto &m : msgs)
+    {
+      const ftr::Base *lf = project->findFeature(m.featureId);
+      picks.push_back(tls::convertToPick(m, *lf, project->getShapeHistory()));
+      picks.back().tag = ftr::InputType::createIndexedTag(tag, picks.size() - 1);
+      project->connect(lf->getId(), basePtr->getId(), {picks.back().tag});
+    }
+    return picks;
+  };
+  
+  ftr::Picks targetPicks = connect(targets, ftr::InputType::target);
+  ftr::Picks toolPicks = connect(tools, ftr::InputType::tool);
+  std::visit(SetPickVisitor(targetPicks, toolPicks), feature);
+}
+
+std::tuple<slc::Messages, slc::Messages> Boolean::getSelections()
+{
+  ftr::Picks targetPicks;
+  ftr::Picks toolPicks;
+  std::visit(GetPickVisitor(targetPicks, toolPicks), feature);
+  
+  auto payload = project->getPayload(basePtr->getId());
+  tls::Resolver resolver(payload);
+  slc::Messages targetMessages;
+  for (const auto &p : targetPicks)
+  {
+    if (!resolver.resolve(p))
+      continue;
+    auto msgs = resolver.convertToMessages();
+    targetMessages.insert(targetMessages.end(), msgs.begin(), msgs.end());
+  }
+  
+  slc::Messages toolMessages;
+  for (const auto &p : toolPicks)
+  {
+    if (!resolver.resolve(p))
+      continue;
+    auto msgs = resolver.convertToMessages();
+    toolMessages.insert(toolMessages.end(), msgs.begin(), msgs.end());
+  }
+  
+  return std::make_tuple(targetMessages, toolMessages);
+}
+
+void Boolean::localUpdate()
+{
+  assert(isActive);
+  basePtr->updateModel(project->getPayload(basePtr->getId()));
+  basePtr->updateVisual();
+  basePtr->setModelDirty();
+  node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
 }
 
 void Boolean::go()
 {
-  auto goDialog = [&]()
-  {
-    node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
-    if (ftrType == ftr::Type::Intersect)
-    {
-      std::shared_ptr<ftr::Intersect> intersect(new ftr::Intersect());
-      project->addFeature(intersect);
-      dialog = new dlg::Boolean(intersect.get(), mainWindow);
-    }
-    else if (ftrType == ftr::Type::Subtract)
-    {
-      std::shared_ptr<ftr::Subtract> subtract(new ftr::Subtract());
-      project->addFeature(subtract);
-      dialog = new dlg::Boolean(subtract.get(), mainWindow);
-    }
-    else if (ftrType == ftr::Type::Union)
-    {
-      std::shared_ptr<ftr::Union> onion(new ftr::Union());
-      project->addFeature(onion);
-      dialog = new dlg::Boolean(onion.get(), mainWindow);
-    }
-    node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
-    node->sendBlocked(msg::buildStatusMessage("invalid pre selection", 2.0));
-  };
-  
   const slc::Containers &containers = eventHandler->getSelections();
-  if (containers.size() < 2)
+  if (containers.size() > 1)
   {
-    goDialog();
-    return;
+    slc::Messages targets; //pick first only supports 1 target
+    slc::Messages tools;
+    for (const auto &c : containers)
+    {
+      auto m = slc::EventHandler::containerToMessage(c);
+      if (!isValidSelection(m))
+        continue;
+      if (targets.empty())
+      {
+        targets.push_back(m);
+        continue;
+      }
+      tools.push_back(m);
+    }
+    if (!targets.empty() && !tools.empty())
+    {
+      setSelections(targets, tools);
+      node->sendBlocked(msg::buildStatusMessage(basePtr->getTypeString() + " Added", 2.0));
+      node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+      return;
+    }
   }
-  
-  ftr::Base *tf = project->findFeature(containers.front().featureId);
-  if (!tf->hasAnnex(ann::Type::SeerShape))
-  {
-    goDialog();
-    return;
-  }
-  
-  ftr::Pick targetPick = tls::convertToPick(containers.front(), tf->getAnnex<ann::SeerShape>(), project->getShapeHistory());
-  targetPick.tag = ftr::InputType::target;
-  
-  std::shared_ptr<ftr::Base> basePtr = nullptr;
-  std::shared_ptr<ftr::Intersect> iPtr;
-  std::shared_ptr<ftr::Subtract> sPtr;
-  std::shared_ptr<ftr::Union> uPtr;
-  if (ftrType == ftr::Type::Intersect)
-  {
-    iPtr = std::make_shared<ftr::Intersect>();
-    iPtr->setTargetPicks(ftr::Picks(1, targetPick));
-    basePtr = iPtr;
-  }
-  else if (ftrType == ftr::Type::Subtract)
-  {
-    sPtr = std::make_shared<ftr::Subtract>();
-    sPtr->setTargetPicks(ftr::Picks(1, targetPick));
-    basePtr = sPtr;
-  }
-  else if (ftrType == ftr::Type::Union)
-  {
-    uPtr = std::make_shared<ftr::Union>();
-    uPtr->setTargetPicks(ftr::Picks(1, targetPick));
-    basePtr = uPtr;
-  }
-  
-  basePtr->setColor(tf->getColor());
-  project->addFeature(basePtr);
-  project->connectInsert(tf->getId(), basePtr->getId(), ftr::InputType{targetPick.tag});
-  node->sendBlocked(msg::buildHideThreeD(tf->getId()));
-  node->sendBlocked(msg::buildHideOverlay(tf->getId()));
-  
-  
-  ftr::Picks toolPicks;
-  int toolCount = 0;
-  for (std::size_t index = 1; index < containers.size(); ++index, ++toolCount)
-  {
-    const slc::Container &cc = containers.at(index); // current container
-    ftr::Base *tool = project->findFeature(cc.featureId);
-    if (!tool->hasAnnex(ann::Type::SeerShape))
-      continue;
-    
-    ftr::Pick toolPick = tls::convertToPick(cc, tf->getAnnex<ann::SeerShape>(), project->getShapeHistory());
-    toolPick.tag = std::string(ftr::InputType::tool) + std::to_string(toolCount);
-    toolPicks.push_back(toolPick);
-    
-    project->connect(cc.featureId, basePtr->getId(), ftr::InputType{toolPick.tag});
-    node->sendBlocked(msg::buildHideThreeD(cc.featureId));
-    node->sendBlocked(msg::buildHideOverlay(cc.featureId));
-  }
-  
-  if (ftrType == ftr::Type::Intersect)
-    iPtr->setToolPicks(toolPicks);
-  else if (ftrType == ftr::Type::Subtract)
-    sPtr->setToolPicks(toolPicks);
-  else if (ftrType == ftr::Type::Union)
-    uPtr->setToolPicks(toolPicks);
   
   node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
-}
-
-BooleanEdit::BooleanEdit(ftr::Base *in) : Base()
-{
-  //command manager edit dispatcher dispatches on ftr::type, so we know the type of 'in'
-  if (in->getType() == ftr::Type::Intersect)
-  {
-    iPtr = dynamic_cast<ftr::Intersect*>(in);
-    assert(iPtr);
-  }
-  else if (in->getType() == ftr::Type::Subtract)
-  {
-    sPtr = dynamic_cast<ftr::Subtract*>(in);
-    assert(sPtr);
-  }
-  else if (in->getType() == ftr::Type::Union)
-  {
-    uPtr = dynamic_cast<ftr::Union*>(in);
-    assert(uPtr);
-  }
-}
-
-BooleanEdit::~BooleanEdit()
-{
-  if (dialog)
-    dialog->deleteLater();
-}
-
-std::string BooleanEdit::getStatusMessage()
-{
-  if (iPtr)
-    return QObject::tr("Editing Intersect").toStdString();
-  else if (sPtr)
-    return QObject::tr("Editing Subtract").toStdString();
-  else if (uPtr)
-    return QObject::tr("Editing Union").toStdString();
-  
-  return "ERROR";
-}
-
-void BooleanEdit::activate()
-{
-  isActive = true;
-  if (!dialog)
-  {
-    node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
-    
-    if (iPtr)
-      dialog = new dlg::Boolean(iPtr, mainWindow);
-    else if (sPtr)
-      dialog = new dlg::Boolean(sPtr, mainWindow);
-    else if (uPtr)
-      dialog = new dlg::Boolean(uPtr, mainWindow);
-    
-    dialog->setEditDialog();
-  }
-
-  dialog->show();
-  dialog->raise();
-  dialog->activateWindow();
-}
-
-void BooleanEdit::deactivate()
-{
-  dialog->hide();
-  isActive = false;
+  node->sendBlocked(msg::buildShowThreeD(basePtr->getId()));
+  node->sendBlocked(msg::buildShowOverlay(basePtr->getId()));
+  node->sendBlocked(msg::buildStatusMessage("invalid pre selection", 2.0));
+  viewBase = std::make_unique<cmv::Boolean>(this);
 }

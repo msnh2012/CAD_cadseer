@@ -55,9 +55,6 @@
 #include "command/cmdinstancelinear.h"
 #include "command/cmdinstancemirror.h"
 #include "command/cmdinstancepolar.h"
-#include "command/cmdintersect.h"
-#include "command/cmdsubtract.h"
-#include "command/cmdunion.h"
 #include "command/cmdboolean.h"
 #include "command/cmdoffset.h"
 #include "command/cmdthicken.h"
@@ -995,17 +992,17 @@ BasePtr editQuote(ftr::Base *feature)
 
 BasePtr editIntersect(ftr::Base *feature)
 {
-  return std::make_shared<BooleanEdit>(feature);
+  return std::make_shared<Boolean>(feature);
 }
 
 BasePtr editSubtract(ftr::Base *feature)
 {
-  return std::make_shared<BooleanEdit>(feature);
+  return std::make_shared<Boolean>(feature);
 }
 
 BasePtr editUnion(ftr::Base *feature)
 {
-  return std::make_shared<BooleanEdit>(feature);
+  return std::make_shared<Boolean>(feature);
 }
 
 BasePtr editSketch(ftr::Base *feature)

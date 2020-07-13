@@ -3,7 +3,7 @@ project('cadseer_project', 'cpp',
   version : '0.1.0',
   license : 'GPL-3+',
   meson_version : '>=0.52.0',
-  default_options : ['warning_level=3', 'cpp_std=c++14']
+  default_options : ['warning_level=3', 'cpp_std=c++17']
 )
 
 #args for cgal. https://github.com/CGAL/cgal/issues/3180. not sure implications for clang.
@@ -244,7 +244,6 @@ dialog_sources = ['dialogs/dlgparameter.cpp'
   , 'dialogs/dlgquote.cpp'
   , 'dialogs/dlgpreferences.cpp'
   , 'dialogs/dlgproject.cpp'
-  , 'dialogs/dlgboolean.cpp'
   , 'dialogs/dlgrevision.cpp'
   , 'dialogs/dlgcommitwidget.cpp'
   , 'dialogs/dlgtagwidget.cpp'
@@ -366,9 +365,6 @@ command_sources = ['command/cmdmanager.cpp'
   , 'command/cmdinstancelinear.cpp'
   , 'command/cmdinstancemirror.cpp'
   , 'command/cmdinstancepolar.cpp'
-  , 'command/cmdintersect.cpp'
-  , 'command/cmdsubtract.cpp'
-  , 'command/cmdunion.cpp'
   , 'command/cmdsystemtoselection.cpp'
   , 'command/cmdoffset.cpp'
   , 'command/cmdthicken.cpp'
@@ -435,6 +431,7 @@ commandview_sources = [
   , 'commandview/cmvlawfunctionwidget.cpp'
   , 'commandview/cmvmappcurve.cpp'
   , 'commandview/cmvsurfacemesh.cpp'
+  , 'commandview/cmvboolean.cpp'
 ]
   
 law_sources = ['law/lwfcue.cpp']
@@ -540,7 +537,6 @@ cadseer_moc_hdrs = ['viewer/vwrwidget.h'
   , 'dialogs/dlgselectionbutton.h'
   , 'dialogs/dlgquote.h'
   , 'dialogs/dlgproject.h'
-  , 'dialogs/dlgboolean.h'
   , 'dialogs/dlgrevision.h'
   , 'dialogs/dlgcommitwidget.h'
   , 'lod/lodmanager.h'
@@ -584,6 +580,7 @@ cadseer_moc_hdrs = ['viewer/vwrwidget.h'
   , 'commandview/cmvlawfunctionwidget.h'
   , 'commandview/cmvmappcurve.h'
   , 'commandview/cmvsurfacemesh.h'
+  , 'commandview/cmvboolean.h'
 ]
   
 cadseer_resources = ['resources.qrc']

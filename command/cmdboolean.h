@@ -20,9 +20,12 @@
 #ifndef CMD_BOOLEAN_H
 #define CMD_BOOLEAN_H
 
+#include <variant>
+#include <tuple>
+
+#include "command/cmdleafmanager.h"
 #include "command/cmdbase.h"
 
-namespace dlg{class Boolean;}
 namespace ftr{class Base; class Intersect; class Subtract; class Union;}
 
 namespace cmd
@@ -33,38 +36,26 @@ namespace cmd
   class Boolean : public Base
   {
   public:
-    Boolean(const ftr::Type&);
+    using Variant = std::variant<ftr::Intersect*, ftr::Subtract*, ftr::Union*>;
+    Variant feature;
+    ftr::Base *basePtr = nullptr; //don't need a visit for some things.
+    
+    Boolean(ftr::Type); //new feature
+    Boolean(ftr::Base*); //edit feature
     ~Boolean() override;
     
     std::string getCommandName() override;
     std::string getStatusMessage() override;
     void activate() override;
     void deactivate() override;
-  private:
-    void go();
-    ftr::Type ftrType;
-    bool firstRun = true;
-    dlg::Boolean *dialog = nullptr;
-  };
-  
-  /**
-  * @todo write docs
-  */
-  class BooleanEdit : public Base
-  {
-  public:
-    BooleanEdit(ftr::Base*);
-    virtual ~BooleanEdit() override;
     
-    virtual std::string getCommandName() override{return "Boolean Edit";}
-    virtual std::string getStatusMessage() override;
-    virtual void activate() override;
-    virtual void deactivate() override;
+    void setSelections(const std::vector<slc::Message>&, const std::vector<slc::Message>&);
+    std::tuple<std::vector<slc::Message>, std::vector<slc::Message>> getSelections();
+    void localUpdate();
   private:
-    dlg::Boolean *dialog = nullptr;
-    ftr::Intersect *iPtr = nullptr;
-    ftr::Subtract *sPtr = nullptr;
-    ftr::Union *uPtr = nullptr;
+    cmd::LeafManager leafManager;
+    void go();
+    bool isValidSelection(const slc::Message&);
   };
 }
 #endif // CMD_BOOLEAN_H
