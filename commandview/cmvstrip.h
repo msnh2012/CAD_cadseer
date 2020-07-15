@@ -1,6 +1,6 @@
 /*
  * CadSeer. Parametric Solid Modeling.
- * Copyright (C) 2017  Thomas S. Anderson blobfish.at.gmx.com
+ * Copyright (C) 2020 Thomas S. Anderson blobfish.at.gmx.com
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,37 +17,35 @@
  *
  */
 
-#ifndef CMD_STRIP_H
-#define CMD_STRIP_H
+#ifndef CMV_STRIP_H
+#define CMV_STRIP_H
 
-#include "command/cmdleafmanager.h"
-#include "command/cmdbase.h"
+#include <memory>
 
-namespace ftr{class Strip;}
+#include "commandview/cmvbase.h"
 
-namespace cmd
+namespace cmd{class Strip;}
+
+namespace cmv
 {
+  /**
+  * @todo write docs
+  */
   class Strip : public Base
   {
+    Q_OBJECT
   public:
-    ftr::Strip *feature = nullptr;
-    
-    Strip();
-    Strip(ftr::Base*);
+    Strip(cmd::Strip*);
     ~Strip() override;
-    
-    std::string getCommandName() override{return "Strip";}
-    std::string getStatusMessage() override;
-    void activate() override;
-    void deactivate() override;
-    
-    void setSelections(const slc::Messages&, const slc::Messages&, const slc::Messages&);
-    void localUpdate();
+  public Q_SLOTS:
+    void selectionChanged();
+    void stationsChanged(const QModelIndex&, int, int);
+    void dataChanged(const QModelIndex&, const QModelIndex&, const QVector<int>&);
   private:
-    cmd::LeafManager leafManager;
-    void go();
+    struct Stow;
+    std::unique_ptr<Stow> stow;
+    void eyeroll();
   };
-
 }
 
-#endif // CMD_STRIP_H
+#endif // CMV_STRIP_H

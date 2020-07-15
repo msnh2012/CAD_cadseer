@@ -148,10 +148,6 @@ osg::Node* buildStationLabel(const std::string &sIn)
   autoTransform->setAutoRotateMode(osg::AutoTransform::ROTATE_TO_SCREEN);
   autoTransform->setAutoScaleToScreen(true);
   
-  osg::MatrixTransform *textScale = new osg::MatrixTransform();
-  textScale->setMatrix(osg::Matrixd::scale(75.0, 75.0, 75.0));
-  autoTransform->addChild(textScale);
-  
   osgText::Text *text = new osgText::Text();
   text->setName(sIn);
   text->setText(sIn);
@@ -163,7 +159,7 @@ osg::Node* buildStationLabel(const std::string &sIn)
   text->setBackdropColor(osg::Vec4(0.0, 0.0, 0.0, 1.0));
   text->setCharacterSize(iPref.characterSize());
   text->setAlignment(osgText::Text::CENTER_CENTER);
-  textScale->addChild(text);
+  autoTransform->addChild(text);
   
   return autoTransform;
 }

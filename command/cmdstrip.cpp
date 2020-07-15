@@ -21,20 +21,40 @@
 #include "project/prjproject.h"
 #include "message/msgnode.h"
 #include "selection/slceventhandler.h"
+#include "feature/ftrinputtype.h"
 #include "feature/ftrstrip.h"
-#include "dialogs/dlgstrip.h"
+#include "commandview/cmvmessage.h"
+#include "commandview/cmvstrip.h"
 #include "command/cmdstrip.h"
 
 using namespace cmd;
 using boost::uuids::uuid;
 
-Strip::Strip() : Base() {}
-
-Strip::~Strip()
+Strip::Strip()
+: Base("cmd::Strip")
+, leafManager()
 {
-  if (dialog)
-    dialog->deleteLater();
+  auto nf = std::make_shared<ftr::Strip>();
+  project->addFeature(nf);
+  feature = nf.get();
+  node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
+  isEdit = false;
+  isFirstRun = true;
 }
+
+Strip::Strip(ftr::Base *fIn)
+: Base("cmd::Strip")
+, leafManager(fIn)
+{
+  feature = dynamic_cast<ftr::Strip*>(fIn);
+  assert(feature);
+  viewBase = std::make_unique<cmv::Strip>(this);
+  node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  isEdit = true;
+  isFirstRun = false;
+}
+
+Strip::~Strip() = default;
 
 std::string Strip::getStatusMessage()
 {
@@ -44,20 +64,58 @@ std::string Strip::getStatusMessage()
 void Strip::activate()
 {
   isActive = true;
-  
-  if (!dialog)
+  leafManager.rewind();
+  if (isFirstRun.get())
+  {
+    isFirstRun = false;
     go();
-  
-  dialog->show();
-  dialog->raise();
-  dialog->activateWindow();
+  }
+  if (viewBase)
+  {
+    feature->setEditing();
+    cmv::Message vm(viewBase.get(), viewBase->getPaneWidth());
+    msg::Message out(msg::Mask(msg::Request | msg::Command | msg::View | msg::Show), vm);
+    node->sendBlocked(out);
+  }
+  else
+    sendDone();
 }
 
 void Strip::deactivate()
 {
+  if (viewBase)
+  {
+    feature->setNotEditing();
+    msg::Message out(msg::Mask(msg::Request | msg::Command | msg::View | msg::Hide));
+    node->sendBlocked(out);
+  }
+  leafManager.fastForward();
+  if (!isEdit.get())
+  {
+    node->sendBlocked(msg::buildShowThreeD(feature->getId()));
+    node->sendBlocked(msg::buildShowOverlay(feature->getId()));
+  }
   isActive = false;
-  
-  dialog->hide();
+}
+
+void Strip::setSelections(const slc::Messages &parts, const slc::Messages &blanks, const slc::Messages &nests)
+{
+  project->clearAllInputs(feature->getId());
+  if (!parts.empty())
+    project->connect(parts.front().featureId, feature->getId(), {ftr::Strip::part});
+  if (!blanks.empty())
+    project->connect(blanks.front().featureId, feature->getId(), {ftr::Strip::blank});
+  if (!nests.empty())
+    project->connect(nests.front().featureId, feature->getId(), {ftr::Strip::nest});
+}
+
+void Strip::localUpdate()
+{
+  assert(isActive);
+  feature->updateModel(project->getPayload(feature->getId()));
+  feature->updateVisual();
+  feature->setModelDirty();
+  node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
 }
 
 void Strip::go()
@@ -76,7 +134,9 @@ void Strip::go()
     else
       partId = c.featureId;
   }
+  node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
   
+  //this scans the entire project to find a blank feature and a nest feature.
   if (blankId.is_nil() || nestId.is_nil())
   {
     auto ids = project->getAllFeatureIds();
@@ -89,52 +149,17 @@ void Strip::go()
         nestId = id;
     }
   }
-  node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
   
-  std::shared_ptr<ftr::Strip> strip(new ftr::Strip());
-  project->addFeature(strip);
+  //we will make connections to parents and let the view initialize.
+  if (!partId.is_nil())
+    project->connect(partId, feature->getId(), {ftr::Strip::part});
+  if (!blankId.is_nil())
+    project->connect(blankId, feature->getId(), {ftr::Strip::blank});
+  if (!nestId.is_nil())
+    project->connect(nestId, feature->getId(), {ftr::Strip::nest});
   
-  node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
+  //try to update with default parameters.
+  localUpdate();
   
-  dialog = new dlg::Strip(strip.get(), mainWindow);
-  dialog->setPartId(partId);
-  dialog->setBlankId(blankId);
-  dialog->setNestId(nestId);
-}
-
-StripEdit::StripEdit(ftr::Base *feature) : Base()
-{
-  strip = dynamic_cast<ftr::Strip*>(feature);
-  assert(strip);
-}
-
-StripEdit::~StripEdit()
-{
-  if (dialog)
-    dialog->deleteLater();
-}
-
-std::string StripEdit::getStatusMessage()
-{
-  return "Editing Strip Feature";
-}
-
-void StripEdit::activate()
-{
-  if (!dialog)
-  {
-    node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
-    dialog = new dlg::Strip(strip, mainWindow);
-  }
-  
-  isActive = true;
-  dialog->show();
-  dialog->raise();
-  dialog->activateWindow();
-}
-
-void StripEdit::deactivate()
-{
-  dialog->hide();
-  isActive = false;
+  viewBase = std::make_unique<cmv::Strip>(this);
 }

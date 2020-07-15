@@ -982,7 +982,7 @@ BasePtr editBlend(ftr::Base *feature)
 
 BasePtr editStrip(ftr::Base *feature)
 {
-  return std::make_shared<StripEdit>(feature);
+  return std::make_shared<Strip>(feature);
 }
 
 BasePtr editQuote(ftr::Base *feature)
