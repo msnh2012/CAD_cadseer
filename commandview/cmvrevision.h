@@ -1,6 +1,6 @@
 /*
  * CadSeer. Parametric Solid Modeling.
- * Copyright (C) 2018  Thomas S. Anderson blobfish.at.gmx.com
+ * Copyright (C) 2020 Thomas S. Anderson blobfish.at.gmx.com
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,23 +17,20 @@
  *
  */
 
-#ifndef DLG_REVISION_H
-#define DLG_REVISION_H
+#ifndef CMV_REVISION_H
+#define CMV_REVISION_H
 
 #include <memory>
 
-#include <QDialog>
+#include "commandview/cmvbase.h"
 
 class QListWidget;
-class QTextEdit;
 class QTabWidget;
-class QAction;
+namespace cmd{class Revision;}
+namespace dlg{class CommitWidget; class TagWidget;}
 
-namespace dlg
+namespace cmv
 {
-  class CommitWidget;
-  class TagWidget;
-  
   class UndoPage : public QWidget
   {
     Q_OBJECT
@@ -45,7 +42,7 @@ namespace dlg
     struct Data;
     std::unique_ptr<Data> data;
     QListWidget *commitList;
-    CommitWidget *commitWidget;
+    dlg::CommitWidget *commitWidget;
     
     void buildGui();
     void fillInCommitList();
@@ -65,7 +62,7 @@ namespace dlg
     struct Data;
     std::unique_ptr<Data> data;
     QListWidget *tagList;
-    TagWidget *tagWidget;
+    dlg::TagWidget *tagWidget;
     QAction *createTagAction;
     QAction *checkoutTagAction;
     QAction *destroyTagAction;
@@ -81,23 +78,19 @@ namespace dlg
     void checkoutTagSlot();
   };
   
-  /**
-  * @todo write docs
-  */
-  class Revision : public QDialog
+  class Revision : public Base
   {
     Q_OBJECT
   public:
-    Revision(QWidget*);
-    virtual ~Revision() override;
+    Revision(cmd::Revision*);
+    ~Revision() override;
     
-  protected:
-    virtual void closeEvent (QCloseEvent*) override;
+  private:
+    struct Stow;
+    std::unique_ptr<Stow> stow;
+    
     void buildGui();
-    
-    struct Data;
-    QTabWidget *tabWidget;
   };
 }
 
-#endif // DLG_REVISION_H
+#endif // CMV_REVISION_H

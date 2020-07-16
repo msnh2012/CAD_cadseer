@@ -1,6 +1,6 @@
 /*
  * CadSeer. Parametric Solid Modeling.
- * Copyright (C) 2018  Thomas S. Anderson blobfish.at.gmx.com
+ * Copyright (C) 2020 Thomas S. Anderson blobfish.at.gmx.com
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,30 +17,36 @@
  *
  */
 
-#include <QMessageBox>
-#include <QDialogButtonBox>
-#include <QListWidget>
-#include <QTabWidget>
+#include <QSettings>
 #include <QLabel>
 #include <QLineEdit>
+#include <QTextEdit>
+#include <QListWidget>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
-#include <QTextEdit>
 #include <QAction>
 #include <QCloseEvent>
+#include <QDialogButtonBox>
+#include <QDialog>
+#include <QMessageBox>
+#include <QScrollBar>
 
-#include "message/msgmessage.h"
 #include "application/appapplication.h"
+#include "application/appmainwindow.h"
 #include "project/prjproject.h"
 #include "project/prjgitmanager.h"
 #include "project/prjmessage.h"
-#include "dialogs/dlgwidgetgeometry.h"
+#include "message/msgmessage.h"
+#include "message/msgnode.h"
+#include "dialogs/dlgsplitterdecorated.h"
 #include "dialogs/dlgcommitwidget.h"
 #include "dialogs/dlgtagwidget.h"
-#include "dialogs/dlgsplitterdecorated.h"
-#include "dialogs/dlgrevision.h"
+#include "command/cmdrevision.h"
+#include "commandview/cmvrevision.h"
 
-namespace dlg
+using boost::uuids::uuid;
+
+namespace cmv
 {
   struct UndoPage::Data
   {
@@ -55,7 +61,7 @@ namespace dlg
   };
 }
 
-using namespace dlg;
+using namespace cmv;
 
 UndoPage::UndoPage(QWidget *parent) :
 QWidget(parent),
@@ -74,11 +80,8 @@ UndoPage::~UndoPage(){}
 
 void UndoPage::buildGui()
 {
-  QVBoxLayout *mainLayout = new QVBoxLayout();
-  
-  dlg::SplitterDecorated *splitter = new dlg::SplitterDecorated(this);
-  splitter->setChildrenCollapsible(false);
-  splitter->setOrientation(Qt::Horizontal);
+  QHBoxLayout *mainLayout = new QHBoxLayout();
+  this->setLayout(mainLayout);
   
   commitList = new QListWidget(this);
   commitList->setSelectionMode(QAbstractItemView::SingleSelection);
@@ -86,16 +89,10 @@ void UndoPage::buildGui()
   QAction *resetAction = new QAction(tr("Reset"), this);
   commitList->addAction(resetAction);
   commitList->setWhatsThis(tr("A list of commits to current branch. List is in descending order. Top is the latest"));
-  splitter->addWidget(commitList);
+  mainLayout->addWidget(commitList);
   
-  commitWidget = new CommitWidget(this);
-  splitter->addWidget(commitWidget);
-  
-  mainLayout->addWidget(splitter);
-  
-  this->setLayout(mainLayout);
-  
-  splitter->restoreSettings("dlg::UndoPage");
+  commitWidget = new dlg::CommitWidget(this);
+  mainLayout->addWidget(commitWidget);
   
   connect(commitList, &QListWidget::currentRowChanged, this, &UndoPage::commitRowChangedSlot);
   connect(resetAction, &QAction::triggered, this, &UndoPage::resetActionSlot);
@@ -112,6 +109,9 @@ void UndoPage::fillInCommitList()
     std::string idString = c.oid().format();
     commitList->addItem(QString::fromStdString(idString.substr(0, 12)));
   }
+  
+  commitList->setFixedWidth(commitList->sizeHintForColumn(0) + 2 * commitList->frameWidth() + commitList->verticalScrollBar()->sizeHint().width());
+  commitList->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 }
 
 void UndoPage::commitRowChangedSlot(int r)
@@ -143,12 +143,8 @@ void UndoPage::resetActionSlot()
   pMessage.directory = pdir;
   app::instance()->messageSlot(msg::Message(msg::Mask(msg::Request | msg::Open | msg::Project), pMessage));
   
-  //addTab reparents so the constructor argument is not really the parent.
-  QWidget *parentDialog = this->parentWidget()->parentWidget()->parentWidget();
-  application->postEvent(parentDialog, new QCloseEvent());
+  app::instance()->queuedMessage(msg::Message(msg::Mask(msg::Request | msg::Command | msg::Done)));
 }
-
-
 
 AdvancedPage::AdvancedPage(QWidget *parent) :
 QWidget(parent),
@@ -174,6 +170,7 @@ void AdvancedPage::init()
   {
     tagList->setCurrentRow(0);
     tagList->item(0)->setSelected(true);
+    tagList->setFixedWidth(tagList->sizeHintForColumn(0) + 2 * tagList->frameWidth() + tagList->verticalScrollBar()->sizeHint().width());
   }
 }
 
@@ -182,7 +179,6 @@ void AdvancedPage::buildGui()
   QLabel *revisionLabel = new QLabel(tr("Revisions:"), this);
   QHBoxLayout *rhl = new QHBoxLayout();
   rhl->addWidget(revisionLabel);
-  rhl->addStretch();
   
   tagList = new QListWidget(this);
   tagList->setSelectionMode(QAbstractItemView::SingleSelection);
@@ -196,30 +192,18 @@ void AdvancedPage::buildGui()
       "Can not have identical revisions"
     )
   );
+  
   QVBoxLayout *revisionLayout = new QVBoxLayout();
   revisionLayout->setContentsMargins(0, 0, 0, 0);
   revisionLayout->addLayout(rhl);
   revisionLayout->addWidget(tagList);
   
-  //splitter will only take a widget.
-  QWidget *dummy = new QWidget(this);
-  dummy->setContentsMargins(0, 0, 0, 0);
-  dummy->setLayout(revisionLayout);
+  tagWidget = new dlg::TagWidget(this);
   
-  tagWidget = new TagWidget(this);
-  
-  dlg::SplitterDecorated *splitter = new dlg::SplitterDecorated(this);
-  splitter->setChildrenCollapsible(false);
-  splitter->setOrientation(Qt::Horizontal);
-  splitter->addWidget(dummy);
-  splitter->addWidget(tagWidget);
-  
-  QVBoxLayout *mainLayout = new QVBoxLayout();
-  mainLayout->addWidget(splitter);
-  
+  QHBoxLayout *mainLayout = new QHBoxLayout();
   this->setLayout(mainLayout);
-  
-  splitter->restoreSettings("dlg::AdvancedPage");
+  mainLayout->addLayout(revisionLayout);
+  mainLayout->addWidget(tagWidget);
   
   createTagAction = new QAction(tr("Create New Revision"), this);
   tagList->addAction(createTagAction);
@@ -356,7 +340,7 @@ void AdvancedPage::checkoutTagSlot()
   /* 1) close the project
    * 2) update the git repo.
    * 3) reopen the project
-   * see not in UndoPage::resetActionSlot() why we dynamicly allocate a new git manager.
+   * see UndoPage::resetActionSlot() for why we dynamically allocate a new git manager.
    */
   app::Application *application = app::instance();
   std::string pdir = application->getProject()->getSaveDirectory().string();
@@ -371,9 +355,7 @@ void AdvancedPage::checkoutTagSlot()
   pMessage.directory = pdir;
   app::instance()->messageSlot(msg::Message(msg::Mask(msg::Request | msg::Open | msg::Project), pMessage));
   
-  //addTab reparents so the constructor argument is not really the parent.
-  QWidget *parentDialog = this->parentWidget()->parentWidget()->parentWidget();
-  application->postEvent(parentDialog, new QCloseEvent()); //close dialog
+  app::instance()->queuedMessage(msg::Message(msg::Mask(msg::Request | msg::Command | msg::Done)));
 }
 
 void AdvancedPage::fillInTagList()
@@ -404,39 +386,41 @@ void AdvancedPage::setCurrentHead()
   data->currentHead = gm.getCurrentHead();
 }
 
-
-Revision::Revision(QWidget *parent) :
-QDialog(parent)
+struct Revision::Stow
 {
-  this->setWindowTitle(tr("Revisions"));
+  cmd::Revision *command;
+  cmv::Revision *view;
+  QTabWidget *tabWidget;
   
-  buildGui();
+  Stow(cmd::Revision *cIn, cmv::Revision *vIn)
+  : command(cIn)
+  , view(vIn)
+  {
+    buildGui();
+    
+    QSettings &settings = app::instance()->getUserSettings();
+    settings.beginGroup("cmv::Revision");
+    //load settings
+    settings.endGroup();
+  }
   
-  WidgetGeometry *filter = new WidgetGeometry(this, "dlg::Revision");
-  this->installEventFilter(filter);
-}
+  void buildGui()
+  {
+    view->setContentsMargins(0, 0, 0, 0);
+    QVBoxLayout *mainLayout = new QVBoxLayout();
+    mainLayout->setContentsMargins(0, 0, 0, 0);
+    view->setLayout(mainLayout);
+  
+    tabWidget = new QTabWidget(view);
+    tabWidget->addTab(new UndoPage(tabWidget), tr("Undo")); //addTab reparents.
+    tabWidget->addTab(new AdvancedPage(tabWidget), tr("Advanced"));
+    mainLayout->addWidget(tabWidget);
+  }
+};
 
-Revision::~Revision() {}
+Revision::Revision(cmd::Revision *cIn)
+: Base("cmv::Revision")
+, stow(new Stow(cIn, this))
+{}
 
-void Revision::closeEvent(QCloseEvent *e)
-{
-  QDialog::closeEvent(e);
-  app::instance()->messageSlot(msg::Mask(msg::Request | msg::Command | msg::Done));
-}
-
-void Revision::buildGui()
-{
-  QVBoxLayout *mainLayout = new QVBoxLayout();
-  
-  tabWidget = new QTabWidget(this);
-  tabWidget->addTab(new UndoPage(tabWidget), tr("Undo")); //addTab reparents.
-  tabWidget->addTab(new AdvancedPage(tabWidget), tr("Advanced"));
-  mainLayout->addWidget(tabWidget);
-  
-  QDialogButtonBox *buttonBox = new QDialogButtonBox(QDialogButtonBox::Close, this);
-  mainLayout->addWidget(buttonBox);
-  
-  this->setLayout(mainLayout);
-  
-  connect(buttonBox, &QDialogButtonBox::rejected, this, &QDialog::close);
-}
+Revision::~Revision() = default;

@@ -18,7 +18,9 @@
  */
 
 #include "application/appmainwindow.h"
-#include "dialogs/dlgrevision.h"
+#include "message/msgnode.h"
+#include "commandview/cmvrevision.h"
+#include "commandview/cmvmessage.h"
 #include "command/cmdrevision.h"
 
 using namespace cmd;
@@ -26,13 +28,11 @@ using namespace cmd;
 Revision::Revision() : Base()
 {
   shouldUpdate = false;
+  viewBase = std::make_unique<cmv::Revision>(this);
+  node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
 }
 
-Revision::~Revision()
-{
-  if (dialog)
-    dialog->deleteLater();
-}
+Revision::~Revision() = default;
 
 std::string Revision::getStatusMessage()
 {
@@ -43,17 +43,15 @@ void Revision::activate()
 {
   isActive = true;
   
-  if (!dialog)
-    dialog = new dlg::Revision(mainWindow);
-  dialog->show();
-  dialog->raise();
-  dialog->activateWindow();
+  cmv::Message vm(viewBase.get(), viewBase->getPaneWidth());
+  msg::Message out(msg::Mask(msg::Request | msg::Command | msg::View | msg::Show), vm);
+  node->sendBlocked(out);
 }
 
 void Revision::deactivate()
 {
-  if (dialog)
-    dialog->hide();
+  msg::Message out(msg::Mask(msg::Request | msg::Command | msg::View | msg::Hide));
+  node->sendBlocked(out);
   isActive = false;
 }
 
