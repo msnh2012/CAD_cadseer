@@ -22,8 +22,6 @@
 
 #include "command/cmdbase.h"
 
-namespace dlg{class Remove;}
-
 namespace cmd
 {
   /**
@@ -41,8 +39,6 @@ namespace cmd
     void deactivate() override;
   private:
     void go();
-    bool firstRun = true;
-    dlg::Remove *dialog = nullptr;
   };
 }
 #endif // CMD_REMOVE_H

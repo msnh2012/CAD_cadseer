@@ -22,8 +22,6 @@
 
 #include "command/cmdbase.h"
 
-namespace dlg{class Revision;}
-
 namespace cmd
 {
   /**
@@ -33,14 +31,12 @@ namespace cmd
   {
   public:
     Revision();
-    virtual ~Revision() override;
+    ~Revision() override;
     
-    virtual std::string getCommandName() override{return "Revision";}
-    virtual std::string getStatusMessage() override;
-    virtual void activate() override;
-    virtual void deactivate() override;
-  private:
-    dlg::Revision *dialog = nullptr;
+    std::string getCommandName() override{return "Revision";}
+    std::string getStatusMessage() override;
+    void activate() override;
+    void deactivate() override;
   };
 }
 

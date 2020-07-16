@@ -24,18 +24,15 @@
 #include "message/msgnode.h"
 #include "project/prjmessage.h"
 #include "selection/slceventhandler.h"
-#include "dialogs/dlgremove.h"
+#include "commandview/cmvmessage.h"
+#include "commandview/cmvremove.h"
 #include "command/cmdremove.h"
 
 using namespace cmd;
 
-Remove::Remove() : Base() {}
+Remove::Remove() : Base() {isFirstRun = true;}
 
-Remove::~Remove()
-{
-  if (dialog)
-    dialog->deleteLater();
-}
+Remove::~Remove() = default;
 
 std::string Remove::getStatusMessage()
 {
@@ -46,38 +43,38 @@ void Remove::activate()
 {
   isActive = true;
   
-  if (firstRun)
+  if (isFirstRun.get())
   {
-    firstRun = false;
+    isFirstRun = false;
     go();
   }
-  
-  if (dialog)
+  if (viewBase)
   {
-    dialog->show();
-    dialog->raise();
-    dialog->activateWindow();
+    cmv::Message vm(viewBase.get(), viewBase->getPaneWidth());
+    msg::Message out(msg::Mask(msg::Request | msg::Command | msg::View | msg::Show), vm);
+    node->sendBlocked(out);
   }
-  else sendDone();
+  else
+    sendDone();
 }
 
 void Remove::deactivate()
 {
-  if (dialog)
-    dialog->hide();
+  if (viewBase)
+  {
+    msg::Message out(msg::Mask(msg::Request | msg::Command | msg::View | msg::Hide));
+    node->sendBlocked(out);
+  }
   isActive = false;
 }
 
 void Remove::go()
 {
-  auto goDialog = [&]()
+  auto goView = [&]()
   {
     node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
-
-    dialog = new dlg::Remove(mainWindow);
-
+    viewBase = std::make_unique<cmv::Remove>(this);
     node->sendBlocked(msg::buildStatusMessage("invalid pre selection", 2.0));
-    shouldUpdate = false;
   };
   
   const slc::Containers &cs = eventHandler->getSelections();
@@ -89,7 +86,7 @@ void Remove::go()
   }
   if (rs.empty())
   {
-    goDialog();
+    goView();
     return;
   }
   node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));

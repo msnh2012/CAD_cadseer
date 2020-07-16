@@ -88,8 +88,6 @@ namespace cmv
   private:
     struct Stow;
     std::unique_ptr<Stow> stow;
-    
-    void buildGui();
   };
 }
 

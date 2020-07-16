@@ -1,6 +1,6 @@
 /*
  * CadSeer. Parametric Solid Modeling.
- * Copyright (C) 2019 Thomas S. Anderson blobfish.at.gmx.com
+ * Copyright (C) 2020 Thomas S. Anderson blobfish.at.gmx.com
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,34 +17,32 @@
  *
  */
 
-#ifndef DLG_REMOVE_H
-#define DLG_REMOVE_H
+#ifndef CMV_REMOVE_H
+#define CMV_REMOVE_H
 
 #include <memory>
 
-#include <QDialog>
+#include "commandview/cmvbase.h"
 
-namespace dlg
+namespace cmd{class Remove;}
+
+namespace cmv
 {
   /**
   * @todo write docs
   */
-  class Remove : public QDialog
+  class Remove : public Base
   {
     Q_OBJECT
   public:
-    Remove(QWidget*);
+    Remove(cmd::Remove*);
     ~Remove() override;
-  public Q_SLOTS:
-    void reject() override;
-    void accept() override;
+  private Q_SLOTS:
+    void selectionChanged();
   private:
     struct Stow;
     std::unique_ptr<Stow> stow;
-    
-    void init();
-    void buildGui();
   };
 }
 
-#endif // DLG_REMOVE_H
+#endif // CMV_REMOVE_H
