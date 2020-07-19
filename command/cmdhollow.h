@@ -20,6 +20,7 @@
 #ifndef CMD_HOLLOW_H
 #define CMD_HOLLOW_H
 
+#include "command/cmdleafmanager.h"
 #include "command/cmdbase.h"
 
 namespace dlg{class Hollow;}
@@ -33,35 +34,23 @@ namespace cmd
   class Hollow : public Base
   {
   public:
+    ftr::Hollow *feature = nullptr;
+    
     Hollow();
+    Hollow(ftr::Base*);
     ~Hollow() override;
     
     std::string getCommandName() override{return "Hollow";}
     std::string getStatusMessage() override;
     void activate() override;
     void deactivate() override;
-  private:
-    void go();
-    bool firstRun = true;
-    dlg::Hollow *dialog = nullptr;
-  };
-  
-  /**
-  * @todo write docs
-  */
-  class HollowEdit : public Base
-  {
-  public:
-    HollowEdit(ftr::Base*);
-    ~HollowEdit() override;
     
-    std::string getCommandName() override{return "Hollow Edit";}
-    std::string getStatusMessage() override;
-    void activate() override;
-    void deactivate() override;
+    bool isValidSelection(const slc::Message&);
+    void setSelections(const std::vector<slc::Message>&);
+    void localUpdate();
   private:
-    dlg::Hollow *dialog = nullptr;
-    ftr::Hollow *feature = nullptr;
+    cmd::LeafManager leafManager;
+    void go();
   };
 }
 #endif // CMD_HOLLOW_H

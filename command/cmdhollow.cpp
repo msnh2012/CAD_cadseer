@@ -28,7 +28,8 @@
 #include "selection/slceventhandler.h"
 #include "parameter/prmparameter.h"
 #include "dialogs/dlgparameter.h"
-#include "dialogs/dlghollow.h"
+#include "commandview/cmvmessage.h"
+#include "commandview/cmvhollow.h"
 #include "annex/annseershape.h"
 #include "tools/featuretools.h"
 #include "feature/ftrinputtype.h"
@@ -39,13 +40,31 @@ using boost::uuids::uuid;
 
 using namespace cmd;
 
-Hollow::Hollow() : Base() {}
-
-Hollow::~Hollow()
+Hollow::Hollow()
+: Base("cmd::Hollow")
+, leafManager()
 {
-  if (dialog)
-    dialog->deleteLater();
+  auto nf = std::make_shared<ftr::Hollow>();
+  project->addFeature(nf);
+  feature = nf.get();
+  node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
+  isEdit = false;
+  isFirstRun = true;
 }
+
+Hollow::Hollow(ftr::Base *fIn)
+: Base("cmd::Hollow")
+, leafManager(fIn)
+{
+  feature = dynamic_cast<ftr::Hollow*>(fIn);
+  assert(feature);
+  viewBase = std::make_unique<cmv::Hollow>(this);
+  node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  isEdit = true;
+  isFirstRun = false;
+}
+
+Hollow::~Hollow() = default;
 
 std::string Hollow::getStatusMessage()
 {
@@ -55,140 +74,114 @@ std::string Hollow::getStatusMessage()
 void Hollow::activate()
 {
   isActive = true;
-  
-  if (firstRun)
+  leafManager.rewind();
+  if (isFirstRun.get())
   {
-    firstRun = false;
+    isFirstRun = false;
     go();
   }
-  
-  if (dialog)
+  if (viewBase)
   {
-    dialog->show();
-    dialog->raise();
-    dialog->activateWindow();
+    feature->setEditing();
+    cmv::Message vm(viewBase.get(), viewBase->getPaneWidth());
+    msg::Message out(msg::Mask(msg::Request | msg::Command | msg::View | msg::Show), vm);
+    node->sendBlocked(out);
   }
-  else sendDone();
+  else
+    sendDone();
 }
 
 void Hollow::deactivate()
 {
-  if (dialog)
-    dialog->hide();
+  if (viewBase)
+  {
+    feature->setNotEditing();
+    msg::Message out(msg::Mask(msg::Request | msg::Command | msg::View | msg::Hide));
+    node->sendBlocked(out);
+  }
+  leafManager.fastForward();
+  if (!isEdit.get())
+  {
+    node->sendBlocked(msg::buildShowThreeD(feature->getId()));
+    node->sendBlocked(msg::buildShowOverlay(feature->getId()));
+  }
   isActive = false;
 }
 
-void Hollow::go()
+bool Hollow::isValidSelection(const slc::Message &mIn)
 {
-  auto goDialog = [&]()
-  {
-    node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
-
-    auto hollow = std::make_shared<ftr::Hollow>();
-    project->addFeature(hollow);
-    dialog = new dlg::Hollow(hollow.get(), mainWindow);
-
-    node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
-    node->sendBlocked(msg::buildStatusMessage("invalid pre selection", 2.0));
-    shouldUpdate = false;
-  };
+  const ftr::Base *lf = project->findFeature(mIn.featureId);
+  if (!lf->hasAnnex(ann::Type::SeerShape) || lf->getAnnex<ann::SeerShape>().isNull())
+    return false;
   
-  auto getFeature = [&](const uuid &fId) -> const ftr::Base*
-  {
-    if (!project->hasFeature(fId))
-      return nullptr;
-    const ftr::Base *out = project->findFeature(fId);
-    if (!out->hasAnnex(ann::Type::SeerShape))
-      return nullptr;
-    if (out->getAnnex<ann::SeerShape>().isNull())
-      return nullptr;
-    return out;
-  };
+  if (mIn.type != slc::Type::Face)
+    return false;
+  return true;
+}
+
+void Hollow::setSelections(const slc::Messages &targets)
+{
+  assert(isActive);
+  project->clearAllInputs(feature->getId());
+  feature->setHollowPicks(ftr::Picks());
   
-  const slc::Containers &cs = eventHandler->getSelections();
-  if (cs.empty())
-  {
-    goDialog();
+  if (targets.empty())
     return;
-  }
   
-  uuid fId = gu::createNilId();
-  ftr::Picks picks;
-  tls::Connector connector;
-  for (const auto &m : cs)
+  uuid fId = gu::createNilId(); //ensure all belong to same feature.
+  ftr::Picks freshPicks;
+  for (const auto &m : targets)
   {
-    if (m.selectionType != slc::Type::Face)
-      continue;
-    const ftr::Base *f = getFeature(m.featureId);
-    if (!f)
-      continue;
     if (fId.is_nil())
       fId = m.featureId;
     if (fId != m.featureId)
       continue;
-    auto ps = picks.size();
-    picks.push_back(tls::convertToPick(m, f->getAnnex<ann::SeerShape>(), project->getShapeHistory()));
-    picks.back().tag = ftr::InputType::createIndexedTag(ftr::InputType::target, ps);
-    connector.add(fId, picks.back().tag);
+    if (!isValidSelection(m))
+      continue;
+
+    const ftr::Base *lf = project->findFeature(m.featureId);
+    freshPicks.push_back(tls::convertToPick(m, *lf, project->getShapeHistory()));
+    freshPicks.back().tag = ftr::InputType::createIndexedTag(ftr::InputType::target, freshPicks.size() - 1);
+    project->connect(lf->getId(), feature->getId(), {freshPicks.back().tag});
   }
-  if (picks.empty() || connector.pairs.empty())
+  feature->setHollowPicks(freshPicks);
+}
+
+void Hollow::localUpdate()
+{
+  assert(isActive);
+  feature->updateModel(project->getPayload(feature->getId()));
+  feature->updateVisual();
+  feature->setModelDirty();
+  node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
+}
+
+void Hollow::go()
+{
+  const slc::Containers &cs = eventHandler->getSelections();
+  if (!cs.empty())
   {
-    goDialog();
-    return;
+    slc::Messages targets;
+    for (const auto &c : cs)
+    {
+      auto m = slc::EventHandler::containerToMessage(c);
+      if (!isValidSelection(m))
+        continue;
+      targets.push_back(m);
+    }
+    if (!targets.empty())
+    {
+      setSelections(targets);
+      node->sendBlocked(msg::buildHideThreeD(targets.front().featureId));
+      node->sendBlocked(msg::buildHideOverlay(targets.front().featureId));
+      dlg::Parameter *pDialog = new dlg::Parameter(&feature->getOffset(), feature->getId());
+      pDialog->show();
+      pDialog->raise();
+      pDialog->activateWindow();
+      return;
+    }
   }
   
-  auto f = std::make_shared<ftr::Hollow>();
-  f->setHollowPicks(picks);
-  project->addFeature(f);
-  for (const auto &pr : connector.pairs)
-    project->connectInsert(pr.first, f->getId(), {pr.second});
-  
-  node->sendBlocked(msg::buildHideThreeD(fId));
-  node->sendBlocked(msg::buildHideOverlay(fId));
-  node->sendBlocked(msg::buildStatusMessage("Hollow created", 2.0));
-  node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
-
-  dlg::Parameter *pDialog = new dlg::Parameter(&f->getOffset(), f->getId());
-  pDialog->show();
-  pDialog->raise();
-  pDialog->activateWindow();
-}
-
-HollowEdit::HollowEdit(ftr::Base *in) : Base()
-{
-  //command manager edit dispatcher dispatches on ftr::type, so we know the type of 'in'
-  feature = dynamic_cast<ftr::Hollow*>(in);
-  assert(feature);
-  shouldUpdate = false; //dialog controls.
-}
-
-HollowEdit::~HollowEdit()
-{
-  if (dialog)
-    dialog->deleteLater();
-}
-
-std::string HollowEdit::getStatusMessage()
-{
-  return QObject::tr("Editing hollow").toStdString();
-}
-
-void HollowEdit::activate()
-{
-  isActive = true;
-  if (!dialog)
-  {
-    node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
-    dialog = new dlg::Hollow(feature, mainWindow, true);
-  }
-
-  dialog->show();
-  dialog->raise();
-  dialog->activateWindow();
-}
-
-void HollowEdit::deactivate()
-{
-  dialog->hide();
-  isActive = false;
+  node->sendBlocked(msg::buildStatusMessage("invalid pre selection", 2.0));
+  viewBase = std::make_unique<cmv::Hollow>(this);
 }

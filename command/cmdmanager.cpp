@@ -1037,7 +1037,7 @@ BasePtr editPrimitive(ftr::Base *feature)
 
 BasePtr editHollow(ftr::Base *feature)
 {
-  return std::make_shared<HollowEdit>(feature);
+  return std::make_shared<Hollow>(feature);
 }
 
 BasePtr editDatumSystem(ftr::Base *feature)

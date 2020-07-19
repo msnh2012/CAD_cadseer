@@ -1,6 +1,6 @@
 /*
  * CadSeer. Parametric Solid Modeling.
- * Copyright (C) 2019 Thomas S. Anderson blobfish.at.gmx.com
+ * Copyright (C) 2020 Thomas S. Anderson blobfish.at.gmx.com
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,16 +17,16 @@
  *
  */
 
-#ifndef DLG_HOLLOW_H
-#define DLG_HOLLOW_H
+#ifndef CMV_HOLLOW_H
+#define CMV_HOLLOW_H
 
 #include <memory>
 
-#include "dialogs/dlgbase.h"
+#include "commandview/cmvbase.h"
 
-namespace ftr{class Hollow;}
+namespace cmd{class Hollow;}
 
-namespace dlg
+namespace cmv
 {
   /**
   * @todo write docs
@@ -35,20 +35,14 @@ namespace dlg
   {
     Q_OBJECT
   public:
-    Hollow(ftr::Hollow*, QWidget*, bool = false);
+    Hollow(cmd::Hollow*);
     ~Hollow() override;
-  public Q_SLOTS:
-    void reject() override;
-    void accept() override;
+  private Q_SLOTS:
+    void selectionChanged();
   private:
     struct Stow;
     std::unique_ptr<Stow> stow;
-    
-    void init();
-    void buildGui();
-    void loadFeatureData();
-    void finishDialog();
   };
 }
 
-#endif // DLG_HOLLOW_H
+#endif // CMV_HOLLOW_H
