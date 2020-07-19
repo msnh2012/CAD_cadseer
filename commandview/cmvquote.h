@@ -1,6 +1,6 @@
 /*
  * CadSeer. Parametric Solid Modeling.
- * Copyright (C) 2017  Thomas S. Anderson blobfish.at.gmx.com
+ * Copyright (C) 2020 Thomas S. Anderson blobfish.at.gmx.com
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,36 +17,40 @@
  *
  */
 
-#ifndef CMD_QUOTE_H
-#define CMD_QUOTE_H
+#ifndef CMV_QUOTE_H
+#define CMV_QUOTE_H
 
-#include "command/cmdleafmanager.h"
-#include "command/cmdbase.h"
+#include <memory>
 
-namespace ftr{class Base; class Quote;}
+#include "commandview/cmvbase.h"
 
-namespace cmd
+namespace cmd{class Quote;}
+
+namespace cmv
 {
+  /**
+  * @todo write docs
+  */
   class Quote : public Base
   {
+    Q_OBJECT
   public:
-    ftr::Quote *feature = nullptr;
-    
-    Quote();
-    Quote(ftr::Base*);
+    Quote(cmd::Quote*);
     ~Quote() override;
-    
-    std::string getCommandName() override{return "Quote";}
-    std::string getStatusMessage() override;
-    void activate() override;
-    void deactivate() override;
-    
-    void setSelections(const std::vector<slc::Message>&, const std::vector<slc::Message>&);
-    void localUpdate();
+  private Q_SLOTS:
+    void browseForTemplateSlot();
+    void browseForOutputSlot();
+    void takePictureSlot();
+    void loadLabelPixmapSlot();
+    void selectionsChanged();
+    void valueChanged();
+    void comboValueChanged(int);
+    void templateChanged(const QString&);
+    void outputChanged(const QString&);
   private:
-    cmd::LeafManager leafManager;
-    void go();
+    struct Stow;
+    std::unique_ptr<Stow> stow;
   };
 }
 
-#endif // CMD_QUOTE_H
+#endif // CMV_QUOTE_H

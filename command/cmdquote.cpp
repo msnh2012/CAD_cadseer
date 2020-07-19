@@ -21,21 +21,41 @@
 #include "project/prjproject.h"
 #include "message/msgnode.h"
 #include "selection/slceventhandler.h"
+#include "feature/ftrinputtype.h"
 #include "feature/ftrquote.h"
-#include "dialogs/dlgquote.h"
+#include "commandview/cmvmessage.h"
+#include "commandview/cmvquote.h"
 #include "command/cmdquote.h"
 
 using namespace cmd;
 
 using boost::uuids::uuid;
 
-Quote::Quote() : Base(){}
-
-Quote::~Quote()
+Quote::Quote()
+: Base("cmd::Quote")
+, leafManager()
 {
-  if (dialog)
-    dialog->deleteLater();
+  auto nf = std::make_shared<ftr::Quote>();
+  project->addFeature(nf);
+  feature = nf.get();
+  node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
+  isEdit = false;
+  isFirstRun = true;
 }
+
+Quote::Quote(ftr::Base *fIn)
+: Base("cmd::Quote")
+, leafManager(fIn)
+{
+  feature = dynamic_cast<ftr::Quote*>(fIn);
+  assert(feature);
+  viewBase = std::make_unique<cmv::Quote>(this);
+  node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  isEdit = true;
+  isFirstRun = false;
+}
+
+Quote::~Quote() = default;
 
 std::string Quote::getStatusMessage()
 {
@@ -45,20 +65,60 @@ std::string Quote::getStatusMessage()
 void Quote::activate()
 {
   isActive = true;
-  
-  if (!dialog)
+  leafManager.rewind();
+  if (isFirstRun.get())
+  {
+    isFirstRun = false;
     go();
-  
-  dialog->show();
-  dialog->raise();
-  dialog->activateWindow();
+  }
+  if (viewBase)
+  {
+    feature->setEditing();
+    cmv::Message vm(viewBase.get(), viewBase->getPaneWidth());
+    msg::Message out(msg::Mask(msg::Request | msg::Command | msg::View | msg::Show), vm);
+    node->sendBlocked(out);
+  }
+  else
+    sendDone();
 }
 
 void Quote::deactivate()
 {
+  if (viewBase)
+  {
+    feature->setNotEditing();
+    msg::Message out(msg::Mask(msg::Request | msg::Command | msg::View | msg::Hide));
+    node->sendBlocked(out);
+  }
+  leafManager.fastForward();
+  if (!isEdit.get())
+  {
+    node->sendBlocked(msg::buildShowThreeD(feature->getId()));
+    node->sendBlocked(msg::buildShowOverlay(feature->getId()));
+  }
   isActive = false;
+}
+
+void Quote::setSelections(const std::vector<slc::Message> &strip, const std::vector<slc::Message> &dieset)
+{
+  assert(isActive);
   
-  dialog->hide();
+  project->clearAllInputs(feature->getId());
+  
+  if (!strip.empty())
+    project->connect(strip.front().featureId, feature->getId(), {ftr::Quote::strip});
+  
+  if (!dieset.empty())
+    project->connect(dieset.front().featureId, feature->getId(), {ftr::Quote::dieSet});
+}
+
+void Quote::localUpdate()
+{
+  assert(isActive);
+  feature->updateModel(project->getPayload(feature->getId()));
+  feature->updateVisual();
+  feature->setModelDirty();
+  node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
 }
 
 void Quote::go()
@@ -88,47 +148,27 @@ void Quote::go()
     }
   }
   
-  std::shared_ptr<ftr::Quote> quote(new ftr::Quote());
-  project->addFeature(quote);
+  slc::Messages strip;
+  if (!stripId.is_nil())
+  {
+    slc::Message m;
+    m.type = slc::Type::Object;
+    m.featureType = ftr::Type::Strip;
+    m.featureId = stripId;
+    strip.push_back(m);
+  }
+  slc::Messages dieset;
+  if (!diesetId.is_nil())
+  {
+    slc::Message m;
+    m.type = slc::Type::Object;
+    m.featureType = ftr::Type::DieSet;
+    m.featureId = diesetId;
+    dieset.push_back(m);
+  }
+
+  setSelections(strip, dieset);
   
-  node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
-  
-  dialog = new dlg::Quote(quote.get(), mainWindow);
-  dialog->setStripId(stripId);
-  dialog->setDieSetId(diesetId);
   node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
-}
-
-QuoteEdit::QuoteEdit(ftr::Base *feature) : Base()
-{
-  quote = dynamic_cast<ftr::Quote*>(feature);
-  assert(quote);
-}
-
-QuoteEdit::~QuoteEdit()
-{
-  if (dialog)
-    dialog->deleteLater();
-}
-
-std::string QuoteEdit::getStatusMessage()
-{
-  return "Editing Quote Feature";
-}
-
-void QuoteEdit::activate()
-{
-  if (!dialog)
-    dialog = new dlg::Quote(quote, mainWindow);
-  
-  isActive = true;
-  dialog->show();
-  dialog->raise();
-  dialog->activateWindow();
-}
-
-void QuoteEdit::deactivate()
-{
-  dialog->hide();
-  isActive = false;
+  viewBase = std::make_unique<cmv::Quote>(this);
 }

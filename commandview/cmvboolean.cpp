@@ -96,13 +96,13 @@ struct Boolean::Stow
     dlg::SelectionWidgetCue cue;
     cue.name = tr("Target");
     cue.singleSelection = true;
-    cue.mask = slc::ObjectsEnabled | slc::ObjectsSelectable | slc::SolidsEnabled;;
+    cue.mask = slc::ObjectsEnabled | slc::ObjectsSelectable | slc::SolidsEnabled;
     cue.statusPrompt = tr("Select Target Object Or Solid");
     cue.showAccrueColumn = false;
     cues.push_back(cue);
     cue.name = tr("Tools");
     cue.singleSelection = false;
-    cue.mask = slc::ObjectsEnabled | slc::ObjectsSelectable | slc::SolidsEnabled;;
+    cue.mask = slc::ObjectsEnabled | slc::ObjectsSelectable | slc::SolidsEnabled;
     cue.statusPrompt = tr("Select Tool Object Or Solid");
     cues.push_back(cue);
     selectionWidget = new dlg::SelectionWidget(view, cues);

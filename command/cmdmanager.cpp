@@ -987,7 +987,7 @@ BasePtr editStrip(ftr::Base *feature)
 
 BasePtr editQuote(ftr::Base *feature)
 {
-  return std::make_shared<QuoteEdit>(feature);
+  return std::make_shared<Quote>(feature);
 }
 
 BasePtr editIntersect(ftr::Base *feature)
