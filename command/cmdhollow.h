@@ -23,7 +23,6 @@
 #include "command/cmdleafmanager.h"
 #include "command/cmdbase.h"
 
-namespace dlg{class Hollow;}
 namespace ftr{class Hollow;}
 
 namespace cmd

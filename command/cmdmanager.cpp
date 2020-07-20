@@ -1022,7 +1022,7 @@ BasePtr editDraft(ftr::Base *feature)
 
 BasePtr editExtract(ftr::Base *feature)
 {
-  return std::make_shared<ExtractEdit>(feature);
+  return std::make_shared<Extract>(feature);
 }
 
 BasePtr editChamfer(ftr::Base *feature)

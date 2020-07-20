@@ -20,9 +20,9 @@
 #ifndef CMD_EXTRACT_H
 #define CMD_EXTRACT_H
 
+#include "command/cmdleafmanager.h"
 #include "command/cmdbase.h"
 
-namespace dlg{class Extract;}
 namespace ftr{class Extract;}
 
 namespace cmd
@@ -30,36 +30,23 @@ namespace cmd
   class Extract : public Base
   {
   public:
+    ftr::Extract *feature = nullptr;
+    
     Extract();
+    Extract(ftr::Base*);
     ~Extract() override;
     
-    virtual std::string getCommandName() override{return "Extract";}
-    virtual std::string getStatusMessage() override;
-    virtual void activate() override;
-    virtual void deactivate() override;
-  private:
-    void go();
-    bool firstRun = true;
-    dlg::Extract *dialog = nullptr;
-    ftr::Extract *feature = nullptr;
-  };
-  
-  /**
-  * @todo write docs
-  */
-  class ExtractEdit : public Base
-  {
-  public:
-    ExtractEdit(ftr::Base*);
-    ~ExtractEdit() override;
-    
-    std::string getCommandName() override{return "Extract Edit";}
+    std::string getCommandName() override{return "Extract";}
     std::string getStatusMessage() override;
     void activate() override;
     void deactivate() override;
+    
+    bool isValidSelection(const slc::Message&);
+    void setSelections(const slc::Messages&);
+    void localUpdate();
   private:
-    dlg::Extract *dialog = nullptr;
-    ftr::Extract *feature = nullptr;
+    cmd::LeafManager leafManager;
+    void go();
   };
 }
 

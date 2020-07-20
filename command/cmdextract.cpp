@@ -27,7 +27,8 @@
 #include "message/msgnode.h"
 #include "selection/slceventhandler.h"
 #include "annex/annseershape.h"
-#include "dialogs/dlgextract.h"
+#include "commandview/cmvmessage.h"
+#include "commandview/cmvextract.h"
 #include "feature/ftrinputtype.h"
 #include "feature/ftrextract.h"
 #include "tools/featuretools.h"
@@ -36,13 +37,33 @@
 using namespace cmd;
 using boost::uuids::uuid;
 
-Extract::Extract() : Base() {}
-
-Extract::~Extract()
+Extract::Extract()
+: Base("cmd::Extract")
+, leafManager()
 {
-  if (dialog)
-    dialog->deleteLater();
+  //this command is different. We can create multiple features.
+  //so we don't build a feature by default.
+//   auto nf = std::make_shared<ftr::Extract>();
+//   project->addFeature(nf);
+//   feature = nf.get();
+//   node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
+  isEdit = false;
+  isFirstRun = true;
 }
+
+Extract::Extract(ftr::Base *fIn)
+: Base("cmd::Extract")
+, leafManager(fIn)
+{
+  feature = dynamic_cast<ftr::Extract*>(fIn);
+  assert(feature);
+  viewBase = std::make_unique<cmv::Extract>(this);
+  node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  isEdit = true;
+  isFirstRun = false;
+}
+
+Extract::~Extract() = default;
 
 std::string Extract::getStatusMessage()
 {
@@ -52,122 +73,122 @@ std::string Extract::getStatusMessage()
 void Extract::activate()
 {
   isActive = true;
-  
-  /* first time the command is activated we will check for a valid preselection.
-   * if there is one then we will just build a simple blend feature and call
-   * the parameter dialog. Otherwise we will call the blend dialog.
-   */
-  if (firstRun)
+  leafManager.rewind();
+  if (isFirstRun.get())
   {
-    firstRun = false;
+    isFirstRun = false;
     go();
   }
-  if (dialog)
+  if (viewBase)
   {
-    dialog->show();
-    dialog->raise();
-    dialog->activateWindow();
+    feature->setEditing();
+    cmv::Message vm(viewBase.get(), viewBase->getPaneWidth());
+    msg::Message out(msg::Mask(msg::Request | msg::Command | msg::View | msg::Show), vm);
+    node->sendBlocked(out);
   }
-  else sendDone();
+  else
+    sendDone();
 }
 
 void Extract::deactivate()
 {
+  if (viewBase)
+  {
+    feature->setNotEditing();
+    msg::Message out(msg::Mask(msg::Request | msg::Command | msg::View | msg::Hide));
+    node->sendBlocked(out);
+  }
+  leafManager.fastForward();
+  if (!isEdit.get())
+  {
+    node->sendBlocked(msg::buildShowThreeD(feature->getId()));
+    node->sendBlocked(msg::buildShowOverlay(feature->getId()));
+  }
   isActive = false;
+}
+
+bool Extract::isValidSelection(const slc::Message &mIn)
+{
+  const ftr::Base *lf = project->findFeature(mIn.featureId);
+  if (!lf->hasAnnex(ann::Type::SeerShape) || lf->getAnnex<ann::SeerShape>().isNull())
+    return false;
+
+  return true;
+}
+
+void Extract::setSelections(const slc::Messages &targets)
+{
+  assert(isActive);
+  assert(feature);
+  project->clearAllInputs(feature->getId());
+  feature->setPicks(ftr::Picks());
+  
+  if (targets.empty())
+    return;
+  
+  ftr::Picks freshPicks;
+  for (const auto &m : targets)
+  {
+    if (!isValidSelection(m))
+      continue;
+
+    const ftr::Base *lf = project->findFeature(m.featureId);
+    freshPicks.push_back(tls::convertToPick(m, *lf, project->getShapeHistory()));
+    freshPicks.back().tag = ftr::InputType::createIndexedTag(ftr::InputType::target, freshPicks.size() - 1);
+    project->connect(lf->getId(), feature->getId(), {freshPicks.back().tag});
+  }
+  feature->setPicks(freshPicks);
+}
+
+void Extract::localUpdate()
+{
+  assert(isActive);
+  feature->updateModel(project->getPayload(feature->getId()));
+  feature->updateVisual();
+  feature->setModelDirty();
+  node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
 }
 
 void Extract::go()
 {
-  auto goDialog = [&]()
-  {
-    node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
-
-    std::shared_ptr<ftr::Extract> extract = std::make_shared<ftr::Extract>();
-    project->addFeature(extract);
-    dialog = new dlg::Extract(extract.get(), mainWindow);
-
-    node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
-    node->sendBlocked(msg::buildStatusMessage("invalid pre selection", 2.0));
-    shouldUpdate = false;
-  };
-  
   bool created = false;
   const slc::Containers &containers = eventHandler->getSelections();
   std::vector<slc::Containers> splits = slc::split(containers); //grouped by featureId.
   for (const auto &cs : splits)
   {
     assert(!cs.empty());
-    uuid fId = cs.front().featureId;
-    ftr::Base *baseFeature = project->findFeature(fId);
-    assert(baseFeature);
-    if (!baseFeature->hasAnnex(ann::Type::SeerShape))
-      continue;
-    const ann::SeerShape &tss = baseFeature->getAnnex<ann::SeerShape>();
-    int pickCount = -1;
-    ftr::Picks picks;
-    tls::Connector connector;
+    
+    slc::Messages targets;
     for (const auto c : cs)
     {
-      pickCount++;
-      assert(c.featureId == fId);
-      ftr::Pick pick = tls::convertToPick(c, tss, project->getShapeHistory());
-      pick.tag = ftr::InputType::createIndexedTag(ftr::InputType::target, picks.size());
-      connector.add(fId, pick.tag);
-      picks.push_back(pick);
+      auto m = slc::EventHandler::containerToMessage(c);
+      if (!isValidSelection(m))
+        continue;
+      targets.push_back(m);
     }
-    
-    std::shared_ptr<ftr::Extract> extract = std::make_shared<ftr::Extract>();
-    extract->setPicks(picks);
-    project->addFeature(extract);
-    for (const auto &p : connector.pairs)
-      project->connectInsert(p.first, extract->getId(), {p.second});
-    created = true;
-    node->sendBlocked(msg::buildHideThreeD(baseFeature->getId()));
-    node->sendBlocked(msg::buildHideOverlay(baseFeature->getId()));
-    extract->setColor(baseFeature->getColor());
+    if (!targets.empty())
+    {
+      auto nf = std::make_shared<ftr::Extract>();
+      project->addFeature(nf);
+      feature = nf.get();
+      setSelections(targets);
+      feature->setColor(project->findFeature(targets.front().featureId)->getColor());
+      created = true;
+      node->sendBlocked(msg::buildHideThreeD(targets.front().featureId));
+      node->sendBlocked(msg::buildHideOverlay(targets.front().featureId));
+      node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
+    }
   }
+  
+  node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  
   if (!created)
   {
-    goDialog();
+    auto nf = std::make_shared<ftr::Extract>();
+    project->addFeature(nf);
+    feature = nf.get();
+    node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
+    node->sendBlocked(msg::buildStatusMessage("invalid pre selection", 2.0));
+    viewBase = std::make_unique<cmv::Extract>(this);
   }
-  else
-    node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
-}
-
-ExtractEdit::ExtractEdit(ftr::Base *in) : Base()
-{
-  feature = dynamic_cast<ftr::Extract*>(in);
-  assert(feature);
-  shouldUpdate = false; //dialog controls.
-}
-
-ExtractEdit::~ExtractEdit()
-{
-  if (dialog)
-    dialog->deleteLater();
-}
-
-std::string ExtractEdit::getStatusMessage()
-{
-  return QObject::tr("Editing draft").toStdString();
-}
-
-void ExtractEdit::activate()
-{
-  isActive = true;
-  if (!dialog)
-  {
-    node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
-    dialog = new dlg::Extract(feature, mainWindow, true);
-  }
-
-  dialog->show();
-  dialog->raise();
-  dialog->activateWindow();
-}
-
-void ExtractEdit::deactivate()
-{
-  dialog->hide();
-  isActive = false;
 }

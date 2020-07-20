@@ -1,6 +1,6 @@
 /*
  * CadSeer. Parametric Solid Modeling.
- * Copyright (C) 2019 Thomas S. Anderson blobfish.at.gmx.com
+ * Copyright (C) 2020 Thomas S. Anderson blobfish.at.gmx.com
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,17 +17,16 @@
  *
  */
 
-#ifndef DLG_EXTRACT_H
-#define DLG_EXTRACT_H
+#ifndef CMV_EXTRACT_H
+#define CMV_EXTRACT_H
 
 #include <memory>
 
-#include "dialogs/dlgbase.h"
+#include "commandview/cmvbase.h"
 
-namespace ftr{class Extract;}
-namespace msg{struct Node;}
+namespace cmd{class Extract;}
 
-namespace dlg
+namespace cmv
 {
   /**
   * @todo write docs
@@ -36,22 +35,16 @@ namespace dlg
   {
     Q_OBJECT
   public:
-    Extract(ftr::Extract*, QWidget*, bool = false);
+    Extract(cmd::Extract*);
     ~Extract() override;
-  public Q_SLOTS:
-    void reject() override;
-    void accept() override;
+  private Q_SLOTS:
     void accrueChanged();
+    void selectionChanged();
   private:
     struct Stow;
     std::unique_ptr<Stow> stow;
-    
-    void init();
-    void buildGui();
-    void loadFeatureData();
-    void finishDialog();
-    void valueChanged();
+    void enableParameterWidget();
   };
 }
 
-#endif //DLG_EXTRACT_H
+#endif // CMV_EXTRACT_H
