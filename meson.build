@@ -251,7 +251,6 @@ dialog_sources = ['dialogs/dlgparameter.cpp'
   , 'dialogs/dlgselectionlist.cpp'
   , 'dialogs/dlgselectionwidget.cpp'
   , 'dialogs/dlgparameterwidget.cpp'
-  , 'dialogs/dlgdraft.cpp'
   , 'dialogs/dlgbase.cpp'
   , 'dialogs/dlgchamfer.cpp'
   , 'dialogs/dlgdatumsystem.cpp'
@@ -432,6 +431,7 @@ commandview_sources = [
   , 'commandview/cmvquote.cpp'
   , 'commandview/cmvhollow.cpp'
   , 'commandview/cmvextract.cpp'
+  , 'commandview/cmvdraft.cpp'
 ]
   
 law_sources = ['law/lwfcue.cpp']
@@ -543,7 +543,6 @@ cadseer_moc_hdrs = ['viewer/vwrwidget.h'
   , 'dialogs/dlgselectionlist.h'
   , 'dialogs/dlgselectionwidget.h'
   , 'dialogs/dlgparameterwidget.h'
-  , 'dialogs/dlgdraft.h'
   , 'dialogs/dlgbase.h'
   , 'dialogs/dlgchamfer.h'
   , 'dialogs/dlgdatumsystem.h'
@@ -581,6 +580,7 @@ cadseer_moc_hdrs = ['viewer/vwrwidget.h'
   , 'commandview/cmvquote.h'
   , 'commandview/cmvhollow.h'
   , 'commandview/cmvextract.h'
+  , 'commandview/cmvdraft.h'
 ]
   
 cadseer_resources = ['resources.qrc']

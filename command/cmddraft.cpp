@@ -17,6 +17,10 @@
  *
  */
 
+#include <boost/optional/optional.hpp>
+
+#include <osg/Geometry> //yuck
+
 #include "tools/featuretools.h"
 #include "application/appmainwindow.h"
 #include "application/appapplication.h"
@@ -25,7 +29,8 @@
 #include "selection/slceventhandler.h"
 #include "parameter/prmparameter.h"
 #include "dialogs/dlgparameter.h"
-#include "dialogs/dlgdraft.h"
+#include "commandview/cmvmessage.h"
+#include "commandview/cmvdraft.h"
 #include "annex/annseershape.h"
 #include "feature/ftrinputtype.h"
 #include "feature/ftrdraft.h"
@@ -33,13 +38,32 @@
 
 using namespace cmd;
 
-Draft::Draft() : Base() {}
-
-Draft::~Draft()
+Draft::Draft()
+: Base("cmd::Draft")
+, leafManager()
 {
-  if (dialog)
-    dialog->deleteLater();
+  //build multiples in go. so don't build a feature by default.
+//   auto nf = std::make_shared<ftr::Draft>();
+//   project->addFeature(nf);
+//   feature = nf.get();
+//   node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
+  isEdit = false;
+  isFirstRun = true;
 }
+
+Draft::Draft(ftr::Base *fIn)
+: Base("cmd::Draft")
+, leafManager(fIn)
+{
+  feature = dynamic_cast<ftr::Draft*>(fIn);
+  assert(feature);
+  viewBase = std::make_unique<cmv::Draft>(this);
+  node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  isEdit = true;
+  isFirstRun = false;
+}
+
+Draft::~Draft() = default;
 
 std::string Draft::getStatusMessage()
 {
@@ -49,141 +73,145 @@ std::string Draft::getStatusMessage()
 void Draft::activate()
 {
   isActive = true;
-  
-  if (firstRun)
+  leafManager.rewind();
+  if (isFirstRun.get())
   {
-    firstRun = false;
+    isFirstRun = false;
     go();
   }
-  
-  if (dialog)
+  if (viewBase)
   {
-    dialog->show();
-    dialog->raise();
-    dialog->activateWindow();
+    feature->setEditing();
+    cmv::Message vm(viewBase.get(), viewBase->getPaneWidth());
+    msg::Message out(msg::Mask(msg::Request | msg::Command | msg::View | msg::Show), vm);
+    node->sendBlocked(out);
   }
-  else sendDone();
+  else
+    sendDone();
 }
 
 void Draft::deactivate()
 {
-  if (dialog)
-    dialog->hide();
+  if (viewBase)
+  {
+    feature->setNotEditing();
+    msg::Message out(msg::Mask(msg::Request | msg::Command | msg::View | msg::Hide));
+    node->sendBlocked(out);
+  }
+  leafManager.fastForward();
+  if (!isEdit.get())
+  {
+    node->sendBlocked(msg::buildShowThreeD(feature->getId()));
+    node->sendBlocked(msg::buildShowOverlay(feature->getId()));
+  }
   isActive = false;
+}
+
+bool Draft::isValidSelection(const slc::Message &mIn)
+{
+  const ftr::Base *lf = project->findFeature(mIn.featureId);
+  if (!lf->hasAnnex(ann::Type::SeerShape) || lf->getAnnex<ann::SeerShape>().isNull())
+    return false;
+  
+  if (mIn.type != slc::Type::Face)
+    return false;
+  return true;
+}
+
+void Draft::setSelections(const slc::Messages &neutral, const slc::Messages &targets)
+{
+  assert(isActive);
+  assert(feature);
+  project->clearAllInputs(feature->getId());
+  feature->setNeutralPick(ftr::Pick());
+  feature->setTargetPicks(ftr::Picks());
+  
+  if (neutral.empty() || targets.empty())
+    return;
+  
+  //currently draft feature only supports the neutral pick to be a planar face.
+  //this will change as we will want datum planes and maybe more.
+  //so don't validate consistent feature ids to neutral.
+  
+  const ftr::Base *nf = project->findFeature(neutral.front().featureId);
+  ftr::Pick neutralPick = tls::convertToPick(neutral.front(), *nf, project->getShapeHistory());
+  neutralPick.tag = ftr::Draft::neutral;
+  feature->setNeutralPick(neutralPick);
+  project->connect(nf->getId(), feature->getId(), {neutralPick.tag});
+  
+  ftr::Picks targetPicks;
+  const ftr::Base *lf = project->findFeature(targets.front().featureId);
+  for (const auto &m : targets)
+  {
+    if (!isValidSelection(m))
+      continue;
+    if (lf->getId() != m.featureId)
+      continue;
+    targetPicks.push_back(tls::convertToPick(m, *lf, project->getShapeHistory()));
+    targetPicks.back().tag = ftr::InputType::createIndexedTag(ftr::InputType::target, targetPicks.size() - 1);
+    project->connect(lf->getId(), feature->getId(), {targetPicks.back().tag});
+  }
+  feature->setTargetPicks(targetPicks);
+}
+
+void Draft::localUpdate()
+{
+  assert(isActive);
+  feature->updateModel(project->getPayload(feature->getId()));
+  feature->updateVisual();
+  feature->setModelDirty();
+  node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
 }
 
 void Draft::go()
 {
-  auto goDialog = [&]()
+  bool created = false;
+  const slc::Containers &containers = eventHandler->getSelections();
+  std::vector<slc::Containers> splits = slc::split(containers); //grouped by featureId.
+  for (const auto &cs : splits)
   {
-    node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
-
-    std::shared_ptr<ftr::Draft> draft(new ftr::Draft());
-    project->addFeature(draft);
-    dialog = new dlg::Draft(draft.get(), mainWindow);
-
-    node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
-    node->sendBlocked(msg::buildStatusMessage("invalid pre selection", 2.0));
-    shouldUpdate = false;
-  };
-  
-  const slc::Containers &cs = eventHandler->getSelections();
-  if (cs.size() < 2)
-  {
-    goDialog();
-    return;
-  }
-  const ftr::Base *bf = project->findFeature(cs.front().featureId);
-  if (!bf || !bf->hasAnnex(ann::Type::SeerShape))
-  {
-    goDialog();
-    return;
-  }
-  const ann::SeerShape &ss = bf->getAnnex<ann::SeerShape>();
-  if (ss.isNull())
-  {
-    goDialog();
-    return;
-  }
-  
-  tls::Connector connector;
-  ftr::Pick np = tls::convertToPick(cs.front(), ss, project->getShapeHistory());
-  np.tag = ftr::Draft::neutral;
-  connector.add(cs.front().featureId, np.tag);
-  
-  ftr::Picks draftPicks;
-  auto it = cs.begin() + 1;
-  for (; it != cs.end(); ++it)
-  {
-    if (it->featureId != cs.front().featureId)
-      continue; //can't apply draft across solids. Is this really a limitation in occt?
-    ftr::Pick tp = tls::convertToPick(*it, ss, project->getShapeHistory());
-    tp.tag = ftr::InputType::createIndexedTag(ftr::InputType::target, draftPicks.size());
-    connector.add(it->featureId, tp.tag);
-    draftPicks.push_back(tp);
+    assert(!cs.empty());
+    
+    boost::optional<slc::Message> neutral;
+    slc::Messages targets;
+    
+    for (const auto c : cs)
+    {
+      auto m = slc::EventHandler::containerToMessage(c);
+      if (!isValidSelection(m))
+        continue;
+      if (neutral)
+        targets.push_back(m);
+      else
+        neutral = m;
+    }
+    if (neutral && !targets.empty())
+    {
+      auto nf = std::make_shared<ftr::Draft>();
+      project->addFeature(nf);
+      feature = nf.get();
+      setSelections(slc::Messages(1, neutral.get()), targets);
+      feature->setColor(project->findFeature(targets.front().featureId)->getColor());
+      created = true;
+      node->sendBlocked(msg::buildHideThreeD(targets.front().featureId));
+      node->sendBlocked(msg::buildHideOverlay(targets.front().featureId));
+      node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
+      dlg::Parameter *pDialog = new dlg::Parameter(feature->getAngleParameter().get(), feature->getId());
+      pDialog->show();
+      pDialog->raise();
+      pDialog->activateWindow();
+    }
   }
   
-  if (draftPicks.empty())
-  {
-    goDialog();
-    return;
-  }
-  
-  auto f = std::make_shared<ftr::Draft>();
-  project->addFeature(f);
-  f->setNeutralPick(np);
-  f->setTargetPicks(draftPicks);
-  for (const auto &p : connector.pairs)
-    project->connectInsert(p.first, f->getId(), {p.second});
-  f->setColor(bf->getColor());
-  
-  node->sendBlocked(msg::buildHideThreeD(cs.front().featureId));
-  node->sendBlocked(msg::buildHideOverlay(cs.front().featureId));
-  
-  node->sendBlocked(msg::buildStatusMessage("Draft created", 2.0));
   node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
   
-  dlg::Parameter *pDialog = new dlg::Parameter(f->getAngleParameter().get(), f->getId());
-  pDialog->show();
-  pDialog->raise();
-  pDialog->activateWindow();
-}
-
-DraftEdit::DraftEdit(ftr::Base *in) : Base()
-{
-  //command manager edit dispatcher dispatches on ftr::type, so we know the type of 'in'
-  feature = dynamic_cast<ftr::Draft*>(in);
-  assert(feature);
-  shouldUpdate = false; //dialog controls.
-}
-
-DraftEdit::~DraftEdit()
-{
-  if (dialog)
-    dialog->deleteLater();
-}
-
-std::string DraftEdit::getStatusMessage()
-{
-  return QObject::tr("Editing draft").toStdString();
-}
-
-void DraftEdit::activate()
-{
-  isActive = true;
-  if (!dialog)
+  if (!created)
   {
-    node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
-    dialog = new dlg::Draft(feature, mainWindow, true);
+    auto nf = std::make_shared<ftr::Draft>();
+    project->addFeature(nf);
+    feature = nf.get();
+    node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
+    node->sendBlocked(msg::buildStatusMessage("invalid pre selection", 2.0));
+    viewBase = std::make_unique<cmv::Draft>(this);
   }
-
-  dialog->show();
-  dialog->raise();
-  dialog->activateWindow();
-}
-
-void DraftEdit::deactivate()
-{
-  dialog->hide();
-  isActive = false;
 }

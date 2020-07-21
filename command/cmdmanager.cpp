@@ -1017,7 +1017,7 @@ BasePtr editSweep(ftr::Base *feature)
 
 BasePtr editDraft(ftr::Base *feature)
 {
-  return std::make_shared<DraftEdit>(feature);
+  return std::make_shared<Draft>(feature);
 }
 
 BasePtr editExtract(ftr::Base *feature)

@@ -20,9 +20,9 @@
 #ifndef CMD_DRAFT_H
 #define CMD_DRAFT_H
 
+#include "command/cmdleafmanager.h"
 #include "command/cmdbase.h"
 
-namespace dlg{class Draft;}
 namespace ftr{class Draft;}
 
 namespace cmd
@@ -33,35 +33,23 @@ namespace cmd
   class Draft : public Base
   {
   public:
+    ftr::Draft *feature;
+    
     Draft();
+    Draft(ftr::Base*);
     ~Draft() override;
     
     std::string getCommandName() override{return "Draft";}
     std::string getStatusMessage() override;
     void activate() override;
     void deactivate() override;
-  private:
-    void go();
-    bool firstRun = true;
-    dlg::Draft *dialog = nullptr;
-  };
-  
-  /**
-  * @todo write docs
-  */
-  class DraftEdit : public Base
-  {
-  public:
-    DraftEdit(ftr::Base*);
-    virtual ~DraftEdit() override;
     
-    std::string getCommandName() override{return "Draft Edit";}
-    std::string getStatusMessage() override;
-    void activate() override;
-    void deactivate() override;
+    bool isValidSelection(const slc::Message&);
+    void setSelections(const slc::Messages&, const slc::Messages&);
+    void localUpdate();
   private:
-    dlg::Draft *dialog = nullptr;
-    ftr::Draft *feature = nullptr;
+    cmd::LeafManager leafManager;
+    void go();
   };
 }
 #endif // CMD_DRAFT_H
