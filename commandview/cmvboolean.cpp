@@ -17,38 +17,13 @@
  *
  */
 
-// #include <cassert>
-// #include <boost/optional/optional.hpp>
-
 #include <QSettings>
-// #include <QComboBox>
-// #include <QPushButton>
-// #include <QLabel>
-// #include <QLineEdit>
-// #include <QStackedWidget>
-// #include <QGridLayout>
 #include <QVBoxLayout>
-// #include <QHBoxLayout>
 
 #include "application/appapplication.h"
 #include "project/prjproject.h"
-// #include "annex/annseershape.h"
-// #include "preferences/preferencesXML.h"
-// #include "preferences/prfmanager.h"
-// #include "message/msgmessage.h"
-// #include "message/msgnode.h"
 #include "dialogs/dlgselectionbutton.h"
-// #include "dialogs/dlgselectionlist.h"
 #include "dialogs/dlgselectionwidget.h"
-// #include "commandview/cmvparameterwidgets.h"
-// #include "parameter/prmparameter.h"
-// #include "expressions/exprmanager.h"
-// #include "expressions/exprstringtranslator.h"
-// #include "expressions/exprvalue.h"
-// #include "library/lbrplabel.h"
-// #include "tools/featuretools.h"
-// #include "tools/idtools.h"
-// #include "feature/ftrinputtype.h"
 #include "feature/ftrsubtract.h"
 #include "feature/ftrintersect.h"
 #include "feature/ftrunion.h"
@@ -64,8 +39,6 @@ struct Boolean::Stow
   cmd::Boolean *command;
   cmv::Boolean *view;
   dlg::SelectionWidget *selectionWidget = nullptr;
-//   cmv::ParameterWidget *parameterWidget = nullptr;
-//   std::vector<prm::Observer> observers;
   
   Stow(cmd::Boolean *cIn, cmv::Boolean *vIn)
   : command(cIn)

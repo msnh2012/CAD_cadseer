@@ -17,38 +17,19 @@
  *
  */
 
-// #include <cassert>
-// #include <boost/optional/optional.hpp>
-
 #include <QSettings>
 #include <QComboBox>
-// #include <QPushButton>
 #include <QLabel>
-// #include <QLineEdit>
 #include <QStackedWidget>
-// #include <QGridLayout>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QTimer>
 
 #include "application/appapplication.h"
 #include "project/prjproject.h"
-// #include "annex/annseershape.h"
-// #include "preferences/preferencesXML.h"
-// #include "preferences/prfmanager.h"
-// #include "message/msgmessage.h"
 #include "message/msgnode.h"
 #include "dialogs/dlgselectionbutton.h"
-// #include "dialogs/dlgselectionlist.h"
 #include "dialogs/dlgselectionwidget.h"
-// #include "commandview/cmvparameterwidgets.h"
-// #include "parameter/prmparameter.h"
-// #include "expressions/exprmanager.h"
-// #include "expressions/exprstringtranslator.h"
-// #include "expressions/exprvalue.h"
-// #include "library/lbrplabel.h"
-// #include "tools/featuretools.h"
-// #include "tools/idtools.h"
 #include "feature/ftrinputtype.h"
 #include "dialogs/dlgnetgenparameters.h"
 #include "dialogs/dlgocctparameters.h"
@@ -64,8 +45,6 @@ struct SurfaceMesh::Stow
 {
   cmd::SurfaceMesh *command;
   cmv::SurfaceMesh *view;
-//   cmv::ParameterWidget *parameterWidget = nullptr;
-//   std::vector<prm::Observer> observers;
   
   QVBoxLayout *verticalLayout = nullptr;
   QHBoxLayout *horizontalLayout = nullptr;

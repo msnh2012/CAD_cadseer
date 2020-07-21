@@ -17,18 +17,14 @@
  *
  */
 
-// #include <cassert>
-// #include <boost/optional/optional.hpp>
 #include <boost/filesystem.hpp>
 
 #include <QSettings>
 #include <QTabWidget>
 #include <QComboBox>
-// #include <QPushButton>
 #include <QButtonGroup>
 #include <QLabel>
 #include <QLineEdit>
-// #include <QStackedWidget>
 #include <QGridLayout>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -39,23 +35,12 @@
 #include "application/appmainwindow.h"
 #include "project/prjproject.h"
 #include "viewer/vwrwidget.h"
-// #include "annex/annseershape.h"
 #include "preferences/preferencesXML.h"
 #include "preferences/prfmanager.h"
-// #include "message/msgmessage.h"
-// #include "message/msgnode.h"
 #include "dialogs/dlgselectionbutton.h"
-// #include "dialogs/dlgselectionlist.h"
 #include "dialogs/dlgselectionwidget.h"
-// #include "commandview/cmvparameterwidgets.h"
 #include "parameter/prmparameter.h"
-// #include "expressions/exprmanager.h"
-// #include "expressions/exprstringtranslator.h"
-// #include "expressions/exprvalue.h"
-// #include "library/lbrplabel.h"
-// #include "tools/featuretools.h"
 #include "tools/idtools.h"
-// #include "feature/ftrinputtype.h"
 #include "feature/ftrquote.h"
 #include "command/cmdquote.h"
 #include "commandview/cmvquote.h"
@@ -69,8 +54,6 @@ struct Quote::Stow
   cmd::Quote *command;
   cmv::Quote *view;
   dlg::SelectionWidget *selectionWidget = nullptr;
-//   cmv::ParameterWidget *parameterWidget = nullptr;
-//   std::vector<prm::Observer> observers;
     
   QTabWidget *tabWidget;
   dlg::SelectionButton *stripButton;
