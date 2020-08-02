@@ -54,8 +54,10 @@ osg::Matrixd applyOffset(osg::Matrixd mIn, const osg::Vec3d &offset)
 Feature::Feature()
 : Base()
 , csys(new prm::Parameter(prm::Names::CSys, osg::Matrixd::identity()))
-, autoSize(new prm::Parameter(QObject::tr("Auto Size"), false))
-, size(new prm::Parameter(QObject::tr("Size"), 1.0))
+, csysObserver(new prm::Observer(std::bind(&Feature::setModelDirty, this)))
+, autoSize(new prm::Parameter(prm::Names::AutoSize, false))
+, size(new prm::Parameter(prm::Names::Size, 1.0))
+, sizeObserver(new prm::Observer(std::bind(&Feature::setModelDirty, this)))
 , offsetVector(new prm::Parameter(prm::Names::Offset, osg::Vec3d()))
 , csysDragger(new ann::CSysDragger(this, csys.get()))
 , display(new mdv::DatumSystem())
@@ -70,13 +72,13 @@ Feature::Feature()
   name = QObject::tr("Datum System");
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
   
-  csys->connectValue(std::bind(&Feature::setModelDirty, this));
+  csys->connect(*csysObserver);
   parameters.push_back(csys.get());
   
   autoSize->connectValue(std::bind(&Feature::setModelDirty, this));
   parameters.push_back(autoSize.get());
   
-  size->connectValue(std::bind(&Feature::setModelDirty, this));
+  size->connect(*sizeObserver);
   parameters.push_back(size.get());
   
   offsetVector->connectValue(std::bind(&Feature::setModelDirty, this));
@@ -158,6 +160,8 @@ void Feature::updateModel(const UpdatePayload &pIn)
     
     if (cue.systemType == SystemType::Constant)
       updateNone(pIn);
+    if (cue.systemType == SystemType::Linked)
+      updateLinked(pIn);
     else if (cue.systemType == SystemType::Through3Points)
       update3Points(pIn);
     
@@ -201,7 +205,8 @@ void Feature::updateLinked(const UpdatePayload &pIn)
     , static_cast<osg::Vec3d>(*offsetVector)
   );
   
-  csys->setValueQuiet(newSys);
+  prm::ObserverBlocker blocker(*csysObserver);
+  csys->setValue(newSys);
   csysDragger->draggerUpdate();
 }
 
@@ -236,7 +241,8 @@ void Feature::update3Points(const UpdatePayload &pIn)
   
   osg::Matrixd newSys = applyOffset(ocsys.get(), static_cast<osg::Vec3d>(*offsetVector));
   
-  csys->setValueQuiet(newSys);
+  prm::ObserverBlocker blocker(*csysObserver);
+  csys->setValue(newSys);
   csysDragger->draggerUpdate();
   
   if (static_cast<bool>(*autoSize))
@@ -245,8 +251,8 @@ void Feature::update3Points(const UpdatePayload &pIn)
     bs.expandBy(points.at(0));
     bs.expandBy(points.at(1));
     bs.expandBy(points.at(2));
-    size->setValueQuiet(bs.radius());
-    sizeLabel->valueHasChanged();
+    prm::ObserverBlocker blocker(*sizeObserver);
+    size->setValue(bs.radius());
   }
 }
 

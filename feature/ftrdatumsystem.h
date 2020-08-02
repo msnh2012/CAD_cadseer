@@ -25,13 +25,14 @@
 
 namespace osg{class Matrixd; class PositionAttitudeTransform;}
 
+namespace prm{struct Observer;}
 namespace mdv{class DatumSystem;}
 namespace lbr{class PLabel;}
 namespace ann{class CSysDragger;}
 namespace prj{namespace srl{namespace dtms{class DatumSystem;}}}
 
 /* right now the only offset is just a 3d vector offsetVector. This is only temporary.
- * We will add an orientation of promote it to a full blown matrixd.
+ * We will add an orientation or promote it to a full blown matrixd.
  * This should be done after the expressions for those 2 are working.
  */
 
@@ -82,8 +83,10 @@ namespace ftr
       static QIcon icon;
       Cue cue;
       std::unique_ptr<prm::Parameter> csys;
+      std::unique_ptr<prm::Observer> csysObserver;
       std::unique_ptr<prm::Parameter> autoSize;
       std::unique_ptr<prm::Parameter> size;
+      std::unique_ptr<prm::Observer> sizeObserver;
       std::unique_ptr<prm::Parameter> offsetVector;
       std::unique_ptr<ann::CSysDragger> csysDragger;
       

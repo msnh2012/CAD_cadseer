@@ -738,6 +738,9 @@ void Project::featureStateChangedDispatched(const msg::Message &messageIn)
   Vertices vertices;
   gu::BFSLimitVisitor<Vertex> visitor(vertices);
   boost::breadth_first_search(stow->graph, vertex, boost::visitor(visitor));
+  
+  //we don't need to set the feature responsible for getting here.
+  vertices.erase(std::remove_if(vertices.begin(), vertices.end(), [&](Vertex v){return v == vertex;}), vertices.end());
   for (const auto &v : vertices)
     stow->graph[v].feature->setModelDirty();
 }

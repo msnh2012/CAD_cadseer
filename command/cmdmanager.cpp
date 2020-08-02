@@ -1042,7 +1042,7 @@ BasePtr editHollow(ftr::Base *feature)
 
 BasePtr editDatumSystem(ftr::Base *feature)
 {
-  return std::make_shared<DatumSystemEdit>(feature);
+  return std::make_shared<DatumSystem>(feature);
 }
 
 BasePtr editSurfaceMesh(ftr::Base *feature)

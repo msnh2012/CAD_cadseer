@@ -23,6 +23,7 @@
 #include <memory>
 #include <functional>
 
+#include <QObject>
 #include <QString>
 #include <QStringList>
 
@@ -36,21 +37,23 @@ namespace prm
 {
   namespace Names
   {
-    static const QString Radius = "Radius"; //!< cylinder, sphere
-    static const QString Height = "Height"; //!< cylinder, box, cone
-    static const QString Length = "Length"; //!< box
-    static const QString Width = "Width"; //!< box
-    static const QString Radius1 = "Radius1"; //!< cone
-    static const QString Radius2 = "Radius2"; //!< cone
-    static const QString Position = "Position"; //!< blend
-    static const QString Distance = "Distance"; //!< chamfer, sketch
-    static const QString Angle = "Angle"; //!< draft
-    static const QString Offset = "Offset"; //!< datum plane
-    static const QString CSys = "CSys"; //!< feature with a coordinate system.
-    static const QString Diameter = "Diameter"; //!< sketch
-    static const QString Direction = "Direction"; //!< extrude.
-    static const QString Scale = "Scale"; //!< image plane.
-    static const QString Path = "Path"; //!< image plane.
+    static const QString Radius = QObject::tr("Radius"); //!< cylinder, sphere
+    static const QString Height = QObject::tr("Height"); //!< cylinder, box, cone
+    static const QString Length = QObject::tr("Length"); //!< box
+    static const QString Width = QObject::tr("Width"); //!< box
+    static const QString Radius1 = QObject::tr("Radius1"); //!< cone
+    static const QString Radius2 = QObject::tr("Radius2"); //!< cone
+    static const QString Position = QObject::tr("Position"); //!< blend
+    static const QString Distance = QObject::tr("Distance"); //!< chamfer, sketch
+    static const QString Angle = QObject::tr("Angle"); //!< draft
+    static const QString Offset = QObject::tr("Offset"); //!< datum plane
+    static const QString CSys = QObject::tr("CSys"); //!< feature with a coordinate system.
+    static const QString Diameter = QObject::tr("Diameter"); //!< sketch
+    static const QString Direction = QObject::tr("Direction"); //!< extrude.
+    static const QString Scale = QObject::tr("Scale"); //!< image plane.
+    static const QString Path = QObject::tr("Path"); //!< image plane.
+    static const QString Size = QObject::tr("Size"); //!< datums.
+    static const QString AutoSize = QObject::tr("AutoSize"); //!< datums.
   }
   
   /*! Descriptor for path parameters.*/

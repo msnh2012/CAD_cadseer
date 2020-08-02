@@ -20,10 +20,9 @@
 #ifndef CMD_DATUMSYSTEM_H
 #define CMD_DATUMSYSTEM_H
 
+#include "command/cmdleafmanager.h"
 #include "command/cmdbase.h"
 
-namespace slc{class Container;}
-namespace dlg{class DatumSystem;}
 namespace ftr{namespace DatumSystem{class Feature;}}
 
 namespace cmd
@@ -34,36 +33,24 @@ namespace cmd
   class DatumSystem : public Base
   {
   public:
+    ftr::DatumSystem::Feature *feature = nullptr;
+    
     DatumSystem();
+    DatumSystem(ftr::Base*);
     ~DatumSystem() override;
     
     std::string getCommandName() override{return "DatumSystem";}
     std::string getStatusMessage() override;
     void activate() override;
     void deactivate() override;
-  private:
-    void go();
-    bool attemptThrough3Points(const std::vector<slc::Container>&);
-    bool firstRun = true;
-    dlg::DatumSystem *dialog = nullptr;
-  };
-  
-  /**
-  * @todo write docs
-  */
-  class DatumSystemEdit : public Base
-  {
-  public:
-    DatumSystemEdit(ftr::Base*);
-    ~DatumSystemEdit() override;
     
-    std::string getCommandName() override{return "DatumSystem Edit";}
-    std::string getStatusMessage() override;
-    void activate() override;
-    void deactivate() override;
+    bool set3Points(const slc::Messages&);
+    void setLinked(const boost::uuids::uuid&); //!< pass nil id for constant by parameter
+    bool isValidSelection(const slc::Message&);
+    void localUpdate();
   private:
-    dlg::DatumSystem *dialog = nullptr;
-    ftr::DatumSystem::Feature *feature = nullptr;
+    cmd::LeafManager leafManager;
+    void go();
   };
 }
 #endif // CMD_DATUMSYSTEM_H

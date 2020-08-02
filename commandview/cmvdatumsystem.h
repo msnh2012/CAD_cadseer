@@ -1,6 +1,6 @@
 /*
  * CadSeer. Parametric Solid Modeling.
- * Copyright (C) 2019 Thomas S. Anderson blobfish.at.gmx.com
+ * Copyright (C) 2020 Thomas S. Anderson blobfish.at.gmx.com
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,16 +17,16 @@
  *
  */
 
-#ifndef DLG_DATUMSYSTEM_H
-#define DLG_DATUMSYSTEM_H
+#ifndef CMV_DATUMSYSTEM_H
+#define CMV_DATUMSYSTEM_H
 
 #include <memory>
 
-#include "dialogs/dlgbase.h"
+#include "commandview/cmvbase.h"
 
-namespace ftr{namespace DatumSystem{class Feature;}}
+namespace cmd{class DatumSystem;}
 
-namespace dlg
+namespace cmv
 {
   /**
   * @todo write docs
@@ -35,23 +35,16 @@ namespace dlg
   {
     Q_OBJECT
   public:
-    DatumSystem(ftr::DatumSystem::Feature*, QWidget*, bool = false);
+    DatumSystem(cmd::DatumSystem*);
     ~DatumSystem() override;
-  public Q_SLOTS:
-    void reject() override;
-    void accept() override;
   private Q_SLOTS:
     void comboChanged(int);
-    void tabChanged(int);
+    void linkCSysChanged();
+    void p3Changed();
   private:
     struct Stow;
     std::unique_ptr<Stow> stow;
-    
-    void init();
-    void buildGui();
-    void loadFeatureData();
-    void finishDialog();
   };
 }
 
-#endif // DLG_DATUMSYSTEM_H
+#endif // CMV_DATUMSYSTEM_H

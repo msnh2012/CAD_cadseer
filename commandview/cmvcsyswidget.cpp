@@ -19,7 +19,7 @@
 
 #include <QHBoxLayout>
 #include <QVBoxLayout>
-#include <QStackedLayout>
+#include <QStackedWidget>
 #include <QLabel>
 #include <QRadioButton>
 
@@ -42,7 +42,7 @@ struct cmv::CSysWidget::Stow
   QRadioButton *byFeature = nullptr;
   dlg::ExpressionEdit *expressionWidget = nullptr;
   dlg::SelectionWidget *selectionWidget = nullptr;
-  QStackedLayout *stackLayout = nullptr;
+  QStackedWidget *stackWidget = nullptr;
   
   Stow() = delete;
   Stow(QWidget *parentIn, prm::Parameter* parameterIn)
@@ -54,6 +54,8 @@ struct cmv::CSysWidget::Stow
   
   void buildGui()
   {
+    parent->setSizePolicy(parent->sizePolicy().horizontalPolicy(), QSizePolicy::Maximum);
+    
     QVBoxLayout *mainLayout = new QVBoxLayout();
     mainLayout->setContentsMargins(0, 0, 0, 0);
     parent->setLayout(mainLayout);
@@ -71,26 +73,19 @@ struct cmv::CSysWidget::Stow
     //stacked widgets
     expressionWidget = new dlg::ExpressionEdit(parent);
     expressionWidget->setDisabled(true); //we can't parse coordinate systems yet
+    
     dlg::SelectionWidgetCue cue;
     cue.name.clear();
     cue.singleSelection = true;
     cue.showAccrueColumn = false;
     cue.mask = slc::ObjectsEnabled | slc::ObjectsSelectable;
     cue.statusPrompt = tr("Select Feature To Link Coordinate System");
-    QWidget *dummy = new QWidget(parent); //to keep parameter widget pushed 'up'
-    dummy->setContentsMargins(0, 0, 0, 0);
-    QVBoxLayout *dummyLayout = new QVBoxLayout();
-    dummyLayout->setContentsMargins(0, 0, 0, 0);
-    dummyLayout->addWidget(expressionWidget);
-    dummyLayout->addStretch();
-    dummy->setLayout(dummyLayout);
-    
     selectionWidget = new dlg::SelectionWidget(parent, std::vector<dlg::SelectionWidgetCue>(1, cue));
-    stackLayout = new QStackedLayout();
-    stackLayout->addWidget(dummy);
-    stackLayout->addWidget(selectionWidget);
-    mainLayout->addLayout(stackLayout);
-    mainLayout->addStretch();
+    
+    stackWidget = new QStackedWidget();
+    stackWidget->addWidget(expressionWidget);
+    stackWidget->addWidget(selectionWidget);
+    mainLayout->addWidget(stackWidget);
     
     selectionWidget->getButton(0)->setChecked(true);
   }
@@ -121,7 +116,7 @@ void CSysWidget::setCSysLinkId(const boost::uuids::uuid &idIn)
   if (idIn.is_nil())
   {
     stow->byConstant->setChecked(true);
-    stow->stackLayout->setCurrentIndex(0);
+    stow->stackWidget->setCurrentIndex(0);
     return;
   }
   //else
@@ -135,7 +130,7 @@ void CSysWidget::setCSysLinkId(const boost::uuids::uuid &idIn)
   //don't care about selection mask
   stow->selectionWidget->initializeButton(0, s); //don't send 'dirty'
   stow->byFeature->setChecked(true);
-  stow->stackLayout->setCurrentIndex(1);
+  stow->stackWidget->setCurrentIndex(1);
 }
 
 boost::uuids::uuid CSysWidget::getCSysLinkId() const
@@ -152,13 +147,13 @@ void CSysWidget::radioSlot()
   //so we need both tests and can't use 'else'
   if (stow->byConstant->isChecked())
   {
-    stow->stackLayout->setCurrentIndex(0);
+    stow->stackWidget->setCurrentIndex(0);
     statusChanged();
     dirty();
   }
   if (stow->byFeature->isChecked())
   {
-    stow->stackLayout->setCurrentIndex(1);
+    stow->stackWidget->setCurrentIndex(1);
     dirty();
   }
 }
