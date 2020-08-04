@@ -22,7 +22,8 @@
 
 #include "command/cmdbase.h"
 
-namespace dlg{class CheckGeometry;}
+namespace ftr{class Base;}
+namespace slc{struct Message;}
 
 namespace cmd
 {
@@ -30,19 +31,24 @@ namespace cmd
   {
   public:
     CheckGeometry();
-    virtual ~CheckGeometry() override;
-    virtual std::string getCommandName() override{return "Check Geometry";}
-    virtual std::string getStatusMessage() override;
-    virtual void activate() override;
-    virtual void deactivate() override;
+    ~CheckGeometry() override;
+    std::string getCommandName() override{return "Check Geometry";}
+    std::string getStatusMessage() override;
+    void activate() override;
+    void deactivate() override;
+    
+    bool isCompromised = false;
     
   private:
-    dlg::CheckGeometry *dialog = nullptr;
-    bool hasRan = false;
+    ftr::Base *feature = nullptr;
     
-    void go();
     void setupDispatcher();
+    void go();
     void selectionAdditionDispatched(const msg::Message&);
+    void goMessage(const slc::Message&);
+    void featureRemovedDispatched(const msg::Message&);
+    void featureStateChangedDispatched(const msg::Message&);
+    void forceClose();
   };
 }
 

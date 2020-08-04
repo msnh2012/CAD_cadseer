@@ -1,6 +1,6 @@
 /*
  * CadSeer. Parametric Solid Modeling.
- * Copyright (C) 2016  Thomas S. Anderson blobfish.at.gmx.com
+ * Copyright (C) 2020 Thomas S. Anderson blobfish.at.gmx.com
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,194 +17,208 @@
  *
  */
 
+// #include <cassert>
+// #include <boost/optional/optional.hpp>
+
+#include <QSettings>
+#include <QTabWidget>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
-#include <QTabWidget>
 #include <QTreeWidget>
 #include <QTableWidget>
-#include <QCloseEvent>
-#include <QSettings>
 #include <QHeaderView>
 #include <QHideEvent>
 #include <QTextEdit>
 #include <QLabel>
 #include <QPushButton>
 
-#include <boost/current_function.hpp>
-
 #include <BRepCheck_Analyzer.hxx>
 #include <BOPAlgo_ArgumentAnalyzer.hxx>
+#include <BRepBndLib.hxx>
+#include <Bnd_Box.hxx>
+#include <TopoDS.hxx>
 #include <TopExp_Explorer.hxx>
 #include <TopExp.hxx>
 #include <BRep_Tool.hxx>
-#include <TopoDS.hxx>
-#include <BRepBndLib.hxx>
-#include <Bnd_Box.hxx>
 #include <BRepTools_ShapeSet.hxx>
-#include <BRepBuilderAPI_Copy.hxx>
 
-#include <osg/Group>
 #include <osg/PositionAttitudeTransform>
 #include <osg/Geometry>
 #include <osg/BlendFunc>
 #include <osg/PolygonMode>
 #include <osg/Switch>
 
-#include "globalutilities.h"
 #include "application/appapplication.h"
-#include "project/prjmessage.h"
-#include "feature/ftrbase.h"
-#include "feature/ftrmessage.h"
+#include "project/prjproject.h"
 #include "annex/annseershape.h"
+// #include "preferences/preferencesXML.h"
+// #include "preferences/prfmanager.h"
+// #include "message/msgmessage.h"
 #include "message/msgnode.h"
 #include "message/msgsift.h"
-#include "selection/slcmessage.h"
+#include "library/lbrspherebuilder.h"
+// #include "dialogs/dlgselectionbutton.h"
+// #include "dialogs/dlgselectionlist.h"
+// #include "dialogs/dlgselectionwidget.h"
+// #include "commandview/cmvparameterwidgets.h"
+// #include "parameter/prmparameter.h"
+// #include "expressions/exprmanager.h"
+// #include "expressions/exprstringtranslator.h"
+// #include "expressions/exprvalue.h"
+// #include "library/lbrplabel.h"
+// #include "tools/featuretools.h"
 #include "tools/idtools.h"
 #include "tools/occtools.h"
-#include "library/lbrspherebuilder.h"
-#include "dialogs/dlgwidgetgeometry.h"
-#include "dialogs/dlgcheckgeometry.h"
+#include "globalutilities.h"
+// #include "feature/ftrinputtype.h"
+#include "feature/ftrbase.h"
+#include "command/cmdcheckgeometry.h"
+#include "commandview/cmvcheckgeometry.h"
 
-using namespace dlg;
 using boost::uuids::uuid;
 
-QString checkStatusToString(BRepCheck_Status status)
+namespace
 {
-  static const std::map<BRepCheck_Status, QString> names
+  QString checkStatusToString(BRepCheck_Status status)
   {
-    std::make_pair(BRepCheck_NoError, QObject::tr("No Error")),
-    std::make_pair(BRepCheck_InvalidPointOnCurve, QObject::tr("Invalid Point On Curve")),
-    std::make_pair(BRepCheck_InvalidPointOnCurveOnSurface, QObject::tr("Invalid Point On Curve On Surface")),
-    std::make_pair(BRepCheck_InvalidPointOnSurface, QObject::tr("Invalid Point On Surface")),
-    std::make_pair(BRepCheck_No3DCurve, QObject::tr("No 3D Curve")),
-    std::make_pair(BRepCheck_Multiple3DCurve, QObject::tr("Multiple 3D Curve")),
-    std::make_pair(BRepCheck_Invalid3DCurve, QObject::tr("Invalid 3D Curve")),
-    std::make_pair(BRepCheck_NoCurveOnSurface, QObject::tr("No Curve On Surface")),
-    std::make_pair(BRepCheck_InvalidCurveOnSurface, QObject::tr("Invalid Curve On Surface")),
-    std::make_pair(BRepCheck_InvalidCurveOnClosedSurface, QObject::tr("Invalid Curve On Closed Surface")),
-    std::make_pair(BRepCheck_InvalidSameRangeFlag, QObject::tr("Invalid Same Range Flag")),
-    std::make_pair(BRepCheck_InvalidSameParameterFlag, QObject::tr("Invalid Same Parameter Flag")),
-    std::make_pair(BRepCheck_InvalidDegeneratedFlag, QObject::tr("Invalid Degenerated Flag")),
-    std::make_pair(BRepCheck_FreeEdge, QObject::tr("Free Edge")),
-    std::make_pair(BRepCheck_InvalidMultiConnexity, QObject::tr("Invalid MultiConnexity")),
-    std::make_pair(BRepCheck_InvalidRange, QObject::tr("Invalid Range")),
-    std::make_pair(BRepCheck_EmptyWire, QObject::tr("Empty Wire")),
-    std::make_pair(BRepCheck_RedundantEdge, QObject::tr("Redundant Edge")),
-    std::make_pair(BRepCheck_SelfIntersectingWire, QObject::tr("Self Intersecting Wire")),
-    std::make_pair(BRepCheck_NoSurface, QObject::tr("No Surface")),
-    std::make_pair(BRepCheck_InvalidWire, QObject::tr("Invalid Wire")),
-    std::make_pair(BRepCheck_RedundantWire, QObject::tr("Redundant Wire")),
-    std::make_pair(BRepCheck_IntersectingWires, QObject::tr("Intersecting Wires")),
-    std::make_pair(BRepCheck_InvalidImbricationOfWires, QObject::tr("Invalid Imbrication Of Wires")),
-    std::make_pair(BRepCheck_EmptyShell, QObject::tr("Empty Shell")),
-    std::make_pair(BRepCheck_RedundantFace, QObject::tr("Redundant Face")),
-    std::make_pair(BRepCheck_InvalidImbricationOfShells, QObject::tr("Invalid Imbrication Of Shells")),
-    std::make_pair(BRepCheck_UnorientableShape, QObject::tr("Unorientable Shape")),
-    std::make_pair(BRepCheck_NotClosed, QObject::tr("Not Closed")),
-    std::make_pair(BRepCheck_NotConnected, QObject::tr("Not Connected")),
-    std::make_pair(BRepCheck_SubshapeNotInShape, QObject::tr("Sub Shape Not In Shape")),
-    std::make_pair(BRepCheck_BadOrientation, QObject::tr("Bad Orientation")),
-    std::make_pair(BRepCheck_BadOrientationOfSubshape, QObject::tr("Bad Orientation Of Sub Shape")),
-    std::make_pair(BRepCheck_InvalidPolygonOnTriangulation, QObject::tr("Invalid Polygon On Triangulation")),
-    std::make_pair(BRepCheck_InvalidToleranceValue, QObject::tr("Invalid Tolerance Value")),
-    std::make_pair(BRepCheck_EnclosedRegion, QObject::tr("Enclosed Region")),
-    std::make_pair(BRepCheck_CheckFail, QObject::tr("Check Failed"))
-  };
-  
-  if (names.count(status) == 0)
-    return (QObject::tr("Out Of Enum Range"));
-  else
-    return names.at(status);
-}
-
-QString BOPCheckStatusToString(BOPAlgo_CheckStatus status)
-{
-  static const QStringList results =
-  {
-    QObject::tr("BOPAlgo CheckUnknown"),                //BOPAlgo_CheckUnknown
-    QObject::tr("BOPAlgo BadType"),                     //BOPAlgo_BadType
-    QObject::tr("BOPAlgo SelfIntersect"),               //BOPAlgo_SelfIntersect
-    QObject::tr("BOPAlgo TooSmallEdge"),                //BOPAlgo_TooSmallEdge
-    QObject::tr("BOPAlgo NonRecoverableFace"),          //BOPAlgo_NonRecoverableFace
-    QObject::tr("BOPAlgo IncompatibilityOfVertex"),     //BOPAlgo_IncompatibilityOfVertex
-    QObject::tr("BOPAlgo IncompatibilityOfEdge"),       //BOPAlgo_IncompatibilityOfEdge
-    QObject::tr("BOPAlgo IncompatibilityOfFace"),       //BOPAlgo_IncompatibilityOfFace
-    QObject::tr("BOPAlgo OperationAborted"),            //BOPAlgo_OperationAborted
-    QObject::tr("BOPAlgo GeomAbs_C0"),                  //BOPAlgo_GeomAbs_C0
-    QObject::tr("BOPAlgo InvalidCurveOnSurface"),       //BOPAlgo_InvalidCurveOnSurface
-    QObject::tr("BOPAlgo NotValid")                     //BOPAlgo_NotValid
-  };
-  
-  return results.at(static_cast<int>(status));
-}
-
-static osg::BoundingSphered calculateBoundingSphere(const TopoDS_Shape& shape)
-{
-  osg::BoundingSphered out;
-  
-  Bnd_Box bBox;
-  BRepBndLib::Add(shape, bBox);
-  if (bBox.IsVoid())
-    return out;
-  
-  osg::Vec3d point1 = gu::toOsg(bBox.CornerMin());
-  osg::Vec3d point2 = gu::toOsg(bBox.CornerMax());
-  osg::Vec3d diagonalVec = point2 - point1;
-  out.radius() = diagonalVec.length() / 2.0;
-  diagonalVec.normalize();
-  diagonalVec *= out.radius();
-  out.center() = point1 + diagonalVec;
-  
-  return out;
-}
-
-static osg::PositionAttitudeTransform* buildBoundingSphere(const osg::BoundingSphered &bSphere)
-{
-  osg::ref_ptr<osg::PositionAttitudeTransform> transform = new osg::PositionAttitudeTransform();
-  transform->setPosition(bSphere.center());
-  lbr::SphereBuilder builder;
-  builder.setRadius(bSphere.radius());
-  builder.setDeviation(0.25);
-  osg::Geometry *geometry = builder;
-  osg::Vec4Array *color = new osg::Vec4Array();
-  color->push_back(osg::Vec4(1.0, 1.0, 0.0, 0.2));
-  geometry->setColorArray(color);
-  geometry->setColorBinding(osg::Geometry::BIND_OVERALL);
-  geometry->getOrCreateStateSet()->setRenderingHint(osg::StateSet::TRANSPARENT_BIN);
-  osg::BlendFunc* bf = new osg::BlendFunc(osg::BlendFunc::SRC_ALPHA, osg::BlendFunc::ONE_MINUS_SRC_ALPHA); 
-  geometry->getOrCreateStateSet()->setAttributeAndModes(bf);
-  osg::PolygonMode *pm = new osg::PolygonMode(osg::PolygonMode::FRONT_AND_BACK, osg::PolygonMode::LINE);
-  geometry->getOrCreateStateSet()->setAttribute(pm);
-  transform->addChild(geometry);
-  
-  return transform.release();
-}
-
-bool convertVertexSelection
-(
-  const ann::SeerShape& seerShapeIn,
-  slc::Message &mInOut
-)
-{
-  const TopoDS_Vertex vertex = TopoDS::Vertex(seerShapeIn.getOCCTShape(mInOut.shapeId));
-  std::vector<uuid> parentEdges = seerShapeIn.useGetParentsOfType(mInOut.shapeId, TopAbs_EDGE);
-  for (const auto &edge : parentEdges)
-  {
-    if (seerShapeIn.useGetStartVertex(edge) == mInOut.shapeId)
+    static const std::map<BRepCheck_Status, QString> names
     {
-      mInOut.shapeId = edge;
-      mInOut.type = slc::Type::StartPoint;
-      return true;
-    }
-    else if (seerShapeIn.useGetEndVertex(edge) == mInOut.shapeId)
-    {
-      mInOut.shapeId = edge;
-      mInOut.type = slc::Type::EndPoint;
-      return true;
-    }
+      std::make_pair(BRepCheck_NoError, QObject::tr("No Error")),
+      std::make_pair(BRepCheck_InvalidPointOnCurve, QObject::tr("Invalid Point On Curve")),
+      std::make_pair(BRepCheck_InvalidPointOnCurveOnSurface, QObject::tr("Invalid Point On Curve On Surface")),
+      std::make_pair(BRepCheck_InvalidPointOnSurface, QObject::tr("Invalid Point On Surface")),
+      std::make_pair(BRepCheck_No3DCurve, QObject::tr("No 3D Curve")),
+      std::make_pair(BRepCheck_Multiple3DCurve, QObject::tr("Multiple 3D Curve")),
+      std::make_pair(BRepCheck_Invalid3DCurve, QObject::tr("Invalid 3D Curve")),
+      std::make_pair(BRepCheck_NoCurveOnSurface, QObject::tr("No Curve On Surface")),
+      std::make_pair(BRepCheck_InvalidCurveOnSurface, QObject::tr("Invalid Curve On Surface")),
+      std::make_pair(BRepCheck_InvalidCurveOnClosedSurface, QObject::tr("Invalid Curve On Closed Surface")),
+      std::make_pair(BRepCheck_InvalidSameRangeFlag, QObject::tr("Invalid Same Range Flag")),
+      std::make_pair(BRepCheck_InvalidSameParameterFlag, QObject::tr("Invalid Same Parameter Flag")),
+      std::make_pair(BRepCheck_InvalidDegeneratedFlag, QObject::tr("Invalid Degenerated Flag")),
+      std::make_pair(BRepCheck_FreeEdge, QObject::tr("Free Edge")),
+      std::make_pair(BRepCheck_InvalidMultiConnexity, QObject::tr("Invalid MultiConnexity")),
+      std::make_pair(BRepCheck_InvalidRange, QObject::tr("Invalid Range")),
+      std::make_pair(BRepCheck_EmptyWire, QObject::tr("Empty Wire")),
+      std::make_pair(BRepCheck_RedundantEdge, QObject::tr("Redundant Edge")),
+      std::make_pair(BRepCheck_SelfIntersectingWire, QObject::tr("Self Intersecting Wire")),
+      std::make_pair(BRepCheck_NoSurface, QObject::tr("No Surface")),
+      std::make_pair(BRepCheck_InvalidWire, QObject::tr("Invalid Wire")),
+      std::make_pair(BRepCheck_RedundantWire, QObject::tr("Redundant Wire")),
+      std::make_pair(BRepCheck_IntersectingWires, QObject::tr("Intersecting Wires")),
+      std::make_pair(BRepCheck_InvalidImbricationOfWires, QObject::tr("Invalid Imbrication Of Wires")),
+      std::make_pair(BRepCheck_EmptyShell, QObject::tr("Empty Shell")),
+      std::make_pair(BRepCheck_RedundantFace, QObject::tr("Redundant Face")),
+      std::make_pair(BRepCheck_InvalidImbricationOfShells, QObject::tr("Invalid Imbrication Of Shells")),
+      std::make_pair(BRepCheck_UnorientableShape, QObject::tr("Unorientable Shape")),
+      std::make_pair(BRepCheck_NotClosed, QObject::tr("Not Closed")),
+      std::make_pair(BRepCheck_NotConnected, QObject::tr("Not Connected")),
+      std::make_pair(BRepCheck_SubshapeNotInShape, QObject::tr("Sub Shape Not In Shape")),
+      std::make_pair(BRepCheck_BadOrientation, QObject::tr("Bad Orientation")),
+      std::make_pair(BRepCheck_BadOrientationOfSubshape, QObject::tr("Bad Orientation Of Sub Shape")),
+      std::make_pair(BRepCheck_InvalidPolygonOnTriangulation, QObject::tr("Invalid Polygon On Triangulation")),
+      std::make_pair(BRepCheck_InvalidToleranceValue, QObject::tr("Invalid Tolerance Value")),
+      std::make_pair(BRepCheck_EnclosedRegion, QObject::tr("Enclosed Region")),
+      std::make_pair(BRepCheck_CheckFail, QObject::tr("Check Failed"))
+    };
+    
+    if (names.count(status) == 0)
+      return (QObject::tr("Out Of Enum Range"));
+    else
+      return names.at(status);
   }
-  return false;
+
+  QString BOPCheckStatusToString(BOPAlgo_CheckStatus status)
+  {
+    static const QStringList results =
+    {
+      QObject::tr("BOPAlgo CheckUnknown"),                //BOPAlgo_CheckUnknown
+      QObject::tr("BOPAlgo BadType"),                     //BOPAlgo_BadType
+      QObject::tr("BOPAlgo SelfIntersect"),               //BOPAlgo_SelfIntersect
+      QObject::tr("BOPAlgo TooSmallEdge"),                //BOPAlgo_TooSmallEdge
+      QObject::tr("BOPAlgo NonRecoverableFace"),          //BOPAlgo_NonRecoverableFace
+      QObject::tr("BOPAlgo IncompatibilityOfVertex"),     //BOPAlgo_IncompatibilityOfVertex
+      QObject::tr("BOPAlgo IncompatibilityOfEdge"),       //BOPAlgo_IncompatibilityOfEdge
+      QObject::tr("BOPAlgo IncompatibilityOfFace"),       //BOPAlgo_IncompatibilityOfFace
+      QObject::tr("BOPAlgo OperationAborted"),            //BOPAlgo_OperationAborted
+      QObject::tr("BOPAlgo GeomAbs_C0"),                  //BOPAlgo_GeomAbs_C0
+      QObject::tr("BOPAlgo InvalidCurveOnSurface"),       //BOPAlgo_InvalidCurveOnSurface
+      QObject::tr("BOPAlgo NotValid")                     //BOPAlgo_NotValid
+    };
+    
+    return results.at(static_cast<int>(status));
+  }
+
+  osg::BoundingSphered calculateBoundingSphere(const TopoDS_Shape& shape)
+  {
+    osg::BoundingSphered out;
+    
+    Bnd_Box bBox;
+    BRepBndLib::Add(shape, bBox);
+    if (bBox.IsVoid())
+      return out;
+    
+    osg::Vec3d point1 = gu::toOsg(bBox.CornerMin());
+    osg::Vec3d point2 = gu::toOsg(bBox.CornerMax());
+    osg::Vec3d diagonalVec = point2 - point1;
+    out.radius() = diagonalVec.length() / 2.0;
+    diagonalVec.normalize();
+    diagonalVec *= out.radius();
+    out.center() = point1 + diagonalVec;
+    
+    return out;
+  }
+
+  osg::PositionAttitudeTransform* buildBoundingSphere(const osg::BoundingSphered &bSphere)
+  {
+    osg::ref_ptr<osg::PositionAttitudeTransform> transform = new osg::PositionAttitudeTransform();
+    transform->setPosition(bSphere.center());
+    lbr::SphereBuilder builder;
+    builder.setRadius(bSphere.radius());
+    builder.setDeviation(0.25);
+    osg::Geometry *geometry = builder;
+    osg::Vec4Array *color = new osg::Vec4Array();
+    color->push_back(osg::Vec4(1.0, 1.0, 0.0, 0.2));
+    geometry->setColorArray(color);
+    geometry->setColorBinding(osg::Geometry::BIND_OVERALL);
+    geometry->getOrCreateStateSet()->setRenderingHint(osg::StateSet::TRANSPARENT_BIN);
+    osg::BlendFunc* bf = new osg::BlendFunc(osg::BlendFunc::SRC_ALPHA, osg::BlendFunc::ONE_MINUS_SRC_ALPHA); 
+    geometry->getOrCreateStateSet()->setAttributeAndModes(bf);
+    osg::PolygonMode *pm = new osg::PolygonMode(osg::PolygonMode::FRONT_AND_BACK, osg::PolygonMode::LINE);
+    geometry->getOrCreateStateSet()->setAttribute(pm);
+    transform->addChild(geometry);
+    
+    return transform.release();
+  }
+
+  bool convertVertexSelection
+  (
+    const ann::SeerShape& seerShapeIn,
+    slc::Message &mInOut
+  )
+  {
+    const TopoDS_Vertex vertex = TopoDS::Vertex(seerShapeIn.getOCCTShape(mInOut.shapeId));
+    std::vector<uuid> parentEdges = seerShapeIn.useGetParentsOfType(mInOut.shapeId, TopAbs_EDGE);
+    for (const auto &edge : parentEdges)
+    {
+      if (seerShapeIn.useGetStartVertex(edge) == mInOut.shapeId)
+      {
+        mInOut.shapeId = edge;
+        mInOut.type = slc::Type::StartPoint;
+        return true;
+      }
+      else if (seerShapeIn.useGetEndVertex(edge) == mInOut.shapeId)
+      {
+        mInOut.shapeId = edge;
+        mInOut.type = slc::Type::EndPoint;
+        return true;
+      }
+    }
+    return false;
+  }
 }
+
+using namespace cmv;
 
 CheckPageBase::CheckPageBase(const ftr::Base &featureIn, QWidget *parent):
   QWidget(parent), feature(featureIn), seerShape(featureIn.getAnnex<ann::SeerShape>())
@@ -973,97 +987,61 @@ void ShapesPage::hideEvent(QHideEvent *event)
   QWidget::hideEvent(event);
 }
 
-CheckGeometry::CheckGeometry(const ftr::Base &featureIn, QWidget *parent) :
-  QDialog(parent), feature(featureIn)
+struct CheckGeometry::Stow
 {
-  this->setWindowTitle(tr("Check Geometry"));
+  const ftr::Base &feature;
+  cmv::CheckGeometry *view;
   
-  node = std::make_unique<msg::Node>();
-  node->connect(msg::hub());
-  sift = std::make_unique<msg::Sift>();
-  sift->name = "dlg::CheckGeometry";
-  node->setHandler(std::bind(&msg::Sift::receive, sift.get(), std::placeholders::_1));
-  setupDispatcher();
+  QTabWidget *tabWidget = nullptr;
+  BasicCheckPage *basicCheckPage = nullptr;
+  BOPCheckPage *bopCheckPage = nullptr;
+  ToleranceCheckPage *toleranceCheckPage = nullptr;
+  ShapesPage *shapesPage = nullptr;
   
-  buildGui();
+  Stow(const ftr::Base &fIn, cmv::CheckGeometry *vIn)
+  : feature(fIn)
+  , view(vIn)
+  {
+    buildGui();
+    
+    QSettings &settings = app::instance()->getUserSettings();
+    settings.beginGroup("cmv::CheckGeometry");
+    //load settings
+    settings.endGroup();
+    
+    //we don't call go for bop page because it is so slow.
+    //we make the user launch it.
+    basicCheckPage->go();
+    toleranceCheckPage->go();
+    shapesPage->go();
+  }
   
-  WidgetGeometry *filter = new WidgetGeometry(this, "dlg::CheckGeometry");
-  this->installEventFilter(filter);
-}
+  void buildGui()
+  {
+    QVBoxLayout *mainLayout = new QVBoxLayout();
+    view->setLayout(mainLayout);
+    tabWidget = new QTabWidget(view);
+    mainLayout->addWidget(tabWidget);
+    
+    basicCheckPage = new BasicCheckPage(feature, view);
+    tabWidget->addTab(basicCheckPage, tr("Basic"));
+    
+    bopCheckPage = new BOPCheckPage(feature, view);
+    tabWidget->addTab(bopCheckPage, tr("Boolean"));
+    connect(basicCheckPage, SIGNAL(basicCheckPassed()), bopCheckPage, SLOT(basicCheckPassedSlot()));
+    connect(basicCheckPage, SIGNAL(basicCheckFailed()), bopCheckPage, SLOT(basicCheckFailedSlot()));
+    
+    toleranceCheckPage = new ToleranceCheckPage(feature, view);
+    tabWidget->addTab(toleranceCheckPage, tr("Tolerance"));
+    
+    shapesPage = new ShapesPage(feature, view);
+    tabWidget->addTab(shapesPage, tr("Shapes"));
+  }
+};
 
-CheckGeometry::~CheckGeometry(){}
+CheckGeometry::CheckGeometry(const ftr::Base &fIn)
+: Base("cmv::CheckGeometry")
+, stow(new Stow(fIn, this))
+{}
 
-void CheckGeometry::closeEvent(QCloseEvent *e)
-{
-  QDialog::closeEvent(e);
-  app::instance()->queuedMessage(msg::Mask(msg::Request | msg::Command | msg::Done));
-}
-
-void CheckGeometry::buildGui()
-{
-  QVBoxLayout *mainLayout = new QVBoxLayout();
-  this->setLayout(mainLayout);
-  tabWidget = new QTabWidget(this);
-  mainLayout->addWidget(tabWidget);
-  
-  basicCheckPage = new BasicCheckPage(feature, this);
-  tabWidget->addTab(basicCheckPage, tr("Basic"));
-  
-  bopCheckPage = new BOPCheckPage(feature, this);
-  tabWidget->addTab(bopCheckPage, tr("Boolean"));
-  connect(basicCheckPage, SIGNAL(basicCheckPassed()), bopCheckPage, SLOT(basicCheckPassedSlot()));
-  connect(basicCheckPage, SIGNAL(basicCheckFailed()), bopCheckPage, SLOT(basicCheckFailedSlot()));
-  
-  toleranceCheckPage = new ToleranceCheckPage(feature, this);
-  tabWidget->addTab(toleranceCheckPage, tr("Tolerance"));
-  
-  shapesPage = new ShapesPage(feature, this);
-  tabWidget->addTab(shapesPage, tr("Shapes"));
-}
-
-void CheckGeometry::go()
-{
-  //we don't call go for bop page because it is so slow.
-  //we make the user launch it.
-  basicCheckPage->go();
-  toleranceCheckPage->go();
-  shapesPage->go();
-}
-
-void CheckGeometry::setupDispatcher()
-{
-  sift->insert
-  (
-    {
-      std::make_pair
-      (
-        msg::Response | msg::Pre | msg::Remove | msg::Feature
-        , std::bind(&CheckGeometry::featureRemovedDispatched, this, std::placeholders::_1)
-      )
-      , std::make_pair
-      (
-        msg::Response | msg::Feature | msg::Status
-        , std::bind(&CheckGeometry::featureStateChangedDispatched, this, std::placeholders::_1)
-      )
-    }
-  );
-}
-
-void CheckGeometry::featureRemovedDispatched(const msg::Message &messageIn)
-{
-  prj::Message message = messageIn.getPRJ();
-  
-  if
-  (
-    (message.featureIds.size() == 1)
-    && (message.featureIds.front() == feature.getId())
-  )
-    qApp->postEvent(this, new QCloseEvent());
-}
-
-void CheckGeometry::featureStateChangedDispatched(const msg::Message &messageIn)
-{
-  ftr::Message fMessage = messageIn.getFTR();
-  if (fMessage.featureId == feature.getId())
-    qApp->postEvent(this, new QCloseEvent());
-}
+CheckGeometry::~CheckGeometry() = default;

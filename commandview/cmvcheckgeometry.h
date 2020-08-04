@@ -1,6 +1,6 @@
 /*
  * CadSeer. Parametric Solid Modeling.
- * Copyright (C) 2016  Thomas S. Anderson blobfish.at.gmx.com
+ * Copyright (C) 2020 Thomas S. Anderson blobfish.at.gmx.com
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,8 +17,8 @@
  *
  */
 
-#ifndef DLG_CHECKGEOMETRYDIALOG_H
-#define DLG_CHECKGEOMETRYDIALOG_H
+#ifndef CMV_CHECKGEOMETRY_H
+#define CMV_CHECKGEOMETRY_H
 
 #include <memory>
 #include <stack>
@@ -28,12 +28,14 @@
 #include <boost/uuid/uuid.hpp>
 #endif
 
-#include <QDialog>
+#include <QWidget>
 
 #include <TopAbs_ShapeEnum.hxx>
 
 #include <osg/observer_ptr>
 #include <osg/BoundingSphere>
+
+#include "commandview/cmvbase.h"
 
 class QTabWidget;
 class QTreeWidget;
@@ -49,17 +51,16 @@ class TopoDS_Shape;
 namespace osg{class PositionAttitudeTransform;}
 
 namespace ftr{class Base;}
-namespace msg{class Message; struct Node; struct Sift;}
 namespace ann{class SeerShape;}
 
-namespace dlg
+namespace cmv
 {
   class CheckPageBase : public QWidget
   {
     Q_OBJECT
   public:
     CheckPageBase(const ftr::Base&, QWidget*);
-    virtual ~CheckPageBase() override;
+    ~CheckPageBase() override;
   protected:
     const ftr::Base &feature;
     const ann::SeerShape &seerShape;
@@ -72,10 +73,10 @@ namespace dlg
     Q_OBJECT
   public:
     BasicCheckPage(const ftr::Base&, QWidget*);
-    virtual ~BasicCheckPage() override;
+    ~BasicCheckPage() override;
     void go();
   protected:
-    virtual void hideEvent(QHideEvent *) override;
+    void hideEvent(QHideEvent *) override;
   private:
     QTreeWidget *treeWidget = nullptr;
     std::stack<QTreeWidgetItem*> itemStack; //!< used during shape iteration.
@@ -97,13 +98,13 @@ namespace dlg
     Q_OBJECT
   public:
     BOPCheckPage(const ftr::Base&, QWidget*);
-    virtual ~BOPCheckPage() override;
+    ~BOPCheckPage() override;
   public Q_SLOTS:
     void basicCheckFailedSlot();
     void basicCheckPassedSlot();
     void goSlot();
   protected:
-    virtual void hideEvent(QHideEvent *) override;
+    void hideEvent(QHideEvent *) override;
   private:
     QTableWidget *tableWidget = nullptr;
     
@@ -116,10 +117,10 @@ namespace dlg
     Q_OBJECT
   public:
     ToleranceCheckPage(const ftr::Base&, QWidget*);
-    virtual ~ToleranceCheckPage() override;
+    ~ToleranceCheckPage() override;
     void go();
   protected:
-    virtual void hideEvent(QHideEvent *) override;
+    void hideEvent(QHideEvent *) override;
   private:
     QTableWidget *tableWidget;
     void buildGui();
@@ -140,39 +141,31 @@ namespace dlg
     void buildGui();
     std::vector<std::vector<boost::uuids::uuid>> boundaries;
   protected:
-    virtual void hideEvent(QHideEvent *) override;
+    void hideEvent(QHideEvent *) override;
   private Q_SLOTS:
     void boundaryItemChangedSlot();
   };
   
-  /*! @brief dialog for displaying corrupt occt geometry.
-   * 
-   * class assumes that the feature passed in does have
-   * a valid SeerShape.
-   */
-  class CheckGeometry : public QDialog
+  
+  
+  
+  
+  
+  
+  
+  /**
+  * @todo write docs
+  */
+  class CheckGeometry : public Base
   {
     Q_OBJECT
   public:
-    CheckGeometry(const ftr::Base&, QWidget*);
-    virtual ~CheckGeometry() override;
-    void go();
-  protected:
-    virtual void closeEvent (QCloseEvent*) override;
+    CheckGeometry(const ftr::Base&);
+    ~CheckGeometry() override;
   private:
-    const ftr::Base &feature;
-    QTabWidget *tabWidget;
-    BasicCheckPage *basicCheckPage;
-    BOPCheckPage *bopCheckPage;
-    ToleranceCheckPage *toleranceCheckPage;
-    ShapesPage *shapesPage;
-    std::unique_ptr<msg::Node> node;
-    std::unique_ptr<msg::Sift> sift;
-    void setupDispatcher();
-    void buildGui();
-    void featureRemovedDispatched(const msg::Message &);
-    void featureStateChangedDispatched(const msg::Message &);
+    struct Stow;
+    std::unique_ptr<Stow> stow;
   };
 }
 
-#endif // DLG_CHECKGEOMETRYDIALOG_H
+#endif // CMV_CHECKGEOMETRY_H

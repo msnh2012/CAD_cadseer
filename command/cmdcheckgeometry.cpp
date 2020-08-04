@@ -18,109 +18,170 @@
  */
 
 #include "project/prjproject.h"
+#include "project/prjmessage.h"
 #include "application/appapplication.h"
 #include "application/appmainwindow.h"
 #include "feature/ftrbase.h"
+#include "feature/ftrmessage.h"
+#include "annex/annseershape.h"
 #include "selection/slceventhandler.h"
 #include "selection/slcmanager.h"
 #include "message/msgnode.h"
 #include "message/msgsift.h"
-#include "dialogs/dlgcheckgeometry.h"
+#include "commandview/cmvmessage.h"
+#include "commandview/cmvcheckgeometry.h"
 #include "command/cmdcheckgeometry.h"
 
 using namespace cmd;
 
 CheckGeometry::CheckGeometry() : Base("cmd::CheckGeometry")
 {
-  setupDispatcher();
   shouldUpdate = false;
+  isEdit = false;
+  isFirstRun = true;
+  setupDispatcher();
 }
 
-CheckGeometry::~CheckGeometry()
-{
-  if (dialog)
-    dialog->deleteLater();
-}
+CheckGeometry::~CheckGeometry() = default;
 
 std::string CheckGeometry::getStatusMessage()
 {
-  return QObject::tr("Select geometry to check").toStdString();
+  return QObject::tr("Select object to check").toStdString();
 }
 
 void CheckGeometry::activate()
 {
   isActive = true;
   
-  if (!hasRan)
+  if (isFirstRun.get())
   {
+    isFirstRun = false;
     node->send(msg::buildSelectionMask(slc::ObjectsEnabled | slc::ObjectsSelectable));
     go();
   }
-
-  if (dialog)
+  if (viewBase)
   {
-    dialog->show();
-    dialog->raise();
-    dialog->activateWindow();
+    cmv::Message vm(viewBase.get(), viewBase->getPaneWidth());
+    msg::Message out(msg::Mask(msg::Request | msg::Command | msg::View | msg::Show), vm);
+    node->sendBlocked(out);
   }
+  
+  forceClose();
 }
 
 void CheckGeometry::deactivate()
 {
-  isActive = false;
+  if (viewBase)
+  {
+    msg::Message out(msg::Mask(msg::Request | msg::Command | msg::View | msg::Hide));
+    node->sendBlocked(out);
+  }
   
-  if (dialog)
-    dialog->hide();
+  isActive = false;
 }
 
 void CheckGeometry::go()
 {
-  const slc::Containers &containers = eventHandler->getSelections();
-  if
-  (
-    (!containers.empty()) &&
-    (containers.front().selectionType == slc::Type::Object)
-  )
+  //look for first valid pre selection
+  boost::optional<slc::Message> msg;
+  for (const auto &c : eventHandler->getSelections())
   {
-    ftr::Base *feature = project->findFeature(containers.front().featureId);
-    assert(feature);
-    if (feature->hasAnnex(ann::Type::SeerShape))
+    if (!slc::isObjectType(c.selectionType))
+      continue;
+    ftr::Base *lf = project->findFeature(c.featureId);
+    assert(lf);
+    if (lf->hasAnnex(ann::Type::SeerShape) && !lf->getAnnex<ann::SeerShape>().isNull())
     {
-      assert(!dialog);
-      dialog = new dlg::CheckGeometry(*feature, application->getMainWindow());
-      QString freshTitle = dialog->windowTitle() + " --" + feature->getName() + "--";
-      dialog->setWindowTitle(freshTitle);
-      hasRan = true;
-      dialog->go();
-      node->send(msg::buildSelectionMask(~slc::All));
-      node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
-      return;
+      msg = slc::EventHandler::containerToMessage(c);
+      break;
     }
   }
-  
-  //here we didn't have an acceptable pre seleciton.
-  node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
-  node->send(msg::buildStatusMessage("Select object to check"));
+  if (msg)
+    goMessage(msg.get());
+  else
+  {
+    node->sendBlocked(msg::buildStatusMessage(QObject::tr("Invalid pre selection").toStdString(), 2));
+    node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  }
+}
+
+void CheckGeometry::goMessage(const slc::Message &mIn)
+{
+  ftr::Base *lf = project->findFeature(mIn.featureId);
+  assert(lf);
+  if (lf->hasAnnex(ann::Type::SeerShape) && !lf->getAnnex<ann::SeerShape>().isNull())
+  {
+    assert(!viewBase);
+    feature = lf;
+    viewBase = std::make_unique<cmv::CheckGeometry>(*feature);
+    node->send(msg::buildSelectionMask(~slc::All));
+    node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
+    return;
+  }
+  node->sendBlocked(msg::buildStatusMessage(QObject::tr("Invalid Selection").toStdString(), 2));
+  node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
 }
 
 void CheckGeometry::setupDispatcher()
 {
   sift->insert
   (
-    msg::Response | msg::Post | msg::Selection | msg::Add
-    , std::bind(&CheckGeometry::selectionAdditionDispatched, this, std::placeholders::_1)
+    {
+      std::make_pair
+      (
+        msg::Response | msg::Post | msg::Selection | msg::Add
+        , std::bind(&CheckGeometry::selectionAdditionDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Response | msg::Pre | msg::Remove | msg::Feature
+        , std::bind(&CheckGeometry::featureRemovedDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Response | msg::Feature | msg::Status
+        , std::bind(&CheckGeometry::featureStateChangedDispatched, this, std::placeholders::_1)
+      )
+    }
   );
 }
 
-void CheckGeometry::selectionAdditionDispatched(const msg::Message&)
+void CheckGeometry::selectionAdditionDispatched(const msg::Message &mIn)
 {
-  if (hasRan)
+  if (!isActive || !mIn.isSLC() || viewBase)
     return;
-  go();
-  if (dialog)
+  goMessage(mIn.getSLC());
+}
+
+void CheckGeometry::featureRemovedDispatched(const msg::Message &messageIn)
+{
+  assert(messageIn.isPRJ());
+  prj::Message message = messageIn.getPRJ();
+  if
+  (
+    (message.featureIds.size() == 1)
+    && (message.featureIds.front() == feature->getId())
+  )
   {
-    dialog->show();
-    dialog->raise();
-    dialog->activateWindow();
+    isCompromised = true;
+    forceClose();
   }
 }
+
+void CheckGeometry::featureStateChangedDispatched(const msg::Message &messageIn)
+{
+  assert(messageIn.isFTR());
+  ftr::Message fMessage = messageIn.getFTR();
+  if (fMessage.featureId == feature->getId())
+  {
+    isCompromised = true;
+    forceClose();
+  }
+}
+
+void CheckGeometry::forceClose()
+{
+  if (isCompromised && isActive)
+    node->send(msg::Message(msg::Request | msg::Command | msg::Done));
+}
+  
