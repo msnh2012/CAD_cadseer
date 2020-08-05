@@ -17,9 +17,6 @@
  *
  */
 
-// #include <cassert>
-// #include <boost/optional/optional.hpp>
-
 #include <QSettings>
 #include <QTabWidget>
 #include <QVBoxLayout>
@@ -51,26 +48,12 @@
 #include "application/appapplication.h"
 #include "project/prjproject.h"
 #include "annex/annseershape.h"
-// #include "preferences/preferencesXML.h"
-// #include "preferences/prfmanager.h"
-// #include "message/msgmessage.h"
 #include "message/msgnode.h"
 #include "message/msgsift.h"
 #include "library/lbrspherebuilder.h"
-// #include "dialogs/dlgselectionbutton.h"
-// #include "dialogs/dlgselectionlist.h"
-// #include "dialogs/dlgselectionwidget.h"
-// #include "commandview/cmvparameterwidgets.h"
-// #include "parameter/prmparameter.h"
-// #include "expressions/exprmanager.h"
-// #include "expressions/exprstringtranslator.h"
-// #include "expressions/exprvalue.h"
-// #include "library/lbrplabel.h"
-// #include "tools/featuretools.h"
 #include "tools/idtools.h"
 #include "tools/occtools.h"
 #include "globalutilities.h"
-// #include "feature/ftrinputtype.h"
 #include "feature/ftrbase.h"
 #include "command/cmdcheckgeometry.h"
 #include "commandview/cmvcheckgeometry.h"
