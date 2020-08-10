@@ -70,7 +70,6 @@ namespace prj
     namespace chms
     {
       class Entry;
-      class Cue;
       class Chamfer;
     }
   }
@@ -279,74 +278,6 @@ namespace prj
         FacePicksSequence facePicks_;
       };
 
-      class Cue: public ::xml_schema::Type
-      {
-        public:
-        // mode
-        //
-        typedef ::xml_schema::Int ModeType;
-        typedef ::xsd::cxx::tree::traits< ModeType, char > ModeTraits;
-
-        const ModeType&
-        mode () const;
-
-        ModeType&
-        mode ();
-
-        void
-        mode (const ModeType& x);
-
-        // entries
-        //
-        typedef ::prj::srl::chms::Entry EntriesType;
-        typedef ::xsd::cxx::tree::sequence< EntriesType > EntriesSequence;
-        typedef EntriesSequence::iterator EntriesIterator;
-        typedef EntriesSequence::const_iterator EntriesConstIterator;
-        typedef ::xsd::cxx::tree::traits< EntriesType, char > EntriesTraits;
-
-        const EntriesSequence&
-        entries () const;
-
-        EntriesSequence&
-        entries ();
-
-        void
-        entries (const EntriesSequence& s);
-
-        // Constructors.
-        //
-        Cue (const ModeType&);
-
-        Cue (const ::xercesc::DOMElement& e,
-             ::xml_schema::Flags f = 0,
-             ::xml_schema::Container* c = 0);
-
-        Cue (const Cue& x,
-             ::xml_schema::Flags f = 0,
-             ::xml_schema::Container* c = 0);
-
-        virtual Cue*
-        _clone (::xml_schema::Flags f = 0,
-                ::xml_schema::Container* c = 0) const;
-
-        Cue&
-        operator= (const Cue& x);
-
-        virtual 
-        ~Cue ();
-
-        // Implementation.
-        //
-        protected:
-        void
-        parse (::xsd::cxx::xml::dom::parser< char >&,
-               ::xml_schema::Flags);
-
-        protected:
-        ::xsd::cxx::tree::one< ModeType > mode_;
-        EntriesSequence entries_;
-      };
-
       class Chamfer: public ::xml_schema::Type
       {
         public:
@@ -401,32 +332,46 @@ namespace prj
         void
         shapeMap (const ShapeMapSequence& s);
 
-        // cue
+        // mode
         //
-        typedef ::prj::srl::chms::Cue CueType;
-        typedef ::xsd::cxx::tree::traits< CueType, char > CueTraits;
+        typedef ::xml_schema::Int ModeType;
+        typedef ::xsd::cxx::tree::traits< ModeType, char > ModeTraits;
 
-        const CueType&
-        cue () const;
+        const ModeType&
+        mode () const;
 
-        CueType&
-        cue ();
-
-        void
-        cue (const CueType& x);
+        ModeType&
+        mode ();
 
         void
-        cue (::std::unique_ptr< CueType > p);
+        mode (const ModeType& x);
+
+        // entries
+        //
+        typedef ::prj::srl::chms::Entry EntriesType;
+        typedef ::xsd::cxx::tree::sequence< EntriesType > EntriesSequence;
+        typedef EntriesSequence::iterator EntriesIterator;
+        typedef EntriesSequence::const_iterator EntriesConstIterator;
+        typedef ::xsd::cxx::tree::traits< EntriesType, char > EntriesTraits;
+
+        const EntriesSequence&
+        entries () const;
+
+        EntriesSequence&
+        entries ();
+
+        void
+        entries (const EntriesSequence& s);
 
         // Constructors.
         //
         Chamfer (const BaseType&,
                  const SeerShapeType&,
-                 const CueType&);
+                 const ModeType&);
 
         Chamfer (::std::unique_ptr< BaseType >,
                  ::std::unique_ptr< SeerShapeType >,
-                 ::std::unique_ptr< CueType >);
+                 const ModeType&);
 
         Chamfer (const ::xercesc::DOMElement& e,
                  ::xml_schema::Flags f = 0,
@@ -457,7 +402,8 @@ namespace prj
         ::xsd::cxx::tree::one< BaseType > base_;
         ::xsd::cxx::tree::one< SeerShapeType > seerShape_;
         ShapeMapSequence shapeMap_;
-        ::xsd::cxx::tree::one< CueType > cue_;
+        ::xsd::cxx::tree::one< ModeType > mode_;
+        EntriesSequence entries_;
       };
     }
   }
@@ -587,9 +533,6 @@ namespace prj
     {
       void
       operator<< (::xercesc::DOMElement&, const Entry&);
-
-      void
-      operator<< (::xercesc::DOMElement&, const Cue&);
 
       void
       operator<< (::xercesc::DOMElement&, const Chamfer&);

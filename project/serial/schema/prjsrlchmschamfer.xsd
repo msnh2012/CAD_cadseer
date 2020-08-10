@@ -24,19 +24,13 @@
   </xs:sequence>
 </xs:complexType>
 
-<xs:complexType name="Cue">
-  <xs:sequence>
-    <xs:element name="mode" type="xs:int"/>
-    <xs:element name="entries" type="chf:Entry" minOccurs="0" maxOccurs="unbounded"/>
-  </xs:sequence>
-</xs:complexType>
-
 <xs:complexType name="Chamfer">
   <xs:sequence>
     <xs:element name="base" type="spt:Base"/>
     <xs:element name="seerShape" type="spt:SeerShape"/>
     <xs:element name="shapeMap" type="spt:EvolveRecord" minOccurs="0" maxOccurs="unbounded"/>
-    <xs:element name="cue" type="chf:Cue"/>
+    <xs:element name="mode" type="xs:int"/>
+    <xs:element name="entries" type="chf:Entry" minOccurs="0" maxOccurs="unbounded"/>
   </xs:sequence>
 </xs:complexType>
 

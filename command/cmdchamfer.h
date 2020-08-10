@@ -20,10 +20,10 @@
 #ifndef CMD_CHAMFER_H
 #define CMD_CHAMFER_H
 
+#include "command/cmdleafmanager.h"
 #include "command/cmdbase.h"
 
-namespace dlg{class Chamfer;}
-namespace ftr{class Chamfer;}
+namespace ftr{namespace Chamfer{class Feature; struct Cue;}}
 
 namespace cmd
 {
@@ -33,35 +33,26 @@ namespace cmd
   class Chamfer : public Base
   {
   public:
+    //getting corruption using references for messages. Not sure why.
+    using SelectionData = std::vector<std::tuple<slc::Messages, slc::Messages>>;
+    ftr::Chamfer::Feature *feature = nullptr;
+    
     Chamfer();
+    Chamfer(ftr::Base*);
     ~Chamfer() override;
     
     std::string getCommandName() override{return "Chamfer";}
     std::string getStatusMessage() override;
     void activate() override;
     void deactivate() override;
-  private:
-    void go();
-    bool firstRun = true;
-    dlg::Chamfer *dialog = nullptr;
-  };
-  
-  /**
-  * @todo write docs
-  */
-  class ChamferEdit : public Base
-  {
-  public:
-    ChamferEdit(ftr::Base*);
-    ~ChamferEdit() override;
     
-    std::string getCommandName() override{return "Chamfer Edit";}
-    std::string getStatusMessage() override;
-    void activate() override;
-    void deactivate() override;
+    bool isValidSelection(const slc::Message&);
+    void setMode(int); //clear all entries.
+    void setSelectionData(const SelectionData&);
+    void localUpdate();
   private:
-    dlg::Chamfer *dialog = nullptr;
-    ftr::Chamfer *feature = nullptr;
+    cmd::LeafManager leafManager;
+    void go();
   };
 }
 #endif // CMD_CHAMFER_H

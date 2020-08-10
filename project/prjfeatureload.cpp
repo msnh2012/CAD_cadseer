@@ -325,7 +325,7 @@ std::shared_ptr< ftr::Base > FeatureLoad::loadChamfer(const std::string &fileNam
   auto sChamfer = srl::chms::chamfer(fileNameIn, flags);
   assert(sChamfer);
   
-  auto freshChamfer = std::make_shared<ftr::Chamfer>();
+  auto freshChamfer = std::make_shared<ftr::Chamfer::Feature>();
   freshChamfer->getAnnex<ann::SeerShape>().setOCCTShape(shapeVector.at(shapeOffsetIn), featureId);
   freshChamfer->serialRead(*sChamfer);
   

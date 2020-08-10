@@ -45,12 +45,12 @@
 #include "tools/featuretools.h"
 #include "feature/ftrchamfer.h"
 
-using namespace ftr;
+using namespace ftr::Chamfer;
 using boost::uuids::uuid;
 
-QIcon Chamfer::icon;
+QIcon Feature::icon;
 
-Chamfer::Cue::Entry::Entry(const Chamfer::Cue::Entry &other, bool)
+Entry::Entry(const Entry &other, bool)
 {
   style = other.style;
   if (other.parameter1)
@@ -73,12 +73,12 @@ Chamfer::Cue::Entry::Entry(const Chamfer::Cue::Entry &other, bool)
   facePicks = other.facePicks;
 }
 
-Chamfer::Cue::Entry::Entry(const prj::srl::chms::Entry &eIn) : Entry()
+Entry::Entry(const prj::srl::chms::Entry &eIn) : Entry()
 {
   serialIn(eIn);
 }
 
-prj::srl::chms::Entry Chamfer::Cue::Entry::serialOut() const
+prj::srl::chms::Entry Entry::serialOut() const
 {
   prj::srl::chms::Entry out
   (
@@ -99,7 +99,7 @@ prj::srl::chms::Entry Chamfer::Cue::Entry::serialOut() const
   return out;
 }
 
-void Chamfer::Cue::Entry::serialIn(const prj::srl::chms::Entry &eIn)
+void Entry::serialIn(const prj::srl::chms::Entry &eIn)
 {
   style = static_cast<Style>(eIn.style());
   parameter1 = std::make_shared<prm::Parameter>(eIn.parameter1());
@@ -126,9 +126,9 @@ void Chamfer::Cue::Entry::serialIn(const prj::srl::chms::Entry &eIn)
   }
 }
 
-Chamfer::Cue::Entry Chamfer::Cue::Entry::buildDefaultSymmetric()
+Entry Entry::buildDefaultSymmetric()
 {
-  Chamfer::Cue::Entry out;
+  Entry out;
   out.style = Style::Symmetric;
   out.parameter1 = std::make_shared<prm::Parameter>(prm::Names::Distance, prf::manager().rootPtr->features().chamfer().get().distance());
   out.parameter1->setConstraint(prm::Constraint::buildNonZeroPositive());
@@ -139,9 +139,9 @@ Chamfer::Cue::Entry Chamfer::Cue::Entry::buildDefaultSymmetric()
   return out;
 }
 
-Chamfer::Cue::Entry Chamfer::Cue::Entry::buildDefaultTwoDistances()
+Entry Entry::buildDefaultTwoDistances()
 {
-  Chamfer::Cue::Entry out;
+  Entry out;
   out.style = Style::TwoDistances;
   out.parameter1 = std::make_shared<prm::Parameter>(prm::Names::Distance, prf::manager().rootPtr->features().chamfer().get().distance());
   out.parameter1->setConstraint(prm::Constraint::buildNonZeroPositive());
@@ -158,9 +158,9 @@ Chamfer::Cue::Entry Chamfer::Cue::Entry::buildDefaultTwoDistances()
   return out;
 }
 
-Chamfer::Cue::Entry Chamfer::Cue::Entry::buildDefaultDistanceAngle()
+Entry Entry::buildDefaultDistanceAngle()
 {
-  Chamfer::Cue::Entry out;
+  Entry out;
   out.style = Style::DistanceAngle;
   out.parameter1 = std::make_shared<prm::Parameter>(prm::Names::Distance, prf::manager().rootPtr->features().chamfer().get().distance());
   out.parameter1->setConstraint(prm::Constraint::buildNonZeroPositive());
@@ -177,7 +177,7 @@ Chamfer::Cue::Entry Chamfer::Cue::Entry::buildDefaultDistanceAngle()
   return out;
 }
 
-Chamfer::Chamfer() : Base(), sShape(new ann::SeerShape())
+Feature::Feature() : Base(), sShape(new ann::SeerShape())
 {
   if (icon.isNull())
     icon = QIcon(":/resources/images/constructionChamfer.svg");
@@ -188,46 +188,106 @@ Chamfer::Chamfer() : Base(), sShape(new ann::SeerShape())
   annexes.insert(std::make_pair(ann::Type::SeerShape, sShape.get()));
 }
 
-Chamfer::~Chamfer(){}
+Feature::~Feature(){}
 
-void Chamfer::setCue(const Cue &cIn, bool dirty)
+void Feature::setMode(Mode mIn)
 {
-  for (const auto &e : cue.entries)
-  {
-    if (e.parameter1)
-      removeParameter(e.parameter1.get());
-    if (e.parameter2)
-      removeParameter(e.parameter2.get());
-    if (e.label1)
-      overlaySwitch->removeChild(e.label1.get());
-    if (e.label2)
-      overlaySwitch->removeChild(e.label2.get());
-  }
-  
-  //we assume here the entry structure has been set accordingly to chamfer style and mode
-  auto setupParameter = [&](prm::Parameter *p)
-  {
-    p->connectValue(std::bind(&Chamfer::setModelDirty, this));
-    parameters.push_back(p);
-  };
-  cue = cIn;
-  for (const auto &e : cue.entries)
-  {
-    if (e.parameter1)
-      setupParameter(e.parameter1.get());
-    if (e.parameter2)
-      setupParameter(e.parameter2.get());
-    if (e.label1)
-      overlaySwitch->addChild(e.label1.get());
-    if (e.label2)
-      overlaySwitch->addChild(e.label2.get());
-  }
-  
-  if (dirty)
-    setModelDirty();
+  for (const auto &e : entries)
+    detachEntry(e);
+  entries.clear();
+  mode = mIn;
+  setModelDirty();
 }
 
-void Chamfer::updateModel(const UpdatePayload &payloadIn)
+int Feature::addSymmetric()
+{
+  assert(mode == Mode::Classic || mode == Mode::Throat);
+  entries.push_back(Entry::buildDefaultSymmetric());
+  attachEntry(entries.back());
+  setModelDirty();
+  return static_cast<int>(entries.size()) - 1;
+}
+
+int Feature::addTwoDistances()
+{
+  assert(mode == Mode::Classic || mode == Mode::ThroatPenetration);
+  entries.push_back(Entry::buildDefaultTwoDistances());
+  attachEntry(entries.back());
+  setModelDirty();
+  return static_cast<int>(entries.size()) - 1;
+}
+
+int Feature::addDistanceAngle()
+{
+  assert(mode == Mode::Classic);
+  entries.push_back(Entry::buildDefaultDistanceAngle());
+  attachEntry(entries.back());
+  setModelDirty();
+  return static_cast<int>(entries.size()) - 1;
+}
+
+void Feature::removeEntry(int index)
+{
+  assert(index >= 0 && index < static_cast<int>(entries.size()));
+  const auto &e = entries.at(index);
+  detachEntry(e);
+  entries.erase(entries.begin() + index);
+  setModelDirty();
+}
+
+const Entry& Feature::getEntry(int index)
+{
+  assert(index >= 0 && index < static_cast<int>(entries.size()));
+  return entries.at(index);
+}
+
+void Feature::attachEntry(const Entry &eIn)
+{
+  //assumes entry is already added to vector
+  auto setupParameter = [&](prm::Parameter *p)
+  {
+    p->connectValue(std::bind(&Feature::setModelDirty, this));
+    parameters.push_back(p);
+  };
+
+  if (eIn.parameter1)
+    setupParameter(eIn.parameter1.get());
+  if (eIn.parameter2)
+    setupParameter(eIn.parameter2.get());
+  if (eIn.label1)
+    overlaySwitch->addChild(eIn.label1.get());
+  if (eIn.label2)
+    overlaySwitch->addChild(eIn.label2.get());
+}
+
+void Feature::detachEntry(const Entry &eIn)
+{
+  if (eIn.parameter1)
+    removeParameter(eIn.parameter1.get());
+  if (eIn.parameter2)
+    removeParameter(eIn.parameter2.get());
+  if (eIn.label1)
+    overlaySwitch->removeChild(eIn.label1.get());
+  if (eIn.label2)
+    overlaySwitch->removeChild(eIn.label2.get());
+}
+
+void Feature::setEdgePicks(int index, const Picks &psIn)
+{
+  assert(index >= 0 && index < static_cast<int>(entries.size()));
+  entries.at(index).edgePicks = psIn;
+  setModelDirty();
+}
+
+void Feature::setFacePicks(int index, const Picks &psIn)
+{
+  assert(index >= 0 && index < static_cast<int>(entries.size()));
+  assert(entries.at(index).style != Style::Symmetric);
+  entries.at(index).facePicks = psIn;
+  setModelDirty();
+}
+
+void Feature::updateModel(const UpdatePayload &payloadIn)
 {
   setFailure();
   lastUpdateLog.clear();
@@ -278,12 +338,12 @@ void Chamfer::updateModel(const UpdatePayload &payloadIn)
     tls::Resolver resolver(payloadIn);
     BRepFilletAPI_MakeChamfer chamferMaker(targetSeerShape.getRootOCCTShape());
     
-    chamferMaker.SetMode(static_cast<ChFiDS_ChamfMode>(cue.mode));
-    for (const auto &e : cue.entries)
+    chamferMaker.SetMode(static_cast<ChFiDS_ChamfMode>(mode));
+    for (const auto &e : entries)
     {
-      if (cue.mode == Mode::Throat && e.style != Style::Symmetric)
+      if (mode == Mode::Throat && e.style != Style::Symmetric)
         throw std::runtime_error("Throat mode only uses symmetric style");
-      if (cue.mode == Mode::ThroatPenetration && e.style != Style::TwoDistances)
+      if (mode == Mode::ThroatPenetration && e.style != Style::TwoDistances)
         throw std::runtime_error("Throat penetration mode only uses 2 distances style");
       //classic mode can use any style
       
@@ -409,7 +469,7 @@ void Chamfer::updateModel(const UpdatePayload &payloadIn)
 }
 
 //duplicated with blend.
-void Chamfer::generatedMatch(BRepFilletAPI_MakeChamfer &chamferMakerIn, const ann::SeerShape &targetShapeIn)
+void Feature::generatedMatch(BRepFilletAPI_MakeChamfer &chamferMakerIn, const ann::SeerShape &targetShapeIn)
 {
   using boost::uuids::uuid;
   
@@ -449,7 +509,7 @@ void Chamfer::generatedMatch(BRepFilletAPI_MakeChamfer &chamferMakerIn, const an
   }
 }
 
-void Chamfer::updateShapeMap(const boost::uuids::uuid &resolvedId, const ShapeHistory &pick)
+void Feature::updateShapeMap(const boost::uuids::uuid &resolvedId, const ShapeHistory &pick)
 {
   for (const auto &historyId : pick.getAllIds())
   {
@@ -463,7 +523,7 @@ void Chamfer::updateShapeMap(const boost::uuids::uuid &resolvedId, const ShapeHi
   }
 }
 
-void Chamfer::serialWrite(const boost::filesystem::path &dIn)
+void Feature::serialWrite(const boost::filesystem::path &dIn)
 {
   namespace serial = prj::srl::chms;
   serial::Chamfer::ShapeMapSequence shapeMapOut;
@@ -477,24 +537,22 @@ void Chamfer::serialWrite(const boost::filesystem::path &dIn)
     shapeMapOut.push_back(eRecord);
   }
   
-  serial::Cue cueOut(static_cast<int>(cue.mode));
-  for (const auto &e : cue.entries)
-    cueOut.entries().push_back(e.serialOut());
-  
   serial::Chamfer chamferOut
   (
     Base::serialOut()
     , sShape->serialOut()
-    , cueOut
+    , static_cast<int>(mode)
   );
   chamferOut.shapeMap() = shapeMapOut;
+  for (const auto &e : entries)
+    chamferOut.entries().push_back(e.serialOut());
   
   xml_schema::NamespaceInfomap infoMap;
   std::ofstream stream(buildFilePathName(dIn).string());
   serial::chamfer(stream, chamferOut, infoMap);
 }
 
-void Chamfer::serialRead(const prj::srl::chms::Chamfer &sChamferIn)
+void Feature::serialRead(const prj::srl::chms::Chamfer &sChamferIn)
 {
   Base::serialIn(sChamferIn.base());
   sShape->serialIn(sChamferIn.seerShape());
@@ -508,9 +566,10 @@ void Chamfer::serialRead(const prj::srl::chms::Chamfer &sChamferIn)
     shapeMap.insert(record);
   }
   
-  Cue cueIn;
-  cueIn.mode = static_cast<Mode>(sChamferIn.cue().mode());
-  for (const auto &e : sChamferIn.cue().entries())
-    cueIn.entries.emplace_back(e);
-  setCue(cueIn, false);
+  mode = static_cast<Mode>(sChamferIn.mode());
+  for (const auto &e : sChamferIn.entries())
+  {
+    entries.emplace_back(e);
+    attachEntry(entries.back());
+  }
 }

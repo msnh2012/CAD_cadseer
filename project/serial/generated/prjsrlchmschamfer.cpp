@@ -212,46 +212,6 @@ namespace prj
       }
 
 
-      // Cue
-      // 
-
-      const Cue::ModeType& Cue::
-      mode () const
-      {
-        return this->mode_.get ();
-      }
-
-      Cue::ModeType& Cue::
-      mode ()
-      {
-        return this->mode_.get ();
-      }
-
-      void Cue::
-      mode (const ModeType& x)
-      {
-        this->mode_.set (x);
-      }
-
-      const Cue::EntriesSequence& Cue::
-      entries () const
-      {
-        return this->entries_;
-      }
-
-      Cue::EntriesSequence& Cue::
-      entries ()
-      {
-        return this->entries_;
-      }
-
-      void Cue::
-      entries (const EntriesSequence& s)
-      {
-        this->entries_ = s;
-      }
-
-
       // Chamfer
       // 
 
@@ -321,28 +281,40 @@ namespace prj
         this->shapeMap_ = s;
       }
 
-      const Chamfer::CueType& Chamfer::
-      cue () const
+      const Chamfer::ModeType& Chamfer::
+      mode () const
       {
-        return this->cue_.get ();
+        return this->mode_.get ();
       }
 
-      Chamfer::CueType& Chamfer::
-      cue ()
+      Chamfer::ModeType& Chamfer::
+      mode ()
       {
-        return this->cue_.get ();
-      }
-
-      void Chamfer::
-      cue (const CueType& x)
-      {
-        this->cue_.set (x);
+        return this->mode_.get ();
       }
 
       void Chamfer::
-      cue (::std::unique_ptr< CueType > x)
+      mode (const ModeType& x)
       {
-        this->cue_.set (std::move (x));
+        this->mode_.set (x);
+      }
+
+      const Chamfer::EntriesSequence& Chamfer::
+      entries () const
+      {
+        return this->entries_;
+      }
+
+      Chamfer::EntriesSequence& Chamfer::
+      entries ()
+      {
+        return this->entries_;
+      }
+
+      void Chamfer::
+      entries (const EntriesSequence& s)
+      {
+        this->entries_ = s;
       }
     }
   }
@@ -578,134 +550,32 @@ namespace prj
       {
       }
 
-      // Cue
-      //
-
-      Cue::
-      Cue (const ModeType& mode)
-      : ::xml_schema::Type (),
-        mode_ (mode, this),
-        entries_ (this)
-      {
-      }
-
-      Cue::
-      Cue (const Cue& x,
-           ::xml_schema::Flags f,
-           ::xml_schema::Container* c)
-      : ::xml_schema::Type (x, f, c),
-        mode_ (x.mode_, f, this),
-        entries_ (x.entries_, f, this)
-      {
-      }
-
-      Cue::
-      Cue (const ::xercesc::DOMElement& e,
-           ::xml_schema::Flags f,
-           ::xml_schema::Container* c)
-      : ::xml_schema::Type (e, f | ::xml_schema::Flags::base, c),
-        mode_ (this),
-        entries_ (this)
-      {
-        if ((f & ::xml_schema::Flags::base) == 0)
-        {
-          ::xsd::cxx::xml::dom::parser< char > p (e, true, false, false);
-          this->parse (p, f);
-        }
-      }
-
-      void Cue::
-      parse (::xsd::cxx::xml::dom::parser< char >& p,
-             ::xml_schema::Flags f)
-      {
-        for (; p.more_content (); p.next_content (false))
-        {
-          const ::xercesc::DOMElement& i (p.cur_element ());
-          const ::xsd::cxx::xml::qualified_name< char > n (
-            ::xsd::cxx::xml::dom::name< char > (i));
-
-          // mode
-          //
-          if (n.name () == "mode" && n.namespace_ ().empty ())
-          {
-            if (!mode_.present ())
-            {
-              this->mode_.set (ModeTraits::create (i, f, this));
-              continue;
-            }
-          }
-
-          // entries
-          //
-          if (n.name () == "entries" && n.namespace_ ().empty ())
-          {
-            ::std::unique_ptr< EntriesType > r (
-              EntriesTraits::create (i, f, this));
-
-            this->entries_.push_back (::std::move (r));
-            continue;
-          }
-
-          break;
-        }
-
-        if (!mode_.present ())
-        {
-          throw ::xsd::cxx::tree::expected_element< char > (
-            "mode",
-            "");
-        }
-      }
-
-      Cue* Cue::
-      _clone (::xml_schema::Flags f,
-              ::xml_schema::Container* c) const
-      {
-        return new class Cue (*this, f, c);
-      }
-
-      Cue& Cue::
-      operator= (const Cue& x)
-      {
-        if (this != &x)
-        {
-          static_cast< ::xml_schema::Type& > (*this) = x;
-          this->mode_ = x.mode_;
-          this->entries_ = x.entries_;
-        }
-
-        return *this;
-      }
-
-      Cue::
-      ~Cue ()
-      {
-      }
-
       // Chamfer
       //
 
       Chamfer::
       Chamfer (const BaseType& base,
                const SeerShapeType& seerShape,
-               const CueType& cue)
+               const ModeType& mode)
       : ::xml_schema::Type (),
         base_ (base, this),
         seerShape_ (seerShape, this),
         shapeMap_ (this),
-        cue_ (cue, this)
+        mode_ (mode, this),
+        entries_ (this)
       {
       }
 
       Chamfer::
       Chamfer (::std::unique_ptr< BaseType > base,
                ::std::unique_ptr< SeerShapeType > seerShape,
-               ::std::unique_ptr< CueType > cue)
+               const ModeType& mode)
       : ::xml_schema::Type (),
         base_ (std::move (base), this),
         seerShape_ (std::move (seerShape), this),
         shapeMap_ (this),
-        cue_ (std::move (cue), this)
+        mode_ (mode, this),
+        entries_ (this)
       {
       }
 
@@ -717,7 +587,8 @@ namespace prj
         base_ (x.base_, f, this),
         seerShape_ (x.seerShape_, f, this),
         shapeMap_ (x.shapeMap_, f, this),
-        cue_ (x.cue_, f, this)
+        mode_ (x.mode_, f, this),
+        entries_ (x.entries_, f, this)
       {
       }
 
@@ -729,7 +600,8 @@ namespace prj
         base_ (this),
         seerShape_ (this),
         shapeMap_ (this),
-        cue_ (this)
+        mode_ (this),
+        entries_ (this)
       {
         if ((f & ::xml_schema::Flags::base) == 0)
         {
@@ -787,18 +659,26 @@ namespace prj
             continue;
           }
 
-          // cue
+          // mode
           //
-          if (n.name () == "cue" && n.namespace_ ().empty ())
+          if (n.name () == "mode" && n.namespace_ ().empty ())
           {
-            ::std::unique_ptr< CueType > r (
-              CueTraits::create (i, f, this));
-
-            if (!cue_.present ())
+            if (!mode_.present ())
             {
-              this->cue_.set (::std::move (r));
+              this->mode_.set (ModeTraits::create (i, f, this));
               continue;
             }
+          }
+
+          // entries
+          //
+          if (n.name () == "entries" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< EntriesType > r (
+              EntriesTraits::create (i, f, this));
+
+            this->entries_.push_back (::std::move (r));
+            continue;
           }
 
           break;
@@ -818,10 +698,10 @@ namespace prj
             "");
         }
 
-        if (!cue_.present ())
+        if (!mode_.present ())
         {
           throw ::xsd::cxx::tree::expected_element< char > (
-            "cue",
+            "mode",
             "");
         }
       }
@@ -842,7 +722,8 @@ namespace prj
           this->base_ = x.base_;
           this->seerShape_ = x.seerShape_;
           this->shapeMap_ = x.shapeMap_;
-          this->cue_ = x.cue_;
+          this->mode_ = x.mode_;
+          this->entries_ = x.entries_;
         }
 
         return *this;
@@ -1237,37 +1118,6 @@ namespace prj
       }
 
       void
-      operator<< (::xercesc::DOMElement& e, const Cue& i)
-      {
-        e << static_cast< const ::xml_schema::Type& > (i);
-
-        // mode
-        //
-        {
-          ::xercesc::DOMElement& s (
-            ::xsd::cxx::xml::dom::create_element (
-              "mode",
-              e));
-
-          s << i.mode ();
-        }
-
-        // entries
-        //
-        for (Cue::EntriesConstIterator
-             b (i.entries ().begin ()), n (i.entries ().end ());
-             b != n; ++b)
-        {
-          ::xercesc::DOMElement& s (
-            ::xsd::cxx::xml::dom::create_element (
-              "entries",
-              e));
-
-          s << *b;
-        }
-      }
-
-      void
       operator<< (::xercesc::DOMElement& e, const Chamfer& i)
       {
         e << static_cast< const ::xml_schema::Type& > (i);
@@ -1308,15 +1158,29 @@ namespace prj
           s << *b;
         }
 
-        // cue
+        // mode
         //
         {
           ::xercesc::DOMElement& s (
             ::xsd::cxx::xml::dom::create_element (
-              "cue",
+              "mode",
               e));
 
-          s << i.cue ();
+          s << i.mode ();
+        }
+
+        // entries
+        //
+        for (Chamfer::EntriesConstIterator
+             b (i.entries ().begin ()), n (i.entries ().end ());
+             b != n; ++b)
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "entries",
+              e));
+
+          s << *b;
         }
       }
 

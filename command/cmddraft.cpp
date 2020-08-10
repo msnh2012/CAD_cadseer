@@ -101,6 +101,7 @@ void Draft::deactivate()
   leafManager.fastForward();
   if (!isEdit.get())
   {
+    project->hideAlterParents(feature->getId());
     node->sendBlocked(msg::buildShowThreeD(feature->getId()));
     node->sendBlocked(msg::buildShowOverlay(feature->getId()));
   }

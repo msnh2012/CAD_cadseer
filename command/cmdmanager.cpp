@@ -1027,7 +1027,7 @@ BasePtr editExtract(ftr::Base *feature)
 
 BasePtr editChamfer(ftr::Base *feature)
 {
-  return std::make_shared<ChamferEdit>(feature);
+  return std::make_shared<Chamfer>(feature);
 }
 
 BasePtr editPrimitive(ftr::Base *feature)

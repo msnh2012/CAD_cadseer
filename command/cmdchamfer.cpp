@@ -17,30 +17,53 @@
  *
  */
 
-// #include "tools/featuretools.h"
+#include <osg/Geometry> //yuck
+
 #include "application/appmainwindow.h"
 #include "project/prjproject.h"
-// #include "viewer/vwrwidget.h"
 #include "message/msgnode.h"
 #include "selection/slceventhandler.h"
 #include "parameter/prmparameter.h"
 #include "dialogs/dlgparameter.h"
-#include "dialogs/dlgchamfer.h"
+#include "commandview/cmvmessage.h"
+#include "commandview/cmvchamfer.h"
 #include "annex/annseershape.h"
 #include "feature/ftrinputtype.h"
 #include "feature/ftrchamfer.h"
 #include "tools/featuretools.h"
 #include "command/cmdchamfer.h"
 
+using boost::uuids::uuid;
+
 using namespace cmd;
 
-Chamfer::Chamfer() : Base() {}
-
-Chamfer::~Chamfer()
+Chamfer::Chamfer()
+: Base("cmd::Chamfer")
+, leafManager()
 {
-  if (dialog)
-    dialog->deleteLater();
+  //this command is different. We can create multiple features.
+  //so we don't build a feature by default.
+//   auto nf = std::make_shared<ftr::Chamfer>();
+//   project->addFeature(nf);
+//   feature = nf.get();
+//   node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
+  isEdit = false;
+  isFirstRun = true;
 }
+
+Chamfer::Chamfer(ftr::Base *fIn)
+: Base("cmd::Chamfer")
+, leafManager(fIn)
+{
+  feature = dynamic_cast<ftr::Chamfer::Feature*>(fIn);
+  assert(feature);
+  viewBase = std::make_unique<cmv::Chamfer>(this);
+  node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  isEdit = true;
+  isFirstRun = false;
+}
+
+Chamfer::~Chamfer() = default;
 
 std::string Chamfer::getStatusMessage()
 {
@@ -50,130 +73,147 @@ std::string Chamfer::getStatusMessage()
 void Chamfer::activate()
 {
   isActive = true;
-  
-  if (firstRun)
+  leafManager.rewind();
+  if (isFirstRun.get())
   {
-    firstRun = false;
+    isFirstRun = false;
     go();
   }
-  
-  if (dialog)
+  if (viewBase)
   {
-    dialog->show();
-    dialog->raise();
-    dialog->activateWindow();
+    feature->setEditing();
+    cmv::Message vm(viewBase.get(), viewBase->getPaneWidth());
+    msg::Message out(msg::Mask(msg::Request | msg::Command | msg::View | msg::Show), vm);
+    node->sendBlocked(out);
   }
-  else sendDone();
+  else
+    sendDone();
 }
 
 void Chamfer::deactivate()
 {
-  if (dialog)
-    dialog->hide();
+  if (viewBase)
+  {
+    feature->setNotEditing();
+    msg::Message out(msg::Mask(msg::Request | msg::Command | msg::View | msg::Hide));
+    node->sendBlocked(out);
+  }
+  leafManager.fastForward();
+  if (!isEdit.get())
+  {
+    project->hideAlterParents(feature->getId());
+    node->sendBlocked(msg::buildShowThreeD(feature->getId()));
+    node->sendBlocked(msg::buildShowOverlay(feature->getId()));
+  }
   isActive = false;
+}
+
+bool Chamfer::isValidSelection(const slc::Message &mIn)
+{
+  if (mIn.type != slc::Type::Edge)
+    return false;
+  const ftr::Base *lf = project->findFeature(mIn.featureId);
+  if (!lf->hasAnnex(ann::Type::SeerShape) || lf->getAnnex<ann::SeerShape>().isNull())
+    return false;
+  return true;
+}
+
+void Chamfer::setMode(int modeIn)
+{
+  assert(isActive);
+  project->clearAllInputs(feature->getId());
+  ftr::Chamfer::Mode newMode = static_cast<ftr::Chamfer::Mode>(modeIn);
+  feature->setMode(newMode); //this clears all entries.
+}
+
+void Chamfer::setSelectionData(const SelectionData &dataIn)
+{
+  assert(dataIn.size() == feature->getEntries().size());
+  project->clearAllInputs(feature->getId());
+  
+  int index = -1;
+  for (const auto &tup : dataIn)
+  {
+    ++index;
+    ftr::Picks edgePicks;
+    for (const auto &sm : std::get<0>(tup))
+    {
+      edgePicks.push_back(tls::convertToPick(sm, *project->findFeature(sm.featureId), project->getShapeHistory()));
+      edgePicks.back().tag = ftr::InputType::createIndexedTag(ftr::Chamfer::edge, edgePicks.size() - 1);
+      project->connect(sm.featureId, feature->getId(), {edgePicks.back().tag});
+    }
+    feature->setEdgePicks(index, edgePicks);
+    if (feature->getEntries().at(index).style != ftr::Chamfer::Style::Symmetric)
+    {
+      ftr::Picks facePicks;
+      for (const auto &sm : std::get<1>(tup))
+      {
+        facePicks.push_back(tls::convertToPick(sm, *project->findFeature(sm.featureId), project->getShapeHistory()));
+        facePicks.back().tag = ftr::InputType::createIndexedTag(ftr::Chamfer::face, facePicks.size() - 1);
+        project->connect(sm.featureId, feature->getId(), {facePicks.back().tag});
+      }
+      feature->setFacePicks(index, facePicks);
+    }
+  }
+}
+
+void Chamfer::localUpdate()
+{
+  assert(isActive);
+  feature->updateModel(project->getPayload(feature->getId()));
+  feature->updateVisual();
+  feature->setModelDirty();
+  node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
 }
 
 void Chamfer::go()
 {
-  auto goDialog = [&]()
+  bool created = false;
+  const slc::Containers &containers = eventHandler->getSelections();
+  std::vector<slc::Containers> splits = slc::split(containers); //grouped by featureId.
+  for (const auto &cs : splits)
   {
-    node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
-
-    std::shared_ptr<ftr::Chamfer> chamfer(new ftr::Chamfer());
-    project->addFeature(chamfer);
-    dialog = new dlg::Chamfer(chamfer.get(), mainWindow);
-
-    node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
-    node->sendBlocked(msg::buildStatusMessage("invalid pre selection", 2.0));
-    shouldUpdate = false;
-  };
-  
-  const slc::Containers &cs = eventHandler->getSelections();
-  if (cs.empty())
-  {
-    goDialog();
-    return;
+    assert(!cs.empty());
+    
+    slc::Messages targets;
+    for (const auto c : cs)
+    {
+      auto m = slc::EventHandler::containerToMessage(c);
+      if (!isValidSelection(m))
+        continue;
+      targets.push_back(m);
+    }
+    if (!targets.empty())
+    {
+      auto nf = std::make_shared<ftr::Chamfer::Feature>();
+      project->addFeature(nf);
+      feature = nf.get();
+      feature->setColor(project->findFeature(targets.front().featureId)->getColor());
+      feature->setMode(ftr::Chamfer::Mode::Classic);
+      feature->addSymmetric();
+      setSelectionData({std::make_tuple(targets, slc::Messages())});
+      created = true;
+      node->sendBlocked(msg::buildHideThreeD(targets.front().featureId));
+      node->sendBlocked(msg::buildHideOverlay(targets.front().featureId));
+      node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
+      dlg::Parameter *pDialog = new dlg::Parameter(feature->getParameters().front(), feature->getId());
+      pDialog->show();
+      pDialog->raise();
+      pDialog->activateWindow();
+    }
   }
   
-  const ftr::Base *bf = project->findFeature(cs.front().featureId);
-  if (!bf || !bf->hasAnnex(ann::Type::SeerShape) || bf->getAnnex<ann::SeerShape>().isNull())
-  {
-    goDialog();
-    return;
-  }
-  const ann::SeerShape &ss = bf->getAnnex<ann::SeerShape>();
-  
-  tls::Connector connector;
-  ftr::Chamfer::Cue::Entry entry = ftr::Chamfer::Cue::Entry::buildDefaultSymmetric();
-  for (const auto &c : cs)
-  {
-    //make sure we are all on the same solid
-    if (c.featureId != cs.front().featureId)
-      continue;
-    int index = entry.edgePicks.size();
-    entry.edgePicks.push_back(tls::convertToPick(c, ss, project->getShapeHistory()));
-    entry.edgePicks.back().tag = ftr::InputType::createIndexedTag(ftr::InputType::target, index);
-    connector.add(c.featureId, entry.edgePicks.back().tag);
-  }
-  
-  ftr::Chamfer::Cue cue;
-  cue.mode = ftr::Chamfer::Mode::Classic;
-  cue.entries.push_back(entry);
-  auto f = std::make_shared<ftr::Chamfer>();
-  f->setCue(cue);
-  project->addFeature(f);
-  for (const auto &p : connector.pairs)
-    project->connectInsert(p.first, f->getId(), ftr::InputType{p.second});
-  
-  f->setColor(bf->getColor());
-  
-  node->sendBlocked(msg::buildHideThreeD(cs.front().featureId));
-  node->sendBlocked(msg::buildHideOverlay(cs.front().featureId));
-  
-  node->sendBlocked(msg::buildStatusMessage("Chamfer created", 2.0));
   node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
   
-  dlg::Parameter *dialog = new dlg::Parameter(cue.entries.back().parameter1.get(), f->getId());
-  dialog->show();
-  dialog->raise();
-  dialog->activateWindow();
-}
-
-ChamferEdit::ChamferEdit(ftr::Base *in) : Base()
-{
-  //command manager edit dispatcher dispatches on ftr::type, so we know the type of 'in'
-  feature = dynamic_cast<ftr::Chamfer*>(in);
-  assert(feature);
-  shouldUpdate = false; //dialog controls.
-}
-
-ChamferEdit::~ChamferEdit()
-{
-  if (dialog)
-    dialog->deleteLater();
-}
-
-std::string ChamferEdit::getStatusMessage()
-{
-  return QObject::tr("Editing chamfer").toStdString();
-}
-
-void ChamferEdit::activate()
-{
-  isActive = true;
-  if (!dialog)
+  if (!created)
   {
-    node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
-    dialog = new dlg::Chamfer(feature, mainWindow, true);
+    auto nf = std::make_shared<ftr::Chamfer::Feature>();
+    project->addFeature(nf);
+    feature = nf.get();
+    node->sendBlocked(msg::buildHideOverlay(feature->getId()));
+    node->sendBlocked(msg::buildHideThreeD(feature->getId()));
+    node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
+    node->sendBlocked(msg::buildStatusMessage("invalid pre selection", 2.0));
+    viewBase = std::make_unique<cmv::Chamfer>(this);
   }
-
-  dialog->show();
-  dialog->raise();
-  dialog->activateWindow();
-}
-
-void ChamferEdit::deactivate()
-{
-  dialog->hide();
-  isActive = false;
 }
