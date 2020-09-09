@@ -33,6 +33,7 @@
 #include <gp_Elips.hxx>
 #include <gp_Hypr.hxx>
 #include <gp_Parab.hxx>
+#include <Geom_BSplineCurve.hxx>
 
 #include <osg/Matrixd>
 
@@ -272,6 +273,19 @@ void SeerShapeInfo::edgeInfo(QTextStream &streamIn, const TopoDS_Shape &shapeIn)
       << "        Placement: "; gu::osgMatrixOut(streamIn, gu::toOsg(par.Position())) << endl
       << "        Start Point: "; gu::gpPntOut(streamIn, curveAdaptor.Value(curveAdaptor.FirstParameter())) << endl
       << "        End Point: "; gu::gpPntOut(streamIn, curveAdaptor.Value(curveAdaptor.LastParameter())) << endl;
+    }
+    else if (curveAdaptor.GetType() == GeomAbs_BSplineCurve)
+    {
+      //not sure about start and end points.
+      opencascade::handle<Geom_BSplineCurve> spline = curveAdaptor.BSpline();
+      
+      streamIn
+      << "        Is Closed: " << ((spline->IsClosed()) ? "True" : "False") << endl
+      << "        Is Periodic: " << ((spline->IsPeriodic()) ? "True" : "False") << endl
+      << "        Is Rational: " << ((spline->IsRational()) ? "True" : "False") << endl
+      << "        Continuity: " << gu::continuityStrings.at(static_cast<int>(spline->Continuity())) << endl
+      << "        Pole Count: " << spline->NbPoles() << endl;
+//       << "        Weight Count: " << spline->Weights()->Length() << endl;
     }
 }
 
