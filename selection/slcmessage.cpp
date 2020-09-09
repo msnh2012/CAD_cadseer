@@ -48,9 +48,14 @@ void slc::add(slc::Messages& messagesIn, const slc::Message& messageIn)
     messagesIn.push_back(messageIn);
 }
 
-void slc::remove(slc::Messages& messagesIn, const slc::Message& messageIn)
+int slc::remove(slc::Messages& messagesIn, const slc::Message& messageIn)
 {
+  int out = -1;
   auto it = std::find(messagesIn.begin(), messagesIn.end(), messageIn);
   if (it != messagesIn.end())
+  {
+    out = std::distance(messagesIn.begin(), it);
     messagesIn.erase(it);
+  }
+  return out;
 }

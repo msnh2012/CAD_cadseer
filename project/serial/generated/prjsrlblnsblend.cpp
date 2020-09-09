@@ -331,6 +331,42 @@ namespace prj
         this->seerShape_.set (std::move (x));
       }
 
+      const Blend::FilletShapeType& Blend::
+      filletShape () const
+      {
+        return this->filletShape_.get ();
+      }
+
+      Blend::FilletShapeType& Blend::
+      filletShape ()
+      {
+        return this->filletShape_.get ();
+      }
+
+      void Blend::
+      filletShape (const FilletShapeType& x)
+      {
+        this->filletShape_.set (x);
+      }
+
+      const Blend::BlendTypeType& Blend::
+      blendType () const
+      {
+        return this->blendType_.get ();
+      }
+
+      Blend::BlendTypeType& Blend::
+      blendType ()
+      {
+        return this->blendType_.get ();
+      }
+
+      void Blend::
+      blendType (const BlendTypeType& x)
+      {
+        this->blendType_.set (x);
+      }
+
       const Blend::ShapeMapSequence& Blend::
       shapeMap () const
       {
@@ -367,16 +403,16 @@ namespace prj
         this->simpleBlends_ = s;
       }
 
-      const Blend::VariableBlendType& Blend::
+      const Blend::VariableBlendOptional& Blend::
       variableBlend () const
       {
-        return this->variableBlend_.get ();
+        return this->variableBlend_;
       }
 
-      Blend::VariableBlendType& Blend::
+      Blend::VariableBlendOptional& Blend::
       variableBlend ()
       {
-        return this->variableBlend_.get ();
+        return this->variableBlend_;
       }
 
       void Blend::
@@ -386,27 +422,15 @@ namespace prj
       }
 
       void Blend::
-      variableBlend (::std::unique_ptr< VariableBlendType > x)
+      variableBlend (const VariableBlendOptional& x)
       {
-        this->variableBlend_.set (std::move (x));
-      }
-
-      const Blend::FilletShapeType& Blend::
-      filletShape () const
-      {
-        return this->filletShape_.get ();
-      }
-
-      Blend::FilletShapeType& Blend::
-      filletShape ()
-      {
-        return this->filletShape_.get ();
+        this->variableBlend_ = x;
       }
 
       void Blend::
-      filletShape (const FilletShapeType& x)
+      variableBlend (::std::unique_ptr< VariableBlendType > x)
       {
-        this->filletShape_.set (x);
+        this->variableBlend_.set (std::move (x));
       }
     }
   }
@@ -877,30 +901,32 @@ namespace prj
       Blend::
       Blend (const BaseType& base,
              const SeerShapeType& seerShape,
-             const VariableBlendType& variableBlend,
-             const FilletShapeType& filletShape)
+             const FilletShapeType& filletShape,
+             const BlendTypeType& blendType)
       : ::xml_schema::Type (),
         base_ (base, this),
         seerShape_ (seerShape, this),
+        filletShape_ (filletShape, this),
+        blendType_ (blendType, this),
         shapeMap_ (this),
         simpleBlends_ (this),
-        variableBlend_ (variableBlend, this),
-        filletShape_ (filletShape, this)
+        variableBlend_ (this)
       {
       }
 
       Blend::
       Blend (::std::unique_ptr< BaseType > base,
              ::std::unique_ptr< SeerShapeType > seerShape,
-             ::std::unique_ptr< VariableBlendType > variableBlend,
-             const FilletShapeType& filletShape)
+             const FilletShapeType& filletShape,
+             const BlendTypeType& blendType)
       : ::xml_schema::Type (),
         base_ (std::move (base), this),
         seerShape_ (std::move (seerShape), this),
+        filletShape_ (filletShape, this),
+        blendType_ (blendType, this),
         shapeMap_ (this),
         simpleBlends_ (this),
-        variableBlend_ (std::move (variableBlend), this),
-        filletShape_ (filletShape, this)
+        variableBlend_ (this)
       {
       }
 
@@ -911,10 +937,11 @@ namespace prj
       : ::xml_schema::Type (x, f, c),
         base_ (x.base_, f, this),
         seerShape_ (x.seerShape_, f, this),
+        filletShape_ (x.filletShape_, f, this),
+        blendType_ (x.blendType_, f, this),
         shapeMap_ (x.shapeMap_, f, this),
         simpleBlends_ (x.simpleBlends_, f, this),
-        variableBlend_ (x.variableBlend_, f, this),
-        filletShape_ (x.filletShape_, f, this)
+        variableBlend_ (x.variableBlend_, f, this)
       {
       }
 
@@ -925,10 +952,11 @@ namespace prj
       : ::xml_schema::Type (e, f | ::xml_schema::Flags::base, c),
         base_ (this),
         seerShape_ (this),
+        filletShape_ (this),
+        blendType_ (this),
         shapeMap_ (this),
         simpleBlends_ (this),
-        variableBlend_ (this),
-        filletShape_ (this)
+        variableBlend_ (this)
       {
         if ((f & ::xml_schema::Flags::base) == 0)
         {
@@ -975,6 +1003,28 @@ namespace prj
             }
           }
 
+          // filletShape
+          //
+          if (n.name () == "filletShape" && n.namespace_ ().empty ())
+          {
+            if (!filletShape_.present ())
+            {
+              this->filletShape_.set (FilletShapeTraits::create (i, f, this));
+              continue;
+            }
+          }
+
+          // blendType
+          //
+          if (n.name () == "blendType" && n.namespace_ ().empty ())
+          {
+            if (!blendType_.present ())
+            {
+              this->blendType_.set (BlendTypeTraits::create (i, f, this));
+              continue;
+            }
+          }
+
           // shapeMap
           //
           if (n.name () == "shapeMap" && n.namespace_ ().empty ())
@@ -1004,20 +1054,9 @@ namespace prj
             ::std::unique_ptr< VariableBlendType > r (
               VariableBlendTraits::create (i, f, this));
 
-            if (!variableBlend_.present ())
+            if (!this->variableBlend_)
             {
               this->variableBlend_.set (::std::move (r));
-              continue;
-            }
-          }
-
-          // filletShape
-          //
-          if (n.name () == "filletShape" && n.namespace_ ().empty ())
-          {
-            if (!filletShape_.present ())
-            {
-              this->filletShape_.set (FilletShapeTraits::create (i, f, this));
               continue;
             }
           }
@@ -1039,17 +1078,17 @@ namespace prj
             "");
         }
 
-        if (!variableBlend_.present ())
-        {
-          throw ::xsd::cxx::tree::expected_element< char > (
-            "variableBlend",
-            "");
-        }
-
         if (!filletShape_.present ())
         {
           throw ::xsd::cxx::tree::expected_element< char > (
             "filletShape",
+            "");
+        }
+
+        if (!blendType_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "blendType",
             "");
         }
       }
@@ -1069,10 +1108,11 @@ namespace prj
           static_cast< ::xml_schema::Type& > (*this) = x;
           this->base_ = x.base_;
           this->seerShape_ = x.seerShape_;
+          this->filletShape_ = x.filletShape_;
+          this->blendType_ = x.blendType_;
           this->shapeMap_ = x.shapeMap_;
           this->simpleBlends_ = x.simpleBlends_;
           this->variableBlend_ = x.variableBlend_;
-          this->filletShape_ = x.filletShape_;
         }
 
         return *this;
@@ -1539,6 +1579,28 @@ namespace prj
           s << i.seerShape ();
         }
 
+        // filletShape
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "filletShape",
+              e));
+
+          s << i.filletShape ();
+        }
+
+        // blendType
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "blendType",
+              e));
+
+          s << i.blendType ();
+        }
+
         // shapeMap
         //
         for (Blend::ShapeMapConstIterator
@@ -1569,24 +1631,14 @@ namespace prj
 
         // variableBlend
         //
+        if (i.variableBlend ())
         {
           ::xercesc::DOMElement& s (
             ::xsd::cxx::xml::dom::create_element (
               "variableBlend",
               e));
 
-          s << i.variableBlend ();
-        }
-
-        // filletShape
-        //
-        {
-          ::xercesc::DOMElement& s (
-            ::xsd::cxx::xml::dom::create_element (
-              "filletShape",
-              e));
-
-          s << i.filletShape ();
+          s << *i.variableBlend ();
         }
       }
 

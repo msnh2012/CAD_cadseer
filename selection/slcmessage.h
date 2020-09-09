@@ -70,7 +70,7 @@ namespace slc
   typedef std::vector<Message> Messages;
   bool has(const Messages &messagesIn, const Message &messageIn);
   void add(Messages &messagesIn, const Message &messageIn);
-  void remove(Messages &messagesIn, const Message &messageIn);
+  int remove(Messages &messagesIn, const Message &messageIn);
 }
 
 #endif // SLC_SELECTIONMESSAGE_H

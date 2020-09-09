@@ -92,7 +92,7 @@ public:
     void open(); //!< call setSaveDirectory prior.
     void initializeNew(); //!< call setSaveDirectory prior.
     
-    const ftr::ShapeHistory& getShapeHistory(){return *shapeHistory;}
+    const ftr::ShapeHistory& getShapeHistory() const {return *shapeHistory;}
     void shapeTrackDump(const boost::uuids::uuid &shapeId, const boost::filesystem::path &directory) const;
     ftr::UpdatePayload::UpdateMap getParentMap(const boost::uuids::uuid&) const;
     ftr::UpdatePayload getPayload(const boost::uuids::uuid&) const;

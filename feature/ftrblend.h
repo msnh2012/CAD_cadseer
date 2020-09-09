@@ -36,32 +36,15 @@ namespace ann{class SeerShape;}
 namespace ftr
 {
   class ShapeHistory;
-
-struct SimpleBlend
-{
-  Picks picks; //!< vector of picked objects
-  std::shared_ptr<prm::Parameter> radius; //!< parameter containing blend radius.
-  osg::ref_ptr<lbr::PLabel> label; //!< graphic icon
-};
-
-struct VariableEntry
-{
-  Pick pick; //!< edge or vertex.
-  std::shared_ptr<prm::Parameter> position; //!< parameter along edge 0 to 1. ignored if vertex. maybe invalid
-  std::shared_ptr<prm::Parameter> radius; //!< value of blend.
-  osg::ref_ptr<lbr::PLabel> label; //!< graphic icon
-  osg::ref_ptr<lbr::PLabel> positionLabel; //!< graphic icon
-};
-
-struct VariableBlend
-{
-  Picks picks; //!< pick object.
-  std::vector<VariableEntry> entries;
-};
   
-class Blend : public Base
-{
-  public:
+  namespace Blend
+  {
+    enum class BlendType
+    {
+      Constant = 0
+      , Variable
+    };
+    
     enum class Shape
     {
       Rational,
@@ -69,57 +52,100 @@ class Blend : public Base
       Polynomial
     };
     
-    Blend();
-    virtual ~Blend() override;
-    
-    static std::shared_ptr<prm::Parameter> buildRadiusParameter();
-    static std::shared_ptr<prm::Parameter> buildPositionParameter();
-    static VariableBlend buildDefaultVariable(const ann::SeerShape&, const Pick &, const ShapeHistory&);
-    
-    void clearBlends(); //remove all blend definitions
-    void addSimpleBlend(const SimpleBlend&);
-    void addVariableBlend(const VariableBlend&);
-    std::vector<SimpleBlend>& getSimpleBlends(){return simpleBlends;}
-    VariableBlend& getVariableBlend(){return variableBlend;}
-    void setShape(Shape sIn){filletShape = sIn;}
-    Shape getShape(){return filletShape;}
-    
-    virtual void updateModel(const UpdatePayload&) override;
-    virtual Type getType() const override {return Type::Blend;}
-    virtual const std::string& getTypeString() const override {return toString(Type::Blend);}
-    virtual const QIcon& getIcon() const override {return icon;}
-    virtual Descriptor getDescriptor() const override {return Descriptor::Alter;}
-    virtual void serialWrite(const boost::filesystem::path&) override; //!< write xml file. not const, might reset a modified flag.
-    void serialRead(const prj::srl::blns::Blend&); //!<initializes this from serial. not virtual, type already known.
-  
-  protected:
-    std::vector<SimpleBlend> simpleBlends;
-    VariableBlend variableBlend;
-    
-    /*! used to map the edges that are blended away to the face generated.
-     * used to map new generated face to outer wire.
-     */ 
-    std::map<boost::uuids::uuid, boost::uuids::uuid> shapeMap; //!< map edges or vertices to faces
-    std::unique_ptr<ann::SeerShape> sShape;
-    Shape filletShape = Shape::Rational;
-    
-private:
-    void match(ChFi3d_FilBuilder&, const ann::SeerShape &);
-    
-    /*! now that we are 'resolving' picks we need to update the shapemap to ensure
-     * consistant id output of generated faces.
+    struct Constant
+    {
+      Picks picks; //!< vector of picked objects
+      std::shared_ptr<prm::Parameter> radius; //!< parameter containing blend radius.
+      osg::ref_ptr<lbr::PLabel> label; //!< graphic icon
+    };
+
+    struct VariableEntry
+    {
+      Pick pick; //!< edge or vertex.
+      std::shared_ptr<prm::Parameter> position; //!< parameter along edge 0 to 1. ignored if vertex. maybe invalid
+      std::shared_ptr<prm::Parameter> radius; //!< value of blend.
+      osg::ref_ptr<lbr::PLabel> label; //!< graphic icon
+      osg::ref_ptr<lbr::PLabel> positionLabel; //!< graphic icon
+    };
+
+    /*! @struct Variable
+     * @brief Data for a variable blend
+     * 
+     * @details We have to combine the picks/edges/contours
+     * and the parameters. Think about a box where 3 adjacent
+     * edges are picked and we share a vertex on all 3 edges.
      */
-    void updateShapeMap(const boost::uuids::uuid&, const ShapeHistory &);
-    void ensureNoFaceNils();
-    void dumpInfo(ChFi3d_FilBuilder&, const ann::SeerShape&);
+    struct Variable
+    {
+      Picks picks; //!< pick object.
+      std::vector<VariableEntry> entries;
+    };
+      
+    std::shared_ptr<prm::Parameter> buildRadiusParameter();
+    std::shared_ptr<prm::Parameter> buildPositionParameter();
+    std::vector<boost::uuids::uuid> getSpineEnds(const ann::SeerShape&, const boost::uuids::uuid&);
     
-    //needed for serial in.
-    void addSimpleBlendQuiet(const SimpleBlend&);
-    void addVariableBlendQuiet(const VariableBlend&);
-    void removeParameter(prm::Parameter *);
-    
-    static QIcon icon;
-};
+    class Feature : public Base
+    {
+      public:
+        
+        Feature();
+        ~Feature() override;
+        
+        void setBlendType(BlendType); //!< will call clearBlends to reset data.
+        BlendType getBlendType() const {return blendType;}
+        
+        void setShape(Shape sIn);
+        Shape getShape() const {return filletShape;}
+        
+        void clearBlends(); //remove all blend definitions
+        
+        void addConstantBlend(const Constant&); //assert on blend type.
+        void removeConstantBlend(int); //assert on blend type.
+        void setConstantPicks(int, const Picks&); //assert on blend type.
+        const std::vector<Constant>& getConstantBlends() const; //assert on blend type.
+        
+        void addOrCreateVariableBlend(const Pick&); //assert on blend type.
+        void addVariableEntry(const VariableEntry&);
+        const std::optional<Variable>& getVariableBlend() const; //!< notice optional return.
+        
+        void updateModel(const UpdatePayload&) override;
+        Type getType() const override {return Type::Blend;}
+        const std::string& getTypeString() const override {return toString(Type::Blend);}
+        const QIcon& getIcon() const override {return icon;}
+        Descriptor getDescriptor() const override {return Descriptor::Alter;}
+        void serialWrite(const boost::filesystem::path&) override; //!< write xml file. not const, might reset a modified flag.
+        void serialRead(const prj::srl::blns::Blend&); //!<initializes this from serial. not virtual, type already known.
+      
+      private:
+        Shape filletShape = Shape::Rational;
+        BlendType blendType = BlendType::Constant;
+        
+        std::vector<Constant> constantBlends;
+        std::optional<Variable> variableBlend; 
+        
+        /*! used to map the edges that are blended away to the face generated.
+        * used to map new generated face to outer wire.
+        */ 
+        std::map<boost::uuids::uuid, boost::uuids::uuid> shapeMap; //!< map edges or vertices to faces
+        std::unique_ptr<ann::SeerShape> sShape;
+        
+        void match(ChFi3d_FilBuilder&, const ann::SeerShape &);
+        
+        /*! now that we are 'resolving' picks we need to update the shapemap to ensure
+        * consistant id output of generated faces.
+        */
+        void updateShapeMap(const boost::uuids::uuid&, const ShapeHistory &);
+        void ensureNoFaceNils();
+        void dumpInfo(ChFi3d_FilBuilder&, const ann::SeerShape&);
+        
+        //needed for serial in.
+        void addConstantBlendQuiet(const Constant&);
+        void wireEntry(VariableEntry&);
+        
+        static QIcon icon;
+    };
+  }
 }
 
 #endif // FTR_BLEND_H

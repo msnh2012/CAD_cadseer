@@ -233,7 +233,7 @@ namespace prm
     ~Parameter();
     Parameter& operator=(const Parameter&);
     
-    QString getName() const {return name;}
+    const QString& getName() const {return name;}
     void setName(const QString &nameIn){name = nameIn;}
     bool isConstant() const {return constant;} //!< true = not linked to forumla.
     void setConstant(bool constantIn);

@@ -23,7 +23,7 @@
 #include "command/cmdleafmanager.h"
 #include "command/cmdbase.h"
 
-namespace ftr{namespace Chamfer{class Feature; struct Cue;}}
+namespace ftr{namespace Chamfer{class Feature;}}
 
 namespace cmd
 {

@@ -20,44 +20,38 @@
 #ifndef CMD_BLEND_H
 #define CMD_BLEND_H
 
+#include "command/cmdleafmanager.h"
 #include "command/cmdbase.h"
 
-namespace dlg{class Blend;}
-namespace ftr{class Blend;}
+namespace ftr{namespace Blend{class Feature; struct VariableEntry;}}
 
 namespace cmd
 {
   class Blend : public Base
   {
   public:
+    using SelectionData = std::tuple<slc::Messages, std::vector<ftr::Blend::VariableEntry>>;
+    
+    ftr::Blend::Feature *feature = nullptr;
+    
     Blend();
+    Blend(ftr::Base*);
     virtual ~Blend() override;
     
-    virtual std::string getCommandName() override{return "Blend";}
-    virtual std::string getStatusMessage() override;
-    virtual void activate() override;
-    virtual void deactivate() override;
+    std::string getCommandName() override{return "Blend";}
+    std::string getStatusMessage() override;
+    void activate() override;
+    void deactivate() override;
+    
+    void setType(int);
+    bool isValidSelection(const slc::Message&);
+    void setConstantSelections(const std::vector<slc::Messages>&);
+    void setVariableSelections(const SelectionData&);
+    void localUpdate();
     
   private:
+    cmd::LeafManager leafManager;
     void go();
-    bool firstRun = true;
-    dlg::Blend *blendDialog = nullptr;
-  };
-  
-  class BlendEdit : public Base
-  {
-  public:
-    BlendEdit(ftr::Base*);
-    virtual ~BlendEdit() override;
-    
-    virtual std::string getCommandName() override{return "Blend Edit";}
-    virtual std::string getStatusMessage() override;
-    virtual void activate() override;
-    virtual void deactivate() override;
-    
-  private:
-    dlg::Blend *blendDialog = nullptr;
-    ftr::Blend *blend;
   };
 }
 

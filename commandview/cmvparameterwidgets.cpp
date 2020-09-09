@@ -27,6 +27,10 @@
 #include <QComboBox>
 #include <QPushButton>
 #include <QFileDialog>
+#include <QTableView>
+#include <QAbstractTableModel>
+#include <QHeaderView>
+#include <QTimer>
 
 #include "application/appapplication.h"
 #include "application/appmainwindow.h"
@@ -797,4 +801,209 @@ QWidget* ParameterWidget::getWidget(prm::Parameter *pIn)
   if (!widget)
     return nullptr;
   return widget.get();
+}
+
+namespace
+{
+  class TableModel : public QAbstractTableModel
+  {
+  public:
+    TableModel(QObject *parent)
+    : QAbstractTableModel(parent)
+    {}
+    int addParameter(prm::Parameter *pIn)
+    {
+      int index = static_cast<int>(parameters.size());
+      beginInsertRows(QModelIndex(), index, index);
+      parameters.push_back(pIn);
+      endInsertRows();
+      return static_cast<int>(parameters.size()) - 1;
+    }
+    void removeParameter(int index)
+    {
+      beginRemoveRows(QModelIndex(), index, index);
+      auto it = parameters.begin() + index;
+      parameters.erase(it);
+      endRemoveRows();
+    }
+    prm::Parameter* getParameter(int index) const
+    {
+      assert(index >= 0 && index < static_cast<int>(parameters.size()));
+      return parameters.at(index);
+    }
+    int rowCount(const QModelIndex&) const override
+    {
+      return static_cast<int>(parameters.size());
+    }
+    int columnCount(const QModelIndex&) const override
+    {
+      return 2;
+    }
+    QVariant headerData(int section, Qt::Orientation orientation, int role) const override
+    {
+      if (role == Qt::DisplayRole && orientation == Qt::Horizontal)
+      {
+        if (section == 0)
+          return tr("Name");
+        if (section == 1)
+          return tr("Value");
+      }
+      return QAbstractTableModel::headerData(section, orientation, role);
+    }
+    QVariant data(const QModelIndex &index, int role) const override
+    {
+      if (!index.isValid())
+        return QVariant();
+      if (role == Qt::DisplayRole)
+      {
+        assert(index.row() >= 0 && index.row() < static_cast<int>(parameters.size()));
+        const auto *p = parameters.at(index.row());
+        if (index.column() == 0)
+          return p->getName();
+        if (index.column() == 1)
+          return static_cast<QString>(*p);
+      }
+      return QVariant();
+    }
+    bool setData(const QModelIndex &index, const QVariant&, int) override
+    {
+      dataChanged(index, index);
+      return true;
+    }
+    Qt::ItemFlags flags(const QModelIndex &index) const override
+    {
+      Qt::ItemFlags out = Qt::ItemIsSelectable | Qt::ItemIsEnabled;
+      if (index.column() == 1)
+        out |= Qt::ItemIsEditable;
+      return out;
+    }
+  private:
+    std::vector<prm::Parameter*> parameters;
+  };
+  
+  
+  
+  
+    /*! @brief Delegate expression editor
+   * 
+   * Again!
+   */
+  class ExpressionDelegate : public QStyledItemDelegate
+  {
+  public:
+    explicit ExpressionDelegate(QObject *parent): QStyledItemDelegate(parent){}
+    
+    QWidget* createEditor(QWidget* parent, const QStyleOptionViewItem&, const QModelIndex &index) const override
+    {
+      prm::Parameter *p = static_cast<const TableModel*>(index.model())->getParameter(index.row());
+      cmv::WidgetFactoryVisitor v(parent, p);
+      return boost::apply_visitor(v, p->getStow().variant);
+    }
+
+    void updateEditorGeometry(QWidget* editor, const QStyleOptionViewItem& option, const QModelIndex&) const override
+    {
+      editor->setGeometry(option.rect);
+    }
+    
+    void setEditorData(QWidget*, const QModelIndex&) const override
+    {
+      //shouldn't need to do anything here as we initialized everything when we created
+    }
+
+    void setModelData(QWidget*, QAbstractItemModel* model, const QModelIndex& index) const override
+    {
+      if (!index.isValid())
+        return;
+      
+      //right now we are only using doubles/expression edits in parameter table.
+      //the editor itself should set the value of the parameter. so here
+      //all we need to do is trick the model into thinking the value has changed.
+      TableModel *tm = dynamic_cast<TableModel*>(model);
+      assert(tm);
+      QVariant dummy;
+      tm->setData(index, dummy, Qt::EditRole);
+    }
+  };
+}
+
+struct cmv::ParameterTable::Stow
+{
+  ParameterTable *parentWidget;
+  TableModel *model;
+  QTableView *view;
+  
+  Stow() = delete;
+  Stow(ParameterTable *parentWidgetIn)
+  : parentWidget(parentWidgetIn)
+  {
+    buildGui();
+  }
+  
+  void buildGui()
+  {
+    QVBoxLayout *layout = new QVBoxLayout();
+    parentWidget->setLayout(layout);
+    layout->setContentsMargins(0, 0, 0, 0);
+    parentWidget->setContentsMargins(0, 0, 0, 0);
+    parentWidget->setSizePolicy(parentWidget->sizePolicy().horizontalPolicy(), QSizePolicy::Maximum);
+    
+    model = new TableModel(parentWidget);
+    view = new QTableView(parentWidget);
+    view->setModel(model);
+    view->setSizePolicy(view->sizePolicy().horizontalPolicy(), QSizePolicy::Maximum);
+    view->horizontalHeader()->setStretchLastSection(true);
+    view->verticalHeader()->setVisible(false);
+    view->setSelectionBehavior(QAbstractItemView::SelectItems);
+    view->setSelectionMode(QAbstractItemView::SingleSelection);
+    connect (view->selectionModel(), &QItemSelectionModel::selectionChanged, parentWidget, &ParameterTable::selectionHasChanged);
+    layout->addWidget(view);
+    
+    ExpressionDelegate *ed = new ExpressionDelegate(view);
+    view->setItemDelegateForColumn(1, ed);
+  }
+};
+
+ParameterTable::ParameterTable(QWidget *parentIn)
+: QWidget(parentIn)
+, stow(std::make_unique<Stow>(this))
+{}
+
+ParameterTable::~ParameterTable() = default;
+
+void ParameterTable::addParameter(prm::Parameter *p)
+{
+  int row = stow->model->addParameter(p);
+  auto *sm = stow->view->selectionModel();
+  assert(sm);
+  QModelIndex mi = stow->model->index(row, 1);
+  assert(mi.isValid());
+  auto flags = QItemSelectionModel::Clear | QItemSelectionModel::SelectCurrent;
+  sm->select(mi, flags);
+}
+
+void ParameterTable::removeParameter(int index)
+{
+  stow->model->removeParameter(index);
+}
+
+int ParameterTable::getCurrentSelectedIndex()
+{
+  if (!stow->view->selectionModel()->hasSelection())
+    return -1;
+  auto indexList = stow->view->selectionModel()->selectedIndexes();
+  if (indexList.isEmpty())
+    return -1;
+  return indexList.front().row();
+}
+
+void ParameterTable::setCurrentSelectedIndex(int index)
+{
+  if (index >= stow->model->rowCount(QModelIndex()) || index < 0)
+    return;
+  stow->view->selectionModel()->select(stow->model->index(index, 1), QItemSelectionModel::Clear | QItemSelectionModel::SelectCurrent);
+}
+
+void ParameterTable::selectionChanged(const QItemSelection&, const QItemSelection&)
+{
+  emit selectionHasChanged();
 }

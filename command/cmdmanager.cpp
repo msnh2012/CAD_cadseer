@@ -977,7 +977,7 @@ void Manager::editFeatureDispatched(const msg::Message&)
 
 BasePtr editBlend(ftr::Base *feature)
 {
-  return std::make_shared<BlendEdit>(feature);
+  return std::make_shared<Blend>(feature);
 }
 
 BasePtr editStrip(ftr::Base *feature)

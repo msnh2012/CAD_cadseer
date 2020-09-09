@@ -118,6 +118,20 @@ int SelectionWidget::getButtonCount() const
   return static_cast<int>(stow->entries.size());
 }
 
+int SelectionWidget::getActiveIndex() const
+{
+  //note can't use button group as it might be passed in and
+  //may contain buttons outside of this widget.
+  int index = -1;
+  for (const auto &e : stow->entries)
+  {
+    ++index;
+    if (e.button->isChecked())
+      return index;
+  }
+  return -1;
+}
+
 /*! @brief add a button to group of buttons
  * 
  * @parameter index is the index of new button. if invalid added at end.
@@ -152,6 +166,7 @@ void SelectionWidget::addButton(const SelectionWidgetCue &cueIn)
   if (!cueIn.showAccrueColumn)
     stow->entries.back().view->hideColumn(1);
   stow->entries.back().view->setMinimumWidth(stow->selectionWidth);
+  stow->entries.back().view->setEnabled(false);
   stow->stackedWidget->addWidget(stow->entries.back().view);
 }
 
@@ -159,6 +174,12 @@ SelectionButton* SelectionWidget::getButton(int index) const
 {
   assert(stow->validEntryIndex(index));
   return stow->entries.at(index).button;
+}
+
+SelectionView* SelectionWidget::getView(int index) const
+{
+  assert(stow->validEntryIndex(index));
+  return stow->entries.at(index).view;
 }
 
 const slc::Messages& SelectionWidget::getMessages(int index) const
@@ -261,10 +282,6 @@ void SelectionWidget::advance()
 
 void SelectionWidget::buttonToggled(bool bState)
 {
-  //we don't care about button unchecked
-  if (!bState)
-    return;
-  
   SelectionButton *sb = dynamic_cast<SelectionButton *>(sender());
   assert(sb);
   if (!sb)
@@ -273,10 +290,20 @@ void SelectionWidget::buttonToggled(bool bState)
   assert(oi);
   if (!oi)
     return;
-  //shouldn't have to worry about a hidden button being toggled down
+  
+  //shouldn't have to worry about a hidden button being toggled
   assert(oi.get() >= 0 && oi.get() < stow->stackedWidget->count());
+  assert(stow->validEntryIndex(oi.get()));
   if (bState)
+  {
+    stow->entries.at(oi.get()).view->setEnabled(true);
     stow->stackedWidget->setCurrentIndex(oi.get());
+  }
+  else
+  {
+    stow->entries.at(oi.get()).view->clearSelection();
+    stow->entries.at(oi.get()).view->setEnabled(false);
+  }
 }
 
 void SelectionWidget::activate(int index)

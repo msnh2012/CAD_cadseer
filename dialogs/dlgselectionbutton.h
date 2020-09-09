@@ -31,7 +31,7 @@
 class QHideEvent;
 class QShowEvent;
 
-namespace msg{class Message; struct Node; struct Sift;}
+namespace msg{struct Message; struct Node; struct Sift;}
 
 namespace dlg
 {
@@ -62,6 +62,7 @@ namespace dlg
     void setMessagesQuietly(const slc::Message&);
     void addMessage(const slc::Message&);
     void addMessages(const slc::Messages&);
+    void removeMessage(int);
     void clear();
     
     slc::Mask mask; //!< to control selection.
@@ -70,7 +71,9 @@ namespace dlg
     QString statusPrompt;
     
   Q_SIGNALS:
-    void dirty();
+    void dirty(); //triggered for any selection change.
+    void selectionAdded(int); //only triggered by external selection changes
+    void selectionRemoved(int); //only triggered by external selection changes
     void advance(); //!< used in single selection mode to advance to next button.
     
   protected:

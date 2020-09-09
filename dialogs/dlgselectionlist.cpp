@@ -141,7 +141,6 @@ SelectionView::SelectionView(QWidget *parent)
   setSizePolicy(adjust);
   
   setSelectionMode(QAbstractItemView::SingleSelection);
-  connect(this, &QTableView::clicked, this, &SelectionView::clickedSlot);
 }
 
 SelectionView::SelectionView(QWidget *parent, QLayout *lIn)
@@ -150,14 +149,42 @@ SelectionView::SelectionView(QWidget *parent, QLayout *lIn)
   layout = lIn;
 }
 
-void SelectionView::clickedSlot(const QModelIndex &index)
+int SelectionView::getSelectedIndex()
 {
-  if (!index.isValid())
+  auto *sm = selectionModel();
+  if (!sm->hasSelection())
+    return -1;
+  auto indexes = sm->selectedIndexes();
+  if (indexes.isEmpty())
+    return -1;
+  return indexes.front().row();
+}
+
+void SelectionView::setSelectedIndex(int index)
+{
+  if (model()->rowCount() == 0)
+    return;
+  assert(index < model()->rowCount());
+  auto mi = model()->index(index, 0);
+  selectionModel()->select(mi, QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Current);
+}
+
+void SelectionView::selectionChanged(const QItemSelection &selected, const QItemSelection &deselected)
+{
+  QTableView::selectionChanged(selected, deselected);
+  auto indexes = selected.indexes();
+  if (indexes.isEmpty() || !indexes.front().isValid())
     return;
   auto *m = dynamic_cast<SelectionModel*>(model());
   assert(m);
-  if (m->flags(index) & Qt::ItemIsSelectable)
-    m->getButton()->highlightIndex(index.row());
+  if (m->flags(indexes.front()) & Qt::ItemIsSelectable)
+    m->getButton()->highlightIndex(indexes.front().row());
+  emit dirty();
+}
+
+void SelectionView::clearSelection()
+{
+  selectionModel()->clearSelection();
 }
 
 void SelectionView::reset()

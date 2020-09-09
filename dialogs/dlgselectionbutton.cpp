@@ -83,7 +83,9 @@ void SelectionButton::setupDispatcher()
 }
 
 /* I think it will be easier to check state in the message handlers than trying
- * to block boost signals in qt events.
+ * to block boost signals in qt events. The selection list uses dirty to
+ * keep in sync. So we have to call dirty before selectionAdded/removed
+ * so any code assessing the list works
  */
 void SelectionButton::selectionAdditionDispatched(const msg::Message &mIn)
 {
@@ -96,8 +98,15 @@ void SelectionButton::selectionAdditionDispatched(const msg::Message &mIn)
   if (isSingleSelection)
   {
     QTimer::singleShot(0, this, SIGNAL(advance()));
+    if (!messages.empty())
+    {
+      dirty();
+      selectionRemoved(0);
+    }
     messages.clear();
     messages.push_back(message);
+    dirty();
+    selectionAdded(0);
     node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
     node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Add, message));
   }
@@ -114,9 +123,10 @@ void SelectionButton::selectionAdditionDispatched(const msg::Message &mIn)
         node->sendBlocked(mm);
       }
     }
+    dirty();
+    selectionAdded(static_cast<int>(messages.size()) - 1);
   }
   
-  dirty();
 }
 
 void SelectionButton::selectionSubtractionDispatched(const msg::Message &mIn)
@@ -127,7 +137,8 @@ void SelectionButton::selectionSubtractionDispatched(const msg::Message &mIn)
   const slc::Message& sm = mIn.getSLC();
   if (slc::has(messages, sm))
   {
-    slc::remove(messages, sm);
+    int index = slc::remove(messages, sm);
+    selectionRemoved(index);
     dirty();
   }
 }
@@ -177,6 +188,13 @@ void SelectionButton::addMessage(const slc::Message &mIn)
 void SelectionButton::addMessages(const slc::Messages &msIn)
 {
   std::copy(msIn.begin(), msIn.end(), std::back_inserter(messages));
+  dirty();
+}
+
+void SelectionButton::removeMessage(int index)
+{
+  assert(index >= 0 && index < static_cast<int>(messages.size()));
+  messages.erase(messages.begin() + index);
   dirty();
 }
 

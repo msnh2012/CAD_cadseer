@@ -37,6 +37,7 @@ namespace slc{struct Message; typedef std::vector<Message> Messages;}
 namespace dlg
 {
   class SelectionButton;
+  class SelectionView;
   
   /*! @struct SelectionWidgetCue
    * @brief describes selection entry.
@@ -70,7 +71,9 @@ namespace dlg
     SelectionWidget(QWidget*, const std::vector<SelectionWidgetCue>&, QButtonGroup* = nullptr);
     ~SelectionWidget() override;
     int getButtonCount() const;
+    int getActiveIndex() const; //!< -1 if no button checked;
     SelectionButton* getButton(int) const;
+    SelectionView* getView(int) const;
     const slc::Messages& getMessages(int) const;
     void initializeButton(int, const slc::Message&);
     void initializeButton(int, const slc::Messages&);

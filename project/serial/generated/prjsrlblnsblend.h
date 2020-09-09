@@ -444,6 +444,34 @@ namespace prj
         void
         seerShape (::std::unique_ptr< SeerShapeType > p);
 
+        // filletShape
+        //
+        typedef ::xml_schema::Int FilletShapeType;
+        typedef ::xsd::cxx::tree::traits< FilletShapeType, char > FilletShapeTraits;
+
+        const FilletShapeType&
+        filletShape () const;
+
+        FilletShapeType&
+        filletShape ();
+
+        void
+        filletShape (const FilletShapeType& x);
+
+        // blendType
+        //
+        typedef ::xml_schema::Int BlendTypeType;
+        typedef ::xsd::cxx::tree::traits< BlendTypeType, char > BlendTypeTraits;
+
+        const BlendTypeType&
+        blendType () const;
+
+        BlendTypeType&
+        blendType ();
+
+        void
+        blendType (const BlendTypeType& x);
+
         // shapeMap
         //
         typedef ::prj::srl::spt::EvolveRecord ShapeMapType;
@@ -481,45 +509,35 @@ namespace prj
         // variableBlend
         //
         typedef ::prj::srl::blns::VariableBlend VariableBlendType;
+        typedef ::xsd::cxx::tree::optional< VariableBlendType > VariableBlendOptional;
         typedef ::xsd::cxx::tree::traits< VariableBlendType, char > VariableBlendTraits;
 
-        const VariableBlendType&
+        const VariableBlendOptional&
         variableBlend () const;
 
-        VariableBlendType&
+        VariableBlendOptional&
         variableBlend ();
 
         void
         variableBlend (const VariableBlendType& x);
 
         void
-        variableBlend (::std::unique_ptr< VariableBlendType > p);
-
-        // filletShape
-        //
-        typedef ::xml_schema::Int FilletShapeType;
-        typedef ::xsd::cxx::tree::traits< FilletShapeType, char > FilletShapeTraits;
-
-        const FilletShapeType&
-        filletShape () const;
-
-        FilletShapeType&
-        filletShape ();
+        variableBlend (const VariableBlendOptional& x);
 
         void
-        filletShape (const FilletShapeType& x);
+        variableBlend (::std::unique_ptr< VariableBlendType > p);
 
         // Constructors.
         //
         Blend (const BaseType&,
                const SeerShapeType&,
-               const VariableBlendType&,
-               const FilletShapeType&);
+               const FilletShapeType&,
+               const BlendTypeType&);
 
         Blend (::std::unique_ptr< BaseType >,
                ::std::unique_ptr< SeerShapeType >,
-               ::std::unique_ptr< VariableBlendType >,
-               const FilletShapeType&);
+               const FilletShapeType&,
+               const BlendTypeType&);
 
         Blend (const ::xercesc::DOMElement& e,
                ::xml_schema::Flags f = 0,
@@ -549,10 +567,11 @@ namespace prj
         protected:
         ::xsd::cxx::tree::one< BaseType > base_;
         ::xsd::cxx::tree::one< SeerShapeType > seerShape_;
+        ::xsd::cxx::tree::one< FilletShapeType > filletShape_;
+        ::xsd::cxx::tree::one< BlendTypeType > blendType_;
         ShapeMapSequence shapeMap_;
         SimpleBlendsSequence simpleBlends_;
-        ::xsd::cxx::tree::one< VariableBlendType > variableBlend_;
-        ::xsd::cxx::tree::one< FilletShapeType > filletShape_;
+        VariableBlendOptional variableBlend_;
       };
     }
   }

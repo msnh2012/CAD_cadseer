@@ -23,6 +23,9 @@
 #include <memory>
 
 #include <QWidget>
+#include <QStyledItemDelegate>
+
+class QItemSelection;
 
 namespace prm{class Parameter;}
 
@@ -116,6 +119,33 @@ namespace cmv
     void enableWidget(prm::Parameter*);
     void disableWidget(prm::Parameter*);
     QWidget* getWidget(prm::Parameter*); // maybe nullptr
+  private:
+    struct Stow;
+    std::unique_ptr<Stow> stow;
+  };
+  
+  /*! @class ParameterTable
+   * @brief Self contained widget for parameter editing
+   * 
+   * Allows a selection so parameters associated
+   * to picks can be displayed while editing. see blend
+   */
+  class ParameterTable : public QWidget
+  {
+    Q_OBJECT
+  public:
+    ParameterTable(QWidget*);
+    ~ParameterTable();
+    void addParameter(prm::Parameter*);
+    void removeParameter(int);
+    int getCurrentSelectedIndex();
+    void setCurrentSelectedIndex(int);
+  Q_SIGNALS:
+    void selectionHasChanged();
+  private Q_SLOTS:
+    void selectionChanged(const QItemSelection&, const QItemSelection&);
+    
+    
   private:
     struct Stow;
     std::unique_ptr<Stow> stow;

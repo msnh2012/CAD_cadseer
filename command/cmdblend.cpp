@@ -17,8 +17,7 @@
  *
  */
 
-#include <TopoDS.hxx>
-#include <TopoDS_Edge.hxx>
+#include <osg/Geometry> //yuck
 
 #include "application/appapplication.h"
 #include "application/appmainwindow.h"
@@ -31,20 +30,41 @@
 #include "feature/ftrblend.h"
 #include "tools/featuretools.h"
 #include "dialogs/dlgparameter.h"
-#include "dialogs/dlgblend.h"
+#include "commandview/cmvmessage.h"
+#include "commandview/cmvblend.h"
 #include "command/cmdblend.h"
 
 using namespace cmd;
 
 using boost::uuids::uuid;
 
-Blend::Blend() : Base() {}
-
-Blend::~Blend()
+Blend::Blend()
+: Base("cmd::Blend")
+, leafManager()
 {
-  if (blendDialog)
-    blendDialog->deleteLater();
+  //this command is different. We can create multiple features.
+  //so we don't build a feature by default.
+//   auto nf = std::make_shared<ftr::Blend>();
+//   project->addFeature(nf);
+//   feature = nf.get();
+//   node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
+  isEdit = false;
+  isFirstRun = true;
 }
+
+Blend::Blend(ftr::Base *fIn)
+: Base("cmd::Blend")
+, leafManager(fIn)
+{
+  feature = dynamic_cast<ftr::Blend::Feature*>(fIn);
+  assert(feature);
+  viewBase = std::make_unique<cmv::Blend>(this);
+  node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  isEdit = true;
+  isFirstRun = false;
+}
+
+Blend::~Blend() = default;
 
 std::string Blend::getStatusMessage()
 {
@@ -54,126 +74,192 @@ std::string Blend::getStatusMessage()
 void Blend::activate()
 {
   isActive = true;
-  
-  /* first time the command is activated we will check for a valid preselection.
-   * if there is one then we will just build a simple blend feature and call
-   * the parameter dialog. Otherwise we will call the blend dialog.
-   */
-  if (firstRun)
+  leafManager.rewind();
+  if (isFirstRun.get())
   {
-    firstRun = false;
+    isFirstRun = false;
     go();
   }
-  
-  if (blendDialog)
+  if (viewBase)
   {
-    blendDialog->show();
-    blendDialog->raise();
-    blendDialog->activateWindow();
+    feature->setEditing();
+    cmv::Message vm(viewBase.get(), viewBase->getPaneWidth());
+    msg::Message out(msg::Mask(msg::Request | msg::Command | msg::View | msg::Show), vm);
+    node->sendBlocked(out);
   }
-  else sendDone();
+  else
+    sendDone();
 }
 
 void Blend::deactivate()
 {
+  if (viewBase)
+  {
+    feature->setNotEditing();
+    msg::Message out(msg::Mask(msg::Request | msg::Command | msg::View | msg::Hide));
+    node->sendBlocked(out);
+  }
+  leafManager.fastForward();
+  if (!isEdit.get())
+  {
+    project->hideAlterParents(feature->getId());
+    node->sendBlocked(msg::buildShowThreeD(feature->getId()));
+    node->sendBlocked(msg::buildShowOverlay(feature->getId()));
+  }
   isActive = false;
-  if (blendDialog)
-    blendDialog->hide();
+}
+
+void Blend::setType(int type)
+{
+  assert(type == 0 || type == 1);
+  auto t = static_cast<ftr::Blend::BlendType>(type);
+  feature->setBlendType(t);
+}
+
+bool Blend::isValidSelection(const slc::Message &mIn)
+{
+  if (mIn.type != slc::Type::Edge)
+    return false;
+  
+  ftr::Base *f = project->findFeature(mIn.featureId);
+  assert(f);
+  if (!f->hasAnnex(ann::Type::SeerShape) || f->getAnnex<ann::SeerShape>().isNull())
+    return false;
+  
+  return true;
+}
+
+void Blend::setConstantSelections(const std::vector<slc::Messages> &msgsIn)
+{
+  assert(isActive);
+  assert(msgsIn.size() == feature->getConstantBlends().size());
+  project->clearAllInputs(feature->getId());
+  
+  int index = -1;
+  for (const auto &msgs : msgsIn)
+  {
+    index++;
+    ftr::Picks currentPicks;
+    for (const auto &m : msgs)
+    {
+      if (!isValidSelection(m))
+        continue;
+      ftr::Pick pick = tls::convertToPick(m, *project->findFeature(m.featureId), project->getShapeHistory());
+      pick.tag = ftr::InputType::createIndexedTag(ftr::InputType::target, index);
+      currentPicks.push_back(pick);
+      project->connectInsert(m.featureId, feature->getId(), {currentPicks.back().tag});
+    }
+    feature->setConstantPicks(index, currentPicks);
+  }
+}
+
+/*! Setting of project connections and feature picks.
+ * 
+ * @param msgsIn Tuple consisting of a vector of messages for edges
+ * and a vector of ftr::VariableEntry. All should belong to same body.
+ */
+void Blend::setVariableSelections(const SelectionData &msgsIn)
+{
+  assert(isActive);
+  project->clearAllInputs(feature->getId());
+  feature->clearBlends();
+  
+  if (std::get<0>(msgsIn).empty() || std::get<1>(msgsIn).empty())
+    return;
+  
+  //we know the edges passed in is not empty so get first edge and
+  //assign input feature and test for validity.
+  assert(project->hasFeature(std::get<0>(msgsIn).front().featureId));
+  const auto &inputFeature = *project->findFeature(std::get<0>(msgsIn).front().featureId);
+  assert(inputFeature.hasAnnex(ann::Type::SeerShape) && !inputFeature.getAnnex<ann::SeerShape>().isNull());
+  const auto &ssIn = inputFeature.getAnnex<ann::SeerShape>();
+  
+  int index = -1;
+  const auto &edges = std::get<0>(msgsIn);
+  for (const auto &edge : edges)
+  {
+    if (inputFeature.getId() != edge.featureId)
+    {
+      node->sendBlocked(msg::buildStatusMessage(QObject::tr("Filtering selected object on separate feature").toStdString(), 2.0));
+      continue;
+    }
+    index++;
+    ftr::Pick pick = tls::convertToPick(edge, ssIn, project->getShapeHistory());
+    pick.tag = ftr::InputType::createIndexedTag(ftr::InputType::target, index);
+    feature->addOrCreateVariableBlend(pick);
+    project->connect(inputFeature.getId(), feature->getId(), {pick.tag});
+  }
+  
+  
+  for (auto entry : std::get<1>(msgsIn))
+  {
+    index++;
+    entry.pick.tag = ftr::InputType::createIndexedTag(ftr::InputType::target, index);
+    feature->addVariableEntry(entry);
+    project->connect(inputFeature.getId(), feature->getId(), {entry.pick.tag});
+  }
+}
+
+void Blend::localUpdate()
+{
+  assert(isActive);
+  feature->updateModel(project->getPayload(feature->getId()));
+  feature->updateVisual();
+  feature->setModelDirty();
+  node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
 }
 
 void Blend::go()
 {
   assert(project);
   
+  bool created = false;
   const slc::Containers &containers = eventHandler->getSelections();
-  if (!containers.empty())
+  std::vector<slc::Containers> splits = slc::split(containers); //grouped by featureId.
+  for (const auto &cs : splits)
   {
-    //get targetId and filter out edges not belonging to first target.
-    const ftr::Base *targetFeature = project->findFeature(containers.at(0).featureId);
-    const ann::SeerShape &targetSeerShape = project->findFeature(targetFeature->getId())->getAnnex<ann::SeerShape>();
-    ftr::SimpleBlend simpleBlend; //no variable blend for pick first scenario
-    tls::Connector connector;
-    int pickIndex = -1;
-    for (const auto &currentSelection : containers)
+    assert(!cs.empty());
+    
+    slc::Messages targets;
+    for (const auto c : cs)
     {
-      pickIndex++;
-      if
-      (
-        currentSelection.featureId != targetFeature->getId() ||
-        currentSelection.selectionType != slc::Type::Edge //just edges for now.
-      )
+      auto m = slc::EventHandler::containerToMessage(c);
+      if (!isValidSelection(m))
         continue;
-      
-      TopoDS_Edge edge = TopoDS::Edge(targetSeerShape.getOCCTShape(currentSelection.shapeId));  
-      ftr::Pick pick = tls::convertToPick(currentSelection, targetSeerShape, project->getShapeHistory());
-      pick.tag = std::string(ftr::InputType::target) + std::to_string(pickIndex);
-      simpleBlend.picks.push_back(pick);
-      connector.add(targetFeature->getId(), pick.tag);
+      targets.push_back(m);
     }
-    if (!simpleBlend.picks.empty())
+    if (!targets.empty())
     {
-      auto simpleRadius = ftr::Blend::buildRadiusParameter();
-      simpleBlend.radius = simpleRadius;
-      
-      std::shared_ptr<ftr::Blend> blend(new ftr::Blend());
-      project->addFeature(blend);
-      for (const auto &p : connector.pairs)
-        project->connectInsert(p.first, blend->getId(), {p.second});
-      blend->addSimpleBlend(simpleBlend);
-      
-      node->sendBlocked(msg::buildHideThreeD(targetFeature->getId()));
-      node->sendBlocked(msg::buildHideOverlay(targetFeature->getId()));
-      
-      blend->setColor(targetFeature->getColor());
-                
-      dlg::Parameter *dialog = new dlg::Parameter(simpleBlend.radius.get(), blend->getId());
-      dialog->show();
-      dialog->raise();
-      dialog->activateWindow();
-      
-      node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
-      return; 
+      auto nf = std::make_shared<ftr::Blend::Feature>();
+      project->addFeature(nf);
+      feature = nf.get();
+      feature->setColor(project->findFeature(targets.front().featureId)->getColor());
+      ftr::Blend::Constant simpleBlend;
+      simpleBlend.radius = ftr::Blend::buildRadiusParameter();
+      feature->addConstantBlend(simpleBlend);
+      setConstantSelections({targets});
+      created = true;
+      node->sendBlocked(msg::buildHideThreeD(targets.front().featureId));
+      node->sendBlocked(msg::buildHideOverlay(targets.front().featureId));
+      node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
+      dlg::Parameter *pDialog = new dlg::Parameter(feature->getParameters().front(), feature->getId());
+      pDialog->show();
+      pDialog->raise();
+      pDialog->activateWindow();
     }
   }
   
-  //if we make it here. we didn't build a blend feature from pre selection.
-  blendDialog = new dlg::Blend(mainWindow);
-  shouldUpdate = false; //dialog calls update
-}
-
-
-BlendEdit::BlendEdit(ftr::Base *feature) : Base()
-{
-  blend = dynamic_cast<ftr::Blend*>(feature);
-  assert(blend);
-}
-
-BlendEdit::~BlendEdit()
-{
-  if (blendDialog)
-    blendDialog->deleteLater();
-}
-
-std::string BlendEdit::getStatusMessage()
-{
-  return "Editing Blend Feature";
-}
-
-void BlendEdit::activate()
-{
-  if (!blendDialog)
-    blendDialog = new dlg::Blend(blend, mainWindow);
+  node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
   
-  isActive = true;
-  blendDialog->show();
-  blendDialog->raise();
-  blendDialog->activateWindow();
-  
-  shouldUpdate = false;
-}
-
-void BlendEdit::deactivate()
-{
-  blendDialog->hide();
-  isActive = false;
+  if (!created)
+  {
+    auto nf = std::make_shared<ftr::Blend::Feature>();
+    project->addFeature(nf);
+    feature = nf.get();
+    node->sendBlocked(msg::buildHideOverlay(feature->getId()));
+    node->sendBlocked(msg::buildHideThreeD(feature->getId()));
+    node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
+    node->sendBlocked(msg::buildStatusMessage("invalid pre selection", 2.0));
+    viewBase = std::make_unique<cmv::Blend>(this);
+  }
 }

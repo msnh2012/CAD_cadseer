@@ -60,9 +60,15 @@ namespace dlg
     SelectionView(QWidget*, QLayout*);
     QSize sizeHint() const override;
     QSize minimumSizeHint() const override;
+    int getSelectedIndex(); //!< can be -1 for no selection.
+    void setSelectedIndex(int);
+    void clearSelection();
+  Q_SIGNALS:
+    void dirty(); //!<selection has changed
   public Q_SLOTS:
-    void clickedSlot(const QModelIndex&);
     void reset() override;
+  protected:
+    void selectionChanged(const QItemSelection&, const QItemSelection&) override;
   private:
     QLayout *layout = nullptr;
   };

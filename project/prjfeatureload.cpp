@@ -313,7 +313,7 @@ std::shared_ptr< ftr::Base > FeatureLoad::loadBlend(const std::string& fileNameI
   auto sBlend = srl::blns::blend(fileNameIn, flags);
   assert(sBlend);
   
-  auto freshBlend = std::make_shared<ftr::Blend>();
+  auto freshBlend = std::make_shared<ftr::Blend::Feature>();
   freshBlend->getAnnex<ann::SeerShape>().setOCCTShape(shapeVector.at(shapeOffsetIn), featureId);
   freshBlend->serialRead(*sBlend);
   

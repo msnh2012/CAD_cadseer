@@ -41,10 +41,11 @@
   <xs:sequence>
     <xs:element name="base" type="spt:Base"/>
     <xs:element name="seerShape" type="spt:SeerShape"/>
+    <xs:element name="filletShape" type="xs:int"/>
+    <xs:element name="blendType" type="xs:int"/>
     <xs:element name="shapeMap" type="spt:EvolveRecord" minOccurs="0" maxOccurs="unbounded"/>
     <xs:element name="simpleBlends" type="blns:SimpleBlend" minOccurs="0" maxOccurs="unbounded"/>
-    <xs:element name="variableBlend" type="blns:VariableBlend"/>
-    <xs:element name="filletShape" type="xs:int"/>
+    <xs:element name="variableBlend" type="blns:VariableBlend" minOccurs="0" maxOccurs="1"/>
   </xs:sequence>
 </xs:complexType>
 

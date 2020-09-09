@@ -53,12 +53,55 @@
 #include "feature/ftrupdatepayload.h"
 #include "feature/ftrblend.h"
 
-using namespace ftr;
+using namespace ftr::Blend;
 using boost::uuids::uuid;
 
-QIcon Blend::icon;
+std::shared_ptr<prm::Parameter> ftr::Blend::buildRadiusParameter()
+{
+  std::shared_ptr<prm::Parameter> out(new prm::Parameter(prm::Names::Radius, prf::manager().rootPtr->features().blend().get().radius()));
+  out->setConstraint(prm::Constraint::buildZeroPositive());
+  return out;
+}
 
-Blend::Blend() : Base(), sShape(new ann::SeerShape())
+std::shared_ptr<prm::Parameter> ftr::Blend::buildPositionParameter()
+{
+  std::shared_ptr<prm::Parameter> out(new prm::Parameter(prm::Names::Position, 0.0));
+  out->setConstraint(prm::Constraint::buildUnit());
+  return out;
+}
+
+/*! @brief get ids of first and last spine vertices
+ * 
+ * @param ssIn is the parent seer shape of the edge.
+ * @param edgeIdIn is the id of the edge
+ * @return Vector of vertex ids. Only one for periodic.
+ * 
+ * @details asserts that parent seer shape has edge id.
+ * asserts that the shape is an actual edge.
+ */
+std::vector<uuid> ftr::Blend::getSpineEnds(const ann::SeerShape &ssIn, const uuid &edgeIdIn)
+{
+  std::vector<uuid> out;
+  assert(ssIn.hasId(edgeIdIn));
+  TopoDS_Shape edgeShape = ssIn.getOCCTShape(edgeIdIn);
+  assert(edgeShape.ShapeType() == TopAbs_EDGE);
+  
+  const TopoDS_Shape &rootShape = ssIn.getRootOCCTShape();
+  BRepFilletAPI_MakeFillet blendMaker(rootShape);
+  blendMaker.Add(TopoDS::Edge(edgeShape));
+  
+  uuid entry1Id = ssIn.findId(blendMaker.FirstVertex(1));
+  uuid entry2Id = ssIn.findId(blendMaker.LastVertex(1));
+  out.push_back(entry1Id);
+  if (entry1Id != entry2Id)
+    out.push_back(entry2Id);
+  
+  return out;
+}
+
+QIcon Feature::icon;
+
+Feature::Feature() : Base(), sShape(new ann::SeerShape())
 {
   if (icon.isNull())
     icon = QIcon(":/resources/images/constructionBlend.svg");
@@ -69,148 +112,157 @@ Blend::Blend() : Base(), sShape(new ann::SeerShape())
   annexes.insert(std::make_pair(ann::Type::SeerShape, sShape.get()));
 }
 
-Blend::~Blend(){}
+Feature::~Feature() = default;
 
-std::shared_ptr< prm::Parameter > Blend::buildRadiusParameter()
+void Feature::setBlendType(BlendType typeIn)
 {
-  std::shared_ptr<prm::Parameter> out(new prm::Parameter(prm::Names::Radius, prf::manager().rootPtr->features().blend().get().radius()));
-  out->setConstraint(prm::Constraint::buildZeroPositive());
-  return out;
+  clearBlends();
+  blendType = typeIn;
+  setModelDirty();
 }
 
-std::shared_ptr< prm::Parameter > Blend::buildPositionParameter()
+void Feature::setShape(Shape sIn)
 {
-  std::shared_ptr<prm::Parameter> out(new prm::Parameter(prm::Names::Position, 0.0));
-  out->setConstraint(prm::Constraint::buildUnit());
-  return out;
+  filletShape = sIn;
+  setModelDirty();
 }
 
-VariableBlend Blend::buildDefaultVariable(const ann::SeerShape &seerShapeIn, const Pick &pickIn, const ShapeHistory& historyIn)
+void Feature::clearBlends()
 {
-  VariableBlend out;
-  out.picks.push_back(pickIn);
-  
-  const TopoDS_Shape &rootShape = seerShapeIn.getRootOCCTShape();
-  BRepFilletAPI_MakeFillet blendMaker(rootShape);
-  const TopoDS_Shape &edge = seerShapeIn.getOCCTShape(pickIn.shapeHistory.getRootId()); //TODO might be face!
-  blendMaker.Add(TopoDS::Edge(edge));
-  
-  //not using position parameter for vertices, but building anyway for consistency
-  VariableEntry entry1;
-  uuid entry1Id = seerShapeIn.findId(blendMaker.FirstVertex(1));
-  entry1.pick.shapeHistory = historyIn.createDevolveHistory(entry1Id);
-  entry1.radius = buildRadiusParameter();
-  entry1.position = buildPositionParameter();
-  out.entries.push_back(entry1);
-  
-  VariableEntry entry2;
-  uuid entry2Id = seerShapeIn.findId(blendMaker.LastVertex(1));
-  if (entry1Id != entry2Id) //periodic spine
-  {
-    entry2.pick.shapeHistory = historyIn.createDevolveHistory(entry2Id);
-    entry2.radius = buildRadiusParameter();
-    entry2.radius->setValue(1.5);
-    entry2.position = buildPositionParameter();
-    out.entries.push_back(entry2);
-  }
-  
-  return out;
-}
-
-void Blend::removeParameter(prm::Parameter *p)
-{
-  auto it = std::find(parameters.begin(), parameters.end(), p);
-  if(it != parameters.end())
-    parameters.erase(it);
-}
-
-void Blend::clearBlends()
-{
-  for (const auto &sb : simpleBlends)
+  for (const auto &sb : constantBlends)
   {
     removeParameter(sb.radius.get());
     overlaySwitch->removeChild(sb.label.get());
   }
-  simpleBlends.clear();
+  constantBlends.clear();
   
-  for (const auto &e : variableBlend.entries)
+  if (variableBlend)
   {
-    removeParameter(e.radius.get());
-    removeParameter(e.position.get());
-    overlaySwitch->removeChild(e.label.get());
+    for (const auto &e : variableBlend->entries)
+    {
+      removeParameter(e.radius.get());
+      overlaySwitch->removeChild(e.label.get());
+      if (e.positionLabel)
+      {
+        removeParameter(e.position.get());
+        overlaySwitch->removeChild(e.positionLabel.get());
+      }
+    }
+    variableBlend.reset();
   }
-  variableBlend.picks.clear();
-  variableBlend.entries.clear();
 }
 
-void Blend::addSimpleBlend(const SimpleBlend &simpleBlendIn)
+void Feature::addConstantBlend(const Constant &simpleBlendIn)
 {
-  addSimpleBlendQuiet(simpleBlendIn);
+  addConstantBlendQuiet(simpleBlendIn);
   setModelDirty();
 }
 
-void Blend::addSimpleBlendQuiet(const SimpleBlend &simpleBlendIn)
+void Feature::addConstantBlendQuiet(const Constant &constantBlendIn)
 {
-  if (simpleBlendIn.radius)
-    simpleBlends.push_back(simpleBlendIn);
+  assert(blendType == BlendType::Constant);
+  if (constantBlendIn.radius)
+    constantBlends.push_back(constantBlendIn);
   else
   {
-    SimpleBlend temp = simpleBlendIn;
+    Constant temp = constantBlendIn;
     temp.radius = buildRadiusParameter();
-    simpleBlends.push_back(temp);
+    constantBlends.push_back(temp);
   }
-  simpleBlends.back().radius->connectValue(std::bind(&Blend::setModelDirty, this));
-  if (!simpleBlends.back().label)
+  constantBlends.back().radius->connectValue(std::bind(&Feature::setModelDirty, this));
+  if (!constantBlends.back().label)
   {
-    simpleBlends.back().label = new lbr::PLabel(simpleBlends.back().radius.get());
-    simpleBlends.back().label->showName = true;
+    constantBlends.back().label = new lbr::PLabel(constantBlends.back().radius.get());
+    constantBlends.back().label->showName = true;
   }
-  simpleBlends.back().label->valueHasChanged();
-  simpleBlends.back().label->constantHasChanged();
-  overlaySwitch->addChild(simpleBlends.back().label.get());
+  constantBlends.back().label->valueHasChanged();
+  constantBlends.back().label->constantHasChanged();
+  overlaySwitch->addChild(constantBlends.back().label.get());
   
-  parameters.push_back(simpleBlends.back().radius.get());
+  parameters.push_back(constantBlends.back().radius.get());
 }
 
-void Blend::addVariableBlend(const VariableBlend &variableBlendIn)
+void Feature::removeConstantBlend(int index)
 {
-  addVariableBlendQuiet(variableBlendIn);
+  assert(blendType == BlendType::Constant);
+  assert(index >= 0 && index < static_cast<int>(constantBlends.size()));
+  Constant &b = constantBlends.at(index);
+  removeParameter(b.radius.get());
+  overlaySwitch->removeChild(b.label.get());
+  auto it = constantBlends.begin() + index;
+  constantBlends.erase(it);
   setModelDirty();
 }
 
-void Blend::addVariableBlendQuiet(const VariableBlend &variableBlendIn)
+void Feature::setConstantPicks(int index, const Picks &psIn)
 {
-  variableBlend = variableBlendIn;
-  for (auto &e : variableBlend.entries)
+  assert(blendType == BlendType::Constant);
+  assert(index >= 0 && index < static_cast<int>(constantBlends.size()));
+  constantBlends.at(index).picks = psIn;
+  setModelDirty();
+}
+
+const std::vector<Constant>& Feature::getConstantBlends() const
+{
+  assert(blendType == BlendType::Constant);
+  return constantBlends;
+}
+
+void Feature::addOrCreateVariableBlend(const Pick &pickIn)
+{
+  assert(blendType == BlendType::Variable);
+  if (!variableBlend)
+    variableBlend = Variable();
+  variableBlend->picks.push_back(pickIn);
+  setModelDirty();
+}
+
+void Feature::addVariableEntry(const VariableEntry &eIn)
+{
+  variableBlend->entries.push_back(eIn);
+  wireEntry(variableBlend->entries.back());
+  setModelDirty();
+}
+
+void Feature::wireEntry(VariableEntry &eIn)
+{
+  assert(blendType == BlendType::Variable);
+  
+  if (!eIn.radius)
+    eIn.radius = buildRadiusParameter();
+  eIn.radius->connectValue(std::bind(&Feature::setModelDirty, this));
+  parameters.push_back(eIn.radius.get());
+  if (!eIn.label)
   {
-    e.radius->connectValue(std::bind(&Blend::setModelDirty, this));
-    parameters.push_back(e.radius.get());
-    if (!e.label)
-    {
-      e.label = new lbr::PLabel(e.radius.get());
-      e.label->showName = true;
-    }
-    e.label->valueHasChanged();
-    e.label->constantHasChanged();
-    overlaySwitch->addChild(e.label.get());
-    
-    if (!e.position)
-      e.position = buildPositionParameter();
-    e.position->setValue(e.pick.u);
-    e.position->connectValue(std::bind(&Blend::setModelDirty, this));
-    if (!e.positionLabel)
-    {
-      e.positionLabel = new lbr::PLabel(e.position.get());
-      e.positionLabel->showName = true;
-    }
-    if (e.pick.selectionType == slc::Type::MidPoint || e.pick.selectionType == slc::Type::NearestPoint)
-    {
-      e.positionLabel->valueHasChanged();
-      e.positionLabel->constantHasChanged();
-      overlaySwitch->addChild(e.positionLabel.get());
-      parameters.push_back(e.position.get());
-    }
+    eIn.label = new lbr::PLabel(eIn.radius.get());
+    eIn.label->showName = true;
   }
+  eIn.label->valueHasChanged();
+  eIn.label->constantHasChanged();
+  overlaySwitch->addChild(eIn.label.get());
+  
+  if (!eIn.position)
+    eIn.position = buildPositionParameter();
+  eIn.position->setValue(eIn.pick.u);
+  eIn.position->connectValue(std::bind(&Feature::setModelDirty, this));
+  if (!eIn.positionLabel)
+  {
+    eIn.positionLabel = new lbr::PLabel(eIn.position.get());
+    eIn.positionLabel->showName = true;
+  }
+  if (eIn.pick.selectionType == slc::Type::MidPoint || eIn.pick.selectionType == slc::Type::NearestPoint)
+  {
+    eIn.positionLabel->valueHasChanged();
+    eIn.positionLabel->constantHasChanged();
+    overlaySwitch->addChild(eIn.positionLabel.get());
+    parameters.push_back(eIn.position.get());
+  }
+}
+
+const std::optional<Variable>& Feature::getVariableBlend() const
+{
+  assert(blendType == BlendType::Variable);
+  return variableBlend;
 }
 
 /* Typical occt bullshit: v7.1
@@ -245,7 +297,7 @@ void Blend::addVariableBlendQuiet(const VariableBlend &variableBlendIn)
  * assignment for mid and nearest points.
  */
 
-void Blend::updateModel(const UpdatePayload &payloadIn)
+void Feature::updateModel(const UpdatePayload &payloadIn)
 {
   setFailure();
   lastUpdateLog.clear();
@@ -253,6 +305,8 @@ void Blend::updateModel(const UpdatePayload &payloadIn)
   try
   {
     std::vector<const Base*> features = payloadIn.getFeatures(std::string());
+    if (features.empty())
+      throw std::runtime_error("no input features");
     boost::optional<uuid> fId;
     for (const auto *f : features)
     {
@@ -288,34 +342,38 @@ void Blend::updateModel(const UpdatePayload &payloadIn)
     ChFi3d_FilBuilder bMaker(targetSeerShape.getRootOCCTShape());
     bMaker.SetFilletShape(static_cast<ChFi3d_FilletShape>(filletShape));
     tls::Resolver resolver(payloadIn);
-    for (const auto &simpleBlend : simpleBlends)
+    
+    if (blendType == BlendType::Constant)
     {
-      bool labelDone = false; //set label position to first pick.
-      for (const auto &pick : simpleBlend.picks)
+      for (const auto &constantBlend : constantBlends)
       {
-        resolver.resolve(pick);
-        for (const auto &resultId : resolver.getResolvedIds())
+        bool labelDone = false; //set label position to first pick.
+        for (const auto &pick : constantBlend.picks)
         {
-          if (resultId.is_nil())
-            continue;
-          updateShapeMap(resultId, pick.shapeHistory);
-          assert(targetSeerShape.hasId(resultId)); //project history out of sync with seershape.
-          TopoDS_Shape tempShape = targetSeerShape.getOCCTShape(resultId);
-          assert(!tempShape.IsNull());
-          assert(tempShape.ShapeType() == TopAbs_EDGE);
-          bMaker.Add(static_cast<double>(*(simpleBlend.radius)), TopoDS::Edge(tempShape));
-          //update location of parameter label.
-          if (!labelDone)
+          resolver.resolve(pick);
+          for (const auto &resultId : resolver.getResolvedIds())
           {
-            labelDone = true;
-            simpleBlend.label->setMatrix(osg::Matrixd::translate(pick.getPoint(TopoDS::Edge(tempShape))));
+            if (resultId.is_nil())
+              continue;
+            updateShapeMap(resultId, pick.shapeHistory);
+            assert(targetSeerShape.hasId(resultId)); //project history out of sync with seershape.
+            TopoDS_Shape tempShape = targetSeerShape.getOCCTShape(resultId);
+            assert(!tempShape.IsNull());
+            assert(tempShape.ShapeType() == TopAbs_EDGE);
+            bMaker.Add(static_cast<double>(*(constantBlend.radius)), TopoDS::Edge(tempShape));
+            //update location of parameter label.
+            if (!labelDone)
+            {
+              labelDone = true;
+              constantBlend.label->setMatrix(osg::Matrixd::translate(pick.getPoint(TopoDS::Edge(tempShape))));
+            }
           }
         }
       }
     }
-    if (simpleBlends.empty())
+    if (blendType == BlendType::Variable && variableBlend)
     {
-      for (const auto &pick : variableBlend.picks)
+      for (const auto &pick : variableBlend->picks)
       {
         resolver.resolve(pick);
         for (const auto &resultId : resolver.getResolvedIds())
@@ -330,7 +388,7 @@ void Blend::updateModel(const UpdatePayload &payloadIn)
           bMaker.Add(TopoDS::Edge(tempShape));
         }
       }
-      for (auto &e : variableBlend.entries)
+      for (auto &e : variableBlend->entries)
       {
         bool labelDone = false;
         resolver.resolve(e.pick);
@@ -442,7 +500,7 @@ void Blend::updateModel(const UpdatePayload &payloadIn)
  * blends are made from vertices. blending 3 edges of a box corner is such a situation.
  * so we will iterate over all the shapes of the targe object.
  */
-void Blend::match(ChFi3d_FilBuilder &bMaker, const ann::SeerShape &targetShapeIn)
+void Feature::match(ChFi3d_FilBuilder &bMaker, const ann::SeerShape &targetShapeIn)
 {
   auto modified = [&](const TopoDS_Shape &sourceShape) -> occt::ShapeVector
   {
@@ -530,7 +588,7 @@ void Blend::match(ChFi3d_FilBuilder &bMaker, const ann::SeerShape &targetShapeIn
   }
 }
 
-void Blend::updateShapeMap(const boost::uuids::uuid &resolvedId, const ShapeHistory &pick)
+void Feature::updateShapeMap(const boost::uuids::uuid &resolvedId, const ShapeHistory &pick)
 {
   for (const auto &historyId : pick.getAllIds())
   {
@@ -544,7 +602,7 @@ void Blend::updateShapeMap(const boost::uuids::uuid &resolvedId, const ShapeHist
   }
 }
 
-void Blend::ensureNoFaceNils()
+void Feature::ensureNoFaceNils()
 {
   //ok this is a hack. Because of an OCCT bug, generated is missing
   //an edge to blended face mapping and on another edge has 2 faces
@@ -567,7 +625,7 @@ void Blend::ensureNoFaceNils()
 }
 
 //only partial update from switch to ChFi3d_FilBuilder
-void Blend::dumpInfo(ChFi3d_FilBuilder &blendMakerIn, const ann::SeerShape &targetFeatureIn)
+void Feature::dumpInfo(ChFi3d_FilBuilder &blendMakerIn, const ann::SeerShape &targetFeatureIn)
 {
   std::cout << std::endl << std::endl <<
     "shape out type is: " << occt::getShapeTypeString(blendMakerIn.Shape()) << std::endl <<
@@ -588,9 +646,10 @@ void Blend::dumpInfo(ChFi3d_FilBuilder &blendMakerIn, const ann::SeerShape &targ
   }
 }
 
-void Blend::serialWrite(const boost::filesystem::path &dIn)
+void Feature::serialWrite(const boost::filesystem::path &dIn)
 {
   namespace serial = prj::srl::blns;
+  
   serial::Blend::ShapeMapSequence shapeMapOut;
   for (const auto &p : shapeMap)
   {
@@ -602,61 +661,71 @@ void Blend::serialWrite(const boost::filesystem::path &dIn)
     shapeMapOut.push_back(eRecord);
   }
   
-  serial::Blend::SimpleBlendsSequence sBlendsOut;
-  for (const auto &sBlend : simpleBlends)
-  {
-    serial::SimpleBlend::BlendPicksSequence bPicksOut;
-    for (const auto &sbp : sBlend.picks)
-      bPicksOut.push_back(sbp);
-    serial::SimpleBlend sBlendOut
-    (
-      sBlend.radius->serialOut(),
-      sBlend.label->serialOut()
-    );
-    sBlendOut.blendPicks() = bPicksOut;
-    sBlendsOut.push_back(sBlendOut);
-  }
-
-  serial::VariableBlend::VariableEntriesSequence vEntriesOut;
-  for (const auto vEntry : variableBlend.entries)
-  {
-    serial::VariableEntry vEntryOut
-    (
-      vEntry.pick.serialOut(),
-      vEntry.position->serialOut(),
-      vEntry.radius->serialOut(),
-      vEntry.label->serialOut(),
-      vEntry.positionLabel->serialOut()
-    );
-    vEntriesOut.push_back(vEntryOut);
-  }
-  serial::VariableBlend::BlendPicksSequence vPicksOut;
-  for (const auto &vbp : variableBlend.picks)
-    vPicksOut.push_back(vbp.serialOut());
-  
-  serial::VariableBlend vBlendOut;
-  vBlendOut.variableEntries() = vEntriesOut;
-  vBlendOut.blendPicks() = vPicksOut;
-  
   serial::Blend blendOut
   (
     Base::serialOut()
     , sShape->serialOut()
-    , vBlendOut
     , static_cast<int>(filletShape)
+    , static_cast<int>(blendType)
   );
   blendOut.shapeMap() = shapeMapOut;
-  blendOut.simpleBlends() = sBlendsOut;
+  
+  if (blendType == BlendType::Constant)
+  {
+    serial::Blend::SimpleBlendsSequence sBlendsOut;
+    for (const auto &sBlend : constantBlends)
+    {
+      serial::SimpleBlend::BlendPicksSequence bPicksOut;
+      for (const auto &sbp : sBlend.picks)
+        bPicksOut.push_back(sbp);
+      serial::SimpleBlend sBlendOut
+      (
+        sBlend.radius->serialOut(),
+        sBlend.label->serialOut()
+      );
+      sBlendOut.blendPicks() = bPicksOut;
+      sBlendsOut.push_back(sBlendOut);
+    }
+    blendOut.simpleBlends() = sBlendsOut;
+  }
+  
+  if (blendType == BlendType::Variable)
+  {
+    serial::VariableBlend vBlendOut;
+    serial::VariableBlend::VariableEntriesSequence vEntriesOut;
+    for (const auto vEntry : variableBlend->entries)
+    {
+      serial::VariableEntry vEntryOut
+      (
+        vEntry.pick.serialOut(),
+        vEntry.position->serialOut(),
+        vEntry.radius->serialOut(),
+        vEntry.label->serialOut(),
+        vEntry.positionLabel->serialOut()
+      );
+      vEntriesOut.push_back(vEntryOut);
+    }
+    serial::VariableBlend::BlendPicksSequence vPicksOut;
+    for (const auto &vbp : variableBlend->picks)
+      vPicksOut.push_back(vbp.serialOut());
+    
+    vBlendOut.variableEntries() = vEntriesOut;
+    vBlendOut.blendPicks() = vPicksOut;
+    blendOut.variableBlend() = vBlendOut;
+  }
   
   xml_schema::NamespaceInfomap infoMap;
   std::ofstream stream(buildFilePathName(dIn).string());
   serial::blend(stream, blendOut, infoMap);
 }
 
-void Blend::serialRead(const prj::srl::blns::Blend& sBlendIn)
+void Feature::serialRead(const prj::srl::blns::Blend& sBlendIn)
 {
   Base::serialIn(sBlendIn.base());
   sShape->serialIn(sBlendIn.seerShape());
+  
+  blendType = static_cast<BlendType>(sBlendIn.blendType());
+  filletShape = static_cast<Shape>(sBlendIn.filletShape());
   
   shapeMap.clear();
   for (const auto &sERecord : sBlendIn.shapeMap())
@@ -667,39 +736,44 @@ void Blend::serialRead(const prj::srl::blns::Blend& sBlendIn)
     shapeMap.insert(record);
   }
   
-  for (const auto &simpleBlendIn : sBlendIn.simpleBlends())
+  if (blendType == BlendType::Constant)
   {
-    SimpleBlend simpleBlend;
-    for (const auto &bPickIn : simpleBlendIn.blendPicks())
-      simpleBlend.picks.emplace_back(bPickIn);
-    simpleBlend.radius = buildRadiusParameter();
-    simpleBlend.radius->serialIn(simpleBlendIn.radius());
-    simpleBlend.label = new lbr::PLabel(simpleBlend.radius.get());
-    simpleBlend.label->showName = true;
-    simpleBlend.label->serialIn(simpleBlendIn.plabel());
-    addSimpleBlendQuiet(simpleBlend);
+    for (const auto &simpleBlendIn : sBlendIn.simpleBlends())
+    {
+      Constant simpleBlend;
+      for (const auto &bPickIn : simpleBlendIn.blendPicks())
+        simpleBlend.picks.emplace_back(bPickIn);
+      simpleBlend.radius = buildRadiusParameter();
+      simpleBlend.radius->serialIn(simpleBlendIn.radius());
+      simpleBlend.label = new lbr::PLabel(simpleBlend.radius.get());
+      simpleBlend.label->showName = true;
+      simpleBlend.label->serialIn(simpleBlendIn.plabel());
+      addConstantBlendQuiet(simpleBlend);
+    }
   }
   
-  VariableBlend vBlend;
-  for (const auto &vbpIn : sBlendIn.variableBlend().blendPicks())
-    vBlend.picks.emplace_back(vbpIn);
-  for (const auto &entryIn : sBlendIn.variableBlend().variableEntries())
+  if (blendType == BlendType::Variable && sBlendIn.variableBlend())
   {
-    VariableEntry entry;
-    entry.pick.serialIn(entryIn.blendPick());
-    entry.position = buildPositionParameter();
-    entry.position->serialIn(entryIn.position());
-    entry.radius = buildRadiusParameter();
-    entry.radius->serialIn(entryIn.radius());
-    entry.label = new lbr::PLabel(entry.radius.get());
-    entry.label->showName = true;
-    entry.label->serialIn(entryIn.plabel());
-    entry.positionLabel = new lbr::PLabel(entry.position.get());
-    entry.positionLabel->showName = true;
-    entry.positionLabel->serialIn(entryIn.positionLabel());
-    vBlend.entries.push_back(entry);
+    Variable vBlend;
+    for (const auto &vbpIn : sBlendIn.variableBlend().get().blendPicks())
+      vBlend.picks.emplace_back(vbpIn);
+    for (const auto &entryIn : sBlendIn.variableBlend().get().variableEntries())
+    {
+      VariableEntry entry;
+      entry.pick.serialIn(entryIn.blendPick());
+      entry.position = buildPositionParameter();
+      entry.position->serialIn(entryIn.position());
+      entry.radius = buildRadiusParameter();
+      entry.radius->serialIn(entryIn.radius());
+      entry.label = new lbr::PLabel(entry.radius.get());
+      entry.label->showName = true;
+      entry.label->serialIn(entryIn.plabel());
+      entry.positionLabel = new lbr::PLabel(entry.position.get());
+      entry.positionLabel->showName = true;
+      entry.positionLabel->serialIn(entryIn.positionLabel());
+      vBlend.entries.push_back(entry);
+      wireEntry(vBlend.entries.back());
+    }
+    variableBlend = vBlend;
   }
-  addVariableBlendQuiet(vBlend);
-  
-  filletShape = static_cast<Shape>(sBlendIn.filletShape());
 }

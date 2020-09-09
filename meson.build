@@ -236,7 +236,6 @@ tools_sources = ['tools/idtools.cpp'
   
 dialog_sources = ['dialogs/dlgparameter.cpp'
   , 'dialogs/dlgwidgetgeometry.cpp'
-  , 'dialogs/dlgblend.cpp'
   , 'dialogs/dlgexpressionedit.cpp'
   , 'dialogs/dlgselectionbutton.cpp'
   , 'dialogs/dlgpreferences.cpp'
@@ -432,6 +431,7 @@ commandview_sources = [
   , 'commandview/cmvdatumsystem.cpp'
   , 'commandview/cmvcheckgeometry.cpp'
   , 'commandview/cmvchamfer.cpp'
+  , 'commandview/cmvblend.cpp'
 ]
   
 law_sources = ['law/lwfcue.cpp']
@@ -524,7 +524,6 @@ cadseer_moc_hdrs = ['viewer/vwrwidget.h'
   , 'application/appincrementwidget.h'
   , 'selection/slcmanager.h'
   , 'dialogs/dlgwidgetgeometry.h'
-  , 'dialogs/dlgblend.h'
   , 'dialogs/dlgexpressionedit.h'
   , 'dialogs/dlgpreferences.h'
   , 'dialogs/dlgparameter.h'
@@ -581,6 +580,7 @@ cadseer_moc_hdrs = ['viewer/vwrwidget.h'
   , 'commandview/cmvdatumsystem.h'
   , 'commandview/cmvcheckgeometry.h'
   , 'commandview/cmvchamfer.h'
+  , 'commandview/cmvblend.h'
 ]
   
 cadseer_resources = ['resources.qrc']
