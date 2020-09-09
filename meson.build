@@ -41,6 +41,7 @@ occt = dependency('OpenCASCADE', method : 'cmake', version : '>=7.4'
     , 'TKMesh'
     , 'TKXMesh'
     , 'TKSTEP'
+    , 'TKIGES'
   ]
   , include_type : 'system'
 )

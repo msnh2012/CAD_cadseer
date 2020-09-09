@@ -17,9 +17,12 @@
  *
  */
 
+#include <boost/filesystem/path.hpp>
+
 #include <QFileDialog>
 
 #include <STEPControl_Reader.hxx>
+#include <IGESControl_Reader.hxx>
 #include <TopoDS_Iterator.hxx>
 
 #include "application/appmainwindow.h"
@@ -50,6 +53,8 @@ void Import::activate()
 {
   isActive = true;
   go();
+  if (shouldUpdate)
+    node->sendBlocked(msg::Message(msg::Request | msg::View | msg::Fit));
   sendDone();
 }
 
@@ -65,11 +70,14 @@ void Import::go()
   
   QString supportedFiles = QObject::tr
   (
-    "brep (*.brep *.brp)"
-    ";;step (*.step *.stp)"
-    ";;off (*.off)"
-    ";;ply (*.ply)"
-    ";;stl (*.stl)"
+    "Supported Formats"
+    " (*.brep *.brp"
+    " *.step *.stp"
+    " *.iges *.igs"
+    " *.off"
+    " *.ply"
+    " *.stl"
+    ")"
   );
   
   QStringList fileNames = QFileDialog::getOpenFileNames
@@ -91,105 +99,177 @@ void Import::go()
   assert(project);
   for (const auto &fn : fileNames)
   {
-    boost::filesystem::path cp = fn.toStdString(); //current path.
-    std::string baseName = cp.stem().string();
+    boost::filesystem::path currentFilePath = fn.toStdString(); //current path.
     
     if (fn.endsWith(QObject::tr(".brep")) || fn.endsWith(QObject::tr(".brp")))
     {
-      project->readOCC(fn.toStdString());
+      project->readOCC(currentFilePath.string());
       node->sendBlocked(msg::buildStatusMessage("OCCT Imported", 2.0));
       shouldUpdate = true;
     }
     else if (fn.endsWith(QObject::tr(".step")) || fn.endsWith(QObject::tr(".stp")))
     {
-      STEPControl_Reader scr; //step control reader.
-      if (scr.ReadFile(fn.toUtf8().constData()) != IFSelect_RetDone)
-      {
-        std::string em("Failed To Read: ");
-        em += fn.toUtf8().constData();
-        node->sendBlocked(msg::buildStatusMessage(em, 2.0));
-        continue;
-      }
-      
-      //todo check units!
-      
-      scr.TransferRoots();
-      int nos = scr.NbShapes(); //number of shapes.
-      
-      auto outputShape = [&](int index, std::string namePrefix)
-      {
-        occt::ShapeVector ncs = occt::getNonCompounds(scr.Shape(index));
-        if (ncs.empty())
-          return;
-        if (ncs.size() == 1)
-        {
-          std::shared_ptr<ftr::Inert> inert(new ftr::Inert(ncs.front()));
-          project->addFeature(inert);
-          inert->setName(QString::fromStdString(namePrefix));
-          shouldUpdate = true;
-          return;
-        }
-        tls::NameIndexer inner(ncs.size());
-        for (const auto &s : ncs)
-        {
-          if (s.IsNull())
-          {
-            inner.bump();
-            continue;
-          }
-          std::string name = namePrefix;
-          name += "_" + inner.buildSuffix();
-          std::shared_ptr<ftr::Inert> inert(new ftr::Inert(s));
-          project->addFeature(inert);
-          inert->setName(QString::fromStdString(name));
-          shouldUpdate = true;
-        }
-      };
-      
-      if (nos < 1)
-      {
-        std::string em("No Shapes In File: ");
-        em += fn.toUtf8().constData();
-        node->sendBlocked(msg::buildStatusMessage(em, 2.0));
-        continue;
-      }
-      else if (nos == 1)
-      {
-        outputShape(1, baseName);
-        continue;
-      }
-      tls::NameIndexer outer(nos);
-      for (int i = 1; i < nos + 1; ++i)
-      {
-        TopoDS_Shape s = scr.Shape(i);
-        if (s.IsNull())
-        {
-          outer.bump();
-          continue;
-        }
-        std::string currentName = baseName + "_";
-        currentName += outer.buildSuffix();
-        outputShape(i, currentName);
-        node->sendBlocked(msg::buildStatusMessage("Step Imported", 2.0));
-      }
+      goStep(currentFilePath);
+      shouldUpdate = true;
+    }
+    else if (fn.endsWith(QObject::tr(".iges")) || fn.endsWith(QObject::tr(".igs")))
+    {
+      goIges(currentFilePath);
+      shouldUpdate = true;
     }
     else if (fn.endsWith(QObject::tr(".off")) || fn.endsWith(QObject::tr(".ply")) || fn.endsWith(QObject::tr(".stl")))
     {
       std::shared_ptr<ftr::SurfaceMesh> meshFeature(new ftr::SurfaceMesh());
       project->addFeature(meshFeature);
-      meshFeature->setName(QString::fromStdString(baseName));
+      meshFeature->setName(QString::fromStdString(currentFilePath.stem().string()));
       
       std::unique_ptr<ann::SurfaceMesh> mesh = std::make_unique<ann::SurfaceMesh>();
       if (fn.endsWith(QObject::tr(".off")))
-        mesh->readOFF(cp);
+        mesh->readOFF(currentFilePath);
       else if (fn.endsWith(QObject::tr(".ply")))
-        mesh->readPLY(cp);
+        mesh->readPLY(currentFilePath);
       else if (fn.endsWith(QObject::tr(".stl")))
-        mesh->readSTL(cp);
+        mesh->readSTL(currentFilePath);
       meshFeature->setMesh(std::move(mesh));
       
+      meshFeature->updateModel(project->getPayload(meshFeature->getId()));
+      meshFeature->updateVisual();
       node->sendBlocked(msg::buildStatusMessage("Surface Mesh Imported", 2.0));
       shouldUpdate = true;
     }
+  }
+  
+  node->sendBlocked(msg::Message(msg::Request | msg::View | msg::Fit));
+}
+
+void Import::outputShape(const TopoDS_Shape &shapeIn, const std::string &namePrefix)
+{
+  occt::ShapeVector ncs = occt::getNonCompounds(shapeIn);
+  if (ncs.empty())
+    return;
+  
+  auto add = [&](const TopoDS_Shape &sIn, const std::string &nameIn)
+  {
+    std::shared_ptr<ftr::Inert> inert(new ftr::Inert(sIn));
+    project->addFeature(inert);
+    inert->setName(QString::fromStdString(nameIn));
+    inert->updateModel(project->getPayload(inert->getId()));
+    inert->updateVisual();
+    shouldUpdate = true;
+  };
+  
+  if (ncs.size() == 1)
+  {
+    add(ncs.front(), namePrefix);
+    return;
+  }
+  tls::NameIndexer inner(ncs.size());
+  for (const auto &s : ncs)
+  {
+    if (s.IsNull())
+    {
+      inner.bump();
+      continue;
+    }
+    std::string name = namePrefix;
+    name += "_" + inner.buildSuffix();
+    add(s, name);
+  }
+}
+
+void Import::goStep(const boost::filesystem::path &filePath)
+{
+  std::string baseName = filePath.stem().string();
+  
+  STEPControl_Reader scr; //step control reader.
+  if (scr.ReadFile(filePath.string().c_str()) != IFSelect_RetDone)
+  {
+    std::string em("Failed To Read: ");
+    em += filePath.string().c_str();
+    node->sendBlocked(msg::buildStatusMessage(em, 2.0));
+    return;
+  }
+  
+  //todo check units!
+  
+  scr.TransferRoots();
+  int nos = scr.NbShapes(); //number of shapes.
+  
+  if (nos < 1)
+  {
+    std::string em("No Shapes In File: ");
+    em += filePath.string().c_str();
+    node->sendBlocked(msg::buildStatusMessage(em, 2.0));
+    return;
+  }
+  else if (nos == 1)
+  {
+    outputShape(scr.Shape(1), baseName);
+    return;
+  }
+  tls::NameIndexer outer(nos);
+  for (int i = 1; i < nos + 1; ++i)
+  {
+    TopoDS_Shape s = scr.Shape(i);
+    if (s.IsNull())
+    {
+      outer.bump();
+      continue;
+    }
+    std::string currentName = baseName + "_";
+    currentName += outer.buildSuffix();
+    outputShape(s, currentName);
+    node->sendBlocked(msg::buildStatusMessage("Step Imported", 2.0));
+  }
+}
+
+void cmd::Import::goIges(const boost::filesystem::path &filePathIn)
+{
+  std::string baseName = filePathIn.stem().string();
+  
+  IGESControl_Reader reader;
+  reader.SetReadVisible(Standard_True);
+  auto readResult = reader.ReadFile(filePathIn.string().c_str());
+  if (readResult == IFSelect_RetVoid)
+  {
+    std::string error = QObject::tr("Nothing To Translate For File: ").toStdString() + filePathIn.string();
+    node->sendBlocked(msg::buildStatusMessage(error, 2.0));
+    return;
+  }
+  else if(readResult == IFSelect_RetError)
+  {
+    std::string error = QObject::tr("Input Data Error For File: ").toStdString() + filePathIn.string();
+    node->sendBlocked(msg::buildStatusMessage(error, 2.0));
+    return;
+  }
+  else if(readResult == IFSelect_RetFail)
+  {
+    std::string error = QObject::tr("Execution Failed Error For File: ").toStdString() + filePathIn.string();
+    node->sendBlocked(msg::buildStatusMessage(error, 2.0));
+    return;
+  }
+  else if(readResult == IFSelect_RetStop)
+  {
+    std::string error = QObject::tr("Execution Stopped For File: ").toStdString() + filePathIn.string();
+    node->sendBlocked(msg::buildStatusMessage(error, 2.0));
+    return;
+  }
+  
+  reader.TransferRoots();
+  
+  int nos = reader.NbShapes();
+  tls::NameIndexer outer(nos);
+  for (int i = 1; i < nos + 1; ++i)
+  {
+    TopoDS_Shape s = reader.Shape(i);
+    if (s.IsNull())
+    {
+      outer.bump();
+      continue;
+    }
+    std::string currentName = baseName + "_";
+    currentName += outer.buildSuffix();
+    outputShape(s, currentName);
+    node->sendBlocked(msg::buildStatusMessage("Step Imported", 2.0));
   }
 }

@@ -22,8 +22,8 @@
 
 #include "command/cmdbase.h"
 
-namespace dlg{class Import;}
-namespace ftr{class Import;}
+namespace boost{namespace filesystem{class path;}}
+class TopoDS_Shape;
 
 namespace cmd
 {
@@ -42,6 +42,9 @@ namespace cmd
     void deactivate() override;
   private:
     void go();
+    void goStep(const boost::filesystem::path&);
+    void goIges(const boost::filesystem::path&);
+    void outputShape(const TopoDS_Shape&, const std::string&);
   };
 }
 #endif // CMD_IMPORT_H
