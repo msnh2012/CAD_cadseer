@@ -19,12 +19,13 @@
 
 #include <cassert>
 
-#include <boost/uuid/uuid_generators.hpp>
+#include <boost/uuid/nil_generator.hpp>
 
 #include "globalutilities.h"
 #include "application/appapplication.h"
 #include "project/prjproject.h"
 #include "message/msgmessage.h"
+#include "selection/slcmessage.h"
 #include "feature/ftrbase.h"
 #include "command/cmdleafmanager.h"
 
@@ -33,14 +34,18 @@ using boost::uuids::uuid;
 struct cmd::LeafManager::Stow
 {
   Stow() = delete;
-  Stow(const uuid& fIdIn) : featureId(fIdIn){}
-  uuid featureId;
+  Stow(const uuid& fIdIn)
+  {
+    featureState.id = fIdIn;
+  }
   struct LeafState
   {
-    uuid leafId;
+    uuid id;
     bool isVisible3d = false;
     bool isVisibleOverlay = false;
+    bool isSelectable = false;
   };
+  LeafState featureState;
   std::vector<LeafState> leafStates;
 };
 
@@ -82,34 +87,50 @@ LeafManager::~LeafManager() = default;
  */
 void LeafManager::rewind()
 {
-  if (stow->featureId.is_nil())
+  if (stow->featureState.id.is_nil())
     return;
   
   prj::Project *p = app::instance()->getProject();
   assert(p);
-  assert(p->hasFeature(stow->featureId));
+  assert(p->hasFeature(stow->featureState.id));
   
   //store current state
-  stow->leafStates.clear();
-  auto leafIds = p->getRelatedLeafs(stow->featureId);
-  for (const auto &fId : leafIds)
+  auto setState = [&](const uuid &fId, Stow::LeafState &state)
   {
     assert(p->hasFeature(fId));
     const ftr::Base *f = p->findFeature(fId);
-    stow->leafStates.push_back({fId, f->isVisible3D(), f->isVisibleOverlay()});
-    app::instance()->messageSlot(msg::buildHideOverlay(f->getId()));
+    state = {fId, f->isVisible3D(), f->isVisibleOverlay(), f->isSelectable()};
+  };
+  
+  setState(stow->featureState.id, stow->featureState);
+  
+  stow->leafStates.clear();
+  auto leafIds = p->getRelatedLeafs(stow->featureState.id);
+  for (const auto &fId : leafIds)
+  {
+    stow->leafStates.emplace_back();
+    setState(fId, stow->leafStates.back());
+    app::instance()->messageSlot(msg::buildHideOverlay(stow->leafStates.back().id));
   }
   
   //set current state.
-  for (const auto &id : p->getRewindInputs(stow->featureId))
+  for (const auto &id : p->getRewindInputs(stow->featureState.id))
     p->setCurrentLeaf(id);
   
   //rewind inputs are cleansed to remove redundant calls, so it can't be used it for setting visibility.
-  for (const auto *ple : p->getPayload(stow->featureId).getFeatures(""))
+  for (const auto *ple : p->getPayload(stow->featureState.id).getFeatures(""))
+  {
     app::instance()->messageSlot(msg::buildShowThreeD(ple->getId()));
+    slc::Message sm;
+    sm.featureId = ple->getId();
+    app::instance()->messageSlot(msg::Message(msg::Request | msg::Selection | msg::Feature | msg::Thaw, sm));
+  }
   
-  //editing feature is hidden by call setCurrentLeaf on inputs, so turn it back on for user.
-  app::instance()->messageSlot(msg::buildShowThreeD(stow->featureId));
+  //editing feature is hidden by call setCurrentLeaf on inputs, so turn it back on for user. Make unselectable.
+  app::instance()->messageSlot(msg::buildShowThreeD(stow->featureState.id));
+  slc::Message sm;
+  sm.featureId = stow->featureState.id;
+  app::instance()->messageSlot(msg::Message(msg::Request | msg::Selection | msg::Feature | msg::Freeze, sm));
 }
 
 /*! @brief puts project graph into original state.
@@ -119,25 +140,40 @@ void LeafManager::rewind()
  */
 void LeafManager::fastForward()
 {
-  if (stow->featureId.is_nil())
+  if (stow->featureState.id.is_nil())
     return;
   
   prj::Project *p = app::instance()->getProject();
   assert(p);
   
+  auto restoreState = [&](const Stow::LeafState &stateIn)
+  {
+    if (!p->hasFeature(stateIn.id))
+      return;
+    if (stateIn.isVisible3d)
+      app::instance()->queuedMessage(msg::buildShowThreeD(stateIn.id));
+    else
+      app::instance()->queuedMessage(msg::buildHideThreeD(stateIn.id));
+    if (stateIn.isVisibleOverlay)
+      app::instance()->queuedMessage(msg::buildShowOverlay(stateIn.id));
+    else
+      app::instance()->queuedMessage(msg::buildHideOverlay(stateIn.id));
+    slc::Message sm;
+    sm.featureId = stateIn.id;
+    if (stateIn.isSelectable)
+      app::instance()->queuedMessage(msg::Message(msg::Request | msg::Selection | msg::Feature | msg::Thaw, sm));
+    else
+      app::instance()->queuedMessage(msg::Message(msg::Request | msg::Selection | msg::Feature | msg::Freeze, sm));
+  };
+  
+  restoreState(stow->featureState);
+  
   for (const auto &lf : stow->leafStates)
   {
-    if (p->hasFeature(lf.leafId))
+    if (p->hasFeature(lf.id))
     {
-      p->setCurrentLeaf(lf.leafId);
-      if (lf.isVisible3d)
-        app::instance()->queuedMessage(msg::buildShowThreeD(lf.leafId));
-      else
-        app::instance()->queuedMessage(msg::buildHideThreeD(lf.leafId));
-      if (lf.isVisibleOverlay)
-        app::instance()->queuedMessage(msg::buildShowOverlay(lf.leafId));
-      else
-        app::instance()->queuedMessage(msg::buildHideOverlay(lf.leafId));
+      p->setCurrentLeaf(lf.id);
+      restoreState(lf);
     }
   }
 }

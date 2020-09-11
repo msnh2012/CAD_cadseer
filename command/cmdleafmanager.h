@@ -22,7 +22,7 @@
 
 #include <memory>
 
-namespace boost{namespace uuids{struct uuid;}}
+namespace boost{namespace uuids{class uuid;}}
 namespace ftr{class Base;}
 
 namespace cmd

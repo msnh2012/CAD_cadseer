@@ -40,10 +40,11 @@ namespace dag
     const static int point =            2;
     const static int visibleIcon =      3;
     const static int overlayIcon =      4;
-    const static int stateIcon =        5;
-    const static int featureIcon =      6;
-    const static int text =             7;
-    const static int connector =        8;
+    const static int selectableIcon =   5;
+    const static int stateIcon =        6;
+    const static int featureIcon =      7;
+    const static int text =             8;
+    const static int connector =        9;
   }
   
   //limit of column width? boost::dynamic_bitset?
@@ -71,6 +72,7 @@ namespace dag
     std::shared_ptr<QGraphicsEllipseItem> pointShared;
     std::shared_ptr<QGraphicsPixmapItem> visibleIconShared;
     std::shared_ptr<QGraphicsPixmapItem> overlayIconShared;
+    std::shared_ptr<QGraphicsPixmapItem> selectableIconShared;
     std::shared_ptr<QGraphicsPixmapItem> stateIconShared;
     std::shared_ptr<QGraphicsPixmapItem> featureIconShared;
     std::shared_ptr<QGraphicsTextItem> textShared;
@@ -154,6 +156,7 @@ namespace dag
     Vertex findVertex(const QGraphicsEllipseItem*);
     Vertex findVisibleVertex(const QGraphicsPixmapItem*);
     Vertex findOverlayVertex(const QGraphicsPixmapItem*);
+    Vertex findSelectableVertex(const QGraphicsPixmapItem*);
     Edge findEdge(const QGraphicsPathItem *);
     
     std::vector<Vertex> getAllSelected();

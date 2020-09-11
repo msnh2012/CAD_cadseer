@@ -76,6 +76,7 @@ namespace dag
     void setCurrentLeafSlot();
     void removeFeatureSlot();
     void toggleOverlaySlot();
+    void toggleSelectableSlot();
     void viewIsolateSlot();
     void editColorSlot();
     void editRenameSlot();
@@ -110,6 +111,8 @@ namespace dag
     void threeDHideDispatched(const msg::Message &);
     void overlayShowDispatched(const msg::Message &);
     void overlayHideDispatched(const msg::Message &);
+    void featureSelectionThawDispatched(const msg::Message &);
+    void featureSelectionFreezeDispatched(const msg::Message &);
     void commandActiveDispatched(const msg::Message &);
     void commandInactiveDispatched(const msg::Message &);
     
@@ -152,6 +155,8 @@ namespace dag
     QPixmap visiblePixmapDisabled;
     QPixmap overlayPixmapEnabled;
     QPixmap overlayPixmapDisabled;
+    QPixmap selectablePixmapEnabled;
+    QPixmap selectablePixmapDisabled;
     QPixmap passPixmap;
     QPixmap failPixmap;
     QPixmap pendingPixmap;

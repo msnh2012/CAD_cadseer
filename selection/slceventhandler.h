@@ -30,7 +30,7 @@
 
 namespace osg{class Switch;}
 namespace mdv{class ShapeGeometry;}
-namespace msg{class Message; struct Node; struct Sift;}
+namespace msg{struct Message; struct Node; struct Sift;}
 
 namespace slc
 {

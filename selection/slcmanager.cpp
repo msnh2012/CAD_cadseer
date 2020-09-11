@@ -26,10 +26,12 @@
 #include <osg/Node>
 
 #include "application/appapplication.h"
+#include "project/prjproject.h"
 #include "modelviz/mdvnodemaskdefs.h"
 #include "selection/slcdefinitions.h"
 #include "message/msgnode.h"
 #include "message/msgsift.h"
+#include "feature/ftrbase.h"
 #include "selection/slcmessage.h"
 #include "selection/slcmanager.h"
 
@@ -242,8 +244,12 @@ void Manager::setupDispatcher()
 {
   sift->insert
   (
-    msg::Request | msg::Selection | msg::SetMask
-    , std::bind(&Manager::requestSelectionMaskDispatched, this, std::placeholders::_1)
+    {
+      std::make_pair(msg::Request | msg::Selection | msg::SetMask, std::bind(&Manager::requestSelectionMaskDispatched, this, std::placeholders::_1))
+      , std::make_pair(msg::Request | msg::Selection | msg::Feature | msg::Toggle, std::bind(&Manager::requestFeatureToggleDispatched, this, std::placeholders::_1))
+      , std::make_pair(msg::Request | msg::Selection | msg::Feature | msg::Thaw, std::bind(&Manager::requestFeatureThawDispatched, this, std::placeholders::_1))
+      , std::make_pair(msg::Request | msg::Selection | msg::Feature | msg::Freeze, std::bind(&Manager::requestFeatureFreezeDispatched, this, std::placeholders::_1))
+    }
   );
 }
 
@@ -251,4 +257,40 @@ void Manager::requestSelectionMaskDispatched(const msg::Message &messageIn)
 {
   slc::Message message = messageIn.getSLC();
   setState(message.selectionMask);
+}
+
+void Manager::requestFeatureToggleDispatched(const msg::Message &mIn)
+{
+  assert(mIn.isSLC());
+  ftr::Base *f = app::instance()->getProject()->findFeature(mIn.getSLC().featureId);
+  if (f->isSelectable())
+  {
+    f->setNotSelectable();
+    node->sendBlocked(msg::Message(msg::Response | msg::Selection | msg::Feature | msg::Freeze, mIn.getSLC()));
+  }
+  else
+  {
+    f->setSelectable();
+    node->sendBlocked(msg::Message(msg::Response | msg::Selection | msg::Feature | msg::Thaw, mIn.getSLC()));
+  }
+}
+
+void Manager::requestFeatureThawDispatched(const msg::Message &mIn)
+{
+  assert(mIn.isSLC());
+  ftr::Base *f = app::instance()->getProject()->findFeature(mIn.getSLC().featureId);
+  if (f->isSelectable())
+    return;
+  f->setSelectable();
+  node->sendBlocked(msg::Message(msg::Response | msg::Selection | msg::Feature | msg::Thaw, mIn.getSLC()));
+}
+
+void Manager::requestFeatureFreezeDispatched(const msg::Message &mIn)
+{
+  assert(mIn.isSLC());
+  ftr::Base *f = app::instance()->getProject()->findFeature(mIn.getSLC().featureId);
+  if (!f->isSelectable())
+    return;
+  f->setNotSelectable();
+  node->sendBlocked(msg::Message(msg::Response | msg::Selection | msg::Feature | msg::Freeze, mIn.getSLC()));
 }

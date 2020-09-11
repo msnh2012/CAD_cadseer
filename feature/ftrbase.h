@@ -96,6 +96,9 @@ public:
   void setEditing();
   void setNotEditing();
   bool isEditing() const {return state.test(ftr::StateOffset::Editing);}
+  void setSelectable();
+  void setNotSelectable();
+  bool isSelectable() const {return !(state.test(StateOffset::NotSelectable));}
   void setName(const QString &nameIn);
   QString getName() const {return name;}
   ftr::State getState() const {return state;}

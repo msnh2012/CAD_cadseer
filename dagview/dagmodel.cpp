@@ -145,11 +145,12 @@ Model::Model(QObject *parentIn) : QGraphicsScene(parentIn), stow(new Stow())
   QIcon temp(":/resources/images/dagViewVisible.svg");
   visiblePixmapEnabled = temp.pixmap(iconSize, iconSize, QIcon::Normal, QIcon::On);
   visiblePixmapDisabled = temp.pixmap(iconSize, iconSize, QIcon::Disabled, QIcon::Off);
-  
   QIcon tempOverlay(":/resources/images/dagViewOverlay.svg");
   overlayPixmapEnabled = tempOverlay.pixmap(iconSize, iconSize, QIcon::Normal, QIcon::On);
   overlayPixmapDisabled = tempOverlay.pixmap(iconSize, iconSize, QIcon::Disabled, QIcon::Off);
-  
+  QIcon tempSelectable(":/resources/images/dagViewSelectable.svg");
+  selectablePixmapEnabled = tempSelectable.pixmap(iconSize, iconSize, QIcon::Normal, QIcon::On);
+  selectablePixmapDisabled = tempSelectable.pixmap(iconSize, iconSize, QIcon::Disabled, QIcon::Off);
   QIcon passIcon(":/resources/images/dagViewPass.svg");
   passPixmap = passIcon.pixmap(iconSize, iconSize);
   QIcon failIcon(":/resources/images/dagViewFail.svg");
@@ -228,6 +229,11 @@ void Model::featureAddedDispatched(const msg::Message &messageIn)
     stow->graph[virginVertex].overlayIconShared->setPixmap(overlayPixmapEnabled);
   else
     stow->graph[virginVertex].overlayIconShared->setPixmap(overlayPixmapDisabled);
+  
+  if (message.feature->isSelectable())
+    stow->graph[virginVertex].selectableIconShared->setPixmap(selectablePixmapEnabled);
+  else
+    stow->graph[virginVertex].selectableIconShared->setPixmap(selectablePixmapDisabled);
   
   stow->graph[virginVertex].featureIconShared->setPixmap(message.feature->getIcon().pixmap(iconSize, iconSize));
   stow->graph[virginVertex].textShared->setPlainText(message.feature->getName());
@@ -412,6 +418,16 @@ void Model::setupDispatcher()
       )
       , std::make_pair
       (
+        msg::Response | msg::Selection | msg::Feature | msg::Thaw
+        , std::bind(&Model::featureSelectionThawDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Response | msg::Selection | msg::Feature | msg::Freeze
+        , std::bind(&Model::featureSelectionFreezeDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
         msg::Response | msg::Selection | msg::SetMask
       , std::bind(&Model::selectionMaskDispatched, this, std::placeholders::_1)
       )
@@ -481,11 +497,15 @@ void Model::stateUpdate(Vertex vIn)
   {
     if (stow->graph[vIn].visibleIconShared->scene())
       removeItem(stow->graph[vIn].visibleIconShared.get());
+    if (stow->graph[vIn].selectableIconShared->scene())
+      removeItem(stow->graph[vIn].selectableIconShared.get());
   }
   else
   {
     if (!stow->graph[vIn].visibleIconShared->scene())
       addItem(stow->graph[vIn].visibleIconShared.get());
+    if (!stow->graph[vIn].selectableIconShared->scene())
+      addItem(stow->graph[vIn].selectableIconShared.get());
   }
   
   //set tool tip to current state.
@@ -709,23 +729,18 @@ void Model::projectUpdatedDispatched(const msg::Message &)
     if (direction == -1)
       cheat = rowHeight;
     
-    auto visiblePixmap = stow->graph[currentVertex].visibleIconShared;
-    visiblePixmap->setTransform(QTransform::fromTranslate(0.0, rowHeight * currentRow + cheat)); //calculate x location later.
-    
-    auto overlayPixmap = stow->graph[currentVertex].overlayIconShared;
-    overlayPixmap->setTransform(QTransform::fromTranslate(0.0, rowHeight * currentRow + cheat)); //calculate x location later.
-    
-    auto statePixmap = stow->graph[currentVertex].stateIconShared;
-    statePixmap->setTransform(QTransform::fromTranslate(0.0, rowHeight * currentRow + cheat)); //calculate x location later.
-    
-    auto featurePixmap = stow->graph[currentVertex].featureIconShared;
-    featurePixmap->setTransform(QTransform::fromTranslate(0.0, rowHeight * currentRow + cheat)); //calculate x location later.
+    //we are just setting y value for now. x is done later
+    float yValue = rowHeight * currentRow + cheat;
+    stow->graph[currentVertex].visibleIconShared->setTransform(QTransform::fromTranslate(0.0, yValue));
+    stow->graph[currentVertex].overlayIconShared->setTransform(QTransform::fromTranslate(0.0, yValue));
+    stow->graph[currentVertex].selectableIconShared->setTransform(QTransform::fromTranslate(0.0, yValue));
+    stow->graph[currentVertex].stateIconShared->setTransform(QTransform::fromTranslate(0.0, yValue));
+    stow->graph[currentVertex].featureIconShared->setTransform(QTransform::fromTranslate(0.0, yValue));
     
     auto text = stow->graph[currentVertex].textShared;
     text->setDefaultTextColor(currentBrush.color());
     maxTextLength = std::max(maxTextLength, static_cast<float>(text->boundingRect().width()));
-    text->setTransform(QTransform::fromTranslate
-      (0.0, rowHeight * currentRow - verticalSpacing * 2.0 + cheat)); //calculate x location later.
+    text->setTransform(QTransform::fromTranslate (0.0, rowHeight * currentRow - verticalSpacing * 2.0 + cheat)); //calculate x location later.
     
     //update connector
     float currentX = pointSpacing * currentColumn + pointSize / 2.0;
@@ -808,6 +823,11 @@ void Model::projectUpdatedDispatched(const msg::Message &)
     overlayPixmap->setTransform(overlayPixmap->transform() * overlayIconTransform);
     
     localCurrentX += iconSize + iconToIcon;
+    auto selectablePixmap = stow->graph[vertex].selectableIconShared;
+    QTransform selectableIconTransform = QTransform::fromTranslate(localCurrentX, 0.0);
+    selectablePixmap->setTransform(selectablePixmap->transform() * selectableIconTransform);
+    
+    localCurrentX += iconSize + iconToIcon;
     auto statePixmap = stow->graph[vertex].stateIconShared;
     QTransform stateIconTransform = QTransform::fromTranslate(localCurrentX, 0.0);
     statePixmap->setTransform(statePixmap->transform() * stateIconTransform);
@@ -873,6 +893,24 @@ void Model::overlayHideDispatched(const msg::Message &msgIn)
   stow->graph[vertex].overlayIconShared->setPixmap(overlayPixmapDisabled);
 }
 
+void Model::featureSelectionThawDispatched(const msg::Message &mIn)
+{
+  assert(mIn.isSLC());
+  Vertex vertex = stow->findVertex(mIn.getSLC().featureId);
+  if (vertex == NullVertex())
+    return;
+  stow->graph[vertex].selectableIconShared->setPixmap(selectablePixmapEnabled);
+}
+
+void Model::featureSelectionFreezeDispatched(const msg::Message &mIn)
+{
+  assert(mIn.isSLC());
+  Vertex vertex = stow->findVertex(mIn.getSLC().featureId);
+  if (vertex == NullVertex())
+    return;
+  stow->graph[vertex].selectableIconShared->setPixmap(selectablePixmapDisabled);
+}
+
 void Model::commandActiveDispatched(const msg::Message &)
 {
   commandActive = true;
@@ -929,9 +967,9 @@ void Model::mouseMoveEvent(QGraphicsSceneMouseEvent* event)
 {
   QGraphicsScene::mouseMoveEvent(event);
   
-  RectItem *rect = getRectFromPosition(event->scenePos());
   if (dragData)
   {
+    RectItem *rect = getRectFromPosition(event->scenePos());
     QGraphicsView *qgv = this->views().front();
     
     //search for edge first as it is more explicit.
@@ -1032,6 +1070,17 @@ void Model::mouseMoveEvent(QGraphicsSceneMouseEvent* event)
       else
         node->send(msg::Message(msg::Request | msg::Preselection | msg::Add, buildMessage(vertex)));
     };
+    
+    
+    //don't prehighlight if we are on a interactive control
+    RectItem *rect = nullptr;
+    auto theItems = this->items(event->scenePos(), Qt::IntersectsItemBoundingRect, Qt::DescendingOrder);
+    if (!theItems.empty())
+    {
+      int t = theItems.front()->data(qtd::key).toInt();
+      if (t != qtd::point && t != qtd::visibleIcon && t != qtd::overlayIcon && t != qtd::selectableIcon && t != qtd::connector)
+        rect = dynamic_cast<RectItem *>(theItems.back());
+    }
     
     if (rect == currentPrehighlight)
       return;
@@ -1145,6 +1194,22 @@ void Model::mousePressEvent(QGraphicsSceneMouseEvent* event)
         msg::Request | msg::View | msg::Toggle | msg::Overlay
         , vwr::Message(stow->graph[vertex].featureId)
       );
+      node->send(msg);
+      
+      return;
+    }
+    else if (currentType == qtd::selectableIcon)
+    {
+      QGraphicsPixmapItem *currentPixmap = dynamic_cast<QGraphicsPixmapItem *>(theItems.front());
+      assert(currentPixmap);
+      
+      Vertex vertex = stow->findSelectableVertex(currentPixmap);
+      if (vertex == NullVertex())
+        return;
+      
+      slc::Message sMsg;
+      sMsg.featureId = stow->graph[vertex].featureId;
+      msg::Message msg(msg::Request | msg::Selection | msg::Feature | msg::Toggle, sMsg);
       node->send(msg);
       
       return;
@@ -1317,6 +1382,10 @@ void Model::contextMenuEvent(QGraphicsSceneContextMenuEvent* event)
     QAction* toggleOverlayAction = contextMenu.addAction(overlayIcon, tr("Toggle Overlay"));
     connect(toggleOverlayAction, SIGNAL(triggered()), this, SLOT(toggleOverlaySlot()));
     
+    static QIcon selectableIcon(":/resources/images/dagViewSelectable.svg");
+    QAction* toggleSelectableAction = contextMenu.addAction(selectableIcon, tr("Toggle Selectable"));
+    connect(toggleSelectableAction, SIGNAL(triggered()), this, SLOT(toggleSelectableSlot()));
+    
     static QIcon viewIsolateIcon(":/resources/images/viewIsolate.svg");
     QAction* viewIsolateAction = contextMenu.addAction(viewIsolateIcon, tr("View Isolate"));
     connect(viewIsolateAction, SIGNAL(triggered()), this, SLOT(viewIsolateSlot()));
@@ -1388,8 +1457,10 @@ void Model::contextMenuEvent(QGraphicsSceneContextMenuEvent* event)
     }
     
     contextMenu.exec(event->screenPos());
+    return;
   }
   
+  //passes event to graphics item at position or ignores.
   QGraphicsScene::contextMenuEvent(event);
 }
 
@@ -1428,6 +1499,25 @@ void Model::toggleOverlaySlot()
       , vwr::Message(stow->graph[v].featureId)
     );
     node->send(mOut);
+  }
+}
+
+void Model::toggleSelectableSlot()
+{
+  auto currentSelections = stow->getAllSelected();
+  
+  msg::Message message(msg::Request | msg::Selection | msg::Clear);
+  node->send(message);
+  
+  for (auto v : currentSelections)
+  {
+    //this should only be relative to leafs
+    if (!stow->graph[v].visibleIconShared->scene())
+      continue;
+    
+    slc::Message sm;
+    sm.featureId = stow->graph[v].featureId;
+    node->send(msg::Message(msg::Request | msg::Selection | msg::Feature | msg::Toggle, sm));
   }
 }
 

@@ -28,7 +28,7 @@
 
 class QAction;
 
-namespace msg{class Message; struct Node; struct Sift;}
+namespace msg{struct Message; struct Node; struct Sift;}
 
 namespace slc
 {
@@ -81,6 +81,9 @@ namespace slc
     std::unique_ptr<msg::Sift> sift;
     void setupDispatcher();
     void requestSelectionMaskDispatched(const msg::Message &);
+    void requestFeatureToggleDispatched(const msg::Message &);
+    void requestFeatureThawDispatched(const msg::Message &);
+    void requestFeatureFreezeDispatched(const msg::Message &);
   };
 }
 

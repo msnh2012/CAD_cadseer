@@ -36,26 +36,23 @@ using boost::uuids::uuid;
 
 //We need to make the containers a set so we don't put multiple items in.
 
-//helper function
-static uuid getFeatureId(osg::Drawable &drawableIn) //can't be const, accept discards.
+namespace
 {
-  ParentMaskVisitor visitor(mdv::object);
-  drawableIn.accept(visitor);
-  osg::Node *featureRoot = visitor.out;
-  assert(featureRoot);
-  return gu::getId(featureRoot);
-}
-
-static ftr::Type getFeatureType(osg::Drawable &drawableIn)
-{
-  ParentMaskVisitor visitor(mdv::object);
-  drawableIn.accept(visitor);
-  osg::Node *featureRoot = visitor.out;
-  assert(featureRoot);
-  int featureTypeInteger = 0;
-  if (!featureRoot->getUserValue<int>(gu::featureTypeAttributeTitle, featureTypeInteger))
-      assert(0);
-  return static_cast<ftr::Type>(featureTypeInteger);
+  std::tuple<uuid, ftr::Type> getFeatureInfo(osg::Drawable &drawableIn)
+  {
+    ParentMaskVisitor visitor(mdv::object);
+    drawableIn.accept(visitor);
+    osg::Node *featureRoot = visitor.out;
+    assert(featureRoot);
+    uuid fId = gu::getId(featureRoot);
+    
+    int featureTypeInteger = 0;
+    if (!featureRoot->getUserValue<int>(gu::featureTypeAttributeTitle, featureTypeInteger))
+        assert(0);
+    ftr::Type fType = static_cast<ftr::Type>(featureTypeInteger);
+    
+    return std::make_tuple(fId, fType);
+  }
 }
 
 Interpreter::Interpreter
@@ -74,8 +71,7 @@ void Interpreter::go()
     osg::Vec3d worldPoint = osg::Matrixd::inverse(*intersection.matrix) * intersection.localIntersectionPoint;
     
     Container container;
-    container.featureId = getFeatureId(*intersection.drawable);
-    container.featureType = getFeatureType(*intersection.drawable);
+    std::tie(container.featureId, container.featureType) = getFeatureInfo(*intersection.drawable);
     container.pointLocation = worldPoint; //default to intersection world point.
     
     int localNodeMask = intersection.nodePath.back()->getNodeMask();

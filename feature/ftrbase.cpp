@@ -197,6 +197,24 @@ void Base::setNotEditing()
   sendStateMessage(StateOffset::Editing);
 }
 
+void Base::setSelectable()
+{
+  if (isSelectable())
+    return;
+  state.set(StateOffset::NotSelectable, false);
+  mainSwitch->setNodeMask(mdv::object);
+  sendStateMessage(StateOffset::NotSelectable);
+}
+
+void Base::setNotSelectable()
+{
+  if (!isSelectable())
+    return;
+  state.set(StateOffset::NotSelectable, true);
+  mainSwitch->setNodeMask(mdv::noIntersect);
+  sendStateMessage(StateOffset::NotSelectable);
+}
+
 void Base::sendStateMessage(std::size_t stateOffset)
 {
   ftr::Message fMessage(id, state, stateOffset);

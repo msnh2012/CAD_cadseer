@@ -102,7 +102,7 @@ EventHandler::EventHandler(osg::Group *viewerRootIn) : osgGA::GUIEventHandler()
   
   preHighlightColor = Vec4(1.0, 1.0, 0.0, 1.0);
   selectionColor = Vec4(1.0, 1.0, 1.0, 1.0);
-  nodeMask = ~(mdv::backGroundCamera | mdv::gestureCamera | mdv::csys | mdv::point);
+  nodeMask = ~(mdv::backGroundCamera | mdv::gestureCamera | mdv::csys | mdv::point | mdv::noIntersect);
   
   setSelectionMask(slc::AllEnabled);
 }
