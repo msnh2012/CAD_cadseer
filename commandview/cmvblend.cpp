@@ -549,7 +549,10 @@ struct Blend::Stow
       ce.pick = tls::convertToPick(ps, inputFeature, view->project->getShapeHistory());
       ce.radius = vPage->pointPage->parameters.at(edgeIndex).at(0);
       if (vPage->pointPage->parameters.at(edgeIndex).size() > 1)
+      {
         ce.position = vPage->pointPage->parameters.at(edgeIndex).at(1);
+        ce.pick.u = static_cast<double>(*ce.position);
+      }
       else
         ce.position = ftr::Blend::buildPositionParameter();
       out.push_back(ce);
@@ -776,6 +779,11 @@ void Blend::variableEdgeRemoved(int)
   stow->goLocalUpdate();
 }
 
+/* We have a fundamental problem. We have 'pick.u' describing position of a point.
+ * Then we have the position parameter describing same point. The parameter should
+ * be master after it is set from the initial pick. We have no method to keep the
+ * visual point synced with the parameter.
+ */
 void Blend::variablePointAdded(int pointIndex)
 {
   std::vector<std::shared_ptr<prm::Parameter>> freshParameters;
@@ -784,7 +792,19 @@ void Blend::variablePointAdded(int pointIndex)
   const slc::Message &sm = stow->vPage->pointPage->pointSelections->getButton(0)->getMessages().at(pointIndex);
   if (sm.type != slc::Type::StartPoint && sm.type != slc::Type::EndPoint)
   {
-    freshParameters.push_back(ftr::Blend::buildPositionParameter()); //unused for vertices but build anyway.
+    freshParameters.push_back(ftr::Blend::buildPositionParameter());
+    
+    //set the parameter to the point.
+    assert(project->hasFeature(sm.featureId));
+    const ftr::Base &inputFeature = *project->findFeature(sm.featureId);
+    assert(inputFeature.hasAnnex(ann::Type::SeerShape));
+    const ann::SeerShape &ss = inputFeature.getAnnex<ann::SeerShape>();
+    assert(!ss.isNull());
+    assert(ss.hasId(sm.shapeId));
+    const TopoDS_Shape &es = ss.getOCCTShape(sm.shapeId);
+    if (es.ShapeType() == TopAbs_EDGE)
+      freshParameters.back()->setValue(ftr::Pick::parameter(TopoDS::Edge(es), sm.pointLocation));
+    
     freshParameters.back()->connect(stow->vPage->observer);
   }
   int index = stow->vPage->pointPage->addParameterPage(freshParameters);

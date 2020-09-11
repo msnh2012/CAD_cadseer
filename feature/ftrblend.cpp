@@ -242,8 +242,10 @@ void Feature::wireEntry(VariableEntry &eIn)
   overlaySwitch->addChild(eIn.label.get());
   
   if (!eIn.position)
+  {
     eIn.position = buildPositionParameter();
-  eIn.position->setValue(eIn.pick.u);
+    eIn.position->setValueQuiet(eIn.pick.u);
+  }
   eIn.position->connectValue(std::bind(&Feature::setModelDirty, this));
   if (!eIn.positionLabel)
   {
