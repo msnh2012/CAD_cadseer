@@ -28,7 +28,7 @@ class QCloseEvent;
 
 namespace vwr{class Widget;}
 namespace slc{class Manager;}
-namespace msg{class Message;}
+namespace msg{struct Message;}
 
 namespace app
 {

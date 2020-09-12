@@ -31,7 +31,7 @@
 
 #include "selection/slccontainer.h"
 
-namespace msg{class Message; struct Node; struct Sift;}
+namespace msg{struct Message; struct Node; struct Sift;}
 
 namespace expr{
   class Manager;

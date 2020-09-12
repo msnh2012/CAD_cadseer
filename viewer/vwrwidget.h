@@ -34,7 +34,7 @@ class QTextStream;
 namespace vwr{class SpaceballManipulator;}
 namespace slc{class EventHandler; class OverlayHandler;}
 namespace lbr{class CSysDragger; class CSysCallBack;}
-namespace msg{class Message; struct Node; struct Sift;}
+namespace msg{struct Message; struct Node; struct Sift;}
 
 namespace vwr
 {

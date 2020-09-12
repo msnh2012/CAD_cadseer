@@ -27,7 +27,7 @@
 #include <osgManipulator/Dragger> //needed for pointerInfo
 
 namespace vwr{class Overlay;}
-namespace msg{class Message; struct Node; struct Sift;}
+namespace msg{struct Message; struct Node; struct Sift;}
 namespace lbr {class IPGroup; class PLabel;}
 
 namespace slc

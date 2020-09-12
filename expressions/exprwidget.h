@@ -25,7 +25,7 @@
 #include <QWidget>
 
 namespace boost{namespace uuids{class uuid;}}
-namespace msg{class Message; struct Node; struct Sift;}
+namespace msg{struct Message; struct Node; struct Sift;}
 class QTabWidget;
 class QToolBar;
 

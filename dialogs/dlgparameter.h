@@ -35,7 +35,7 @@ namespace boost{namespace uuids{class uuid;}}
 
 namespace ftr{class Base;}
 namespace prm{class Parameter; struct Observer;}
-namespace msg{class Message; struct Node; struct Sift;}
+namespace msg{struct Message; struct Node; struct Sift;}
 
 namespace dlg
 {

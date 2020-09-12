@@ -29,7 +29,7 @@ class QShowEvent;
 class QResizeEvent;
 class QCloseEvent;
 
-namespace msg{class Message; struct Node; struct Sift;}
+namespace msg{struct Message; struct Node; struct Sift;}
 
 namespace app
 {
