@@ -241,7 +241,8 @@ void Interpreter::go()
       {
         container.selectionType = Type::Face;
         container.shapeId = selectedId;
-        container.selectionIds.push_back(selectedId);
+        container.selectionIds = sShape.useGetChildrenOfType(selectedId, TopAbs_EDGE); //wireframe mode
+        container.selectionIds.push_back(selectedId); //shaded mode
         add(containersOut,container);
       }
       if (canSelectShells(selectionMask))
@@ -253,7 +254,9 @@ void Interpreter::go()
           container.shapeId = shells.at(0);
           if (!has(containersOut, container)) //don't run again
           {
-            container.selectionIds = sShape.useGetChildrenOfType(shells.at(0), TopAbs_FACE);
+            container.selectionIds = sShape.useGetChildrenOfType(shells.at(0), TopAbs_EDGE); //wireframe mode
+            auto wtf = sShape.useGetChildrenOfType(shells.at(0), TopAbs_FACE);
+            container.selectionIds.insert(container.selectionIds.begin(), wtf.begin(), wtf.end()); //shaded mode
             add(containersOut, container);
           }
         }
@@ -268,7 +271,9 @@ void Interpreter::go()
           container.shapeId = solids.at(0);
           if (!has(containersOut, container)) //don't run again
           {
-            container.selectionIds = sShape.useGetChildrenOfType(solids.at(0), TopAbs_FACE);
+            container.selectionIds = sShape.useGetChildrenOfType(solids.at(0), TopAbs_EDGE); //wireframe mode
+            auto wtf = sShape.useGetChildrenOfType(solids.at(0), TopAbs_FACE);
+            container.selectionIds.insert(container.selectionIds.begin(), wtf.begin(), wtf.end()); //shaded mode
             add(containersOut, container);
           }
         }

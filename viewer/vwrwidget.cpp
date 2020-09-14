@@ -502,6 +502,24 @@ struct Widget::Stow
     //update preferences.
     prf::manager().rootPtr->visual().display().renderStyle() = prf::RenderStyle::fill;
     prf::manager().saveConfig();
+    
+    getMainCamera()->setCullMask(0xffffffff);
+    
+    //notify for selection
+    node.sendBlocked(msg::Message(msg::Response | msg::View | msg::Fill));
+  }
+  
+  void viewWireframeDispatched(const msg::Message&)
+  {
+    //I don't think we need to set polygonmode.
+    //update preferences.
+    prf::manager().rootPtr->visual().display().renderStyle() = prf::RenderStyle::wireframe;
+    prf::manager().saveConfig();
+    
+    getMainCamera()->setCullMask(~mdv::face);
+    
+    //notify for selection
+    node.sendBlocked(msg::Message(msg::Response | msg::View | msg::Wireframe));
   }
   
   void viewTriangulationDispatched(const msg::Message&)
@@ -514,16 +532,22 @@ struct Widget::Stow
     //update preferences.
     prf::manager().rootPtr->visual().display().renderStyle() = prf::RenderStyle::triangulation;
     prf::manager().saveConfig();
+    
+    getMainCamera()->setCullMask(0xffffffff);
+    
+    //notify for selection
+    node.sendBlocked(msg::Message(msg::Response | msg::View | msg::Triangulation));
   }
 
   void renderStyleToggleDispatched(const msg::Message &)
   {
     prf::RenderStyle::Value cStyle = prf::Manager().rootPtr->visual().display().renderStyle().get();
     if (cStyle == prf::RenderStyle::fill)
+      viewWireframeDispatched(msg::Message());
+    else if (cStyle == prf::RenderStyle::wireframe)
       viewTriangulationDispatched(msg::Message());
     else if (cStyle == prf::RenderStyle::triangulation)
       viewFillDispatched(msg::Message());
-    //wireframe some day.
   }
 
   void exportOSGDispatched(const msg::Message&)
@@ -910,6 +934,11 @@ struct Widget::Stow
         )
         , std::make_pair
         (
+          msg::Request | msg::View | msg::Wireframe
+          , std::bind(&Stow::viewWireframeDispatched, this, std::placeholders::_1)
+        )
+        , std::make_pair
+        (
           msg::Request | msg::View | msg::Triangulation
           , std::bind(&Stow::viewTriangulationDispatched, this, std::placeholders::_1)
         )
@@ -1010,7 +1039,8 @@ struct Widget::Stow
       app::instance()->queuedMessage(msg::Message(msg::Request | msg::View | msg::Fill));
     else if (renderStyle == prf::RenderStyle::triangulation)
       app::instance()->queuedMessage(msg::Message(msg::Request | msg::View | msg::Triangulation));
-    //nothing for wireframe yet.
+    else if (renderStyle == prf::RenderStyle::wireframe)
+      app::instance()->queuedMessage(msg::Message(msg::Request | msg::View | msg::Wireframe));
     v->setSceneData(root.get()); //need this set before manipulator is added in 'setupMainCamera'
     
     setupMainCamera();

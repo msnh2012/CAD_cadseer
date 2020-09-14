@@ -293,6 +293,7 @@ void Manager::Stow::setAllMenu()
       }
       viewBase.commandIds().push_back(8);
       viewBase.commandIds().push_back(10);
+      viewBase.commandIds().push_back(97);
       viewBase.commandIds().push_back(11);
       viewBase.commandIds().push_back(9);
       viewBase.commandIds().push_back(12);
@@ -513,6 +514,7 @@ void Manager::Stow::setAllToolbars()
       entry.visual().get().toolTipText() = QObject::tr("Render Views").toStdString();
       entry.commandIds().push_back(9);
       entry.commandIds().push_back(10);
+      entry.commandIds().push_back(97);
       entry.commandIds().push_back(11);
       toolbar.entries().push_back(entry);
     }
@@ -1768,5 +1770,15 @@ void Manager::Stow::setAllCommands()
     , QObject::tr("Construct 3d Curve From A Parametric 2d Curve.").toStdString() //whats this text
     , QObject::tr("Map P Curve").toStdString() // toolTipText
     , msg::Request | msg::Construct | msg::MapPCurve
+  );
+  sc
+  (
+    97
+    , ":/resources/images/viewWireframe.svg"
+    , QObject::tr("Wireframe").toStdString() //icon text
+    , QObject::tr("Render Style Wireframe").toStdString() //status text
+    , QObject::tr("Sets The View To The Wireframe Render Style").toStdString() //whats this text
+    , QObject::tr("Render Style Wireframe").toStdString() // toolTipText
+    , msg::Request | msg::View | msg::Wireframe
   );
 }
