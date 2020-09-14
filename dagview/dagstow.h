@@ -47,11 +47,7 @@ namespace dag
     const static int connector =        9;
   }
   
-  //limit of column width? boost::dynamic_bitset?
-  //did a trial run with this set at 4096, not much difference.
-  //going to leave a big number by default and see how it goes.
-  typedef std::bitset<1024> ColumnMask;
-  
+
   /*! @brief Graph vertex information
   *
   * My data stored for each vertex;
@@ -60,8 +56,6 @@ namespace dag
   {
     VertexProperty();
     boost::uuids::uuid featureId;  //? possibly for multi_index.
-    ColumnMask columnMask; //!< column number containing the point.
-    std::size_t row;
     std::size_t sortedIndex; //for index into toposorted list.
     ftr::State state;
     bool dagVisible; //!< should entry be visible in the DAG view.
@@ -75,7 +69,7 @@ namespace dag
     std::shared_ptr<QGraphicsPixmapItem> selectableIconShared;
     std::shared_ptr<QGraphicsPixmapItem> stateIconShared;
     std::shared_ptr<QGraphicsPixmapItem> featureIconShared;
-    std::shared_ptr<QGraphicsTextItem> textShared;
+    std::shared_ptr<QGraphicsSimpleTextItem> textShared;
   };
 
   
@@ -88,6 +82,7 @@ namespace dag
     EdgeProperty();
     std::shared_ptr <QGraphicsPathItem> connector; //!< line representing link between nodes.
     ftr::InputType inputType;
+    int sortedDistance; //!< distance between source and target in the sorted list.
   };
   
   typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS, VertexProperty, EdgeProperty> Graph;
@@ -127,7 +122,7 @@ namespace dag
     {
       out <<
         "[label=\"" <<
-        graphVW[vertexW].textShared->toPlainText().toUtf8().data() << "\\n" <<
+        graphVW[vertexW].textShared->text().toUtf8().data() << "\\n" <<
         gu::idToShortString(graphVW[vertexW].featureId) <<
         "\"]";
     }

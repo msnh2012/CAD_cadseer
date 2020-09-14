@@ -25,6 +25,7 @@ View::View(QWidget* parentIn): QGraphicsView(parentIn)
 {
   this->setRenderHint(QPainter::Antialiasing, true);
   this->setRenderHint(QPainter::TextAntialiasing, true);
+  this->setMouseTracking(true);
   
   //AlignTop = top to bottom view. This will be set from preferences
   //as will the direction member of model.

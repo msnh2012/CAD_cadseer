@@ -21,8 +21,6 @@
 #include <cassert>
 
 #include <boost/graph/topological_sort.hpp>
-#include <boost/graph/breadth_first_search.hpp>
-#include <boost/current_function.hpp>
 
 #include <QString>
 #include <QTextStream>
@@ -31,8 +29,8 @@
 #include <QGraphicsPixmapItem>
 #include <QGraphicsRectItem>
 #include <QGraphicsSceneHoverEvent>
-#include <QGraphicsProxyWidget>
 #include <QGraphicsView>
+#include <QInputDialog>
 #include <QPen>
 #include <QBrush>
 #include <QColor>
@@ -45,6 +43,7 @@
 #include <QDesktopServices>
 
 #include "application/appapplication.h"
+#include "application/appmainwindow.h"
 #include "preferences/preferencesXML.h"
 #include "preferences/prfmanager.h"
 #include "project/prjproject.h"
@@ -57,7 +56,7 @@
 #include "feature/ftrmessage.h"
 #include "selection/slcmessage.h"
 #include "viewer/vwrmessage.h"
-#include "dagview/dagcontrolleddfs.h"
+#include "tools/graphtools.h"
 #include "dagview/dagrectitem.h"
 #include "dagview/dagstow.h"
 #include "dagview/dagmodel.h"
@@ -186,10 +185,10 @@ void Model::setupViewConstants()
   iconSize = fontHeight;
   pointSize = fontHeight * 0.6;
   pointSpacing = pointSize * 1.10;
-  pointToIcon = iconSize;
-  iconToIcon = iconSize * 0.25;
-  iconToText = iconSize / 2.0;
-  rowPadding = fontHeight;
+  pointToIcon =  (pointSize / 2.0 + iconSize / 2.0) * 1.25;
+  iconToIcon = iconSize * 1.25;
+  iconToText = iconSize * 1.5;
+  rowPadding = fontHeight / 2.0;
   backgroundBrushes = {this->palette().base(), this->palette().alternateBase()};
   forgroundBrushes = 
   {
@@ -236,7 +235,7 @@ void Model::featureAddedDispatched(const msg::Message &messageIn)
     stow->graph[virginVertex].selectableIconShared->setPixmap(selectablePixmapDisabled);
   
   stow->graph[virginVertex].featureIconShared->setPixmap(message.feature->getIcon().pixmap(iconSize, iconSize));
-  stow->graph[virginVertex].textShared->setPlainText(message.feature->getName());
+  stow->graph[virginVertex].textShared->setText(message.feature->getName());
   stow->graph[virginVertex].textShared->setFont(this->font());
   
   addItemsToScene(stow->getAllSceneItems(virginVertex));
@@ -538,7 +537,7 @@ void Model::featureRenamedDispatched(const msg::Message &messageIn)
   Vertex vertex = stow->findVertex(fMessage.featureId);
   if (vertex == NullVertex())
     return;
-  stow->graph[vertex].textShared->setPlainText(fMessage.string);
+  stow->graph[vertex].textShared->setText(fMessage.string);
 }
 
 void Model::preselectionAdditionDispatched(const msg::Message &messageIn)
@@ -585,7 +584,7 @@ void Model::selectionAdditionDispatched(const msg::Message &messageIn)
     return;
   stow->graph[vertex].rectShared->selectionOn();
   for (const auto &e : stow->getAllEdges(vertex))
-    stow->highlightConnectorOn(e, stow->graph[vertex].textShared->defaultTextColor());
+    stow->highlightConnectorOn(e, stow->graph[vertex].textShared->brush().color());
   
   lastPickValid = true;
   lastPick = stow->graph[vertex].rectShared->mapToScene(stow->graph[vertex].rectShared->rect().center());
@@ -624,228 +623,245 @@ void Model::closeProjectDispatched(const msg::Message&)
 
 void Model::projectUpdatedDispatched(const msg::Message &)
 {
-  
-//   auto dumpMask = [] (const ColumnMask& columnMaskIn)
-//   {
-//     //have to create a smaller subset to get through std::cout.
-//     std::bitset<8> testSet;
-//     for (unsigned int index = 0; index < testSet.size(); ++index)
-//       testSet[index] = columnMaskIn[index];
-//     std::cout << testSet.to_string() << std::endl;
-//   };
-  
-  auto columnNumberFromMask = [] (const ColumnMask& columnMaskIn)
+  //create a filtered graph on what is alive and visible.
+  std::vector<Vertex> filterVertices;
+  for (auto its = boost::vertices(stow->graph); its.first != its.second; ++its.first)
   {
-    //if we probe for a column before it is set, Error!
-    assert(columnMaskIn.any()); //toposort problem?
-    //we can't use to_ulong or to_ullong. They are to small.
-    //this might be slow?
-    std::string buffer = columnMaskIn.to_string();
-    std::size_t position = buffer.find_last_of('1');
-    return (columnMaskIn.size() - position - 1);
-  };
+    if (stow->graph[*its.first].dagVisible && stow->graph[*its.first].alive)
+      filterVertices.push_back(*its.first);
+  }
+  gu::SubsetFilter<decltype(stow->graph)> filter(stow->graph, filterVertices);
+  boost::filtered_graph<decltype(stow->graph), boost::keep_all, decltype(filter)> filteredGraph(stow->graph, boost::keep_all(), filter);
   
-  TopoSortVisitor<Graph> visitor(stow->graph);
-  ControlledDFS<Graph, TopoSortVisitor<Graph> > dfs(visitor);
-  Path sorted = visitor.getResults();
+  //topo sort vertices.
+  Path sorted;
+  boost::topological_sort(filteredGraph, std::back_inserter(sorted));
+  std::reverse(sorted.begin(), sorted.end()); //topo sort is reversed.
   
-  //reversed graph for calculating parent mask.
-  GraphReversed rGraph = boost::make_reverse_graph(stow->graph);
-  GraphReversed::adjacency_iterator parentIt, parentItEnd;
   
-  std::size_t maxColumn = 0;
+  /* I see no other way:
+   * I have to loop vertices to set the sorted index on the vertices.
+   * Then I have to loop edges to set the distance on the edges.
+   * Then I have to loop vertices to set the receptacle offsets, so I can ignore edges with a distance of 1.
+   * Then I have to loop vertices to set the background rectangle.
+   * Hope it scales. 
+   */
+  
+  //layout constant items
   std::size_t currentRow = 0;
-  
-  for (auto currentIt = sorted.begin(); currentIt != sorted.end(); ++currentIt)
+  QRectF maxTextRect;
+  QRectF maxConnectorRect;
+  for (auto currentVertex : sorted)
   {
-    Vertex currentVertex = *currentIt;
-    stow->graph[currentVertex].sortedIndex = std::distance(sorted.begin(), currentIt);
-    
-    if (!stow->graph[currentVertex].dagVisible)
-      continue;
-    if (!stow->graph[currentVertex].alive)
-      continue;
-    
-    std::size_t currentColumn = 0; //always default to first column
-    ColumnMask spreadMask; //mask between child and all parents.
-    ColumnMask targetMask; //mask of 'target' parent.
-    std::tie(parentIt, parentItEnd) = boost::adjacent_vertices(currentVertex, rGraph);
-    for (; parentIt != parentItEnd; ++parentIt)
-    {
-      bool results;
-      GraphReversed::edge_descriptor currentEdge;
-      std::tie(currentEdge, results) = boost::edge(currentVertex, *parentIt, rGraph);
-      assert(results);
-      if (rGraph[currentEdge].inputType.has(ftr::InputType::target))
-        targetMask |= rGraph[*parentIt].columnMask; //should only be 1 target parent.
-      
-      auto parentSortedIndex = rGraph[*parentIt].sortedIndex;
-      auto tempParentIt = sorted.begin() + parentSortedIndex;
-      tempParentIt++;
-      while (tempParentIt != currentIt)
-      {
-        Vertex parentVertex = *tempParentIt;
-        spreadMask |= rGraph[parentVertex].columnMask;
-        tempParentIt++;
-      }
-    }
-    assert(targetMask.count() < 2); //just a little sanity check.
-    
-    if ((targetMask & (~spreadMask)).any())
-      currentColumn = columnNumberFromMask(targetMask);
-    else //target parent didn't work.
-    {
-      //find first usable column
-      for (std::size_t nextColumn = 0; nextColumn < ColumnMask().size(); nextColumn++)
-      {
-        if (!spreadMask.test(nextColumn))
-        {
-        currentColumn = nextColumn;
-        break;
-        }
-      }
-    }
-    
-    maxColumn = std::max(currentColumn, maxColumn);
-    ColumnMask freshMask;
-    freshMask.set(currentColumn);
-    
-    stow->graph[currentVertex].columnMask = freshMask;
-    stow->graph[currentVertex].row = currentRow;
-    QBrush currentBrush(forgroundBrushes.at(currentColumn % forgroundBrushes.size()));
-    
-    auto rectangle = stow->graph[currentVertex].rectShared;
-    rectangle->setRect(-rowPadding, 0.0, rowPadding, rowHeight); //calculate actual length later.
-    rectangle->setTransform(QTransform::fromTranslate(0, rowHeight * currentRow));
-    rectangle->setBackgroundBrush(backgroundBrushes[currentRow % backgroundBrushes.size()]);
+    //I can't calculate receptacle locations here. See note above.
+    stow->graph[currentVertex].sortedIndex = currentRow;
+    QBrush currentBrush(forgroundBrushes.at(currentRow % forgroundBrushes.size()));
     
     auto point = stow->graph[currentVertex].pointShared;
-    point->setRect(0.0, 0.0, pointSize, pointSize);
-    point->setTransform(QTransform::fromTranslate(pointSpacing * currentColumn,
-      rowHeight * currentRow + rowHeight / 2.0 - pointSize / 2.0));
+    point->setRect(pointSize / -2.0, 0, pointSize, pointSize);
+    point->setTransform(QTransform::fromTranslate(0, rowHeight * currentRow + rowHeight / 2.0 - pointSize / 2.0));
     point->setBrush(currentBrush);
     
     float cheat = 0.0;
     if (direction == -1)
       cheat = rowHeight;
     
-    //we are just setting y value for now. x is done later
     float yValue = rowHeight * currentRow + cheat;
-    stow->graph[currentVertex].visibleIconShared->setTransform(QTransform::fromTranslate(0.0, yValue));
-    stow->graph[currentVertex].overlayIconShared->setTransform(QTransform::fromTranslate(0.0, yValue));
-    stow->graph[currentVertex].selectableIconShared->setTransform(QTransform::fromTranslate(0.0, yValue));
-    stow->graph[currentVertex].stateIconShared->setTransform(QTransform::fromTranslate(0.0, yValue));
-    stow->graph[currentVertex].featureIconShared->setTransform(QTransform::fromTranslate(0.0, yValue));
+    stow->graph[currentVertex].visibleIconShared->setTransform(QTransform::fromTranslate(pointToIcon, yValue));
+    stow->graph[currentVertex].overlayIconShared->setTransform(QTransform::fromTranslate(pointToIcon + iconToIcon, yValue));
+    stow->graph[currentVertex].selectableIconShared->setTransform(QTransform::fromTranslate(pointToIcon + iconToIcon * 2, yValue));
+    stow->graph[currentVertex].stateIconShared->setTransform(QTransform::fromTranslate(pointToIcon + iconToIcon * 3, yValue));
+    stow->graph[currentVertex].featureIconShared->setTransform(QTransform::fromTranslate(pointToIcon + iconToIcon * 4, yValue));
     
     auto text = stow->graph[currentVertex].textShared;
-    text->setDefaultTextColor(currentBrush.color());
+    text->setBrush(currentBrush.color());
     maxTextLength = std::max(maxTextLength, static_cast<float>(text->boundingRect().width()));
-    text->setTransform(QTransform::fromTranslate (0.0, rowHeight * currentRow - verticalSpacing * 2.0 + cheat)); //calculate x location later.
-    
-    //update connector
-    float currentX = pointSpacing * currentColumn + pointSize / 2.0;
-    float currentY = rowHeight * currentRow + rowHeight / 2.0;
-    
-//     GraphReversed rGraph = boost::make_reverse_graph(graph);
-//     GraphReversed::adjacency_iterator parentIt, parentItEnd;
-    std::tie(parentIt, parentItEnd) = boost::adjacent_vertices(currentVertex, rGraph);
-    for (; parentIt != parentItEnd; ++parentIt)
-    {
-      bool results;
-      GraphReversed::edge_descriptor edge;
-      std::tie(edge, results) = boost::edge(currentVertex, *parentIt, rGraph);
-      assert(results);
-      
-      //create an offset along x axis to allow separation in multiple edge scenario.
-      Edge forwardEdge;
-      std::tie(forwardEdge, results) = boost::edge(*parentIt, currentVertex, stow->graph);
-      assert(results);
-      float currentXOffset = currentX + pointSize * 0.25 * stow->connectionOffset(currentVertex, forwardEdge);
-      
-      //we can't do this when loop through parents above because then we don't
-      //know what the column is going to be.
-      if (!rGraph[*parentIt].dagVisible)
-        continue; //we don't make it here if source isn't visible. So don't have to worry about that.
-      float dependentX = pointSpacing * static_cast<int>(columnNumberFromMask(rGraph[*parentIt].columnMask)) + pointSize / 2.0; //on center.
-      float dependentY = rowHeight * rGraph[*parentIt].row + rowHeight / 2.0 + pointSize * 0.25 * stow->connectionOffset(*parentIt, forwardEdge);;
-      
-      QGraphicsPathItem *pathItem = rGraph[edge].connector.get();
-      pathItem->setBrush(Qt::NoBrush);
-      QPainterPath path;
-      path.moveTo(currentXOffset, currentY);
-      if (currentColumn == columnNumberFromMask(rGraph[*parentIt].columnMask))
-        path.lineTo(currentXOffset, dependentY); //straight connector in y.
-      else
-      {
-        //connector with bend.
-        float radius = pointSpacing / 1.9; //no zero length line.
-        
-        path.lineTo(currentXOffset, dependentY + radius * direction);
-      
-        float yPosition;
-        if (direction == -1.0)
-          yPosition = dependentY - 2.0 * radius;
-        else
-          yPosition = dependentY;
-        float width = 2.0 * radius;
-        float height = width;
-        if (dependentX > currentXOffset) //radius to the right.
-        {
-          QRectF arcRect(currentXOffset, yPosition, width, height);
-          path.arcTo(arcRect, 180.0, 90.0 * -direction);
-        }
-        else //radius to the left.
-        {
-          QRectF arcRect(currentXOffset - 2.0 * radius, yPosition, width, height);
-          path.arcTo(arcRect, 0.0, 90.0 * direction);
-        }
-        path.lineTo(dependentX, dependentY);
-      }
-      pathItem->setPath(path);
-    }
+    text->setTransform(QTransform::fromTranslate (pointToIcon + iconToIcon * 4 + iconToText, rowHeight * currentRow - verticalSpacing * 2.0 + cheat));
+    QRectF textRect = text->boundingRect();
+    textRect.translate(text->transform().dx(), text->transform().dy());
+    if (textRect.width() > maxTextRect.width())
+      maxTextRect = textRect;
     
     currentRow++;
   }
   
-  //now that we have the graph drawn we know where to place icons and text.
-  float columnSpacing = (maxColumn * pointSpacing);
-  for (const auto &vertex : sorted)
+  //set sorted distance on edges and then sort
+  //this should process the shorted distance edges first and help
+  //minimize edge crossings.
+  std::vector<Edge> sortedEdges;
+  for (auto its = boost::edges(filteredGraph); its.first != its.second; ++its.first)
   {
-    float localCurrentX = columnSpacing;
-    localCurrentX += pointToIcon;
-    auto visiblePixmap = stow->graph[vertex].visibleIconShared;
-    QTransform visibleIconTransform = QTransform::fromTranslate(localCurrentX, 0.0);
-    visiblePixmap->setTransform(visiblePixmap->transform() * visibleIconTransform);
+    Edge e = *its.first;
+    sortedEdges.emplace_back(e);
+    decltype(filteredGraph) &g = filteredGraph;
+    g[e].sortedDistance = static_cast<int>(g[boost::target(e, g)].sortedIndex) - static_cast<int>(g[boost::source(e, g)].sortedIndex);
+  }
+  std::sort(sortedEdges.begin(), sortedEdges.end(), [&filteredGraph](Edge e0, Edge e1){return filteredGraph[e0].sortedDistance < filteredGraph[e1].sortedDistance;});
+  
+  //use for drawing connectors
+  struct Receptacle
+  {
+    qreal yOffset = 0.0;
+    bool used = false;
+  };
+  
+  struct VertexState
+  {
+    Vertex vertex;
+    int countOut = 0;
+    int countIn = 0;
+    int countPassing = 0;
+    std::vector<Receptacle> receptacles;
     
-    localCurrentX += iconSize + iconToIcon;
-    auto overlayPixmap = stow->graph[vertex].overlayIconShared;
-    QTransform overlayIconTransform = QTransform::fromTranslate(localCurrentX, 0.0);
-    overlayPixmap->setTransform(overlayPixmap->transform() * overlayIconTransform);
+    VertexState() = delete;
+    VertexState(Vertex vIn) : vertex(vIn){}
+    qreal nextInput()
+    {
+      for (auto &receptacle : receptacles)
+      {
+        if (!receptacle.used)
+        {
+          receptacle.used = true;
+          return receptacle.yOffset;
+        }
+      }
+      assert(0); //couldn't find an unused receptacle. Shouldn't happen.
+      return 0.0;
+    }
+    qreal nextOutput()
+    {
+      for (auto it = receptacles.rbegin(); it != receptacles.rend(); ++it)
+      {
+        if (!it->used)
+        {
+          it->used = true;
+          return it->yOffset;
+        }
+      }
+      assert(0); //couldn't find an unused receptacle. Shouldn't happen.
+      return 0.0;
+    }
+  };
+  std::vector<VertexState> vertexStates;
+  
+  for (auto currentVertex : sorted)
+  {
+    vertexStates.emplace_back(currentVertex);
+    int degree = boost::degree(currentVertex, filteredGraph);
     
-    localCurrentX += iconSize + iconToIcon;
-    auto selectablePixmap = stow->graph[vertex].selectableIconShared;
-    QTransform selectableIconTransform = QTransform::fromTranslate(localCurrentX, 0.0);
-    selectablePixmap->setTransform(selectablePixmap->transform() * selectableIconTransform);
+    //we ignore any edges that have a distance of 1. they
+    //get connected into a straight line between the two
+    //vertices and won't need any receptacles.
+    for (auto its = boost::in_edges(currentVertex, filteredGraph); its.first != its.second; ++its.first)
+    {
+      if (filteredGraph[*its.first].sortedDistance == 1)
+        degree--;
+    }
+    for (auto its = boost::out_edges(currentVertex, filteredGraph); its.first != its.second; ++its.first)
+    {
+      if (filteredGraph[*its.first].sortedDistance == 1)
+        degree--;
+    }
     
-    localCurrentX += iconSize + iconToIcon;
-    auto statePixmap = stow->graph[vertex].stateIconShared;
-    QTransform stateIconTransform = QTransform::fromTranslate(localCurrentX, 0.0);
-    statePixmap->setTransform(statePixmap->transform() * stateIconTransform);
+    if (degree == 1)
+    {
+      vertexStates.back().receptacles.emplace_back();
+      vertexStates.back().receptacles.back().yOffset = pointSize / 2.0;
+    }
+    else if (degree != 0)
+    {
+      qreal spacing = pointSize / (degree - 1);
+      for (int index = 0 ; index < degree ; ++index)
+      {
+        vertexStates.back().receptacles.emplace_back();
+        vertexStates.back().receptacles.back().yOffset = spacing * index;
+      }
+    }
+  }
+  
+  auto findStateVertex = [&](Vertex vIn) -> std::vector<VertexState>::iterator
+  {
+    for (auto it = vertexStates.begin(); it != vertexStates.end(); ++it)
+    {
+      if (vIn == it->vertex)
+        return it;
+    }
+    assert(0); //couldn't find vertex state
+    return vertexStates.end();
+  };
+
+  for (auto edge : sortedEdges)
+  {
+    auto sv = boost::source(edge, filteredGraph);
+    auto tv = boost::target(edge, filteredGraph);
+    QGraphicsPathItem *pathItem = filteredGraph[edge].connector.get();
+    pathItem->setBrush(Qt::NoBrush);
+    QPainterPath path;
     
-    localCurrentX += iconSize + iconToIcon;
-    auto pixmap = stow->graph[vertex].featureIconShared;
-    QTransform iconTransform = QTransform::fromTranslate(localCurrentX, 0.0);
-    pixmap->setTransform(pixmap->transform() * iconTransform);
+    if (filteredGraph[edge].sortedDistance == 1)
+    {
+      //update with straight line in y at x 0, but don't count against vertex and edge states
+      path.moveTo(0.0, filteredGraph[sv].pointShared->transform().dy() + pointSize / 2.0);
+      path.lineTo(0.0, filteredGraph[tv].pointShared->transform().dy() + pointSize / 2.0);
+      pathItem->setPath(path);
+      if (pathItem->boundingRect().width() > maxConnectorRect.width())
+        maxConnectorRect = pathItem->boundingRect();
+      continue;
+    }
     
-    localCurrentX += iconSize + iconToText;
-    auto text = stow->graph[vertex].textShared;
-    QTransform textTransform = QTransform::fromTranslate(localCurrentX, 0.0);
-    text->setTransform(text->transform() * textTransform);
+    /* now the tricky part.
+      calculating line offset:
+        ignore how many lines are coming in to the source.
+        ignore how many lines are going out of target.
+        consider both in and out of the sorted vertices between source and target.
+      in and out of vertex:
+        we do the closest edges first, so we have to consider the number of
+        total in and out edges to calculate the y offset with minimal crossing.
+    */
+    auto sourceIterator = findStateVertex(sv);
+    auto targetIterator = findStateVertex(tv);
+    assert(std::distance(sourceIterator, targetIterator) > 1);
+    int offset = std::max(sourceIterator->countOut, targetIterator->countIn);
+    offset = std::max(offset, sourceIterator->countPassing);
+    offset = std::max(offset, targetIterator->countPassing);
+    auto middleIterator = sourceIterator;
+    middleIterator++;
+    while(middleIterator != targetIterator)
+    {
+      offset = std::max(offset, middleIterator->countIn);
+      offset = std::max(offset, middleIterator->countOut);
+      offset = std::max(offset, middleIterator->countPassing);
+      middleIterator->countPassing++;
+      middleIterator++;
+    }
+    offset++; //get one increment beyond
+    //now offset should be set
+    qreal edgeSpacing = pointSize / 4.0;
+    qreal xPosition = edgeSpacing * offset + iconSize / 2.0;
+    qreal yOut = filteredGraph[sv].pointShared->transform().dy() + sourceIterator->nextOutput();
+    qreal yIn = filteredGraph[tv].pointShared->transform().dy() + targetIterator->nextInput();
+    path.moveTo(0.0, yOut);
+    path.lineTo(-xPosition, yOut);
+    path.lineTo(-xPosition, yIn);
+    path.lineTo(0.0, yIn);
+    pathItem->setPath(path);
+    if (pathItem->boundingRect().width() > maxConnectorRect.width())
+        maxConnectorRect = pathItem->boundingRect();
     
-    auto rectangle = stow->graph[vertex].rectShared;
-    QRectF rect = rectangle->rect();
-    rect.setWidth(localCurrentX + maxTextLength + 2.0 * rowPadding);
-    rectangle->setRect(rect);
+    sourceIterator->countOut++;
+    targetIterator->countIn++;
+  }
+  
+  //now set the the rectangle background items.
+  QRectF rowSizeRect = maxTextRect | maxConnectorRect;
+  qreal rowWidth = rowSizeRect.width() + 2 * rowPadding;
+  qreal rowX = -maxConnectorRect.width() - rowPadding;
+  for (auto v : sorted)
+  {
+    qreal yStart = rowHeight * filteredGraph[v].sortedIndex;
+    auto rectangle = filteredGraph[v].rectShared;
+    rectangle->setRect(rowX, yStart, rowWidth, rowHeight); //calculate actual size later.
+    rectangle->setBackgroundBrush(backgroundBrushes[filteredGraph[v].sortedIndex % backgroundBrushes.size()]);
   }
   
   this->setSceneRect(this->itemsBoundingRect());
@@ -1153,9 +1169,6 @@ void Model::mousePressEvent(QGraphicsSceneMouseEvent* event)
     else
       select(getFeatureIdFromRect(rectIn), msg::Add);
   };
-//   
-//   if (proxy)
-//     renameAcceptedSlot();
   
   if (event->button() == Qt::LeftButton)
   {
@@ -1533,24 +1546,19 @@ void Model::editColorSlot()
 
 void Model::editRenameSlot()
 {
-  assert(proxy == nullptr);
   std::vector<Vertex> selections = stow->getAllSelected();
   assert(selections.size() == 1);
   
-  LineEdit *lineEdit = new LineEdit();
   auto text = stow->graph[selections.front()].textShared;
-  lineEdit->setText(text->toPlainText());
-  connect(lineEdit, SIGNAL(acceptedSignal()), this, SLOT(renameAcceptedSlot()));
-  connect(lineEdit, SIGNAL(rejectedSignal()), this, SLOT(renameRejectedSlot()));
-  
-  proxy = this->addWidget(lineEdit);
-  QRectF geometry = text->sceneBoundingRect();
-  if (maxTextLength > 0.0)
-    geometry.setWidth(maxTextLength);
-  proxy->setGeometry(geometry);
-  
-  lineEdit->selectAll();
-  QTimer::singleShot(0, lineEdit, SLOT(setFocus())); 
+  bool results;
+  QString freshName = QInputDialog::getText(app::instance()->getMainWindow(), tr("Feature Rename"), tr("New Name"), QLineEdit::Normal, text->text(), &results);
+  if (results && !freshName.isEmpty())
+  {
+    ftr::Message fm(stow->graph[selections.front()].featureId, freshName);
+    msg::Message m(msg::Request | msg::Edit | msg::Feature | msg::Name, fm);
+    node->send(m); //don't block rename makes it back here.
+    projectUpdatedDispatched(msg::Message()); //this will size the background rects to match.
+  }
 }
 
 void Model::editFeatureSlot()
@@ -1586,40 +1594,4 @@ void Model::toggleSkippedSlot()
   
   if (prf::manager().rootPtr->dragger().triggerUpdateOnFinish())
     node->send(msg::Mask(msg::Request | msg::Project | msg::Update));
-}
-
-void Model::renameAcceptedSlot()
-{
-  assert(proxy);
-  
-  std::vector<Vertex> selections = stow->getAllSelected();
-  assert(selections.size() == 1);
-  
-  LineEdit *lineEdit = dynamic_cast<LineEdit*>(proxy->widget());
-  assert(lineEdit);
-  QString freshName = lineEdit->text();
-  if (!freshName.isEmpty())
-  {
-    ftr::Message fm(stow->graph[selections.front()].featureId, freshName);
-    msg::Message m(msg::Request | msg::Edit | msg::Feature | msg::Name, fm);
-    node->send(m); //don't block rename makes it back here.
-  }
-  
-  finishRename();
-  
-  node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
-}
-
-void Model::renameRejectedSlot()
-{
-  finishRename();
-}
-
-void Model::finishRename()
-{
-  assert(proxy);
-  this->removeItem(proxy);
-  delete proxy;
-  proxy = nullptr;
-  this->invalidate();
 }

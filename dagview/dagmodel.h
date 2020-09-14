@@ -33,7 +33,6 @@
 
 namespace boost{namespace uuids{class uuid;}}
 
-class QGraphicsProxyWidget;
 class QFocusEvent;
 
 namespace msg{struct Message; struct Node; struct Sift;}
@@ -82,8 +81,6 @@ namespace dag
     void editRenameSlot();
     void editFeatureSlot();
     void dissolveSlot();
-    void renameAcceptedSlot();
-    void renameRejectedSlot();
     void infoFeatureSlot();
     void checkGeometrySlot();
     void toggleSkippedSlot();
@@ -165,7 +162,6 @@ namespace dag
     
     QAction *renameAction;
     QAction *editingFinishedAction;
-    QGraphicsProxyWidget *proxy = nullptr;
     void finishRename();
     
     std::shared_ptr<DragData> dragData; //!< valid means a drag in progress.

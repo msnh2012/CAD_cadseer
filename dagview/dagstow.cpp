@@ -32,8 +32,6 @@ using namespace dag;
 
 VertexProperty::VertexProperty() :
 featureId(gu::createNilId()),
-columnMask(),
-row(0),
 sortedIndex(0),
 state(),
 dagVisible(true),
@@ -46,7 +44,7 @@ overlayIconShared(new QGraphicsPixmapItem()),
 selectableIconShared(new QGraphicsPixmapItem()),
 stateIconShared(new QGraphicsPixmapItem()),
 featureIconShared(new QGraphicsPixmapItem()),
-textShared(new QGraphicsTextItem())
+textShared(new QGraphicsSimpleTextItem())
 {
   //set z values.
   rectShared->setZValue(-1000.0);
