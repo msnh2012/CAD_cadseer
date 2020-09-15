@@ -46,6 +46,11 @@ namespace ann
   
   /*! @class SeerShape
   * @brief Extended wrapping around occt shape
+  * 
+  * @details. A seershape is expected to be null or to have a TopoDS_Compound as the root.
+  * There should no other TopoDS_Compound's in the sub shapes. This is enforced by asserts.
+  * If a non-compound shape is passed to @setOCCTShape then a compound will be created to
+  * wrap the passed in shape. 
   *
   * @shapeIdContainer is a 3 way link between the boost uuid shape id,
   * Graph vertex topology and the OCCT TopoDS_Shape. Any references to OCCT shapes
@@ -68,8 +73,8 @@ namespace ann
   {
   public:
     SeerShape();
-    virtual ~SeerShape() override;
-    virtual Type getType(){return Type::SeerShape;}
+    ~SeerShape() override;
+    Type getType() override {return Type::SeerShape;}
     
     void setOCCTShape(const TopoDS_Shape& shapeIn, const boost::uuids::uuid &idIn);
     void reset(); //!< clears data and this isNull() == true;

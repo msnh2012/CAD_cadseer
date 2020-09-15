@@ -963,20 +963,17 @@ uuid SeerShape::useGetEndVertex(const uuid &edgeIdIn) const
 
 occt::ShapeVector SeerShape::useGetNonCompoundChildren() const
 {
+  assert(!isNull());
+  
   occt::ShapeVector out;
-  for (auto its = boost::vertices(stow->graph); its.first != its.second; ++its.first)
+  auto r = stow->findShapeIdRecord(getRootShapeId());
+  for (auto aits = boost::adjacent_vertices(r.graphVertex, stow->graph); aits.first != aits.second; ++aits.first)
   {
-    const TopoDS_Shape &shape = stow->findShapeIdRecord(*its.first).shape;
-    if (shape.ShapeType() != TopAbs_COMPOUND)
-      continue;
-    for (auto aits = boost::adjacent_vertices(*its.first, stow->graph); aits.first != aits.second; ++aits.first)
-    {
-      const TopoDS_Shape &subShape = stow->findShapeIdRecord(*aits.first).shape;
-      if (subShape.ShapeType() == TopAbs_COMPOUND)
-        continue;
-      out.push_back(subShape);
-    }
+    const TopoDS_Shape &subShape = stow->findShapeIdRecord(*aits.first).shape;
+    assert(subShape.ShapeType() != TopAbs_COMPOUND);
+    out.push_back(subShape);
   }
+
   return out;
 }
 
