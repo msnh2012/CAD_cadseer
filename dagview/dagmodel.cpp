@@ -708,9 +708,9 @@ void Model::projectUpdatedDispatched(const msg::Message &)
   struct VertexState
   {
     Vertex vertex;
-    int countOut = 0;
-    int countIn = 0;
-    int countPassing = 0;
+    int maxColumnOut = 0;
+    int maxColumnIn = 0;
+    int maxColumnPassing = 0;
     std::vector<Receptacle> receptacles;
     
     VertexState() = delete;
@@ -821,21 +821,32 @@ void Model::projectUpdatedDispatched(const msg::Message &)
     auto sourceIterator = findStateVertex(sv);
     auto targetIterator = findStateVertex(tv);
     assert(std::distance(sourceIterator, targetIterator) > 1);
-    int offset = std::max(sourceIterator->countOut, targetIterator->countIn);
-    offset = std::max(offset, sourceIterator->countPassing);
-    offset = std::max(offset, targetIterator->countPassing);
-    auto middleIterator = sourceIterator;
-    middleIterator++;
+    
+    //find greatest offset relative to range source to vertex
+    int offset = std::max(sourceIterator->maxColumnOut, targetIterator->maxColumnIn);
+    offset = std::max(offset, sourceIterator->maxColumnPassing);
+    offset = std::max(offset, targetIterator->maxColumnPassing);
+    auto middleIterator = sourceIterator + 1;
     while(middleIterator != targetIterator)
     {
-      offset = std::max(offset, middleIterator->countIn);
-      offset = std::max(offset, middleIterator->countOut);
-      offset = std::max(offset, middleIterator->countPassing);
-      middleIterator->countPassing++;
+      offset = std::max(offset, middleIterator->maxColumnIn);
+      offset = std::max(offset, middleIterator->maxColumnOut);
+      offset = std::max(offset, middleIterator->maxColumnPassing);
       middleIterator++;
     }
     offset++; //get one increment beyond
-    //now offset should be set
+    
+    //now that we have found the value we have to update
+    sourceIterator->maxColumnOut = offset;
+    targetIterator->maxColumnIn = offset;
+    middleIterator = sourceIterator + 1;
+    while(middleIterator != targetIterator)
+    {
+      middleIterator->maxColumnPassing = offset;
+      middleIterator++;
+    }
+    
+    //now we can use offset for drawing
     qreal edgeSpacing = pointSize / 4.0;
     qreal xPosition = edgeSpacing * offset + iconSize / 2.0;
     qreal yOut = filteredGraph[sv].pointShared->transform().dy() + sourceIterator->nextOutput();
@@ -847,9 +858,6 @@ void Model::projectUpdatedDispatched(const msg::Message &)
     pathItem->setPath(path);
     if (pathItem->boundingRect().width() > maxConnectorRect.width())
         maxConnectorRect = pathItem->boundingRect();
-    
-    sourceIterator->countOut++;
-    targetIterator->countIn++;
   }
   
   //now set the the rectangle background items.
