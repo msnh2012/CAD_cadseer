@@ -76,7 +76,8 @@ namespace ftr
     DatumSystem, //!< feature for datum coordinate systems
     SurfaceReMesh, //!< feature for surface remesh
     SurfaceMeshFill, //!< feature for surface remesh
-    MapPCurve //!< feature for mapping 2d pcurves to 3d surface curves
+    MapPCurve, //!< feature for mapping 2d pcurves to 3d surface curves
+    Untrim //!< feature for removing trim of faces.
   };
   
   inline const static std::string& toString(Type typeIn)
@@ -131,7 +132,8 @@ namespace ftr
       {Type::DatumSystem, "DatumSystem"},
       {Type::SurfaceReMesh, "SurfaceReMesh"},
       {Type::SurfaceMeshFill, "SurfaceMeshFill"},
-      {Type::MapPCurve, "MapPCurve"}
+      {Type::MapPCurve, "MapPCurve"},
+      {Type::Untrim, "Untrim"}
     };
     
     assert(strings.count(typeIn) > 0);

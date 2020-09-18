@@ -112,6 +112,7 @@ namespace cmd
     void constructDatumSystemDispatched(const msg::Message&);
     void constructSurfaceReMeshDispatched(const msg::Message&);
     void constructSurfaceMeshFillDispatched(const msg::Message&);
+    void constructUntrimDispatched(const msg::Message&);
     void constructMapPCurveDispatched(const msg::Message&);
     void revisionDispatched(const msg::Message&);
     void importDispatched(const msg::Message&);

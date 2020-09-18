@@ -51,6 +51,10 @@ if not path.isfile("./commandViewTemplate.h"):
 if not path.isfile("./commandViewTemplate.cpp"):
   print >> sys.stderr, 'ERROR: No commandViewTemplate.cpp file'
   sys.exit()
+  
+if not path.isfile("./serialTemplate.xsd"):
+  print >> sys.stderr, 'ERROR: No serialTemplate.xsd file'
+  sys.exit()
 
 className = sys.argv[1]
 classNameLowerCase = className.lower()
@@ -80,7 +84,7 @@ class Entry:
   def go(self):
     if self.inHeader and self.outHeader and self.runState == 'true':
       copyAndReplace(self.inHeader, self.outHeader)
-    if (self.inSource and self.outSource and self.runState) == 'true':
+    if self.inSource and self.outSource and self.runState == 'true':
       copyAndReplace(self.inSource, self.outSource)
 
 entries = []
@@ -100,7 +104,7 @@ entries.append(Entry('./commandTemplate.h',
                      ))
 entries.append(Entry('./serialTemplate.xsd',
                      '',
-                     '../project/serial/schema/prjsrl_FIX_/' + classNameLowerCase + '.xsd',
+                     '../project/serial/schema/prjsrl_FIX_' + classNameLowerCase + '.xsd',
                      '',
                      '--serial',
                      'true'

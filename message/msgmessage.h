@@ -170,7 +170,8 @@ namespace msg
     static const Mask SurfaceReMesh(Mask().set(                126));//!< command
     static const Mask SurfaceMeshFill(Mask().set(              127));//!< command
     static const Mask MapPCurve(Mask().set(                    128));//!< command
-    static const Mask Wireframe(Mask().set(                    129));//!< render style
+    static const Mask Untrim(Mask().set(                       129));//!< command
+    static const Mask Wireframe(Mask().set(                    130));//!< render style
 
     struct Stow; // forward declare see message/variant.h
     struct Message

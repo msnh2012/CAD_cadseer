@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xs:schema
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  xmlns:spt="http://www.cadseer.com/prj/srl/spt"
+  xmlns:utr="http://www.cadseer.com/prj/srl/utr"
+  targetNamespace="http://www.cadseer.com/prj/srl/utr"
+>
+  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptparameter.xsd"/>
+  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptoverlay.xsd"/>
+  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptseershape.xsd"/>
+  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptpick.xsd"/>
+  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptbase.xsd"/>
+  
+<xs:complexType name="EdgeToCap">
+  <xs:sequence>
+    <xs:element name="keyId" type="xs:string" default="00000000-0000-0000-0000-000000000000"/>
+    <xs:element name="faceId" type="xs:string" default="00000000-0000-0000-0000-000000000000"/>
+    <xs:element name="wireId" type="xs:string" default="00000000-0000-0000-0000-000000000000"/>
+  </xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="Untrim">
+  <xs:sequence>
+    <xs:element name="base" type="spt:Base"/>
+    <xs:element name="seerShape" type="spt:SeerShape"/>
+    <xs:element name="pick" type="spt:Pick"/>
+    <xs:element name="offset" type="spt:Parameter"/>
+    <xs:element name="closeU" type="spt:Parameter"/>
+    <xs:element name="closeV" type="spt:Parameter"/>
+    <xs:element name="makeSolid" type="spt:Parameter"/>
+    <xs:element name="offsetLabel" type="spt:PLabel"/>
+    <xs:element name="closeULabel" type="spt:PLabel"/>
+    <xs:element name="closeVLabel" type="spt:PLabel"/>
+    <xs:element name="makeSolidLabel" type="spt:PLabel"/>
+    <xs:element name="solidId" type="xs:string"/>
+    <xs:element name="shellId" type="xs:string"/>
+    <xs:element name="uvEdgeIds" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+    <xs:element name="edgeToCap" type="utr:EdgeToCap" minOccurs="0" maxOccurs="unbounded"/>
+  </xs:sequence>
+</xs:complexType>
+
+<xs:element name="untrim" type="utr:Untrim"/>
+  
+</xs:schema> 

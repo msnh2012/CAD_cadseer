@@ -369,6 +369,7 @@ void Manager::Stow::setAllMenu()
         constructionSurface.commandIds().push_back(90);
         constructionSurface.commandIds().push_back(91);
         constructionSurface.commandIds().push_back(92);
+        constructionSurface.commandIds().push_back(98);
         constructionBase.subMenus().push_back(constructionSurface);
       }
       {
@@ -658,6 +659,7 @@ void Manager::Stow::setAllToolbars()
       entry.commandIds().push_back(90);
       entry.commandIds().push_back(91);
       entry.commandIds().push_back(92);
+      entry.commandIds().push_back(98);
       toolbar.entries().push_back(entry);
     }
     {
@@ -1780,5 +1782,15 @@ void Manager::Stow::setAllCommands()
     , QObject::tr("Sets The View To The Wireframe Render Style").toStdString() //whats this text
     , QObject::tr("Render Style Wireframe").toStdString() // toolTipText
     , msg::Request | msg::View | msg::Wireframe
+  );
+  sc
+  (
+    98
+    , ":/resources/images/constructionUntrim.svg"
+    , QObject::tr("Untrim").toStdString() //icon text
+    , QObject::tr("Untrim A Face").toStdString() //status text
+    , QObject::tr("Replaces The Outer Boundary Of A Face").toStdString() //whats this text
+    , QObject::tr("Untrim A Face").toStdString() // toolTipText
+    , msg::Request | msg::Construct | msg::Untrim
   );
 }

@@ -67,7 +67,7 @@ Base()
 //   annexes.insert(std::make_pair(ann::Type::SeerShape, sShape.get()));
 }
 
-%CLASSNAME%::~%CLASSNAME%(){}
+%CLASSNAME%::~%CLASSNAME%() = default;
 
 // void %CLASSNAME%::setPicks(const Picks &pIn)
 // {
@@ -175,6 +175,7 @@ void %CLASSNAME%::serialWrite(const boost::filesystem::path &/*dIn*/)
 // void %CLASSNAME%::serialRead(const prj::srl::FIXME::%CLASSNAME% &so)
 // {
 //   Base::serialIn(so.base());
+//   sShape->serialIn(so.seerShape());
 //   pick.serialIn(so.pick());
 //   for (const auto &p : so.picks())
 //     picks.emplace_back(p);
