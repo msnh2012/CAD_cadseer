@@ -155,6 +155,7 @@ void Import::outputShape(const TopoDS_Shape &shapeIn, const std::string &namePre
     inert->setName(QString::fromStdString(nameIn));
     inert->updateModel(project->getPayload(inert->getId()));
     inert->updateVisual();
+    inert->setModelDirty();
     shouldUpdate = true;
   };
   
