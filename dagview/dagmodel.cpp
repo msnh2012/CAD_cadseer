@@ -679,8 +679,14 @@ void Model::projectUpdatedDispatched(const msg::Message &)
     text->setTransform(QTransform::fromTranslate (pointToIcon + iconToIcon * 4 + iconToText, rowHeight * currentRow - verticalSpacing * 2.0 + cheat));
     QRectF textRect = text->boundingRect();
     textRect.translate(text->transform().dx(), text->transform().dy());
+    
     if (textRect.width() > maxTextRect.width())
       maxTextRect = textRect;
+    
+    //we can have a graph with no edges. That will cause maxConnectorRect to be left in its null state
+    //and will mess up the background rect size. So here we will set it to a point as a fallback
+    if (maxConnectorRect.isNull())
+      maxConnectorRect = point->rect();
     
     currentRow++;
   }
