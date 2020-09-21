@@ -131,6 +131,17 @@ void ShapeIdContainer::insert(const boost::uuids::uuid &idIn, const TopoDS_Shape
   stow->insert(Record(idIn, ShapeIn));
 }
 
+void ShapeIdContainer::update(const TopoDS_Shape &stale, const TopoDS_Shape &fresh)
+{
+  typedef Container::index<Record::ByShape>::type List;
+  List &list = stow->get<Record::ByShape>();
+  List::iterator it = list.find(stale);
+  assert(it != list.end());
+  auto r = *it;
+  r.shape = fresh;
+  list.replace(it, r);
+}
+
 bool ShapeIdContainer::has(const TopoDS_Shape &shapeIn)
 {
   typedef Container::index<Record::ByShape>::type List;

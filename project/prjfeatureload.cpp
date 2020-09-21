@@ -68,6 +68,7 @@
 #include "feature/ftrsurfacemeshfill.h"
 #include "feature/ftrmappcurve.h"
 #include "feature/ftruntrim.h"
+#include "feature/ftrface.h"
 #include "project/serial/generated/prjsrlbxsbox.h"
 #include "project/serial/generated/prjsrlblnsblend.h"
 #include "project/serial/generated/prjsrlchmschamfer.h"
@@ -114,6 +115,7 @@
 #include "project/serial/generated/prjsrlunnsunion.h"
 #include "project/serial/generated/prjsrlmpcmappcurve.h"
 #include "project/serial/generated/prjsrlutruntrim.h"
+#include "project/serial/generated/prjsrlfceface.h"
 
 #include "project/prjfeatureload.h"
 
@@ -186,6 +188,7 @@ FeatureLoad::FeatureLoad(const path& directoryIn, const TopoDS_Shape &masterShap
   functionMap.insert(std::make_pair(ftr::toString(ftr::Type::SurfaceMeshFill), std::bind(&FeatureLoad::loadSurfaceMeshFill, this, std::placeholders::_1, std::placeholders::_2)));
   functionMap.insert(std::make_pair(ftr::toString(ftr::Type::MapPCurve), std::bind(&FeatureLoad::loadMapPCurve, this, std::placeholders::_1, std::placeholders::_2)));
   functionMap.insert(std::make_pair(ftr::toString(ftr::Type::Untrim), std::bind(&FeatureLoad::loadUntrim, this, std::placeholders::_1, std::placeholders::_2)));
+  functionMap.insert(std::make_pair(ftr::toString(ftr::Type::Face), std::bind(&FeatureLoad::loadFace, this, std::placeholders::_1, std::placeholders::_2)));
 }
 
 std::shared_ptr< ftr::Base > FeatureLoad::load(const std::string& idIn, const std::string& typeIn, std::size_t shapeOffsetIn)
@@ -753,6 +756,18 @@ std::shared_ptr<ftr::Base> FeatureLoad::loadUntrim(const std::string &fileNameIn
   assert(ss);
   
   auto sf = std::make_shared<ftr::Untrim>();
+  sf->getAnnex<ann::SeerShape>().setOCCTShape(shapeVector.at(shapeOffsetIn), featureId);
+  sf->serialRead(*ss);
+  
+  return sf;
+}
+
+std::shared_ptr<ftr::Base> FeatureLoad::loadFace(const std::string &fileNameIn, std::size_t shapeOffsetIn)
+{
+  auto ss = srl::fce::face(fileNameIn, flags);
+  assert(ss);
+  
+  auto sf = std::make_shared<ftr::Face>();
   sf->getAnnex<ann::SeerShape>().setOCCTShape(shapeVector.at(shapeOffsetIn), featureId);
   sf->serialRead(*ss);
   

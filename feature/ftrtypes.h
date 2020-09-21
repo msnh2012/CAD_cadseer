@@ -77,7 +77,8 @@ namespace ftr
     SurfaceReMesh, //!< feature for surface remesh
     SurfaceMeshFill, //!< feature for surface remesh
     MapPCurve, //!< feature for mapping 2d pcurves to 3d surface curves
-    Untrim //!< feature for removing trim of faces.
+    Untrim, //!< feature for removing trim of faces.
+    Face //!< feature for creating a face. 
   };
   
   inline const static std::string& toString(Type typeIn)
@@ -133,7 +134,8 @@ namespace ftr
       {Type::SurfaceReMesh, "SurfaceReMesh"},
       {Type::SurfaceMeshFill, "SurfaceMeshFill"},
       {Type::MapPCurve, "MapPCurve"},
-      {Type::Untrim, "Untrim"}
+      {Type::Untrim, "Untrim"},
+      {Type::Face, "Face"}
     };
     
     assert(strings.count(typeIn) > 0);

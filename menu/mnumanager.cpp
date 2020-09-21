@@ -370,6 +370,7 @@ void Manager::Stow::setAllMenu()
         constructionSurface.commandIds().push_back(91);
         constructionSurface.commandIds().push_back(92);
         constructionSurface.commandIds().push_back(98);
+        constructionSurface.commandIds().push_back(99);
         constructionBase.subMenus().push_back(constructionSurface);
       }
       {
@@ -660,6 +661,7 @@ void Manager::Stow::setAllToolbars()
       entry.commandIds().push_back(91);
       entry.commandIds().push_back(92);
       entry.commandIds().push_back(98);
+      entry.commandIds().push_back(99);
       toolbar.entries().push_back(entry);
     }
     {
@@ -1792,5 +1794,15 @@ void Manager::Stow::setAllCommands()
     , QObject::tr("Replaces The Outer Boundary Of A Face").toStdString() //whats this text
     , QObject::tr("Untrim A Face").toStdString() // toolTipText
     , msg::Request | msg::Construct | msg::Untrim
+  );
+  sc
+  (
+    99
+    , ":/resources/images/constructionFace.svg"
+    , QObject::tr("Face").toStdString() //icon text
+    , QObject::tr("Create A Face").toStdString() //status text
+    , QObject::tr("Creates A Face Through Edges Or Wire").toStdString() //whats this text
+    , QObject::tr("Create A Face").toStdString() // toolTipText
+    , msg::Request | msg::Construct | msg::Face
   );
 }

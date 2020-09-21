@@ -46,6 +46,7 @@ namespace tls
     ShapeIdContainer& operator=(ShapeIdContainer&&) noexcept; //move
     
     void insert(const boost::uuids::uuid&, const TopoDS_Shape&);
+    void update(const TopoDS_Shape&, const TopoDS_Shape&);
     bool has(const TopoDS_Shape&);
     const boost::uuids::uuid& find(const TopoDS_Shape&);
     const TopoDS_Shape& find(const boost::uuids::uuid&);
