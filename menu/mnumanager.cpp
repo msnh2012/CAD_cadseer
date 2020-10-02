@@ -371,6 +371,7 @@ void Manager::Stow::setAllMenu()
         constructionSurface.commandIds().push_back(92);
         constructionSurface.commandIds().push_back(98);
         constructionSurface.commandIds().push_back(99);
+        constructionSurface.commandIds().push_back(100);
         constructionBase.subMenus().push_back(constructionSurface);
       }
       {
@@ -662,6 +663,7 @@ void Manager::Stow::setAllToolbars()
       entry.commandIds().push_back(92);
       entry.commandIds().push_back(98);
       entry.commandIds().push_back(99);
+      entry.commandIds().push_back(100);
       toolbar.entries().push_back(entry);
     }
     {
@@ -1804,5 +1806,15 @@ void Manager::Stow::setAllCommands()
     , QObject::tr("Creates A Face Through Edges Or Wire").toStdString() //whats this text
     , QObject::tr("Create A Face").toStdString() // toolTipText
     , msg::Request | msg::Construct | msg::Face
+  );
+  sc
+  (
+    100
+    , ":/resources/images/constructionFill.svg"
+    , QObject::tr("Fill").toStdString() //icon text
+    , QObject::tr("Create A Fill Face").toStdString() //status text
+    , QObject::tr("Creates A Face Through Edges And Faces").toStdString() //whats this text
+    , QObject::tr("Create A Fill Face").toStdString() // toolTipText
+    , msg::Request | msg::Construct | msg::Fill
   );
 }

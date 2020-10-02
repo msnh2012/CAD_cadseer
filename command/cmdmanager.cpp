@@ -93,6 +93,7 @@
 #include "command/cmdmappcurve.h"
 #include "command/cmduntrim.h"
 #include "command/cmdface.h"
+#include "command/cmdfill.h"
 #include "message/msgnode.h"
 #include "message/msgsift.h"
 #include "selection/slcmessage.h"
@@ -453,6 +454,11 @@ void Manager::setupDispatcher()
       (
         msg::Request | msg::Construct | msg::Face
       , std::bind(&Manager::constructFaceDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Construct | msg::Fill
+      , std::bind(&Manager::constructFillDispatched, this, std::placeholders::_1)
       )
       , std::make_pair
       (
@@ -915,6 +921,11 @@ void Manager::constructFaceDispatched(const msg::Message&)
   addCommand(std::make_shared<Face>());
 }
 
+void Manager::constructFillDispatched(const msg::Message&)
+{
+  addCommand(std::make_shared<Fill>());
+}
+
 void Manager::importDispatched(const msg::Message&)
 {
   addCommand(std::make_shared<Import>());
@@ -1142,6 +1153,11 @@ BasePtr editFace(ftr::Base *feature)
   return std::make_shared<Face>(feature);
 }
 
+BasePtr editFill(ftr::Base *feature)
+{
+  return std::make_shared<Fill>(feature);
+}
+
 void Manager::setupEditFunctionMap()
 {
   editFunctionMap.insert(std::make_pair(ftr::Type::Blend, std::bind(editBlend, std::placeholders::_1)));
@@ -1179,4 +1195,5 @@ void Manager::setupEditFunctionMap()
   editFunctionMap.insert(std::make_pair(ftr::Type::MapPCurve, std::bind(editMapPCurve, std::placeholders::_1)));
   editFunctionMap.insert(std::make_pair(ftr::Type::Untrim, std::bind(editUntrim, std::placeholders::_1)));
   editFunctionMap.insert(std::make_pair(ftr::Type::Face, std::bind(editFace, std::placeholders::_1)));
+  editFunctionMap.insert(std::make_pair(ftr::Type::Fill, std::bind(editFill, std::placeholders::_1)));
 }

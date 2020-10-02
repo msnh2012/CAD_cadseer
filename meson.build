@@ -195,6 +195,7 @@ feature_sources = ['feature/ftrinputtype.cpp'
   , 'feature/ftrmappcurve.cpp'
   , 'feature/ftruntrim.cpp'
   , 'feature/ftrface.cpp'
+  , 'feature/ftrfill.cpp'
   ]
   
 parameter_sources = ['parameter/prmparameter.cpp', 'parameter/prmexpressionlink.cpp']
@@ -324,6 +325,7 @@ project_serial_sources = [
   , 'project/serial/generated/prjsrlmpcmappcurve.cpp'
   , 'project/serial/generated/prjsrlutruntrim.cpp'
   , 'project/serial/generated/prjsrlfceface.cpp'
+  , 'project/serial/generated/prjsrlflsfill.cpp'
 ]
   
 application_sources = ['application/appmainwindow.cpp'
@@ -397,6 +399,7 @@ command_sources = ['command/cmdmanager.cpp'
   , 'command/cmdmappcurve.cpp'
   , 'command/cmduntrim.cpp'
   , 'command/cmdface.cpp'
+  , 'command/cmdfill.cpp'
 ]
 
 commandview_sources = [
@@ -438,6 +441,7 @@ commandview_sources = [
   , 'commandview/cmvblend.cpp'
   , 'commandview/cmvuntrim.cpp'
   , 'commandview/cmvface.cpp'
+  , 'commandview/cmvfill.cpp'
 ]
   
 law_sources = ['law/lwfcue.cpp']
@@ -586,6 +590,7 @@ cadseer_moc_hdrs = ['viewer/vwrwidget.h'
   , 'commandview/cmvblend.h'
   , 'commandview/cmvuntrim.h'
   , 'commandview/cmvface.h'
+  , 'commandview/cmvfill.h'
 ]
   
 cadseer_resources = ['resources.qrc']

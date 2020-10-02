@@ -59,3 +59,29 @@ int slc::remove(slc::Messages& messagesIn, const slc::Message& messageIn)
   }
   return out;
 }
+
+std::vector<Messages> slc::split(const Messages &msgsIn)
+{
+  std::vector<Messages> out;
+  auto findInOut = [&](const Message &mIn) -> std::vector<Messages>::iterator
+  {
+    for (auto it = out.begin(); it != out.end(); ++it)
+    {
+      //there is always one. because we don't add an empty vector
+      if (it->front().featureId == mIn.featureId)
+        return it;
+    }
+    return out.end();
+  };
+  
+  for (const auto &msg : msgsIn)
+  {
+    auto it = findInOut(msg);
+    if (it == out.end())
+      out.push_back({msg});
+    else
+      it->push_back(msg);
+  }
+  
+  return out;
+}

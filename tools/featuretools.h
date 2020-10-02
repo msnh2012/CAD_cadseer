@@ -30,7 +30,7 @@
 
 namespace ann{class SeerShape;}
 namespace ftr{class Base; class ShapeHistory; struct Pick; class UpdatePayload;}
-namespace slc{class Message; class Container; typedef std::vector<Message> Messages;}
+namespace slc{struct Message; class Container; typedef std::vector<Message> Messages;}
 
 namespace tls
 {

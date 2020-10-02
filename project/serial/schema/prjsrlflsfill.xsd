@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xs:schema
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  xmlns:spt="http://www.cadseer.com/prj/srl/spt"
+  xmlns:fls="http://www.cadseer.com/prj/srl/fls"
+  targetNamespace="http://www.cadseer.com/prj/srl/fls"
+>
+  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptparameter.xsd"/>
+  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptoverlay.xsd"/>
+  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptseershape.xsd"/>
+  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptpick.xsd"/>
+  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptbase.xsd"/>
+
+<xs:complexType name="Entry">
+  <xs:sequence>
+    <xs:element name="edgePick" type="spt:Pick" minOccurs="0" maxOccurs="1"/>
+    <xs:element name="facePick" type="spt:Pick" minOccurs="0" maxOccurs="1"/>
+    <xs:element name="boundary" type="xs:boolean"/>
+    <xs:element name="continuity" type="spt:Parameter"/>
+    <xs:element name="continuityLabel" type="spt:PLabel"/>
+  </xs:sequence>
+</xs:complexType>
+    
+<xs:complexType name="Fill">
+  <xs:sequence>
+    <xs:element name="base" type="spt:Base"/>
+    <xs:element name="seerShape" type="spt:SeerShape"/>
+    <xs:element name="entries" type="fls:Entry" minOccurs="0" maxOccurs="unbounded"/>
+  </xs:sequence>
+</xs:complexType>
+
+<xs:element name="fill" type="fls:Fill"/>
+  
+</xs:schema> 

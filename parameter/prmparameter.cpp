@@ -570,7 +570,8 @@ Parameter::Parameter(const Parameter &other) :
   stow(new Stow(other.stow->variant)),
   id(other.id),
   constraint(other.constraint),
-  pathType(other.pathType)
+  pathType(other.pathType),
+  enumeration(other.enumeration)
 {
 }
 

@@ -71,6 +71,7 @@ namespace slc
   bool has(const Messages &messagesIn, const Message &messageIn);
   void add(Messages &messagesIn, const Message &messageIn);
   int remove(Messages &messagesIn, const Message &messageIn);
+  std::vector<Messages> split(const Messages&); //!< group messages by feature id
 }
 
 #endif // SLC_SELECTIONMESSAGE_H

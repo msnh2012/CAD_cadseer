@@ -94,7 +94,7 @@ namespace msg
     static const Mask HiddenLine(Mask().set(                    50));//!< command
     static const Mask Isolate(Mask().set(                       51));//!< command
     static const Mask Fit(Mask().set(                           52));//!< command
-    static const Mask Fill(Mask().set(                          53));//!< command
+    static const Mask Fill(Mask().set(                          53));//!< command for view and feature
     static const Mask Triangulation(Mask().set(                 54));//!< command
     static const Mask RenderStyle(Mask().set(                   55));//!< command
     static const Mask Box(Mask().set(                           56));//!< command
@@ -172,7 +172,7 @@ namespace msg
     static const Mask MapPCurve(Mask().set(                    128));//!< command
     static const Mask Untrim(Mask().set(                       129));//!< command
     static const Mask Wireframe(Mask().set(                    130));//!< render style
-    static const Mask Face(Mask().set(                       131));//!< command
+    static const Mask Face(Mask().set(                         131));//!< command
 
     struct Stow; // forward declare see message/variant.h
     struct Message
