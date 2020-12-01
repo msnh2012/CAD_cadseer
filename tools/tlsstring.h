@@ -17,21 +17,23 @@
  *
  */
 
-#ifndef PRM_EXPRESSIONLINK_H
-#define PRM_EXPRESSIONLINK_H
+#ifndef TLS_STRING_H
+#define TLS_STRING_H
 
-namespace boost{namespace uuids{struct uuid;}}
+#include <string>
 
-namespace expr{class Manager;}
+namespace osg{class Vec3d; class Quat; class Matrixd;}
 
-namespace prm
+namespace tls
 {
-  class Parameter;
-  
-  bool canLinkExpression(expr::Manager&, Parameter*, const boost::uuids::uuid&);
-  bool canLinkExpression(Parameter*, const boost::uuids::uuid&);
-  bool linkExpression(Parameter*, const boost::uuids::uuid&);
-  void unLinkExpression(Parameter*);
+  //! convert double to a formatted string. precision less than zero uses default value. see source
+  std::string prettyDouble(const double &dIn, int precision = -1);
+  //! convert an osg vector value to an expression conforming string.
+  std::string valueString(const osg::Vec3d&, int = -1);
+  //! convert an osg quaternion value to an expression conforming string.
+  std::string valueString(const osg::Quat&, int = -1);
+  //! convert an osg matrix value to an expression conforming string.
+  std::string valueString(const osg::Matrixd&, int = -1);
 }
 
-#endif // PRM_EXPRESSIONLINK_H
+#endif

@@ -29,10 +29,12 @@
 #include <QTextStream>
 #include <QFileDialog>
 
+#include <lccmanager.h>
+
 #include "tools/idtools.h"
 #include "tools/infotools.h"
+#include "tools/tlsstring.h"
 #include "expressions/exprmanager.h"
-#include "expressions/exprstringtranslator.h"
 #include "expressions/exprvalue.h"
 #include "application/appapplication.h"
 #include "project/prjproject.h"
@@ -330,8 +332,8 @@ void Parameter::requestLinkSlot(const QString &stringIn)
 {
   //for now we only get here if we have a double. because connect inside double condition.
   
-  boost::uuids::uuid eId = gu::stringToId(stringIn.toStdString());
-  assert(!eId.is_nil());
+  int eId = stringIn.toInt();
+  assert(eId >= 0);
   app::instance()->getProject()->expressionLink(parameter->getId(), eId);
   
   if (prf::manager().rootPtr->dragger().triggerUpdateOnFinish())
@@ -362,7 +364,7 @@ void Parameter::valueHasChangedDouble()
   lastValue = static_cast<double>(*parameter);
   if (parameter->isConstant())
   {
-    eEdit->lineEdit->setText(QString::number(lastValue, 'f', 12));
+    eEdit->lineEdit->setText(QString::fromStdString(tls::prettyDouble(lastValue)));
     eEdit->lineEdit->selectAll();
   }
   //if it is linked we shouldn't need to change.
@@ -460,11 +462,13 @@ void Parameter::constantHasChangedDouble()
   else
   {
     const expr::Manager &eManager = static_cast<app::Application *>(qApp)->getProject()->getManager();
-    assert(eManager.hasParameterLink(parameter->getId()));
-    std::string formulaName = eManager.getFormulaName(eManager.getFormulaLink(parameter->getId()));
+    auto linked = eManager.getLinked(parameter->getId());
+    assert(linked);
+    auto formulaName = eManager.getExpressionName(*linked);
+    assert(formulaName);
     
     eEdit->trafficLabel->setLinkSlot();
-    eEdit->lineEdit->setText(QString::fromStdString(formulaName));
+    eEdit->lineEdit->setText(QString::fromStdString(*formulaName));
     eEdit->clearFocus();
     eEdit->lineEdit->deselect();
     eEdit->lineEdit->setReadOnly(true);
@@ -497,7 +501,7 @@ void Parameter::updateDoubleSlot()
 
   auto fail = [&]()
   {
-    eEdit->lineEdit->setText(QString::number(lastValue, 'f', 12));
+    eEdit->lineEdit->setText(QString::fromStdString(tls::prettyDouble(lastValue)));
     eEdit->lineEdit->selectAll();
     eEdit->trafficLabel->setTrafficGreenSlot();
   };
@@ -507,35 +511,40 @@ void Parameter::updateDoubleSlot()
     << QObject::tr("Feature: ").toStdString() << feature->getName().toStdString()
     << QObject::tr("    Parameter ").toStdString() << parameter->getName().toStdString();
 
-  //just run it through a string translator and expression manager.
-  expr::Manager localManager;
-  expr::StringTranslator translator(localManager);
+  lcc::Manager eman;
   std::string formula("temp = ");
   formula += eEdit->lineEdit->text().toStdString();
-  if (translator.parseString(formula) == expr::StringTranslator::ParseSucceeded)
+  auto results = eman.parseString(formula);
+  if (results.isAllGood())
   {
-    localManager.update();
-    assert(localManager.getFormulaValueType(translator.getFormulaOutId()) == expr::ValueType::Scalar);
-    double value = boost::get<double>(localManager.getFormulaValue(translator.getFormulaOutId()));
-    if (parameter->isValidValue(value))
+    if (results.value.size() == 1)
     {
-      parameter->setValue(value);
-      if (prf::manager().rootPtr->dragger().triggerUpdateOnFinish())
+      double value = results.value.at(0);
+      if (parameter->isValidValue(value))
       {
-        gitStream  << QObject::tr("    changed to: ").toStdString() << static_cast<double>(*parameter);
-        node->send(msg::buildGitMessage(gitStream.str()));
-        node->send(msg::Mask(msg::Request | msg::Project | msg::Update));
+        parameter->setValue(value);
+        if (prf::manager().rootPtr->dragger().triggerUpdateOnFinish())
+        {
+          gitStream  << QObject::tr("    changed to: ").toStdString() << static_cast<double>(*parameter);
+          node->send(msg::buildGitMessage(gitStream.str()));
+          node->send(msg::Mask(msg::Request | msg::Project | msg::Update));
+        }
+      }
+      else
+      {
+        node->send(msg::buildStatusMessage(QObject::tr("Value out of range").toStdString()));
+        fail();
       }
     }
     else
     {
-      node->send(msg::buildStatusMessage(QObject::tr("Value out of range").toStdString()));
+      node->send(msg::buildStatusMessage("Wrong Type"));
       fail();
     }
   }
   else
   {
-    node->send(msg::buildStatusMessage(QObject::tr("Parsing failed").toStdString()));
+    node->send(msg::buildStatusMessage(results.getError()));
     fail();
   }
 }
@@ -548,22 +557,28 @@ void Parameter::textEditedDoubleSlot(const QString &textIn)
   eEdit->trafficLabel->setTrafficYellowSlot();
   qApp->processEvents(); //need this or we never see yellow signal.
   
-  expr::Manager localManager;
-  expr::StringTranslator translator(localManager);
+  lcc::Manager eman;
   std::string formula("temp = ");
   formula += textIn.toStdString();
-  if (translator.parseString(formula) == expr::StringTranslator::ParseSucceeded)
+  auto results = eman.parseString(formula);
+  if (results.isAllGood())
   {
-    localManager.update();
-    eEdit->trafficLabel->setTrafficGreenSlot();
-    assert(localManager.getFormulaValueType(translator.getFormulaOutId()) == expr::ValueType::Scalar);
-    double value = boost::get<double>(localManager.getFormulaValue(translator.getFormulaOutId()));
-    eEdit->goToolTipSlot(QString::number(value));
+    if (results.value.size() == 1)
+    {
+      eEdit->trafficLabel->setTrafficGreenSlot();
+      double value = results.value.at(0);
+      eEdit->goToolTipSlot(QString::fromStdString(tls::prettyDouble(value)));
+    }
+    else
+    {
+      eEdit->trafficLabel->setTrafficRedSlot();
+      eEdit->goToolTipSlot("Wrong Type");
+    }
   }
   else
   {
     eEdit->trafficLabel->setTrafficRedSlot();
-    int position = translator.getFailedPosition() - 8; // 7 chars for 'temp = ' + 1
+    int position = results.errorPosition - 8; // 7 chars for 'temp = ' + 1
     eEdit->goToolTipSlot(textIn.left(position) + "?");
   }
 }

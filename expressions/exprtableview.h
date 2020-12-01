@@ -25,27 +25,36 @@
 #include <QLineEdit>
 #include <QWidget>
 
-class QShowEvent;
 class QContextMenuEvent;
+class QShowEvent;
 class QAction;
-class QLabel;
 
 namespace expr{
-  class StringTranslator;
+
+//! @class TableViewBase @brief common code for syncing headerview widths
+class TableViewBase : public QTableView
+{
+  Q_OBJECT
+public:
+  explicit TableViewBase(QWidget *parentIn = 0);
+protected:
+  void showEvent(QShowEvent*) override;
+private Q_SLOTS:
+  void columnResizedSlot(int, int, int);
+private:
+  void restoreSettings();
+};
   
 //! @brief Table view for all the expressions.
-class TableViewAll : public QTableView
+class TableViewAll : public TableViewBase
 {
   Q_OBJECT
 public:
   explicit TableViewAll(QWidget *parentIn = 0);
-  //! Widget is shown. Make sure it is up to date with model.
-  virtual void showEvent(QShowEvent *event);
+protected:
   //! Show the menu.
-  virtual void contextMenuEvent(QContextMenuEvent *event);
+  void contextMenuEvent(QContextMenuEvent*) override;
 public Q_SLOTS:
-  //! Add new expression.
-  void addDefaultRowSlot();
   //! Add selected expressions to group.
   void addToGroupSlot();
   //! Remove expression.
@@ -56,32 +65,38 @@ public Q_SLOTS:
   void importFormulaSlot();
   //! Copy the formulas value to clipboard.
   void copyFormulaValueSlot();
+  void addScalarSlot(); //!< Add new scalar expression.
+  void addVectorSlot(); //!< Add new vector expression.
+  void addRotationSlot(); //!< Add new rotation expression.
+  void addCSysSlot(); //!< Add new csys expression.
+  
 Q_SIGNALS:
   void addGroupSignal();
 private:
   void buildActions();
   
-  QAction *addFormulaAction;
   QAction *removeFormulaAction;
   QAction *exportFormulaAction;
   QAction *importFormulaAction;
   QAction *addGroupAction;
   QAction *copyFormulaValueAction;
+  
+  QAction *addScalarAction;
+  QAction *addVectorAction;
+  QAction *addRotationAction;
+  QAction *addCSysAction;
 };
 
 //! @brief Table view for a group of expressions.
-class TableViewGroup : public QTableView
+class TableViewGroup : public TableViewBase
 {
   Q_OBJECT
 public:
   explicit TableViewGroup(QWidget *parentIn = 0);
-  //! Widget is shown. Make sure it is up to date with model.
-  virtual void showEvent(QShowEvent *event);
+protected:
   //! Show the menu.
-  virtual void contextMenuEvent(QContextMenuEvent *event);
+  void contextMenuEvent(QContextMenuEvent*) override;
 public Q_SLOTS:
-  //! Add a new expression.
-  void addDefaultRowSlot();
   //! Remove expression.
   void removeFormulaSlot();
   //! Remove expression from group. Expression still exists.
@@ -96,6 +111,10 @@ public Q_SLOTS:
   void importFormulaSlot();
   //! Copy the formulas value to clipboard.
   void copyFormulaValueSlot();
+  void addScalarSlot(); //!< Add new scalar expression.
+  void addVectorSlot(); //!< Add new vector expression.
+  void addRotationSlot(); //!< Add new rotation expression.
+  void addCSysSlot(); //!< Add new csys expression.
 Q_SIGNALS:
   //! Notify the tab widget about renamed group.
   void groupRenamedSignal(QWidget *tab, const QString &newName);
@@ -104,7 +123,6 @@ Q_SIGNALS:
 private:
   void buildActions();
   
-  QAction *addFormulaAction;
   QAction *removeFormulaAction;
   QAction *exportFormulaAction;
   QAction *importFormulaAction;
@@ -112,10 +130,15 @@ private:
   QAction *renameGroupAction;
   QAction *removeGroupAction;
   QAction *copyFormulaValueAction;
+  
+  QAction *addScalarAction;
+  QAction *addVectorAction;
+  QAction *addRotationAction;
+  QAction *addCSysAction;
 };
 
 //! @brief view for selection context expressions.
-class TableViewSelection : public QTableView
+class TableViewSelection : public TableViewBase
 {
   Q_OBJECT
 public:

@@ -43,8 +43,8 @@ class Widget : public QWidget
 {
   Q_OBJECT
 public:
-    explicit Widget(QWidget* parent = 0, Qt::WindowFlags f = 0);
-    virtual ~Widget() override;
+    explicit Widget(QWidget* parent = 0);
+    ~Widget() override;
     
     //! acts as a parent of all widgets and allows us to remove all the widgets between close and open of projects.
     TableViewAll *tableViewAll = nullptr;
@@ -70,13 +70,12 @@ public Q_SLOTS:
   void dumpLinksSlot();
   //! Show a tab demonstrating syntax
   void goExamplesTabSlot();
+  
 private:
   //! Build the GUI.
   void setupGui();
   //! Setting up the view.
-  void addGroupView(const boost::uuids::uuid &idIn, const QString &name);
-  //! Build examples string.
-  std::string buildExamplesString();
+  void addGroupView(int, const QString &name);
   //! Manager to interface with.
   Manager *eManager = nullptr;
   std::unique_ptr<msg::Node> node;

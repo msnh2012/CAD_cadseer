@@ -40,9 +40,7 @@
 #include "message/msgmessage.h"
 #include "parameter/prmvariant.h"
 #include "parameter/prmparameter.h"
-#include "parameter/prmexpressionlink.h"
 #include "expressions/exprmanager.h"
-#include "expressions/exprstringtranslator.h"
 #include "tools/idtools.h"
 #include "commandview/cmvcsyswidget.h"
 #include "commandview/cmvtrafficsignal.h"
@@ -157,8 +155,11 @@ struct cmv::ExpressionEdit::Stow
       lineEdit->deselect();
 
       expr::Manager &manager = app::instance()->getProject()->getManager();
-      assert(manager.hasParameterLink(parameter->getId()));
-      lineEdit->setText(QString::fromStdString(manager.getFormulaName(manager.getFormulaLink(parameter->getId()))));
+      auto oLinked = manager.getLinked(parameter->getId());
+      assert(oLinked);
+      auto oName = manager.getExpressionName(*oLinked);
+      assert(oName);
+      lineEdit->setText(QString::fromStdString(*oName));
     }
   }
   
@@ -207,19 +208,20 @@ void ExpressionEdit::editingSlot(const QString &textIn)
   qApp->processEvents(); //need this or we never see yellow signal.
   
   expr::Manager localManager;
-  expr::StringTranslator translator(localManager);
   std::string formula("temp = ");
   formula += textIn.toStdString();
-  if (translator.parseString(formula) == expr::StringTranslator::ParseSucceeded)
+  auto result = localManager.parseString(formula);
+  if (!result.isAllGood())
   {
-    localManager.update();
-    if (prm::canLinkExpression(localManager, stow->parameter, translator.getFormulaOutId()))
+    auto oId = localManager.getExpressionId(result.expressionName);
+    assert(oId);
+    if (localManager.canLinkExpression(stow->parameter, *oId))
     {
       //going to make a temp parameter and assign the expression value.
       //this is so we can cast the parameter to a qstring.
       //random id just in case.
       prm::Parameter tp(*stow->parameter, gu::createRandomId());
-      ParameterVisitor v(&tp, localManager.getFormulaValue(translator.getFormulaOutId()));
+      ParameterVisitor v(&tp, localManager.getExpressionValue(*oId));
       if (boost::apply_visitor(v, stow->parameter->getStow().variant))
       {
         stow->trafficSignal->setTrafficGreenSlot();
@@ -240,7 +242,7 @@ void ExpressionEdit::editingSlot(const QString &textIn)
   else
   {
     stow->trafficSignal->setTrafficRedSlot();
-    int position = translator.getFailedPosition() - 8; // 7 chars for 'temp = ' + 1
+    int position = result.errorPosition - 8; // 7 chars for 'temp = ' + 1
     goToolTipSlot(textIn.left(position) + "?");
   }
 }
@@ -252,15 +254,16 @@ void ExpressionEdit::finishedEditingSlot()
     return;
 
   expr::Manager localManager;
-  expr::StringTranslator translator(localManager);
   std::string formula("temp = ");
   formula += stow->lineEdit->text().toStdString();
-  if (translator.parseString(formula) == expr::StringTranslator::ParseSucceeded)
+  auto result = localManager.parseString(formula);
+  if (result.isAllGood())
   {
-    localManager.update();
-    if (prm::canLinkExpression(localManager, stow->parameter, translator.getFormulaOutId()))
+    auto oId = localManager.getExpressionId(result.expressionName);
+    assert(oId);
+    if (localManager.canLinkExpression(stow->parameter, *oId))
     {
-      ParameterVisitor v(stow->parameter, localManager.getFormulaValue(translator.getFormulaOutId()));
+      ParameterVisitor v(stow->parameter, localManager.getExpressionValue(*oId));
       if (!boost::apply_visitor(v, stow->parameter->getStow().variant))
       {
         app::instance()->queuedMessage(msg::buildStatusMessage(QObject::tr("Value out of range").toStdString(), 2.0));

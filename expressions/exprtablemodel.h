@@ -23,61 +23,55 @@
 #include <memory>
 #include <vector>
 
-#include <boost/uuid/uuid.hpp>
-#include <boost/shared_ptr.hpp>
-
 #include <QAbstractTableModel>
 #include <QSortFilterProxyModel>
 
 #include "selection/slccontainer.h"
 
+namespace lcc{struct Result;}
 namespace msg{struct Message; struct Node; struct Sift;}
 
 namespace expr{
   class Manager;
-  class Group;
-  class StringTranslator;
 
-/*! @brief Main interface between Manager and Qt MVC
+/*! @class TableModel @brief Main interface between Manager and Qt MVC
  * 
- * LastFailed* members are used to store information from a failed parse.
- * The delegate uses #lastFailedPosition and #lastFailedText to restore and highlight
- * failing text. #lastFailedMessage is shown to user in a messagebox.
  */
 class TableModel : public QAbstractTableModel
 {
   Q_OBJECT
 public:
     explicit TableModel(expr::Manager &eManagerIn, QObject* parent = 0);
-    virtual ~TableModel() override;
-    virtual int rowCount(const QModelIndex& parent = QModelIndex()) const;
-    virtual int columnCount(const QModelIndex& parent = QModelIndex()) const;
-    virtual QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const;
-    virtual QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const;
-    virtual Qt::ItemFlags flags(const QModelIndex &index) const;
-    virtual bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole);
-    virtual QStringList mimeTypes() const override;
+    ~TableModel() override;
+    int rowCount(const QModelIndex& parent = QModelIndex()) const override;
+    int columnCount(const QModelIndex& parent = QModelIndex()) const override;
+    QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
+    QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
+    Qt::ItemFlags flags(const QModelIndex &index) const override;
+    bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole) override;
+    QStringList mimeTypes() const override;
     QMimeData* mimeData (const QModelIndexList &) const override;
-    //! Get all user defined groups.
-    std::vector<expr::Group> getGroups();
-    //! Add formulas to a group.
-    void addFormulaToGroup(const QModelIndex &indexIn, const QString &groupIdIn);
-    //! Remove formulas
-    void removeFormula(const QModelIndexList &indexesIn);
+    //! Add expression to a group.
+    void addExpressionToGroup(const QModelIndex &indexIn, int groupIdIn);
+    //! Remove expressions
+    void removeExpression(const QModelIndexList &indexesIn);
     //! Export expressions to a text file.
-    void exportExpressions(QModelIndexList &indexesIn, std::ostream &streamIn) const;
-    //! Import expressions from a text file. Will not over write existing expressions.
-    void importExpressions(std::istream &streamIn, boost::uuids::uuid groupId);
+    void exportExpressions(QModelIndexList&, std::ostream&) const;
+    //! Import expressions from a text file. Will over write existing expressions.
+    std::vector<lcc::Result> importExpressions(std::istream &streamIn, int groupId = -1);
     
-    //! The position causing the parse to fail.
-    int lastFailedPosition;
-    //! The text responsible for a failed parse.
-    QString lastFailedText;
     //! Message indicating the cause of the failure.
     QString lastFailedMessage;
     
-    //! Add a new row to the model.
-    void addDefaultRow();
+    //! @name Adding new expression by type.
+    ///@{
+    void addScalar();
+    void addVector();
+    void addRotation();
+    void addCSys();
+    ///@}
+    
+    const expr::Manager& getManager(){return eManager;}
     
   //@{
   //! items related to temp parsing in the editor delegate.
@@ -89,6 +83,7 @@ Q_SIGNALS:
   void parseSucceededSignal();
   void parseFailedSignal(const QString&); //!< string showing failure position.
   void parseFailedSignal();
+  void groupChangedSignal(int); //!< adding happens from 'all' table and we need to let the group model know.
 private:
   const std::string testFormulaName = "f9d2e8f0_2354_40ef_8d3c_4b8ced3a2504"; //!< unique name for temp.
   //@}
@@ -96,43 +91,20 @@ private:
 private:
   //! Manager containing expressions and groups.
   expr::Manager &eManager;
-  //! Translator to interface with the manager.
-  boost::shared_ptr<StringTranslator> sTranslator;
   //! tableview calls into ::data every paint event. Way too many! cache rhs strings for speed.
-  typedef std::map<boost::uuids::uuid, std::string> IdToRhsMap;
-  mutable IdToRhsMap idToRhsMap;
-  void buildOrModifyMapEntry(const boost::uuids::uuid &, const std::string&) const;
-  std::string getRhs(const boost::uuids::uuid&) const;
-  void removeRhs(const boost::uuids::uuid&) const;
-};
-
-//! ProxyModel for behaviour common to both AllProxy and GroupProxy
-class BaseProxyModel : public QSortFilterProxyModel
-{
-    Q_OBJECT
-public:
-  explicit BaseProxyModel(QObject *parent = 0);
+  mutable std::map<int, std::string> idToRhsMap;
   
-  /*! @brief Intercept for sort.
-   * 
-   * Calls parent for setting of data.
-   * Calls a queued sort after the the 2nd column is edited for smooth user insert behaviour.
-   */
-  virtual bool setData(const QModelIndex& index, const QVariant& value, int role = Qt::EditRole);
-private Q_SLOTS:
-  //! Trigger a sort of the model. 
-  void delayedSortSlot();
+  std::string createUniqueName(const std::string&) const;
+  void addCommon(const std::string&);
 };
 
 /*! @brief Proxy model for the grouping view.
  */
-class GroupProxyModel : public BaseProxyModel
+class GroupProxyModel : public QSortFilterProxyModel
 {
   Q_OBJECT
 public:
-  explicit GroupProxyModel(expr::Manager &eManagerIn, boost::uuids::uuid groupIdIn, QObject *parent = 0);
-  //! Add a new formula to the source model and add it to the group.
-  QModelIndex addDefaultRow();
+  explicit GroupProxyModel(expr::Manager &eManagerIn, int groupIdIn, QObject *parent = 0);
   //! Remove the expressions from the group.
   void removeFromGroup(const QModelIndexList &indexesIn);
   //! Rename the user group this model is referencing.
@@ -142,42 +114,41 @@ public:
   //! Remove the group from manager and signal tab widget remove view.
   void removeGroup();
   //! Import the expressions from the file and add to the user group.
-  void importExpressions(std::istream &streamIn);
+  std::vector<lcc::Result> importExpressions(std::istream &streamIn);
+  
+  //! @name Adding new expression by type.
+  ///@{
+  QModelIndex addScalar();
+  QModelIndex addVector();
+  QModelIndex addRotation();
+  QModelIndex addCSys();
+  ///@}
   
 protected:
-  virtual bool filterAcceptsRow(int source_row, const QModelIndex& source_parent) const override;
+  bool filterAcceptsRow(int source_row, const QModelIndex& source_parent) const override;
   
 public Q_SLOTS:
-  /*! @brief invalidate the filter and sort.
-   * 
-   * Changes through in any one tab can modify the underlying data to have an effect on the other tabs.
-   * We allow the hidden tabs to fall out of sync with the underlying model. So for a 
-   * synchronized interface, we call this function in response to the view being shown to reflect
-   * any changes made from other tabs. Now this could all be avoided by using the proxies dynamicSortFilter
-   * setting. But then we loose control of when the sort happens and user chases records around the view.
-   * This function is also called from removeFromGroup in a queued invoke to reflect group removal.
-   */
-  void refreshSlot();
+  void groupChangedSlot(int);
 private:
   //! Reference to manager
   expr::Manager &eManager;
   //! Group id this model is referencing.
-  boost::uuids::uuid groupId;
+  int groupId;
 };
 
 /* this one is a little different in that we are NOT letting it get of sync.
  * I don't like this but I don't want to an observer to both model and view.
  */
 //! @brief Proxy model for selection expressions view.
-class SelectionProxyModel : public BaseProxyModel
+class SelectionProxyModel : public QSortFilterProxyModel
 {
   Q_OBJECT
 public:
   explicit SelectionProxyModel(expr::Manager &, QObject *parent = 0);
-  virtual ~SelectionProxyModel();
+  ~SelectionProxyModel() override;
   
 protected:
-  virtual bool filterAcceptsRow(int source_row, const QModelIndex& source_parent) const override;
+  bool filterAcceptsRow(int source_row, const QModelIndex& source_parent) const override;
   
 private:
   //! Reference to manager
@@ -191,15 +162,11 @@ private:
 };
 
 //! @brief Proxy model for all expressions view.
-class AllProxyModel : public BaseProxyModel
+class AllProxyModel : public QSortFilterProxyModel
 {
   Q_OBJECT
 public:
   explicit AllProxyModel(QObject *parent = 0);
-  /*! @brief invalidate sort.
-   * Same reason as @see GroupProxyModel.
-   */
-  void refresh();
 };
 }
 

@@ -74,9 +74,10 @@ namespace prj
       class Connection;
       class AppVersion;
       class Expression;
-      class ExpressionLink;
-      class ExpressionGroup;
       class Project;
+      class Expressions;
+      class Groups;
+      class Links;
     }
   }
 }
@@ -471,50 +472,60 @@ namespace prj
       class Expression: public ::xml_schema::Type
       {
         public:
-        // id
+        // expressions
         //
-        typedef ::xml_schema::String IdType;
-        typedef ::xsd::cxx::tree::traits< IdType, char > IdTraits;
+        typedef ::prj::srl::prjs::Expressions ExpressionsType;
+        typedef ::xsd::cxx::tree::sequence< ExpressionsType > ExpressionsSequence;
+        typedef ExpressionsSequence::iterator ExpressionsIterator;
+        typedef ExpressionsSequence::const_iterator ExpressionsConstIterator;
+        typedef ::xsd::cxx::tree::traits< ExpressionsType, char > ExpressionsTraits;
 
-        const IdType&
-        id () const;
+        const ExpressionsSequence&
+        expressions () const;
 
-        IdType&
-        id ();
+        ExpressionsSequence&
+        expressions ();
 
         void
-        id (const IdType& x);
+        expressions (const ExpressionsSequence& s);
 
-        void
-        id (::std::unique_ptr< IdType > p);
-
-        static const IdType&
-        id_default_value ();
-
-        // stringForm
+        // groups
         //
-        typedef ::xml_schema::String StringFormType;
-        typedef ::xsd::cxx::tree::traits< StringFormType, char > StringFormTraits;
+        typedef ::prj::srl::prjs::Groups GroupsType;
+        typedef ::xsd::cxx::tree::sequence< GroupsType > GroupsSequence;
+        typedef GroupsSequence::iterator GroupsIterator;
+        typedef GroupsSequence::const_iterator GroupsConstIterator;
+        typedef ::xsd::cxx::tree::traits< GroupsType, char > GroupsTraits;
 
-        const StringFormType&
-        stringForm () const;
+        const GroupsSequence&
+        groups () const;
 
-        StringFormType&
-        stringForm ();
+        GroupsSequence&
+        groups ();
 
         void
-        stringForm (const StringFormType& x);
+        groups (const GroupsSequence& s);
+
+        // links
+        //
+        typedef ::prj::srl::prjs::Links LinksType;
+        typedef ::xsd::cxx::tree::sequence< LinksType > LinksSequence;
+        typedef LinksSequence::iterator LinksIterator;
+        typedef LinksSequence::const_iterator LinksConstIterator;
+        typedef ::xsd::cxx::tree::traits< LinksType, char > LinksTraits;
+
+        const LinksSequence&
+        links () const;
+
+        LinksSequence&
+        links ();
 
         void
-        stringForm (::std::unique_ptr< StringFormType > p);
-
-        static const StringFormType&
-        stringForm_default_value ();
+        links (const LinksSequence& s);
 
         // Constructors.
         //
-        Expression (const IdType&,
-                    const StringFormType&);
+        Expression ();
 
         Expression (const ::xercesc::DOMElement& e,
                     ::xml_schema::Flags f = 0,
@@ -542,188 +553,9 @@ namespace prj
                ::xml_schema::Flags);
 
         protected:
-        ::xsd::cxx::tree::one< IdType > id_;
-        static const IdType id_default_value_;
-        ::xsd::cxx::tree::one< StringFormType > stringForm_;
-        static const StringFormType stringForm_default_value_;
-      };
-
-      class ExpressionLink: public ::xml_schema::Type
-      {
-        public:
-        // parameterId
-        //
-        typedef ::xml_schema::String ParameterIdType;
-        typedef ::xsd::cxx::tree::traits< ParameterIdType, char > ParameterIdTraits;
-
-        const ParameterIdType&
-        parameterId () const;
-
-        ParameterIdType&
-        parameterId ();
-
-        void
-        parameterId (const ParameterIdType& x);
-
-        void
-        parameterId (::std::unique_ptr< ParameterIdType > p);
-
-        static const ParameterIdType&
-        parameterId_default_value ();
-
-        // expressionId
-        //
-        typedef ::xml_schema::String ExpressionIdType;
-        typedef ::xsd::cxx::tree::traits< ExpressionIdType, char > ExpressionIdTraits;
-
-        const ExpressionIdType&
-        expressionId () const;
-
-        ExpressionIdType&
-        expressionId ();
-
-        void
-        expressionId (const ExpressionIdType& x);
-
-        void
-        expressionId (::std::unique_ptr< ExpressionIdType > p);
-
-        static const ExpressionIdType&
-        expressionId_default_value ();
-
-        // Constructors.
-        //
-        ExpressionLink (const ParameterIdType&,
-                        const ExpressionIdType&);
-
-        ExpressionLink (const ::xercesc::DOMElement& e,
-                        ::xml_schema::Flags f = 0,
-                        ::xml_schema::Container* c = 0);
-
-        ExpressionLink (const ExpressionLink& x,
-                        ::xml_schema::Flags f = 0,
-                        ::xml_schema::Container* c = 0);
-
-        virtual ExpressionLink*
-        _clone (::xml_schema::Flags f = 0,
-                ::xml_schema::Container* c = 0) const;
-
-        ExpressionLink&
-        operator= (const ExpressionLink& x);
-
-        virtual 
-        ~ExpressionLink ();
-
-        // Implementation.
-        //
-        protected:
-        void
-        parse (::xsd::cxx::xml::dom::parser< char >&,
-               ::xml_schema::Flags);
-
-        protected:
-        ::xsd::cxx::tree::one< ParameterIdType > parameterId_;
-        static const ParameterIdType parameterId_default_value_;
-        ::xsd::cxx::tree::one< ExpressionIdType > expressionId_;
-        static const ExpressionIdType expressionId_default_value_;
-      };
-
-      class ExpressionGroup: public ::xml_schema::Type
-      {
-        public:
-        // id
-        //
-        typedef ::xml_schema::String IdType;
-        typedef ::xsd::cxx::tree::traits< IdType, char > IdTraits;
-
-        const IdType&
-        id () const;
-
-        IdType&
-        id ();
-
-        void
-        id (const IdType& x);
-
-        void
-        id (::std::unique_ptr< IdType > p);
-
-        static const IdType&
-        id_default_value ();
-
-        // name
-        //
-        typedef ::xml_schema::String NameType;
-        typedef ::xsd::cxx::tree::traits< NameType, char > NameTraits;
-
-        const NameType&
-        name () const;
-
-        NameType&
-        name ();
-
-        void
-        name (const NameType& x);
-
-        void
-        name (::std::unique_ptr< NameType > p);
-
-        static const NameType&
-        name_default_value ();
-
-        // entries
-        //
-        typedef ::xml_schema::String EntriesType;
-        typedef ::xsd::cxx::tree::sequence< EntriesType > EntriesSequence;
-        typedef EntriesSequence::iterator EntriesIterator;
-        typedef EntriesSequence::const_iterator EntriesConstIterator;
-        typedef ::xsd::cxx::tree::traits< EntriesType, char > EntriesTraits;
-
-        const EntriesSequence&
-        entries () const;
-
-        EntriesSequence&
-        entries ();
-
-        void
-        entries (const EntriesSequence& s);
-
-        // Constructors.
-        //
-        ExpressionGroup (const IdType&,
-                         const NameType&);
-
-        ExpressionGroup (const ::xercesc::DOMElement& e,
-                         ::xml_schema::Flags f = 0,
-                         ::xml_schema::Container* c = 0);
-
-        ExpressionGroup (const ExpressionGroup& x,
-                         ::xml_schema::Flags f = 0,
-                         ::xml_schema::Container* c = 0);
-
-        virtual ExpressionGroup*
-        _clone (::xml_schema::Flags f = 0,
-                ::xml_schema::Container* c = 0) const;
-
-        ExpressionGroup&
-        operator= (const ExpressionGroup& x);
-
-        virtual 
-        ~ExpressionGroup ();
-
-        // Implementation.
-        //
-        protected:
-        void
-        parse (::xsd::cxx::xml::dom::parser< char >&,
-               ::xml_schema::Flags);
-
-        protected:
-        ::xsd::cxx::tree::one< IdType > id_;
-        static const IdType id_default_value_;
-        ::xsd::cxx::tree::one< NameType > name_;
-        static const NameType name_default_value_;
-        EntriesSequence entries_;
+        ExpressionsSequence expressions_;
+        GroupsSequence groups_;
+        LinksSequence links_;
       };
 
       class Project: public ::xml_schema::Type
@@ -814,56 +646,22 @@ namespace prj
         void
         connections (const ConnectionsSequence& s);
 
-        // expressions
+        // expression
         //
-        typedef ::prj::srl::prjs::Expression ExpressionsType;
-        typedef ::xsd::cxx::tree::sequence< ExpressionsType > ExpressionsSequence;
-        typedef ExpressionsSequence::iterator ExpressionsIterator;
-        typedef ExpressionsSequence::const_iterator ExpressionsConstIterator;
-        typedef ::xsd::cxx::tree::traits< ExpressionsType, char > ExpressionsTraits;
+        typedef ::prj::srl::prjs::Expression ExpressionType;
+        typedef ::xsd::cxx::tree::traits< ExpressionType, char > ExpressionTraits;
 
-        const ExpressionsSequence&
-        expressions () const;
+        const ExpressionType&
+        expression () const;
 
-        ExpressionsSequence&
-        expressions ();
+        ExpressionType&
+        expression ();
 
         void
-        expressions (const ExpressionsSequence& s);
-
-        // expressionLinks
-        //
-        typedef ::prj::srl::prjs::ExpressionLink ExpressionLinksType;
-        typedef ::xsd::cxx::tree::sequence< ExpressionLinksType > ExpressionLinksSequence;
-        typedef ExpressionLinksSequence::iterator ExpressionLinksIterator;
-        typedef ExpressionLinksSequence::const_iterator ExpressionLinksConstIterator;
-        typedef ::xsd::cxx::tree::traits< ExpressionLinksType, char > ExpressionLinksTraits;
-
-        const ExpressionLinksSequence&
-        expressionLinks () const;
-
-        ExpressionLinksSequence&
-        expressionLinks ();
+        expression (const ExpressionType& x);
 
         void
-        expressionLinks (const ExpressionLinksSequence& s);
-
-        // expressionGroups
-        //
-        typedef ::prj::srl::prjs::ExpressionGroup ExpressionGroupsType;
-        typedef ::xsd::cxx::tree::sequence< ExpressionGroupsType > ExpressionGroupsSequence;
-        typedef ExpressionGroupsSequence::iterator ExpressionGroupsIterator;
-        typedef ExpressionGroupsSequence::const_iterator ExpressionGroupsConstIterator;
-        typedef ::xsd::cxx::tree::traits< ExpressionGroupsType, char > ExpressionGroupsTraits;
-
-        const ExpressionGroupsSequence&
-        expressionGroups () const;
-
-        ExpressionGroupsSequence&
-        expressionGroups ();
-
-        void
-        expressionGroups (const ExpressionGroupsSequence& s);
+        expression (::std::unique_ptr< ExpressionType > p);
 
         // shapeHistory
         //
@@ -886,10 +684,12 @@ namespace prj
         //
         Project (const AppVersionType&,
                  const FileVersionType&,
+                 const ExpressionType&,
                  const ShapeHistoryType&);
 
         Project (::std::unique_ptr< AppVersionType >,
                  const FileVersionType&,
+                 ::std::unique_ptr< ExpressionType >,
                  ::std::unique_ptr< ShapeHistoryType >);
 
         Project (const ::xercesc::DOMElement& e,
@@ -923,10 +723,233 @@ namespace prj
         FeaturesSequence features_;
         StatesSequence states_;
         ConnectionsSequence connections_;
-        ExpressionsSequence expressions_;
-        ExpressionLinksSequence expressionLinks_;
-        ExpressionGroupsSequence expressionGroups_;
+        ::xsd::cxx::tree::one< ExpressionType > expression_;
         ::xsd::cxx::tree::one< ShapeHistoryType > shapeHistory_;
+      };
+
+      class Expressions: public ::xml_schema::Type
+      {
+        public:
+        // id
+        //
+        typedef ::xml_schema::Int IdType;
+        typedef ::xsd::cxx::tree::traits< IdType, char > IdTraits;
+
+        const IdType&
+        id () const;
+
+        IdType&
+        id ();
+
+        void
+        id (const IdType& x);
+
+        // stringForm
+        //
+        typedef ::xml_schema::String StringFormType;
+        typedef ::xsd::cxx::tree::traits< StringFormType, char > StringFormTraits;
+
+        const StringFormType&
+        stringForm () const;
+
+        StringFormType&
+        stringForm ();
+
+        void
+        stringForm (const StringFormType& x);
+
+        void
+        stringForm (::std::unique_ptr< StringFormType > p);
+
+        // Constructors.
+        //
+        Expressions (const IdType&,
+                     const StringFormType&);
+
+        Expressions (const ::xercesc::DOMElement& e,
+                     ::xml_schema::Flags f = 0,
+                     ::xml_schema::Container* c = 0);
+
+        Expressions (const Expressions& x,
+                     ::xml_schema::Flags f = 0,
+                     ::xml_schema::Container* c = 0);
+
+        virtual Expressions*
+        _clone (::xml_schema::Flags f = 0,
+                ::xml_schema::Container* c = 0) const;
+
+        Expressions&
+        operator= (const Expressions& x);
+
+        virtual 
+        ~Expressions ();
+
+        // Implementation.
+        //
+        protected:
+        void
+        parse (::xsd::cxx::xml::dom::parser< char >&,
+               ::xml_schema::Flags);
+
+        protected:
+        ::xsd::cxx::tree::one< IdType > id_;
+        ::xsd::cxx::tree::one< StringFormType > stringForm_;
+      };
+
+      class Groups: public ::xml_schema::Type
+      {
+        public:
+        // id
+        //
+        typedef ::xml_schema::Int IdType;
+        typedef ::xsd::cxx::tree::traits< IdType, char > IdTraits;
+
+        const IdType&
+        id () const;
+
+        IdType&
+        id ();
+
+        void
+        id (const IdType& x);
+
+        // name
+        //
+        typedef ::xml_schema::String NameType;
+        typedef ::xsd::cxx::tree::traits< NameType, char > NameTraits;
+
+        const NameType&
+        name () const;
+
+        NameType&
+        name ();
+
+        void
+        name (const NameType& x);
+
+        void
+        name (::std::unique_ptr< NameType > p);
+
+        // entries
+        //
+        typedef ::xml_schema::Int EntriesType;
+        typedef ::xsd::cxx::tree::sequence< EntriesType > EntriesSequence;
+        typedef EntriesSequence::iterator EntriesIterator;
+        typedef EntriesSequence::const_iterator EntriesConstIterator;
+        typedef ::xsd::cxx::tree::traits< EntriesType, char > EntriesTraits;
+
+        const EntriesSequence&
+        entries () const;
+
+        EntriesSequence&
+        entries ();
+
+        void
+        entries (const EntriesSequence& s);
+
+        // Constructors.
+        //
+        Groups (const IdType&,
+                const NameType&);
+
+        Groups (const ::xercesc::DOMElement& e,
+                ::xml_schema::Flags f = 0,
+                ::xml_schema::Container* c = 0);
+
+        Groups (const Groups& x,
+                ::xml_schema::Flags f = 0,
+                ::xml_schema::Container* c = 0);
+
+        virtual Groups*
+        _clone (::xml_schema::Flags f = 0,
+                ::xml_schema::Container* c = 0) const;
+
+        Groups&
+        operator= (const Groups& x);
+
+        virtual 
+        ~Groups ();
+
+        // Implementation.
+        //
+        protected:
+        void
+        parse (::xsd::cxx::xml::dom::parser< char >&,
+               ::xml_schema::Flags);
+
+        protected:
+        ::xsd::cxx::tree::one< IdType > id_;
+        ::xsd::cxx::tree::one< NameType > name_;
+        EntriesSequence entries_;
+      };
+
+      class Links: public ::xml_schema::Type
+      {
+        public:
+        // parameterId
+        //
+        typedef ::xml_schema::String ParameterIdType;
+        typedef ::xsd::cxx::tree::traits< ParameterIdType, char > ParameterIdTraits;
+
+        const ParameterIdType&
+        parameterId () const;
+
+        ParameterIdType&
+        parameterId ();
+
+        void
+        parameterId (const ParameterIdType& x);
+
+        void
+        parameterId (::std::unique_ptr< ParameterIdType > p);
+
+        // expressionId
+        //
+        typedef ::xml_schema::Int ExpressionIdType;
+        typedef ::xsd::cxx::tree::traits< ExpressionIdType, char > ExpressionIdTraits;
+
+        const ExpressionIdType&
+        expressionId () const;
+
+        ExpressionIdType&
+        expressionId ();
+
+        void
+        expressionId (const ExpressionIdType& x);
+
+        // Constructors.
+        //
+        Links (const ParameterIdType&,
+               const ExpressionIdType&);
+
+        Links (const ::xercesc::DOMElement& e,
+               ::xml_schema::Flags f = 0,
+               ::xml_schema::Container* c = 0);
+
+        Links (const Links& x,
+               ::xml_schema::Flags f = 0,
+               ::xml_schema::Container* c = 0);
+
+        virtual Links*
+        _clone (::xml_schema::Flags f = 0,
+                ::xml_schema::Container* c = 0) const;
+
+        Links&
+        operator= (const Links& x);
+
+        virtual 
+        ~Links ();
+
+        // Implementation.
+        //
+        protected:
+        void
+        parse (::xsd::cxx::xml::dom::parser< char >&,
+               ::xml_schema::Flags);
+
+        protected:
+        ::xsd::cxx::tree::one< ParameterIdType > parameterId_;
+        ::xsd::cxx::tree::one< ExpressionIdType > expressionId_;
       };
     }
   }
@@ -1070,12 +1093,6 @@ namespace prj
       operator<< (::xercesc::DOMElement&, const Expression&);
 
       void
-      operator<< (::xercesc::DOMElement&, const ExpressionLink&);
-
-      void
-      operator<< (::xercesc::DOMElement&, const ExpressionGroup&);
-
-      void
       operator<< (::xercesc::DOMElement&, const Project&);
 
       // Serialize to std::ostream.
@@ -1145,6 +1162,15 @@ namespace prj
       project (const ::prj::srl::prjs::Project& x, 
                const ::xml_schema::NamespaceInfomap& m = ::xml_schema::NamespaceInfomap (),
                ::xml_schema::Flags f = 0);
+
+      void
+      operator<< (::xercesc::DOMElement&, const Expressions&);
+
+      void
+      operator<< (::xercesc::DOMElement&, const Groups&);
+
+      void
+      operator<< (::xercesc::DOMElement&, const Links&);
     }
   }
 }

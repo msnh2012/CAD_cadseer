@@ -106,7 +106,7 @@ public:
     
     QTextStream& getInfo(QTextStream&) const;
     
-    void expressionLink(const boost::uuids::uuid&, const boost::uuids::uuid&);
+    void expressionLink(const boost::uuids::uuid&, int);
     void expressionUnlink(const boost::uuids::uuid&);
     
 private:

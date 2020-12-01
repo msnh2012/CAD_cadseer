@@ -17,7 +17,6 @@
  *
  */
 
-#include <QApplication>
 #include <QVBoxLayout>
 #include <QLabel>
 #include <QLineEdit>
@@ -25,9 +24,11 @@
 #include <QTimer>
 #include <QKeyEvent>
 
-#include "expressions/exprmanager.h"
-#include "expressions/exprstringtranslator.h"
-#include "expressions/exprvalue.h"
+#include <lccmanager.h>
+
+#include "application/appapplication.h"
+#include "message/msgmessage.h"
+#include "tools/tlsstring.h"
 #include "dialogs/dlgexpressionedit.h"
 #include "preferences/preferencesXML.h"
 #include "preferences/prfmanager.h"
@@ -40,6 +41,7 @@ struct IncrementWidget::Stow
   dlg::ExpressionEdit *lineEdit = nullptr;
   QString title;
   double &prefRef;
+  lcc::Manager eman;
   
   Stow(const QString &titleIn, double &prefRefIn)
   : title(titleIn)
@@ -76,7 +78,7 @@ void IncrementWidget::buildGui()
 
 void IncrementWidget::update()
 {
-  stow->lineEdit->lineEdit->setText(QString::number(stow->prefRef, 'f', 12));
+  stow->lineEdit->lineEdit->setText(QString::fromStdString(tls::prettyDouble(stow->prefRef)));
   stow->lineEdit->lineEdit->setCursorPosition(0);
 }
 
@@ -87,22 +89,27 @@ void IncrementWidget::textEditedSlot(const QString &textIn)
   stow->lineEdit->trafficLabel->setTrafficYellowSlot();
   qApp->processEvents(); //need this or we never see yellow signal.
   
-  expr::Manager localManager;
-  expr::StringTranslator translator(localManager);
   std::string formula("temp = ");
   formula += textIn.toStdString();
-  if (translator.parseString(formula) == expr::StringTranslator::ParseSucceeded)
+  stow->eman.reset();
+  auto result = stow->eman.parseString(formula);
+  if (result.isAllGood())
   {
-    localManager.update();
-    stow->lineEdit->trafficLabel->setTrafficGreenSlot();
-    assert(localManager.getFormulaValueType(translator.getFormulaOutId()) == expr::ValueType::Scalar);
-    double value = boost::get<double>(localManager.getFormulaValue(translator.getFormulaOutId()));
-    stow->lineEdit->goToolTipSlot(QString::number(value));
+    if (result.value.size() == 1)
+    {
+      stow->lineEdit->trafficLabel->setTrafficGreenSlot();
+      stow->lineEdit->goToolTipSlot(QString::fromStdString(tls::prettyDouble(result.value.at(0))));
+    }
+    else
+    {
+      stow->lineEdit->trafficLabel->setTrafficRedSlot();
+      stow->lineEdit->goToolTipSlot("Error: Wrong Type");
+    }
   }
   else
   {
     stow->lineEdit->trafficLabel->setTrafficRedSlot();
-    int position = translator.getFailedPosition() - 8; // 7 chars for 'temp = ' + 1
+    int position = result.errorPosition - 8; // 7 chars for 'temp = ' + 1
     stow->lineEdit->goToolTipSlot(textIn.left(position) + "?");
   }
 }
@@ -116,18 +123,30 @@ void IncrementWidget::returnPressedSlot()
 void IncrementWidget::editingFinishedSlot()
 {
   stow->lineEdit->trafficLabel->setPixmap(QPixmap());
+  stow->lineEdit->lineEdit->setToolTip(this->toolTip());
   
-  expr::Manager localManager;
-  expr::StringTranslator translator(localManager);
+  auto error = [&](const std::string &e)
+  {
+    app::instance()->messageSlot(msg::buildStatusMessage(e, 2.0));
+  };
+  
   std::string formula("temp = ");
   formula += stow->lineEdit->lineEdit->text().toStdString();
-  if (translator.parseString(formula) == expr::StringTranslator::ParseSucceeded)
+  stow->eman.reset();
+  auto result = stow->eman.parseString(formula);
+  if (result.isAllGood())
   {
-    localManager.update();
-    assert(localManager.getFormulaValueType(translator.getFormulaOutId()) == expr::ValueType::Scalar);
-    stow->prefRef = boost::get<double>(localManager.getFormulaValue(translator.getFormulaOutId()));
-    prf::manager().saveConfig();
+    if (result.value.size() == 1)
+    {
+      stow->prefRef = result.value.at(0);
+      prf::manager().saveConfig();
+    }
+    else
+      error("Error: Wrong Type");
   }
+  else
+    error(result.parseErrorMessage);
+  
   update();
 }
 

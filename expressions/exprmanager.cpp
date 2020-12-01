@@ -18,439 +18,348 @@
  */
 
 #include <assert.h>
-#include <set>
 #include <iostream>
 #include <iomanip>
+#include <sstream>
+
+#include <boost/multi_index_container.hpp>
+#include <boost/multi_index/member.hpp>
+#include <boost/multi_index/ordered_index.hpp>
 
 #include <QTextStream>
 
-#include <boost/graph/topological_sort.hpp>
-#include <boost/current_function.hpp>
+#include <lccmanager.h>
 
 #include "application/appapplication.h"
 #include "project/prjproject.h"
 #include "project/prjmessage.h"
 #include "feature/ftrbase.h"
 #include "parameter/prmparameter.h"
+#include "parameter/prmvariant.h"
 #include "message/msgnode.h"
 #include "message/msgsift.h"
 #include "preferences/preferencesXML.h"
 #include "preferences/prfmanager.h"
 
 #include "tools/idtools.h"
-#include "expressions/expredgeproperty.h"
-#include "expressions/exprgraph.h"
-#include "expressions/exprformulalink.h"
+#include "project/serial/generated/prjsrlprjsproject.h"
 #include "expressions/exprmanager.h"
 
-//temp.
-#include <sstream>
-
-using namespace expr;
 using namespace boost::uuids;
 
-Group::Group() : id(gu::createRandomId()), name("default")
+namespace
 {
+  /*! @brief Link between expression and parameters
+   * 
+   * boost multi_index link.
+   */
+  struct Link
+  {
+    Link(const uuid &pIdIn, int fIdIn): parameterId(pIdIn), expressionId(fIdIn){}
+    uuid parameterId;
+    int expressionId;
+    
+    //@{
+    //! used as tags.
+    struct ByParameterId{};
+    struct ByExpressionId{};
+    //@}
+  };
 
+  namespace BMI = boost::multi_index;
+  using Links = boost::multi_index_container
+  <
+    Link,
+    BMI::indexed_by
+    <
+      BMI::ordered_unique //parameter can only be linked to one formula
+      <
+        BMI::tag<Link::ByParameterId>,
+        BMI::member<Link, uuid, &Link::parameterId>
+      >,
+      BMI::ordered_non_unique //expression can be linked to many parameters.
+      <
+        BMI::tag<Link::ByExpressionId>,
+        BMI::member<Link, int, &Link::expressionId>
+      >
+    >
+  >;
 }
 
-bool Group::containsFormula(const boost::uuids::uuid& fIdIn)
+using namespace expr;
+
+struct Manager::Stow
 {
-  std::vector<boost::uuids::uuid>::const_iterator it = std::find(formulaIds.begin(), formulaIds.end(), fIdIn);
-  if (it == formulaIds.end())
+  lcc::Manager manager;
+  Links links;
+  msg::Node node;
+  msg::Sift sift;
+  
+  //used to test compatibility between exrpressions and parameters.
+  //will assign value if assign=true
+  class ParameterValueVisitor : public boost::static_visitor<bool>
+  {
+    prm::Parameter *parameter = nullptr;
+    expr::Value ev;
+    bool assign = false;
+  public:
+    ParameterValueVisitor(prm::Parameter *pIn, const expr::Value &evIn, bool assignIn)
+    : parameter(pIn)
+    , ev(evIn)
+    , assign(assignIn)
+    {}
+    
+    bool operator()(double) const
+    {
+      expr::DoubleVisitor edv;
+      double newValue = boost::apply_visitor(edv, ev);
+      if (!parameter->isValidValue(newValue))
+        return false;
+      if (assign)
+        parameter->setValue(newValue);
+      return true;
+    }
+    
+    bool operator()(int) const
+    {
+      expr::DoubleVisitor edv;
+      int newValue = static_cast<int>(boost::apply_visitor(edv, ev));
+      if (!parameter->isValidValue(newValue))
+        return false;
+      if (assign)
+        parameter->setValue(newValue);
+      return true;
+    }
+    bool operator()(bool) const
+    {
+      expr::DoubleVisitor edv;
+      bool newValue = static_cast<bool>(boost::apply_visitor(edv, ev));
+      if (!parameter->isValidValue(newValue))
+        return false;
+      if (assign)
+        parameter->setValue(newValue);
+      return true;
+    }
+    bool operator()(const std::string&) const {assert(0); return false;} //currently unsupported formula type.
+    bool operator()(const boost::filesystem::path&) const {assert(0); return false;} //currently unsupported formula type.
+    bool operator()(const osg::Vec3d&) const
+    {
+      expr::VectorVisitor evv;
+      osg::Vec3d newValue = boost::apply_visitor(evv, ev);
+      if (assign)
+        parameter->setValue(newValue);
+      return true;
+    }
+    bool operator()(const osg::Quat&) const
+    {
+      //parameters not supporting Quaternions at this time.
+      return false;
+      
+  //       expr::QuatVisitor eqv;
+  //       osg::Quat newValue = boost::apply_visitor(eqv, ev);
+  //       parameter->setValue(newValue);
+  //       return true;
+    }
+    bool operator()(const osg::Matrixd&) const
+    {
+      expr::MatrixVisitor emv;
+      osg::Matrixd newValue = boost::apply_visitor(emv, ev);
+      if (assign)
+        parameter->setValue(newValue);
+      return true;
+    }
+  };
+  
+  //can't make parameter const. We can assign or test.
+  bool common(prm::Parameter *parameter, const expr::Value &evIn, bool assign)
+  {
+    //we only visit if the types are acceptable otherwise a crash.
+    ParameterValueVisitor v(parameter, evIn, assign);
+    auto goVisit = [&]() -> bool {return boost::apply_visitor(v, parameter->getStow().variant);};
+    
+    if (parameter->getValueType() == evIn.type())
+      return goVisit();
+    //here we allow conversions from an expression double to an int or boolean parameter.
+    if (evIn.type() == typeid(double) &&  (parameter->getValueType() == typeid(int) || parameter->getValueType() == typeid(bool)))
+      return goVisit();
+    
     return false;
-  return true;
-}
-
-void Group::removeFormula(const boost::uuids::uuid& fIdIn)
-{
-  std::vector<boost::uuids::uuid>::iterator it = std::find(formulaIds.begin(), formulaIds.end(), fIdIn);
-  assert(it != formulaIds.end());
-  formulaIds.erase(it);
-}
-
-Manager::Manager()
-{
-  graphPtr = std::move(std::unique_ptr<GraphWrapper>(new GraphWrapper()));
-  formulaLinksPtr = std::move(std::unique_ptr<FormulaLinksWrapper>(new FormulaLinksWrapper()));
-  
-  node = std::make_unique<msg::Node>();
-  node->connect(msg::hub());
-  sift = std::make_unique<msg::Sift>();
-  sift->name = "expr::Widget";
-  node->setHandler(std::bind(&msg::Sift::receive, sift.get(), std::placeholders::_1));
-  setupDispatcher();
-  
-  //allgroup id set upon serialize restore.
-  allGroup.name = "All";
-}
-
-Manager::~Manager()
-{
-
-}
-
-GraphWrapper& Manager::getGraphWrapper()
-{
-  return *graphPtr;
-}
-
-void Manager::update()
-{
-  graphPtr->update();
-  dispatchValues();
-}
-
-void Manager::writeOutGraph(const std::string& pathName)
-{
-  graphPtr->writeOutGraph(pathName);
-}
-
-void Manager::addFormulaToAllGroup(boost::uuids::uuid idIn)
-{
-  allGroup.formulaIds.push_back(idIn);
-}
-
-void Manager::removeFormulaFromAllGroup(boost::uuids::uuid idIn)
-{
-  std::vector<boost::uuids::uuid>::iterator it = std::find(allGroup.formulaIds.begin(), allGroup.formulaIds.end(), idIn);
-  assert (it != allGroup.formulaIds.end());
-  allGroup.formulaIds.erase(it);
-}
-
-boost::uuids::uuid Manager::createUserGroup(const std::string& groupNameIn)
-{
-  //ensure unique group name.
-  for (std::vector<Group>::iterator it = userDefinedGroups.begin(); it != userDefinedGroups.end(); ++it)
-  {
-    if (it->name == groupNameIn)
-      assert(0); //name already exists. use hasGroupOfName.
   }
   
-  Group virginGroup;
-  virginGroup.name = groupNameIn;
-  userDefinedGroups.push_back(virginGroup);
-  return virginGroup.id;
-}
-
-void Manager::renameUserGroup(const boost::uuids::uuid& idIn, const std::string &newName)
-{
-  assert(this->hasUserGroup(idIn));
-  assert(!this->hasUserGroup(newName));
-  for (std::vector<Group>::iterator it = userDefinedGroups.begin(); it != userDefinedGroups.end(); ++it)
+  Value getExpressionValue(int idIn) const
   {
-    if (it->id == idIn)
+    Value out;
+    auto lv = manager.getExpressionValue(idIn);
+    if (lv.size() == 1)
+      out = lv.at(0);
+    else if (lv.size() == 3)
+      out = osg::Vec3d(lv.at(0), lv.at(1), lv.at(2));
+    else if (lv.size() == 4)
+      out = osg::Quat(lv.at(0), lv.at(1), lv.at(2), lv.at(3));
+    else if (lv.size() == 7)
     {
-      it->name = newName;
-      break;
+      osg::Matrixd temp;
+      temp.setRotate(osg::Quat(lv.at(0), lv.at(1), lv.at(2), lv.at(3)));
+      temp.setTrans(lv.at(4), lv.at(5), lv.at(6));
+      out = temp;
+    }
+    else
+      assert(0); //unrecognized value from libcadcalc
+    return out;
+  }
+  
+  bool canLinkExpression(prm::Parameter *p, int eId)
+  {
+    auto ev = getExpressionValue(eId);
+    return common(p, ev, false);
+  }
+
+  bool canLinkExpression(const uuid &pId, int eId)
+  {
+    prm::Parameter *p = app::instance()->getProject()->findParameter(pId);
+    assert(p);
+    if (!p)
+      return false;
+    return canLinkExpression(p, eId);
+  }
+
+  bool addLink(const uuid &pId, int eId)
+  {
+    prm::Parameter *p = app::instance()->getProject()->findParameter(pId);
+    assert(p);
+    if (!p)
+      return false;
+    return addLink(p, eId);
+  }
+  
+  bool addLink(prm::Parameter *p, int eId)
+  {
+    auto ev = getExpressionValue(eId);
+    if (!common(p, ev, true))
+      return false;
+    
+    removeLink(p->getId()); //it is ok if it doesn't exist.
+    links.insert(Link(p->getId(), eId));
+    p->setConstant(false);
+    
+    std::ostringstream gm;
+    gm << "Linking parameter: " << p->getName().toStdString() << " to formula: " << *manager.getExpressionName(eId);
+    app::instance()->messageSlot(msg::buildGitMessage(gm.str()));
+    
+    return true;
+  }
+
+  void removeLink(const uuid &pId)
+  {
+    //a parameter can only have one link. so no equal range for this.
+    auto it = links.get<Link::ByParameterId>().find(pId);
+    if (it != links.get<Link::ByParameterId>().end())
+    {
+      prm::Parameter *p = app::instance()->getProject()->findParameter(pId);
+      assert(p); if (!p) return;
+      
+      p->setConstant(true);
+      std::ostringstream gm;
+      gm << "Unlinking parameter: " << p->getName().toStdString();
+      app::instance()->messageSlot(msg::buildGitMessage(gm.str()));
+      
+      links.get<Link::ByParameterId>().erase(it);
     }
   }
-}
 
-void Manager::removeUserGroup(const boost::uuids::uuid& idIn)
-{
-  for (std::vector<Group>::iterator it = userDefinedGroups.begin(); it != userDefinedGroups.end(); ++it)
+  void removeLink(int eId)
   {
-    if (it->id == idIn)
+    auto its = links.get<Link::ByExpressionId>().equal_range(eId);
+    
+    for (auto copy = its; copy.first != copy.second; ++copy.first)
     {
-      userDefinedGroups.erase(it);
-      return;
+      prm::Parameter *p = app::instance()->getProject()->findParameter(copy.first->parameterId);
+      assert(p); if (!p) continue;
+      p->setConstant(true);
+      std::ostringstream gm;
+      gm << "Unlinking parameter: " << p->getName().toStdString();
+      app::instance()->messageSlot(msg::buildGitMessage(gm.str()));
     }
+    
+    links.get<Link::ByExpressionId>().erase(its.first, its.second);
   }
-  assert(0); //no group of that id.
-}
 
-bool Manager::hasUserGroup(const std::string& groupNameIn) const
-{
-  for (std::vector<Group>::const_iterator it = userDefinedGroups.begin(); it != userDefinedGroups.end(); ++it)
+  bool isLinked(const uuid &pId) const
   {
-    if (it->name == groupNameIn)
-      return true;
+    return links.get<Link::ByParameterId>().find(pId) != links.get<Link::ByParameterId>().end();
   }
-  return false;
-}
 
-bool Manager::hasUserGroup(const boost::uuids::uuid& groupIdIn) const
-{
-  for (std::vector<Group>::const_iterator it = userDefinedGroups.begin(); it != userDefinedGroups.end(); ++it)
+  bool isLinked(int eId) const
   {
-    if (it->id == groupIdIn)
-      return true;
+    //expressions can be linked to multiple parameters but we don't care, just look for first one here.
+    return links.get<Link::ByExpressionId>().find(eId) != links.get<Link::ByExpressionId>().end();
   }
-  return false;
-}
 
-void Manager::addFormulaToUserGroup(const boost::uuids::uuid& groupIdIn, const boost::uuids::uuid& formulaIdIn)
-{
-  for (std::vector<Group>::iterator groupIt = userDefinedGroups.begin(); groupIt != userDefinedGroups.end(); ++groupIt)
+  std::optional<int> getLinked(const uuid &pId) const
   {
-    if (groupIt->id == groupIdIn)
+    auto it = links.get<Link::ByParameterId>().find(pId);
+    if (it == links.get<Link::ByParameterId>().end())
+      return std::nullopt;
+    return it->expressionId;
+  }
+
+  std::vector<uuid> getLinked(int eId) const
+  {
+    std::vector<uuid> out;
+    auto its = links.get<Link::ByExpressionId>().equal_range(eId);
+    for (; its.first != its.second; ++its.first)
+      out.emplace_back(its.first->parameterId);
+    return out;
+  }
+
+  void dispatchLinks(const std::vector<int> &eIds)
+  {
+    for (auto eId : eIds)
     {
-      groupIt->formulaIds.push_back(formulaIdIn);
-    }
-  }
-}
-
-bool Manager::doesUserGroupContainFormula(const boost::uuids::uuid& groupIdIn, const boost::uuids::uuid& formulaIdIn)
-{
-  for (std::vector<Group>::iterator groupIt = userDefinedGroups.begin(); groupIt != userDefinedGroups.end(); ++groupIt)
-  {
-    if (groupIt->id == groupIdIn)
-    {
-      if (groupIt->containsFormula(formulaIdIn))
-        return true;
-    }
-  }
-  return false;
-}
-
-void Manager::removeFormulaFromUserGroup(const boost::uuids::uuid& groupIdIn, const boost::uuids::uuid& formulaIdIn)
-{
-  for (std::vector<Group>::iterator groupIt = userDefinedGroups.begin(); groupIt != userDefinedGroups.end(); ++groupIt)
-  {
-    if (groupIt->id == groupIdIn)
-    {
-      std::vector<boost::uuids::uuid>::iterator it = std::find(groupIt->formulaIds.begin(), groupIt->formulaIds.end(), formulaIdIn);
-      if (it != groupIt->formulaIds.end())
+      auto its = links.get<Link::ByExpressionId>().equal_range(eId);
+      for (; its.first != its.second; ++its.first)
       {
-        groupIt->formulaIds.erase(it);
-        return;
+        prm::Parameter *p = app::instance()->getProject()->findParameter(its.first->parameterId);
+        assert(p); if (!p) continue;
+        auto ev = getExpressionValue(its.first->expressionId);
+        if (!common(p, ev, true))
+          app::instance()->messageSlot(msg::buildStatusMessage("Failed to update parameter: " + p->getName().toStdString(), 2.0));
       }
     }
   }
-  assert(0); //couldn't find group with id and or formula with id.
+};
+
+Manager::Manager() : stow(std::make_unique<Stow>())
+{
+  stow->node.connect(msg::hub());
+  stow->sift.name = "expr::Widget";
+  stow->node.setHandler(std::bind(&msg::Sift::receive, &stow->sift, std::placeholders::_1));
+  setupDispatcher();
 }
 
-boost::uuids::uuid Manager::getUserGroupId(const std::string& groupNameIn) const
+Manager::~Manager() = default;
+
+void Manager::writeOutGraph(const std::string& pathName)
 {
-  for (std::vector<Group>::const_iterator groupIt = userDefinedGroups.begin(); groupIt != userDefinedGroups.end(); ++groupIt)
+  stow->manager.writeOutGraph(pathName);
+}
+
+void Manager::dumpLinks(std::ostream& stream) const
+{
+  for (const auto &c : stow->links.get<Link::ByExpressionId>())
   {
-    if (groupIt->name == groupNameIn)
-    {
-      return groupIt->id;
-    }
-  }
-  assert(0); //no user group of name.
-  throw std::runtime_error("couldn't find user group with name in Manager::getUserGroupId");
-}
-
-boost::uuids::uuid Manager::getFormulaId(const std::string& nameIn) const
-{
-  assert(graphPtr->hasFormula(nameIn));
-  return (graphPtr->getFormulaId(nameIn));
-}
-
-void Manager::setFormulaId(const boost::uuids::uuid &oldIdIn, const boost::uuids::uuid &newIdIn)
-{
-  assert(graphPtr->hasFormula(oldIdIn));
-  
-  //remove oldId from the all group and add new id.
-  assert (allGroup.containsFormula(oldIdIn));
-  allGroup.removeFormula(oldIdIn);
-  allGroup.formulaIds.push_back(newIdIn);
-  
-  graphPtr->setFormulaId(oldIdIn, newIdIn);
-}
-
-std::string Manager::getFormulaName(const boost::uuids::uuid& idIn) const
-{
-  assert(graphPtr->hasFormula(idIn));
-  return graphPtr->getFormulaName(idIn);
-}
-
-bool Manager::hasFormula(const uuid& idIn) const
-{
-  return graphPtr->hasFormula(idIn);
-}
-
-bool Manager::hasFormula(const std::string& nameIn) const
-{
-  return graphPtr->hasFormula(nameIn);
-}
-
-Value Manager::getFormulaValue(const uuid& idIn) const
-{
-  assert(graphPtr->hasFormula(idIn));
-  return graphPtr->getFormulaValue(idIn);
-}
-
-ValueType Manager::getFormulaValueType(const uuid &idIn) const
-{
-  assert(graphPtr->hasFormula(idIn));
-  return graphPtr->getFormulaValueType(idIn);
-}
-
-void Manager::setFormulaName(const uuid& idIn, const std::string& nameIn)
-{
-  assert(graphPtr->hasFormula(idIn));
-  graphPtr->setFormulaName(idIn, nameIn);
-}
-
-void Manager::cleanFormula(const uuid& idIn)
-{
-  assert(graphPtr->hasFormula(idIn));
-  graphPtr->cleanFormula(idIn);
-}
-
-bool Manager::hasCycle(const uuid& idIn, std::string& nameOut)
-{
-  assert(graphPtr->hasFormula(idIn));
-  return graphPtr->hasCycle(idIn, nameOut);
-}
-
-void Manager::setFormulaDependentsDirty(const uuid& idIn)
-{
-  assert(graphPtr->hasFormula(idIn));
-  graphPtr->setFormulaDependentsDirty(idIn);
-}
-
-std::vector< uuid > Manager::getDependentFormulaIds(const uuid& parentIn)
-{
-  assert(graphPtr->hasFormula(parentIn));
-  return graphPtr->getDependentFormulaIds(parentIn);
-}
-
-std::vector< uuid > Manager::getAllFormulaIdsSorted() const
-{
-  return graphPtr->getAllFormulaIdsSorted();
-}
-
-std::vector< uuid > Manager::getAllFormulaIds() const
-{
-  return graphPtr->getAllFormulaIds();
-}
-
-std::string Manager::getUserGroupName(const boost::uuids::uuid& groupIdIn) const
-{
-  for (std::vector<Group>::const_iterator groupIt = userDefinedGroups.begin(); groupIt != userDefinedGroups.end(); ++groupIt)
-  {
-    if (groupIt->id == groupIdIn)
-    {
-      return groupIt->name;
-    }
-  }
-  assert(0); //no user group of id.
-  throw std::runtime_error("couldn't find user group with id in Manager::getUserGroupName");
-}
-
-void Manager::removeFormula(const std::string& nameIn)
-{
-  assert(graphPtr->hasFormula(nameIn));
-  boost::uuids::uuid fId = graphPtr->getFormulaId(nameIn);
-  this->removeFormula(fId);
-}
-
-void Manager::removeFormula(const boost::uuids::uuid& idIn)
-{
-  removeFormulaFromAllGroup(idIn);
-  for (std::vector<Group>::iterator it = userDefinedGroups.begin(); it != userDefinedGroups.end(); ++it)
-  {
-    if (it->containsFormula(idIn))
-      it->removeFormula(idIn);
-  }
-  graphPtr->removeFormula(idIn);
-  
-  //update any linked parameters.
-  FormulaLinkContainerType::index<FormulaLink::ByFormulaId>::type::iterator it, it2, itEnd;
-  
-  boost::tie(it, itEnd) = formulaLinksPtr->container.get<FormulaLink::ByFormulaId>().equal_range(idIn);
-  if (it == itEnd)
-    return;
-  it2 = it;
-  
-  for(; it != itEnd; ++it)
-  {
-    prm::Parameter *p = app::instance()->getProject()->findParameter(it->parameterId);
-    assert(p);
-    p->setConstant(true); //change parameter constant to true.
-  }
-  
-  formulaLinksPtr->container.get<FormulaLink::ByFormulaId>().erase(it2, itEnd);
-}
-
-void Manager::addLink(const uuid &parameterIdIn, const uuid &formulaIdIn)
-{
-  formulaLinksPtr->container.insert(FormulaLink(parameterIdIn, formulaIdIn));
-}
-
-void Manager::removeParameterLink(const uuid &parameterIdIn)
-{
-  //a parameter can only have one link. so no equal range for this.
-  
-  FormulaLinkContainerType::index<FormulaLink::ByParameterId>::type::iterator it;
-  it = formulaLinksPtr->container.get<FormulaLink::ByParameterId>().find(parameterIdIn);
-  assert(it != formulaLinksPtr->container.get<FormulaLink::ByParameterId>().end()); //use has first.
-  
-  formulaLinksPtr->container.get<FormulaLink::ByParameterId>().erase(it);
-}
-
-bool Manager::hasParameterLink(const uuid &parameterIdIn) const
-{
-  FormulaLinkContainerType::index<FormulaLink::ByParameterId>::type::iterator it;
-  it = formulaLinksPtr->container.get<FormulaLink::ByParameterId>().find(parameterIdIn);
-  return it != formulaLinksPtr->container.get<FormulaLink::ByParameterId>().end();
-}
-
-uuid Manager::getFormulaLink(const uuid &parameterIdIn) const
-{
-  FormulaLinkContainerType::index<FormulaLink::ByParameterId>::type::iterator it;
-  it = formulaLinksPtr->container.get<FormulaLink::ByParameterId>().find(parameterIdIn);
-  assert(it != formulaLinksPtr->container.get<FormulaLink::ByParameterId>().end()); //use has first.
-  
-  return it->formulaId;
-}
-
-bool Manager::isFormulaLinked(const uuid &formulaIdIn) const
-{
-  FormulaLinkContainerType::index<FormulaLink::ByFormulaId>::type::iterator it, itEnd;
-  
-  boost::tie(it, itEnd) = formulaLinksPtr->container.get<FormulaLink::ByFormulaId>().equal_range(formulaIdIn);
-  return it != itEnd;
-}
-
-std::vector<uuid> Manager::getParametersLinked(const uuid &formulaIdIn) const
-{
-  std::vector<uuid> out;
-  
-  FormulaLinkContainerType::index<FormulaLink::ByFormulaId>::type::iterator it, itEnd;
-  boost::tie(it, itEnd) = formulaLinksPtr->container.get<FormulaLink::ByFormulaId>().equal_range(formulaIdIn);
-  for (; it != itEnd; ++it)
-    out.push_back(it->parameterId);
-  return out;
-}
-
-void Manager::dispatchValues()
-{
-  /* it is safe to just send all the values because, each parameter
-   * makes sure the new value is different than the old
-   */
-  FormulaLinkContainerType::const_iterator it;
-  for (it = formulaLinksPtr->container.begin(); it != formulaLinksPtr->container.end(); ++it)
-  {
-    prm::Parameter *p = app::instance()->getProject()->findParameter(it->parameterId);
-    assert(p);
-    //todo address other value types.
-    p->setValue(boost::get<double>(graphPtr->getFormulaValue(it->formulaId)));
-  }
-}
-
-void Manager::dumpLinks(std::ostream& stream)
-{
-  FormulaLinkContainerType::const_iterator it;
-  for (it = formulaLinksPtr->container.begin(); it != formulaLinksPtr->container.end(); ++it)
-  {
-    prm::Parameter *p = app::instance()->getProject()->findParameter(it->parameterId);
+    prm::Parameter *p = app::instance()->getProject()->findParameter(c.parameterId);
     assert(p);
     
-    stream << "parameter id: " << gu::idToString(it->parameterId)
+    stream << "parameter id: " << gu::idToString(p->getId())
       << "    parameter name: " << std::left << std::setw(20) << p->getName().toStdString()
-      << "    formula id: " << gu::idToString(it->formulaId) << std::endl;
+      << "    expression id: " << c.expressionId << std::endl;
   }
 }
 
 void Manager::setupDispatcher()
 {
-  sift->insert
+  stow->sift.insert
   (
     msg::Response | msg::Pre | msg::Remove | msg::Feature
     , std::bind(&Manager::featureRemovedDispatched, this, std::placeholders::_1)
@@ -462,28 +371,306 @@ void Manager::featureRemovedDispatched(const msg::Message &messageIn)
   prj::Message message = messageIn.getPRJ();
   uuid featureId = message.feature->getId();
   
-  const prm::Parameters &pVector = app::instance()->getProject()->findFeature(featureId)->getParameters();
+  auto *f = app::instance()->getProject()->findFeature(featureId);
+  assert(f); if (!f) return;
   
-  for (const auto &p : pVector)
-  {
-    auto &container = formulaLinksPtr->container.get<FormulaLink::ByParameterId>();
-    FormulaLinkContainerType::index<FormulaLink::ByParameterId>::type::iterator it;
-    it = container.find(p->getId());
-    if (it != container.end())
-      container.erase(it);
-  }
+  for (const auto &p : f->getParameters())
+    removeLink(p->getId());
 }
 
 QTextStream& Manager::getInfo(QTextStream &stream) const
 {
-  stream << endl << QObject::tr("Formulas:") << endl;
-  auto ids = getAllFormulaIds();
-  for (const auto &id : ids)
+  stream << Qt::endl << QObject::tr("Expressions:") << Qt::endl;
+  for (auto id : getExpressionIds())
   {
-    //todo address other variant types.
-    stream << QString::fromStdString(getFormulaName(id))
-    << "    " << QString::number(boost::get<double>(getFormulaValue(id)), 'f', 12) << endl;
+    std::ostringstream temp; temp << getExpressionValue(id);
+    stream << QString::fromStdString(*getExpressionName(id))
+    << "    " << QString::fromStdString(temp.str()) << Qt::endl;
   }
   
   return stream;
+}
+
+lcc::Result Manager::parseString(const std::string &sIn)
+{
+  auto result = stow->manager.parseString(sIn);
+  dispatchLinks(result.updatedIds);
+  return result;
+}
+
+std::string Manager::buildExpressionString(const std::string &sIn) const
+{
+  return stow->manager.buildExpressionString(sIn);
+}
+std::string Manager::buildExpressionString(int idIn) const
+{
+  return stow->manager.buildExpressionString(idIn);
+}
+
+std::string Manager::buildRHSString(const std::string &sIn) const
+{
+  auto oid = stow->manager.getExpressionId(sIn);
+  assert(oid);
+  return buildRHSString(*oid);
+}
+
+std::string Manager::buildRHSString(int idIn) const
+{
+  assert(stow->manager.getExpressionName(idIn));
+  std::string fullExpression = stow->manager.buildExpressionString(idIn);
+  assert(!fullExpression.empty());
+  auto pos = fullExpression.find('=', 0);
+  assert(pos != std::string::npos);
+  auto start = fullExpression.find_first_not_of(' ', pos + 1);
+  assert(start != std::string::npos);
+  return fullExpression.substr(start);
+}
+
+bool Manager::hasExpression(const std::string &nameIn)
+{
+  return stow->manager.hasExpression(nameIn);
+}
+
+bool Manager::hasExpression(int idIn)
+{
+  return stow->manager.hasExpression(idIn);
+}
+
+std::optional<int> Manager::getExpressionId(const std::string &sIn) const
+{
+  return stow->manager.getExpressionId(sIn);
+}
+
+std::optional<std::string> Manager::getExpressionName(int idIn) const
+{
+  return stow->manager.getExpressionName(idIn);
+}
+
+void Manager::removeExpression(const std::string &sIn)
+{
+  auto oeid = stow->manager.getExpressionId(sIn);
+  if (oeid)
+  {
+    stow->removeLink(*oeid);
+    stow->manager.removeExpression(*oeid);
+  }
+  stow->manager.removeExpression(sIn);
+}
+
+void Manager::removeExpression(int idIn)
+{
+  stow->removeLink(idIn);
+  stow->manager.removeExpression(idIn);
+}
+
+void Manager::renameExpression(const std::string &oldName, const std::string &newName)
+{
+  stow->manager.renameExpression(oldName, newName);
+}
+
+void Manager::renameExpression(int idIn, const std::string &newName)
+{
+  stow->manager.renameExpression(idIn, newName);
+}
+
+std::vector<std::string> Manager::getExpressionNames() const
+{
+  return stow->manager.getExpressionNames();
+}
+
+std::vector<int> Manager::getExpressionIds() const
+{
+  return stow->manager.getExpressionIds();
+}
+
+Value Manager::getExpressionValue(const std::string &sIn) const
+{
+  auto oId = stow->manager.getExpressionId(sIn);
+  assert(oId);
+  return getExpressionValue(*oId);
+}
+
+Value Manager::getExpressionValue(int idIn) const
+{
+  return stow->getExpressionValue(idIn);
+}
+
+bool Manager::hasGroup(const std::string &sIn) const
+{
+  return stow->manager.hasGroup(sIn);
+}
+
+bool Manager::hasGroup(int idIn) const
+{
+  return stow->manager.hasGroup(idIn);
+}
+
+int Manager::addGroup(const std::string &newGroupName)
+{
+  return stow->manager.addGroup(newGroupName);
+}
+
+void Manager::removeGroup(int groupId)
+{
+  stow->manager.removeGroup(groupId);
+}
+
+void Manager::removeGroup(const std::string &groupName)
+{
+  stow->manager.removeGroup(groupName);
+}
+
+std::vector<int> Manager::getGroupIds() const
+{
+  return stow->manager.getGroupIds();
+}
+
+std::vector<std::string> Manager::getGroupNames() const
+{
+  return stow->manager.getGroupNames();
+}
+
+std::optional<std::string> Manager::getGroupName(int idIn) const
+{
+  return stow->manager.getGroupName(idIn);
+}
+
+std::optional<int> Manager::getGroupId(const std::string &groupName) const
+{
+  return stow->manager.getGroupId(groupName);
+}
+
+void Manager::renameGroup(int idIn, const std::string &newName)
+{
+  stow->manager.renameGroup(idIn, newName);
+}
+
+void Manager::addExpressionToGroup(int group, int expression)
+{
+  stow->manager.addExpressionToGroup(group, expression);
+}
+
+void Manager::removeExpressionFromGroup(int group, int expression)
+{
+  stow->manager.removeExpressionFromGroup(group, expression);
+  //update links!
+}
+
+bool Manager::groupHasExpression(int group, int expression) const
+{
+  return stow->manager.groupHasExpression(group, expression);
+}
+
+const std::vector<int>& Manager::getExpressionsOfGroup(int group) const
+{
+  return stow->manager.getExpressionsOfGroup(group);
+}
+
+void Manager::exportExpressions(std::ostream &os) const
+{
+  stow->manager.exportExpressions(os);
+}
+
+void Manager::exportExpressions(std::ostream &os, const std::vector<int> &eIdsIn) const
+{
+  stow->manager.exportExpressions(os, eIdsIn);
+}
+
+std::vector<lcc::Result> Manager::importExpressions(std::istream &is)
+{
+  return stow->manager.importExpressions(is);
+}
+
+//can't make parameter const as this function uses supporting functions common with assigning.
+bool Manager::canLinkExpression(prm::Parameter *p, int eId)
+{
+  return stow->canLinkExpression(p, eId);
+}
+
+bool Manager::canLinkExpression(const boost::uuids::uuid& pId, int eId)
+{
+  return stow->canLinkExpression(pId, eId);
+}
+
+bool Manager::addLink(const uuid &pId, int eId)
+{
+  return stow->addLink(pId, eId);
+}
+
+bool Manager::addLink(prm::Parameter *p, int eId)
+{
+  return stow->addLink(p, eId);
+}
+
+void Manager::removeLink(const uuid &pId)
+{
+  stow->removeLink(pId);
+}
+
+void Manager::removeLink(int eId)
+{
+  stow->removeLink(eId);
+}
+
+bool Manager::isLinked(const uuid &pId) const
+{
+  return stow->isLinked(pId);
+}
+
+bool Manager::isLinked(int eId) const
+{
+  return stow->isLinked(eId);
+}
+
+std::optional<int> Manager::getLinked(const uuid &pId) const
+{
+  return stow->getLinked(pId);
+}
+
+std::vector<uuid> Manager::getLinked(int eId) const
+{
+  return stow->getLinked(eId);
+}
+
+void Manager::dispatchLinks(const std::vector<int> &eIds)
+{
+  stow->dispatchLinks(eIds);
+}
+
+prj::srl::prjs::Expression Manager::serialOut() const
+{
+  prj::srl::prjs::Expression out;
+  auto serialOut = stow->manager.serialOut();
+  for (const auto &e : serialOut.expressions)
+    out.expressions().push_back(prj::srl::prjs::Expressions(e.id, e.expression));
+  for (const auto &g : serialOut.groups)
+  {
+    prj::srl::prjs::Groups go(g.id, g.name);
+    for (const auto &eid : g.expressionIds)
+      go.entries().push_back(eid);
+    out.groups().push_back(go);
+  }
+  for (const auto &l : stow->links.get<Link::ByParameterId>())
+    out.links().push_back(prj::srl::prjs::Links(gu::idToString(l.parameterId), l.expressionId));
+  return out;
+}
+
+void Manager::serialIn(const prj::srl::prjs::Expression &sIn)
+{
+  lcc::Serial lccSerialIn;
+  for (const auto &e : sIn.expressions())
+    lccSerialIn.expressions.push_back({e.id(), e.stringForm()});
+  for (const auto &g : sIn.groups())
+    lccSerialIn.groups.push_back({g.id(), g.name(), g.entries()});
+  auto results = stow->manager.serialIn(lccSerialIn);
+  
+  for (const auto &l : sIn.links())
+    stow->addLink(gu::stringToId(l.parameterId()), l.expressionId());
+  
+  assert(results.empty());
+  if (!results.empty())
+  {
+    //what to do here? should I clean links.
+    std::cout << "Error: problem loading expressions" << std::endl;
+  }
 }

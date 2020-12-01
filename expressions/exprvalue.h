@@ -17,6 +17,9 @@
  *
  */
 
+#ifndef EXPR_VALUE_H
+#define EXPR_VALUE_H
+
 #include <cassert>
 
 #include <boost/variant/variant.hpp>
@@ -24,26 +27,11 @@
 #include <boost/variant/get.hpp>
 
 #include <osg/Matrixd>
-#include <osg/io_utils>
 
-#ifndef EXPR_VALUE_H
-#define EXPR_VALUE_H
+#include "tools/tlsstring.h"
 
 namespace expr
 {
-  /*! @brief ValueTypes. 
-   * 
-   * represent what kind of output the nodes have.
-   */
-  enum class ValueType
-  {
-    Variant = 0,  //!< might be any.
-    Scalar,       //!< double value
-    Vector,       //!< osg::Vec3d
-    Quat,         //!< osg::Quat
-    CSys          //!< osg::matrixd
-  };
-  
   //!* an object capable of holding all expression outputs.
   typedef boost::variant
   <
@@ -97,22 +85,22 @@ namespace expr
     
     void operator()(const double &dIn) const
     {
-      stream << dIn;
+      stream << tls::prettyDouble(dIn);
     }
     
     void operator()(const osg::Vec3d &vIn) const
     {
-      stream << vIn;
+      stream << tls::valueString(vIn);
     }
     
     void operator()(const osg::Quat &qIn) const
     {
-      stream << qIn;
+      stream << tls::valueString(qIn);
     }
     
     void operator()(const osg::Matrixd &mIn) const
     {
-      stream << mIn;
+      stream << tls::valueString(mIn);
     }
   };
 }

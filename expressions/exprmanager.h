@@ -23,52 +23,26 @@
 #include <memory>
 
 #include <boost/uuid/uuid.hpp>
-#include <boost/tuple/tuple.hpp>
-#include <boost/unordered_map.hpp>
+
+#include <lccresult.h>
+#include <lccserial.h>
 
 #include "expressions/exprvalue.h"
 
 class QTextStream;
 
 namespace prm{class Parameter;}
-namespace msg{struct Message; struct Node; struct Sift;}
+namespace msg{struct Message;}
+namespace prj{namespace srl{namespace prjs{class Expression;}}}
 
 namespace expr{
 
-class GraphWrapper;
-struct FormulaLinksWrapper;
-
-/*! @brief A collection of formulas
+/*! @class Manager @brief interface to store and manage expressions.
  * 
- * Group contains a vector of formula ids.
- */
-class Group
-{
-public:
-  Group();
-  //! Group id.
-  boost::uuids::uuid id;
-  //! Group name.
-  std::string name;
-  //! Container for formula ids.
-  std::vector<boost::uuids::uuid> formulaIds;
-  //! check if group contains the passed in formula id.
-  bool containsFormula(const boost::uuids::uuid &fIdIn);
-  //! remove formula with passed in id from this group.
-  void removeFormula(const boost::uuids::uuid &fIdIn);
-};
-
-/*! @brief Container to store and manage expressions.
- * 
- * Expression data is stored in the member #graphPtr. Organization of the
- * expressions are stored in 2 groups: #allGroup and #userDefinedGroups. Because
+ * Expression and groups are stored in libcadcalc. Because
  * naming can be volatile, groups and expressions have an id so they can
  * be referenced in a static way. Use ids over names whenever possible.
  * Groups only contain ids to the expressions they hold.
- * When modifying
- * any expression data, use the beginTransaction and commitTransaction or rejectTransaction.
- * This allows notifications to be send of individual formula modifications, along with
- * activating the undo/redo functionality.
  */
 class Manager
 {
@@ -76,122 +50,77 @@ public:
   Manager();
   ~Manager();
   
-  //! Cycle the graph and recalculate dirty nodes.
-  void update();
-  
-  //! return a reference to the GraphWrapper 
-  GraphWrapper& getGraphWrapper();
-  
   //! write a graphviz file for the graph.
   void writeOutGraph(const std::string &pathName);
-  
-  //! Add formula to all group.
-  void addFormulaToAllGroup(boost::uuids::uuid idIn);
-  
-  //! Remove formula form all group.
-  void removeFormulaFromAllGroup(boost::uuids::uuid idIn);
-  
-  //! Test if a user group with name exist.
-  bool hasUserGroup(const std::string &groupNameIn) const;
-  
-  //! Test if a user group with id exists.
-  bool hasUserGroup(const boost::uuids::uuid &groupIdIn) const;
-  
-  /*! @brief Create a new user group.
-   * 
-   * Assert if group of groupNameIn already exists; @see hasUserGroup
-   */
-  boost::uuids::uuid createUserGroup(const std::string &groupNameIn);
-  
-  /*! @brief Rename the group.
-   * 
-   * Assert if newName is not unique or no such group with idIn. @see hasUserGroup
-   */
-  void renameUserGroup(const boost::uuids::uuid &idIn, const std::string &newName);
-  
-  //! Remove user group. Assert if no such group. @see hasUserGroup
-  void removeUserGroup(const boost::uuids::uuid &idIn);
-  
-  //! Add formula reference to user group.
-  void addFormulaToUserGroup(const boost::uuids::uuid &groupIdIn, const boost::uuids::uuid &formulaIdIn);
-  
-  //! Test for formula in group.
-  bool doesUserGroupContainFormula(const boost::uuids::uuid &groupIdIn, const boost::uuids::uuid &formulaIdIn);
-  
-  /*! @brief Remove formula from group.
-   * 
-   * Assert if group doesn't exist or doesn't contain formula. @see hasUserGroup @see doesUserGroupContainFormula
-   */
-  void removeFormulaFromUserGroup(const boost::uuids::uuid &groupIdIn, const boost::uuids::uuid &formulaIdIn);
-  
-  /*! @brief Get name of user group with id.
-   * 
-   * Assert if no user group with id. @see hasUserGroup
-   */
-  std::string getUserGroupName(const boost::uuids::uuid &groupIdIn) const;
-  
-  /*! @brief Get group id for group with name.
-   * 
-   * Assert if no user group exists with name. @see hasUserGroup
-   */
-  boost::uuids::uuid getUserGroupId(const std::string &groupNameIn) const;
-  
-  boost::uuids::uuid getFormulaId(const std::string &nameIn) const;
-  void setFormulaId(const boost::uuids::uuid &oldIdIn, const boost::uuids::uuid &newIdIn);
-  std::string getFormulaName(const boost::uuids::uuid &idIn) const;
-  bool hasFormula(const std::string &nameIn) const;
-  bool hasFormula(const boost::uuids::uuid &idIn) const;
-  Value getFormulaValue(const boost::uuids::uuid &idIn) const;
-  ValueType getFormulaValueType(const boost::uuids::uuid &idIn) const;
-  void setFormulaName(const boost::uuids::uuid &idIn, const std::string &nameIn);
-  void cleanFormula(const boost::uuids::uuid &idIn);
-  bool hasCycle(const boost::uuids::uuid &idIn, std::string &nameOut);
-  void setFormulaDependentsDirty(const boost::uuids::uuid &idIn);
-  std::vector<boost::uuids::uuid> getDependentFormulaIds(const boost::uuids::uuid &parentIn);
-  std::vector<boost::uuids::uuid> getAllFormulaIdsSorted() const;
-  std::vector<boost::uuids::uuid> getAllFormulaIds() const;
-  
-  //@{
-  //! Remove formula from both groups and graph. DON'T call remove formula with a dirty graph. @see update
-  void removeFormula(const boost::uuids::uuid &idIn);
-  void removeFormula(const std::string &nameIn);
-  //@}
-  
-  //! Link parameter to formula. first is parameter ptr. last is formula id.
-  void addLink(const boost::uuids::uuid &, const boost::uuids::uuid &);
-  //! erase link by parameter id.
-  void removeParameterLink(const boost::uuids::uuid &);
-  //! checks if parameter is linked by parameter id. 
-  bool hasParameterLink(const boost::uuids::uuid &) const;
-  //! get formula id by parameter id.
-  boost::uuids::uuid getFormulaLink(const boost::uuids::uuid &) const;
-  //! check if a formula has been linked by formula id.
-  bool isFormulaLinked(const boost::uuids::uuid &) const;
-  //! get all the parameter ids linked to formula id passed in.
-  std::vector<boost::uuids::uuid> getParametersLinked(const boost::uuids::uuid &) const;
-  //! Dispatch values to parameters.
-  void dispatchValues();
   //! Write a list of links to stream.
-  void dumpLinks(std::ostream &stream);
-  //! get all the links. created for serialize.
-  const FormulaLinksWrapper& getLinkContainer() const{return *formulaLinksPtr;}
-  
-  //! Contains an id to all existing formulas.
-  Group allGroup;
-  
-  //! Contains ids for a subset of expressions.
-  std::vector<Group> userDefinedGroups;
-  
+  void dumpLinks(std::ostream &stream) const;
+  //! Write expression information to Qt stream.
   QTextStream& getInfo(QTextStream&) const;
   
-private:
-  //! Pointer to GraphWrapper.
-  std::unique_ptr<GraphWrapper> graphPtr;
-  //! Container for formula to properties links.
-  std::unique_ptr<FormulaLinksWrapper> formulaLinksPtr;
+public:
+  lcc::Result parseString(const std::string&);
+  std::string buildExpressionString(const std::string&) const;
+  std::string buildExpressionString(int) const;
+  std::string buildRHSString(const std::string&) const;
+  std::string buildRHSString(int) const;
+  bool hasExpression(const std::string&);
+  bool hasExpression(int);
+  std::optional<int> getExpressionId(const std::string&) const;
+  std::optional<std::string> getExpressionName(int) const;
+  void removeExpression(const std::string&);
+  void removeExpression(int);
+  void renameExpression(const std::string&, const std::string&);
+  void renameExpression(int, const std::string&);
+  std::vector<std::string> getExpressionNames() const;
+  std::vector<int> getExpressionIds() const;
   
-  std::unique_ptr<msg::Node> node;
-  std::unique_ptr<msg::Sift> sift;
+  Value getExpressionValue(const std::string&) const;
+  Value getExpressionValue(int) const;
+  
+  bool hasGroup(const std::string&) const;
+  bool hasGroup(int) const;
+  int addGroup(const std::string&);
+  void removeGroup(int);
+  void removeGroup(const std::string&);
+  std::vector<int> getGroupIds() const;
+  std::vector<std::string> getGroupNames() const;
+  std::optional<std::string> getGroupName(int) const;
+  std::optional<int> getGroupId(const std::string&) const;
+  void renameGroup(int, const std::string&);
+  
+  void addExpressionToGroup(int group, int expression);
+  void removeExpressionFromGroup(int group, int expression);
+  bool groupHasExpression(int group, int expression) const;
+  const std::vector<int>& getExpressionsOfGroup(int group) const;
+  
+  void exportExpressions(std::ostream&) const;
+  void exportExpressions(std::ostream&, const std::vector<int>&) const;
+  std::vector<lcc::Result> importExpressions(std::istream&);
+  
+  /*! @name Expression links. integers are expression ids. uuids are parameters.
+   * A Parameter can be linked to only 1 expression, however an expression
+   * can be linked to many parameters.
+   */
+  ///@{
+  bool canLinkExpression(prm::Parameter*, int); //check compatible types.
+  bool canLinkExpression(const boost::uuids::uuid&, int); //check compatible types.
+  bool addLink(const boost::uuids::uuid&, int); //!< only if types allow and a valid parameter value.
+  bool addLink(prm::Parameter*, int); //!< only if types allow and a valid parameter value.
+  void removeLink(const boost::uuids::uuid&); //!< remove the link by parameter id. 0 or 1.
+  void removeLink(int); //!< remove all links to expression. 0 or many.
+  bool isLinked(const boost::uuids::uuid&) const;
+  bool isLinked(int) const;
+  std::optional<int> getLinked(const boost::uuids::uuid&) const; //!< get optional expression id linked to parameter id passed in. 0 or 1
+  std::vector<boost::uuids::uuid> getLinked(int) const; //!< get all parameter ids linked to passed in expression id. 0 or many.
+  void dispatchLinks(const std::vector<int>&); //!< assign values from expressions to parameters.
+  ///@}
+  
+  prj::srl::prjs::Expression serialOut() const;
+  void serialIn(const prj::srl::prjs::Expression&);
+
+private:
+  struct Stow;
+  std::unique_ptr<Stow> stow;
   void setupDispatcher();
   void featureRemovedDispatched(const msg::Message &);
 };

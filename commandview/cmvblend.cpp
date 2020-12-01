@@ -31,7 +31,6 @@
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QDragMoveEvent>
-#include <QMimeData>
 #include <QButtonGroup>
 #include <QTimer>
 
@@ -49,7 +48,6 @@
 #include "commandview/cmvparameterwidgets.h"
 #include "parameter/prmparameter.h"
 #include "expressions/exprmanager.h"
-#include "expressions/exprstringtranslator.h"
 #include "tools/featuretools.h"
 #include "tools/idtools.h"
 #include "dialogs/dlgsplitterdecorated.h"

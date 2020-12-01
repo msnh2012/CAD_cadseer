@@ -32,9 +32,10 @@
 #include <QMimeData>
 #include <QTimer>
 
+#include <lccmanager.h>
+
 #include "tools/idtools.h"
-#include "expressions/exprmanager.h"
-#include "expressions/exprstringtranslator.h"
+#include "tools/tlsstring.h"
 #include "dialogs/dlgexpressionedit.h"
 
 using namespace dlg;
@@ -142,12 +143,12 @@ bool ExpressionEditFilter::eventFilter(QObject *obj, QEvent *event)
 {
   auto getId = [](const QString &stringIn)
   {
-    boost::uuids::uuid idOut = gu::createNilId();
+    int idOut = -1;
     if (stringIn.startsWith("ExpressionId;"))
     {
       QStringList split = stringIn.split(";");
       if (split.size() == 2)
-        idOut = gu::stringToId(split.at(1).toStdString());
+        idOut = split.at(1).toInt();
     }
     return idOut;
   };
@@ -160,8 +161,8 @@ bool ExpressionEditFilter::eventFilter(QObject *obj, QEvent *event)
     if (dEvent->mimeData()->hasText())
     {
       QString textIn = dEvent->mimeData()->text();
-      boost::uuids::uuid id = getId(textIn);
-      if (!id.is_nil())
+      int id = getId(textIn);
+      if (id >= 0)
         dEvent->acceptProposedAction();
     }
     return true;
@@ -174,11 +175,11 @@ bool ExpressionEditFilter::eventFilter(QObject *obj, QEvent *event)
     if (dEvent->mimeData()->hasText())
     {
       QString textIn = dEvent->mimeData()->text();
-      boost::uuids::uuid id = getId(textIn);
-      if (!id.is_nil())
+      int id = getId(textIn);
+      if (id >= 0)
       {
         dEvent->acceptProposedAction();
-        Q_EMIT requestLinkSignal(QString::fromStdString(gu::idToString(id)));
+        Q_EMIT requestLinkSignal(QString::number(id));
       }
     }
     
@@ -225,22 +226,28 @@ void ExpressionDelegate::textEditedSlot(const QString &textIn)
   eEditor->trafficLabel->setTrafficYellowSlot();
   qApp->processEvents(); //need this or we never see yellow signal.
   
-  expr::Manager localManager;
-  expr::StringTranslator translator(localManager);
+  lcc::Manager eman;
   std::string formula("temp = ");
   formula += textIn.toStdString();
-  if (translator.parseString(formula) == expr::StringTranslator::ParseSucceeded)
+  auto result = eman.parseString(formula);
+  if (result.isAllGood())
   {
-    localManager.update();
-    eEditor->trafficLabel->setTrafficGreenSlot();
-    assert(localManager.getFormulaValueType(translator.getFormulaOutId()) == expr::ValueType::Scalar);
-    double value = boost::get<double>(localManager.getFormulaValue(translator.getFormulaOutId()));
-    eEditor->goToolTipSlot(QString::number(value));
+    if (result.value.size() == 1)
+    {
+      eEditor->trafficLabel->setTrafficGreenSlot();
+      double value = result.value.at(1);
+      eEditor->goToolTipSlot(QString::number(value));
+    }
+    else
+    {
+      eEditor->trafficLabel->setTrafficRedSlot();
+      eEditor->goToolTipSlot("Wrong Type");
+    }
   }
   else
   {
     eEditor->trafficLabel->setTrafficRedSlot();
-    int position = translator.getFailedPosition() - 8; // 7 chars for 'temp = ' + 1
+    int position = result.errorPosition - 8; // 7 chars for 'temp = ' + 1
     eEditor->goToolTipSlot(textIn.left(position) + "?");
   }
 }

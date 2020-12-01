@@ -31,19 +31,19 @@
 #include "project/prjproject.h"
 #include "message/msgmessage.h"
 #include "parameter/prmparameter.h"
-#include "parameter/prmexpressionlink.h"
+#include "expressions/exprmanager.h"
 #include "commandview/cmvtrafficsignal.h"
 
 using boost::uuids::uuid;
 
-static uuid getId(const QString &stringIn)
+static int getId(const QString &stringIn)
 {
-  boost::uuids::uuid idOut = gu::createNilId();
+  int idOut = -1;
   if (stringIn.startsWith("ExpressionId;"))
   {
     QStringList split = stringIn.split(";");
     if (split.size() == 2)
-      idOut = gu::stringToId(split.at(1).toStdString());
+      idOut = split.at(1).toInt();
   }
   return idOut;
 }
@@ -147,7 +147,7 @@ void TrafficSignal::setTrafficLinkSlot()
 
 void TrafficSignal::unlink()
 {
-  prm::unLinkExpression(stow->parameter);
+  app::instance()->getProject()->getManager().removeLink(stow->parameter->getId());
   app::instance()->messageSlot(msg::buildStatusMessage("Expression UnLinked"));
 }
 
@@ -156,8 +156,8 @@ void TrafficSignal::dragEnterEvent(QDragEnterEvent *event)
   if (event->mimeData()->hasText())
   {
     QString textIn = event->mimeData()->text();
-    uuid id = getId(textIn);
-    if (!id.is_nil() && prm::canLinkExpression(stow->parameter, id))
+    int id = getId(textIn);
+    if (id >= 0 && app::instance()->getProject()->getManager().canLinkExpression(stow->parameter, id))
       event->acceptProposedAction();
   }
 }
@@ -167,11 +167,11 @@ void TrafficSignal::dropEvent(QDropEvent *event)
   if (event->mimeData()->hasText())
   {
     QString textIn = event->mimeData()->text();
-    uuid id = getId(textIn);
-    if (!id.is_nil() && prm::canLinkExpression(stow->parameter, id))
+    int id = getId(textIn);
+    if (id >= 0 && app::instance()->getProject()->getManager().canLinkExpression(stow->parameter, id))
     {
       event->acceptProposedAction();
-      if (prm::linkExpression(stow->parameter, id))
+      if (app::instance()->getProject()->getManager().addLink(stow->parameter, id))
         app::instance()->messageSlot(msg::buildStatusMessage("Expression Link Accepted"));
       else
         app::instance()->messageSlot(msg::buildStatusMessage("Expression Link Rejected"));

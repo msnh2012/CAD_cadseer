@@ -30,6 +30,8 @@
 #include <QLineEdit>
 #include <QVBoxLayout>
 
+#include "lccmanager.h"
+
 #include "application/appapplication.h"
 #include "application/appmainwindow.h"
 #include "project/prjproject.h"
@@ -42,13 +44,13 @@
 #include "commandview/cmvcsyswidget.h"
 #include "parameter/prmparameter.h"
 #include "expressions/exprmanager.h"
-#include "expressions/exprstringtranslator.h"
 #include "expressions/exprvalue.h"
 #include "feature/ftrinputtype.h"
 #include "feature/ftrsketch.h"
 #include "sketch/sktvisual.h"
 #include "sketch/sktselection.h"
 #include "sketch/sktsolver.h"
+#include "tools/tlsstring.h"
 #include "command/cmdsketch.h"
 #include "commandview/cmvsketch.h"
 
@@ -66,6 +68,7 @@ struct Sketch::Stow
   prm::Parameter *parameter = nullptr; //!< currently selected parameter or nullptr
   dlg::ExpressionEdit *pEdit = nullptr;
   CSysWidget *csysWidget = nullptr;
+  lcc::Manager eman;
   
   QRadioButton *sketchRadio = nullptr;
   QRadioButton *csysRadio = nullptr;
@@ -428,7 +431,11 @@ struct Sketch::Stow
     pEdit->lineEdit->setReadOnly(true);
     
     expr::Manager &manager = app::instance()->getProject()->getManager();
-    pEdit->lineEdit->setText(QString::fromStdString(manager.getFormulaName(manager.getFormulaLink(parameter->getId()))));
+    auto oLinked = manager.getLinked(parameter->getId());
+    assert(oLinked);
+    auto oName = manager.getExpressionName(*oLinked);
+    assert(oName);
+    pEdit->lineEdit->setText(QString::fromStdString(*oName));
   }
 
   void setEditUnlinked()
@@ -766,24 +773,22 @@ void Sketch::requestParameterLinkSlot(const QString &stringIn)
   assert(stow->parameter);
   assert(stow->pEdit);
   
-  boost::uuids::uuid eId = gu::stringToId(stringIn.toStdString());
-  assert(!eId.is_nil()); //project asserts on presence of expression eId.
-  prj::Project *project = app::instance()->getProject();
-  double eValue = boost::get<double>(project->getManager().getFormulaValue(eId));
+  int eId = stringIn.toInt();
+  assert(eId >= 0);
   
-  if (stow->parameter->isValidValue(eValue))
+  bool result = app::instance()->getProject()->getManager().addLink(stow->parameter, eId);
+  if (result)
   {
-    project->expressionLink(stow->parameter->getId(), eId);
     setEditLinked();
     stow->visual->reHighlight();
     
-    stow->feature->getSolver()->updateConstraintValue(stow->feature->getHPHandle(stow->parameter), eValue);
+    stow->feature->getSolver()->updateConstraintValue(stow->feature->getHPHandle(stow->parameter), static_cast<double>(*stow->parameter));
     stow->feature->getSolver()->solve(stow->feature->getSolver()->getGroup(), true);
     stow->visual->update();
   }
   else
   {
-    node->send(msg::buildStatusMessage(QObject::tr("Value out of range").toStdString(), 2.0));
+    node->send(msg::buildStatusMessage(QObject::tr("Not Valid Expression To Link").toStdString(), 2.0));
   }
   
   this->activateWindow();
@@ -813,7 +818,11 @@ void Sketch::setEditLinked()
   stow->pEdit->lineEdit->setReadOnly(true);
   
   expr::Manager &manager = app::instance()->getProject()->getManager();
-  stow->pEdit->lineEdit->setText(QString::fromStdString(manager.getFormulaName(manager.getFormulaLink(stow->parameter->getId()))));
+  auto oLinked = manager.getLinked(stow->parameter->getId());
+  assert(oLinked);
+  auto oName = manager.getExpressionName(*oLinked);
+  assert(oName);
+  stow->pEdit->lineEdit->setText(QString::fromStdString(*oName));
 }
 
 void Sketch::setEditUnlinked()
@@ -837,32 +846,33 @@ void Sketch::updateParameterSlot()
   if (!stow->parameter->isConstant())
     return;
 
-  expr::Manager localManager;
-  expr::StringTranslator translator(localManager);
+  stow->eman.reset();
   std::string formula("temp = ");
   formula += stow->pEdit->lineEdit->text().toStdString();
-  if (translator.parseString(formula) == expr::StringTranslator::ParseSucceeded)
+  auto result = stow->eman.parseString(formula);
+  
+  if (result.isAllGood())
   {
-    localManager.update();
-    assert(localManager.getFormulaValueType(translator.getFormulaOutId()) == expr::ValueType::Scalar);
-    double value = boost::get<double>(localManager.getFormulaValue(translator.getFormulaOutId()));
-    if (stow->parameter->isValidValue(value))
+    if (result.value.size() == 1)
     {
-      stow->parameter->setValue(value);
-      stow->feature->getSolver()->updateConstraintValue(stow->feature->getHPHandle(stow->parameter), value);
-      stow->feature->getSolver()->solve(stow->feature->getSolver()->getGroup(), true);
-      stow->visual->update();
+      double value = result.value.at(0);
+      if (stow->parameter->isValidValue(value))
+      {
+        stow->parameter->setValue(value);
+        stow->feature->getSolver()->updateConstraintValue(stow->feature->getHPHandle(stow->parameter), value);
+        stow->feature->getSolver()->solve(stow->feature->getSolver()->getGroup(), true);
+        stow->visual->update();
+      }
+      else
+        node->send(msg::buildStatusMessage(QObject::tr("Value out of range").toStdString(), 2.0));
     }
     else
-    {
-      node->send(msg::buildStatusMessage(QObject::tr("Value out of range").toStdString(), 2.0));
-    }
+      node->send(msg::buildStatusMessage(QObject::tr("Wrong Type").toStdString(), 2.0));
   }
   else
-  {
-    node->send(msg::buildStatusMessage(QObject::tr("Parsing failed").toStdString(), 2.0));
-  }
-  stow->pEdit->lineEdit->setText(QString::number(static_cast<double>(*stow->parameter), 'f', 12));
+    node->send(msg::buildStatusMessage(result.getError(), 2.0));
+  
+  stow->pEdit->lineEdit->setText(QString::fromStdString(tls::prettyDouble(static_cast<double>(*stow->parameter))));
   stow->pEdit->lineEdit->selectAll();
   stow->pEdit->trafficLabel->setTrafficGreenSlot();
 }
@@ -874,22 +884,28 @@ void Sketch::textEditedParameterSlot(const QString &textIn)
   stow->pEdit->trafficLabel->setTrafficYellowSlot();
   qApp->processEvents(); //need this or we never see yellow signal.
   
-  expr::Manager localManager;
-  expr::StringTranslator translator(localManager);
+  stow->eman.reset();
   std::string formula("temp = ");
   formula += textIn.toStdString();
-  if (translator.parseString(formula) == expr::StringTranslator::ParseSucceeded)
+  auto result = stow->eman.parseString(formula);
+  if (result.isAllGood())
   {
-    localManager.update();
-    stow->pEdit->trafficLabel->setTrafficGreenSlot();
-    assert(localManager.getFormulaValueType(translator.getFormulaOutId()) == expr::ValueType::Scalar);
-    double value = boost::get<double>(localManager.getFormulaValue(translator.getFormulaOutId()));
-    stow->pEdit->goToolTipSlot(QString::number(value));
+    if (result.value.size() == 1)
+    {
+      stow->pEdit->trafficLabel->setTrafficGreenSlot();
+      double value = result.value.at(0);
+      stow->pEdit->goToolTipSlot(QString::fromStdString(tls::prettyDouble(value)));
+    }
+    else
+    {
+      stow->pEdit->trafficLabel->setTrafficRedSlot();
+      stow->pEdit->goToolTipSlot("Wrong Type");
+    }
   }
   else
   {
     stow->pEdit->trafficLabel->setTrafficRedSlot();
-    int position = translator.getFailedPosition() - 8; // 7 chars for 'temp = ' + 1
+    int position = result.errorPosition - 8; // 7 chars for 'temp = ' + 1
     stow->pEdit->goToolTipSlot(textIn.left(position) + "?");
   }
 }

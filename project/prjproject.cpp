@@ -51,8 +51,6 @@
 #include "feature/ftrmessage.h"
 #include "parameter/prmparameter.h"
 #include "expressions/exprmanager.h"
-#include "expressions/exprformulalink.h"
-#include "expressions/exprstringtranslator.h" //for serialize.
 #include "message/msgmessage.h"
 #include "message/msgnode.h"
 #include "message/msgsift.h"
@@ -104,8 +102,6 @@ QTextStream& Project::getInfo(QTextStream &stream) const
 void Project::updateModel()
 {
   node->send(msg::Message(msg::Response | msg::Pre | msg::Project | msg::Update | msg::Model));
-  
-  expressionManager->update();
   
   Vertices sorted;
   try
@@ -1284,16 +1280,15 @@ void Project::serialWrite()
   BRep_Builder builder;
   builder.MakeCompound(compound);
   
-  RemovedGraph removedGraph = buildRemovedGraph(stow->graph);
-  
-  srl::prjs::AppVersion version(0, 0, 0);
   srl::prjs::Project po
   (
-    version,
+    srl::prjs::AppVersion(0, 0, 0),
     0,
+    expressionManager->serialOut(),
     shapeHistory->serialOut()
   );
   
+  RemovedGraph removedGraph = buildRemovedGraph(stow->graph);
   for (auto its = boost::vertices(removedGraph); its.first != its.second; ++its.first)
   {
     ftr::Base *f = removedGraph[*its.first].feature.get();
@@ -1339,30 +1334,7 @@ void Project::serialWrite()
       connection.inputType().push_back(tag);
     po.connections().push_back(connection);
   }
-  
-  expr::StringTranslator sTranslator(*expressionManager);
-  std::vector<uuid> formulaIds = expressionManager->getAllFormulaIdsSorted();
-  for (const auto& fId : formulaIds)
-  {
-    std::string eString = sTranslator.buildStringAll(fId);
-    srl::prjs::Expression expression(gu::idToString(fId), eString);
-    po.expressions().push_back(expression);
-  }
-  
-  for (const auto& link : expressionManager->getLinkContainer().container)
-  {
-    srl::prjs::ExpressionLink sLink(gu::idToString(link.parameterId), gu::idToString(link.formulaId));
-    po.expressionLinks().push_back(sLink);
-  }
-  
-  for (const auto &group : expressionManager->userDefinedGroups)
-  {
-    srl::prjs::ExpressionGroup groupOut(gu::idToString(group.id), group.name);
-    for (const auto &eId : group.formulaIds)
-      groupOut.entries().push_back(gu::idToString(eId));
-    po.expressionGroups().push_back(groupOut);
-  }
-  
+
   path pPath = saveDirectory / "project.prjt";
   std::ofstream stream(pPath.string());
   xml_schema::NamespaceInfomap infoMap;
@@ -1454,49 +1426,7 @@ void Project::open()
     
     node->sendBlocked(msg::buildStatusMessage("Loading: Expressions"));
     qApp->processEvents();
-    expr::StringTranslator sTranslator(*expressionManager);
-    for (const auto &sExpression : project->expressions())
-    {
-      if (sTranslator.parseString(sExpression.stringForm()) != expr::StringTranslator::ParseSucceeded)
-      {
-        std::cout << "failed expression parse on load: \"" << sExpression.stringForm()
-          << "\". Error message: " << sTranslator.getFailureMessage() << std::endl;
-        continue;
-      }
-      expressionManager->setFormulaId(sTranslator.getFormulaOutId(), gu::stringToId(sExpression.id()));
-      
-      /* scenario:
-       * We now have multiple formula types. scalar, vector etc....
-       * The types for the formula nodes are not set until update/calculate are called.
-       * The string parser checks input strings for compatable types.
-       * 
-       * problem:
-       * When we read multiple expressions from the project file that has expressions
-       * linked to each other, the parser fails. It fails because the types of the 
-       * formula nodes are not known yet.
-       * 
-       * To avoid this we are call update after each expression. I don't think this will
-       * be significant with respect to performance.
-       */
-      expressionManager->update();
-    }
-    
-    for (const auto &sLink : project->expressionLinks())
-    {
-      prm::Parameter *parameter = findParameter(gu::stringToId(sLink.parameterId()));
-      assert(parameter);
-      expressionManager->addLink(parameter->getId(), gu::stringToId(sLink.expressionId()));
-    }
-    
-    for (const auto &sGroup : project->expressionGroups())
-    {
-      expr::Group eGroup;
-      eGroup.id = gu::stringToId(sGroup.id());
-      eGroup.name = sGroup.name();
-      for (const auto &entry : sGroup.entries())
-        eGroup.formulaIds.push_back(gu::stringToId(entry));
-      expressionManager->userDefinedGroups.push_back(eGroup);
-    }
+    expressionManager->serialIn(project->expression());
     
     node->sendBlocked(msg::buildStatusMessage("Loading: Shape History"));
     qApp->processEvents();
@@ -1795,30 +1725,13 @@ bool Project::isFeatureNonLeaf(const boost::uuids::uuid &idIn)
  * @param pId the id of the parameter.
  * @param eId the id of the expression.
  */
-void Project::expressionLink(const boost::uuids::uuid &pId, const boost::uuids::uuid &eId)
+void Project::expressionLink(const boost::uuids::uuid &pId, int eId)
 {
-  assert(!pId.is_nil());
-  assert(!eId.is_nil());
-  assert(expressionManager->hasFormula(eId));
-  
-  prm::Parameter *parameter = findParameter(pId); //asserts on no id.
-  if (!parameter->isConstant())
-  {
-    //parameter is already linked.
-    assert(expressionManager->hasParameterLink(pId));
-    expressionManager->removeParameterLink(pId);
-  }
-  
-  double value = boost::get<double>(expressionManager->getFormulaValue(eId));
+  /* expression manager takes care of everything. Checks if parameter is already links and removes
+   * sets the parameter value if types match and expression contains a valid value for the parameter.
+   * even writes the git message.
+   */
   expressionManager->addLink(pId, eId);
-  parameter->setValue(value);
-  parameter->setConstant(false);
-  
-  std::ostringstream gm;
-  gm << "Linking parameter " << parameter->getName().toStdString()
-  << " to formula " << expressionManager->getFormulaName(eId);
-  
-  gitManager->appendGitMessage(gm.str());
 }
 
 /*! @brief Unlink a parameter to an expression.
@@ -1827,18 +1740,5 @@ void Project::expressionLink(const boost::uuids::uuid &pId, const boost::uuids::
  */
 void Project::expressionUnlink(const boost::uuids::uuid &pId)
 {
-  assert(!pId.is_nil());
-  assert(expressionManager->hasParameterLink(pId));
-  
-  prm::Parameter *parameter = findParameter(pId); //find already asserts.
-  
-  boost::uuids::uuid eId = expressionManager->getFormulaLink(pId);
-  expressionManager->removeParameterLink(pId);
-  parameter->setConstant(true);
-  
-  std::ostringstream gm;
-  gm << "Unlinking parameter " << parameter->getName().toStdString()
-  << " from formula " << expressionManager->getFormulaName(eId);
-  
-  gitManager->appendGitMessage(gm.str());
+  expressionManager->removeLink(pId);
 }

@@ -23,11 +23,10 @@
 
 #include <boost/filesystem.hpp>
 
-#include <QApplication>
 #include <QLineEdit>
 #include <QHeaderView>
 #include <QAction>
-#include <QShowEvent>
+#include <QContextMenuEvent>
 #include <QMenu>
 #include <QInputDialog>
 #include <QFileDialog>
@@ -38,29 +37,185 @@
 #include <QPainter>
 #include <QTimer>
 #include <QClipboard>
+#include <QShowEvent>
+#include <QSettings>
 
+#include "application/appapplication.h"
+#include "application/appmessage.h"
 #include "preferences/preferencesXML.h"
 #include "preferences/prfmanager.h"
 #include "tools/idtools.h"
 #include "dialogs/dlgexpressionedit.h"
+#include "message/msgmessage.h"
 #include "expressions/exprtableview.h"
 #include "expressions/exprtablemodel.h"
 #include "expressions/exprmanager.h"
-#include "expressions/exprstringtranslator.h"
+
+namespace
+{
+  QAction* buildAction(QWidget *parent, std::function<void()> f, const QString &text, const QKeySequence &keys)
+  {
+    QAction *out = new QAction(text, parent);
+    out->setShortcut(keys);
+    out->setShortcutContext(Qt::WidgetShortcut);
+    parent->addAction(out);
+    QObject::connect(out, &QAction::triggered, f);
+    return out;
+  }
+  
+  QAction* buildAddScalarAction(QWidget *parent, std::function<void()> f)
+  {
+    return buildAction(parent, f, QObject::tr("Add Scalar Expression"), QKeySequence(Qt::Key_F9));
+  }
+  
+  QAction* buildAddVectorAction(QWidget *parent, std::function<void()> f)
+  {
+    return buildAction(parent, f, QObject::tr("Add Vector Expression"), QKeySequence(Qt::Key_F10));
+  }
+  
+  QAction* buildAddRotationAction(QWidget *parent, std::function<void()> f)
+  {
+    return buildAction(parent, f, QObject::tr("Add Rotation Expression"), QKeySequence(Qt::Key_F11));
+  }
+  
+  QAction* buildAddCSysAction(QWidget *parent, std::function<void()> f)
+  {
+    return buildAction(parent, f, QObject::tr("Add CSys Expression"), QKeySequence(Qt::Key_F12));
+  }
+  
+  QAction* buildRemoveExpressionAction(QWidget *parent, std::function<void()> f)
+  {
+    return buildAction(parent, f, QObject::tr("Remove Expression"), QKeySequence(Qt::CTRL + Qt::Key_D));
+  }
+  
+  QAction* buildExportExpressionAction(QWidget *parent, std::function<void()> f)
+  {
+    return buildAction(parent, f, QObject::tr("Export Expression"), QKeySequence(Qt::CTRL + Qt::Key_E));
+  }
+  
+  QAction* buildImportExpressionAction(QWidget *parent, std::function<void()> f)
+  {
+    return buildAction(parent, f, QObject::tr("Import Expression"), QKeySequence(Qt::CTRL + Qt::Key_I));
+  }
+  
+  QAction* buildCopyExpressionValueAction(QWidget *parent, std::function<void()> f)
+  {
+    return buildAction(parent, f, QObject::tr("Copy Value"), QKeySequence(Qt::CTRL + Qt::Key_C));
+  }
+  
+  void reportImportErrors(const std::vector<lcc::Result> &results)
+  {
+    bool shouldSend = false;
+    std::ostringstream errorStream;
+    errorStream << std::endl << "Import Errors and Warnings:" << std::endl;
+    for (const auto &r : results)
+    {
+      if (!r.isAllGood())
+      {
+        shouldSend = true;
+        errorStream << "Error: Expression '" << r.input << "'    Failed with: " << r.getError() << std::endl;
+        continue;
+      }
+      if (!r.oldExpression.empty())
+      {
+        shouldSend = true;
+        std::ostringstream warning;
+        errorStream << "Warning: Expression '" << r.expressionName << "' Has Been Overwritten";
+      }
+    }
+    if (shouldSend)
+    {
+      app::Message am;
+      am.infoMessage = QString::fromStdString(errorStream.str());
+      app::instance()->messageSlot(msg::Message(msg::Request | msg::Info | msg::Text, am));
+    }
+  }
+}
 
 using namespace expr;
 
-TableViewAll::TableViewAll(QWidget* parentIn): QTableView(parentIn)
+TableViewBase::TableViewBase(QWidget* parentIn): QTableView(parentIn)
 {
-  buildActions();
   this->verticalHeader()->setVisible(false);
+  setSortingEnabled(true);
+//   horizontalHeader()->setSectionResizeMode(1, QHeaderView::Stretch);
+  horizontalHeader()->setStretchLastSection(true);
+  restoreSettings();
+  connect(horizontalHeader(), &QHeaderView::sectionResized, this, &TableViewBase::columnResizedSlot);
+  
+  NameDelegate *nameDelegate = new NameDelegate(this);
+  setItemDelegateForColumn(0, nameDelegate);
+  ExpressionDelegate *expressionDelegate = new ExpressionDelegate(this);
+  setItemDelegateForColumn(1, expressionDelegate);
 }
 
-void TableViewAll::addDefaultRowSlot()
+void TableViewBase::columnResizedSlot(int, int, int)
+{
+  QSettings &settings = app::instance()->getUserSettings();
+  settings.beginGroup("expr:widget");
+  settings.setValue("header", horizontalHeader()->saveState());
+  settings.endGroup();
+}
+
+void TableViewBase::showEvent(QShowEvent*)
+{
+  restoreSettings();
+}
+
+void TableViewBase::restoreSettings()
+{
+  QSettings &settings = app::instance()->getUserSettings();
+  settings.beginGroup("expr:widget");
+  horizontalHeader()->restoreState(settings.value("header").toByteArray());
+  settings.endGroup();
+}
+
+TableViewAll::TableViewAll(QWidget* parentIn): TableViewBase(parentIn)
+{
+  buildActions();
+}
+
+void TableViewAll::addScalarSlot()
 {
   TableModel *myModel = static_cast<TableModel *>(static_cast<AllProxyModel*>(this->model())->sourceModel());
   int rowCount = myModel->rowCount();
-  myModel->addDefaultRow();
+  myModel->addScalar();
+  QModelIndex index = this->model()->index(rowCount, 0);
+  
+  this->selectionModel()->select(index, QItemSelectionModel::ClearAndSelect);
+  this->setCurrentIndex(index);
+  QMetaObject::invokeMethod(this, "edit", Qt::QueuedConnection, Q_ARG(QModelIndex, index));
+}
+
+void TableViewAll::addVectorSlot()
+{
+  TableModel *myModel = static_cast<TableModel *>(static_cast<AllProxyModel*>(this->model())->sourceModel());
+  int rowCount = myModel->rowCount();
+  myModel->addVector();
+  QModelIndex index = this->model()->index(rowCount, 0);
+  
+  this->selectionModel()->select(index, QItemSelectionModel::ClearAndSelect);
+  this->setCurrentIndex(index);
+  QMetaObject::invokeMethod(this, "edit", Qt::QueuedConnection, Q_ARG(QModelIndex, index));
+}
+
+void TableViewAll::addRotationSlot()
+{
+  TableModel *myModel = static_cast<TableModel *>(static_cast<AllProxyModel*>(this->model())->sourceModel());
+  int rowCount = myModel->rowCount();
+  myModel->addRotation();
+  QModelIndex index = this->model()->index(rowCount, 0);
+  
+  this->selectionModel()->select(index, QItemSelectionModel::ClearAndSelect);
+  this->setCurrentIndex(index);
+  QMetaObject::invokeMethod(this, "edit", Qt::QueuedConnection, Q_ARG(QModelIndex, index));
+}
+
+void TableViewAll::addCSysSlot()
+{
+  TableModel *myModel = static_cast<TableModel *>(static_cast<AllProxyModel*>(this->model())->sourceModel());
+  int rowCount = myModel->rowCount();
+  myModel->addCSys();
   QModelIndex index = this->model()->index(rowCount, 0);
   
   this->selectionModel()->select(index, QItemSelectionModel::ClearAndSelect);
@@ -82,7 +237,7 @@ void TableViewAll::addToGroupSlot()
   for (QModelIndexList::iterator it = indexes.begin(); it != indexes.end(); ++it)
   {
     QModelIndex sourceIndex = pModel->mapToSource(*it);
-    myModel->addFormulaToGroup(sourceIndex, action->data().toString());
+    myModel->addExpressionToGroup(sourceIndex, action->data().toInt());
   }
 }
 
@@ -97,7 +252,7 @@ void TableViewAll::removeFormulaSlot()
   QModelIndexList sourceIndexes;
   for (QModelIndexList::iterator it = indexes.begin(); it != indexes.end(); ++it)
     sourceIndexes.append(pModel->mapToSource(*it));
-  myModel->removeFormula(sourceIndexes);
+  myModel->removeExpression(sourceIndexes);
 }
 
 void TableViewAll::exportFormulaSlot()
@@ -165,42 +320,30 @@ void TableViewAll::importFormulaSlot()
   if (!fileStream.is_open())
     return;
   
-  myModel->importExpressions(fileStream, gu::createNilId());
+  auto results = myModel->importExpressions(fileStream);
+  reportImportErrors(results);
 }
 
 void TableViewAll::copyFormulaValueSlot()
 {
-  QSortFilterProxyModel *pModel = dynamic_cast<QSortFilterProxyModel *>(this->model());
-  assert(pModel);
-  TableModel *myModel = dynamic_cast<TableModel *>(pModel->sourceModel());
-  assert(myModel);
+  QSortFilterProxyModel *pModel = dynamic_cast<QSortFilterProxyModel *>(this->model()); assert(pModel);
+  TableModel *myModel = dynamic_cast<TableModel *>(pModel->sourceModel()); assert(myModel);
   
   QModelIndexList indexes = this->selectedIndexes();
   if (indexes.size() != 1)
     return;
   
-  QModelIndex sourceIndex = pModel->mapToSource(indexes.front());
-  QClipboard *clipboard = QApplication::clipboard();
-  
-  QVariant value = myModel->data(sourceIndex);
-  if (value.type() == QVariant::Double)
-    clipboard->setText(QString::number(value.toDouble(), 'f', 12));
-  if (value.type() == QVariant::String)
-    clipboard->setText(value.toString());
-}
-
-void TableViewAll::showEvent(QShowEvent* event)
-{
-    QWidget::showEvent(event);
-    AllProxyModel *model = dynamic_cast<AllProxyModel *>(this->model());
-    assert(model);
-    model->refresh();
+  QModelIndex sourceIndex = myModel->index(pModel->mapToSource(indexes.front()).row(), 2);
+  QApplication::clipboard()->setText(myModel->data(sourceIndex).toString());
 }
 
 void TableViewAll::contextMenuEvent(QContextMenuEvent* event)
 {
   QMenu menu;
-  menu.addAction(addFormulaAction);
+  menu.addAction(addScalarAction);
+  menu.addAction(addVectorAction);
+  menu.addAction(addRotationAction);
+  menu.addAction(addCSysAction);
   menu.addAction(removeFormulaAction);
 
   //add to group sub menu.
@@ -208,13 +351,15 @@ void TableViewAll::contextMenuEvent(QContextMenuEvent* event)
   assert(pModel);
   TableModel *tModel = dynamic_cast<TableModel *>(pModel->sourceModel());
   assert(tModel);
-  std::vector<Group> groups = tModel->getGroups();
   QMenu *groupMenu = menu.addMenu(tr("Add To Group"));
   groupMenu->setDisabled(true); //default to off. turn on below.
-  for (std::vector<Group>::iterator it = groups.begin(); it != groups.end(); ++it)
+  const expr::Manager& man = tModel->getManager();
+  for (auto id : man.getGroupIds())
   {
-    QAction *currentAction = groupMenu->addAction(QString::fromStdString(it->name));
-    currentAction->setData(QVariant(QString::fromStdString(gu::idToString(it->id))));
+    auto oName = man.getGroupName(id);
+    assert(oName);
+    QAction *currentAction = groupMenu->addAction(QString::fromStdString(*oName));
+    currentAction->setData(QVariant(id));
     connect(currentAction, SIGNAL(triggered()), this, SLOT(addToGroupSlot()));
   }
     
@@ -242,7 +387,7 @@ void TableViewAll::contextMenuEvent(QContextMenuEvent* event)
   {
     removeFormulaAction->setEnabled(true);
     exportFormulaAction->setEnabled(true);
-    if (!groups.empty())
+    if (!man.getGroupIds().empty())
       groupMenu->setEnabled(true);
   }
   
@@ -260,72 +405,68 @@ void TableViewAll::contextMenuEvent(QContextMenuEvent* event)
 
 void TableViewAll::buildActions()
 {
-  addFormulaAction = new QAction(tr("Add Formula"), this);
-  addFormulaAction->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_N));
-  addFormulaAction->setShortcutContext(Qt::WidgetShortcut);
-  this->addAction(addFormulaAction);
-  connect (addFormulaAction, SIGNAL(triggered()), this, SLOT(addDefaultRowSlot()));
+  addScalarAction = buildAddScalarAction(this, std::bind(&TableViewAll::addScalarSlot, this));
+  addVectorAction = buildAddVectorAction(this, std::bind(&TableViewAll::addVectorSlot, this));
+  addRotationAction = buildAddRotationAction(this, std::bind(&TableViewAll::addRotationSlot, this));
+  addCSysAction = buildAddCSysAction(this, std::bind(&TableViewAll::addCSysSlot, this));
+  removeFormulaAction = buildRemoveExpressionAction(this, std::bind(&TableViewAll::removeFormulaSlot, this));
+  copyFormulaValueAction = buildCopyExpressionValueAction(this, std::bind(&TableViewAll::copyFormulaValueSlot, this));
   
-  removeFormulaAction = new QAction(tr("Remove Formula"), this);
-  removeFormulaAction->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_D));
-  removeFormulaAction->setShortcutContext(Qt::WidgetShortcut);
-  this->addAction(removeFormulaAction);
-  connect(removeFormulaAction, SIGNAL(triggered()), this, SLOT(removeFormulaSlot()));
-  
-  exportFormulaAction = new QAction(tr("Export Formula"), this);
-  exportFormulaAction->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_E));
-  exportFormulaAction->setShortcutContext(Qt::WidgetShortcut);
-  this->addAction(exportFormulaAction);
-  connect(exportFormulaAction, SIGNAL(triggered()), this, SLOT(exportFormulaSlot()));
-  
-  importFormulaAction = new QAction(tr("Import Formula"), this);
-  importFormulaAction->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_I));
-  importFormulaAction->setShortcutContext(Qt::WidgetShortcut);
-  this->addAction(importFormulaAction);
-  connect(importFormulaAction, SIGNAL(triggered()), this, SLOT(importFormulaSlot()));
-  
-  addGroupAction = new QAction(tr("Add Group"), this);
-  addGroupAction->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_G));
-  addGroupAction->setShortcutContext(Qt::WidgetShortcut);
-  this->addAction(addGroupAction);
-  connect(addGroupAction, SIGNAL(triggered()), this, SIGNAL(addGroupSignal()));
-  
-  copyFormulaValueAction = new QAction(tr("Copy Value"), this);
-  copyFormulaValueAction->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_C));
-  copyFormulaValueAction->setShortcutContext(Qt::WidgetShortcut);
-  this->addAction(copyFormulaValueAction);
-  connect(copyFormulaValueAction, SIGNAL(triggered()), this, SLOT(copyFormulaValueSlot()));
+  exportFormulaAction = buildExportExpressionAction(this, std::bind(&TableViewAll::exportFormulaSlot, this));
+  importFormulaAction = buildImportExpressionAction(this, std::bind(&TableViewAll::importFormulaSlot, this));
+
+  addGroupAction = buildAction(this, std::bind(&TableViewAll::addGroupSignal, this), tr("Add Group"), QKeySequence(Qt::CTRL + Qt::Key_G));
 }
 
-
-TableViewGroup::TableViewGroup(QWidget* parentIn): QTableView(parentIn)
+TableViewGroup::TableViewGroup(QWidget* parentIn): TableViewBase(parentIn)
 {
   buildActions();
-  this->verticalHeader()->setVisible(false);
 }
 
-void TableViewGroup::addDefaultRowSlot()
+void TableViewGroup::addScalarSlot()
 {
-  QModelIndex proxyIndex = static_cast<GroupProxyModel*>(this->model())->addDefaultRow();
+  QModelIndex proxyIndex = static_cast<GroupProxyModel*>(this->model())->addScalar();
   
   this->selectionModel()->select(proxyIndex, QItemSelectionModel::ClearAndSelect);
   this->setCurrentIndex(proxyIndex);
   QMetaObject::invokeMethod(this, "edit", Qt::QueuedConnection, Q_ARG(QModelIndex, proxyIndex));
 }
 
-void TableViewGroup::showEvent(QShowEvent* event)
+void TableViewGroup::addVectorSlot()
 {
-    QWidget::showEvent(event);
-    GroupProxyModel *model = dynamic_cast<GroupProxyModel *>(this->model());
-    assert(model);
-    model->refreshSlot();
+  QModelIndex proxyIndex = static_cast<GroupProxyModel*>(this->model())->addVector();
+  
+  this->selectionModel()->select(proxyIndex, QItemSelectionModel::ClearAndSelect);
+  this->setCurrentIndex(proxyIndex);
+  QMetaObject::invokeMethod(this, "edit", Qt::QueuedConnection, Q_ARG(QModelIndex, proxyIndex));
+}
+
+void TableViewGroup::addRotationSlot()
+{
+  QModelIndex proxyIndex = static_cast<GroupProxyModel*>(this->model())->addRotation();
+  
+  this->selectionModel()->select(proxyIndex, QItemSelectionModel::ClearAndSelect);
+  this->setCurrentIndex(proxyIndex);
+  QMetaObject::invokeMethod(this, "edit", Qt::QueuedConnection, Q_ARG(QModelIndex, proxyIndex));
+}
+
+void TableViewGroup::addCSysSlot()
+{
+  QModelIndex proxyIndex = static_cast<GroupProxyModel*>(this->model())->addCSys();
+  
+  this->selectionModel()->select(proxyIndex, QItemSelectionModel::ClearAndSelect);
+  this->setCurrentIndex(proxyIndex);
+  QMetaObject::invokeMethod(this, "edit", Qt::QueuedConnection, Q_ARG(QModelIndex, proxyIndex));
 }
 
 void TableViewGroup::contextMenuEvent(QContextMenuEvent* event)
 {
   QMenu menu;
   
-  menu.addAction(addFormulaAction);
+  menu.addAction(addScalarAction);
+  menu.addAction(addVectorAction);
+  menu.addAction(addRotationAction);
+  menu.addAction(addCSysAction);
   menu.addAction(removeFormulaAction);
   menu.addAction(removeFromGroupAction);
   
@@ -380,7 +521,7 @@ void TableViewGroup::removeFormulaSlot()
   QModelIndexList sourceIndexes;
   for (QModelIndexList::iterator it = indexes.begin(); it != indexes.end(); ++it)
     sourceIndexes.append(pModel->mapToSource(*it));
-  myModel->removeFormula(sourceIndexes);
+  myModel->removeExpression(sourceIndexes);
 }
 
 void TableViewGroup::removeFromGroupSlot()
@@ -480,90 +621,43 @@ void TableViewGroup::importFormulaSlot()
   if (!fileStream.is_open())
     return;
   
-  pModel->importExpressions(fileStream);
+  auto results = pModel->importExpressions(fileStream);
+  reportImportErrors(results);
 }
 
 void TableViewGroup::copyFormulaValueSlot()
 {
-  GroupProxyModel *pModel = dynamic_cast<GroupProxyModel *>(this->model());
-  assert(pModel);
-  TableModel *myModel = dynamic_cast<TableModel *>(pModel->sourceModel());
-  assert(myModel);
+  GroupProxyModel *pModel = dynamic_cast<GroupProxyModel *>(this->model()); assert(pModel);
+  TableModel *myModel = dynamic_cast<TableModel *>(pModel->sourceModel()); assert(myModel);
   
   QModelIndexList indexes = this->selectedIndexes();
   if (indexes.size() != 1)
     return;
   
-  QModelIndex sourceIndex = pModel->mapToSource(indexes.front());
-  QClipboard *clipboard = QApplication::clipboard();
-  
-  QVariant value = myModel->data(sourceIndex);
-  if (value.type() == QVariant::Double)
-    clipboard->setText(QString::number(value.toDouble(), 'f', 12));
-  if (value.type() == QVariant::String)
-    clipboard->setText(value.toString());
+  QModelIndex sourceIndex = myModel->index(pModel->mapToSource(indexes.front()).row(), 2);
+  QApplication::clipboard()->setText(myModel->data(sourceIndex).toString());
 }
 
 void TableViewGroup::buildActions()
 {
-  addFormulaAction = new QAction(tr("Add Formula"), this);
-  addFormulaAction->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_N));
-  addFormulaAction->setShortcutContext(Qt::WidgetShortcut);
-  this->addAction(addFormulaAction);
-  connect (addFormulaAction, SIGNAL(triggered()), this, SLOT(addDefaultRowSlot()));
+  addScalarAction = buildAddScalarAction(this, std::bind(&TableViewGroup::addScalarSlot, this));
+  addVectorAction = buildAddVectorAction(this, std::bind(&TableViewGroup::addVectorSlot, this));
+  addRotationAction = buildAddRotationAction(this, std::bind(&TableViewGroup::addRotationSlot, this));
+  addCSysAction = buildAddCSysAction(this, std::bind(&TableViewGroup::addCSysSlot, this));
+  removeFormulaAction = buildRemoveExpressionAction(this, std::bind(&TableViewGroup::removeFormulaSlot, this));
+  copyFormulaValueAction = buildCopyExpressionValueAction(this, std::bind(&TableViewGroup::copyFormulaValueSlot, this));
   
-  removeFormulaAction = new QAction(tr("Remove Formula"), this);
-  removeFormulaAction->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_D));
-  removeFormulaAction->setShortcutContext(Qt::WidgetShortcut);
-  this->addAction(removeFormulaAction);
-  connect(removeFormulaAction, SIGNAL(triggered()), this, SLOT(removeFormulaSlot()));
+  exportFormulaAction = buildExportExpressionAction(this, std::bind(&TableViewGroup::exportFormulaSlot, this));
+  importFormulaAction = buildImportExpressionAction(this, std::bind(&TableViewGroup::importFormulaSlot, this));
   
-  removeFromGroupAction = new QAction(tr("Remove From Group"), this);
-  removeFromGroupAction->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_R));
-  removeFromGroupAction->setShortcutContext(Qt::WidgetShortcut);
-  this->addAction(removeFromGroupAction);
-  connect(removeFromGroupAction, SIGNAL(triggered()), this, SLOT(removeFromGroupSlot()));
-  
-  exportFormulaAction = new QAction(tr("Export Formula"), this);
-  exportFormulaAction->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_E));
-  exportFormulaAction->setShortcutContext(Qt::WidgetShortcut);
-  this->addAction(exportFormulaAction);
-  connect(exportFormulaAction, SIGNAL(triggered()), this, SLOT(exportFormulaSlot()));
-  
-  importFormulaAction = new QAction(tr("Import Formula"), this);
-  importFormulaAction->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_I));
-  importFormulaAction->setShortcutContext(Qt::WidgetShortcut);
-  this->addAction(importFormulaAction);
-  connect(importFormulaAction, SIGNAL(triggered()), this, SLOT(importFormulaSlot()));
-  
-  renameGroupAction = new QAction(tr("Rename Group"), this);
-  renameGroupAction->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_M));
-  renameGroupAction->setShortcutContext(Qt::WidgetShortcut);
-  this->addAction(renameGroupAction);
-  connect(renameGroupAction, SIGNAL(triggered()), this, SLOT(renameGroupSlot()));
-  
-  removeGroupAction = new QAction(tr("Remove Group"), this);
-  removeGroupAction->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_K));
-  removeGroupAction->setShortcutContext(Qt::WidgetShortcut);
-  this->addAction(removeGroupAction);
-  connect(removeGroupAction, SIGNAL(triggered()), this, SLOT(removeGroupSlot()));
-  
-  copyFormulaValueAction = new QAction(tr("Copy Value"), this);
-  copyFormulaValueAction->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_C));
-  copyFormulaValueAction->setShortcutContext(Qt::WidgetShortcut);
-  this->addAction(copyFormulaValueAction);
-  connect(copyFormulaValueAction, SIGNAL(triggered()), this, SLOT(copyFormulaValueSlot()));
+  removeFromGroupAction = buildAction(this, std::bind(&TableViewGroup::removeFromGroupSlot, this), tr("Remove From Group"), QKeySequence(Qt::CTRL + Qt::Key_R));
+  renameGroupAction = buildAction(this, std::bind(&TableViewGroup::renameGroupSlot, this), tr("Rename Group"), QKeySequence(Qt::CTRL + Qt::Key_M));
+  removeGroupAction = buildAction(this, std::bind(&TableViewGroup::removeGroupSlot, this), tr("Remove Group"), QKeySequence(Qt::CTRL + Qt::Key_K));
 }
 
-TableViewSelection::TableViewSelection(QWidget* parent): QTableView(parent)
+TableViewSelection::TableViewSelection(QWidget* parent): TableViewBase(parent)
 {
-  this->verticalHeader()->setVisible(false);
-  
-  copyFormulaValueAction = new QAction(tr("Copy Value"), this);
-  copyFormulaValueAction->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_C));
-  copyFormulaValueAction->setShortcutContext(Qt::WidgetShortcut);
-  this->addAction(copyFormulaValueAction);
-  connect(copyFormulaValueAction, SIGNAL(triggered()), this, SLOT(copyFormulaValueSlot()));
+  copyFormulaValueAction = buildCopyExpressionValueAction(this, std::bind(&TableViewSelection::copyFormulaValueSlot, this));
 }
 
 void TableViewSelection::contextMenuEvent(QContextMenuEvent* event)
@@ -582,30 +676,18 @@ void TableViewSelection::contextMenuEvent(QContextMenuEvent* event)
 
 void TableViewSelection::copyFormulaValueSlot()
 {
-  SelectionProxyModel *pModel = dynamic_cast<SelectionProxyModel *>(this->model());
-  assert(pModel);
-  TableModel *myModel = dynamic_cast<TableModel *>(pModel->sourceModel());
-  assert(myModel);
+  SelectionProxyModel *pModel = dynamic_cast<SelectionProxyModel *>(this->model()); assert(pModel);
+  TableModel *myModel = dynamic_cast<TableModel *>(pModel->sourceModel()); assert(myModel);
   
   QModelIndexList indexes = this->selectedIndexes();
   if (indexes.size() != 1)
     return;
   
-  QModelIndex sourceIndex = pModel->mapToSource(indexes.front());
-  QClipboard *clipboard = QApplication::clipboard();
-  
-  QVariant value = myModel->data(sourceIndex);
-  if (value.type() == QVariant::Double)
-    clipboard->setText(QString::number(value.toDouble(), 'f', 12));
-  if (value.type() == QVariant::String)
-    clipboard->setText(value.toString());
+  QModelIndex sourceIndex = myModel->index(pModel->mapToSource(indexes.front()).row(), 2);
+  QApplication::clipboard()->setText(myModel->data(sourceIndex).toString());
 }
 
-
-NameDelegate::NameDelegate(QObject* parent): QStyledItemDelegate(parent)
-{
-
-}
+NameDelegate::NameDelegate(QObject* parent): QStyledItemDelegate(parent){}
 
 void NameDelegate::setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const
 {
@@ -620,10 +702,7 @@ void NameDelegate::setModelData(QWidget* editor, QAbstractItemModel* model, cons
   }
 }
 
-ExpressionDelegate::ExpressionDelegate(QObject *parent): QStyledItemDelegate(parent)
-{
-  
-}
+ExpressionDelegate::ExpressionDelegate(QObject *parent): QStyledItemDelegate(parent){}
 
 QWidget* ExpressionDelegate::createEditor(QWidget* parent, const QStyleOptionViewItem&, const QModelIndex&) const
 {

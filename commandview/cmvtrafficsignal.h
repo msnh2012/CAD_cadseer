@@ -24,7 +24,7 @@
 
 #include <QLabel>
 
-namespace boost{namespace uuids{struct uuid;}}
+namespace boost{namespace uuids{class uuid;}}
 class QDragEnterEvent;
 class QDropEvent;
 

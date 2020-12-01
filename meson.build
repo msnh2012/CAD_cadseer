@@ -110,6 +110,9 @@ threads = dependency('threads')
 pmp_proj = subproject('pmp-library')
 pmp = pmp_proj.get_variable('libpmp_dep')
 
+libcadcalc_proj = subproject('libcadcalc')
+libcadcalc = libcadcalc_proj.get_variable('libcadcalc_dep')
+
 squash_sources = ['squash/sqssquash.cpp'
   , 'squash/sqsigl.cpp']
   
@@ -198,7 +201,7 @@ feature_sources = ['feature/ftrinputtype.cpp'
   , 'feature/ftrfill.cpp'
   ]
   
-parameter_sources = ['parameter/prmparameter.cpp', 'parameter/prmexpressionlink.cpp']
+parameter_sources = ['parameter/prmparameter.cpp']
 
 annex_sources = ['annex/annbase.cpp'
   , 'annex/anncsysdragger.cpp'
@@ -209,12 +212,8 @@ annex_sources = ['annex/annbase.cpp'
   , 'annex/annsurfacemesh.cpp'
   , 'annex/annlawfunction.cpp']
   
-expression_sources = ['expressions/exprabstractnode.cpp'
-  , 'expressions/exprgraph.cpp'
-  , 'expressions/exprmanager.cpp'
+expression_sources = ['expressions/exprmanager.cpp'
   , 'expressions/exprwidget.cpp'
-  , 'expressions/exprstringtranslator.cpp'
-  , 'expressions/exprstringtranslatorstow.cpp'
   , 'expressions/exprtablemodel.cpp'
   , 'expressions/exprtableview.cpp']
   
@@ -236,6 +235,7 @@ tools_sources = ['tools/idtools.cpp'
   , 'tools/tlsnameindexer.cpp'
   , 'tools/tlsosgtools.cpp'
   , 'tools/tlsshapeid.cpp'
+  , 'tools/tlsstring.cpp'
   ]
   
 dialog_sources = ['dialogs/dlgparameter.cpp'
@@ -602,7 +602,7 @@ qt5_processed = qt5process.preprocess(
 )
 
 cadseer_exe = executable('cadseer', [cadseer_sources, qt5_processed]
-  , dependencies : [qt5, boost, occt, osg, osgqt, eigen, xerces, cgal, threads, libzippp, spnav, gmsh, netgen, git2pp, solvespace, libigl, pmp]
+  , dependencies : [qt5, boost, occt, osg, osgqt, eigen, xerces, cgal, threads, libzippp, spnav, gmsh, netgen, git2pp, solvespace, libigl, pmp, libcadcalc]
   , include_directories : include_directories(occt.get_variable(cmake : 'OpenCASCADE_INCLUDE_DIR'))
   , cpp_args : [defines, extra_args]
   , install : true)
