@@ -31,15 +31,15 @@
 
 #include "modelviz/mdvbase.h"
 
-namespace boost{namespace uuids{class uuid;}}
+namespace boost{namespace uuids{struct uuid;}}
 class TopoDS_Face; class TopoDS_Edge;
 namespace osg{class Switch; class Depth; class LineWidth;}
 namespace ann{class ShapeIdHelper;}
 
 namespace mdv
 {
-  class IdPSetWrapper;
-  class PSetPrimitiveWrapper;
+  struct IdPSetWrapper;
+  struct PSetPrimitiveWrapper;
   
   class ShapeGeometry : public Base
   {

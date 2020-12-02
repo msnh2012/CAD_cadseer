@@ -31,7 +31,7 @@
 #include "selection/slcdefinitions.h"
 // #include "DAGFilter.h"
 
-namespace boost{namespace uuids{class uuid;}}
+namespace boost{namespace uuids{struct uuid;}}
 
 class QFocusEvent;
 

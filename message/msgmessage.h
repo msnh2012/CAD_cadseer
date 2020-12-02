@@ -26,7 +26,7 @@
 
 #include "selection/slcdefinitions.h"
 
-namespace boost{namespace uuids{class uuid;}}
+namespace boost{namespace uuids{struct uuid;}}
 
 namespace prj {struct Message;}
 namespace app {struct Message;}

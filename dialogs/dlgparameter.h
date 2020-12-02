@@ -31,7 +31,7 @@ class QEnterEvent;
 class QDropEvent;
 class QLabel;
 
-namespace boost{namespace uuids{class uuid;}}
+namespace boost{namespace uuids{struct uuid;}}
 
 namespace ftr{class Base;}
 namespace prm{class Parameter; struct Observer;}
