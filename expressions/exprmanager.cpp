@@ -42,6 +42,7 @@
 #include "preferences/prfmanager.h"
 
 #include "tools/idtools.h"
+#include "tools/tlsnameindexer.h"
 #include "project/serial/generated/prjsrlprjsproject.h"
 #include "expressions/exprmanager.h"
 
@@ -327,12 +328,33 @@ struct Manager::Stow
       }
     }
   }
+  
+  bool assignParameter(prm::Parameter *p, int eId)
+  {
+    auto ev = getExpressionValue(eId);
+    return common(p, ev, true);
+  }
+  
+  //builds a new default expression.
+  int make(const std::string &base, const std::string &rhs)
+  {
+    tls::NameIndexer ni(100);
+    std::string current = base + ni.buildSuffix();
+    while (manager.hasExpression(current))
+      current = base + "_" + ni.buildSuffix();
+    current += rhs;
+    auto result = manager.parseString(current);
+    assert(result.isAllGood());
+    auto oId = manager.getExpressionId(result.expressionName);
+    assert(oId);
+    return *oId;
+  }
 };
 
 Manager::Manager() : stow(std::make_unique<Stow>())
 {
   stow->node.connect(msg::hub());
-  stow->sift.name = "expr::Widget";
+  stow->sift.name = "expr::Manager";
   stow->node.setHandler(std::bind(&msg::Sift::receive, &stow->sift, std::placeholders::_1));
   setupDispatcher();
 }
@@ -396,6 +418,26 @@ lcc::Result Manager::parseString(const std::string &sIn)
   auto result = stow->manager.parseString(sIn);
   dispatchLinks(result.updatedIds);
   return result;
+}
+
+int Manager::makeScalar(const std::string &base)
+{
+  return stow->make(base, " = 0.0");
+}
+
+int Manager::makeVector(const std::string &base)
+{
+  return stow->make(base, " = VZERO");
+}
+
+int Manager::makeRotation(const std::string &base)
+{
+  return stow->make(base, " = RZERO");
+}
+
+int Manager::makeCSys(const std::string &base)
+{
+  return stow->make(base, " = CZERO");
 }
 
 std::string Manager::buildExpressionString(const std::string &sIn) const
@@ -635,6 +677,11 @@ std::vector<uuid> Manager::getLinked(int eId) const
 void Manager::dispatchLinks(const std::vector<int> &eIds)
 {
   stow->dispatchLinks(eIds);
+}
+
+bool Manager::assignParameter(prm::Parameter *p, int eId)
+{
+  return stow->assignParameter(p, eId);
 }
 
 prj::srl::prjs::Expression Manager::serialOut() const

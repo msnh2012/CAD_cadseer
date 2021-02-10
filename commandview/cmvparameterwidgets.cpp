@@ -50,65 +50,6 @@ using boost::uuids::uuid;
 
 using namespace cmv;
 
-//this always assigns to parameter. Make a temp parameter if needed.
-class ParameterVisitor : public boost::static_visitor<bool>
-{
-  prm::Parameter *parameter = nullptr;
-  expr::Value ev;
-public:
-  ParameterVisitor(prm::Parameter *pIn, const expr::Value& evIn)
-  : parameter(pIn)
-  , ev(evIn)
-  {}
-  
-  bool operator()(double) const
-  {
-    expr::DoubleVisitor edv;
-    double newValue = boost::apply_visitor(edv, ev);
-    if (!parameter->isValidValue(newValue))
-      return false;
-    parameter->setValue(newValue);
-    return true;
-  }
-  
-  bool operator()(int) const
-  {
-    expr::DoubleVisitor edv;
-    int newValue = static_cast<int>(boost::apply_visitor(edv, ev));
-    if (!parameter->isValidValue(newValue))
-      return false;
-    parameter->setValue(newValue);
-    return true;
-  }
-  bool operator()(bool) const {assert(0); return false;} //currently unsupported formula type.
-  bool operator()(const std::string&) const {assert(0); return false;} //currently unsupported formula type.
-  bool operator()(const boost::filesystem::path&) const {assert(0); return false;} //currently unsupported formula type.
-  bool operator()(const osg::Vec3d&) const
-  {
-    expr::VectorVisitor evv;
-    osg::Vec3d newValue = boost::apply_visitor(evv, ev);
-    parameter->setValue(newValue);
-    return true;
-  }
-  bool operator()(const osg::Quat&) const
-  {
-    //parameters not supporting Quaternions at this time.
-    return false;
-    
-//       expr::QuatVisitor eqv;
-//       osg::Quat newValue = boost::apply_visitor(eqv, ev);
-//       parameter->setValue(newValue);
-//       return true;
-  }
-  bool operator()(const osg::Matrixd&) const
-  {
-    expr::MatrixVisitor emv;
-    osg::Matrixd newValue = boost::apply_visitor(emv, ev);
-    parameter->setValue(newValue);
-    return true;
-  }
-};
-
 struct cmv::ExpressionEdit::Stow
 {
   ExpressionEdit *parentWidget;
@@ -211,32 +152,21 @@ void ExpressionEdit::editingSlot(const QString &textIn)
   std::string formula("temp = ");
   formula += textIn.toStdString();
   auto result = localManager.parseString(formula);
-  if (!result.isAllGood())
+  if (result.isAllGood())
   {
     auto oId = localManager.getExpressionId(result.expressionName);
     assert(oId);
     if (localManager.canLinkExpression(stow->parameter, *oId))
     {
-      //going to make a temp parameter and assign the expression value.
-      //this is so we can cast the parameter to a qstring.
-      //random id just in case.
-      prm::Parameter tp(*stow->parameter, gu::createRandomId());
-      ParameterVisitor v(&tp, localManager.getExpressionValue(*oId));
-      if (boost::apply_visitor(v, stow->parameter->getStow().variant))
-      {
-        stow->trafficSignal->setTrafficGreenSlot();
-        goToolTipSlot(static_cast<QString>(tp));
-      }
-      else
-      {
-        stow->trafficSignal->setTrafficRedSlot();
-        goToolTipSlot(tr("Assignment failed"));
-      }
+      stow->trafficSignal->setTrafficGreenSlot();
+      std::ostringstream stream;
+      stream << localManager.getExpressionValue(*oId);
+      goToolTipSlot(QString::fromStdString(stream.str()));
     }
     else
     {
       stow->trafficSignal->setTrafficRedSlot();
-      goToolTipSlot(tr("Type Mismatch"));
+      goToolTipSlot(tr("Invalid Type Or Value"));
     }
   }
   else
@@ -253,6 +183,8 @@ void ExpressionEdit::finishedEditingSlot()
   if (!stow->parameter->isConstant())
     return;
 
+  //no sense in setting traffic signal red here. we are just resetting the expression
+  //and want the signal to be green.
   expr::Manager localManager;
   std::string formula("temp = ");
   formula += stow->lineEdit->text().toStdString();
@@ -261,27 +193,15 @@ void ExpressionEdit::finishedEditingSlot()
   {
     auto oId = localManager.getExpressionId(result.expressionName);
     assert(oId);
-    if (localManager.canLinkExpression(stow->parameter, *oId))
-    {
-      ParameterVisitor v(stow->parameter, localManager.getExpressionValue(*oId));
-      if (!boost::apply_visitor(v, stow->parameter->getStow().variant))
-      {
-        app::instance()->queuedMessage(msg::buildStatusMessage(QObject::tr("Value out of range").toStdString(), 2.0));
-        stow->trafficSignal->setTrafficRedSlot();
-      }
-    }
+    if (localManager.assignParameter(stow->parameter, *oId))
+      app::instance()->queuedMessage(msg::buildStatusMessage(QObject::tr("Value Changed").toStdString(), 2.0));
     else
-    {
-      app::instance()->queuedMessage(msg::buildStatusMessage(QObject::tr("Type Mismatch").toStdString(), 2.0));
-      stow->trafficSignal->setTrafficRedSlot();
-    }
+      app::instance()->queuedMessage(msg::buildStatusMessage(QObject::tr("Invalid Type Or Value").toStdString(), 2.0));
   }
   else
   {
     app::instance()->queuedMessage(msg::buildStatusMessage(QObject::tr("Parsing failed").toStdString(), 2.0));
-    stow->trafficSignal->setTrafficRedSlot();
   }
-//   stow->editor->lineEdit->setText(static_cast<QString>(*stow->parameter));
   stow->trafficSignal->setTrafficGreenSlot();
 }
 

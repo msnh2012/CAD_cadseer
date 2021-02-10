@@ -145,6 +145,12 @@ void TrafficSignal::setTrafficLinkSlot()
   this->addAction(stow->unlinkAction);
 }
 
+void TrafficSignal::setTrafficEmptySlot()
+{
+  setPixmap(QPixmap());
+  this->removeAction(stow->unlinkAction);
+}
+
 void TrafficSignal::unlink()
 {
   app::instance()->getProject()->getManager().removeLink(stow->parameter->getId());

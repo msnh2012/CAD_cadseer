@@ -220,54 +220,53 @@ void TableModel::addExpressionToGroup(const QModelIndex& indexIn, int groupIdIn)
 
 void TableModel::addScalar()
 {
-  std::string expression = createUniqueName("aScalar") + " = 0.0";
-  addCommon(expression);
-}
-
-void TableModel::addVector()
-{
-  std::string expression = createUniqueName("aVector") + " = VZERO";
-  addCommon(expression);
-}
-
-void TableModel::addRotation()
-{
-  std::string expression = createUniqueName("aRotation") + " = RZERO";
-  addCommon(expression);
-}
-
-void TableModel::addCSys()
-{
-  std::string expression = createUniqueName("aSystem") + " = CZERO";
-  addCommon(expression);
-}
-
-std::string TableModel::createUniqueName(const std::string &base) const
-{
-  std::string out;
-  for (int nameIndex = 0; nameIndex < 100000; ++nameIndex) //more than 100000? something is wrong!
-  {
-    std::ostringstream stream;
-    stream << base << "_" << nameIndex;
-    out = stream.str();
-    if (eManager.getExpressionId(out))
-      continue;
-    break;
-  }
-  assert(!eManager.getExpressionId(out));
-  return out;
-}
-
-void TableModel::addCommon(const std::string &expression)
-{
   int size = static_cast<int>(eManager.getExpressionIds().size());
   this->beginInsertRows(QModelIndex(), size, size);
-  auto result = eManager.parseString(expression);
+  int id = eManager.makeScalar("aScalar");
   this->endInsertRows();
   
   //add git message.
   std::ostringstream gitStream;
-  gitStream << "Adding expression: " << result.expressionName;
+  gitStream << "Adding expression: " << *eManager.getExpressionName(id);
+  app::instance()->messageSlot(msg::buildGitMessage(gitStream.str()));
+}
+
+void TableModel::addVector()
+{
+  int size = static_cast<int>(eManager.getExpressionIds().size());
+  this->beginInsertRows(QModelIndex(), size, size);
+  int id = eManager.makeVector("aVector");
+  this->endInsertRows();
+  
+  //add git message.
+  std::ostringstream gitStream;
+  gitStream << "Adding expression: " << *eManager.getExpressionName(id);
+  app::instance()->messageSlot(msg::buildGitMessage(gitStream.str()));
+}
+
+void TableModel::addRotation()
+{
+  int size = static_cast<int>(eManager.getExpressionIds().size());
+  this->beginInsertRows(QModelIndex(), size, size);
+  int id = eManager.makeRotation("aRotation");
+  this->endInsertRows();
+  
+  //add git message.
+  std::ostringstream gitStream;
+  gitStream << "Adding expression: " << *eManager.getExpressionName(id);
+  app::instance()->messageSlot(msg::buildGitMessage(gitStream.str()));
+}
+
+void TableModel::addCSys()
+{
+  int size = static_cast<int>(eManager.getExpressionIds().size());
+  this->beginInsertRows(QModelIndex(), size, size);
+  int id = eManager.makeCSys("aSystem");
+  this->endInsertRows();
+  
+  //add git message.
+  std::ostringstream gitStream;
+  gitStream << "Adding expression: " << *eManager.getExpressionName(id);
   app::instance()->messageSlot(msg::buildGitMessage(gitStream.str()));
 }
 

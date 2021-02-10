@@ -93,9 +93,6 @@ private:
   expr::Manager &eManager;
   //! tableview calls into ::data every paint event. Way too many! cache rhs strings for speed.
   mutable std::map<int, std::string> idToRhsMap;
-  
-  std::string createUniqueName(const std::string&) const;
-  void addCommon(const std::string&);
 };
 
 /*! @brief Proxy model for the grouping view.

@@ -24,7 +24,7 @@
 
 #include <QLabel>
 
-namespace boost{namespace uuids{class uuid;}}
+namespace boost{namespace uuids{struct uuid;}}
 class QDragEnterEvent;
 class QDropEvent;
 
@@ -49,6 +49,7 @@ namespace cmv
     void setTrafficYellowSlot();
     void setTrafficGreenSlot();
     void setTrafficLinkSlot();
+    void setTrafficEmptySlot(); //hides the signal.
   protected:
     void dragEnterEvent(QDragEnterEvent*) override;
     void dropEvent(QDropEvent*) override;

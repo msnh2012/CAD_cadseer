@@ -59,6 +59,17 @@ public:
   
 public:
   lcc::Result parseString(const std::string&);
+  
+  /*! @name Make. Create a new typed expression with a unique name
+   * based from passed in string and an index. returns id of new expression
+   */
+  ///@{
+  int makeScalar(const std::string&);
+  int makeVector(const std::string&);
+  int makeRotation(const std::string&);
+  int makeCSys(const std::string&);
+  ///@}
+  
   std::string buildExpressionString(const std::string&) const;
   std::string buildExpressionString(int) const;
   std::string buildRHSString(const std::string&) const;
@@ -113,6 +124,7 @@ public:
   std::optional<int> getLinked(const boost::uuids::uuid&) const; //!< get optional expression id linked to parameter id passed in. 0 or 1
   std::vector<boost::uuids::uuid> getLinked(int) const; //!< get all parameter ids linked to passed in expression id. 0 or many.
   void dispatchLinks(const std::vector<int>&); //!< assign values from expressions to parameters.
+  bool assignParameter(prm::Parameter*, int); //!< assign expression value to parameter without creating a link.
   ///@}
   
   prj::srl::prjs::Expression serialOut() const;
