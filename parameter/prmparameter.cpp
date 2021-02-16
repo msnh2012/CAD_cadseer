@@ -406,7 +406,7 @@ public:
   QString operator()(const osg::Vec3d &vIn) const {return gu::osgVectorOut(vIn);}
   QString operator()(const osg::Quat &qIn) const {return gu::osgQuatOut(qIn);}
   QString operator()(const osg::Matrixd &mIn) const {return gu::osgMatrixOut(mIn);}
-  QString operator()(const ftr::Picks &psIn) const {return QObject::tr("Picks");} //TODO
+  QString operator()(const ftr::Picks&) const {return QObject::tr("Picks");} //TODO
 };
 
 class PathVisitor : public boost::static_visitor<path>

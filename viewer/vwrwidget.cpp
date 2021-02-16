@@ -1161,7 +1161,7 @@ const osg::Matrixd& Widget::getViewSystem() const
 
 QTextStream& Widget::getInfo(QTextStream &stream) const
 {
-  stream << endl << QObject::tr("Current System: ");
+  stream << Qt::endl << QObject::tr("Current System: ");
   gu::osgMatrixOut(stream, getCurrentSystem());
   
   return stream;

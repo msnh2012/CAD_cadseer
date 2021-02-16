@@ -59,7 +59,7 @@ Manager::Manager(const std::string &parentArg)
   
   process = new QProcess(this);
   process->setProcessChannelMode(QProcess::ForwardedErrorChannel);
-  process->start(QString::fromStdString(lodPath.string()));
+  process->start(QString::fromStdString(lodPath.string()), QStringList());
   connect(process, SIGNAL(readyReadStandardOutput()), this, SLOT(readyReadStdOutSlot()));
   connect(process, SIGNAL(finished(int, QProcess::ExitStatus)), this, SLOT(childFinishedSlot(int, QProcess::ExitStatus)));
   connect(process, SIGNAL(errorOccurred(QProcess::ProcessError)), this, SLOT(childErrorSlot(QProcess::ProcessError)));

@@ -57,9 +57,10 @@ namespace ftr
 
 using namespace ftr;
 
-SeerShapeInfo::SeerShapeInfo(const ann::SeerShape &shapeIn) : seerShape(shapeIn)
+SeerShapeInfo::SeerShapeInfo(const ann::SeerShape &shapeIn)
+: seerShape(shapeIn)
+, functionMapper(std::make_unique<FunctionMapper>())
 {
-    functionMapper = std::move(std::unique_ptr<FunctionMapper>(new FunctionMapper()));
     functionMapper->functionMap.insert(std::make_pair(TopAbs_COMPOUND, std::bind(&SeerShapeInfo::compInfo, this, std::placeholders::_1, std::placeholders::_2)));
     functionMapper->functionMap.insert(std::make_pair(TopAbs_COMPSOLID, std::bind(&SeerShapeInfo::compSolidInfo, this, std::placeholders::_1, std::placeholders::_2)));
     functionMapper->functionMap.insert(std::make_pair(TopAbs_SOLID, std::bind(&SeerShapeInfo::solidInfo, this, std::placeholders::_1, std::placeholders::_2)));
@@ -76,10 +77,10 @@ SeerShapeInfo::~SeerShapeInfo(){}
 QTextStream& SeerShapeInfo::getShapeInfo(QTextStream &streamIn, const boost::uuids::uuid &idIn )
 {
     assert(functionMapper);
-    streamIn << endl << "Shape information: " << endl;
+    streamIn << Qt::endl << "Shape information: " << Qt::endl;
     if (seerShape.isNull())
     {
-      streamIn << "    SeerShape is null" << endl;
+      streamIn << "    SeerShape is null" << Qt::endl;
       return streamIn;
     }
     assert(seerShape.hasId(idIn));
@@ -88,23 +89,23 @@ QTextStream& SeerShapeInfo::getShapeInfo(QTextStream &streamIn, const boost::uui
     const TopoDS_Shape &shape = seerShape.findShape(idIn);
     if (shape.IsNull())
     {
-      streamIn << "    TopoDS_Shape is null" << endl;
+      streamIn << "    TopoDS_Shape is null" << Qt::endl;
       return streamIn;
     }
     
     functionMapper->functionMap.at(shape.ShapeType())(streamIn, shape);
     //common to all shapes.
-    streamIn << "    Orientation: " << ((shape.Orientation() == TopAbs_FORWARD) ? ("Forward") : ("Reversed")) << endl
-        << "    Hash code: " << occt::getShapeHash(shape) << endl
-        << "    Shape id: " << QString::fromStdString(gu::idToString(idIn)) << endl;
+    streamIn << "    Orientation: " << ((shape.Orientation() == TopAbs_FORWARD) ? ("Forward") : ("Reversed")) << Qt::endl
+        << "    Hash code: " << occt::getShapeHash(shape) << Qt::endl
+        << "    Shape id: " << QString::fromStdString(gu::idToString(idIn)) << Qt::endl;
     
     occt::BoundingBox bb(shape);    
     streamIn << "    Bounding Box: "
-        << qSetRealNumberPrecision(12) << fixed << endl
-        << "        Center: "; gu::gpPntOut(streamIn, bb.getCenter()); streamIn << endl
-        << "        Length: " << bb.getLength() << endl
-        << "        Width: " << bb.getWidth() << endl
-        << "        Height: " << bb.getHeight() << endl;
+        << qSetRealNumberPrecision(12) << Qt::fixed << Qt::endl
+        << "        Center: "; gu::gpPntOut(streamIn, bb.getCenter()); streamIn << Qt::endl
+        << "        Length: " << bb.getLength() << Qt::endl
+        << "        Width: " << bb.getWidth() << Qt::endl
+        << "        Height: " << bb.getHeight() << Qt::endl;
     
     return streamIn;
 }
@@ -112,26 +113,26 @@ QTextStream& SeerShapeInfo::getShapeInfo(QTextStream &streamIn, const boost::uui
 void SeerShapeInfo::compInfo(QTextStream &streamIn, const TopoDS_Shape &s)
 {
     occt::ShapeVector subShapes = occt::ShapeVectorCast(TopoDS::Compound(s));
-    streamIn << "    Shape type: compound" << endl
-             << "    Sub-Shapes:" << endl;
+    streamIn << "    Shape type: compound" << Qt::endl
+             << "    Sub-Shapes:" << Qt::endl;
     for (const auto &ss : subShapes)
-      streamIn << "        " << QString::fromStdString(occt::getShapeTypeString(ss)) << endl;
+      streamIn << "        " << QString::fromStdString(occt::getShapeTypeString(ss)) << Qt::endl;
 }
 
 void SeerShapeInfo::compSolidInfo(QTextStream &streamIn, const TopoDS_Shape&)
 {
-    streamIn << "    Shape type: compound solid" << endl;
+    streamIn << "    Shape type: compound solid" << Qt::endl;
 }
 
 void SeerShapeInfo::solidInfo(QTextStream &streamIn, const TopoDS_Shape&)
 {
-    streamIn << "    Shape type: solid" << endl;
+    streamIn << "    Shape type: solid" << Qt::endl;
 }
 
 void SeerShapeInfo::shellInfo(QTextStream &streamIn, const TopoDS_Shape &shapeIn)
 {
-    streamIn << "    Shape type: shell." << endl
-        << "    Closed is: " << ((shapeIn.Closed()) ? ("true") : ("false")) << endl;
+    streamIn << "    Shape type: shell." << Qt::endl
+        << "    Closed is: " << ((shapeIn.Closed()) ? ("true") : ("false")) << Qt::endl;
 }
 
 template<typename T>
@@ -146,64 +147,64 @@ void SeerShapeInfo::faceInfo(QTextStream &streamIn, const TopoDS_Shape &shapeIn)
     assert(shapeIn.ShapeType() == TopAbs_FACE);
     BRepAdaptor_Surface surfaceAdaptor(TopoDS::Face(shapeIn));
     
-    streamIn << qSetRealNumberPrecision(12) << fixed
-    << "    Shape type: face" << endl
-    << "    Tolerance: " << BRep_Tool::Tolerance(TopoDS::Face(shapeIn)) << endl;
+    streamIn << qSetRealNumberPrecision(12) << Qt::fixed
+    << "    Shape type: face" << Qt::endl
+    << "    Tolerance: " << BRep_Tool::Tolerance(TopoDS::Face(shapeIn)) << Qt::endl;
     if (surfaceAdaptor.IsUPeriodic())
-      streamIn << "    Is U periodic: True. Period = " << surfaceAdaptor.UPeriod() << endl;
+      streamIn << "    Is U periodic: True. Period = " << surfaceAdaptor.UPeriod() << Qt::endl;
     else
-      streamIn << "    Is U periodic: False" << endl;
+      streamIn << "    Is U periodic: False" << Qt::endl;
     if (surfaceAdaptor.IsVPeriodic())
-      streamIn << "    Is V periodic: True. Period = " << surfaceAdaptor.VPeriod() << endl;
+      streamIn << "    Is V periodic: True. Period = " << surfaceAdaptor.VPeriod() << Qt::endl;
     else
-      streamIn << "    Is V periodic: False" << endl;
-    streamIn << "    Surface type: " << gu::surfaceTypeStrings.at(surfaceAdaptor.GetType()) << endl;
+      streamIn << "    Is V periodic: False" << Qt::endl;
+    streamIn << "    Surface type: " << gu::surfaceTypeStrings.at(surfaceAdaptor.GetType()) << Qt::endl;
     if (surfaceAdaptor.GetType() == GeomAbs_Plane)
     {
       gp_Pln plane = surfaceAdaptor.Plane();
       
       streamIn
-      << "        Placement: "; gu::osgMatrixOut(streamIn, gu::toOsg(surfaceSystem(plane))) << endl;
+      << "        Placement: "; gu::osgMatrixOut(streamIn, gu::toOsg(surfaceSystem(plane))) << Qt::endl;
     }
     else if (surfaceAdaptor.GetType() == GeomAbs_Cylinder)
     {
       gp_Cylinder cyl = surfaceAdaptor.Cylinder();
       
       streamIn
-      << "        Radius: " << cyl.Radius() << endl
-      << "        Placement: "; gu::osgMatrixOut(streamIn, gu::toOsg(surfaceSystem(cyl))) << endl;
+      << "        Radius: " << cyl.Radius() << Qt::endl
+      << "        Placement: "; gu::osgMatrixOut(streamIn, gu::toOsg(surfaceSystem(cyl))) << Qt::endl;
     }
     else if (surfaceAdaptor.GetType() == GeomAbs_Cone)
     {
       gp_Cone cone = surfaceAdaptor.Cone();
       
       streamIn
-      << "        Radius: " << cone.RefRadius() << endl
-      << "        Semi Angle: " << cone.SemiAngle() << endl
-      << "        Placement: "; gu::osgMatrixOut(streamIn, gu::toOsg(surfaceSystem(cone))) << endl;
+      << "        Radius: " << cone.RefRadius() << Qt::endl
+      << "        Semi Angle: " << cone.SemiAngle() << Qt::endl
+      << "        Placement: "; gu::osgMatrixOut(streamIn, gu::toOsg(surfaceSystem(cone))) << Qt::endl;
     }
     else if (surfaceAdaptor.GetType() == GeomAbs_Sphere)
     {
       gp_Sphere sphere = surfaceAdaptor.Sphere();
       
       streamIn
-      << "        Radius: " << sphere.Radius() << endl
-      << "        Placement: "; gu::osgMatrixOut(streamIn, gu::toOsg(surfaceSystem(sphere))) << endl;
+      << "        Radius: " << sphere.Radius() << Qt::endl
+      << "        Placement: "; gu::osgMatrixOut(streamIn, gu::toOsg(surfaceSystem(sphere))) << Qt::endl;
     }
     else if (surfaceAdaptor.GetType() == GeomAbs_Torus)
     {
       gp_Torus torus = surfaceAdaptor.Torus();
       
       streamIn
-      << "        Major Radius: " << torus.MajorRadius() << endl
-      << "        Minor Radius: " << torus.MinorRadius() << endl
-      << "        Placement: "; gu::osgMatrixOut(streamIn, gu::toOsg(surfaceSystem(torus))) << endl;
+      << "        Major Radius: " << torus.MajorRadius() << Qt::endl
+      << "        Minor Radius: " << torus.MinorRadius() << Qt::endl
+      << "        Placement: "; gu::osgMatrixOut(streamIn, gu::toOsg(surfaceSystem(torus))) << Qt::endl;
     }
 }
 
 void SeerShapeInfo::wireInfo(QTextStream &streamIn, const TopoDS_Shape&)
 {
-    streamIn << "    Shape type: wire" << endl;
+    streamIn << "    Shape type: wire" << Qt::endl;
 }
 
 void SeerShapeInfo::edgeInfo(QTextStream &streamIn, const TopoDS_Shape &shapeIn)
@@ -211,57 +212,57 @@ void SeerShapeInfo::edgeInfo(QTextStream &streamIn, const TopoDS_Shape &shapeIn)
     assert(shapeIn.ShapeType() == TopAbs_EDGE);
     BRepAdaptor_Curve curveAdaptor(TopoDS::Edge(shapeIn));
     
-    streamIn << qSetRealNumberPrecision(12) << fixed
-    << "    Shape type: edge" << endl
-    << "    Tolerance Brep_Tool: " << BRep_Tool::Tolerance(TopoDS::Edge(shapeIn)) << endl
-    << "    Tolerance BRepAdaptor_Curve: " << curveAdaptor.Tolerance() << endl
-    << "    Curve type: " << gu::curveTypeStrings.at(curveAdaptor.GetType()) << endl;
+    streamIn << qSetRealNumberPrecision(12) << Qt::fixed
+    << "    Shape type: edge" << Qt::endl
+    << "    Tolerance Brep_Tool: " << BRep_Tool::Tolerance(TopoDS::Edge(shapeIn)) << Qt::endl
+    << "    Tolerance BRepAdaptor_Curve: " << curveAdaptor.Tolerance() << Qt::endl
+    << "    Curve type: " << gu::curveTypeStrings.at(curveAdaptor.GetType()) << Qt::endl;
     
     if (curveAdaptor.GetType() == GeomAbs_Line)
     {
       gp_Lin line = curveAdaptor.Line();
       
       streamIn
-      << "        Location: "; gu::gpPntOut(streamIn, line.Location()) << endl
-      << "        Direction: "; gu::gpDirOut(streamIn, line.Direction()) << endl
-      << "        Start Point: "; gu::gpPntOut(streamIn, curveAdaptor.Value(curveAdaptor.FirstParameter())) << endl
-      << "        End Point: "; gu::gpPntOut(streamIn, curveAdaptor.Value(curveAdaptor.LastParameter())) << endl;
+      << "        Location: "; gu::gpPntOut(streamIn, line.Location()) << Qt::endl
+      << "        Direction: "; gu::gpDirOut(streamIn, line.Direction()) << Qt::endl
+      << "        Start Point: "; gu::gpPntOut(streamIn, curveAdaptor.Value(curveAdaptor.FirstParameter())) << Qt::endl
+      << "        End Point: "; gu::gpPntOut(streamIn, curveAdaptor.Value(curveAdaptor.LastParameter())) << Qt::endl;
     }
     else if (curveAdaptor.GetType() == GeomAbs_Circle)
     {
       gp_Circ circle = curveAdaptor.Circle();
       
       streamIn
-      << "        Radius: " << circle.Radius() << endl
-      << "        Placement: "; gu::osgMatrixOut(streamIn, gu::toOsg(circle.Position())) << endl
-      << "        Start Point: "; gu::gpPntOut(streamIn, curveAdaptor.Value(curveAdaptor.FirstParameter())) << endl
-      << "        End Point: "; gu::gpPntOut(streamIn, curveAdaptor.Value(curveAdaptor.LastParameter())) << endl;
+      << "        Radius: " << circle.Radius() << Qt::endl
+      << "        Placement: "; gu::osgMatrixOut(streamIn, gu::toOsg(circle.Position())) << Qt::endl
+      << "        Start Point: "; gu::gpPntOut(streamIn, curveAdaptor.Value(curveAdaptor.FirstParameter())) << Qt::endl
+      << "        End Point: "; gu::gpPntOut(streamIn, curveAdaptor.Value(curveAdaptor.LastParameter())) << Qt::endl;
     }
     else if (curveAdaptor.GetType() == GeomAbs_Ellipse)
     {
       gp_Elips ellipse = curveAdaptor.Ellipse();
       
       streamIn
-      << "        Major Radius: " << ellipse.MajorRadius() << endl
-      << "        Minor Radius: " << ellipse.MinorRadius() << endl
-      << "        Focus 1: "; gu::gpPntOut(streamIn, ellipse.Focus1()) << endl
-      << "        Focus 2: "; gu::gpPntOut(streamIn, ellipse.Focus2()) << endl
-      << "        Placement: "; gu::osgMatrixOut(streamIn, gu::toOsg(ellipse.Position())) << endl
-      << "        Start Point: "; gu::gpPntOut(streamIn, curveAdaptor.Value(curveAdaptor.FirstParameter())) << endl
-      << "        End Point: "; gu::gpPntOut(streamIn, curveAdaptor.Value(curveAdaptor.LastParameter())) << endl;
+      << "        Major Radius: " << ellipse.MajorRadius() << Qt::endl
+      << "        Minor Radius: " << ellipse.MinorRadius() << Qt::endl
+      << "        Focus 1: "; gu::gpPntOut(streamIn, ellipse.Focus1()) << Qt::endl
+      << "        Focus 2: "; gu::gpPntOut(streamIn, ellipse.Focus2()) << Qt::endl
+      << "        Placement: "; gu::osgMatrixOut(streamIn, gu::toOsg(ellipse.Position())) << Qt::endl
+      << "        Start Point: "; gu::gpPntOut(streamIn, curveAdaptor.Value(curveAdaptor.FirstParameter())) << Qt::endl
+      << "        End Point: "; gu::gpPntOut(streamIn, curveAdaptor.Value(curveAdaptor.LastParameter())) << Qt::endl;
     }
     else if (curveAdaptor.GetType() == GeomAbs_Hyperbola)
     {
       gp_Hypr hyp = curveAdaptor.Hyperbola();
       
       streamIn
-      << "        Major Radius: " << hyp.MajorRadius() << endl
-      << "        Minor Radius: " << hyp.MinorRadius() << endl
-      << "        Focus 1: "; gu::gpPntOut(streamIn, hyp.Focus1()) << endl
-      << "        Focus 2: "; gu::gpPntOut(streamIn, hyp.Focus2()) << endl
-      << "        Placement: "; gu::osgMatrixOut(streamIn, gu::toOsg(hyp.Position())) << endl
-      << "        Start Point: "; gu::gpPntOut(streamIn, curveAdaptor.Value(curveAdaptor.FirstParameter())) << endl
-      << "        End Point: "; gu::gpPntOut(streamIn, curveAdaptor.Value(curveAdaptor.LastParameter())) << endl;
+      << "        Major Radius: " << hyp.MajorRadius() << Qt::endl
+      << "        Minor Radius: " << hyp.MinorRadius() << Qt::endl
+      << "        Focus 1: "; gu::gpPntOut(streamIn, hyp.Focus1()) << Qt::endl
+      << "        Focus 2: "; gu::gpPntOut(streamIn, hyp.Focus2()) << Qt::endl
+      << "        Placement: "; gu::osgMatrixOut(streamIn, gu::toOsg(hyp.Position())) << Qt::endl
+      << "        Start Point: "; gu::gpPntOut(streamIn, curveAdaptor.Value(curveAdaptor.FirstParameter())) << Qt::endl
+      << "        End Point: "; gu::gpPntOut(streamIn, curveAdaptor.Value(curveAdaptor.LastParameter())) << Qt::endl;
     }
     else if (curveAdaptor.GetType() == GeomAbs_Parabola)
     {
@@ -269,10 +270,10 @@ void SeerShapeInfo::edgeInfo(QTextStream &streamIn, const TopoDS_Shape &shapeIn)
       gp_Parab par = curveAdaptor.Parabola();
       
       streamIn
-      << "        Focus: "; gu::gpPntOut(streamIn, par.Focus()) << endl
-      << "        Placement: "; gu::osgMatrixOut(streamIn, gu::toOsg(par.Position())) << endl
-      << "        Start Point: "; gu::gpPntOut(streamIn, curveAdaptor.Value(curveAdaptor.FirstParameter())) << endl
-      << "        End Point: "; gu::gpPntOut(streamIn, curveAdaptor.Value(curveAdaptor.LastParameter())) << endl;
+      << "        Focus: "; gu::gpPntOut(streamIn, par.Focus()) << Qt::endl
+      << "        Placement: "; gu::osgMatrixOut(streamIn, gu::toOsg(par.Position())) << Qt::endl
+      << "        Start Point: "; gu::gpPntOut(streamIn, curveAdaptor.Value(curveAdaptor.FirstParameter())) << Qt::endl
+      << "        End Point: "; gu::gpPntOut(streamIn, curveAdaptor.Value(curveAdaptor.LastParameter())) << Qt::endl;
     }
     else if (curveAdaptor.GetType() == GeomAbs_BSplineCurve)
     {
@@ -280,11 +281,11 @@ void SeerShapeInfo::edgeInfo(QTextStream &streamIn, const TopoDS_Shape &shapeIn)
       opencascade::handle<Geom_BSplineCurve> spline = curveAdaptor.BSpline();
       
       streamIn
-      << "        Is Closed: " << ((spline->IsClosed()) ? "True" : "False") << endl
-      << "        Is Periodic: " << ((spline->IsPeriodic()) ? "True" : "False") << endl
-      << "        Is Rational: " << ((spline->IsRational()) ? "True" : "False") << endl
-      << "        Continuity: " << gu::continuityStrings.at(static_cast<int>(spline->Continuity())) << endl
-      << "        Pole Count: " << spline->NbPoles() << endl;
+      << "        Is Closed: " << ((spline->IsClosed()) ? "True" : "False") << Qt::endl
+      << "        Is Periodic: " << ((spline->IsPeriodic()) ? "True" : "False") << Qt::endl
+      << "        Is Rational: " << ((spline->IsRational()) ? "True" : "False") << Qt::endl
+      << "        Continuity: " << gu::continuityStrings.at(static_cast<int>(spline->Continuity())) << Qt::endl
+      << "        Pole Count: " << spline->NbPoles() << Qt::endl;
 //       << "        Weight Count: " << spline->Weights()->Length() << endl;
     }
 }
@@ -293,8 +294,8 @@ void SeerShapeInfo::vertexInfo(QTextStream &streamIn, const TopoDS_Shape &shapeI
 {
     assert(shapeIn.ShapeType() == TopAbs_VERTEX);
     gp_Pnt vPoint = BRep_Tool::Pnt(TopoDS::Vertex(shapeIn));
-    forcepoint(streamIn) << qSetRealNumberPrecision(12) << fixed
-    << "    Shape type: vertex" << endl
-      << "    location: "; gu::gpPntOut(streamIn, vPoint); streamIn << endl
-      << "    Tolerance: " << BRep_Tool::Tolerance(TopoDS::Vertex(shapeIn)) << endl;
+    Qt::forcepoint(streamIn) << qSetRealNumberPrecision(12) << Qt::fixed
+    << "    Shape type: vertex" << Qt::endl
+      << "    location: "; gu::gpPntOut(streamIn, vPoint); streamIn << Qt::endl
+      << "    Tolerance: " << BRep_Tool::Tolerance(TopoDS::Vertex(shapeIn)) << Qt::endl;
 }

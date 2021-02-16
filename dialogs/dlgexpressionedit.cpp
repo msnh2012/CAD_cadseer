@@ -100,8 +100,8 @@ void TrafficLabel::setLinkSlot()
   current = 4;
 }
 
-ExpressionEdit::ExpressionEdit(QWidget* parent, Qt::WindowFlags f) :
-  QWidget(parent, f)
+ExpressionEdit::ExpressionEdit(QWidget* parent) :
+  QWidget(parent)
 {
   setupGui();
 }

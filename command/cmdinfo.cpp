@@ -64,8 +64,8 @@ void Info::go()
   QString infoMessage;
   QTextStream stream(&infoMessage);
   stream.setRealNumberNotation(QTextStream::FixedNotation);
-  forcepoint(stream) << qSetRealNumberPrecision(12);
-  stream << endl;
+  Qt::forcepoint(stream) << qSetRealNumberPrecision(12);
+  stream << Qt::endl;
   
   osg::Matrixd ics = osg::Matrixd::inverse(viewer->getCurrentSystem()); //inverted current system.
   
@@ -77,7 +77,7 @@ void Info::go()
       << p.x() << ", "
       << p.y() << ", "
       << p.z() << "]"
-      << endl;
+      << Qt::endl;
       
     osg::Vec3d tp = p * ics;
     stream
@@ -86,7 +86,7 @@ void Info::go()
       << tp.x() << ", "
       << tp.y() << ", "
       << tp.z() << "]"
-      << endl;
+      << Qt::endl;
   };
   
   //maybe if selection is empty we will dump out application information.
@@ -109,7 +109,7 @@ void Info::go()
     for (const auto &container : containers)
     {
       ftr::Base *feature = project->findFeature(container.featureId);
-      stream <<  endl;
+      stream <<  Qt::endl;
       if
       (
         (container.selectionType == slc::Type::Object) ||

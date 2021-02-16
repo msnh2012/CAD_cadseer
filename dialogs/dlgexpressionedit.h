@@ -62,7 +62,7 @@ namespace dlg
   {
     Q_OBJECT
   public:
-    explicit ExpressionEdit(QWidget *, Qt::WindowFlags f = 0);
+    explicit ExpressionEdit(QWidget*);
     
     QLineEdit *lineEdit;
     TrafficLabel *trafficLabel;

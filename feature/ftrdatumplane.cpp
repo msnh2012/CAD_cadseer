@@ -757,7 +757,7 @@ void DatumPlane::updateLabelPositions()
   flipLabel->setMatrix(osg::Matrixd::translate(osg::Vec3d(s, 0.0, 0.0) * m));
   angleLabel->setMatrix(osg::Matrixd::translate(m.getTrans()));
   
-  //offset parameter has to be placed at original position. notice modifing m.
+  //offset parameter has to be placed at original position. notice modifying m.
   osg::Vec3d projection = gu::getZVector(m) * static_cast<double>(*offset) * -1.0;
   m.setTrans(m.getTrans() + projection);
   offsetIP->setMatrix(m);
@@ -767,7 +767,7 @@ QTextStream& DatumPlane::getInfo(QTextStream &streamIn) const
 {
     Inherited::getInfo(streamIn);
     
-    streamIn << "System is: " << endl;
+    streamIn << "System is: " << Qt::endl;
     gu::osgMatrixOut(streamIn, static_cast<osg::Matrixd>(*csys));
     
     return streamIn;

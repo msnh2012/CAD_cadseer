@@ -139,7 +139,7 @@ void MeasureLinear::build(const osg::Vec3d &point1, const osg::Vec3d &point2)
   //if I don't set the realNumberNotation I get 10 decimal places. 
   //with it I get the specified 12. Why qt?
   stream.setRealNumberNotation(QTextStream::FixedNotation);
-  forcepoint(stream) << qSetRealNumberPrecision(12);
+  Qt::forcepoint(stream) << qSetRealNumberPrecision(12);
   auto streamPoint = [&](const osg::Vec3d &p)
   {
     stream
@@ -149,30 +149,30 @@ void MeasureLinear::build(const osg::Vec3d &point1, const osg::Vec3d &point2)
       << p.z() << "]";
   };
   
-  stream << endl << "Measure linear: "<< endl
+  stream << Qt::endl << "Measure linear: "<< Qt::endl
     << "    3d distance: "<< distance
-    << endl << "    Absolute System:" << endl << "        Point1 location: ";
+    << Qt::endl << "    Absolute System:" << Qt::endl << "        Point1 location: ";
   streamPoint(point1);
-  stream << endl << "        Point2 location: ";
+  stream << Qt::endl << "        Point2 location: ";
   streamPoint(point2);
   
-  stream << endl << "        delta X: " << point2.x() - point1.x()
-    << endl << "        delta Y: " << point2.y() - point1.y()
-    << endl << "        delta Z: " << point2.z() - point1.z();
+  stream << Qt::endl << "        delta X: " << point2.x() - point1.x()
+    << Qt::endl << "        delta Y: " << point2.y() - point1.y()
+    << Qt::endl << "        delta Z: " << point2.z() - point1.z();
   
   vwr::Widget *viewer = app::instance()->getMainWindow()->getViewer();
   //report points in current system.
   osg::Matrixd ics = osg::Matrixd::inverse(viewer->getCurrentSystem()); //inverted current system.
   osg::Vec3d csPoint1 = point1 * ics; //current system point1
   osg::Vec3d csPoint2 = point2 * ics; //current system point2
-  stream << endl << "    Current system:" << endl << "        Point1 location: ";
+  stream << Qt::endl << "    Current system:" << Qt::endl << "        Point1 location: ";
   streamPoint(csPoint1);
-  stream << endl << "        Point2 location: ";
+  stream << Qt::endl << "        Point2 location: ";
   streamPoint(csPoint2);
-  stream << endl << "        delta X: " << csPoint2.x() - csPoint1.x()
-    << endl << "        delta Y: " << csPoint2.y() - csPoint1.y()
-    << endl << "        delta Z: " << csPoint2.z() - csPoint1.z();
-  stream << endl;
+  stream << Qt::endl << "        delta X: " << csPoint2.x() - csPoint1.x()
+    << Qt::endl << "        delta Y: " << csPoint2.y() - csPoint1.y()
+    << Qt::endl << "        delta Z: " << csPoint2.z() - csPoint1.z();
+  stream << Qt::endl;
   
   app::Message appMessage;
   appMessage.infoMessage = infoMessage;

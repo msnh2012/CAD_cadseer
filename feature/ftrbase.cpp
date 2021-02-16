@@ -558,24 +558,24 @@ QTextStream& Base::getInfo(QTextStream &stream) const
         return out;
     };
     
-    stream << "Feature info: " << endl
-        << "    Feature name: " << name << endl
-        << "    Feature id: " << QString::fromStdString(gu::idToString(id)) << endl
-        << "    Feature type: " << QString::fromStdString(getTypeString()) << endl
-        << "    Model is clean: " << boolString(isModelClean()) << endl
-        << "    Visual is clean: " << boolString(isVisualClean()) << endl
-        << "    Update was successful: " << boolString(isSuccess()) << endl
-        << endl << "Last Update: " << QString::fromStdString(lastUpdateLog);
+    stream << "Feature info: " << Qt::endl
+        << "    Feature name: " << name << Qt::endl
+        << "    Feature id: " << QString::fromStdString(gu::idToString(id)) << Qt::endl
+        << "    Feature type: " << QString::fromStdString(getTypeString()) << Qt::endl
+        << "    Model is clean: " << boolString(isModelClean()) << Qt::endl
+        << "    Visual is clean: " << boolString(isVisualClean()) << Qt::endl
+        << "    Update was successful: " << boolString(isSuccess()) << Qt::endl
+        << Qt::endl << "Last Update: " << QString::fromStdString(lastUpdateLog);
     
     if (!parameters.empty())
     {
-      stream << endl << "Parameters:" << endl;
+      stream << Qt::endl << "Parameters:" << Qt::endl;
       for (const auto &p : parameters)
       {
           stream
               << "    Parameter name: " << p->getName()
               << "    Value: " << boost::apply_visitor(InfoVisitor(), p->getStow().variant)
-              << "    Is linked: " << boolString(!(p->isConstant())) << endl;
+              << "    Is linked: " << boolString(!(p->isConstant())) << Qt::endl;
       }
     }
     
