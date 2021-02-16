@@ -32,28 +32,50 @@
 namespace boost{namespace filesystem{class path;}}
 namespace osg{class Vec3d; class Quat; class Matrixd;}
 namespace prj{namespace srl{namespace spt{class Parameter;}}}
+namespace ftr{struct Pick; typedef std::vector<Pick> Picks;}
 
 namespace prm
 {
+  /*! Common default names. subjected to locale. */
   namespace Names
   {
-    static const QString Radius = QObject::tr("Radius"); //!< cylinder, sphere
-    static const QString Height = QObject::tr("Height"); //!< cylinder, box, cone
-    static const QString Length = QObject::tr("Length"); //!< box
-    static const QString Width = QObject::tr("Width"); //!< box
-    static const QString Radius1 = QObject::tr("Radius1"); //!< cone
-    static const QString Radius2 = QObject::tr("Radius2"); //!< cone
-    static const QString Position = QObject::tr("Position"); //!< blend
-    static const QString Distance = QObject::tr("Distance"); //!< chamfer, sketch
-    static const QString Angle = QObject::tr("Angle"); //!< draft
-    static const QString Offset = QObject::tr("Offset"); //!< datum plane
-    static const QString CSys = QObject::tr("CSys"); //!< feature with a coordinate system.
-    static const QString Diameter = QObject::tr("Diameter"); //!< sketch
-    static const QString Direction = QObject::tr("Direction"); //!< extrude.
-    static const QString Scale = QObject::tr("Scale"); //!< image plane.
-    static const QString Path = QObject::tr("Path"); //!< image plane.
-    static const QString Size = QObject::tr("Size"); //!< datums.
-    static const QString AutoSize = QObject::tr("AutoSize"); //!< datums.
+    static const QString Radius = QObject::tr("Radius");
+    static const QString Height = QObject::tr("Height");
+    static const QString Length = QObject::tr("Length");
+    static const QString Width = QObject::tr("Width");
+    static const QString Radius1 = QObject::tr("Radius1");
+    static const QString Radius2 = QObject::tr("Radius2");
+    static const QString Position = QObject::tr("Position");
+    static const QString Distance = QObject::tr("Distance");
+    static const QString Angle = QObject::tr("Angle");
+    static const QString Offset = QObject::tr("Offset");
+    static const QString CSys = QObject::tr("CSys");
+    static const QString Diameter = QObject::tr("Diameter");
+    static const QString Direction = QObject::tr("Direction");
+    static const QString Scale = QObject::tr("Scale");
+    static const QString Path = QObject::tr("Path");
+    static const QString Size = QObject::tr("Size");
+    static const QString AutoSize = QObject::tr("AutoSize");
+  }
+  
+  /*! Common tags for parameters not subjected to locale */
+  namespace Tags
+  {
+    inline constexpr std::string_view Radius = "Radius"; //!< cylinder, sphere
+    inline constexpr std::string_view Height = "Height"; //!< cylinder, box, cone
+    inline constexpr std::string_view Length = "Length"; //!< box
+    inline constexpr std::string_view Width = "Width"; //!< box
+    inline constexpr std::string_view Position = "Position"; //!< blend
+    inline constexpr std::string_view Distance = "Distance"; //!< chamfer, sketch
+    inline constexpr std::string_view Angle = "Angle"; //!< draft
+    inline constexpr std::string_view Offset = "Offset"; //!< datum plane
+    inline constexpr std::string_view CSys = "CSys"; //!< feature with a coordinate system.
+    inline constexpr std::string_view Diameter = "Diameter"; //!< sketch
+    inline constexpr std::string_view Direction = "Direction"; //!< extrude.
+    inline constexpr std::string_view Scale = "Scale"; //!< image plane.
+    inline constexpr std::string_view Path = "Path"; //!< image plane.
+    inline constexpr std::string_view Size = "Size"; //!< datums.
+    inline constexpr std::string_view AutoSize = "AutoSize"; //!< datums.
   }
   
   /*! Descriptor for path parameters.*/
@@ -114,8 +136,9 @@ namespace prm
   struct Observer
   {
     Observer();
-    Observer(Handler);
-    Observer(Handler, Handler);
+    Observer(Handler); //first is value handler
+    Observer(Handler, Handler); //second is constant handler
+    Observer(Handler, Handler, Handler); //third is active handler
     ~Observer();
     Observer(const Observer&) = delete; //no copy
     Observer& operator=(const Observer&) = delete; //no copy
@@ -130,6 +153,7 @@ namespace prm
     
     Handler valueHandler;
     Handler constantHandler;
+    Handler activeHandler;
   };
   
   /*! @struct ObserverBlocker
@@ -182,6 +206,7 @@ namespace prm
       */
     void addValueHandler(Handler);
     void addConstantHandler(Handler);
+    void addActiveHandler(Handler);
     //@}
     
     //@{
@@ -195,6 +220,7 @@ namespace prm
     
     void sendValueChanged() const;
     void sendConstantChanged() const;
+    void sendActiveChanged() const;
     
   private:
     struct Stow; //!< forward declare for private data
@@ -222,12 +248,14 @@ namespace prm
   public:
     Parameter() = delete;
     Parameter(const prj::srl::spt::Parameter&);
-    Parameter(const QString &nameIn, double valueIn);
-    Parameter(const QString &nameIn, int valueIn);
-    Parameter(const QString &nameIn, bool valueIn);
-    Parameter(const QString &nameIn, const boost::filesystem::path &valueIn, PathType);
-    Parameter(const QString &nameIn, const osg::Vec3d &valueIn);
-    Parameter(const QString &nameIn, const osg::Matrixd &valueIn);
+    Parameter(const QString &nameIn, double valueIn, std::string_view = "");
+    Parameter(const QString &nameIn, int valueIn, std::string_view = "");
+    Parameter(const QString &nameIn, bool valueIn, std::string_view = "");
+    Parameter(const QString &nameIn, const boost::filesystem::path &valueIn, PathType, std::string_view = "");
+    Parameter(const QString &nameIn, const osg::Vec3d &valueIn, std::string_view = "");
+    Parameter(const QString &nameIn, const osg::Quat &valueIn, std::string_view = "");
+    Parameter(const QString &nameIn, const osg::Matrixd &valueIn, std::string_view = "");
+    Parameter(const QString &nameIn, const ftr::Picks &valueIn, std::string_view = "");
     Parameter(const Parameter&); //<! warning same Id
     Parameter(const Parameter&, const boost::uuids::uuid&);
     ~Parameter();
@@ -235,8 +263,14 @@ namespace prm
     
     const QString& getName() const {return name;}
     void setName(const QString &nameIn){name = nameIn;}
+    void setTag(std::string_view tagIn) {tag = tagIn;}
+    std::string_view getTag() const {return tag;}
     bool isConstant() const {return constant;} //!< true = not linked to forumla.
     void setConstant(bool constantIn);
+    bool isExpressionLinkable(){return expressionLinkable;} //!< if possible, not if it is linked.
+    void setExpressinLinkable(bool vIn){expressionLinkable = vIn;} //!< don't use on something already linked.
+    bool isActive(){return active;}
+    void setActive(bool);
     const boost::uuids::uuid& getId() const {return id;}
     const std::type_info& getValueType() const; //!< compare return by: "getValueType() == typeid(std::string)"
     std::string getValueTypeString() const;
@@ -298,6 +332,8 @@ namespace prm
     
     //@{
     //! osg::Quat support functions.
+    bool setValue(const osg::Quat&); //<! true = value was changed.
+    bool setValueQuiet(const osg::Quat&);
     explicit operator osg::Quat() const;
     //@}
     
@@ -308,11 +344,19 @@ namespace prm
     explicit operator osg::Matrixd() const;
     //@}
     
+    //@{
+    //! Pick support functions.
+    bool setValue(const ftr::Pick&); //<! true = value was changed.
+    bool setValue(const ftr::Picks&); //<! true = value was changed.
+    explicit operator ftr::Picks() const;
+    //@}
+    
     //! observations of parameter changes.
     //@{
     void connect(Observer&);
     void connectValue(Handler);
     void connectConstant(Handler);
+    void connectActive(Handler);
     //@}
     
     prj::srl::spt::Parameter serialOut() const; //serial rename
@@ -320,7 +364,10 @@ namespace prm
     
   private:
     bool constant = true;
+    bool expressionLinkable = true;
+    bool active = true;
     QString name;
+    std::string tag;
     std::unique_ptr<Stow> stow;
     boost::uuids::uuid id;
     Constraint constraint;

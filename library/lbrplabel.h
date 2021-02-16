@@ -28,7 +28,7 @@
 namespace osg{class AutoTransform;}
 namespace osgText{class Text;}
 
-namespace prm{class Parameter; class Observer;}
+namespace prm{class Parameter; struct Observer;}
 namespace prj{namespace srl{namespace spt{class PLabel;}}}
 
 namespace lbr
@@ -42,6 +42,7 @@ namespace lbr
     
     void valueHasChanged();
     void constantHasChanged();
+    void activeHasChanged();
     prm::Parameter* getParameter(){return parameter;}
     void setTextColor(const osg::Vec4&);
     void setTextColor(); //!< linked is green and constant is blue.

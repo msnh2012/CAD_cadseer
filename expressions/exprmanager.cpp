@@ -153,13 +153,11 @@ struct Manager::Stow
     }
     bool operator()(const osg::Quat&) const
     {
-      //parameters not supporting Quaternions at this time.
-      return false;
-      
-  //       expr::QuatVisitor eqv;
-  //       osg::Quat newValue = boost::apply_visitor(eqv, ev);
-  //       parameter->setValue(newValue);
-  //       return true;
+      expr::QuatVisitor eqv;
+      osg::Quat newValue = boost::apply_visitor(eqv, ev);
+      if (assign)
+        parameter->setValue(newValue);
+      return true;
     }
     bool operator()(const osg::Matrixd&) const
     {
@@ -169,6 +167,7 @@ struct Manager::Stow
         parameter->setValue(newValue);
       return true;
     }
+    bool operator()(const ftr::Picks&) const {assert(0); return false;}
   };
   
   //can't make parameter const. We can assign or test.

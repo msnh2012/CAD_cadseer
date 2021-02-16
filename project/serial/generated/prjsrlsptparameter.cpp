@@ -289,6 +289,24 @@ namespace prj
         this->aMatrixd_.set (std::move (x));
       }
 
+      const ParameterValue::APicksSequence& ParameterValue::
+      aPicks () const
+      {
+        return this->aPicks_;
+      }
+
+      ParameterValue::APicksSequence& ParameterValue::
+      aPicks ()
+      {
+        return this->aPicks_;
+      }
+
+      void ParameterValue::
+      aPicks (const APicksSequence& s)
+      {
+        this->aPicks_ = s;
+      }
+
 
       // Parameter
       // 
@@ -321,6 +339,36 @@ namespace prj
       name_default_value ()
       {
         return name_default_value_;
+      }
+
+      const Parameter::TagType& Parameter::
+      tag () const
+      {
+        return this->tag_.get ();
+      }
+
+      Parameter::TagType& Parameter::
+      tag ()
+      {
+        return this->tag_.get ();
+      }
+
+      void Parameter::
+      tag (const TagType& x)
+      {
+        this->tag_.set (x);
+      }
+
+      void Parameter::
+      tag (::std::unique_ptr< TagType > x)
+      {
+        this->tag_.set (std::move (x));
+      }
+
+      const Parameter::TagType& Parameter::
+      tag_default_value ()
+      {
+        return tag_default_value_;
       }
 
       const Parameter::ConstantType& Parameter::
@@ -425,7 +473,8 @@ namespace prj
         aPath_ (this),
         aVec3d_ (this),
         aQuat_ (this),
-        aMatrixd_ (this)
+        aMatrixd_ (this),
+        aPicks_ (this)
       {
       }
 
@@ -441,7 +490,8 @@ namespace prj
         aPath_ (x.aPath_, f, this),
         aVec3d_ (x.aVec3d_, f, this),
         aQuat_ (x.aQuat_, f, this),
-        aMatrixd_ (x.aMatrixd_, f, this)
+        aMatrixd_ (x.aMatrixd_, f, this),
+        aPicks_ (x.aPicks_, f, this)
       {
       }
 
@@ -457,7 +507,8 @@ namespace prj
         aPath_ (this),
         aVec3d_ (this),
         aQuat_ (this),
-        aMatrixd_ (this)
+        aMatrixd_ (this),
+        aPicks_ (this)
       {
         if ((f & ::xml_schema::Flags::base) == 0)
         {
@@ -579,6 +630,17 @@ namespace prj
             }
           }
 
+          // aPicks
+          //
+          if (n.name () == "aPicks" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< APicksType > r (
+              APicksTraits::create (i, f, this));
+
+            this->aPicks_.push_back (::std::move (r));
+            continue;
+          }
+
           break;
         }
       }
@@ -604,6 +666,7 @@ namespace prj
           this->aVec3d_ = x.aVec3d_;
           this->aQuat_ = x.aQuat_;
           this->aMatrixd_ = x.aMatrixd_;
+          this->aPicks_ = x.aPicks_;
         }
 
         return *this;
@@ -620,16 +683,21 @@ namespace prj
       const Parameter::NameType Parameter::name_default_value_ (
         "Name");
 
+      const Parameter::TagType Parameter::tag_default_value_ (
+        "");
+
       const Parameter::IdType Parameter::id_default_value_ (
         "00000000-0000-0000-0000-000000000000");
 
       Parameter::
       Parameter (const NameType& name,
+                 const TagType& tag,
                  const ConstantType& constant,
                  const IdType& id,
                  const PValueType& pValue)
       : ::xml_schema::Type (),
         name_ (name, this),
+        tag_ (tag, this),
         constant_ (constant, this),
         id_ (id, this),
         pValue_ (pValue, this)
@@ -638,11 +706,13 @@ namespace prj
 
       Parameter::
       Parameter (const NameType& name,
+                 const TagType& tag,
                  const ConstantType& constant,
                  const IdType& id,
                  ::std::unique_ptr< PValueType > pValue)
       : ::xml_schema::Type (),
         name_ (name, this),
+        tag_ (tag, this),
         constant_ (constant, this),
         id_ (id, this),
         pValue_ (std::move (pValue), this)
@@ -655,6 +725,7 @@ namespace prj
                  ::xml_schema::Container* c)
       : ::xml_schema::Type (x, f, c),
         name_ (x.name_, f, this),
+        tag_ (x.tag_, f, this),
         constant_ (x.constant_, f, this),
         id_ (x.id_, f, this),
         pValue_ (x.pValue_, f, this)
@@ -667,6 +738,7 @@ namespace prj
                  ::xml_schema::Container* c)
       : ::xml_schema::Type (e, f | ::xml_schema::Flags::base, c),
         name_ (this),
+        tag_ (this),
         constant_ (this),
         id_ (this),
         pValue_ (this)
@@ -698,6 +770,20 @@ namespace prj
             if (!name_.present ())
             {
               this->name_.set (::std::move (r));
+              continue;
+            }
+          }
+
+          // tag
+          //
+          if (n.name () == "tag" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< TagType > r (
+              TagTraits::create (i, f, this));
+
+            if (!tag_.present ())
+            {
+              this->tag_.set (::std::move (r));
               continue;
             }
           }
@@ -751,6 +837,13 @@ namespace prj
             "");
         }
 
+        if (!tag_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "tag",
+            "");
+        }
+
         if (!constant_.present ())
         {
           throw ::xsd::cxx::tree::expected_element< char > (
@@ -787,6 +880,7 @@ namespace prj
         {
           static_cast< ::xml_schema::Type& > (*this) = x;
           this->name_ = x.name_;
+          this->tag_ = x.tag_;
           this->constant_ = x.constant_;
           this->id_ = x.id_;
           this->pValue_ = x.pValue_;
@@ -927,6 +1021,20 @@ namespace prj
 
           s << *i.aMatrixd ();
         }
+
+        // aPicks
+        //
+        for (ParameterValue::APicksConstIterator
+             b (i.aPicks ().begin ()), n (i.aPicks ().end ());
+             b != n; ++b)
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "aPicks",
+              e));
+
+          s << *b;
+        }
       }
 
       void
@@ -943,6 +1051,17 @@ namespace prj
               e));
 
           s << i.name ();
+        }
+
+        // tag
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "tag",
+              e));
+
+          s << i.tag ();
         }
 
         // constant

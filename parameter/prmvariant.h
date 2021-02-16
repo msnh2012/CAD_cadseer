@@ -30,6 +30,8 @@
 #include <osg/Quat>
 #include <osg/Matrixd>
 
+#include "feature/ftrpick.h"
+
 namespace prm
 {
   typedef boost::variant
@@ -41,7 +43,8 @@ namespace prm
     boost::filesystem::path,
     osg::Vec3d,
     osg::Quat,
-    osg::Matrixd
+    osg::Matrixd,
+    ftr::Picks
   > Variant;
   
   struct Stow
@@ -53,7 +56,9 @@ namespace prm
     Stow(bool i) : variant(i){}
     Stow(const boost::filesystem::path &i) : variant(i){}
     Stow(const osg::Vec3d &i) : variant(i){}
+    Stow(const osg::Quat &i) : variant(i){}
     Stow(const osg::Matrixd &i) : variant(i){}
+    Stow(const ftr::Picks &i) : variant(i){}
     Stow(const Variant &i) : variant(i){}
   };
 }

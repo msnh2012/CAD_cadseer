@@ -581,6 +581,7 @@ namespace cmv
     QWidget* operator()(const osg::Vec3d&) const {return buildVec3d();}
     QWidget* operator()(const osg::Quat&) const {return buildQuat();}
     QWidget* operator()(const osg::Matrixd&) const {return buildMatrix();}
+    QWidget* operator()(const ftr::Picks&) const {return new QWidget(parent);} //TODO
     
   private:
     QWidget *parent;

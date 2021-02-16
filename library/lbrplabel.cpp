@@ -87,6 +87,10 @@ public:
   {
     return "some matrix";
   }
+  std::string operator()(const ftr::Picks&) const //TODO
+  {
+    return "some picks";
+  }
   
   const prm::Parameter &parameter;
 };
@@ -104,7 +108,12 @@ PLabel::PLabel(const PLabel& copy, const osg::CopyOp& copyOp) : osg::MatrixTrans
 PLabel::PLabel(prm::Parameter* parameterIn)
 : osg::MatrixTransform()
 , parameter(parameterIn)
-, pObserver(new prm::Observer(std::bind(&PLabel::valueHasChanged, this), std::bind(&PLabel::constantHasChanged, this)))
+, pObserver
+(
+  new prm::Observer(std::bind(&PLabel::valueHasChanged, this)
+  , std::bind(&PLabel::constantHasChanged, this)
+  , std::bind(&PLabel::activeHasChanged, this))
+)
 {
   getOrCreateStateSet()->setMode(GL_LIGHTING, osg::StateAttribute::OFF);
   build();
@@ -173,6 +182,15 @@ void PLabel::constantHasChanged()
   setTextColor();
 }
 
+void PLabel::activeHasChanged()
+{
+  assert(parameter);
+  if (parameter->isActive())
+    autoTransform->addChild(text.get());
+  else
+    autoTransform->removeChild(text.get());
+}
+
 prj::srl::spt::PLabel PLabel::serialOut() const
 {
   const osg::Matrixd &m = this->getMatrix();
@@ -204,6 +222,7 @@ void PLabel::serialIn(const prj::srl::spt::PLabel &sIn)
   
   constantHasChanged();
   valueHasChanged();
+  activeHasChanged();
   
   //label color maybe overridden by feature update.
   const auto &cIn = sIn.color();

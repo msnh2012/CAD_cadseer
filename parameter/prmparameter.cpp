@@ -21,6 +21,7 @@
 #include <limits>
 
 #include <boost/signals2.hpp>
+#include <boost/variant/get.hpp>
 
 #include <QObject>
 
@@ -262,6 +263,7 @@ namespace prm
   {
     boost::signals2::signal<void ()> valueSignal;
     boost::signals2::signal<void ()> constantSignal;
+    boost::signals2::signal<void ()> activeSignal;
   };
 }
 
@@ -278,6 +280,13 @@ Observer::Observer(Handler vhIn, Handler chIn)
 : stow(std::make_unique<Stow>())
 , valueHandler(vhIn)
 , constantHandler(chIn)
+{}
+
+Observer::Observer(Handler vhIn, Handler chIn, Handler ahIn)
+: stow(std::make_unique<Stow>())
+, valueHandler(vhIn)
+, constantHandler(chIn)
+, activeHandler(ahIn)
 {}
 
 Observer::~Observer() = default;
@@ -314,12 +323,19 @@ void Subject::addConstantHandler(Handler chIn)
   stow->constantSignal.connect(chIn);
 }
 
+void Subject::addActiveHandler(Handler ahIn)
+{
+  stow->activeSignal.connect(ahIn);
+}
+
 void Subject::connect(Observer &oIn)
 {
   if (oIn.valueHandler)
     oIn.stow->connections.push_back(stow->valueSignal.connect(oIn.valueHandler));
   if (oIn.constantHandler)
     oIn.stow->connections.push_back(stow->constantSignal.connect(oIn.constantHandler));
+  if (oIn.activeHandler)
+    oIn.stow->connections.push_back(stow->activeSignal.connect(oIn.activeHandler));
 }
 
 void Subject::sendValueChanged() const
@@ -330,6 +346,11 @@ void Subject::sendValueChanged() const
 void Subject::sendConstantChanged() const
 {
   stow->constantSignal();
+}
+
+void Subject::sendActiveChanged() const
+{
+  stow->activeSignal();
 }
 
 class DoubleVisitor : public boost::static_visitor<double>
@@ -343,6 +364,7 @@ public:
   double operator()(const osg::Vec3d&) const {assert(0); return 0.0;}
   double operator()(const osg::Quat&) const {assert(0); return 0.0;}
   double operator()(const osg::Matrixd&) const {assert(0); return 0.0;}
+  double operator()(const ftr::Picks&) const {assert(0); return 0.0;}
 };
 
 class IntVisitor : public boost::static_visitor<int>
@@ -356,6 +378,7 @@ public:
   int operator()(const osg::Vec3d&) const {assert(0); return 0;}
   int operator()(const osg::Quat&) const {assert(0); return 0;}
   int operator()(const osg::Matrixd&) const {assert(0); return 0;}
+  int operator()(const ftr::Picks&) const {assert(0); return 0;}
 };
 
 class BoolVisitor : public boost::static_visitor<bool>
@@ -369,6 +392,7 @@ public:
   bool operator()(const osg::Vec3d&) const {assert(0); return false;}
   bool operator()(const osg::Quat&) const {assert(0); return false;}
   bool operator()(const osg::Matrixd&) const {assert(0); return false;}
+  bool operator()(const ftr::Picks&) const {assert(0); return false;}
 };
 
 class QStringVisitor : public boost::static_visitor<QString>
@@ -382,6 +406,7 @@ public:
   QString operator()(const osg::Vec3d &vIn) const {return gu::osgVectorOut(vIn);}
   QString operator()(const osg::Quat &qIn) const {return gu::osgQuatOut(qIn);}
   QString operator()(const osg::Matrixd &mIn) const {return gu::osgMatrixOut(mIn);}
+  QString operator()(const ftr::Picks &psIn) const {return QObject::tr("Picks");} //TODO
 };
 
 class PathVisitor : public boost::static_visitor<path>
@@ -395,6 +420,7 @@ public:
   path operator()(const osg::Vec3d&) const {assert(0); return path();}
   path operator()(const osg::Quat&) const {assert(0); return path();}
   path operator()(const osg::Matrixd&) const {assert(0); return path();}
+  path operator()(const ftr::Picks&) const {assert(0); return path();}
 };
 
 class Vec3dVisitor : public boost::static_visitor<osg::Vec3d>
@@ -408,6 +434,21 @@ public:
   osg::Vec3d operator()(const osg::Vec3d &v) const {return v;}
   osg::Vec3d operator()(const osg::Quat&) const {assert(0); return osg::Vec3d();}
   osg::Vec3d operator()(const osg::Matrixd&) const {assert(0); return osg::Vec3d();}
+  osg::Vec3d operator()(const ftr::Picks&) const {assert(0); return osg::Vec3d();}
+};
+
+class QuatVisitor : public boost::static_visitor<osg::Quat>
+{
+public:
+  osg::Quat operator()(double) const {assert(0); return osg::Quat();}
+  osg::Quat operator()(int) const {assert(0); return osg::Quat();}
+  osg::Quat operator()(bool) const {assert(0); return osg::Quat();}
+  osg::Quat operator()(const std::string&) const {assert(0); return osg::Quat();}
+  osg::Quat operator()(const boost::filesystem::path&) const {assert(0); return osg::Quat();}
+  osg::Quat operator()(const osg::Vec3d&) const {return osg::Quat();}
+  osg::Quat operator()(const osg::Quat &q) const {return q;}
+  osg::Quat operator()(const osg::Matrixd&) const {assert(0); return osg::Quat();}
+  osg::Quat operator()(const ftr::Picks&) const {assert(0); return osg::Quat();}
 };
 
 class MatrixdVisitor : public boost::static_visitor<osg::Matrixd>
@@ -421,6 +462,21 @@ public:
   osg::Matrixd operator()(const osg::Vec3d&) const {assert(0); return osg::Matrixd::identity();}
   osg::Matrixd operator()(const osg::Quat&) const {assert(0); return osg::Matrixd::identity();}
   osg::Matrixd operator()(const osg::Matrixd &mIn) const {return mIn;}
+  osg::Matrixd operator()(const ftr::Picks&) const {assert(0); return osg::Matrixd::identity();}
+};
+
+class PicksVisitor : public boost::static_visitor<ftr::Picks>
+{
+public:
+  ftr::Picks operator()(double) const {assert(0); return ftr::Picks();}
+  ftr::Picks operator()(int) const {assert(0); return ftr::Picks();}
+  ftr::Picks operator()(bool) const {assert(0); return ftr::Picks();}
+  ftr::Picks operator()(const std::string&) const {assert(0); return ftr::Picks();}
+  ftr::Picks operator()(const boost::filesystem::path&) const {assert(0); return ftr::Picks();}
+  ftr::Picks operator()(const osg::Vec3d&) const {assert(0); return ftr::Picks();}
+  ftr::Picks operator()(const osg::Quat&) const {assert(0); return ftr::Picks();}
+  ftr::Picks operator()(const osg::Matrixd&) const {assert(0); return ftr::Picks();}
+  ftr::Picks operator()(const ftr::Picks &ps) const {return ps;}
 };
 
 class TypeStringVisitor : public boost::static_visitor<std::string>
@@ -434,6 +490,7 @@ public:
   std::string operator()(const osg::Vec3d&) const {return "Vec3d";}
   std::string operator()(const osg::Quat&) const {return "Quat";}
   std::string operator()(const osg::Matrixd&) const {return "Matrixd";}
+  std::string operator()(const ftr::Picks&) const {return "Picks";}
 };
 
 class SrlVisitor : public boost::static_visitor<prj::srl::spt::ParameterValue>
@@ -494,6 +551,13 @@ public:
     );
     return out;
   }
+  SPV operator()(const ftr::Picks &ps) const
+  {
+    SPV out;
+    for (const auto &p : ps)
+      out.aPicks().push_back(p.serialOut());
+    return out;
+  }
 };
 
 /*! @brief construct parameter from serial object
@@ -502,6 +566,7 @@ public:
  */
 Parameter::Parameter(const prj::srl::spt::Parameter &pIn)
 : name(QString())
+, tag("")
 , stow(new Stow(1.0))
 , id(gu::createNilId())
 , constraint()
@@ -509,32 +574,36 @@ Parameter::Parameter(const prj::srl::spt::Parameter &pIn)
   serialIn(pIn);
 }
 
-Parameter::Parameter(const QString& nameIn, double valueIn) :
+Parameter::Parameter(const QString& nameIn, double valueIn, std::string_view tagIn) :
   name(nameIn),
+  tag(tagIn),
   stow(new Stow(valueIn)),
   id(gu::createRandomId()),
   constraint(Constraint::buildAll())
 {
 }
 
-Parameter::Parameter(const QString& nameIn, int valueIn) :
+Parameter::Parameter(const QString& nameIn, int valueIn, std::string_view tagIn) :
   name(nameIn),
+  tag(tagIn),
   stow(new Stow(valueIn)),
   id(gu::createRandomId()),
   constraint(Constraint::buildAll())
 {
 }
 
-Parameter::Parameter(const QString& nameIn, bool valueIn) :
+Parameter::Parameter(const QString& nameIn, bool valueIn, std::string_view tagIn) :
   name(nameIn),
+  tag(tagIn),
   stow(new Stow(valueIn)),
   id(gu::createRandomId()),
   constraint()
 {
 }
 
-Parameter::Parameter(const QString &nameIn, const boost::filesystem::path &valueIn, PathType ptIn) :
+Parameter::Parameter(const QString &nameIn, const boost::filesystem::path &valueIn, PathType ptIn, std::string_view tagIn) :
   name(nameIn),
+  tag(tagIn),
   stow(new Stow(valueIn)),
   id(gu::createRandomId()),
   constraint(),
@@ -542,16 +611,36 @@ Parameter::Parameter(const QString &nameIn, const boost::filesystem::path &value
 {
 }
 
-Parameter::Parameter(const QString &nameIn, const osg::Vec3d &valueIn) :
+Parameter::Parameter(const QString &nameIn, const osg::Vec3d &valueIn, std::string_view tagIn) :
   name(nameIn),
+  tag(tagIn),
   stow(new Stow(valueIn)),
   id(gu::createRandomId()),
   constraint()
 {
 }
 
-Parameter::Parameter(const QString &nameIn, const osg::Matrixd &valueIn) :
+Parameter::Parameter(const QString &nameIn, const osg::Quat &valueIn, std::string_view tagIn) :
   name(nameIn),
+  tag(tagIn),
+  stow(new Stow(valueIn)),
+  id(gu::createRandomId()),
+  constraint()
+{
+}
+
+Parameter::Parameter(const QString &nameIn, const osg::Matrixd &valueIn, std::string_view tagIn) :
+  name(nameIn),
+  tag(tagIn),
+  stow(new Stow(valueIn)),
+  id(gu::createRandomId()),
+  constraint()
+{
+}
+
+Parameter::Parameter(const QString &nameIn, const ftr::Picks &valueIn, std::string_view tagIn) :
+  name(nameIn),
+  tag(tagIn),
   stow(new Stow(valueIn)),
   id(gu::createRandomId()),
   constraint()
@@ -567,6 +656,7 @@ Parameter::Parameter(const Parameter &other, const boost::uuids::uuid &idIn) :
 Parameter::Parameter(const Parameter &other) :
   constant(other.constant),
   name(other.name),
+  tag(other.tag),
   stow(new Stow(other.stow->variant)),
   id(other.id),
   constraint(other.constraint),
@@ -581,6 +671,7 @@ Parameter& Parameter::operator=(const Parameter &other)
 {
   constant = other.constant;
   name = other.name;
+  tag = other.tag;
   stow = std::make_unique<Stow>(other.stow->variant);
   id = other.id;
   constraint = other.constraint;
@@ -595,6 +686,14 @@ void Parameter::setConstant(bool constantIn)
     return;
   constant = constantIn;
   subject.sendConstantChanged();
+}
+
+void Parameter::setActive(bool stateIn)
+{
+  if (stateIn == active)
+    return;
+  active = stateIn;
+  subject.sendActiveChanged();
 }
 
 const std::type_info& Parameter::getValueType() const
@@ -795,6 +894,31 @@ Parameter::operator osg::Vec3d() const
   return boost::apply_visitor(Vec3dVisitor(), stow->variant);
 }
 
+bool Parameter::setValue(const osg::Quat &qIn)
+{
+  if (setValueQuiet(qIn))
+  {
+    subject.sendValueChanged();
+    return true;
+  }
+  
+  return false;
+}
+
+bool Parameter::setValueQuiet(const osg::Quat &qIn)
+{
+  if (boost::apply_visitor(QuatVisitor(), stow->variant) == qIn)
+    return false;
+  
+  stow->variant = qIn;
+  return true;
+}
+
+Parameter::operator osg::Quat() const
+{
+  return boost::apply_visitor(QuatVisitor(), stow->variant);
+}
+
 bool Parameter::setValue(const osg::Matrixd &mIn)
 {
   if (setValueQuiet(mIn))
@@ -815,6 +939,29 @@ bool Parameter::setValueQuiet(const osg::Matrixd &mIn)
   return true;
 }
 
+bool Parameter::setValue(const ftr::Pick &pIn)
+{
+  auto cp = boost::apply_visitor(PicksVisitor(), stow->variant);
+  ftr::Picks np(1, pIn);
+  if (cp == np)
+    return false;
+  
+  stow->variant = np;
+  subject.sendValueChanged();
+  return true;
+}
+
+bool Parameter::setValue(const ftr::Picks &psIn)
+{
+  auto cp = boost::apply_visitor(PicksVisitor(), stow->variant);
+  if (cp == psIn)
+    return false;
+  
+  stow->variant = psIn;
+  subject.sendValueChanged();
+  return true;
+}
+
 void Parameter::connect(Observer &o)
 {
   subject.connect(o);
@@ -827,6 +974,11 @@ void Parameter::connectValue(Handler h)
 void Parameter::connectConstant(Handler h)
 {
   subject.addConstantHandler(h);
+}
+
+void Parameter::connectActive(Handler h)
+{
+  subject.addActiveHandler(h);
 }
 
 Parameter::operator osg::Matrixd() const
@@ -842,15 +994,13 @@ Parameter::operator QString() const
   return boost::apply_visitor(QStringVisitor(), stow->variant);
 }
 
-//todo
-Parameter::operator osg::Quat() const{return osg::Quat();}
-
  //serial rename
 prj::srl::spt::Parameter Parameter::serialOut() const
 {
   return prj::srl::spt::Parameter
   (
     name.toStdString()
+    , tag
     , constant
     , gu::idToString(id)
     , boost::apply_visitor(SrlVisitor(), stow->variant)
@@ -861,6 +1011,7 @@ prj::srl::spt::Parameter Parameter::serialOut() const
 void Parameter::serialIn(const prj::srl::spt::Parameter &spIn)
 {
   name = QString::fromStdString(spIn.name());
+  tag = spIn.tag();
   constant = spIn.constant();
   id = gu::stringToId(spIn.id());
   
@@ -889,5 +1040,12 @@ void Parameter::serialIn(const prj::srl::spt::Parameter &spIn)
       mIn.i2j0(), mIn.i2j1(), mIn.i2j2(), mIn.i2j3(),
       mIn.i3j0(), mIn.i3j1(), mIn.i3j2(), mIn.i3j3()
     );
+  }
+  else if (!vIn.aPicks().empty())
+  {
+    stow->variant = ftr::Picks();
+    auto &vr = boost::get<ftr::Picks>(stow->variant);
+    for (const auto &pIn : vIn.aPicks())
+      vr.emplace_back(pIn);
   }
 }

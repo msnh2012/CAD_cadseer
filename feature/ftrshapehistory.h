@@ -22,6 +22,8 @@
 
 #include <memory>
 
+namespace boost{namespace uuids{struct uuid;}}
+
 namespace prj{namespace srl{namespace spt{class ShapeHistory;}}}
 
 namespace ftr

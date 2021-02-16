@@ -5,6 +5,7 @@
   targetNamespace="http://www.cadseer.com/prj/srl/spt"
 >
   <xs:include schemaLocation="prjsrlsptvectormath.xsd"/>
+  <xs:include schemaLocation="prjsrlsptpick.xsd"/>
   
   <xs:complexType name="ParameterValue">
     <xs:choice>
@@ -16,11 +17,13 @@
       <xs:element name="aVec3d" type="spt:Vec3d"/>
       <xs:element name="aQuat" type="spt:Quat"/>
       <xs:element name="aMatrixd" type="spt:Matrixd"/>
+      <xs:element name="aPicks" type="spt:Pick" minOccurs="0" maxOccurs="unbounded"/>
     </xs:choice>
   </xs:complexType>  
   <xs:complexType name="Parameter">
     <xs:sequence>
       <xs:element name="name" type="xs:string" default="Name"/>
+      <xs:element name="tag" type="xs:string" default=""/>
       <xs:element name="constant" type="xs:boolean" default="true"/>
       <xs:element name="id" type="xs:string" default="00000000-0000-0000-0000-000000000000"/>
       <xs:element name="pValue" type="spt:ParameterValue"/>

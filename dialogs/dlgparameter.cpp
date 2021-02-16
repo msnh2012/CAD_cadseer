@@ -67,6 +67,7 @@ public:
   QWidget* operator()(const osg::Vec3d&) const {return buildVec3d();}
   QWidget* operator()(const osg::Quat&) const {return buildQuat();}
   QWidget* operator()(const osg::Matrixd&) const {return buildMatrix();}
+  QWidget* operator()(const ftr::Picks&) const {return new QWidget(dialog);} //TODO
   
 private:
   Parameter *dialog;
@@ -254,6 +255,7 @@ public:
   void operator()(const osg::Vec3d&) const {dialog->valueHasChangedVector();}
   void operator()(const osg::Quat&) const {}
   void operator()(const osg::Matrixd&) const {}
+  void operator()(const ftr::Picks&) const {}
 private:
   Parameter *dialog;
 };
@@ -272,6 +274,7 @@ public:
   void operator()(const osg::Vec3d&) const {}
   void operator()(const osg::Quat&) const {}
   void operator()(const osg::Matrixd&) const {}
+  void operator()(const ftr::Picks&) const {}
 private:
   Parameter *dialog;
 };

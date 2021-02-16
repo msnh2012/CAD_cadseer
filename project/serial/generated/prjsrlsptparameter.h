@@ -92,6 +92,8 @@ namespace prj
 
 #include "prjsrlsptvectormath.h"
 
+#include "prjsrlsptpick.h"
+
 namespace prj
 {
   namespace srl
@@ -269,6 +271,23 @@ namespace prj
         void
         aMatrixd (::std::unique_ptr< AMatrixdType > p);
 
+        // aPicks
+        //
+        typedef ::prj::srl::spt::Pick APicksType;
+        typedef ::xsd::cxx::tree::sequence< APicksType > APicksSequence;
+        typedef APicksSequence::iterator APicksIterator;
+        typedef APicksSequence::const_iterator APicksConstIterator;
+        typedef ::xsd::cxx::tree::traits< APicksType, char > APicksTraits;
+
+        const APicksSequence&
+        aPicks () const;
+
+        APicksSequence&
+        aPicks ();
+
+        void
+        aPicks (const APicksSequence& s);
+
         // Constructors.
         //
         ParameterValue ();
@@ -307,6 +326,7 @@ namespace prj
         AVec3dOptional aVec3d_;
         AQuatOptional aQuat_;
         AMatrixdOptional aMatrixd_;
+        APicksSequence aPicks_;
       };
 
       class Parameter: public ::xml_schema::Type
@@ -331,6 +351,26 @@ namespace prj
 
         static const NameType&
         name_default_value ();
+
+        // tag
+        //
+        typedef ::xml_schema::String TagType;
+        typedef ::xsd::cxx::tree::traits< TagType, char > TagTraits;
+
+        const TagType&
+        tag () const;
+
+        TagType&
+        tag ();
+
+        void
+        tag (const TagType& x);
+
+        void
+        tag (::std::unique_ptr< TagType > p);
+
+        static const TagType&
+        tag_default_value ();
 
         // constant
         //
@@ -389,11 +429,13 @@ namespace prj
         // Constructors.
         //
         Parameter (const NameType&,
+                   const TagType&,
                    const ConstantType&,
                    const IdType&,
                    const PValueType&);
 
         Parameter (const NameType&,
+                   const TagType&,
                    const ConstantType&,
                    const IdType&,
                    ::std::unique_ptr< PValueType >);
@@ -426,6 +468,8 @@ namespace prj
         protected:
         ::xsd::cxx::tree::one< NameType > name_;
         static const NameType name_default_value_;
+        ::xsd::cxx::tree::one< TagType > tag_;
+        static const TagType tag_default_value_;
         ::xsd::cxx::tree::one< ConstantType > constant_;
         ::xsd::cxx::tree::one< IdType > id_;
         static const IdType id_default_value_;

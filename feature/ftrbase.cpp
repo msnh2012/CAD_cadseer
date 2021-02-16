@@ -43,6 +43,7 @@
 #include "tools/idtools.h"
 #include "tools/infotools.h"
 #include "tools/occtools.h"
+#include "tools/tlsstring.h"
 #include "application/appapplication.h" //need project directory for viz
 #include "project/prjproject.h" //need project directory for viz
 #include "preferences/preferencesXML.h"
@@ -72,7 +73,7 @@ std::size_t Base::nextConstructionIndex = 0;
 class InfoVisitor : public boost::static_visitor<QString>
 {
 public:
-  QString operator()(double d) const {return QString::number(d, 'f', 12);}
+  QString operator()(double d) const {return QString::fromStdString(tls::prettyDouble(d));}
   QString operator()(int i) const {return QString::number(i);}
   QString operator()(bool b) const {return (b) ? (QObject::tr("True")) : (QObject::tr("False"));}
   QString operator()(const std::string &s) const {return QString::fromStdString(s);}
@@ -80,6 +81,7 @@ public:
   QString operator()(const osg::Vec3d &vIn) const {return gu::osgVectorOut(vIn);}
   QString operator()(const osg::Quat &qIn) const {return gu::osgQuatOut(qIn);}
   QString operator()(const osg::Matrixd &mIn) const {return gu::osgMatrixOut(mIn);}
+  QString operator()(const Picks&) const {return QObject::tr("Picks");} //TODO
 };
 
 Base::Base()
