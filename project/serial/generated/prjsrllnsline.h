@@ -175,15 +175,59 @@ namespace prj
         static const LineIdType&
         lineId_default_value ();
 
+        // v0Id
+        //
+        typedef ::xml_schema::String V0IdType;
+        typedef ::xsd::cxx::tree::traits< V0IdType, char > V0IdTraits;
+
+        const V0IdType&
+        v0Id () const;
+
+        V0IdType&
+        v0Id ();
+
+        void
+        v0Id (const V0IdType& x);
+
+        void
+        v0Id (::std::unique_ptr< V0IdType > p);
+
+        static const V0IdType&
+        v0Id_default_value ();
+
+        // v1Id
+        //
+        typedef ::xml_schema::String V1IdType;
+        typedef ::xsd::cxx::tree::traits< V1IdType, char > V1IdTraits;
+
+        const V1IdType&
+        v1Id () const;
+
+        V1IdType&
+        v1Id ();
+
+        void
+        v1Id (const V1IdType& x);
+
+        void
+        v1Id (::std::unique_ptr< V1IdType > p);
+
+        static const V1IdType&
+        v1Id_default_value ();
+
         // Constructors.
         //
         Line (const BaseType&,
               const SeerShapeType&,
-              const LineIdType&);
+              const LineIdType&,
+              const V0IdType&,
+              const V1IdType&);
 
         Line (::std::unique_ptr< BaseType >,
               ::std::unique_ptr< SeerShapeType >,
-              const LineIdType&);
+              const LineIdType&,
+              const V0IdType&,
+              const V1IdType&);
 
         Line (const ::xercesc::DOMElement& e,
               ::xml_schema::Flags f = 0,
@@ -216,6 +260,10 @@ namespace prj
         PicksSequence picks_;
         ::xsd::cxx::tree::one< LineIdType > lineId_;
         static const LineIdType lineId_default_value_;
+        ::xsd::cxx::tree::one< V0IdType > v0Id_;
+        static const V0IdType v0Id_default_value_;
+        ::xsd::cxx::tree::one< V1IdType > v1Id_;
+        static const V1IdType v1Id_default_value_;
       };
     }
   }

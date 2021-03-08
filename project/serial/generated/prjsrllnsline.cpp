@@ -144,6 +144,66 @@ namespace prj
       {
         return lineId_default_value_;
       }
+
+      const Line::V0IdType& Line::
+      v0Id () const
+      {
+        return this->v0Id_.get ();
+      }
+
+      Line::V0IdType& Line::
+      v0Id ()
+      {
+        return this->v0Id_.get ();
+      }
+
+      void Line::
+      v0Id (const V0IdType& x)
+      {
+        this->v0Id_.set (x);
+      }
+
+      void Line::
+      v0Id (::std::unique_ptr< V0IdType > x)
+      {
+        this->v0Id_.set (std::move (x));
+      }
+
+      const Line::V0IdType& Line::
+      v0Id_default_value ()
+      {
+        return v0Id_default_value_;
+      }
+
+      const Line::V1IdType& Line::
+      v1Id () const
+      {
+        return this->v1Id_.get ();
+      }
+
+      Line::V1IdType& Line::
+      v1Id ()
+      {
+        return this->v1Id_.get ();
+      }
+
+      void Line::
+      v1Id (const V1IdType& x)
+      {
+        this->v1Id_.set (x);
+      }
+
+      void Line::
+      v1Id (::std::unique_ptr< V1IdType > x)
+      {
+        this->v1Id_.set (std::move (x));
+      }
+
+      const Line::V1IdType& Line::
+      v1Id_default_value ()
+      {
+        return v1Id_default_value_;
+      }
     }
   }
 }
@@ -162,27 +222,41 @@ namespace prj
       const Line::LineIdType Line::lineId_default_value_ (
         "00000000-0000-0000-0000-000000000000");
 
+      const Line::V0IdType Line::v0Id_default_value_ (
+        "00000000-0000-0000-0000-000000000000");
+
+      const Line::V1IdType Line::v1Id_default_value_ (
+        "00000000-0000-0000-0000-000000000000");
+
       Line::
       Line (const BaseType& base,
             const SeerShapeType& seerShape,
-            const LineIdType& lineId)
+            const LineIdType& lineId,
+            const V0IdType& v0Id,
+            const V1IdType& v1Id)
       : ::xml_schema::Type (),
         base_ (base, this),
         seerShape_ (seerShape, this),
         picks_ (this),
-        lineId_ (lineId, this)
+        lineId_ (lineId, this),
+        v0Id_ (v0Id, this),
+        v1Id_ (v1Id, this)
       {
       }
 
       Line::
       Line (::std::unique_ptr< BaseType > base,
             ::std::unique_ptr< SeerShapeType > seerShape,
-            const LineIdType& lineId)
+            const LineIdType& lineId,
+            const V0IdType& v0Id,
+            const V1IdType& v1Id)
       : ::xml_schema::Type (),
         base_ (std::move (base), this),
         seerShape_ (std::move (seerShape), this),
         picks_ (this),
-        lineId_ (lineId, this)
+        lineId_ (lineId, this),
+        v0Id_ (v0Id, this),
+        v1Id_ (v1Id, this)
       {
       }
 
@@ -194,7 +268,9 @@ namespace prj
         base_ (x.base_, f, this),
         seerShape_ (x.seerShape_, f, this),
         picks_ (x.picks_, f, this),
-        lineId_ (x.lineId_, f, this)
+        lineId_ (x.lineId_, f, this),
+        v0Id_ (x.v0Id_, f, this),
+        v1Id_ (x.v1Id_, f, this)
       {
       }
 
@@ -206,7 +282,9 @@ namespace prj
         base_ (this),
         seerShape_ (this),
         picks_ (this),
-        lineId_ (this)
+        lineId_ (this),
+        v0Id_ (this),
+        v1Id_ (this)
       {
         if ((f & ::xml_schema::Flags::base) == 0)
         {
@@ -278,6 +356,34 @@ namespace prj
             }
           }
 
+          // v0Id
+          //
+          if (n.name () == "v0Id" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< V0IdType > r (
+              V0IdTraits::create (i, f, this));
+
+            if (!v0Id_.present ())
+            {
+              this->v0Id_.set (::std::move (r));
+              continue;
+            }
+          }
+
+          // v1Id
+          //
+          if (n.name () == "v1Id" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< V1IdType > r (
+              V1IdTraits::create (i, f, this));
+
+            if (!v1Id_.present ())
+            {
+              this->v1Id_.set (::std::move (r));
+              continue;
+            }
+          }
+
           break;
         }
 
@@ -301,6 +407,20 @@ namespace prj
             "lineId",
             "");
         }
+
+        if (!v0Id_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "v0Id",
+            "");
+        }
+
+        if (!v1Id_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "v1Id",
+            "");
+        }
       }
 
       Line* Line::
@@ -320,6 +440,8 @@ namespace prj
           this->seerShape_ = x.seerShape_;
           this->picks_ = x.picks_;
           this->lineId_ = x.lineId_;
+          this->v0Id_ = x.v0Id_;
+          this->v1Id_ = x.v1Id_;
         }
 
         return *this;
@@ -672,6 +794,28 @@ namespace prj
               e));
 
           s << i.lineId ();
+        }
+
+        // v0Id
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "v0Id",
+              e));
+
+          s << i.v0Id ();
+        }
+
+        // v1Id
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "v1Id",
+              e));
+
+          s << i.v1Id ();
         }
       }
 

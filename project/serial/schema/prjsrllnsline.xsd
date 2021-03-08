@@ -16,6 +16,8 @@
     <xs:element name="seerShape" type="spt:SeerShape"/>
     <xs:element name="picks" type="spt:Pick" minOccurs="0" maxOccurs="unbounded"/>
     <xs:element name="lineId" type="xs:string" default="00000000-0000-0000-0000-000000000000"/>
+    <xs:element name="v0Id" type="xs:string" default="00000000-0000-0000-0000-000000000000"/>
+    <xs:element name="v1Id" type="xs:string" default="00000000-0000-0000-0000-000000000000"/>
   </xs:sequence>
 </xs:complexType>
 

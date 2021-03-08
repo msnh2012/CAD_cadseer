@@ -53,6 +53,8 @@ namespace ftr
     Picks picks;
     std::unique_ptr<ann::SeerShape> sShape;
     boost::uuids::uuid lineId;
+    boost::uuids::uuid v0Id;
+    boost::uuids::uuid v1Id;
   private:
     static QIcon icon;
   };

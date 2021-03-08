@@ -22,6 +22,7 @@
 
 #include <TopoDS.hxx>
 #include <BRepBuilderAPI_MakeEdge.hxx>
+#include <TopExp.hxx>
 
 #include <osg/Switch>
 
@@ -44,6 +45,8 @@ Line::Line()
 : Base()
 , sShape(new ann::SeerShape())
 , lineId(gu::createRandomId())
+, v0Id(gu::createRandomId())
+, v1Id(gu::createRandomId())
 {
   if (icon.isNull())
     icon = QIcon(":/resources/images/sketchLine.svg");
@@ -104,8 +107,14 @@ void Line::updateModel(const UpdatePayload &pIn)
       throw std::runtime_error("Couldn't construct line edge");
     sShape->setOCCTShape(TopoDS::Edge(edgeMaker), getId());
     sShape->updateId(edgeMaker.Edge(), lineId);
+    sShape->updateId(TopExp::FirstVertex(edgeMaker.Edge()), v0Id);
+    sShape->updateId(TopExp::LastVertex(edgeMaker.Edge()), v1Id);
     if (!sShape->hasEvolveRecordOut(lineId))
       sShape->insertEvolve(gu::createNilId(), lineId);
+    if (!sShape->hasEvolveRecordOut(v0Id))
+      sShape->insertEvolve(gu::createNilId(), v0Id);
+    if (!sShape->hasEvolveRecordOut(v1Id))
+      sShape->insertEvolve(gu::createNilId(), v1Id);
     
     setSuccess();
   }
@@ -136,6 +145,8 @@ void Line::serialWrite(const boost::filesystem::path &dIn)
     Base::serialOut()
     , sShape->serialOut()
     , gu::idToString(lineId)
+    , gu::idToString(v0Id)
+    , gu::idToString(v1Id)
   );
   for (const auto &p : picks)
     so.picks().push_back(p);
@@ -150,6 +161,8 @@ void Line::serialRead(const prj::srl::lns::Line &sli)
   Base::serialIn(sli.base());
   sShape->serialIn(sli.seerShape());
   lineId = gu::stringToId(sli.lineId());
+  v0Id = gu::stringToId(sli.v0Id());
+  v1Id = gu::stringToId(sli.v1Id());
   for (const auto &p : sli.picks())
     picks.emplace_back(p);
 }
