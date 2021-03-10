@@ -711,7 +711,7 @@ void Manager::serialIn(const prj::srl::prjs::Expression &sIn)
   auto results = stow->manager.serialIn(lccSerialIn);
   
   for (const auto &l : sIn.links())
-    stow->addLink(gu::stringToId(l.parameterId()), l.expressionId());
+    stow->links.insert(Link(gu::stringToId(l.parameterId()), l.expressionId()));
   
   assert(results.empty());
   if (!results.empty())
