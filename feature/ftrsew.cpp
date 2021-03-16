@@ -22,6 +22,7 @@
 #include <TopoDS.hxx>
 #include <BRepClass3d.hxx>
 #include <BRepBuilderAPI_Sewing.hxx>
+#include <BRep_Tool.hxx>
 
 #include <osg/Switch>
 
@@ -143,6 +144,9 @@ void Sew::updateModel(const UpdatePayload &payloadIn)
       throw std::runtime_error("can't find acceptable output shape");
     out = nc;
     
+    //apparently sew doesn't set closed property on a closed shell.
+    if (BRep_Tool::IsClosed(nc))
+      nc.Closed(true);
     //try to make a solid.
     if (nc.Closed())
     {
