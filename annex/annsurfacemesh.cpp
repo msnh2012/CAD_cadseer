@@ -21,6 +21,8 @@
 #include <functional>
 #include <cstddef> //null error from nglib
 
+#include <osg/Matrixd>
+
 #include <CGAL/Polygon_mesh_processing/remesh.h>
 
 #include "subprojects/pmp-library/src/pmp/Types.h"
@@ -196,6 +198,17 @@ void SurfaceMesh::fillHolesPMP()
   pmp::SurfaceMesh pmpMesh = msh::srf::convert(stow->mesh);
   msh::srf::fillHoles(pmpMesh);
   stow->mesh = msh::srf::convert(pmpMesh);
+}
+
+void SurfaceMesh::transform(const osg::Matrixd &mIn)
+{
+  msh::srf::Mesh &mesh = stow->mesh;
+  for (msh::srf::Vertex &v : mesh.vertices())
+  {
+    msh::srf::Point &op = mesh.point(v);
+    osg::Vec3d np = osg::Vec3d(op.x(), op.y(), op.z()) * mIn;
+    op = msh::srf::Point(np.x(), np.y(), np.z());
+  }
 }
 
 prj::srl::mshs::Surface SurfaceMesh::serialOut()

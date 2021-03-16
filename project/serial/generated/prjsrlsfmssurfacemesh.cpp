@@ -97,6 +97,54 @@ namespace prj
         this->surface_.set (std::move (x));
       }
 
+      const SurfaceMesh::CsysType& SurfaceMesh::
+      csys () const
+      {
+        return this->csys_.get ();
+      }
+
+      SurfaceMesh::CsysType& SurfaceMesh::
+      csys ()
+      {
+        return this->csys_.get ();
+      }
+
+      void SurfaceMesh::
+      csys (const CsysType& x)
+      {
+        this->csys_.set (x);
+      }
+
+      void SurfaceMesh::
+      csys (::std::unique_ptr< CsysType > x)
+      {
+        this->csys_.set (std::move (x));
+      }
+
+      const SurfaceMesh::CsysDraggerType& SurfaceMesh::
+      csysDragger () const
+      {
+        return this->csysDragger_.get ();
+      }
+
+      SurfaceMesh::CsysDraggerType& SurfaceMesh::
+      csysDragger ()
+      {
+        return this->csysDragger_.get ();
+      }
+
+      void SurfaceMesh::
+      csysDragger (const CsysDraggerType& x)
+      {
+        this->csysDragger_.set (x);
+      }
+
+      void SurfaceMesh::
+      csysDragger (::std::unique_ptr< CsysDraggerType > x)
+      {
+        this->csysDragger_.set (std::move (x));
+      }
+
       const SurfaceMesh::ParametersOCCTType& SurfaceMesh::
       parametersOCCT () const
       {
@@ -204,6 +252,8 @@ namespace prj
       SurfaceMesh::
       SurfaceMesh (const BaseType& base,
                    const SurfaceType& surface,
+                   const CsysType& csys,
+                   const CsysDraggerType& csysDragger,
                    const ParametersOCCTType& parametersOCCT,
                    const ParametersNetgenType& parametersNetgen,
                    const ParametersGMSHType& parametersGMSH,
@@ -211,6 +261,8 @@ namespace prj
       : ::xml_schema::Type (),
         base_ (base, this),
         surface_ (surface, this),
+        csys_ (csys, this),
+        csysDragger_ (csysDragger, this),
         parametersOCCT_ (parametersOCCT, this),
         parametersNetgen_ (parametersNetgen, this),
         parametersGMSH_ (parametersGMSH, this),
@@ -221,6 +273,8 @@ namespace prj
       SurfaceMesh::
       SurfaceMesh (::std::unique_ptr< BaseType > base,
                    ::std::unique_ptr< SurfaceType > surface,
+                   ::std::unique_ptr< CsysType > csys,
+                   ::std::unique_ptr< CsysDraggerType > csysDragger,
                    ::std::unique_ptr< ParametersOCCTType > parametersOCCT,
                    ::std::unique_ptr< ParametersNetgenType > parametersNetgen,
                    ::std::unique_ptr< ParametersGMSHType > parametersGMSH,
@@ -228,6 +282,8 @@ namespace prj
       : ::xml_schema::Type (),
         base_ (std::move (base), this),
         surface_ (std::move (surface), this),
+        csys_ (std::move (csys), this),
+        csysDragger_ (std::move (csysDragger), this),
         parametersOCCT_ (std::move (parametersOCCT), this),
         parametersNetgen_ (std::move (parametersNetgen), this),
         parametersGMSH_ (std::move (parametersGMSH), this),
@@ -242,6 +298,8 @@ namespace prj
       : ::xml_schema::Type (x, f, c),
         base_ (x.base_, f, this),
         surface_ (x.surface_, f, this),
+        csys_ (x.csys_, f, this),
+        csysDragger_ (x.csysDragger_, f, this),
         parametersOCCT_ (x.parametersOCCT_, f, this),
         parametersNetgen_ (x.parametersNetgen_, f, this),
         parametersGMSH_ (x.parametersGMSH_, f, this),
@@ -256,6 +314,8 @@ namespace prj
       : ::xml_schema::Type (e, f | ::xml_schema::Flags::base, c),
         base_ (this),
         surface_ (this),
+        csys_ (this),
+        csysDragger_ (this),
         parametersOCCT_ (this),
         parametersNetgen_ (this),
         parametersGMSH_ (this),
@@ -302,6 +362,34 @@ namespace prj
             if (!surface_.present ())
             {
               this->surface_.set (::std::move (r));
+              continue;
+            }
+          }
+
+          // csys
+          //
+          if (n.name () == "csys" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< CsysType > r (
+              CsysTraits::create (i, f, this));
+
+            if (!csys_.present ())
+            {
+              this->csys_.set (::std::move (r));
+              continue;
+            }
+          }
+
+          // csysDragger
+          //
+          if (n.name () == "csysDragger" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< CsysDraggerType > r (
+              CsysDraggerTraits::create (i, f, this));
+
+            if (!csysDragger_.present ())
+            {
+              this->csysDragger_.set (::std::move (r));
               continue;
             }
           }
@@ -376,6 +464,20 @@ namespace prj
             "");
         }
 
+        if (!csys_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "csys",
+            "");
+        }
+
+        if (!csysDragger_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "csysDragger",
+            "");
+        }
+
         if (!parametersOCCT_.present ())
         {
           throw ::xsd::cxx::tree::expected_element< char > (
@@ -420,6 +522,8 @@ namespace prj
           static_cast< ::xml_schema::Type& > (*this) = x;
           this->base_ = x.base_;
           this->surface_ = x.surface_;
+          this->csys_ = x.csys_;
+          this->csysDragger_ = x.csysDragger_;
           this->parametersOCCT_ = x.parametersOCCT_;
           this->parametersNetgen_ = x.parametersNetgen_;
           this->parametersGMSH_ = x.parametersGMSH_;
@@ -751,6 +855,28 @@ namespace prj
               e));
 
           s << i.surface ();
+        }
+
+        // csys
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "csys",
+              e));
+
+          s << i.csys ();
+        }
+
+        // csysDragger
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "csysDragger",
+              e));
+
+          s << i.csysDragger ();
         }
 
         // parametersOCCT

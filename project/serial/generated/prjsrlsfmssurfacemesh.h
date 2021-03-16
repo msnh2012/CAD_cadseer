@@ -91,6 +91,10 @@ namespace prj
 
 #include "prjsrlsptbase.h"
 
+#include "prjsrlsptparameter.h"
+
+#include "prjsrlsptoverlay.h"
+
 #include "prjsrlmshsmesh.h"
 
 namespace prj
@@ -135,6 +139,40 @@ namespace prj
 
         void
         surface (::std::unique_ptr< SurfaceType > p);
+
+        // csys
+        //
+        typedef ::prj::srl::spt::Parameter CsysType;
+        typedef ::xsd::cxx::tree::traits< CsysType, char > CsysTraits;
+
+        const CsysType&
+        csys () const;
+
+        CsysType&
+        csys ();
+
+        void
+        csys (const CsysType& x);
+
+        void
+        csys (::std::unique_ptr< CsysType > p);
+
+        // csysDragger
+        //
+        typedef ::prj::srl::spt::CSysDragger CsysDraggerType;
+        typedef ::xsd::cxx::tree::traits< CsysDraggerType, char > CsysDraggerTraits;
+
+        const CsysDraggerType&
+        csysDragger () const;
+
+        CsysDraggerType&
+        csysDragger ();
+
+        void
+        csysDragger (const CsysDraggerType& x);
+
+        void
+        csysDragger (::std::unique_ptr< CsysDraggerType > p);
 
         // parametersOCCT
         //
@@ -205,6 +243,8 @@ namespace prj
         //
         SurfaceMesh (const BaseType&,
                      const SurfaceType&,
+                     const CsysType&,
+                     const CsysDraggerType&,
                      const ParametersOCCTType&,
                      const ParametersNetgenType&,
                      const ParametersGMSHType&,
@@ -212,6 +252,8 @@ namespace prj
 
         SurfaceMesh (::std::unique_ptr< BaseType >,
                      ::std::unique_ptr< SurfaceType >,
+                     ::std::unique_ptr< CsysType >,
+                     ::std::unique_ptr< CsysDraggerType >,
                      ::std::unique_ptr< ParametersOCCTType >,
                      ::std::unique_ptr< ParametersNetgenType >,
                      ::std::unique_ptr< ParametersGMSHType >,
@@ -245,6 +287,8 @@ namespace prj
         protected:
         ::xsd::cxx::tree::one< BaseType > base_;
         ::xsd::cxx::tree::one< SurfaceType > surface_;
+        ::xsd::cxx::tree::one< CsysType > csys_;
+        ::xsd::cxx::tree::one< CsysDraggerType > csysDragger_;
         ::xsd::cxx::tree::one< ParametersOCCTType > parametersOCCT_;
         ::xsd::cxx::tree::one< ParametersNetgenType > parametersNetgen_;
         ::xsd::cxx::tree::one< ParametersGMSHType > parametersGMSH_;

@@ -7,12 +7,16 @@
 >
 
 <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptbase.xsd"/>
+<xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptparameter.xsd"/>
+<xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptoverlay.xsd"/>
 <xs:import namespace="http://www.cadseer.com/prj/srl/mshs" schemaLocation="prjsrlmshsmesh.xsd"/>
 
 <xs:complexType name="SurfaceMesh">
   <xs:sequence>
     <xs:element name="base" type="spt:Base"/>
     <xs:element name="surface" type="mshs:Surface"/>
+    <xs:element name="csys" type="spt:Parameter"/>
+    <xs:element name="csysDragger" type="spt:CSysDragger"/>
     <xs:element name="parametersOCCT" type="mshs:ParametersOCCT"/>
     <xs:element name="parametersNetgen" type="mshs:ParametersNetgen"/>
     <xs:element name="parametersGMSH" type="mshs:ParametersGMSH"/>

@@ -134,6 +134,8 @@ void Import::go()
       
       meshFeature->updateModel(project->getPayload(meshFeature->getId()));
       meshFeature->updateVisual();
+      meshFeature->setModelDirty();
+      meshFeature->csysActive(); //to display dragger.
       node->sendBlocked(msg::buildStatusMessage("Surface Mesh Imported", 2.0));
       shouldUpdate = true;
     }

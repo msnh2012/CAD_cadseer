@@ -23,7 +23,7 @@
 #include "mesh/mshparameters.h"
 #include "feature/ftrbase.h"
 
-namespace ann{class SurfaceMesh;}
+namespace ann{class SurfaceMesh; class CSysDragger;}
 namespace prj{namespace srl{namespace sfms{class SurfaceMesh;}}}
 
 namespace ftr
@@ -61,8 +61,11 @@ namespace ftr
     virtual void serialWrite(const boost::filesystem::path&) override;
     void serialRead(const prj::srl::sfms::SurfaceMesh&);
     
+    void csysActive();
   protected:
     MeshType meshType = MeshType::inert;
+    std::unique_ptr<prm::Parameter> csys;
+    std::unique_ptr<ann::CSysDragger> csysDragger;
     std::unique_ptr<ann::SurfaceMesh> mesh;
     msh::prm::OCCT occtParameters;
     msh::prm::Netgen netgenParameters;

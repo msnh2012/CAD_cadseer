@@ -25,7 +25,7 @@
 #include "annex/annbase.h"
 
 namespace boost{namespace filesystem{class path;}}
-
+namespace osg{class Matrixd;}
 namespace prj{namespace srl{namespace mshs{class Surface;}}}
 
 namespace msh
@@ -68,6 +68,8 @@ namespace ann
     
     void fillHolesCGAL();
     void fillHolesPMP();
+    
+    void transform(const osg::Matrixd&);
     
     prj::srl::mshs::Surface serialOut();
     void serialIn(const prj::srl::mshs::Surface&);

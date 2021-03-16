@@ -35,12 +35,14 @@
 #include "feature/ftrinputtype.h"
 #include "annex/annseershape.h"
 #include "annex/annsurfacemesh.h"
+#include "annex/anncsysdragger.h"
+#include "library/lbrcsysdragger.h"
+#include "parameter/prmparameter.h"
 #include "mesh/mshocct.h"
 #include "mesh/mshmesh.h"
 #include "modelviz/mdvsurfacemesh.h"
 #include "project/serial/generated/prjsrlsfmssurfacemesh.h"
 #include "feature/ftrsurfacemesh.h"
-
 
 using namespace ftr;
 using boost::uuids::uuid;
@@ -49,6 +51,8 @@ QIcon SurfaceMesh::icon;
 
 SurfaceMesh::SurfaceMesh():
 Base()
+, csys(new prm::Parameter(prm::Names::CSys, osg::Matrixd::identity(), prm::Tags::CSys))
+, csysDragger(new ann::CSysDragger(this, csys.get()))
 , mesh(new ann::SurfaceMesh())
 {
   if (icon.isNull())
@@ -57,10 +61,17 @@ Base()
   name = QObject::tr("SurfaceMesh");
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
   
+  parameters.push_back(csys.get());
+  
   annexes.insert(std::make_pair(ann::Type::SurfaceMesh, mesh.get()));
+  annexes.insert(std::make_pair(ann::Type::CSysDragger, csysDragger.get()));
+  //update will decide if dragger is added to overlay
   
   //we don't use lod stuff that is in base by default. so remove
   mainTransform->removeChildren(0, mainTransform->getNumChildren());
+  
+  csys->connectValue(std::bind(&SurfaceMesh::setModelDirty, this));
+  csys->connectActive(std::bind(&SurfaceMesh::csysActive, this));
 }
 
 SurfaceMesh::~SurfaceMesh(){}
@@ -68,6 +79,10 @@ SurfaceMesh::~SurfaceMesh(){}
 void SurfaceMesh::setMeshType(MeshType t)
 {
   meshType = t;
+  if (meshType == MeshType::inert)
+    csys->setActive(true);
+  else
+    csys->setActive(false);
   setModelDirty();
 }
 
@@ -81,7 +96,7 @@ void SurfaceMesh::setMeshType(MeshType t)
 void SurfaceMesh::setMesh(std::unique_ptr<ann::SurfaceMesh> mIn, bool setToInert)
 {
   if (setToInert)
-    meshType = MeshType::inert;
+    setMeshType(MeshType::inert);
   annexes.erase(ann::Type::SurfaceMesh);
   mesh = std::move(mIn);
   annexes.insert(std::make_pair(ann::Type::SurfaceMesh, mesh.get()));
@@ -91,14 +106,14 @@ void SurfaceMesh::setMesh(std::unique_ptr<ann::SurfaceMesh> mIn, bool setToInert
 void SurfaceMesh::setOcctParameters(const msh::prm::OCCT &prmsIn)
 {
   occtParameters = prmsIn;
-  meshType = MeshType::occt;
+  setMeshType(MeshType::occt);
   setModelDirty();
 }
 
 void SurfaceMesh::setNetgenParameters(const msh::prm::Netgen &prmsIn)
 {
   netgenParameters = prmsIn;
-  meshType = MeshType::netgen;
+  setMeshType(MeshType::netgen);
   setModelDirty();
 }
 
@@ -113,7 +128,18 @@ void SurfaceMesh::updateModel(const UpdatePayload &pIn)
       setSuccess();
       throw std::runtime_error("feature is skipped");
     }
-    if (meshType != MeshType::inert)
+    if (meshType == MeshType::inert)
+    {
+      //the csys parameter will have total transformation
+      //we only want the increment that was applied
+      osg::Matrixd increment = mainTransform->getMatrix();
+      if (!increment.isIdentity())
+      {
+        mesh->transform(increment);
+        mainTransform->setMatrix(osg::Matrixd::identity());
+      }
+    }
+    else
     {
       std::vector<const Base*> tfs = pIn.getFeatures(InputType::target);
       if (tfs.size() != 1)
@@ -204,6 +230,8 @@ void SurfaceMesh::serialWrite(const boost::filesystem::path &dIn)
   (
     Base::serialOut()
     , mesh->serialOut()
+    , csys->serialOut()
+    , csysDragger->serialOut()
     , occtParameters.serialOut()
     , netgenParameters.serialOut()
     , gmshParameters.serialOut()
@@ -219,8 +247,20 @@ void SurfaceMesh::serialRead(const prj::srl::sfms::SurfaceMesh &smIn)
 {
   Base::serialIn(smIn.base());
   mesh->serialIn(smIn.surface());
+  csys->serialIn(smIn.csys());
+  csysDragger->serialIn(smIn.csysDragger());
   occtParameters.serialIn(smIn.parametersOCCT());
   netgenParameters.serialIn(smIn.parametersNetgen());
   gmshParameters.serialIn(smIn.parametersGMSH());
   meshType = static_cast<MeshType>(smIn.meshType());
+  
+  csysActive();
+}
+
+void SurfaceMesh::csysActive()
+{
+  if (csys->isActive())
+    overlaySwitch->addChild(csysDragger->dragger);
+  else
+    overlaySwitch->removeChild(csysDragger->dragger);
 }
