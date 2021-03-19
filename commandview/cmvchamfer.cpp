@@ -252,6 +252,7 @@ struct Chamfer::Stow
   
   void loadFeatureData()
   {
+    modeCombo->setCurrentIndex(static_cast<int>(command->feature->getMode()));
     for (const auto &e : command->feature->getEntries())
     {
       ChamferWidgetBase *widget = appendEntry(e);
