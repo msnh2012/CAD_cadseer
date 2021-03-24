@@ -27,6 +27,7 @@
 #include <QMenu>
 #include <QToolButton>
 #include <QSurfaceFormat>
+#include <QWidgetAction>
 
 #include "dagview/dagmodel.h"
 #include "dagview/dagview.h"
@@ -38,7 +39,6 @@
 #include "message/msgnode.h"
 #include "message/msgsift.h"
 #include "commandview/cmvmessage.h"
-#include "dialogs/dlgexpressionedit.h"
 #include "application/appincrementwidget.h"
 #include "commandview/cmvpane.h"
 #include "preferences/preferencesXML.h"
@@ -479,8 +479,8 @@ void MainWindow::setupDispatcher()
 
 void MainWindow::preferencesChanged(const msg::Message&)
 {
-  stow->translationEdit->update();
-  stow->rotationEdit->update();
+  stow->translationEdit->externalUpdate();
+  stow->rotationEdit->externalUpdate();
 }
 
 void MainWindow::infoTextDispatched(const msg::Message&)

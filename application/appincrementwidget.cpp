@@ -17,19 +17,16 @@
  *
  */
 
-#include <QVBoxLayout>
+#include <QHBoxLayout>
 #include <QLabel>
 #include <QLineEdit>
-#include <QFontMetrics>
 #include <QTimer>
 #include <QKeyEvent>
 
-#include <lccmanager.h>
-
 #include "application/appapplication.h"
-#include "message/msgmessage.h"
 #include "tools/tlsstring.h"
-#include "dialogs/dlgexpressionedit.h"
+#include "commandview/cmvexpressionedit.h"
+#include "parameter/prmparameter.h"
 #include "preferences/preferencesXML.h"
 #include "preferences/prfmanager.h"
 #include "application/appincrementwidget.h"
@@ -38,15 +35,27 @@ using namespace app;
 
 struct IncrementWidget::Stow
 {
-  dlg::ExpressionEdit *lineEdit = nullptr;
+  cmv::ParameterEdit *lineEdit = nullptr;
   QString title;
   double &prefRef;
-  lcc::Manager eman;
+  prm::Parameter parameter;
+  prm::Observer observer;
+  
+  void valueChanged()
+  {
+    prefRef = static_cast<double>(parameter);
+    prf::manager().saveConfig();
+  }
   
   Stow(const QString &titleIn, double &prefRefIn)
   : title(titleIn)
   , prefRef(prefRefIn)
-  {}
+  , parameter(QObject::tr("dummy"), prefRefIn)
+  , observer(std::bind(&Stow::valueChanged, this))
+  {
+    parameter.setExpressinLinkable(false);
+    parameter.connect(observer);
+  }
 };
 
 IncrementWidget::IncrementWidget(QWidget *parent, const QString &titleIn, double &prefRefIn)
@@ -64,90 +73,17 @@ void IncrementWidget::buildGui()
   layout->setSpacing(0);
   QLabel *label = new QLabel(stow->title, this);
   layout->addWidget(label);
-  stow->lineEdit = new dlg::ExpressionEdit(this);
+  stow->lineEdit = new cmv::ParameterEdit(this, &stow->parameter);
   layout->addWidget(stow->lineEdit);
   layout->setContentsMargins(0, 0, 0, 0);
   this->setLayout(layout);
-  update();
-  connect(stow->lineEdit->lineEdit, SIGNAL(textEdited(QString)), this, SLOT(textEditedSlot(QString)));
-  connect(stow->lineEdit->lineEdit, SIGNAL(editingFinished()), this, SLOT(editingFinishedSlot()));
-  connect(stow->lineEdit->lineEdit, SIGNAL(returnPressed()), this, SLOT(returnPressedSlot()));
-  HighlightOnFocusFilter *filter = new HighlightOnFocusFilter(stow->lineEdit->lineEdit);
-  stow->lineEdit->lineEdit->installEventFilter(filter);
+//   HighlightOnFocusFilter *filter = new HighlightOnFocusFilter(stow->lineEdit->lineEdit);
+//   stow->lineEdit->lineEdit->installEventFilter(filter);
 }
 
-void IncrementWidget::update()
+void IncrementWidget::externalUpdate()
 {
-  stow->lineEdit->lineEdit->setText(QString::fromStdString(tls::prettyDouble(stow->prefRef)));
-  stow->lineEdit->lineEdit->setCursorPosition(0);
-}
-
-void IncrementWidget::textEditedSlot(const QString &textIn)
-{
-  assert(stow->lineEdit);
-  assert(stow->lineEdit->trafficLabel);
-  stow->lineEdit->trafficLabel->setTrafficYellowSlot();
-  qApp->processEvents(); //need this or we never see yellow signal.
-  
-  std::string formula("temp = ");
-  formula += textIn.toStdString();
-  stow->eman.reset();
-  auto result = stow->eman.parseString(formula);
-  if (result.isAllGood())
-  {
-    if (result.value.size() == 1)
-    {
-      stow->lineEdit->trafficLabel->setTrafficGreenSlot();
-      stow->lineEdit->goToolTipSlot(QString::fromStdString(tls::prettyDouble(result.value.at(0))));
-    }
-    else
-    {
-      stow->lineEdit->trafficLabel->setTrafficRedSlot();
-      stow->lineEdit->goToolTipSlot("Error: Wrong Type");
-    }
-  }
-  else
-  {
-    stow->lineEdit->trafficLabel->setTrafficRedSlot();
-    int position = result.errorPosition - 8; // 7 chars for 'temp = ' + 1
-    stow->lineEdit->goToolTipSlot(textIn.left(position) + "?");
-  }
-}
-
-void IncrementWidget::returnPressedSlot()
-{
-  stow->lineEdit->lineEdit->setCursorPosition(0);
-  QTimer::singleShot(0, stow->lineEdit->lineEdit, SLOT(selectAll()));
-}
-
-void IncrementWidget::editingFinishedSlot()
-{
-  stow->lineEdit->trafficLabel->setPixmap(QPixmap());
-  stow->lineEdit->lineEdit->setToolTip(this->toolTip());
-  
-  auto error = [&](const std::string &e)
-  {
-    app::instance()->messageSlot(msg::buildStatusMessage(e, 2.0));
-  };
-  
-  std::string formula("temp = ");
-  formula += stow->lineEdit->lineEdit->text().toStdString();
-  stow->eman.reset();
-  auto result = stow->eman.parseString(formula);
-  if (result.isAllGood())
-  {
-    if (result.value.size() == 1)
-    {
-      stow->prefRef = result.value.at(0);
-      prf::manager().saveConfig();
-    }
-    else
-      error("Error: Wrong Type");
-  }
-  else
-    error(result.parseErrorMessage);
-  
-  update();
+  stow->parameter.setValue(stow->prefRef);
 }
 
 bool HighlightOnFocusFilter::eventFilter(QObject *obj, QEvent *event)

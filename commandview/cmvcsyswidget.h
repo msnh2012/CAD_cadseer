@@ -24,6 +24,8 @@
 
 #include <QWidget>
 
+#include "commandview/cmvparameterbase.h"
+
 namespace boost{namespace uuids{struct uuid;}}
 
 namespace prm{class Parameter;}
@@ -40,7 +42,7 @@ namespace cmv
    * only one use per dialog/tab. If csyswidget exists in the same
    * dialog/tab as another selectionwidget, I think it will be chaos.
    */
-  class CSysWidget : public QWidget
+  class CSysWidget : public ParameterBase
   {
     Q_OBJECT
   public:

@@ -80,9 +80,7 @@ public Q_SLOTS:
 Q_SIGNALS:
   void parseWorkingSignal();
   void parseSucceededSignal(const QString&); //!< string representation of value.
-  void parseSucceededSignal();
   void parseFailedSignal(const QString&); //!< string showing failure position.
-  void parseFailedSignal();
   void groupChangedSignal(int); //!< adding happens from 'all' table and we need to let the group model know.
 private:
   const std::string testFormulaName = "f9d2e8f0_2354_40ef_8d3c_4b8ced3a2504"; //!< unique name for temp.

@@ -44,166 +44,12 @@
 #include "tools/idtools.h"
 #include "commandview/cmvcsyswidget.h"
 #include "commandview/cmvtrafficsignal.h"
+#include "commandview/cmvexpressionedit.h"
 #include "commandview/cmvparameterwidgets.h"
 
 using boost::uuids::uuid;
 
 using namespace cmv;
-
-struct cmv::ExpressionEdit::Stow
-{
-  ExpressionEdit *parentWidget;
-  prm::Parameter *parameter;
-  prm::Observer pObserver;
-  QLineEdit *lineEdit;
-  TrafficSignal *trafficSignal;
-  
-  Stow() = delete;
-  Stow(ExpressionEdit *pwIn, prm::Parameter *pIn)
-  : parentWidget(pwIn)
-  , parameter(pIn)
-  , pObserver(std::bind(&Stow::valueChanged, this), std::bind(&Stow::constantChanged, this))
-  {
-    buildGui();
-    //no need to call valueChanged. Constant will do it all
-    constantChanged();
-    parameter->connect(pObserver);
-    QObject::connect(lineEdit, &QLineEdit::textEdited, parentWidget, &ExpressionEdit::editingSlot);
-    QObject::connect(lineEdit, &QLineEdit::editingFinished, parentWidget, &ExpressionEdit::finishedEditingSlot);
-  }
-  
-  void valueChanged()
-  {
-    if (parameter->isConstant())
-    {
-      lineEdit->setText(static_cast<QString>(*parameter));
-      lineEdit->selectAll();
-    }
-  }
-  
-  void constantChanged()
-  {
-    if (parameter->isConstant())
-    {
-      lineEdit->setReadOnly(false);
-      lineEdit->setText(static_cast<QString>(*parameter));
-      lineEdit->selectAll();
-    }
-    else
-    {
-      lineEdit->setReadOnly(true);
-      lineEdit->clearFocus();
-      lineEdit->deselect();
-
-      expr::Manager &manager = app::instance()->getProject()->getManager();
-      auto oLinked = manager.getLinked(parameter->getId());
-      assert(oLinked);
-      auto oName = manager.getExpressionName(*oLinked);
-      assert(oName);
-      lineEdit->setText(QString::fromStdString(*oName));
-    }
-  }
-  
-  void buildGui()
-  {
-    parentWidget->setContentsMargins(0, 0, 0, 0);
-    QHBoxLayout *layout = new QHBoxLayout();
-    layout->setSpacing(0);
-    layout->setContentsMargins(0, 0, 0, 0);
-    parentWidget->setLayout(layout);
-    
-    lineEdit = new QLineEdit(parentWidget);
-    lineEdit->setAcceptDrops(false); //the edit line accepts drops by default.
-    lineEdit->setWhatsThis(tr("Value Or Name Of Linked Expression"));
-    layout->addWidget(lineEdit);
-    parentWidget->setFocusProxy(lineEdit);
-    
-    trafficSignal = new TrafficSignal(parentWidget, parameter);
-    trafficSignal->setMinimumSize(1, 1);
-    trafficSignal->setScaledContents(true);
-    trafficSignal->setFixedSize(lineEdit->height(), lineEdit->height());
-    layout->addWidget(trafficSignal);
-  }
-};
-
-ExpressionEdit::ExpressionEdit(QWidget *parent, prm::Parameter *pIn)
-: QWidget(parent)
-, stow(std::make_unique<Stow>(this, pIn))
-{}
-
-ExpressionEdit::~ExpressionEdit() = default;
-
-void ExpressionEdit::goToolTipSlot(const QString &tipIn)
-{
-  stow->lineEdit->setToolTip(tipIn);
-  
-  QPoint point(0.0, -1.5 * (stow->lineEdit->frameGeometry().height()));
-  QHelpEvent *toolTipEvent = new QHelpEvent(QEvent::ToolTip, point, stow->lineEdit->mapToGlobal(point));
-  qApp->postEvent(stow->lineEdit, toolTipEvent);
-}
-
-void ExpressionEdit::editingSlot(const QString &textIn)
-{
-  assert(stow->parameter);
-  stow->trafficSignal->setTrafficYellowSlot();
-  qApp->processEvents(); //need this or we never see yellow signal.
-  
-  expr::Manager localManager;
-  std::string formula("temp = ");
-  formula += textIn.toStdString();
-  auto result = localManager.parseString(formula);
-  if (result.isAllGood())
-  {
-    auto oId = localManager.getExpressionId(result.expressionName);
-    assert(oId);
-    if (localManager.canLinkExpression(stow->parameter, *oId))
-    {
-      stow->trafficSignal->setTrafficGreenSlot();
-      std::ostringstream stream;
-      stream << localManager.getExpressionValue(*oId);
-      goToolTipSlot(QString::fromStdString(stream.str()));
-    }
-    else
-    {
-      stow->trafficSignal->setTrafficRedSlot();
-      goToolTipSlot(tr("Invalid Type Or Value"));
-    }
-  }
-  else
-  {
-    stow->trafficSignal->setTrafficRedSlot();
-    int position = result.errorPosition - 8; // 7 chars for 'temp = ' + 1
-    goToolTipSlot(textIn.left(position) + "?");
-  }
-}
-
-void ExpressionEdit::finishedEditingSlot()
-{
-  assert(stow->parameter);
-  if (!stow->parameter->isConstant())
-    return;
-
-  //no sense in setting traffic signal red here. we are just resetting the expression
-  //and want the signal to be green.
-  expr::Manager localManager;
-  std::string formula("temp = ");
-  formula += stow->lineEdit->text().toStdString();
-  auto result = localManager.parseString(formula);
-  if (result.isAllGood())
-  {
-    auto oId = localManager.getExpressionId(result.expressionName);
-    assert(oId);
-    if (localManager.assignParameter(stow->parameter, *oId))
-      app::instance()->queuedMessage(msg::buildStatusMessage(QObject::tr("Value Changed").toStdString(), 2.0));
-    else
-      app::instance()->queuedMessage(msg::buildStatusMessage(QObject::tr("Invalid Type Or Value").toStdString(), 2.0));
-  }
-  else
-  {
-    app::instance()->queuedMessage(msg::buildStatusMessage(QObject::tr("Parsing failed").toStdString(), 2.0));
-  }
-  stow->trafficSignal->setTrafficGreenSlot();
-}
 
 struct cmv::BoolCombo::Stow
 {
@@ -211,7 +57,7 @@ struct cmv::BoolCombo::Stow
   prm::Parameter *parameter;
   prm::Observer pObserver;
   QComboBox *comboBox;
-  TrafficSignal *trafficSignal;
+  cmv::trf::Signal *trafficSignal;
   
   Stow() = delete;
   Stow(BoolCombo *pwIn, prm::Parameter *pIn)
@@ -241,7 +87,7 @@ struct cmv::BoolCombo::Stow
     comboBox->addItem(tr("False"));
     layout->addWidget(comboBox);
     
-    trafficSignal = new TrafficSignal(parentWidget, parameter);
+    trafficSignal = new cmv::trf::Signal(parentWidget, parameter);
     trafficSignal->setMinimumSize(1, 1);
     trafficSignal->setScaledContents(true);
     trafficSignal->setFixedSize(comboBox->height(), comboBox->height());
@@ -271,7 +117,7 @@ struct cmv::BoolCombo::Stow
 };
 
 BoolCombo::BoolCombo(QWidget *parent, prm::Parameter *pIn)
-: QWidget(parent)
+: ParameterBase(parent)
 , stow(std::make_unique<Stow>(this, pIn))
 {}
 
@@ -282,7 +128,8 @@ void BoolCombo::currentChangedSlot(int index)
   bool newValue = (index == 0) ? true : false;
   assert(stow->parameter->isValidValue(newValue));
   prm::ObserverBlocker blocker(stow->pObserver);
-  stow->parameter->setValue(newValue);
+  if (stow->parameter->setValue(newValue))
+    prmValueChanged();
 }
 
 struct cmv::EnumCombo::Stow
@@ -291,7 +138,7 @@ struct cmv::EnumCombo::Stow
   prm::Parameter *parameter;
   prm::Observer pObserver;
   QComboBox *comboBox;
-  TrafficSignal *trafficSignal;
+  cmv::trf::Signal *trafficSignal;
   
   Stow() = delete;
   Stow(EnumCombo *pwIn, prm::Parameter *pIn)
@@ -321,7 +168,7 @@ struct cmv::EnumCombo::Stow
     comboBox->addItems(parameter->getEnumeration());
     layout->addWidget(comboBox);
     
-    trafficSignal = new TrafficSignal(parentWidget, parameter);
+    trafficSignal = new cmv::trf::Signal(parentWidget, parameter);
     trafficSignal->setMinimumSize(1, 1);
     trafficSignal->setScaledContents(true);
     trafficSignal->setFixedSize(comboBox->height(), comboBox->height());
@@ -349,7 +196,7 @@ struct cmv::EnumCombo::Stow
 };
 
 EnumCombo::EnumCombo(QWidget *parent, prm::Parameter *pIn)
-: QWidget(parent)
+: ParameterBase(parent)
 , stow(std::make_unique<Stow>(this, pIn))
 {}
 
@@ -359,7 +206,8 @@ void EnumCombo::currentChangedSlot(int index)
 {
   assert(stow->parameter->isValidValue(index));
   prm::ObserverBlocker blocker(stow->pObserver);
-  stow->parameter->setValue(index);
+  if (stow->parameter->setValue(index))
+    prmValueChanged();
 }
 
 struct cmv::StringEdit::Stow
@@ -417,7 +265,7 @@ struct cmv::StringEdit::Stow
 };
 
 StringEdit::StringEdit(QWidget *parent, prm::Parameter *pIn)
-: QWidget(parent)
+: ParameterBase(parent)
 , stow(std::make_unique<Stow>(this, pIn))
 {}
 
@@ -427,7 +275,8 @@ void StringEdit::finishedEditingSlot()
 {
   QString value = stow->lineEdit->text();
   prm::ObserverBlocker blocker(stow->pObserver);
-  stow->parameter->setValue(value.toStdString());
+  if (stow->parameter->setValue(value.toStdString()))
+    prmValueChanged();
 }
 
 struct cmv::PathEdit::Stow
@@ -490,7 +339,7 @@ struct cmv::PathEdit::Stow
 };
 
 PathEdit::PathEdit(QWidget *parent, prm::Parameter *pIn)
-: QWidget(parent)
+: ParameterBase(parent)
 , stow(std::make_unique<Stow>(this, pIn))
 {}
 
@@ -503,7 +352,8 @@ void PathEdit::finishedEditingSlot()
   if (boost::filesystem::exists(p))
   {
     prm::ObserverBlocker blocker(stow->pObserver);
-    stow->parameter->setValue(boost::filesystem::path(value.toStdString()));
+    if (stow->parameter->setValue(boost::filesystem::path(value.toStdString())))
+      prmValueChanged();
   }
 }
 
@@ -565,7 +415,7 @@ void PathEdit::browseSlot()
 //build the appropriate widget editor.
 namespace cmv
 {
-  class WidgetFactoryVisitor : public boost::static_visitor<QWidget*>
+  class WidgetFactoryVisitor : public boost::static_visitor<ParameterBase*>
   {
   public:
     WidgetFactoryVisitor() = delete;
@@ -573,68 +423,66 @@ namespace cmv
     : parent(pIn)
     , parameter(prmIn)
     {assert(parent); assert(parameter);}
-    QWidget* operator()(double) const {return buildDouble();}
-    QWidget* operator()(int) const {return buildInt();}
-    QWidget* operator()(bool) const {return buildBool();}
-    QWidget* operator()(const std::string&) const {return buildString();}
-    QWidget* operator()(const boost::filesystem::path&) const {return buildPath();}
-    QWidget* operator()(const osg::Vec3d&) const {return buildVec3d();}
-    QWidget* operator()(const osg::Quat&) const {return buildQuat();}
-    QWidget* operator()(const osg::Matrixd&) const {return buildMatrix();}
-    QWidget* operator()(const ftr::Picks&) const {return new QWidget(parent);} //TODO
+    ParameterBase* operator()(double) const {return buildDouble();}
+    ParameterBase* operator()(int) const {return buildInt();}
+    ParameterBase* operator()(bool) const {return buildBool();}
+    ParameterBase* operator()(const std::string&) const {return buildString();}
+    ParameterBase* operator()(const boost::filesystem::path&) const {return buildPath();}
+    ParameterBase* operator()(const osg::Vec3d&) const {return buildVec3d();}
+    ParameterBase* operator()(const osg::Quat&) const {return buildQuat();}
+    ParameterBase* operator()(const osg::Matrixd&) const {return buildMatrix();}
+    ParameterBase* operator()(const ftr::Picks&) const {return new ParameterBase(parent);} //TODO
     
   private:
     QWidget *parent;
     prm::Parameter* parameter;
     
-    QWidget* buildDouble() const
+    ParameterBase* buildDouble() const
     {
-      return new ExpressionEdit(parent, parameter);
+      return new ParameterEdit(parent, parameter);
     }
       
-    QWidget* buildInt() const
+    ParameterBase* buildInt() const
     {
-      QWidget *widgetOut = nullptr;
+      ParameterBase *widgetOut = nullptr;
       
       if (parameter->isEnumeration())
         widgetOut = new EnumCombo(parent, parameter);
       else
-        widgetOut = new ExpressionEdit(parent, parameter);
+        widgetOut = new ParameterEdit(parent, parameter);
       
       assert(widgetOut);
       return widgetOut;
     }
     
-    QWidget* buildBool() const
+    ParameterBase* buildBool() const
     {
       return new BoolCombo(parent, parameter);
     }
     
-    QWidget* buildString() const
+    ParameterBase* buildString() const
     {
       return new StringEdit(parent, parameter);
     }
     
-    QWidget* buildPath() const
+    ParameterBase* buildPath() const
     {
       return new PathEdit(parent, parameter);
     }
     
-    QWidget* buildVec3d() const
+    ParameterBase* buildVec3d() const
     {
-      ExpressionEdit *ee = new ExpressionEdit(parent, parameter);
-      ee->setDisabled(true); //can't parse yet
+      ParameterEdit *ee = new ParameterEdit(parent, parameter);
       return ee;
     }
     
-    QWidget* buildQuat() const
+    ParameterBase* buildQuat() const
     {
-      ExpressionEdit *ee = new ExpressionEdit(parent, parameter);
-      ee->setDisabled(true); //can't parse yet
+      ParameterEdit *ee = new ParameterEdit(parent, parameter);
       return ee;
     }
     
-    QWidget* buildMatrix() const
+    ParameterBase* buildMatrix() const
     {
       cmv::CSysWidget *cw = new cmv::CSysWidget(parent, parameter);
       return cw;
@@ -677,7 +525,7 @@ struct cmv::ParameterWidget::Stow
     }
   }
   
-  boost::optional<QWidget*> findWidget(prm::Parameter *pIn)
+  boost::optional<ParameterBase*> findWidget(prm::Parameter *pIn)
   {
     auto it = std::find(parameters.begin(), parameters.end(), pIn);
     if (it == parameters.end())
@@ -689,12 +537,16 @@ struct cmv::ParameterWidget::Stow
     auto *widget = layout->itemAtPosition(row, 1)->widget();
     if (!widget)
       return boost::none;
-    return widget;
+    auto out = dynamic_cast<ParameterBase*>(widget);
+    assert(out);
+    if (!out)
+      return boost::none;
+    return out;
   }
 };
 
 ParameterWidget::ParameterWidget(QWidget *parent, const std::vector<prm::Parameter*> &psIn)
-: QWidget(parent)
+: ParameterBase(parent)
 , stow(std::make_unique<Stow>(this, psIn))
 {}
 
@@ -718,13 +570,20 @@ void ParameterWidget::disableWidget(prm::Parameter *pIn)
   widget.get()->setDisabled(true);
 }
 
-QWidget* ParameterWidget::getWidget(prm::Parameter *pIn)
+ParameterBase* ParameterWidget::getWidget(prm::Parameter *pIn)
 {
   auto widget = stow->findWidget(pIn);
   assert(widget);
   if (!widget)
     return nullptr;
   return widget.get();
+}
+
+ParameterBase* ParameterWidget::buildWidget(QWidget *parent, prm::Parameter *pIn)
+{
+  cmv::WidgetFactoryVisitor v(parent, pIn);
+  ParameterBase *pWidget = boost::apply_visitor(v, pIn->getStow().variant);
+  return pWidget;
 }
 
 namespace
@@ -888,7 +747,7 @@ struct cmv::ParameterTable::Stow
 };
 
 ParameterTable::ParameterTable(QWidget *parentIn)
-: QWidget(parentIn)
+: ParameterBase(parentIn)
 , stow(std::make_unique<Stow>(this))
 {}
 

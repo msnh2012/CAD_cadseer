@@ -34,132 +34,152 @@
 #include "expressions/exprmanager.h"
 #include "commandview/cmvtrafficsignal.h"
 
-using boost::uuids::uuid;
-
-static int getId(const QString &stringIn)
+namespace
 {
-  int idOut = -1;
-  if (stringIn.startsWith("ExpressionId;"))
+  int getId(const QString &stringIn)
   {
-    QStringList split = stringIn.split(";");
-    if (split.size() == 2)
-      idOut = split.at(1).toInt();
-  }
-  return idOut;
-}
-
-struct cmv::TrafficSignal::Stow
-{
-  TrafficSignal *trafficSignal;
-  prm::Parameter *parameter;
-  prm::Observer pObserver;
-  int iconSize = 128; //qlabel will scale.
-  QPixmap trafficRed;
-  QPixmap trafficYellow;
-  QPixmap trafficGreen;
-  QPixmap trafficLink;
-  QAction *unlinkAction;
-  
-  Stow() = delete;
-  Stow(TrafficSignal *tsIn, prm::Parameter *pIn)
-  : trafficSignal(tsIn)
-  , parameter(pIn)
-  {
-    assert(trafficSignal);
-    assert(parameter);
-    pObserver.constantHandler = std::bind(&Stow::constantChanged, this);
-    parameter->connect(pObserver);
-    
-    trafficRed = buildPixmap(":/resources/images/trafficRed.svg");
-    trafficYellow = buildPixmap(":/resources/images/trafficYellow.svg");
-    trafficGreen = buildPixmap(":/resources/images/trafficGreen.svg");
-    trafficLink = buildPixmap(":resources/images/linkIcon.svg");
-    
-    unlinkAction = new QAction(tr("unlink"), trafficSignal);
-    QObject::connect(unlinkAction, &QAction::triggered, trafficSignal, &TrafficSignal::unlink);
-    
-    if (parameter->isConstant())
-      QTimer::singleShot(0, trafficSignal, &TrafficSignal::setTrafficGreenSlot); //assumption
-    else
-      QTimer::singleShot(0, trafficSignal, &TrafficSignal::setTrafficLinkSlot);
-  }
-  
-  void constantChanged()
-  {
-    if (parameter->isConstant())
-      trafficSignal->setTrafficGreenSlot(); //assumption
-    else
-      trafficSignal->setTrafficLinkSlot();
+    int idOut = -1;
+    if (stringIn.startsWith("ExpressionId;"))
+    {
+      QStringList split = stringIn.split(";");
+      if (split.size() == 2)
+        idOut = split.at(1).toInt();
+    }
+    return idOut;
   }
   
   QPixmap buildPixmap(const QString &resourceNameIn)
   {
-    QPixmap temp = QPixmap(resourceNameIn).scaled(iconSize, iconSize, Qt::KeepAspectRatio);
-    QPixmap out(iconSize, iconSize);
+    //the qlabel will scale
+    QPixmap temp = QPixmap(resourceNameIn).scaled(128, 128, Qt::KeepAspectRatio);
+    QPixmap out(128, 128);
     QPainter painter(&out);
     painter.fillRect(out.rect(), qApp->palette().color(QPalette::Window));
     painter.drawPixmap(out.rect(), temp, temp.rect());
     painter.end();
-    
     return out;
+  }
+
+  thread_local QPixmap trafficRed = buildPixmap(":/resources/images/trafficRed.svg");
+  thread_local QPixmap trafficYellow = buildPixmap(":/resources/images/trafficYellow.svg");
+  thread_local QPixmap trafficGreen = buildPixmap(":/resources/images/trafficGreen.svg");
+  thread_local QPixmap trafficLink = buildPixmap(":resources/images/linkIcon.svg");
+}
+
+using namespace cmv::trf;
+
+struct Signal::Stow
+{
+  Signal *parent;
+  prm::Parameter *parameter;
+  prm::Observer pObserver;
+  QAction *unlinkAction = nullptr;
+  
+  Stow() = delete;
+  Stow(Signal *parentIn, prm::Parameter *parameterIn)
+  : parent(parentIn)
+  , parameter(parameterIn)
+  {
+    assert(parent);
+    
+    if (parameter && parameter->isExpressionLinkable())
+    {
+      pObserver.constantHandler = std::bind(&Stow::constantChanged, this);
+      pObserver.activeHandler = std::bind(&Stow::activeChanged, this);
+      parameter->connect(pObserver);
+      
+      unlinkAction = new QAction(tr("unlink"), parent);
+      QObject::connect(unlinkAction, &QAction::triggered, parent, &Signal::unlink);
+      QTimer::singleShot(0, [this](){constantChanged();});
+      QTimer::singleShot(0, [this](){activeChanged();});
+    }
+    else
+      parent->setTrafficGreen();
+  }
+  
+  void constantChanged()
+  {
+    assert(parameter);
+    if (parameter->isConstant())
+    {
+      parent->setTrafficGreen(); //assumption
+      parent->removeAction(unlinkAction);
+    }
+    else
+    {
+      parent->setTrafficLink();
+      parent->addAction(unlinkAction);
+    }
+  }
+  
+  void activeChanged()
+  {
+    assert(parameter);
+    if (parameter->isActive())
+      parent->setEnabled(true);
+    else
+      parent->setDisabled(true);
   }
 };
 
-using namespace cmv;
-
-TrafficSignal::TrafficSignal(QWidget* parentIn, prm::Parameter *pIn)
+Signal::Signal(QWidget *parentIn, prm::Parameter *parameterIn)
 : QLabel(parentIn)
-, stow(std::make_unique<Stow>(this, pIn))
+, stow(std::make_unique<Stow>(this, parameterIn))
 {
   assert(parentIn);
   setContentsMargins(0, 0, 0, 0);
-  setContextMenuPolicy(Qt::ActionsContextMenu);
-  setAcceptDrops(true);
-  setToolTip(tr("Drop Expression To Link. Right Click To Unlink"));
-  setWhatsThis(tr("Drop Expression To Link. Right Click To Unlink"));
+  setToolTip(tr("Signal For Recognized Expression"));
+  setWhatsThis(tr("Signal For Recognized Expression"));
+  
+  if (stow->parameter && stow->parameter->isExpressionLinkable())
+  {
+    setContextMenuPolicy(Qt::ActionsContextMenu);
+    setAcceptDrops(true);
+    setToolTip(tr("Drop Expression To Link. Right Click To Unlink"));
+    setWhatsThis(tr("Drop Expression To Link. Right Click To Unlink"));
+  }
 }
 
-TrafficSignal::~TrafficSignal() = default;
+Signal::~Signal() = default;
 
-void TrafficSignal::setTrafficRedSlot()
+void Signal::setTrafficRed()
 {
-  setPixmap(stow->trafficRed);
-  this->removeAction(stow->unlinkAction);
+  setPixmap(trafficRed);
 }
 
-void TrafficSignal::setTrafficYellowSlot()
+void Signal::setTrafficYellow()
 {
-  setPixmap(stow->trafficYellow);
-  this->removeAction(stow->unlinkAction);
+  setPixmap(trafficYellow);
 }
 
-void TrafficSignal::setTrafficGreenSlot()
+void Signal::setTrafficGreen()
 {
-  setPixmap(stow->trafficGreen);
-  this->removeAction(stow->unlinkAction);
+  setPixmap(trafficGreen);
 }
 
-void TrafficSignal::setTrafficLinkSlot()
-{
-  setPixmap(stow->trafficLink);
-  this->addAction(stow->unlinkAction);
-}
-
-void TrafficSignal::setTrafficEmptySlot()
+void Signal::setTrafficEmpty()
 {
   setPixmap(QPixmap());
-  this->removeAction(stow->unlinkAction);
 }
 
-void TrafficSignal::unlink()
+void Signal::setTrafficLink()
 {
+  assert(stow->parameter && stow->parameter->isExpressionLinkable());
+  setPixmap(trafficLink);
+}
+
+void Signal::unlink()
+{
+  assert(stow->parameter && stow->parameter->isExpressionLinkable());
   app::instance()->getProject()->getManager().removeLink(stow->parameter->getId());
   app::instance()->messageSlot(msg::buildStatusMessage("Expression UnLinked"));
+  prmConstantChanged();
+  //unlinking doesn't change the value so we don't signal 'prmValueChanged'
 }
 
-void TrafficSignal::dragEnterEvent(QDragEnterEvent *event)
+void Signal::dragEnterEvent(QDragEnterEvent *event)
 {
-  if (event->mimeData()->hasText())
+  if (event->mimeData()->hasText() && stow->parameter->isExpressionLinkable())
   {
     QString textIn = event->mimeData()->text();
     int id = getId(textIn);
@@ -168,21 +188,37 @@ void TrafficSignal::dragEnterEvent(QDragEnterEvent *event)
   }
 }
 
-void TrafficSignal::dropEvent(QDropEvent *event)
+void Signal::dropEvent(QDropEvent *event)
 {
-  if (event->mimeData()->hasText())
+  auto mo = [&](const std::string &s)
+  {
+    app::instance()->messageSlot(msg::buildStatusMessage(s, 2.0));
+  };
+  
+  if (event->mimeData()->hasText() && stow->parameter->isExpressionLinkable())
   {
     QString textIn = event->mimeData()->text();
     int id = getId(textIn);
-    if (id >= 0 && app::instance()->getProject()->getManager().canLinkExpression(stow->parameter, id))
+    
+    event->acceptProposedAction();
+    auto linkResults = app::instance()->getProject()->getManager().addLink(stow->parameter, id);
+    switch (linkResults)
     {
-      event->acceptProposedAction();
-      if (app::instance()->getProject()->getManager().addLink(stow->parameter, id))
-        app::instance()->messageSlot(msg::buildStatusMessage("Expression Link Accepted"));
-      else
-        app::instance()->messageSlot(msg::buildStatusMessage("Expression Link Rejected"));
+      case expr::Amity::Incompatible:
+        mo("Incompatible Types. Link Rejected");
+        break;
+      case expr::Amity::InvalidValue:
+        mo("Invalid Value. Link Rejected");
+        break;
+      case expr::Amity::Equal:
+        mo("Link Accepted");
+        prmConstantChanged();
+        break;
+      case expr::Amity::Mutate:
+        mo("Link Accepted");
+        prmConstantChanged();
+        prmValueChanged();
+        break;
     }
-    else
-      app::instance()->messageSlot(msg::buildStatusMessage("Expression Link Rejected"));
   }
 }

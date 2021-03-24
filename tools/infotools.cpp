@@ -25,12 +25,15 @@
 #include <osg/Matrixd>
 
 #include "globalutilities.h"
+#include "tools/tlsstring.h"
 #include "tools/infotools.h"
 
-
-QString ms(const double &number)
+namespace
 {
-  return QString::number(number, 'f', 12);
+  QString ms(const double &number)
+  {
+    return QString::fromStdString(tls::prettyDouble(number));
+  }
 }
 
 QTextStream& gu::osgMatrixOut(QTextStream &streamIn, const osg::Matrixd &m)

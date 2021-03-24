@@ -17,8 +17,6 @@
  *
  */
 
-#include <iostream>
-
 #include <osgViewer/Viewer>
 
 #include <QSettings>
@@ -30,8 +28,6 @@
 #include <QLineEdit>
 #include <QVBoxLayout>
 
-#include "lccmanager.h"
-
 #include "application/appapplication.h"
 #include "application/appmainwindow.h"
 #include "project/prjproject.h"
@@ -39,18 +35,14 @@
 #include "message/msgmessage.h"
 #include "message/msgnode.h"
 #include "message/msgsift.h"
-#include "dialogs/dlgexpressionedit.h"
-#include "dialogs/dlgenterfilter.h"
 #include "commandview/cmvcsyswidget.h"
+#include "commandview/cmvexpressionedit.h"
 #include "parameter/prmparameter.h"
-#include "expressions/exprmanager.h"
-#include "expressions/exprvalue.h"
 #include "feature/ftrinputtype.h"
 #include "feature/ftrsketch.h"
 #include "sketch/sktvisual.h"
 #include "sketch/sktselection.h"
 #include "sketch/sktsolver.h"
-#include "tools/tlsstring.h"
 #include "command/cmdsketch.h"
 #include "commandview/cmvsketch.h"
 
@@ -66,9 +58,8 @@ struct Sketch::Stow
   skt::Visual *visual = nullptr;
   osg::ref_ptr<skt::Selection> selection;
   prm::Parameter *parameter = nullptr; //!< currently selected parameter or nullptr
-  dlg::ExpressionEdit *pEdit = nullptr;
+  cmv::ParameterEdit *pEdit = nullptr;
   CSysWidget *csysWidget = nullptr;
-  lcc::Manager eman;
   
   QRadioButton *sketchRadio = nullptr;
   QRadioButton *csysRadio = nullptr;
@@ -76,6 +67,7 @@ struct Sketch::Stow
   QGroupBox *sketchGroup = nullptr;
   QGroupBox *csysGroup = nullptr;
   QButtonGroup *geoGroup = nullptr;
+  QVBoxLayout *sgLayout = nullptr; //so I can add parameter edit widget.
   QAction *pointAction = nullptr;
   QAction *lineAction = nullptr;
   QAction *arcAction = nullptr;
@@ -298,18 +290,6 @@ struct Sketch::Stow
     connect(selectWorkAction, &QAction::toggled, view, &Sketch::selectWorkToggled);
     stb->addAction(selectWorkAction);
 
-    pEdit = new dlg::ExpressionEdit(view);
-    pEdit->lineEdit->clear();
-    pEdit->setDisabled(true);
-    dlg::ExpressionEditFilter *filter = new dlg::ExpressionEditFilter(view);
-    pEdit->lineEdit->installEventFilter(filter);
-    dlg::EnterFilter *ef = new dlg::EnterFilter(view);
-    pEdit->lineEdit->installEventFilter(ef);
-    QObject::connect(filter, &dlg::ExpressionEditFilter::requestLinkSignal, view, &Sketch::requestParameterLinkSlot);
-    QObject::connect(pEdit->lineEdit, &QLineEdit::textEdited, view, &Sketch::textEditedParameterSlot);
-    QObject::connect(ef, &dlg::EnterFilter::enterPressed, view, &Sketch::updateParameterSlot);
-    QObject::connect(pEdit->trafficLabel, &dlg::TrafficLabel::requestUnlinkSignal, view, &Sketch::requestParameterUnlinkSlot);
-    
     auto *tbLayout = new QHBoxLayout();
     tbLayout->addWidget(ctb);
     tbLayout->addWidget(etb);
@@ -317,9 +297,8 @@ struct Sketch::Stow
     tbLayout->addWidget(stb);
     tbLayout->addStretch();
     
-    auto *sgLayout = new QVBoxLayout();
+    sgLayout = new QVBoxLayout();
     sgLayout->addLayout(tbLayout);
-    sgLayout->addWidget(pEdit);
     
     sketchGroup = new QGroupBox(view);
     sketchGroup->setLayout(sgLayout);
@@ -390,18 +369,21 @@ struct Sketch::Stow
     boost::uuids::uuid pId = mIn.getSLC().shapeId;
     if (pId.is_nil() || (!feature->hasParameter(pId)))
     {
-      pEdit->lineEdit->clear();
-      pEdit->setDisabled(true);
+      if (pEdit)
+      {
+        delete pEdit;
+        pEdit = nullptr;
+      }
       parameter = nullptr;
       return;
     }
     parameter = feature->getParameter(pId);
+    pEdit = new cmv::ParameterEdit(view, parameter);
+    sgLayout->addWidget(pEdit);
+    connect(pEdit, &cmv::ParameterEdit::prmValueChanged, view, &Sketch::prmValueChanged);
+    connect(pEdit, &cmv::ParameterEdit::prmConstantChanged, view, &Sketch::prmConstantChanged);
+    pEdit->setFocus();
     view->activateWindow();
-    pEdit->setEnabled(true);
-    if (parameter->isConstant())
-      setEditUnlinked();
-    else
-      setEditLinked();
   }
   
   //https://forum.qt.io/topic/6419/how-to-uncheck-button-in-qbuttongroup/8
@@ -417,38 +399,6 @@ struct Sketch::Stow
   void selectionCleared(const msg::Message&)
   {
     evaluateActiveControls();
-  }
-  
-  void setEditLinked()
-  {
-    assert(parameter);
-    assert(pEdit);
-    assert(!parameter->isConstant());
-    
-    pEdit->trafficLabel->setLinkSlot();
-    pEdit->clearFocus();
-    pEdit->lineEdit->deselect();
-    pEdit->lineEdit->setReadOnly(true);
-    
-    expr::Manager &manager = app::instance()->getProject()->getManager();
-    auto oLinked = manager.getLinked(parameter->getId());
-    assert(oLinked);
-    auto oName = manager.getExpressionName(*oLinked);
-    assert(oName);
-    pEdit->lineEdit->setText(QString::fromStdString(*oName));
-  }
-
-  void setEditUnlinked()
-  {
-    assert(parameter);
-    assert(pEdit);
-    assert(parameter->isConstant());
-    
-    pEdit->trafficLabel->setTrafficGreenSlot();
-    pEdit->lineEdit->setReadOnly(false);
-    pEdit->lineEdit->setText(QString::number(static_cast<double>(*parameter), 'f', 12));
-    pEdit->lineEdit->selectAll();
-    pEdit->setFocus();
   }
   
   void evaluateActiveControls()
@@ -638,8 +588,8 @@ void Sketch::remove()
     if (h != 0)
       stow->feature->removeHPPair(h);
     stow->parameter = nullptr;
-    stow->pEdit->lineEdit->clear();
-    stow->pEdit->setDisabled(true);
+    delete stow->pEdit;
+    stow->pEdit = nullptr;
   }
   
   if (stow->visual->getState() != skt::State::selection)
@@ -768,146 +718,20 @@ void Sketch::addWhereDragged()
   stow->visual->addWhereDragged();
 }
 
-void Sketch::requestParameterLinkSlot(const QString &stringIn)
-{
-  assert(stow->parameter);
-  assert(stow->pEdit);
-  
-  int eId = stringIn.toInt();
-  assert(eId >= 0);
-  
-  bool result = app::instance()->getProject()->getManager().addLink(stow->parameter, eId);
-  if (result)
-  {
-    setEditLinked();
-    stow->visual->reHighlight();
-    
-    stow->feature->getSolver()->updateConstraintValue(stow->feature->getHPHandle(stow->parameter), static_cast<double>(*stow->parameter));
-    stow->feature->getSolver()->solve(stow->feature->getSolver()->getGroup(), true);
-    stow->visual->update();
-  }
-  else
-  {
-    node->send(msg::buildStatusMessage(QObject::tr("Not Valid Expression To Link").toStdString(), 2.0));
-  }
-  
-  this->activateWindow();
-}
-
-void Sketch::requestParameterUnlinkSlot()
-{
-  assert(stow->parameter);
-  assert(stow->pEdit);
-  
-  app::instance()->getProject()->expressionUnlink(stow->parameter->getId());
-  
-  setEditUnlinked();
-  stow->visual->reHighlight();
-  //don't need to update, because unlinking doesn't change parameter value.
-}
-
-void Sketch::setEditLinked()
-{
-  assert(stow->parameter);
-  assert(stow->pEdit);
-  assert(!stow->parameter->isConstant());
-  
-  stow->pEdit->trafficLabel->setLinkSlot();
-  stow->pEdit->clearFocus();
-  stow->pEdit->lineEdit->deselect();
-  stow->pEdit->lineEdit->setReadOnly(true);
-  
-  expr::Manager &manager = app::instance()->getProject()->getManager();
-  auto oLinked = manager.getLinked(stow->parameter->getId());
-  assert(oLinked);
-  auto oName = manager.getExpressionName(*oLinked);
-  assert(oName);
-  stow->pEdit->lineEdit->setText(QString::fromStdString(*oName));
-}
-
-void Sketch::setEditUnlinked()
-{
-  assert(stow->parameter);
-  assert(stow->pEdit);
-  assert(stow->parameter->isConstant());
-  
-  stow->pEdit->trafficLabel->setTrafficGreenSlot();
-  stow->pEdit->lineEdit->setReadOnly(false);
-  stow->pEdit->lineEdit->setText(QString::number(static_cast<double>(*stow->parameter), 'f', 12));
-  stow->pEdit->lineEdit->selectAll();
-  stow->pEdit->setFocus();
-}
-
-void Sketch::updateParameterSlot()
+void Sketch::prmValueChanged()
 {
   assert(stow->pEdit);
   assert(stow->parameter);
   
-  if (!stow->parameter->isConstant())
-    return;
-
-  stow->eman.reset();
-  std::string formula("temp = ");
-  formula += stow->pEdit->lineEdit->text().toStdString();
-  auto result = stow->eman.parseString(formula);
-  
-  if (result.isAllGood())
-  {
-    if (result.value.size() == 1)
-    {
-      double value = result.value.at(0);
-      if (stow->parameter->isValidValue(value))
-      {
-        stow->parameter->setValue(value);
-        stow->feature->getSolver()->updateConstraintValue(stow->feature->getHPHandle(stow->parameter), value);
-        stow->feature->getSolver()->solve(stow->feature->getSolver()->getGroup(), true);
-        stow->visual->update();
-      }
-      else
-        node->send(msg::buildStatusMessage(QObject::tr("Value out of range").toStdString(), 2.0));
-    }
-    else
-      node->send(msg::buildStatusMessage(QObject::tr("Wrong Type").toStdString(), 2.0));
-  }
-  else
-    node->send(msg::buildStatusMessage(result.getError(), 2.0));
-  
-  stow->pEdit->lineEdit->setText(QString::fromStdString(tls::prettyDouble(static_cast<double>(*stow->parameter))));
-  stow->pEdit->lineEdit->selectAll();
-  stow->pEdit->trafficLabel->setTrafficGreenSlot();
+  double pValue = static_cast<double>(*stow->parameter);
+  stow->feature->getSolver()->updateConstraintValue(stow->feature->getHPHandle(stow->parameter), pValue);
+  stow->feature->getSolver()->solve(stow->feature->getSolver()->getGroup(), true);
+  stow->visual->update();
 }
 
-void Sketch::textEditedParameterSlot(const QString &textIn)
+void Sketch::prmConstantChanged()
 {
-  assert(stow->pEdit);
-  
-  stow->pEdit->trafficLabel->setTrafficYellowSlot();
-  qApp->processEvents(); //need this or we never see yellow signal.
-  
-  stow->eman.reset();
-  std::string formula("temp = ");
-  formula += textIn.toStdString();
-  auto result = stow->eman.parseString(formula);
-  if (result.isAllGood())
-  {
-    if (result.value.size() == 1)
-    {
-      stow->pEdit->trafficLabel->setTrafficGreenSlot();
-      double value = result.value.at(0);
-      stow->pEdit->goToolTipSlot(QString::fromStdString(tls::prettyDouble(value)));
-    }
-    else
-    {
-      stow->pEdit->trafficLabel->setTrafficRedSlot();
-      stow->pEdit->goToolTipSlot("Wrong Type");
-    }
-  }
-  else
-  {
-    stow->pEdit->trafficLabel->setTrafficRedSlot();
-    int position = result.errorPosition - 8; // 7 chars for 'temp = ' + 1
-    stow->pEdit->goToolTipSlot(textIn.left(position) + "?");
-  }
+  prmValueChanged();
 }
 
 void Sketch::linkedCSysChanged()

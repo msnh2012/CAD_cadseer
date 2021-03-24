@@ -98,7 +98,7 @@ struct Manager::Stow
   
   //used to test compatibility between exrpressions and parameters.
   //will assign value if assign=true
-  class ParameterValueVisitor : public boost::static_visitor<bool>
+  class ParameterValueVisitor : public boost::static_visitor<Amity>
   {
     prm::Parameter *parameter = nullptr;
     expr::Value ev;
@@ -110,72 +110,102 @@ struct Manager::Stow
     , assign(assignIn)
     {}
     
-    bool operator()(double) const
+    Amity operator()(double) const
     {
       expr::DoubleVisitor edv;
       double newValue = boost::apply_visitor(edv, ev);
       if (!parameter->isValidValue(newValue))
-        return false;
+        return Amity::InvalidValue;
       if (assign)
-        parameter->setValue(newValue);
-      return true;
+      {
+        if (parameter->setValue(newValue))
+          return Amity::Mutate;
+        else
+          return Amity::Equal;
+      }
+      return Amity::Mutate;
     }
     
-    bool operator()(int) const
+    Amity operator()(int) const
     {
       expr::DoubleVisitor edv;
       int newValue = static_cast<int>(boost::apply_visitor(edv, ev));
       if (!parameter->isValidValue(newValue))
-        return false;
+        return Amity::InvalidValue;
       if (assign)
-        parameter->setValue(newValue);
-      return true;
+      {
+        if (parameter->setValue(newValue))
+          return Amity::Mutate;
+        else
+          return Amity::Equal;
+      }
+      return Amity::Mutate;
     }
-    bool operator()(bool) const
+    Amity operator()(bool) const
     {
       expr::DoubleVisitor edv;
       bool newValue = static_cast<bool>(boost::apply_visitor(edv, ev));
       if (!parameter->isValidValue(newValue))
-        return false;
+        return Amity::InvalidValue;
       if (assign)
-        parameter->setValue(newValue);
-      return true;
+      {
+        if (parameter->setValue(newValue))
+          return Amity::Mutate;
+        else
+          return Amity::Equal;
+      }
+      return Amity::Mutate;
     }
-    bool operator()(const std::string&) const {assert(0); return false;} //currently unsupported formula type.
-    bool operator()(const boost::filesystem::path&) const {assert(0); return false;} //currently unsupported formula type.
-    bool operator()(const osg::Vec3d&) const
+    Amity operator()(const std::string&) const {assert(0); return Amity::Incompatible;} //currently unsupported formula type.
+    Amity operator()(const boost::filesystem::path&) const {assert(0); return Amity::Incompatible;} //currently unsupported formula type.
+    Amity operator()(const osg::Vec3d&) const
     {
       expr::VectorVisitor evv;
       osg::Vec3d newValue = boost::apply_visitor(evv, ev);
       if (assign)
-        parameter->setValue(newValue);
-      return true;
+      {
+        if (parameter->setValue(newValue))
+          return Amity::Mutate;
+        else
+          return Amity::Equal;
+      }
+      return Amity::Mutate;
     }
-    bool operator()(const osg::Quat&) const
+    Amity operator()(const osg::Quat&) const
     {
       expr::QuatVisitor eqv;
       osg::Quat newValue = boost::apply_visitor(eqv, ev);
       if (assign)
-        parameter->setValue(newValue);
-      return true;
+      {
+        if (parameter->setValue(newValue))
+          return Amity::Mutate;
+        else
+          return Amity::Equal;
+      }
+      return Amity::Mutate;
     }
-    bool operator()(const osg::Matrixd&) const
+    Amity operator()(const osg::Matrixd&) const
     {
       expr::MatrixVisitor emv;
       osg::Matrixd newValue = boost::apply_visitor(emv, ev);
       if (assign)
-        parameter->setValue(newValue);
-      return true;
+      {
+        if (parameter->setValue(newValue))
+          return Amity::Mutate;
+        else
+          return Amity::Equal;
+      }
+      return Amity::Mutate;
     }
-    bool operator()(const ftr::Picks&) const {assert(0); return false;}
+    Amity operator()(const ftr::Picks&) const {assert(0); return Amity::Incompatible;}
   };
   
   //can't make parameter const. We can assign or test.
-  bool common(prm::Parameter *parameter, const expr::Value &evIn, bool assign)
+  Amity common(prm::Parameter *parameter, const expr::Value &evIn, bool assign)
   {
     //we only visit if the types are acceptable otherwise a crash.
     ParameterValueVisitor v(parameter, evIn, assign);
-    auto goVisit = [&]() -> bool {return boost::apply_visitor(v, parameter->getStow().variant);};
+    auto goVisit = [&]() -> Amity {return boost::apply_visitor(v, parameter->getStow().variant);};
     
     if (parameter->getValueType() == evIn.type())
       return goVisit();
@@ -183,7 +213,7 @@ struct Manager::Stow
     if (evIn.type() == typeid(double) &&  (parameter->getValueType() == typeid(int) || parameter->getValueType() == typeid(bool)))
       return goVisit();
     
-    return false;
+    return Amity::Incompatible;
   }
   
   Value getExpressionValue(int idIn) const
@@ -211,7 +241,9 @@ struct Manager::Stow
   bool canLinkExpression(prm::Parameter *p, int eId)
   {
     auto ev = getExpressionValue(eId);
-    return common(p, ev, false);
+    if (common(p, ev, false) >= Amity::Equal)
+      return true;
+    return false;
   }
 
   bool canLinkExpression(const uuid &pId, int eId)
@@ -223,30 +255,31 @@ struct Manager::Stow
     return canLinkExpression(p, eId);
   }
 
-  bool addLink(const uuid &pId, int eId)
+  Amity addLink(const uuid &pId, int eId)
   {
     prm::Parameter *p = app::instance()->getProject()->findParameter(pId);
     assert(p);
     if (!p)
-      return false;
+      return Amity::Incompatible;
     return addLink(p, eId);
   }
   
-  bool addLink(prm::Parameter *p, int eId)
+  Amity addLink(prm::Parameter *p, int eId)
   {
     auto ev = getExpressionValue(eId);
-    if (!common(p, ev, true))
-      return false;
+    auto result = common(p, ev, true);
+    if (result >= Amity::Equal)
+    {
+      removeLink(p->getId()); //it is ok if it doesn't exist.
+      links.insert(Link(p->getId(), eId));
+      p->setConstant(false);
+      
+      std::ostringstream gm;
+      gm << "Linking parameter: " << p->getName().toStdString() << " to formula: " << *manager.getExpressionName(eId);
+      app::instance()->messageSlot(msg::buildGitMessage(gm.str()));
+    }
     
-    removeLink(p->getId()); //it is ok if it doesn't exist.
-    links.insert(Link(p->getId(), eId));
-    p->setConstant(false);
-    
-    std::ostringstream gm;
-    gm << "Linking parameter: " << p->getName().toStdString() << " to formula: " << *manager.getExpressionName(eId);
-    app::instance()->messageSlot(msg::buildGitMessage(gm.str()));
-    
-    return true;
+    return result;
   }
 
   void removeLink(const uuid &pId)
@@ -322,13 +355,13 @@ struct Manager::Stow
         prm::Parameter *p = app::instance()->getProject()->findParameter(its.first->parameterId);
         assert(p); if (!p) continue;
         auto ev = getExpressionValue(its.first->expressionId);
-        if (!common(p, ev, true))
+        if (common(p, ev, true) <= Amity::InvalidValue)
           app::instance()->messageSlot(msg::buildStatusMessage("Failed to update parameter: " + p->getName().toStdString(), 2.0));
       }
     }
   }
   
-  bool assignParameter(prm::Parameter *p, int eId)
+  Amity assignParameter(prm::Parameter *p, int eId)
   {
     auto ev = getExpressionValue(eId);
     return common(p, ev, true);
@@ -633,12 +666,12 @@ bool Manager::canLinkExpression(const boost::uuids::uuid& pId, int eId)
   return stow->canLinkExpression(pId, eId);
 }
 
-bool Manager::addLink(const uuid &pId, int eId)
+Amity Manager::addLink(const uuid &pId, int eId)
 {
   return stow->addLink(pId, eId);
 }
 
-bool Manager::addLink(prm::Parameter *p, int eId)
+Amity Manager::addLink(prm::Parameter *p, int eId)
 {
   return stow->addLink(p, eId);
 }
@@ -678,7 +711,7 @@ void Manager::dispatchLinks(const std::vector<int> &eIds)
   stow->dispatchLinks(eIds);
 }
 
-bool Manager::assignParameter(prm::Parameter *p, int eId)
+Amity Manager::assignParameter(prm::Parameter *p, int eId)
 {
   return stow->assignParameter(p, eId);
 }

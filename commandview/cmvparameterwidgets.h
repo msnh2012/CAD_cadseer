@@ -25,30 +25,15 @@
 #include <QWidget>
 #include <QStyledItemDelegate>
 
+#include "commandview/cmvparameterbase.h"
+
 class QItemSelection;
 
 namespace prm{class Parameter;}
 
 namespace cmv
 {
-  class ExpressionEdit : public QWidget
-  {
-    Q_OBJECT
-  public:
-    ExpressionEdit() = delete;
-    ExpressionEdit(QWidget*, prm::Parameter*);
-    ~ExpressionEdit() override;
-  public Q_SLOTS:
-    void goToolTipSlot(const QString&);
-  private Q_SLOTS:
-    void editingSlot(const QString &);
-    void finishedEditingSlot();
-  private:
-    struct Stow;
-    std::unique_ptr<Stow> stow;
-  };
-  
-  class BoolCombo : public QWidget
+  class BoolCombo : public ParameterBase
   {
     Q_OBJECT
   public:
@@ -62,7 +47,7 @@ namespace cmv
     std::unique_ptr<Stow> stow;
   };
   
-  class EnumCombo : public QWidget
+  class EnumCombo : public ParameterBase
   {
     Q_OBJECT
   public:
@@ -76,7 +61,7 @@ namespace cmv
     std::unique_ptr<Stow> stow;
   };
   
-  class StringEdit : public QWidget
+  class StringEdit : public ParameterBase
   {
     Q_OBJECT
   public:
@@ -90,7 +75,7 @@ namespace cmv
     std::unique_ptr<Stow> stow;
   };
   
-  class PathEdit : public QWidget
+  class PathEdit : public ParameterBase
   {
     Q_OBJECT
   public:
@@ -110,7 +95,7 @@ namespace cmv
    * 
    * Will layout multiple parameters in a grid
    */
-  class ParameterWidget : public QWidget
+  class ParameterWidget : public ParameterBase
   {
     Q_OBJECT
   public:
@@ -118,7 +103,10 @@ namespace cmv
     ~ParameterWidget();
     void enableWidget(prm::Parameter*);
     void disableWidget(prm::Parameter*);
-    QWidget* getWidget(prm::Parameter*); // maybe nullptr
+    ParameterBase* getWidget(prm::Parameter*); // maybe nullptr
+    
+    static ParameterBase* buildWidget(QWidget*, prm::Parameter*);
+    
   private:
     struct Stow;
     std::unique_ptr<Stow> stow;
@@ -130,7 +118,7 @@ namespace cmv
    * Allows a selection so parameters associated
    * to picks can be displayed while editing. see blend
    */
-  class ParameterTable : public QWidget
+  class ParameterTable : public ParameterBase
   {
     Q_OBJECT
   public:

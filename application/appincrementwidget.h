@@ -23,11 +23,6 @@
 #include <memory>
 
 #include <QWidget>
-#include <QWidgetAction>
-
-class QLineEdit;
-
-namespace dlg{class ExpressionEdit;}
 
 namespace app
 {
@@ -37,11 +32,7 @@ namespace app
   public:
     IncrementWidget(QWidget*, const QString&, double&);
     ~IncrementWidget();
-    void update(); //called when prefs changed externally. like through pref dialog.
-  private Q_SLOTS:
-    void textEditedSlot(const QString&);
-    void returnPressedSlot();
-    void editingFinishedSlot();
+    void externalUpdate();
   private:
     struct Stow;
     std::unique_ptr<Stow> stow;
@@ -50,6 +41,7 @@ namespace app
   };
   
   //! a filter to select text when editlines are picked.
+  //not currently being used.
   class HighlightOnFocusFilter : public QObject
   {
     Q_OBJECT

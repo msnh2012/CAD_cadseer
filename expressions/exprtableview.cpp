@@ -45,7 +45,7 @@
 #include "preferences/preferencesXML.h"
 #include "preferences/prfmanager.h"
 #include "tools/idtools.h"
-#include "dialogs/dlgexpressionedit.h"
+#include "commandview/cmvexpressionedit.h"
 #include "message/msgmessage.h"
 #include "expressions/exprtableview.h"
 #include "expressions/exprtablemodel.h"
@@ -706,16 +706,14 @@ ExpressionDelegate::ExpressionDelegate(QObject *parent): QStyledItemDelegate(par
 
 QWidget* ExpressionDelegate::createEditor(QWidget* parent, const QStyleOptionViewItem&, const QModelIndex&) const
 {
-  dlg::ExpressionEdit *editor = new dlg::ExpressionEdit(parent);
-  return editor;
+  return new cmv::ExpressionEdit(parent);
 }
 
 void ExpressionDelegate::setEditorData(QWidget* editor, const QModelIndex& index) const
 {
-  dlg::ExpressionEdit *eEditor = dynamic_cast<dlg::ExpressionEdit *>(editor); assert(eEditor);
-  eEditor->lineEdit->setText(index.model()->data(index, Qt::EditRole).toString());
-  QTimer::singleShot(0, eEditor->trafficLabel, SLOT(setTrafficGreenSlot()));
-  eEditor->trafficLabel->setTrafficGreenSlot(); //expect current string is valid.
+  cmv::ExpressionEdit *eEditor = dynamic_cast<cmv::ExpressionEdit *>(editor); assert(eEditor);
+  eEditor->setText(index.model()->data(index, Qt::EditRole).toString());
+  QTimer::singleShot(0, [eEditor](){eEditor->setTrafficGreen();});
   
   const QSortFilterProxyModel *proxyModel = dynamic_cast<const QSortFilterProxyModel *>(index.model());
   assert(proxyModel);
@@ -723,12 +721,10 @@ void ExpressionDelegate::setEditorData(QWidget* editor, const QModelIndex& index
   TableModel *tableModel = const_cast<TableModel*>(dynamic_cast<const TableModel *>(proxyModel->sourceModel()));
   assert(tableModel);
   
-  connect (eEditor->lineEdit, SIGNAL(textEdited(QString)), tableModel, SLOT(parseStringSlot(QString)));
-  connect (tableModel, SIGNAL(parseWorkingSignal()), eEditor->trafficLabel, SLOT(setTrafficYellowSlot()));
-  connect (tableModel, SIGNAL(parseSucceededSignal(QString)), editor, SLOT(goToolTipSlot(QString)));
-  connect (tableModel, SIGNAL(parseSucceededSignal()), eEditor->trafficLabel, SLOT(setTrafficGreenSlot()));
-  connect (tableModel, SIGNAL(parseFailedSignal(QString)), editor, SLOT(goToolTipSlot(QString)));
-  connect (tableModel, SIGNAL(parseFailedSignal()), eEditor->trafficLabel, SLOT(setTrafficRedSlot()));
+  connect (eEditor, &cmv::ExpressionEdit::editing, tableModel, &TableModel::parseStringSlot);
+  connect (tableModel, &TableModel::parseWorkingSignal, eEditor, &cmv::ExpressionEdit::setTrafficYellow);
+  connect (tableModel, &TableModel::parseSucceededSignal, eEditor, &cmv::ExpressionEdit::parseSucceeded);
+  connect (tableModel, &TableModel::parseFailedSignal, eEditor, &cmv::ExpressionEdit::parseFailed);
 }
 
 void ExpressionDelegate::updateEditorGeometry(QWidget* editor, const QStyleOptionViewItem& option, const QModelIndex&) const
@@ -739,9 +735,9 @@ void ExpressionDelegate::updateEditorGeometry(QWidget* editor, const QStyleOptio
 
 void ExpressionDelegate::setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const
 {
-  dlg::ExpressionEdit *eEditor = dynamic_cast<dlg::ExpressionEdit *>(editor);
+  cmv::ExpressionEdit *eEditor = dynamic_cast<cmv::ExpressionEdit *>(editor);
   assert(eEditor);
-  if (!model->setData(index, eEditor->lineEdit->text(), Qt::EditRole))
+  if (!model->setData(index, eEditor->getText(), Qt::EditRole))
   {
     //view must be used as parent when constructing the delegate.
     QAbstractItemView *view = dynamic_cast<QAbstractItemView *>(this->parent());

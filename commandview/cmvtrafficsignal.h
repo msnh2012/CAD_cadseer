@@ -32,33 +32,42 @@ namespace prm{class Parameter;}
 
 namespace cmv
 {
-  /*! @class TrafficSignal 
-   * @brief Widget for user interaction with parameter links
-   * @details User can drag and drop an expression on to widget to link.
-   * right click and select 'unlink' to unlik.
-   */
-  class TrafficSignal : public QLabel
+  namespace trf
   {
-    Q_OBJECT
-  public:
-    TrafficSignal() = delete;
-    TrafficSignal(QWidget*, prm::Parameter*);
-    ~TrafficSignal() override;
-  public Q_SLOTS:
-    void setTrafficRedSlot();
-    void setTrafficYellowSlot();
-    void setTrafficGreenSlot();
-    void setTrafficLinkSlot();
-    void setTrafficEmptySlot(); //hides the signal.
-  protected:
-    void dragEnterEvent(QDragEnterEvent*) override;
-    void dropEvent(QDropEvent*) override;
-  private:
-    struct Stow;
-    std::unique_ptr<Stow> stow;
-    
-    void unlink();
-  };
+    /*! @class Signal 
+   * @brief Traffic signal
+   * @details This is a pixmapped qlabel for displaying
+   * results of expression parsing. If the parameter is null
+   * then any expression linking capabilities will be hidden.
+   * When the parameter is valid, the label will accept drops
+   * form expressions and will have a context menu with an
+   * 'unlink' action to unlink.
+   */
+    class Signal : public QLabel
+    {
+      Q_OBJECT
+    public:
+      Signal() = delete;
+      explicit Signal(QWidget*, prm::Parameter* = nullptr);
+      ~Signal() override;
+      void setTrafficRed();
+      void setTrafficYellow();
+      void setTrafficGreen();
+      void setTrafficEmpty(); //hides the signal.
+      void setTrafficLink(); //assert on parameter ! null
+    Q_SIGNALS:
+      void prmValueChanged();
+      void prmConstantChanged();
+    protected:
+      void dragEnterEvent(QDragEnterEvent*) override;
+      void dropEvent(QDropEvent*) override;
+    private:
+      struct Stow;
+      std::unique_ptr<Stow> stow;
+      
+      void unlink();
+    };
+  }
 }
 
 #endif //CMV_TRAFFICSIGNAL_H

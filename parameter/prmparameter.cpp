@@ -27,6 +27,7 @@
 
 #include "tools/idtools.h"
 #include "tools/infotools.h"
+#include "tools/tlsstring.h"
 #include "project/serial/generated/prjsrlsptparameter.h"
 #include "parameter/prmvariant.h"
 #include "parameter/prmparameter.h"
@@ -398,7 +399,7 @@ public:
 class QStringVisitor : public boost::static_visitor<QString>
 {
 public:
-  QString operator()(double dIn) const {return QString::number(dIn, 'f', 12);}
+  QString operator()(double dIn) const {return QString::fromStdString(tls::prettyDouble(dIn));}
   QString operator()(int iIn) const {return QString::number(iIn);}
   QString operator()(bool b) const {return (b) ? QObject::tr("True") : QObject::tr("False");}
   QString operator()(const std::string &sIn) const {return QString::fromStdString(sIn);}

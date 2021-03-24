@@ -30,22 +30,22 @@
 #include "selection/slcmessage.h"
 #include "dialogs/dlgselectionbutton.h"
 #include "dialogs/dlgselectionwidget.h"
-#include "dialogs/dlgexpressionedit.h"
 #include "dialogs/dlgvizfilter.h"
+#include "commandview/cmvexpressionedit.h"
 #include "commandview/cmvcsyswidget.h"
 
 struct cmv::CSysWidget::Stow
 {
-  QWidget *parent = nullptr;
+  CSysWidget *parent = nullptr;
   prm::Parameter *parameter = nullptr;
   QRadioButton *byConstant = nullptr;
   QRadioButton *byFeature = nullptr;
-  dlg::ExpressionEdit *expressionWidget = nullptr;
+  cmv::ParameterEdit *expressionWidget = nullptr;
   dlg::SelectionWidget *selectionWidget = nullptr;
   QStackedWidget *stackWidget = nullptr;
   
   Stow() = delete;
-  Stow(QWidget *parentIn, prm::Parameter* parameterIn)
+  Stow(CSysWidget *parentIn, prm::Parameter* parameterIn)
   : parent(parentIn)
   , parameter(parameterIn)
   {
@@ -71,8 +71,8 @@ struct cmv::CSysWidget::Stow
     mainLayout->addLayout(csysLayout);
     
     //stacked widgets
-    expressionWidget = new dlg::ExpressionEdit(parent);
-    expressionWidget->setDisabled(true); //we can't parse coordinate systems yet
+    expressionWidget = new cmv::ParameterEdit(parent, parameter);
+    QObject::connect(expressionWidget, &ParameterEdit::prmValueChanged, parent, &CSysWidget::prmValueChanged);
     
     dlg::SelectionWidgetCue cue;
     cue.name.clear();
@@ -94,7 +94,7 @@ struct cmv::CSysWidget::Stow
 using namespace cmv;
 
 CSysWidget::CSysWidget(QWidget *parentIn, prm::Parameter *parameterIn)
-: QWidget(parentIn)
+: ParameterBase(parentIn)
 , stow(std::make_unique<Stow>(this, parameterIn))
 {
   dlg::VizFilter *vFilter = new dlg::VizFilter(this);

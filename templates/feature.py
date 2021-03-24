@@ -18,42 +18,42 @@ def commandMessage():
   print ('  python ./feature.py FeatureName --feature --command --serial --commandView')
 
 if (len(sys.argv) < 2):
-  print >> sys.stderr, 'ERROR: Wrong number of arguments. Need at least classname'
+  sys.stderr.write('ERROR: Wrong number of arguments. Need at least classname\n')
   commandMessage()
   sys.exit()
 
 #this ensures user puts classname first
 if sys.argv[1].startswith('-'):
-  print >> sys.stderr, 'ERROR: invalid classname'
+  sys.stderr.write('ERROR: invalid classname\n')
   commandMessage()
   sys.exit()
 
 if not path.isfile('./featureTemplate.h'):
-  print >> sys.stderr, 'ERROR: No featureTemplate.h file'
+  sys.stderr.write('ERROR: No featureTemplate.h file\n')
   sys.exit()
   
 if not path.isfile("./featureTemplate.cpp"):
-  print >> sys.stderr, 'ERROR: No featureTemplate.cpp file'
+  sys.stderr.write('ERROR: No featureTemplate.cpp file\n')
   sys.exit()
 
 if not path.isfile('./commandTemplate.h'):
-  print >> sys.stderr, 'ERROR: No commandTemplate.h file'
+  sys.stderr.write('ERROR: No commandTemplate.h file\n')
   sys.exit()
   
 if not path.isfile("./commandTemplate.cpp"):
-  print >> sys.stderr, 'ERROR: No commandTemplate.cpp file'
+  sys.stderr.write('ERROR: No commandTemplate.cpp file\n')
   sys.exit()
   
 if not path.isfile("./commandViewTemplate.h"):
-  print >> sys.stderr, 'ERROR: No commandViewTemplate.h file'
+  sys.stderr.write('ERROR: No commandViewTemplate.h file\n')
   sys.exit()
   
 if not path.isfile("./commandViewTemplate.cpp"):
-  print >> sys.stderr, 'ERROR: No commandViewTemplate.cpp file'
+  sys.stderr.write('ERROR: No commandViewTemplate.cpp file\n')
   sys.exit()
   
 if not path.isfile("./serialTemplate.xsd"):
-  print >> sys.stderr, 'ERROR: No serialTemplate.xsd file'
+  sys.stderr.write('ERROR: No serialTemplate.xsd file\n')
   sys.exit()
 
 className = sys.argv[1]

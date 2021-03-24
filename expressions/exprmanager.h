@@ -35,7 +35,16 @@ namespace prm{class Parameter;}
 namespace msg{struct Message;}
 namespace prj{namespace srl{namespace prjs{class Expression;}}}
 
-namespace expr{
+namespace expr
+{
+  //! Enum for describing relation between an expression and parameter.
+  enum class Amity
+  {
+    Incompatible = 0 //!< types are not equal and don't convert
+    , InvalidValue //! types are acceptable, but value of expression is not acceptable for parameter
+    , Equal //!< types are acceptable and values are 'equal'
+    , Mutate //!< types are acceptable and values are not 'equal'
+  };
 
 /*! @class Manager @brief interface to store and manage expressions.
  * 
@@ -115,8 +124,8 @@ public:
   ///@{
   bool canLinkExpression(prm::Parameter*, int); //check compatible types.
   bool canLinkExpression(const boost::uuids::uuid&, int); //check compatible types.
-  bool addLink(const boost::uuids::uuid&, int); //!< only if types allow and a valid parameter value.
-  bool addLink(prm::Parameter*, int); //!< only if types allow and a valid parameter value.
+  Amity addLink(const boost::uuids::uuid&, int); //!< only if types allow and a valid parameter value.
+  Amity addLink(prm::Parameter*, int); //!< only if types allow and a valid parameter value.
   void removeLink(const boost::uuids::uuid&); //!< remove the link by parameter id. 0 or 1.
   void removeLink(int); //!< remove all links to expression. 0 or many.
   bool isLinked(const boost::uuids::uuid&) const;
@@ -124,7 +133,7 @@ public:
   std::optional<int> getLinked(const boost::uuids::uuid&) const; //!< get optional expression id linked to parameter id passed in. 0 or 1
   std::vector<boost::uuids::uuid> getLinked(int) const; //!< get all parameter ids linked to passed in expression id. 0 or many.
   void dispatchLinks(const std::vector<int>&); //!< assign values from expressions to parameters.
-  bool assignParameter(prm::Parameter*, int); //!< assign expression value to parameter without creating a link.
+  Amity assignParameter(prm::Parameter*, int); //!< assign expression value to parameter without creating a link.
   ///@}
   
   prj::srl::prjs::Expression serialOut() const;

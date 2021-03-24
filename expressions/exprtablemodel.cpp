@@ -357,14 +357,12 @@ void TableModel::parseStringSlot(const QString &textIn)
     valueStream << eManager.getExpressionValue(testFormulaName);
     QString string;
     Q_EMIT parseSucceededSignal(QString::fromStdString(valueStream.str()));
-    Q_EMIT parseSucceededSignal();
   }
   else
   {
     int position = result.errorPosition - testFormulaName.size() - 1;
     QString string = textIn.left(position) + "?";
     Q_EMIT parseFailedSignal(string);
-    Q_EMIT parseFailedSignal();
   }
   
   if (eManager.hasExpression(testFormulaName))

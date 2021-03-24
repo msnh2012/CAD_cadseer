@@ -74,12 +74,8 @@ namespace cmv
     void addMidpoint();
     void addWhereDragged();
     
-    void setEditLinked();
-    void setEditUnlinked();
-    void requestParameterLinkSlot(const QString&);
-    void requestParameterUnlinkSlot();
-    void updateParameterSlot();
-    void textEditedParameterSlot(const QString&);
+    void prmValueChanged();
+    void prmConstantChanged();
     
     void viewEntitiesToggled(bool);
     void viewConstraintsToggled(bool);
