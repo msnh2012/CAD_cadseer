@@ -45,7 +45,7 @@ QIcon Face::icon;
 
 Face::Face():
 Base()
-, sShape(new ann::SeerShape())
+, sShape(std::make_unique<ann::SeerShape>())
 {
   if (icon.isNull())
     icon = QIcon(":/resources/images/constructionFace.svg");

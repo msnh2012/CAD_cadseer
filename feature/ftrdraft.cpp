@@ -53,7 +53,7 @@ QIcon Draft::icon;
 
 Draft::Draft()
 : Base()
-, sShape(new ann::SeerShape())
+, sShape(std::make_unique<ann::SeerShape>())
 , angle(buildAngleParameter())
 , label(new lbr::PLabel(angle.get()))
 {
@@ -122,7 +122,12 @@ void Draft::setAngleParameter(std::shared_ptr<prm::Parameter> prmIn)
 
 std::shared_ptr<prm::Parameter> Draft::buildAngleParameter()
 {
-  std::shared_ptr<prm::Parameter> out(new prm::Parameter(prm::Names::Angle, prf::manager().rootPtr->features().draft().get().angle()));
+  auto out = std::make_shared<prm::Parameter>
+  (
+    prm::Names::Angle
+    , prf::manager().rootPtr->features().draft().get().angle()
+    , prm::Tags::Angle
+  );
   out->setConstraint(prm::Constraint::buildNonZeroAngle());
   return out;
 }

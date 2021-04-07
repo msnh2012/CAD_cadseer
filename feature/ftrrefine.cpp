@@ -39,7 +39,7 @@ using boost::uuids::uuid;
 
 QIcon Refine::icon;
 
-Refine::Refine() : Base(), sShape(new ann::SeerShape())
+Refine::Refine() : Base(), sShape(std::make_unique<ann::SeerShape>())
 {
   if (icon.isNull())
     icon = QIcon(":/resources/images/constructionRefine.svg");

@@ -61,6 +61,7 @@ namespace ftr
 using namespace ftr;
 
 ShapeCheck::ShapeCheck(const TopoDS_Shape &shapeIn)
+: shapeCheckPrivate(std::make_unique<ShapeCheckPrivate>(shapeIn))
 {
   try
   {
@@ -68,7 +69,6 @@ ShapeCheck::ShapeCheck(const TopoDS_Shape &shapeIn)
     if (shapeIn.IsNull())
       return;
     
-    shapeCheckPrivate = std::unique_ptr<ShapeCheckPrivate>(new ShapeCheckPrivate(shapeIn));
     if (!shapeCheckPrivate->checker.IsValid())
       return;
     

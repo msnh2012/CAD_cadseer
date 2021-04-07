@@ -52,14 +52,14 @@ QIcon InstancePolar::icon;
 
 InstancePolar::InstancePolar() :
 Base(),
-csys(new prm::Parameter(prm::Names::CSys, osg::Matrixd::identity())),
-count(new prm::Parameter(QObject::tr("Count"), 3)),
-angle(new prm::Parameter(prm::Names::Angle, 20.0)),
-inclusiveAngle(new prm::Parameter(QObject::tr("Inclusive Angle"), false)),
-includeSource(new prm::Parameter(QObject::tr("Include Source"), true)),
-sShape(new ann::SeerShape()),
-iMapper(new ann::InstanceMapper()),
-csysDragger(new ann::CSysDragger(this, csys.get()))
+csys(std::make_unique<prm::Parameter>(prm::Names::CSys, osg::Matrixd::identity(), prm::Tags::CSys)),
+count(std::make_unique<prm::Parameter>(QObject::tr("Count"), 3)),
+angle(std::make_unique<prm::Parameter>(prm::Names::Angle, 20.0)),
+inclusiveAngle(std::make_unique<prm::Parameter>(QObject::tr("Inclusive Angle"), false, prm::Tags::Angle)),
+includeSource(std::make_unique<prm::Parameter>(QObject::tr("Include Source"), true)),
+sShape(std::make_unique<ann::SeerShape>()),
+iMapper(std::make_unique<ann::InstanceMapper>()),
+csysDragger(std::make_unique<ann::CSysDragger>(this, csys.get()))
 {
   if (icon.isNull())
     icon = QIcon(":/resources/images/constructionInstancePolar.svg");

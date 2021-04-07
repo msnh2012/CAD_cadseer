@@ -46,8 +46,8 @@ using boost::filesystem::path;
 QIcon Quote::icon;
 
 Quote::Quote() : Base(),
-tFile(new prm::Parameter("Template File", prf::manager().rootPtr->features().quote().get().templateSheet(), prm::PathType::Read)),
-oFile(new prm::Parameter("Output File",  path(app::instance()->getProject()->getSaveDirectory()) /= "Quote.ods", prm::PathType::Write))
+tFile(std::make_unique<prm::Parameter>("Template File", prf::manager().rootPtr->features().quote().get().templateSheet(), prm::PathType::Read)),
+oFile(std::make_unique<prm::Parameter>("Output File",  path(app::instance()->getProject()->getSaveDirectory()) /= "Quote.ods", prm::PathType::Write))
 {
   if (icon.isNull())
     icon = QIcon(":/resources/images/constructionQuote.svg");

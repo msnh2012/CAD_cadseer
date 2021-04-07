@@ -80,7 +80,7 @@ void Entry::createLabel()
 
 Feature::Feature():
 Base()
-, sShape(new ann::SeerShape())
+, sShape(std::make_unique<ann::SeerShape>())
 {
   if (icon.isNull())
     icon = QIcon(":/resources/images/constructionFill.svg"); //fix me

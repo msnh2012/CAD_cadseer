@@ -51,9 +51,9 @@ QIcon SurfaceMesh::icon;
 
 SurfaceMesh::SurfaceMesh():
 Base()
-, csys(new prm::Parameter(prm::Names::CSys, osg::Matrixd::identity(), prm::Tags::CSys))
-, csysDragger(new ann::CSysDragger(this, csys.get()))
-, mesh(new ann::SurfaceMesh())
+, csys(std::make_unique<prm::Parameter>(prm::Names::CSys, osg::Matrixd::identity(), prm::Tags::CSys))
+, csysDragger(std::make_unique<ann::CSysDragger>(this, csys.get()))
+, mesh(std::make_unique<ann::SurfaceMesh>())
 {
   if (icon.isNull())
     icon = QIcon(":/resources/images/constructionSurfaceMesh.svg");

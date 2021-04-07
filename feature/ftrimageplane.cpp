@@ -46,9 +46,9 @@ QIcon ImagePlane::icon;
 
 ImagePlane::ImagePlane():
 Base()
-, scale(new prm::Parameter(prm::Names::Scale, 1.0))
-, csys(new prm::Parameter(prm::Names::CSys, osg::Matrixd::identity()))
-, csysDragger(new ann::CSysDragger(this, csys.get()))
+, scale(std::make_unique<prm::Parameter>(prm::Names::Scale, 1.0, prm::Tags::Scale))
+, csys(std::make_unique<prm::Parameter>(prm::Names::CSys, osg::Matrixd::identity(), prm::Tags::CSys))
+, csysDragger(std::make_unique<ann::CSysDragger>(this, csys.get()))
 , transform(new osg::PositionAttitudeTransform())
 , scaleLabel(new lbr::PLabel(scale.get()))
 {

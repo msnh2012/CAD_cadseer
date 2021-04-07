@@ -123,14 +123,16 @@ static const std::map<FeatureTag, std::string> featureTagMap =
 
 QIcon Box::icon;
 
+inline static const prf::Box& pBox(){return prf::manager().rootPtr->features().box().get();}
+
 Box::Box() :
   Base(),
-  length(std::make_shared<prm::Parameter>(prm::Names::Length, prf::manager().rootPtr->features().box().get().length())),
-  width(std::make_shared<prm::Parameter>(prm::Names::Width, prf::manager().rootPtr->features().box().get().width())),
-  height(std::make_shared<prm::Parameter>(prm::Names::Height, prf::manager().rootPtr->features().box().get().height())),
-  csys(new prm::Parameter(prm::Names::CSys, osg::Matrixd::identity())),
-  csysDragger(new ann::CSysDragger(this, csys.get())),
-  sShape(new ann::SeerShape())
+  length(std::make_shared<prm::Parameter>(prm::Names::Length, pBox().length(), prm::Tags::Length)),
+  width(std::make_shared<prm::Parameter>(prm::Names::Width, pBox().width(), prm::Tags::Width)),
+  height(std::make_shared<prm::Parameter>(prm::Names::Height, pBox().height(), prm::Tags::Height)),
+  csys(std::make_unique<prm::Parameter>(prm::Names::CSys, osg::Matrixd::identity(), prm::Tags::CSys)),
+  csysDragger(std::make_unique<ann::CSysDragger>(this, csys.get())),
+  sShape(std::make_unique<ann::SeerShape>())
 {
   if (icon.isNull())
     icon = QIcon(":/resources/images/constructionBox.svg");

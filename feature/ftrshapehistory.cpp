@@ -173,7 +173,7 @@ namespace ftr
 }
 
 ShapeHistory::ShapeHistory() :
-shapeHistoryStow(new ShapeHistoryStow())
+shapeHistoryStow(std::make_shared<ShapeHistoryStow>())
 {
 }
 ShapeHistory::ShapeHistory(std::shared_ptr<ShapeHistoryStow> stowIn) :
@@ -354,7 +354,7 @@ ShapeHistory ShapeHistory::createEvolveHistory(const uuid &shapeIdIn) const
   typedef boost::filtered_graph<Graph, boost::keep_all, gu::SubsetFilter<Graph> > FilteredGraph;
   FilteredGraph filteredGraph(shapeHistoryStow->graph, boost::keep_all(), vertexFilter);
   
-  std::shared_ptr<ShapeHistoryStow> stowOut(new ShapeHistoryStow());
+  auto stowOut = std::make_shared<ShapeHistoryStow>();
   //need to transpose because we discard the reverse graph.
   boost::transpose_graph(filteredGraph, stowOut->graph);
   
@@ -381,7 +381,7 @@ ShapeHistory ShapeHistory::createDevolveHistory(const uuid &shapeIdIn) const
   typedef boost::filtered_graph<Graph, boost::keep_all, gu::SubsetFilter<Graph> > FilteredGraph;
   FilteredGraph filteredGraph(shapeHistoryStow->graph, boost::keep_all(), vertexFilter);
   
-  std::shared_ptr<ShapeHistoryStow> stowOut(new ShapeHistoryStow());
+  auto stowOut = std::make_shared<ShapeHistoryStow>();
   boost::copy_graph(filteredGraph, stowOut->graph);
   VertexIterator it, itEnd;
   std::tie(it, itEnd) = boost::vertices(stowOut->graph);

@@ -46,7 +46,10 @@ using namespace ftr;
 
 QIcon Subtract::icon;
 
-Subtract::Subtract() : Base(), sShape(new ann::SeerShape()), iMapper(new ann::IntersectionMapper())
+Subtract::Subtract()
+: Base()
+, sShape(std::make_unique<ann::SeerShape>())
+, iMapper(std::make_unique<ann::IntersectionMapper>())
 {
   if (icon.isNull())
     icon = QIcon(":/resources/images/constructionSubtract.svg");

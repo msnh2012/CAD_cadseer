@@ -56,17 +56,19 @@ using boost::uuids::uuid;
 
 QIcon Thread::icon;
 
+inline static const prf::Thread& pTh(){return prf::manager().rootPtr->features().thread().get();}
+
 //defaulting to 10mm screw. need to fill in with preferences.
 Thread::Thread():
 Base(),
-diameter(new prm::Parameter(QObject::tr("Diameter"), prf::manager().rootPtr->features().thread().get().diameter())),
-pitch(new prm::Parameter(QObject::tr("Pitch"), prf::manager().rootPtr->features().thread().get().pitch())),
-length(new prm::Parameter(prm::Names::Length, prf::manager().rootPtr->features().thread().get().length())),
-angle(new prm::Parameter(prm::Names::Angle, prf::manager().rootPtr->features().thread().get().angle())),
-internal(new prm::Parameter(QObject::tr("Internal Thread"), prf::manager().rootPtr->features().thread().get().internal())),
-fake(new prm::Parameter(QObject::tr("Fake"), prf::manager().rootPtr->features().thread().get().fake())),
-leftHanded(new prm::Parameter(QObject::tr("Left Handed"), prf::manager().rootPtr->features().thread().get().leftHanded())),
-csys(new prm::Parameter(prm::Names::CSys, osg::Matrixd::identity())),
+diameter(std::make_unique<prm::Parameter>(prm::Names::Diameter, pTh().diameter(), prm::Tags::Diameter)),
+pitch(std::make_unique<prm::Parameter>(prm::Names::Pitch, pTh().pitch(), prm::Tags::Pitch)),
+length(std::make_unique<prm::Parameter>(prm::Names::Length, pTh().length(), prm::Tags::Length)),
+angle(std::make_unique<prm::Parameter>(prm::Names::Angle, pTh().angle(), prm::Tags::Angle)),
+internal(std::make_unique<prm::Parameter>(QObject::tr("Internal Thread"), pTh().internal())),
+fake(std::make_unique<prm::Parameter>(QObject::tr("Fake"), pTh().fake())),
+leftHanded(std::make_unique<prm::Parameter>(QObject::tr("Left Handed"), pTh().leftHanded())),
+csys(std::make_unique<prm::Parameter>(prm::Names::CSys, osg::Matrixd::identity(), prm::Tags::CSys)),
 diameterLabel(new lbr::PLabel(diameter.get())),
 pitchLabel(new lbr::PLabel(pitch.get())),
 lengthLabel(new lbr::PLabel(length.get())),
@@ -74,8 +76,8 @@ angleLabel(new lbr::PLabel(angle.get())),
 internalLabel(new lbr::PLabel(internal.get())),
 fakeLabel(new lbr::PLabel(fake.get())),
 leftHandedLabel(new lbr::PLabel(leftHanded.get())),
-csysDragger(new ann::CSysDragger(this, csys.get())),
-sShape(new ann::SeerShape()),
+csysDragger(std::make_unique<ann::CSysDragger>(this, csys.get())),
+sShape(std::make_unique<ann::SeerShape>()),
 solidId(gu::createRandomId())
 {
   if (icon.isNull())

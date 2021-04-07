@@ -126,11 +126,21 @@ void Entry::serialIn(const prj::srl::chms::Entry &eIn)
   }
 }
 
+inline static std::shared_ptr<prm::Parameter> makeDistance()
+{
+  return std::make_shared<prm::Parameter>
+  (
+    prm::Names::Distance
+    , prf::manager().rootPtr->features().chamfer().get().distance()
+    , prm::Tags::Distance
+  );
+}
+
 Entry Entry::buildDefaultSymmetric()
 {
   Entry out;
   out.style = Style::Symmetric;
-  out.parameter1 = std::make_shared<prm::Parameter>(prm::Names::Distance, prf::manager().rootPtr->features().chamfer().get().distance());
+  out.parameter1 = makeDistance();
   out.parameter1->setConstraint(prm::Constraint::buildNonZeroPositive());
   out.label1 = new lbr::PLabel(out.parameter1.get());
   out.label1->showName = true;
@@ -143,13 +153,13 @@ Entry Entry::buildDefaultTwoDistances()
 {
   Entry out;
   out.style = Style::TwoDistances;
-  out.parameter1 = std::make_shared<prm::Parameter>(prm::Names::Distance, prf::manager().rootPtr->features().chamfer().get().distance());
+  out.parameter1 = makeDistance();
   out.parameter1->setConstraint(prm::Constraint::buildNonZeroPositive());
   out.label1 = new lbr::PLabel(out.parameter1.get());
   out.label1->showName = true;
   out.label1->valueHasChanged();
   out.label1->constantHasChanged();
-  out.parameter2 = std::make_shared<prm::Parameter>(prm::Names::Distance, prf::manager().rootPtr->features().chamfer().get().distance());
+  out.parameter2 = makeDistance();
   out.parameter2->setConstraint(prm::Constraint::buildNonZeroPositive());
   out.label2 = new lbr::PLabel(out.parameter2.get());
   out.label2->showName = true;
@@ -162,13 +172,18 @@ Entry Entry::buildDefaultDistanceAngle()
 {
   Entry out;
   out.style = Style::DistanceAngle;
-  out.parameter1 = std::make_shared<prm::Parameter>(prm::Names::Distance, prf::manager().rootPtr->features().chamfer().get().distance());
+  out.parameter1 = makeDistance();
   out.parameter1->setConstraint(prm::Constraint::buildNonZeroPositive());
   out.label1 = new lbr::PLabel(out.parameter1.get());
   out.label1->showName = true;
   out.label1->valueHasChanged();
   out.label1->constantHasChanged();
-  out.parameter2 = std::make_shared<prm::Parameter>(prm::Names::Angle, 30.0); //todo add angle to preferences.
+  out.parameter2 = std::make_shared<prm::Parameter>
+  (
+    prm::Names::Angle
+    , 30.0
+    ,prm::Tags::Angle
+  ); //todo add angle to preferences.
   out.parameter2->setConstraint(prm::Constraint::buildNonZeroPositiveAngle());
   out.label2 = new lbr::PLabel(out.parameter2.get());
   out.label2->showName = true;
@@ -177,7 +192,7 @@ Entry Entry::buildDefaultDistanceAngle()
   return out;
 }
 
-Feature::Feature() : Base(), sShape(new ann::SeerShape())
+Feature::Feature() : Base(), sShape(std::make_unique<ann::SeerShape>())
 {
   if (icon.isNull())
     icon = QIcon(":/resources/images/constructionChamfer.svg");

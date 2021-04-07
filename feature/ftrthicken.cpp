@@ -46,8 +46,8 @@ QIcon Thicken::icon;
 
 Thicken::Thicken():
 Base(),
-distance(new prm::Parameter(prm::Names::Distance, 0.1)),
-sShape(new ann::SeerShape())
+distance(std::make_unique<prm::Parameter>(prm::Names::Distance, 0.1, prm::Tags::Distance)),
+sShape(std::make_unique<ann::SeerShape>())
 {
   if (icon.isNull())
     icon = QIcon(":/resources/images/constructionThicken.svg");

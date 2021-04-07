@@ -51,31 +51,35 @@ namespace prm
     static const QString Offset = QObject::tr("Offset");
     static const QString CSys = QObject::tr("CSys");
     static const QString Diameter = QObject::tr("Diameter");
+    static const QString Origin = QObject::tr("Origin");
     static const QString Direction = QObject::tr("Direction");
     static const QString Scale = QObject::tr("Scale");
     static const QString Path = QObject::tr("Path");
     static const QString Size = QObject::tr("Size");
     static const QString AutoSize = QObject::tr("AutoSize");
+    static const QString Pitch = QObject::tr("Pitch");
   }
   
   /*! Common tags for parameters not subjected to locale */
   namespace Tags
   {
-    inline constexpr std::string_view Radius = "Radius"; //!< cylinder, sphere
-    inline constexpr std::string_view Height = "Height"; //!< cylinder, box, cone
-    inline constexpr std::string_view Length = "Length"; //!< box
-    inline constexpr std::string_view Width = "Width"; //!< box
-    inline constexpr std::string_view Position = "Position"; //!< blend
-    inline constexpr std::string_view Distance = "Distance"; //!< chamfer, sketch
-    inline constexpr std::string_view Angle = "Angle"; //!< draft
-    inline constexpr std::string_view Offset = "Offset"; //!< datum plane
-    inline constexpr std::string_view CSys = "CSys"; //!< feature with a coordinate system.
-    inline constexpr std::string_view Diameter = "Diameter"; //!< sketch
-    inline constexpr std::string_view Direction = "Direction"; //!< extrude.
-    inline constexpr std::string_view Scale = "Scale"; //!< image plane.
-    inline constexpr std::string_view Path = "Path"; //!< image plane.
-    inline constexpr std::string_view Size = "Size"; //!< datums.
-    inline constexpr std::string_view AutoSize = "AutoSize"; //!< datums.
+    constexpr std::string_view Radius = "Radius"; //!< cylinder, sphere, blend
+    constexpr std::string_view Height = "Height"; //!< cylinder, box, cone
+    constexpr std::string_view Length = "Length"; //!< box
+    constexpr std::string_view Width = "Width"; //!< box
+    constexpr std::string_view Position = "Position"; //!< blend
+    constexpr std::string_view Distance = "Distance"; //!< chamfer, sketch
+    constexpr std::string_view Angle = "Angle"; //!< draft
+    constexpr std::string_view Offset = "Offset"; //!< datum plane
+    constexpr std::string_view CSys = "CSys"; //!< feature with a coordinate system.
+    constexpr std::string_view Diameter = "Diameter"; //!< sketch
+    constexpr std::string_view Origin = "Origin"; //!< revolve, dieset
+    constexpr std::string_view Direction = "Direction"; //!< extrude.
+    constexpr std::string_view Scale = "Scale"; //!< image plane.
+    constexpr std::string_view Path = "Path"; //!< image plane.
+    constexpr std::string_view Size = "Size"; //!< datums.
+    constexpr std::string_view AutoSize = "AutoSize"; //!< datums.
+    constexpr std::string_view Pitch = "Pitch"; //!< thread, strip
   }
   
   /*! Descriptor for path parameters.*/

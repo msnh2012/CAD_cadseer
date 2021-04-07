@@ -54,9 +54,9 @@ QIcon Trim::icon;
 
 Trim::Trim():
 Base(),
-reversed(new prm::Parameter(QObject::tr("Reversed"), false)),
-sShape(new ann::SeerShape()),
-iMapper(new ann::IntersectionMapper()),
+reversed(std::make_unique<prm::Parameter>(QObject::tr("Reversed"), false)),
+sShape(std::make_unique<ann::SeerShape>()),
+iMapper(std::make_unique<ann::IntersectionMapper>()),
 dpFaceId(gu::createRandomId()),
 dpWireId(gu::createRandomId())
 {

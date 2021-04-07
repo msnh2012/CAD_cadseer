@@ -52,8 +52,16 @@ QIcon Hollow::icon;
 
 Hollow::Hollow() :
 Base(),
-offset(new prm::Parameter(prm::Names::Offset, prf::manager().rootPtr->features().hollow().get().offset())),
-sShape(new ann::SeerShape())
+offset
+(
+  std::make_unique<prm::Parameter>
+  (
+    prm::Names::Offset
+    , prf::manager().rootPtr->features().hollow().get().offset()
+    , prm::Tags::Offset
+  )
+),
+sShape(std::make_unique<ann::SeerShape>())
 {
   if (icon.isNull())
     icon = QIcon(":/resources/images/constructionHollow.svg");

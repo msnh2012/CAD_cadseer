@@ -116,14 +116,16 @@ static const std::map<FeatureTag, std::string> featureTagMap =
   {FeatureTag::VertexXNYNZN, "VertexXNYNZN"}
 };
 
+inline static const prf::Oblong& pOb(){return prf::manager().rootPtr->features().oblong().get();}
+
 Oblong::Oblong() :
   Base(),
-  length(new prm::Parameter(prm::Names::Length, prf::manager().rootPtr->features().oblong().get().length())),
-  width(new prm::Parameter(prm::Names::Width, prf::manager().rootPtr->features().oblong().get().width())),
-  height(new prm::Parameter(prm::Names::Height, prf::manager().rootPtr->features().oblong().get().height())),
-  csys(new prm::Parameter(prm::Names::CSys, osg::Matrixd::identity())),
-  csysDragger(new ann::CSysDragger(this, csys.get())),
-  sShape(new ann::SeerShape())
+  length(std::make_unique<prm::Parameter>(prm::Names::Length, pOb().length(), prm::Tags::Length)),
+  width(std::make_unique<prm::Parameter>(prm::Names::Width, pOb().width(), prm::Tags::Width)),
+  height(std::make_unique<prm::Parameter>(prm::Names::Height, pOb().height(), prm::Tags::Height)),
+  csys(std::make_unique<prm::Parameter>(prm::Names::CSys, osg::Matrixd::identity(), prm::Tags::CSys)),
+  csysDragger(std::make_unique<ann::CSysDragger>(this, csys.get())),
+  sShape(std::make_unique<ann::SeerShape>())
 {
   if (icon.isNull())
     icon = QIcon(":/resources/images/constructionOblong.svg");

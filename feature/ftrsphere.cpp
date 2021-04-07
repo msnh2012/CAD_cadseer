@@ -62,12 +62,14 @@ static const std::map<FeatureTag, std::string> featureTagMap =
 
 QIcon Sphere::icon;
 
+inline static const prf::Sphere& pSph(){return prf::manager().rootPtr->features().sphere().get();}
+
 Sphere::Sphere() :
 Base(),
-radius(new prm::Parameter(prm::Names::Radius, prf::manager().rootPtr->features().sphere().get().radius())),
-csys(new prm::Parameter(prm::Names::CSys, osg::Matrixd::identity())),
-csysDragger(new ann::CSysDragger(this, csys.get())),
-sShape(new ann::SeerShape())
+radius(std::make_unique<prm::Parameter>(prm::Names::Radius, pSph().radius(), prm::Tags::Radius)),
+csys(std::make_unique<prm::Parameter>(prm::Names::CSys, osg::Matrixd::identity(), prm::Tags::CSys)),
+csysDragger(std::make_unique<ann::CSysDragger>(this, csys.get())),
+sShape(std::make_unique<ann::SeerShape>())
 {
   if (icon.isNull())
     icon = QIcon(":/resources/images/constructionSphere.svg");

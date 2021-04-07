@@ -44,14 +44,16 @@ using boost::uuids::uuid;
 
 QIcon Torus::icon;
 
+inline static const prf::Torus& pTor(){return prf::manager().rootPtr->features().torus().get();}
+
 Torus::Torus():
 Base(),
-radius1(new prm::Parameter(prm::Names::Radius1, prf::manager().rootPtr->features().torus().get().radius1())),
-radius2(new prm::Parameter(prm::Names::Radius2, prf::manager().rootPtr->features().torus().get().radius2())),
-seam(new prm::Parameter(QObject::tr("Seam"), 0.0)),
-csys(new prm::Parameter(prm::Names::CSys, osg::Matrixd::identity())),
-csysDragger(new ann::CSysDragger(this, csys.get())),
-sShape(new ann::SeerShape())
+radius1(std::make_unique<prm::Parameter>(prm::Names::Radius1, pTor().radius1(), prm::Tags::Radius)),
+radius2(std::make_unique<prm::Parameter>(prm::Names::Radius2, pTor().radius2(), prm::Tags::Radius)),
+seam(std::make_unique<prm::Parameter>(QObject::tr("Seam Angle"), 0.0, prm::Tags::Angle)),
+csys(std::make_unique<prm::Parameter>(prm::Names::CSys, osg::Matrixd::identity(), prm::Tags::CSys)),
+csysDragger(std::make_unique<ann::CSysDragger>(this, csys.get())),
+sShape(std::make_unique<ann::SeerShape>())
 {
   if (icon.isNull())
     icon = QIcon(":/resources/images/constructionTorus.svg");

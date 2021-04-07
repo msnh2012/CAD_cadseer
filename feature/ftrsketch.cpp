@@ -59,11 +59,11 @@ QIcon Sketch::icon;
 
 Sketch::Sketch():
 Base()
-, sShape(new ann::SeerShape())
-, solver(new skt::Solver())
-, visual(new skt::Visual(*solver))
-, csys(new prm::Parameter(prm::Names::CSys, osg::Matrixd::identity()))
-, csysDragger(new ann::CSysDragger(this, csys.get()))
+, sShape(std::make_unique<ann::SeerShape>())
+, solver(std::make_unique<skt::Solver>())
+, visual(std::make_unique<skt::Visual>(*solver))
+, csys(std::make_unique<prm::Parameter>(prm::Names::CSys, osg::Matrixd::identity(), prm::Tags::CSys))
+, csysDragger(std::make_unique<ann::CSysDragger>(this, csys.get()))
 , draggerSwitch(new osg::Switch())
 {
   if (icon.isNull())

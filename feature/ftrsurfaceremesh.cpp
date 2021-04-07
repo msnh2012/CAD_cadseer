@@ -40,11 +40,11 @@ QIcon SurfaceReMesh::icon;
 
 SurfaceReMesh::SurfaceReMesh():
 Base()
-, mesh(new ann::SurfaceMesh())
-, reMeshType(new prm::Parameter(QObject::tr("ReMesh Type"), 0))
-, minEdgeLength(new prm::Parameter(QObject::tr("Minimum Edge Length"), 1.0))
-, maxEdgeLength(new prm::Parameter(QObject::tr("Maximum Edge Length"), 2.0))
-, iterations(new prm::Parameter(QObject::tr("Iterations"), 3))
+, mesh(std::make_unique<ann::SurfaceMesh>())
+, reMeshType(std::make_unique<prm::Parameter>(QObject::tr("ReMesh Type"), 0))
+, minEdgeLength(std::make_unique<prm::Parameter>(QObject::tr("Minimum Edge Length"), 1.0))
+, maxEdgeLength(std::make_unique<prm::Parameter>(QObject::tr("Maximum Edge Length"), 2.0))
+, iterations(std::make_unique<prm::Parameter>(QObject::tr("Iterations"), 3))
 , reMeshTypeLabel(new lbr::PLabel(reMeshType.get()))
 , minEdgeLengthLabel(new lbr::PLabel(minEdgeLength.get()))
 , maxEdgeLengthLabel(new lbr::PLabel(maxEdgeLength.get()))

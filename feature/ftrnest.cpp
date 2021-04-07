@@ -44,10 +44,10 @@ QIcon Nest::icon;
 
 Nest::Nest() : 
 Base(),
-pitch(new prm::Parameter(QObject::tr("Pitch"), 1.0)),
-gap(new prm::Parameter(QObject::tr("Gap"), prf::manager().rootPtr->features().nest().get().gap())),
-feedDirection(new prm::Parameter(QObject::tr("Feed Direction"), osg::Vec3d(-1.0, 0.0, 0.0))),
-sShape(new ann::SeerShape())
+pitch(std::make_unique<prm::Parameter>(QObject::tr("Pitch"), 1.0)),
+gap(std::make_unique<prm::Parameter>(QObject::tr("Gap"), prf::manager().rootPtr->features().nest().get().gap())),
+feedDirection(std::make_unique<prm::Parameter>(QObject::tr("Feed Direction"), osg::Vec3d(-1.0, 0.0, 0.0))),
+sShape(std::make_unique<ann::SeerShape>())
 
 {
   if (icon.isNull())

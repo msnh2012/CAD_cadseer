@@ -48,7 +48,7 @@ QIcon Ruled::icon;
 
 Ruled::Ruled():
 Base()
-, sShape(new ann::SeerShape())
+, sShape(std::make_unique<ann::SeerShape>())
 , parentId(gu::createRandomId())
 {
   if (icon.isNull())

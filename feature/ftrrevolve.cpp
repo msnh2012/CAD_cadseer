@@ -46,10 +46,10 @@ QIcon Revolve::icon;
 
 Revolve::Revolve():
 Base()
-, sShape(new ann::SeerShape())
-, axisOrigin(new prm::Parameter(QObject::tr("Axis Origin"), osg::Vec3d(0.0, 0.0, 0.0)))
-, axisDirection(new prm::Parameter(QObject::tr("Axis Direction"), osg::Vec3d(0.0, 1.0, 0.0)))
-, angle(new prm::Parameter(prm::Names::Angle, 360.0))
+, sShape(std::make_unique<ann::SeerShape>())
+, axisOrigin(std::make_unique<prm::Parameter>(prm::Names::Origin, osg::Vec3d(0.0, 0.0, 0.0), prm::Tags::Origin))
+, axisDirection(std::make_unique<prm::Parameter>(prm::Names::Direction, osg::Vec3d(0.0, 1.0, 0.0), prm::Tags::Direction))
+, angle(std::make_unique<prm::Parameter>(prm::Names::Angle, 360.0, prm::Tags::Angle))
 , axisOriginLabel(new lbr::PLabel(axisOrigin.get()))
 , axisDirectionLabel(new lbr::PLabel(axisDirection.get()))
 , angleLabel(new lbr::PLabel(angle.get()))

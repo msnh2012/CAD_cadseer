@@ -43,7 +43,10 @@ using namespace ftr;
 
 QIcon Intersect::icon;
 
-Intersect::Intersect() : Base(), sShape(new ann::SeerShape()), iMapper(new ann::IntersectionMapper())
+Intersect::Intersect()
+: Base()
+, sShape(std::make_unique<ann::SeerShape>())
+, iMapper(std::make_unique<ann::IntersectionMapper>())
 {
   if (icon.isNull())
     icon = QIcon(":/resources/images/constructionIntersect.svg");

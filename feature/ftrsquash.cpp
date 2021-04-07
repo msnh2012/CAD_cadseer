@@ -44,7 +44,7 @@ using boost::uuids::uuid;
 
 QIcon Squash::icon;
 
-Squash::Squash() : Base(), sShape(new ann::SeerShape())
+Squash::Squash() : Base(), sShape(std::make_unique<ann::SeerShape>())
 {
   if (icon.isNull())
     icon = QIcon(":/resources/images/constructionSquash.svg");
@@ -55,13 +55,10 @@ Squash::Squash() : Base(), sShape(new ann::SeerShape())
   faceId = gu::createRandomId();
   wireId = gu::createRandomId();
   
-  granularity = std::shared_ptr<prm::Parameter>
+  granularity = std::make_shared<prm::Parameter>
   (
-    new prm::Parameter
-    (
-      QObject::tr("Granularity"),
-      prf::manager().rootPtr->features().squash().get().granularity()
-    )
+    QObject::tr("Granularity"),
+    prf::manager().rootPtr->features().squash().get().granularity()
   );
   
   prm::Boundary lower(1.0, prm::Boundary::End::Closed);

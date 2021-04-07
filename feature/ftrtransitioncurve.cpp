@@ -49,11 +49,11 @@ QIcon TransitionCurve::icon;
 
 TransitionCurve::TransitionCurve():
 Base()
-, sShape(new ann::SeerShape())
-, pick0Direction(new prm::Parameter(QObject::tr("Reversed"), false))
-, pick1Direction(new prm::Parameter(QObject::tr("Reversed"), false))
-, pick0Magnitude(new prm::Parameter(QObject::tr("Magnitude"), 1.0))
-, pick1Magnitude(new prm::Parameter(QObject::tr("Magnitude"), 1.0))
+, sShape(std::make_unique<ann::SeerShape>())
+, pick0Direction(std::make_unique<prm::Parameter>(QObject::tr("Reversed"), false))
+, pick1Direction(std::make_unique<prm::Parameter>(QObject::tr("Reversed"), false))
+, pick0Magnitude(std::make_unique<prm::Parameter>(QObject::tr("Magnitude"), 1.0))
+, pick1Magnitude(std::make_unique<prm::Parameter>(QObject::tr("Magnitude"), 1.0))
 , directionLabel0(new lbr::PLabel(pick0Direction.get()))
 , directionLabel1(new lbr::PLabel(pick1Direction.get()))
 , magnitudeLabel0(new lbr::PLabel(pick0Magnitude.get()))

@@ -76,12 +76,14 @@ static const std::map<FeatureTag, std::string> featureTagMap =
 
 QIcon Cylinder::icon;
 
+inline static const prf::Cylinder& pCyl(){return prf::manager().rootPtr->features().cylinder().get();}
+
 Cylinder::Cylinder() : Base(),
-  radius(new prm::Parameter(prm::Names::Radius, prf::manager().rootPtr->features().cylinder().get().radius())),
-  height(new prm::Parameter(prm::Names::Height, prf::manager().rootPtr->features().cylinder().get().height())),
-  csys(new prm::Parameter(prm::Names::CSys, osg::Matrixd::identity())),
-  csysDragger(new ann::CSysDragger(this, csys.get())),
-  sShape(new ann::SeerShape())
+  radius(std::make_unique<prm::Parameter>(prm::Names::Radius, pCyl().radius(), prm::Tags::Radius)),
+  height(std::make_unique<prm::Parameter>(prm::Names::Height, pCyl().height(), prm::Tags::Height)),
+  csys(std::make_unique<prm::Parameter>(prm::Names::CSys, osg::Matrixd::identity(), prm::Tags::CSys)),
+  csysDragger(std::make_unique<ann::CSysDragger>(this, csys.get())),
+  sShape(std::make_unique<ann::SeerShape>())
 {
   if (icon.isNull())
     icon = QIcon(":/resources/images/constructionCylinder.svg");

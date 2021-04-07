@@ -39,8 +39,8 @@ QIcon SurfaceMeshFill::icon;
 
 SurfaceMeshFill::SurfaceMeshFill():
 Base()
-, mesh(new ann::SurfaceMesh())
-, algorithm(new prm::Parameter(QObject::tr("Algorithm"), 1))
+, mesh(std::make_unique<ann::SurfaceMesh>())
+, algorithm(std::make_unique<prm::Parameter>(QObject::tr("Algorithm"), 1))
 , algorithmLabel(new lbr::PLabel(algorithm.get()))
 {
   if (icon.isNull())

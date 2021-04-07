@@ -62,13 +62,13 @@ TopoDS_Edge makeEdge(const osg::Vec3d &v1, const osg::Vec3d &v2)
 
 Strip::Strip() :
 Base(),
-feedDirection(new prm::Parameter(QObject::tr("Feed Direction"), osg::Vec3d(-1.0, 0.0, 0.0))),
-pitch(new prm::Parameter(QObject::tr("Pitch"), 1.0)),
-width(new prm::Parameter(QObject::tr("Width"), 1.0)),
-widthOffset(new prm::Parameter(QObject::tr("Width Offset"), 1.0)),
-gap(new prm::Parameter(QObject::tr("Gap"), prf::manager().rootPtr->features().strip().get().gap())),
-autoCalc(new prm::Parameter(QObject::tr("Auto Calc"), true)),
-sShape(new ann::SeerShape())
+feedDirection(std::make_unique<prm::Parameter>(QObject::tr("Feed Direction"), osg::Vec3d(-1.0, 0.0, 0.0), prm::Tags::Direction)),
+pitch(std::make_unique<prm::Parameter>(prm::Names::Pitch, 1.0, prm::Tags::Pitch)),
+width(std::make_unique<prm::Parameter>(QObject::tr("Width"), 1.0, prm::Tags::Width)),
+widthOffset(std::make_unique<prm::Parameter>(QObject::tr("Width Offset"), 1.0, prm::Tags::Offset)),
+gap(std::make_unique<prm::Parameter>(QObject::tr("Gap"), prf::manager().rootPtr->features().strip().get().gap())),
+autoCalc(std::make_unique<prm::Parameter>(prm::Names::AutoSize, true, prm::Tags::AutoSize)),
+sShape(std::make_unique<ann::SeerShape>())
 {
   if (icon.isNull())
     icon = QIcon(":/resources/images/constructionStrip.svg");

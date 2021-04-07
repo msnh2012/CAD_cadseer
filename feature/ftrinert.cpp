@@ -43,9 +43,9 @@ QIcon Inert::icon;
 
 Inert::Inert(const TopoDS_Shape &shapeIn) :
 Base(),
-csys(new prm::Parameter(prm::Names::CSys, osg::Matrixd::identity())),
-csysDragger(new ann::CSysDragger(this, csys.get())),
-sShape(new ann::SeerShape())
+csys(std::make_unique<prm::Parameter>(prm::Names::CSys, osg::Matrixd::identity(), prm::Tags::CSys)),
+csysDragger(std::make_unique<ann::CSysDragger>(this, csys.get())),
+sShape(std::make_unique<ann::SeerShape>())
 {
   if (icon.isNull())
     icon = QIcon(":/resources/images/constructionInert.svg");

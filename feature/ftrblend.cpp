@@ -58,14 +58,24 @@ using boost::uuids::uuid;
 
 std::shared_ptr<prm::Parameter> ftr::Blend::buildRadiusParameter()
 {
-  std::shared_ptr<prm::Parameter> out(new prm::Parameter(prm::Names::Radius, prf::manager().rootPtr->features().blend().get().radius()));
+  auto out = std::make_shared<prm::Parameter>
+  (
+    prm::Names::Radius
+    , prf::manager().rootPtr->features().blend().get().radius()
+    , prm::Tags::Radius
+  );
   out->setConstraint(prm::Constraint::buildZeroPositive());
   return out;
 }
 
 std::shared_ptr<prm::Parameter> ftr::Blend::buildPositionParameter()
 {
-  std::shared_ptr<prm::Parameter> out(new prm::Parameter(prm::Names::Position, 0.0));
+  auto out = std::make_shared<prm::Parameter>
+  (
+    prm::Names::Position
+    , 0.0
+    , prm::Tags::Position
+  );
   out->setConstraint(prm::Constraint::buildUnit());
   return out;
 }
@@ -101,7 +111,7 @@ std::vector<uuid> ftr::Blend::getSpineEnds(const ann::SeerShape &ssIn, const uui
 
 QIcon Feature::icon;
 
-Feature::Feature() : Base(), sShape(new ann::SeerShape())
+Feature::Feature() : Base(), sShape(std::make_unique<ann::SeerShape>())
 {
   if (icon.isNull())
     icon = QIcon(":/resources/images/constructionBlend.svg");

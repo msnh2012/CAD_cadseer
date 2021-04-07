@@ -39,7 +39,7 @@ using boost::uuids::uuid;
 
 QIcon DieSet::icon;
 
-DieSet::DieSet() : Base(), sShape(new ann::SeerShape())
+DieSet::DieSet() : Base(), sShape(std::make_unique<ann::SeerShape>())
 {
   if (icon.isNull())
     icon = QIcon(":/resources/images/constructionDieSet.svg");
@@ -47,58 +47,48 @@ DieSet::DieSet() : Base(), sShape(new ann::SeerShape())
   name = QObject::tr("DieSet");
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
   
-  length = std::shared_ptr<prm::Parameter>(new prm::Parameter(prm::Names::Length, 1.0));
+  length = std::make_shared<prm::Parameter>(prm::Names::Length, 1.0, prm::Tags::Length);
   length->setConstraint(prm::Constraint::buildNonZeroPositive());
   length->connectValue(std::bind(&DieSet::setModelDirty, this));
   parameters.push_back(length.get());
   
-  width = std::shared_ptr<prm::Parameter>(new prm::Parameter(prm::Names::Width, 1.0));
+  width = std::make_shared<prm::Parameter>(prm::Names::Width, 1.0, prm::Tags::Width);
   width->setConstraint(prm::Constraint::buildNonZeroPositive());
   width->connectValue(std::bind(&DieSet::setModelDirty, this));
   parameters.push_back(width.get());
   
-  lengthPadding = std::shared_ptr<prm::Parameter>
+  lengthPadding = std::make_shared<prm::Parameter>
   (
-    new prm::Parameter
-    (
-      QObject::tr("Length Padding"),
-      prf::manager().rootPtr->features().dieset().get().lengthPadding()
-    )
+    QObject::tr("Length Padding")
+    , prf::manager().rootPtr->features().dieset().get().lengthPadding()
   );
   lengthPadding->setConstraint(prm::Constraint::buildZeroPositive());
   lengthPadding->connectValue(std::bind(&DieSet::setModelDirty, this));
   parameters.push_back(lengthPadding.get());
   
-  widthPadding = std::shared_ptr<prm::Parameter>
+  widthPadding = std::make_shared<prm::Parameter>
   (
-    new prm::Parameter
-    (
-      QObject::tr("Width Padding"),
-      prf::manager().rootPtr->features().dieset().get().widthPadding()
-    )
+    QObject::tr("Width Padding")
+    , prf::manager().rootPtr->features().dieset().get().widthPadding()
   );
   widthPadding->setConstraint(prm::Constraint::buildZeroPositive());
   widthPadding->connectValue(std::bind(&DieSet::setModelDirty, this));
   parameters.push_back(widthPadding.get());
   
-  origin = std::shared_ptr<prm::Parameter>
+  origin = std::make_shared<prm::Parameter>
   (
-    new prm::Parameter
-    (
-      QObject::tr("Origin"),
-      osg::Vec3d(-1.0, -1.0, -1.0)
-    )
+    prm::Names::Origin
+    , osg::Vec3d(-1.0, -1.0, -1.0)
+    , prm::Tags::Origin
   );
   origin->connectValue(std::bind(&DieSet::setModelDirty, this));
   parameters.push_back(origin.get());
   
-  autoCalc = std::shared_ptr<prm::Parameter>
+  autoCalc = std::make_shared<prm::Parameter>
   (
-    new prm::Parameter
-    (
-      QObject::tr("Auto Calc"),
-      true
-    )
+    prm::Names::AutoSize
+    , true
+    , prm::Tags::AutoSize
   );
   autoCalc->connectValue(std::bind(&DieSet::setModelDirty, this));
   parameters.push_back(autoCalc.get());

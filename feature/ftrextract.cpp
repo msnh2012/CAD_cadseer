@@ -46,7 +46,7 @@ QIcon Extract::icon;
 
 Extract::Extract()
 : Base()
-, sShape(new ann::SeerShape())
+, sShape(std::make_unique<ann::SeerShape>())
 , angle(buildAngleParameter())
 , label(new lbr::PLabel(angle.get()))
 {
@@ -71,7 +71,7 @@ Extract::~Extract(){}
 
 std::shared_ptr<prm::Parameter> Extract::buildAngleParameter(double deg)
 {
-  std::shared_ptr<prm::Parameter> out(new prm::Parameter(prm::Names::Angle, 0.0));
+  auto out = std::make_shared<prm::Parameter>(prm::Names::Angle, 0.0, prm::Tags::Angle);
   //set the value after constraints have been set.
   
   prm::Boundary lower(0.0, prm::Boundary::End::Closed);

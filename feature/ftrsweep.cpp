@@ -65,8 +65,8 @@ SweepProfile::SweepProfile(): SweepProfile(Pick()){}
 SweepProfile::SweepProfile(const Pick &pIn): SweepProfile(pIn, false, false){}
 SweepProfile::SweepProfile(const Pick &pIn, bool contactIn, bool correctionIn)
 : pick(pIn)
-, contact(new prm::Parameter(QObject::tr("Contact"), contactIn))
-, correction(new prm::Parameter(QObject::tr("Correction"), correctionIn))
+, contact(std::make_shared<prm::Parameter>(QObject::tr("Contact"), contactIn))
+, correction(std::make_shared<prm::Parameter>(QObject::tr("Correction"), correctionIn))
 , contactLabel(new lbr::PLabel(contact.get()))
 , correctionLabel(new lbr::PLabel(correction.get()))
 {
@@ -103,8 +103,8 @@ SweepAuxiliary::SweepAuxiliary(): SweepAuxiliary(Pick()){}
 SweepAuxiliary::SweepAuxiliary(const Pick &pIn): SweepAuxiliary(pIn, false, 0){}
 SweepAuxiliary::SweepAuxiliary(const Pick &pIn, bool ceIn, int contactIn)
 : pick(pIn)
-, curvilinearEquivalence(new prm::Parameter(QObject::tr("Curvelinear Equivalence"), ceIn))
-, contactType(new prm::Parameter(QObject::tr("Contact Type"), contactIn))
+, curvilinearEquivalence(std::make_shared<prm::Parameter>(QObject::tr("Curvelinear Equivalence"), ceIn))
+, contactType(std::make_shared<prm::Parameter>(QObject::tr("Contact Type"), contactIn))
 , curvilinearEquivalenceLabel(new lbr::PLabel(curvilinearEquivalence.get()))
 , contactTypeLabel(new lbr::PLabel(contactType.get()))
 {
@@ -166,7 +166,7 @@ SweepBinormal::SweepBinormal(const Picks &psIn)
 
 SweepBinormal::SweepBinormal(const Picks &psIn, const osg::Vec3d &vIn)
 : picks(psIn)
-, binormal(new prm::Parameter(QObject::tr("Binormal"), vIn))
+, binormal(std::make_shared<prm::Parameter>(QObject::tr("Binormal"), vIn))
 , binormalLabel(new lbr::PLabel(binormal.get()))
 {}
 SweepBinormal::~SweepBinormal() = default;
@@ -192,13 +192,13 @@ void SweepBinormal::serialIn(const prj::srl::swps::SweepBinormal &bnIn)
 
 Sweep::Sweep():
 Base()
-, sShape(new ann::SeerShape())
-, lawFunction(new ann::LawFunction())
-, trihedron(new prm::Parameter(QObject::tr("Trihedron"), 0))
-, transition(new prm::Parameter(QObject::tr("Transition"), 0))
-, forceC1(new prm::Parameter(QObject::tr("Force C1"), false))
-, solid(new prm::Parameter(QObject::tr("Solid"), false))
-, useLaw(new prm::Parameter(QObject::tr("Use Law"), false))
+, sShape(std::make_unique<ann::SeerShape>())
+, lawFunction(std::make_unique<ann::LawFunction>())
+, trihedron(std::make_unique<prm::Parameter>(QObject::tr("Trihedron"), 0))
+, transition(std::make_unique<prm::Parameter>(QObject::tr("Transition"), 0))
+, forceC1(std::make_unique<prm::Parameter>(QObject::tr("Force C1"), false))
+, solid(std::make_unique<prm::Parameter>(QObject::tr("Solid"), false))
+, useLaw(std::make_unique<prm::Parameter>(QObject::tr("Use Law"), false))
 , trihedronLabel(new lbr::PLabel(trihedron.get()))
 , transitionLabel(new lbr::PLabel(transition.get()))
 , forceC1Label(new lbr::PLabel(forceC1.get()))

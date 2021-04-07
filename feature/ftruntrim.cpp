@@ -49,8 +49,8 @@ QIcon Untrim::icon;
 
 Untrim::Untrim():
 Base()
-, sShape(new ann::SeerShape())
-, offset(std::make_unique<prm::Parameter>(prm::Names::Offset, 0.1))
+, sShape(std::make_unique<ann::SeerShape>())
+, offset(std::make_unique<prm::Parameter>(prm::Names::Offset, 0.1, prm::Tags::Offset))
 , closeU(std::make_unique<prm::Parameter>(QObject::tr("Close U"), false))
 , closeV(std::make_unique<prm::Parameter>(QObject::tr("Close V"), false))
 , makeSolid(std::make_unique<prm::Parameter>(QObject::tr("Make Solid"), false))

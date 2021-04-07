@@ -74,15 +74,17 @@ static const std::map<FeatureTag, std::string> featureTagMap =
 
 QIcon Cone::icon;
 
+inline static const prf::Cone& pCone(){return prf::manager().rootPtr->features().cone().get();}
+
 //only complete rotational cone. no partials. because top or bottom radius
 //maybe 0.0, faces and wires might be null and edges maybe degenerate.
 Cone::Cone() : Base(),
-  radius1(new prm::Parameter(prm::Names::Radius1, prf::manager().rootPtr->features().cone().get().radius1())),
-  radius2(new prm::Parameter(prm::Names::Radius2, prf::manager().rootPtr->features().cone().get().radius2())),
-  height(new prm::Parameter(prm::Names::Height, prf::manager().rootPtr->features().cone().get().height())),
-  csys(new prm::Parameter(prm::Names::CSys, osg::Matrixd::identity())),
-  csysDragger(new ann::CSysDragger(this, csys.get())),
-  sShape(new ann::SeerShape())
+  radius1(std::make_unique<prm::Parameter>(prm::Names::Radius1, pCone().radius1(), prm::Tags::Radius)),
+  radius2(std::make_unique<prm::Parameter>(prm::Names::Radius2, pCone().radius2(), prm::Tags::Radius)),
+  height(std::make_unique<prm::Parameter>(prm::Names::Height, pCone().height(), prm::Tags::Height)),
+  csys(std::make_unique<prm::Parameter>(prm::Names::CSys, osg::Matrixd::identity(), prm::Tags::CSys)),
+  csysDragger(std::make_unique<ann::CSysDragger>(this, csys.get())),
+  sShape(std::make_unique<ann::SeerShape>())
 {
   if (icon.isNull())
     icon = QIcon(":/resources/images/constructionCone.svg");

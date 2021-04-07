@@ -47,11 +47,11 @@ QIcon InstanceMirror::icon;
 
 InstanceMirror::InstanceMirror() :
 Base(),
-csys(new prm::Parameter(prm::Names::CSys, osg::Matrixd::identity())),
-includeSource(new prm::Parameter(QObject::tr("Include Source"), true)),
-sShape(new ann::SeerShape()),
-iMapper(new ann::InstanceMapper()),
-csysDragger(new ann::CSysDragger(this, csys.get()))
+csys(std::make_unique<prm::Parameter>(prm::Names::CSys, osg::Matrixd::identity(), prm::Tags::CSys)),
+includeSource(std::make_unique<prm::Parameter>(QObject::tr("Include Source"), true)),
+sShape(std::make_unique<ann::SeerShape>()),
+iMapper(std::make_unique<ann::InstanceMapper>()),
+csysDragger(std::make_unique<ann::CSysDragger>(this, csys.get()))
 {
   if (icon.isNull())
     icon = QIcon(":/resources/images/constructionInstanceMirror.svg");

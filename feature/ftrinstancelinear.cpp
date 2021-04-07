@@ -44,17 +44,17 @@ QIcon InstanceLinear::icon;
 
 InstanceLinear::InstanceLinear() :
 Base(),
-xOffset(new prm::Parameter(QObject::tr("X Offset"), 20.0)),
-yOffset(new prm::Parameter(QObject::tr("Y Offset"), 20.0)),
-zOffset(new prm::Parameter(QObject::tr("Z Offset"), 20.0)),
-xCount(new prm::Parameter(QObject::tr("X Count"), 2)),
-yCount(new prm::Parameter(QObject::tr("Y Count"), 2)),
-zCount(new prm::Parameter(QObject::tr("Z Count"), 2)),
-csys(new prm::Parameter(prm::Names::CSys, osg::Matrixd::identity())),
-includeSource(new prm::Parameter(QObject::tr("Include Source"), true)),
-sShape(new ann::SeerShape()),
-iMapper(new ann::InstanceMapper()),
-csysDragger(new ann::CSysDragger(this, csys.get()))
+xOffset(std::make_unique<prm::Parameter>(QObject::tr("X Offset"), 20.0)),
+yOffset(std::make_unique<prm::Parameter>(QObject::tr("Y Offset"), 20.0)),
+zOffset(std::make_unique<prm::Parameter>(QObject::tr("Z Offset"), 20.0)),
+xCount(std::make_unique<prm::Parameter>(QObject::tr("X Count"), 2)),
+yCount(std::make_unique<prm::Parameter>(QObject::tr("Y Count"), 2)),
+zCount(std::make_unique<prm::Parameter>(QObject::tr("Z Count"), 2)),
+csys(std::make_unique<prm::Parameter>(prm::Names::CSys, osg::Matrixd::identity(), prm::Tags::CSys)),
+includeSource(std::make_unique<prm::Parameter>(QObject::tr("Include Source"), true)),
+sShape(std::make_unique<ann::SeerShape>()),
+iMapper(std::make_unique<ann::InstanceMapper>()),
+csysDragger(std::make_unique<ann::CSysDragger>(this, csys.get()))
 {
   if (icon.isNull())
     icon = QIcon(":/resources/images/constructionInstanceLinear.svg");

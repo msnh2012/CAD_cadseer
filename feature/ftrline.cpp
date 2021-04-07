@@ -43,7 +43,7 @@ QIcon Line::icon;
 
 Line::Line()
 : Base()
-, sShape(new ann::SeerShape())
+, sShape(std::make_unique<ann::SeerShape>())
 , lineId(gu::createRandomId())
 , v0Id(gu::createRandomId())
 , v1Id(gu::createRandomId())

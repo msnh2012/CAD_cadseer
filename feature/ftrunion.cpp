@@ -46,7 +46,10 @@ using namespace ftr;
 
 QIcon Union::icon;
 
-Union::Union() : Base(), sShape(new ann::SeerShape()), iMapper(new ann::IntersectionMapper())
+Union::Union()
+: Base()
+, sShape(std::make_unique<ann::SeerShape>())
+, iMapper(std::make_unique<ann::IntersectionMapper>())
 {
   if (icon.isNull())
     icon = QIcon(":/resources/images/constructionUnion.svg");
