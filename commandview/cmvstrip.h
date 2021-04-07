@@ -39,6 +39,7 @@ namespace cmv
     ~Strip() override;
   public Q_SLOTS:
     void selectionChanged();
+    void parameterChanged();
     void stationsChanged(const QModelIndex&, int, int);
     void dataChanged(const QModelIndex&, const QModelIndex&, const QVector<int>&);
   private:

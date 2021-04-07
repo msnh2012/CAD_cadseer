@@ -41,6 +41,7 @@ namespace cmv
     void comboChanged(int);
     void linkCSysChanged();
     void p3Changed();
+    void parameterChanged();
   private:
     struct Stow;
     std::unique_ptr<Stow> stow;

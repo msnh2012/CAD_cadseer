@@ -41,12 +41,10 @@ struct Untrim::Stow
   cmv::Untrim *view;
   dlg::SelectionWidget *selectionWidget = nullptr;
   cmv::ParameterWidget *parameterWidget = nullptr;
-  prm::Observer observer;
   
   Stow(cmd::Untrim *cIn, cmv::Untrim *vIn)
   : command(cIn)
   , view(vIn)
-  , observer(std::bind(&Stow::parameterChanged, this))
   {
     buildGui();
     
@@ -79,8 +77,6 @@ struct Untrim::Stow
     
     parameterWidget = new ParameterWidget(view, command->feature->getParameters());
     mainLayout->addWidget(parameterWidget);
-    for (auto *p : command->feature->getParameters())
-      p->connect(observer);
     
     mainLayout->addItem(new QSpacerItem(20, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
   }
@@ -94,16 +90,10 @@ struct Untrim::Stow
       selectionWidget->initializeButton(0, resolver.convertToMessages());
   }
   
-  void parameterChanged()
-  {
-    if (!parameterWidget->isVisible())
-      return;
-    command->localUpdate();
-  }
-  
   void glue()
   {
     connect(selectionWidget->getButton(0), &dlg::SelectionButton::dirty, view, &Untrim::selectionChanged);
+    connect(parameterWidget, &ParameterBase::prmValueChanged, view, &Untrim::parameterChanged);
   }
 };
 
@@ -120,5 +110,10 @@ void Untrim::selectionChanged()
   if (msgs.empty())
     return;
   stow->command->setSelection(stow->selectionWidget->getButton(0)->getMessages().front());
+  stow->command->localUpdate();
+}
+
+void Untrim::parameterChanged()
+{
   stow->command->localUpdate();
 }

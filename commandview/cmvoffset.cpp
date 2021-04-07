@@ -41,7 +41,6 @@ struct Offset::Stow
   cmv::Offset *view;
   dlg::SelectionWidget *selectionWidget = nullptr;
   cmv::ParameterWidget *parameterWidget = nullptr;
-  std::vector<prm::Observer> observers;
   
   Stow(cmd::Offset *cIn, cmv::Offset *vIn)
   : command(cIn)
@@ -55,6 +54,8 @@ struct Offset::Stow
     settings.endGroup();
     
     loadFeatureData();
+    glue();
+    selectionWidget->activate(0);
   }
   
   void buildGui()
@@ -79,15 +80,7 @@ struct Offset::Stow
     
     parameterWidget = new cmv::ParameterWidget(view, command->feature->getParameters());
     mainLayout->addWidget(parameterWidget);
-    for (auto *p : command->feature->getParameters())
-    {
-      observers.emplace_back(std::bind(&Stow::parameterChanged, this));
-      p->connect(observers.back());
-    }
-    
     mainLayout->addItem(new QSpacerItem(20, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
-    
-    QObject::connect(selectionWidget->getButton(0), &dlg::SelectionButton::dirty, view, &Offset::selectionChanged);
   }
   
   void loadFeatureData()
@@ -110,14 +103,12 @@ struct Offset::Stow
     };
     
     selectionWidget->initializeButton(0, picksToMessages(command->feature->getPicks()));
-    selectionWidget->activate(0);
   }
   
-  void parameterChanged()
+  void glue()
   {
-    if (!parameterWidget->isVisible())
-      return;
-    goUpdate();
+    QObject::connect(selectionWidget->getButton(0), &dlg::SelectionButton::dirty, view, &Offset::selectionChanged);
+    QObject::connect(parameterWidget, &ParameterBase::prmValueChanged, view, &Offset::parameterChanged);
   }
   
   void goSelections()
@@ -128,10 +119,6 @@ struct Offset::Stow
   
   void goUpdate()
   {
-    //Break cycle.
-    std::vector<std::unique_ptr<prm::ObserverBlocker>> blockers;
-    for (auto &o : observers)
-      blockers.push_back(std::make_unique<prm::ObserverBlocker>(o));
     command->localUpdate();
   }
 };
@@ -146,4 +133,9 @@ Offset::~Offset() = default;
 void Offset::selectionChanged()
 {
   stow->goSelections();
+}
+
+void Offset::parameterChanged()
+{
+  stow->goUpdate();
 }

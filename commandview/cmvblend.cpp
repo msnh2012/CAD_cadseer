@@ -68,7 +68,6 @@ namespace
     std::vector<dlg::SelectionWidget*> selectionWidgets;
     QAction *addParameterAction = nullptr;
     QAction *removeParameterAction = nullptr;
-    std::vector<prm::Observer> observers;
     
     explicit ConstantPage(cmv::Blend *viewIn)
     : QWidget(viewIn)
@@ -94,6 +93,7 @@ namespace
       connect(removeParameterAction, &QAction::triggered, view, &cmv::Blend::removeConstantBlend);
       parameterTable->setContextMenuPolicy(Qt::ActionsContextMenu);
       connect(parameterTable, &cmv::ParameterTable::selectionHasChanged, this, &ConstantPage::selectionChanged);
+      connect(parameterTable, &cmv::ParameterTable::prmValueChanged, view, &cmv::Blend::parameterChanged);
       
       stacked = new QStackedWidget(view);
       layout->addWidget(stacked);
@@ -121,8 +121,6 @@ namespace
       for (const auto &b : bsIn)
       {
         auto *cpp = b.radius.get(); //current parameter pointer
-        observers.emplace_back(std::bind(&cmv::Blend::parameterChanged, view));
-        cpp->connect(observers.back());
         parameterTable->addParameter(cpp);
         
         buildSelectionWidget();
@@ -144,8 +142,6 @@ namespace
     {
       buildSelectionWidget();
       parameterTable->addParameter(sbIn.radius.get());
-      observers.emplace_back(std::bind(&cmv::Blend::parameterChanged, view));
-      sbIn.radius->connect(observers.back());
     }
     
     void removeConstantBlend(int index)
@@ -200,13 +196,15 @@ namespace
   class PointPage : public QWidget
   {
   public:
+    cmv::Blend *view = nullptr;
+    QButtonGroup *group = nullptr;
     dlg::SelectionWidget *pointSelections = nullptr;
     QStackedWidget *parameterStacked = nullptr;
-    QButtonGroup *group = nullptr;
     std::vector<std::vector<std::shared_ptr<prm::Parameter>>> parameters;
     
-    PointPage(QWidget *parent, QButtonGroup *groupIn)
+    PointPage(cmv::Blend *parent, QButtonGroup *groupIn)
     : QWidget(parent)
+    , view(parent)
     , group(groupIn)
     {
       buildGui();
@@ -258,6 +256,7 @@ namespace
       for (auto p : parameters.back())
         pt->addParameter(p.get());
       parameterStacked->addWidget(pt);
+      connect(pt, &cmv::ParameterBase::prmValueChanged, view, &cmv::Blend::parameterChanged);
       return parameterStacked->count() - 1;
     }
     
@@ -300,12 +299,10 @@ namespace
     PointPage *pointPage = nullptr;
     QButtonGroup *buttonGroup = nullptr;
     QPushButton *dummyButton = nullptr; //hidden button to check to uncheck all other buttons.
-    prm::Observer observer;
     
     explicit VariablePage(cmv::Blend *viewIn)
     : QWidget(viewIn)
     , view(viewIn)
-    , observer(std::bind(&cmv::Blend::parameterChanged, view))
     {
       buildGui();
       glue();
@@ -371,11 +368,9 @@ namespace
         
         std::vector<std::shared_ptr<prm::Parameter>> params;
         params.push_back(entry.radius);
-        params.back()->connect(observer);
         if (temp.front().type != slc::Type::StartPoint && temp.front().type != slc::Type::EndPoint)
         {
           params.push_back(entry.position); //unused for vertices but build anyway.
-          params.back()->connect(observer);
         }
         pointPage->addParameterPage(params);
       }
@@ -609,9 +604,6 @@ void Blend::constantSelectionDirty()
 
 void Blend::parameterChanged()
 {
-  // lets make sure we don't trigger updates 'behind the scenes'
-  if (!isVisible())
-    return;
   stow->goLocalUpdate();
   
   //when we change a position parameter, the point on screen does not get updated.
@@ -678,11 +670,9 @@ void Blend::variableEdgeAdded(int index)
     
     std::vector<std::shared_ptr<prm::Parameter>> freshParameters;
     freshParameters.push_back(ftr::Blend::buildRadiusParameter());
-    freshParameters.back()->connect(stow->vPage->observer);
     if (convertedMessages.front().type != slc::Type::StartPoint && convertedMessages.front().type != slc::Type::EndPoint)
     {
       freshParameters.push_back(ftr::Blend::buildPositionParameter()); //unused for vertices but build anyway.
-      freshParameters.back()->connect(stow->vPage->observer);
     }
     int pi = stow->vPage->pointPage->addParameterPage(freshParameters);
     if (!pointIndex)
@@ -786,7 +776,6 @@ void Blend::variablePointAdded(int pointIndex)
 {
   std::vector<std::shared_ptr<prm::Parameter>> freshParameters;
   freshParameters.push_back(ftr::Blend::buildRadiusParameter());
-  freshParameters.back()->connect(stow->vPage->observer);
   const slc::Message &sm = stow->vPage->pointPage->pointSelections->getButton(0)->getMessages().at(pointIndex);
   if (sm.type != slc::Type::StartPoint && sm.type != slc::Type::EndPoint)
   {
@@ -802,8 +791,6 @@ void Blend::variablePointAdded(int pointIndex)
     const TopoDS_Shape &es = ss.getOCCTShape(sm.shapeId);
     if (es.ShapeType() == TopAbs_EDGE)
       freshParameters.back()->setValue(ftr::Pick::parameter(TopoDS::Edge(es), sm.pointLocation));
-    
-    freshParameters.back()->connect(stow->vPage->observer);
   }
   int index = stow->vPage->pointPage->addParameterPage(freshParameters);
   

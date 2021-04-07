@@ -52,7 +52,6 @@ struct DatumPlane::Stow
   dlg::SelectionWidget *average3PlaneSelection = nullptr;
   dlg::SelectionWidget *through3PointsSelection = nullptr;
   cmv::ParameterWidget *parameterWidget = nullptr;
-  std::vector<prm::Observer> observers;
   
   Stow(cmd::DatumPlane *cIn, cmv::DatumPlane *vIn)
   : command(cIn)
@@ -66,6 +65,7 @@ struct DatumPlane::Stow
     settings.endGroup();
     
     loadFeatureData();
+    glue();
   }
   
   void buildGui()
@@ -189,27 +189,7 @@ struct DatumPlane::Stow
     
     parameterWidget = new cmv::ParameterWidget(view, command->feature->getParameters());
     mainLayout->addWidget(parameterWidget);
-    for (auto *p : command->feature->getParameters())
-    {
-      observers.emplace_back(std::bind(&Stow::parameterChanged, this));
-      p->connect(observers.back());
-    }
-  
     mainLayout->addItem(new QSpacerItem(20, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
-    
-    QObject::connect(combo, SIGNAL(currentIndexChanged(int)), stackedWidget, SLOT(setCurrentIndex(int)));
-    QObject::connect(stackedWidget, SIGNAL(currentChanged(int)), view, SLOT(stackedChanged(int)));
-    QObject::connect(planarOffsetSelection->getButton(0), &dlg::SelectionButton::dirty, view, &DatumPlane::planarOffsetSelectionChanged);
-    QObject::connect(planarCenterSelection->getButton(0), &dlg::SelectionButton::dirty, view, &DatumPlane::planarCenterSelectionChanged);
-    QObject::connect(planarCenterSelection->getButton(1), &dlg::SelectionButton::dirty, view, &DatumPlane::planarCenterSelectionChanged);
-    QObject::connect(axisAngleSelection->getButton(0), &dlg::SelectionButton::dirty, view, &DatumPlane::axisAngleSelectionChanged);
-    QObject::connect(axisAngleSelection->getButton(1), &dlg::SelectionButton::dirty, view, &DatumPlane::axisAngleSelectionChanged);
-    QObject::connect(average3PlaneSelection->getButton(0), &dlg::SelectionButton::dirty, view, &DatumPlane::average3PlaneSelectionChanged);
-    QObject::connect(average3PlaneSelection->getButton(1), &dlg::SelectionButton::dirty, view, &DatumPlane::average3PlaneSelectionChanged);
-    QObject::connect(average3PlaneSelection->getButton(2), &dlg::SelectionButton::dirty, view, &DatumPlane::average3PlaneSelectionChanged);
-    QObject::connect(through3PointsSelection->getButton(0), &dlg::SelectionButton::dirty, view, &DatumPlane::through3PointsSelectionChanged);
-    QObject::connect(through3PointsSelection->getButton(1), &dlg::SelectionButton::dirty, view, &DatumPlane::through3PointsSelectionChanged);
-    QObject::connect(through3PointsSelection->getButton(2), &dlg::SelectionButton::dirty, view, &DatumPlane::through3PointsSelectionChanged);
   }
   
   void loadFeatureData()
@@ -301,6 +281,24 @@ struct DatumPlane::Stow
     updateWidgetState();
   }
   
+  void glue()
+  {
+    connect(combo, SIGNAL(currentIndexChanged(int)), stackedWidget, SLOT(setCurrentIndex(int)));
+    connect(stackedWidget, SIGNAL(currentChanged(int)), view, SLOT(stackedChanged(int)));
+    connect(planarOffsetSelection->getButton(0), &dlg::SelectionButton::dirty, view, &DatumPlane::planarOffsetSelectionChanged);
+    connect(planarCenterSelection->getButton(0), &dlg::SelectionButton::dirty, view, &DatumPlane::planarCenterSelectionChanged);
+    connect(planarCenterSelection->getButton(1), &dlg::SelectionButton::dirty, view, &DatumPlane::planarCenterSelectionChanged);
+    connect(axisAngleSelection->getButton(0), &dlg::SelectionButton::dirty, view, &DatumPlane::axisAngleSelectionChanged);
+    connect(axisAngleSelection->getButton(1), &dlg::SelectionButton::dirty, view, &DatumPlane::axisAngleSelectionChanged);
+    connect(average3PlaneSelection->getButton(0), &dlg::SelectionButton::dirty, view, &DatumPlane::average3PlaneSelectionChanged);
+    connect(average3PlaneSelection->getButton(1), &dlg::SelectionButton::dirty, view, &DatumPlane::average3PlaneSelectionChanged);
+    connect(average3PlaneSelection->getButton(2), &dlg::SelectionButton::dirty, view, &DatumPlane::average3PlaneSelectionChanged);
+    connect(through3PointsSelection->getButton(0), &dlg::SelectionButton::dirty, view, &DatumPlane::through3PointsSelectionChanged);
+    connect(through3PointsSelection->getButton(1), &dlg::SelectionButton::dirty, view, &DatumPlane::through3PointsSelectionChanged);
+    connect(through3PointsSelection->getButton(2), &dlg::SelectionButton::dirty, view, &DatumPlane::through3PointsSelectionChanged);
+    connect(parameterWidget, &ParameterBase::prmValueChanged, view, &DatumPlane::parameterChanged);
+  }
+  
   void activate(int index)
   {
     if (index < 0 || index >= stackedWidget->count())
@@ -374,16 +372,6 @@ struct DatumPlane::Stow
       command->setToThrough3Points(msgs0);
       command->localUpdate();
     }
-  }
-  
-  void parameterChanged()
-  {
-    updateWidgetState();
-      
-    // lets make sure we don't trigger updates 'behind the scenes'
-    if (!parameterWidget->isVisible())
-      return;
-    command->localUpdate();
   }
   
   void updateWidgetState()
@@ -468,4 +456,10 @@ void DatumPlane::average3PlaneSelectionChanged()
 void DatumPlane::through3PointsSelectionChanged()
 {
   stow->goThrough3Points();
+}
+
+void DatumPlane::parameterChanged()
+{
+  stow->updateWidgetState();
+  stow->command->localUpdate();
 }

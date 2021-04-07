@@ -41,7 +41,6 @@ struct Primitive::Stow
   cmv::Primitive *view;
   cmv::ParameterWidget *parameterWidget = nullptr;
   cmv::CSysWidget *csysWidget = nullptr;
-  std::vector<prm::Observer> observers;
   
   Stow(ftr::Base *fIn, cmv::Primitive *vIn)
   : feature(fIn)
@@ -53,6 +52,8 @@ struct Primitive::Stow
     settings.beginGroup("cmv::Primitive");
     //load settings
     settings.endGroup();
+    
+    glue();
   }
   
   void buildGui()
@@ -69,44 +70,34 @@ struct Primitive::Stow
     prm::Parameter *csys = nullptr;
     for (auto *p : feature->getParameters())
     {
-      observers.emplace_back(std::bind(&Stow::parameterChanged, this));
-      p->connect(observers.back());
+      //future:
+//       if (p->getTag() == prm::Tags::CSys)
+//         csys = p;
       if (p->getName() == prm::Names::CSys)
         csys = p;
     }
     
-    if (csys)
-    {
-      csysWidget = dynamic_cast<cmv::CSysWidget*>(parameterWidget->getWidget(csys));
-      assert(csysWidget);
-      if (csysWidget)
-      {
-        ftr::UpdatePayload payload = view->project->getPayload(feature->getId());
-        std::vector<const ftr::Base*> inputs = payload.getFeatures(ftr::InputType::linkCSys);
-        if (inputs.empty())
-          csysWidget->setCSysLinkId(gu::createNilId());
-        else
-          csysWidget->setCSysLinkId(inputs.front()->getId());
-        QObject::connect(csysWidget, &CSysWidget::dirty, view, &Primitive::linkedCSysChanged);
-      }
-    }
+    assert(csys);
+    csysWidget = dynamic_cast<cmv::CSysWidget*>(parameterWidget->getWidget(csys));
+    assert(csysWidget);
+    ftr::UpdatePayload payload = view->project->getPayload(feature->getId());
+    std::vector<const ftr::Base*> inputs = payload.getFeatures(ftr::InputType::linkCSys);
+    if (inputs.empty())
+      csysWidget->setCSysLinkId(gu::createNilId());
+    else
+      csysWidget->setCSysLinkId(inputs.front()->getId());
     
     mainLayout->addItem(new QSpacerItem(20, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
   }
   
-  void parameterChanged()
+  void glue()
   {
-    if (!parameterWidget->isVisible())
-      return;
-    goUpdate();
+    QObject::connect(csysWidget, &CSysWidget::dirty, view, &Primitive::linkedCSysChanged);
+    QObject::connect(parameterWidget, &ParameterBase::prmValueChanged, view, &Primitive::parameterChanged);
   }
   
   void goUpdate()
   {
-    //Break cycle.
-    std::vector<std::unique_ptr<prm::ObserverBlocker>> blockers;
-    for (auto &o : observers)
-      blockers.push_back(std::make_unique<prm::ObserverBlocker>(o));
     feature->updateModel(view->project->getPayload(feature->getId()));
     feature->updateVisual();
     feature->setModelDirty();
@@ -127,5 +118,10 @@ void Primitive::linkedCSysChanged()
   uuid lId = stow->csysWidget->getCSysLinkId();
   if (!lId.is_nil())
     project->connect(lId, stow->feature->getId(), {ftr::InputType::linkCSys});
+  stow->goUpdate();
+}
+
+void Primitive::parameterChanged()
+{
   stow->goUpdate();
 }

@@ -41,7 +41,6 @@ struct TransitionCurve::Stow
   cmv::TransitionCurve *view;
   dlg::SelectionWidget *selectionWidget = nullptr;
   cmv::ParameterWidget *parameterWidget = nullptr;
-  std::vector<prm::Observer> observers;
   
   Stow(cmd::TransitionCurve *cIn, cmv::TransitionCurve *vIn)
   : command(cIn)
@@ -55,6 +54,8 @@ struct TransitionCurve::Stow
     settings.endGroup();
     
     loadFeatureData();
+    glue();
+    selectionWidget->activate(0);
   }
   
   void buildGui()
@@ -82,16 +83,7 @@ struct TransitionCurve::Stow
     
     parameterWidget = new cmv::ParameterWidget(view, command->feature->getParameters());
     mainLayout->addWidget(parameterWidget);
-    for (auto *p : command->feature->getParameters())
-    {
-      observers.emplace_back(std::bind(&Stow::parameterChanged, this));
-      p->connect(observers.back());
-    }
-    
     mainLayout->addItem(new QSpacerItem(20, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
-    
-    QObject::connect(selectionWidget->getButton(0), &dlg::SelectionButton::dirty, view, &TransitionCurve::selectionChanged);
-    QObject::connect(selectionWidget->getButton(1), &dlg::SelectionButton::dirty, view, &TransitionCurve::selectionChanged);
   }
   
   void loadFeatureData()
@@ -118,15 +110,13 @@ struct TransitionCurve::Stow
       selectionWidget->initializeButton(0, ps.at(0));
     if (ps.size() > 1)
       selectionWidget->initializeButton(1, ps.at(1));
-    
-    selectionWidget->activate(0);
   }
   
-  void parameterChanged()
+  void glue()
   {
-    if (!parameterWidget->isVisible())
-      return;
-    goUpdate();
+    QObject::connect(selectionWidget->getButton(0), &dlg::SelectionButton::dirty, view, &TransitionCurve::selectionChanged);
+    QObject::connect(selectionWidget->getButton(1), &dlg::SelectionButton::dirty, view, &TransitionCurve::selectionChanged);
+    QObject::connect(parameterWidget, &ParameterBase::prmValueChanged, view, &TransitionCurve::parameterChanged);
   }
   
   void goSelections()
@@ -140,10 +130,6 @@ struct TransitionCurve::Stow
   
   void goUpdate()
   {
-    //Break cycle.
-    std::vector<std::unique_ptr<prm::ObserverBlocker>> blockers;
-    for (auto &o : observers)
-      blockers.push_back(std::make_unique<prm::ObserverBlocker>(o));
     command->localUpdate();
   }
 };
@@ -158,4 +144,9 @@ TransitionCurve::~TransitionCurve() = default;
 void TransitionCurve::selectionChanged()
 {
   stow->goSelections();
+}
+
+void TransitionCurve::parameterChanged()
+{
+  stow->goUpdate();
 }

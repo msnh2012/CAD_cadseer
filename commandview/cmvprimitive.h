@@ -39,6 +39,7 @@ namespace cmv
     ~Primitive() override;
   public Q_SLOTS:
     void linkedCSysChanged();
+    void parameterChanged();
   private:
     struct Stow;
     std::unique_ptr<Stow> stow;

@@ -41,6 +41,8 @@ namespace cmv
     void comboChanged(int);
     void profileSelectionChanged();
     void axisSelectionChanged();
+    void parameterChanged();
+    
   private:
     struct Stow;
     std::unique_ptr<Stow> stow;

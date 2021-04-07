@@ -46,7 +46,6 @@ struct Extrude::Stow
   dlg::SelectionWidget *inferSelection = nullptr; //used by parameter also
   dlg::SelectionWidget *picksSelection = nullptr;
   cmv::ParameterWidget *parameterWidget = nullptr;
-  std::vector<prm::Observer> observers;
   int lastComboIndex = 0; // used to sync profile selections between selection widgets.
   
   Stow(cmd::Extrude *cIn, cmv::Extrude *vIn)
@@ -61,6 +60,7 @@ struct Extrude::Stow
     settings.endGroup();
     
     loadFeatureData();
+    glue();
   }
   
   void buildGui()
@@ -104,18 +104,7 @@ struct Extrude::Stow
     
     parameterWidget = new cmv::ParameterWidget(view, command->feature->getParameters());
     mainLayout->addWidget(parameterWidget);
-    for (auto *p : command->feature->getParameters())
-    {
-      observers.emplace_back(std::bind(&Stow::parameterChanged, this));
-      p->connect(observers.back());
-    }
-    
     mainLayout->addItem(new QSpacerItem(20, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
-    
-    QObject::connect(combo, SIGNAL(currentIndexChanged(int)), view, SLOT(comboChanged(int)));
-    QObject::connect(inferSelection->getButton(0), &dlg::SelectionButton::dirty, view, &Extrude::profileSelectionChanged);
-    QObject::connect(picksSelection->getButton(0), &dlg::SelectionButton::dirty, view, &Extrude::profileSelectionChanged);
-    QObject::connect(picksSelection->getButton(1), &dlg::SelectionButton::dirty, view, &Extrude::axisSelectionChanged);
   }
   
   void loadFeatureData()
@@ -153,19 +142,17 @@ struct Extrude::Stow
       inferSelection->activate(0);
     }
     
-    QSignalBlocker stackBlocker(combo);
     combo->setCurrentIndex(static_cast<int>(dt));
     lastComboIndex = combo->currentIndex();
   }
   
-  void parameterChanged()
+  void glue()
   {
-//     updateWidgetState();
-      
-    // lets make sure we don't trigger updates 'behind the scenes'
-    if (!parameterWidget->isVisible())
-      return;
-    goUpdate();
+    QObject::connect(combo, SIGNAL(currentIndexChanged(int)), view, SLOT(comboChanged(int)));
+    QObject::connect(inferSelection->getButton(0), &dlg::SelectionButton::dirty, view, &Extrude::profileSelectionChanged);
+    QObject::connect(picksSelection->getButton(0), &dlg::SelectionButton::dirty, view, &Extrude::profileSelectionChanged);
+    QObject::connect(picksSelection->getButton(1), &dlg::SelectionButton::dirty, view, &Extrude::axisSelectionChanged);
+    QObject::connect(parameterWidget, &ParameterBase::prmValueChanged, view, &Extrude::parameterChanged);
   }
   
   void goAxisInfer()
@@ -188,10 +175,6 @@ struct Extrude::Stow
   
   void goUpdate()
   {
-    //extrude can and will change the direction parameter. Break cycle.
-    std::vector<std::unique_ptr<prm::ObserverBlocker>> blockers;
-    for (auto &o : observers)
-      blockers.push_back(std::make_unique<prm::ObserverBlocker>(o));
     command->localUpdate();
   }
 };
@@ -261,4 +244,9 @@ void Extrude::profileSelectionChanged()
 void Extrude::axisSelectionChanged()
 {
   stow->goAxisPicks();
+}
+
+void Extrude::parameterChanged()
+{
+  stow->goUpdate();
 }

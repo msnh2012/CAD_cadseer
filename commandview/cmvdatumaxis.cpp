@@ -50,7 +50,6 @@ struct DatumAxis::Stow
   dlg::SelectionWidget *intersectionSelectionWidget = nullptr;
   dlg::SelectionWidget *geometrySelectionWidget = nullptr;
   cmv::ParameterWidget *parameterWidget = nullptr;
-  std::vector<prm::Observer> observers;
   
   Stow(cmd::DatumAxis *cIn, cmv::DatumAxis *vIn)
   : command(cIn)
@@ -64,6 +63,7 @@ struct DatumAxis::Stow
     settings.endGroup();
     
     loadFeatureData();
+    glue();
   }
   
   void buildGui()
@@ -123,23 +123,7 @@ struct DatumAxis::Stow
     prm::Parameters prmsToShow = {command->feature->getAutoSizeParameter(), command->feature->getSizeParameter()};
     parameterWidget = new cmv::ParameterWidget(view, prmsToShow);
     mainLayout->addWidget(parameterWidget);
-    for (auto *p : prmsToShow)
-    {
-      observers.emplace_back(std::bind(&Stow::parameterChanged, this));
-      p->connect(observers.back());
-    }
-    if (static_cast<bool>(*command->feature->getAutoSizeParameter()))
-      parameterWidget->disableWidget(command->feature->getSizeParameter());
-    
     mainLayout->addItem(new QSpacerItem(20, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
-    
-    QObject::connect(combo, SIGNAL(currentIndexChanged(int)), stackedWidget, SLOT(setCurrentIndex(int)));
-    QObject::connect(stackedWidget, SIGNAL(currentChanged(int)), view, SLOT(stackedChanged(int)));
-    QObject::connect(pointsSelectionWidget->getButton(0), &dlg::SelectionButton::dirty, view, &DatumAxis::pointSelectionChanged);
-    QObject::connect(pointsSelectionWidget->getButton(1), &dlg::SelectionButton::dirty, view, &DatumAxis::pointSelectionChanged);
-    QObject::connect(intersectionSelectionWidget->getButton(0), &dlg::SelectionButton::dirty, view, &DatumAxis::intersectionSelectionChanged);
-    QObject::connect(intersectionSelectionWidget->getButton(1), &dlg::SelectionButton::dirty, view, &DatumAxis::intersectionSelectionChanged);
-    QObject::connect(geometrySelectionWidget->getButton(0), &dlg::SelectionButton::dirty, view, &DatumAxis::geometrySelectionChanged);
   }
   
   void loadFeatureData()
@@ -195,6 +179,18 @@ struct DatumAxis::Stow
     }
   }
   
+  void glue()
+  {
+    QObject::connect(combo, SIGNAL(currentIndexChanged(int)), stackedWidget, SLOT(setCurrentIndex(int)));
+    QObject::connect(stackedWidget, SIGNAL(currentChanged(int)), view, SLOT(stackedChanged(int)));
+    QObject::connect(pointsSelectionWidget->getButton(0), &dlg::SelectionButton::dirty, view, &DatumAxis::pointSelectionChanged);
+    QObject::connect(pointsSelectionWidget->getButton(1), &dlg::SelectionButton::dirty, view, &DatumAxis::pointSelectionChanged);
+    QObject::connect(intersectionSelectionWidget->getButton(0), &dlg::SelectionButton::dirty, view, &DatumAxis::intersectionSelectionChanged);
+    QObject::connect(intersectionSelectionWidget->getButton(1), &dlg::SelectionButton::dirty, view, &DatumAxis::intersectionSelectionChanged);
+    QObject::connect(geometrySelectionWidget->getButton(0), &dlg::SelectionButton::dirty, view, &DatumAxis::geometrySelectionChanged);
+    QObject::connect(parameterWidget, &ParameterBase::prmValueChanged, view, &DatumAxis::parameterChanged);
+  }
+  
   void activate(int index)
   {
     if (index < 0 || index >= stackedWidget->count())
@@ -241,19 +237,6 @@ struct DatumAxis::Stow
       command->localUpdate();
     }
   }
-  
-  void parameterChanged()
-  {
-    if (static_cast<bool>(*command->feature->getAutoSizeParameter()))
-      parameterWidget->disableWidget(command->feature->getSizeParameter());
-    else
-      parameterWidget->enableWidget(command->feature->getSizeParameter());
-      
-    //lets make sure we don't trigger updates 'behind the scenes'
-    if (!parameterWidget->isVisible())
-      return;
-    command->localUpdate();
-  }
 };
 
 DatumAxis::DatumAxis(cmd::DatumAxis *cIn)
@@ -295,4 +278,9 @@ void DatumAxis::intersectionSelectionChanged()
 void DatumAxis::geometrySelectionChanged()
 {
   stow->goGeometry();
+}
+
+void DatumAxis::parameterChanged()
+{
+  stow->command->localUpdate();
 }

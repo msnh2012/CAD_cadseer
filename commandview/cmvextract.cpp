@@ -41,7 +41,6 @@ struct Extract::Stow
   cmv::Extract *view;
   dlg::SelectionWidget *selectionWidget = nullptr;
   cmv::ParameterWidget *parameterWidget = nullptr;
-  std::vector<prm::Observer> observers;
   
   Stow(cmd::Extract *cIn, cmv::Extract *vIn)
   : command(cIn)
@@ -83,8 +82,6 @@ struct Extract::Stow
     eLayout->addWidget(parameterWidget);
     mainLayout->addLayout(eLayout);
     parameterWidget->setDisabled(true);
-    observers.emplace_back(std::bind(&Stow::parameterChanged, this));
-    command->feature->getAngleParameter()->connect(observers.back());
     
     mainLayout->addItem(new QSpacerItem(20, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
   }
@@ -116,16 +113,7 @@ struct Extract::Stow
   {
     connect(selectionWidget, &dlg::SelectionWidget::accrueChanged, view, &Extract::accrueChanged);
     connect(selectionWidget->getButton(0), &dlg::SelectionButton::dirty, view, &Extract::selectionChanged);
-  }
-  
-  void parameterChanged()
-  {
-    // lets make sure we don't trigger updates 'behind the scenes'
-    if (!parameterWidget->isVisible())
-      return;
-    selectionWidget->setAngle(static_cast<double>(*command->feature->getAngleParameter()));
-    selectionWidget->getButton(0)->syncToSelection();
-    command->localUpdate();
+    connect(parameterWidget, &ParameterBase::prmValueChanged, view, &Extract::parameterChanged);
   }
 };
 
@@ -176,4 +164,11 @@ void Extract::enableParameterWidget()
     }
   }
   stow->parameterWidget->setEnabled(pwe);
+}
+
+void Extract::parameterChanged()
+{
+  stow->selectionWidget->setAngle(static_cast<double>(*stow->command->feature->getAngleParameter()));
+  stow->selectionWidget->getButton(0)->syncToSelection();
+  stow->command->localUpdate();
 }

@@ -41,7 +41,6 @@ struct Thicken::Stow
   cmv::Thicken *view;
   dlg::SelectionWidget *selectionWidget = nullptr;
   cmv::ParameterWidget *parameterWidget = nullptr;
-  std::vector<prm::Observer> observers;
   
   Stow(cmd::Thicken *cIn, cmv::Thicken *vIn)
   : command(cIn)
@@ -55,6 +54,8 @@ struct Thicken::Stow
     settings.endGroup();
     
     loadFeatureData();
+    glue();
+    selectionWidget->activate(0);
   }
   
   void buildGui()
@@ -79,15 +80,8 @@ struct Thicken::Stow
     
     parameterWidget = new cmv::ParameterWidget(view, command->feature->getParameters());
     mainLayout->addWidget(parameterWidget);
-    for (auto *p : command->feature->getParameters())
-    {
-      observers.emplace_back(std::bind(&Stow::parameterChanged, this));
-      p->connect(observers.back());
-    }
-    
     mainLayout->addItem(new QSpacerItem(20, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
     
-    QObject::connect(selectionWidget->getButton(0), &dlg::SelectionButton::dirty, view, &Thicken::selectionChanged);
   }
   
   void loadFeatureData()
@@ -110,14 +104,12 @@ struct Thicken::Stow
     };
     
     selectionWidget->initializeButton(0, picksToMessages(command->feature->getPicks()));
-    selectionWidget->activate(0);
   }
   
-  void parameterChanged()
+  void glue()
   {
-    if (!parameterWidget->isVisible())
-      return;
-    goUpdate();
+    QObject::connect(selectionWidget->getButton(0), &dlg::SelectionButton::dirty, view, &Thicken::selectionChanged);
+    QObject::connect(parameterWidget, &ParameterBase::prmValueChanged, view, &Thicken::parameterChanged);
   }
   
   void goSelections()
@@ -128,10 +120,6 @@ struct Thicken::Stow
   
   void goUpdate()
   {
-    //Break cycle.
-    std::vector<std::unique_ptr<prm::ObserverBlocker>> blockers;
-    for (auto &o : observers)
-      blockers.push_back(std::make_unique<prm::ObserverBlocker>(o));
     command->localUpdate();
   }
 };
@@ -146,4 +134,9 @@ Thicken::~Thicken() = default;
 void Thicken::selectionChanged()
 {
   stow->goSelections();
+}
+
+void Thicken::parameterChanged()
+{
+  stow->goUpdate();
 }

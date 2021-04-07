@@ -41,7 +41,6 @@ struct Hollow::Stow
   cmv::Hollow *view;
   dlg::SelectionWidget *selectionWidget = nullptr;
   cmv::ParameterWidget *parameterWidget = nullptr;
-  std::vector<prm::Observer> observers;
   
   Stow(cmd::Hollow *cIn, cmv::Hollow *vIn)
   : command(cIn)
@@ -79,12 +78,6 @@ struct Hollow::Stow
     
     parameterWidget = new cmv::ParameterWidget(view, command->feature->getParameters());
     mainLayout->addWidget(parameterWidget);
-    for (auto *p : command->feature->getParameters())
-    {
-      observers.emplace_back(std::bind(&Stow::parameterChanged, this));
-      p->connect(observers.back());
-    }
-    
     mainLayout->addItem(new QSpacerItem(20, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
   }
   
@@ -112,14 +105,7 @@ struct Hollow::Stow
   void glue()
   {
     connect(selectionWidget->getButton(0), &dlg::SelectionButton::dirty, view, &Hollow::selectionChanged);
-  }
-  
-  void parameterChanged()
-  {
-    // lets make sure we don't trigger updates 'behind the scenes'
-    if (!parameterWidget->isVisible())
-      return;
-    command->localUpdate();
+    connect(parameterWidget, &ParameterBase::prmValueChanged, view, &Hollow::parameterChanged);
   }
 };
 
@@ -133,5 +119,10 @@ Hollow::~Hollow() = default;
 void Hollow::selectionChanged()
 {
   stow->command->setSelections(stow->selectionWidget->getButton(0)->getMessages());
+  stow->command->localUpdate();
+}
+
+void Hollow::parameterChanged()
+{
   stow->command->localUpdate();
 }

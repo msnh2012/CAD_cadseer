@@ -44,6 +44,7 @@ namespace cmv
     void axisAngleSelectionChanged();
     void average3PlaneSelectionChanged();
     void through3PointsSelectionChanged();
+    void parameterChanged();
   private:
     struct Stow;
     std::unique_ptr<Stow> stow;

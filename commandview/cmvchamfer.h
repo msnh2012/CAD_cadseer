@@ -46,6 +46,7 @@ namespace cmv
     void listSelectionChangedSlot();
     void selectionChangedSlot();
     void selectFirstStyleSlot();
+    void parameterChanged();
   private:
     struct Stow;
     std::unique_ptr<Stow> stow;

@@ -88,7 +88,6 @@ struct Strip::Stow
   cmv::Strip *view;
   dlg::SelectionWidget *selectionWidget = nullptr;
   cmv::ParameterWidget *parameterWidget = nullptr;
-  std::vector<prm::Observer> observers;
   QListWidget *stationsList = nullptr;
   
   Stow(cmd::Strip *cIn, cmv::Strip *vIn)
@@ -135,14 +134,7 @@ struct Strip::Stow
     
     parameterWidget = new cmv::ParameterWidget(view, command->feature->getParameters());
     mainLayout->addWidget(parameterWidget);
-    for (auto *p : command->feature->getParameters())
-    {
-      observers.emplace_back(std::bind(&Stow::parameterChanged, this));
-      p->connect(observers.back());
-    }
-    
     mainLayout->addWidget(buildStationWidget());
-    
 //     mainLayout->addItem(new QSpacerItem(20, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
   }
   
@@ -252,23 +244,13 @@ struct Strip::Stow
     QObject::connect(selectionWidget->getButton(0), &dlg::SelectionButton::dirty, view, &Strip::selectionChanged);
     QObject::connect(selectionWidget->getButton(1), &dlg::SelectionButton::dirty, view, &Strip::selectionChanged);
     QObject::connect(selectionWidget->getButton(2), &dlg::SelectionButton::dirty, view, &Strip::selectionChanged);
+    QObject::connect(parameterWidget, &ParameterBase::prmValueChanged, view, &Strip::parameterChanged);
     QObject::connect(stationsList->model(), SIGNAL(rowsRemoved(const QModelIndex&, int, int)), view, SLOT(stationsChanged(const QModelIndex&, int, int)));
     QObject::connect(stationsList->model(), SIGNAL(dataChanged(const QModelIndex&, const QModelIndex&, const QVector<int>&)), view, SLOT(dataChanged(const QModelIndex&, const QModelIndex&, const QVector<int>&)));
   }
   
-  void parameterChanged()
-  {
-    if (!parameterWidget->isVisible())
-      return;
-    goUpdate();
-  }
-  
   void goUpdate()
   {
-    //Break cycle.
-    std::vector<std::unique_ptr<prm::ObserverBlocker>> blockers;
-    for (auto &o : observers)
-      blockers.push_back(std::make_unique<prm::ObserverBlocker>(o));
     command->localUpdate();
   }
 };
@@ -284,6 +266,11 @@ void Strip::selectionChanged()
 {
   auto *sw = stow->selectionWidget;
   stow->command->setSelections(sw->getMessages(0), sw->getMessages(1), sw->getMessages(2));
+  stow->goUpdate();
+}
+
+void Strip::parameterChanged()
+{
   stow->goUpdate();
 }
 

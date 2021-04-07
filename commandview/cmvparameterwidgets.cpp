@@ -520,8 +520,10 @@ struct cmv::ParameterWidget::Stow
       layout->addWidget(label, row, column++, Qt::AlignVCenter | Qt::AlignRight);
       
       cmv::WidgetFactoryVisitor v(parentWidget, p);
-      QWidget *pWidget = boost::apply_visitor(v, p->getStow().variant);
+      ParameterBase *pWidget = boost::apply_visitor(v, p->getStow().variant);
       layout->addWidget(pWidget, row++, column--); //don't use alignment or won't stretch to fill area.
+      QObject::connect(pWidget, &ParameterBase::prmValueChanged, parentWidget, &ParameterWidget::prmValueChanged);
+      QObject::connect(pWidget, &ParameterBase::prmConstantChanged, parentWidget, &ParameterWidget::prmConstantChanged);
     }
   }
   
@@ -674,7 +676,9 @@ namespace
   class ExpressionDelegate : public QStyledItemDelegate
   {
   public:
-    explicit ExpressionDelegate(QObject *parent): QStyledItemDelegate(parent){}
+    explicit ExpressionDelegate(ParameterTable *parent)
+    : QStyledItemDelegate(parent)
+    , table(parent){}
     
     QWidget* createEditor(QWidget* parent, const QStyleOptionViewItem&, const QModelIndex &index) const override
     {
@@ -705,7 +709,10 @@ namespace
       assert(tm);
       QVariant dummy;
       tm->setData(index, dummy, Qt::EditRole);
+      table->prmValueChanged();
     }
+  private:
+    ParameterTable *table = nullptr;
   };
 }
 
@@ -741,7 +748,7 @@ struct cmv::ParameterTable::Stow
     connect (view->selectionModel(), &QItemSelectionModel::selectionChanged, parentWidget, &ParameterTable::selectionHasChanged);
     layout->addWidget(view);
     
-    ExpressionDelegate *ed = new ExpressionDelegate(view);
+    ExpressionDelegate *ed = new ExpressionDelegate(parentWidget);
     view->setItemDelegateForColumn(1, ed);
   }
 };

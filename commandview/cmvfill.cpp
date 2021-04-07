@@ -45,12 +45,10 @@ struct Fill::Stow
   dlg::SelectionWidget *selectionWidget = nullptr;
   QStackedWidget *stacked = nullptr;
   std::vector<std::shared_ptr<prm::Parameter>> parameters;
-  prm::Observer observer;
   
   Stow(cmd::Fill *cIn, cmv::Fill *vIn)
   : command(cIn)
   , view(vIn)
-  , observer(std::bind(&Fill::Stow::parameterChanged, this))
   {
     buildGui();
     
@@ -135,6 +133,7 @@ struct Fill::Stow
               parameters.push_back(std::make_shared<prm::Parameter>(*e.continuity));
               auto *w = new cmv::ParameterWidget(view, {parameters.back().get()});
               stacked->addWidget(w);
+              connect(w, &ParameterBase::prmValueChanged, view, &Fill::continuityChanged);
             }
             else
               iMsgs.emplace_back(m);
@@ -153,13 +152,6 @@ struct Fill::Stow
     connect(selectionWidget->getView(0), &dlg::SelectionView::dirty, view, &Fill::boundarySelectionChanged);
     connect(selectionWidget->getButton(1), &dlg::SelectionButton::selectionAdded, view, &Fill::internalAdded);
     connect(selectionWidget->getButton(1), &dlg::SelectionButton::selectionRemoved, view, &Fill::internalRemoved);
-  }
-  
-  void parameterChanged()
-  {
-    if (!view->isVisible())
-      return;
-    goUpdate();
   }
   
   void goUpdate()
@@ -207,9 +199,9 @@ void Fill::boundaryAdded(int index)
   {
     freshParameter->setValue(1);
     auto *w = new cmv::ParameterWidget(this, {stow->parameters.back().get()});
+    connect(w, &ParameterBase::prmValueChanged, this, &Fill::continuityChanged);
     stow->stacked->addWidget(w);
   }
-  freshParameter->connect(stow->observer);
   stow->goUpdate();
 }
 

@@ -42,6 +42,7 @@ namespace cmv
     void pointSelectionChanged();
     void intersectionSelectionChanged();
     void geometrySelectionChanged();
+    void parameterChanged();
   private:
     struct Stow;
     std::unique_ptr<Stow> stow;

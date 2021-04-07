@@ -43,7 +43,6 @@ struct Revolve::Stow
   QComboBox *combo = nullptr;
   dlg::SelectionWidget *selection = nullptr;
   cmv::ParameterWidget *parameterWidget = nullptr;
-  std::vector<prm::Observer> observers;
   
   Stow(cmd::Revolve *cIn, cmv::Revolve *vIn)
   : command(cIn)
@@ -57,6 +56,8 @@ struct Revolve::Stow
     settings.endGroup();
     
     loadFeatureData();
+    glue();
+    selection->activate(0);
   }
   
   void buildGui()
@@ -94,17 +95,7 @@ struct Revolve::Stow
     
     parameterWidget = new cmv::ParameterWidget(view, command->feature->getParameters());
     mainLayout->addWidget(parameterWidget);
-    for (auto *p : command->feature->getParameters())
-    {
-      observers.emplace_back(std::bind(&Stow::parameterChanged, this));
-      p->connect(observers.back());
-    }
-    
     mainLayout->addItem(new QSpacerItem(20, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
-    
-    QObject::connect(combo, SIGNAL(currentIndexChanged(int)), view, SLOT(comboChanged(int)));
-    QObject::connect(selection->getButton(0), &dlg::SelectionButton::dirty, view, &Revolve::profileSelectionChanged);
-    QObject::connect(selection->getButton(1), &dlg::SelectionButton::dirty, view, &Revolve::axisSelectionChanged);
   }
   
   void loadFeatureData()
@@ -134,9 +125,15 @@ struct Revolve::Stow
     else
       selection->initializeButton(1, picksToMessages(command->feature->getAxisPicks()));
     
-    QSignalBlocker stackBlocker(combo);
     combo->setCurrentIndex(static_cast<int>(at));
-    selection->activate(0);
+  }
+  
+  void glue()
+  {
+    QObject::connect(combo, SIGNAL(currentIndexChanged(int)), view, SLOT(comboChanged(int)));
+    QObject::connect(selection->getButton(0), &dlg::SelectionButton::dirty, view, &Revolve::profileSelectionChanged);
+    QObject::connect(selection->getButton(1), &dlg::SelectionButton::dirty, view, &Revolve::axisSelectionChanged);
+    QObject::connect(parameterWidget, &ParameterBase::prmValueChanged, view, &Revolve::parameterChanged);
   }
   
   void parameterChanged()
@@ -160,10 +157,6 @@ struct Revolve::Stow
   
   void goUpdate()
   {
-    //Break cycle.
-    std::vector<std::unique_ptr<prm::ObserverBlocker>> blockers;
-    for (auto &o : observers)
-      blockers.push_back(std::make_unique<prm::ObserverBlocker>(o));
     command->localUpdate();
   }
 };
@@ -187,9 +180,6 @@ void Revolve::comboChanged(int cIndex)
     stow->selection->hideEntry(1);
     stow->goAxisParameter();
   }
-  
-  //we will want to enable/disable the direction parameter.
-  //we can't parse vectors yet, so will leave it disabled.
 }
 
 void Revolve::profileSelectionChanged()
@@ -204,4 +194,9 @@ void Revolve::profileSelectionChanged()
 void Revolve::axisSelectionChanged()
 {
   stow->goAxisPicks();
+}
+
+void Revolve::parameterChanged()
+{
+  stow->goUpdate();
 }

@@ -39,6 +39,7 @@ namespace cmv
     ~Untrim() override;
   private Q_SLOTS:
     void selectionChanged();
+    void parameterChanged();
   private:
     struct Stow;
     std::unique_ptr<Stow> stow;

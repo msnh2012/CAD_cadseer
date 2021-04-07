@@ -41,7 +41,6 @@ struct Draft::Stow
   cmv::Draft *view;
   dlg::SelectionWidget *selectionWidget = nullptr;
   cmv::ParameterWidget *parameterWidget = nullptr;
-  std::vector<prm::Observer> observers;
   
   Stow(cmd::Draft *cIn, cmv::Draft *vIn)
   : command(cIn)
@@ -84,9 +83,6 @@ struct Draft::Stow
     
     parameterWidget = new ParameterWidget(view, command->feature->getParameters());
     mainLayout->addWidget(parameterWidget);
-    observers.emplace_back(std::bind(&Stow::parameterChanged, this));
-    command->feature->getAngleParameter()->connect(observers.back());
-    
     mainLayout->addItem(new QSpacerItem(20, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
   }
   
@@ -116,14 +112,7 @@ struct Draft::Stow
   {
     connect(selectionWidget->getButton(0), &dlg::SelectionButton::dirty, view, &Draft::selectionChanged);
     connect(selectionWidget->getButton(1), &dlg::SelectionButton::dirty, view, &Draft::selectionChanged);
-  }
-  
-  void parameterChanged()
-  {
-    // lets make sure we don't trigger updates 'behind the scenes'
-    if (!parameterWidget->isVisible())
-      return;
-    command->localUpdate();
+    connect(parameterWidget, &ParameterBase::prmValueChanged, view, &Draft::parameterChanged);
   }
 };
 
@@ -137,5 +126,10 @@ Draft::~Draft() = default;
 void Draft::selectionChanged()
 {
   stow->command->setSelections(stow->selectionWidget->getButton(0)->getMessages(), stow->selectionWidget->getButton(1)->getMessages());
+  stow->command->localUpdate();
+}
+
+void Draft::parameterChanged()
+{
   stow->command->localUpdate();
 }

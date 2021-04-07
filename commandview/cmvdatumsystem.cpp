@@ -54,7 +54,6 @@ struct DatumSystem::Stow
   prm::Parameter *csys = nullptr;
   prm::Parameter *autoSize = nullptr;
   prm::Parameter *size = nullptr;
-  std::vector<prm::Observer> observers;
   
   Stow(cmd::DatumSystem *cIn, cmv::DatumSystem *vIn)
   : command(cIn)
@@ -86,8 +85,6 @@ struct DatumSystem::Stow
     
     for (auto *p : command->feature->getParameters())
     {
-      observers.emplace_back(std::bind(&Stow::parameterChanged, this));
-      p->connect(observers.back());
       if (p->getName() == prm::Names::CSys)
         csys = p;
       if (p->getName() == prm::Names::Size)
@@ -188,27 +185,11 @@ struct DatumSystem::Stow
     connect(typeCombo, SIGNAL(currentIndexChanged(int)), view, SLOT(comboChanged(int)));
     connect(csysWidget, &CSysWidget::dirty, view, &DatumSystem::linkCSysChanged);
     connect(selectionWidget3P->getButton(0), &dlg::SelectionButton::dirty, view, &DatumSystem::p3Changed);
-  }
-  
-  void parameterChanged()
-  {
-    if (!parameterWidget->isVisible())
-      return;
-    
-    if (static_cast<bool>(*autoSize))
-      parameterWidget->disableWidget(size);
-    else
-      parameterWidget->enableWidget(size);
-    
-    goUpdate();
+    connect(parameterWidget, &ParameterBase::prmValueChanged, view, &DatumSystem::parameterChanged);
   }
   
   void goUpdate()
   {
-    //Break cycle.
-    std::vector<std::unique_ptr<prm::ObserverBlocker>> blockers;
-    for (auto &o : observers)
-      blockers.push_back(std::make_unique<prm::ObserverBlocker>(o));
     command->localUpdate();
   }
 };
@@ -244,5 +225,10 @@ void DatumSystem::linkCSysChanged()
 void DatumSystem::p3Changed()
 {
   stow->command->set3Points(stow->selectionWidget3P->getButton(0)->getMessages());
+  stow->goUpdate();
+}
+
+void DatumSystem::parameterChanged()
+{
   stow->goUpdate();
 }

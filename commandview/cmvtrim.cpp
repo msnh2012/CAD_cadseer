@@ -41,7 +41,6 @@ struct Trim::Stow
   cmv::Trim *view;
   dlg::SelectionWidget *selectionWidget = nullptr;
   cmv::ParameterWidget *parameterWidget = nullptr;
-  std::vector<prm::Observer> observers;
   
   Stow(cmd::Trim *cIn, cmv::Trim *vIn)
   : command(cIn)
@@ -55,6 +54,7 @@ struct Trim::Stow
     settings.endGroup();
     
     loadFeatureData();
+    glue();
     selectionWidget->activate(0);
   }
   
@@ -83,16 +83,7 @@ struct Trim::Stow
     
     parameterWidget = new cmv::ParameterWidget(view, command->feature->getParameters());
     mainLayout->addWidget(parameterWidget);
-    for (auto *p : command->feature->getParameters())
-    {
-      observers.emplace_back(std::bind(&Stow::parameterChanged, this));
-      p->connect(observers.back());
-    }
-    
     mainLayout->addItem(new QSpacerItem(20, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
-    
-    QObject::connect(selectionWidget->getButton(0), &dlg::SelectionButton::dirty, view, &Trim::selectionChanged);
-    QObject::connect(selectionWidget->getButton(1), &dlg::SelectionButton::dirty, view, &Trim::selectionChanged);
   }
   
   void loadFeatureData()
@@ -124,6 +115,13 @@ struct Trim::Stow
     }
   }
   
+  void glue()
+  {
+    QObject::connect(selectionWidget->getButton(0), &dlg::SelectionButton::dirty, view, &Trim::selectionChanged);
+    QObject::connect(selectionWidget->getButton(1), &dlg::SelectionButton::dirty, view, &Trim::selectionChanged);
+    QObject::connect(parameterWidget, &ParameterBase::prmValueChanged, view, &Trim::parameterChanged);
+  }
+  
   void parameterChanged()
   {
     if (!parameterWidget->isVisible())
@@ -139,10 +137,6 @@ struct Trim::Stow
   
   void goUpdate()
   {
-    //Break cycle.
-    std::vector<std::unique_ptr<prm::ObserverBlocker>> blockers;
-    for (auto &o : observers)
-      blockers.push_back(std::make_unique<prm::ObserverBlocker>(o));
     command->localUpdate();
   }
 };
@@ -157,4 +151,9 @@ Trim::~Trim() = default;
 void Trim::selectionChanged()
 {
   stow->goSelections();
+}
+
+void Trim::parameterChanged()
+{
+  stow->goUpdate();
 }

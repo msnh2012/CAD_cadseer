@@ -40,11 +40,11 @@ using boost::uuids::uuid;
 
 namespace
 {
-  class ChamferWidgetBase : public QWidget
+  class ChamferWidgetBase : public cmv::ParameterBase
   {
   public:
     ChamferWidgetBase(QWidget *parent)
-    : QWidget(parent)
+    : ParameterBase(parent)
     {}
     
     void activate(int index)
@@ -54,7 +54,6 @@ namespace
     
     dlg::SelectionWidget *selectionWidget = nullptr;
     cmv::ParameterWidget *parameterWidget = nullptr;
-    std::vector<prm::Observer> observers;
   };
   
   class SymmetricWidget : public ChamferWidgetBase
@@ -68,9 +67,10 @@ namespace
       layout->setContentsMargins(0, 0, 0, 0);
       this->setLayout(layout);
       
-      parameterWidget = new cmv::ParameterWidget(this, std::vector<prm::Parameter*>(1, eIn.parameter1.get()));
+      parameterWidget = new cmv::ParameterWidget(this, {eIn.parameter1.get()});
       parameterWidget->setSizePolicy(parameterWidget->sizePolicy().horizontalPolicy(), QSizePolicy::Maximum);
       layout->addWidget(parameterWidget);
+      connect(parameterWidget, &ParameterBase::prmValueChanged, this, &ParameterBase::prmValueChanged);
       
       std::vector<dlg::SelectionWidgetCue> cues;
       dlg::SelectionWidgetCue cue;
@@ -103,6 +103,7 @@ namespace
       parameterWidget = new cmv::ParameterWidget(this, prms);
       parameterWidget->setSizePolicy(parameterWidget->sizePolicy().horizontalPolicy(), QSizePolicy::Maximum);
       layout->addWidget(parameterWidget);
+      connect(parameterWidget, &ParameterBase::prmValueChanged, this, &ParameterBase::prmValueChanged);
       
       std::vector<dlg::SelectionWidgetCue> cues;
       dlg::SelectionWidgetCue cue;
@@ -143,6 +144,7 @@ namespace
       parameterWidget = new cmv::ParameterWidget(this, prms);
       parameterWidget->setSizePolicy(parameterWidget->sizePolicy().horizontalPolicy(), QSizePolicy::Maximum);
       layout->addWidget(parameterWidget);
+      connect(parameterWidget, &ParameterBase::prmValueChanged, this, &ParameterBase::prmValueChanged);
       
       std::vector<dlg::SelectionWidgetCue> cues;
       dlg::SelectionWidgetCue cue;
@@ -340,10 +342,7 @@ struct Chamfer::Stow
       styleList->addItem(tr("Symmetric"));
       SymmetricWidget *sw = new SymmetricWidget(eIn, stackedWidget);
       stackedWidget->addWidget(sw);
-      
-      sw->observers.emplace_back(std::bind(&Stow::parameterChanged, this));
-      eIn.parameter1->connect(sw->observers.back());
-      
+      connect(sw, &ParameterBase::prmValueChanged, view, &Chamfer::parameterChanged);
       return sw;
     }
     if (eIn.style == ::ftr::Chamfer::Style::TwoDistances)
@@ -351,11 +350,7 @@ struct Chamfer::Stow
       styleList->addItem(tr("Two Distances"));
       TwoDistanceWidget *tdw = new TwoDistanceWidget(eIn, stackedWidget);
       stackedWidget->addWidget(tdw);
-      
-      tdw->observers.emplace_back(std::bind(&Stow::parameterChanged, this));
-      eIn.parameter1->connect(tdw->observers.back());
-      eIn.parameter2->connect(tdw->observers.back());
-      
+      connect(tdw, &ParameterBase::prmValueChanged, view, &Chamfer::parameterChanged);
       return tdw;
     }
     if (eIn.style == ::ftr::Chamfer::Style::DistanceAngle)
@@ -363,11 +358,7 @@ struct Chamfer::Stow
       styleList->addItem(tr("Angle Distance"));
       DistanceAngleWidget *daw = new DistanceAngleWidget(eIn, stackedWidget);
       stackedWidget->addWidget(daw);
-      
-      daw->observers.emplace_back(std::bind(&Stow::parameterChanged, this));
-      eIn.parameter1->connect(daw->observers.back());
-      eIn.parameter2->connect(daw->observers.back());
-      
+      connect(daw, &ParameterBase::prmValueChanged, view, &Chamfer::parameterChanged);
       return daw;
     }
     assert(0); //unrecognized entry type.
@@ -410,14 +401,6 @@ struct Chamfer::Stow
       }
     }
     command->setSelectionData(data);
-  }
-  
-  void parameterChanged()
-  {
-    // lets make sure we don't trigger updates 'behind the scenes'
-    if (!stackedWidget->isVisible() || !stackedWidget->isEnabled())
-      return;
-    command->localUpdate();
   }
 };
 
@@ -498,4 +481,9 @@ void Chamfer::selectionChangedSlot()
 void Chamfer::selectFirstStyleSlot()
 {
   stow->styleList->setCurrentRow(0, QItemSelectionModel::Clear | QItemSelectionModel::SelectCurrent);
+}
+
+void Chamfer::parameterChanged()
+{
+  stow->command->localUpdate();
 }
