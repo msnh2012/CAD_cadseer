@@ -91,7 +91,7 @@ Project::~Project()
 QTextStream& Project::getInfo(QTextStream &stream) const
 {
   stream
-  << QObject::tr("Project Directory: ") << QString::fromStdString(getSaveDirectory().string()) << endl;
+  << QObject::tr("Project Directory: ") << QString::fromStdString(getSaveDirectory().string()) << Qt::endl;
   //maybe some git stuff.
   
   expressionManager->getInfo(stream);
