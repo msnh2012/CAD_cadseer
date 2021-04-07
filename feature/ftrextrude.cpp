@@ -324,9 +324,9 @@ void Extrude::updateModel(const UpdatePayload &pIn)
         ste.push_back(fte);
         if (directionType == DirectionType::Infer)
         {
-          assert(tResolver.getFeature()->hasParameter(prm::Names::CSys));
-          const prm::Parameter *sketchSys = tResolver.getFeature()->getParameter(prm::Names::CSys);
-          osg::Matrixd sm = static_cast<osg::Matrixd>(*sketchSys);
+          auto systemParameters =  tResolver.getFeature()->getParameters(prm::Tags::CSys);
+          assert(!systemParameters.empty()); //sketches should have a csys.
+          osg::Matrixd sm = static_cast<osg::Matrixd>(*systemParameters.front());
           direction->setValue(gu::getZVector(sm));
         }
       }

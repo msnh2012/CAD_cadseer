@@ -482,24 +482,6 @@ boost::filesystem::path Base::buildFilePathName(const boost::filesystem::path &d
   return dIn / getFileName();
 }
 
-bool Base::hasParameter(const QString &nameIn) const
-{
-  for (const auto &p : parameters)
-    if (p->getName() == nameIn)
-      return true;
-    
-  return false;
-}
-
-prm::Parameter* Base::getParameter(const QString &nameIn) const
-{
-  for (const auto &p : parameters)
-    if (p->getName() == nameIn)
-      return p;
-  assert(0); //no parameter by that name. use hasParameter.
-  return nullptr;
-}
-
 bool Base::hasParameter(const boost::uuids::uuid &idIn) const
 {
   for (const auto &p : parameters)
@@ -518,7 +500,18 @@ prm::Parameter* Base::getParameter(const boost::uuids::uuid &idIn) const
   return nullptr;
 }
 
-void Base::removeParameter(prm::Parameter *pIn)
+prm::Parameters Base::getParameters(std::string_view svIn) const
+{
+  prm::Parameters out;
+  for (auto *p : parameters)
+  {
+    if (p->getTag() == svIn)
+      out.push_back(p);
+  }
+  return out;
+}
+
+void Base::removeParameter(const prm::Parameter *pIn)
 {
   assert(pIn);
   if (!pIn)

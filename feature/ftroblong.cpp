@@ -261,9 +261,12 @@ void Oblong::updateModel(const UpdatePayload &plIn)
     }
     
     std::vector<const Base*> tfs = plIn.getFeatures(ftr::InputType::linkCSys);
-    if (!tfs.empty() && tfs.front()->hasParameter(prm::Names::CSys))
+    if (!tfs.empty())
     {
-      csys->setValueQuiet(static_cast<osg::Matrixd>(*(tfs.front()->getParameter(prm::Names::CSys))));
+      auto systemParameters =  tfs.front()->getParameters(prm::Tags::CSys);
+      if (systemParameters.empty())
+        throw std::runtime_error("Feature for csys link, doesn't have csys parameter");
+      csys->setValueQuiet(static_cast<osg::Matrixd>(*systemParameters.front()));
       csysDragger->draggerUpdate();
       if (overlaySwitch->containsNode(csysDragger->dragger))
         overlaySwitch->removeChild(csysDragger->dragger);

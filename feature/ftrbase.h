@@ -119,11 +119,10 @@ public:
   osg::Switch* getMainSwitch() const {return mainSwitch.get();}
   osg::Switch* getOverlaySwitch() const {return overlaySwitch.get();}
   osg::MatrixTransform* getMainTransform() const {return mainTransform.get();}
-  bool hasParameter(const QString &nameIn) const; //!< parameter names are not unique.
-  prm::Parameter* getParameter(const QString &nameIn) const; //!< parameter names are not unique.
   bool hasParameter(const boost::uuids::uuid &idIn) const;
   prm::Parameter* getParameter(const boost::uuids::uuid &idin) const;
   const prm::Parameters& getParameters() const{return parameters;}
+  prm::Parameters getParameters(std::string_view) const; //!< all parameters with tag.
   
   bool hasAnnex(ann::Type t) const
   {
@@ -168,7 +167,7 @@ protected:
   void setFailure(); //!< set only through virtual update.
   void setSuccess(); //!< set only through virtual update.
   void sendStateMessage(std::size_t); //!< just convenience.
-  void removeParameter(prm::Parameter*); //!< remove parameter from the parameters array.
+  void removeParameter(const prm::Parameter*); //!< remove parameter from the parameters array.
   
  //serial rename
   prj::srl::spt::Base serialOut(); //!<convert this into serializable object. no const, we update the result container with offset

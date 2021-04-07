@@ -98,12 +98,13 @@ void Primitive::deactivate()
 
 void Primitive::go()
 {
-  assert (feature->hasParameter(prm::Names::CSys));
-  feature->getParameter(prm::Names::CSys)->setValue(viewer->getCurrentSystem());
+  auto systemParameters = feature->getParameters(prm::Tags::CSys);
+  assert (!systemParameters.empty());
+  systemParameters.front()->setValue(viewer->getCurrentSystem());
   for (const auto &c : eventHandler->getSelections())
   {
     ftr::Base *tf = project->findFeature(c.featureId);
-    if (!tf || !tf->hasParameter(prm::Names::CSys))
+    if (!tf || tf->getParameters(prm::Tags::CSys).empty())
       continue;
     project->connectInsert(tf->getId(), feature->getId(), ftr::InputType{ftr::InputType::linkCSys});
     break;

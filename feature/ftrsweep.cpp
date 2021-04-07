@@ -297,13 +297,8 @@ void Sweep::setSweepData(const SweepData &in)
   //remove all current profile data.
   for (const auto &p : profiles)
   {
-    auto rit = std::remove_if
-    (
-      parameters.begin()
-      , parameters.end()
-      , [&](prm::Parameter *pic){return pic == p.contact.get() || pic == p.correction.get();}
-    );
-    parameters.erase(rit, parameters.end());
+    removeParameter(p.contact.get());
+    removeParameter(p.correction.get());
     overlaySwitch->removeChild(p.contactLabel.get());
     overlaySwitch->removeChild(p.correctionLabel.get());
   }
@@ -320,13 +315,8 @@ void Sweep::setSweepData(const SweepData &in)
   }
   
   //remove current auxiliary data.
-  auto rit = std::remove_if
-  (
-    parameters.begin()
-    , parameters.end()
-    , [&](prm::Parameter *pic){return pic == auxiliary.curvilinearEquivalence.get() || pic == auxiliary.contactType.get();}
-  );
-  parameters.erase(rit, parameters.end());
+  removeParameter(auxiliary.curvilinearEquivalence.get());
+  removeParameter(auxiliary.contactType.get());
   auxiliarySwitch->removeChild(auxiliary.curvilinearEquivalenceLabel.get());
   auxiliarySwitch->removeChild(auxiliary.contactTypeLabel.get());
   //add new auxiliary data.
@@ -339,13 +329,7 @@ void Sweep::setSweepData(const SweepData &in)
   auxiliarySwitch->addChild(auxiliary.contactTypeLabel.get());
   
   //remove current binormal data
-  rit = std::remove_if
-  (
-    parameters.begin()
-    , parameters.end()
-    , [&](prm::Parameter *pic){return pic == binormal.binormal.get();}
-  );
-  parameters.erase(rit, parameters.end());
+  removeParameter(binormal.binormal.get());
   binormalSwitch->removeChild(binormal.binormalLabel.get());
   //add new binormal data
   binormal = in.binormal;
@@ -392,13 +376,8 @@ void Sweep::setProfiles(const SweepProfiles &in)
   //remove all current profile data.
   for (const auto &p : profiles)
   {
-    auto rit = std::remove_if
-    (
-      parameters.begin()
-      , parameters.end()
-      , [&](prm::Parameter *pic){return pic == p.contact.get() || pic == p.correction.get();}
-    );
-    parameters.erase(rit, parameters.end());
+    removeParameter(p.contact.get());
+    removeParameter(p.correction.get());
     overlaySwitch->removeChild(p.contactLabel.get());
     overlaySwitch->removeChild(p.correctionLabel.get());
   }
@@ -422,25 +401,14 @@ void Sweep::cleanTrihedron()
   int ct = static_cast<int>(*trihedron);
   if (ct == 4) //binormal
   {
-    auto rit = std::remove_if
-    (
-      parameters.begin()
-      , parameters.end()
-      , [&](prm::Parameter *pic){return pic == binormal.binormal.get();}
-    );
-    parameters.erase(rit, parameters.end());
+    removeParameter(binormal.binormal.get());
     binormalSwitch->removeChild(binormal.binormalLabel.get());
   }
   //support doesn't have any parameters
   else if (ct == 6) //auxiliary
   {
-    auto rit = std::remove_if
-    (
-      parameters.begin()
-      , parameters.end()
-      , [&](prm::Parameter *pic){return pic == auxiliary.curvilinearEquivalence.get() || pic == auxiliary.contactType.get();}
-    );
-    parameters.erase(rit, parameters.end());
+    removeParameter(auxiliary.curvilinearEquivalence.get());
+    removeParameter(auxiliary.contactType.get());
     auxiliarySwitch->removeChild(auxiliary.curvilinearEquivalenceLabel.get());
     auxiliarySwitch->removeChild(auxiliary.contactTypeLabel.get());
   }
@@ -536,18 +504,8 @@ void Sweep::severLaw()
   //remove law parameters from general parameter container.
   //note this doesn't delete the parameters and they may still be 'connected' to feature.
   //cue containers will need to be cleared to remove parameter to feature connection.
-  std::vector<const prm::Parameter*> prms = lfc.getParameters();
-  auto rit = parameters.end();
-  for (const prm::Parameter* p : prms)
-  {
-    rit = std::remove_if
-    (
-      parameters.begin()
-      , rit
-      , [&](prm::Parameter *pic){return pic == p;}
-    );
-  }
-  parameters.erase(rit, parameters.end());
+  for (const prm::Parameter* p : lfc.getParameters())
+    removeParameter(p);
   
   /*TODO
    * remove parameter labels from switch.

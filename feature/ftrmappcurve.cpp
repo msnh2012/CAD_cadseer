@@ -121,8 +121,9 @@ void MapPCurve::updateModel(const UpdatePayload &pIn)
         {
           const ftr::Sketch *sketch = dynamic_cast<const ftr::Sketch*>(pr.getFeature());
           assert(sketch);
-          const prm::Parameter *sketchSysParameter = sketch->getParameter(prm::Names::CSys);
-          assert(sketchSysParameter);
+          auto systemParameters =  sketch->getParameters(prm::Tags::CSys);
+          assert(!systemParameters.empty());
+          const prm::Parameter *sketchSysParameter = sketch->getParameters(prm::Tags::CSys).front();
           osg::Matrixd sketchSys = static_cast<osg::Matrixd>(*sketchSysParameter);
           gp_Pln sketchPlane(gu::toOcc(sketchSys));
           for (const auto &w : iss->useGetChildrenOfType(iss->getRootOCCTShape(), TopAbs_WIRE))

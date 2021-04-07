@@ -308,10 +308,10 @@ struct Sketch::Stow
     
     csysGroup = new QGroupBox(view);
     csysGroup->setDisabled(true);
-    auto *p = feature->getParameter(prm::Names::CSys);
-    if (p)
+    auto systemParameters = feature->getParameters(prm::Tags::CSys);
+    if (!systemParameters.empty())
     {
-      csysWidget = new CSysWidget(view, p);
+      csysWidget = new CSysWidget(view, systemParameters.front());
       ftr::UpdatePayload payload = view->project->getPayload(feature->getId());
       std::vector<const ftr::Base*> inputs = payload.getFeatures(ftr::InputType::linkCSys);
       if (inputs.empty())
@@ -322,7 +322,6 @@ struct Sketch::Stow
       QHBoxLayout *csysWrapLayout = new QHBoxLayout();
       csysWrapLayout->addWidget(csysWidget);
       csysGroup->setLayout(csysWrapLayout);
-      
     }
     auto *ciLayout = new QHBoxLayout(); //csys indent layout.
     ciLayout->addSpacing(20);

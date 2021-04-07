@@ -120,12 +120,11 @@ void Sketch::localUpdate()
 
 void Sketch::go()
 {
-  assert (feature->hasParameter(prm::Names::CSys));
   feature->buildDefault(viewer->getCurrentSystem(), viewer->getDiagonalLength() / 5.0);
   for (const auto &c : eventHandler->getSelections())
   {
     ftr::Base *tf = project->findFeature(c.featureId);
-    if (!tf || !tf->hasParameter(prm::Names::CSys))
+    if (!tf || tf->getParameters(prm::Tags::CSys).empty())
       continue;
     project->connectInsert(tf->getId(), feature->getId(), ftr::InputType{ftr::InputType::linkCSys});
     node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);

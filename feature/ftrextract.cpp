@@ -92,14 +92,7 @@ void Extract::setAngleParameter(std::shared_ptr<prm::Parameter> prmIn)
   assert(prmIn);
   
   //remove old
-  auto rit = std::remove_if
-  (
-    parameters.begin()
-    , parameters.end()
-    , [&](prm::Parameter *pic){return pic == angle.get();}
-  );
-  if (angle)
-    parameters.erase(rit, parameters.end());
+  removeParameter(angle.get());
   if (label)
     overlaySwitch->removeChild(label.get());
   

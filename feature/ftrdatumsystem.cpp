@@ -196,12 +196,13 @@ void Feature::updateLinked(const UpdatePayload &pIn)
   auto linkedFeatures = pIn.getFeatures(InputType::linkCSys);
   if (linkedFeatures.empty())
     throw std::runtime_error("No Features for linked csys");
-  if (!linkedFeatures.front()->hasParameter(prm::Names::CSys))
-    throw std::runtime_error("Feature doesn't have csys parameter");
+  auto systemParameters = linkedFeatures.front()->getParameters(prm::Tags::CSys);
+  if (systemParameters.empty())
+    throw std::runtime_error("Feature for csys link, doesn't have csys parameter");
   
   osg::Matrixd newSys = applyOffset
   (
-    static_cast<osg::Matrixd>(*(linkedFeatures.front()->getParameter(prm::Names::CSys)))
+    static_cast<osg::Matrixd>(*systemParameters.front())
     , static_cast<osg::Vec3d>(*offsetVector)
   );
   
