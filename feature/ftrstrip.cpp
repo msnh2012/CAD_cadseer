@@ -102,33 +102,21 @@ sShape(std::make_unique<ann::SeerShape>())
   parameters.push_back(autoCalc.get());
   
   feedDirectionLabel = new lbr::PLabel(feedDirection.get());
-  feedDirectionLabel->showName = true;
-  feedDirectionLabel->valueHasChanged();
   overlaySwitch->addChild(feedDirectionLabel.get());
   
   pitchLabel = new lbr::PLabel(pitch.get());
-  pitchLabel->showName = true;
-  pitchLabel->valueHasChanged();
   overlaySwitch->addChild(pitchLabel.get());
   
   widthLabel = new lbr::PLabel(width.get());
-  widthLabel->showName = true;
-  widthLabel->valueHasChanged();
   overlaySwitch->addChild(widthLabel.get());
   
   widthOffsetLabel = new lbr::PLabel(widthOffset.get());
-  widthOffsetLabel->showName = true;
-  widthOffsetLabel->valueHasChanged();
   overlaySwitch->addChild(widthOffsetLabel.get());
   
   gapLabel = new lbr::PLabel(gap.get());
-  gapLabel->showName = true;
-  gapLabel->valueHasChanged();
   overlaySwitch->addChild(gapLabel.get());
   
   autoCalcLabel = new lbr::PLabel(autoCalc.get());
-  autoCalcLabel->showName = true;
-  autoCalcLabel->valueHasChanged();
   overlaySwitch->addChild(autoCalcLabel.get());
   
   stations.push_back("Blank");
@@ -215,9 +203,7 @@ void Strip::updateModel(const UpdatePayload &payloadIn)
         throw std::runtime_error("Bad cast to Nest");
       feedDirection->setValue(nf->getFeedDirection());
       pitch->setValue(nf->getPitch());
-      pitchLabel->valueHasChanged();
       gap->setValue(nf->getGap());
-      gapLabel->valueHasChanged();
       
       goAutoCalc(bs, bbbox);
     }
@@ -407,7 +393,6 @@ void Strip::goAutoCalc(const TopoDS_Shape &sIn, occt::BoundingBox &bbbox)
   double d2 = getDistance(sIn, face2);
   double widthCalc = 2 * offset - d1 - d2 + 2 * static_cast<double>(*gap);
   width->setValue(widthCalc);
-  widthLabel->valueHasChanged();
   
   osg::Vec3d projection = (norm * (offset - d1)) + (-norm * (offset - d2));
   osg::Vec3d center = gu::toOsg(bbbox.getCenter()) + (projection * 0.5);
@@ -415,7 +400,6 @@ void Strip::goAutoCalc(const TopoDS_Shape &sIn, occt::BoundingBox &bbbox)
   osg::Vec3d auxProjection = center - aux;
   double directionFactor = ((auxProjection * norm) < 0.0) ? -1.0 : 1.0;
   widthOffset->setValue(auxProjection.length() * directionFactor);
-  widthOffsetLabel->valueHasChanged();
 }
 
 void Strip::serialWrite(const boost::filesystem::path &dIn)

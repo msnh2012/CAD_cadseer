@@ -81,24 +81,9 @@ Base()
   
   annexes.insert(std::make_pair(ann::Type::SeerShape, sShape.get()));
   
-  directionLabel0->showName = true;
-  directionLabel0->valueHasChanged();
-  directionLabel0->constantHasChanged();
   overlaySwitch->addChild(directionLabel0.get());
-  
-  directionLabel1->showName = true;
-  directionLabel1->valueHasChanged();
-  directionLabel1->constantHasChanged();
   overlaySwitch->addChild(directionLabel1.get());
-  
-  magnitudeLabel0->showName = true;
-  magnitudeLabel0->valueHasChanged();
-  magnitudeLabel0->constantHasChanged();
   overlaySwitch->addChild(magnitudeLabel0.get());
-  
-  magnitudeLabel1->showName = true;
-  magnitudeLabel1->valueHasChanged();
-  magnitudeLabel1->constantHasChanged();
   overlaySwitch->addChild(magnitudeLabel1.get());
 }
 

@@ -194,9 +194,4 @@ void %CLASSNAME%::serialWrite(const boost::filesystem::path &/*dIn*/)
 //   direction->serialIn(so.direction());
 //   directionLabel->serialIn(so.directionLabel());
 //   distanceLabel->serialIn(so.distanceLabel());
-//   
-//   directionLabel->valueHasChanged();
-//   directionLabel->constantHasChanged();
-//   distanceLabel->valueHasChanged();
-//   distanceLabel->constantHasChanged();
 // }

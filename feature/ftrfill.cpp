@@ -72,10 +72,6 @@ void Entry::createLabel()
 {
   assert(continuity);
   continuityLabel = new lbr::PLabel(continuity.get());
-  
-  continuityLabel->showName = true;
-  continuityLabel->valueHasChanged();
-  continuityLabel->constantHasChanged();
 }
 
 Feature::Feature():
@@ -279,7 +275,6 @@ void Feature::serialRead(const prj::srl::fls::Fill &so)
     entry.continuity = buildContinuityParameter();
     entry.continuity->serialIn(eIn.continuity());
     entry.continuityLabel = new lbr::PLabel(entry.continuity.get());
-    entry.continuityLabel->showName = true;
     entries.push_back(entry);
   }
 }

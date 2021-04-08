@@ -117,7 +117,7 @@ PLabel::PLabel(prm::Parameter* parameterIn)
 {
   getOrCreateStateSet()->setMode(GL_LIGHTING, osg::StateAttribute::OFF);
   build();
-  
+  refresh();
   parameter->connect(*pObserver);
 }
 
@@ -170,6 +170,21 @@ void PLabel::setTextColor()
   //red is used for auto calc.
 }
 
+void PLabel::setShowName(bool freshValue)
+{
+  if (freshValue == showName)
+    return;
+  showName = freshValue;
+  refresh();
+}
+
+void PLabel::refresh()
+{
+  constantHasChanged();
+  valueHasChanged();
+  activeHasChanged();
+}
+
 void PLabel::valueHasChanged()
 {
   assert(parameter);
@@ -220,13 +235,10 @@ void PLabel::serialIn(const prj::srl::spt::PLabel &sIn)
   );
   this->setMatrix(m);
   
-  constantHasChanged();
-  valueHasChanged();
-  activeHasChanged();
+  refresh();
   
   //label color maybe overridden by feature update.
   const auto &cIn = sIn.color();
   osg::Vec4 c(cIn.r(), cIn.g(), cIn.b(), cIn.a());
   setTextColor(c);
 }
-    

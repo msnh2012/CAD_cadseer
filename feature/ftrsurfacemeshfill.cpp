@@ -60,9 +60,6 @@ Base()
   algorithm->connectValue(std::bind(&SurfaceMeshFill::setModelDirty, this));
   parameters.push_back(algorithm.get());
   
-  algorithmLabel->showName = true;
-  algorithmLabel->valueHasChanged();
-  algorithmLabel->constantHasChanged();
   overlaySwitch->addChild(algorithmLabel);
 }
 
@@ -175,7 +172,4 @@ void SurfaceMeshFill::serialRead(const prj::srl::smfs::SurfaceMeshFill &so)
   mesh->serialIn(so.mesh());
   algorithm->serialIn(so.algorithm());
   algorithmLabel->serialIn(so.algorithmLabel());
-  
-  algorithmLabel->valueHasChanged();
-  algorithmLabel->constantHasChanged();
 }

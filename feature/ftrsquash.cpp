@@ -72,9 +72,6 @@ Squash::Squash() : Base(), sShape(std::make_unique<ann::SeerShape>())
   parameters.push_back(granularity.get());
   
   label = new lbr::PLabel(granularity.get());
-  label->showName = true;
-  label->valueHasChanged();
-  label->constantHasChanged();
   overlaySwitch->addChild(label.get());
   
   annexes.insert(std::make_pair(ann::Type::SeerShape, sShape.get()));

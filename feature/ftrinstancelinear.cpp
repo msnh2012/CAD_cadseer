@@ -84,35 +84,17 @@ csysDragger(std::make_unique<ann::CSysDragger>(this, csys.get()))
   includeSource->connectValue(std::bind(&InstanceLinear::setModelDirty, this));
   
   xOffsetLabel = new lbr::PLabel(xOffset.get());
-  xOffsetLabel->showName = true;
-  xOffsetLabel->valueHasChanged();
-  xOffsetLabel->constantHasChanged();
   overlaySwitch->addChild(xOffsetLabel.get());
   yOffsetLabel = new lbr::PLabel(yOffset.get());
-  yOffsetLabel->showName = true;
-  yOffsetLabel->valueHasChanged();
-  yOffsetLabel->constantHasChanged();
   overlaySwitch->addChild(yOffsetLabel.get());
   zOffsetLabel = new lbr::PLabel(zOffset.get());
-  zOffsetLabel->showName = true;
-  zOffsetLabel->valueHasChanged();
-  zOffsetLabel->constantHasChanged();
   overlaySwitch->addChild(zOffsetLabel.get());
   
   xCountLabel = new lbr::PLabel(xCount.get());
-  xCountLabel->showName = true;
-  xCountLabel->valueHasChanged();
-  xCountLabel->constantHasChanged();
   overlaySwitch->addChild(xCountLabel.get());
   yCountLabel = new lbr::PLabel(yCount.get());
-  yCountLabel->showName = true;
-  yCountLabel->valueHasChanged();
-  yCountLabel->constantHasChanged();
   overlaySwitch->addChild(yCountLabel.get());
   zCountLabel = new lbr::PLabel(zCount.get());
-  zCountLabel->showName = true;
-  zCountLabel->valueHasChanged();
-  zCountLabel->constantHasChanged();
   overlaySwitch->addChild(zCountLabel.get());
   
   //keeping the dragger arrows so use can select and define vector.
@@ -122,9 +104,6 @@ csysDragger(std::make_unique<ann::CSysDragger>(this, csys.get()))
   overlaySwitch->addChild(csysDragger->dragger);
   
   includeSourceLabel = new lbr::PLabel(includeSource.get());
-  includeSourceLabel->showName = true;
-  includeSourceLabel->valueHasChanged();
-  includeSourceLabel->constantHasChanged();
   overlaySwitch->addChild(includeSourceLabel.get());
   
   parameters.push_back(xOffset.get());

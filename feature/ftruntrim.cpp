@@ -78,17 +78,10 @@ Base()
   makeSolid->connectValue(std::bind(&Untrim::setModelDirty, this));
   parameters.push_back(makeSolid.get());
   
-  auto labelInit = [&](lbr::PLabel *l)
-  {
-    l->showName = true;
-    l->valueHasChanged();
-    l->constantHasChanged();
-    overlaySwitch->addChild(l);
-  };
-  labelInit(offsetLabel.get());
-  labelInit(closeULabel.get());
-  labelInit(closeVLabel.get());
-  labelInit(makeSolidLabel.get());
+  overlaySwitch->addChild(offsetLabel.get());
+  overlaySwitch->addChild(closeULabel.get());
+  overlaySwitch->addChild(closeVLabel.get());
+  overlaySwitch->addChild(makeSolidLabel.get());
   
   annexes.insert(std::make_pair(ann::Type::SeerShape, sShape.get()));
   

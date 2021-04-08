@@ -181,12 +181,7 @@ void Feature::addConstantBlendQuiet(const Constant &constantBlendIn)
   }
   constantBlends.back().radius->connectValue(std::bind(&Feature::setModelDirty, this));
   if (!constantBlends.back().label)
-  {
     constantBlends.back().label = new lbr::PLabel(constantBlends.back().radius.get());
-    constantBlends.back().label->showName = true;
-  }
-  constantBlends.back().label->valueHasChanged();
-  constantBlends.back().label->constantHasChanged();
   overlaySwitch->addChild(constantBlends.back().label.get());
   
   parameters.push_back(constantBlends.back().radius.get());
@@ -243,12 +238,7 @@ void Feature::wireEntry(VariableEntry &eIn)
   eIn.radius->connectValue(std::bind(&Feature::setModelDirty, this));
   parameters.push_back(eIn.radius.get());
   if (!eIn.label)
-  {
     eIn.label = new lbr::PLabel(eIn.radius.get());
-    eIn.label->showName = true;
-  }
-  eIn.label->valueHasChanged();
-  eIn.label->constantHasChanged();
   overlaySwitch->addChild(eIn.label.get());
   
   if (!eIn.position)
@@ -258,14 +248,9 @@ void Feature::wireEntry(VariableEntry &eIn)
   }
   eIn.position->connectValue(std::bind(&Feature::setModelDirty, this));
   if (!eIn.positionLabel)
-  {
     eIn.positionLabel = new lbr::PLabel(eIn.position.get());
-    eIn.positionLabel->showName = true;
-  }
   if (eIn.pick.selectionType == slc::Type::MidPoint || eIn.pick.selectionType == slc::Type::NearestPoint)
   {
-    eIn.positionLabel->valueHasChanged();
-    eIn.positionLabel->constantHasChanged();
     overlaySwitch->addChild(eIn.positionLabel.get());
     parameters.push_back(eIn.position.get());
   }
@@ -705,7 +690,7 @@ void Feature::serialWrite(const boost::filesystem::path &dIn)
   {
     serial::VariableBlend vBlendOut;
     serial::VariableBlend::VariableEntriesSequence vEntriesOut;
-    for (const auto vEntry : variableBlend->entries)
+    for (const auto &vEntry : variableBlend->entries)
     {
       serial::VariableEntry vEntryOut
       (
@@ -758,7 +743,6 @@ void Feature::serialRead(const prj::srl::blns::Blend& sBlendIn)
       simpleBlend.radius = buildRadiusParameter();
       simpleBlend.radius->serialIn(simpleBlendIn.radius());
       simpleBlend.label = new lbr::PLabel(simpleBlend.radius.get());
-      simpleBlend.label->showName = true;
       simpleBlend.label->serialIn(simpleBlendIn.plabel());
       addConstantBlendQuiet(simpleBlend);
     }
@@ -778,10 +762,8 @@ void Feature::serialRead(const prj::srl::blns::Blend& sBlendIn)
       entry.radius = buildRadiusParameter();
       entry.radius->serialIn(entryIn.radius());
       entry.label = new lbr::PLabel(entry.radius.get());
-      entry.label->showName = true;
       entry.label->serialIn(entryIn.plabel());
       entry.positionLabel = new lbr::PLabel(entry.position.get());
-      entry.positionLabel->showName = true;
       entry.positionLabel->serialIn(entryIn.positionLabel());
       vBlend.entries.push_back(entry);
       wireEntry(vBlend.entries.back());

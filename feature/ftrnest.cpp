@@ -68,13 +68,9 @@ sShape(std::make_unique<ann::SeerShape>())
   parameters.push_back(feedDirection.get());
   
   gapLabel = new lbr::PLabel(gap.get());
-  gapLabel->showName = true;
-  gapLabel->valueHasChanged();
   overlaySwitch->addChild(gapLabel.get());
   
   feedDirectionLabel = new lbr::PLabel(feedDirection.get());
-  feedDirectionLabel->showName = true;
-  feedDirectionLabel->valueHasChanged();
   overlaySwitch->addChild(feedDirectionLabel.get());
   
   annexes.insert(std::make_pair(ann::Type::SeerShape, sShape.get()));

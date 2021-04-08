@@ -40,14 +40,12 @@ namespace lbr
     PLabel(const PLabel &copy, const osg::CopyOp& copyOp=osg::CopyOp::SHALLOW_COPY);
     META_Node(osg, PLabel);
     
-    void valueHasChanged();
-    void constantHasChanged();
-    void activeHasChanged();
     prm::Parameter* getParameter(){return parameter;}
     void setTextColor(const osg::Vec4&);
     void setTextColor(); //!< linked is green and constant is blue.
     
-    bool showName = false;
+    void setShowName(bool); //!< turns the display of the parameter name on or off.
+    void refresh(); //!< forces sync with parameter.
     
     prj::srl::spt::PLabel serialOut() const; //serial rename
     void serialIn(const prj::srl::spt::PLabel&); //serial rename
@@ -56,11 +54,16 @@ namespace lbr
     PLabel(); //needed for META_Node
     void build();
     void setText(); //sets the text from the parameter value
+    void valueHasChanged();
+    void constantHasChanged();
+    void activeHasChanged();
+    
     prm::Parameter *parameter = nullptr;
     osg::ref_ptr<osg::AutoTransform> autoTransform;
     osg::ref_ptr<osgText::Text> text;
     
     std::unique_ptr<prm::Observer> pObserver;
+    bool showName = true;
   };
 }
 

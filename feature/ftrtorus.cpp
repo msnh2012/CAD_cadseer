@@ -147,9 +147,6 @@ void Torus::setupIPGroup()
   csysDragger->dragger->linkToMatrix(radius2IP.get());
   
   seamLabel = new lbr::PLabel(seam.get());
-  seamLabel->showName = true;
-  seamLabel->valueHasChanged();
-  seamLabel->constantHasChanged();
   overlaySwitch->addChild(seamLabel.get());
   csysDragger->dragger->linkToMatrix(seamLabel.get());
   

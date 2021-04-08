@@ -57,17 +57,11 @@ Entry::Entry(const Entry &other, bool)
   {
     parameter1 = std::make_shared<prm::Parameter>(*other.parameter1);
     label1 = new lbr::PLabel(parameter1.get());
-    label1->showName = true;
-    label1->valueHasChanged();
-    label1->constantHasChanged();
   }
   if (other.parameter2)
   {
     parameter2 = std::make_shared<prm::Parameter>(*other.parameter2);
     label2 = new lbr::PLabel(parameter2.get());
-    label2->showName = true;
-    label2->valueHasChanged();
-    label2->constantHasChanged();
   }
   edgePicks = other.edgePicks;
   facePicks = other.facePicks;
@@ -105,9 +99,6 @@ void Entry::serialIn(const prj::srl::chms::Entry &eIn)
   parameter1 = std::make_shared<prm::Parameter>(eIn.parameter1());
   label1 = new lbr::PLabel(parameter1.get());
   label1->serialIn(eIn.label1());
-  label1->showName = true;
-  label1->valueHasChanged();
-  label1->constantHasChanged();
   prj::srl::chms::Entry::EdgePicksSequence edgePicksOut;
   for (const auto &epi : eIn.edgePicks())
     edgePicks.emplace_back(epi);
@@ -120,9 +111,6 @@ void Entry::serialIn(const prj::srl::chms::Entry &eIn)
   {
     label2 = new lbr::PLabel(parameter2.get());
     label2->serialIn(eIn.label2().get());
-    label2->showName = true;
-    label2->valueHasChanged();
-    label2->constantHasChanged();
   }
 }
 
@@ -143,9 +131,6 @@ Entry Entry::buildDefaultSymmetric()
   out.parameter1 = makeDistance();
   out.parameter1->setConstraint(prm::Constraint::buildNonZeroPositive());
   out.label1 = new lbr::PLabel(out.parameter1.get());
-  out.label1->showName = true;
-  out.label1->valueHasChanged();
-  out.label1->constantHasChanged();
   return out;
 }
 
@@ -156,15 +141,9 @@ Entry Entry::buildDefaultTwoDistances()
   out.parameter1 = makeDistance();
   out.parameter1->setConstraint(prm::Constraint::buildNonZeroPositive());
   out.label1 = new lbr::PLabel(out.parameter1.get());
-  out.label1->showName = true;
-  out.label1->valueHasChanged();
-  out.label1->constantHasChanged();
   out.parameter2 = makeDistance();
   out.parameter2->setConstraint(prm::Constraint::buildNonZeroPositive());
   out.label2 = new lbr::PLabel(out.parameter2.get());
-  out.label2->showName = true;
-  out.label2->valueHasChanged();
-  out.label2->constantHasChanged();
   return out;
 }
 
@@ -175,9 +154,6 @@ Entry Entry::buildDefaultDistanceAngle()
   out.parameter1 = makeDistance();
   out.parameter1->setConstraint(prm::Constraint::buildNonZeroPositive());
   out.label1 = new lbr::PLabel(out.parameter1.get());
-  out.label1->showName = true;
-  out.label1->valueHasChanged();
-  out.label1->constantHasChanged();
   out.parameter2 = std::make_shared<prm::Parameter>
   (
     prm::Names::Angle
@@ -186,9 +162,6 @@ Entry Entry::buildDefaultDistanceAngle()
   ); //todo add angle to preferences.
   out.parameter2->setConstraint(prm::Constraint::buildNonZeroPositiveAngle());
   out.label2 = new lbr::PLabel(out.parameter2.get());
-  out.label2->showName = true;
-  out.label2->valueHasChanged();
-  out.label2->constantHasChanged();
   return out;
 }
 

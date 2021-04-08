@@ -61,9 +61,6 @@ Extract::Extract()
   angle->connectValue(std::bind(&Extract::setModelDirty, this));
   parameters.push_back(angle.get());
   
-  label->showName = true;
-  label->valueHasChanged();
-  label->constantHasChanged();
 //   overlaySwitch->addChild(label.get());
 }
 
@@ -101,9 +98,6 @@ void Extract::setAngleParameter(std::shared_ptr<prm::Parameter> prmIn)
   angle->connectValue(std::bind(&Extract::setModelDirty, this));
   parameters.push_back(angle.get());
   label = new lbr::PLabel(angle.get());
-  label->showName = true;
-  label->valueHasChanged();
-  label->constantHasChanged();
   overlaySwitch->addChild(label.get());
   
   setModelDirty();

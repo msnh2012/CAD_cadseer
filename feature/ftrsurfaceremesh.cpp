@@ -76,24 +76,10 @@ Base()
   //we don't use lod stuff that is in base by default. so remove
   mainTransform->removeChildren(0, mainTransform->getNumChildren());
   
-//   direction->connectValue(std::bind(&SurfaceReMesh::setModelDirty, this));
-//   parameters.push_back(direction.get());
-  
-//   distance->connectValue(std::bind(&SurfaceReMesh::setModelDirty, this));
-//   parameters.push_back(distance.get());
-  
-  auto setupLabel = [&](lbr::PLabel *l)
-  {
-    l->showName = true;
-    l->valueHasChanged();
-    l->constantHasChanged();
-    overlaySwitch->addChild(l);
-  };
-  setupLabel(reMeshTypeLabel.get());
-  setupLabel(minEdgeLengthLabel.get());
-  setupLabel(maxEdgeLengthLabel.get());
-  overlaySwitch->removeChild(maxEdgeLengthLabel.get()); //viz update to control adding to overlay.
-  setupLabel(iterationsLabel.get());
+  overlaySwitch->addChild(reMeshTypeLabel.get());
+  overlaySwitch->addChild(minEdgeLengthLabel.get());
+  overlaySwitch->addChild(maxEdgeLengthLabel.get());
+  overlaySwitch->addChild(iterationsLabel.get());
 }
 
 SurfaceReMesh::~SurfaceReMesh(){}
@@ -218,14 +204,4 @@ void SurfaceReMesh::serialRead(const prj::srl::srms::SurfaceReMesh &so)
   minEdgeLengthLabel->serialIn(so.minEdgeLengthLabel());
   maxEdgeLengthLabel->serialIn(so.maxEdgeLengthLabel());
   iterationsLabel->serialIn(so.iterationsLabel());
-  
-  auto lu = [](lbr::PLabel *l)
-  {
-    l->valueHasChanged();
-    l->constantHasChanged();
-  };
-  lu(reMeshTypeLabel.get());
-  lu(minEdgeLengthLabel.get());
-  lu(maxEdgeLengthLabel.get());
-  lu(iterationsLabel.get());
 }

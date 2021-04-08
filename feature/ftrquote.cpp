@@ -71,13 +71,9 @@ oFile(std::make_unique<prm::Parameter>("Output File",  path(app::instance()->get
   parameters.push_back(oFile.get());
   
   tLabel = new lbr::PLabel(tFile.get());
-  tLabel->showName = true;
-  tLabel->valueHasChanged();
   overlaySwitch->addChild(tLabel.get());
   
   oLabel = new lbr::PLabel(oFile.get());
-  oLabel->showName = true;
-  oLabel->valueHasChanged();
   overlaySwitch->addChild(oLabel.get());
 }
 

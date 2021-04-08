@@ -64,9 +64,6 @@ Base()
   scale->setConstraint(prm::Constraint::buildNonZeroPositive());
   parameters.push_back(scale.get());
   
-  scaleLabel->showName = true;
-  scaleLabel->valueHasChanged();
-  scaleLabel->constantHasChanged();
   osg::ref_ptr<osg::MatrixTransform> labelDraggerTransform = new osg::MatrixTransform();
   labelDraggerTransform->addChild(scaleLabel.get());
   overlaySwitch->addChild(labelDraggerTransform.get());
@@ -209,7 +206,4 @@ void ImagePlane::serialRead(const prj::srl::imps::ImagePlane &so)
   transform->addChild(geometry.get());
   
   mainTransform->setMatrix(static_cast<osg::Matrix>(*csys));
-  
-  scaleLabel->valueHasChanged();
-  scaleLabel->constantHasChanged();
 }

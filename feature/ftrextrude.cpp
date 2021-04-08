@@ -205,29 +205,23 @@ void Extrude::setupLabels()
 {
   overlaySwitch->addChild(internalSwitch.get());
   
-  directionLabel->showName = true;
-  directionLabel->valueHasChanged();
-  directionLabel->constantHasChanged();
   internalSwitch->addChild(directionLabel.get());
   
   distanceLabel->setMatrixDims(osg::Matrixd::rotate(osg::PI_2, osg::Vec3d(1.0, 0.0, 0.0)));
   distanceLabel->setRotationAxis(osg::Vec3d(0.0, 0.0, 1.0), osg::Vec3d(0.0, 1.0, 0.0));
   distanceLabel->setMatrix(osg::Matrixd::identity());
   distanceLabel->noAutoRotateDragger();
+  distanceLabel->valueHasChanged();
+  distanceLabel->constantHasChanged();
   internalSwitch->addChild(distanceLabel.get());
   
   offsetLabel->setMatrixDims(osg::Matrixd::rotate(osg::PI_2, osg::Vec3d(1.0, 0.0, 0.0)));
   offsetLabel->setRotationAxis(osg::Vec3d(0.0, 0.0, 1.0), osg::Vec3d(0.0, -1.0, 0.0));
   offsetLabel->setMatrix(osg::Matrixd::identity());
   offsetLabel->noAutoRotateDragger();
-  internalSwitch->addChild(offsetLabel.get());
-  
-  directionLabel->valueHasChanged();
-  directionLabel->constantHasChanged();
-  distanceLabel->valueHasChanged();
-  distanceLabel->constantHasChanged();
   offsetLabel->valueHasChanged();
   offsetLabel->constantHasChanged();
+  internalSwitch->addChild(offsetLabel.get());
 }
 
 void Extrude::updateLabels(occt::BoundingBox &bb)
@@ -718,10 +712,6 @@ void Extrude::serialRead(const prj::srl::exrs::Extrude &so)
   lastMap = serializeMap(so.lastMap());
   oWireMap = serializeMap(so.oWireMap());
   
-  directionLabel->valueHasChanged();
-  directionLabel->constantHasChanged();
-  distanceLabel->valueHasChanged();
-  distanceLabel->constantHasChanged();
   offsetLabel->valueHasChanged();
   offsetLabel->constantHasChanged();
   updateLabelVisibility();

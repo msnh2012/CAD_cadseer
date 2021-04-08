@@ -72,16 +72,9 @@ Base()
   angle->connectValue(std::bind(&Revolve::setModelDirty, this));
   parameters.push_back(angle.get());
   
-  auto labelInit = [&](lbr::PLabel *pl)
-  {
-    pl->showName = true;
-    pl->valueHasChanged();
-    pl->constantHasChanged();
-    internalSwitch->addChild(pl);
-  };
-  labelInit(axisOriginLabel);
-  labelInit(axisDirectionLabel);
-  labelInit(angleLabel);
+  internalSwitch->addChild(axisOriginLabel);
+  internalSwitch->addChild(axisDirectionLabel);
+  internalSwitch->addChild(angleLabel);
   
   overlaySwitch->addChild(internalSwitch.get());
   
@@ -436,11 +429,5 @@ void Revolve::serialRead(const prj::srl::rvls::Revolve &so)
   for (const auto &p : so.oWireMap())
     oWireMap.insert(std::make_pair(gu::stringToId(p.idIn()), gu::stringToId(p.idOut())));
   
-  axisOriginLabel->valueHasChanged();
-  axisOriginLabel->constantHasChanged();
-  axisDirectionLabel->valueHasChanged();
-  axisDirectionLabel->constantHasChanged();
-  angleLabel->valueHasChanged();
-  angleLabel->constantHasChanged();
   updateLabelVisibility();
 }

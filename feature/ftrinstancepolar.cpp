@@ -86,21 +86,12 @@ csysDragger(std::make_unique<ann::CSysDragger>(this, csys.get()))
   parameters.push_back(includeSource.get());
   
   countLabel = new lbr::PLabel(count.get());
-  countLabel->showName = true;
-  countLabel->valueHasChanged();
-  countLabel->constantHasChanged();
   overlaySwitch->addChild(countLabel.get());
   
   angleLabel = new lbr::PLabel(angle.get());
-  angleLabel->showName = true;
-  angleLabel->valueHasChanged();
-  angleLabel->constantHasChanged();
   overlaySwitch->addChild(angleLabel.get());
   
   inclusiveAngleLabel = new lbr::PLabel(inclusiveAngle.get());
-  inclusiveAngleLabel->showName = true;
-  inclusiveAngleLabel->valueHasChanged();
-  inclusiveAngleLabel->constantHasChanged();
   overlaySwitch->addChild(inclusiveAngleLabel.get());
   
   csysDragger->dragger->unlinkToMatrix(getMainTransform());
@@ -109,9 +100,6 @@ csysDragger(std::make_unique<ann::CSysDragger>(this, csys.get()))
 //   overlaySwitch->addChild(csysDragger->dragger);
   
   includeSourceLabel = new lbr::PLabel(includeSource.get());
-  includeSourceLabel->showName = true;
-  includeSourceLabel->valueHasChanged();
-  includeSourceLabel->constantHasChanged();
   overlaySwitch->addChild(includeSourceLabel.get());
   
   annexes.insert(std::make_pair(ann::Type::SeerShape, sShape.get()));

@@ -2264,8 +2264,6 @@ void Visual::connectDistance(SSHandle cHandle, prm::Parameter *parameter, const 
   
   lbr::PLabel *label = new lbr::PLabel(parameter);
   label->setMatrix(osg::Matrixd::translate(location));
-  label->valueHasChanged();
-  label->constantHasChanged();
     
   osg::MatrixTransform *ld = lbr::buildLinearDimension(label);
   ld->setNodeMask(Constraint.to_ulong());
@@ -2290,8 +2288,6 @@ void Visual::connectDiameter(SSHandle cHandle, prm::Parameter *parameter, const 
   
   lbr::PLabel *label = new lbr::PLabel(parameter);
   label->setMatrix(osg::Matrixd::translate(location));
-  label->valueHasChanged();
-  label->constantHasChanged();
     
   osg::MatrixTransform *dd = lbr::buildDiameterDimension(label);
   dd->setNodeMask(Constraint.to_ulong());
@@ -2315,8 +2311,6 @@ void Visual::connectAngle(SSHandle cHandle, prm::Parameter *parameter, const osg
   
   lbr::PLabel *label = new lbr::PLabel(parameter);
   label->setMatrix(osg::Matrixd::translate(location));
-  label->valueHasChanged();
-  label->constantHasChanged();
   
   osg::MatrixTransform *angularDimension = lbr::buildAngularDimension(label);
   lbr::AngularDimensionCallback *cb = new lbr::AngularDimensionCallback(label->getName());

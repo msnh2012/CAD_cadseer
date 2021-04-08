@@ -69,15 +69,7 @@ SweepProfile::SweepProfile(const Pick &pIn, bool contactIn, bool correctionIn)
 , correction(std::make_shared<prm::Parameter>(QObject::tr("Correction"), correctionIn))
 , contactLabel(new lbr::PLabel(contact.get()))
 , correctionLabel(new lbr::PLabel(correction.get()))
-{
-  contactLabel->showName = true;
-  contactLabel->valueHasChanged();
-  contactLabel->constantHasChanged();
-  
-  correctionLabel->showName = true;
-  correctionLabel->valueHasChanged();
-  correctionLabel->constantHasChanged();
-}
+{}
 SweepProfile::~SweepProfile(){}
 SweepProfile::SweepProfile(const prj::srl::swps::SweepProfile &pfIn) : SweepProfile()
 {
@@ -118,14 +110,6 @@ SweepAuxiliary::SweepAuxiliary(const Pick &pIn, bool ceIn, int contactIn)
   prm::Constraint tConstraint = prm::Constraint::buildUnit();
   tConstraint.intervals.front().upper.value = 2.0;
   contactType->setConstraint(tConstraint);
-  
-  curvilinearEquivalenceLabel->showName = true;
-  curvilinearEquivalenceLabel->valueHasChanged();
-  curvilinearEquivalenceLabel->constantHasChanged();
-  
-  contactTypeLabel->showName = true;
-  contactTypeLabel->valueHasChanged();
-  contactTypeLabel->constantHasChanged();
 }
 SweepAuxiliary::SweepAuxiliary(const prj::srl::swps::SweepAuxiliary &auxIn)
 {
@@ -261,31 +245,11 @@ Base()
   annexes.insert(std::make_pair(ann::Type::SeerShape, sShape.get()));
   annexes.insert(std::make_pair(ann::Type::LawFunction, lawFunction.get()));
   
-  trihedronLabel->showName = true;
-  trihedronLabel->valueHasChanged();
-  trihedronLabel->constantHasChanged();
   overlaySwitch->addChild(trihedronLabel.get());
-  
-  transitionLabel->showName = true;
-  transitionLabel->valueHasChanged();
-  transitionLabel->constantHasChanged();
   overlaySwitch->addChild(transitionLabel.get());
-  
-  forceC1Label->showName = true;
-  forceC1Label->valueHasChanged();
-  forceC1Label->constantHasChanged();
   overlaySwitch->addChild(forceC1Label.get());
-  
-  solidLabel->showName = true;
-  solidLabel->valueHasChanged();
-  solidLabel->constantHasChanged();
   overlaySwitch->addChild(solidLabel.get());
-  
-  useLawLabel->showName = true;
-  useLawLabel->valueHasChanged();
-  useLawLabel->constantHasChanged();
   overlaySwitch->addChild(useLawLabel.get());
-  
   overlaySwitch->addChild(auxiliarySwitch.get());
   overlaySwitch->addChild(binormalSwitch.get());
   overlaySwitch->addChild(lawSwitch.get());

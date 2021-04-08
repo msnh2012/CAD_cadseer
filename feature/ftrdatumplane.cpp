@@ -161,15 +161,9 @@ Base()
   angle->connectValue(std::bind(&DatumPlane::setModelDirty, this));
   parameters.push_back(angle.get());
   
-  flipLabel->showName = true;
-  flipLabel->valueHasChanged();
-  flipLabel->constantHasChanged();
   overlaySubSwitch->addChild(flipLabel.get());
-  
-  autoSizeLabel->showName = true;
-  autoSizeLabel->valueHasChanged();
-  autoSizeLabel->constantHasChanged();
   overlaySubSwitch->addChild(autoSizeLabel.get());
+  overlaySubSwitch->addChild(angleLabel.get());
   
   sizeIP->setMatrixDims(osg::Matrixd::rotate(osg::PI, osg::Vec3d(0.0, 0.0, 1.0)));
   sizeIP->noAutoRotateDragger();
@@ -185,11 +179,6 @@ Base()
   offsetIP->valueHasChanged();
   offsetIP->constantHasChanged();
   overlaySubSwitch->addChild(offsetIP.get());
-  
-  angleLabel->showName = true;
-  angleLabel->valueHasChanged();
-  angleLabel->constantHasChanged();
-  overlaySubSwitch->addChild(angleLabel.get());
   
   annexes.insert(std::make_pair(ann::Type::CSysDragger, csysDragger.get()));
   overlaySubSwitch->addChild(csysDragger->dragger.get());

@@ -69,9 +69,6 @@ csysDragger(std::make_unique<ann::CSysDragger>(this, csys.get()))
 //   overlaySwitch->addChild(csysDragger->dragger);
   
   includeSourceLabel = new lbr::PLabel(includeSource.get());
-  includeSourceLabel->showName = true;
-  includeSourceLabel->valueHasChanged();
-  includeSourceLabel->constantHasChanged();
   overlaySwitch->addChild(includeSourceLabel.get());
   
   parameters.push_back(csys.get());

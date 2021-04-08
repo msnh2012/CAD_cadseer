@@ -70,9 +70,6 @@ dpWireId(gu::createRandomId())
   parameters.push_back(reversed.get());
   
   reversedLabel = new lbr::PLabel(reversed.get());
-  reversedLabel->showName = true;
-  reversedLabel->valueHasChanged();
-  reversedLabel->constantHasChanged();
   overlaySwitch->addChild(reversedLabel.get());
   
   annexes.insert(std::make_pair(ann::Type::SeerShape, sShape.get()));

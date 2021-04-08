@@ -60,9 +60,6 @@ sShape(std::make_unique<ann::SeerShape>())
   parameters.push_back(distance.get());
   
   distanceLabel = new lbr::PLabel(distance.get());
-  distanceLabel->showName = true;
-  distanceLabel->valueHasChanged();
-  distanceLabel->constantHasChanged();
   overlaySwitch->addChild(distanceLabel.get());
   
   annexes.insert(std::make_pair(ann::Type::SeerShape, sShape.get()));

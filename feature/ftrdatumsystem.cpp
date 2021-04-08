@@ -86,22 +86,7 @@ Feature::Feature()
   
   csysDragger->dragger->hide(lbr::CSysDragger::SwitchIndexes::LinkIcon);
   annexes.insert(std::make_pair(ann::Type::CSysDragger, csysDragger.get()));
-  //update will control when this is added to overlay.
-  
-  autoSizeLabel->showName = true;
-  autoSizeLabel->valueHasChanged();
-  autoSizeLabel->constantHasChanged();
-  //update will control when this is added to overlay.
-  
-  sizeLabel->showName = true;
-  sizeLabel->valueHasChanged();
-  sizeLabel->constantHasChanged();
-  //update will control when this is added to overlay.
-  
-  offsetVectorLabel->showName = true;
-  offsetVectorLabel->valueHasChanged();
-  offsetVectorLabel->constantHasChanged();
-  //update will control when this is added to overlay.
+  //update will add to overlay or remove from overlay.
   
   double temp = static_cast<double>(*size);
   scale->setScale(osg::Vec3d(temp, temp, temp));

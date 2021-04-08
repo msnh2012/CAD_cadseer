@@ -82,16 +82,10 @@ DatumAxis::DatumAxis() : Base()
   overlaySwitch->addChild(csysDragger->dragger);
   
   autoSizeLabel = new lbr::PLabel(autoSize.get());
-  autoSizeLabel->showName = true;
-  autoSizeLabel->valueHasChanged();
-  autoSizeLabel->constantHasChanged();
   overlaySwitch->addChild(autoSizeLabel.get());
   
-  //size label will get added or removed from overlay as needed.
   sizeLabel = new lbr::PLabel(size.get());
-  sizeLabel->showName = true;
-  sizeLabel->valueHasChanged();
-  sizeLabel->constantHasChanged();
+  //size label will get added or removed from overlay as needed.
   
   display = new mdv::DatumAxis();
   mainTransform->addChild(display.get());

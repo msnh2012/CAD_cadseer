@@ -99,33 +99,21 @@ DieSet::DieSet()
   annexes.insert(std::make_pair(ann::Type::SeerShape, sShape.get()));
   
   lengthLabel = new lbr::PLabel(length.get());
-  lengthLabel->showName = true;
-  lengthLabel->valueHasChanged();
   overlaySwitch->addChild(lengthLabel.get());
   
   widthLabel = new lbr::PLabel(width.get());
-  widthLabel->showName = true;
-  widthLabel->valueHasChanged();
   overlaySwitch->addChild(widthLabel.get());
   
   lengthPaddingLabel = new lbr::PLabel(lengthPadding.get());
-  lengthPaddingLabel->showName = true;
-  lengthPaddingLabel->valueHasChanged();
   overlaySwitch->addChild(lengthPaddingLabel.get());
   
   widthPaddingLabel = new lbr::PLabel(widthPadding.get());
-  widthPaddingLabel->showName = true;
-  widthPaddingLabel->valueHasChanged();
   overlaySwitch->addChild(widthPaddingLabel.get());
   
   originLabel = new lbr::PLabel(origin.get());
-  originLabel->showName = true;
-  originLabel->valueHasChanged();
   overlaySwitch->addChild(originLabel.get());
   
   autoCalcLabel = new lbr::PLabel(autoCalc.get());
-  autoCalcLabel->showName = true;
-  autoCalcLabel->valueHasChanged();
   overlaySwitch->addChild(autoCalcLabel.get());
 }
 

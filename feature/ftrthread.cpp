@@ -119,20 +119,13 @@ solidId(gu::createRandomId())
   csys->connect(*prmObserver);
   parameters.push_back(csys.get());
   
-  auto setupLabel = [&](lbr::PLabel *l)
-  {
-    l->showName = true;
-    l->valueHasChanged();
-    l->constantHasChanged();
-    overlaySwitch->addChild(l);
-  };
-  setupLabel(diameterLabel.get());
-  setupLabel(pitchLabel.get());
-  setupLabel(lengthLabel.get());
-  setupLabel(angleLabel.get());
-  setupLabel(internalLabel.get());
-  setupLabel(fakeLabel.get());
-  setupLabel(leftHandedLabel.get());
+  overlaySwitch->addChild(diameterLabel.get());
+  overlaySwitch->addChild(pitchLabel.get());
+  overlaySwitch->addChild(lengthLabel.get());
+  overlaySwitch->addChild(angleLabel.get());
+  overlaySwitch->addChild(internalLabel.get());
+  overlaySwitch->addChild(fakeLabel.get());
+  overlaySwitch->addChild(leftHandedLabel.get());
   
   annexes.insert(std::make_pair(ann::Type::SeerShape, sShape.get()));
   annexes.insert(std::make_pair(ann::Type::CSysDragger, csysDragger.get()));

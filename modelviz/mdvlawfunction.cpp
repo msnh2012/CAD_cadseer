@@ -84,8 +84,6 @@ osg::Switch* mdv::generate(lwf::Cue &cIn)
   {
     pointVertices->push_back(static_cast<osg::Vec3d>(*p));
     lbr::PLabel *tempLabel = new lbr::PLabel(p);
-    tempLabel->constantHasChanged();
-    tempLabel->valueHasChanged();
     scale->addChild(tempLabel);
   }
   osg::Vec4Array *pointColor = new osg::Vec4Array();
@@ -248,11 +246,6 @@ void LawCallback::update(osg::Node *node)
     xmax = std::max(xmax, loc.x());
     ymin = std::min(ymin, loc.y());
     ymax = std::max(ymax, loc.y());
-    
-    //some changes are done 'quietly' causing the labels to reflect
-    //the wrong value. So here we will force the label to read the
-    //parameter value.
-    labels.at(i)->valueHasChanged();
   }
   
   //update plane boundary.
