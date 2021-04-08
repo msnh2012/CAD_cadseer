@@ -82,6 +82,7 @@ Cylinder::Cylinder() : Base(),
   radius(std::make_unique<prm::Parameter>(prm::Names::Radius, pCyl().radius(), prm::Tags::Radius)),
   height(std::make_unique<prm::Parameter>(prm::Names::Height, pCyl().height(), prm::Tags::Height)),
   csys(std::make_unique<prm::Parameter>(prm::Names::CSys, osg::Matrixd::identity(), prm::Tags::CSys)),
+  prmObserver(std::make_unique<prm::Observer>(std::bind(&Cylinder::setModelDirty, this))),
   csysDragger(std::make_unique<ann::CSysDragger>(this, csys.get())),
   sShape(std::make_unique<ann::SeerShape>())
 {
@@ -106,7 +107,7 @@ Cylinder::Cylinder() : Base(),
   
   radius->connectValue(std::bind(&Cylinder::setModelDirty, this));
   height->connectValue(std::bind(&Cylinder::setModelDirty, this));
-  csys->connectValue(std::bind(&Cylinder::setModelDirty, this));
+  csys->connect(*prmObserver);
   
   setupIPGroup();
 }
@@ -201,6 +202,8 @@ void Cylinder::updateModel(const UpdatePayload &plIn)
   sShape->reset();
   try
   {
+    prm::ObserverBlocker block(*prmObserver);
+    
     if (isSkipped())
     {
       setSuccess();
@@ -213,7 +216,7 @@ void Cylinder::updateModel(const UpdatePayload &plIn)
       auto systemParameters =  tfs.front()->getParameters(prm::Tags::CSys);
       if (systemParameters.empty())
         throw std::runtime_error("Feature for csys link, doesn't have csys parameter");
-      csys->setValueQuiet(static_cast<osg::Matrixd>(*systemParameters.front()));
+      csys->setValue(static_cast<osg::Matrixd>(*systemParameters.front()));
       csysDragger->draggerUpdate();
       if (overlaySwitch->containsNode(csysDragger->dragger))
         overlaySwitch->removeChild(csysDragger->dragger);

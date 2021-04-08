@@ -29,6 +29,7 @@ class TopoDS_Shape;
 namespace prj{namespace srl{namespace stps{class Strip;}}}
 namespace ann{class SeerShape;}
 namespace occt{class BoundingBox;}
+namespace prm{struct Observer;}
 namespace ftr
 {
   class Strip : public Base
@@ -64,6 +65,8 @@ namespace ftr
     std::unique_ptr<prm::Parameter> widthOffset;
     std::unique_ptr<prm::Parameter> gap;
     std::unique_ptr<prm::Parameter> autoCalc;
+    
+    std::unique_ptr<prm::Observer> prmObserver;
     
     std::unique_ptr<ann::SeerShape> sShape;
     

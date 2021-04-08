@@ -28,6 +28,7 @@ namespace osg{class Matrixd;}
 namespace prj{namespace srl{namespace thds{class Thread;}}}
 namespace ann{class CSysDragger; class SeerShape;}
 namespace lbr{class PLabel;}
+namespace prm{struct Observer;}
 
 namespace ftr
 {
@@ -82,6 +83,8 @@ namespace ftr
     std::unique_ptr<prm::Parameter> fake; //!< true means no helical.
     std::unique_ptr<prm::Parameter> leftHanded; //!< true means no helical.
     std::unique_ptr<prm::Parameter> csys;
+    
+    std::unique_ptr<prm::Observer> prmObserver;
     
     osg::ref_ptr<lbr::PLabel> diameterLabel;
     osg::ref_ptr<lbr::PLabel> pitchLabel;

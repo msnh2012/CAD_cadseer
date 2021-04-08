@@ -49,6 +49,7 @@ InstanceMirror::InstanceMirror() :
 Base(),
 csys(std::make_unique<prm::Parameter>(prm::Names::CSys, osg::Matrixd::identity(), prm::Tags::CSys)),
 includeSource(std::make_unique<prm::Parameter>(QObject::tr("Include Source"), true)),
+csysObserver(std::make_unique<prm::Observer>(std::bind(&InstanceMirror::setModelDirty, this))),
 sShape(std::make_unique<ann::SeerShape>()),
 iMapper(std::make_unique<ann::InstanceMapper>()),
 csysDragger(std::make_unique<ann::CSysDragger>(this, csys.get()))
@@ -59,7 +60,7 @@ csysDragger(std::make_unique<ann::CSysDragger>(this, csys.get()))
   name = QObject::tr("Instance Mirror");
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
   
-  csys->connectValue(std::bind(&InstanceMirror::setModelDirty, this));
+  csys->connect(*csysObserver);
   includeSource->connectValue(std::bind(&InstanceMirror::setModelDirty, this));
   
   csysDragger->dragger->unlinkToMatrix(getMainTransform());
@@ -199,7 +200,8 @@ void InstanceMirror::updateModel(const UpdatePayload &payloadIn)
         overlaySwitch->addChild(csysDragger->dragger.get());
     }
     
-    csys->setValueQuiet(workSystem);
+    prm::ObserverBlocker block(*csysObserver);
+    csys->setValue(workSystem);
     csysDragger->draggerUpdate(); //keep dragger in sync with parameter.
     
     gp_Trsf mt; //mirror transform.

@@ -28,6 +28,7 @@
 namespace lbr{class IPGroup;}
 namespace prj{namespace srl{namespace bxs{class Box;}}}
 namespace ann{class CSysDragger; class SeerShape;}
+namespace prm{struct Observer;}
 
 namespace ftr
 {
@@ -61,6 +62,8 @@ protected:
   std::shared_ptr<prm::Parameter> width;
   std::shared_ptr<prm::Parameter> height;
   std::unique_ptr<prm::Parameter> csys;
+  
+  std::unique_ptr<prm::Observer> csysObserver;
   
   std::unique_ptr<ann::CSysDragger> csysDragger;
   std::unique_ptr<ann::SeerShape> sShape;

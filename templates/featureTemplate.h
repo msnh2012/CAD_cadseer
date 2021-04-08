@@ -26,6 +26,7 @@
 // namespace ann{class SeerShape;}
 // namespace prj{namespace srl{namespace FIXME{class %CLASSNAME%;}}}
 // namespace lbr{class IPGroup; class PLabel;}
+// namespace prm{struct Observer;}
 
 namespace ftr
 {
@@ -50,10 +51,16 @@ namespace ftr
   private:
 //     std::unique_ptr<ann::SeerShape> sShape;
 //     std::unique_ptr<prm::Parameter> direction;
+//     std::unique_ptr<prm::Parameter> distance;
+//     std::unique_ptr<prm::Parameter> csys;
+//     std::unique_ptr<prm::Observer> prmObserver;
 //     Picks picks;
+//     std::unique_ptr<prm::Parameter> picks; //experimental 
+    
+//     std::unique_ptr<ann::CSysDragger> csysDragger;
     
 //     osg::ref_ptr<lbr::PLabel> directionLabel;
-//     osg::ref_ptr<lbr::IPGroup> distanceLabel;
+//     osg::ref_ptr<lbr::IPGroup> distanceIPGroup;
     
     static QIcon icon;
   };

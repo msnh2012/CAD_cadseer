@@ -312,13 +312,13 @@ void Cue::remove(int index)
   {
     osg::Vec3d temp = static_cast<osg::Vec3d>(boundaries.front());
     temp.x() = firstParameter.get();
-    boundaries.front().setValueQuiet(temp);
+    boundaries.front().setValue(temp);
   }
   if (lastParameter)
   {
     osg::Vec3d temp = static_cast<osg::Vec3d>(boundaries.back());
     temp.x() = lastParameter.get();
-    boundaries.back().setValueQuiet(temp);
+    boundaries.back().setValue(temp);
   }
 }
 
@@ -373,8 +373,8 @@ void Cue::smooth()
       bb.z() = 0.0;
     }
     
-    boundaries.front().setValueQuiet(bf);
-    boundaries.back().setValueQuiet(bb);
+    boundaries.front().setValue(bf);
+    boundaries.back().setValue(bb);
   }
   
   for (std::size_t index = 1; index < (boundaries.size() - 1); ++index)
@@ -414,7 +414,7 @@ void Cue::smooth()
     /* we ignore c0 conditions with adjacent constants and linears.
      * we also ignore adjacent interpolates. left to user to assign appropriate slope.
      */
-    boundaries.at(index).setValueQuiet(point);
+    boundaries.at(index).setValue(point);
   }
 }
 
@@ -426,7 +426,7 @@ void Cue::alignConstant()
     osg::Vec3d b0 = static_cast<osg::Vec3d>(boundaries.front());
     osg::Vec3d b1 = static_cast<osg::Vec3d>(boundaries.back());
     b1.y() = b0.y();
-    boundaries.back().setValueQuiet(b1);
+    boundaries.back().setValue(b1);
   }
   else if (type == Type::composite)
   {
@@ -437,7 +437,7 @@ void Cue::alignConstant()
       osg::Vec3d b0 = static_cast<osg::Vec3d>(boundaries.at(bi));
       osg::Vec3d b1 = static_cast<osg::Vec3d>(boundaries.at(bi + 1));
       b1.y() = b0.y();
-      boundaries.at(bi + 1).setValueQuiet(b1);
+      boundaries.at(bi + 1).setValue(b1);
     }
   }
 }

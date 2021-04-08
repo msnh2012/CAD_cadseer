@@ -50,6 +50,7 @@ Base()
 , axisOrigin(std::make_unique<prm::Parameter>(prm::Names::Origin, osg::Vec3d(0.0, 0.0, 0.0), prm::Tags::Origin))
 , axisDirection(std::make_unique<prm::Parameter>(prm::Names::Direction, osg::Vec3d(0.0, 1.0, 0.0), prm::Tags::Direction))
 , angle(std::make_unique<prm::Parameter>(prm::Names::Angle, 360.0, prm::Tags::Angle))
+, prmObserver(std::make_unique<prm::Observer>(std::bind(&Revolve::setModelDirty, this)))
 , axisOriginLabel(new lbr::PLabel(axisOrigin.get()))
 , axisDirectionLabel(new lbr::PLabel(axisDirection.get()))
 , angleLabel(new lbr::PLabel(angle.get()))
@@ -61,10 +62,10 @@ Base()
   name = QObject::tr("Revolve");
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
   
-  axisOrigin->connectValue(std::bind(&Revolve::setModelDirty, this));
+  axisOrigin->connect(*prmObserver);
   parameters.push_back(axisOrigin.get());
   
-  axisDirection->connectValue(std::bind(&Revolve::setModelDirty, this));
+  axisDirection->connect(*prmObserver);
   parameters.push_back(axisDirection.get());
   
   angle->setConstraint(prm::Constraint::buildNonZeroAngle());
@@ -213,8 +214,8 @@ void Revolve::updateModel(const UpdatePayload &pIn)
             throw std::runtime_error("Wrong feature type for single axis pick");
           const DatumAxis *da = dynamic_cast<const DatumAxis*>(aResolver.getFeature());
           assert(da);
-          axisOrigin->setValueQuiet(da->getOrigin());
-          axisDirection->setValueQuiet(da->getDirection());
+          axisOrigin->setValue(da->getOrigin());
+          axisDirection->setValue(da->getDirection());
         }
         else
         {
@@ -231,8 +232,8 @@ void Revolve::updateModel(const UpdatePayload &pIn)
           auto glean = occt::gleanAxis(rShapes.front());
           if (!glean.second)
             throw std::runtime_error("Couldn't glean axis from single axis pick");
-          axisOrigin->setValueQuiet(gu::toOsg(glean.first.Location()));
-          axisDirection->setValueQuiet(gu::toOsg(glean.first.Direction()));
+          axisOrigin->setValue(gu::toOsg(glean.first.Location()));
+          axisDirection->setValue(gu::toOsg(glean.first.Direction()));
         }
       }
       else //axisPicks size == 2
@@ -252,8 +253,8 @@ void Revolve::updateModel(const UpdatePayload &pIn)
         }
         osg::Vec3d tAxis = points0.front() - points1.front();
         tAxis.normalize();
-        axisOrigin->setValueQuiet(points1.front());
-        axisDirection->setValueQuiet(tAxis);
+        axisOrigin->setValue(points1.front());
+        axisDirection->setValue(tAxis);
       }
     }
     

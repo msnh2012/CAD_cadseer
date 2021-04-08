@@ -63,6 +63,7 @@ Base()
 , solver(std::make_unique<skt::Solver>())
 , visual(std::make_unique<skt::Visual>(*solver))
 , csys(std::make_unique<prm::Parameter>(prm::Names::CSys, osg::Matrixd::identity(), prm::Tags::CSys))
+, prmObserver(std::make_unique<prm::Observer>(std::bind(&Sketch::setModelDirty, this)))
 , csysDragger(std::make_unique<ann::CSysDragger>(this, csys.get()))
 , draggerSwitch(new osg::Switch())
 {
@@ -76,7 +77,7 @@ Base()
   annexes.insert(std::make_pair(ann::Type::CSysDragger, csysDragger.get()));
   parameters.push_back(csys.get());
   
-  csys->connectValue(std::bind(&Sketch::setModelDirty, this));
+  csys->connect(*prmObserver);
   
   csysDragger->dragger->linkToMatrix(visual->getTransform());
   draggerSwitch->addChild(csysDragger->dragger);
@@ -210,6 +211,8 @@ void Sketch::updateModel(const UpdatePayload &plIn)
   sShape->reset();
   try
   {
+    prm::ObserverBlocker block(*prmObserver);
+    
     if (isSkipped())
     {
       setSuccess();
@@ -223,7 +226,7 @@ void Sketch::updateModel(const UpdatePayload &plIn)
       auto systemParameters =  tfs.front()->getParameters(prm::Tags::CSys);
       if (systemParameters.empty())
         throw std::runtime_error("Feature for csys link, doesn't have csys parameter");
-      csys->setValueQuiet(static_cast<osg::Matrixd>(*systemParameters.front()));
+      csys->setValue(static_cast<osg::Matrixd>(*systemParameters.front()));
       csysDragger->draggerUpdate();
       draggerHide();
     }

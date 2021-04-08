@@ -68,6 +68,7 @@ width(std::make_unique<prm::Parameter>(QObject::tr("Width"), 1.0, prm::Tags::Wid
 widthOffset(std::make_unique<prm::Parameter>(QObject::tr("Width Offset"), 1.0, prm::Tags::Offset)),
 gap(std::make_unique<prm::Parameter>(QObject::tr("Gap"), prf::manager().rootPtr->features().strip().get().gap())),
 autoCalc(std::make_unique<prm::Parameter>(prm::Names::AutoSize, true, prm::Tags::AutoSize)),
+prmObserver(std::make_unique<prm::Observer>(std::bind(&Strip::setModelDirty, this))),
 sShape(std::make_unique<ann::SeerShape>())
 {
   if (icon.isNull())
@@ -78,23 +79,23 @@ sShape(std::make_unique<ann::SeerShape>())
   
   annexes.insert(std::make_pair(ann::Type::SeerShape, sShape.get()));
   
-  feedDirection->connectValue(std::bind(&Strip::setModelDirty, this));
+  feedDirection->connect(*prmObserver);
   parameters.push_back(feedDirection.get());
   
   pitch->setConstraint(prm::Constraint::buildNonZeroPositive());
-  pitch->connectValue(std::bind(&Strip::setModelDirty, this));
+  pitch->connect(*prmObserver);
   parameters.push_back(pitch.get());
   
   width->setConstraint(prm::Constraint::buildNonZeroPositive());
-  width->connectValue(std::bind(&Strip::setModelDirty, this));
+  width->connect(*prmObserver);
   parameters.push_back(width.get());
   
   widthOffset->setConstraint(prm::Constraint::buildAll());
-  widthOffset->connectValue(std::bind(&Strip::setModelDirty, this));
+  widthOffset->connect(*prmObserver);
   parameters.push_back(widthOffset.get());
   
   gap->setConstraint(prm::Constraint::buildNonZeroPositive());
-  gap->connectValue(std::bind(&Strip::setModelDirty, this));
+  gap->connect(*prmObserver);
   parameters.push_back(gap.get());
   
   autoCalc->connectValue(std::bind(&Strip::setModelDirty, this));
@@ -171,6 +172,8 @@ void Strip::updateModel(const UpdatePayload &payloadIn)
   sShape->reset();
   try
   {
+    prm::ObserverBlocker block(*prmObserver);
+    
     std::vector<const Base*> pfs = payloadIn.getFeatures(part);
     if (pfs.size() != 1)
       throw std::runtime_error("wrong number of 'part' inputs");
@@ -210,10 +213,10 @@ void Strip::updateModel(const UpdatePayload &payloadIn)
       assert(nf);
       if (!nf)
         throw std::runtime_error("Bad cast to Nest");
-      feedDirection->setValueQuiet(nf->getFeedDirection());
-      pitch->setValueQuiet(nf->getPitch());
+      feedDirection->setValue(nf->getFeedDirection());
+      pitch->setValue(nf->getPitch());
       pitchLabel->valueHasChanged();
-      gap->setValueQuiet(nf->getGap());
+      gap->setValue(nf->getGap());
       gapLabel->valueHasChanged();
       
       goAutoCalc(bs, bbbox);
@@ -403,7 +406,7 @@ void Strip::goAutoCalc(const TopoDS_Shape &sIn, occt::BoundingBox &bbbox)
   double d1 = getDistance(sIn, face1);
   double d2 = getDistance(sIn, face2);
   double widthCalc = 2 * offset - d1 - d2 + 2 * static_cast<double>(*gap);
-  width->setValueQuiet(widthCalc);
+  width->setValue(widthCalc);
   widthLabel->valueHasChanged();
   
   osg::Vec3d projection = (norm * (offset - d1)) + (-norm * (offset - d2));
@@ -411,7 +414,7 @@ void Strip::goAutoCalc(const TopoDS_Shape &sIn, occt::BoundingBox &bbbox)
   osg::Vec3d aux = feed * (feed * center);
   osg::Vec3d auxProjection = center - aux;
   double directionFactor = ((auxProjection * norm) < 0.0) ? -1.0 : 1.0;
-  widthOffset->setValueQuiet(auxProjection.length() * directionFactor);
+  widthOffset->setValue(auxProjection.length() * directionFactor);
   widthOffsetLabel->valueHasChanged();
 }
 

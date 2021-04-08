@@ -30,6 +30,7 @@ class BRepPrimAPI_MakeSphere;
 namespace lbr{class IPGroup;}
 namespace prj{namespace srl{namespace sprs{class Sphere;}}}
 namespace ann{class CSysDragger; class SeerShape;}
+namespace prm{struct Observer;}
 
 namespace ftr
 {
@@ -54,6 +55,8 @@ namespace ftr
   protected:
     std::unique_ptr<prm::Parameter> radius;
     std::unique_ptr<prm::Parameter> csys;
+    
+    std::unique_ptr<prm::Observer> prmObserver;
   
     std::unique_ptr<ann::CSysDragger> csysDragger;
     std::unique_ptr<ann::SeerShape> sShape;

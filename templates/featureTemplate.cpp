@@ -43,9 +43,13 @@ QIcon %CLASSNAME%::icon;
 %CLASSNAME%::%CLASSNAME%():
 Base()
 // , sShape(new ann::SeerShape())
-// , direction(new prm::Parameter(prm::Names::Direction, osg::Vec3d(0.0, 0.0, 1.0)))
+// , direction(std::make_unique<prm::Parameter>(prm::Names::Direction, osg::Vec3d(0.0, 0.0, 1.0), prm::Tags::Direction))
+// , distance(std::make_unique<prm::Parameter>(prm::Names::Distance, 1.0, prm::Tags::Distance))
+// , csys(std::make_unique<prm::Parameter>(prm::Names::CSys, osg::Matrixd::identity(), prm::Tags::CSys))
+// , prmObserver(std::make_unique<prm::Observer>(std::bind(&%CLASSNAME%::setModelDirty, this)))
+// , csysDragger(std::make_unique<ann::CSysDragger>(this, csys.get()))
 // , directionLabel(new lbr::PLabel(direction.get()))
-// , distanceLabel(new lbr::IPGroup(distance.get()))
+// , distanceIPGroup(new lbr::IPGroup(distance.get()))
 {
   if (icon.isNull())
     icon = QIcon(":/resources/images/constructionBase.svg"); //fix me
@@ -53,18 +57,26 @@ Base()
   name = QObject::tr("%CLASSNAME%");
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
   
-//   direction->connectValue(std::bind(&%CLASSNAME%::setModelDirty, this));
+//   direction->connect(*prmObserver);
 //   parameters.push_back(direction.get());
   
-//   distance->connectValue(std::bind(&%CLASSNAME%::setModelDirty, this));
+//   distance->connect(*prmObserver);
 //   parameters.push_back(distance.get());
   
-//   distanceLabel->showName = true;
-//   distanceLabel->valueHasChanged();
-//   distanceLabel->constantHasChanged();
-//   overlaySwitch->addChild(distanceLabel.get());
+//   csys->connect(*prmObserver);
+//   parameters.push_back(csys.get());
+  
+  //shouldn't have to do anything for plabels
+  
+  //setup a IPGroup
+//   distanceIPGroup->setMatrixDims(osg::Matrixd::rotate(osg::PI_2, osg::Vec3d(0.0, 0.0, -1.0)));
+//   distanceIPGroup->noAutoRotateDragger();
+//   distanceIPGroup->setRotationAxis(osg::Vec3d(1.0, 0.0, 0.0), osg::Vec3d(0.0, 0.0, 1.0));
+//   overlaySwitch->addChild(distanceIPGroup.get());
+//   csysDragger->dragger->linkToMatrix(distanceIPGroup.get());
   
 //   annexes.insert(std::make_pair(ann::Type::SeerShape, sShape.get()));
+//   annexes.insert(std::make_pair(ann::Type::CSysDragger, csysDragger.get()));
 }
 
 %CLASSNAME%::~%CLASSNAME%() = default;

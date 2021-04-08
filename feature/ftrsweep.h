@@ -40,6 +40,7 @@ namespace prj
 }
 namespace lbr{class PLabel;}
 namespace lwf{struct Cue;}
+namespace prm{struct Observer;}
 
 namespace ftr
 {
@@ -186,6 +187,7 @@ namespace ftr
     std::unique_ptr<prm::Parameter> forceC1;
     std::unique_ptr<prm::Parameter> solid;
     std::unique_ptr<prm::Parameter> useLaw;
+    std::unique_ptr<prm::Observer> prmObserver;
     Pick spine;
     SweepProfiles profiles;
     SweepAuxiliary auxiliary;

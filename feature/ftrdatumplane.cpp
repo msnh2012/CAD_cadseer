@@ -120,6 +120,7 @@ Base()
 , size(std::make_unique<prm::Parameter>(prm::Names::Size, 1.0, prm::Tags::Size))
 , offset(std::make_unique<prm::Parameter>(prm::Names::Offset, 1.0, prm::Tags::Offset))
 , angle(std::make_unique<prm::Parameter>(prm::Names::Angle, 45.0, prm::Tags::Angle))
+, prmObserver(std::make_unique<prm::Observer>(std::bind(&DatumPlane::setModelDirty, this)))
 , csysDragger(std::make_unique<ann::CSysDragger>(this, csys.get()))
 , flipLabel(new lbr::PLabel(flip.get()))
 , autoSizeLabel(new lbr::PLabel(autoSize.get()))
@@ -136,7 +137,7 @@ Base()
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
   
   parameters.push_back(csys.get());
-  csys->connectValue(std::bind(&DatumPlane::setModelDirty, this));
+  csys->connect(*prmObserver);
   
   flip->connectValue(std::bind(&DatumPlane::setModelDirty, this));
   parameters.push_back(flip.get());
@@ -145,7 +146,7 @@ Base()
   parameters.push_back(autoSize.get());
   
   size->setConstraint(prm::Constraint::buildNonZeroPositive());
-  size->connectValue(std::bind(&DatumPlane::setModelDirty, this));
+  size->connect(*prmObserver);
   parameters.push_back(size.get());
   
   offset->connectValue(std::bind(&DatumPlane::setModelDirty, this));
@@ -267,6 +268,8 @@ void DatumPlane::updateModel(const UpdatePayload &pli)
   lastUpdateLog.clear();
   try
   {
+    prm::ObserverBlocker block(*prmObserver);
+    
     if (dpType == DPType::Constant)
       goUpdateConstant();
     else if (dpType == DPType::POffset)
@@ -286,12 +289,12 @@ void DatumPlane::updateModel(const UpdatePayload &pli)
       osg::Quat r(osg::PI, gu::getXVector(cm));
       osg::Matrixd nm(cm.getRotate() * r);
       nm.setTrans(cm.getTrans());
-      csys->setValueQuiet(nm);
+      csys->setValue(nm);
     }
     
     if (static_cast<bool>(*autoSize))
     {
-      size->setValueQuiet(cachedSize);
+      size->setValue(cachedSize);
       sizeIP->valueHasChanged();
     }
     
@@ -382,7 +385,7 @@ void DatumPlane::goUpdatePOffset(const UpdatePayload &pli)
   }
   osg::Vec3d normal = gu::getZVector(faceSystem) * static_cast<double>(*offset);
   faceSystem.setTrans(faceSystem.getTrans() + normal);
-  csys->setValueQuiet(faceSystem);
+  csys->setValue(faceSystem);
 }
 
 void DatumPlane::goUpdatePCenter(const UpdatePayload &pli)
@@ -506,7 +509,7 @@ void DatumPlane::goUpdatePCenter(const UpdatePayload &pli)
   if (!newSystem)
     throw std::runtime_error("PCenter: couldn't derive center datum");
   cachedSize = tempSize;
-  csys->setValueQuiet(newSystem.get());
+  csys->setValue(newSystem.get());
 }
 
 void DatumPlane::goUpdateAAngleP(const UpdatePayload &pli)
@@ -585,7 +588,7 @@ void DatumPlane::goUpdateAAngleP(const UpdatePayload &pli)
   osg::Vec3d outNormal(rotation * planeNormal.get());
   osg::Matrixd csysOut = osg::Matrixd::rotate(osg::Vec3d(0.0, 0.0, 1.0), outNormal);
   csysOut.setTrans(axisOrigin.get());
-  csys->setValueQuiet(csysOut);
+  csys->setValue(csysOut);
 }
 
 void DatumPlane::goUpdateAverage3P(const UpdatePayload &pli)
@@ -666,7 +669,7 @@ void DatumPlane::goUpdateAverage3P(const UpdatePayload &pli)
   averageNormal.normalize();
   osg::Matrixd ns = osg::Matrixd::rotate(osg::Vec3d(0.0, 0.0, 1.0), averageNormal);
   ns.setTrans(to);
-  csys->setValueQuiet(ns);
+  csys->setValue(ns);
   cachedSize = tSize;
 }
 
@@ -712,7 +715,7 @@ void DatumPlane::goUpdateThrough3P(const UpdatePayload &pli)
   osg::Vec3d center = (points.at(0) + points.at(1) + points.at(2)) / 3.0;
   ts.setTrans(center);
   
-  csys->setValueQuiet(ts);
+  csys->setValue(ts);
   cachedSize = std::max(std::max(v0.length(), v1.length()), (v1 - v0).length()) / 2.0;
 }
 

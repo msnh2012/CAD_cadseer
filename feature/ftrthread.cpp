@@ -69,6 +69,7 @@ internal(std::make_unique<prm::Parameter>(QObject::tr("Internal Thread"), pTh().
 fake(std::make_unique<prm::Parameter>(QObject::tr("Fake"), pTh().fake())),
 leftHanded(std::make_unique<prm::Parameter>(QObject::tr("Left Handed"), pTh().leftHanded())),
 csys(std::make_unique<prm::Parameter>(prm::Names::CSys, osg::Matrixd::identity(), prm::Tags::CSys)),
+prmObserver(std::make_unique<prm::Observer>(std::bind(&Thread::setModelDirty, this))),
 diameterLabel(new lbr::PLabel(diameter.get())),
 pitchLabel(new lbr::PLabel(pitch.get())),
 lengthLabel(new lbr::PLabel(length.get())),
@@ -115,7 +116,7 @@ solidId(gu::createRandomId())
   leftHanded->connectValue(std::bind(&Thread::setModelDirty, this));
   parameters.push_back(leftHanded.get());
   
-  csys->connectValue(std::bind(&Thread::setModelDirty, this));
+  csys->connect(*prmObserver);
   parameters.push_back(csys.get());
   
   auto setupLabel = [&](lbr::PLabel *l)
@@ -251,6 +252,8 @@ void Thread::updateModel(const UpdatePayload &plIn)
   sShape->reset();
   try
   {
+    prm::ObserverBlocker block(*prmObserver);
+    
     if (isSkipped())
     {
       setSuccess();
@@ -263,7 +266,7 @@ void Thread::updateModel(const UpdatePayload &plIn)
       auto systemParameters =  tfs.front()->getParameters(prm::Tags::CSys);
       if (systemParameters.empty())
         throw std::runtime_error("Feature for csys link, doesn't have csys parameter");
-      csys->setValueQuiet(static_cast<osg::Matrixd>(*systemParameters.front()));
+      csys->setValue(static_cast<osg::Matrixd>(*systemParameters.front()));
       csysDragger->draggerUpdate();
       if (overlaySwitch->containsNode(csysDragger->dragger))
         overlaySwitch->removeChild(csysDragger->dragger);

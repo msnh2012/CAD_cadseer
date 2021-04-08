@@ -62,6 +62,7 @@ DatumAxis::DatumAxis() : Base()
 , csys(std::make_unique<prm::Parameter>(prm::Names::CSys, osg::Matrixd::identity(), prm::Tags::CSys))
 , autoSize(std::make_unique<prm::Parameter>(prm::Names::AutoSize, false, prm::Tags::AutoSize))
 , size(std::make_unique<prm::Parameter>(prm::Names::Size, 20.0, prm::Tags::Size))
+, prmObserver(std::make_unique<prm::Observer>(std::bind(&DatumAxis::setModelDirty, this)))
 , csysDragger(std::make_unique<ann::CSysDragger>(this, csys.get()))
 , cachedSize(20.0)
 {
@@ -74,7 +75,7 @@ DatumAxis::DatumAxis() : Base()
   autoSize->connectValue(std::bind(&DatumAxis::setVisualDirty, this));
   
   parameters.push_back(size.get());
-  size->connectValue(std::bind(&DatumAxis::setVisualDirty, this));
+  size->connect(*prmObserver);
   
   parameters.push_back(csys.get()); //should we add and remove this when type switching? PIA
   csys->connectValue(std::bind(&DatumAxis::setModelDirty, this));
@@ -176,6 +177,8 @@ void DatumAxis::updateModel(const UpdatePayload &pli)
   lastUpdateLog.clear();
   try
   {
+    prm::ObserverBlocker block(*prmObserver);
+    
     if (isSkipped())
     {
       setSuccess();
@@ -362,10 +365,7 @@ void DatumAxis::updateVisual()
 void DatumAxis::updateVisualInternal()
 {
   if (static_cast<bool>(*autoSize))
-  {
-    size->setValueQuiet(cachedSize);
-    sizeLabel->valueHasChanged();
-  }
+    size->setValue(cachedSize);
   
   double ts = static_cast<double>(*size);
   

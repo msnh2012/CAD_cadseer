@@ -747,17 +747,6 @@ const Stow& Parameter::getStow() const
 
 bool Parameter::setValue(double valueIn)
 {
-  if (setValueQuiet(valueIn))
-  {
-    subject.sendValueChanged();
-    return true;
-  }
-  
-  return false;
-}
-
-bool Parameter::setValueQuiet(double valueIn)
-{
   if (boost::apply_visitor(DoubleVisitor(), stow->variant) == valueIn)
     return false;
   
@@ -765,6 +754,7 @@ bool Parameter::setValueQuiet(double valueIn)
     return false;
   
   stow->variant = valueIn;
+  subject.sendValueChanged();
   return true;
 }
 
@@ -789,17 +779,6 @@ void Parameter::setConstraint(const Constraint &cIn)
 
 bool Parameter::setValue(int valueIn)
 {
-  if (setValueQuiet(valueIn))
-  {
-    subject.sendValueChanged();
-    return true;
-  }
-  
-  return false;
-}
-
-bool Parameter::setValueQuiet(int valueIn)
-{
   if (boost::apply_visitor(IntVisitor(), stow->variant) == valueIn)
     return false;
   
@@ -807,6 +786,7 @@ bool Parameter::setValueQuiet(int valueIn)
     return false;
   
   stow->variant = valueIn;
+  subject.sendValueChanged();
   return true;
 }
 
@@ -822,21 +802,11 @@ Parameter::operator int() const
 
 bool Parameter::setValue(bool valueIn)
 {
-  if (setValueQuiet(valueIn))
-  {
-    subject.sendValueChanged();
-    return true;
-  }
-  
-  return false;
-}
-
-bool Parameter::setValueQuiet(bool valueIn)
-{
   if (boost::apply_visitor(BoolVisitor(), stow->variant) == valueIn)
     return false;
   
   stow->variant = valueIn;
+  subject.sendValueChanged();
   return true;
 }
 
@@ -847,21 +817,11 @@ Parameter::operator bool() const
 
 bool Parameter::setValue(const path &valueIn)
 {
-  if (setValueQuiet(valueIn))
-  {
-    subject.sendValueChanged();
-    return true;
-  }
-  
-  return false;
-}
-
-bool Parameter::setValueQuiet(const path &valueIn)
-{
   if (boost::apply_visitor(PathVisitor(), stow->variant) == valueIn)
     return false;
   
   stow->variant = valueIn;
+  subject.sendValueChanged();
   return true;
 }
 
@@ -872,21 +832,11 @@ Parameter::operator boost::filesystem::path() const
 
 bool Parameter::setValue(const osg::Vec3d &vIn)
 {
-  if (setValueQuiet(vIn))
-  {
-    subject.sendValueChanged();
-    return true;
-  }
-  
-  return false;
-}
-
-bool Parameter::setValueQuiet(const osg::Vec3d &vIn)
-{
   if (boost::apply_visitor(Vec3dVisitor(), stow->variant) == vIn)
     return false;
   
   stow->variant = vIn;
+  subject.sendValueChanged();
   return true;
 }
 
@@ -897,21 +847,11 @@ Parameter::operator osg::Vec3d() const
 
 bool Parameter::setValue(const osg::Quat &qIn)
 {
-  if (setValueQuiet(qIn))
-  {
-    subject.sendValueChanged();
-    return true;
-  }
-  
-  return false;
-}
-
-bool Parameter::setValueQuiet(const osg::Quat &qIn)
-{
   if (boost::apply_visitor(QuatVisitor(), stow->variant) == qIn)
     return false;
   
   stow->variant = qIn;
+  subject.sendValueChanged();
   return true;
 }
 
@@ -922,21 +862,11 @@ Parameter::operator osg::Quat() const
 
 bool Parameter::setValue(const osg::Matrixd &mIn)
 {
-  if (setValueQuiet(mIn))
-  {
-    subject.sendValueChanged();
-    return true;
-  }
-  
-  return false;
-}
-
-bool Parameter::setValueQuiet(const osg::Matrixd &mIn)
-{
   if (boost::apply_visitor(MatrixdVisitor(), stow->variant) == mIn)
     return false;
   
   stow->variant = mIn;
+  subject.sendValueChanged();
   return true;
 }
 

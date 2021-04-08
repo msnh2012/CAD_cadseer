@@ -124,6 +124,7 @@ Oblong::Oblong() :
   width(std::make_unique<prm::Parameter>(prm::Names::Width, pOb().width(), prm::Tags::Width)),
   height(std::make_unique<prm::Parameter>(prm::Names::Height, pOb().height(), prm::Tags::Height)),
   csys(std::make_unique<prm::Parameter>(prm::Names::CSys, osg::Matrixd::identity(), prm::Tags::CSys)),
+  prmObserver(std::make_unique<prm::Observer>(std::bind(&Oblong::setModelDirty, this))),
   csysDragger(std::make_unique<ann::CSysDragger>(this, csys.get())),
   sShape(std::make_unique<ann::SeerShape>())
 {
@@ -151,7 +152,7 @@ Oblong::Oblong() :
   length->connectValue(std::bind(&Oblong::setModelDirty, this));
   width->connectValue(std::bind(&Oblong::setModelDirty, this));
   height->connectValue(std::bind(&Oblong::setModelDirty, this));
-  csys->connectValue(std::bind(&Oblong::setModelDirty, this));
+  csys->connect(*prmObserver);
   
   setupIPGroup();
 }
@@ -254,6 +255,8 @@ void Oblong::updateModel(const UpdatePayload &plIn)
   sShape->reset();
   try
   {
+    prm::ObserverBlocker block(*prmObserver);
+    
     if (isSkipped())
     {
       setSuccess();
@@ -266,7 +269,7 @@ void Oblong::updateModel(const UpdatePayload &plIn)
       auto systemParameters =  tfs.front()->getParameters(prm::Tags::CSys);
       if (systemParameters.empty())
         throw std::runtime_error("Feature for csys link, doesn't have csys parameter");
-      csys->setValueQuiet(static_cast<osg::Matrixd>(*systemParameters.front()));
+      csys->setValue(static_cast<osg::Matrixd>(*systemParameters.front()));
       csysDragger->draggerUpdate();
       if (overlaySwitch->containsNode(csysDragger->dragger))
         overlaySwitch->removeChild(csysDragger->dragger);

@@ -131,6 +131,7 @@ Box::Box() :
   width(std::make_shared<prm::Parameter>(prm::Names::Width, pBox().width(), prm::Tags::Width)),
   height(std::make_shared<prm::Parameter>(prm::Names::Height, pBox().height(), prm::Tags::Height)),
   csys(std::make_unique<prm::Parameter>(prm::Names::CSys, osg::Matrixd::identity(), prm::Tags::CSys)),
+  csysObserver(std::make_unique<prm::Observer>(std::bind(&Box::setModelDirty, this))),
   csysDragger(std::make_unique<ann::CSysDragger>(this, csys.get())),
   sShape(std::make_unique<ann::SeerShape>())
 {
@@ -159,7 +160,7 @@ Box::Box() :
   length->connectValue(std::bind(&Box::setModelDirty, this));
   width->connectValue(std::bind(&Box::setModelDirty, this));
   height->connectValue(std::bind(&Box::setModelDirty, this));
-  csys->connectValue(std::bind(&Box::setModelDirty, this));
+  csys->connect(*csysObserver);
   
   setupIPGroup();
 }
@@ -277,7 +278,8 @@ void Box::updateModel(const UpdatePayload &plIn)
       auto systemParameters =  tfs.front()->getParameters(prm::Tags::CSys);
       if (systemParameters.empty())
         throw std::runtime_error("Feature for csys link, doesn't have csys parameter");
-      csys->setValueQuiet(static_cast<osg::Matrixd>(*systemParameters.front()));
+      prm::ObserverBlocker block(*csysObserver);
+      csys->setValue(static_cast<osg::Matrixd>(*systemParameters.front()));
       csysDragger->draggerUpdate();
       if (overlaySwitch->containsNode(csysDragger->dragger))
         overlaySwitch->removeChild(csysDragger->dragger);

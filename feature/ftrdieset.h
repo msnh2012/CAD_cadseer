@@ -29,6 +29,7 @@
 namespace lbr{class PLabel;}
 namespace prj{namespace srl{namespace dsts{class DieSet;}}}
 namespace ann{class SeerShape;}
+namespace prm{struct Observer;}
 
 namespace ftr
 {
@@ -61,6 +62,8 @@ namespace ftr
     std::shared_ptr<prm::Parameter> widthPadding; //!< only used if autoCalc is true.
     std::shared_ptr<prm::Parameter> origin; //!< only used if autoCalc is true.
     std::shared_ptr<prm::Parameter> autoCalc;
+    
+    std::unique_ptr<prm::Observer> prmObserver;
     
     osg::ref_ptr<lbr::PLabel> lengthLabel;
     osg::ref_ptr<lbr::PLabel> widthLabel;

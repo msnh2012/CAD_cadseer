@@ -68,6 +68,7 @@ Sphere::Sphere() :
 Base(),
 radius(std::make_unique<prm::Parameter>(prm::Names::Radius, pSph().radius(), prm::Tags::Radius)),
 csys(std::make_unique<prm::Parameter>(prm::Names::CSys, osg::Matrixd::identity(), prm::Tags::CSys)),
+prmObserver(std::make_unique<prm::Observer>(std::bind(&Sphere::setModelDirty, this))),
 csysDragger(std::make_unique<ann::CSysDragger>(this, csys.get())),
 sShape(std::make_unique<ann::SeerShape>())
 {
@@ -89,7 +90,7 @@ sShape(std::make_unique<ann::SeerShape>())
   overlaySwitch->addChild(csysDragger->dragger);
   
   radius->connectValue(std::bind(&Sphere::setModelDirty, this));
-  csys->connectValue(std::bind(&Sphere::setModelDirty, this));
+  csys->connect(*prmObserver);
   
   setupIPGroup();
 }
@@ -152,6 +153,8 @@ void Sphere::updateModel(const UpdatePayload &plIn)
   sShape->reset();
   try
   {
+    prm::ObserverBlocker block(*prmObserver);
+    
     if (isSkipped())
     {
       setSuccess();
@@ -164,7 +167,7 @@ void Sphere::updateModel(const UpdatePayload &plIn)
       auto systemParameters = tfs.front()->getParameters(prm::Tags::CSys);
       if (systemParameters.empty())
         throw std::runtime_error("Feature for csys link, doesn't have csys parameter");
-      csys->setValueQuiet(static_cast<osg::Matrixd>(*systemParameters.front()));
+      csys->setValue(static_cast<osg::Matrixd>(*systemParameters.front()));
       csysDragger->draggerUpdate();
       if (overlaySwitch->containsNode(csysDragger->dragger))
         overlaySwitch->removeChild(csysDragger->dragger);

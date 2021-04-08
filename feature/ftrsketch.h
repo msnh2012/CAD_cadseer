@@ -25,6 +25,7 @@
 namespace prj{namespace srl{namespace skts{class Sketch;}}}
 namespace skt{struct Solver; class Visual;}
 namespace ann{class SeerShape; class CSysDragger;}
+namespace prm{struct Observer;}
 
 namespace ftr
 {
@@ -67,6 +68,7 @@ namespace ftr
     std::unique_ptr<skt::Solver> solver;
     std::unique_ptr<skt::Visual> visual;
     std::unique_ptr<prm::Parameter> csys;
+    std::unique_ptr<prm::Observer> prmObserver;
     std::unique_ptr<ann::CSysDragger> csysDragger;
     osg::ref_ptr<osg::Switch> draggerSwitch;
     std::vector<boost::uuids::uuid> wireIds;

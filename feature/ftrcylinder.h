@@ -27,6 +27,7 @@
 namespace lbr{class IPGroup;}
 namespace prj{namespace srl{namespace cyls{class Cylinder;}}}
 namespace ann{class CSysDragger; class SeerShape;}
+namespace prm{struct Observer;}
 
 namespace ftr
 {
@@ -56,6 +57,8 @@ namespace ftr
     std::unique_ptr<prm::Parameter> radius;
     std::unique_ptr<prm::Parameter> height;
     std::unique_ptr<prm::Parameter> csys;
+    
+    std::unique_ptr<prm::Observer> prmObserver;
     
     std::unique_ptr<ann::CSysDragger> csysDragger;
     std::unique_ptr<ann::SeerShape> sShape;

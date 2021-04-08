@@ -39,7 +39,10 @@ using boost::uuids::uuid;
 
 QIcon DieSet::icon;
 
-DieSet::DieSet() : Base(), sShape(std::make_unique<ann::SeerShape>())
+DieSet::DieSet()
+: Base()
+, prmObserver(std::make_unique<prm::Observer>(std::bind(&DieSet::setModelDirty, this)))
+, sShape(std::make_unique<ann::SeerShape>())
 {
   if (icon.isNull())
     icon = QIcon(":/resources/images/constructionDieSet.svg");
@@ -49,12 +52,12 @@ DieSet::DieSet() : Base(), sShape(std::make_unique<ann::SeerShape>())
   
   length = std::make_shared<prm::Parameter>(prm::Names::Length, 1.0, prm::Tags::Length);
   length->setConstraint(prm::Constraint::buildNonZeroPositive());
-  length->connectValue(std::bind(&DieSet::setModelDirty, this));
+  length->connect(*prmObserver);
   parameters.push_back(length.get());
   
   width = std::make_shared<prm::Parameter>(prm::Names::Width, 1.0, prm::Tags::Width);
   width->setConstraint(prm::Constraint::buildNonZeroPositive());
-  width->connectValue(std::bind(&DieSet::setModelDirty, this));
+  width->connect(*prmObserver);
   parameters.push_back(width.get());
   
   lengthPadding = std::make_shared<prm::Parameter>
@@ -81,7 +84,7 @@ DieSet::DieSet() : Base(), sShape(std::make_unique<ann::SeerShape>())
     , osg::Vec3d(-1.0, -1.0, -1.0)
     , prm::Tags::Origin
   );
-  origin->connectValue(std::bind(&DieSet::setModelDirty, this));
+  origin->connect(*prmObserver);
   parameters.push_back(origin.get());
   
   autoCalc = std::make_shared<prm::Parameter>
@@ -147,6 +150,8 @@ void DieSet::updateModel(const UpdatePayload &payloadIn)
   sShape->reset();
   try
   {
+    prm::ObserverBlocker block(*prmObserver);
+    
     double h = 50.0; //height
     double zPadding = 50.0; //distance from bottom of bounding box to top of set.
     if (static_cast<bool>(*autoCalc))
@@ -167,14 +172,11 @@ void DieSet::updateModel(const UpdatePayload &payloadIn)
       gp_Vec zVec(0.0, 0.0, -zPadding - h);
       
       gp_Pnt corner = bbc.Translated(xVec).Translated(yVec).Translated(zVec);
-      origin->setValueQuiet(osg::Vec3d(corner.X(), corner.Y(), corner.Z()));
-      originLabel->valueHasChanged();
+      origin->setValue(osg::Vec3d(corner.X(), corner.Y(), corner.Z()));
       double l = sbbox.getLength() + 2 * static_cast<double>(*lengthPadding);
       double w = sbbox.getWidth() + 2 * static_cast<double>(*widthPadding);
-      length->setValueQuiet(l);
-      lengthLabel->valueHasChanged();
-      width->setValueQuiet(w);
-      widthLabel->valueHasChanged();
+      length->setValue(l);
+      width->setValue(w);
     }
     
     //assumptions on orientation.

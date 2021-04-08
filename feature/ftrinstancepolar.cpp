@@ -57,6 +57,7 @@ count(std::make_unique<prm::Parameter>(QObject::tr("Count"), 3)),
 angle(std::make_unique<prm::Parameter>(prm::Names::Angle, 20.0)),
 inclusiveAngle(std::make_unique<prm::Parameter>(QObject::tr("Inclusive Angle"), false, prm::Tags::Angle)),
 includeSource(std::make_unique<prm::Parameter>(QObject::tr("Include Source"), true)),
+prmObserver(std::make_unique<prm::Observer>(std::bind(&InstancePolar::setModelDirty, this))),
 sShape(std::make_unique<ann::SeerShape>()),
 iMapper(std::make_unique<ann::InstanceMapper>()),
 csysDragger(std::make_unique<ann::CSysDragger>(this, csys.get()))
@@ -71,7 +72,7 @@ csysDragger(std::make_unique<ann::CSysDragger>(this, csys.get()))
   count->connectValue(std::bind(&InstancePolar::setModelDirty, this));
   parameters.push_back(count.get());
   
-  csys->connectValue(std::bind(&InstancePolar::setModelDirty, this));
+  csys->connect(*prmObserver);
   parameters.push_back(csys.get());
   
   angle->setConstraint(prm::Constraint::buildNonZeroAngle());
@@ -144,6 +145,8 @@ void InstancePolar::updateModel(const UpdatePayload &payloadIn)
   sShape->reset();
   try
   {
+    prm::ObserverBlocker block(*prmObserver);
+    
     //no new failure state.
     if (isSkipped())
     {
@@ -207,7 +210,7 @@ void InstancePolar::updateModel(const UpdatePayload &payloadIn)
         newOrigin = gu::toOsg(axis.Location());
       }
       assert(newDirection && newOrigin);
-      csys->setValueQuiet(osg::Matrixd::rotate(osg::Vec3d(0.0, 0.0, 1.0), newDirection.get()) * osg::Matrixd::translate(newOrigin.get()));
+      csys->setValue(osg::Matrixd::rotate(osg::Vec3d(0.0, 0.0, 1.0), newDirection.get()) * osg::Matrixd::translate(newOrigin.get()));
       csysDragger->draggerUpdate(); //keep dragger in sync with parameter.
     }
     else

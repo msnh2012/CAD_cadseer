@@ -280,5 +280,5 @@ void Nest::serialRead(const prj::srl::nsts::Nest &sNestIn)
   feedDirection->serialIn(sNestIn.feedDirection());
   gapLabel->serialIn(sNestIn.gapLabel());
   feedDirectionLabel->serialIn(sNestIn.feedDirectionLabel());
-  pitch->setValueQuiet(sNestIn.pitch());
+  pitch->setValue(sNestIn.pitch());
 }

@@ -27,6 +27,7 @@ namespace ann{class SeerShape;}
 namespace lbr{class PLabel;}
 namespace occt{class BoundingBox;}
 namespace prj{namespace srl{namespace rvls{class Revolve;}}}
+namespace prm{struct Observer;}
 
 namespace ftr
 {
@@ -70,6 +71,8 @@ namespace ftr
     std::unique_ptr<prm::Parameter> axisOrigin;
     std::unique_ptr<prm::Parameter> axisDirection;
     std::unique_ptr<prm::Parameter> angle;
+    
+    std::unique_ptr<prm::Observer> prmObserver;
     
     osg::ref_ptr<lbr::PLabel> axisOriginLabel;
     osg::ref_ptr<lbr::PLabel> axisDirectionLabel;

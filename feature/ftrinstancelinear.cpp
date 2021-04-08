@@ -52,6 +52,7 @@ yCount(std::make_unique<prm::Parameter>(QObject::tr("Y Count"), 2)),
 zCount(std::make_unique<prm::Parameter>(QObject::tr("Z Count"), 2)),
 csys(std::make_unique<prm::Parameter>(prm::Names::CSys, osg::Matrixd::identity(), prm::Tags::CSys)),
 includeSource(std::make_unique<prm::Parameter>(QObject::tr("Include Source"), true)),
+prmObserver(std::make_unique<prm::Observer>(std::bind(&InstanceLinear::setModelDirty, this))),
 sShape(std::make_unique<ann::SeerShape>()),
 iMapper(std::make_unique<ann::InstanceMapper>()),
 csysDragger(std::make_unique<ann::CSysDragger>(this, csys.get()))
@@ -78,7 +79,7 @@ csysDragger(std::make_unique<ann::CSysDragger>(this, csys.get()))
   yCount->connectValue(std::bind(&InstanceLinear::setModelDirty, this));
   zCount->connectValue(std::bind(&InstanceLinear::setModelDirty, this));
   
-  csys->connectValue(std::bind(&InstanceLinear::setModelDirty, this));
+  csys->connect(*prmObserver);
   
   includeSource->connectValue(std::bind(&InstanceLinear::setModelDirty, this));
   
@@ -171,6 +172,8 @@ void InstanceLinear::updateModel(const UpdatePayload &payloadIn)
   sShape->reset();
   try
   {
+    prm::ObserverBlocker block(*prmObserver);
+    
     //no new failure state.
     if (isSkipped())
     {
@@ -250,7 +253,7 @@ void InstanceLinear::updateModel(const UpdatePayload &payloadIn)
     osg::Vec3d origin = gu::toOsg(bb.getCenter());
     osg::Matrixd tsys = static_cast<osg::Matrixd>(*csys);
     tsys.setTrans(origin);
-    csys->setValueQuiet(tsys);
+    csys->setValue(tsys);
     csysDragger->draggerUpdate();
     
     xOffsetLabel->setMatrix(tsys * osg::Matrixd::translate(xProjection * 0.5));

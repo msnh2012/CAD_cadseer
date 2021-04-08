@@ -39,6 +39,7 @@
 #include <osg/Vec3d>
 
 #include "tools/idtools.h"
+#include "tools/tlsstring.h"
 #include "law/lwfcue.h"
 #include "dialogs/dlgwidgetgeometry.h"
 #include "dialogs/dlgenterfilter.h"
@@ -323,9 +324,9 @@ void LawFunctionWidget::selectionChangedSlot()
       stow->pEdit->setEnabled(true);
       stow->vEdit->setEnabled(true);
       stow->dEdit->setEnabled(true);
-      stow->pEdit->setText(QString::number(pv.x()));
-      stow->vEdit->setText(QString::number(pv.y()));
-      stow->dEdit->setText(QString::number(pv.z()));
+      stow->pEdit->setText(QString::fromStdString(tls::prettyDouble(pv.x())));
+      stow->vEdit->setText(QString::fromStdString(tls::prettyDouble(pv.y())));
+      stow->dEdit->setText(QString::fromStdString(tls::prettyDouble(pv.z())));
     }
     else
       disableWidgets();
@@ -393,7 +394,7 @@ void LawFunctionWidget::changed(const QString &textIn, int index)
   assert(parameter);
   osg::Vec3d value = static_cast<osg::Vec3d>(*parameter);
   value[index] = nv;
-  parameter->setValueQuiet(value);
+  parameter->setValue(value);
   
   //if we changed the value of a composite with a constant, update the other parameter
   if (stow->cue.type == lwf::Type::composite && index == 1)
@@ -417,7 +418,7 @@ void LawFunctionWidget::changed(const QString &textIn, int index)
       {
         osg::Vec3d tv = static_cast<osg::Vec3d>(stow->cue.boundaries.at(bi));
         tv.y() = value.y();
-        stow->cue.boundaries.at(bi).setValueQuiet(tv);
+        stow->cue.boundaries.at(bi).setValue(tv);
       };
       if (bi.get() != 0)
       {

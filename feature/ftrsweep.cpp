@@ -199,6 +199,7 @@ Base()
 , forceC1(std::make_unique<prm::Parameter>(QObject::tr("Force C1"), false))
 , solid(std::make_unique<prm::Parameter>(QObject::tr("Solid"), false))
 , useLaw(std::make_unique<prm::Parameter>(QObject::tr("Use Law"), false))
+, prmObserver(std::make_unique<prm::Observer>(std::bind(&Sweep::setModelDirty, this)))
 , trihedronLabel(new lbr::PLabel(trihedron.get()))
 , transitionLabel(new lbr::PLabel(transition.get()))
 , forceC1Label(new lbr::PLabel(forceC1.get()))
@@ -444,7 +445,7 @@ void Sweep::setBinormal(const SweepBinormal &bnIn)
   trihedron->setValue(4);
   binormal = bnIn;
   
-  binormal.binormal->connectValue(std::bind(&Sweep::setModelDirty, this));
+  binormal.binormal->connect(*prmObserver);
   parameters.push_back(binormal.binormal.get());
   binormalSwitch->addChild(binormal.binormalLabel.get());
   
@@ -562,6 +563,8 @@ void Sweep::updateModel(const UpdatePayload &pIn)
   sShape->reset();
   try
   {
+    prm::ObserverBlocker block(*prmObserver);
+    
     if (isSkipped())
     {
       setSuccess();
@@ -721,14 +724,14 @@ void Sweep::updateModel(const UpdatePayload &pIn)
             auto axis = occt::gleanAxis(shape);
             if (!axis.second)
               throw std::runtime_error("couldn't glean axis for binormal");
-            binormal.binormal->setValueQuiet(gu::toOsg(axis.first.Direction()));
+            binormal.binormal->setValue(gu::toOsg(axis.first.Direction()));
           }
           else
           {
             if (f0.getType() == ftr::Type::DatumAxis)
             {
               const ftr::DatumAxis &da = static_cast<const ftr::DatumAxis&>(f0);
-              binormal.binormal->setValueQuiet(da.getDirection());
+              binormal.binormal->setValue(da.getDirection());
             }
           }
         }
@@ -760,7 +763,7 @@ void Sweep::updateModel(const UpdatePayload &pIn)
           if (!pd.valid() || pd.length() < std::numeric_limits<float>::epsilon())
             throw std::runtime_error("invalid direction for 2 binormal picks");
           pd.normalize();
-          binormal.binormal->setValueQuiet(pd);
+          binormal.binormal->setValue(pd);
         }
         else
           throw std::runtime_error("unsupported number of binormal picks");

@@ -28,6 +28,7 @@
 namespace ann{class SeerShape; class InstanceMapper; class CSysDragger;}
 namespace lbr{class PLabel;}
 namespace prj{namespace srl{namespace inps{class InstancePolar;}}}
+namespace prm{struct Observer;}
 
 namespace ftr
 {
@@ -63,6 +64,8 @@ namespace ftr
     std::unique_ptr<prm::Parameter> angle;
     std::unique_ptr<prm::Parameter> inclusiveAngle;
     std::unique_ptr<prm::Parameter> includeSource;
+    
+    std::unique_ptr<prm::Observer> prmObserver;
     
     std::unique_ptr<ann::SeerShape> sShape;
     std::unique_ptr<ann::InstanceMapper> iMapper;

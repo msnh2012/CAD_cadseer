@@ -38,6 +38,7 @@ namespace mdv{class DatumAxis;}
 namespace ann{class CSysDragger;}
 namespace lbr{class PLabel;}
 namespace prj{namespace srl{namespace dtas{class DatumAxis;}}}
+namespace prm{struct Observer;}
 
 namespace ftr
 {
@@ -104,6 +105,7 @@ namespace ftr
     std::unique_ptr<prm::Parameter> csys; //!< for constant type
     std::unique_ptr<prm::Parameter> autoSize; //!< for constant type
     std::unique_ptr<prm::Parameter> size; //!< for constant type
+    std::unique_ptr<prm::Observer> prmObserver;
     std::unique_ptr<ann::CSysDragger> csysDragger; //!< for constant type
     osg::ref_ptr<lbr::PLabel> autoSizeLabel;
     osg::ref_ptr<lbr::PLabel> sizeLabel;

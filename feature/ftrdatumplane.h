@@ -31,6 +31,7 @@ namespace mdv{class DatumPlane;}
 namespace lbr{class IPGroup; class PLabel;}
 namespace ann{class CSysDragger;}
 namespace prj{namespace srl{namespace dtps{class DatumPlane;}}}
+namespace prm{struct Observer;}
 
 namespace ftr
 {
@@ -101,6 +102,7 @@ namespace ftr
     std::unique_ptr<prm::Parameter> size; //!< double. distance to edges.
     std::unique_ptr<prm::Parameter> offset; //!< double. distance for POffset
     std::unique_ptr<prm::Parameter> angle; //!< double. angle for rotationn
+    std::unique_ptr<prm::Observer> prmObserver;
     std::unique_ptr<ann::CSysDragger> csysDragger; //!< for constant type
     osg::ref_ptr<lbr::PLabel> flipLabel;
     osg::ref_ptr<lbr::PLabel> autoSizeLabel;

@@ -52,6 +52,7 @@ radius1(std::make_unique<prm::Parameter>(prm::Names::Radius1, pTor().radius1(), 
 radius2(std::make_unique<prm::Parameter>(prm::Names::Radius2, pTor().radius2(), prm::Tags::Radius)),
 seam(std::make_unique<prm::Parameter>(QObject::tr("Seam Angle"), 0.0, prm::Tags::Angle)),
 csys(std::make_unique<prm::Parameter>(prm::Names::CSys, osg::Matrixd::identity(), prm::Tags::CSys)),
+csysObserver(std::make_unique<prm::Observer>(std::bind(&Torus::setModelDirty, this))),
 csysDragger(std::make_unique<ann::CSysDragger>(this, csys.get())),
 sShape(std::make_unique<ann::SeerShape>())
 {
@@ -85,7 +86,7 @@ sShape(std::make_unique<ann::SeerShape>())
   radius1->connectValue(std::bind(&Torus::setModelDirty, this));
   radius2->connectValue(std::bind(&Torus::setModelDirty, this));
   seam->connectValue(std::bind(&Torus::setModelDirty, this));
-  csys->connectValue(std::bind(&Torus::setModelDirty, this));
+  csys->connect(*csysObserver);
   
   setupIPGroup();
 }
@@ -207,7 +208,8 @@ void Torus::updateModel(const UpdatePayload &plIn)
       auto systemParameters =  tfs.front()->getParameters(prm::Tags::CSys);
       if (systemParameters.empty())
         throw std::runtime_error("Feature for csys link, doesn't have csys parameter");
-      csys->setValueQuiet(static_cast<osg::Matrixd>(*systemParameters.front()));
+      prm::ObserverBlocker block(*csysObserver);
+      csys->setValue(static_cast<osg::Matrixd>(*systemParameters.front()));
       csysDragger->draggerUpdate();
       if (overlaySwitch->containsNode(csysDragger->dragger))
         overlaySwitch->removeChild(csysDragger->dragger);

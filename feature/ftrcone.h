@@ -29,6 +29,7 @@
 namespace lbr{class IPGroup;}
 namespace prj{namespace srl{namespace cns{class Cone;}}}
 namespace ann{class CSysDragger;}
+namespace prm{struct Observer;}
 
 namespace ftr
 {
@@ -61,6 +62,8 @@ namespace ftr
     std::unique_ptr<prm::Parameter> radius2; //!< maybe zero.
     std::unique_ptr<prm::Parameter> height;
     std::unique_ptr<prm::Parameter> csys;
+    
+    std::unique_ptr<prm::Observer> prmObserver;
   
     std::unique_ptr<ann::CSysDragger> csysDragger;
     std::unique_ptr<ann::SeerShape> sShape;

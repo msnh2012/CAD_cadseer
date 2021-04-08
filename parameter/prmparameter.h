@@ -288,7 +288,6 @@ namespace prm
     //@{
     //! original functions from when only doubles supported.
     bool setValue(double valueIn);
-    bool setValueQuiet(double valueIn); //!< don't trigger changed signal. use sparingly!
     explicit operator double() const;
     bool isValidValue(const double &valueIn) const;
     void setConstraint(const Constraint &); //!< only for doubles ..maybe ints?
@@ -297,7 +296,6 @@ namespace prm
     //@{
     //! int support functions.
     bool setValue(int);
-    bool setValueQuiet(int);
     explicit operator int() const;
     bool isValidValue(const int &valueIn) const; //!< just casting to double and using double constraints.
     //maybe setConstraint
@@ -306,7 +304,6 @@ namespace prm
     //@{
     //! bool support functions.
     bool setValue(bool); //<! true = value was changed.
-    bool setValueQuiet(bool);
     explicit operator bool() const;
     //@}
     
@@ -323,28 +320,24 @@ namespace prm
     //@{
     //! boost::filesystem::path support functions.
     bool setValue(const boost::filesystem::path&); //<! true = value was changed.
-    bool setValueQuiet(const boost::filesystem::path&);
     explicit operator boost::filesystem::path() const;
     //@}
     
     //@{
     //! osg::Vec3d support functions.
     bool setValue(const osg::Vec3d&); //<! true = value was changed.
-    bool setValueQuiet(const osg::Vec3d&);
     explicit operator osg::Vec3d() const;
     //@}
     
     //@{
     //! osg::Quat support functions.
     bool setValue(const osg::Quat&); //<! true = value was changed.
-    bool setValueQuiet(const osg::Quat&);
     explicit operator osg::Quat() const;
     //@}
     
     //@{
     //! osg::Matrixd support functions.
     bool setValue(const osg::Matrixd&); //<! true = value was changed.
-    bool setValueQuiet(const osg::Matrixd&);
     explicit operator osg::Matrixd() const;
     //@}
     
