@@ -930,10 +930,11 @@ prj::srl::spt::Parameter Parameter::serialOut() const
 {
   return prj::srl::spt::Parameter
   (
-    name.toStdString()
+    gu::idToString(id)
+    , name.toStdString()
     , tag
     , constant
-    , gu::idToString(id)
+    , active
     , boost::apply_visitor(SrlVisitor(), stow->variant)
   );
 }
@@ -941,10 +942,11 @@ prj::srl::spt::Parameter Parameter::serialOut() const
  //serial rename
 void Parameter::serialIn(const prj::srl::spt::Parameter &spIn)
 {
+  id = gu::stringToId(spIn.id());
   name = QString::fromStdString(spIn.name());
   tag = spIn.tag();
   constant = spIn.constant();
-  id = gu::stringToId(spIn.id());
+  active = spIn.active();
   
   const auto &vIn = spIn.pValue(); //variant in
   if (vIn.aDouble().present())

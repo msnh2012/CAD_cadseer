@@ -332,6 +332,26 @@ namespace prj
       class Parameter: public ::xml_schema::Type
       {
         public:
+        // id
+        //
+        typedef ::xml_schema::String IdType;
+        typedef ::xsd::cxx::tree::traits< IdType, char > IdTraits;
+
+        const IdType&
+        id () const;
+
+        IdType&
+        id ();
+
+        void
+        id (const IdType& x);
+
+        void
+        id (::std::unique_ptr< IdType > p);
+
+        static const IdType&
+        id_default_value ();
+
         // name
         //
         typedef ::xml_schema::String NameType;
@@ -389,25 +409,22 @@ namespace prj
         static ConstantType
         constant_default_value ();
 
-        // id
+        // active
         //
-        typedef ::xml_schema::String IdType;
-        typedef ::xsd::cxx::tree::traits< IdType, char > IdTraits;
+        typedef ::xml_schema::Boolean ActiveType;
+        typedef ::xsd::cxx::tree::traits< ActiveType, char > ActiveTraits;
 
-        const IdType&
-        id () const;
+        const ActiveType&
+        active () const;
 
-        IdType&
-        id ();
-
-        void
-        id (const IdType& x);
+        ActiveType&
+        active ();
 
         void
-        id (::std::unique_ptr< IdType > p);
+        active (const ActiveType& x);
 
-        static const IdType&
-        id_default_value ();
+        static ActiveType
+        active_default_value ();
 
         // pValue
         //
@@ -428,16 +445,18 @@ namespace prj
 
         // Constructors.
         //
-        Parameter (const NameType&,
+        Parameter (const IdType&,
+                   const NameType&,
                    const TagType&,
                    const ConstantType&,
-                   const IdType&,
+                   const ActiveType&,
                    const PValueType&);
 
-        Parameter (const NameType&,
+        Parameter (const IdType&,
+                   const NameType&,
                    const TagType&,
                    const ConstantType&,
-                   const IdType&,
+                   const ActiveType&,
                    ::std::unique_ptr< PValueType >);
 
         Parameter (const ::xercesc::DOMElement& e,
@@ -466,13 +485,14 @@ namespace prj
                ::xml_schema::Flags);
 
         protected:
+        ::xsd::cxx::tree::one< IdType > id_;
+        static const IdType id_default_value_;
         ::xsd::cxx::tree::one< NameType > name_;
         static const NameType name_default_value_;
         ::xsd::cxx::tree::one< TagType > tag_;
         static const TagType tag_default_value_;
         ::xsd::cxx::tree::one< ConstantType > constant_;
-        ::xsd::cxx::tree::one< IdType > id_;
-        static const IdType id_default_value_;
+        ::xsd::cxx::tree::one< ActiveType > active_;
         ::xsd::cxx::tree::one< PValueType > pValue_;
       };
     }

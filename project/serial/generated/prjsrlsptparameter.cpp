@@ -311,6 +311,36 @@ namespace prj
       // Parameter
       // 
 
+      const Parameter::IdType& Parameter::
+      id () const
+      {
+        return this->id_.get ();
+      }
+
+      Parameter::IdType& Parameter::
+      id ()
+      {
+        return this->id_.get ();
+      }
+
+      void Parameter::
+      id (const IdType& x)
+      {
+        this->id_.set (x);
+      }
+
+      void Parameter::
+      id (::std::unique_ptr< IdType > x)
+      {
+        this->id_.set (std::move (x));
+      }
+
+      const Parameter::IdType& Parameter::
+      id_default_value ()
+      {
+        return id_default_value_;
+      }
+
       const Parameter::NameType& Parameter::
       name () const
       {
@@ -395,34 +425,28 @@ namespace prj
         return ConstantType (true);
       }
 
-      const Parameter::IdType& Parameter::
-      id () const
+      const Parameter::ActiveType& Parameter::
+      active () const
       {
-        return this->id_.get ();
+        return this->active_.get ();
       }
 
-      Parameter::IdType& Parameter::
-      id ()
+      Parameter::ActiveType& Parameter::
+      active ()
       {
-        return this->id_.get ();
-      }
-
-      void Parameter::
-      id (const IdType& x)
-      {
-        this->id_.set (x);
+        return this->active_.get ();
       }
 
       void Parameter::
-      id (::std::unique_ptr< IdType > x)
+      active (const ActiveType& x)
       {
-        this->id_.set (std::move (x));
+        this->active_.set (x);
       }
 
-      const Parameter::IdType& Parameter::
-      id_default_value ()
+      Parameter::ActiveType Parameter::
+      active_default_value ()
       {
-        return id_default_value_;
+        return ActiveType (true);
       }
 
       const Parameter::PValueType& Parameter::
@@ -680,41 +704,45 @@ namespace prj
       // Parameter
       //
 
+      const Parameter::IdType Parameter::id_default_value_ (
+        "00000000-0000-0000-0000-000000000000");
+
       const Parameter::NameType Parameter::name_default_value_ (
         "Name");
 
       const Parameter::TagType Parameter::tag_default_value_ (
         "");
 
-      const Parameter::IdType Parameter::id_default_value_ (
-        "00000000-0000-0000-0000-000000000000");
-
       Parameter::
-      Parameter (const NameType& name,
+      Parameter (const IdType& id,
+                 const NameType& name,
                  const TagType& tag,
                  const ConstantType& constant,
-                 const IdType& id,
+                 const ActiveType& active,
                  const PValueType& pValue)
       : ::xml_schema::Type (),
+        id_ (id, this),
         name_ (name, this),
         tag_ (tag, this),
         constant_ (constant, this),
-        id_ (id, this),
+        active_ (active, this),
         pValue_ (pValue, this)
       {
       }
 
       Parameter::
-      Parameter (const NameType& name,
+      Parameter (const IdType& id,
+                 const NameType& name,
                  const TagType& tag,
                  const ConstantType& constant,
-                 const IdType& id,
+                 const ActiveType& active,
                  ::std::unique_ptr< PValueType > pValue)
       : ::xml_schema::Type (),
+        id_ (id, this),
         name_ (name, this),
         tag_ (tag, this),
         constant_ (constant, this),
-        id_ (id, this),
+        active_ (active, this),
         pValue_ (std::move (pValue), this)
       {
       }
@@ -724,10 +752,11 @@ namespace prj
                  ::xml_schema::Flags f,
                  ::xml_schema::Container* c)
       : ::xml_schema::Type (x, f, c),
+        id_ (x.id_, f, this),
         name_ (x.name_, f, this),
         tag_ (x.tag_, f, this),
         constant_ (x.constant_, f, this),
-        id_ (x.id_, f, this),
+        active_ (x.active_, f, this),
         pValue_ (x.pValue_, f, this)
       {
       }
@@ -737,10 +766,11 @@ namespace prj
                  ::xml_schema::Flags f,
                  ::xml_schema::Container* c)
       : ::xml_schema::Type (e, f | ::xml_schema::Flags::base, c),
+        id_ (this),
         name_ (this),
         tag_ (this),
         constant_ (this),
-        id_ (this),
+        active_ (this),
         pValue_ (this)
       {
         if ((f & ::xml_schema::Flags::base) == 0)
@@ -759,6 +789,20 @@ namespace prj
           const ::xercesc::DOMElement& i (p.cur_element ());
           const ::xsd::cxx::xml::qualified_name< char > n (
             ::xsd::cxx::xml::dom::name< char > (i));
+
+          // id
+          //
+          if (n.name () == "id" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< IdType > r (
+              IdTraits::create (i, f, this));
+
+            if (!id_.present ())
+            {
+              this->id_.set (::std::move (r));
+              continue;
+            }
+          }
 
           // name
           //
@@ -799,16 +843,13 @@ namespace prj
             }
           }
 
-          // id
+          // active
           //
-          if (n.name () == "id" && n.namespace_ ().empty ())
+          if (n.name () == "active" && n.namespace_ ().empty ())
           {
-            ::std::unique_ptr< IdType > r (
-              IdTraits::create (i, f, this));
-
-            if (!id_.present ())
+            if (!active_.present ())
             {
-              this->id_.set (::std::move (r));
+              this->active_.set (ActiveTraits::create (i, f, this));
               continue;
             }
           }
@@ -828,6 +869,13 @@ namespace prj
           }
 
           break;
+        }
+
+        if (!id_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "id",
+            "");
         }
 
         if (!name_.present ())
@@ -851,10 +899,10 @@ namespace prj
             "");
         }
 
-        if (!id_.present ())
+        if (!active_.present ())
         {
           throw ::xsd::cxx::tree::expected_element< char > (
-            "id",
+            "active",
             "");
         }
 
@@ -879,10 +927,11 @@ namespace prj
         if (this != &x)
         {
           static_cast< ::xml_schema::Type& > (*this) = x;
+          this->id_ = x.id_;
           this->name_ = x.name_;
           this->tag_ = x.tag_;
           this->constant_ = x.constant_;
-          this->id_ = x.id_;
+          this->active_ = x.active_;
           this->pValue_ = x.pValue_;
         }
 
@@ -1042,6 +1091,17 @@ namespace prj
       {
         e << static_cast< const ::xml_schema::Type& > (i);
 
+        // id
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "id",
+              e));
+
+          s << i.id ();
+        }
+
         // name
         //
         {
@@ -1075,15 +1135,15 @@ namespace prj
           s << i.constant ();
         }
 
-        // id
+        // active
         //
         {
           ::xercesc::DOMElement& s (
             ::xsd::cxx::xml::dom::create_element (
-              "id",
+              "active",
               e));
 
-          s << i.id ();
+          s << i.active ();
         }
 
         // pValue
