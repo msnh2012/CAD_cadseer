@@ -144,8 +144,9 @@ using namespace ann;
 CSysDragger::CSysDragger(ftr::Base *fIn, prm::Parameter *pIn) :
 Base(),
 dragger(new lbr::CSysDragger()),
+parameter(pIn),
 callBack(new DCallBack(dragger.get(), fIn, pIn)),
-parameter(pIn)
+prmObserver(std::make_unique<prm::Observer>())
 {
   dragger->setScreenScale(75.0);
   dragger->setRotationIncrement(prf::manager().rootPtr->dragger().angularIncrement());
@@ -156,12 +157,12 @@ parameter(pIn)
   dragger->setUserValue<std::string>(gu::idAttributeTitle, gu::idToString(fIn->getId()));
   
   dragger->addDraggerCallback(callBack.get());
+  
+  prmObserver->activeHandler = std::bind(&CSysDragger::csysActiveChanged, this);
+  parameter->connect(*prmObserver);
 }
 
-CSysDragger::~CSysDragger()
-{
-
-}
+CSysDragger::~CSysDragger() = default;
 
 void CSysDragger::draggerUpdate()
 {
@@ -186,6 +187,14 @@ void CSysDragger::setCSys(const osg::Matrixd &mIn)
   //apply the same transformation to dragger, so dragger moves with it.
   osg::Matrixd diffMatrix = osg::Matrixd::inverse(oldSystem) * mIn;
   draggerUpdate(dragger->getMatrix() * diffMatrix);
+}
+
+void CSysDragger::csysActiveChanged()
+{
+  if (parameter->isActive())
+    dragger->show();
+  else
+    dragger->hide();
 }
 
 prj::srl::spt::CSysDragger CSysDragger::serialOut()
@@ -221,6 +230,7 @@ void CSysDragger::serialIn(const prj::srl::spt::CSysDragger &si)
     dragger->setLink();
   else
     dragger->setUnlink();
+  csysActiveChanged();
   
   dragger->setUserValue<std::string>(gu::idAttributeTitle, si.featureId());
 }

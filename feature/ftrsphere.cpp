@@ -169,11 +169,7 @@ void Sphere::updateModel(const UpdatePayload &plIn)
         throw std::runtime_error("Feature for csys link, doesn't have csys parameter");
       csys->setValue(static_cast<osg::Matrixd>(*systemParameters.front()));
       csysDragger->draggerUpdate();
-      if (overlaySwitch->containsNode(csysDragger->dragger))
-        overlaySwitch->removeChild(csysDragger->dragger);
     }
-    else if (!overlaySwitch->containsNode(csysDragger->dragger))
-      overlaySwitch->addChild(csysDragger->dragger);
     
     BRepPrimAPI_MakeSphere sphereMaker(gu::toOcc(static_cast<osg::Matrixd>(*csys)), static_cast<double>(*radius));
     sphereMaker.Build();

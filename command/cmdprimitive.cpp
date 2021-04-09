@@ -107,6 +107,7 @@ void Primitive::go()
     if (!tf || tf->getParameters(prm::Tags::CSys).empty())
       continue;
     project->connectInsert(tf->getId(), feature->getId(), ftr::InputType{ftr::InputType::linkCSys});
+    systemParameters.front()->setActive(false);
     break;
   }
   

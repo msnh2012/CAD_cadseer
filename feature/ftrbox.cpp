@@ -275,17 +275,14 @@ void Box::updateModel(const UpdatePayload &plIn)
     std::vector<const Base*> tfs = plIn.getFeatures(ftr::InputType::linkCSys);
     if (!tfs.empty())
     {
+      //what if csys is not active? exception, warning?
       auto systemParameters =  tfs.front()->getParameters(prm::Tags::CSys);
       if (systemParameters.empty())
         throw std::runtime_error("Feature for csys link, doesn't have csys parameter");
       prm::ObserverBlocker block(*csysObserver);
       csys->setValue(static_cast<osg::Matrixd>(*systemParameters.front()));
       csysDragger->draggerUpdate();
-      if (overlaySwitch->containsNode(csysDragger->dragger))
-        overlaySwitch->removeChild(csysDragger->dragger);
     }
-    else if (!overlaySwitch->containsNode(csysDragger->dragger))
-      overlaySwitch->addChild(csysDragger->dragger);
     
     BoxBuilder boxMaker
     (

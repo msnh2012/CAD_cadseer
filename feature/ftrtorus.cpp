@@ -208,11 +208,7 @@ void Torus::updateModel(const UpdatePayload &plIn)
       prm::ObserverBlocker block(*csysObserver);
       csys->setValue(static_cast<osg::Matrixd>(*systemParameters.front()));
       csysDragger->draggerUpdate();
-      if (overlaySwitch->containsNode(csysDragger->dragger))
-        overlaySwitch->removeChild(csysDragger->dragger);
     }
-    else if (!overlaySwitch->containsNode(csysDragger->dragger))
-      overlaySwitch->addChild(csysDragger->dragger);
     
     if (!(static_cast<double>(*radius1) > static_cast<double>(*radius2)))
       throw std::runtime_error("radius1 must be bigger than radius2");

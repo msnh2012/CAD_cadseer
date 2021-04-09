@@ -22,7 +22,7 @@
 
 #include "annex/annbase.h"
 
-namespace prm{class Parameter;}
+namespace prm{class Parameter; class Observer;}
 namespace ftr{class Base;}
 namespace lbr{class CSysDragger;}
 namespace osg{class Matrixd;}
@@ -47,8 +47,12 @@ namespace ann
     void serialIn(const prj::srl::spt::CSysDragger&); //serial rename
     
     osg::ref_ptr<lbr::CSysDragger> dragger;
-    osg::ref_ptr<DCallBack> callBack;
     prm::Parameter *parameter;
+  private:
+    osg::ref_ptr<DCallBack> callBack;
+    std::unique_ptr<prm::Observer> prmObserver;
+    
+    void csysActiveChanged();
   };
 }
 

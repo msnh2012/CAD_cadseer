@@ -271,11 +271,7 @@ void Oblong::updateModel(const UpdatePayload &plIn)
         throw std::runtime_error("Feature for csys link, doesn't have csys parameter");
       csys->setValue(static_cast<osg::Matrixd>(*systemParameters.front()));
       csysDragger->draggerUpdate();
-      if (overlaySwitch->containsNode(csysDragger->dragger))
-        overlaySwitch->removeChild(csysDragger->dragger);
     }
-    else if (!overlaySwitch->containsNode(csysDragger->dragger))
-      overlaySwitch->addChild(csysDragger->dragger);
     
     if (!(static_cast<double>(*length) > static_cast<double>(*width)))
       throw std::runtime_error("length must be greater than width");

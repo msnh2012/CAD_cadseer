@@ -81,8 +81,10 @@ public:
     Origin,
     LinkIcon,
   };
-  void show(SwitchIndexes index);
-  void hide(SwitchIndexes index);
+  void show(); //!< all components
+  void hide(); //!< all components
+  void show(SwitchIndexes index); //!< individual components
+  void hide(SwitchIndexes index); //!< individual components
   
   void highlightOrigin();
   void unHighlightOrigin();
@@ -104,7 +106,8 @@ protected:
   std::vector<osg::ref_ptr<osg::MatrixTransform> > matrixLinks;
   bool matrixLinked = true;
 
-  osg::ref_ptr<osg::Switch> draggerSwitch;
+  osg::ref_ptr<osg::Switch> displaySwitch; //for everything
+  osg::ref_ptr<osg::Switch> draggerSwitch; //for individual components
   osg::ref_ptr<osg::Geode> originGeode;
   osg::ref_ptr<osg::AutoTransform> autoTransform;
   osg::ref_ptr<osg::MatrixTransform> matrixTransform;

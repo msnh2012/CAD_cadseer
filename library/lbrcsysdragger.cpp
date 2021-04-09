@@ -47,10 +47,13 @@ CSysDragger::CSysDragger()
   this->setNodeMask(mdv::csys);
   setUserValue<std::string>(gu::idAttributeTitle, gu::idToString(gu::createNilId()));
   
+  displaySwitch = new Switch();
+  this->addChild(displaySwitch);
+  
   autoTransform = new osg::AutoTransform();
   autoTransform->setAutoScaleToScreen(true);
   autoTransform->setPosition(osg::Vec3d(0.0, 0.0, 0.0));
-  this->addChild(autoTransform);
+  displaySwitch->addChild(autoTransform);
   
   //why do I need this matrix transform??????
   screenScale = 200.0;
@@ -239,6 +242,16 @@ void CSysDragger::setTranslationIncrement(double incrementIn)
 void CSysDragger::setRotationIncrement(double incrementIn)
 {
   rotateConstraint->setAngle(osg::DegreesToRadians(incrementIn));
+}
+
+void CSysDragger::show()
+{
+  displaySwitch->setAllChildrenOn();
+}
+
+void CSysDragger::hide()
+{
+  displaySwitch->setAllChildrenOff();
 }
 
 void CSysDragger::show(CSysDragger::SwitchIndexes index)

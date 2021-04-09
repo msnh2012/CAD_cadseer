@@ -149,11 +149,13 @@ void CSysWidget::radioSlot()
   {
     stow->stackWidget->setCurrentIndex(0);
     statusChanged();
+    stow->parameter->setActive(true);
     dirty();
   }
   if (stow->byFeature->isChecked())
   {
     stow->stackWidget->setCurrentIndex(1);
+    stow->parameter->setActive(false);
     dirty();
   }
 }
