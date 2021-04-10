@@ -63,7 +63,12 @@ struct cmv::BoolCombo::Stow
   Stow(BoolCombo *pwIn, prm::Parameter *pIn)
   : parentWidget(pwIn)
   , parameter(pIn)
-  , pObserver(std::bind(&Stow::valueChanged, this), std::bind(&Stow::constantChanged, this))
+  , pObserver
+  (
+    std::bind(&Stow::valueChanged, this)
+    , std::bind(&Stow::constantChanged, this)
+    , std::bind(&Stow::activeChanged, this)
+  )
   {
     assert(parameter->getValueType() == typeid(bool));
     buildGui();
@@ -105,14 +110,18 @@ struct cmv::BoolCombo::Stow
   void constantChanged()
   {
     if (parameter->isConstant())
-    {
       comboBox->setEnabled(true);
-    }
     else
-    {
       comboBox->setDisabled(true);
-    }
     valueChanged();
+  }
+  
+  void activeChanged()
+  {
+    if (parameter->isActive())
+      comboBox->setEnabled(true);
+    else
+      comboBox->setDisabled(true);
   }
 };
 
@@ -144,7 +153,12 @@ struct cmv::EnumCombo::Stow
   Stow(EnumCombo *pwIn, prm::Parameter *pIn)
   : parentWidget(pwIn)
   , parameter(pIn)
-  , pObserver(std::bind(&Stow::valueChanged, this), std::bind(&Stow::constantChanged, this))
+  , pObserver
+  (
+    std::bind(&Stow::valueChanged, this)
+    , std::bind(&Stow::constantChanged, this)
+    , std::bind(&Stow::activeChanged, this)
+  )
   {
     assert(parameter->getValueType() == typeid(int));
     assert(parameter->isEnumeration());
@@ -184,14 +198,18 @@ struct cmv::EnumCombo::Stow
   void constantChanged()
   {
     if (parameter->isConstant())
-    {
       comboBox->setEnabled(true);
-    }
     else
-    {
       comboBox->setDisabled(true);
-    }
     valueChanged();
+  }
+  
+  void activeChanged()
+  {
+    if (parameter->isActive())
+      comboBox->setEnabled(true);
+    else
+      comboBox->setDisabled(true);
   }
 };
 
@@ -221,7 +239,12 @@ struct cmv::StringEdit::Stow
   Stow(StringEdit *pwIn, prm::Parameter *pIn)
   : parentWidget(pwIn)
   , parameter(pIn)
-  , pObserver(std::bind(&Stow::valueChanged, this), std::bind(&Stow::constantChanged, this))
+  , pObserver
+  (
+    std::bind(&Stow::valueChanged, this)
+    , std::bind(&Stow::constantChanged, this)
+    , std::bind(&Stow::activeChanged, this)
+  )
   {
     assert(parameter->getValueType() == typeid(std::string));
     buildGui();
@@ -253,14 +276,18 @@ struct cmv::StringEdit::Stow
   void constantChanged() //not needed as strings can't be linked, but oh well.
   {
     if (parameter->isConstant())
-    {
       lineEdit->setEnabled(true);
-    }
     else
-    {
       lineEdit->setDisabled(true);
-    }
     valueChanged();
+  }
+  
+  void activeChanged()
+  {
+    if (parameter->isActive())
+      lineEdit->setEnabled(true);
+    else
+      lineEdit->setDisabled(true);
   }
 };
 
@@ -291,7 +318,12 @@ struct cmv::PathEdit::Stow
   Stow(PathEdit *pwIn, prm::Parameter *pIn)
   : parentWidget(pwIn)
   , parameter(pIn)
-  , pObserver(std::bind(&Stow::valueChanged, this), std::bind(&Stow::constantChanged, this))
+  , pObserver
+  (
+    std::bind(&Stow::valueChanged, this)
+    , std::bind(&Stow::constantChanged, this)
+    , std::bind(&Stow::activeChanged, this)
+  )
   {
     assert(parameter->getValueType() == typeid(boost::filesystem::path));
     buildGui();
@@ -327,14 +359,24 @@ struct cmv::PathEdit::Stow
   void constantChanged() //not needed as paths can't be linked, but oh well.
   {
     if (parameter->isConstant())
+      lineEdit->setEnabled(true);
+    else
+      lineEdit->setDisabled(true);
+    valueChanged();
+  }
+  
+  void activeChanged()
+  {
+    if (parameter->isActive())
     {
       lineEdit->setEnabled(true);
+      button->setEnabled(true);
     }
     else
     {
       lineEdit->setDisabled(true);
+      button->setDisabled(true);
     }
-    valueChanged();
   }
 };
 
