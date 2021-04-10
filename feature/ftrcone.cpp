@@ -163,13 +163,6 @@ void Cone::updateIPGroup()
   
   heightIP->mainDim->setSqueeze(static_cast<double>(*radius1));
   heightIP->mainDim->setExtensionOffset(static_cast<double>(*radius1));
-  
-  heightIP->valueHasChanged();
-  heightIP->constantHasChanged();
-  radius1IP->valueHasChanged();
-  radius1IP->constantHasChanged();
-  radius2IP->valueHasChanged();
-  radius2IP->constantHasChanged();
 }
 
 void Cone::setRadius1(double radius1In)

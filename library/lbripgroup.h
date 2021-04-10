@@ -27,7 +27,7 @@
 #include <osgManipulator/Dragger>
 
 namespace osg{class Switch; class AutoTransform;}
-namespace prm{class Parameter;}
+namespace prm{class Parameter; struct Observer;}
 namespace prj{namespace srl{namespace spt{class IPGroup;}}}
 
 namespace lbr
@@ -48,10 +48,7 @@ namespace lbr
     META_Node(osg, IPGroup);
     
     prm::Parameter* getParameter(){return parameter;}
-    void setParameterValue(double valueIn);
     void setRotationAxis(const osg::Vec3d&, const osg::Vec3d&);
-    void valueHasChanged();
-    void constantHasChanged();
     osg::BoundingBox maxTextBoundingBox();
     bool processMotion(const osgManipulator::MotionCommand&);
     void draggerShow();
@@ -66,6 +63,7 @@ namespace lbr
     void setMatrixDims(const osg::Matrixd &matrixIn);
     void setMatrixDragger(const osg::Matrixd &matrixIn);
     void setDimsFlipped(bool flippedIn);
+    void refresh(); //!< forces sync with parameter.
     
     prj::srl::spt::IPGroup serialOut() const; //serial rename
     void serialIn(const prj::srl::spt::IPGroup&); //serial rename
@@ -75,11 +73,17 @@ namespace lbr
     prm::Parameter *parameter = nullptr;
     double value;
     osg::Vec3d originStart;
+    osg::ref_ptr<osg::Switch> displaySwitch; //for everything
     osg::ref_ptr<osg::Switch> dimSwitch;
     osg::ref_ptr<LinearDragger> dragger;
     osg::ref_ptr<osg::Switch> draggerSwitch;
     osg::ref_ptr<osg::MatrixTransform> draggerMatrix;
     osg::ref_ptr<IPCallback> ipCallback;
+    std::unique_ptr<prm::Observer> prmObserver;
+    
+    void valueHasChanged();
+    void constantHasChanged();
+    void activeHasChanged();
   };
   
 

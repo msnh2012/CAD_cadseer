@@ -211,16 +211,12 @@ void Extrude::setupLabels()
   distanceLabel->setRotationAxis(osg::Vec3d(0.0, 0.0, 1.0), osg::Vec3d(0.0, 1.0, 0.0));
   distanceLabel->setMatrix(osg::Matrixd::identity());
   distanceLabel->noAutoRotateDragger();
-  distanceLabel->valueHasChanged();
-  distanceLabel->constantHasChanged();
   internalSwitch->addChild(distanceLabel.get());
   
   offsetLabel->setMatrixDims(osg::Matrixd::rotate(osg::PI_2, osg::Vec3d(1.0, 0.0, 0.0)));
   offsetLabel->setRotationAxis(osg::Vec3d(0.0, 0.0, 1.0), osg::Vec3d(0.0, -1.0, 0.0));
   offsetLabel->setMatrix(osg::Matrixd::identity());
   offsetLabel->noAutoRotateDragger();
-  offsetLabel->valueHasChanged();
-  offsetLabel->constantHasChanged();
   internalSwitch->addChild(offsetLabel.get());
 }
 
@@ -712,7 +708,5 @@ void Extrude::serialRead(const prj::srl::exrs::Extrude &so)
   lastMap = serializeMap(so.lastMap());
   oWireMap = serializeMap(so.oWireMap());
   
-  offsetLabel->valueHasChanged();
-  offsetLabel->constantHasChanged();
   updateLabelVisibility();
 }

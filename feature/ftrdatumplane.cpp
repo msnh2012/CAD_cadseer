@@ -169,15 +169,11 @@ Base()
   sizeIP->noAutoRotateDragger();
   sizeIP->setRotationAxis(osg::Vec3d(0.0, 1.0, 0.0), osg::Vec3d(0.0, 0.0, 1.0));
   sizeIP->setMatrixDragger(osg::Matrixd::rotate(osg::PI_2, osg::Vec3d(1.0, 0.0, 0.0)));
-  sizeIP->valueHasChanged();
-  sizeIP->constantHasChanged();
   overlaySubSwitch->addChild(sizeIP.get());
   
   offsetIP->setMatrixDims(osg::Matrixd::rotate(osg::PI_2, osg::Vec3d(1.0, 0.0, 0.0)));
   offsetIP->noAutoRotateDragger();
   offsetIP->setRotationAxis(osg::Vec3d(0.0, 0.0, 1.0), osg::Vec3d(0.0, 1.0, 0.0));
-  offsetIP->valueHasChanged();
-  offsetIP->constantHasChanged();
   overlaySubSwitch->addChild(offsetIP.get());
   
   annexes.insert(std::make_pair(ann::Type::CSysDragger, csysDragger.get()));
@@ -282,10 +278,7 @@ void DatumPlane::updateModel(const UpdatePayload &pli)
     }
     
     if (static_cast<bool>(*autoSize))
-    {
       size->setValue(cachedSize);
-      sizeIP->valueHasChanged();
-    }
     
     mainTransform->setMatrix(static_cast<osg::Matrixd>(*csys));
     

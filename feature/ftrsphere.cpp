@@ -142,8 +142,6 @@ void Sphere::setupIPGroup()
 void Sphere::updateIPGroup()
 {
   radiusIP->setMatrix(static_cast<osg::Matrixd>(*csys));
-  radiusIP->valueHasChanged();
-  radiusIP->constantHasChanged();
 }
 
 void Sphere::updateModel(const UpdatePayload &plIn)

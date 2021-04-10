@@ -152,11 +152,6 @@ void Cylinder::updateIPGroup()
   
   radiusIP->mainDim->setSqueeze(static_cast<double>(*height) / 2.0);
   radiusIP->mainDim->setExtensionOffset(static_cast<double>(*height) / 2.0);
-  
-  heightIP->valueHasChanged();
-  heightIP->constantHasChanged();
-  radiusIP->valueHasChanged();
-  radiusIP->constantHasChanged();
 }
 
 void Cylinder::setRadius(double radiusIn)

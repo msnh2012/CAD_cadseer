@@ -403,13 +403,6 @@ void Oblong::updateIPGroup()
   //no need to rotate
   hMatrix.setTrans(osg::Vec3d(static_cast<double>(*length) / 2.0, static_cast<double>(*width) / 2.0, 0.0));
   heightIP->setMatrixDragger(hMatrix);
-  
-  lengthIP->valueHasChanged();
-  lengthIP->constantHasChanged();
-  widthIP->valueHasChanged();
-  widthIP->constantHasChanged();
-  heightIP->valueHasChanged();
-  heightIP->constantHasChanged();
 }
 
 void Oblong::serialWrite(const boost::filesystem::path &dIn)

@@ -164,11 +164,6 @@ void Torus::updateIPGroup()
   radius2IP->setMatrixDims(osg::Matrixd::translate(osg::Vec3d(0.0, static_cast<double>(*radius1), 0.0)));
   radius2IP->setMatrix(static_cast<osg::Matrixd>(*csys));
   
-  radius1IP->valueHasChanged();
-  radius1IP->constantHasChanged();
-  radius2IP->valueHasChanged();
-  radius2IP->constantHasChanged();
-  
   osg::Vec3d seamLocation = osg::Vec3d(static_cast<double>(*radius2), 0.0, 0.0)
     * osg::Matrixd::rotate(osg::DegreesToRadians(static_cast<double>(*seam)), osg::Vec3d(0.0, 1.0, 0.0))
     + osg::Vec3d(static_cast<double>(*radius1), 0.0, 0.0);

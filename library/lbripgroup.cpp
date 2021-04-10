@@ -51,10 +51,22 @@ mainDim(),
 differenceDim(),
 overallDim(),
 parameter(parameterIn),
-value(std::numeric_limits<double>::max())
+value(std::numeric_limits<double>::max()),
+prmObserver
+(
+  std::make_unique<prm::Observer>
+  (
+    std::bind(&IPGroup::valueHasChanged, this)
+    , std::bind(&IPGroup::constantHasChanged, this)
+    , std::bind(&IPGroup::activeHasChanged, this)
+  )
+)
 {
+  displaySwitch = new osg::Switch();
+  this->addChild(displaySwitch.get());
+  
   rotation = new osg::AutoTransform();
-  this->addChild(rotation.get());
+  displaySwitch->addChild(rotation.get());
   
   dimSwitch = new osg::Switch();
   rotation->addChild(dimSwitch.get());
@@ -87,8 +99,8 @@ value(std::numeric_limits<double>::max())
   ipCallback = new IPCallback(dragger.get(), this);
   dragger->addDraggerCallback(ipCallback.get());
   
-  parameter->connectValue(std::bind(&IPGroup::valueHasChanged, this));
-  parameter->connectConstant(std::bind(&IPGroup::constantHasChanged, this));
+  refresh();
+  parameter->connect(*prmObserver);
 }
 
 IPGroup::IPGroup(const IPGroup& copy, const osg::CopyOp& copyOp) : osg::MatrixTransform(copy, copyOp)
@@ -122,10 +134,17 @@ void IPGroup::setDimsFlipped(bool flippedIn)
   overallDim->setFlipped(flippedIn);
 }
 
+void IPGroup::refresh()
+{
+  constantHasChanged();
+  valueHasChanged();
+  activeHasChanged();
+}
+
 void IPGroup::noAutoRotateDragger()
 {
   rotation->removeChild(draggerMatrix.get());
-  this->addChild(draggerMatrix.get());
+  displaySwitch->addChild(draggerMatrix.get());
 }
 
 osg::BoundingBox IPGroup::maxTextBoundingBox()
@@ -142,7 +161,10 @@ osg::BoundingBox IPGroup::maxTextBoundingBox()
 void IPGroup::valueHasChanged()
 {
   assert(parameter);
-  setParameterValue(static_cast<double>(*parameter));
+  value = static_cast<double>(*parameter);
+  mainDim->setSpread(value);
+  overallDim->setSpread(value);
+  dragger->setMatrix(osg::Matrixd::translate(0.0, 0.0, value));
 }
 
 void IPGroup::constantHasChanged()
@@ -160,15 +182,12 @@ void IPGroup::constantHasChanged()
   }
 }
 
-void IPGroup::setParameterValue(double valueIn)
+void IPGroup::activeHasChanged()
 {
-  if (value == valueIn)
-    return;
-  value = valueIn;
-  mainDim->setSpread(value);
-  overallDim->setSpread(value);
-  
-  dragger->setMatrix(osg::Matrixd::translate(0.0, 0.0, value));
+  if (parameter->isActive())
+    displaySwitch->setAllChildrenOn();
+  else
+    displaySwitch->setAllChildrenOff();
 }
 
 void IPGroup::draggerShow()
@@ -246,6 +265,7 @@ void IPGroup::serialIn(const prj::srl::spt::IPGroup &sgi)
   
   valueHasChanged();
   constantHasChanged();
+  activeHasChanged();
 }
 
 bool IPGroup::processMotion(const osgManipulator::MotionCommand &commandIn)
