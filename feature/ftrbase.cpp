@@ -568,7 +568,9 @@ QTextStream& Base::getInfo(QTextStream &stream) const
           stream
               << "    Parameter name: " << p->getName()
               << "    Value: " << boost::apply_visitor(InfoVisitor(), p->getStow().variant)
-              << "    Is linked: " << boolString(!(p->isConstant())) << Qt::endl;
+              << "    Is linked: " << boolString(!(p->isConstant()))
+              << "    Is active: " << boolString(p->isActive())
+              << Qt::endl;
       }
     }
     

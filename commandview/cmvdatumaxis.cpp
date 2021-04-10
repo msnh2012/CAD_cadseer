@@ -146,11 +146,11 @@ struct DatumAxis::Stow
         msg1 = msgs.front();
     }
     
-    QSignalBlocker stackBlocker(stackedWidget);
     ftr::DatumAxis::AxisType at = command->feature->getAxisType();
     if (at == ftr::DatumAxis::AxisType::Constant)
     {
       combo->setCurrentIndex(0);
+      stackedWidget->setCurrentIndex(0);
     }
     else if (at == ftr::DatumAxis::AxisType::Points)
     {
@@ -159,6 +159,7 @@ struct DatumAxis::Stow
       if (msg1)
         pointsSelectionWidget->initializeButton(1, msg1.get());
       combo->setCurrentIndex(1);
+      stackedWidget->setCurrentIndex(1);
       activate(1);
     }
     else if (at == ftr::DatumAxis::AxisType::Intersection)
@@ -168,6 +169,7 @@ struct DatumAxis::Stow
       if (msg1)
         intersectionSelectionWidget->initializeButton(1, msg1.get());
       combo->setCurrentIndex(2);
+      stackedWidget->setCurrentIndex(2);
       activate(2);
     }
     else if (at == ftr::DatumAxis::AxisType::Geometry)
@@ -175,6 +177,7 @@ struct DatumAxis::Stow
       if (msg0)
         geometrySelectionWidget->initializeButton(0, msg0.get());
       combo->setCurrentIndex(3);
+      stackedWidget->setCurrentIndex(3);
       activate(3);
     }
   }

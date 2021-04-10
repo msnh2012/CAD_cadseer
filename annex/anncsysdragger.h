@@ -22,7 +22,7 @@
 
 #include "annex/annbase.h"
 
-namespace prm{class Parameter; class Observer;}
+namespace prm{class Parameter; struct Observer;}
 namespace ftr{class Base;}
 namespace lbr{class CSysDragger;}
 namespace osg{class Matrixd;}

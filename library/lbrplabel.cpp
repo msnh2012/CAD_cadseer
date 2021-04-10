@@ -143,7 +143,8 @@ void PLabel::build()
   text->setBackdropColor(osg::Vec4(1.0, 1.0, 1.0, 1.0));
   text->setCharacterSize(iPref.characterSize());
   text->setAlignment(osgText::Text::CENTER_CENTER);
-  autoTransform->addChild(text.get());
+  if (parameter->isActive())
+    autoTransform->addChild(text.get());
 }
 
 void PLabel::setText()
@@ -201,7 +202,10 @@ void PLabel::activeHasChanged()
 {
   assert(parameter);
   if (parameter->isActive())
-    autoTransform->addChild(text.get());
+  {
+    if (!autoTransform->containsNode(text.get()))
+      autoTransform->addChild(text.get());
+  }
   else
     autoTransform->removeChild(text.get());
 }

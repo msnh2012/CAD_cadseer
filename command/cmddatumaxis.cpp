@@ -144,9 +144,7 @@ void DatumAxis::go()
   
   //create a constant type. and launch command view
   feature->setAxisType(ftr::DatumAxis::AxisType::Constant);
-  osg::Matrixd current = viewer->getCurrentSystem();
-  feature->setOrigin(current.getTrans());
-  feature->setDirection(gu::getZVector(current));
+  feature->setToSystem(viewer->getCurrentSystem());
   feature->setSize(viewer->getDiagonalLength() / 4.0);
   localUpdate();
   node->sendBlocked(msg::buildStatusMessage("Constant datum added at current system z axis", 2.0));

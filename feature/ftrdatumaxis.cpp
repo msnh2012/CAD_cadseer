@@ -62,7 +62,7 @@ DatumAxis::DatumAxis() : Base()
 , csys(std::make_unique<prm::Parameter>(prm::Names::CSys, osg::Matrixd::identity(), prm::Tags::CSys))
 , autoSize(std::make_unique<prm::Parameter>(prm::Names::AutoSize, false, prm::Tags::AutoSize))
 , size(std::make_unique<prm::Parameter>(prm::Names::Size, 20.0, prm::Tags::Size))
-, prmObserver(std::make_unique<prm::Observer>(std::bind(&DatumAxis::setModelDirty, this)))
+, prmObserver(std::make_unique<prm::Observer>(std::bind(&DatumAxis::setVisualDirty, this)))
 , csysDragger(std::make_unique<ann::CSysDragger>(this, csys.get()))
 , cachedSize(20.0)
 {
@@ -71,21 +71,25 @@ DatumAxis::DatumAxis() : Base()
   name = QObject::tr("Datum Axis");
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
   
+  //little unusual as a parameters don't actually affect much.
   parameters.push_back(autoSize.get());
+  autoSize->setActive(false); //default state
+  autoSize->connectValue(std::bind(&DatumAxis::prmActiveSync, this));
   autoSize->connectValue(std::bind(&DatumAxis::setVisualDirty, this));
   
   parameters.push_back(size.get());
   size->connect(*prmObserver);
   
-  parameters.push_back(csys.get()); //should we add and remove this when type switching? PIA
-  csys->connectValue(std::bind(&DatumAxis::setModelDirty, this));
-  overlaySwitch->addChild(csysDragger->dragger);
+  parameters.push_back(csys.get());
+  csys->connectValue(std::bind(&DatumAxis::setModelDirty, this)); //for dragger
   
   autoSizeLabel = new lbr::PLabel(autoSize.get());
   overlaySwitch->addChild(autoSizeLabel.get());
   
   sizeLabel = new lbr::PLabel(size.get());
-  //size label will get added or removed from overlay as needed.
+  overlaySwitch->addChild(sizeLabel.get());
+  
+  overlaySwitch->addChild(csysDragger->dragger);
   
   display = new mdv::DatumAxis();
   mainTransform->addChild(display.get());
@@ -103,30 +107,22 @@ void DatumAxis::setAxisType(AxisType tIn)
   {
     //update dragger and parameter to current axis. origin and direction always up to date.
     csysDragger->setCSys(osg::Matrixd::rotate(osg::Vec3d(0.0, 0.0, 1.0), direction) * osg::Matrixd::translate(origin));
-    autoSize->setValue(false);
     picks.clear();
+    csys->setActive(true);
   }
+  else
+    csys->setActive(false);
   
-  updateDraggerViz();
-  updateLabelViz();
+  prmActiveSync();
   this->setModelDirty();
 }
 
-void DatumAxis::setOrigin(const osg::Vec3d &oIn)
+void DatumAxis::setToSystem(const osg::Matrixd &mIn)
 {
-  axisType = AxisType::Constant;
-  origin = oIn;
-  csysDragger->setCSys(osg::Matrixd::rotate(osg::Vec3d(0.0, 0.0, 1.0), direction) * osg::Matrixd::translate(origin)); //does both parameter and dragger
-}
-
-void DatumAxis::setDirection(const osg::Vec3d &dIn)
-{
-  axisType = AxisType::Constant;
-
-  osg::Vec3d dn = dIn;
-  dn.normalize();
-  direction = dn;
-  csysDragger->setCSys(osg::Matrixd::rotate(osg::Vec3d(0.0, 0.0, 1.0), direction) * osg::Matrixd::translate(origin)); //does both parameter and dragger
+  origin = mIn.getTrans();
+  direction = gu::getZVector(mIn);
+  csysDragger->setCSys(mIn);
+  this->setModelDirty();
 }
 
 void DatumAxis::setSize(double sIn)
@@ -165,14 +161,32 @@ prm::Parameter* DatumAxis::getSizeParameter()
   return size.get();
 }
 
+void DatumAxis::prmActiveSync()
+{
+  // we don't need to trigger here
+  if (axisType == AxisType::Constant)
+  {
+    csys->setActive(true);
+    autoSize->setActive(false);
+    size->setActive(true);
+  }
+  else
+  {
+    csys->setActive(false);
+    autoSize->setActive(true);
+    if (static_cast<bool>(*autoSize))
+      size->setActive(false);
+    else
+      size->setActive(true);
+  }
+}
+
 void DatumAxis::updateModel(const UpdatePayload &pli)
 {
   setFailure();
   lastUpdateLog.clear();
   try
   {
-    prm::ObserverBlocker block(*prmObserver);
-    
     if (isSkipped())
     {
       setSuccess();
@@ -359,7 +373,10 @@ void DatumAxis::updateVisual()
 void DatumAxis::updateVisualInternal()
 {
   if (static_cast<bool>(*autoSize))
+  {
+    prm::ObserverBlocker block(*prmObserver);
     size->setValue(cachedSize);
+  }
   
   double ts = static_cast<double>(*size);
   
@@ -369,29 +386,6 @@ void DatumAxis::updateVisualInternal()
   
   sizeLabel->setMatrix(osg::Matrixd::translate(osg::Vec3d(0.0, 0.0, ts) * mainTransform->getMatrix()));
   autoSizeLabel->setMatrix(osg::Matrixd::translate(osg::Vec3d(0.0, 0.0, ts * 0.5) * mainTransform->getMatrix()));
-  
-  updateLabelViz();
-}
-
-void DatumAxis::updateDraggerViz()
-{
-  if (axisType == AxisType::Constant && !overlaySwitch->containsNode(csysDragger->dragger))
-    overlaySwitch->addChild(csysDragger->dragger);
-  if (axisType != AxisType::Constant && overlaySwitch->containsNode(csysDragger->dragger))
-    overlaySwitch->removeChild(csysDragger->dragger);
-}
-
-void DatumAxis::updateLabelViz()
-{
-  if (axisType == AxisType::Constant && overlaySwitch->containsNode(autoSizeLabel.get()))
-    overlaySwitch->removeChild(autoSizeLabel.get());
-  if (axisType != AxisType::Constant && (!overlaySwitch->containsNode(autoSizeLabel.get())))
-    overlaySwitch->addChild(autoSizeLabel.get());
-  
-  if (static_cast<bool>(*autoSize) && (overlaySwitch->containsNode(sizeLabel.get())))
-    overlaySwitch->removeChild(sizeLabel.get());
-  if (!static_cast<bool>(*autoSize) && (!overlaySwitch->containsNode(sizeLabel.get())))
-    overlaySwitch->addChild(sizeLabel.get());
 }
 
 void DatumAxis::serialWrite(const boost::filesystem::path &dIn)
@@ -433,7 +427,6 @@ void DatumAxis::serialRead(const prj::srl::dtas::DatumAxis &dai)
     picks.emplace_back(pIn);
   
   cachedSize = static_cast<double>(*size);
-  updateDraggerViz();
   updateVisualInternal();
   if (axisType == AxisType::Constant)
     mainTransform->setMatrix(static_cast<osg::Matrixd>(*csys));

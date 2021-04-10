@@ -75,10 +75,9 @@ namespace ftr
     const Picks& getPicks(){return picks;}
     void setAutoSize(bool);
     
-    void setOrigin(const osg::Vec3d&); //!< makes type constant
     osg::Vec3d getOrigin() const {return origin;}
-    void setDirection(const osg::Vec3d&); //!< makes type constant
     osg::Vec3d getDirection() const {return direction;}
+    void setToSystem(const osg::Matrixd&);
     
     void setSize(double);
     double getSize() const;
@@ -92,9 +91,8 @@ namespace ftr
     void goUpdatePoints(const UpdatePayload&);
     void goUpdateIntersection(const UpdatePayload&);
     void goUpdateGeometry(const UpdatePayload&);
-    void updateDraggerViz();
-    void updateLabelViz();
     void updateVisualInternal();
+    void prmActiveSync();
     
     AxisType axisType;
     Picks picks; //understood that 1st is head and 2nd is tail of vector.
