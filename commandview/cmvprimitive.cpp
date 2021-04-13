@@ -67,17 +67,7 @@ struct Primitive::Stow
     
     parameterWidget = new cmv::ParameterWidget(view, feature->getParameters());
     mainLayout->addWidget(parameterWidget);
-    prm::Parameter *csys = nullptr;
-    for (auto *p : feature->getParameters())
-    {
-      //future:
-//       if (p->getTag() == prm::Tags::CSys)
-//         csys = p;
-      if (p->getName() == prm::Names::CSys)
-        csys = p;
-    }
-    
-    assert(csys);
+    prm::Parameter *csys = feature->getParameters(prm::Tags::CSys).front();
     csysWidget = dynamic_cast<cmv::CSysWidget*>(parameterWidget->getWidget(csys));
     assert(csysWidget);
     ftr::UpdatePayload payload = view->project->getPayload(feature->getId());

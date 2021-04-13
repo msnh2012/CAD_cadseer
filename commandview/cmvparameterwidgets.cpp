@@ -74,6 +74,7 @@ struct cmv::BoolCombo::Stow
     buildGui();
     //no need to call valueChanged. Constant will do it all
     constantChanged();
+    activeChanged();
     parameter->connect(pObserver);
     QObject::connect(comboBox, SIGNAL(currentIndexChanged(int)), parentWidget, SLOT(currentChangedSlot(int)));
   }
@@ -165,6 +166,7 @@ struct cmv::EnumCombo::Stow
     buildGui();
     //no need to call valueChanged. Constant will do it all
     constantChanged();
+    activeChanged();
     parameter->connect(pObserver);
     QObject::connect(comboBox, SIGNAL(currentIndexChanged(int)), parentWidget, SLOT(currentChangedSlot(int)));
   }
@@ -250,6 +252,7 @@ struct cmv::StringEdit::Stow
     buildGui();
     //no need to call valueChanged. Constant will do it all
     constantChanged();
+    activeChanged();
     parameter->connect(pObserver);
     QObject::connect(lineEdit, SIGNAL(editingFinished()), parentWidget, SLOT(finishedEditingSlot()));
   }
@@ -329,6 +332,7 @@ struct cmv::PathEdit::Stow
     buildGui();
     //no need to call valueChanged. Constant will do it all
     constantChanged();
+    activeChanged();
     parameter->connect(pObserver);
     QObject::connect(lineEdit, &QLineEdit::editingFinished, parentWidget, &PathEdit::finishedEditingSlot);
     QObject::connect(button, &QPushButton::clicked, parentWidget, &PathEdit::browseSlot);

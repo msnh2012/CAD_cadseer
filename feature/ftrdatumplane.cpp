@@ -67,27 +67,8 @@ QIcon DatumPlane::icon;
 
 using boost::uuids::uuid;
 
-static Bnd_Box getBoundingBox(const TopoDS_Shape &shapeIn)
-{
-  Bnd_Box out;
-  BRepBndLib::Add(shapeIn, out);
-  return out;
-}
-
-static void centerRadius(const Bnd_Box &boxIn, gp_Pnt &centerOut, gp_Pnt &cornerOut)
-{
-  cornerOut = boxIn.CornerMin();
-  
-  gp_Vec min(boxIn.CornerMin().Coord());
-  gp_Vec max(boxIn.CornerMax().Coord());
-  gp_Vec projection(max - min);
-  projection = projection.Normalized() * (projection.Magnitude() / 2.0);
-  gp_Vec centerVec = min + projection;
-  centerOut = gp_Pnt(centerVec.XYZ());
-}
-
 //throws std::runtime_error
-static osg::Matrixd getFaceSystem(const TopoDS_Shape &faceShape)
+static std::pair<osg::Matrixd, double> getFaceSystem(const TopoDS_Shape &faceShape)
 {
   assert(faceShape.ShapeType() == TopAbs_FACE);
   BRepAdaptor_Surface adaptor(TopoDS::Face(faceShape));
@@ -98,14 +79,22 @@ static osg::Matrixd getFaceSystem(const TopoDS_Shape &faceShape)
     tempSystem.SetDirection(tempSystem.Direction().Reversed());
   osg::Matrixd faceSystem = gu::toOsg(tempSystem);
   
-  gp_Pnt centerPoint, cornerPoint;
-  centerRadius(getBoundingBox(faceShape), centerPoint, cornerPoint);
-  double centerDistance = adaptor.Plane().Distance(centerPoint);
-  osg::Vec3d workVector = gu::getZVector(faceSystem);
-  osg::Vec3d centerVec = gu::toOsg(centerPoint) + (workVector * centerDistance);
-  faceSystem.setTrans(centerVec);
+  //get center
+  double uMin = adaptor.FirstUParameter();
+  double uMax = adaptor.LastUParameter();
+  double uRange = uMax - uMin;
+  double vMin = adaptor.FirstVParameter();
+  double vMax = adaptor.LastVParameter();
+  double vRange = vMax - vMin;
   
-  return faceSystem;
+  double uMid = uRange / 2.0 + uMin;
+  double vMid = vRange / 2.0 + vMin;
+  gp_Pnt centerPoint = adaptor.Value(uMid, vMid);
+  faceSystem.setTrans(gu::toOsg(centerPoint));
+  
+  //get size.
+  double size = osg::Vec2(uRange, vRange).length() / 2.0;
+  return std::make_pair(faceSystem, size);
 }
 
 //default constructed plane is 2.0 x 2.0
@@ -114,7 +103,7 @@ Base()
 , dpType(DPType::Constant)
 , cachedSize(1.0)
 , picks()
-, csys(std::make_unique<prm::Parameter>(prm::Names::CSys, osg::Matrixd::identity()))
+, csys(std::make_unique<prm::Parameter>(prm::Names::CSys, osg::Matrixd::identity(), prm::Tags::CSys))
 , flip(std::make_unique<prm::Parameter>(QObject::tr("Flip"), false))
 , autoSize(std::make_unique<prm::Parameter>(prm::Names::AutoSize, false, prm::Tags::AutoSize))
 , size(std::make_unique<prm::Parameter>(prm::Names::Size, 1.0, prm::Tags::Size))
@@ -127,7 +116,6 @@ Base()
 , sizeIP(new lbr::IPGroup(size.get()))
 , offsetIP(new lbr::IPGroup(offset.get()))
 , angleLabel(new lbr::PLabel(angle.get()))
-, overlaySubSwitch(new osg::Switch())
 , display(new mdv::DatumPlane())
 {
   if (icon.isNull())
@@ -143,6 +131,7 @@ Base()
   parameters.push_back(flip.get());
   
   autoSize->connectValue(std::bind(&DatumPlane::setModelDirty, this));
+  autoSize->connectValue(std::bind(&DatumPlane::prmActiveSync, this));
   parameters.push_back(autoSize.get());
   
   size->setConstraint(prm::Constraint::buildNonZeroPositive());
@@ -161,26 +150,27 @@ Base()
   angle->connectValue(std::bind(&DatumPlane::setModelDirty, this));
   parameters.push_back(angle.get());
   
-  overlaySubSwitch->addChild(flipLabel.get());
-  overlaySubSwitch->addChild(autoSizeLabel.get());
-  overlaySubSwitch->addChild(angleLabel.get());
+  overlaySwitch->addChild(flipLabel.get());
+  overlaySwitch->addChild(autoSizeLabel.get());
+  overlaySwitch->addChild(angleLabel.get());
   
   sizeIP->setMatrixDims(osg::Matrixd::rotate(osg::PI, osg::Vec3d(0.0, 0.0, 1.0)));
   sizeIP->noAutoRotateDragger();
   sizeIP->setRotationAxis(osg::Vec3d(0.0, 1.0, 0.0), osg::Vec3d(0.0, 0.0, 1.0));
   sizeIP->setMatrixDragger(osg::Matrixd::rotate(osg::PI_2, osg::Vec3d(1.0, 0.0, 0.0)));
-  overlaySubSwitch->addChild(sizeIP.get());
+  overlaySwitch->addChild(sizeIP.get());
   
   offsetIP->setMatrixDims(osg::Matrixd::rotate(osg::PI_2, osg::Vec3d(1.0, 0.0, 0.0)));
   offsetIP->noAutoRotateDragger();
   offsetIP->setRotationAxis(osg::Vec3d(0.0, 0.0, 1.0), osg::Vec3d(0.0, 1.0, 0.0));
-  overlaySubSwitch->addChild(offsetIP.get());
+  overlaySwitch->addChild(offsetIP.get());
   
   annexes.insert(std::make_pair(ann::Type::CSysDragger, csysDragger.get()));
-  overlaySubSwitch->addChild(csysDragger->dragger.get());
+  overlaySwitch->addChild(csysDragger->dragger.get());
   
   mainTransform->addChild(display.get());
-  overlaySwitch->addChild(overlaySubSwitch.get());
+  
+  prmActiveSync();
   updateGeometry();
 }
 
@@ -218,7 +208,20 @@ void DatumPlane::setDPType(DPType tIn)
   if (dpType == tIn)
     return;
   dpType = tIn;
-  updateOverlayViz();
+  
+  /* the value of autoSize is wired to both modelDirty
+   * and prmActiveSync, so when we change that value those
+   * actions will be taken care of for us.
+   */
+  if (dpType == DPType::Constant)
+  {
+    //changing types will not turn autoSize on.
+    //the user will have to do that.
+    autoSize->setValue(false);
+    return;
+  }
+  
+  prmActiveSync();
   setModelDirty();
 }
 
@@ -341,29 +344,7 @@ void DatumPlane::goUpdatePOffset(const UpdatePayload &pli)
     if (rShapes.front().ShapeType() != TopAbs_FACE)
       throw std::runtime_error("POffset: Resolved shape is not a face.");
     
-    //get coordinate system
-    //TODO GeomLib_IsPlanarSurface
-    BRepAdaptor_Surface adaptor(TopoDS::Face(rShapes.front()));
-    if (adaptor.GetType() != GeomAbs_Plane)
-      throw std::runtime_error("POffset: wrong surface type");
-    gp_Ax2 tempSystem = adaptor.Plane().Position().Ax2();
-    if (rShapes.front().Orientation() == TopAbs_REVERSED)
-      tempSystem.SetDirection(tempSystem.Direction().Reversed());
-    faceSystem = gu::toOsg(tempSystem);
-    
-    //calculate parameter boundaries and project onto plane.
-    gp_Pnt centerPoint, cornerPoint;
-    centerRadius(getBoundingBox(rShapes.front()), centerPoint, cornerPoint);
-    double centerDistance = adaptor.Plane().Distance(centerPoint);
-    double cornerDistance = adaptor.Plane().Distance(cornerPoint);
-    osg::Vec3d workVector = gu::getZVector(faceSystem);
-    osg::Vec3d centerVec = gu::toOsg(centerPoint) + (workVector * centerDistance);
-    osg::Vec3d cornerVec = gu::toOsg(cornerPoint) + (workVector * cornerDistance);
-    faceSystem.setTrans(centerVec);
-    
-    osg::Vec3d offsetVec = centerVec * osg::Matrixd::inverse(faceSystem);
-    double tempRadius = (centerVec - cornerVec).length();
-    cachedSize = offsetVec.x() + tempRadius;
+    std::tie(faceSystem, cachedSize) = getFaceSystem(rShapes.front());
   }
   osg::Vec3d normal = gu::getZVector(faceSystem) * static_cast<double>(*offset);
   faceSystem.setTrans(faceSystem.getTrans() + normal);
@@ -405,8 +386,12 @@ void DatumPlane::goUpdatePCenter(const UpdatePayload &pli)
       if (rShapes.front().ShapeType() != TopAbs_FACE)
         throw std::runtime_error("Resolved shape is not a face for center datum.");
       
-      tempSize = std::max(tempSize, std::sqrt(getBoundingBox(rShapes.front()).SquareExtent()) / 2.0);
-      return getFaceSystem(rShapes.front());
+      osg::Matrixd localMatrix;
+      double localSize;
+      std::tie(localMatrix, localSize) = getFaceSystem(rShapes.front());
+      tempSize = std::max(tempSize, localSize);
+      
+      return localMatrix;
     }
     return boost::none;
   };
@@ -474,10 +459,7 @@ void DatumPlane::goUpdatePCenter(const UpdatePayload &pli)
     if (p1 && p2)
     {
       osg::Vec3d projection = p2.get() - p1.get();
-      double mag = projection.length() / 2.0;
-      projection.normalize();
-      projection *= mag;
-      ts.setTrans(p1.get() + projection);
+      ts.setTrans(p1.get() + projection * 0.5);
     }
     else
     {
@@ -524,9 +506,12 @@ void DatumPlane::goUpdateAAngleP(const UpdatePayload &pli)
         }
         if (rShapes.front().ShapeType() != TopAbs_FACE)
           throw std::runtime_error("AAngleP: resolved 'plane' shape is not a face");
-        planeNormal = gu::getZVector(getFaceSystem(rShapes.front()));
-        occt::BoundingBox bb(rShapes.front());
-        tempSize = std::max(tempSize, bb.getDiagonal() / 2.0);
+        
+        osg::Matrixd localSystem;
+        double localSize;
+        std::tie(localSystem, localSize) = getFaceSystem(rShapes.front());
+        planeNormal = gu::getZVector(localSystem);
+        tempSize = std::max(tempSize, localSize);
       }
     }
     else if (p.tag == axis)
@@ -704,7 +689,6 @@ void DatumPlane::goUpdateThrough3P(const UpdatePayload &pli)
 void DatumPlane::updateVisual()
 {
   updateGeometry();
-  updateOverlayViz();
   updateLabelPositions();
   setVisualClean();
 }
@@ -715,27 +699,73 @@ void DatumPlane::updateGeometry()
   display->setParameters(-r, r, -r, r);
 }
 
-void DatumPlane::updateOverlayViz()
+void DatumPlane::prmActiveSync()
 {
-  //just turn everything off and turn on what is needed.
-  overlaySubSwitch->setAllChildrenOff();
-  if (dpType != DPType::Constant)
-    overlaySubSwitch->setChildValue(autoSizeLabel.get(), true);
-  overlaySubSwitch->setChildValue(flipLabel.get(), true);
-  if (!static_cast<bool>(*autoSize))
-    overlaySubSwitch->setChildValue(sizeIP.get(), true);
-  if (dpType == DPType::POffset)
-    overlaySubSwitch->setChildValue(offsetIP.get(), true);
-  if (dpType == DPType::AAngleP)
-    overlaySubSwitch->setChildValue(angleLabel.get(), true);
-  if (dpType == DPType::Constant)
-    overlaySubSwitch->setChildValue(csysDragger->dragger.get(), true);
+  switch (dpType)
+  {
+    case DPType::Constant:
+    {
+      csysDragger->draggerUpdate();
+      csys->setActive(true);
+      autoSize->setActive(false);
+      size->setActive(true);
+      offset->setActive(false);
+      angle->setActive(false);
+      break;
+    }
+    case DPType::POffset:
+    {
+      csys->setActive(false);
+      autoSize->setActive(true);
+      if (static_cast<bool>(*autoSize))
+        size->setActive(false);
+      else
+        size->setActive(true);
+      offset->setActive(true);
+      angle->setActive(false);
+      break;
+    }
+    case DPType::PCenter:
+    case DPType::Average3P:
+    case DPType::Through3P:
+    {
+      csys->setActive(false);
+      autoSize->setActive(true);
+      if (static_cast<bool>(*autoSize))
+        size->setActive(false);
+      else
+        size->setActive(true);
+      offset->setActive(false);
+      angle->setActive(false);
+      break;
+    }
+    case DPType::AAngleP:
+    {
+      csys->setActive(false);
+      autoSize->setActive(true);
+      if (static_cast<bool>(*autoSize))
+        size->setActive(false);
+      else
+        size->setActive(true);
+      offset->setActive(false);
+      angle->setActive(true);
+      break;
+    }
+  }
 }
 
 void DatumPlane::updateLabelPositions()
 {
   double s = static_cast<double>(*size);
   osg::Matrixd m = static_cast<osg::Matrixd>(*csys);
+  
+  if (static_cast<bool>(*flip))
+  {
+    osg::Quat r(osg::PI, gu::getXVector(m));
+    osg::Matrixd nm(m.getRotate() * r);
+    nm.setTrans(m.getTrans());
+    m = nm;
+  }
   
   autoSizeLabel->setMatrix(osg::Matrixd::translate(osg::Vec3d(0.0, s, 0.0) * m));
   sizeIP->setMatrix(m);
@@ -809,7 +839,6 @@ void DatumPlane::serialRead(const prj::srl::dtps::DatumPlane &dpi)
   cachedSize = static_cast<double>(*size);
   mainTransform->setMatrix(static_cast<osg::Matrixd>(*csys));
   
-  updateOverlayViz();
   updateLabelPositions();
   updateGeometry();
 }

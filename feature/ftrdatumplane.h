@@ -109,11 +109,10 @@ namespace ftr
     osg::ref_ptr<lbr::IPGroup> sizeIP; //!< for POffset
     osg::ref_ptr<lbr::IPGroup> offsetIP; //!< for POffset
     osg::ref_ptr<lbr::PLabel> angleLabel;
-    osg::ref_ptr<osg::Switch> overlaySubSwitch; //manage overlay vis
     osg::ref_ptr<mdv::DatumPlane> display;
     
     void updateGeometry();
-    void updateOverlayViz();
+    void prmActiveSync();
     void updateLabelPositions();
     
     void goUpdateConstant();

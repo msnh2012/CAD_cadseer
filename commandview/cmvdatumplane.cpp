@@ -86,6 +86,9 @@ struct DatumPlane::Stow
     combo->addItem(QObject::tr("Through 3 Points"));
     mainLayout->addWidget(combo);
     
+    parameterWidget = new cmv::ParameterWidget(view, command->feature->getParameters());
+    mainLayout->addWidget(parameterWidget);
+    
     stackedWidget = new QStackedWidget(view);
     mainLayout->addWidget(stackedWidget);
     
@@ -186,10 +189,6 @@ struct DatumPlane::Stow
       through3PointsSelection->setObjectName("selection");
       stackedWidget->addWidget(through3PointsSelection);
     }
-    
-    parameterWidget = new cmv::ParameterWidget(view, command->feature->getParameters());
-    mainLayout->addWidget(parameterWidget);
-    mainLayout->addItem(new QSpacerItem(20, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
   }
   
   void loadFeatureData()
@@ -225,6 +224,7 @@ struct DatumPlane::Stow
       if (!msgs.empty()) //what if more than one?
         planarOffsetSelection->initializeButton(0, msgs.front());
       combo->setCurrentIndex(1);
+      stackedWidget->setCurrentIndex(1);
       activate(1);
     }
     else if (dpt == ftr::DatumPlane::DPType::PCenter)
@@ -236,6 +236,7 @@ struct DatumPlane::Stow
       if (!msgs1.empty()) //what if more than one?
         planarCenterSelection->initializeButton(1, msgs1.front());
       combo->setCurrentIndex(2);
+      stackedWidget->setCurrentIndex(2);
       activate(2);
     }
     else if (dpt == ftr::DatumPlane::DPType::AAngleP)
@@ -247,6 +248,7 @@ struct DatumPlane::Stow
       if (!msgsPlane.empty()) //what if more than one?
         axisAngleSelection->initializeButton(1, msgsPlane.front());
       combo->setCurrentIndex(3);
+      stackedWidget->setCurrentIndex(3);
       activate(3);
     }
     else if (dpt == ftr::DatumPlane::DPType::Average3P)
@@ -261,6 +263,7 @@ struct DatumPlane::Stow
       if (!msgs2.empty()) //what if more than one?
         average3PlaneSelection->initializeButton(2, msgs2.front());
       combo->setCurrentIndex(4);
+      stackedWidget->setCurrentIndex(4);
       activate(4);
     }
     else if (dpt == ftr::DatumPlane::DPType::Through3P)
@@ -275,10 +278,9 @@ struct DatumPlane::Stow
       if (!msgs2.empty()) //what if more than one?
         through3PointsSelection->initializeButton(2, msgs2.front());
       combo->setCurrentIndex(5);
+      stackedWidget->setCurrentIndex(5);
       activate(5);
     }
-    
-    updateWidgetState();
   }
   
   void glue()
@@ -373,33 +375,6 @@ struct DatumPlane::Stow
       command->localUpdate();
     }
   }
-  
-  void updateWidgetState()
-  {
-    parameterWidget->disableWidget(command->feature->getOffsetParameter());
-    parameterWidget->disableWidget(command->feature->getAngleParameter());
-    parameterWidget->enableWidget(command->feature->getAutoSizeParameter());
-    
-    int current = combo->currentIndex();
-    if (current == 0)
-    {
-      parameterWidget->enableWidget(command->feature->getSizeParameter());
-      parameterWidget->disableWidget(command->feature->getAutoSizeParameter());
-    }
-    else
-    {
-      if (static_cast<bool>(*command->feature->getAutoSizeParameter()))
-        parameterWidget->disableWidget(command->feature->getSizeParameter());
-      else
-        parameterWidget->enableWidget(command->feature->getSizeParameter());
-    }
-    
-    if (current == 1)
-      parameterWidget->enableWidget(command->feature->getOffsetParameter());
-
-    if (current == 3)
-      parameterWidget->enableWidget(command->feature->getAngleParameter());
-  }
 };
 
 DatumPlane::DatumPlane(cmd::DatumPlane *cIn)
@@ -414,7 +389,6 @@ void DatumPlane::stackedChanged(int index)
   if (index < 0 || index >= stow->stackedWidget->count())
     return;
   stow->activate(index);
-  stow->updateWidgetState();
   
   if (index == 0) //constant
   {
@@ -460,6 +434,5 @@ void DatumPlane::through3PointsSelectionChanged()
 
 void DatumPlane::parameterChanged()
 {
-  stow->updateWidgetState();
   stow->command->localUpdate();
 }
