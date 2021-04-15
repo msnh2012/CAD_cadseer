@@ -110,6 +110,7 @@ struct DatumPlane::Stow
   prm::Parameter size; //!< double. distance to edges.
   prm::Parameter offset; //!< double. distance for POffset
   prm::Parameter angle; //!< double. angle for rotation
+  prm::Parameter picks; //!< double. angle for rotation
   prm::Observer dirtyObserver;
   prm::Observer syncObserver;
   ann::CSysDragger csysDragger; //!< for constant type
@@ -120,7 +121,6 @@ struct DatumPlane::Stow
   osg::ref_ptr<lbr::PLabel> angleLabel;
   osg::ref_ptr<mdv::DatumPlane> display;
   double cachedSize; //!< for auto calc.
-  Picks picks;
   
   Stow() = delete;
   Stow(DatumPlane &featureIn)
@@ -133,6 +133,7 @@ struct DatumPlane::Stow
   , size(prm::Names::Size, 1.0, prm::Tags::Size)
   , offset(prm::Names::Offset, 1.0, prm::Tags::Offset)
   , angle(prm::Names::Angle, 45.0, prm::Tags::Angle)
+  , picks(prm::Names::Picks, Picks(), prm::Tags::Picks)
   , dirtyObserver(std::bind(&DatumPlane::setModelDirty, &feature))
   , syncObserver(std::bind(&Stow::prmActiveSync, this))
   , csysDragger(&feature, &csys)
@@ -189,6 +190,9 @@ struct DatumPlane::Stow
     angle.setConstraint(ac);
     angle.connect(dirtyObserver);
     feature.parameters.push_back(&angle);
+    
+    picks.connect(dirtyObserver);
+    feature.parameters.push_back(&picks);
     
     feature.overlaySwitch->addChild(flipLabel.get());
     feature.overlaySwitch->addChild(autoSizeLabel.get());
@@ -345,11 +349,12 @@ struct DatumPlane::Stow
 
   void goUpdatePOffset(const UpdatePayload &pli)
   {
-    if (picks.size() != 1)
+    const auto &tPicks = static_cast<const ftr::Picks&>(picks);
+    if (tPicks.size() != 1)
       throw std::runtime_error("POffset: Wrong number of picks");
     
     tls::Resolver pr(pli);
-    if (!pr.resolve(picks.front()))
+    if (!pr.resolve(tPicks.front()))
       throw std::runtime_error("POffset: Pick resolution failed");
     
     osg::Matrixd faceSystem;
@@ -383,13 +388,14 @@ struct DatumPlane::Stow
 
   void goUpdatePCenter(const UpdatePayload &pli)
   {
-    if (picks.size() != 2)
+    const auto &tPicks = static_cast<const ftr::Picks&>(picks);
+    if (tPicks.size() != 2)
       throw std::runtime_error("Wrong number of picks for center datum");
     tls::Resolver r0(pli);
-    if (!r0.resolve(picks.front()))
+    if (!r0.resolve(tPicks.front()))
       throw std::runtime_error("Couldn't resolve pick 0 for center datum");
     tls::Resolver r1(pli);
-    if (!r1.resolve(picks.back()))
+    if (!r1.resolve(tPicks.back()))
       throw std::runtime_error("Couldn't resolve pick 1 for center datum");
     
     double tempSize = std::numeric_limits<double>::min();
@@ -508,13 +514,14 @@ struct DatumPlane::Stow
 
   void goUpdateAAngleP(const UpdatePayload &pli)
   {
-    if (picks.size() != 2)
+    const auto &tPicks = static_cast<const ftr::Picks&>(picks);
+    if (tPicks.size() != 2)
       throw std::runtime_error("AAngleP: Wrong number of picks");
     
     boost::optional<osg::Vec3d> axisOrigin, axisDirection, planeNormal;
     double tempSize = 0.0;
     tls::Resolver pr(pli);
-    for (const auto &p : picks)
+    for (const auto &p : tPicks)
     {
       if (!pr.resolve(p))
         throw std::runtime_error("AAngleP: Failed to resolve pick");
@@ -590,7 +597,8 @@ struct DatumPlane::Stow
 
   void goUpdateAverage3P(const UpdatePayload &pli)
   {
-    if (picks.size() != 3)
+    const auto &tPicks = static_cast<const ftr::Picks&>(picks);
+    if (tPicks.size() != 3)
       throw std::runtime_error("Average3P: Wrong number of picks");
     
     typedef std::vector<opencascade::handle<Geom_Surface>, NCollection_StdAllocator<opencascade::handle<Geom_Surface>>> GeomVector;
@@ -626,7 +634,7 @@ struct DatumPlane::Stow
     };
     
     tls::Resolver pr(pli);
-    for (const auto &p : picks)
+    for (const auto &p : tPicks)
     {
       if (!pr.resolve(p))
         throw std::runtime_error("Average3P: Failed to resolve pick");
@@ -672,12 +680,13 @@ struct DatumPlane::Stow
 
   void goUpdateThrough3P(const UpdatePayload &pli)
   {
-    if (picks.size() != 3)
+    const auto &tPicks = static_cast<const ftr::Picks&>(picks);
+    if (tPicks.size() != 3)
       throw std::runtime_error("Through3P: Wrong number of picks");
     
     tls::Resolver pr(pli);
     std::vector<osg::Vec3d> points;
-    for (const auto &p : picks)
+    for (const auto &p : tPicks)
     {
       if (!pr.resolve(p))
         throw std::runtime_error("Through3P: Pick resolution failed");
@@ -757,11 +766,13 @@ osg::Matrixd DatumPlane::getSystem() const
 
 void DatumPlane::setPicks(const Picks &psIn)
 {
-  stow->picks = psIn;
-  setModelDirty();
+  stow->picks.setValue(psIn);
 }
 
-const Picks& DatumPlane::getPicks(){return stow->picks;}
+const Picks& DatumPlane::getPicks()
+{
+  return static_cast<const ftr::Picks&>(stow->picks);
+}
 
 void DatumPlane::setDPType(DPType tIn)
 {
@@ -887,17 +898,17 @@ QTextStream& DatumPlane::getInfo(QTextStream &streamIn) const
 //serial support for datum plane needs to be done.
 void DatumPlane::serialWrite(const boost::filesystem::path &dIn)
 {
-
   prj::srl::dtps::DatumPlane datumPlaneOut
   (
     Base::serialOut(),
-    static_cast<int>(stow->dpType), // stow->dpType.serialOut(), //TODO
+    stow->dpType.serialOut(),
     stow->csys.serialOut(),
     stow->flip.serialOut(),
     stow->autoSize.serialOut(),
     stow->size.serialOut(),
     stow->offset.serialOut(),
     stow->angle.serialOut(),
+    stow->picks.serialOut(),
     stow->csysDragger.serialOut(),
     stow->flipLabel->serialOut(),
     stow->autoSizeLabel->serialOut(),
@@ -905,8 +916,6 @@ void DatumPlane::serialWrite(const boost::filesystem::path &dIn)
     stow->sizeIP->serialOut(),
     stow->offsetIP->serialOut()
   );
-  for (const auto &p : stow->picks)
-    datumPlaneOut.picks().push_back(p);
   
   xml_schema::NamespaceInfomap infoMap;
   std::ofstream stream(buildFilePathName(dIn).string());
@@ -916,19 +925,18 @@ void DatumPlane::serialWrite(const boost::filesystem::path &dIn)
 void DatumPlane::serialRead(const prj::srl::dtps::DatumPlane &dpi)
 {
   Base::serialIn(dpi.base());
-  stow->dpType.setValue(dpi.dpType()); // stow->dpType.serialIn(dpi.dpType()); //TODO
+  stow->dpType.serialIn(dpi.dpType());
   stow->csys.serialIn(dpi.csys());
   stow->flip.serialIn(dpi.flip());
   stow->autoSize.serialIn(dpi.autoSize());
   stow->size.serialIn(dpi.size());
   stow->offset.serialIn(dpi.offset());
   stow->angle.serialIn(dpi.angle());
+  stow->picks.serialIn(dpi.picks());
   stow->csysDragger.serialIn(dpi.csysDragger());
   stow->flipLabel->serialIn(dpi.flipLabel());
   stow->autoSizeLabel->serialIn(dpi.autoSizeLabel());
   stow->angleLabel->serialIn(dpi.angleLabel());
-  for (const auto &p : dpi.picks())
-    stow->picks.emplace_back(p);
   stow->sizeIP->serialIn(dpi.sizeIP());
   stow->offsetIP->serialIn(dpi.offsetIP());
 

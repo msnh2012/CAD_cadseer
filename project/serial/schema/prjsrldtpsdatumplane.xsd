@@ -13,14 +13,14 @@
 <xs:complexType name="DatumPlane">
   <xs:sequence>
     <xs:element name="base" type="spt:Base"/>
-    <xs:element name="dpType" type="xs:int"/>
-    <xs:element name="picks" type="spt:Pick" minOccurs="0" maxOccurs="unbounded"/>
+    <xs:element name="dpType" type="spt:Parameter"/>
     <xs:element name="csys" type="spt:Parameter"/>
     <xs:element name="flip" type="spt:Parameter"/>
     <xs:element name="autoSize" type="spt:Parameter"/>
     <xs:element name="size" type="spt:Parameter"/>
     <xs:element name="offset" type="spt:Parameter"/>
     <xs:element name="angle" type="spt:Parameter"/>
+    <xs:element name="picks" type="spt:Parameter"/>
     <xs:element name="csysDragger" type="spt:CSysDragger"/>
     <xs:element name="flipLabel" type="spt:PLabel"/>
     <xs:element name="autoSizeLabel" type="spt:PLabel"/>

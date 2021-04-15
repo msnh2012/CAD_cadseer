@@ -125,7 +125,7 @@ namespace prj
 
         // dpType
         //
-        typedef ::xml_schema::Int DpTypeType;
+        typedef ::prj::srl::spt::Parameter DpTypeType;
         typedef ::xsd::cxx::tree::traits< DpTypeType, char > DpTypeTraits;
 
         const DpTypeType&
@@ -137,22 +137,8 @@ namespace prj
         void
         dpType (const DpTypeType& x);
 
-        // picks
-        //
-        typedef ::prj::srl::spt::Pick PicksType;
-        typedef ::xsd::cxx::tree::sequence< PicksType > PicksSequence;
-        typedef PicksSequence::iterator PicksIterator;
-        typedef PicksSequence::const_iterator PicksConstIterator;
-        typedef ::xsd::cxx::tree::traits< PicksType, char > PicksTraits;
-
-        const PicksSequence&
-        picks () const;
-
-        PicksSequence&
-        picks ();
-
         void
-        picks (const PicksSequence& s);
+        dpType (::std::unique_ptr< DpTypeType > p);
 
         // csys
         //
@@ -255,6 +241,23 @@ namespace prj
 
         void
         angle (::std::unique_ptr< AngleType > p);
+
+        // picks
+        //
+        typedef ::prj::srl::spt::Parameter PicksType;
+        typedef ::xsd::cxx::tree::traits< PicksType, char > PicksTraits;
+
+        const PicksType&
+        picks () const;
+
+        PicksType&
+        picks ();
+
+        void
+        picks (const PicksType& x);
+
+        void
+        picks (::std::unique_ptr< PicksType > p);
 
         // csysDragger
         //
@@ -368,6 +371,7 @@ namespace prj
                     const SizeType&,
                     const OffsetType&,
                     const AngleType&,
+                    const PicksType&,
                     const CsysDraggerType&,
                     const FlipLabelType&,
                     const AutoSizeLabelType&,
@@ -376,13 +380,14 @@ namespace prj
                     const OffsetIPType&);
 
         DatumPlane (::std::unique_ptr< BaseType >,
-                    const DpTypeType&,
+                    ::std::unique_ptr< DpTypeType >,
                     ::std::unique_ptr< CsysType >,
                     ::std::unique_ptr< FlipType >,
                     ::std::unique_ptr< AutoSizeType >,
                     ::std::unique_ptr< SizeType >,
                     ::std::unique_ptr< OffsetType >,
                     ::std::unique_ptr< AngleType >,
+                    ::std::unique_ptr< PicksType >,
                     ::std::unique_ptr< CsysDraggerType >,
                     ::std::unique_ptr< FlipLabelType >,
                     ::std::unique_ptr< AutoSizeLabelType >,
@@ -418,13 +423,13 @@ namespace prj
         protected:
         ::xsd::cxx::tree::one< BaseType > base_;
         ::xsd::cxx::tree::one< DpTypeType > dpType_;
-        PicksSequence picks_;
         ::xsd::cxx::tree::one< CsysType > csys_;
         ::xsd::cxx::tree::one< FlipType > flip_;
         ::xsd::cxx::tree::one< AutoSizeType > autoSize_;
         ::xsd::cxx::tree::one< SizeType > size_;
         ::xsd::cxx::tree::one< OffsetType > offset_;
         ::xsd::cxx::tree::one< AngleType > angle_;
+        ::xsd::cxx::tree::one< PicksType > picks_;
         ::xsd::cxx::tree::one< CsysDraggerType > csysDragger_;
         ::xsd::cxx::tree::one< FlipLabelType > flipLabel_;
         ::xsd::cxx::tree::one< AutoSizeLabelType > autoSizeLabel_;

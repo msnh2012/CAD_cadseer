@@ -91,22 +91,10 @@ namespace prj
         this->dpType_.set (x);
       }
 
-      const DatumPlane::PicksSequence& DatumPlane::
-      picks () const
-      {
-        return this->picks_;
-      }
-
-      DatumPlane::PicksSequence& DatumPlane::
-      picks ()
-      {
-        return this->picks_;
-      }
-
       void DatumPlane::
-      picks (const PicksSequence& s)
+      dpType (::std::unique_ptr< DpTypeType > x)
       {
-        this->picks_ = s;
+        this->dpType_.set (std::move (x));
       }
 
       const DatumPlane::CsysType& DatumPlane::
@@ -251,6 +239,30 @@ namespace prj
       angle (::std::unique_ptr< AngleType > x)
       {
         this->angle_.set (std::move (x));
+      }
+
+      const DatumPlane::PicksType& DatumPlane::
+      picks () const
+      {
+        return this->picks_.get ();
+      }
+
+      DatumPlane::PicksType& DatumPlane::
+      picks ()
+      {
+        return this->picks_.get ();
+      }
+
+      void DatumPlane::
+      picks (const PicksType& x)
+      {
+        this->picks_.set (x);
+      }
+
+      void DatumPlane::
+      picks (::std::unique_ptr< PicksType > x)
+      {
+        this->picks_.set (std::move (x));
       }
 
       const DatumPlane::CsysDraggerType& DatumPlane::
@@ -420,6 +432,7 @@ namespace prj
                   const SizeType& size,
                   const OffsetType& offset,
                   const AngleType& angle,
+                  const PicksType& picks,
                   const CsysDraggerType& csysDragger,
                   const FlipLabelType& flipLabel,
                   const AutoSizeLabelType& autoSizeLabel,
@@ -429,13 +442,13 @@ namespace prj
       : ::xml_schema::Type (),
         base_ (base, this),
         dpType_ (dpType, this),
-        picks_ (this),
         csys_ (csys, this),
         flip_ (flip, this),
         autoSize_ (autoSize, this),
         size_ (size, this),
         offset_ (offset, this),
         angle_ (angle, this),
+        picks_ (picks, this),
         csysDragger_ (csysDragger, this),
         flipLabel_ (flipLabel, this),
         autoSizeLabel_ (autoSizeLabel, this),
@@ -447,13 +460,14 @@ namespace prj
 
       DatumPlane::
       DatumPlane (::std::unique_ptr< BaseType > base,
-                  const DpTypeType& dpType,
+                  ::std::unique_ptr< DpTypeType > dpType,
                   ::std::unique_ptr< CsysType > csys,
                   ::std::unique_ptr< FlipType > flip,
                   ::std::unique_ptr< AutoSizeType > autoSize,
                   ::std::unique_ptr< SizeType > size,
                   ::std::unique_ptr< OffsetType > offset,
                   ::std::unique_ptr< AngleType > angle,
+                  ::std::unique_ptr< PicksType > picks,
                   ::std::unique_ptr< CsysDraggerType > csysDragger,
                   ::std::unique_ptr< FlipLabelType > flipLabel,
                   ::std::unique_ptr< AutoSizeLabelType > autoSizeLabel,
@@ -462,14 +476,14 @@ namespace prj
                   ::std::unique_ptr< OffsetIPType > offsetIP)
       : ::xml_schema::Type (),
         base_ (std::move (base), this),
-        dpType_ (dpType, this),
-        picks_ (this),
+        dpType_ (std::move (dpType), this),
         csys_ (std::move (csys), this),
         flip_ (std::move (flip), this),
         autoSize_ (std::move (autoSize), this),
         size_ (std::move (size), this),
         offset_ (std::move (offset), this),
         angle_ (std::move (angle), this),
+        picks_ (std::move (picks), this),
         csysDragger_ (std::move (csysDragger), this),
         flipLabel_ (std::move (flipLabel), this),
         autoSizeLabel_ (std::move (autoSizeLabel), this),
@@ -486,13 +500,13 @@ namespace prj
       : ::xml_schema::Type (x, f, c),
         base_ (x.base_, f, this),
         dpType_ (x.dpType_, f, this),
-        picks_ (x.picks_, f, this),
         csys_ (x.csys_, f, this),
         flip_ (x.flip_, f, this),
         autoSize_ (x.autoSize_, f, this),
         size_ (x.size_, f, this),
         offset_ (x.offset_, f, this),
         angle_ (x.angle_, f, this),
+        picks_ (x.picks_, f, this),
         csysDragger_ (x.csysDragger_, f, this),
         flipLabel_ (x.flipLabel_, f, this),
         autoSizeLabel_ (x.autoSizeLabel_, f, this),
@@ -509,13 +523,13 @@ namespace prj
       : ::xml_schema::Type (e, f | ::xml_schema::Flags::base, c),
         base_ (this),
         dpType_ (this),
-        picks_ (this),
         csys_ (this),
         flip_ (this),
         autoSize_ (this),
         size_ (this),
         offset_ (this),
         angle_ (this),
+        picks_ (this),
         csysDragger_ (this),
         flipLabel_ (this),
         autoSizeLabel_ (this),
@@ -558,22 +572,14 @@ namespace prj
           //
           if (n.name () == "dpType" && n.namespace_ ().empty ())
           {
+            ::std::unique_ptr< DpTypeType > r (
+              DpTypeTraits::create (i, f, this));
+
             if (!dpType_.present ())
             {
-              this->dpType_.set (DpTypeTraits::create (i, f, this));
+              this->dpType_.set (::std::move (r));
               continue;
             }
-          }
-
-          // picks
-          //
-          if (n.name () == "picks" && n.namespace_ ().empty ())
-          {
-            ::std::unique_ptr< PicksType > r (
-              PicksTraits::create (i, f, this));
-
-            this->picks_.push_back (::std::move (r));
-            continue;
           }
 
           // csys
@@ -656,6 +662,20 @@ namespace prj
             if (!angle_.present ())
             {
               this->angle_.set (::std::move (r));
+              continue;
+            }
+          }
+
+          // picks
+          //
+          if (n.name () == "picks" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< PicksType > r (
+              PicksTraits::create (i, f, this));
+
+            if (!picks_.present ())
+            {
+              this->picks_.set (::std::move (r));
               continue;
             }
           }
@@ -803,6 +823,13 @@ namespace prj
             "");
         }
 
+        if (!picks_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "picks",
+            "");
+        }
+
         if (!csysDragger_.present ())
         {
           throw ::xsd::cxx::tree::expected_element< char > (
@@ -861,13 +888,13 @@ namespace prj
           static_cast< ::xml_schema::Type& > (*this) = x;
           this->base_ = x.base_;
           this->dpType_ = x.dpType_;
-          this->picks_ = x.picks_;
           this->csys_ = x.csys_;
           this->flip_ = x.flip_;
           this->autoSize_ = x.autoSize_;
           this->size_ = x.size_;
           this->offset_ = x.offset_;
           this->angle_ = x.angle_;
+          this->picks_ = x.picks_;
           this->csysDragger_ = x.csysDragger_;
           this->flipLabel_ = x.flipLabel_;
           this->autoSizeLabel_ = x.autoSizeLabel_;
@@ -1203,20 +1230,6 @@ namespace prj
           s << i.dpType ();
         }
 
-        // picks
-        //
-        for (DatumPlane::PicksConstIterator
-             b (i.picks ().begin ()), n (i.picks ().end ());
-             b != n; ++b)
-        {
-          ::xercesc::DOMElement& s (
-            ::xsd::cxx::xml::dom::create_element (
-              "picks",
-              e));
-
-          s << *b;
-        }
-
         // csys
         //
         {
@@ -1281,6 +1294,17 @@ namespace prj
               e));
 
           s << i.angle ();
+        }
+
+        // picks
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "picks",
+              e));
+
+          s << i.picks ();
         }
 
         // csysDragger
