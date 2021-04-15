@@ -32,6 +32,7 @@
 #include "annex/annseershape.h"
 #include "tools/featuretools.h"
 #include "tools/occtools.h"
+#include "parameter/prmconstants.h"
 #include "parameter/prmparameter.h"
 #include "feature/ftrinputtype.h"
 #include "feature/ftrdatumplane.h"

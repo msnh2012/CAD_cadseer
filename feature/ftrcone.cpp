@@ -30,6 +30,7 @@
 #include "feature/ftrconebuilder.h"
 #include "feature/ftrupdatepayload.h"
 #include "feature/ftrinputtype.h"
+#include "parameter/prmconstants.h"
 #include "parameter/prmparameter.h"
 #include "feature/ftrcone.h"
 

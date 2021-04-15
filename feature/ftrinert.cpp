@@ -32,6 +32,7 @@
 #include "library/lbrcsysdragger.h"
 #include "annex/annseershape.h"
 #include "annex/anncsysdragger.h"
+#include "parameter/prmconstants.h"
 #include "parameter/prmparameter.h"
 #include "feature/ftrupdatepayload.h"
 #include "feature/ftrinert.h"

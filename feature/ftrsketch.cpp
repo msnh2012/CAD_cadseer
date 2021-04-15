@@ -45,6 +45,7 @@
 #include "sketch/sktsolver.h"
 #include "sketch/sktvisual.h"
 #include "project/serial/generated/prjsrlsktssketch.h"
+#include "parameter/prmconstants.h"
 #include "parameter/prmparameter.h"
 #include "feature/ftrupdatepayload.h"
 #include "feature/ftrinputtype.h"

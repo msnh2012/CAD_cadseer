@@ -31,6 +31,7 @@
 #include "annex/anncsysdragger.h"
 #include "annex/anninstancemapper.h"
 #include "feature/ftrdatumplane.h"
+#include "parameter/prmconstants.h"
 #include "parameter/prmparameter.h"
 #include "project/serial/generated/prjsrlinmsinstancemirror.h"
 #include "tools/featuretools.h"

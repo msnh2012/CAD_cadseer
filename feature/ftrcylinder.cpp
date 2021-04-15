@@ -32,6 +32,7 @@
 #include "feature/ftrinputtype.h"
 #include "annex/annseershape.h"
 #include "feature/ftrupdatepayload.h"
+#include "parameter/prmconstants.h"
 #include "parameter/prmparameter.h"
 #include "feature/ftrcylinder.h"
 

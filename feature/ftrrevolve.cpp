@@ -30,6 +30,7 @@
 #include "library/lbrplabel.h"
 #include "annex/annseershape.h"
 #include "feature/ftrshapecheck.h"
+#include "parameter/prmconstants.h"
 #include "parameter/prmparameter.h"
 #include "feature/ftrupdatepayload.h"
 #include "feature/ftrinputtype.h"

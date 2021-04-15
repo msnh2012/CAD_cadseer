@@ -25,6 +25,7 @@
 #include "message/msgnode.h"
 #include "commandview/cmvparameterwidgets.h"
 #include "commandview/cmvcsyswidget.h"
+#include "parameter/prmconstants.h"
 #include "parameter/prmparameter.h"
 #include "tools/idtools.h"
 #include "feature/ftrinputtype.h"

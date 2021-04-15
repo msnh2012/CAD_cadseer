@@ -28,6 +28,7 @@
 #include "annex/anncsysdragger.h"
 #include "annex/anninstancemapper.h"
 #include "feature/ftrdatumplane.h"
+#include "parameter/prmconstants.h"
 #include "parameter/prmparameter.h"
 #include "feature/ftrshapecheck.h"
 #include "project/serial/generated/prjsrlinlsinstancelinear.h"

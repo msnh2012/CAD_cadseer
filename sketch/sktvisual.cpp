@@ -62,6 +62,7 @@
 #include "library/lbrplabel.h"
 #include "library/lbrchildnamevisitor.h"
 #include "project/serial/generated/prjsrlsktssketch.h"
+#include "parameter/prmconstants.h"
 #include "parameter/prmparameter.h"
 #include "sketch/sktsolver.h"
 #include "sketch/sktvisual.h"

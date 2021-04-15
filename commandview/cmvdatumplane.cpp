@@ -32,6 +32,7 @@
 #include "dialogs/dlgselectionwidget.h"
 #include "commandview/cmvparameterwidgets.h"
 #include "commandview/cmvcsyswidget.h"
+#include "parameter/prmconstants.h"
 #include "parameter/prmparameter.h"
 #include "tools/featuretools.h"
 #include "feature/ftrinputtype.h"

@@ -35,6 +35,7 @@
 #include "annex/annseershape.h"
 #include "annex/anncsysdragger.h"
 #include "annex/anninstancemapper.h"
+#include "parameter/prmconstants.h"
 #include "parameter/prmparameter.h"
 #include "project/serial/generated/prjsrlinpsinstancepolar.h"
 #include "tools/featuretools.h"

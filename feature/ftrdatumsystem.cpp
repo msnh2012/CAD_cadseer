@@ -26,6 +26,7 @@
 #include "annex/anncsysdragger.h"
 #include "library/lbrcsysdragger.h"
 #include "library/lbrplabel.h"
+#include "parameter/prmconstants.h"
 #include "parameter/prmparameter.h"
 #include "tools/occtools.h"
 #include "tools/featuretools.h"

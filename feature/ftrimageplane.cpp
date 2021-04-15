@@ -30,6 +30,7 @@
 #include <osg/Texture2D>
 
 #include "globalutilities.h"
+#include "parameter/prmconstants.h"
 #include "parameter/prmparameter.h"
 #include "tools/occtools.h"
 #include "feature/ftrupdatepayload.h"

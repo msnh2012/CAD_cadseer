@@ -33,6 +33,7 @@
 #include "project/serial/generated/prjsrlbxsbox.h"
 #include "feature/ftrupdatepayload.h"
 #include "feature/ftrinputtype.h"
+#include "parameter/prmconstants.h"
 #include "parameter/prmparameter.h"
 #include "feature/ftrbox.h"
 

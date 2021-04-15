@@ -34,6 +34,7 @@
 #include "feature/ftrupdatepayload.h"
 #include "tools/featuretools.h"
 #include "feature/ftrinputtype.h"
+#include "parameter/prmconstants.h"
 #include "parameter/prmparameter.h"
 #include "library/lbrplabel.h"
 #include "feature/ftrextract.h"

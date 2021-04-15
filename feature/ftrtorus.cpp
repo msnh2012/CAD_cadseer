@@ -33,6 +33,7 @@
 #include "annex/annseershape.h"
 #include "annex/anncsysdragger.h"
 #include "project/serial/generated/prjsrltrsstorus.h"
+#include "parameter/prmconstants.h"
 #include "parameter/prmparameter.h"
 #include "feature/ftrupdatepayload.h"
 #include "feature/ftrinputtype.h"

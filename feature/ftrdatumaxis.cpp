@@ -42,6 +42,7 @@
 #include "library/lbrplabel.h"
 #include "annex/anncsysdragger.h"
 #include "project/serial/generated/prjsrldtasdatumaxis.h"
+#include "parameter/prmconstants.h"
 #include "parameter/prmparameter.h"
 #include "feature/ftrinputtype.h"
 #include "feature/ftrupdatepayload.h"

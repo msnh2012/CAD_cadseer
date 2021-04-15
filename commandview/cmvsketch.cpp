@@ -37,6 +37,7 @@
 #include "message/msgsift.h"
 #include "commandview/cmvcsyswidget.h"
 #include "commandview/cmvexpressionedit.h"
+#include "parameter/prmconstants.h"
 #include "parameter/prmparameter.h"
 #include "feature/ftrinputtype.h"
 #include "feature/ftrsketch.h"

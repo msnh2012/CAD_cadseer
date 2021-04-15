@@ -37,6 +37,7 @@
 #include "annex/annsurfacemesh.h"
 #include "annex/anncsysdragger.h"
 #include "library/lbrcsysdragger.h"
+#include "parameter/prmconstants.h"
 #include "parameter/prmparameter.h"
 #include "mesh/mshocct.h"
 #include "mesh/mshmesh.h"

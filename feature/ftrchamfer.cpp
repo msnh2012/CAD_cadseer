@@ -41,6 +41,7 @@
 #include "feature/ftrshapecheck.h"
 #include "feature/ftrinputtype.h"
 #include "feature/ftrupdatepayload.h"
+#include "parameter/prmconstants.h"
 #include "parameter/prmparameter.h"
 #include "tools/featuretools.h"
 #include "feature/ftrchamfer.h"

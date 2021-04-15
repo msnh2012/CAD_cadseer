@@ -49,6 +49,7 @@
 #include "parameter/prmparameter.h"
 #include "feature/ftrshapecheck.h"
 #include "annex/annseershape.h"
+#include "parameter/prmconstants.h"
 #include "parameter/prmparameter.h"
 #include "feature/ftrupdatepayload.h"
 #include "feature/ftrblend.h"

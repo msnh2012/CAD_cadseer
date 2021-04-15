@@ -57,6 +57,7 @@
 #include "project/serial/generated/prjsrldtpsdatumplane.h"
 #include "tools/featuretools.h"
 #include "tools/occtools.h"
+#include "parameter/prmconstants.h"
 #include "parameter/prmparameter.h"
 #include "feature/ftrdatumaxis.h"
 #include "feature/ftrdatumplane.h"

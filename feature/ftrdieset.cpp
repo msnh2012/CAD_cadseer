@@ -24,6 +24,7 @@
 #include "tools/occtools.h"
 #include "preferences/preferencesXML.h"
 #include "preferences/prfmanager.h"
+#include "parameter/prmconstants.h"
 #include "parameter/prmparameter.h"
 #include "annex/annseershape.h"
 #include "feature/ftrshapecheck.h"

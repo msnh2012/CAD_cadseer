@@ -23,6 +23,7 @@
 #include "viewer/vwrwidget.h"
 #include "message/msgnode.h"
 #include "project/prjproject.h"
+#include "parameter/prmconstants.h"
 #include "parameter/prmparameter.h"
 #include "feature/ftrinputtype.h"
 #include "feature/ftrsketch.h"

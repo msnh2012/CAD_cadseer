@@ -26,6 +26,7 @@
 #include <Law_Interpol.hxx>
 #include <Law_Composite.hxx>
 
+#include "parameter/prmconstants.h"
 #include "project/serial/generated/prjsrllwfslawfunction.h"
 #include "law/lwfcue.h"
 

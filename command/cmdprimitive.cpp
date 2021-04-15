@@ -22,6 +22,7 @@
 #include "annex/annseershape.h"
 #include "message/msgnode.h"
 #include "selection/slceventhandler.h"
+#include "parameter/prmconstants.h"
 #include "parameter/prmparameter.h"
 #include "feature/ftrinputtype.h"
 #include "feature/ftrbase.h"

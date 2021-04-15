@@ -41,6 +41,7 @@
 #include "tools/occtools.h"
 #include "feature/ftrupdatepayload.h"
 #include "feature/ftrinputtype.h"
+#include "parameter/prmconstants.h"
 #include "parameter/prmparameter.h"
 #include "feature/ftrhollow.h"
 

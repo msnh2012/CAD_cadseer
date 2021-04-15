@@ -40,6 +40,7 @@
 #include "globalutilities.h"
 #include "tools/occtools.h"
 #include "annex/annseershape.h"
+#include "parameter/prmconstants.h"
 #include "feature/ftrshapecheck.h"
 #include "feature/ftrnest.h"
 #include "project/serial/generated/prjsrlstpsstrip.h"
