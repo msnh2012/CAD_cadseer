@@ -37,7 +37,10 @@
 struct cmv::CSysWidget::Stow
 {
   CSysWidget *parent = nullptr;
-  prm::Parameter *parameter = nullptr;
+  prm::Parameter *csysParameter = nullptr;
+  prm::Parameter *linkParameter = nullptr;
+  prm::Observer csysObserver;
+  prm::Observer linkObserver;
   QRadioButton *byConstant = nullptr;
   QRadioButton *byFeature = nullptr;
   cmv::ParameterEdit *expressionWidget = nullptr;
@@ -47,7 +50,7 @@ struct cmv::CSysWidget::Stow
   Stow() = delete;
   Stow(CSysWidget *parentIn, prm::Parameter* parameterIn)
   : parent(parentIn)
-  , parameter(parameterIn)
+  , csysParameter(parameterIn)
   {
     buildGui();
   }
@@ -71,7 +74,7 @@ struct cmv::CSysWidget::Stow
     mainLayout->addLayout(csysLayout);
     
     //stacked widgets
-    expressionWidget = new cmv::ParameterEdit(parent, parameter);
+    expressionWidget = new cmv::ParameterEdit(parent, csysParameter);
     QObject::connect(expressionWidget, &ParameterEdit::prmValueChanged, parent, &CSysWidget::prmValueChanged);
     
     dlg::SelectionWidgetCue cue;
@@ -88,6 +91,38 @@ struct cmv::CSysWidget::Stow
     mainLayout->addWidget(stackWidget);
     
     selectionWidget->getButton(0)->setChecked(true);
+  }
+  
+  void goPrmMode()
+  {
+    byConstant->hide();
+    byFeature->hide();
+    csysObserver.activeHandler = std::bind(&Stow::prmsHaveChanged, this);
+    linkObserver.activeHandler = std::bind(&Stow::prmsHaveChanged, this);
+    csysParameter->connect(csysObserver);
+    linkParameter->connect(linkObserver);
+    prmsHaveChanged();
+  }
+  
+  void prmsHaveChanged()
+  {
+    bool csysState = csysParameter->isActive();
+    bool linkState = linkParameter->isActive();
+    if (csysState && !linkState)
+    {
+      parent->setEnabled(true);
+      parent->statusChanged();
+      stackWidget->setCurrentIndex(0);
+    }
+    else if (!csysState && linkState)
+    {
+      parent->setEnabled(true);
+      stackWidget->setCurrentIndex(1);
+    }
+    else if (!csysState && !linkState)
+    {
+      parent->setEnabled(false);
+    }
   }
 };
 
@@ -107,6 +142,13 @@ CSysWidget::CSysWidget(QWidget *parentIn, prm::Parameter *parameterIn)
 }
 
 CSysWidget::~CSysWidget() = default;
+
+void CSysWidget::setPrmMode(prm::Parameter *linkParameterIn)
+{
+  assert(!stow->linkParameter); //can't re-assign link parameter.
+  stow->linkParameter = linkParameterIn;
+  stow->goPrmMode();
+}
 
 void CSysWidget::setCSysLinkId(const boost::uuids::uuid &idIn)
 {
@@ -136,9 +178,12 @@ void CSysWidget::setCSysLinkId(const boost::uuids::uuid &idIn)
 boost::uuids::uuid CSysWidget::getCSysLinkId() const
 {
   const slc::Messages &msgs = stow->selectionWidget->getButton(0)->getMessages();
-  if (!stow->byFeature->isChecked() || msgs.empty())
-    return gu::createNilId();
-  return msgs.front().featureId;
+  
+  //we don't care about the state of radio buttons in prmMode.  
+  if ((stow->linkParameter || stow->byFeature->isChecked()) && !msgs.empty())
+    return msgs.front().featureId;
+  
+  return gu::createNilId();
 }
 
 void CSysWidget::radioSlot()
@@ -149,13 +194,13 @@ void CSysWidget::radioSlot()
   {
     stow->stackWidget->setCurrentIndex(0);
     statusChanged();
-    stow->parameter->setActive(true);
+    stow->csysParameter->setActive(true);
     dirty();
   }
   if (stow->byFeature->isChecked())
   {
     stow->stackWidget->setCurrentIndex(1);
-    stow->parameter->setActive(false);
+    stow->csysParameter->setActive(false);
     dirty();
   }
 }

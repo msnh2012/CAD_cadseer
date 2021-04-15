@@ -32,6 +32,7 @@
 #include "annex/annseershape.h"
 #include "tools/featuretools.h"
 #include "tools/occtools.h"
+#include "parameter/prmparameter.h"
 #include "feature/ftrinputtype.h"
 #include "feature/ftrdatumplane.h"
 #include "commandview/cmvmessage.h"
@@ -111,23 +112,33 @@ void DatumPlane::deactivate()
 
 void DatumPlane::setToConstant()
 {
+  assert(isActive);
   project->clearAllInputs(feature->getId());
   feature->setDPType(ftr::DatumPlane::DPType::Constant);
+}
+
+void DatumPlane::setLinked(const boost::uuids::uuid &idIn)
+{
+  assert(isActive);
+  project->clearAllInputs(feature->getId());
+  feature->setDPType(ftr::DatumPlane::DPType::Link);
+  
+  if (!idIn.is_nil())
+    project->connect(idIn, feature->getId(), {ftr::InputType::linkCSys});
 }
 
 void DatumPlane::setToPlanarOffset(const std::vector<slc::Message> &msIn)
 {
   assert(isActive);
-  assert(msIn.size() == 1);
-  assert(project->hasFeature(msIn.front().featureId));
+  project->clearAllInputs(feature->getId());
   if (msIn.size() != 1)
     return;
+  assert(project->hasFeature(msIn.front().featureId));
   
   const ftr::Base *f = project->findFeature(msIn.front().featureId);
   ftr::Pick pick = tls::convertToPick(msIn.front(), *f, project->getShapeHistory());
   pick.tag = ftr::InputType::create;
   
-  project->clearAllInputs(feature->getId());
   feature->setPicks(ftr::Picks{pick});
   feature->setDPType(ftr::DatumPlane::DPType::POffset);
   project->connectInsert(f->getId(), feature->getId(), {pick.tag});
@@ -136,13 +147,13 @@ void DatumPlane::setToPlanarOffset(const std::vector<slc::Message> &msIn)
 void DatumPlane::setToPlanarCenter(const std::vector<slc::Message> &msIn)
 {
   assert(isActive);
-  assert(msIn.size() == 2);
-  assert(project->hasFeature(msIn.front().featureId));
-  assert(project->hasFeature(msIn.back().featureId));
-  if (msIn.size() != 2)
-    return;
   
   project->clearAllInputs(feature->getId());
+  if (msIn.size() != 2)
+    return;
+  assert(project->hasFeature(msIn.front().featureId));
+  assert(project->hasFeature(msIn.back().featureId));
+  
   ftr::Picks picks;
   for (const auto &mIn : msIn)
   {
@@ -159,14 +170,13 @@ void DatumPlane::setToPlanarCenter(const std::vector<slc::Message> &msIn)
 void DatumPlane::setToAxisAngle(const std::vector<slc::Message> &msIn)
 {
   assert(isActive);
-  assert(msIn.size() == 2);
-  assert(project->hasFeature(msIn.front().featureId));
-  assert(project->hasFeature(msIn.back().featureId));
+  project->clearAllInputs(feature->getId());
   if (msIn.size() != 2)
     return;
+  assert(project->hasFeature(msIn.front().featureId));
+  assert(project->hasFeature(msIn.back().featureId));
   
   //understood that first selection message is axis and second is plane.
-  project->clearAllInputs(feature->getId());
   ftr::Picks picks;
   for (const auto &mIn : msIn)
   {
@@ -183,14 +193,13 @@ void DatumPlane::setToAxisAngle(const std::vector<slc::Message> &msIn)
 void DatumPlane::setToAverage3Plane(const std::vector<slc::Message> &msIn)
 {
   assert(isActive);
-  assert(msIn.size() == 3);
+  project->clearAllInputs(feature->getId());
+  if (msIn.size() != 3)
+    return;
   assert(project->hasFeature(msIn.at(0).featureId));
   assert(project->hasFeature(msIn.at(1).featureId));
   assert(project->hasFeature(msIn.at(2).featureId));
-  if (msIn.size() != 3)
-    return;
   
-  project->clearAllInputs(feature->getId());
   ftr::Picks picks;
   for (const auto &mIn : msIn)
   {
@@ -207,14 +216,13 @@ void DatumPlane::setToAverage3Plane(const std::vector<slc::Message> &msIn)
 void DatumPlane::setToThrough3Points(const std::vector<slc::Message> &msIn)
 {
   assert(isActive);
-  assert(msIn.size() == 3);
+  project->clearAllInputs(feature->getId());
+  if (msIn.size() != 3)
+    return;
   assert(project->hasFeature(msIn.at(0).featureId));
   assert(project->hasFeature(msIn.at(1).featureId));
   assert(project->hasFeature(msIn.at(2).featureId));
-  if (msIn.size() != 3)
-    return;
   
-  project->clearAllInputs(feature->getId());
   ftr::Picks picks;
   for (const auto &mIn : msIn)
   {
@@ -241,10 +249,18 @@ void DatumPlane::go()
 {
   assert(project);
   const slc::Containers &cs = eventHandler->getSelections();
-  if (cs.size() == 1 && (cs.front().selectionType == slc::Type::Face || cs.front().featureType == ftr::Type::DatumPlane))
+  if (cs.size() == 1)
   {
-    if (attemptOffset(cs.front()))
-      return;
+    if (cs.front().selectionType == slc::Type::Face || cs.front().featureType == ftr::Type::DatumPlane)
+    {
+      if (attemptOffset(cs.front()))
+        return;
+    }
+    if (slc::isObjectType(cs.front().selectionType))
+    {
+      if (attemptLink(cs.front()))
+        return;
+    }
   }
   if (cs.size() == 2)
   {
@@ -298,6 +314,18 @@ bool DatumPlane::isAxis(const slc::Container &cIn)
   assert(ss.hasId(cIn.shapeId));
   const TopoDS_Shape &s = ss.getOCCTShape(cIn.shapeId);
   return occt::gleanAxis(s).second;
+}
+
+bool DatumPlane::attemptLink(const slc::Container &cIn)
+{
+  const ftr::Base *f = project->findFeature(cIn.featureId);
+  if (!f->getParameters(prm::Tags::CSys).empty())
+  {
+    setLinked(cIn.featureId);
+    feature->setSize(viewer->getDiagonalLength() / 4.0);
+    return true;
+  }
+  return false;
 }
 
 bool DatumPlane::attemptOffset(const slc::Container &cIn)

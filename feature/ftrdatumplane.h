@@ -41,9 +41,10 @@ namespace ftr
   class DatumPlane : public Base
   {
   public:
-    enum class DPType
+    enum class DPType //keep in sync with parameter strings in constructor.
     {
       Constant = 0 //!< no links
+      , Link //!< linked to input feature.
       , POffset //!< offset from 1 planar face. parameter, ipgroup
       , PCenter //!< 2 planar inputs. center, bisect
       , AAngleP //!< through axis angle to planar
@@ -57,19 +58,21 @@ namespace ftr
     constexpr static const char *center = "center";
     constexpr static const char *plane = "plane";
     constexpr static const char *point = "point";
+    constexpr static std::string_view datumPlaneType = "datumPlaneType";
+    constexpr static std::string_view csysLinkHack = "csysLinkHack";
     
     DatumPlane();
     ~DatumPlane();
     
-    virtual void updateModel(const UpdatePayload&) override;
-    virtual void updateVisual() override;
-    virtual Type getType() const override {return Type::DatumPlane;}
-    virtual const std::string& getTypeString() const override {return toString(Type::DatumPlane);}
-    virtual const QIcon& getIcon() const override {return icon;}
-    virtual Descriptor getDescriptor() const override {return Descriptor::Create;}
-    virtual void serialWrite(const boost::filesystem::path&) override;
+    void updateModel(const UpdatePayload&) override;
+    void updateVisual() override;
+    Type getType() const override {return Type::DatumPlane;}
+    const std::string& getTypeString() const override {return toString(Type::DatumPlane);}
+    const QIcon& getIcon() const override {return icon;}
+    Descriptor getDescriptor() const override {return Descriptor::Create;}
+    void serialWrite(const boost::filesystem::path&) override;
     void serialRead(const prj::srl::dtps::DatumPlane&);
-    virtual QTextStream& getInfo(QTextStream &) const override;
+    QTextStream& getInfo(QTextStream &) const override;
     
     void setSystem(const osg::Matrixd &); //!< makes type constant.
     osg::Matrixd getSystem() const;
@@ -78,49 +81,17 @@ namespace ftr
     double getSize() const;
     
     void setPicks(const Picks&);
-    const Picks& getPicks(){return picks;}
+    const Picks& getPicks();
     
     void setDPType(DPType);
-    DPType getDPType(){return dpType;}
+    DPType getDPType();
     
     void setAutoSize(bool);
-    
-    prm::Parameter* getAutoSizeParameter();
-    prm::Parameter* getSizeParameter();
-    prm::Parameter* getOffsetParameter();
-    prm::Parameter* getAngleParameter();
   private:
-    typedef Base Inherited;
     static QIcon icon;
-    DPType dpType;
-    double cachedSize; //!< for auto calc.
-    Picks picks;
     
-    std::unique_ptr<prm::Parameter> csys;
-    std::unique_ptr<prm::Parameter> flip; //!< double. reverse normal
-    std::unique_ptr<prm::Parameter> autoSize; //!< bool. auto calculate radius.
-    std::unique_ptr<prm::Parameter> size; //!< double. distance to edges.
-    std::unique_ptr<prm::Parameter> offset; //!< double. distance for POffset
-    std::unique_ptr<prm::Parameter> angle; //!< double. angle for rotationn
-    std::unique_ptr<prm::Observer> prmObserver;
-    std::unique_ptr<ann::CSysDragger> csysDragger; //!< for constant type
-    osg::ref_ptr<lbr::PLabel> flipLabel;
-    osg::ref_ptr<lbr::PLabel> autoSizeLabel;
-    osg::ref_ptr<lbr::IPGroup> sizeIP; //!< for POffset
-    osg::ref_ptr<lbr::IPGroup> offsetIP; //!< for POffset
-    osg::ref_ptr<lbr::PLabel> angleLabel;
-    osg::ref_ptr<mdv::DatumPlane> display;
-    
-    void updateGeometry();
-    void prmActiveSync();
-    void updateLabelPositions();
-    
-    void goUpdateConstant();
-    void goUpdatePOffset(const UpdatePayload&);
-    void goUpdatePCenter(const UpdatePayload&);
-    void goUpdateAAngleP(const UpdatePayload&);
-    void goUpdateAverage3P(const UpdatePayload&);
-    void goUpdateThrough3P(const UpdatePayload&);
+    struct Stow;
+    std::unique_ptr<Stow> stow;
   };
 }
 

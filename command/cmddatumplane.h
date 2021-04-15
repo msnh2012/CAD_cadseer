@@ -47,6 +47,7 @@ namespace cmd
     virtual void deactivate() override;
     
     void setToConstant();
+    void setLinked(const boost::uuids::uuid&);
     void setToPlanarOffset(const std::vector<slc::Message>&);
     void setToPlanarCenter(const std::vector<slc::Message>&);
     void setToAxisAngle(const std::vector<slc::Message>&);
@@ -58,6 +59,7 @@ namespace cmd
     void go();
     bool isPlanarFace(const slc::Container&);
     bool isAxis(const slc::Container&);
+    bool attemptLink(const slc::Container&);
     bool attemptOffset(const slc::Container&);
     bool attemptCenter(const std::vector<slc::Container>&);
     bool attemptAxisAngle(const std::vector<slc::Container>&);

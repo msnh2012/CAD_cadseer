@@ -26,9 +26,12 @@
 
 #include "application/appapplication.h"
 #include "project/prjproject.h"
+#include "message/msgmessage.h"
+#include "message/msgnode.h"
 #include "dialogs/dlgselectionbutton.h"
 #include "dialogs/dlgselectionwidget.h"
 #include "commandview/cmvparameterwidgets.h"
+#include "commandview/cmvcsyswidget.h"
 #include "parameter/prmparameter.h"
 #include "tools/featuretools.h"
 #include "feature/ftrinputtype.h"
@@ -44,7 +47,6 @@ struct DatumPlane::Stow
 {
   cmd::DatumPlane *command;
   cmv::DatumPlane *view;
-  QComboBox *combo = nullptr;
   QStackedWidget *stackedWidget = nullptr;
   dlg::SelectionWidget *planarOffsetSelection = nullptr;
   dlg::SelectionWidget *planarCenterSelection = nullptr;
@@ -52,6 +54,7 @@ struct DatumPlane::Stow
   dlg::SelectionWidget *average3PlaneSelection = nullptr;
   dlg::SelectionWidget *through3PointsSelection = nullptr;
   cmv::ParameterWidget *parameterWidget = nullptr;
+  cmv::CSysWidget *csysWidget = nullptr;
   
   Stow(cmd::DatumPlane *cIn, cmv::DatumPlane *vIn)
   : command(cIn)
@@ -77,16 +80,22 @@ struct DatumPlane::Stow
     QVBoxLayout *mainLayout = new QVBoxLayout();
     view->setLayout(mainLayout);
     
-    combo = new QComboBox(view);
-    combo->addItem(QObject::tr("Constant"));
-    combo->addItem(QObject::tr("Planar Offset"));
-    combo->addItem(QObject::tr("Planar Center"));
-    combo->addItem(QObject::tr("Axis Angle"));
-    combo->addItem(QObject::tr("3 Plane Average"));
-    combo->addItem(QObject::tr("Through 3 Points"));
-    mainLayout->addWidget(combo);
+    //remove hack param so doesn't show in widget
+    auto allParams = command->feature->getParameters();
+    auto hackPrms = command->feature->getParameters(ftr::DatumPlane::csysLinkHack);
+    assert(hackPrms.size() == 1);
+    auto theEnd = std::remove(allParams.begin(), allParams.end(), hackPrms.front());
+    allParams.erase(theEnd, allParams.end());
     
-    parameterWidget = new cmv::ParameterWidget(view, command->feature->getParameters());
+    parameterWidget = new cmv::ParameterWidget(view, allParams);
+    
+    //set prm mode onto csysWidget.
+    auto csysPrms = command->feature->getParameters(prm::Tags::CSys);
+    assert(csysPrms.size() == 1);
+    csysWidget = dynamic_cast<CSysWidget*>(parameterWidget->getWidget(csysPrms.front()));
+    assert(csysWidget);
+    csysWidget->setPrmMode(hackPrms.front());
+    
     mainLayout->addWidget(parameterWidget);
     
     stackedWidget = new QStackedWidget(view);
@@ -96,6 +105,11 @@ struct DatumPlane::Stow
     QWidget *dummy = new QWidget(stackedWidget);
     dummy->setSizePolicy(QSizePolicy(dummy->sizePolicy().horizontalPolicy(), QSizePolicy::Expanding));
     stackedWidget->addWidget(dummy);
+    
+    //Link to be empty widget for now.
+    QWidget *dummy2 = new QWidget(stackedWidget);
+    dummy2->setSizePolicy(QSizePolicy(dummy2->sizePolicy().horizontalPolicy(), QSizePolicy::Expanding));
+    stackedWidget->addWidget(dummy2);
     
     //planar offset
     {
@@ -193,8 +207,6 @@ struct DatumPlane::Stow
   
   void loadFeatureData()
   {
-    QSignalBlocker stackBlocker(stackedWidget);
-    
     const ftr::Picks &picks = command->feature->getPicks();
     auto pickFromTag = [&](const std::string &tagIn) -> boost::optional<const ftr::Pick&>
     {
@@ -216,16 +228,23 @@ struct DatumPlane::Stow
     };
     
     ftr::DatumPlane::DPType dpt = command->feature->getDPType();
-    if (dpt == ftr::DatumPlane::DPType::Constant)
-      combo->setCurrentIndex(0);
+    if (dpt == ftr::DatumPlane::DPType::Link)
+    {
+      const auto &pl = view->project->getPayload(command->feature->getId());
+      auto features = pl.getFeatures(ftr::InputType::linkCSys);
+      if (features.empty())
+      {
+        csysWidget->setCSysLinkId(gu::createNilId());
+        view->node->sendBlocked(msg::buildStatusMessage("Couldn't find linked csys feature"));
+      }
+      else
+        csysWidget->setCSysLinkId(features.front()->getId());
+    }
     else if (dpt == ftr::DatumPlane::DPType::POffset)
     {
       auto msgs = goResolve(ftr::InputType::create);
       if (!msgs.empty()) //what if more than one?
         planarOffsetSelection->initializeButton(0, msgs.front());
-      combo->setCurrentIndex(1);
-      stackedWidget->setCurrentIndex(1);
-      activate(1);
     }
     else if (dpt == ftr::DatumPlane::DPType::PCenter)
     {
@@ -235,9 +254,6 @@ struct DatumPlane::Stow
       auto msgs1 = goResolve(ftr::InputType::createIndexedTag(ftr::DatumPlane::center, 1));
       if (!msgs1.empty()) //what if more than one?
         planarCenterSelection->initializeButton(1, msgs1.front());
-      combo->setCurrentIndex(2);
-      stackedWidget->setCurrentIndex(2);
-      activate(2);
     }
     else if (dpt == ftr::DatumPlane::DPType::AAngleP)
     {
@@ -247,9 +263,6 @@ struct DatumPlane::Stow
       auto msgsPlane = goResolve(ftr::DatumPlane::plane);
       if (!msgsPlane.empty()) //what if more than one?
         axisAngleSelection->initializeButton(1, msgsPlane.front());
-      combo->setCurrentIndex(3);
-      stackedWidget->setCurrentIndex(3);
-      activate(3);
     }
     else if (dpt == ftr::DatumPlane::DPType::Average3P)
     {
@@ -262,9 +275,6 @@ struct DatumPlane::Stow
       auto msgs2 = goResolve(ftr::InputType::createIndexedTag(ftr::DatumPlane::plane, 2));
       if (!msgs2.empty()) //what if more than one?
         average3PlaneSelection->initializeButton(2, msgs2.front());
-      combo->setCurrentIndex(4);
-      stackedWidget->setCurrentIndex(4);
-      activate(4);
     }
     else if (dpt == ftr::DatumPlane::DPType::Through3P)
     {
@@ -277,16 +287,14 @@ struct DatumPlane::Stow
       auto msgs2 = goResolve(ftr::InputType::createIndexedTag(ftr::DatumPlane::point, 2));
       if (!msgs2.empty()) //what if more than one?
         through3PointsSelection->initializeButton(2, msgs2.front());
-      combo->setCurrentIndex(5);
-      stackedWidget->setCurrentIndex(5);
-      activate(5);
     }
+    int dptInt = static_cast<int>(dpt);
+    stackedWidget->setCurrentIndex(dptInt);
+    activate(dptInt); //activate will handle it, if no selection widget for index.
   }
   
   void glue()
   {
-    connect(combo, SIGNAL(currentIndexChanged(int)), stackedWidget, SLOT(setCurrentIndex(int)));
-    connect(stackedWidget, SIGNAL(currentChanged(int)), view, SLOT(stackedChanged(int)));
     connect(planarOffsetSelection->getButton(0), &dlg::SelectionButton::dirty, view, &DatumPlane::planarOffsetSelectionChanged);
     connect(planarCenterSelection->getButton(0), &dlg::SelectionButton::dirty, view, &DatumPlane::planarCenterSelectionChanged);
     connect(planarCenterSelection->getButton(1), &dlg::SelectionButton::dirty, view, &DatumPlane::planarCenterSelectionChanged);
@@ -299,6 +307,7 @@ struct DatumPlane::Stow
     connect(through3PointsSelection->getButton(1), &dlg::SelectionButton::dirty, view, &DatumPlane::through3PointsSelectionChanged);
     connect(through3PointsSelection->getButton(2), &dlg::SelectionButton::dirty, view, &DatumPlane::through3PointsSelectionChanged);
     connect(parameterWidget, &ParameterBase::prmValueChanged, view, &DatumPlane::parameterChanged);
+    connect(csysWidget, &CSysWidget::dirty, view, &DatumPlane::linkCSysChanged);
   }
   
   void activate(int index)
@@ -314,14 +323,19 @@ struct DatumPlane::Stow
       sw->activate(0);
   }
   
+  void goLinked()
+  {
+    assert(csysWidget);
+    auto id = csysWidget->getCSysLinkId();
+    command->setLinked(id);
+    command->localUpdate();
+  }
+  
   void goPlanarOffset()
   {
     std::vector<slc::Message> msgs0 = planarOffsetSelection->getMessages(0);
-    if (msgs0.size() == 1)
-    {
-      command->setToPlanarOffset(msgs0);
-      command->localUpdate();
-    }
+    command->setToPlanarOffset(msgs0);
+    command->localUpdate();
   }
   
   void goPlanarCenter()
@@ -329,11 +343,8 @@ struct DatumPlane::Stow
     std::vector<slc::Message> msgs0 = planarCenterSelection->getMessages(0);
     std::vector<slc::Message> msgs1 = planarCenterSelection->getMessages(1);
     msgs0.insert(msgs0.end(), msgs1.begin(), msgs1.end());
-    if (msgs0.size() == 2)
-    {
-      command->setToPlanarCenter(msgs0);
-      command->localUpdate();
-    }
+    command->setToPlanarCenter(msgs0);
+    command->localUpdate();
   }
   
   void goAxisAngle()
@@ -341,11 +352,8 @@ struct DatumPlane::Stow
     std::vector<slc::Message> msgs0 = axisAngleSelection->getMessages(0);
     std::vector<slc::Message> msgs1 = axisAngleSelection->getMessages(1);
     msgs0.insert(msgs0.end(), msgs1.begin(), msgs1.end());
-    if (msgs0.size() == 2)
-    {
-      command->setToAxisAngle(msgs0);
-      command->localUpdate();
-    }
+    command->setToAxisAngle(msgs0);
+    command->localUpdate();
   }
   
   void goAverage3Plane()
@@ -355,11 +363,8 @@ struct DatumPlane::Stow
     std::vector<slc::Message> msgs2 = average3PlaneSelection->getMessages(2);
     msgs0.insert(msgs0.end(), msgs1.begin(), msgs1.end());
     msgs0.insert(msgs0.end(), msgs2.begin(), msgs2.end());
-    if (msgs0.size() == 3)
-    {
-      command->setToAverage3Plane(msgs0);
-      command->localUpdate();
-    }
+    command->setToAverage3Plane(msgs0);
+    command->localUpdate();
   }
   
   void goThrough3Points()
@@ -369,11 +374,8 @@ struct DatumPlane::Stow
     std::vector<slc::Message> msgs2 = through3PointsSelection->getMessages(2);
     msgs0.insert(msgs0.end(), msgs1.begin(), msgs1.end());
     msgs0.insert(msgs0.end(), msgs2.begin(), msgs2.end());
-    if (msgs0.size() == 3)
-    {
-      command->setToThrough3Points(msgs0);
-      command->localUpdate();
-    }
+    command->setToThrough3Points(msgs0);
+    command->localUpdate();
   }
 };
 
@@ -383,29 +385,6 @@ DatumPlane::DatumPlane(cmd::DatumPlane *cIn)
 {}
 
 DatumPlane::~DatumPlane() = default;
-
-void DatumPlane::stackedChanged(int index)
-{
-  if (index < 0 || index >= stow->stackedWidget->count())
-    return;
-  stow->activate(index);
-  
-  if (index == 0) //constant
-  {
-    stow->command->setToConstant();
-    stow->command->localUpdate();
-  }
-  else if (index == 1)
-    stow->goPlanarOffset();
-  else if (index == 2)
-    stow->goPlanarCenter();
-  else if (index == 3)
-    stow->goAxisAngle();
-  else if (index == 4)
-    stow->goAverage3Plane();
-  else if (index == 5)
-    stow->goThrough3Points();
-}
 
 void DatumPlane::planarOffsetSelectionChanged()
 {
@@ -434,5 +413,72 @@ void DatumPlane::through3PointsSelectionChanged()
 
 void DatumPlane::parameterChanged()
 {
-  stow->command->localUpdate();
+  auto prmsType = stow->command->feature->getParameters(ftr::DatumPlane::datumPlaneType);
+  assert(!prmsType.empty());
+  auto *prmType = prmsType.front();
+  int typeInt = static_cast<int>(*prmType);
+  assert(typeInt >= 0 && typeInt < stow->stackedWidget->count());
+  
+  if (stow->stackedWidget->currentIndex() == typeInt)
+  {
+    //minor parameter change.
+    stow->command->localUpdate();
+    return;
+  }
+  
+  //major type change.
+  stow->stackedWidget->setCurrentIndex(typeInt);
+  stow->activate(typeInt);
+  
+  using DPType = ftr::DatumPlane::DPType;
+  switch (static_cast<DPType>(typeInt))
+  {
+    case DPType::Constant:
+    {
+      stow->command->setToConstant();
+      stow->command->localUpdate();
+      break;
+    }
+    case DPType::Link:
+    {
+      stow->goLinked();
+      break;
+    }
+    case DPType::POffset:
+    {
+      stow->goPlanarOffset();
+      break;
+    }
+    case DPType::PCenter:
+    {
+      stow->goPlanarCenter();
+      break;
+    }
+    case DPType::AAngleP:
+    {
+      stow->goAxisAngle();
+      break;
+    }
+    case DPType::Average3P:
+    {
+      stow->goAverage3Plane();
+      break;
+    }
+    case DPType::Through3P:
+    {
+      stow->goThrough3Points();
+      break;
+    }
+    default:
+    {
+      assert(0); //unrecognized DatumPlane type.
+      break;
+    }
+  }
+}
+
+void DatumPlane::linkCSysChanged()
+{
+  stow->command->feature->setModelDirty();
+  stow->goLinked();
 }

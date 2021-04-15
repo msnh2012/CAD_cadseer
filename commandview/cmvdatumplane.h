@@ -38,13 +38,13 @@ namespace cmv
     DatumPlane(cmd::DatumPlane*);
     ~DatumPlane() override;
   public Q_SLOTS:
-    void stackedChanged(int);
     void planarOffsetSelectionChanged();
     void planarCenterSelectionChanged();
     void axisAngleSelectionChanged();
     void average3PlaneSelectionChanged();
     void through3PointsSelectionChanged();
     void parameterChanged();
+    void linkCSysChanged();
   private:
     struct Stow;
     std::unique_ptr<Stow> stow;
