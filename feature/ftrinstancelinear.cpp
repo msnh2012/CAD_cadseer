@@ -137,7 +137,7 @@ void InstanceLinear::setCSys(const osg::Matrixd &mIn)
 
 bool InstanceLinear::getIncludeSource()
 {
-  return static_cast<bool>(*includeSource);
+  return includeSource->getBool();
 }
 
 void InstanceLinear::setIncludeSource(bool in)
@@ -177,21 +177,21 @@ void InstanceLinear::updateModel(const UpdatePayload &payloadIn)
       throw std::runtime_error("No shapes found.");
 
     occt::ShapeVector out;
-    osg::Vec3d xProjection = gu::getXVector(static_cast<osg::Matrixd>(*csys)) * static_cast<double>(*xOffset);
-    osg::Vec3d yProjection = gu::getYVector(static_cast<osg::Matrixd>(*csys)) * static_cast<double>(*yOffset);
-    osg::Vec3d zProjection = gu::getZVector(static_cast<osg::Matrixd>(*csys)) * static_cast<double>(*zOffset);
+    osg::Vec3d xProjection = gu::getXVector(csys->getMatrix()) * xOffset->getDouble();
+    osg::Vec3d yProjection = gu::getYVector(csys->getMatrix()) * yOffset->getDouble();
+    osg::Vec3d zProjection = gu::getZVector(csys->getMatrix()) * zOffset->getDouble();
     for (const auto &tShape : tShapes)
     {
       osg::Matrixd shapeBase = gu::toOsg(tShape.Location().Transformation());
       osg::Vec3d baseTrans = shapeBase.getTrans();
       
-      for (int z = 0; z < static_cast<int>(*zCount); ++z)
+      for (int z = 0; z < zCount->getInt(); ++z)
       {
-        for (int y = 0; y < static_cast<int>(*yCount); ++y)
+        for (int y = 0; y < yCount->getInt(); ++y)
         {
-          for (int x = 0; x < static_cast<int>(*xCount); ++x)
+          for (int x = 0; x < xCount->getInt(); ++x)
           {
-            if ((x == 0) && (y == 0) && (z == 0) && (!static_cast<bool>(*includeSource)))
+            if ((x == 0) && (y == 0) && (z == 0) && (!includeSource->getBool()))
               continue;
             osg::Vec3d no = baseTrans; //new origin
             no += zProjection * static_cast<double>(z);
@@ -231,7 +231,7 @@ void InstanceLinear::updateModel(const UpdatePayload &payloadIn)
     //the origin of the system doesn't matter, so just put at shape center.
     occt::BoundingBox bb(tShapes);
     osg::Vec3d origin = gu::toOsg(bb.getCenter());
-    osg::Matrixd tsys = static_cast<osg::Matrixd>(*csys);
+    osg::Matrixd tsys = csys->getMatrix();
     tsys.setTrans(origin);
     csys->setValue(tsys);
     csysDragger->draggerUpdate();
@@ -243,9 +243,9 @@ void InstanceLinear::updateModel(const UpdatePayload &payloadIn)
     //if we do instancing only on the x axis, y and z count = 1, then
     //the y and z labels overlap at zero. so we cheat.
     auto cheat = [](int c) -> int{return std::max(c - 1, 1);};
-    xCountLabel->setMatrix(tsys * osg::Matrixd::translate(xProjection * cheat(static_cast<int>(*xCount))));
-    yCountLabel->setMatrix(tsys * osg::Matrixd::translate(yProjection * cheat(static_cast<int>(*yCount))));
-    zCountLabel->setMatrix(tsys * osg::Matrixd::translate(zProjection * cheat(static_cast<int>(*zCount))));
+    xCountLabel->setMatrix(tsys * osg::Matrixd::translate(xProjection * cheat(xCount->getInt())));
+    yCountLabel->setMatrix(tsys * osg::Matrixd::translate(yProjection * cheat(yCount->getInt())));
+    zCountLabel->setMatrix(tsys * osg::Matrixd::translate(zProjection * cheat(zCount->getInt())));
     
     includeSourceLabel->setMatrix(osg::Matrixd::translate(origin + osg::Vec3d(0.0, 0.0, -bb.getHeight() / 2.0)));
     

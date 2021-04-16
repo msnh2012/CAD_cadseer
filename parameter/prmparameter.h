@@ -209,6 +209,7 @@ namespace prm
     Parameter(const QString &nameIn, double valueIn, std::string_view = "");
     Parameter(const QString &nameIn, int valueIn, std::string_view = "");
     Parameter(const QString &nameIn, bool valueIn, std::string_view = "");
+    Parameter(const QString &nameIn, const std::string &valueIn, std::string_view = "");
     Parameter(const QString &nameIn, const boost::filesystem::path &valueIn, PathType, std::string_view = "");
     Parameter(const QString &nameIn, const osg::Vec3d &valueIn, std::string_view = "");
     Parameter(const QString &nameIn, const osg::Quat &valueIn, std::string_view = "");
@@ -241,65 +242,67 @@ namespace prm
     
     //@{
     //! original functions from when only doubles supported.
-    bool setValue(double valueIn);
-    explicit operator double() const;
+    bool setValue(double); //<! true = value was changed. assert or throw on wrong variant type.
+    double getDouble() const; //!<assert or throw on wrong variant type.
     bool isValidValue(const double &valueIn) const;
     void setConstraint(const Constraint &); //!< only for doubles ..maybe ints?
     //@}
     
     //@{
     //! int support functions.
-    bool setValue(int);
-    explicit operator int() const;
+    bool setValue(int); //<! true = value was changed. assert or throw on wrong variant type.
+    int getInt() const; //!<assert or throw on wrong variant type.
     bool isValidValue(const int &valueIn) const; //!< just casting to double and using double constraints.
     //maybe setConstraint
     //@}
     
     //@{
     //! bool support functions.
-    bool setValue(bool); //<! true = value was changed.
-    explicit operator bool() const;
+    bool setValue(bool); //<! true = value was changed. assert or throw on wrong variant type.
+    bool getBool() const; //!<assert or throw on wrong variant type.
     //@}
     
     //@{
     //! std::string support functions.
-    explicit operator std::string() const;
-    //@}
-    
-    //@{
-    //! QString support functions. We don't store QString, only for conversion out.
-    explicit operator QString() const;
+    bool setValue(const std::string&); //<! true = value was changed. assert or throw on wrong variant type.
+    const std::string& getString() const; //!<assert or throw on wrong variant type.
     //@}
     
     //@{
     //! boost::filesystem::path support functions.
-    bool setValue(const boost::filesystem::path&); //<! true = value was changed.
-    explicit operator boost::filesystem::path() const;
+    bool setValue(const boost::filesystem::path&); //<! true = value was changed. assert or throw on wrong variant type.
+    const boost::filesystem::path& getPath() const; //!<assert or throw on wrong variant type.
     //@}
     
     //@{
     //! osg::Vec3d support functions.
-    bool setValue(const osg::Vec3d&); //<! true = value was changed.
-    explicit operator osg::Vec3d() const;
+    bool setValue(const osg::Vec3d&); //<! true = value was changed. assert or throw on wrong variant type.
+    const osg::Vec3d& getVector() const; //!<assert or throw on wrong variant type.
     //@}
     
     //@{
     //! osg::Quat support functions.
-    bool setValue(const osg::Quat&); //<! true = value was changed.
-    explicit operator osg::Quat() const;
+    bool setValue(const osg::Quat&); //<! true = value was changed. assert or throw on wrong variant type.
+    const osg::Quat& getQuat() const; //!<assert or throw on wrong variant type.
     //@}
     
     //@{
     //! osg::Matrixd support functions.
-    bool setValue(const osg::Matrixd&); //<! true = value was changed.
-    explicit operator osg::Matrixd() const;
+    bool setValue(const osg::Matrixd&); //<! true = value was changed. assert or throw on wrong variant type.
+    const osg::Matrixd& getMatrix() const; //!<assert or throw on wrong variant type.
     //@}
     
     //@{
     //! Pick support functions.
-    bool setValue(const ftr::Pick&); //<! true = value was changed.
-    bool setValue(const ftr::Picks&); //<! true = value was changed.
-    explicit operator ftr::Picks() const;
+    bool setValue(const ftr::Pick&); //<! true = value was changed. assert or throw on wrong variant type.
+    bool setValue(const ftr::Picks&); //<! true = value was changed. assert or throw on wrong variant type.
+    const ftr::Picks& getPicks() const; //!<assert or throw on wrong variant type.
+    //@}
+    
+    //@{
+    //! conversion functions. no throw on type. returns values, not refs.
+    std::string adaptToString(int = -1) const;
+    QString adaptToQString(int = -1) const;
     //@}
     
     //! observations of parameter changes.

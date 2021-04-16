@@ -101,7 +101,7 @@ struct cmv::BoolCombo::Stow
   }
   void valueChanged()
   {
-    bool value = static_cast<bool>(*parameter);
+    bool value = parameter->getBool();
     if (value)
       comboBox->setCurrentIndex(0);
     else
@@ -192,7 +192,7 @@ struct cmv::EnumCombo::Stow
   }
   void valueChanged()
   {
-    int value = static_cast<int>(*parameter);
+    int value = parameter->getInt();
     assert(value >= 0 && value < comboBox->count());
     comboBox->setCurrentIndex(value);
   }
@@ -272,8 +272,7 @@ struct cmv::StringEdit::Stow
   
   void valueChanged()
   {
-    auto value = static_cast<QString>(*parameter);
-    lineEdit->setText(value);
+    lineEdit->setText(parameter->adaptToQString());
   }
   
   void constantChanged() //not needed as strings can't be linked, but oh well.
@@ -356,8 +355,7 @@ struct cmv::PathEdit::Stow
   
   void valueChanged()
   {
-    auto value = static_cast<QString>(*parameter);
-    lineEdit->setText(value);
+    lineEdit->setText(parameter->adaptToQString());
   }
   
   void constantChanged() //not needed as paths can't be linked, but oh well.
@@ -405,7 +403,7 @@ void PathEdit::finishedEditingSlot()
 
 void PathEdit::browseSlot()
 {
-  boost::filesystem::path cp = static_cast<boost::filesystem::path>(*stow->parameter);
+  boost::filesystem::path cp = stow->parameter->getPath();
   if (!boost::filesystem::exists(cp))
     cp = prf::manager().rootPtr->project().lastDirectory().get();
   boost::filesystem::path op;
@@ -461,9 +459,8 @@ void PathEdit::browseSlot()
 //build the appropriate widget editor.
 namespace cmv
 {
-  class WidgetFactoryVisitor : public boost::static_visitor<ParameterBase*>
+  struct WidgetFactoryVisitor
   {
-  public:
     WidgetFactoryVisitor() = delete;
     WidgetFactoryVisitor(QWidget *pIn, prm::Parameter* prmIn)
     : parent(pIn)
@@ -566,7 +563,7 @@ struct cmv::ParameterWidget::Stow
       layout->addWidget(label, row, column++, Qt::AlignVCenter | Qt::AlignRight);
       
       cmv::WidgetFactoryVisitor v(parentWidget, p);
-      ParameterBase *pWidget = boost::apply_visitor(v, p->getStow().variant);
+      ParameterBase *pWidget = std::visit(v, p->getStow().variant);
       layout->addWidget(pWidget, row++, column--); //don't use alignment or won't stretch to fill area.
       QObject::connect(pWidget, &ParameterBase::prmValueChanged, parentWidget, &ParameterWidget::prmValueChanged);
       QObject::connect(pWidget, &ParameterBase::prmConstantChanged, parentWidget, &ParameterWidget::prmConstantChanged);
@@ -630,7 +627,7 @@ ParameterBase* ParameterWidget::getWidget(prm::Parameter *pIn)
 ParameterBase* ParameterWidget::buildWidget(QWidget *parent, prm::Parameter *pIn)
 {
   cmv::WidgetFactoryVisitor v(parent, pIn);
-  ParameterBase *pWidget = boost::apply_visitor(v, pIn->getStow().variant);
+  ParameterBase *pWidget = std::visit(v, pIn->getStow().variant);
   return pWidget;
 }
 
@@ -692,7 +689,7 @@ namespace
         if (index.column() == 0)
           return p->getName();
         if (index.column() == 1)
-          return static_cast<QString>(*p);
+          return p->adaptToQString();
       }
       return QVariant();
     }
@@ -730,7 +727,7 @@ namespace
     {
       prm::Parameter *p = static_cast<const TableModel*>(index.model())->getParameter(index.row());
       cmv::WidgetFactoryVisitor v(parent, p);
-      return boost::apply_visitor(v, p->getStow().variant);
+      return std::visit(v, p->getStow().variant);
     }
 
     void updateEditorGeometry(QWidget* editor, const QStyleOptionViewItem& option, const QModelIndex&) const override

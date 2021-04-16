@@ -417,7 +417,7 @@ void DatumPlane::parameterChanged()
   auto prmsType = stow->command->feature->getParameters(ftr::DatumPlane::datumPlaneType);
   assert(!prmsType.empty());
   auto *prmType = prmsType.front();
-  int typeInt = static_cast<int>(*prmType);
+  int typeInt = prmType->getInt();
   assert(typeInt >= 0 && typeInt < stow->stackedWidget->count());
   
   if (stow->stackedWidget->currentIndex() == typeInt)

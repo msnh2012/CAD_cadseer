@@ -118,7 +118,7 @@ void Sketch::buildDefault(const osg::Matrixd &mIn, double sizeIn)
 
 void Sketch::setCSys(const osg::Matrixd &csysIn)
 {
-  osg::Matrixd oldSystem = static_cast<osg::Matrixd>(*csys);
+  osg::Matrixd oldSystem = csys->getMatrix();
   if (!csys->setValue(csysIn))
     return; // already at this csys
     
@@ -129,7 +129,7 @@ void Sketch::setCSys(const osg::Matrixd &csysIn)
 
 osg::Matrixd Sketch::getCSys() const
 {
-  return static_cast<osg::Matrixd>(*csys);
+  return csys->getMatrix();
 }
 
 bool Sketch::hasHPPair(uint32_t hIn)
@@ -227,7 +227,7 @@ void Sketch::updateModel(const UpdatePayload &plIn)
       auto systemParameters =  tfs.front()->getParameters(prm::Tags::CSys);
       if (systemParameters.empty())
         throw std::runtime_error("Feature for csys link, doesn't have csys parameter");
-      csys->setValue(static_cast<osg::Matrixd>(*systemParameters.front()));
+      csys->setValue(systemParameters.front()->getMatrix());
       csysDragger->draggerUpdate();
       draggerHide();
     }
@@ -236,7 +236,7 @@ void Sketch::updateModel(const UpdatePayload &plIn)
     
     //set solver constraints to parameters.
     for (const auto &p : hpPairs)
-      solver->updateConstraintValue(p.first, static_cast<double>(*p.second));
+      solver->updateConstraintValue(p.first, p.second->getDouble());
     
     solver->solve(solver->getGroup(), true);
     if (solver->getResultCode() != 0)
@@ -245,7 +245,7 @@ void Sketch::updateModel(const UpdatePayload &plIn)
     
     updateSeerShape();
     mainTransform->setMatrix(osg::Matrixd::identity());
-    visual->getTransform()->setMatrix(static_cast<osg::Matrixd>(*csys));
+    visual->getTransform()->setMatrix(csys->getMatrix());
     
     setSuccess();
   }
@@ -271,7 +271,7 @@ void Sketch::updateModel(const UpdatePayload &plIn)
 
 void Sketch::updateSeerShape()
 {
-  osg::Matrixd toWorld = static_cast<osg::Matrixd>(*csys);
+  osg::Matrixd toWorld = csys->getMatrix();
   
   //we only want entities that are in the current group, the target of the solve.
   //also, only non construction entities also.
@@ -618,7 +618,7 @@ void Sketch::serialRead(const prj::srl::skts::Sketch &sIn)
       std::cout << "ERROR: in finding location of constraint in: " << BOOST_CURRENT_FUNCTION << std::endl;
   }
   
-  visual->getTransform()->setMatrix(static_cast<osg::Matrixd>(*csys));
+  visual->getTransform()->setMatrix(csys->getMatrix());
   solver->solve(solver->getGroup(), true);
   visual->update();
 }

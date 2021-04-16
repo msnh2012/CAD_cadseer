@@ -55,7 +55,6 @@
 #include "lod/lodmessage.h"
 #include "annex/annshapeidhelper.h"
 #include "annex/annseershape.h"
-#include "parameter/prmvariant.h"
 #include "parameter/prmparameter.h"
 #include "feature/ftrmessage.h"
 #include "feature/ftrshapehistory.h"
@@ -67,22 +66,6 @@
 using namespace ftr;
 
 std::size_t Base::nextConstructionIndex = 0;
-
-
-//used to display value info.
-class InfoVisitor : public boost::static_visitor<QString>
-{
-public:
-  QString operator()(double d) const {return QString::fromStdString(tls::prettyDouble(d));}
-  QString operator()(int i) const {return QString::number(i);}
-  QString operator()(bool b) const {return (b) ? (QObject::tr("True")) : (QObject::tr("False"));}
-  QString operator()(const std::string &s) const {return QString::fromStdString(s);}
-  QString operator()(const boost::filesystem::path &p) const {return QString::fromStdString(p.string());}
-  QString operator()(const osg::Vec3d &vIn) const {return gu::osgVectorOut(vIn);}
-  QString operator()(const osg::Quat &qIn) const {return gu::osgQuatOut(qIn);}
-  QString operator()(const osg::Matrixd &mIn) const {return gu::osgMatrixOut(mIn);}
-  QString operator()(const Picks&) const {return QObject::tr("Picks");} //TODO
-};
 
 Base::Base()
 {
@@ -567,7 +550,7 @@ QTextStream& Base::getInfo(QTextStream &stream) const
       {
           stream
               << "    Parameter name: " << p->getName()
-              << "    Value: " << boost::apply_visitor(InfoVisitor(), p->getStow().variant)
+              << "    Value: " << p->adaptToQString()
               << "    Is linked: " << boolString(!(p->isConstant()))
               << "    Is active: " << boolString(p->isActive())
               << Qt::endl;

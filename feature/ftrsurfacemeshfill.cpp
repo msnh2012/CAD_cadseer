@@ -98,9 +98,9 @@ void SurfaceMeshFill::updateModel(const UpdatePayload &pIn)
     
     *mesh = tsm;
     
-    if (static_cast<int>(*algorithm) == 0)
+    if (algorithm->getInt() == 0)
       mesh->fillHolesCGAL();
-    if (static_cast<int>(*algorithm) == 1)
+    if (algorithm->getInt() == 1)
       mesh->fillHolesPMP();;
 
     setSuccess();

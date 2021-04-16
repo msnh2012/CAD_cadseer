@@ -70,7 +70,7 @@ void FeatureReposition::go()
     ann::CSysDragger &da = baseFeature->getAnnex<ann::CSysDragger>(ann::Type::CSysDragger);
     
     osg::Matrixd dm = osg::Matrixd::inverse(da.dragger->getMatrix()); //dragger matrix
-    osg::Matrixd ns = static_cast<osg::Matrix>(*(da.parameter)) * dm * cs;
+    osg::Matrixd ns = da.parameter->getMatrix() * dm * cs;
     da.setCSys(ns);
     moved = true;
   }

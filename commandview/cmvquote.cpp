@@ -297,8 +297,8 @@ struct Quote::Stow
     
     loadLabelPixmapSlot();
     
-    tFileEdit->setText(QString::fromStdString(static_cast<boost::filesystem::path>(*command->feature->tFile).string()));
-    oFileEdit->setText(QString::fromStdString(static_cast<boost::filesystem::path>(*command->feature->oFile).string()));
+    tFileEdit->setText(QString::fromStdString(command->feature->tFile->getPath().string()));
+    oFileEdit->setText(QString::fromStdString(command->feature->oFile->getPath().string()));
     
     auto payload = view->project->getPayload(command->feature->getId());
     auto buildMessage = [](const std::vector<const ftr::Base*> &parents) -> slc::Message

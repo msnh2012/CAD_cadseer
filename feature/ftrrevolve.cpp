@@ -121,8 +121,8 @@ void Revolve::updateLabels(occt::BoundingBox &bb)
 {
   updateLabelVisibility();
   
-  axisOriginLabel->setMatrix(osg::Matrixd::translate(static_cast<osg::Vec3d>(*axisOrigin)));
-  axisDirectionLabel->setMatrix(osg::Matrixd::translate(static_cast<osg::Vec3d>(*axisDirection)));
+  axisOriginLabel->setMatrix(osg::Matrixd::translate(axisOrigin->getVector()));
+  axisDirectionLabel->setMatrix(osg::Matrixd::translate(axisDirection->getVector()));
   angleLabel->setMatrix(osg::Matrixd::translate(gu::toOsg(bb.getCenter())));
 }
 
@@ -255,10 +255,10 @@ void Revolve::updateModel(const UpdatePayload &pIn)
     TopoDS_Compound strc = static_cast<TopoDS_Compound>(occt::ShapeVectorCast(str));
     gp_Ax1 axis
     (
-      gp_Pnt(gu::toOcc(static_cast<osg::Vec3d>(*axisOrigin)).XYZ()),
-      gp_Dir(gu::toOcc(static_cast<osg::Vec3d>(*axisDirection)))
+      gp_Pnt(gu::toOcc(axisOrigin->getVector()).XYZ()),
+      gp_Dir(gu::toOcc(axisDirection->getVector()))
     );
-    double la = static_cast<double>(*angle);
+    double la = angle->getDouble();
     BRepPrimAPI_MakeRevol revolver(strc, axis, osg::DegreesToRadians(la));
     revolver.Check(); //throw occ exception if failed
     

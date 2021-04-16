@@ -131,7 +131,7 @@ void ImagePlane::setScale(double sIn)
 
 double ImagePlane::getScale() const
 {
-  return static_cast<double>(*scale);
+  return scale->getDouble();
 }
 
 void ImagePlane::updateModel(const UpdatePayload &/*pIn*/)
@@ -147,7 +147,7 @@ void ImagePlane::updateVisual()
   if (!geometry.valid())
     return;
   
-  double s = static_cast<double>(*scale);
+  double s = scale->getDouble();
   osg::Vec3d sv(s, s, 1.0);
   transform->setScale(sv);
   
@@ -206,5 +206,5 @@ void ImagePlane::serialRead(const prj::srl::imps::ImagePlane &so)
   assert(geometry.valid());
   transform->addChild(geometry.get());
   
-  mainTransform->setMatrix(static_cast<osg::Matrix>(*csys));
+  mainTransform->setMatrix(csys->getMatrix());
 }

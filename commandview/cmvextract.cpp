@@ -106,7 +106,7 @@ struct Extract::Stow
     };
     selectionWidget->initializeButton(0, picksToMessages(command->feature->getPicks()));
     
-    selectionWidget->setAngle(static_cast<double>(*command->feature->getAngleParameter()));
+    selectionWidget->setAngle(command->feature->getAngleParameter()->getDouble());
   }
   
   void glue()
@@ -168,7 +168,7 @@ void Extract::enableParameterWidget()
 
 void Extract::parameterChanged()
 {
-  stow->selectionWidget->setAngle(static_cast<double>(*stow->command->feature->getAngleParameter()));
+  stow->selectionWidget->setAngle(stow->command->feature->getAngleParameter()->getDouble());
   stow->selectionWidget->getButton(0)->syncToSelection();
   stow->command->localUpdate();
 }

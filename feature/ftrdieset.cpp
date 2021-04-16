@@ -124,12 +124,12 @@ DieSet::~DieSet()
 
 double DieSet::getLength() const
 {
-  return static_cast<double>(*length);
+  return length->getDouble();
 }
 
 double DieSet::getWidth() const
 {
-  return static_cast<double>(*width);
+  return width->getDouble();
 }
 
 void DieSet::updateModel(const UpdatePayload &payloadIn)
@@ -143,7 +143,7 @@ void DieSet::updateModel(const UpdatePayload &payloadIn)
     
     double h = 50.0; //height
     double zPadding = 50.0; //distance from bottom of bounding box to top of set.
-    if (static_cast<bool>(*autoCalc))
+    if (autoCalc->getBool())
     {
       if (payloadIn.updateMap.count(strip) != 1)
         throw std::runtime_error("couldn't find 'strip' input");
@@ -156,22 +156,22 @@ void DieSet::updateModel(const UpdatePayload &payloadIn)
       occt::BoundingBox sbbox(ss); //blank bounding box.
       
       gp_Pnt bbc = sbbox.getCorners().front();
-      gp_Vec xVec(-static_cast<double>(*lengthPadding), 0.0, 0.0);
-      gp_Vec yVec(0.0, -static_cast<double>(*widthPadding), 0.0);
+      gp_Vec xVec(-lengthPadding->getDouble(), 0.0, 0.0);
+      gp_Vec yVec(0.0, -widthPadding->getDouble(), 0.0);
       gp_Vec zVec(0.0, 0.0, -zPadding - h);
       
       gp_Pnt corner = bbc.Translated(xVec).Translated(yVec).Translated(zVec);
       origin->setValue(osg::Vec3d(corner.X(), corner.Y(), corner.Z()));
-      double l = sbbox.getLength() + 2 * static_cast<double>(*lengthPadding);
-      double w = sbbox.getWidth() + 2 * static_cast<double>(*widthPadding);
+      double l = sbbox.getLength() + 2 * lengthPadding->getDouble();
+      double w = sbbox.getWidth() + 2 * widthPadding->getDouble();
       length->setValue(l);
       width->setValue(w);
     }
     
     //assumptions on orientation.
-    osg::Vec3d to = static_cast<osg::Vec3d>(*origin); //temp origin.
+    osg::Vec3d to = origin->getVector(); //temp origin.
     gp_Ax2 sys(gp_Pnt(to.x(), to.y(), to.z()), gp_Dir(0.0, 0.0, 1.0), gp_Dir(1.0, 0.0, 0.0));
-    BoxBuilder b(static_cast<double>(*length), static_cast<double>(*width), h, sys);
+    BoxBuilder b(length->getDouble(), width->getDouble(), h, sys);
     TopoDS_Shape out = b.getSolid();
     ShapeCheck check(out);
     if (!check.isValid())
@@ -183,37 +183,37 @@ void DieSet::updateModel(const UpdatePayload &payloadIn)
     
     //update label locations
     osg::Vec3d lLoc = //length label location.
-      static_cast<osg::Vec3d>(*origin)
-      + osg::Vec3d(1.0, 0.0, 0.0) * static_cast<double>(*length) / 2.0
+      origin->getVector()
+      + osg::Vec3d(1.0, 0.0, 0.0) * length->getDouble() / 2.0
       + osg::Vec3d(0.0, 0.0, 1.0) * h;
     lengthLabel->setMatrix(osg::Matrixd::translate(lLoc));
     
     osg::Vec3d wLoc = //length label location.
-      static_cast<osg::Vec3d>(*origin)
-      + osg::Vec3d(1.0, 0.0, 0.0) * static_cast<double>(*length)
-      + osg::Vec3d(0.0, 1.0, 0.0) * static_cast<double>(*width) / 2.0
+      origin->getVector()
+      + osg::Vec3d(1.0, 0.0, 0.0) * length->getDouble()
+      + osg::Vec3d(0.0, 1.0, 0.0) * width->getDouble() / 2.0
       + osg::Vec3d(0.0, 0.0, 1.0) * h;
     widthLabel->setMatrix(osg::Matrixd::translate(wLoc));
     
     osg::Vec3d lpLoc = //length padding label location.
-      static_cast<osg::Vec3d>(*origin)
-      + osg::Vec3d(0.0, 1.0, 0.0) * static_cast<double>(*width) / 2.0
+      origin->getVector()
+      + osg::Vec3d(0.0, 1.0, 0.0) * width->getDouble() / 2.0
       + osg::Vec3d(0.0, 0.0, 1.0) * h;
     lengthPaddingLabel->setMatrix(osg::Matrixd::translate(lpLoc));
     
     osg::Vec3d wpLoc = //width padding label location.
-      static_cast<osg::Vec3d>(*origin)
-      + osg::Vec3d(1.0, 0.0, 0.0) * static_cast<double>(*length) / 2.0
-      + osg::Vec3d(0.0, 1.0, 0.0) * static_cast<double>(*width)
+      origin->getVector()
+      + osg::Vec3d(1.0, 0.0, 0.0) * length->getDouble() / 2.0
+      + osg::Vec3d(0.0, 1.0, 0.0) * width->getDouble()
       + osg::Vec3d(0.0, 0.0, 1.0) * h;
     widthPaddingLabel->setMatrix(osg::Matrixd::translate(wpLoc));
     
-    originLabel->setMatrix(osg::Matrixd::translate(static_cast<osg::Vec3d>(*origin)));
+    originLabel->setMatrix(osg::Matrixd::translate(origin->getVector()));
     
     osg::Vec3d acLoc = //auto calc label location
-      static_cast<osg::Vec3d>(*origin)
-      + osg::Vec3d(static_cast<double>(*length) / 2.0, 0.0, 0.0)
-      + osg::Vec3d(0.0, static_cast<double>(*width) / 2.0, 0.0);
+      origin->getVector()
+      + osg::Vec3d(length->getDouble() / 2.0, 0.0, 0.0)
+      + osg::Vec3d(0.0, width->getDouble() / 2.0, 0.0);
     autoCalcLabel->setMatrix(osg::Matrixd::translate(acLoc));
     
     updateLabelColors();
@@ -242,7 +242,7 @@ void DieSet::updateModel(const UpdatePayload &payloadIn)
 
 void DieSet::updateLabelColors()
 {
-  if (static_cast<bool>(*autoCalc))
+  if (autoCalc->getBool())
   {
     //red while auto calculation.
     lengthLabel->setTextColor(osg::Vec4(1.0, 0.0, 0.0, 1.0));

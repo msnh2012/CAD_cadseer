@@ -99,7 +99,7 @@ void Parameter::valueHasChanged()
   gitStream
     << QObject::tr("Feature: ").toStdString() << feature->getName().toStdString()
     << QObject::tr("    Parameter ").toStdString() << parameter->getName().toStdString()
-    << QObject::tr("    changed to: ").toStdString() << static_cast<QString>(*parameter).toStdString();
+    << QObject::tr("    changed to: ").toStdString() << parameter->adaptToString();
   node->sendBlocked(msg::buildGitMessage(gitStream.str()));
   if (prf::manager().rootPtr->dragger().triggerUpdateOnFinish())
     node->sendBlocked(msg::Mask(msg::Request | msg::Project | msg::Update));

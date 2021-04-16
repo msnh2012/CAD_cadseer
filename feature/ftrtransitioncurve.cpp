@@ -219,18 +219,18 @@ void TransitionCurve::updateModel(const UpdatePayload &pIn)
     p1.Transform(adapt1.Trsf());
     v1.Transform(adapt1.Trsf());
     
-    if (static_cast<bool>(*pick0Direction))
+    if (pick0Direction->getBool())
       v0.Reverse();
-    if (static_cast<bool>(*pick1Direction))
+    if (pick1Direction->getBool())
       v1.Reverse();
     
-    v0 *= static_cast<double>(*pick0Magnitude);
-    v1 *= static_cast<double>(*pick1Magnitude);
+    v0 *= pick0Magnitude->getDouble();
+    v1 *= pick1Magnitude->getDouble();
     
     directionLabel0->setMatrix(osg::Matrixd::translate(gu::toOsg(p0)));
     directionLabel1->setMatrix(osg::Matrixd::translate(gu::toOsg(p1)));
-    magnitudeLabel0->setMatrix(osg::Matrixd::translate(gu::toOsg(p0) + gu::toOsg(v0) * static_cast<double>(*pick0Magnitude)));
-    magnitudeLabel1->setMatrix(osg::Matrixd::translate(gu::toOsg(p1) + gu::toOsg(v1) * static_cast<double>(*pick1Magnitude)));
+    magnitudeLabel0->setMatrix(osg::Matrixd::translate(gu::toOsg(p0) + gu::toOsg(v0) * pick0Magnitude->getDouble()));
+    magnitudeLabel1->setMatrix(osg::Matrixd::translate(gu::toOsg(p1) + gu::toOsg(v1) * pick1Magnitude->getDouble()));
     
     opencascade::handle<TColgp_HArray1OfPnt> points = new TColgp_HArray1OfPnt(1,2);
     points->SetValue(1, p0);

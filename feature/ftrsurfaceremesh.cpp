@@ -117,10 +117,10 @@ void SurfaceReMesh::updateModel(const UpdatePayload &pIn)
     
     *mesh = tsm;
     
-    if (static_cast<int>(*reMeshType) == 0)
-      mesh->remeshCGAL(static_cast<double>(*minEdgeLength), static_cast<int>(*iterations));
-    if (static_cast<int>(*reMeshType) == 1)
-      mesh->remeshPMPUniform(static_cast<double>(*minEdgeLength), static_cast<int>(*iterations));
+    if (reMeshType->getInt() == 0)
+      mesh->remeshCGAL(minEdgeLength->getDouble(), iterations->getInt());
+    if (reMeshType->getInt() == 1)
+      mesh->remeshPMPUniform(minEdgeLength->getDouble(), iterations->getInt());
     
     setSuccess();
   }

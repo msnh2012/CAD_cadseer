@@ -189,7 +189,7 @@ void Strip::updateModel(const UpdatePayload &payloadIn)
     
     occt::BoundingBox bbbox(bs); //blank bounding box.
     
-    if (static_cast<bool>(*autoCalc))
+    if (autoCalc->getBool())
     {
       osg::Vec4 cIn(1.0, 0.0, 0.0, 1.0);
       feedDirectionLabel->setTextColor(cIn);
@@ -231,25 +231,25 @@ void Strip::updateModel(const UpdatePayload &payloadIn)
       }
     }
     
-    osg::Vec3d lFeed = static_cast<osg::Vec3d>(*feedDirection);
+    osg::Vec3d lFeed = feedDirection->getVector();
     osg::Vec3d fNorm = lFeed * osg::Matrixd::rotate(osg::PI_2, osg::Vec3d(0.0, 0.0, -1.0));
       
     for (std::size_t i = 1; i < nb + 1; ++i) //blanks
-      shapes.push_back(occt::instanceShape(bs, gu::toOcc(-lFeed), static_cast<double>(*pitch) * i));
+      shapes.push_back(occt::instanceShape(bs, gu::toOcc(-lFeed), pitch->getDouble() * i));
     for (std::size_t i = 1; i < stations.size() - nb; ++i) //parts
-      shapes.push_back(occt::instanceShape(ps, gu::toOcc(lFeed), static_cast<double>(*pitch) * i));
+      shapes.push_back(occt::instanceShape(ps, gu::toOcc(lFeed), pitch->getDouble() * i));
     
     //add edges representing the incoming strip.
-    double edgeLength = nb * static_cast<double>(*pitch);
-    osg::Vec3d centerLinePoint = fNorm * static_cast<double>(*widthOffset);
+    double edgeLength = nb * pitch->getDouble();
+    osg::Vec3d centerLinePoint = fNorm * widthOffset->getDouble();
     centerLinePoint += lFeed * (gu::toOsg(bbbox.getCenter()) * lFeed);
     
-    osg::Vec3d backLinePoint = centerLinePoint + (fNorm * static_cast<double>(*width) / 2.0);
+    osg::Vec3d backLinePoint = centerLinePoint + (fNorm * width->getDouble() / 2.0);
     osg::Vec3d backLineEnd1 = backLinePoint;
     osg::Vec3d backLineEnd2 = backLinePoint + (-lFeed * edgeLength);
     shapes.push_back(makeEdge(backLineEnd1, backLineEnd2));
     
-    osg::Vec3d frontLinePoint = centerLinePoint + (-fNorm * static_cast<double>(*width) / 2.0);
+    osg::Vec3d frontLinePoint = centerLinePoint + (-fNorm * width->getDouble() / 2.0);
     osg::Vec3d frontLineEnd1 = frontLinePoint;
     osg::Vec3d frontLineEnd2 = frontLinePoint + (-lFeed * edgeLength);
     shapes.push_back(makeEdge(frontLineEnd1, frontLineEnd2));
@@ -267,24 +267,24 @@ void Strip::updateModel(const UpdatePayload &payloadIn)
     //update label locations
     osg::Vec3d plLoc = //pitch label location.
       gu::toOsg(bbbox.getCenter())
-      + (-lFeed * static_cast<double>(*pitch) * 0.5)
+      + (-lFeed * pitch->getDouble() * 0.5)
       + (fNorm * bbbox.getWidth() * 0.5);
     pitchLabel->setMatrix(osg::Matrixd::translate(plLoc));
     
     osg::Vec3d glLoc = //gap label location.
       gu::toOsg(bbbox.getCenter())
-      + (-lFeed * static_cast<double>(*pitch) * 0.5)
+      + (-lFeed * pitch->getDouble() * 0.5)
       + (-fNorm * bbbox.getWidth() * 0.5);
     gapLabel->setMatrix(osg::Matrixd::translate(glLoc));
     
     osg::Vec3d wolLoc = //width offset location.
       gu::toOsg(bbbox.getCenter())
-      + (-lFeed * (static_cast<double>(*pitch) * (static_cast<double>(nb) + 0.5)));
+      + (-lFeed * (pitch->getDouble() * (static_cast<double>(nb) + 0.5)));
     widthOffsetLabel->setMatrix(osg::Matrixd::translate(wolLoc));
     
     osg::Vec3d wlLoc = //width location.
       gu::toOsg(bbbox.getCenter())
-      + (-lFeed * (static_cast<double>(*pitch) * (static_cast<double>(nb) + 0.5)))
+      + (-lFeed * (pitch->getDouble() * (static_cast<double>(nb) + 0.5)))
       + (fNorm * bbbox.getWidth() * 0.5);
     widthLabel->setMatrix(osg::Matrixd::translate(wlLoc));
     
@@ -304,7 +304,7 @@ void Strip::updateModel(const UpdatePayload &payloadIn)
     for (std::size_t i = 1; i < nb + 1; ++i)
     {
       osg::ref_ptr<osg::MatrixTransform> sl = new osg::MatrixTransform(); // station label
-      sl->setMatrix(osg::Matrixd::translate(gu::toOsg(bbbox.getCenter()) + (-lFeed * static_cast<double>(*pitch) * i)));
+      sl->setMatrix(osg::Matrixd::translate(gu::toOsg(bbbox.getCenter()) + (-lFeed * pitch->getDouble() * i)));
       sl->addChild(buildStationLabel("Blank"));
       stationLabels.push_back(sl);
       overlaySwitch->addChild(sl.get(), cv);
@@ -312,7 +312,7 @@ void Strip::updateModel(const UpdatePayload &payloadIn)
     for (std::size_t i = nb; i < stations.size(); ++i)
     {
       osg::ref_ptr<osg::MatrixTransform> sl = new osg::MatrixTransform(); // station label
-      sl->setMatrix(osg::Matrixd::translate(gu::toOsg(bbbox.getCenter()) + (lFeed * static_cast<double>(*pitch) * (i - nb))));
+      sl->setMatrix(osg::Matrixd::translate(gu::toOsg(bbbox.getCenter()) + (lFeed * pitch->getDouble() * (i - nb))));
       sl->addChild(buildStationLabel(stations.at(i).toStdString()));
       stationLabels.push_back(sl);
       overlaySwitch->addChild(sl.get(), cv);
@@ -347,7 +347,7 @@ void Strip::updateModel(const UpdatePayload &payloadIn)
 void Strip::goAutoCalc(const TopoDS_Shape &sIn, occt::BoundingBox &bbbox)
 {
   double offset = bbbox.getDiagonal() / 2.0;
-  osg::Vec3d feed = static_cast<osg::Vec3d>(*feedDirection);
+  osg::Vec3d feed = feedDirection->getVector();
   osg::Vec3d norm = feed * osg::Matrixd::rotate(osg::PI_2, osg::Vec3d(0.0, 0.0, -1.0));
   
   gp_Ax3 orientation(gp_Pnt(0.0, 0.0, 0.0), gu::toOcc(norm), gu::toOcc(feed));
@@ -392,7 +392,7 @@ void Strip::goAutoCalc(const TopoDS_Shape &sIn, occt::BoundingBox &bbbox)
   
   double d1 = getDistance(sIn, face1);
   double d2 = getDistance(sIn, face2);
-  double widthCalc = 2 * offset - d1 - d2 + 2 * static_cast<double>(*gap);
+  double widthCalc = 2 * offset - d1 - d2 + 2 * gap->getDouble();
   width->setValue(widthCalc);
   
   osg::Vec3d projection = (norm * (offset - d1)) + (-norm * (offset - d2));

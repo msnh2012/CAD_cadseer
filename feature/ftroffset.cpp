@@ -165,7 +165,7 @@ void Offset::updateModel(const UpdatePayload &payloadIn)
       builder.PerformByJoin
       (
         sto,
-        static_cast<double>(*distance),
+        distance->getDouble(),
         1.0e-06, //same tolerance as the sewing default.
         BRepOffset_Skin,
         Standard_False,
@@ -227,7 +227,7 @@ void Offset::updateModel(const UpdatePayload &payloadIn)
             labelDone = true;
             labelPosition = osg::Matrixd::translate(p.getPoint(TopoDS::Face(s)));
           }
-          builder.SetOffsetOnFace(TopoDS::Face(s), static_cast<double>(*distance));
+          builder.SetOffsetOnFace(TopoDS::Face(s), distance->getDouble());
         }
       }
       

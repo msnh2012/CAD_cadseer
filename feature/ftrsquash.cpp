@@ -81,7 +81,7 @@ Squash::~Squash(){}
 
 int Squash::getGranularity()
 {
-  return static_cast<int>(*granularity);
+  return granularity->getInt();
 }
 
 void Squash::setGranularity(int vIn)
@@ -173,7 +173,7 @@ void Squash::updateModel(const UpdatePayload &payloadIn)
       s.Reverse();
     
     sqs::Parameters ps(s, fs);
-    ps.granularity = static_cast<int>(*granularity);
+    ps.granularity = granularity->getInt();
     try
     {
       sqs::squash(ps);

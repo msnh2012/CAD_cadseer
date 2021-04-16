@@ -354,135 +354,36 @@ void Subject::sendActiveChanged() const
   stow->activeSignal();
 }
 
-class DoubleVisitor : public boost::static_visitor<double>
+struct StringVisitor
 {
-public:
-  double operator()(double d) const {return d;}
-  double operator()(int) const {assert(0); return 0.0;}
-  double operator()(bool) const {assert(0); return 0.0;}
-  double operator()(const std::string&) const {assert(0); return 0.0;}
-  double operator()(const boost::filesystem::path&) const {assert(0); return 0.0;}
-  double operator()(const osg::Vec3d&) const {assert(0); return 0.0;}
-  double operator()(const osg::Quat&) const {assert(0); return 0.0;}
-  double operator()(const osg::Matrixd&) const {assert(0); return 0.0;}
-  double operator()(const ftr::Picks&) const {assert(0); return 0.0;}
+  int precision = -1;
+  StringVisitor(int precisionIn = -1): precision(precisionIn){}
+  std::string operator()(double dIn) const {return tls::prettyDouble(dIn, precision);}
+  std::string operator()(int iIn) const{return std::to_string(iIn);}
+  std::string operator()(bool b) const {return (b) ? "True" : "False";}
+  std::string operator()(const std::string &sIn) const {return sIn;}
+  std::string operator()(const boost::filesystem::path &pIn) const {return pIn.string();}
+  std::string operator()(const osg::Vec3d &vIn) const {return tls::valueString(vIn, precision);}
+  std::string operator()(const osg::Quat &qIn) const {return tls::valueString(qIn, precision);}
+  std::string operator()(const osg::Matrixd &mIn) const {return tls::valueString(mIn, precision);}
+  std::string operator()(const ftr::Picks&) const {return "Picks";} //TODO
 };
 
-class IntVisitor : public boost::static_visitor<int>
+struct TypeVisitor
 {
-public:
-  int operator()(double) const {assert(0); return 0;}
-  int operator()(int i) const {return i;}
-  int operator()(bool) const {assert(0); return 0;}
-  int operator()(const std::string&) const {assert(0); return 0;}
-  int operator()(const boost::filesystem::path&) const {assert(0); return 0;}
-  int operator()(const osg::Vec3d&) const {assert(0); return 0;}
-  int operator()(const osg::Quat&) const {assert(0); return 0;}
-  int operator()(const osg::Matrixd&) const {assert(0); return 0;}
-  int operator()(const ftr::Picks&) const {assert(0); return 0;}
+  const std::type_info& operator()(double v){return typeid(v);}
+  const std::type_info& operator()(int v){return typeid(v);}
+  const std::type_info& operator()(bool v){return typeid(v);}
+  const std::type_info& operator()(const std::string &v){return typeid(v);}
+  const std::type_info& operator()(const boost::filesystem::path &v){return typeid(v);}
+  const std::type_info& operator()(const osg::Vec3d &v){return typeid(v);}
+  const std::type_info& operator()(const osg::Quat &v){return typeid(v);}
+  const std::type_info& operator()(const osg::Matrixd &v){return typeid(v);}
+  const std::type_info& operator()(const ftr::Picks &v){return typeid(v);}
 };
 
-class BoolVisitor : public boost::static_visitor<bool>
+struct TypeStringVisitor
 {
-public:
-  bool operator()(double) const {assert(0); return false;}
-  bool operator()(int) const {assert(0); return false;}
-  bool operator()(bool b) const {return b;}
-  bool operator()(const std::string&) const {assert(0); return false;}
-  bool operator()(const boost::filesystem::path&) const {assert(0); return false;}
-  bool operator()(const osg::Vec3d&) const {assert(0); return false;}
-  bool operator()(const osg::Quat&) const {assert(0); return false;}
-  bool operator()(const osg::Matrixd&) const {assert(0); return false;}
-  bool operator()(const ftr::Picks&) const {assert(0); return false;}
-};
-
-class QStringVisitor : public boost::static_visitor<QString>
-{
-public:
-  QString operator()(double dIn) const {return QString::fromStdString(tls::prettyDouble(dIn));}
-  QString operator()(int iIn) const {return QString::number(iIn);}
-  QString operator()(bool b) const {return (b) ? QObject::tr("True") : QObject::tr("False");}
-  QString operator()(const std::string &sIn) const {return QString::fromStdString(sIn);}
-  QString operator()(const boost::filesystem::path &pIn) const {return QString::fromStdString(pIn.string());}
-  QString operator()(const osg::Vec3d &vIn) const {return gu::osgVectorOut(vIn);}
-  QString operator()(const osg::Quat &qIn) const {return gu::osgQuatOut(qIn);}
-  QString operator()(const osg::Matrixd &mIn) const {return gu::osgMatrixOut(mIn);}
-  QString operator()(const ftr::Picks&) const {return QObject::tr("Picks");} //TODO
-};
-
-class PathVisitor : public boost::static_visitor<path>
-{
-public:
-  path operator()(double) const {assert(0); return path();}
-  path operator()(int) const {assert(0); return path();}
-  path operator()(bool) const {assert(0); return path();}
-  path operator()(const std::string&) const {assert(0); return path();}
-  path operator()(const boost::filesystem::path &p) const {return p;}
-  path operator()(const osg::Vec3d&) const {assert(0); return path();}
-  path operator()(const osg::Quat&) const {assert(0); return path();}
-  path operator()(const osg::Matrixd&) const {assert(0); return path();}
-  path operator()(const ftr::Picks&) const {assert(0); return path();}
-};
-
-class Vec3dVisitor : public boost::static_visitor<osg::Vec3d>
-{
-public:
-  osg::Vec3d operator()(double) const {assert(0); return osg::Vec3d();}
-  osg::Vec3d operator()(int) const {assert(0); return osg::Vec3d();}
-  osg::Vec3d operator()(bool) const {assert(0); return osg::Vec3d();}
-  osg::Vec3d operator()(const std::string&) const {assert(0); return osg::Vec3d();}
-  osg::Vec3d operator()(const boost::filesystem::path&) const {assert(0); return osg::Vec3d();}
-  osg::Vec3d operator()(const osg::Vec3d &v) const {return v;}
-  osg::Vec3d operator()(const osg::Quat&) const {assert(0); return osg::Vec3d();}
-  osg::Vec3d operator()(const osg::Matrixd&) const {assert(0); return osg::Vec3d();}
-  osg::Vec3d operator()(const ftr::Picks&) const {assert(0); return osg::Vec3d();}
-};
-
-class QuatVisitor : public boost::static_visitor<osg::Quat>
-{
-public:
-  osg::Quat operator()(double) const {assert(0); return osg::Quat();}
-  osg::Quat operator()(int) const {assert(0); return osg::Quat();}
-  osg::Quat operator()(bool) const {assert(0); return osg::Quat();}
-  osg::Quat operator()(const std::string&) const {assert(0); return osg::Quat();}
-  osg::Quat operator()(const boost::filesystem::path&) const {assert(0); return osg::Quat();}
-  osg::Quat operator()(const osg::Vec3d&) const {return osg::Quat();}
-  osg::Quat operator()(const osg::Quat &q) const {return q;}
-  osg::Quat operator()(const osg::Matrixd&) const {assert(0); return osg::Quat();}
-  osg::Quat operator()(const ftr::Picks&) const {assert(0); return osg::Quat();}
-};
-
-class MatrixdVisitor : public boost::static_visitor<osg::Matrixd>
-{
-public:
-  osg::Matrixd operator()(double) const {assert(0); return osg::Matrixd::identity();}
-  osg::Matrixd operator()(int) const {assert(0); return osg::Matrixd::identity();}
-  osg::Matrixd operator()(bool) const {assert(0); return osg::Matrixd::identity();}
-  osg::Matrixd operator()(const std::string&) const {assert(0); return osg::Matrixd::identity();}
-  osg::Matrixd operator()(const boost::filesystem::path&) const {assert(0); return osg::Matrixd::identity();}
-  osg::Matrixd operator()(const osg::Vec3d&) const {assert(0); return osg::Matrixd::identity();}
-  osg::Matrixd operator()(const osg::Quat&) const {assert(0); return osg::Matrixd::identity();}
-  osg::Matrixd operator()(const osg::Matrixd &mIn) const {return mIn;}
-  osg::Matrixd operator()(const ftr::Picks&) const {assert(0); return osg::Matrixd::identity();}
-};
-
-class PicksVisitor : public boost::static_visitor<ftr::Picks>
-{
-public:
-  ftr::Picks operator()(double) const {assert(0); return ftr::Picks();}
-  ftr::Picks operator()(int) const {assert(0); return ftr::Picks();}
-  ftr::Picks operator()(bool) const {assert(0); return ftr::Picks();}
-  ftr::Picks operator()(const std::string&) const {assert(0); return ftr::Picks();}
-  ftr::Picks operator()(const boost::filesystem::path&) const {assert(0); return ftr::Picks();}
-  ftr::Picks operator()(const osg::Vec3d&) const {assert(0); return ftr::Picks();}
-  ftr::Picks operator()(const osg::Quat&) const {assert(0); return ftr::Picks();}
-  ftr::Picks operator()(const osg::Matrixd&) const {assert(0); return ftr::Picks();}
-  ftr::Picks operator()(const ftr::Picks &ps) const {return ps;}
-};
-
-class TypeStringVisitor : public boost::static_visitor<std::string>
-{
-public:
   std::string operator()(double) const {return "Double";}
   std::string operator()(int) const {return "Int";}
   std::string operator()(bool) const {return "Bool";}
@@ -494,10 +395,9 @@ public:
   std::string operator()(const ftr::Picks&) const {return "Picks";}
 };
 
-class SrlVisitor : public boost::static_visitor<prj::srl::spt::ParameterValue>
+struct SrlVisitor
 {
   using SPV = prj::srl::spt::ParameterValue;
-public:
   SPV operator()(double d) const
   {
     SPV out;
@@ -594,6 +494,15 @@ Parameter::Parameter(const QString& nameIn, int valueIn, std::string_view tagIn)
 }
 
 Parameter::Parameter(const QString& nameIn, bool valueIn, std::string_view tagIn) :
+  name(nameIn),
+  tag(tagIn),
+  stow(new Stow(valueIn)),
+  id(gu::createRandomId()),
+  constraint()
+{
+}
+
+Parameter::Parameter(const QString &nameIn, const std::string &valueIn, std::string_view tagIn) :
   name(nameIn),
   tag(tagIn),
   stow(new Stow(valueIn)),
@@ -699,17 +608,16 @@ void Parameter::setActive(bool stateIn)
 
 const std::type_info& Parameter::getValueType() const
 {
-  return stow->variant.type();
+  return std::visit(TypeVisitor(), stow->variant);
 }
 
 std::string Parameter::getValueTypeString() const
 {
-  return boost::apply_visitor(TypeStringVisitor(), stow->variant);
+  return std::visit(TypeStringVisitor(), stow->variant);
 }
 
 bool Parameter::isEnumeration() const
 {
-  assert(getValueType() == typeid(int));
   return (!enumeration.isEmpty());
 }
 
@@ -734,8 +642,7 @@ const QStringList& Parameter::getEnumeration() const
 
 const QString& Parameter::getEnumerationString() const
 {
-  assert(getValueType() == typeid(int));
-  int value = boost::apply_visitor(IntVisitor(), stow->variant);
+  int value = getInt();
   assert(value < enumeration.size());
   return enumeration.at(value);
 }
@@ -747,7 +654,7 @@ const Stow& Parameter::getStow() const
 
 bool Parameter::setValue(double valueIn)
 {
-  if (boost::apply_visitor(DoubleVisitor(), stow->variant) == valueIn)
+  if (getDouble() == valueIn)
     return false;
   
   if (!isValidValue(valueIn))
@@ -758,9 +665,10 @@ bool Parameter::setValue(double valueIn)
   return true;
 }
 
-Parameter::operator double() const
+double Parameter::getDouble() const
 {
-  return boost::apply_visitor(DoubleVisitor(), stow->variant);
+  assert(getValueType() == typeid(double));
+  return std::get<double>(stow->variant);
 }
 
 bool Parameter::isValidValue(const double &valueIn) const
@@ -779,7 +687,7 @@ void Parameter::setConstraint(const Constraint &cIn)
 
 bool Parameter::setValue(int valueIn)
 {
-  if (boost::apply_visitor(IntVisitor(), stow->variant) == valueIn)
+  if (getInt() == valueIn)
     return false;
   
   if (!isValidValue(valueIn))
@@ -795,14 +703,15 @@ bool Parameter::isValidValue(const int &valueIn) const
   return constraint.test(static_cast<double>(valueIn));
 }
 
-Parameter::operator int() const
+int Parameter::getInt() const
 {
-  return boost::apply_visitor(IntVisitor(), stow->variant);
+  assert(getValueType() == typeid(int));
+  return std::get<int>(stow->variant);
 }
 
 bool Parameter::setValue(bool valueIn)
 {
-  if (boost::apply_visitor(BoolVisitor(), stow->variant) == valueIn)
+  if (getBool() == valueIn)
     return false;
   
   stow->variant = valueIn;
@@ -810,14 +719,31 @@ bool Parameter::setValue(bool valueIn)
   return true;
 }
 
-Parameter::operator bool() const
+bool Parameter::getBool() const
 {
-  return boost::apply_visitor(BoolVisitor(), stow->variant);
+  assert(getValueType() == typeid(bool));
+  return std::get<bool>(stow->variant);
+}
+
+bool Parameter::setValue(const std::string &valueIn)
+{
+  if (getString() == valueIn)
+    return false;
+  
+  stow->variant = valueIn;
+  subject.sendValueChanged();
+  return true;
+}
+
+const std::string& Parameter::getString() const
+{
+  assert(getValueType() == typeid(std::string));
+  return std::get<std::string>(stow->variant);
 }
 
 bool Parameter::setValue(const path &valueIn)
 {
-  if (boost::apply_visitor(PathVisitor(), stow->variant) == valueIn)
+  if (getPath() == valueIn)
     return false;
   
   stow->variant = valueIn;
@@ -825,14 +751,15 @@ bool Parameter::setValue(const path &valueIn)
   return true;
 }
 
-Parameter::operator boost::filesystem::path() const
+const boost::filesystem::path& Parameter::getPath() const
 {
-  return boost::apply_visitor(PathVisitor(), stow->variant);
+  assert(getValueType() == typeid(boost::filesystem::path));
+  return std::get<boost::filesystem::path>(stow->variant);
 }
 
 bool Parameter::setValue(const osg::Vec3d &vIn)
 {
-  if (boost::apply_visitor(Vec3dVisitor(), stow->variant) == vIn)
+  if (getVector() == vIn)
     return false;
   
   stow->variant = vIn;
@@ -840,14 +767,15 @@ bool Parameter::setValue(const osg::Vec3d &vIn)
   return true;
 }
 
-Parameter::operator osg::Vec3d() const
+const osg::Vec3d& Parameter::getVector() const
 {
-  return boost::apply_visitor(Vec3dVisitor(), stow->variant);
+  assert(getValueType() == typeid(osg::Vec3d));
+  return std::get<osg::Vec3d>(stow->variant);
 }
 
 bool Parameter::setValue(const osg::Quat &qIn)
 {
-  if (boost::apply_visitor(QuatVisitor(), stow->variant) == qIn)
+  if (getQuat() == qIn)
     return false;
   
   stow->variant = qIn;
@@ -855,14 +783,15 @@ bool Parameter::setValue(const osg::Quat &qIn)
   return true;
 }
 
-Parameter::operator osg::Quat() const
+const osg::Quat& Parameter::getQuat() const
 {
-  return boost::apply_visitor(QuatVisitor(), stow->variant);
+  assert(getValueType() == typeid(osg::Quat));
+  return std::get<osg::Quat>(stow->variant);
 }
 
 bool Parameter::setValue(const osg::Matrixd &mIn)
 {
-  if (boost::apply_visitor(MatrixdVisitor(), stow->variant) == mIn)
+  if (getMatrix() == mIn)
     return false;
   
   stow->variant = mIn;
@@ -870,11 +799,16 @@ bool Parameter::setValue(const osg::Matrixd &mIn)
   return true;
 }
 
+const osg::Matrixd& Parameter::getMatrix() const
+{
+  assert(getValueType() == typeid(osg::Matrixd));
+  return std::get<osg::Matrixd>(stow->variant);
+}
+
 bool Parameter::setValue(const ftr::Pick &pIn)
 {
-  auto cp = boost::apply_visitor(PicksVisitor(), stow->variant);
   ftr::Picks np(1, pIn);
-  if (cp == np)
+  if (getPicks() == np)
     return false;
   
   stow->variant = np;
@@ -884,13 +818,31 @@ bool Parameter::setValue(const ftr::Pick &pIn)
 
 bool Parameter::setValue(const ftr::Picks &psIn)
 {
-  auto cp = boost::apply_visitor(PicksVisitor(), stow->variant);
-  if (cp == psIn)
+  if (getPicks() == psIn)
     return false;
   
   stow->variant = psIn;
   subject.sendValueChanged();
   return true;
+}
+
+const ftr::Picks& Parameter::getPicks() const
+{
+  assert(getValueType() == typeid(ftr::Picks));
+  return std::get<ftr::Picks>(stow->variant);
+}
+
+std::string Parameter::adaptToString(int precision) const
+{
+  //enum hack on int.
+  if (isEnumeration())
+    return getEnumerationString().toStdString(); 
+  return std::visit(StringVisitor(precision), stow->variant);
+}
+
+QString Parameter::adaptToQString(int precision) const
+{
+  return QString::fromStdString(adaptToString(precision));
 }
 
 void Parameter::connect(Observer &o)
@@ -912,19 +864,6 @@ void Parameter::connectActive(Handler h)
   subject.addActiveHandler(h);
 }
 
-Parameter::operator osg::Matrixd() const
-{
-  return boost::apply_visitor(MatrixdVisitor(), stow->variant);
-}
-
-//todo
-Parameter::operator std::string() const{return std::string();}
-
-Parameter::operator QString() const
-{
-  return boost::apply_visitor(QStringVisitor(), stow->variant);
-}
-
  //serial rename
 prj::srl::spt::Parameter Parameter::serialOut() const
 {
@@ -935,7 +874,7 @@ prj::srl::spt::Parameter Parameter::serialOut() const
     , tag
     , constant
     , active
-    , boost::apply_visitor(SrlVisitor(), stow->variant)
+    , std::visit(SrlVisitor(), stow->variant)
   );
 }
 
@@ -977,7 +916,7 @@ void Parameter::serialIn(const prj::srl::spt::Parameter &spIn)
   else if (!vIn.aPicks().empty())
   {
     stow->variant = ftr::Picks();
-    auto &vr = boost::get<ftr::Picks>(stow->variant);
+    auto &vr = std::get<ftr::Picks>(stow->variant);
     for (const auto &pIn : vIn.aPicks())
       vr.emplace_back(pIn);
   }

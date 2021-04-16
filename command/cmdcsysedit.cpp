@@ -206,7 +206,7 @@ void CSysEdit::analyzeSelections()
     {
       osg::Vec3d move = messages.at(0).pointLocation - csysDragger->getMatrix().getTrans();
       ann::CSysDragger &da = feature->getAnnex<ann::CSysDragger>(ann::Type::CSysDragger);
-      osg::Matrixd ft = static_cast<osg::Matrixd>(*(da.parameter));
+      osg::Matrixd ft = da.parameter->getMatrix();
       ft.setTrans(ft.getTrans() + move);
       da.setCSys(ft); //this should update the dragger also
     }
@@ -305,7 +305,7 @@ void CSysEdit::updateToVector(const osg::Vec3d& toVector)
   {
     osg::Matrixd diffMatrix = osg::Matrixd::inverse(originalMatrix) * fm;
     ann::CSysDragger &da = feature->getAnnex<ann::CSysDragger>(ann::Type::CSysDragger);
-    da.setCSys(static_cast<osg::Matrixd>(*(da.parameter)) * diffMatrix); //should move dragger also.
+    da.setCSys(da.parameter->getMatrix() * diffMatrix); //should move dragger also.
   }
 }
 

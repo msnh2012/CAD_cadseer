@@ -51,9 +51,9 @@ namespace ftr
     void serialRead(const prj::srl::stps::Strip&);
     
     void setAutoCalc(bool acIn){autoCalc->setValue(acIn);}
-    bool isAutoCalc(){return static_cast<bool>(*autoCalc);}
-    double getPitch() const {return static_cast<double>(*pitch);}
-    double getWidth() const {return static_cast<double>(*width);}
+    bool isAutoCalc() const {return autoCalc->getBool();}
+    double getPitch() const {return pitch->getDouble();}
+    double getWidth() const {return width->getDouble();}
     double getHeight() const {return stripHeight;}
     
     std::vector<QString> stations;

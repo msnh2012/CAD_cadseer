@@ -199,23 +199,23 @@ void Box::setupIPGroup()
 
 void Box::updateIPGroup()
 {
-  lengthIP->setMatrix(static_cast<osg::Matrixd>(*csys));
-  widthIP->setMatrix(static_cast<osg::Matrixd>(*csys));
-  heightIP->setMatrix(static_cast<osg::Matrixd>(*csys));
+  lengthIP->setMatrix(csys->getMatrix());
+  widthIP->setMatrix(csys->getMatrix());
+  heightIP->setMatrix(csys->getMatrix());
   
   osg::Matrix lMatrix;
   lMatrix.setRotate(osg::Quat(osg::PI_2, osg::Vec3d(0.0, 1.0, 0.0)));
-  lMatrix.setTrans(osg::Vec3d(0.0, static_cast<double>(*width) / 2.0, static_cast<double>(*height) / 2.0));
+  lMatrix.setTrans(osg::Vec3d(0.0, width->getDouble() / 2.0, height->getDouble() / 2.0));
   lengthIP->setMatrixDragger(lMatrix);
   
   osg::Matrix wMatrix;
   wMatrix.setRotate(osg::Quat(osg::PI_2, osg::Vec3d(-1.0, 0.0, 0.0)));
-  wMatrix.setTrans(osg::Vec3d(static_cast<double>(*length) / 2.0, 0.0, static_cast<double>(*height) / 2.0));
+  wMatrix.setTrans(osg::Vec3d(length->getDouble() / 2.0, 0.0, height->getDouble() / 2.0));
   widthIP->setMatrixDragger(wMatrix);
   
   osg::Matrix hMatrix;
   //no need to rotate
-  hMatrix.setTrans(osg::Vec3d(static_cast<double>(*length) / 2.0, static_cast<double>(*width) / 2.0, 0.0));
+  hMatrix.setTrans(osg::Vec3d(length->getDouble() / 2.0, width->getDouble() / 2.0, 0.0));
   heightIP->setMatrixDragger(hMatrix);
 }
 
@@ -239,7 +239,7 @@ void Box::setHeight(double vIn)
 
 void Box::setCSys(const osg::Matrixd &csysIn)
 {
-  osg::Matrixd oldSystem = static_cast<osg::Matrixd>(*csys);
+  osg::Matrixd oldSystem = csys->getMatrix();
   if (!csys->setValue(csysIn))
     return; // already at this csys
     
@@ -250,7 +250,7 @@ void Box::setCSys(const osg::Matrixd &csysIn)
 
 osg::Matrixd Box::getCSys() const
 {
-  return static_cast<osg::Matrixd>(*csys);
+  return csys->getMatrix();
 }
 
 void Box::updateModel(const UpdatePayload &plIn)
@@ -274,16 +274,16 @@ void Box::updateModel(const UpdatePayload &plIn)
       if (systemParameters.empty())
         throw std::runtime_error("Feature for csys link, doesn't have csys parameter");
       prm::ObserverBlocker block(*csysObserver);
-      csys->setValue(static_cast<osg::Matrixd>(*systemParameters.front()));
+      csys->setValue(systemParameters.front()->getMatrix());
       csysDragger->draggerUpdate();
     }
     
     BoxBuilder boxMaker
     (
-      static_cast<double>(*length),
-      static_cast<double>(*width),
-      static_cast<double>(*height),
-      gu::toOcc(static_cast<osg::Matrixd>(*csys))
+      length->getDouble(),
+      width->getDouble(),
+      height->getDouble(),
+      gu::toOcc(csys->getMatrix())
     );
     sShape->setOCCTShape(boxMaker.getSolid(), getId());
     updateResult(boxMaker);

@@ -43,7 +43,7 @@ struct IncrementWidget::Stow
   
   void valueChanged()
   {
-    prefRef = static_cast<double>(parameter);
+    prefRef = parameter.getDouble();
     prf::manager().saveConfig();
   }
   

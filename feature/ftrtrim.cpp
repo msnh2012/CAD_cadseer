@@ -104,7 +104,7 @@ TopoDS_Solid Trim::makeHalfSpace(const ann::SeerShape &seerShapeIn, const TopoDS
   if (!results)
     return TopoDS_Solid();
   gp_Vec normal = occt::getNormal(TopoDS::Face(support2), u, v);
-  if (static_cast<bool>(*reversed))
+  if (reversed->getBool())
     normal.Reverse();
   //maybe we should go less than unit to avoid cross thin boundary?
   gp_Pnt refPoint = e.PointOnShape2(1).Translated(normal);
@@ -151,7 +151,7 @@ void Trim::updateModel(const UpdatePayload &payloadIn)
       if (!fm.IsDone())
         throw std::runtime_error("couldn't make face from datum plane");
       osg::Vec3d rp(0.0, 0.0, 1.0);
-      if (static_cast<bool>(*reversed))
+      if (reversed->getBool())
         rp = -rp;
       rp = rp * ts;
       BRepPrimAPI_MakeHalfSpace hsm(fm.Face(), gp_Pnt(gu::toOcc(rp).XYZ()));

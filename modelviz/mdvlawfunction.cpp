@@ -82,7 +82,7 @@ osg::Switch* mdv::generate(lwf::Cue &cIn)
   pointGeometry->setVertexArray(pointVertices);
   for (prm::Parameter *p : cIn.getParameters())
   {
-    pointVertices->push_back(static_cast<osg::Vec3d>(*p));
+    pointVertices->push_back(p->getVector());
     lbr::PLabel *tempLabel = new lbr::PLabel(p);
     scale->addChild(tempLabel);
   }
@@ -238,7 +238,7 @@ void LawCallback::update(osg::Node *node)
   double ymax = 1.0;
   for (std::size_t i = 0; i < labels.size(); ++i)
   {
-    osg::Vec3d loc = static_cast<osg::Vec3d>(*(labels.at(i)->getParameter()));
+    osg::Vec3d loc = labels.at(i)->getParameter()->getVector();
     loc.z() = 0.0;
     labels.at(i)->setMatrix(osg::Matrixd::translate(loc));
     pverts->at(i) = loc;
@@ -279,7 +279,7 @@ void LawCallback::update(osg::Node *node)
   
   auto convertFlatten = [](const prm::Parameter &pIn) -> osg::Vec3d
   {
-    osg::Vec3d out = static_cast<osg::Vec3d>(pIn);
+    osg::Vec3d out = pIn.getVector();
     out.z() = 0.0;
     return out;
   };

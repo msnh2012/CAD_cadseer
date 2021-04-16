@@ -133,7 +133,7 @@ void DatumAxis::setSize(double sIn)
 
 double DatumAxis::getSize() const
 {
-  return static_cast<double>(*size);
+  return size->getDouble();
 }
 
 void DatumAxis::setPicks(const Picks &pIn)
@@ -175,7 +175,7 @@ void DatumAxis::prmActiveSync()
   {
     csys->setActive(false);
     autoSize->setActive(true);
-    if (static_cast<bool>(*autoSize))
+    if (autoSize->getBool())
       size->setActive(false);
     else
       size->setActive(true);
@@ -227,7 +227,7 @@ void DatumAxis::updateModel(const UpdatePayload &pli)
 
 void DatumAxis::goUpdateConstant()
 {
-  osg::Matrixd t = static_cast<osg::Matrixd>(*csys);
+  osg::Matrixd t = csys->getMatrix();
   origin = t.getTrans();
   direction = gu::getZVector(t);
 }
@@ -373,13 +373,13 @@ void DatumAxis::updateVisual()
 
 void DatumAxis::updateVisualInternal()
 {
-  if (static_cast<bool>(*autoSize))
+  if (autoSize->getBool())
   {
     prm::ObserverBlocker block(*prmObserver);
     size->setValue(cachedSize);
   }
   
-  double ts = static_cast<double>(*size);
+  double ts = size->getDouble();
   
   display->setHeight(ts);
   osg::Matrixd rotation = osg::Matrixd::rotate(osg::Vec3d(0.0, 0.0, 1.0), direction);
@@ -427,8 +427,8 @@ void DatumAxis::serialRead(const prj::srl::dtas::DatumAxis &dai)
   for (const auto &pIn : dai.picks())
     picks.emplace_back(pIn);
   
-  cachedSize = static_cast<double>(*size);
+  cachedSize = size->getDouble();
   updateVisualInternal();
   if (axisType == AxisType::Constant)
-    mainTransform->setMatrix(static_cast<osg::Matrixd>(*csys));
+    mainTransform->setMatrix(csys->getMatrix());
 }

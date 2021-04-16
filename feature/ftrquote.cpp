@@ -115,7 +115,7 @@ void Quote::updateModel(const UpdatePayload &payloadIn)
     osg::Vec3d oLoc = gu::toOsg(sbbox.getCenter()) + osg::Vec3d(0.0, -50.0, 0.0);
     oLabel->setMatrix(osg::Matrixd::translate(oLoc));
     
-    if (!boost::filesystem::exists(static_cast<path>(*tFile)))
+    if (!boost::filesystem::exists(tFile->getPath()))
       throw std::runtime_error("template file doesn't exist");
     /* we change the entries in a specific sheet and these values are linked into
     * a customer designed sheet. The links are not updated when we open the sheet in calc by default.
@@ -124,12 +124,12 @@ void Quote::updateModel(const UpdatePayload &payloadIn)
     */
     boost::filesystem::copy_file
     (
-      static_cast<path>(*tFile),
-      static_cast<path>(*oFile),
+      tFile->getPath(),
+      oFile->getPath(),
       boost::filesystem::copy_option::overwrite_if_exists
     );
     
-    libzippp::ZipArchive zip(static_cast<path>(*oFile).string());
+    libzippp::ZipArchive zip(oFile->getPath().string());
     zip.open(libzippp::ZipArchive::WRITE);
     for(const auto &e : zip.getEntries())
     {

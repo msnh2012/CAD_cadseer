@@ -89,7 +89,7 @@ Feature::Feature()
   annexes.insert(std::make_pair(ann::Type::CSysDragger, csysDragger.get()));
   //update will add to overlay or remove from overlay.
   
-  double temp = static_cast<double>(*size);
+  double temp = size->getDouble();
   scale->setScale(osg::Vec3d(temp, temp, temp));
   mainTransform->addChild(scale.get());
   
@@ -108,7 +108,7 @@ void Feature::setCSys(const osg::Matrixd &csysIn)
 {
   cue.systemType = SystemType::Constant;
   
-  osg::Matrixd oldSystem = static_cast<osg::Matrixd>(*csys);
+  osg::Matrixd oldSystem = csys->getMatrix();
   if (!csys->setValue(csysIn))
     return; // already at this csys
     
@@ -119,7 +119,7 @@ void Feature::setCSys(const osg::Matrixd &csysIn)
 
 osg::Matrixd Feature::getCSys() const
 {
-  return static_cast<osg::Matrixd>(*csys);
+  return csys->getMatrix();
 }
 
 void Feature::setSize(double sizeIn)
@@ -188,8 +188,8 @@ void Feature::updateLinked(const UpdatePayload &pIn)
   
   osg::Matrixd newSys = applyOffset
   (
-    static_cast<osg::Matrixd>(*systemParameters.front())
-    , static_cast<osg::Vec3d>(*offsetVector)
+    systemParameters.front()->getMatrix()
+    , offsetVector->getVector()
   );
   
   prm::ObserverBlocker blocker(*csysObserver);
@@ -226,13 +226,13 @@ void Feature::update3Points(const UpdatePayload &pIn)
   if (!ocsys)
     throw std::runtime_error("Through3P: couldn't derive matrix from 3 points");
   
-  osg::Matrixd newSys = applyOffset(ocsys.get(), static_cast<osg::Vec3d>(*offsetVector));
+  osg::Matrixd newSys = applyOffset(ocsys.get(), offsetVector->getVector());
   
   prm::ObserverBlocker blocker(*csysObserver);
   csys->setValue(newSys);
   csysDragger->draggerUpdate();
   
-  if (static_cast<bool>(*autoSize))
+  if (autoSize->getBool())
   {
     osg::BoundingSphere bs;
     bs.expandBy(points.at(0));
@@ -251,7 +251,7 @@ void Feature::updateVisual()
 
 void Feature::updateVisualInternal()
 {
-  mainTransform->setMatrix(static_cast<osg::Matrixd>(*csys));
+  mainTransform->setMatrix(csys->getMatrix());
   
   auto addLabel = [&](osg::Node *child)
   {
@@ -284,16 +284,16 @@ void Feature::updateVisualInternal()
   {
     removeLabel(csysDragger->dragger.get());
     addLabel(offsetVectorLabel.get());
-    if (static_cast<bool>(*autoSize))
+    if (autoSize->getBool())
       removeLabel(sizeLabel.get());
     else
       addLabel(sizeLabel.get());
     addLabel(autoSizeLabel.get());
   }
   
-  osg::Matrixd cs = static_cast<osg::Matrixd>(*csys); //current system
+  osg::Matrixd cs = csys->getMatrix(); //current system
   
-  double ts = static_cast<double>(*size);
+  double ts = size->getDouble();
   scale->setScale(osg::Vec3d(ts, ts, ts));
   
   double lo = ts * 1.2; //label offset

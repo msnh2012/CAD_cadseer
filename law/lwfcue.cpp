@@ -71,8 +71,8 @@ void Cue::setConstant(double vIn)
 
 void Cue::setConstant(const prm::Parameter &begin, const prm::Parameter &end)
 {
-  osg::Vec3d p0 = begin.operator osg::Vec3d();
-  osg::Vec3d p1 = end.operator osg::Vec3d();
+  osg::Vec3d p0 = begin.getVector();
+  osg::Vec3d p1 = end.getVector();
   assert(p0.x() < p1.x());
   assert(p0.y() == p1.y());
   type = Type::constant;
@@ -91,8 +91,8 @@ void Cue::setLinear(double firstValue, double lastValue)
 
 void Cue::setLinear(const prm::Parameter &begin, const prm::Parameter &end)
 {
-  osg::Vec3d p0 = begin.operator osg::Vec3d();
-  osg::Vec3d p1 = end.operator osg::Vec3d();
+  osg::Vec3d p0 = begin.getVector();
+  osg::Vec3d p1 = end.getVector();
   assert(p0.x() < p1.x());
   type = Type::linear;
   boundaries.clear();
@@ -116,8 +116,8 @@ void Cue::setInterpolate
 
 void Cue::setInterpolate(const prm::Parameter &begin, const prm::Parameter &end)
 {
-  osg::Vec3d p0 = begin.operator osg::Vec3d();
-  osg::Vec3d p1 = end.operator osg::Vec3d();
+  osg::Vec3d p0 = begin.getVector();
+  osg::Vec3d p1 = end.getVector();
   assert(p0.x() < p1.x());
   type = Type::interpolate;
   boundaries.clear();
@@ -161,8 +161,8 @@ void Cue::addInternalParameter(double prm)
     count++;
     datas.clear();
     
-    osg::Vec3d p0 = boundaries.front().operator osg::Vec3d();
-    osg::Vec3d p1 = boundaries.back().operator osg::Vec3d();
+    osg::Vec3d p0 = boundaries.front().getVector();
+    osg::Vec3d p1 = boundaries.back().getVector();
     std::vector<osg::Vec3d> internalPoints = disperse(p0, p1, count);
     Parameters prms;
     for (const auto &p : internalPoints)
@@ -178,8 +178,8 @@ void Cue::addInternalParameter(double prm)
     count++;
     datas.at(di).internalParameters.clear();
     
-    osg::Vec3d p0 = boundaries.at(di).operator osg::Vec3d();
-    osg::Vec3d p1 = boundaries.at(di + 1).operator osg::Vec3d();
+    osg::Vec3d p0 = boundaries.at(di).getVector();
+    osg::Vec3d p1 = boundaries.at(di + 1).getVector();
     std::vector<osg::Vec3d> internalPoints = disperse(p0, p1, count);
     Parameters prms;
     for (const auto &p : internalPoints)
@@ -201,8 +201,8 @@ void Cue::removeInternalParameter(double prm)
     if (count <= 0)
       return;
     
-    osg::Vec3d p0 = boundaries.front().operator osg::Vec3d();
-    osg::Vec3d p1 = boundaries.back().operator osg::Vec3d();
+    osg::Vec3d p0 = boundaries.front().getVector();
+    osg::Vec3d p1 = boundaries.back().getVector();
     std::vector<osg::Vec3d> internalPoints = disperse(p0, p1, count);
     Parameters prms;
     for (const auto &p : internalPoints)
@@ -221,8 +221,8 @@ void Cue::removeInternalParameter(double prm)
     if (count <= 0)
       return;
     
-    osg::Vec3d p0 = boundaries.at(di).operator osg::Vec3d();
-    osg::Vec3d p1 = boundaries.at(di + 1).operator osg::Vec3d();
+    osg::Vec3d p0 = boundaries.at(di).getVector();
+    osg::Vec3d p1 = boundaries.at(di + 1).getVector();
     std::vector<osg::Vec3d> internalPoints = disperse(p0, p1, count);
     Parameters prms;
     for (const auto &p : internalPoints)
@@ -248,7 +248,7 @@ void Cue::setComposite(const prm::Parameter &pIn)
 void Cue::appendConstant(double endParameter)
 {
   //constant law has same ending value as beginning value.
-  osg::Vec3d p0 = boundaries.back().operator osg::Vec3d();
+  osg::Vec3d p0 = boundaries.back().getVector();
   Parameter p1(Position, osg::Vec3d(endParameter, p0.y(), 0.0));
   
   assert(endParameter > p0.x());
@@ -264,8 +264,8 @@ void Cue::appendLinear(double endParameter, double endValue)
 
 void Cue::appendLinear(const prm::Parameter &endParameter)
 {
-  osg::Vec3d p0 = boundaries.back().operator osg::Vec3d();
-  assert(endParameter.operator osg::Vec3d().x() > p0.x());
+  osg::Vec3d p0 = boundaries.back().getVector();
+  assert(endParameter.getVector().x() > p0.x());
   datas.push_back(Data(Type::linear));
   boundaries.push_back(endParameter);
 }
@@ -279,7 +279,7 @@ void Cue::appendInterpolate(double endParameter, double endValue)
 
 void Cue::appendInterpolate(const prm::Parameter &endParameter)
 {
-  assert(endParameter.operator osg::Vec3d().x() > boundaries.back().operator osg::Vec3d().x());
+  assert(endParameter.getVector().x() > boundaries.back().getVector().x());
   datas.push_back(Data(Type::interpolate));
   boundaries.push_back(endParameter);
 }
@@ -302,22 +302,22 @@ void Cue::remove(int index)
   //and the new last parameter equal to the old last parameter, if we remove the last law
   boost::optional<double> firstParameter, lastParameter;
   if (index == 0)
-    firstParameter = static_cast<osg::Vec3d>(boundaries.front()).x();
+    firstParameter = boundaries.front().getVector().x();
   if (index == static_cast<int>(datas.size()) - 1)
-    lastParameter = static_cast<osg::Vec3d>(boundaries.back()).x();
+    lastParameter = boundaries.back().getVector().x();
   
   datas.erase(datas.begin() + index);
   boundaries.erase(boundaries.begin() + index + 1);
   
   if (firstParameter)
   {
-    osg::Vec3d temp = static_cast<osg::Vec3d>(boundaries.front());
+    osg::Vec3d temp = boundaries.front().getVector();
     temp.x() = firstParameter.get();
     boundaries.front().setValue(temp);
   }
   if (lastParameter)
   {
-    osg::Vec3d temp = static_cast<osg::Vec3d>(boundaries.back());
+    osg::Vec3d temp = boundaries.back().getVector();
     temp.x() = lastParameter.get();
     boundaries.back().setValue(temp);
   }
@@ -335,8 +335,8 @@ void Cue::smooth()
   
   if (periodic) //smooth any interpolation between front and back.
   {
-    osg::Vec3d bf = boundaries.front().operator osg::Vec3d();
-    osg::Vec3d bb = boundaries.back().operator osg::Vec3d();
+    osg::Vec3d bf = boundaries.front().getVector();
+    osg::Vec3d bb = boundaries.back().getVector();
     bb.y() = bf.y();
     
     Type t0 = datas.front().subType;
@@ -349,18 +349,18 @@ void Cue::smooth()
       (
         bf.x()
         , bf.y()
-        , boundaries.at(1).operator osg::Vec3d().x()
-        , boundaries.at(1).operator osg::Vec3d().y()
+        , boundaries.at(1).getVector().x()
+        , boundaries.at(1).getVector().y()
       );
     }
     else if (t0 == Type::interpolate && t1 == Type::linear)
     {
       bf.z() = getSlope
       (
-        boundaries.at(bs - 2).operator osg::Vec3d().x()
-        , boundaries.at(bs - 2).operator osg::Vec3d().y()
-        , boundaries.at(bs - 1).operator osg::Vec3d().x()
-        , boundaries.at(bs - 1).operator osg::Vec3d().y()
+        boundaries.at(bs - 2).getVector().x()
+        , boundaries.at(bs - 2).getVector().y()
+        , boundaries.at(bs - 1).getVector().x()
+        , boundaries.at(bs - 1).getVector().y()
       );
     }
     else if (t0 == Type::constant || t1 == Type::constant)
@@ -382,7 +382,7 @@ void Cue::smooth()
   {
     Type t0 = datas.at(index - 1).subType;
     Type t1 = datas.at(index).subType;
-    osg::Vec3d point = boundaries.at(index).operator osg::Vec3d();
+    osg::Vec3d point = boundaries.at(index).getVector();
     
     if
     (
@@ -395,10 +395,10 @@ void Cue::smooth()
     {
       point.z() = getSlope
       (
-        boundaries.at(index - 1).operator osg::Vec3d().x()
-        , boundaries.at(index - 1).operator osg::Vec3d().y()
-        , boundaries.at(index).operator osg::Vec3d().x()
-        , boundaries.at(index).operator osg::Vec3d().y()
+        boundaries.at(index - 1).getVector().x()
+        , boundaries.at(index - 1).getVector().y()
+        , boundaries.at(index).getVector().x()
+        , boundaries.at(index).getVector().y()
       );
     }
     
@@ -406,10 +406,10 @@ void Cue::smooth()
     {
       point.z() = getSlope
       (
-        boundaries.at(index).operator osg::Vec3d().x()
-        , boundaries.at(index).operator osg::Vec3d().y()
-        , boundaries.at(index + 1).operator osg::Vec3d().x()
-        , boundaries.at(index + 1).operator osg::Vec3d().y()
+        boundaries.at(index).getVector().x()
+        , boundaries.at(index).getVector().y()
+        , boundaries.at(index + 1).getVector().x()
+        , boundaries.at(index + 1).getVector().y()
       );
     }
     /* we ignore c0 conditions with adjacent constants and linears.
@@ -424,8 +424,8 @@ void Cue::alignConstant()
   if (type == Type::constant)
   {
     assert(boundaries.size() == 2);
-    osg::Vec3d b0 = static_cast<osg::Vec3d>(boundaries.front());
-    osg::Vec3d b1 = static_cast<osg::Vec3d>(boundaries.back());
+    osg::Vec3d b0 = boundaries.front().getVector();
+    osg::Vec3d b1 = boundaries.back().getVector();
     b1.y() = b0.y();
     boundaries.back().setValue(b1);
   }
@@ -435,8 +435,8 @@ void Cue::alignConstant()
     {
       if (datas.at(bi).subType != Type::constant)
         continue;
-      osg::Vec3d b0 = static_cast<osg::Vec3d>(boundaries.at(bi));
-      osg::Vec3d b1 = static_cast<osg::Vec3d>(boundaries.at(bi + 1));
+      osg::Vec3d b0 = boundaries.at(bi).getVector();
+      osg::Vec3d b1 = boundaries.at(bi + 1).getVector();
       b1.y() = b0.y();
       boundaries.at(bi + 1).setValue(b1);
     }
@@ -448,8 +448,8 @@ int Cue::compositeIndex(double prm)
   assert(type == Type::composite);
   for (std::size_t bi = 0; bi < boundaries.size() - 1; ++bi)
   {
-    osg::Vec3d b0 = static_cast<osg::Vec3d>(boundaries.at(bi));
-    osg::Vec3d b1 = static_cast<osg::Vec3d>(boundaries.at(bi + 1));
+    osg::Vec3d b0 = boundaries.at(bi).getVector();
+    osg::Vec3d b1 = boundaries.at(bi + 1).getVector();
     if (b0.x() < prm && b1.x() > prm)
       return bi;
   }
@@ -459,8 +459,8 @@ int Cue::compositeIndex(double prm)
 double Cue::squeezeBack()
 {
   assert(type == Type::composite);
-  osg::Vec3d last = static_cast<osg::Vec3d>(boundaries.back());
-  osg::Vec3d nextLast = static_cast<osg::Vec3d>(*(boundaries.end() - 2));
+  osg::Vec3d last = boundaries.back().getVector();
+  osg::Vec3d nextLast = (boundaries.end() - 2)->getVector();
   double freshParameter = nextLast.x() + ((last.x() - nextLast.x()) / 2.0);
   osg::Vec3d freshLast = last;
   freshLast.x() = freshParameter;
@@ -505,8 +505,8 @@ opencascade::handle<Law_Function> Cue::buildLawFunction() const
   -> opencascade::handle<Law_Constant>
   {
     opencascade::handle<Law_Constant> t = new Law_Constant();
-    osg::Vec3d p0 = prm0.operator osg::Vec3d();
-    osg::Vec3d p1 = prm1.operator osg::Vec3d();
+    osg::Vec3d p0 = prm0.getVector();
+    osg::Vec3d p1 = prm1.getVector();
     t->Set(p0.y(), p0.x(), p1.x());
     return t;
   };
@@ -515,8 +515,8 @@ opencascade::handle<Law_Function> Cue::buildLawFunction() const
   -> opencascade::handle<Law_Linear>
   {
     opencascade::handle<Law_Linear> t = new Law_Linear();
-    osg::Vec3d p0 = prm0.operator osg::Vec3d();
-    osg::Vec3d p1 = prm1.operator osg::Vec3d();
+    osg::Vec3d p0 = prm0.getVector();
+    osg::Vec3d p1 = prm1.getVector();
     t->Set(p0.x(), p0.y(), p1.x(), p1.y());
     return t;
   };
@@ -530,8 +530,8 @@ opencascade::handle<Law_Function> Cue::buildLawFunction() const
   )
   -> opencascade::handle<Law_Interpol>
   {
-    osg::Vec3d p0 = prm0.operator osg::Vec3d();
-    osg::Vec3d p1 = prm1.operator osg::Vec3d();
+    osg::Vec3d p0 = prm0.getVector();
+    osg::Vec3d p1 = prm1.getVector();
     int sizeOfPoints = 2;
     sizeOfPoints += ips.size();
     TColgp_Array1OfPnt2d points(1, sizeOfPoints);
@@ -539,7 +539,7 @@ opencascade::handle<Law_Function> Cue::buildLawFunction() const
     int index = 2;
     for (const auto &ip : ips)
     {
-      osg::Vec3d tp = ip.operator osg::Vec3d();
+      osg::Vec3d tp = ip.getVector();
       points.ChangeValue(index) = gp_Pnt2d(tp.x(), tp.y());
       ++index;
     }

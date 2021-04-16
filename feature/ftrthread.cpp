@@ -172,7 +172,7 @@ void Thread::setLeftHanded(bool hIn)
 
 void Thread::setCSys(const osg::Matrixd &csysIn)
 {
-  osg::Matrixd oldSystem = static_cast<osg::Matrixd>(*csys);
+  osg::Matrixd oldSystem = csys->getMatrix();
   if (!csys->setValue(csysIn))
     return; // already at this csys
     
@@ -183,42 +183,42 @@ void Thread::setCSys(const osg::Matrixd &csysIn)
 
 double Thread::getDiameter() const
 {
-  return static_cast<double>(*diameter);
+  return diameter->getDouble();
 }
 
 double Thread::getPitch() const
 {
-  return static_cast<double>(*pitch);
+  return pitch->getDouble();
 }
 
 double Thread::getLength() const
 {
-  return static_cast<double>(*length);
+  return length->getDouble();
 }
 
 double Thread::getAngle() const
 {
-  return static_cast<double>(*angle);
+  return angle->getDouble();
 }
 
 bool Thread::getInternal() const
 {
-  return static_cast<bool>(*internal);
+  return internal->getBool();
 }
 
 bool Thread::getFake() const
 {
-  return static_cast<bool>(*fake);
+  return fake->getBool();
 }
 
 bool Thread::getLeftHanded() const
 {
-  return static_cast<bool>(*leftHanded);
+  return leftHanded->getBool();
 }
 
 osg::Matrixd Thread::getCSys() const
 {
-  return static_cast<osg::Matrixd>(*csys);
+  return csys->getMatrix();
 }
 
 //builds one revolution
@@ -260,20 +260,20 @@ void Thread::updateModel(const UpdatePayload &plIn)
       auto systemParameters =  tfs.front()->getParameters(prm::Tags::CSys);
       if (systemParameters.empty())
         throw std::runtime_error("Feature for csys link, doesn't have csys parameter");
-      csys->setValue(static_cast<osg::Matrixd>(*systemParameters.front()));
+      csys->setValue(systemParameters.front()->getMatrix());
       csysDragger->draggerUpdate();
     }
     
-    double d = static_cast<double>(*diameter);
-    double p = static_cast<double>(*pitch);
-    double l = static_cast<double>(*length);
-    double a = osg::DegreesToRadians(static_cast<double>(*angle));
+    double d = diameter->getDouble();
+    double p = pitch->getDouble();
+    double l = length->getDouble();
+    double a = osg::DegreesToRadians(angle->getDouble());
     
     double h = p / (2.0 * std::tan(a / 2.0));
     
     TopoDS_Shape proto;
     
-    if (!static_cast<bool>(*fake))
+    if (!fake->getBool())
     {
       //internal or external
       TopoDS_Edge outside01 = buildOneHelix(d + .125 * h * 2.0, p);
@@ -294,7 +294,7 @@ void Thread::updateModel(const UpdatePayload &plIn)
       BRepBuilderAPI_Sewing sewOp;
       TopoDS_Shape edgeToBlend;
       double blendRadius = 0.0;
-      if (static_cast<bool>(*internal))
+      if (internal->getBool())
       {
         //internal threads
         sewOp.Add(face02);
@@ -364,10 +364,10 @@ void Thread::updateModel(const UpdatePayload &plIn)
     gp_Pnt refPoint(d, 0.0, l / 2.0);
     TopoDS_Solid tool = BRepPrimAPI_MakeHalfSpace(TopoDS::Shell(proto), refPoint);
     TopoDS_Shape out;
-    if (!static_cast<bool>(*fake))
+    if (!fake->getBool())
     {
       //real threads
-      if (static_cast<bool>(*internal))
+      if (internal->getBool())
       {
         //internal
         
@@ -431,7 +431,7 @@ void Thread::updateModel(const UpdatePayload &plIn)
     }
     
     //doesn't hurt to mirror the fake threads.
-    if (static_cast<bool>(*leftHanded))
+    if (leftHanded->getBool())
     {
       gp_Trsf mirror;
       mirror.SetMirror(gp_Ax2(gp_Pnt(0.0, 0.0, l / 2.0), gp_Dir(0.0, 0.0, 1.0)));
@@ -443,7 +443,7 @@ void Thread::updateModel(const UpdatePayload &plIn)
       throw std::runtime_error("shapeCheck failed");
     
     gp_Trsf nt; //new transformation
-    nt.SetTransformation(gp_Ax3(gu::toOcc(static_cast<osg::Matrixd>(*csys))));
+    nt.SetTransformation(gp_Ax3(gu::toOcc(csys->getMatrix())));
     nt.Invert();
     TopLoc_Location nl(nt); //new location
     out.Location(nt);
@@ -511,9 +511,9 @@ void Thread::updateIds()
 
 void Thread::updateLabels()
 {
-  osg::Matrixd m = static_cast<osg::Matrixd>(*csys);
-  double d = static_cast<double>(*diameter);
-  double l = static_cast<double>(*length);
+  osg::Matrixd m = csys->getMatrix();
+  double d = diameter->getDouble();
+  double l = length->getDouble();
   
   diameterLabel->setMatrix(osg::Matrixd::translate(osg::Vec3d(d / 2.0, 0.0, l * .625) * m));
   pitchLabel->setMatrix(osg::Matrixd::translate(osg::Vec3d(d / 2.0, 0.0, l * .875) * m));

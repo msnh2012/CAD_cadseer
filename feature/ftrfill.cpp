@@ -131,9 +131,9 @@ void Feature::updateModel(const UpdatePayload &pIn)
     for (const auto &e : entries)
     {
       GeomAbs_Shape c = GeomAbs_C0;
-      if (static_cast<int>(*e.continuity) == 1)
+      if (e.continuity->getInt() == 1)
         c = GeomAbs_G1;
-      else if (static_cast<int>(*e.continuity) == 2)
+      else if (e.continuity->getInt() == 2)
         c = GeomAbs_G2;
       if (e.edgePick && !e.facePick)
       {

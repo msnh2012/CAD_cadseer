@@ -104,7 +104,7 @@ void InstanceMirror::setCSys(const osg::Matrixd &mIn)
 
 bool InstanceMirror::getIncludeSource()
 {
-  return static_cast<bool>(*includeSource);
+  return includeSource->getBool();
 }
 
 void InstanceMirror::setIncludeSource(bool in)
@@ -144,7 +144,7 @@ void InstanceMirror::updateModel(const UpdatePayload &payloadIn)
       throw std::runtime_error("No shapes found.");
     
     //get the plane
-    osg::Matrixd workSystem = static_cast<osg::Matrixd>(*csys);
+    osg::Matrixd workSystem = csys->getMatrix();
     resolver.resolve(planePick);
     
     if (resolver.getFeature())
@@ -175,7 +175,7 @@ void InstanceMirror::updateModel(const UpdatePayload &payloadIn)
         {
           osg::Vec3d norm = gu::toOsg(occt::getNormal(TopoDS::Face(dsShape), planePick.u, planePick.v));
           osg::Vec3d origin = planePick.getPoint(TopoDS::Face(dsShape));
-          osg::Matrixd cs = static_cast<osg::Matrixd>(*csys); // current system
+          osg::Matrixd cs = csys->getMatrix(); // current system
           osg::Vec3d cz = gu::getZVector(cs);
           if (norm.isNaN())
             throw std::runtime_error("invalid normal from face");
@@ -209,7 +209,7 @@ void InstanceMirror::updateModel(const UpdatePayload &payloadIn)
     occt::ShapeVector out;
     for (const auto &tShape : tShapes)
     {
-      if (static_cast<bool>(*includeSource))
+      if (includeSource->getBool())
         out.push_back(tShape);
       bt.Perform(tShape);
       out.push_back(bt.Shape());

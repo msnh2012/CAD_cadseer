@@ -142,17 +142,17 @@ void Cylinder::updateIPGroup()
   //height of radius dragger
   osg::Matrixd freshMatrix;
   freshMatrix.setRotate(osg::Quat(osg::PI_2, osg::Vec3d(-1.0, 0.0, 0.0)));
-  freshMatrix.setTrans(osg::Vec3d (0.0, 0.0, static_cast<double>(*height) / 2.0));
+  freshMatrix.setTrans(osg::Vec3d (0.0, 0.0, height->getDouble() / 2.0));
   radiusIP->setMatrixDragger(freshMatrix);
   
-  heightIP->setMatrix(static_cast<osg::Matrixd>(*csys));
-  radiusIP->setMatrix(static_cast<osg::Matrixd>(*csys));
+  heightIP->setMatrix(csys->getMatrix());
+  radiusIP->setMatrix(csys->getMatrix());
   
-  heightIP->mainDim->setSqueeze(static_cast<double>(*radius));
-  heightIP->mainDim->setExtensionOffset(static_cast<double>(*radius));
+  heightIP->mainDim->setSqueeze(radius->getDouble());
+  heightIP->mainDim->setExtensionOffset(radius->getDouble());
   
-  radiusIP->mainDim->setSqueeze(static_cast<double>(*height) / 2.0);
-  radiusIP->mainDim->setExtensionOffset(static_cast<double>(*height) / 2.0);
+  radiusIP->mainDim->setSqueeze(height->getDouble() / 2.0);
+  radiusIP->mainDim->setExtensionOffset(height->getDouble() / 2.0);
 }
 
 void Cylinder::setRadius(double radiusIn)
@@ -167,7 +167,7 @@ void Cylinder::setHeight(double heightIn)
 
 void Cylinder::setCSys(const osg::Matrixd &csysIn)
 {
-  osg::Matrixd oldSystem = static_cast<osg::Matrixd>(*csys);
+  osg::Matrixd oldSystem = csys->getMatrix();
   if (!csys->setValue(csysIn))
     return; // already at this csys
     
@@ -188,7 +188,7 @@ const prm::Parameter& Cylinder::getHeight() const
 
 osg::Matrixd Cylinder::getCSys() const
 {
-  return static_cast<osg::Matrixd>(*csys);
+  return csys->getMatrix();
 }
 
 void Cylinder::updateModel(const UpdatePayload &plIn)
@@ -212,15 +212,15 @@ void Cylinder::updateModel(const UpdatePayload &plIn)
       auto systemParameters =  tfs.front()->getParameters(prm::Tags::CSys);
       if (systemParameters.empty())
         throw std::runtime_error("Feature for csys link, doesn't have csys parameter");
-      csys->setValue(static_cast<osg::Matrixd>(*systemParameters.front()));
+      csys->setValue(systemParameters.front()->getMatrix());
       csysDragger->draggerUpdate();
     }
     
     CylinderBuilder cylinderMaker
     (
-      static_cast<double>(*radius),
-      static_cast<double>(*height),
-      gu::toOcc(static_cast<osg::Matrixd>(*csys))
+      radius->getDouble(),
+      height->getDouble(),
+      gu::toOcc(csys->getMatrix())
     );
     sShape->setOCCTShape(cylinderMaker.getSolid(), getId());
     updateResult(cylinderMaker);

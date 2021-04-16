@@ -544,7 +544,7 @@ struct Blend::Stow
       if (vPage->pointPage->parameters.at(edgeIndex).size() > 1)
       {
         ce.position = vPage->pointPage->parameters.at(edgeIndex).at(1);
-        ce.pick.u = static_cast<double>(*ce.position);
+        ce.pick.u = ce.position->getDouble();
       }
       else
         ce.position = ftr::Blend::buildPositionParameter();

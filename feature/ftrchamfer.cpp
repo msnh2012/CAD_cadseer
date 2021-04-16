@@ -351,7 +351,7 @@ void Feature::updateModel(const UpdatePayload &payloadIn)
               lastUpdateLog += s.str();
               continue;
             }
-            chamferMaker.Add(static_cast<double>(*e.parameter1), TopoDS::Edge(s));
+            chamferMaker.Add(e.parameter1->getDouble(), TopoDS::Edge(s));
             if (!labelDone)
             {
               labelDone = true;
@@ -386,8 +386,8 @@ void Feature::updateModel(const UpdatePayload &payloadIn)
             {
               chamferMaker.Add
               (
-                static_cast<double>(*e.parameter1)
-                , static_cast<double>(*e.parameter2)
+                e.parameter1->getDouble()
+                , e.parameter2->getDouble()
                 , edge
                 , face
               );
@@ -396,8 +396,8 @@ void Feature::updateModel(const UpdatePayload &payloadIn)
             {
               chamferMaker.AddDA
               (
-                static_cast<double>(*e.parameter1)
-                , osg::DegreesToRadians(static_cast<double>(*e.parameter2))
+                e.parameter1->getDouble()
+                , osg::DegreesToRadians(e.parameter2->getDouble())
                 , edge
                 , face
               );

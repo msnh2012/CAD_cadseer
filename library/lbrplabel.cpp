@@ -29,71 +29,11 @@
 
 #include "preferences/preferencesXML.h"
 #include "preferences/prfmanager.h"
-#include "parameter/prmvariant.h"
 #include "parameter/prmparameter.h"
 #include "project/serial/generated/prjsrlsptoverlay.h"
 #include "library/lbrplabel.h"
 
 using namespace lbr;
-
-class TextVisitor : public boost::static_visitor<std::string>
-{
-public:
-  TextVisitor() = delete;
-  TextVisitor(const prm::Parameter &pIn) : parameter(pIn){}
-  
-  std::string operator()(double d) const
-  {
-    std::ostringstream stream;
-    stream << std::setprecision(3) << std::fixed << d << std::endl;
-    return stream.str();
-  }
-  std::string operator()(int i) const
-  {
-    if (parameter.isEnumeration())
-      return parameter.getEnumerationString().toStdString();
-    
-    return std::to_string(i);
-  }
-  std::string operator()(bool b) const
-  {
-    if (b)
-      return "True";
-    return "False";
-  }
-  std::string operator()(const std::string &s) const {return s;}
-  std::string operator()(const boost::filesystem::path &p) const
-  {
-    if (p.has_filename())
-      return p.filename().string();
-    else
-      return p.end()->string();
-  }
-  std::string operator()(const osg::Vec3d &vIn) const
-  {
-    std::ostringstream stream;
-    stream << std::setprecision(3) << std::fixed
-    << vIn.x() << ", " << vIn.y() << ", " << vIn.z();
-    return stream.str();
-  }
-  std::string operator()(const osg::Quat &qIn) const
-  {
-    std::ostringstream stream;
-    stream << std::setprecision(3) << std::fixed
-    << qIn.x() << ", " << qIn.y() << ", " << qIn.z() << ", " << qIn.w();
-    return stream.str();
-  }
-  std::string operator()(const osg::Matrixd&) const
-  {
-    return "some matrix";
-  }
-  std::string operator()(const ftr::Picks&) const //TODO
-  {
-    return "some picks";
-  }
-  
-  const prm::Parameter &parameter;
-};
 
 PLabel::PLabel() : osg::MatrixTransform()
 {
@@ -152,7 +92,7 @@ void PLabel::setText()
   std::ostringstream stream;
   if (showName)
     stream << parameter->getName().toStdString() << " = ";
-  stream << boost::apply_visitor(TextVisitor(*parameter), parameter->getStow().variant);
+  stream << parameter->adaptToString();
   text->setText(stream.str());
 }
 

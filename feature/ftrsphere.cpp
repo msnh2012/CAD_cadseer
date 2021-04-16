@@ -108,7 +108,7 @@ void Sphere::setRadius(double radiusIn)
 
 void Sphere::setCSys(const osg::Matrixd &csysIn)
 {
-  osg::Matrixd oldSystem = static_cast<osg::Matrixd>(*csys);
+  osg::Matrixd oldSystem = csys->getMatrix();
   if (!csys->setValue(csysIn))
     return; // already at this csys
     
@@ -124,7 +124,7 @@ const prm::Parameter& Sphere::getRadius() const
 
 osg::Matrixd Sphere::getCSys() const
 {
-  return static_cast<osg::Matrixd>(*csys);
+  return csys->getMatrix();
 }
 
 void Sphere::setupIPGroup()
@@ -142,7 +142,7 @@ void Sphere::setupIPGroup()
 
 void Sphere::updateIPGroup()
 {
-  radiusIP->setMatrix(static_cast<osg::Matrixd>(*csys));
+  radiusIP->setMatrix(csys->getMatrix());
 }
 
 void Sphere::updateModel(const UpdatePayload &plIn)
@@ -166,11 +166,11 @@ void Sphere::updateModel(const UpdatePayload &plIn)
       auto systemParameters = tfs.front()->getParameters(prm::Tags::CSys);
       if (systemParameters.empty())
         throw std::runtime_error("Feature for csys link, doesn't have csys parameter");
-      csys->setValue(static_cast<osg::Matrixd>(*systemParameters.front()));
+      csys->setValue(systemParameters.front()->getMatrix());
       csysDragger->draggerUpdate();
     }
     
-    BRepPrimAPI_MakeSphere sphereMaker(gu::toOcc(static_cast<osg::Matrixd>(*csys)), static_cast<double>(*radius));
+    BRepPrimAPI_MakeSphere sphereMaker(gu::toOcc(csys->getMatrix()), radius->getDouble());
     sphereMaker.Build();
     assert(sphereMaker.IsDone());
     sShape->setOCCTShape(sphereMaker.Shape(), getId());

@@ -108,7 +108,7 @@ void Torus::setRadius2(double radius2In)
 
 void Torus::setCSys(const osg::Matrixd &csysIn)
 {
-  osg::Matrixd oldSystem = static_cast<osg::Matrixd>(*csys);
+  osg::Matrixd oldSystem = csys->getMatrix();
   if (!csys->setValue(csysIn))
     return; // already at this csys
     
@@ -129,7 +129,7 @@ const prm::Parameter& Torus::getRadius2() const
 
 osg::Matrixd Torus::getCSys() const
 {
-  return static_cast<osg::Matrixd>(*csys);
+  return csys->getMatrix();
 }
 
 void Torus::setupIPGroup()
@@ -156,19 +156,19 @@ void Torus::setupIPGroup()
 
 void Torus::updateIPGroup()
 {
-  radius1IP->setMatrix(static_cast<osg::Matrixd>(*csys));
+  radius1IP->setMatrix(csys->getMatrix());
   
   osg::Matrixd dm; //dragger matrix
   dm.setRotate(osg::Quat(osg::PI_2, osg::Vec3d(-1.0, 0.0, 0.0)));
-  dm.setTrans(osg::Vec3d (0.0, static_cast<double>(*radius1), 0.0));
+  dm.setTrans(osg::Vec3d (0.0, radius1->getDouble(), 0.0));
   radius2IP->setMatrixDragger(dm);
-  radius2IP->setMatrixDims(osg::Matrixd::translate(osg::Vec3d(0.0, static_cast<double>(*radius1), 0.0)));
-  radius2IP->setMatrix(static_cast<osg::Matrixd>(*csys));
+  radius2IP->setMatrixDims(osg::Matrixd::translate(osg::Vec3d(0.0, radius1->getDouble(), 0.0)));
+  radius2IP->setMatrix(csys->getMatrix());
   
-  osg::Vec3d seamLocation = osg::Vec3d(static_cast<double>(*radius2), 0.0, 0.0)
-    * osg::Matrixd::rotate(osg::DegreesToRadians(static_cast<double>(*seam)), osg::Vec3d(0.0, 1.0, 0.0))
-    + osg::Vec3d(static_cast<double>(*radius1), 0.0, 0.0);
-  seamLabel->setMatrix(osg::Matrixd::translate(seamLocation * static_cast<osg::Matrixd>(*csys)));
+  osg::Vec3d seamLocation = osg::Vec3d(radius2->getDouble(), 0.0, 0.0)
+    * osg::Matrixd::rotate(osg::DegreesToRadians(seam->getDouble()), osg::Vec3d(0.0, 1.0, 0.0))
+    + osg::Vec3d(radius1->getDouble(), 0.0, 0.0);
+  seamLabel->setMatrix(osg::Matrixd::translate(seamLocation * csys->getMatrix()));
 }
 
 void Torus::initializeMaps()
@@ -202,15 +202,15 @@ void Torus::updateModel(const UpdatePayload &plIn)
       if (systemParameters.empty())
         throw std::runtime_error("Feature for csys link, doesn't have csys parameter");
       prm::ObserverBlocker block(*csysObserver);
-      csys->setValue(static_cast<osg::Matrixd>(*systemParameters.front()));
+      csys->setValue(systemParameters.front()->getMatrix());
       csysDragger->draggerUpdate();
     }
     
-    if (!(static_cast<double>(*radius1) > static_cast<double>(*radius2)))
+    if (!(radius1->getDouble() > radius2->getDouble()))
       throw std::runtime_error("radius1 must be bigger than radius2");
     
-    double sa = osg::DegreesToRadians(static_cast<double>(*seam));
-    BRepPrimAPI_MakeTorus tMaker(static_cast<double>(*radius1), static_cast<double>(*radius2), sa, sa + osg::PI * 2.0);
+    double sa = osg::DegreesToRadians(seam->getDouble());
+    BRepPrimAPI_MakeTorus tMaker(radius1->getDouble(), radius2->getDouble(), sa, sa + osg::PI * 2.0);
     tMaker.Build();
     assert(tMaker.IsDone());
     if (!tMaker.IsDone())
@@ -218,7 +218,7 @@ void Torus::updateModel(const UpdatePayload &plIn)
     
     TopoDS_Shape out = tMaker.Shape();
     gp_Trsf nt; //new transformation
-    nt.SetTransformation(gp_Ax3(gu::toOcc(static_cast<osg::Matrixd>(*csys))));
+    nt.SetTransformation(gp_Ax3(gu::toOcc(csys->getMatrix())));
     nt.Invert();
     TopLoc_Location nl(nt); //new location
     out.Location(nt);

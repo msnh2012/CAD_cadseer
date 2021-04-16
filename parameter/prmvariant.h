@@ -22,8 +22,8 @@
 #define PRM_VARIANT_H
 
 #include <string>
+#include <variant>
 
-#include <boost/variant/variant.hpp>
 #include <boost/filesystem/path.hpp>
 
 #include <osg/Vec3d>
@@ -34,7 +34,7 @@
 
 namespace prm
 {
-  typedef boost::variant
+  using Variant = std::variant
   <
     double,
     int,
@@ -45,7 +45,7 @@ namespace prm
     osg::Quat,
     osg::Matrixd,
     ftr::Picks
-  > Variant;
+  >;
   
   struct Stow
   {
@@ -54,6 +54,7 @@ namespace prm
     Stow(double i) : variant(i){}
     Stow(int i) : variant(i){}
     Stow(bool i) : variant(i){}
+    Stow(const std::string &i) : variant(i){}
     Stow(const boost::filesystem::path &i) : variant(i){}
     Stow(const osg::Vec3d &i) : variant(i){}
     Stow(const osg::Quat &i) : variant(i){}

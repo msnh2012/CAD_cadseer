@@ -2270,7 +2270,7 @@ void Visual::connectDistance(SSHandle cHandle, prm::Parameter *parameter, const 
   ld->setNodeMask(Constraint.to_ulong());
   lbr::LinearDimensionCallback *cb = new lbr::LinearDimensionCallback();
   cb->setTextObjectName(label->getName().c_str());
-  cb->setDistance(static_cast<double>(*parameter));
+  cb->setDistance(parameter->getDouble());
   ld->setUpdateCallback(cb);
   
   Map::Record &record = oRec.get();
@@ -2293,7 +2293,7 @@ void Visual::connectDiameter(SSHandle cHandle, prm::Parameter *parameter, const 
   osg::MatrixTransform *dd = lbr::buildDiameterDimension(label);
   dd->setNodeMask(Constraint.to_ulong());
   lbr::DiameterDimensionCallback *cb = new lbr::DiameterDimensionCallback(label->getName());
-  cb->setDiameter(static_cast<double>(*parameter));
+  cb->setDiameter(parameter->getDouble());
   dd->setUpdateCallback(cb);
   
   Map::Record &record = oRec.get();
@@ -2315,7 +2315,7 @@ void Visual::connectAngle(SSHandle cHandle, prm::Parameter *parameter, const osg
   
   osg::MatrixTransform *angularDimension = lbr::buildAngularDimension(label);
   lbr::AngularDimensionCallback *cb = new lbr::AngularDimensionCallback(label->getName());
-  cb->setAngleDegrees(static_cast<double>(*parameter));
+  cb->setAngleDegrees(parameter->getDouble());
   angularDimension->setUpdateCallback(cb);
   
   Map::Record &record = oRec.get();

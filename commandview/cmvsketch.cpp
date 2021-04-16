@@ -723,7 +723,7 @@ void Sketch::prmValueChanged()
   assert(stow->pEdit);
   assert(stow->parameter);
   
-  double pValue = static_cast<double>(*stow->parameter);
+  double pValue = stow->parameter->getDouble();
   stow->feature->getSolver()->updateConstraintValue(stow->feature->getHPHandle(stow->parameter), pValue);
   stow->feature->getSolver()->solve(stow->feature->getSolver()->getGroup(), true);
   stow->visual->update();

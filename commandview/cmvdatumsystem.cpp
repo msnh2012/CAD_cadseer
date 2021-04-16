@@ -175,7 +175,7 @@ struct DatumSystem::Stow
       selectionWidget3P->activate(0);
     }
     
-    if (static_cast<bool>(*autoSize))
+    if (autoSize->getBool())
       parameterWidget->disableWidget(size);
     else
       parameterWidget->enableWidget(size);

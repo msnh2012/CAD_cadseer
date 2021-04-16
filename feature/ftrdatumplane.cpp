@@ -219,7 +219,7 @@ struct DatumPlane::Stow
   
   void updateGeometry()
   {
-    double r = static_cast<double>(size);
+    double r = size.getDouble();
     display->setParameters(-r, r, -r, r);
   }
   void prmActiveSync()
@@ -229,7 +229,7 @@ struct DatumPlane::Stow
     prm::ObserverBlocker block(dirtyObserver); //callers responsible for dirtyModel.
     prm::ObserverBlocker block2(syncObserver); //don't recurse.
     
-    switch (static_cast<int>(dpType))
+    switch (dpType.getInt())
     {
       case static_cast<int>(DPType::Constant):
       {
@@ -259,7 +259,7 @@ struct DatumPlane::Stow
         csys.setActive(false);
         csysLinkHack.setActive(false);
         autoSize.setActive(true);
-        if (static_cast<bool>(autoSize))
+        if (autoSize.getBool())
           size.setActive(false);
         else
           size.setActive(true);
@@ -274,7 +274,7 @@ struct DatumPlane::Stow
         csys.setActive(false);
         csysLinkHack.setActive(false);
         autoSize.setActive(true);
-        if (static_cast<bool>(autoSize))
+        if (autoSize.getBool())
           size.setActive(false);
         else
           size.setActive(true);
@@ -287,7 +287,7 @@ struct DatumPlane::Stow
         csys.setActive(false);
         csysLinkHack.setActive(false);
         autoSize.setActive(true);
-        if (static_cast<bool>(autoSize))
+        if (autoSize.getBool())
           size.setActive(false);
         else
           size.setActive(true);
@@ -305,10 +305,10 @@ struct DatumPlane::Stow
   
   void updateLabelPositions()
   {
-    double s = static_cast<double>(size);
-    osg::Matrixd m = static_cast<osg::Matrixd>(csys);
+    double s = size.getDouble();
+    osg::Matrixd m = csys.getMatrix();
     
-    if (static_cast<bool>(flip))
+    if (flip.getBool())
     {
       osg::Quat r(osg::PI, gu::getXVector(m));
       osg::Matrixd nm(m.getRotate() * r);
@@ -322,7 +322,7 @@ struct DatumPlane::Stow
     angleLabel->setMatrix(osg::Matrixd::translate(m.getTrans()));
     
     //offset parameter has to be placed at original position. notice modifying m.
-    osg::Vec3d projection = gu::getZVector(m) * static_cast<double>(offset) * -1.0;
+    osg::Vec3d projection = gu::getZVector(m) * offset.getDouble() * -1.0;
     m.setTrans(m.getTrans() + projection);
     offsetIP->setMatrix(m);
   }
@@ -341,7 +341,7 @@ struct DatumPlane::Stow
     if (systemParameters.empty())
       throw std::runtime_error("Feature for csys link, doesn't have csys parameter");
     
-    osg::Matrixd newSys = static_cast<osg::Matrixd>(*systemParameters.front());
+    osg::Matrixd newSys = systemParameters.front()->getMatrix();
 
     prm::ObserverBlocker block(dirtyObserver);
     csys.setValue(newSys);
@@ -349,7 +349,7 @@ struct DatumPlane::Stow
 
   void goUpdatePOffset(const UpdatePayload &pli)
   {
-    const auto &tPicks = static_cast<const ftr::Picks&>(picks);
+    const auto &tPicks = picks.getPicks();
     if (tPicks.size() != 1)
       throw std::runtime_error("POffset: Wrong number of picks");
     
@@ -381,14 +381,14 @@ struct DatumPlane::Stow
       
       std::tie(faceSystem, cachedSize) = getFaceSystem(rShapes.front());
     }
-    osg::Vec3d normal = gu::getZVector(faceSystem) * static_cast<double>(offset);
+    osg::Vec3d normal = gu::getZVector(faceSystem) * offset.getDouble();
     faceSystem.setTrans(faceSystem.getTrans() + normal);
     csys.setValue(faceSystem);
   }
 
   void goUpdatePCenter(const UpdatePayload &pli)
   {
-    const auto &tPicks = static_cast<const ftr::Picks&>(picks);
+    const auto &tPicks = picks.getPicks();
     if (tPicks.size() != 2)
       throw std::runtime_error("Wrong number of picks for center datum");
     tls::Resolver r0(pli);
@@ -514,7 +514,7 @@ struct DatumPlane::Stow
 
   void goUpdateAAngleP(const UpdatePayload &pli)
   {
-    const auto &tPicks = static_cast<const ftr::Picks&>(picks);
+    const auto &tPicks = picks.getPicks();
     if (tPicks.size() != 2)
       throw std::runtime_error("AAngleP: Wrong number of picks");
     
@@ -588,7 +588,7 @@ struct DatumPlane::Stow
       tempSize = 1.0;
     cachedSize = tempSize;
     
-    osg::Quat rotation(osg::DegreesToRadians(static_cast<double>(angle)), axisDirection.get());
+    osg::Quat rotation(osg::DegreesToRadians(angle.getDouble()), axisDirection.get());
     osg::Vec3d outNormal(rotation * planeNormal.get());
     osg::Matrixd csysOut = osg::Matrixd::rotate(osg::Vec3d(0.0, 0.0, 1.0), outNormal);
     csysOut.setTrans(axisOrigin.get());
@@ -597,7 +597,7 @@ struct DatumPlane::Stow
 
   void goUpdateAverage3P(const UpdatePayload &pli)
   {
-    const auto &tPicks = static_cast<const ftr::Picks&>(picks);
+    const auto &tPicks = picks.getPicks();
     if (tPicks.size() != 3)
       throw std::runtime_error("Average3P: Wrong number of picks");
     
@@ -680,7 +680,7 @@ struct DatumPlane::Stow
 
   void goUpdateThrough3P(const UpdatePayload &pli)
   {
-    const auto &tPicks = static_cast<const ftr::Picks&>(picks);
+    const auto &tPicks = picks.getPicks();
     if (tPicks.size() != 3)
       throw std::runtime_error("Through3P: Wrong number of picks");
     
@@ -751,7 +751,7 @@ void DatumPlane::setSize(double sIn)
 
 double DatumPlane::getSize() const
 {
-  return static_cast<double>(stow->size);
+  return stow->size.getDouble();
 }
 
 void DatumPlane::setSystem(const osg::Matrixd &sysIn)
@@ -761,7 +761,7 @@ void DatumPlane::setSystem(const osg::Matrixd &sysIn)
 
 osg::Matrixd DatumPlane::getSystem() const
 {
-  return static_cast<osg::Matrixd>(stow->csys);
+  return stow->csys.getMatrix();
 }
 
 void DatumPlane::setPicks(const Picks &psIn)
@@ -771,7 +771,7 @@ void DatumPlane::setPicks(const Picks &psIn)
 
 const Picks& DatumPlane::getPicks()
 {
-  return static_cast<const ftr::Picks&>(stow->picks);
+  return stow->picks.getPicks();
 }
 
 void DatumPlane::setDPType(DPType tIn)
@@ -781,7 +781,7 @@ void DatumPlane::setDPType(DPType tIn)
 
 DatumPlane::DPType DatumPlane::getDPType()
 {
-  return static_cast<DPType>(static_cast<int>(stow->dpType));
+  return static_cast<DPType>(stow->dpType.getInt());
 }
 
 void DatumPlane::setAutoSize(bool vIn)
@@ -797,7 +797,7 @@ void DatumPlane::updateModel(const UpdatePayload &pli)
   {
     prm::ObserverBlocker block(stow->dirtyObserver);
     
-    switch (static_cast<int>(stow->dpType))
+    switch (stow->dpType.getInt())
     {
       case 0:
       {
@@ -841,19 +841,19 @@ void DatumPlane::updateModel(const UpdatePayload &pli)
       }
     }
     
-    if (static_cast<bool>(stow->flip))
+    if (stow->flip.getBool())
     {
-      osg::Matrixd cm = static_cast<osg::Matrixd>(stow->csys);
+      osg::Matrixd cm = stow->csys.getMatrix();
       osg::Quat r(osg::PI, gu::getXVector(cm));
       osg::Matrixd nm(cm.getRotate() * r);
       nm.setTrans(cm.getTrans());
       stow->csys.setValue(nm);
     }
     
-    if (static_cast<bool>(stow->autoSize))
+    if (stow->autoSize.getBool())
       stow->size.setValue(stow->cachedSize);
     
-    mainTransform->setMatrix(static_cast<osg::Matrixd>(stow->csys));
+    mainTransform->setMatrix(stow->csys.getMatrix());
     
     setSuccess();
   }
@@ -890,7 +890,7 @@ QTextStream& DatumPlane::getInfo(QTextStream &streamIn) const
     Base::getInfo(streamIn);
     
     streamIn << "System is: " << Qt::endl;
-    gu::osgMatrixOut(streamIn, static_cast<osg::Matrixd>(stow->csys));
+    gu::osgMatrixOut(streamIn, stow->csys.getMatrix());
     
     return streamIn;
 }
@@ -940,8 +940,8 @@ void DatumPlane::serialRead(const prj::srl::dtps::DatumPlane &dpi)
   stow->sizeIP->serialIn(dpi.sizeIP());
   stow->offsetIP->serialIn(dpi.offsetIP());
 
-  stow->cachedSize = static_cast<double>(stow->size);
-  mainTransform->setMatrix(static_cast<osg::Matrixd>(stow->csys));
+  stow->cachedSize = stow->size.getDouble();
+  mainTransform->setMatrix(stow->csys.getMatrix());
   
 //   stow->updateLabelPositions();
   stow->updateGeometry();

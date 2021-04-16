@@ -173,7 +173,7 @@ void Draft::updateModel(const UpdatePayload &payloadIn)
       lastUpdateLog += s.str();
     }
     gp_Pln plane = derivePlaneFromShape(rShapes.front());
-    double localAngle = osg::DegreesToRadians(static_cast<double>(*angle));
+    double localAngle = osg::DegreesToRadians(angle->getDouble());
     gp_Dir direction = plane.Axis().Direction();
     
     bool labelDone = false; //set label position to first pick.

@@ -223,7 +223,7 @@ void Extrude::setupLabels()
 
 void Extrude::updateLabels(occt::BoundingBox &bb)
 {
-  osg::Vec3d z = static_cast<osg::Vec3d>(*direction);
+  osg::Vec3d z = direction->getVector();
   osg::Vec3d vtc; //vector to cross.
   double dot = 1.0;
   auto check = [&](const osg::Vec3d &vIn)
@@ -287,10 +287,10 @@ void Extrude::updateModel(const UpdatePayload &pIn)
       throw std::runtime_error("target resolution failed.");
     
     //make sure that distance > offset.
-    if (static_cast<double>(*offset) >= static_cast<double>(*distance))
+    if (offset->getDouble() >= distance->getDouble())
       throw std::runtime_error("offset needs to be less than distance");
     //force direction to be unit vector.
-    osg::Vec3d td = static_cast<osg::Vec3d>(*direction);
+    osg::Vec3d td = direction->getVector();
     if (td.length() < std::numeric_limits<float>::epsilon())
       throw std::runtime_error("direction is zero vector");
     td.normalize();
@@ -317,7 +317,7 @@ void Extrude::updateModel(const UpdatePayload &pIn)
         {
           auto systemParameters =  tResolver.getFeature()->getParameters(prm::Tags::CSys);
           assert(!systemParameters.empty()); //sketches should have a csys.
-          osg::Matrixd sm = static_cast<osg::Matrixd>(*systemParameters.front());
+          osg::Matrixd sm = systemParameters.front()->getMatrix();
           direction->setValue(gu::getZVector(sm));
         }
       }
@@ -493,9 +493,9 @@ void Extrude::updateModel(const UpdatePayload &pIn)
       oldIds.push_back(tId);
     }
     
-    double lo = static_cast<double>(*offset);
-    double ld = static_cast<double>(*distance);
-    osg::Vec3d ldir = static_cast<osg::Vec3d>(*direction);
+    double lo = offset->getDouble();
+    double ld = distance->getDouble();
+    osg::Vec3d ldir = direction->getVector();
     
     //move shape, if necessary, and extrude
     //moving of shape will mess up id mapping.

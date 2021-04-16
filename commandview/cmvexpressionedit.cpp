@@ -94,7 +94,7 @@ struct ParameterEdit::Stow
   {
     if (parameter->isConstant())
     {
-      parent->lineEdit->setText(static_cast<QString>(*parameter));
+      parent->lineEdit->setText(parameter->adaptToQString());
       parent->lineEdit->selectAll();
     }
   }
@@ -104,7 +104,7 @@ struct ParameterEdit::Stow
     if (parameter->isConstant())
     {
       parent->lineEdit->setReadOnly(false);
-      parent->lineEdit->setText(static_cast<QString>(*parameter));
+      parent->lineEdit->setText(parameter->adaptToQString());
       parent->lineEdit->selectAll();
     }
     else

@@ -57,7 +57,7 @@ void SystemToFeature::activate()
     if (!baseFeature->hasAnnex(ann::Type::CSysDragger))
       continue;
     ann::CSysDragger &da = baseFeature->getAnnex<ann::CSysDragger>(ann::Type::CSysDragger);
-    mainWindow->getViewer()->setCurrentSystem(static_cast<osg::Matrixd>(*(da.parameter)));
+    mainWindow->getViewer()->setCurrentSystem(da.parameter->getMatrix());
     break;
   }
   

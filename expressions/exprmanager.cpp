@@ -98,12 +98,11 @@ struct Manager::Stow
   
   //used to test compatibility between exrpressions and parameters.
   //will assign value if assign=true
-  class ParameterValueVisitor : public boost::static_visitor<Amity>
+  struct ParameterValueVisitor
   {
     prm::Parameter *parameter = nullptr;
     expr::Value ev;
     bool assign = false;
-  public:
     ParameterValueVisitor(prm::Parameter *pIn, const expr::Value &evIn, bool assignIn)
     : parameter(pIn)
     , ev(evIn)
@@ -205,7 +204,7 @@ struct Manager::Stow
   {
     //we only visit if the types are acceptable otherwise a crash.
     ParameterValueVisitor v(parameter, evIn, assign);
-    auto goVisit = [&]() -> Amity {return boost::apply_visitor(v, parameter->getStow().variant);};
+    auto goVisit = [&]() -> Amity {return std::visit(v, parameter->getStow().variant);};
     
     if (parameter->getValueType() == evIn.type())
       return goVisit();

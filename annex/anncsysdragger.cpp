@@ -107,7 +107,7 @@ namespace ann
           if (lastTranslation != 0.0 || lastRotation != 0.0)
           {
             osg::Matrixd diffMatrix = osg::Matrixd::inverse(cachedMatrix) * this->getTransform()->getMatrix();
-            parameter->setValue(static_cast<osg::Matrixd>(*parameter) * diffMatrix);
+            parameter->setValue(parameter->getMatrix() * diffMatrix);
             
             //add git message.
             std::ostringstream gitStream;
@@ -166,7 +166,7 @@ CSysDragger::~CSysDragger() = default;
 
 void CSysDragger::draggerUpdate()
 {
-  draggerUpdate(static_cast<osg::Matrixd>(*parameter));
+  draggerUpdate(parameter->getMatrix());
 }
 
 void CSysDragger::draggerUpdate(const osg::Matrixd &mIn)
@@ -180,7 +180,7 @@ void CSysDragger::draggerUpdate(const osg::Matrixd &mIn)
 
 void CSysDragger::setCSys(const osg::Matrixd &mIn)
 {
-  osg::Matrixd oldSystem = static_cast<osg::Matrixd>(*parameter);
+  osg::Matrixd oldSystem = parameter->getMatrix();
   if (!parameter->setValue(mIn))
     return; // already at this csys
     

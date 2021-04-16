@@ -149,7 +149,7 @@ void Extract::updateModel(const UpdatePayload &payloadIn)
           {
             if (!accrueLocation)
               accrueLocation = osg::Matrixd::translate(p.getPoint(f));
-            occt::FaceVector tempFaces = occt::walkTangentFaces(pr.getSeerShape()->getRootOCCTShape(), f, static_cast<double>(*angle));
+            occt::FaceVector tempFaces = occt::walkTangentFaces(pr.getSeerShape()->getRootOCCTShape(), f, angle->getDouble());
             std::copy(tempFaces.begin(), tempFaces.end(), std::back_inserter(faces));
           }
           else

@@ -207,13 +207,13 @@ void InstancePolar::updateModel(const UpdatePayload &payloadIn)
       //make sure dragger is visible
       if(!overlaySwitch->containsNode(csysDragger->dragger.get()))
         overlaySwitch->addChild(csysDragger->dragger.get());
-      newOrigin = static_cast<osg::Matrixd>(*csys).getTrans();
-      newDirection = gu::getZVector(static_cast<osg::Matrixd>(*csys));
+      newOrigin = csys->getMatrix().getTrans();
+      newDirection = gu::getZVector(csys->getMatrix());
     }
     
-    int ac = static_cast<int>(*count); //actual count
-    double aa = static_cast<double>(*angle); //actual angle
-    bool ai = static_cast<bool>(*inclusiveAngle); //actual inclusive angle
+    int ac = count->getInt(); //actual count
+    double aa = angle->getDouble(); //actual angle
+    bool ai = inclusiveAngle->getBool(); //actual inclusive angle
     
     if (ai)
     {
@@ -227,7 +227,7 @@ void InstancePolar::updateModel(const UpdatePayload &payloadIn)
       //stay under 360. don't overlap.
       int maxCount = static_cast<int>(360.0 / std::fabs(aa));
       ac = std::min(ac, maxCount);
-      if (ac != static_cast<int>(*count))
+      if (ac != count->getInt())
       {
         std::ostringstream s; s << "Count has been limited to less than full rotation"  << std::endl;
         lastUpdateLog.append(s.str());
@@ -239,7 +239,7 @@ void InstancePolar::updateModel(const UpdatePayload &payloadIn)
     
     for (int index = 0; index < ac; ++index)
     {
-      if (index == 0 && !(static_cast<bool>(*includeSource)))
+      if (index == 0 && !(includeSource->getBool()))
         continue;
       gp_Trsf rotation;
       rotation.SetRotation(ra, osg::DegreesToRadians(static_cast<double>(index) * aa));

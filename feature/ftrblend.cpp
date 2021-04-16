@@ -358,7 +358,7 @@ void Feature::updateModel(const UpdatePayload &payloadIn)
             TopoDS_Shape tempShape = targetSeerShape.getOCCTShape(resultId);
             assert(!tempShape.IsNull());
             assert(tempShape.ShapeType() == TopAbs_EDGE);
-            bMaker.Add(static_cast<double>(*(constantBlend.radius)), TopoDS::Edge(tempShape));
+            bMaker.Add(constantBlend.radius->getDouble(), TopoDS::Edge(tempShape));
             //update location of parameter label.
             if (!labelDone)
             {
@@ -412,7 +412,7 @@ void Feature::updateModel(const UpdatePayload &payloadIn)
             {
               if (!(bMaker.RelativeAbscissa(ci, v) < 0.0)) //tests if vertex is on contour
               {
-                bMaker.SetRadius(static_cast<double>(*e.radius), ci, v);
+                bMaker.SetRadius(e.radius->getDouble(), ci, v);
                 if (!labelDone)
                 {
                   e.label->setMatrix(osg::Matrixd::translate(gu::toOsg(v)));
@@ -435,9 +435,9 @@ void Feature::updateModel(const UpdatePayload &payloadIn)
             int ci = bMaker.Contains(edge, ei);
             if (ci > 0)
             {
-              double p = static_cast<double>(*e.position);
+              double p = e.position->getDouble();
               e.pick.u = p; //keep pick in sync with parameter. we use pick.u in dialog.
-              gp_XY pair(p, static_cast<double>(*e.radius));
+              gp_XY pair(p, e.radius->getDouble());
               bMaker.SetRadius(pair, ci, ei);
             }
             if (!labelDone)

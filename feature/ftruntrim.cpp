@@ -146,7 +146,7 @@ void Untrim::updateModel(const UpdatePayload &pIn)
     BRepAdaptor_Surface as(TopoDS::Face(shapeToUntrim));
     opencascade::handle<Geom_Surface> surfaceCopy = dynamic_cast<Geom_Surface*>(as.Surface().Surface()->Copy().get());
     
-    double ov = static_cast<double>(*offset);
+    double ov = offset->getDouble();
     
     double u0 = as.FirstUParameter() - ov;
     double u1 = as.LastUParameter() + ov;
@@ -155,7 +155,7 @@ void Untrim::updateModel(const UpdatePayload &pIn)
     
     if (as.IsUPeriodic())
     {
-      if (static_cast<bool>(*closeU))
+      if (closeU->getBool())
       {
         u0 = 0.0;
         u1 = as.UPeriod();
@@ -170,7 +170,7 @@ void Untrim::updateModel(const UpdatePayload &pIn)
     
     if (as.IsVPeriodic())
     {
-      if (static_cast<bool>(*closeV))
+      if (closeV->getBool())
       {
         v0 = 0.0;
         v1 = as.VPeriod();
@@ -223,7 +223,7 @@ void Untrim::updateModel(const UpdatePayload &pIn)
     }
     
     
-    if (static_cast<bool>(*makeSolid))
+    if (makeSolid->getBool())
     {
       //BRepBuilderAPI_MakeShell making corrupt shape when off of period boundaries
       BRep_Builder builder;

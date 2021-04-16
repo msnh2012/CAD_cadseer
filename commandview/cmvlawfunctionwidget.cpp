@@ -320,7 +320,7 @@ void LawFunctionWidget::selectionChangedSlot()
     prm::Parameter *p = stow->findParameter(psId);
     if (p)
     {
-      osg::Vec3d pv = static_cast<osg::Vec3d>(*p);
+      osg::Vec3d pv = p->getVector();
       stow->pEdit->setEnabled(true);
       stow->vEdit->setEnabled(true);
       stow->dEdit->setEnabled(true);
@@ -392,7 +392,7 @@ void LawFunctionWidget::changed(const QString &textIn, int index)
     return;
   prm::Parameter *parameter = stow->findParameter(pId);
   assert(parameter);
-  osg::Vec3d value = static_cast<osg::Vec3d>(*parameter);
+  osg::Vec3d value = parameter->getVector();
   value[index] = nv;
   parameter->setValue(value);
   
@@ -416,7 +416,7 @@ void LawFunctionWidget::changed(const QString &textIn, int index)
     {
       auto match = [&](std::size_t bi)
       {
-        osg::Vec3d tv = static_cast<osg::Vec3d>(stow->cue.boundaries.at(bi));
+        osg::Vec3d tv = stow->cue.boundaries.at(bi).getVector();
         tv.y() = value.y();
         stow->cue.boundaries.at(bi).setValue(tv);
       };
@@ -499,7 +499,7 @@ void LawFunctionWidget::appendConstant()
 void LawFunctionWidget::appendLinear()
 {
   double end = stow->cue.squeezeBack();
-  double value = static_cast<osg::Vec3d>(stow->cue.boundaries.back()).y();
+  double value = stow->cue.boundaries.back().getVector().y();
   value += 0.1;
   stow->cue.appendLinear(end, value);
   stow->cue.smooth();
@@ -510,7 +510,7 @@ void LawFunctionWidget::appendLinear()
 void LawFunctionWidget::appendInterpolate()
 {
   double end = stow->cue.squeezeBack();
-  double value = static_cast<osg::Vec3d>(stow->cue.boundaries.back()).y();
+  double value = stow->cue.boundaries.back().getVector().y();
   value += 0.1;
   stow->cue.appendInterpolate(end, value);
   stow->cue.smooth();
@@ -628,7 +628,7 @@ void LawFunctionWidget::updateGui()
   double ymax = 1.0;
   for (auto *p : prms) //have to establish range first.
   {
-    osg::Vec3d t = static_cast<osg::Vec3d>(*p);
+    osg::Vec3d t = p->getVector();
     xmin = std::min(xmin, t.x());
     xmax = std::max(xmax, t.x());
     ymin = std::min(ymin, t.y());
@@ -641,7 +641,7 @@ void LawFunctionWidget::updateGui()
   
   auto buildParameterPoint = [&] (const prm::Parameter &pIn)
   {
-    osg::Vec3d t = static_cast<osg::Vec3d>(pIn);
+    osg::Vec3d t = pIn.getVector();
     QGraphicsEllipseItem *point = buildPoint();
     point->setPos(t.x(), ymax - t.y());
     point->setData(QTKEY, QString::fromStdString(gu::idToString(pIn.getId())));
@@ -693,8 +693,8 @@ void LawFunctionWidget::updateGui()
   lwf::Type lft = stow->cue.type;
   if (lft == lwf::Type::constant || lft == lwf::Type::linear)
   {
-    osg::Vec3d f = static_cast<osg::Vec3d>(*(prms.front()));
-    osg::Vec3d l = static_cast<osg::Vec3d>(*(prms.back()));
+    osg::Vec3d f = prms.front()->getVector();
+    osg::Vec3d l = prms.back()->getVector();
     drawLine(f, l);
   }
   else if (lft == lwf::Type::interpolate)
@@ -715,8 +715,8 @@ void LawFunctionWidget::updateGui()
         const lwf::Data &data = stow->cue.datas.at(index);
         if (data.subType == lwf::Type::constant || data.subType == lwf::Type::linear)
         {
-          osg::Vec3d f = static_cast<osg::Vec3d>(stow->cue.boundaries.at(index));
-          osg::Vec3d l = static_cast<osg::Vec3d>(stow->cue.boundaries.at(index + 1));
+          osg::Vec3d f = stow->cue.boundaries.at(index).getVector();
+          osg::Vec3d l = stow->cue.boundaries.at(index + 1).getVector();
           drawLine(f, l);
         }
         else if (data.subType == lwf::Type::interpolate)

@@ -235,7 +235,7 @@ void Oblong::setHeight(double vIn)
 
 void Oblong::setCSys(const osg::Matrixd &csysIn)
 {
-  osg::Matrixd oldSystem = static_cast<osg::Matrixd>(*csys);
+  osg::Matrixd oldSystem = csys->getMatrix();
   if (!csys->setValue(csysIn))
     return; // already at this csys
     
@@ -246,7 +246,7 @@ void Oblong::setCSys(const osg::Matrixd &csysIn)
 
 osg::Matrixd Oblong::getCSys() const
 {
-  return static_cast<osg::Matrixd>(*csys);
+  return csys->getMatrix();
 }
 
 void Oblong::updateModel(const UpdatePayload &plIn)
@@ -270,19 +270,19 @@ void Oblong::updateModel(const UpdatePayload &plIn)
       auto systemParameters =  tfs.front()->getParameters(prm::Tags::CSys);
       if (systemParameters.empty())
         throw std::runtime_error("Feature for csys link, doesn't have csys parameter");
-      csys->setValue(static_cast<osg::Matrixd>(*systemParameters.front()));
+      csys->setValue(systemParameters.front()->getMatrix());
       csysDragger->draggerUpdate();
     }
     
-    if (!(static_cast<double>(*length) > static_cast<double>(*width)))
+    if (!(length->getDouble() > width->getDouble()))
       throw std::runtime_error("length must be greater than width");
     
     OblongBuilder oblongMaker
     (
-      static_cast<double>(*length),
-      static_cast<double>(*width),
-      static_cast<double>(*height),
-      gu::toOcc(static_cast<osg::Matrixd>(*csys))
+      length->getDouble(),
+      width->getDouble(),
+      height->getDouble(),
+      gu::toOcc(csys->getMatrix())
     );
     sShape->setOCCTShape(oblongMaker.getSolid(), getId());
     updateResult(oblongMaker);
@@ -386,23 +386,23 @@ void Oblong::setupIPGroup()
 
 void Oblong::updateIPGroup()
 {
-  lengthIP->setMatrix(static_cast<osg::Matrixd>(*csys));
-  widthIP->setMatrix(static_cast<osg::Matrixd>(*csys));
-  heightIP->setMatrix(static_cast<osg::Matrixd>(*csys));
+  lengthIP->setMatrix(csys->getMatrix());
+  widthIP->setMatrix(csys->getMatrix());
+  heightIP->setMatrix(csys->getMatrix());
   
   osg::Matrix lMatrix;
   lMatrix.setRotate(osg::Quat(osg::PI_2, osg::Vec3d(0.0, 1.0, 0.0)));
-  lMatrix.setTrans(osg::Vec3d(0.0, static_cast<double>(*width) / 2.0, static_cast<double>(*height) / 2.0));
+  lMatrix.setTrans(osg::Vec3d(0.0, width->getDouble() / 2.0, height->getDouble() / 2.0));
   lengthIP->setMatrixDragger(lMatrix);
   
   osg::Matrix wMatrix;
   wMatrix.setRotate(osg::Quat(osg::PI_2, osg::Vec3d(-1.0, 0.0, 0.0)));
-  wMatrix.setTrans(osg::Vec3d(static_cast<double>(*length) / 2.0, 0.0, static_cast<double>(*height) / 2.0));
+  wMatrix.setTrans(osg::Vec3d(length->getDouble() / 2.0, 0.0, height->getDouble() / 2.0));
   widthIP->setMatrixDragger(wMatrix);
   
   osg::Matrix hMatrix;
   //no need to rotate
-  hMatrix.setTrans(osg::Vec3d(static_cast<double>(*length) / 2.0, static_cast<double>(*width) / 2.0, 0.0));
+  hMatrix.setTrans(osg::Vec3d(length->getDouble() / 2.0, width->getDouble() / 2.0, 0.0));
   heightIP->setMatrixDragger(hMatrix);
 }
 

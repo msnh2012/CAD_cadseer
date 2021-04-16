@@ -179,7 +179,7 @@ void Hollow::updateModel(const UpdatePayload &payloadIn)
     (
       tss.getRootOCCTShape(),
       occt::ShapeVectorCast(closingFaceShapes),
-      -static_cast<double>(*offset), //default direction sucks.
+      -offset->getDouble(), //default direction sucks.
       Precision::Confusion(),
       BRepOffset_Skin,
       Standard_False,

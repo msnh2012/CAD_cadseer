@@ -528,8 +528,8 @@ namespace cmv
             {
               ListItem *ni = new ListItem(SelectionList::makeShortString(m));
               ni->setStatusTip(SelectionList::makeFullString(m));
-              ni->contact = static_cast<bool>(*p.contact);
-              ni->correction = static_cast<bool>(*p.correction);
+              ni->contact = p.contact->getBool();
+              ni->correction = p.correction->getBool();
               profilesList->list->addItem(ni);
             }
             buttonMessages.insert(buttonMessages.end(), profileMessages.begin(), profileMessages.end());
@@ -575,8 +575,8 @@ namespace cmv
             auxiliaryButton->addMessages(resolver.convertToMessages());
             //there is only 1 auxiliary pick so we just store the data in the checkboxes
             //not in the list widget items.
-            auxiliaryList->curvilinearEquivalence->setChecked(static_cast<bool>(*command->feature->getAuxiliary().curvilinearEquivalence));
-            auxiliaryList->contactType->setCurrentIndex(static_cast<int>(*command->feature->getAuxiliary().contactType));
+            auxiliaryList->curvilinearEquivalence->setChecked(command->feature->getAuxiliary().curvilinearEquivalence->getBool());
+            auxiliaryList->contactType->setCurrentIndex(command->feature->getAuxiliary().contactType->getInt());
           }
           break;
         }

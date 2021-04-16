@@ -149,7 +149,7 @@ void Thicken::updateModel(const UpdatePayload &payloadIn)
     builder.Initialize
     (
       shapeToThicken,
-      static_cast<double>(*distance), //offset
+      distance->getDouble(), //offset
       1.0e-06, //same tolerance as the sewing default.
       BRepOffset_Skin, //offset mode
       Standard_False, //intersection

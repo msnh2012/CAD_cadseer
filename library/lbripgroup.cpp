@@ -161,7 +161,7 @@ osg::BoundingBox IPGroup::maxTextBoundingBox()
 void IPGroup::valueHasChanged()
 {
   assert(parameter);
-  value = static_cast<double>(*parameter);
+  value = parameter->getDouble();
   mainDim->setSpread(value);
   overallDim->setSpread(value);
   dragger->setMatrix(osg::Matrixd::translate(0.0, 0.0, value));
@@ -350,7 +350,7 @@ bool IPGroup::processMotion(const osgManipulator::MotionCommand &commandIn)
     //add git message.
     std::ostringstream gitStream;
     gitStream << QObject::tr("Parameter ").toStdString() << parameter->getName().toStdString() <<
-      QObject::tr(" changed to: ").toStdString() << static_cast<double>(*parameter);
+      QObject::tr(" changed to: ").toStdString() << parameter->getDouble();
     app::instance()->messageSlot(msg::buildGitMessage(gitStream.str()));
     
     if (prf::manager().rootPtr->dragger().triggerUpdateOnFinish())

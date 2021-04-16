@@ -321,11 +321,11 @@ SweepData Sweep::getSweepData() const
   out.profiles = profiles;
   out.auxiliary = auxiliary;
   out.support = support;
-  out.trihedron = static_cast<int>(*trihedron);
-  out.transition = static_cast<int>(*transition);
-  out.forceC1 = static_cast<bool>(*forceC1);
-  out.solid = static_cast<bool>(*solid);
-  out.useLaw = static_cast<bool>(*useLaw);
+  out.trihedron = trihedron->getInt();
+  out.transition = transition->getInt();
+  out.forceC1 = forceC1->getBool();
+  out.solid = solid->getBool();
+  out.useLaw = useLaw->getBool();
   
   return out;
 }
@@ -363,7 +363,7 @@ void Sweep::setProfiles(const SweepProfiles &in)
 
 void Sweep::cleanTrihedron()
 {
-  int ct = static_cast<int>(*trihedron);
+  int ct = trihedron->getInt();
   if (ct == 4) //binormal
   {
     removeParameter(binormal.binormal.get());
@@ -456,11 +456,11 @@ void Sweep::setLaw(const lwf::Cue &cIn)
   setModelDirty();
 }
 
-int Sweep::getTrihedron(){return static_cast<int>(*trihedron);}
-int Sweep::getTransition(){return static_cast<int>(*transition);}
-bool Sweep::getForceC1(){return static_cast<bool>(*forceC1);}
-bool Sweep::getSolid(){return static_cast<bool>(*solid);}
-bool Sweep::getUseLaw(){return static_cast<bool>(*useLaw);}
+int Sweep::getTrihedron(){return trihedron->getInt();}
+int Sweep::getTransition(){return transition->getInt();}
+bool Sweep::getForceC1(){return forceC1->getBool();}
+bool Sweep::getSolid(){return solid->getBool();}
+bool Sweep::getUseLaw(){return useLaw->getBool();}
 
 void Sweep::severLaw()
 {
@@ -623,7 +623,7 @@ void Sweep::updateModel(const UpdatePayload &pIn)
     
 //     occt::WireVector profileShapes;
     BRepFill_PipeShell sweeper(spineShape);
-    switch (static_cast<int>(*trihedron))
+    switch (trihedron->getInt())
     {
       case 0:
         sweeper.Set(false);
@@ -731,7 +731,7 @@ void Sweep::updateModel(const UpdatePayload &pIn)
         }
         else
           throw std::runtime_error("unsupported number of binormal picks");
-        sweeper.Set(gp_Dir(gu::toOcc(static_cast<osg::Vec3d>(*binormal.binormal))));
+        sweeper.Set(gp_Dir(gu::toOcc(binormal.binormal->getVector())));
         break;
       }
       case 5:
@@ -785,8 +785,8 @@ void Sweep::updateModel(const UpdatePayload &pIn)
         TopoDS_Wire wire = getWire(auxiliary.pick);
         if (!wire.IsNull())
         {
-          bool cle = static_cast<bool>(*auxiliary.curvilinearEquivalence);
-          BRepFill_TypeOfContact toc = static_cast<BRepFill_TypeOfContact>(static_cast<int>(*auxiliary.contactType));
+          bool cle = auxiliary.curvilinearEquivalence->getBool();
+          BRepFill_TypeOfContact toc = static_cast<BRepFill_TypeOfContact>(auxiliary.contactType->getInt());
           sweeper.Set(wire, cle, toc);
           globalBounder.add(wire);
           occt::BoundingBox wb(wire);
@@ -800,7 +800,7 @@ void Sweep::updateModel(const UpdatePayload &pIn)
       default:
         sweeper.Set(false);
     }
-    sweeper.SetTransition(static_cast<BRepFill_TransitionStyle>(static_cast<int>(*transition))); //default is BRepFill_Modified = 0
+    sweeper.SetTransition(static_cast<BRepFill_TransitionStyle>(transition->getInt())); //default is BRepFill_Modified = 0
     occt::WireVector profileWires; //use for shape mapping
     std::vector<std::reference_wrapper<const ann::SeerShape>> seerShapeProfileRefs; //use for shape mapping
     for (const auto &p : profiles)
@@ -811,7 +811,7 @@ void Sweep::updateModel(const UpdatePayload &pIn)
       seerShapeProfileRefs.push_back(ss);
       
       //this is temp.
-      if (profiles.size() == 1 && (static_cast<bool>(*useLaw)))
+      if (profiles.size() == 1 && (useLaw->getBool()))
       {
         lwf::Cue &lfc = lawFunction->getCue();
         lfc.smooth(); //need to smooth when changing parameters from PLabels.
@@ -825,14 +825,14 @@ void Sweep::updateModel(const UpdatePayload &pIn)
         //with composite law. Hence the following meaningless call.
         law->Value(0.5);
         
-        sweeper.SetLaw(wire, law, static_cast<bool>(*p.contact), static_cast<bool>(*p.correction));
+        sweeper.SetLaw(wire, law, p.contact->getBool(), p.correction->getBool());
         
         updateLawViz(globalBounder.getDiagonal());
         lawSwitch->setAllChildrenOn();
       }
       else
       {
-        sweeper.Add(wire, static_cast<bool>(*p.contact), static_cast<bool>(*p.correction));
+        sweeper.Add(wire, p.contact->getBool(), p.correction->getBool());
         lawSwitch->setAllChildrenOff();
       }
       
@@ -843,12 +843,12 @@ void Sweep::updateModel(const UpdatePayload &pIn)
       profileWires.push_back(wire);
     }
     
-    sweeper.SetForceApproxC1(static_cast<bool>(*forceC1));
+    sweeper.SetForceApproxC1(forceC1->getBool());
     
     if (!sweeper.Build())
       throw std::runtime_error("Sweep operation failed");
     
-    if (static_cast<bool>(*solid))
+    if (solid->getBool())
       sweeper.MakeSolid();
     
     ShapeCheck check(sweeper.Shape());
@@ -1296,7 +1296,7 @@ void Sweep::updateModel(const UpdatePayload &pIn)
     forceC1Label->setMatrix(osg::Matrixd::translate(gu::toOsg(cornerPoints.at(7))));
     solidLabel->setMatrix(osg::Matrixd::translate(gu::toOsg(cornerPoints.at(5))));
     useLawLabel->setMatrix(osg::Matrixd::translate(gu::toOsg(cornerPoints.at(6))));
-    if (static_cast<int>(*trihedron) == 6)
+    if (trihedron->getInt() == 6)
       auxiliarySwitch->setAllChildrenOn();
     else
       auxiliarySwitch->setAllChildrenOff();
@@ -1464,7 +1464,7 @@ void Sweep::serialRead(const prj::srl::swps::Sweep &so)
     ocb->setMatrix(m, lawSwitch.get());
     ocb->setScale(so.lawVizScale());
   }
-  if (static_cast<bool>(*useLaw))
+  if (useLaw->getBool())
   {
     lawSwitch->setAllChildrenOn();
     attachLaw();

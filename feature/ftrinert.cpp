@@ -80,7 +80,7 @@ void Inert::setCSys(const osg::Matrixd &mIn)
 
 osg::Matrixd Inert::getCSys() const
 {
-  return static_cast<osg::Matrixd>(*csys);
+  return csys->getMatrix();
 }
 
 void Inert::updateModel(const UpdatePayload&)
@@ -108,7 +108,7 @@ void Inert::updateModel(const UpdatePayload&)
     uuid oldRootId = sShape->getRootShapeId();
     
     TopoDS_Shape tempShape(sShape->getRootOCCTShape());
-    gp_Ax3 tempAx3(gu::toOcc(osg::Matrixd::inverse(static_cast<osg::Matrixd>(*csys))));
+    gp_Ax3 tempAx3(gu::toOcc(osg::Matrixd::inverse(csys->getMatrix())));
     gp_Trsf tempTrsf;
     tempTrsf.SetTransformation(tempAx3);
     TopLoc_Location freshLocation(tempTrsf);
