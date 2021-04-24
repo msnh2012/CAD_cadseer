@@ -89,7 +89,7 @@ struct %CLASSNAME%::Stow
 
 %CLASSNAME%::%CLASSNAME%(cmd::%CLASSNAME% *cIn)
 : Base("cmv::%CLASSNAME%")
-, stow(new Stow(cIn, this))
+, stow(std::make_uniue<Stow>(cIn, this))
 {}
 
 %CLASSNAME%::~%CLASSNAME%() = default;

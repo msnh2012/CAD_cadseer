@@ -366,7 +366,16 @@ struct StringVisitor
   std::string operator()(const osg::Vec3d &vIn) const {return tls::valueString(vIn, precision);}
   std::string operator()(const osg::Quat &qIn) const {return tls::valueString(qIn, precision);}
   std::string operator()(const osg::Matrixd &mIn) const {return tls::valueString(mIn, precision);}
-  std::string operator()(const ftr::Picks&) const {return "Picks";} //TODO
+  std::string operator()(const ftr::Picks &picks) const
+  {
+    std::ostringstream out;
+    for (const auto &p : picks)
+      out << gu::idToShortString(p.shapeHistory.getRootId()) << std::endl;
+    std::string outstr = out.str();
+    if (!outstr.empty())
+      outstr.pop_back();
+    return outstr;
+  }
 };
 
 struct TypeVisitor

@@ -129,7 +129,9 @@ struct cmv::BoolCombo::Stow
 BoolCombo::BoolCombo(QWidget *parent, prm::Parameter *pIn)
 : ParameterBase(parent)
 , stow(std::make_unique<Stow>(this, pIn))
-{}
+{
+  stow->comboBox->installEventFilter(this); //see ParameterBase source.
+}
 
 BoolCombo::~BoolCombo() = default;
 
@@ -218,7 +220,9 @@ struct cmv::EnumCombo::Stow
 EnumCombo::EnumCombo(QWidget *parent, prm::Parameter *pIn)
 : ParameterBase(parent)
 , stow(std::make_unique<Stow>(this, pIn))
-{}
+{
+  stow->comboBox->installEventFilter(this); //see ParameterBase source.
+}
 
 EnumCombo::~EnumCombo() = default;
 
@@ -296,7 +300,9 @@ struct cmv::StringEdit::Stow
 StringEdit::StringEdit(QWidget *parent, prm::Parameter *pIn)
 : ParameterBase(parent)
 , stow(std::make_unique<Stow>(this, pIn))
-{}
+{
+  stow->lineEdit->installEventFilter(this); //see ParameterBase source.
+}
 
 StringEdit::~StringEdit() = default;
 
@@ -385,7 +391,9 @@ struct cmv::PathEdit::Stow
 PathEdit::PathEdit(QWidget *parent, prm::Parameter *pIn)
 : ParameterBase(parent)
 , stow(std::make_unique<Stow>(this, pIn))
-{}
+{
+  stow->lineEdit->installEventFilter(this); //see ParameterBase source.
+}
 
 PathEdit::~PathEdit() = default;
 
@@ -474,7 +482,9 @@ namespace cmv
     ParameterBase* operator()(const osg::Vec3d&) const {return buildVec3d();}
     ParameterBase* operator()(const osg::Quat&) const {return buildQuat();}
     ParameterBase* operator()(const osg::Matrixd&) const {return buildMatrix();}
-    ParameterBase* operator()(const ftr::Picks&) const {return new ParameterBase(parent);} //TODO
+    ParameterBase* operator()(const ftr::Picks&) const {return new ParameterBase(parent);}
+    //we have to convert picks to messages for pick widget, so we treat separately
+    //and we should not call this visitor on picks.
     
   private:
     QWidget *parent;

@@ -286,15 +286,15 @@ bool EventHandler::handle(const osgGA::GUIEventAdapter& eventAdapter,
         );
       }
       
+      slc::Message smOut = containerToMessage(lastPrehighlight);
+      msg::Message preMessage(msg::Response | msg::Pre | msg::Selection | msg::Add, smOut);
+      node->send(preMessage);
+      
       add(selectionContainers, lastPrehighlight);
       
-      msg::Message addMessage
-      (
-        msg::Response | msg::Post | msg::Selection | msg::Add
-        , containerToMessage(lastPrehighlight)
-      );
+      msg::Message postMessage(msg::Response | msg::Post | msg::Selection | msg::Add, smOut);
       lastPrehighlight = Container(); //set to null before signal in case we end up in 'this' again.
-      node->send(addMessage);
+      node->send(postMessage);
     }
     //not clearing the selection anymore on a empty pick.
 //       else
@@ -328,12 +328,9 @@ void EventHandler::clearSelections()
   Containers::reverse_iterator it;
   for (it = selectionContainers.rbegin(); it != selectionContainers.rend(); ++it)
   {
-    msg::Message removeMessage
-    (
-      msg::Response | msg::Pre | msg::Selection | msg::Remove
-      , containerToMessage(*it)
-    );
-    node->send(removeMessage);
+    slc::Message smOut = containerToMessage(*it);
+    msg::Message preMessage(msg::Response | msg::Pre | msg::Selection | msg::Remove, smOut);
+    node->send(preMessage);
     
     if (slc::isPointType(it->selectionType))
     {
@@ -343,6 +340,9 @@ void EventHandler::clearSelections()
     }
     else
       selectionOperation(it->featureId, it->selectionIds, HighlightVisitor::Operation::Restore);
+    
+    msg::Message postMessage(msg::Response | msg::Post | msg::Selection | msg::Remove, smOut);
+    node->send(postMessage);
   }
   selectionContainers.clear();
 }
@@ -515,14 +515,15 @@ void EventHandler::requestSelectionAdditionDispatched(const msg::Message &messag
   else
     selectionOperation(sMessage.featureId, container.selectionIds, HighlightVisitor::Operation::Highlight);
   
+  
+  slc::Message smOut = containerToMessage(container);
+  msg::Message preMessage(msg::Response | msg::Pre | msg::Selection | msg::Add, smOut);
+  node->send(preMessage);
+  
   add(selectionContainers, container);
   
-  msg::Message messageOut
-  (
-    msg::Response | msg::Post | msg::Selection | msg::Add
-    , containerToMessage(container)
-  );
-  node->send(messageOut);
+  msg::Message postMessage(msg::Response | msg::Post | msg::Selection | msg::Add, smOut);
+  node->send(postMessage);
 }
 
 void EventHandler::requestSelectionSubtractionDispatched(const msg::Message &messageIn)

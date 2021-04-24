@@ -106,9 +106,12 @@ Pane::~Pane()
 void Pane::buildGui()
 {
   QVBoxLayout *mainLayout = new QVBoxLayout();
+  this->setLayout(mainLayout);
+  this->setContentsMargins(0, 0, 0, 0);
   mainLayout->setContentsMargins(0, 0, 0, 0);
   
   stow->scrollArea = new QScrollArea(this);
+  stow->scrollArea->setContentsMargins(0, 0, 0, 0);
   stow->scrollArea->setWidgetResizable(true);
   mainLayout->addWidget(stow->scrollArea);
   
@@ -119,8 +122,6 @@ void Pane::buildGui()
   doneLayout->addStretch();
   mainLayout->addLayout(doneLayout);
   connect(stow->doneButton, &QPushButton::clicked, this, &Pane::doneSlot);
-  
-  this->setLayout(mainLayout);
 }
 
 void Pane::doneSlot()

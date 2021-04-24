@@ -191,6 +191,7 @@ struct DatumPlane::Stow
     angle.connect(dirtyObserver);
     feature.parameters.push_back(&angle);
     
+    picks.setExpressionLinkable(false);
     picks.connect(dirtyObserver);
     feature.parameters.push_back(&picks);
     

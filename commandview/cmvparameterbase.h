@@ -29,8 +29,8 @@ namespace cmv
   * @details We can't rely on prm::Observers inside dialogs and commandviews
   * to take actions like trigger feature or project updates. This is because
   * we have no idea who made the parameter change. So we need to be able
-  * signal these changes purely through gui so commandviews and dialogs
-  * no when it's widgets modified the parameter. Widgets will still need
+  * to signal these changes purely through gui so commandviews and dialogs
+  * know when its widgets modified the parameter. Widgets will still need
   * a prm::Observer because we want them to stay up to date if the parameter
   * is changed from an external source.
   */
@@ -40,6 +40,8 @@ namespace cmv
   public:
     ParameterBase() = delete;
     explicit ParameterBase(QWidget *p) : QWidget(p){}
+    
+    bool eventFilter(QObject*, QEvent*) override;
   Q_SIGNALS:
     void prmValueChanged();
     void prmConstantChanged();

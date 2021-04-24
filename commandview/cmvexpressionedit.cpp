@@ -57,6 +57,8 @@ void BaseEdit::buildGui()
   trafficSignal->setScaledContents(true);
   trafficSignal->setFixedSize(lineEdit->height(), lineEdit->height());
   layout->addWidget(trafficSignal);
+  
+  lineEdit->installEventFilter(this); //see ParameterBase source.
 }
 
 void BaseEdit::goToolTip(const QString &tipIn)

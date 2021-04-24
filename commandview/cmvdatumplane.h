@@ -45,6 +45,8 @@ namespace cmv
     void through3PointsSelectionChanged();
     void parameterChanged();
     void linkCSysChanged();
+  private Q_SLOTS:
+    void modelChanged(const QModelIndex&, const QModelIndex&);
   private:
     struct Stow;
     std::unique_ptr<Stow> stow;

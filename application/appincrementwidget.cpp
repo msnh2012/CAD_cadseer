@@ -53,7 +53,7 @@ struct IncrementWidget::Stow
   , parameter(QObject::tr("dummy"), prefRefIn)
   , observer(std::bind(&Stow::valueChanged, this))
   {
-    parameter.setExpressinLinkable(false);
+    parameter.setExpressionLinkable(false);
     parameter.connect(observer);
   }
 };

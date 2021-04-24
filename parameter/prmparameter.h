@@ -226,8 +226,8 @@ namespace prm
     std::string_view getTag() const {return tag;}
     bool isConstant() const {return constant;} //!< true = not linked to forumla.
     void setConstant(bool constantIn);
-    bool isExpressionLinkable(){return expressionLinkable;} //!< if possible, not if it is linked.
-    void setExpressinLinkable(bool vIn){expressionLinkable = vIn;} //!< don't use on something already linked.
+    bool isExpressionLinkable() const {return expressionLinkable;} //!< if possible, not if it is linked.
+    void setExpressionLinkable(bool vIn){expressionLinkable = vIn;} //!< don't use on something already linked.
     bool isActive(){return active;}
     void setActive(bool);
     const boost::uuids::uuid& getId() const {return id;}

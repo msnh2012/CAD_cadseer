@@ -32,6 +32,8 @@
 #include "dialogs/dlgselectionwidget.h"
 #include "commandview/cmvparameterwidgets.h"
 #include "commandview/cmvcsyswidget.h"
+#include "commandview/cmvselectioncue.h"
+#include "commandview/cmvtable.h"
 #include "parameter/prmconstants.h"
 #include "parameter/prmparameter.h"
 #include "tools/featuretools.h"
@@ -48,6 +50,7 @@ struct DatumPlane::Stow
 {
   cmd::DatumPlane *command;
   cmv::DatumPlane *view;
+  prm::Parameters parameters;
   QStackedWidget *stackedWidget = nullptr;
   dlg::SelectionWidget *planarOffsetSelection = nullptr;
   dlg::SelectionWidget *planarCenterSelection = nullptr;
@@ -56,6 +59,8 @@ struct DatumPlane::Stow
   dlg::SelectionWidget *through3PointsSelection = nullptr;
   cmv::ParameterWidget *parameterWidget = nullptr;
   cmv::CSysWidget *csysWidget = nullptr;
+  cmv::tbl::Model *prmModel = nullptr;
+  cmv::tbl::View *prmView = nullptr;
   
   Stow(cmd::DatumPlane *cIn, cmv::DatumPlane *vIn)
   : command(cIn)
@@ -63,26 +68,42 @@ struct DatumPlane::Stow
   {
     buildGui();
     
+    /*
     QSettings &settings = app::instance()->getUserSettings();
     settings.beginGroup("cmv::DatumPlane");
     //load settings
     settings.endGroup();
     
     loadFeatureData();
+    */
     glue();
   }
   
   void buildGui()
   {
-    QSizePolicy adjust = view->sizePolicy();
-    adjust.setVerticalPolicy(QSizePolicy::Maximum);
-    view->setSizePolicy(adjust);
-    
     QVBoxLayout *mainLayout = new QVBoxLayout();
     view->setLayout(mainLayout);
+    Base::clearContentMargins(view);
+    view->setSizePolicy(view->sizePolicy().horizontalPolicy(), QSizePolicy::Expanding);
     
+    //this cue for offset, so kind of temp
+    tbl::SelectionCue cue;
+    cue.singleSelection = true;
+    cue.mask = slc::ObjectsEnabled | slc::FacesEnabled | slc::ObjectsSelectable | slc::FacesSelectable;
+    cue.statusPrompt = tr("Select Planar Face Or Datum Plane");
+    cue.accrueEnabled = false;
+    
+    parameters = command->feature->getParameters();
+    prmModel = new tbl::Model(view, command->feature);
+    prmModel->setCue(command->feature->getParameters(prm::Tags::Picks).front(), cue);
+    prmView = new tbl::View(view, prmModel, true);
+    mainLayout->addWidget(prmView);
+    
+    //probably temp. move to glue.
+//     connect(prmView, &tbl::View::prmValueChanged, view, &DatumPlane::parameterChanged);
+    
+    /*
     //remove hack param so doesn't show in widget
-    auto allParams = command->feature->getParameters();
     auto hackPrms = command->feature->getParameters(ftr::DatumPlane::csysLinkHack);
     assert(hackPrms.size() == 1);
     auto theEnd = std::remove(allParams.begin(), allParams.end(), hackPrms.front());
@@ -204,6 +225,7 @@ struct DatumPlane::Stow
       through3PointsSelection->setObjectName("selection");
       stackedWidget->addWidget(through3PointsSelection);
     }
+    */
   }
   
   void loadFeatureData()
@@ -296,19 +318,21 @@ struct DatumPlane::Stow
   
   void glue()
   {
-    connect(planarOffsetSelection->getButton(0), &dlg::SelectionButton::dirty, view, &DatumPlane::planarOffsetSelectionChanged);
-    connect(planarCenterSelection->getButton(0), &dlg::SelectionButton::dirty, view, &DatumPlane::planarCenterSelectionChanged);
-    connect(planarCenterSelection->getButton(1), &dlg::SelectionButton::dirty, view, &DatumPlane::planarCenterSelectionChanged);
-    connect(axisAngleSelection->getButton(0), &dlg::SelectionButton::dirty, view, &DatumPlane::axisAngleSelectionChanged);
-    connect(axisAngleSelection->getButton(1), &dlg::SelectionButton::dirty, view, &DatumPlane::axisAngleSelectionChanged);
-    connect(average3PlaneSelection->getButton(0), &dlg::SelectionButton::dirty, view, &DatumPlane::average3PlaneSelectionChanged);
-    connect(average3PlaneSelection->getButton(1), &dlg::SelectionButton::dirty, view, &DatumPlane::average3PlaneSelectionChanged);
-    connect(average3PlaneSelection->getButton(2), &dlg::SelectionButton::dirty, view, &DatumPlane::average3PlaneSelectionChanged);
-    connect(through3PointsSelection->getButton(0), &dlg::SelectionButton::dirty, view, &DatumPlane::through3PointsSelectionChanged);
-    connect(through3PointsSelection->getButton(1), &dlg::SelectionButton::dirty, view, &DatumPlane::through3PointsSelectionChanged);
-    connect(through3PointsSelection->getButton(2), &dlg::SelectionButton::dirty, view, &DatumPlane::through3PointsSelectionChanged);
-    connect(parameterWidget, &ParameterBase::prmValueChanged, view, &DatumPlane::parameterChanged);
-    connect(csysWidget, &CSysWidget::dirty, view, &DatumPlane::linkCSysChanged);
+//     connect(planarOffsetSelection->getButton(0), &dlg::SelectionButton::dirty, view, &DatumPlane::planarOffsetSelectionChanged);
+//     connect(planarCenterSelection->getButton(0), &dlg::SelectionButton::dirty, view, &DatumPlane::planarCenterSelectionChanged);
+//     connect(planarCenterSelection->getButton(1), &dlg::SelectionButton::dirty, view, &DatumPlane::planarCenterSelectionChanged);
+//     connect(axisAngleSelection->getButton(0), &dlg::SelectionButton::dirty, view, &DatumPlane::axisAngleSelectionChanged);
+//     connect(axisAngleSelection->getButton(1), &dlg::SelectionButton::dirty, view, &DatumPlane::axisAngleSelectionChanged);
+//     connect(average3PlaneSelection->getButton(0), &dlg::SelectionButton::dirty, view, &DatumPlane::average3PlaneSelectionChanged);
+//     connect(average3PlaneSelection->getButton(1), &dlg::SelectionButton::dirty, view, &DatumPlane::average3PlaneSelectionChanged);
+//     connect(average3PlaneSelection->getButton(2), &dlg::SelectionButton::dirty, view, &DatumPlane::average3PlaneSelectionChanged);
+//     connect(through3PointsSelection->getButton(0), &dlg::SelectionButton::dirty, view, &DatumPlane::through3PointsSelectionChanged);
+//     connect(through3PointsSelection->getButton(1), &dlg::SelectionButton::dirty, view, &DatumPlane::through3PointsSelectionChanged);
+//     connect(through3PointsSelection->getButton(2), &dlg::SelectionButton::dirty, view, &DatumPlane::through3PointsSelectionChanged);
+//     connect(parameterWidget, &ParameterBase::prmValueChanged, view, &DatumPlane::parameterChanged);
+//     connect(csysWidget, &CSysWidget::dirty, view, &DatumPlane::linkCSysChanged);
+    
+    connect(prmModel, &tbl::Model::dataChanged, view, &DatumPlane::modelChanged);
   }
   
   void activate(int index)
@@ -418,6 +442,7 @@ void DatumPlane::parameterChanged()
   assert(!prmsType.empty());
   auto *prmType = prmsType.front();
   int typeInt = prmType->getInt();
+  /*
   assert(typeInt >= 0 && typeInt < stow->stackedWidget->count());
   
   if (stow->stackedWidget->currentIndex() == typeInt)
@@ -430,6 +455,7 @@ void DatumPlane::parameterChanged()
   //major type change.
   stow->stackedWidget->setCurrentIndex(typeInt);
   stow->activate(typeInt);
+  */
   
   using DPType = ftr::DatumPlane::DPType;
   switch (static_cast<DPType>(typeInt))
@@ -482,4 +508,20 @@ void DatumPlane::linkCSysChanged()
 {
   stow->command->feature->setModelDirty();
   stow->goLinked();
+}
+
+void DatumPlane::modelChanged(const QModelIndex &index, const QModelIndex&)
+{
+  if (!index.isValid())
+    return;
+  
+  prm::Parameter *prm = stow->parameters.at(index.row());
+  std::cout << "Prm: " << prm->getName().toStdString() << " changed" << std::endl;
+  
+  if (prm->getValueType() == typeid(ftr::Picks))
+  {
+    if (stow->command->feature->getDPType() == ftr::DatumPlane::DPType::POffset)
+      stow->command->setToPlanarOffset(stow->prmModel->getMessages(index));
+  }
+  stow->command->localUpdate();
 }
