@@ -221,12 +221,16 @@ void Feature::update3Points(const UpdatePayload &pIn)
   }
   if (points.size() != 3)
     throw std::runtime_error("Through3P: couldn't get 3 points");
+  std::array<std::optional<osg::Vec3d>, 4> oPoints;
+  oPoints[0] = points[0];
+  oPoints[1] = points[1];
+  oPoints[2] = points[2];
   
-  auto ocsys = tls::matrixFrom3Points(points);
+  auto ocsys = tls::matrixFromPoints(oPoints);
   if (!ocsys)
     throw std::runtime_error("Through3P: couldn't derive matrix from 3 points");
   
-  osg::Matrixd newSys = applyOffset(ocsys.get(), offsetVector->getVector());
+  osg::Matrixd newSys = applyOffset(*ocsys, offsetVector->getVector());
   
   prm::ObserverBlocker blocker(*csysObserver);
   csys->setValue(newSys);

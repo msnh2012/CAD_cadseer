@@ -21,24 +21,15 @@
 #define TLS_OSGTOOLS_H
 
 #include <optional>
-
-#include <boost/optional/optional.hpp>
+#include <array>
 
 #include <osg/Vec3d>
 #include <osg/Matrixd>
 
 namespace tls
 {
-  boost::optional<osg::Matrixd> matrixFrom3Points(const osg::Vec3d&, const osg::Vec3d&, const osg::Vec3d&);
-  boost::optional<osg::Matrixd> matrixFrom3Points(const std::vector<osg::Vec3d>&);
-  
-  std::optional<osg::Matrixd> matrixFromAxes
-  (
-    std::optional<osg::Vec3d>
-    , std::optional<osg::Vec3d>
-    , std::optional<osg::Vec3d>
-    , std::optional<osg::Vec3d>
-  );
+  std::optional<osg::Matrixd> matrixFromPoints(const std::array<std::optional<osg::Vec3d>, 4>&);
+  std::optional<osg::Matrixd> matrixFromAxes(const std::array<std::optional<osg::Vec3d>, 4>&);
 }
 
 #endif //TLS_OSGTOOLS_H

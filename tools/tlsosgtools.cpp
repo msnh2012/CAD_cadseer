@@ -17,55 +17,37 @@
  *
  */
 
+#include <functional>
+
 #include "tools/tlsosgtools.h"
 
-using osg::Vec3d;
-using osg::Matrixd;
-using boost::optional;
-
-/*! @brief Create a matrix based upon 3 non collinear points.
+/*! @brief Create a matrix based upon points.
 * 
-* @param orignIn point used for the matrix translation.
-* @param xIn point on xAxis.
-* @param yIn point on Y+ plane.
+* @details needs to 2 points of x, y, z.
+* points.at(0) is the optional origin, set to 0 0 0 if not present.
+* points.at(1) is the optional x point
+* points.at(2) is the optional y point
+* points.at(3) is the optional z point
+* @param pointsIn vector of 4 optional points
+* 
 * @return An optional osg::Matrixd.
 */
-optional<Matrixd> tls::matrixFrom3Points(const Vec3d &originIn, const Vec3d &xIn, const Vec3d &yIn)
+std::optional<osg::Matrixd> tls::matrixFromPoints(const std::array<std::optional<osg::Vec3d>, 4> &pointsIn)
 {
-  Vec3d xVector = xIn - originIn;
-  Vec3d yVector = yIn - originIn;
-  if (xVector.isNaN() || yVector.isNaN())
-    return boost::none;
-  xVector.normalize();
-  yVector.normalize();
-  if ((1 - std::fabs(xVector * yVector)) < std::numeric_limits<float>::epsilon())
-    return boost::none;
-  Vec3d zVector = xVector ^ yVector;
-  if (zVector.isNaN())
-    return boost::none;
-  zVector.normalize();
-  yVector = zVector ^ xVector;
-  yVector.normalize();
-
-  Matrixd fm;
-  fm(0,0) = xVector.x(); fm(0,1) = xVector.y(); fm(0,2) = xVector.z();
-  fm(1,0) = yVector.x(); fm(1,1) = yVector.y(); fm(1,2) = yVector.z();
-  fm(2,0) = zVector.x(); fm(2,1) = zVector.y(); fm(2,2) = zVector.z();
-  fm.setTrans(originIn);
+  //looking goofy as points expects origin to be first while axes expects origin to be last.
+  std::array<std::optional<osg::Vec3d>, 4> vectorsOut;
   
-  return fm;
-}
-
-/*! @brief Create a matrix based upon vector points.
-* 
-* @param pointsIn vector of 3 points
-* @return An optional osg::Matrixd.
-*/
-optional<Matrixd> tls::matrixFrom3Points(const std::vector<Vec3d> &pointsIn)
-{
-  if (pointsIn.size() != 3)
-    return boost::none;
-  return tls::matrixFrom3Points(pointsIn.at(0), pointsIn.at(1), pointsIn.at(2));
+  vectorsOut[3] = osg::Vec3d();
+  if (pointsIn.at(0))
+    vectorsOut[3] = *pointsIn.at(0);
+  if (pointsIn.at(1))
+    vectorsOut[0] = *pointsIn.at(1) - *vectorsOut[3];
+  if (pointsIn.at(2))
+    vectorsOut[1] = *pointsIn.at(2) - *vectorsOut[3];
+  if (pointsIn.at(3))
+    vectorsOut[2] = *pointsIn.at(3) - *vectorsOut[3];
+  
+  return matrixFromAxes(vectorsOut);
 }
 
 /*! @brief Create a matrix from optional axes and optional origin
@@ -77,14 +59,14 @@ optional<Matrixd> tls::matrixFrom3Points(const std::vector<Vec3d> &pointsIn)
 * the matrix origin will be 0 0 0 as expected.
 * @return a osg::Matrixd if successful otherwise nullopt
 */
-std::optional<osg::Matrixd> tls::matrixFromAxes
-(
-  std::optional<osg::Vec3d> oxAxis
-  , std::optional<osg::Vec3d> oyAxis
-  , std::optional<osg::Vec3d> ozAxis
-  , std::optional<osg::Vec3d> oOrigin
-)
+std::optional<osg::Matrixd> tls::matrixFromAxes(const std::array<std::optional<osg::Vec3d>, 4> &oPointsIn)
 {
+  auto oxAxis = oPointsIn.at(0);
+  auto oyAxis = oPointsIn.at(1);
+  auto ozAxis = oPointsIn.at(2);
+  auto oOrigin = oPointsIn.at(3);
+  
+  
   //helper lambdas
   auto isBad = [](const std::optional<osg::Vec3d> &oAxis) -> bool
   {
@@ -184,7 +166,7 @@ std::optional<osg::Matrixd> tls::matrixFromAxes
     if (oOrigin)
       lo = *oOrigin;
     
-    Matrixd fm;
+    osg::Matrixd fm;
     fm(0,0) = lx.x(); fm(0,1) = lx.y(); fm(0,2) = lx.z();
     fm(1,0) = ly.x(); fm(1,1) = ly.y(); fm(1,2) = ly.z();
     fm(2,0) = lz.x(); fm(2,1) = lz.y(); fm(2,2) = lz.z();

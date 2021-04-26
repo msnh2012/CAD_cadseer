@@ -623,13 +623,14 @@ struct Feature::Stow
     osg::Quat rotation(osg::DegreesToRadians(angle.getDouble()), axisDirection.get());
     osg::Vec3d outNormal(rotation * planeNormal.get());
     
-    auto oOut = tls::matrixFromAxes
-    (
+    std::array<std::optional<osg::Vec3d>, 4> axesOut =
+    {
       axisDirection.get()
       , std::nullopt
       , outNormal
       , axisOrigin.get()
-    );
+    };
+    auto oOut = tls::matrixFromAxes(axesOut);
     if (!oOut)
       throw std::runtime_error("AAngleP: couldn't build CSys");
     csys.setValue(*oOut);
@@ -743,16 +744,20 @@ struct Feature::Stow
     
     if (points.size() != 3)
       throw std::runtime_error("Through3P: couldn't get 3 points");
+    std::array<std::optional<osg::Vec3d>, 4> oPoints;
+    oPoints[0] = points[0];
+    oPoints[1] = points[1];
+    oPoints[2] = points[2];
     
-    auto om = tls::matrixFrom3Points(points);
+    auto om = tls::matrixFromPoints(oPoints);
     if (!om)
       throw std::runtime_error("failed getting plane from 3 points");
     
     osg::Vec3d center = points.at(0) + points.at(1) + points.at(2);
     center /= 3.0;
-    om.get().setTrans(center);
+    om->setTrans(center);
     
-    csys.setValue(om.get());
+    csys.setValue(*om);
     const auto &p = points;
     const auto &c = center;
     cachedSize = std::max(std::max((p[0] - c).length(), (p[1] - c).length()), (p[2] - c).length());

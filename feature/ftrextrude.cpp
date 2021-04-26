@@ -18,7 +18,6 @@
  */
 
 #include <boost/filesystem/path.hpp>
-#include <boost/optional/optional.hpp>
 
 #include <osg/Switch>
 
@@ -60,31 +59,34 @@ static const std::map<BRepBuilderAPI_FaceError, std::string> errorMap
   , std::make_pair(BRepBuilderAPI_ParametersOutOfRange, "BRepBuilderAPI_ParametersOutOfRange")
 };
 
-static boost::optional<osg::Vec3d> inferDirection(const occt::ShapeVector &svIn)
+static std::optional<osg::Vec3d> inferDirection(const occt::ShapeVector &svIn)
 {
-  //look for a planar face and collect points
+  //look for a planar face and collect points.
+  //shouldn't we being using occtools for some of this?
   TopTools_MapOfShape vertices;
-  auto checkPoints = [&]() -> boost::optional<osg::Vec3d>
+  auto checkPoints = [&]() -> std::optional<osg::Vec3d>
   {
     if (vertices.Extent() < 3)
-      return boost::none;
+      return std::nullopt;
+    
+    std::array<std::optional<osg::Vec3d>, 4> lps; //local points
     
     auto it = vertices.cbegin();
-    osg::Vec3d p0 = gu::toOsg(BRep_Tool::Pnt(TopoDS::Vertex(*it++)));
-    osg::Vec3d p1 = gu::toOsg(BRep_Tool::Pnt(TopoDS::Vertex(*it++)));
-    osg::Vec3d p2 = gu::toOsg(BRep_Tool::Pnt(TopoDS::Vertex(*it)));
+    lps[0] = gu::toOsg(BRep_Tool::Pnt(TopoDS::Vertex(*it++)));
+    lps[1] = gu::toOsg(BRep_Tool::Pnt(TopoDS::Vertex(*it++)));
+    lps[2] = gu::toOsg(BRep_Tool::Pnt(TopoDS::Vertex(*it)));
     
-    auto ocsys = tls::matrixFrom3Points(p0, p1, p2);
+    auto ocsys = tls::matrixFromPoints(lps);
     if (!ocsys)
     {
       vertices.Remove(*(vertices.cbegin()));
-      return boost::none;
+      return std::nullopt;
     }
     
-    return gu::getZVector(ocsys.get());
+    return gu::getZVector(*ocsys);
   };
   
-  auto checkEdge = [&](const TopoDS_Edge &eIn) -> boost::optional<osg::Vec3d>
+  auto checkEdge = [&](const TopoDS_Edge &eIn) -> std::optional<osg::Vec3d>
   {
     vertices.Add(TopExp::FirstVertex(eIn));
     auto normal = checkPoints();
@@ -143,7 +145,7 @@ static boost::optional<osg::Vec3d> inferDirection(const occt::ShapeVector &svIn)
         return normal;
     }
   }
-  return boost::none;
+  return std::nullopt;
 }
 
 Extrude::Extrude():
@@ -342,7 +344,7 @@ void Extrude::updateModel(const UpdatePayload &pIn)
         {
           auto tempDirection = inferDirection(ste);
           if (tempDirection)
-            direction->setValue(tempDirection.get());
+            direction->setValue(*tempDirection);
           else
             throw std::runtime_error("couldn't determine direction from geometry");
         }
@@ -355,7 +357,7 @@ void Extrude::updateModel(const UpdatePayload &pIn)
       {
         auto tempDirection = inferDirection(ste);
         if (tempDirection)
-          direction->setValue(tempDirection.get());
+          direction->setValue(*tempDirection);
         else
           throw std::runtime_error("couldn't determine direction from pick geometry");
       }

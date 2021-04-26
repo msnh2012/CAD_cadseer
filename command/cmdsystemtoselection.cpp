@@ -17,8 +17,6 @@
  *
  */
 
-#include <boost/optional.hpp>
-
 #include "globalutilities.h"
 #include "project/prjproject.h"
 #include "message/msgnode.h"
@@ -34,20 +32,25 @@
 
 using namespace cmd;
 
-static boost::optional<osg::Matrixd> from3Points(const slc::Containers &csIn)
+static std::optional<osg::Matrixd> from3Points(const slc::Containers &csIn)
 {
   if (csIn.size() != 3)
-    return boost::none;
+    return std::nullopt;
   for (const auto &c : csIn)
   {
     if (!slc::isPointType(c.selectionType))
-      return boost::none;
+      return std::nullopt;
   }
-  osg::Vec3d origin = csIn.at(0).pointLocation;
-  osg::Vec3d xPoint = csIn.at(1).pointLocation;
-  osg::Vec3d yPoint = csIn.at(2).pointLocation;
   
-  return tls::matrixFrom3Points(origin, xPoint, yPoint);
+  std::array<std::optional<osg::Vec3d>, 4> points =
+  {
+    csIn.at(0).pointLocation
+    , csIn.at(1).pointLocation
+    , csIn.at(2).pointLocation
+    , std::nullopt
+  };
+  
+  return tls::matrixFromPoints(points);
 }
 
 SystemToSelection::SystemToSelection() : Base()
@@ -110,7 +113,7 @@ void SystemToSelection::go()
   }
   else if (containers.size() == 3)
   {
-    boost::optional<osg::Matrixd> ocsys = from3Points(containers);
+    auto ocsys = from3Points(containers);
     if (ocsys)
     {
       node->sendBlocked(msg::buildStatusMessage("Current system set to 3 points", 2.0));
