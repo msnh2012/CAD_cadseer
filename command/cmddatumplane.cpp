@@ -47,7 +47,7 @@ DatumPlane::DatumPlane()
 : Base()
 , leafManager()
 {
-  auto dPlane = std::make_shared<ftr::DatumPlane>();
+  auto dPlane = std::make_shared<ftr::DatumPlane::Feature>();
   project->addFeature(dPlane);
   feature = dPlane.get();
   node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
@@ -59,7 +59,7 @@ DatumPlane::DatumPlane(ftr::Base *fIn)
 : Base()
 , leafManager(fIn)
 {
-  feature = dynamic_cast<ftr::DatumPlane*>(fIn);
+  feature = dynamic_cast<ftr::DatumPlane::Feature*>(fIn);
   assert(feature);
   viewBase = std::make_unique<cmv::DatumPlane>(this);
   node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
@@ -71,7 +71,7 @@ DatumPlane::~DatumPlane() {}
 
 std::string DatumPlane::getStatusMessage()
 {
-  return QObject::tr("Select geometry for datum plane").toStdString();
+  return QObject::tr("Double Click Parameter To Edit Or Drop Expression").toStdString();
 }
 
 void DatumPlane::activate()
@@ -115,17 +115,23 @@ void DatumPlane::setToConstant()
 {
   assert(isActive);
   project->clearAllInputs(feature->getId());
-  feature->setDPType(ftr::DatumPlane::DPType::Constant);
 }
 
-void DatumPlane::setLinked(const boost::uuids::uuid &idIn)
+void DatumPlane::setLinked(const slc::Messages &msIn)
 {
   assert(isActive);
   project->clearAllInputs(feature->getId());
-  feature->setDPType(ftr::DatumPlane::DPType::Link);
+  if (msIn.empty())
+    return;
   
-  if (!idIn.is_nil())
-    project->connect(idIn, feature->getId(), {ftr::InputType::linkCSys});
+  const ftr::Base *f = project->findFeature(msIn.front().featureId);
+  ftr::Pick pick = tls::convertToPick(msIn.front(), *f, project->getShapeHistory());
+  pick.tag = ftr::InputType::linkCSys;
+  
+  auto ps = feature->getParameters(prm::Tags::CSysLinked);
+  assert(ps.size() == 1);
+  ps.front()->setValue(pick);
+  project->connect(msIn.front().featureId, feature->getId(), {ftr::InputType::linkCSys});
 }
 
 void DatumPlane::setToPlanarOffset(const std::vector<slc::Message> &msIn)
@@ -138,10 +144,11 @@ void DatumPlane::setToPlanarOffset(const std::vector<slc::Message> &msIn)
   
   const ftr::Base *f = project->findFeature(msIn.front().featureId);
   ftr::Pick pick = tls::convertToPick(msIn.front(), *f, project->getShapeHistory());
-  pick.tag = ftr::InputType::create;
+  pick.tag = ftr::DatumPlane::InputTags::plane;
   
-  feature->setPicks(ftr::Picks{pick});
-  feature->setDPType(ftr::DatumPlane::DPType::POffset);
+  auto ps = feature->getParameters(ftr::DatumPlane::PrmTags::offsetPicks);
+  assert(ps.size() == 1);
+  ps.front()->setValue(pick);
   project->connectInsert(f->getId(), feature->getId(), {pick.tag});
 }
 
@@ -160,12 +167,13 @@ void DatumPlane::setToPlanarCenter(const std::vector<slc::Message> &msIn)
   {
     const ftr::Base *f = project->findFeature(mIn.featureId);
     ftr::Pick pick = tls::convertToPick(mIn, *f, project->getShapeHistory());
-    pick.tag = ftr::InputType::createIndexedTag(ftr::DatumPlane::center, picks.size());
+    pick.tag = indexTag(ftr::DatumPlane::InputTags::center, picks.size());
     picks.push_back(pick);
     project->connectInsert(f->getId(), feature->getId(), {pick.tag});
   };
-  feature->setPicks(picks);
-  feature->setDPType(ftr::DatumPlane::DPType::PCenter);
+  auto ps = feature->getParameters(ftr::DatumPlane::PrmTags::centerPicks);
+  assert(ps.size() == 1);
+  ps.front()->setValue(picks);
 }
 
 void DatumPlane::setToAxisAngle(const std::vector<slc::Message> &msIn)
@@ -183,12 +191,13 @@ void DatumPlane::setToAxisAngle(const std::vector<slc::Message> &msIn)
   {
     const ftr::Base *f = project->findFeature(mIn.featureId);
     ftr::Pick pick = tls::convertToPick(mIn, *f, project->getShapeHistory());
-    pick.tag = (picks.empty()) ? ftr::DatumPlane::axis : ftr::DatumPlane::plane;
+    pick.tag = (picks.empty()) ? ftr::DatumPlane::InputTags::axis : ftr::DatumPlane::InputTags::plane;
     picks.push_back(pick);
     project->connectInsert(f->getId(), feature->getId(), {pick.tag});
   };
-  feature->setPicks(picks);
-  feature->setDPType(ftr::DatumPlane::DPType::AAngleP);
+  auto ps = feature->getParameters(ftr::DatumPlane::PrmTags::axisAnglePicks);
+  assert(ps.size() == 1);
+  ps.front()->setValue(picks);
 }
 
 void DatumPlane::setToAverage3Plane(const std::vector<slc::Message> &msIn)
@@ -206,12 +215,13 @@ void DatumPlane::setToAverage3Plane(const std::vector<slc::Message> &msIn)
   {
     const ftr::Base *f = project->findFeature(mIn.featureId);
     ftr::Pick pick = tls::convertToPick(mIn, *f, project->getShapeHistory());
-    pick.tag = ftr::InputType::createIndexedTag(ftr::DatumPlane::plane, picks.size());
+    pick.tag = indexTag(ftr::DatumPlane::InputTags::plane, picks.size());
     picks.push_back(pick);
     project->connectInsert(f->getId(), feature->getId(), {pick.tag});
   };
-  feature->setPicks(picks);
-  feature->setDPType(ftr::DatumPlane::DPType::Average3P);
+  auto ps = feature->getParameters(ftr::DatumPlane::PrmTags::averagePicks);
+  assert(ps.size() == 1);
+  ps.front()->setValue(picks);
 }
 
 void DatumPlane::setToThrough3Points(const std::vector<slc::Message> &msIn)
@@ -229,12 +239,13 @@ void DatumPlane::setToThrough3Points(const std::vector<slc::Message> &msIn)
   {
     const ftr::Base *f = project->findFeature(mIn.featureId);
     ftr::Pick pick = tls::convertToPick(mIn, *f, project->getShapeHistory());
-    pick.tag = ftr::InputType::createIndexedTag(ftr::DatumPlane::point, picks.size());
+    pick.tag = indexTag(ftr::DatumPlane::InputTags::point, picks.size());
     picks.push_back(pick);
     project->connectInsert(f->getId(), feature->getId(), {pick.tag});
-  };
-  feature->setPicks(picks);
-  feature->setDPType(ftr::DatumPlane::DPType::Through3P);
+  }
+  auto ps = feature->getParameters(ftr::DatumPlane::PrmTags::pointsPicks);
+  assert(ps.size() == 1);
+  ps.front()->setValue(picks);
 }
 
 void DatumPlane::localUpdate()
@@ -277,9 +288,10 @@ void DatumPlane::go()
     if (attemptThrough3P(cs))
       return;
   }
-  
-  feature->setSystem(app::instance()->getMainWindow()->getViewer()->getCurrentSystem());
-  feature->setSize(viewer->getDiagonalLength() / 4.0);
+  auto prms = feature->getParameters(prm::Tags::CSys); assert(prms.size() == 1);
+  prms.front()->setValue(app::instance()->getMainWindow()->getViewer()->getCurrentSystem());
+  prms = feature->getParameters(prm::Tags::Size); assert(prms.size() == 1);
+  prms.front()->setValue(viewer->getDiagonalLength() / 4.0);
   localUpdate();
   node->sendBlocked(msg::buildStatusMessage("Constant datum plane added at current system", 2.0));
   node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
@@ -317,13 +329,22 @@ bool DatumPlane::isAxis(const slc::Container &cIn)
   return occt::gleanAxis(s).second;
 }
 
+void DatumPlane::setType(int typeIn)
+{
+  auto typePrms = feature->getParameters(ftr::DatumPlane::PrmTags::datumPlaneType);
+  assert(typePrms.size() == 1);
+  typePrms.front()->setValue(typeIn);
+}
+
 bool DatumPlane::attemptLink(const slc::Container &cIn)
 {
   const ftr::Base *f = project->findFeature(cIn.featureId);
   if (!f->getParameters(prm::Tags::CSys).empty())
   {
-    setLinked(cIn.featureId);
-    feature->setSize(viewer->getDiagonalLength() / 4.0);
+    setType(static_cast<int>(ftr::DatumPlane::DPType::Linked));
+    setLinked({slc::EventHandler::containerToMessage(cIn)});
+    auto prms = feature->getParameters(prm::Tags::Size); assert(prms.size() == 1);
+    prms.front()->setValue(viewer->getDiagonalLength() / 4.0);
     return true;
   }
   return false;
@@ -338,8 +359,10 @@ bool DatumPlane::attemptOffset(const slc::Container &cIn)
   msgs.push_back(slc::EventHandler::containerToMessage(cIn));
   auto build = [&]()
   {
+    setType(static_cast<int>(ftr::DatumPlane::DPType::Offset));
     setToPlanarOffset(msgs);
-    feature->setAutoSize(true);
+    auto prms = feature->getParameters(prm::Tags::AutoSize); assert(prms.size() == 1);
+    prms.front()->setValue(true);
     node->sendBlocked(msg::buildStatusMessage("Offset datum plane added", 2.0));
     node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
   };
@@ -366,8 +389,10 @@ bool DatumPlane::attemptCenter(const std::vector<slc::Container> &csIn)
     std::vector<slc::Message> msgs;
     for (const auto &c : csIn)
       msgs.push_back(slc::EventHandler::containerToMessage(c));
+    setType(static_cast<int>(ftr::DatumPlane::DPType::Center));
     setToPlanarCenter(msgs);
-    feature->setAutoSize(true);
+    auto prms = feature->getParameters(prm::Tags::AutoSize); assert(prms.size() == 1);
+    prms.front()->setValue(true);
     node->sendBlocked(msg::buildStatusMessage("Center datum plane added", 2.0));
     node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
     return true;
@@ -395,8 +420,10 @@ bool DatumPlane::attemptAxisAngle(const std::vector<slc::Container> &csIn)
     return false;
   
   std::vector<slc::Message> msgs{axisMsg.get(), planeMsg.get()};
+  setType(static_cast<int>(ftr::DatumPlane::DPType::AxisAngle));
   setToAxisAngle(msgs);
-  feature->setAutoSize(true);
+  auto prms = feature->getParameters(prm::Tags::AutoSize); assert(prms.size() == 1);
+  prms.front()->setValue(true);
   node->sendBlocked(msg::buildStatusMessage("Axis angle datum plane added", 2.0));
   node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
   return true;
@@ -412,8 +439,10 @@ bool DatumPlane::attemptAverage3P(const std::vector<slc::Container> &csIn)
   }
   if (msgs.size() != 3)
     return false;
+  setType(static_cast<int>(ftr::DatumPlane::DPType::Average));
   setToAverage3Plane(msgs);
-  feature->setAutoSize(true);
+  auto prms = feature->getParameters(prm::Tags::AutoSize); assert(prms.size() == 1);
+  prms.front()->setValue(true);
   node->sendBlocked(msg::buildStatusMessage("3 plane average datum plane added", 2.0));
   node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
   return true;
@@ -429,8 +458,10 @@ bool DatumPlane::attemptThrough3P(const std::vector<slc::Container> &csIn)
   }
   if (msgs.size() != 3)
     return false;
+  setType(static_cast<int>(ftr::DatumPlane::DPType::Points));
   setToThrough3Points(msgs);
-  feature->setAutoSize(true);
+  auto prms = feature->getParameters(prm::Tags::AutoSize); assert(prms.size() == 1);
+  prms.front()->setValue(true);
   node->sendBlocked(msg::buildStatusMessage("Through 3 points datum plane added", 2.0));
   node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
   return true;

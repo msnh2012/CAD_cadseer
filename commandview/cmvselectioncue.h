@@ -20,6 +20,8 @@
 #ifndef CMV_SELECTIONCUE_H
 #define CMV_SELECTIONCUE_H
 
+#include "selection/slcaccrue.h"
+
 namespace cmv
 {
   namespace tbl

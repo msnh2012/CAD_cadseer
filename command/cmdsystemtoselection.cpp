@@ -27,7 +27,9 @@
 #include "tools/tlsosgtools.h"
 #include "tools/occtools.h"
 #include "annex/annseershape.h"
-#include "feature/ftrdatumplane.h"
+#include "feature/ftrbase.h"
+#include "parameter/prmconstants.h"
+#include "parameter/prmparameter.h"
 #include "command/cmdsystemtoselection.h"
 
 using namespace cmd;
@@ -83,17 +85,16 @@ void SystemToSelection::go()
   
   if (containers.size() == 1)
   {
-    if (containers.front().featureType == ftr::Type::DatumPlane)
+    const ftr::Base *f = project->findFeature(containers.front().featureId);
+    auto csysPrms = f->getParameters(prm::Tags::CSys);
+    if (!csysPrms.empty())
     {
-      const ftr::DatumPlane *dp = dynamic_cast<const ftr::DatumPlane*>(project->findFeature(containers.front().featureId));
-      assert(dp);
-      viewer->setCurrentSystem(dp->getSystem());
+      viewer->setCurrentSystem(csysPrms.front()->getMatrix());
       node->sendBlocked(msg::buildStatusMessage("Current system set to datum plane", 2.0));
       return;
     }
     else if (containers.front().selectionType == slc::Type::Edge)
     {
-      const ftr::Base *f = project->findFeature(containers.front().featureId);
       assert(f->hasAnnex(ann::Type::SeerShape));
       const ann::SeerShape &ss = f->getAnnex<ann::SeerShape>();
       assert(ss.hasId(containers.front().shapeId));

@@ -20,7 +20,7 @@
     <xs:element name="size" type="spt:Parameter"/>
     <xs:element name="offset" type="spt:Parameter"/>
     <xs:element name="angle" type="spt:Parameter"/>
-    <xs:element name="picks" type="spt:Parameter"/>
+    <xs:element name="picks" type="spt:Parameter" minOccurs="0" maxOccurs="1"/>
     <xs:element name="csysDragger" type="spt:CSysDragger"/>
     <xs:element name="flipLabel" type="spt:PLabel"/>
     <xs:element name="autoSizeLabel" type="spt:PLabel"/>

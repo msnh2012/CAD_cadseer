@@ -65,6 +65,7 @@ namespace cmv
       //can't do in constructor. need to resolve in views after construction.
       void setMessages(const slc::Messages&);
       const slc::Messages& getMessages() const;
+      const tbl::SelectionCue& getCue() const;
       
       //angle for accrue tangent doesn't exist in ftr::pick or slc::Message
       //It is a parameter of feature. Kind of a hack.
@@ -78,7 +79,12 @@ namespace cmv
     /**
     * @class View. @brief Editor widget view for pick parameters
     * 
-    * @details Think delegate
+    * @details Think delegate editor. When editors are removed, deleteLater
+    * is used. This might cause problems for our selection message handlers.
+    * They can be alive while the gui is hidden and before deletion. So any
+    * selection handlers test for visibility before any processing. If that
+    * doesn't work we can create a state member and set it 'dead' from
+    * the delegate functions: commitSlcEditor, rejectSlcEditor
     */
     class View : public QTableView
     {

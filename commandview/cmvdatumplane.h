@@ -37,14 +37,6 @@ namespace cmv
   public:
     DatumPlane(cmd::DatumPlane*);
     ~DatumPlane() override;
-  public Q_SLOTS:
-    void planarOffsetSelectionChanged();
-    void planarCenterSelectionChanged();
-    void axisAngleSelectionChanged();
-    void average3PlaneSelectionChanged();
-    void through3PointsSelectionChanged();
-    void parameterChanged();
-    void linkCSysChanged();
   private Q_SLOTS:
     void modelChanged(const QModelIndex&, const QModelIndex&);
   private:

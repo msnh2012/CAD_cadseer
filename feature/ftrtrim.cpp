@@ -41,9 +41,9 @@
 #include "feature/ftrbooleanoperation.h"
 #include "feature/ftrshapecheck.h"
 #include "feature/ftrupdatepayload.h"
+#include "parameter/prmconstants.h"
 #include "parameter/prmparameter.h"
 #include "feature/ftrinputtype.h"
-#include "feature/ftrdatumplane.h"
 #include "feature/ftrtrim.h"
 
 using namespace ftr;
@@ -142,11 +142,11 @@ void Trim::updateModel(const UpdatePayload &payloadIn)
     TopoDS_Solid toolSolid;
     bool fromDatum = false;
     const ann::SeerShape *tlss = nullptr;
-    if (tlfs.front()->getType() == ftr::Type::DatumPlane)
+    auto csysPrms = tlfs.front()->getParameters(prm::Tags::CSys);
+    if (!csysPrms.empty())
     {
       fromDatum = true;
-      const DatumPlane *dp = static_cast<const DatumPlane*>(tlfs.front());
-      osg::Matrixd ts = dp->getSystem();
+      osg::Matrixd ts = csysPrms.front()->getMatrix();
       BRepBuilderAPI_MakeFace fm(gp_Pln(gp_Ax3(gu::toOcc(ts))));
       if (!fm.IsDone())
         throw std::runtime_error("couldn't make face from datum plane");

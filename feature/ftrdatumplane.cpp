@@ -57,14 +57,15 @@
 #include "project/serial/generated/prjsrldtpsdatumplane.h"
 #include "tools/featuretools.h"
 #include "tools/occtools.h"
+#include "tools/tlsosgtools.h"
 #include "parameter/prmconstants.h"
 #include "parameter/prmparameter.h"
 #include "feature/ftrdatumaxis.h"
 #include "feature/ftrdatumplane.h"
 
-using namespace ftr;
+using namespace ftr::DatumPlane;
 
-QIcon DatumPlane::icon;
+QIcon Feature::icon;
 
 using boost::uuids::uuid;
 
@@ -98,19 +99,23 @@ static std::pair<osg::Matrixd, double> getFaceSystem(const TopoDS_Shape &faceSha
   return std::make_pair(faceSystem, size);
 }
 
-struct DatumPlane::Stow
+struct Feature::Stow
 {
-  DatumPlane &feature;
+  Feature &feature;
   
   prm::Parameter dpType; //!< datum plane type
   prm::Parameter csys; //!< coordinate system constant dragger mode.
-  prm::Parameter csysLinkHack; //!< coordinate system constant dragger mode.
-  prm::Parameter flip; //!< double. reverse normal
+  prm::Parameter flip; //!< bool. reverse normal
   prm::Parameter autoSize; //!< bool. auto calculate radius.
   prm::Parameter size; //!< double. distance to edges.
-  prm::Parameter offset; //!< double. distance for POffset
+  prm::Parameter offset; //!< double. distance for Offset
   prm::Parameter angle; //!< double. angle for rotation
-  prm::Parameter picks; //!< double. angle for rotation
+  prm::Parameter linkPicks;
+  prm::Parameter offsetPicks;
+  prm::Parameter centerPicks;
+  prm::Parameter axisAnglePicks;
+  prm::Parameter averagePicks;
+  prm::Parameter pointsPicks;
   prm::Observer dirtyObserver;
   prm::Observer syncObserver;
   ann::CSysDragger csysDragger; //!< for constant type
@@ -123,18 +128,22 @@ struct DatumPlane::Stow
   double cachedSize; //!< for auto calc.
   
   Stow() = delete;
-  Stow(DatumPlane &featureIn)
+  Stow(Feature &featureIn)
   : feature(featureIn)
-  , dpType(QObject::tr("Type"), 0, datumPlaneType)
+  , dpType(QObject::tr("Type"), 0, PrmTags::datumPlaneType)
   , csys(prm::Names::CSys, osg::Matrixd::identity(), prm::Tags::CSys)
-  , csysLinkHack(QString(), 0, DatumPlane::csysLinkHack)
   , flip(QObject::tr("Flip"), false)
   , autoSize(prm::Names::AutoSize, false, prm::Tags::AutoSize)
   , size(prm::Names::Size, 1.0, prm::Tags::Size)
   , offset(prm::Names::Offset, 1.0, prm::Tags::Offset)
   , angle(prm::Names::Angle, 45.0, prm::Tags::Angle)
-  , picks(prm::Names::Picks, Picks(), prm::Tags::Picks)
-  , dirtyObserver(std::bind(&DatumPlane::setModelDirty, &feature))
+  , linkPicks(prm::Names::CSysLinked, Picks(), prm::Tags::CSysLinked)
+  , offsetPicks(QObject::tr("Offset Picks"), Picks(), PrmTags::offsetPicks)
+  , centerPicks(QObject::tr("Center Picks"), Picks(), PrmTags::centerPicks)
+  , axisAnglePicks(QObject::tr("Axis Angle Picks"), Picks(), PrmTags::axisAnglePicks)
+  , averagePicks(QObject::tr("Average Picks"), Picks(), PrmTags::averagePicks)
+  , pointsPicks(QObject::tr("Point Picks"), Picks(), PrmTags::pointsPicks)
+  , dirtyObserver(std::bind(&Feature::setModelDirty, &feature))
   , syncObserver(std::bind(&Stow::prmActiveSync, this))
   , csysDragger(&feature, &csys)
   , flipLabel(new lbr::PLabel(&flip))
@@ -166,8 +175,6 @@ struct DatumPlane::Stow
     csys.connect(dirtyObserver);
     feature.parameters.push_back(&csys);
     
-    feature.parameters.push_back(&csysLinkHack);
-    
     flip.connect(dirtyObserver);
     feature.parameters.push_back(&flip);
     
@@ -191,10 +198,19 @@ struct DatumPlane::Stow
     angle.connect(dirtyObserver);
     feature.parameters.push_back(&angle);
     
-    picks.setExpressionLinkable(false);
-    picks.connect(dirtyObserver);
-    feature.parameters.push_back(&picks);
-    
+    auto goPickInit = [&](prm::Parameter &prm)
+    {
+      prm.setExpressionLinkable(false);
+      prm.connect(dirtyObserver);
+      feature.parameters.push_back(&prm);
+    };
+    goPickInit(linkPicks);
+    goPickInit(offsetPicks);
+    goPickInit(centerPicks);
+    goPickInit(axisAnglePicks);
+    goPickInit(averagePicks);
+    goPickInit(pointsPicks);
+
     feature.overlaySwitch->addChild(flipLabel.get());
     feature.overlaySwitch->addChild(autoSizeLabel.get());
     feature.overlaySwitch->addChild(angleLabel.get());
@@ -233,32 +249,36 @@ struct DatumPlane::Stow
     switch (dpType.getInt())
     {
       case static_cast<int>(DPType::Constant):
-      {
         csysDragger.draggerUpdate();
         csys.setActive(true);
-        csysLinkHack.setActive(false);
         autoSize.setValue(false);
         autoSize.setActive(false);
         size.setActive(true);
         offset.setActive(false);
         angle.setActive(false);
+        linkPicks.setActive(false);
+        offsetPicks.setActive(false);
+        centerPicks.setActive(false);
+        axisAnglePicks.setActive(false);
+        averagePicks.setActive(false);
+        pointsPicks.setActive(false);
         break;
-      }
-      case static_cast<int>(DPType::Link):
-      {
+      case static_cast<int>(DPType::Linked):
         csys.setActive(false);
-        csysLinkHack.setActive(true);
         autoSize.setValue(false);
         autoSize.setActive(false);
         size.setActive(true);
         offset.setActive(false);
         angle.setActive(false);
+        linkPicks.setActive(true);
+        offsetPicks.setActive(false);
+        centerPicks.setActive(false);
+        axisAnglePicks.setActive(false);
+        averagePicks.setActive(false);
+        pointsPicks.setActive(false);
         break;
-      }
-      case static_cast<int>(DPType::POffset):
-      {
+      case static_cast<int>(DPType::Offset):
         csys.setActive(false);
-        csysLinkHack.setActive(false);
         autoSize.setActive(true);
         if (autoSize.getBool())
           size.setActive(false);
@@ -266,14 +286,15 @@ struct DatumPlane::Stow
           size.setActive(true);
         offset.setActive(true);
         angle.setActive(false);
+        linkPicks.setActive(false);
+        offsetPicks.setActive(true);
+        centerPicks.setActive(false);
+        axisAnglePicks.setActive(false);
+        averagePicks.setActive(false);
+        pointsPicks.setActive(false);
         break;
-      }
-      case static_cast<int>(DPType::PCenter):
-      case static_cast<int>(DPType::Average3P):
-      case static_cast<int>(DPType::Through3P):
-      {
+      case static_cast<int>(DPType::Center):
         csys.setActive(false);
-        csysLinkHack.setActive(false);
         autoSize.setActive(true);
         if (autoSize.getBool())
           size.setActive(false);
@@ -281,12 +302,15 @@ struct DatumPlane::Stow
           size.setActive(true);
         offset.setActive(false);
         angle.setActive(false);
+        linkPicks.setActive(false);
+        offsetPicks.setActive(false);
+        centerPicks.setActive(true);
+        axisAnglePicks.setActive(false);
+        averagePicks.setActive(false);
+        pointsPicks.setActive(false);
         break;
-      }
-      case static_cast<int>(DPType::AAngleP):
-      {
+      case static_cast<int>(DPType::AxisAngle):
         csys.setActive(false);
-        csysLinkHack.setActive(false);
         autoSize.setActive(true);
         if (autoSize.getBool())
           size.setActive(false);
@@ -294,13 +318,48 @@ struct DatumPlane::Stow
           size.setActive(true);
         offset.setActive(false);
         angle.setActive(true);
+        linkPicks.setActive(false);
+        offsetPicks.setActive(false);
+        centerPicks.setActive(false);
+        axisAnglePicks.setActive(true);
+        averagePicks.setActive(false);
+        pointsPicks.setActive(false);
         break;
-      }
+      case static_cast<int>(DPType::Average):
+        csys.setActive(false);
+        autoSize.setActive(true);
+        if (autoSize.getBool())
+          size.setActive(false);
+        else
+          size.setActive(true);
+        offset.setActive(false);
+        angle.setActive(false);
+        linkPicks.setActive(false);
+        offsetPicks.setActive(false);
+        centerPicks.setActive(false);
+        axisAnglePicks.setActive(false);
+        averagePicks.setActive(true);
+        pointsPicks.setActive(false);
+        break;
+      case static_cast<int>(DPType::Points):
+        csys.setActive(false);
+        autoSize.setActive(true);
+        if (autoSize.getBool())
+          size.setActive(false);
+        else
+          size.setActive(true);
+        offset.setActive(false);
+        angle.setActive(false);
+        linkPicks.setActive(false);
+        offsetPicks.setActive(false);
+        centerPicks.setActive(false);
+        axisAnglePicks.setActive(false);
+        averagePicks.setActive(false);
+        pointsPicks.setActive(true);
+        break;
       default:
-      {
         throw std::runtime_error("Unrecognized Datum Plane Type");
         break;
-      }
     }
   }
   
@@ -328,6 +387,50 @@ struct DatumPlane::Stow
     offsetIP->setMatrix(m);
   }
   
+  //throws for no system. no size is just a warning.
+  std::tuple<osg::Matrixd, double> getSystemAndSize(const tls::Resolver &pr)
+  {
+    osg::Matrixd matrixOut;
+    double sizeOut;
+    
+    if (slc::isObjectType(pr.getPick().selectionType))
+    {
+      auto csysPrms = pr.getFeature()->getParameters(prm::Tags::CSys);
+      if (csysPrms.empty())
+        throw std::runtime_error("Couldn't get csys parameter from object pick");
+      matrixOut = csysPrms.front()->getMatrix();
+      
+      auto sizePrms = pr.getFeature()->getParameters(prm::Tags::Size);
+      if (sizePrms.empty())
+      {
+        std::ostringstream s;
+        s << "WARNING: Couldn't get size parameter from object pick" << std::endl;
+        feature.lastUpdateLog += s.str();
+        sizeOut = cachedSize;
+      }
+      else
+      {
+        sizeOut = sizePrms.front()->getDouble();
+      }
+    }
+    else
+    {
+      auto rShapes = pr.getShapes();
+      if (rShapes.empty())
+        throw std::runtime_error("Resolved shapes are empty");
+      if (rShapes.size() > 1)
+      {
+        std::ostringstream s; s << "WARNING: Multiple resolve shapes. Using first" << std::endl;
+        feature.lastUpdateLog += s.str();
+      }
+      if (rShapes.front().ShapeType() != TopAbs_FACE)
+        throw std::runtime_error("Resolved shape is not a face.");
+      
+      std::tie(matrixOut, sizeOut) = getFaceSystem(rShapes.front());
+    }
+    return std::make_tuple(matrixOut, sizeOut);
+  }
+  
   void goUpdateConstant()
   {
     
@@ -350,7 +453,7 @@ struct DatumPlane::Stow
 
   void goUpdatePOffset(const UpdatePayload &pli)
   {
-    const auto &tPicks = picks.getPicks();
+    const auto &tPicks = offsetPicks.getPicks();
     if (tPicks.size() != 1)
       throw std::runtime_error("POffset: Wrong number of picks");
     
@@ -358,30 +461,8 @@ struct DatumPlane::Stow
     if (!pr.resolve(tPicks.front()))
       throw std::runtime_error("POffset: Pick resolution failed");
     
-    osg::Matrixd faceSystem;
-    faceSystem = osg::Matrixd::identity();
-    if (pr.getFeature()->getType() == ftr::Type::DatumPlane)
-    {
-      const DatumPlane *inputPlane = dynamic_cast<const DatumPlane*>(pr.getFeature());
-      assert(inputPlane);
-      cachedSize = inputPlane->getSize();
-      faceSystem = inputPlane->getSystem();
-    }
-    else
-    {
-      auto rShapes = pr.getShapes();
-      if (rShapes.empty())
-        throw std::runtime_error("POffset: Resolved shapes are empty");
-      if (rShapes.size() > 1)
-      {
-        std::ostringstream s; s << "WARNING: POffset: Multiple resolve shapes. Using first" << std::endl;
-        feature.lastUpdateLog += s.str();
-      }
-      if (rShapes.front().ShapeType() != TopAbs_FACE)
-        throw std::runtime_error("POffset: Resolved shape is not a face.");
-      
-      std::tie(faceSystem, cachedSize) = getFaceSystem(rShapes.front());
-    }
+    osg::Matrixd faceSystem = osg::Matrixd::identity();
+    std::tie(faceSystem, cachedSize) = getSystemAndSize(pr);
     osg::Vec3d normal = gu::getZVector(faceSystem) * offset.getDouble();
     faceSystem.setTrans(faceSystem.getTrans() + normal);
     csys.setValue(faceSystem);
@@ -389,7 +470,7 @@ struct DatumPlane::Stow
 
   void goUpdatePCenter(const UpdatePayload &pli)
   {
-    const auto &tPicks = picks.getPicks();
+    const auto &tPicks = centerPicks.getPicks();
     if (tPicks.size() != 2)
       throw std::runtime_error("Wrong number of picks for center datum");
     tls::Resolver r0(pli);
@@ -399,66 +480,33 @@ struct DatumPlane::Stow
     if (!r1.resolve(tPicks.back()))
       throw std::runtime_error("Couldn't resolve pick 1 for center datum");
     
-    double tempSize = std::numeric_limits<double>::min();
-    
-    auto getResolvedSystem = [&](const tls::Resolver &r) -> boost::optional<osg::Matrixd>
-    {
-      if (r.getFeature()->getType() == ftr::Type::DatumPlane)
-      {
-        const DatumPlane *inputPlane = dynamic_cast<const DatumPlane*>(r.getFeature());
-        assert(inputPlane);
-        tempSize = std::max(tempSize, inputPlane->getSize());
-        return inputPlane->getSystem();
-      }
-      else
-      {
-        auto rShapes = r.getShapes();
-        if (rShapes.empty())
-          throw std::runtime_error("Resolved shapes are empty for center datum");
-        if (rShapes.size() > 1)
-        {
-          std::ostringstream s; s << "WARNING: Multiple resolve shapes for center datum. Using first" << std::endl;
-          feature.lastUpdateLog += s.str();
-        }
-        if (rShapes.front().ShapeType() != TopAbs_FACE)
-          throw std::runtime_error("Resolved shape is not a face for center datum.");
-        
-        osg::Matrixd localMatrix;
-        double localSize;
-        std::tie(localMatrix, localSize) = getFaceSystem(rShapes.front());
-        tempSize = std::max(tempSize, localSize);
-        
-        return localMatrix;
-      }
-      return boost::none;
-    };
-    
-    boost::optional<osg::Matrixd> face1System = getResolvedSystem(r0);
-    boost::optional<osg::Matrixd> face2System = getResolvedSystem(r1);
-    if (!face1System || !face2System)
-      throw std::runtime_error("Invalid face systems");
+    osg::Matrixd face1System, face2System;
+    double size1, size2;
+    std::tie(face1System, size1) = getSystemAndSize(r0);
+    std::tie(face2System, size2) = getSystemAndSize(r1);
+    cachedSize = std::max(size1, size2);
 
-    osg::Vec3d normal1 = gu::getZVector(face1System.get());
-    osg::Vec3d normal2 = gu::getZVector(face2System.get());
+    osg::Vec3d normal1 = gu::getZVector(face1System);
+    osg::Vec3d normal2 = gu::getZVector(face2System);
     boost::optional<osg::Matrixd> newSystem;
     
     if ((gu::toOcc(normal1).IsParallel(gu::toOcc(normal2), Precision::Angular())))
     {
-      osg::Vec3d projection = face2System.get().getTrans() - face1System.get().getTrans();
+      osg::Vec3d projection = face2System.getTrans() - face1System.getTrans();
       double mag = projection.length() / 2.0;
       projection.normalize();
       projection *= mag;
-      osg::Vec3d freshOrigin = face1System.get().getTrans() + projection;
+      osg::Vec3d freshOrigin = face1System.getTrans() + projection;
       
-      newSystem = face1System.get();
+      newSystem = face1System;
       newSystem.get().setTrans(freshOrigin);
     }
     else //try to make a bisector
     {
-      gp_Pnt o1 = gu::toOcc(face1System.get().getTrans()).XYZ();
+      gp_Pnt o1 = gu::toOcc(face1System.getTrans()).XYZ();
       gp_Dir d1 = gu::toOcc(normal1);
       opencascade::handle<Geom_Surface> surface1 = new Geom_Plane(o1, d1);
-      gp_Pnt o2 = gu::toOcc(face2System.get().getTrans()).XYZ();
+      gp_Pnt o2 = gu::toOcc(face2System.getTrans()).XYZ();
       gp_Dir d2 = gu::toOcc(normal2);
       opencascade::handle<Geom_Surface> surface2 = new Geom_Plane(o2, d2);
       
@@ -487,10 +535,10 @@ struct DatumPlane::Stow
       );
       //project center of parent geometry onto line and move half of tSize.
       boost::optional<osg::Vec3d> p1, p2;
-      GeomAPI_ProjectPointOnCurve proj1(gp_Pnt(gu::toOcc(face1System.get().getTrans()).XYZ()), c); 
+      GeomAPI_ProjectPointOnCurve proj1(gp_Pnt(gu::toOcc(face1System.getTrans()).XYZ()), c); 
       if (proj1.NbPoints() > 0)
         p1 = gu::toOsg(proj1.NearestPoint());
-      GeomAPI_ProjectPointOnCurve proj2(gp_Pnt(gu::toOcc(face2System.get().getTrans()).XYZ()), c); 
+      GeomAPI_ProjectPointOnCurve proj2(gp_Pnt(gu::toOcc(face2System.getTrans()).XYZ()), c); 
       if (proj2.NbPoints() > 0)
         p2 = gu::toOsg(proj2.NearestPoint());
       if (p1 && p2)
@@ -509,13 +557,13 @@ struct DatumPlane::Stow
     
     if (!newSystem)
       throw std::runtime_error("PCenter: couldn't derive center datum");
-    cachedSize = tempSize;
+    
     csys.setValue(newSystem.get());
   }
 
   void goUpdateAAngleP(const UpdatePayload &pli)
   {
-    const auto &tPicks = picks.getPicks();
+    const auto &tPicks = axisAnglePicks.getPicks();
     if (tPicks.size() != 2)
       throw std::runtime_error("AAngleP: Wrong number of picks");
     
@@ -526,33 +574,16 @@ struct DatumPlane::Stow
     {
       if (!pr.resolve(p))
         throw std::runtime_error("AAngleP: Failed to resolve pick");
-      if (p.tag == plane)
+      
+      if (p.tag == InputTags::plane)
       {
-        if (slc::isObjectType(p.selectionType) && pr.getFeature()->getType() == ftr::Type::DatumPlane)
-        {
-          const DatumPlane *dp = dynamic_cast<const DatumPlane*>(pr.getFeature());
-          planeNormal = gu::getZVector(dp->getSystem());
-          tempSize = std::max(tempSize, dp->getSize());
-        }
-        else //with a shape pick, resolver verifies we something
-        {
-          auto rShapes = pr.getShapes();
-          if (rShapes.size() > 1)
-          {
-            std::ostringstream s; s << "WARNING: AAngleP: more than one resolved plane. Using first" << std::endl;
-            feature.lastUpdateLog += s.str();
-          }
-          if (rShapes.front().ShapeType() != TopAbs_FACE)
-            throw std::runtime_error("AAngleP: resolved 'plane' shape is not a face");
-          
-          osg::Matrixd localSystem;
-          double localSize;
-          std::tie(localSystem, localSize) = getFaceSystem(rShapes.front());
-          planeNormal = gu::getZVector(localSystem);
-          tempSize = std::max(tempSize, localSize);
-        }
+        osg::Matrixd localSystem;
+        double localSize;
+        std::tie(localSystem, localSize) = getSystemAndSize(pr);
+        planeNormal = gu::getZVector(localSystem);
+        tempSize = std::max(tempSize, localSize);
       }
-      else if (p.tag == axis)
+      else if (p.tag == InputTags::axis)
       {
         if (slc::isObjectType(p.selectionType) && pr.getFeature()->getType() == ftr::Type::DatumAxis)
         {
@@ -591,14 +622,22 @@ struct DatumPlane::Stow
     
     osg::Quat rotation(osg::DegreesToRadians(angle.getDouble()), axisDirection.get());
     osg::Vec3d outNormal(rotation * planeNormal.get());
-    osg::Matrixd csysOut = osg::Matrixd::rotate(osg::Vec3d(0.0, 0.0, 1.0), outNormal);
-    csysOut.setTrans(axisOrigin.get());
-    csys.setValue(csysOut);
+    
+    auto oOut = tls::matrixFromAxes
+    (
+      axisDirection.get()
+      , std::nullopt
+      , outNormal
+      , axisOrigin.get()
+    );
+    if (!oOut)
+      throw std::runtime_error("AAngleP: couldn't build CSys");
+    csys.setValue(*oOut);
   }
 
   void goUpdateAverage3P(const UpdatePayload &pli)
   {
-    const auto &tPicks = picks.getPicks();
+    const auto &tPicks = averagePicks.getPicks();
     if (tPicks.size() != 3)
       throw std::runtime_error("Average3P: Wrong number of picks");
     
@@ -608,15 +647,15 @@ struct DatumPlane::Stow
     double tSize = 1.0;
     auto resolveDatum = [&](const Base *fIn)
     {
-      const DatumPlane *dp = dynamic_cast<const DatumPlane*>(fIn);
+      const Feature *dp = dynamic_cast<const Feature*>(fIn);
       assert(dp);
       
-      osg::Matrixd dpSys = dp->getSystem();
+      osg::Matrixd dpSys = dp->getParameters(prm::Tags::CSys).front()->getMatrix();
       averageNormal += gu::getZVector(dpSys);
       gp_Pnt o = gu::toOcc(dpSys.getTrans()).XYZ();
       gp_Dir d = gu::toOcc(gu::getZVector(dpSys));
       planes.push_back(new Geom_Plane(o, d));
-      tSize = std::max(tSize, dp->getSize());
+      tSize = std::max(tSize, dp->getParameters(prm::Tags::Size).front()->getDouble());
     };
     auto resolveFace = [&](const TopoDS_Shape &sIn)
     {
@@ -681,7 +720,7 @@ struct DatumPlane::Stow
 
   void goUpdateThrough3P(const UpdatePayload &pli)
   {
-    const auto &tPicks = picks.getPicks();
+    const auto &tPicks = pointsPicks.getPicks();
     if (tPicks.size() != 3)
       throw std::runtime_error("Through3P: Wrong number of picks");
     
@@ -705,30 +744,23 @@ struct DatumPlane::Stow
     if (points.size() != 3)
       throw std::runtime_error("Through3P: couldn't get 3 points");
     
-    osg::Vec3d v0 = points.at(1) - points.at(0);
-    osg::Vec3d v1 = points.at(2) - points.at(0);
+    auto om = tls::matrixFrom3Points(points);
+    if (!om)
+      throw std::runtime_error("failed getting plane from 3 points");
     
-    osg::Vec3d v0n(v0);
-    v0n.normalize();
-    osg::Vec3d v1n(v1);
-    v1n.normalize();
-    if ((1.0 - std::fabs(v0n * v1n)) < std::numeric_limits<float>::epsilon())
-      throw std::runtime_error("Through3P: points are collinear");
+    osg::Vec3d center = points.at(0) + points.at(1) + points.at(2);
+    center /= 3.0;
+    om.get().setTrans(center);
     
-    osg::Vec3d z = v0 ^ v1;
-    z.normalize();
-    osg::Matrixd ts = osg::Matrixd::rotate(osg::Vec3d(0.0, 0.0, 1.0), z);
-    
-    osg::Vec3d center = (points.at(0) + points.at(1) + points.at(2)) / 3.0;
-    ts.setTrans(center);
-    
-    csys.setValue(ts);
-    cachedSize = std::max(std::max(v0.length(), v1.length()), (v1 - v0).length()) / 2.0;
+    csys.setValue(om.get());
+    const auto &p = points;
+    const auto &c = center;
+    cachedSize = std::max(std::max((p[0] - c).length(), (p[1] - c).length()), (p[2] - c).length());
   }
 };
 
 //default constructed plane is 2.0 x 2.0
-DatumPlane::DatumPlane() :
+Feature::Feature() :
 Base()
 , stow(std::make_unique<Stow>(*this))
 {
@@ -742,55 +774,9 @@ Base()
   stow->updateGeometry();
 }
 
-DatumPlane::~DatumPlane(){}
+Feature::~Feature(){}
 
-void DatumPlane::setSize(double sIn)
-{
-  //should we set autoSize off?
-  stow->size.setValue(sIn);
-}
-
-double DatumPlane::getSize() const
-{
-  return stow->size.getDouble();
-}
-
-void DatumPlane::setSystem(const osg::Matrixd &sysIn)
-{
-  stow->csys.setValue(sysIn);
-}
-
-osg::Matrixd DatumPlane::getSystem() const
-{
-  return stow->csys.getMatrix();
-}
-
-void DatumPlane::setPicks(const Picks &psIn)
-{
-  stow->picks.setValue(psIn);
-}
-
-const Picks& DatumPlane::getPicks()
-{
-  return stow->picks.getPicks();
-}
-
-void DatumPlane::setDPType(DPType tIn)
-{
-  stow->dpType.setValue(static_cast<int>(tIn));
-}
-
-DatumPlane::DPType DatumPlane::getDPType()
-{
-  return static_cast<DPType>(stow->dpType.getInt());
-}
-
-void DatumPlane::setAutoSize(bool vIn)
-{
-  stow->autoSize.setValue(vIn);
-}
-
-void DatumPlane::updateModel(const UpdatePayload &pli)
+void Feature::updateModel(const UpdatePayload &pli)
 {
   setFailure();
   lastUpdateLog.clear();
@@ -879,14 +865,14 @@ void DatumPlane::updateModel(const UpdatePayload &pli)
     std::cout << std::endl << lastUpdateLog;
 }
 
-void DatumPlane::updateVisual()
+void Feature::updateVisual()
 {
   stow->updateGeometry();
   stow->updateLabelPositions();
   setVisualClean();
 }
 
-QTextStream& DatumPlane::getInfo(QTextStream &streamIn) const 
+QTextStream& Feature::getInfo(QTextStream &streamIn) const 
 {
     Base::getInfo(streamIn);
     
@@ -896,8 +882,7 @@ QTextStream& DatumPlane::getInfo(QTextStream &streamIn) const
     return streamIn;
 }
 
-//serial support for datum plane needs to be done.
-void DatumPlane::serialWrite(const boost::filesystem::path &dIn)
+void Feature::serialWrite(const boost::filesystem::path &dIn)
 {
   prj::srl::dtps::DatumPlane datumPlaneOut
   (
@@ -909,7 +894,6 @@ void DatumPlane::serialWrite(const boost::filesystem::path &dIn)
     stow->size.serialOut(),
     stow->offset.serialOut(),
     stow->angle.serialOut(),
-    stow->picks.serialOut(),
     stow->csysDragger.serialOut(),
     stow->flipLabel->serialOut(),
     stow->autoSizeLabel->serialOut(),
@@ -918,12 +902,22 @@ void DatumPlane::serialWrite(const boost::filesystem::path &dIn)
     stow->offsetIP->serialOut()
   );
   
+  switch (stow->dpType.getInt())
+  {
+    case 1: datumPlaneOut.picks() = stow->linkPicks.serialOut(); break;
+    case 2: datumPlaneOut.picks() = stow->offsetPicks.serialOut(); break;
+    case 3: datumPlaneOut.picks() = stow->centerPicks.serialOut(); break;
+    case 4: datumPlaneOut.picks() = stow->axisAnglePicks.serialOut(); break;
+    case 5: datumPlaneOut.picks() = stow->averagePicks.serialOut(); break;
+    case 6: datumPlaneOut.picks() = stow->pointsPicks.serialOut(); break;
+  }
+  
   xml_schema::NamespaceInfomap infoMap;
   std::ofstream stream(buildFilePathName(dIn).string());
   prj::srl::dtps::datumPlane(stream, datumPlaneOut, infoMap);
 }
 
-void DatumPlane::serialRead(const prj::srl::dtps::DatumPlane &dpi)
+void Feature::serialRead(const prj::srl::dtps::DatumPlane &dpi)
 {
   Base::serialIn(dpi.base());
   stow->dpType.serialIn(dpi.dpType());
@@ -933,13 +927,25 @@ void DatumPlane::serialRead(const prj::srl::dtps::DatumPlane &dpi)
   stow->size.serialIn(dpi.size());
   stow->offset.serialIn(dpi.offset());
   stow->angle.serialIn(dpi.angle());
-  stow->picks.serialIn(dpi.picks());
   stow->csysDragger.serialIn(dpi.csysDragger());
   stow->flipLabel->serialIn(dpi.flipLabel());
   stow->autoSizeLabel->serialIn(dpi.autoSizeLabel());
   stow->angleLabel->serialIn(dpi.angleLabel());
   stow->sizeIP->serialIn(dpi.sizeIP());
   stow->offsetIP->serialIn(dpi.offsetIP());
+  
+  if (dpi.picks())
+  {
+    switch (stow->dpType.getInt())
+    {
+      case 1: stow->linkPicks.serialIn(dpi.picks().get()); break;
+      case 2: stow->offsetPicks.serialIn(dpi.picks().get()); break;
+      case 3: stow->centerPicks.serialIn(dpi.picks().get()); break;
+      case 4: stow->axisAnglePicks.serialIn(dpi.picks().get()); break;
+      case 5: stow->averagePicks.serialIn(dpi.picks().get()); break;
+      case 6: stow->pointsPicks.serialIn(dpi.picks().get()); break;
+    }
+  }
 
   stow->cachedSize = stow->size.getDouble();
   mainTransform->setMatrix(stow->csys.getMatrix());

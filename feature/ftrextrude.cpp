@@ -41,7 +41,6 @@
 #include "parameter/prmconstants.h"
 #include "parameter/prmparameter.h"
 #include "feature/ftrdatumaxis.h"
-#include "feature/ftrdatumplane.h"
 #include "tools/featuretools.h"
 #include "tools/idtools.h"
 #include "project/serial/generated/prjsrlexrsextrude.h"
@@ -414,22 +413,20 @@ void Extrude::updateModel(const UpdatePayload &pIn)
         if (slc::isPointType(axisPicks.front().selectionType))
           throw std::runtime_error("Can't determine direction from 1 point");
         tls::Resolver aResolver(pIn);
-        aResolver.resolve(axisPicks.front());
-        if (!aResolver.getFeature())
+        if (!aResolver.resolve(axisPicks.front()))
           throw std::runtime_error("Resolution failure for first axis pick");
         if (slc::isObjectType(axisPicks.front().selectionType))
         {
-          if (aResolver.getFeature()->getType() == Type::DatumAxis)
+          auto csysPrms = aResolver.getFeature()->getParameters(prm::Tags::CSys);
+          if (!csysPrms.empty())
+          {
+            direction->setValue(gu::getZVector(csysPrms.front()->getMatrix()));
+          }
+          else if (aResolver.getFeature()->getType() == Type::DatumAxis)
           {
             const DatumAxis *da = dynamic_cast<const DatumAxis*>(aResolver.getFeature());
             assert(da);
             direction->setValue(da->getDirection());
-          }
-          else if (aResolver.getFeature()->getType() == Type::DatumPlane)
-          {
-            const DatumPlane *dp = dynamic_cast<const DatumPlane*>(aResolver.getFeature());
-            assert(dp);
-            direction->setValue(gu::getZVector(dp->getSystem()));
           }
         }
         else 

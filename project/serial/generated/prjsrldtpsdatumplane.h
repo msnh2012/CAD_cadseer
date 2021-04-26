@@ -245,16 +245,20 @@ namespace prj
         // picks
         //
         typedef ::prj::srl::spt::Parameter PicksType;
+        typedef ::xsd::cxx::tree::optional< PicksType > PicksOptional;
         typedef ::xsd::cxx::tree::traits< PicksType, char > PicksTraits;
 
-        const PicksType&
+        const PicksOptional&
         picks () const;
 
-        PicksType&
+        PicksOptional&
         picks ();
 
         void
         picks (const PicksType& x);
+
+        void
+        picks (const PicksOptional& x);
 
         void
         picks (::std::unique_ptr< PicksType > p);
@@ -371,7 +375,6 @@ namespace prj
                     const SizeType&,
                     const OffsetType&,
                     const AngleType&,
-                    const PicksType&,
                     const CsysDraggerType&,
                     const FlipLabelType&,
                     const AutoSizeLabelType&,
@@ -387,7 +390,6 @@ namespace prj
                     ::std::unique_ptr< SizeType >,
                     ::std::unique_ptr< OffsetType >,
                     ::std::unique_ptr< AngleType >,
-                    ::std::unique_ptr< PicksType >,
                     ::std::unique_ptr< CsysDraggerType >,
                     ::std::unique_ptr< FlipLabelType >,
                     ::std::unique_ptr< AutoSizeLabelType >,
@@ -429,7 +431,7 @@ namespace prj
         ::xsd::cxx::tree::one< SizeType > size_;
         ::xsd::cxx::tree::one< OffsetType > offset_;
         ::xsd::cxx::tree::one< AngleType > angle_;
-        ::xsd::cxx::tree::one< PicksType > picks_;
+        PicksOptional picks_;
         ::xsd::cxx::tree::one< CsysDraggerType > csysDragger_;
         ::xsd::cxx::tree::one< FlipLabelType > flipLabel_;
         ::xsd::cxx::tree::one< AutoSizeLabelType > autoSizeLabel_;

@@ -178,6 +178,11 @@ const slc::Messages& Model::getMessages() const
   return stow->messages;
 }
 
+const cmv::tbl::SelectionCue& Model::getCue() const
+{
+  return stow->cue;
+}
+
 struct View::Stow
 {
   View *view;
@@ -201,6 +206,8 @@ struct View::Stow
   
   void slcAdded(const msg::Message &mIn)
   {
+    if (view->isHidden())
+      return;
     if (slc::has(model->stow->messages, mIn.getSLC()))
       return;
     
@@ -235,6 +242,8 @@ struct View::Stow
   
   void slcRemoved(const msg::Message &mIn)
   {
+    if (view->isHidden())
+      return;
     const auto &slcMsg = mIn.getSLC();
     auto it = std::find(model->stow->messages.begin(), model->stow->messages.end(), slcMsg);
     if (it == model->stow->messages.end())
@@ -263,9 +272,11 @@ struct View::Stow
       go(); //don't have to worry about sync when removing all.
   }
   
-  void slcMasked(const msg::Message&)
+  void slcMasked(const msg::Message &mIn)
   {
-    //TODO
+    if (view->isHidden())
+      return;
+    model->stow->cue.mask = mIn.getSLC().selectionMask;
   }
   
   void setupDispatcher()

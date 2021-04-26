@@ -88,3 +88,7 @@ void Base::sendDone()
   app::instance()->queuedMessage(mOut);
 }
 
+std::string Base::indexTag(std::string_view sView, std::size_t index)
+{
+  return std::string(sView) + std::to_string(index);
+}

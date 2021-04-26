@@ -25,7 +25,7 @@
 
 namespace slc{class Container;}
 
-namespace ftr{class DatumPlane;}
+namespace ftr{namespace DatumPlane{class Feature;}}
 
 namespace cmd
 {
@@ -35,7 +35,7 @@ namespace cmd
   class DatumPlane : public Base
   {
   public:
-    ftr::DatumPlane *feature = nullptr;
+    ftr::DatumPlane::Feature *feature = nullptr;
     
     DatumPlane();
     DatumPlane(ftr::Base*);
@@ -47,7 +47,7 @@ namespace cmd
     virtual void deactivate() override;
     
     void setToConstant();
-    void setLinked(const boost::uuids::uuid&);
+    void setLinked(const slc::Messages&);
     void setToPlanarOffset(const std::vector<slc::Message>&);
     void setToPlanarCenter(const std::vector<slc::Message>&);
     void setToAxisAngle(const std::vector<slc::Message>&);
@@ -59,6 +59,7 @@ namespace cmd
     void go();
     bool isPlanarFace(const slc::Container&);
     bool isAxis(const slc::Container&);
+    void setType(int);
     bool attemptLink(const slc::Container&);
     bool attemptOffset(const slc::Container&);
     bool attemptCenter(const std::vector<slc::Container>&);

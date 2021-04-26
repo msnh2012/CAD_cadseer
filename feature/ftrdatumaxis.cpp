@@ -46,7 +46,6 @@
 #include "parameter/prmparameter.h"
 #include "feature/ftrinputtype.h"
 #include "feature/ftrupdatepayload.h"
-#include "feature/ftrdatumplane.h"
 #include "feature/ftrdatumaxis.h"
 
 using namespace ftr;
@@ -280,7 +279,10 @@ void DatumAxis::goUpdateIntersection(const UpdatePayload &pli)
   tls::Resolver resolver(pli);
   for (const auto &p : picks)
   {
-    resolver.resolve(p);
+    if (!resolver.resolve(p))
+      continue;
+    auto csysPrms = resolver.getFeature()->getParameters(prm::Tags::CSys);
+    auto sizePrms = resolver.getFeature()->getParameters(prm::Tags::Size);
     if (slc::isShapeType(p.selectionType))
     {
       if (p.selectionType != slc::Type::Face)
@@ -300,17 +302,20 @@ void DatumAxis::goUpdateIntersection(const UpdatePayload &pli)
         to = gu::toOsg(fbb.getCenter());
       }
     }
-    else if (resolver.getFeature() && resolver.getFeature()->getType() == Type::DatumPlane)
+    else if (!csysPrms.empty())
     {
-      const DatumPlane *dp = static_cast<const DatumPlane*>(resolver.getFeature());
-      osg::Matrixd dpSys = dp->getSystem();
+      osg::Matrixd dpSys = csysPrms.front()->getMatrix();
       gp_Pnt o = gu::toOcc(dpSys.getTrans()).XYZ();
       gp_Dir d = gu::toOcc(gu::getZVector(dpSys));
       planes.push_back(new Geom_Plane(o, d));
-      if (dp->getSize() * 2.0 > tSize)
+      if (!sizePrms.empty())
       {
-        tSize = dp->getSize() * 2.0;
-        to = dpSys.getTrans();
+        double inputSize = sizePrms.front()->getDouble() * 2.0;
+        if (inputSize > tSize)
+        {
+          tSize = inputSize;
+          to = dpSys.getTrans();
+        }
       }
     }
   }

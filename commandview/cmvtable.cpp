@@ -164,6 +164,7 @@ namespace
         auto *edtModel = dynamic_cast<cmv::edt::Model*>(myWidget->model());
         assert(edtModel);
         myModel->setMessages(index, edtModel->getMessages());
+        myModel->setCue(index, edtModel->getCue());
       }
       
       model->setData(index, QVariant(), Qt::EditRole);
@@ -426,7 +427,14 @@ const slc::Messages& Model::getMessages(const prm::Parameter *prmIn) const
 
 void Model::setCue(prm::Parameter *prm, const SelectionCue &cueIn)
 {
-  stow->cueMap.insert(std::make_pair(prm, cueIn));
+  stow->cueMap.insert_or_assign(prm, cueIn);
+}
+
+void Model::setCue(const QModelIndex &index, const SelectionCue &cue)
+{
+  if (!index.isValid())
+    return;
+  setCue(getParameter(index), cue);
 }
 
 const SelectionCue& Model::getCue(const prm::Parameter *prmIn) const

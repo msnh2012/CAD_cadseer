@@ -60,6 +60,7 @@ namespace cmd
     void splitterDispatched(const msg::Message&);
     
     void sendDone();
+    std::string indexTag(std::string_view, std::size_t);
     
     app::Application *application;
     app::MainWindow *mainWindow;

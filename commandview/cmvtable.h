@@ -51,17 +51,11 @@ namespace cmv
     * and that can trigger command view actions. We are however still changing
     * the parameter values in the widget and this might be confusing
     * to user who changes a value and then hits escape to reject the
-    * change, but the value changes anyway. Speaking of escape, it
-    * works as expected to close the delegate editor without calling
-    * setModelData, with exception is the selection widget where we
-    * use a persistent editor. Getting that behavior to match
-    * will be challenging. Anyway going with the table 'flow', 
+    * change, but the value changes anyway. Going with the table 'flow', 
     * will require us to rework all the individual widgets once again!
     * I will never move this software forward if I continually rewrite
     * gui interfaces!
     * 
-    * fucking drag and drop from expressions to widgets breaks with
-    * this table.
     */
     class Model : public QAbstractTableModel
     {
@@ -92,6 +86,7 @@ namespace cmv
       const slc::Messages& getMessages(const prm::Parameter*) const;
       
       void setCue(prm::Parameter*, const SelectionCue&);
+      void setCue(const QModelIndex&, const SelectionCue&);
       const SelectionCue& getCue(const prm::Parameter*) const;
       
       QStringList mimeTypes() const override;
@@ -122,6 +117,8 @@ namespace cmv
       View& operator=(const View&) = delete;
       View& operator=(const View&&) = delete;
       ~View() override;
+      
+      void updateHideInactive();
     protected:
       void mouseReleaseEvent(QMouseEvent*) override;
       void mouseDoubleClickEvent(QMouseEvent*) override;
@@ -132,7 +129,6 @@ namespace cmv
       void selectionHasChanged(const QItemSelection&, const QItemSelection&);
     private:
       bool hideInactive = false;
-      void updateHideInactive();
       void closePersistent(bool = true);
     };
   }

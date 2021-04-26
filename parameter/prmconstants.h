@@ -34,20 +34,21 @@ namespace prm
     static const QString Height = QObject::tr("Height");
     static const QString Length = QObject::tr("Length");
     static const QString Width = QObject::tr("Width");
-    static const QString Radius1 = QObject::tr("Radius1");
-    static const QString Radius2 = QObject::tr("Radius2");
+    static const QString Radius1 = QObject::tr("Radius 1");
+    static const QString Radius2 = QObject::tr("Radius 2");
     static const QString Position = QObject::tr("Position");
     static const QString Distance = QObject::tr("Distance");
     static const QString Angle = QObject::tr("Angle");
     static const QString Offset = QObject::tr("Offset");
     static const QString CSys = QObject::tr("CSys");
+    static const QString CSysLinked = QObject::tr("CSys Linked");
     static const QString Diameter = QObject::tr("Diameter");
     static const QString Origin = QObject::tr("Origin");
     static const QString Direction = QObject::tr("Direction");
     static const QString Scale = QObject::tr("Scale");
     static const QString Path = QObject::tr("Path");
     static const QString Size = QObject::tr("Size");
-    static const QString AutoSize = QObject::tr("AutoSize");
+    static const QString AutoSize = QObject::tr("Auto Size");
     static const QString Pitch = QObject::tr("Pitch");
     static const QString Picks = QObject::tr("Picks");
   }
@@ -64,6 +65,7 @@ namespace prm
     constexpr std::string_view Angle = "Angle"; //!< draft
     constexpr std::string_view Offset = "Offset"; //!< datum plane
     constexpr std::string_view CSys = "CSys"; //!< feature with a coordinate system.
+    constexpr std::string_view CSysLinked = "CSysLinked"; //!< feature with a coordinate system.
     constexpr std::string_view Diameter = "Diameter"; //!< sketch
     constexpr std::string_view Origin = "Origin"; //!< revolve, dieset
     constexpr std::string_view Direction = "Direction"; //!< extrude.

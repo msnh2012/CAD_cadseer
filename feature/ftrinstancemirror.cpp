@@ -154,8 +154,10 @@ void InstanceMirror::updateModel(const UpdatePayload &payloadIn)
       
       if (!slc::isShapeType(planePick.selectionType) && resolver.getFeature()->getType() == Type::DatumPlane)
       {
-        const DatumPlane *dp = dynamic_cast<const DatumPlane *>(resolver.getFeature());
-        workSystem = dp->getSystem();
+        auto prms = resolver.getFeature()->getParameters(prm::Tags::CSys);
+        if (prms.empty())
+          throw std::runtime_error("Couldn't get parameter with csys tag");
+        workSystem = prms.front()->getMatrix();
       }
       else if (resolver.getSeerShape())
       {

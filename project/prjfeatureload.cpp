@@ -358,7 +358,7 @@ std::shared_ptr< ftr::Base > FeatureLoad::loadDatumPlane(const std::string &file
   auto sDatumPlane = srl::dtps::datumPlane(fileNameIn, flags);
   assert(sDatumPlane);
   
-  auto freshDatumPlane = std::make_shared<ftr::DatumPlane>();
+  auto freshDatumPlane = std::make_shared<ftr::DatumPlane::Feature>();
   freshDatumPlane->serialRead(*sDatumPlane);
   
   return freshDatumPlane;
