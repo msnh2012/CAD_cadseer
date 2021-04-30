@@ -64,6 +64,13 @@ namespace slc
     | ShellsEnabled | FacesEnabled | WiresEnabled | EdgesEnabled | PointsEnabled);
   static const Mask AllPointsEnabled(EndPointsEnabled | MidPointsEnabled
     | CenterPointsEnabled | QuadrantPointsEnabled | NearestPointsEnabled);
+  static const Mask ObjectsBoth(ObjectsEnabled | ObjectsSelectable);
+  static const Mask SolidsBoth(SolidsEnabled | SolidsSelectable);
+  static const Mask ShellsBoth(ShellsEnabled | ShellsSelectable);
+  static const Mask FacesBoth(FacesEnabled | FacesSelectable);
+  static const Mask WiresBoth(WiresEnabled | WiresSelectable);
+  static const Mask EdgesBoth(EdgesEnabled | EdgesSelectable);
+  static const Mask PointsBoth(PointsEnabled | PointsSelectable);
 
   enum class Type
   {

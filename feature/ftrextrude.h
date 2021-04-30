@@ -31,69 +31,48 @@ namespace prj{namespace srl{namespace exrs{class Extrude;}}}
 
 namespace ftr
 {
-  /**
-  * @todo write docs
-  */
-  class Extrude : public Base
+  namespace Extrude
   {
-  public:
-    constexpr static const char *axisName = "axis";
-    
-    enum class DirectionType
+    namespace InputTags
     {
-      Infer //!< Infer the direction from the geometry to extrude.
+      inline constexpr std::string_view axis = "axis";
+      inline constexpr std::string_view profile = "profile";
+    }
+    namespace PrmTags
+    {
+      inline constexpr std::string_view extrusionType = "extrusionType";
+      inline constexpr std::string_view solid = "solid";
+      inline constexpr std::string_view reverse = "reverse";
+      inline constexpr std::string_view profilePicks = "profilePicks";
+      inline constexpr std::string_view axisPicks = "axisPicks";
+    }
+    enum class ExtrusionType
+    {
+      Constant //!< vector parameter
+      , Infer //!< Infer the direction from the geometry to extrude.
       , Picks //!< Direction is described by axisPicks and payload inputs.
-      , Parameter //!< Direction is like a regular parameter
     };
     
-    Extrude();
-    virtual ~Extrude() override;
-    
-    virtual void updateModel(const UpdatePayload&) override;
-    virtual Type getType() const override {return Type::Extrude;}
-    virtual const std::string& getTypeString() const override {return toString(Type::Extrude);}
-    virtual const QIcon& getIcon() const override {return icon;}
-    virtual Descriptor getDescriptor() const override {return Descriptor::Create;}
-    
-    virtual void serialWrite(const boost::filesystem::path&) override;
-    void serialRead(const prj::srl::exrs::Extrude&);
-    
-    void setPicks(const Picks&);
-    const Picks& getPicks() const {return picks;}
-    void setAxisPicks(const Picks&);
-    const Picks& getAxisPicks() {return axisPicks;}
-    void setDirectionType(DirectionType);
-    DirectionType getDirectionType(){return directionType;}
-    
-  protected:
-    Picks picks;
-    Picks axisPicks; // array because might be 2 points.
-    std::unique_ptr<ann::SeerShape> sShape;
-    std::unique_ptr<prm::Parameter> direction;
-    std::unique_ptr<prm::Parameter> distance;
-    std::unique_ptr<prm::Parameter> offset;
-    
-    std::unique_ptr<prm::Observer> directionObserver;
-    
-    osg::ref_ptr<lbr::PLabel> directionLabel;
-    osg::ref_ptr<lbr::IPGroup> distanceLabel;
-    osg::ref_ptr<lbr::IPGroup> offsetLabel;
-    osg::ref_ptr<osg::Switch> internalSwitch; //separate switch from overlay switch.
-    
-    DirectionType directionType = DirectionType::Infer;
-    
-    std::map<boost::uuids::uuid, boost::uuids::uuid> originalMap; //map inputs to equivalents in the output.
-    std::map<boost::uuids::uuid, boost::uuids::uuid> generatedMap; //map transition shapes.
-    std::map<boost::uuids::uuid, boost::uuids::uuid> lastMap; //map 'top' shapes.
-    std::map<boost::uuids::uuid, boost::uuids::uuid> oWireMap; //map new face to outer wire.
-    
-    void setupLabels();
-    void updateLabels(occt::BoundingBox&);
-    void updateLabelVisibility();
-    
-  private:
-    static QIcon icon;
-  };
+    class Feature : public Base
+    {
+    public:
+      Feature();
+      ~Feature() override;
+      
+      void updateModel(const UpdatePayload&) override;
+      Type getType() const override {return Type::Extrude;}
+      const std::string& getTypeString() const override {return toString(Type::Extrude);}
+      const QIcon& getIcon() const override {return icon;}
+      Descriptor getDescriptor() const override {return Descriptor::Create;}
+      
+      void serialWrite(const boost::filesystem::path&) override;
+      void serialRead(const prj::srl::exrs::Extrude&);
+    private:
+      static QIcon icon;
+      struct Stow;
+      std::unique_ptr<Stow> stow;
+    };
+  }
 }
 
 #endif // FTR_EXTRUDE_H

@@ -97,40 +97,82 @@ namespace prj
         this->seerShape_.set (std::move (x));
       }
 
-      const Extrude::PicksSequence& Extrude::
-      picks () const
+      const Extrude::ExtrusionTypeType& Extrude::
+      extrusionType () const
       {
-        return this->picks_;
+        return this->extrusionType_.get ();
       }
 
-      Extrude::PicksSequence& Extrude::
-      picks ()
+      Extrude::ExtrusionTypeType& Extrude::
+      extrusionType ()
       {
-        return this->picks_;
+        return this->extrusionType_.get ();
       }
 
       void Extrude::
-      picks (const PicksSequence& s)
+      extrusionType (const ExtrusionTypeType& x)
       {
-        this->picks_ = s;
+        this->extrusionType_.set (x);
       }
 
-      const Extrude::AxisPicksSequence& Extrude::
+      void Extrude::
+      extrusionType (::std::unique_ptr< ExtrusionTypeType > x)
+      {
+        this->extrusionType_.set (std::move (x));
+      }
+
+      const Extrude::ProfilePicksType& Extrude::
+      profilePicks () const
+      {
+        return this->profilePicks_.get ();
+      }
+
+      Extrude::ProfilePicksType& Extrude::
+      profilePicks ()
+      {
+        return this->profilePicks_.get ();
+      }
+
+      void Extrude::
+      profilePicks (const ProfilePicksType& x)
+      {
+        this->profilePicks_.set (x);
+      }
+
+      void Extrude::
+      profilePicks (::std::unique_ptr< ProfilePicksType > x)
+      {
+        this->profilePicks_.set (std::move (x));
+      }
+
+      const Extrude::AxisPicksOptional& Extrude::
       axisPicks () const
       {
         return this->axisPicks_;
       }
 
-      Extrude::AxisPicksSequence& Extrude::
+      Extrude::AxisPicksOptional& Extrude::
       axisPicks ()
       {
         return this->axisPicks_;
       }
 
       void Extrude::
-      axisPicks (const AxisPicksSequence& s)
+      axisPicks (const AxisPicksType& x)
       {
-        this->axisPicks_ = s;
+        this->axisPicks_.set (x);
+      }
+
+      void Extrude::
+      axisPicks (const AxisPicksOptional& x)
+      {
+        this->axisPicks_ = x;
+      }
+
+      void Extrude::
+      axisPicks (::std::unique_ptr< AxisPicksType > x)
+      {
+        this->axisPicks_.set (std::move (x));
       }
 
       const Extrude::DirectionType& Extrude::
@@ -277,22 +319,100 @@ namespace prj
         this->offsetLabel_.set (std::move (x));
       }
 
-      const Extrude::DirectionTypeType& Extrude::
-      directionType () const
+      const Extrude::SolidType& Extrude::
+      solid () const
       {
-        return this->directionType_.get ();
+        return this->solid_.get ();
       }
 
-      Extrude::DirectionTypeType& Extrude::
-      directionType ()
+      Extrude::SolidType& Extrude::
+      solid ()
       {
-        return this->directionType_.get ();
+        return this->solid_.get ();
       }
 
       void Extrude::
-      directionType (const DirectionTypeType& x)
+      solid (const SolidType& x)
       {
-        this->directionType_.set (x);
+        this->solid_.set (x);
+      }
+
+      void Extrude::
+      solid (::std::unique_ptr< SolidType > x)
+      {
+        this->solid_.set (std::move (x));
+      }
+
+      const Extrude::SolidLabelType& Extrude::
+      solidLabel () const
+      {
+        return this->solidLabel_.get ();
+      }
+
+      Extrude::SolidLabelType& Extrude::
+      solidLabel ()
+      {
+        return this->solidLabel_.get ();
+      }
+
+      void Extrude::
+      solidLabel (const SolidLabelType& x)
+      {
+        this->solidLabel_.set (x);
+      }
+
+      void Extrude::
+      solidLabel (::std::unique_ptr< SolidLabelType > x)
+      {
+        this->solidLabel_.set (std::move (x));
+      }
+
+      const Extrude::ReverseType& Extrude::
+      reverse () const
+      {
+        return this->reverse_.get ();
+      }
+
+      Extrude::ReverseType& Extrude::
+      reverse ()
+      {
+        return this->reverse_.get ();
+      }
+
+      void Extrude::
+      reverse (const ReverseType& x)
+      {
+        this->reverse_.set (x);
+      }
+
+      void Extrude::
+      reverse (::std::unique_ptr< ReverseType > x)
+      {
+        this->reverse_.set (std::move (x));
+      }
+
+      const Extrude::ReverseLabelType& Extrude::
+      reverseLabel () const
+      {
+        return this->reverseLabel_.get ();
+      }
+
+      Extrude::ReverseLabelType& Extrude::
+      reverseLabel ()
+      {
+        return this->reverseLabel_.get ();
+      }
+
+      void Extrude::
+      reverseLabel (const ReverseLabelType& x)
+      {
+        this->reverseLabel_.set (x);
+      }
+
+      void Extrude::
+      reverseLabel (::std::unique_ptr< ReverseLabelType > x)
+      {
+        this->reverseLabel_.set (std::move (x));
       }
 
       const Extrude::OriginalMapSequence& Extrude::
@@ -366,6 +486,24 @@ namespace prj
       {
         this->oWireMap_ = s;
       }
+
+      const Extrude::SetMapSequence& Extrude::
+      setMap () const
+      {
+        return this->setMap_;
+      }
+
+      Extrude::SetMapSequence& Extrude::
+      setMap ()
+      {
+        return this->setMap_;
+      }
+
+      void Extrude::
+      setMap (const SetMapSequence& s)
+      {
+        this->setMap_ = s;
+      }
     }
   }
 }
@@ -384,17 +522,23 @@ namespace prj
       Extrude::
       Extrude (const BaseType& base,
                const SeerShapeType& seerShape,
+               const ExtrusionTypeType& extrusionType,
+               const ProfilePicksType& profilePicks,
                const DirectionType& direction,
                const DirectionLabelType& directionLabel,
                const DistanceType& distance,
                const DistanceLabelType& distanceLabel,
                const OffsetType& offset,
                const OffsetLabelType& offsetLabel,
-               const DirectionTypeType& directionType)
+               const SolidType& solid,
+               const SolidLabelType& solidLabel,
+               const ReverseType& reverse,
+               const ReverseLabelType& reverseLabel)
       : ::xml_schema::Type (),
         base_ (base, this),
         seerShape_ (seerShape, this),
-        picks_ (this),
+        extrusionType_ (extrusionType, this),
+        profilePicks_ (profilePicks, this),
         axisPicks_ (this),
         direction_ (direction, this),
         directionLabel_ (directionLabel, this),
@@ -402,28 +546,38 @@ namespace prj
         distanceLabel_ (distanceLabel, this),
         offset_ (offset, this),
         offsetLabel_ (offsetLabel, this),
-        directionType_ (directionType, this),
+        solid_ (solid, this),
+        solidLabel_ (solidLabel, this),
+        reverse_ (reverse, this),
+        reverseLabel_ (reverseLabel, this),
         originalMap_ (this),
         generatedMap_ (this),
         lastMap_ (this),
-        oWireMap_ (this)
+        oWireMap_ (this),
+        setMap_ (this)
       {
       }
 
       Extrude::
       Extrude (::std::unique_ptr< BaseType > base,
                ::std::unique_ptr< SeerShapeType > seerShape,
+               ::std::unique_ptr< ExtrusionTypeType > extrusionType,
+               ::std::unique_ptr< ProfilePicksType > profilePicks,
                ::std::unique_ptr< DirectionType > direction,
                ::std::unique_ptr< DirectionLabelType > directionLabel,
                ::std::unique_ptr< DistanceType > distance,
                ::std::unique_ptr< DistanceLabelType > distanceLabel,
                ::std::unique_ptr< OffsetType > offset,
                ::std::unique_ptr< OffsetLabelType > offsetLabel,
-               const DirectionTypeType& directionType)
+               ::std::unique_ptr< SolidType > solid,
+               ::std::unique_ptr< SolidLabelType > solidLabel,
+               ::std::unique_ptr< ReverseType > reverse,
+               ::std::unique_ptr< ReverseLabelType > reverseLabel)
       : ::xml_schema::Type (),
         base_ (std::move (base), this),
         seerShape_ (std::move (seerShape), this),
-        picks_ (this),
+        extrusionType_ (std::move (extrusionType), this),
+        profilePicks_ (std::move (profilePicks), this),
         axisPicks_ (this),
         direction_ (std::move (direction), this),
         directionLabel_ (std::move (directionLabel), this),
@@ -431,11 +585,15 @@ namespace prj
         distanceLabel_ (std::move (distanceLabel), this),
         offset_ (std::move (offset), this),
         offsetLabel_ (std::move (offsetLabel), this),
-        directionType_ (directionType, this),
+        solid_ (std::move (solid), this),
+        solidLabel_ (std::move (solidLabel), this),
+        reverse_ (std::move (reverse), this),
+        reverseLabel_ (std::move (reverseLabel), this),
         originalMap_ (this),
         generatedMap_ (this),
         lastMap_ (this),
-        oWireMap_ (this)
+        oWireMap_ (this),
+        setMap_ (this)
       {
       }
 
@@ -446,7 +604,8 @@ namespace prj
       : ::xml_schema::Type (x, f, c),
         base_ (x.base_, f, this),
         seerShape_ (x.seerShape_, f, this),
-        picks_ (x.picks_, f, this),
+        extrusionType_ (x.extrusionType_, f, this),
+        profilePicks_ (x.profilePicks_, f, this),
         axisPicks_ (x.axisPicks_, f, this),
         direction_ (x.direction_, f, this),
         directionLabel_ (x.directionLabel_, f, this),
@@ -454,11 +613,15 @@ namespace prj
         distanceLabel_ (x.distanceLabel_, f, this),
         offset_ (x.offset_, f, this),
         offsetLabel_ (x.offsetLabel_, f, this),
-        directionType_ (x.directionType_, f, this),
+        solid_ (x.solid_, f, this),
+        solidLabel_ (x.solidLabel_, f, this),
+        reverse_ (x.reverse_, f, this),
+        reverseLabel_ (x.reverseLabel_, f, this),
         originalMap_ (x.originalMap_, f, this),
         generatedMap_ (x.generatedMap_, f, this),
         lastMap_ (x.lastMap_, f, this),
-        oWireMap_ (x.oWireMap_, f, this)
+        oWireMap_ (x.oWireMap_, f, this),
+        setMap_ (x.setMap_, f, this)
       {
       }
 
@@ -469,7 +632,8 @@ namespace prj
       : ::xml_schema::Type (e, f | ::xml_schema::Flags::base, c),
         base_ (this),
         seerShape_ (this),
-        picks_ (this),
+        extrusionType_ (this),
+        profilePicks_ (this),
         axisPicks_ (this),
         direction_ (this),
         directionLabel_ (this),
@@ -477,11 +641,15 @@ namespace prj
         distanceLabel_ (this),
         offset_ (this),
         offsetLabel_ (this),
-        directionType_ (this),
+        solid_ (this),
+        solidLabel_ (this),
+        reverse_ (this),
+        reverseLabel_ (this),
         originalMap_ (this),
         generatedMap_ (this),
         lastMap_ (this),
-        oWireMap_ (this)
+        oWireMap_ (this),
+        setMap_ (this)
       {
         if ((f & ::xml_schema::Flags::base) == 0)
         {
@@ -528,15 +696,32 @@ namespace prj
             }
           }
 
-          // picks
+          // extrusionType
           //
-          if (n.name () == "picks" && n.namespace_ ().empty ())
+          if (n.name () == "extrusionType" && n.namespace_ ().empty ())
           {
-            ::std::unique_ptr< PicksType > r (
-              PicksTraits::create (i, f, this));
+            ::std::unique_ptr< ExtrusionTypeType > r (
+              ExtrusionTypeTraits::create (i, f, this));
 
-            this->picks_.push_back (::std::move (r));
-            continue;
+            if (!extrusionType_.present ())
+            {
+              this->extrusionType_.set (::std::move (r));
+              continue;
+            }
+          }
+
+          // profilePicks
+          //
+          if (n.name () == "profilePicks" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< ProfilePicksType > r (
+              ProfilePicksTraits::create (i, f, this));
+
+            if (!profilePicks_.present ())
+            {
+              this->profilePicks_.set (::std::move (r));
+              continue;
+            }
           }
 
           // axisPicks
@@ -546,8 +731,11 @@ namespace prj
             ::std::unique_ptr< AxisPicksType > r (
               AxisPicksTraits::create (i, f, this));
 
-            this->axisPicks_.push_back (::std::move (r));
-            continue;
+            if (!this->axisPicks_)
+            {
+              this->axisPicks_.set (::std::move (r));
+              continue;
+            }
           }
 
           // direction
@@ -634,13 +822,58 @@ namespace prj
             }
           }
 
-          // directionType
+          // solid
           //
-          if (n.name () == "directionType" && n.namespace_ ().empty ())
+          if (n.name () == "solid" && n.namespace_ ().empty ())
           {
-            if (!directionType_.present ())
+            ::std::unique_ptr< SolidType > r (
+              SolidTraits::create (i, f, this));
+
+            if (!solid_.present ())
             {
-              this->directionType_.set (DirectionTypeTraits::create (i, f, this));
+              this->solid_.set (::std::move (r));
+              continue;
+            }
+          }
+
+          // solidLabel
+          //
+          if (n.name () == "solidLabel" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< SolidLabelType > r (
+              SolidLabelTraits::create (i, f, this));
+
+            if (!solidLabel_.present ())
+            {
+              this->solidLabel_.set (::std::move (r));
+              continue;
+            }
+          }
+
+          // reverse
+          //
+          if (n.name () == "reverse" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< ReverseType > r (
+              ReverseTraits::create (i, f, this));
+
+            if (!reverse_.present ())
+            {
+              this->reverse_.set (::std::move (r));
+              continue;
+            }
+          }
+
+          // reverseLabel
+          //
+          if (n.name () == "reverseLabel" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< ReverseLabelType > r (
+              ReverseLabelTraits::create (i, f, this));
+
+            if (!reverseLabel_.present ())
+            {
+              this->reverseLabel_.set (::std::move (r));
               continue;
             }
           }
@@ -689,6 +922,17 @@ namespace prj
             continue;
           }
 
+          // setMap
+          //
+          if (n.name () == "setMap" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< SetMapType > r (
+              SetMapTraits::create (i, f, this));
+
+            this->setMap_.push_back (::std::move (r));
+            continue;
+          }
+
           break;
         }
 
@@ -703,6 +947,20 @@ namespace prj
         {
           throw ::xsd::cxx::tree::expected_element< char > (
             "seerShape",
+            "");
+        }
+
+        if (!extrusionType_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "extrusionType",
+            "");
+        }
+
+        if (!profilePicks_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "profilePicks",
             "");
         }
 
@@ -748,10 +1006,31 @@ namespace prj
             "");
         }
 
-        if (!directionType_.present ())
+        if (!solid_.present ())
         {
           throw ::xsd::cxx::tree::expected_element< char > (
-            "directionType",
+            "solid",
+            "");
+        }
+
+        if (!solidLabel_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "solidLabel",
+            "");
+        }
+
+        if (!reverse_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "reverse",
+            "");
+        }
+
+        if (!reverseLabel_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "reverseLabel",
             "");
         }
       }
@@ -771,7 +1050,8 @@ namespace prj
           static_cast< ::xml_schema::Type& > (*this) = x;
           this->base_ = x.base_;
           this->seerShape_ = x.seerShape_;
-          this->picks_ = x.picks_;
+          this->extrusionType_ = x.extrusionType_;
+          this->profilePicks_ = x.profilePicks_;
           this->axisPicks_ = x.axisPicks_;
           this->direction_ = x.direction_;
           this->directionLabel_ = x.directionLabel_;
@@ -779,11 +1059,15 @@ namespace prj
           this->distanceLabel_ = x.distanceLabel_;
           this->offset_ = x.offset_;
           this->offsetLabel_ = x.offsetLabel_;
-          this->directionType_ = x.directionType_;
+          this->solid_ = x.solid_;
+          this->solidLabel_ = x.solidLabel_;
+          this->reverse_ = x.reverse_;
+          this->reverseLabel_ = x.reverseLabel_;
           this->originalMap_ = x.originalMap_;
           this->generatedMap_ = x.generatedMap_;
           this->lastMap_ = x.lastMap_;
           this->oWireMap_ = x.oWireMap_;
+          this->setMap_ = x.setMap_;
         }
 
         return *this;
@@ -1113,32 +1397,38 @@ namespace prj
           s << i.seerShape ();
         }
 
-        // picks
+        // extrusionType
         //
-        for (Extrude::PicksConstIterator
-             b (i.picks ().begin ()), n (i.picks ().end ());
-             b != n; ++b)
         {
           ::xercesc::DOMElement& s (
             ::xsd::cxx::xml::dom::create_element (
-              "picks",
+              "extrusionType",
               e));
 
-          s << *b;
+          s << i.extrusionType ();
+        }
+
+        // profilePicks
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "profilePicks",
+              e));
+
+          s << i.profilePicks ();
         }
 
         // axisPicks
         //
-        for (Extrude::AxisPicksConstIterator
-             b (i.axisPicks ().begin ()), n (i.axisPicks ().end ());
-             b != n; ++b)
+        if (i.axisPicks ())
         {
           ::xercesc::DOMElement& s (
             ::xsd::cxx::xml::dom::create_element (
               "axisPicks",
               e));
 
-          s << *b;
+          s << *i.axisPicks ();
         }
 
         // direction
@@ -1207,15 +1497,48 @@ namespace prj
           s << i.offsetLabel ();
         }
 
-        // directionType
+        // solid
         //
         {
           ::xercesc::DOMElement& s (
             ::xsd::cxx::xml::dom::create_element (
-              "directionType",
+              "solid",
               e));
 
-          s << i.directionType ();
+          s << i.solid ();
+        }
+
+        // solidLabel
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "solidLabel",
+              e));
+
+          s << i.solidLabel ();
+        }
+
+        // reverse
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "reverse",
+              e));
+
+          s << i.reverse ();
+        }
+
+        // reverseLabel
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "reverseLabel",
+              e));
+
+          s << i.reverseLabel ();
         }
 
         // originalMap
@@ -1269,6 +1592,20 @@ namespace prj
           ::xercesc::DOMElement& s (
             ::xsd::cxx::xml::dom::create_element (
               "oWireMap",
+              e));
+
+          s << *b;
+        }
+
+        // setMap
+        //
+        for (Extrude::SetMapConstIterator
+             b (i.setMap ().begin ()), n (i.setMap ().end ());
+             b != n; ++b)
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "setMap",
               e));
 
           s << *b;

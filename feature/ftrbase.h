@@ -123,6 +123,7 @@ public:
   prm::Parameter* getParameter(const boost::uuids::uuid &idin) const;
   const prm::Parameters& getParameters() const{return parameters;}
   prm::Parameters getParameters(std::string_view) const; //!< all parameters with tag.
+  prm::Parameter* getParameter(std::string_view) const; //!< first parameter with tag or assert.
   
   bool hasAnnex(ann::Type t) const
   {

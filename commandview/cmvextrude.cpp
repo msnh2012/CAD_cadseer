@@ -26,7 +26,12 @@
 #include "project/prjproject.h"
 #include "dialogs/dlgselectionbutton.h"
 #include "dialogs/dlgselectionwidget.h"
+#include "message/msgmessage.h"
+#include "message/msgnode.h"
 #include "commandview/cmvparameterwidgets.h"
+#include "commandview/cmvselectioncue.h"
+#include "commandview/cmvtable.h"
+#include "parameter/prmconstants.h"
 #include "parameter/prmparameter.h"
 #include "tools/featuretools.h"
 #include "feature/ftrextrude.h"
@@ -41,141 +46,47 @@ struct Extrude::Stow
 {
   cmd::Extrude *command;
   cmv::Extrude *view;
-  QComboBox *combo = nullptr;
-  QStackedWidget *stackedWidget = nullptr;
-  dlg::SelectionWidget *inferSelection = nullptr; //used by parameter also
-  dlg::SelectionWidget *picksSelection = nullptr;
-  cmv::ParameterWidget *parameterWidget = nullptr;
-  int lastComboIndex = 0; // used to sync profile selections between selection widgets.
+  prm::Parameters parameters;
+  cmv::tbl::Model *prmModel = nullptr;
+  cmv::tbl::View *prmView = nullptr;
   
   Stow(cmd::Extrude *cIn, cmv::Extrude *vIn)
   : command(cIn)
   , view(vIn)
   {
+    parameters = command->feature->getParameters();
     buildGui();
-    
-    QSettings &settings = app::instance()->getUserSettings();
-    settings.beginGroup("cmv::Extrude");
-    //load settings
-    settings.endGroup();
-    
-    loadFeatureData();
-    glue();
+    connect(prmModel, &tbl::Model::dataChanged, view, &Extrude::modelChanged);
   }
   
   void buildGui()
   {
-    QSizePolicy adjust = view->sizePolicy();
-    adjust.setVerticalPolicy(QSizePolicy::Maximum);
-    view->setSizePolicy(adjust);
-    
     QVBoxLayout *mainLayout = new QVBoxLayout();
     view->setLayout(mainLayout);
+    Base::clearContentMargins(view);
+    view->setSizePolicy(view->sizePolicy().horizontalPolicy(), QSizePolicy::Expanding);
     
-    combo = new QComboBox(view);
-    combo->addItem(QObject::tr("Infer Direction"));
-    combo->addItem(QObject::tr("Pick Direction"));
-    combo->addItem(QObject::tr("Parameter Direction"));
-    mainLayout->addWidget(combo);
+    prmModel = new tbl::Model(view, command->feature);
+    prmView = new tbl::View(view, prmModel, true);
+    mainLayout->addWidget(prmView);
     
-    stackedWidget = new QStackedWidget(view);
-    mainLayout->addWidget(stackedWidget);
-    
-    std::vector<dlg::SelectionWidgetCue> cues;
-    dlg::SelectionWidgetCue cue;
-    cue.name = tr("Profile");
-    cue.singleSelection = true; //eventually false.
-    cue.mask = slc::ObjectsEnabled | slc::ObjectsSelectable | slc::FacesEnabled  | slc::FacesSelectable
-      | slc::WiresEnabled | slc::EdgesEnabled | slc::PointsEnabled | slc::PointsSelectable | slc::AllPointsEnabled;
-    cue.statusPrompt = tr("Select Profile Geometry");
-    cue.showAccrueColumn = false;
-    cues.push_back(cue);
-    inferSelection = new dlg::SelectionWidget(stackedWidget, cues);
-    stackedWidget->addWidget(inferSelection);
-    
-    cue.name = tr("Axis");
-    cue.singleSelection = false;
-    cue.mask = slc::ObjectsEnabled | slc::ObjectsSelectable | slc::FacesEnabled  | slc::FacesSelectable
-      | slc::PointsEnabled | slc::PointsSelectable | slc::AllPointsEnabled;
-    cue.statusPrompt = tr("Select Points, Face Or Datum For Axis");
-    cues.push_back(cue);
-    picksSelection = new dlg::SelectionWidget(stackedWidget, cues);
-    stackedWidget->addWidget(picksSelection);
-    
-    parameterWidget = new cmv::ParameterWidget(view, command->feature->getParameters());
-    mainLayout->addWidget(parameterWidget);
-    mainLayout->addItem(new QSpacerItem(20, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
-  }
-  
-  void loadFeatureData()
-  {
-    ftr::UpdatePayload up = view->project->getPayload(command->feature->getId());
-    tls::Resolver resolver(up);
-    
-    auto picksToMessages = [&](const ftr::Picks &pIn) -> slc::Messages
     {
-      slc::Messages out;
-      for (const auto &p : pIn)
-      {
-        if (resolver.resolve(p))
-        {
-          auto msgs = resolver.convertToMessages();
-          out.insert(out.end(), msgs.begin(), msgs.end());
-        }
-      }
-      return out;
-    };
-    
-    inferSelection->initializeButton(0, picksToMessages(command->feature->getPicks()));
-    picksSelection->initializeButton(0, picksToMessages(command->feature->getPicks()));
-    
-    ftr::Extrude::DirectionType dt = command->feature->getDirectionType();
-    if (dt == ftr::Extrude::DirectionType::Picks)
-    {
-      picksSelection->initializeButton(1, picksToMessages(command->feature->getAxisPicks()));
-      stackedWidget->setCurrentIndex(1);
-      picksSelection->activate(0);
-    }
-    else
-    {
-      stackedWidget->setCurrentIndex(0);
-      inferSelection->activate(0);
+      tbl::SelectionCue cue;
+      cue.singleSelection = false;
+      cue.mask = slc::ObjectsBoth | slc::FacesBoth | slc::WiresEnabled | slc::EdgesBoth | slc::PointsBoth | slc::AllPointsEnabled;
+      cue.statusPrompt = tr("Select Profiles To Extrude");
+      cue.accrueEnabled = false;
+      prmModel->setCue(command->feature->getParameter(ftr::Extrude::PrmTags::profilePicks), cue);
     }
     
-    combo->setCurrentIndex(static_cast<int>(dt));
-    lastComboIndex = combo->currentIndex();
-  }
-  
-  void glue()
-  {
-    QObject::connect(combo, SIGNAL(currentIndexChanged(int)), view, SLOT(comboChanged(int)));
-    QObject::connect(inferSelection->getButton(0), &dlg::SelectionButton::dirty, view, &Extrude::profileSelectionChanged);
-    QObject::connect(picksSelection->getButton(0), &dlg::SelectionButton::dirty, view, &Extrude::profileSelectionChanged);
-    QObject::connect(picksSelection->getButton(1), &dlg::SelectionButton::dirty, view, &Extrude::axisSelectionChanged);
-    QObject::connect(parameterWidget, &ParameterBase::prmValueChanged, view, &Extrude::parameterChanged);
-  }
-  
-  void goAxisInfer()
-  {
-    command->setToAxisInfer(inferSelection->getMessages(0));
-    goUpdate();
-  }
-  
-  void goAxisPicks()
-  {
-    command->setToAxisPicks(picksSelection->getMessages(0), picksSelection->getMessages(1));
-    goUpdate();
-  }
-  
-  void goAxisParameter()
-  {
-    command->setToAxisParameter(inferSelection->getMessages(0));
-    goUpdate();
-  }
-  
-  void goUpdate()
-  {
-    command->localUpdate();
+    {
+      tbl::SelectionCue cue;
+      cue.singleSelection = false;
+      cue.mask = slc::ObjectsBoth | slc::FacesEnabled | slc::PointsBoth | slc::AllPointsEnabled | slc::EndPointsSelectable;
+      cue.statusPrompt = tr("Select Axis. Two Points, One Face or One Datum Axis");
+      cue.accrueEnabled = false;
+      prmModel->setCue(command->feature->getParameter(ftr::Extrude::PrmTags::axisPicks), cue);
+    }
   }
 };
 
@@ -186,67 +97,40 @@ Extrude::Extrude(cmd::Extrude *cIn)
 
 Extrude::~Extrude() = default;
 
-void Extrude::comboChanged(int cIndex)
+void Extrude::modelChanged(const QModelIndex &index, const QModelIndex&)
 {
-  //we have 2 selection widgets with distinct profile selections.
-  //we want to keep these in sync for a better user experience.
-  if (cIndex == 0)
-  {
-    if (stow->lastComboIndex == 1)
-    {
-      stow->inferSelection->getButton(0)->setMessages(stow->picksSelection->getButton(0)->getMessages());
-      stow->inferSelection->getButton(0)->mask = stow->picksSelection->getButton(0)->mask;
-      stow->inferSelection->activate(0);
-    }
-    stow->stackedWidget->setCurrentIndex(0);
-    stow->goAxisInfer();
-  }
-  else if (cIndex == 1)
-  {
-    if (stow->lastComboIndex != 1)
-    {
-      stow->picksSelection->getButton(0)->setMessages(stow->inferSelection->getButton(0)->getMessages());
-      stow->picksSelection->getButton(0)->mask = stow->inferSelection->getButton(0)->mask;
-      stow->picksSelection->activate(0);
-    }
-    stow->stackedWidget->setCurrentIndex(1);
-    stow->goAxisPicks();
-  }
-  else if (cIndex == 2)
-  {
-    if (stow->lastComboIndex == 1)
-    {
-      stow->inferSelection->getButton(0)->setMessages(stow->picksSelection->getButton(0)->getMessages());
-      stow->inferSelection->getButton(0)->mask = stow->picksSelection->getButton(0)->mask;
-      stow->inferSelection->activate(0);
-    }
-    stow->stackedWidget->setCurrentIndex(0);
-    stow->goAxisParameter();
-  }
+  if (!index.isValid())
+    return;
   
-  stow->lastComboIndex = cIndex;
+  using ftr::Extrude::PrmTags::profilePicks;
+  using ftr::Extrude::PrmTags::axisPicks;
+  using ftr::Extrude::PrmTags::extrusionType;
+  using ftr::Extrude::ExtrusionType;
   
-  //we will want to enable/disable the direction parameter.
-  //we can't parse vectors yet, so will leave it disabled.
-}
-
-void Extrude::profileSelectionChanged()
-{
-  int current = stow->combo->currentIndex();
-  if (current == 0)
-    stow->goAxisInfer();
-  else if (current == 1)
-    stow->goAxisPicks();
-  else if (current == 2)
-    stow->goAxisParameter();
-}
-
-void Extrude::axisSelectionChanged()
-{
-  stow->goAxisPicks();
-}
-
-void Extrude::parameterChanged()
-{
-  stow->goUpdate();
+  const ftr::Base *feature = stow->command->feature;
+  const auto &profiles = stow->prmModel->getMessages(feature->getParameter(profilePicks));
+  const auto &axes = stow->prmModel->getMessages(feature->getParameter(axisPicks));
+  
+  auto dispatch = [&]()
+  {
+    switch(static_cast<ExtrusionType>(feature->getParameter(extrusionType)->getInt()))
+    {
+      case ExtrusionType::Constant: stow->command->setToAxisParameter(profiles); break;
+      case ExtrusionType::Infer: stow->command->setToAxisInfer(profiles); break;
+      case ExtrusionType::Picks: stow->command->setToAxisPicks(profiles, axes); break;
+      default: assert(0); break; //unrecognized extrude type.
+    }
+  };
+  
+  auto changedTag = stow->parameters.at(index.row())->getTag();
+  if (changedTag == extrusionType)
+  {
+    dispatch();
+    stow->prmView->updateHideInactive();
+  }
+  else if (changedTag == profilePicks || changedTag == axisPicks)
+    dispatch();
+  
+  stow->command->localUpdate();
+  node->sendBlocked(msg::buildStatusMessage(stow->command->getStatusMessage()));
 }

@@ -37,11 +37,8 @@ namespace cmv
   public:
     Extrude(cmd::Extrude*);
     ~Extrude() override;
-  public Q_SLOTS:
-    void comboChanged(int);
-    void profileSelectionChanged();
-    void axisSelectionChanged();
-    void parameterChanged();
+  private Q_SLOTS:
+    void modelChanged(const QModelIndex&, const QModelIndex&);
   private:
     struct Stow;
     std::unique_ptr<Stow> stow;

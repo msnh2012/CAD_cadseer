@@ -494,6 +494,17 @@ prm::Parameters Base::getParameters(std::string_view svIn) const
   return out;
 }
 
+prm::Parameter* Base::getParameter(std::string_view svIn) const
+{
+  for (auto *p : parameters)
+  {
+    if (p->getTag() == svIn)
+      return p;
+  }
+  assert(0); //no parameter with tag was found;
+  return nullptr;
+}
+
 void Base::removeParameter(const prm::Parameter *pIn)
 {
   assert(pIn);

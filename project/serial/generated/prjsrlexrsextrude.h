@@ -142,39 +142,60 @@ namespace prj
         void
         seerShape (::std::unique_ptr< SeerShapeType > p);
 
-        // picks
+        // extrusionType
         //
-        typedef ::prj::srl::spt::Pick PicksType;
-        typedef ::xsd::cxx::tree::sequence< PicksType > PicksSequence;
-        typedef PicksSequence::iterator PicksIterator;
-        typedef PicksSequence::const_iterator PicksConstIterator;
-        typedef ::xsd::cxx::tree::traits< PicksType, char > PicksTraits;
+        typedef ::prj::srl::spt::Parameter ExtrusionTypeType;
+        typedef ::xsd::cxx::tree::traits< ExtrusionTypeType, char > ExtrusionTypeTraits;
 
-        const PicksSequence&
-        picks () const;
+        const ExtrusionTypeType&
+        extrusionType () const;
 
-        PicksSequence&
-        picks ();
+        ExtrusionTypeType&
+        extrusionType ();
 
         void
-        picks (const PicksSequence& s);
+        extrusionType (const ExtrusionTypeType& x);
+
+        void
+        extrusionType (::std::unique_ptr< ExtrusionTypeType > p);
+
+        // profilePicks
+        //
+        typedef ::prj::srl::spt::Parameter ProfilePicksType;
+        typedef ::xsd::cxx::tree::traits< ProfilePicksType, char > ProfilePicksTraits;
+
+        const ProfilePicksType&
+        profilePicks () const;
+
+        ProfilePicksType&
+        profilePicks ();
+
+        void
+        profilePicks (const ProfilePicksType& x);
+
+        void
+        profilePicks (::std::unique_ptr< ProfilePicksType > p);
 
         // axisPicks
         //
-        typedef ::prj::srl::spt::Pick AxisPicksType;
-        typedef ::xsd::cxx::tree::sequence< AxisPicksType > AxisPicksSequence;
-        typedef AxisPicksSequence::iterator AxisPicksIterator;
-        typedef AxisPicksSequence::const_iterator AxisPicksConstIterator;
+        typedef ::prj::srl::spt::Parameter AxisPicksType;
+        typedef ::xsd::cxx::tree::optional< AxisPicksType > AxisPicksOptional;
         typedef ::xsd::cxx::tree::traits< AxisPicksType, char > AxisPicksTraits;
 
-        const AxisPicksSequence&
+        const AxisPicksOptional&
         axisPicks () const;
 
-        AxisPicksSequence&
+        AxisPicksOptional&
         axisPicks ();
 
         void
-        axisPicks (const AxisPicksSequence& s);
+        axisPicks (const AxisPicksType& x);
+
+        void
+        axisPicks (const AxisPicksOptional& x);
+
+        void
+        axisPicks (::std::unique_ptr< AxisPicksType > p);
 
         // direction
         //
@@ -278,19 +299,73 @@ namespace prj
         void
         offsetLabel (::std::unique_ptr< OffsetLabelType > p);
 
-        // directionType
+        // solid
         //
-        typedef ::xml_schema::Int DirectionTypeType;
-        typedef ::xsd::cxx::tree::traits< DirectionTypeType, char > DirectionTypeTraits;
+        typedef ::prj::srl::spt::Parameter SolidType;
+        typedef ::xsd::cxx::tree::traits< SolidType, char > SolidTraits;
 
-        const DirectionTypeType&
-        directionType () const;
+        const SolidType&
+        solid () const;
 
-        DirectionTypeType&
-        directionType ();
+        SolidType&
+        solid ();
 
         void
-        directionType (const DirectionTypeType& x);
+        solid (const SolidType& x);
+
+        void
+        solid (::std::unique_ptr< SolidType > p);
+
+        // solidLabel
+        //
+        typedef ::prj::srl::spt::PLabel SolidLabelType;
+        typedef ::xsd::cxx::tree::traits< SolidLabelType, char > SolidLabelTraits;
+
+        const SolidLabelType&
+        solidLabel () const;
+
+        SolidLabelType&
+        solidLabel ();
+
+        void
+        solidLabel (const SolidLabelType& x);
+
+        void
+        solidLabel (::std::unique_ptr< SolidLabelType > p);
+
+        // reverse
+        //
+        typedef ::prj::srl::spt::Parameter ReverseType;
+        typedef ::xsd::cxx::tree::traits< ReverseType, char > ReverseTraits;
+
+        const ReverseType&
+        reverse () const;
+
+        ReverseType&
+        reverse ();
+
+        void
+        reverse (const ReverseType& x);
+
+        void
+        reverse (::std::unique_ptr< ReverseType > p);
+
+        // reverseLabel
+        //
+        typedef ::prj::srl::spt::PLabel ReverseLabelType;
+        typedef ::xsd::cxx::tree::traits< ReverseLabelType, char > ReverseLabelTraits;
+
+        const ReverseLabelType&
+        reverseLabel () const;
+
+        ReverseLabelType&
+        reverseLabel ();
+
+        void
+        reverseLabel (const ReverseLabelType& x);
+
+        void
+        reverseLabel (::std::unique_ptr< ReverseLabelType > p);
 
         // originalMap
         //
@@ -360,27 +435,54 @@ namespace prj
         void
         oWireMap (const OWireMapSequence& s);
 
+        // setMap
+        //
+        typedef ::prj::srl::spt::DerivedRecord SetMapType;
+        typedef ::xsd::cxx::tree::sequence< SetMapType > SetMapSequence;
+        typedef SetMapSequence::iterator SetMapIterator;
+        typedef SetMapSequence::const_iterator SetMapConstIterator;
+        typedef ::xsd::cxx::tree::traits< SetMapType, char > SetMapTraits;
+
+        const SetMapSequence&
+        setMap () const;
+
+        SetMapSequence&
+        setMap ();
+
+        void
+        setMap (const SetMapSequence& s);
+
         // Constructors.
         //
         Extrude (const BaseType&,
                  const SeerShapeType&,
+                 const ExtrusionTypeType&,
+                 const ProfilePicksType&,
                  const DirectionType&,
                  const DirectionLabelType&,
                  const DistanceType&,
                  const DistanceLabelType&,
                  const OffsetType&,
                  const OffsetLabelType&,
-                 const DirectionTypeType&);
+                 const SolidType&,
+                 const SolidLabelType&,
+                 const ReverseType&,
+                 const ReverseLabelType&);
 
         Extrude (::std::unique_ptr< BaseType >,
                  ::std::unique_ptr< SeerShapeType >,
+                 ::std::unique_ptr< ExtrusionTypeType >,
+                 ::std::unique_ptr< ProfilePicksType >,
                  ::std::unique_ptr< DirectionType >,
                  ::std::unique_ptr< DirectionLabelType >,
                  ::std::unique_ptr< DistanceType >,
                  ::std::unique_ptr< DistanceLabelType >,
                  ::std::unique_ptr< OffsetType >,
                  ::std::unique_ptr< OffsetLabelType >,
-                 const DirectionTypeType&);
+                 ::std::unique_ptr< SolidType >,
+                 ::std::unique_ptr< SolidLabelType >,
+                 ::std::unique_ptr< ReverseType >,
+                 ::std::unique_ptr< ReverseLabelType >);
 
         Extrude (const ::xercesc::DOMElement& e,
                  ::xml_schema::Flags f = 0,
@@ -410,19 +512,24 @@ namespace prj
         protected:
         ::xsd::cxx::tree::one< BaseType > base_;
         ::xsd::cxx::tree::one< SeerShapeType > seerShape_;
-        PicksSequence picks_;
-        AxisPicksSequence axisPicks_;
+        ::xsd::cxx::tree::one< ExtrusionTypeType > extrusionType_;
+        ::xsd::cxx::tree::one< ProfilePicksType > profilePicks_;
+        AxisPicksOptional axisPicks_;
         ::xsd::cxx::tree::one< DirectionType > direction_;
         ::xsd::cxx::tree::one< DirectionLabelType > directionLabel_;
         ::xsd::cxx::tree::one< DistanceType > distance_;
         ::xsd::cxx::tree::one< DistanceLabelType > distanceLabel_;
         ::xsd::cxx::tree::one< OffsetType > offset_;
         ::xsd::cxx::tree::one< OffsetLabelType > offsetLabel_;
-        ::xsd::cxx::tree::one< DirectionTypeType > directionType_;
+        ::xsd::cxx::tree::one< SolidType > solid_;
+        ::xsd::cxx::tree::one< SolidLabelType > solidLabel_;
+        ::xsd::cxx::tree::one< ReverseType > reverse_;
+        ::xsd::cxx::tree::one< ReverseLabelType > reverseLabel_;
         OriginalMapSequence originalMap_;
         GeneratedMapSequence generatedMap_;
         LastMapSequence lastMap_;
         OWireMapSequence oWireMap_;
+        SetMapSequence setMap_;
       };
     }
   }

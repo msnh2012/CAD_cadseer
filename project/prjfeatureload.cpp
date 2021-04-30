@@ -607,7 +607,7 @@ std::shared_ptr<ftr::Base> FeatureLoad::loadExtrude(const std::string &fileNameI
   auto se = srl::exrs::extrude(fileNameIn, flags);
   assert(se);
   
-  auto ef = std::make_shared<ftr::Extrude>();
+  auto ef = std::make_shared<ftr::Extrude::Feature>();
   ef->getAnnex<ann::SeerShape>().setOCCTShape(shapeVector.at(shapeOffsetIn), featureId);
   ef->serialRead(*se);
   

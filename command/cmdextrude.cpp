@@ -24,6 +24,7 @@
 #include "selection/slceventhandler.h"
 #include "annex/annseershape.h"
 #include "feature/ftrinputtype.h"
+#include "parameter/prmparameter.h"
 #include "commandview/cmvmessage.h"
 #include "commandview/cmvextrude.h"
 #include "feature/ftrextrude.h"
@@ -37,7 +38,7 @@ Extrude::Extrude()
 : Base()
 , leafManager()
 {
-  auto extrude = std::make_shared<ftr::Extrude>();
+  auto extrude = std::make_shared<ftr::Extrude::Feature>();
   project->addFeature(extrude);
   feature = extrude.get();
   node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
@@ -49,7 +50,7 @@ Extrude::Extrude(ftr::Base *fIn)
 : Base()
 , leafManager(fIn)
 {
-  feature = dynamic_cast<ftr::Extrude*>(fIn);
+  feature = dynamic_cast<ftr::Extrude::Feature*>(fIn);
   assert(feature);
   viewBase = std::make_unique<cmv::Extrude>(this);
   node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
@@ -114,83 +115,51 @@ void Extrude::go()
 {
   /* We can have more than 1 selection for profile geometry and 
    * we can use geometry for extrude direction. So there is no good way
-   * to glean the purpose of the pre-selections. So for pre-selection,
-   * we are going to force the first selection as the profile geometry
-   * and any further selections as the direction. Note with a commandview
-   * we can have more than one selection for the profile geometry.
+   * to glean the purpose of the pre-selections. So all selections
+   * are going to be for profiles and we will set the direction to
+   * infer.
    */
   
+  slc::Messages profiles, axes;
   const slc::Containers &containers = eventHandler->getSelections();
-  if (!containers.empty())
+  for (const auto &c : containers)
   {
-    slc::Messages profiles;
+    if (c.featureType == ftr::Type::DatumAxis)
+    {
+      axes.push_back(slc::EventHandler::containerToMessage(c));
+      continue;
+    }
     const ftr::Base *pfIn = project->findFeature(containers.front().featureId);
     if (pfIn->hasAnnex(ann::Type::SeerShape))
-      profiles.push_back(slc::EventHandler::containerToMessage(containers.front()));
-    
-    slc::Messages directions;
-    if (containers.size() == 2)
+      profiles.push_back(slc::EventHandler::containerToMessage(c));
+  }
+  if (!profiles.empty())
+  {
+    if (!axes.empty())
     {
-      if (containers.back().featureType == ftr::Type::DatumAxis || containers.back().featureType == ftr::Type::DatumPlane)
-        directions.push_back(slc::EventHandler::containerToMessage(containers.back()));
-      else if (!containers.back().isPointType())
-      {
-        const ftr::Base *dfIn = project->findFeature(containers.back().featureId);
-        if (dfIn->hasAnnex(ann::Type::SeerShape))
-        {
-          TopoDS_Shape ds;
-          const ann::SeerShape &ss = dfIn->getAnnex<ann::SeerShape>();
-          if (containers.back().shapeId.is_nil())
-          {
-            auto ncc = ss.useGetNonCompoundChildren();
-            if (!ncc.empty())
-              ds = ncc.front();
-          }
-          else
-            ds = ss.getOCCTShape(containers.back().shapeId);
-          auto result = occt::gleanAxis(ds);
-          if (result.second)
-            directions.push_back(slc::EventHandler::containerToMessage(containers.back()));
-        }
-      }
+      setToAxisPicks(profiles, axes);
+      node->sendBlocked(msg::buildStatusMessage("Extrude added with datum axis", 2.0));
+      node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+      return;
     }
-    else if (containers.size() == 3 && containers.at(1).isPointType() && containers.at(2).isPointType())
-    {
-      directions.push_back(slc::EventHandler::containerToMessage(containers.at(1)));
-      directions.push_back(slc::EventHandler::containerToMessage(containers.at(2)));
-    }
-    
-    if (!profiles.empty())
-    {
-      if (directions.empty())
-      {
-        setToAxisInfer(profiles);
-        node->sendBlocked(msg::buildStatusMessage("Extrude added with inferred axis", 2.0));
-        node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
-        return;
-      }
-      if (directions.size() == 1 || directions.size() == 2)
-      {
-        setToAxisPicks(profiles, directions);
-        node->sendBlocked(msg::buildStatusMessage("Extrude added with picked axis", 2.0));
-        node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
-        return;
-      }
-    }
+    setToAxisInfer(profiles);
+    node->sendBlocked(msg::buildStatusMessage("Extrude added with inferred axis", 2.0));
+    node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+    return;
   }
   
   node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
   viewBase = std::make_unique<cmv::Extrude>(this);
 }
 
-ftr::Picks Extrude::connect(const std::vector<slc::Message> &msIn, const std::string &prefix)
+ftr::Picks Extrude::connect(const std::vector<slc::Message> &msIn, std::string_view prefix)
 {
   ftr::Picks out;
   for (const auto &mIn : msIn)
   {
     const ftr::Base *f = project->findFeature(mIn.featureId);
     ftr::Pick pick = tls::convertToPick(mIn, *f, project->getShapeHistory());
-    pick.tag = ftr::InputType::createIndexedTag(prefix, out.size());
+    pick.tag = indexTag(prefix, out.size());
     out.push_back(pick);
     project->connectInsert(f->getId(), feature->getId(), {pick.tag});
   };
@@ -201,23 +170,45 @@ void Extrude::setToAxisInfer(const std::vector<slc::Message> &profileMessages)
 {
   assert(isActive);
   project->clearAllInputs(feature->getId());
-  feature->setPicks(connect(profileMessages, ftr::InputType::target));
-  feature->setDirectionType(ftr::Extrude::DirectionType::Infer);
+  
+  auto getPrm = [&](std::string_view tag) -> prm::Parameter*
+  {
+    auto prms = feature->getParameters(tag);
+    assert(!prms.empty());
+    return prms.front();
+  };
+  getPrm(ftr::Extrude::PrmTags::extrusionType)->setValue(static_cast<int>(ftr::Extrude::ExtrusionType::Infer));
+  getPrm(ftr::Extrude::PrmTags::profilePicks)->setValue(connect(profileMessages, ftr::Extrude::InputTags::profile));
 }
 
 void Extrude::setToAxisPicks(const std::vector<slc::Message> &profileMessages, const std::vector<slc::Message> &axisMessages)
 {
   assert(isActive);
   project->clearAllInputs(feature->getId());
-  feature->setPicks(connect(profileMessages, ftr::InputType::target));
-  feature->setAxisPicks(connect(axisMessages, ftr::Extrude::axisName));
-  feature->setDirectionType(ftr::Extrude::DirectionType::Picks);
+  
+  auto getPrm = [&](std::string_view tag) -> prm::Parameter*
+  {
+    auto prms = feature->getParameters(tag);
+    assert(!prms.empty());
+    return prms.front();
+  };
+  getPrm(ftr::Extrude::PrmTags::extrusionType)->setValue(static_cast<int>(ftr::Extrude::ExtrusionType::Picks));
+  getPrm(ftr::Extrude::PrmTags::profilePicks)->setValue(connect(profileMessages, ftr::Extrude::InputTags::profile));
+  getPrm(ftr::Extrude::PrmTags::axisPicks)->setValue(connect(axisMessages, ftr::Extrude::InputTags::axis));
 }
 
 void Extrude::setToAxisParameter(const std::vector<slc::Message> &profileMessages)
 {
   assert(isActive);
   project->clearAllInputs(feature->getId());
-  feature->setPicks(connect(profileMessages, ftr::InputType::target));
-  feature->setDirectionType(ftr::Extrude::DirectionType::Parameter);
+  
+  auto getPrm = [&](std::string_view tag) -> prm::Parameter*
+  {
+    auto prms = feature->getParameters(tag);
+    assert(!prms.empty());
+    return prms.front();
+  };
+  
+  getPrm(ftr::Extrude::PrmTags::extrusionType)->setValue(static_cast<int>(ftr::Extrude::ExtrusionType::Constant));
+  getPrm(ftr::Extrude::PrmTags::profilePicks)->setValue(connect(profileMessages, ftr::Extrude::InputTags::profile));
 }

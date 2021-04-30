@@ -685,7 +685,11 @@ std::pair<gp_Ax1, bool> occt::gleanAxis(const TopoDS_Shape &sIn)
     }
     
     if (foundAxis)
+    {
+      if (sIn.Orientation() == TopAbs_REVERSED)
+        axis.Reverse();
       return std::make_pair(axisOriginToCenter(axis), true);
+    }
   }
   else if(sIn.ShapeType() == TopAbs_EDGE)
   {

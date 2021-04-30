@@ -23,7 +23,7 @@
 #include "command/cmdleafmanager.h"
 #include "command/cmdbase.h"
 
-namespace ftr{class Extrude; struct Pick; typedef std::vector<Pick> Picks;}
+namespace ftr{namespace Extrude{class Feature;} struct Pick; typedef std::vector<Pick> Picks;}
 
 namespace cmd
 {
@@ -33,7 +33,7 @@ namespace cmd
   class Extrude : public Base
   {
   public:
-    ftr::Extrude *feature = nullptr;
+    ftr::Extrude::Feature *feature = nullptr;
     
     Extrude();
     Extrude(ftr::Base*);
@@ -51,7 +51,7 @@ namespace cmd
   private:
     cmd::LeafManager leafManager;
     void go();
-    ftr::Picks connect(const std::vector<slc::Message>&, const std::string&);
+    ftr::Picks connect(const std::vector<slc::Message>&, std::string_view);
   };
 }
 

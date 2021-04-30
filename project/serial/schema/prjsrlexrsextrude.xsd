@@ -16,19 +16,24 @@
   <xs:sequence>
     <xs:element name="base" type="spt:Base"/>
     <xs:element name="seerShape" type="spt:SeerShape"/>
-    <xs:element name="picks" type="spt:Pick" minOccurs="0" maxOccurs="unbounded"/>
-    <xs:element name="axisPicks" type="spt:Pick" minOccurs="0" maxOccurs="unbounded"/>
+    <xs:element name="extrusionType" type="spt:Parameter"/>
+    <xs:element name="profilePicks" type="spt:Parameter"/>
+    <xs:element name="axisPicks" type="spt:Parameter" minOccurs="0" maxOccurs="1"/>
     <xs:element name="direction" type="spt:Parameter"/>
     <xs:element name="directionLabel" type="spt:PLabel"/>
     <xs:element name="distance" type="spt:Parameter"/>
     <xs:element name="distanceLabel" type="spt:IPGroup"/>
     <xs:element name="offset" type="spt:Parameter"/>
     <xs:element name="offsetLabel" type="spt:IPGroup"/>
-    <xs:element name="directionType" type="xs:int"/>
+    <xs:element name="solid" type="spt:Parameter"/>
+    <xs:element name="solidLabel" type="spt:PLabel"/>
+    <xs:element name="reverse" type="spt:Parameter"/>
+    <xs:element name="reverseLabel" type="spt:PLabel"/>
     <xs:element name="originalMap" type="spt:EvolveRecord" minOccurs="0" maxOccurs="unbounded"/>
     <xs:element name="generatedMap" type="spt:EvolveRecord" minOccurs="0" maxOccurs="unbounded"/>
     <xs:element name="lastMap" type="spt:EvolveRecord" minOccurs="0" maxOccurs="unbounded"/>
     <xs:element name="oWireMap" type="spt:EvolveRecord" minOccurs="0" maxOccurs="unbounded"/>
+    <xs:element name="setMap" type="spt:DerivedRecord" minOccurs="0" maxOccurs="unbounded"/>
   </xs:sequence>
 </xs:complexType>
 

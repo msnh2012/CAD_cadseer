@@ -46,6 +46,7 @@ struct DatumPlane::Stow
   : command(cIn)
   , view(vIn)
   {
+    parameters = command->feature->getParameters();
     buildGui();
     connect(prmModel, &tbl::Model::dataChanged, view, &DatumPlane::modelChanged);
   }
@@ -68,7 +69,6 @@ struct DatumPlane::Stow
     Base::clearContentMargins(view);
     view->setSizePolicy(view->sizePolicy().horizontalPolicy(), QSizePolicy::Expanding);
     
-    parameters = command->feature->getParameters();
     prmModel = new tbl::Model(view, command->feature);
     prmView = new tbl::View(view, prmModel, true);
     mainLayout->addWidget(prmView);
