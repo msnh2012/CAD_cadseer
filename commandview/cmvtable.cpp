@@ -26,6 +26,9 @@
 #include <QTimer>
 #include <QPainter>
 #include <QMimeData>
+#include <QComboBox>
+#include <QLineEdit>
+#include <QStyledItemDelegate>
 
 #include "application/appapplication.h"
 #include "project/prjproject.h"
@@ -33,9 +36,10 @@
 #include "feature/ftrbase.h"
 #include "selection/slcmessage.h"
 #include "message/msgmessage.h"
-#include "commandview/cmvparameterwidgets.h"
+#include "commandview/cmvtablewidgets.h"
 #include "commandview/cmvselectioncue.h"
 #include "commandview/cmvselection.h"
+#include "parameter/prmvariant.h"
 #include "parameter/prmparameter.h"
 #include "tools/featuretools.h"
 #include "commandview/cmvtable.h"
@@ -119,7 +123,7 @@ namespace
       }
       else
       {
-        auto *editWidget = cmv::ParameterWidget::buildWidget(parent, p);
+        auto *editWidget = cmv::tbl::buildWidget(parent, p);
 //         connect(editWidget, &cmv::ParameterBase::prmValueChanged, view, &cmv::tbl::View::prmValueChanged);
         out = editWidget;
       }
@@ -149,25 +153,9 @@ namespace
     {
       if (!index.isValid())
         return;
-      
-      /* Most widgets directly change the parameters that they are associated with.
-       * The exception is the selections widgets where they work with messages and
-       * parameters work with picks. So here for selections we have to convert to picks
-       * and set the parameter. In any case the call to model->setData is just procedure.
-       */
-      
-      auto *myWidget = dynamic_cast<cmv::edt::View*>(widget);
-      if (myWidget)
-      {
-        auto *myModel = dynamic_cast<cmv::tbl::Model*>(model);
-        assert(myModel);
-        auto *edtModel = dynamic_cast<cmv::edt::Model*>(myWidget->model());
-        assert(edtModel);
-        myModel->setMessages(index, edtModel->getMessages());
-        myModel->setCue(index, edtModel->getCue());
-      }
-      
-      model->setData(index, QVariant(), Qt::EditRole);
+      auto *myModel = dynamic_cast<cmv::tbl::Model*>(model);
+      assert(myModel);
+      myModel->mySetData(index, widget);
     }
     
     void commitSlcEditor()
@@ -196,6 +184,128 @@ namespace
     }
     return idOut;
   }
+  
+//see cmvtablewidgets.cpp for editor types per parameter type.
+  struct WidgetAssignVisitor
+  {
+    mutable QString message;
+    
+    WidgetAssignVisitor() = delete;
+    WidgetAssignVisitor(const QWidget *eIn, prm::Parameter* prmIn, cmv::tbl::Model *mIn)
+    : editor(eIn)
+    , parameter(prmIn)
+    , myModel(mIn)
+    {assert(editor); assert(parameter);}
+    
+    bool operator()(double) const
+    {
+      return goExpression(editor);
+    }
+    
+    bool operator()(int) const
+    {
+      if (parameter->isEnumeration())
+      {
+        const QComboBox *comboBox = dynamic_cast<const QComboBox*>(editor);
+        assert(comboBox);
+        return parameter->setValue(comboBox->currentIndex());
+      }
+      
+      return goExpression(editor);
+    }
+    
+    bool operator()(bool) const
+    {
+      const QComboBox *comboBox = dynamic_cast<const QComboBox*>(editor);
+      assert(comboBox);
+      return parameter->setValue(comboBox->currentIndex() == 0);
+    }
+    
+    bool operator()(const std::string&) const
+    {
+      const QLineEdit *lineEdit = dynamic_cast<const QLineEdit*>(editor);
+      assert(lineEdit);
+      return parameter->setValue(lineEdit->text().toStdString());
+    }
+    
+    bool operator()(const boost::filesystem::path&) const
+    {
+      const QLineEdit *lineEdit = dynamic_cast<const QLineEdit*>(editor);
+      assert(lineEdit);
+      return parameter->setValue(boost::filesystem::path(lineEdit->text().toStdString()));
+    }
+    
+    bool operator()(const osg::Vec3d&) const
+    {
+      return goExpression(editor);
+    }
+    
+    bool operator()(const osg::Quat&) const
+    {
+      return goExpression(editor);
+    }
+    
+    bool operator()(const osg::Matrixd&) const
+    {
+      return goExpression(editor);
+    }
+    
+    bool operator()(const ftr::Picks&) const
+    {
+      const auto *myWidget = dynamic_cast<const cmv::edt::View*>(editor);
+      if (myWidget)
+      {
+        auto *edtModel = dynamic_cast<cmv::edt::Model*>(myWidget->model());
+        assert(edtModel);
+        myModel->setMessages(parameter, edtModel->getMessages());
+        myModel->setCue(parameter, edtModel->getCue());
+        return true;
+      };
+      return false;
+    }
+  private:
+    const QWidget *editor;
+    prm::Parameter* parameter;
+    cmv::tbl::Model *myModel;
+    
+    bool goExpression(const QWidget *w) const
+    {
+      const auto *ee = dynamic_cast<const cmv::tbl::ExpressionEdit*>(w);
+      assert(ee);
+      
+      if (!parameter->isConstant())
+        return false;
+
+      expr::Manager localManager;
+      std::string formula("temp = ");
+      formula += ee->text().toStdString();
+      auto result = localManager.parseString(formula);
+      if (result.isAllGood())
+      {
+        auto oId = localManager.getExpressionId(result.expressionName);
+        assert(oId);
+        auto result = localManager.assignParameter(parameter, *oId);
+        switch (result)
+        {
+          case expr::Amity::Incompatible:
+            message = QObject::tr("Incompatible Types");
+            return false;
+          case expr::Amity::InvalidValue:
+            message = QObject::tr("Invalid Value");
+            return false;
+          case expr::Amity::Equal:
+            message = QObject::tr("Same Value");
+            return false;
+          case expr::Amity::Mutate:
+            message = QObject::tr("Value Changed");
+            return true;
+        }
+      }
+      
+      message = QObject::tr("Parsing failed");
+      return false;
+    }
+  };
 }
 
 using boost::uuids::uuid;
@@ -217,15 +327,17 @@ struct Model::Stow
   , parameters(psIn)
   {
     assert(feature); //don't set me up with a null feature.
+    observer.valueHandler = std::bind(&Stow::valueChanged, this);
     observer.constantHandler = std::bind(&Stow::constantChanged, this);
     observer.activeHandler = std::bind(&Stow::activeChanged, this);
     
-    //cache selections
-    for (const auto *p : parameters)
+    for (auto *p : parameters)
     {
+      p->connect(observer);
+      
       if (p->getValueType() != typeid(ftr::Picks))
         continue;
-      
+      //cache selections
       ftr::UpdatePayload up = app::instance()->getProject()->getPayload(feature->getId());
       tls::Resolver resolver(up);
       slc::Messages out;
@@ -242,16 +354,23 @@ struct Model::Stow
     }
   }
   
+  void valueChanged()
+  {
+    //heavy handed approach for external changes
+    model.beginResetModel();
+    model.endResetModel();
+  }
+  
   void constantChanged()
   {
-    //heavy handed approach
+    //heavy handed approach for external changes
     model.beginResetModel();
     model.endResetModel();
   }
   
   void activeChanged()
   {
-    //heavy handed approach
+    //heavy handed approach for external changes
     model.beginResetModel();
     model.endResetModel();
   }
@@ -348,24 +467,24 @@ Qt::ItemFlags Model::flags(const QModelIndex &index) const
   return Qt::NoItemFlags;
 }
 
-bool Model::setData(const QModelIndex &index, const QVariant&, int role)
+bool Model::mySetData(const QModelIndex &index, const QWidget *widget)
 {
-  //why does this framework insist I run everything through QVariant.
-  //we change the parameters directly in the widgets.
-  if (role == Qt::EditRole && index.column() == 1)
+  prm::ObserverBlocker blocker(stow->observer);
+  
+  bool result = false;
+  WidgetAssignVisitor v(widget, getParameter(index), this);
+  if (std::visit(v, getParameter(index)->getStow().variant))
   {
-    dataChanged(index, index);
-    return true;
+    dataChanged(index, index, {Qt::EditRole});
+    result = true;
   }
-  return false;
+  app::instance()->messageSlot(msg::buildStatusMessage(v.message.toStdString(), 2.0));
+  return result;
 }
 
-void Model::setMessages(const QModelIndex &index, const slc::Messages &msgsIn) const
+void Model::setMessages(prm::Parameter *prmIn, const slc::Messages &msgsIn) const
 {
-  if (!index.isValid())
-    return;
-  auto *prm = stow->parameters.at(index.row());
-  auto it = stow->messageMap.find(prm);
+  auto it = stow->messageMap.find(prmIn);
   assert(it != stow->messageMap.end());
   it->second = msgsIn;
 }

@@ -74,14 +74,14 @@ namespace cmv
       int columnCount(const QModelIndex&) const override;
       QVariant data(const QModelIndex&, int) const override;
       Qt::ItemFlags flags(const QModelIndex&) const override;
-      bool setData(const QModelIndex&, const QVariant&, int = Qt::EditRole) override;
+      bool mySetData(const QModelIndex&, const QWidget*);
       
       prm::Parameter* getParameter(const QModelIndex&) const;
       QModelIndex addParameter(prm::Parameter*);
       void removeParameter(const QModelIndex&);
       void removeParameter(const prm::Parameter*);
       
-      void setMessages(const QModelIndex&, const slc::Messages&) const; //only for delegate.
+      void setMessages(prm::Parameter*, const slc::Messages&) const;
       const slc::Messages& getMessages(const QModelIndex&) const;
       const slc::Messages& getMessages(const prm::Parameter*) const;
       
