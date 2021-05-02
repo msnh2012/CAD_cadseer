@@ -290,9 +290,9 @@ Observer::Observer(Handler vhIn, Handler chIn, Handler ahIn)
 , activeHandler(ahIn)
 {}
 
-Observer::~Observer() = default;
-Observer::Observer(Observer &&) = default;
-Observer& Observer::operator=(Observer &&) = default;
+Observer::~Observer() noexcept = default;
+Observer::Observer(Observer &&) noexcept = default;
+Observer& Observer::operator=(Observer &&) noexcept = default;
 
 void Observer::block()
 {

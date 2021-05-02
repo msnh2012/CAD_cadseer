@@ -97,11 +97,11 @@ namespace prm
     Observer(Handler); //first is value handler
     Observer(Handler, Handler); //second is constant handler
     Observer(Handler, Handler, Handler); //third is active handler
-    ~Observer();
+    ~Observer() noexcept;
     Observer(const Observer&) = delete; //no copy
     Observer& operator=(const Observer&) = delete; //no copy
-    Observer(Observer &&);
-    Observer& operator=(Observer &&);
+    Observer(Observer &&) noexcept;
+    Observer& operator=(Observer &&) noexcept;
     
     void block();
     void unblock();
@@ -120,11 +120,16 @@ namespace prm
   * 
   * @note not std::vector friendly. need to wrap
   * in unique_ptr to add to vector. Yes even emplace_back.
+  * try again now that I have added noexcept to objects
   */
   struct ObserverBlocker
   {
     ObserverBlocker(Observer &oIn):o(oIn){o.block();}
-    ~ObserverBlocker(){o.unblock();}
+    ~ObserverBlocker() noexcept {o.unblock();}
+    ObserverBlocker(const ObserverBlocker&) = delete; //no copy
+    ObserverBlocker& operator=(const ObserverBlocker&) = delete; //no copy
+    ObserverBlocker(ObserverBlocker &&) noexcept = default;
+    //move assignment is implicitly deleted because of observer ref
     Observer &o;
   };
   
