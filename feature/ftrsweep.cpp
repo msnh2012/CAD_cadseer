@@ -108,9 +108,6 @@ SweepAuxiliary::SweepAuxiliary(const Pick &pIn, bool ceIn, int contactIn)
     , QObject::tr("Contact On Border")
   };
   contactType->setEnumeration(tStrings);
-  prm::Constraint tConstraint = prm::Constraint::buildUnit();
-  tConstraint.intervals.front().upper.value = 2.0;
-  contactType->setConstraint(tConstraint);
 }
 SweepAuxiliary::SweepAuxiliary(const prj::srl::swps::SweepAuxiliary &auxIn)
 {
@@ -216,9 +213,6 @@ Base()
   };
   trihedron->setEnumeration(tStrings);
   trihedron->connectValue(std::bind(&Sweep::setModelDirty, this));
-  prm::Constraint tConstraint = prm::Constraint::buildUnit();
-  tConstraint.intervals.front().upper.value = 6.0;
-  trihedron->setConstraint(tConstraint);
   parameters.push_back(trihedron.get());
   
   QStringList transStrings =
@@ -229,9 +223,6 @@ Base()
   };
   transition->setEnumeration(transStrings);
   transition->connectValue(std::bind(&Sweep::setModelDirty, this));
-  prm::Constraint transitionConstraint = prm::Constraint::buildUnit();
-  transitionConstraint.intervals.front().upper.value = 2.0;
-  transition->setConstraint(transitionConstraint);
   parameters.push_back(transition.get());
   
   forceC1->connectValue(std::bind(&Sweep::setModelDirty, this));

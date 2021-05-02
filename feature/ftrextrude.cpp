@@ -276,9 +276,6 @@ struct Feature::Stow
       , QObject::tr("Picks")
     };
     extrusionType.setEnumeration(tStrings);
-    prm::Constraint tConstraint = prm::Constraint::buildUnit();
-    tConstraint.intervals.front().upper.value = static_cast<double>(tStrings.size() - 1);
-    extrusionType.setConstraint(tConstraint);
     wirePrm(extrusionType);
     extrusionType.connectValue(std::bind(&Stow::prmActiveSync, this));
     

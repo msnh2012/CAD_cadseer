@@ -164,9 +164,6 @@ struct Feature::Stow
       , QObject::tr("Points")
     };
     dpType.setEnumeration(tStrings);
-    prm::Constraint tConstraint = prm::Constraint::buildUnit();
-    tConstraint.intervals.front().upper.value = static_cast<double>(tStrings.size() - 1);
-    dpType.setConstraint(tConstraint);
     dpType.connect(dirtyObserver);
     dpType.connect(syncObserver);
     feature.parameters.push_back(&dpType);

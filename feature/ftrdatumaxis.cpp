@@ -113,9 +113,6 @@ struct Feature::Stow
       , QObject::tr("Geometry")
     };
     axisType.setEnumeration(tStrings);
-    prm::Constraint tConstraint = prm::Constraint::buildUnit();
-    tConstraint.intervals.front().upper.value = static_cast<double>(tStrings.size() - 1);
-    axisType.setConstraint(tConstraint);
     axisType.connect(syncObserver);
     axisType.connectValue(std::bind(&Feature::setModelDirty, &feature));
     feature.parameters.push_back(&axisType);
@@ -143,9 +140,6 @@ struct Feature::Stow
       , QObject::tr("Z")
     };
     linkedAxis.setEnumeration(linkedAxisStrings);
-    prm::Constraint linkedAxisConstraint = prm::Constraint::buildUnit();
-    linkedAxisConstraint.intervals.front().upper.value = static_cast<double>(linkedAxisStrings.size() - 1);
-    linkedAxis.setConstraint(linkedAxisConstraint);
     linkedAxis.connectValue(std::bind(&Feature::setModelDirty, &feature));
     feature.parameters.push_back(&linkedAxis);
     

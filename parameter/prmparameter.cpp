@@ -636,7 +636,7 @@ void Parameter::setEnumeration(const QStringList &lIn)
   enumeration = lIn;
   
   Boundary lower(0.0, Boundary::End::Closed);
-  Boundary upper(enumeration.size(), Boundary::End::Closed);
+  Boundary upper(enumeration.size() - 1, Boundary::End::Closed);
   Interval interval(lower, upper);
   Constraint out;
   out.intervals.push_back(interval);
