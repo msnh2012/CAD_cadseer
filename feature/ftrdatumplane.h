@@ -20,9 +20,6 @@
 #ifndef FTR_DATUMPLANE_H
 #define FTR_DATUMPLANE_H
 
-#include <osg/ref_ptr>
-
-#include "feature/ftrpick.h"
 #include "feature/ftrbase.h"
 
 namespace prj{namespace srl{namespace dtps{class DatumPlane;}}}

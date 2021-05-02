@@ -596,7 +596,7 @@ std::shared_ptr<ftr::Base> FeatureLoad::loadDatumAxis(const std::string &fileNam
   auto sda = srl::dtas::datumAxis(fileNameIn, flags);
   assert(sda);
   
-  auto daf = std::make_shared<ftr::DatumAxis>();
+  auto daf = std::make_shared<ftr::DatumAxis::Feature>();
   daf->serialRead(*sda);
   
   return daf;

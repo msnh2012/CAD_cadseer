@@ -89,11 +89,7 @@ namespace prj
 
 #include <xsd/cxx/xml/dom/parsing-header.hxx>
 
-#include "prjsrlsptvectormath.h"
-
 #include "prjsrlsptparameter.h"
-
-#include "prjsrlsptpick.h"
 
 #include "prjsrlsptoverlay.h"
 
@@ -127,7 +123,7 @@ namespace prj
 
         // axisType
         //
-        typedef ::xml_schema::Int AxisTypeType;
+        typedef ::prj::srl::spt::Parameter AxisTypeType;
         typedef ::xsd::cxx::tree::traits< AxisTypeType, char > AxisTypeTraits;
 
         const AxisTypeType&
@@ -139,26 +135,12 @@ namespace prj
         void
         axisType (const AxisTypeType& x);
 
-        // picks
-        //
-        typedef ::prj::srl::spt::Pick PicksType;
-        typedef ::xsd::cxx::tree::sequence< PicksType > PicksSequence;
-        typedef PicksSequence::iterator PicksIterator;
-        typedef PicksSequence::const_iterator PicksConstIterator;
-        typedef ::xsd::cxx::tree::traits< PicksType, char > PicksTraits;
-
-        const PicksSequence&
-        picks () const;
-
-        PicksSequence&
-        picks ();
-
         void
-        picks (const PicksSequence& s);
+        axisType (::std::unique_ptr< AxisTypeType > p);
 
         // origin
         //
-        typedef ::prj::srl::spt::Vec3d OriginType;
+        typedef ::prj::srl::spt::Parameter OriginType;
         typedef ::xsd::cxx::tree::traits< OriginType, char > OriginTraits;
 
         const OriginType&
@@ -175,7 +157,7 @@ namespace prj
 
         // direction
         //
-        typedef ::prj::srl::spt::Vec3d DirectionType;
+        typedef ::prj::srl::spt::Parameter DirectionType;
         typedef ::xsd::cxx::tree::traits< DirectionType, char > DirectionTraits;
 
         const DirectionType&
@@ -241,6 +223,48 @@ namespace prj
         void
         size (::std::unique_ptr< SizeType > p);
 
+        // linkedAxis
+        //
+        typedef ::prj::srl::spt::Parameter LinkedAxisType;
+        typedef ::xsd::cxx::tree::optional< LinkedAxisType > LinkedAxisOptional;
+        typedef ::xsd::cxx::tree::traits< LinkedAxisType, char > LinkedAxisTraits;
+
+        const LinkedAxisOptional&
+        linkedAxis () const;
+
+        LinkedAxisOptional&
+        linkedAxis ();
+
+        void
+        linkedAxis (const LinkedAxisType& x);
+
+        void
+        linkedAxis (const LinkedAxisOptional& x);
+
+        void
+        linkedAxis (::std::unique_ptr< LinkedAxisType > p);
+
+        // picks
+        //
+        typedef ::prj::srl::spt::Parameter PicksType;
+        typedef ::xsd::cxx::tree::optional< PicksType > PicksOptional;
+        typedef ::xsd::cxx::tree::traits< PicksType, char > PicksTraits;
+
+        const PicksOptional&
+        picks () const;
+
+        PicksOptional&
+        picks ();
+
+        void
+        picks (const PicksType& x);
+
+        void
+        picks (const PicksOptional& x);
+
+        void
+        picks (::std::unique_ptr< PicksType > p);
+
         // csysDragger
         //
         typedef ::prj::srl::spt::CSysDragger CsysDraggerType;
@@ -257,6 +281,40 @@ namespace prj
 
         void
         csysDragger (::std::unique_ptr< CsysDraggerType > p);
+
+        // originLabel
+        //
+        typedef ::prj::srl::spt::PLabel OriginLabelType;
+        typedef ::xsd::cxx::tree::traits< OriginLabelType, char > OriginLabelTraits;
+
+        const OriginLabelType&
+        originLabel () const;
+
+        OriginLabelType&
+        originLabel ();
+
+        void
+        originLabel (const OriginLabelType& x);
+
+        void
+        originLabel (::std::unique_ptr< OriginLabelType > p);
+
+        // directionLabel
+        //
+        typedef ::prj::srl::spt::PLabel DirectionLabelType;
+        typedef ::xsd::cxx::tree::traits< DirectionLabelType, char > DirectionLabelTraits;
+
+        const DirectionLabelType&
+        directionLabel () const;
+
+        DirectionLabelType&
+        directionLabel ();
+
+        void
+        directionLabel (const DirectionLabelType& x);
+
+        void
+        directionLabel (::std::unique_ptr< DirectionLabelType > p);
 
         // autoSizeLabel
         //
@@ -292,6 +350,20 @@ namespace prj
         void
         sizeLabel (::std::unique_ptr< SizeLabelType > p);
 
+        // cachedSize
+        //
+        typedef ::xml_schema::Double CachedSizeType;
+        typedef ::xsd::cxx::tree::traits< CachedSizeType, char, ::xsd::cxx::tree::schema_type::double_ > CachedSizeTraits;
+
+        const CachedSizeType&
+        cachedSize () const;
+
+        CachedSizeType&
+        cachedSize ();
+
+        void
+        cachedSize (const CachedSizeType& x);
+
         // Constructors.
         //
         DatumAxis (const BaseType&,
@@ -302,19 +374,25 @@ namespace prj
                    const AutoSizeType&,
                    const SizeType&,
                    const CsysDraggerType&,
+                   const OriginLabelType&,
+                   const DirectionLabelType&,
                    const AutoSizeLabelType&,
-                   const SizeLabelType&);
+                   const SizeLabelType&,
+                   const CachedSizeType&);
 
         DatumAxis (::std::unique_ptr< BaseType >,
-                   const AxisTypeType&,
+                   ::std::unique_ptr< AxisTypeType >,
                    ::std::unique_ptr< OriginType >,
                    ::std::unique_ptr< DirectionType >,
                    ::std::unique_ptr< CsysType >,
                    ::std::unique_ptr< AutoSizeType >,
                    ::std::unique_ptr< SizeType >,
                    ::std::unique_ptr< CsysDraggerType >,
+                   ::std::unique_ptr< OriginLabelType >,
+                   ::std::unique_ptr< DirectionLabelType >,
                    ::std::unique_ptr< AutoSizeLabelType >,
-                   ::std::unique_ptr< SizeLabelType >);
+                   ::std::unique_ptr< SizeLabelType >,
+                   const CachedSizeType&);
 
         DatumAxis (const ::xercesc::DOMElement& e,
                    ::xml_schema::Flags f = 0,
@@ -344,15 +422,19 @@ namespace prj
         protected:
         ::xsd::cxx::tree::one< BaseType > base_;
         ::xsd::cxx::tree::one< AxisTypeType > axisType_;
-        PicksSequence picks_;
         ::xsd::cxx::tree::one< OriginType > origin_;
         ::xsd::cxx::tree::one< DirectionType > direction_;
         ::xsd::cxx::tree::one< CsysType > csys_;
         ::xsd::cxx::tree::one< AutoSizeType > autoSize_;
         ::xsd::cxx::tree::one< SizeType > size_;
+        LinkedAxisOptional linkedAxis_;
+        PicksOptional picks_;
         ::xsd::cxx::tree::one< CsysDraggerType > csysDragger_;
+        ::xsd::cxx::tree::one< OriginLabelType > originLabel_;
+        ::xsd::cxx::tree::one< DirectionLabelType > directionLabel_;
         ::xsd::cxx::tree::one< AutoSizeLabelType > autoSizeLabel_;
         ::xsd::cxx::tree::one< SizeLabelType > sizeLabel_;
+        ::xsd::cxx::tree::one< CachedSizeType > cachedSize_;
       };
     }
   }

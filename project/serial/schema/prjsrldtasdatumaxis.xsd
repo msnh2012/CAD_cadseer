@@ -5,25 +5,27 @@
   targetNamespace="http://www.cadseer.com/prj/srl/dtas"
 >
   
-<xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptvectormath.xsd"/>
 <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptparameter.xsd"/>
-<xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptpick.xsd"/>
 <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptoverlay.xsd"/>
 <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptbase.xsd"/>
 
 <xs:complexType name="DatumAxis">
   <xs:sequence>
     <xs:element name="base" type="spt:Base"/>
-    <xs:element name="axisType" type="xs:int"/>
-    <xs:element name="picks" type="spt:Pick" minOccurs="0" maxOccurs="unbounded"/>
-    <xs:element name="origin" type="spt:Vec3d"/>
-    <xs:element name="direction" type="spt:Vec3d"/>
+    <xs:element name="axisType" type="spt:Parameter"/>
+    <xs:element name="origin" type="spt:Parameter"/>
+    <xs:element name="direction" type="spt:Parameter"/>
     <xs:element name="csys" type="spt:Parameter"/>
     <xs:element name="autoSize" type="spt:Parameter"/>
     <xs:element name="size" type="spt:Parameter"/>
+    <xs:element name="linkedAxis" type="spt:Parameter" minOccurs="0" maxOccurs="1"/>
+    <xs:element name="picks" type="spt:Parameter" minOccurs="0" maxOccurs="1"/>
     <xs:element name="csysDragger" type="spt:CSysDragger"/>
+    <xs:element name="originLabel" type="spt:PLabel"/>
+    <xs:element name="directionLabel" type="spt:PLabel"/>
     <xs:element name="autoSizeLabel" type="spt:PLabel"/>
     <xs:element name="sizeLabel" type="spt:PLabel"/>
+    <xs:element name="cachedSize" type="xs:double"/>
   </xs:sequence>
 </xs:complexType>
 

@@ -23,7 +23,7 @@
 #include "command/cmdleafmanager.h"
 #include "command/cmdbase.h"
 
-namespace ftr{class DatumAxis;}
+namespace ftr{namespace DatumAxis{class Feature;}}
 
 namespace cmd
 {
@@ -33,7 +33,7 @@ namespace cmd
   class DatumAxis : public Base
   {
     public:
-      ftr::DatumAxis *feature = nullptr;
+      ftr::DatumAxis::Feature *feature = nullptr;
       
       DatumAxis();
       DatumAxis(ftr::Base*);
@@ -45,6 +45,8 @@ namespace cmd
       void deactivate() override;
       
       void setToConstant();
+      void setToParameters();
+      void setToLinked(const std::vector<slc::Message>&);
       void setToPoints(const std::vector<slc::Message>&);
       void setToIntersection(const std::vector<slc::Message>&);
       void setToGeometry(const std::vector<slc::Message>&);

@@ -158,6 +158,7 @@ prmObserver(std::make_unique<prm::Observer>())
   
   dragger->addDraggerCallback(callBack.get());
   
+  prmObserver->constantHandler = std::bind(&CSysDragger::csysActiveChanged, this);
   prmObserver->activeHandler = std::bind(&CSysDragger::csysActiveChanged, this);
   parameter->connect(*prmObserver);
 }
@@ -191,7 +192,7 @@ void CSysDragger::setCSys(const osg::Matrixd &mIn)
 
 void CSysDragger::csysActiveChanged()
 {
-  if (parameter->isActive())
+  if (parameter->isActive() && parameter->isConstant())
     dragger->show();
   else
     dragger->hide();

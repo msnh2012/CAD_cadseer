@@ -60,7 +60,6 @@
 #include "tools/tlsosgtools.h"
 #include "parameter/prmconstants.h"
 #include "parameter/prmparameter.h"
-#include "feature/ftrdatumaxis.h"
 #include "feature/ftrdatumplane.h"
 
 using namespace ftr::DatumPlane;
@@ -585,12 +584,17 @@ struct Feature::Stow
       }
       else if (p.tag == InputTags::axis)
       {
-        if (slc::isObjectType(p.selectionType) && pr.getFeature()->getType() == ftr::Type::DatumAxis)
+        if (slc::isObjectType(p.selectionType))
         {
-          const DatumAxis *da = dynamic_cast<const DatumAxis*>(pr.getFeature());
-          axisOrigin = da->getOrigin();
-          axisDirection = da->getDirection();
-          tempSize = std::max(tempSize, da->getSize() / 2.0);
+          const auto originPrms = pr.getFeature()->getParameters(prm::Tags::Origin);
+          const auto directionPrms = pr.getFeature()->getParameters(prm::Tags::Direction);
+          if (originPrms.empty() || directionPrms.empty())
+            throw std::runtime_error("Axis Angle: failed to get origin or direction from feature");
+          const auto sizePrms = pr.getFeature()->getParameters(prm::Tags::Size);
+          if (!sizePrms.empty())
+            tempSize = std::max(tempSize, sizePrms.front()->getDouble() / 2.0);
+          axisOrigin = originPrms.front()->getVector();
+          axisDirection = directionPrms.front()->getVector();
         }
         else
         {

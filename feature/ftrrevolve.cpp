@@ -34,7 +34,6 @@
 #include "parameter/prmparameter.h"
 #include "feature/ftrupdatepayload.h"
 #include "feature/ftrinputtype.h"
-#include "feature/ftrdatumaxis.h"
 #include "tools/featuretools.h"
 #include "tools/idtools.h"
 #include "project/serial/generated/prjsrlrvlsrevolve.h"
@@ -199,17 +198,17 @@ void Revolve::updateModel(const UpdatePayload &pIn)
       tls::Resolver aResolver(pIn);
       if (axisPicks.size() == 1)
       {
-        aResolver.resolve(axisPicks.front());
-        if (!aResolver.getFeature())
+        if (!aResolver.resolve(axisPicks.front()))
           throw std::runtime_error("Unable to resolve single axis pick");
         if (slc::isObjectType(axisPicks.front().selectionType))
         {
-          if (aResolver.getFeature()->getType() != Type::DatumAxis)
-            throw std::runtime_error("Wrong feature type for single axis pick");
-          const DatumAxis *da = dynamic_cast<const DatumAxis*>(aResolver.getFeature());
-          assert(da);
-          axisOrigin->setValue(da->getOrigin());
-          axisDirection->setValue(da->getDirection());
+          const auto originPrms = aResolver.getFeature()->getParameters(prm::Tags::Origin);
+          const auto directionPrms = aResolver.getFeature()->getParameters(prm::Tags::Direction);
+          if (!originPrms.empty() && !directionPrms.empty())
+          {
+            axisOrigin->setValue(originPrms.front()->getVector());
+            axisDirection->setValue(directionPrms.front()->getVector());
+          }
         }
         else
         {

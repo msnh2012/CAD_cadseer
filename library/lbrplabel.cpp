@@ -92,7 +92,7 @@ void PLabel::setText()
   std::ostringstream stream;
   if (showName)
     stream << parameter->getName().toStdString() << " = ";
-  stream << parameter->adaptToString();
+  stream << parameter->adaptToString(3);
   text->setText(stream.str());
 }
 

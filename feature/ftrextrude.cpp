@@ -44,7 +44,6 @@
 #include "feature/ftrinputtype.h"
 #include "parameter/prmconstants.h"
 #include "parameter/prmparameter.h"
-#include "feature/ftrdatumaxis.h"
 #include "tools/featuretools.h"
 #include "tools/idtools.h"
 #include "tools/tlsshapeid.h"
@@ -591,17 +590,12 @@ void Feature::updateModel(const UpdatePayload &pIn)
           throw std::runtime_error("Resolution failure for first axis pick");
         if (slc::isObjectType(axisPicks.front().selectionType))
         {
+          auto directionPrms = resolver.getFeature()->getParameters(prm::Tags::Direction);
           auto csysPrms = aResolver.getFeature()->getParameters(prm::Tags::CSys);
-          if (!csysPrms.empty())
-          {
+          if (!directionPrms.empty())
+            stow->direction.setValue(directionPrms.front()->getVector());
+          else if(!csysPrms.empty())
             stow->direction.setValue(gu::getZVector(csysPrms.front()->getMatrix()));
-          }
-          else if (aResolver.getFeature()->getType() == Type::DatumAxis)
-          {
-            const DatumAxis *da = dynamic_cast<const DatumAxis*>(aResolver.getFeature());
-            assert(da);
-            stow->direction.setValue(da->getDirection());
-          }
         }
         else 
         {

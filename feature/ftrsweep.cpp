@@ -45,6 +45,7 @@
 #include "law/lwfcue.h"
 #include "library/lbrplabel.h"
 #include "modelviz/mdvlawfunction.h"
+#include "parameter/prmconstants.h"
 #include "parameter/prmparameter.h"
 #include "tools/occtools.h"
 #include "tools/featuretools.h"
@@ -692,11 +693,9 @@ void Sweep::updateModel(const UpdatePayload &pIn)
           }
           else
           {
-            if (f0.getType() == ftr::Type::DatumAxis)
-            {
-              const ftr::DatumAxis &da = static_cast<const ftr::DatumAxis&>(f0);
-              binormal.binormal->setValue(da.getDirection());
-            }
+            auto directionPrms = f0.getParameters(prm::Tags::Direction);
+            if (!directionPrms.empty())
+              binormal.binormal->setValue(directionPrms.front()->getVector());
           }
         }
         else if (binormal.picks.size() == 2)

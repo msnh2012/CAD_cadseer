@@ -91,22 +91,10 @@ namespace prj
         this->axisType_.set (x);
       }
 
-      const DatumAxis::PicksSequence& DatumAxis::
-      picks () const
-      {
-        return this->picks_;
-      }
-
-      DatumAxis::PicksSequence& DatumAxis::
-      picks ()
-      {
-        return this->picks_;
-      }
-
       void DatumAxis::
-      picks (const PicksSequence& s)
+      axisType (::std::unique_ptr< AxisTypeType > x)
       {
-        this->picks_ = s;
+        this->axisType_.set (std::move (x));
       }
 
       const DatumAxis::OriginType& DatumAxis::
@@ -229,6 +217,66 @@ namespace prj
         this->size_.set (std::move (x));
       }
 
+      const DatumAxis::LinkedAxisOptional& DatumAxis::
+      linkedAxis () const
+      {
+        return this->linkedAxis_;
+      }
+
+      DatumAxis::LinkedAxisOptional& DatumAxis::
+      linkedAxis ()
+      {
+        return this->linkedAxis_;
+      }
+
+      void DatumAxis::
+      linkedAxis (const LinkedAxisType& x)
+      {
+        this->linkedAxis_.set (x);
+      }
+
+      void DatumAxis::
+      linkedAxis (const LinkedAxisOptional& x)
+      {
+        this->linkedAxis_ = x;
+      }
+
+      void DatumAxis::
+      linkedAxis (::std::unique_ptr< LinkedAxisType > x)
+      {
+        this->linkedAxis_.set (std::move (x));
+      }
+
+      const DatumAxis::PicksOptional& DatumAxis::
+      picks () const
+      {
+        return this->picks_;
+      }
+
+      DatumAxis::PicksOptional& DatumAxis::
+      picks ()
+      {
+        return this->picks_;
+      }
+
+      void DatumAxis::
+      picks (const PicksType& x)
+      {
+        this->picks_.set (x);
+      }
+
+      void DatumAxis::
+      picks (const PicksOptional& x)
+      {
+        this->picks_ = x;
+      }
+
+      void DatumAxis::
+      picks (::std::unique_ptr< PicksType > x)
+      {
+        this->picks_.set (std::move (x));
+      }
+
       const DatumAxis::CsysDraggerType& DatumAxis::
       csysDragger () const
       {
@@ -251,6 +299,54 @@ namespace prj
       csysDragger (::std::unique_ptr< CsysDraggerType > x)
       {
         this->csysDragger_.set (std::move (x));
+      }
+
+      const DatumAxis::OriginLabelType& DatumAxis::
+      originLabel () const
+      {
+        return this->originLabel_.get ();
+      }
+
+      DatumAxis::OriginLabelType& DatumAxis::
+      originLabel ()
+      {
+        return this->originLabel_.get ();
+      }
+
+      void DatumAxis::
+      originLabel (const OriginLabelType& x)
+      {
+        this->originLabel_.set (x);
+      }
+
+      void DatumAxis::
+      originLabel (::std::unique_ptr< OriginLabelType > x)
+      {
+        this->originLabel_.set (std::move (x));
+      }
+
+      const DatumAxis::DirectionLabelType& DatumAxis::
+      directionLabel () const
+      {
+        return this->directionLabel_.get ();
+      }
+
+      DatumAxis::DirectionLabelType& DatumAxis::
+      directionLabel ()
+      {
+        return this->directionLabel_.get ();
+      }
+
+      void DatumAxis::
+      directionLabel (const DirectionLabelType& x)
+      {
+        this->directionLabel_.set (x);
+      }
+
+      void DatumAxis::
+      directionLabel (::std::unique_ptr< DirectionLabelType > x)
+      {
+        this->directionLabel_.set (std::move (x));
       }
 
       const DatumAxis::AutoSizeLabelType& DatumAxis::
@@ -300,6 +396,24 @@ namespace prj
       {
         this->sizeLabel_.set (std::move (x));
       }
+
+      const DatumAxis::CachedSizeType& DatumAxis::
+      cachedSize () const
+      {
+        return this->cachedSize_.get ();
+      }
+
+      DatumAxis::CachedSizeType& DatumAxis::
+      cachedSize ()
+      {
+        return this->cachedSize_.get ();
+      }
+
+      void DatumAxis::
+      cachedSize (const CachedSizeType& x)
+      {
+        this->cachedSize_.set (x);
+      }
     }
   }
 }
@@ -324,46 +438,60 @@ namespace prj
                  const AutoSizeType& autoSize,
                  const SizeType& size,
                  const CsysDraggerType& csysDragger,
+                 const OriginLabelType& originLabel,
+                 const DirectionLabelType& directionLabel,
                  const AutoSizeLabelType& autoSizeLabel,
-                 const SizeLabelType& sizeLabel)
+                 const SizeLabelType& sizeLabel,
+                 const CachedSizeType& cachedSize)
       : ::xml_schema::Type (),
         base_ (base, this),
         axisType_ (axisType, this),
-        picks_ (this),
         origin_ (origin, this),
         direction_ (direction, this),
         csys_ (csys, this),
         autoSize_ (autoSize, this),
         size_ (size, this),
+        linkedAxis_ (this),
+        picks_ (this),
         csysDragger_ (csysDragger, this),
+        originLabel_ (originLabel, this),
+        directionLabel_ (directionLabel, this),
         autoSizeLabel_ (autoSizeLabel, this),
-        sizeLabel_ (sizeLabel, this)
+        sizeLabel_ (sizeLabel, this),
+        cachedSize_ (cachedSize, this)
       {
       }
 
       DatumAxis::
       DatumAxis (::std::unique_ptr< BaseType > base,
-                 const AxisTypeType& axisType,
+                 ::std::unique_ptr< AxisTypeType > axisType,
                  ::std::unique_ptr< OriginType > origin,
                  ::std::unique_ptr< DirectionType > direction,
                  ::std::unique_ptr< CsysType > csys,
                  ::std::unique_ptr< AutoSizeType > autoSize,
                  ::std::unique_ptr< SizeType > size,
                  ::std::unique_ptr< CsysDraggerType > csysDragger,
+                 ::std::unique_ptr< OriginLabelType > originLabel,
+                 ::std::unique_ptr< DirectionLabelType > directionLabel,
                  ::std::unique_ptr< AutoSizeLabelType > autoSizeLabel,
-                 ::std::unique_ptr< SizeLabelType > sizeLabel)
+                 ::std::unique_ptr< SizeLabelType > sizeLabel,
+                 const CachedSizeType& cachedSize)
       : ::xml_schema::Type (),
         base_ (std::move (base), this),
-        axisType_ (axisType, this),
-        picks_ (this),
+        axisType_ (std::move (axisType), this),
         origin_ (std::move (origin), this),
         direction_ (std::move (direction), this),
         csys_ (std::move (csys), this),
         autoSize_ (std::move (autoSize), this),
         size_ (std::move (size), this),
+        linkedAxis_ (this),
+        picks_ (this),
         csysDragger_ (std::move (csysDragger), this),
+        originLabel_ (std::move (originLabel), this),
+        directionLabel_ (std::move (directionLabel), this),
         autoSizeLabel_ (std::move (autoSizeLabel), this),
-        sizeLabel_ (std::move (sizeLabel), this)
+        sizeLabel_ (std::move (sizeLabel), this),
+        cachedSize_ (cachedSize, this)
       {
       }
 
@@ -374,15 +502,19 @@ namespace prj
       : ::xml_schema::Type (x, f, c),
         base_ (x.base_, f, this),
         axisType_ (x.axisType_, f, this),
-        picks_ (x.picks_, f, this),
         origin_ (x.origin_, f, this),
         direction_ (x.direction_, f, this),
         csys_ (x.csys_, f, this),
         autoSize_ (x.autoSize_, f, this),
         size_ (x.size_, f, this),
+        linkedAxis_ (x.linkedAxis_, f, this),
+        picks_ (x.picks_, f, this),
         csysDragger_ (x.csysDragger_, f, this),
+        originLabel_ (x.originLabel_, f, this),
+        directionLabel_ (x.directionLabel_, f, this),
         autoSizeLabel_ (x.autoSizeLabel_, f, this),
-        sizeLabel_ (x.sizeLabel_, f, this)
+        sizeLabel_ (x.sizeLabel_, f, this),
+        cachedSize_ (x.cachedSize_, f, this)
       {
       }
 
@@ -393,15 +525,19 @@ namespace prj
       : ::xml_schema::Type (e, f | ::xml_schema::Flags::base, c),
         base_ (this),
         axisType_ (this),
-        picks_ (this),
         origin_ (this),
         direction_ (this),
         csys_ (this),
         autoSize_ (this),
         size_ (this),
+        linkedAxis_ (this),
+        picks_ (this),
         csysDragger_ (this),
+        originLabel_ (this),
+        directionLabel_ (this),
         autoSizeLabel_ (this),
-        sizeLabel_ (this)
+        sizeLabel_ (this),
+        cachedSize_ (this)
       {
         if ((f & ::xml_schema::Flags::base) == 0)
         {
@@ -438,22 +574,14 @@ namespace prj
           //
           if (n.name () == "axisType" && n.namespace_ ().empty ())
           {
+            ::std::unique_ptr< AxisTypeType > r (
+              AxisTypeTraits::create (i, f, this));
+
             if (!axisType_.present ())
             {
-              this->axisType_.set (AxisTypeTraits::create (i, f, this));
+              this->axisType_.set (::std::move (r));
               continue;
             }
-          }
-
-          // picks
-          //
-          if (n.name () == "picks" && n.namespace_ ().empty ())
-          {
-            ::std::unique_ptr< PicksType > r (
-              PicksTraits::create (i, f, this));
-
-            this->picks_.push_back (::std::move (r));
-            continue;
           }
 
           // origin
@@ -526,6 +654,34 @@ namespace prj
             }
           }
 
+          // linkedAxis
+          //
+          if (n.name () == "linkedAxis" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< LinkedAxisType > r (
+              LinkedAxisTraits::create (i, f, this));
+
+            if (!this->linkedAxis_)
+            {
+              this->linkedAxis_.set (::std::move (r));
+              continue;
+            }
+          }
+
+          // picks
+          //
+          if (n.name () == "picks" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< PicksType > r (
+              PicksTraits::create (i, f, this));
+
+            if (!this->picks_)
+            {
+              this->picks_.set (::std::move (r));
+              continue;
+            }
+          }
+
           // csysDragger
           //
           if (n.name () == "csysDragger" && n.namespace_ ().empty ())
@@ -536,6 +692,34 @@ namespace prj
             if (!csysDragger_.present ())
             {
               this->csysDragger_.set (::std::move (r));
+              continue;
+            }
+          }
+
+          // originLabel
+          //
+          if (n.name () == "originLabel" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< OriginLabelType > r (
+              OriginLabelTraits::create (i, f, this));
+
+            if (!originLabel_.present ())
+            {
+              this->originLabel_.set (::std::move (r));
+              continue;
+            }
+          }
+
+          // directionLabel
+          //
+          if (n.name () == "directionLabel" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< DirectionLabelType > r (
+              DirectionLabelTraits::create (i, f, this));
+
+            if (!directionLabel_.present ())
+            {
+              this->directionLabel_.set (::std::move (r));
               continue;
             }
           }
@@ -564,6 +748,17 @@ namespace prj
             if (!sizeLabel_.present ())
             {
               this->sizeLabel_.set (::std::move (r));
+              continue;
+            }
+          }
+
+          // cachedSize
+          //
+          if (n.name () == "cachedSize" && n.namespace_ ().empty ())
+          {
+            if (!cachedSize_.present ())
+            {
+              this->cachedSize_.set (CachedSizeTraits::create (i, f, this));
               continue;
             }
           }
@@ -627,6 +822,20 @@ namespace prj
             "");
         }
 
+        if (!originLabel_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "originLabel",
+            "");
+        }
+
+        if (!directionLabel_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "directionLabel",
+            "");
+        }
+
         if (!autoSizeLabel_.present ())
         {
           throw ::xsd::cxx::tree::expected_element< char > (
@@ -638,6 +847,13 @@ namespace prj
         {
           throw ::xsd::cxx::tree::expected_element< char > (
             "sizeLabel",
+            "");
+        }
+
+        if (!cachedSize_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "cachedSize",
             "");
         }
       }
@@ -657,15 +873,19 @@ namespace prj
           static_cast< ::xml_schema::Type& > (*this) = x;
           this->base_ = x.base_;
           this->axisType_ = x.axisType_;
-          this->picks_ = x.picks_;
           this->origin_ = x.origin_;
           this->direction_ = x.direction_;
           this->csys_ = x.csys_;
           this->autoSize_ = x.autoSize_;
           this->size_ = x.size_;
+          this->linkedAxis_ = x.linkedAxis_;
+          this->picks_ = x.picks_;
           this->csysDragger_ = x.csysDragger_;
+          this->originLabel_ = x.originLabel_;
+          this->directionLabel_ = x.directionLabel_;
           this->autoSizeLabel_ = x.autoSizeLabel_;
           this->sizeLabel_ = x.sizeLabel_;
+          this->cachedSize_ = x.cachedSize_;
         }
 
         return *this;
@@ -995,20 +1215,6 @@ namespace prj
           s << i.axisType ();
         }
 
-        // picks
-        //
-        for (DatumAxis::PicksConstIterator
-             b (i.picks ().begin ()), n (i.picks ().end ());
-             b != n; ++b)
-        {
-          ::xercesc::DOMElement& s (
-            ::xsd::cxx::xml::dom::create_element (
-              "picks",
-              e));
-
-          s << *b;
-        }
-
         // origin
         //
         {
@@ -1064,6 +1270,30 @@ namespace prj
           s << i.size ();
         }
 
+        // linkedAxis
+        //
+        if (i.linkedAxis ())
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "linkedAxis",
+              e));
+
+          s << *i.linkedAxis ();
+        }
+
+        // picks
+        //
+        if (i.picks ())
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "picks",
+              e));
+
+          s << *i.picks ();
+        }
+
         // csysDragger
         //
         {
@@ -1073,6 +1303,28 @@ namespace prj
               e));
 
           s << i.csysDragger ();
+        }
+
+        // originLabel
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "originLabel",
+              e));
+
+          s << i.originLabel ();
+        }
+
+        // directionLabel
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "directionLabel",
+              e));
+
+          s << i.directionLabel ();
         }
 
         // autoSizeLabel
@@ -1095,6 +1347,17 @@ namespace prj
               e));
 
           s << i.sizeLabel ();
+        }
+
+        // cachedSize
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "cachedSize",
+              e));
+
+          s << ::xml_schema::AsDouble(i.cachedSize ());
         }
       }
 

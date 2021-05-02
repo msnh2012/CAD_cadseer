@@ -20,13 +20,8 @@
 #ifndef FTR_EXTRUDE_H
 #define FTR_EXTRUDE_H
 
-#include "feature/ftrpick.h"
 #include "feature/ftrbase.h"
 
-namespace ann{class SeerShape;}
-namespace prm{struct Observer;}
-namespace lbr{class IPGroup; class PLabel;}
-namespace occt{class BoundingBox;}
 namespace prj{namespace srl{namespace exrs{class Extrude;}}}
 
 namespace ftr

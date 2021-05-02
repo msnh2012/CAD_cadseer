@@ -37,12 +37,8 @@ namespace cmv
   public:
     DatumAxis(cmd::DatumAxis*);
     ~DatumAxis() override;
-  public Q_SLOTS:
-    void stackedChanged(int);
-    void pointSelectionChanged();
-    void intersectionSelectionChanged();
-    void geometrySelectionChanged();
-    void parameterChanged();
+  private Q_SLOTS:
+    void modelChanged(const QModelIndex&, const QModelIndex&);
   private:
     struct Stow;
     std::unique_ptr<Stow> stow;

@@ -42,7 +42,6 @@
 #include "feature/ftrshapecheck.h"
 #include "feature/ftrinputtype.h"
 #include "feature/ftrupdatepayload.h"
-#include "feature/ftrdatumaxis.h"
 #include "feature/ftrinstancepolar.h"
 
 using namespace ftr;
@@ -169,12 +168,15 @@ void InstancePolar::updateModel(const UpdatePayload &payloadIn)
       //we have a rotation axis selection so make sure the csysdragger is hidden.
       overlaySwitch->removeChild(csysDragger->dragger.get()); //ok if not present.
       
-      if (resolver.getFeature()->getType() == ftr::Type::DatumAxis)
+      if (slc::isObjectType(axisPick.selectionType))
       {
-        const ftr::DatumAxis *da = dynamic_cast<const ftr::DatumAxis*>(resolver.getFeature());
-        assert(da);
-        newOrigin = da->getOrigin();
-        newDirection = da->getDirection();
+        const auto originPrms = resolver.getFeature()->getParameters(prm::Tags::Origin);
+        const auto directionPrms = resolver.getFeature()->getParameters(prm::Tags::Direction);
+        if (!originPrms.empty() && !directionPrms.empty())
+        {
+          newOrigin = originPrms.front()->getVector();
+          newDirection = directionPrms.front()->getVector();
+        }
       }
       else
       {

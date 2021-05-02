@@ -17,23 +17,18 @@
  *
  */
 
-#include <boost/optional/optional.hpp>
-
-#include <QSettings>
-#include <QComboBox>
-#include <QStackedWidget>
 #include <QVBoxLayout>
 
 #include "application/appapplication.h"
 #include "project/prjproject.h"
 #include "message/msgmessage.h"
-#include "dialogs/dlgselectionbutton.h"
-#include "dialogs/dlgselectionwidget.h"
-#include "tools/featuretools.h"
+#include "message/msgnode.h"
+#include "commandview/cmvselectioncue.h"
+#include "commandview/cmvtable.h"
+#include "parameter/prmconstants.h"
 #include "parameter/prmparameter.h"
 #include "feature/ftrdatumaxis.h"
 #include "command/cmddatumaxis.h"
-#include "commandview/cmvparameterwidgets.h"
 #include "commandview/cmvdatumaxis.h"
 
 using boost::uuids::uuid;
@@ -44,200 +39,69 @@ struct DatumAxis::Stow
 {
   cmd::DatumAxis *command = nullptr;
   cmv::DatumAxis *view = nullptr;
-  QComboBox *combo = nullptr;
-  QStackedWidget *stackedWidget = nullptr;
-  dlg::SelectionWidget *pointsSelectionWidget = nullptr;
-  dlg::SelectionWidget *intersectionSelectionWidget = nullptr;
-  dlg::SelectionWidget *geometrySelectionWidget = nullptr;
-  cmv::ParameterWidget *parameterWidget = nullptr;
+  prm::Parameters parameters;
+  cmv::tbl::Model *prmModel = nullptr;
+  cmv::tbl::View *prmView = nullptr;
   
   Stow(cmd::DatumAxis *cIn, cmv::DatumAxis *vIn)
   : command(cIn)
   , view(vIn)
   {
+    parameters = command->feature->getParameters();
     buildGui();
-    
-    QSettings &settings = app::instance()->getUserSettings();
-    settings.beginGroup("cmv::DatumAxis");
-    //load settings
-    settings.endGroup();
-    
-    loadFeatureData();
-    glue();
+    connect(prmModel, &tbl::Model::dataChanged, view, &DatumAxis::modelChanged);
   }
   
   void buildGui()
   {
-    QSizePolicy adjust = view->sizePolicy();
-    adjust.setVerticalPolicy(QSizePolicy::Maximum);
-    view->setSizePolicy(adjust);
-    
     QVBoxLayout *mainLayout = new QVBoxLayout();
     view->setLayout(mainLayout);
+    Base::clearContentMargins(view);
+    view->setSizePolicy(view->sizePolicy().horizontalPolicy(), QSizePolicy::Expanding);
     
-    combo = new QComboBox(view);
-    combo->addItem(QObject::tr("Constant"));
-    combo->addItem(QObject::tr("Points"));
-    combo->addItem(QObject::tr("Intersection"));
-    combo->addItem(QObject::tr("Geometry"));
-    mainLayout->addWidget(combo);
+    prmModel = new tbl::Model(view, command->feature);
+    prmView = new tbl::View(view, prmModel, true);
+    mainLayout->addWidget(prmView);
     
-    stackedWidget = new QStackedWidget(view);
-    mainLayout->addWidget(stackedWidget);
+    const auto *ft = command->feature;
     
-    //constant to be empty widget
-    QWidget *dummy = new QWidget(stackedWidget);
-    dummy->setSizePolicy(QSizePolicy(dummy->sizePolicy().horizontalPolicy(), QSizePolicy::Expanding));
-    stackedWidget->addWidget(dummy);
-    
-    //points just has selection widget
-    std::vector<dlg::SelectionWidgetCue> cues;
-    dlg::SelectionWidgetCue cue;
-    cue.name = tr("Item 1");
-    cue.singleSelection = true;
-    cue.mask = slc::PointsEnabled | slc::AllPointsEnabled | slc::PointsSelectable | slc::EndPointsSelectable | slc::CenterPointsSelectable;
-    cue.statusPrompt = tr("Select First Item");
-    cue.showAccrueColumn = false;
-    cues.push_back(cue);
-    cue.name = tr("Item 2");
-    cue.statusPrompt = tr("Select Second Item");
-    cues.push_back(cue);
-    pointsSelectionWidget = new dlg::SelectionWidget(stackedWidget, cues);
-    pointsSelectionWidget->setObjectName("selection");
-    stackedWidget->addWidget(pointsSelectionWidget);
-    
-    //intersection just has selection widget. Cheat and use existing cues.
-    cues.front().mask = cues.back().mask = slc::ObjectsEnabled | slc::ObjectsSelectable | slc::FacesEnabled | slc::FacesSelectable;
-    intersectionSelectionWidget = new dlg::SelectionWidget(stackedWidget, cues);
-    intersectionSelectionWidget->setObjectName("selection");
-    stackedWidget->addWidget(intersectionSelectionWidget);
-    
-    //geometry just has selection widget. Cheat again.
-    cues.pop_back();
-    cues.front().mask = slc::FacesEnabled | slc::FacesSelectable | slc::EdgesEnabled | slc::EdgesSelectable;
-    geometrySelectionWidget = new dlg::SelectionWidget(stackedWidget, cues);
-    geometrySelectionWidget->setObjectName("selection");
-    stackedWidget->addWidget(geometrySelectionWidget);
-    
-    //we don't want to show the csys widget yet.
-    prm::Parameters prmsToShow = {command->feature->getAutoSizeParameter(), command->feature->getSizeParameter()};
-    parameterWidget = new cmv::ParameterWidget(view, prmsToShow);
-    mainLayout->addWidget(parameterWidget);
-    mainLayout->addItem(new QSpacerItem(20, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
-  }
-  
-  void loadFeatureData()
-  {
-    boost::optional<slc::Message> msg0;
-    boost::optional<slc::Message> msg1;
-    const auto &picks = command->feature->getPicks();
-    ftr::UpdatePayload up = app::instance()->getProject()->getPayload(command->feature->getId());
-    tls::Resolver resolver(up);
-    if (picks.size() >= 1 && resolver.resolve(picks.at(0)))
+    //no cues for constant
+    //no cues for parameter
     {
-      auto msgs = resolver.convertToMessages();
-      if (!msgs.empty()) //what if more than one?
-        msg0 = msgs.front();
+      //linked
+      tbl::SelectionCue cue;
+      cue.singleSelection = true;
+      cue.mask = slc::ObjectsBoth;
+      cue.statusPrompt = tr("Select Feature To Link Axis");
+      cue.accrueEnabled = false;
+      prmModel->setCue(ft->getParameter(ftr::DatumAxis::Tags::Linked), cue);
     }
-    if (picks.size() >= 2 && resolver.resolve(picks.at(1)))
     {
-      auto msgs = resolver.convertToMessages();
-      if (!msgs.empty()) //what if more than one?
-        msg1 = msgs.front();
+      //points
+      tbl::SelectionCue cue;
+      cue.singleSelection = false;
+      cue.mask = slc::PointsBoth | slc::AllPointsEnabled | slc::EndPointsSelectable;
+      cue.statusPrompt = tr("Select 2 Points For Axis");
+      cue.accrueEnabled = false;
+      prmModel->setCue(ft->getParameter(ftr::DatumAxis::Tags::Points), cue);
     }
-    
-    ftr::DatumAxis::AxisType at = command->feature->getAxisType();
-    if (at == ftr::DatumAxis::AxisType::Constant)
     {
-      combo->setCurrentIndex(0);
-      stackedWidget->setCurrentIndex(0);
+      //intersection
+      tbl::SelectionCue cue;
+      cue.singleSelection = false;
+      cue.mask = slc::ObjectsBoth | slc::FacesBoth;
+      cue.statusPrompt = tr("Select 2 Planes For Intersection Axis");
+      cue.accrueEnabled = false;
+      prmModel->setCue(ft->getParameter(ftr::DatumAxis::Tags::Intersection), cue);
     }
-    else if (at == ftr::DatumAxis::AxisType::Points)
     {
-      if (msg0)
-        pointsSelectionWidget->initializeButton(0, msg0.get());
-      if (msg1)
-        pointsSelectionWidget->initializeButton(1, msg1.get());
-      combo->setCurrentIndex(1);
-      stackedWidget->setCurrentIndex(1);
-      activate(1);
-    }
-    else if (at == ftr::DatumAxis::AxisType::Intersection)
-    {
-      if (msg0)
-        intersectionSelectionWidget->initializeButton(0, msg0.get());
-      if (msg1)
-        intersectionSelectionWidget->initializeButton(1, msg1.get());
-      combo->setCurrentIndex(2);
-      stackedWidget->setCurrentIndex(2);
-      activate(2);
-    }
-    else if (at == ftr::DatumAxis::AxisType::Geometry)
-    {
-      if (msg0)
-        geometrySelectionWidget->initializeButton(0, msg0.get());
-      combo->setCurrentIndex(3);
-      stackedWidget->setCurrentIndex(3);
-      activate(3);
-    }
-  }
-  
-  void glue()
-  {
-    QObject::connect(combo, SIGNAL(currentIndexChanged(int)), stackedWidget, SLOT(setCurrentIndex(int)));
-    QObject::connect(stackedWidget, SIGNAL(currentChanged(int)), view, SLOT(stackedChanged(int)));
-    QObject::connect(pointsSelectionWidget->getButton(0), &dlg::SelectionButton::dirty, view, &DatumAxis::pointSelectionChanged);
-    QObject::connect(pointsSelectionWidget->getButton(1), &dlg::SelectionButton::dirty, view, &DatumAxis::pointSelectionChanged);
-    QObject::connect(intersectionSelectionWidget->getButton(0), &dlg::SelectionButton::dirty, view, &DatumAxis::intersectionSelectionChanged);
-    QObject::connect(intersectionSelectionWidget->getButton(1), &dlg::SelectionButton::dirty, view, &DatumAxis::intersectionSelectionChanged);
-    QObject::connect(geometrySelectionWidget->getButton(0), &dlg::SelectionButton::dirty, view, &DatumAxis::geometrySelectionChanged);
-    QObject::connect(parameterWidget, &ParameterBase::prmValueChanged, view, &DatumAxis::parameterChanged);
-  }
-  
-  void activate(int index)
-  {
-    if (index < 0 || index >= stackedWidget->count())
-      return;
-    QWidget *w = stackedWidget->widget(index);
-    assert(w);
-    dlg::SelectionWidget *sw = dynamic_cast<dlg::SelectionWidget*>(w);
-    if (!sw)
-      sw = w->findChild<dlg::SelectionWidget*>("selection");
-    if (sw)
-      sw->activate(0);
-  }
-  
-  void goPoints()
-  {
-    std::vector<slc::Message> msgs0 = pointsSelectionWidget->getMessages(0);
-    std::vector<slc::Message> msgs1 = pointsSelectionWidget->getMessages(1);
-    msgs0.insert(msgs0.end(), msgs1.begin(), msgs1.end());
-    if (msgs0.size() == 2)
-    {
-      command->setToPoints(msgs0);
-      command->localUpdate();
-    }
-  }
-  
-  void goIntersection()
-  {
-    std::vector<slc::Message> msgs0 = intersectionSelectionWidget->getMessages(0);
-    std::vector<slc::Message> msgs1 = intersectionSelectionWidget->getMessages(1);
-    msgs0.insert(msgs0.end(), msgs1.begin(), msgs1.end());
-    if (msgs0.size() == 2)
-    {
-      command->setToIntersection(msgs0);
-      command->localUpdate();
-    }
-  }
-  
-  void goGeometry()
-  {
-    std::vector<slc::Message> msgs = geometrySelectionWidget->getMessages(0);
-    if (msgs.size() == 1)
-    {
-      command->setToGeometry(msgs);
-      command->localUpdate();
+      //geometry
+      tbl::SelectionCue cue;
+      cue.singleSelection = false;
+      cue.mask = slc::FacesBoth | slc::EdgesBoth;
+      cue.statusPrompt = tr("Select 2 Planes For Intersection Axis");
+      cue.accrueEnabled = false;
+      prmModel->setCue(ft->getParameter(ftr::DatumAxis::Tags::Geometry), cue);
     }
   }
 };
@@ -249,41 +113,59 @@ DatumAxis::DatumAxis(cmd::DatumAxis *cIn)
 
 DatumAxis::~DatumAxis() = default;
 
-void DatumAxis::stackedChanged(int index)
+void DatumAxis::modelChanged(const QModelIndex &index, const QModelIndex&)
 {
-  if (index < 0 || index >= stow->stackedWidget->count())
+  if (!index.isValid())
     return;
-  stow->activate(index);
   
-  if (index == 0) //constant
+  prm::Parameter *par = stow->parameters.at(index.row());
+  if (par->getTag() == ftr::DatumAxis::Tags::AxisType)
   {
-    stow->command->setToConstant();
-    stow->command->localUpdate();
+    namespace FDA = ftr::DatumAxis;
+    using FDAT = FDA::AxisType;
+    const auto *ft = stow->command->feature;
+    auto axisType = static_cast<ftr::DatumAxis::AxisType>(par->getInt());
+    switch(axisType)
+    {
+      case FDAT::Constant:{
+        stow->command->setToConstant();
+        break;}
+      case FDAT::Parameters:{
+        stow->command->setToParameters();
+        break;}
+      case FDAT::Linked:{
+        const auto *p = ft->getParameter(FDA::Tags::Linked);
+        stow->command->setToLinked(stow->prmModel->getMessages(p));
+        break;}
+      case FDAT::Points:{
+        const auto *p = ft->getParameter(FDA::Tags::Points);
+        stow->command->setToPoints(stow->prmModel->getMessages(p));
+        break;}
+      case FDAT::Intersection:{
+        const auto *p = ft->getParameter(FDA::Tags::Intersection);
+        stow->command->setToIntersection(stow->prmModel->getMessages(p));
+        break;}
+      case FDAT::Geometry:{
+        const auto *p = ft->getParameter(FDA::Tags::Geometry);
+        stow->command->setToGeometry(stow->prmModel->getMessages(p));
+        break;}
+    }
+    stow->prmView->updateHideInactive();
   }
-  else if (index == 1) //points
-    stow->goPoints();
-  else if (index == 2) //intersection
-    stow->goIntersection();
-  else if (index == 3) //geometry
-    stow->goGeometry();
-}
-
-void DatumAxis::pointSelectionChanged()
-{
-  stow->goPoints();
-}
-
-void DatumAxis::intersectionSelectionChanged()
-{
-  stow->goIntersection();
-}
-
-void DatumAxis::geometrySelectionChanged()
-{
-  stow->goGeometry();
-}
-
-void DatumAxis::parameterChanged()
-{
+  
+  //for picks we will need to call command function to handle graph connections.
+  //everything else will be ok with the simple stow->command->localUpdate.
+  if (par->getTag() == ftr::DatumAxis::Tags::Linked)
+    stow->command->setToLinked(stow->prmModel->getMessages(par));
+  else if (par->getTag() == ftr::DatumAxis::Tags::Points)
+    stow->command->setToPoints(stow->prmModel->getMessages(par));
+  else if (par->getTag() == ftr::DatumAxis::Tags::Intersection)
+    stow->command->setToIntersection(stow->prmModel->getMessages(par));
+  else if (par->getTag() == ftr::DatumAxis::Tags::Geometry)
+    stow->command->setToGeometry(stow->prmModel->getMessages(par));
+  else if (par->getTag() == prm::Tags::AutoSize)
+    stow->prmView->updateHideInactive();
+  
   stow->command->localUpdate();
+  node->sendBlocked(msg::buildStatusMessage(stow->command->getStatusMessage()));
 }
