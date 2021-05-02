@@ -88,7 +88,7 @@ void Sift::receive(const Message &mIn) const
   
   if (!handler)
     return;
-  if (stackDepth)
+  if (stackDepth > 1) //Let's not worry about 1 recursion.
     std::cout << "WARNING: " << name << " stack depth: " << stackDepth << std::endl;
   stackDepth++;
   handler(mIn);
