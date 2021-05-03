@@ -1076,6 +1076,7 @@ Widget::Widget(QWidget *parent)
   setMouseTracking(true);
   setFocusPolicy(Qt::ClickFocus);
   connect(this, &Widget::initialized, std::bind(&Stow::go, stow.get()));
+  app::instance()->installEventFilter(this);
 }
 
 Widget::~Widget() = default;
@@ -1137,6 +1138,24 @@ void Widget::keyPressEvent(QKeyEvent* event)
   Q_ASSERT(m_renderer);
   // forward event to renderer
   m_renderer->keyPressEvent(event);
+}
+
+bool Widget::eventFilter(QObject *watched, QEvent *event)
+{
+  if (event->type() == QEvent::KeyPress)
+  {
+    auto *ke = static_cast<QKeyEvent*>(event);
+    if (ke->key() == Qt::Key_Control)
+      stow->spaceballManipulator->ctrlDown();
+  }
+  else if (event->type() == QEvent::KeyRelease)
+  {
+    auto *ke = static_cast<QKeyEvent*>(event);
+    if (ke->key() == Qt::Key_Control)
+      stow->spaceballManipulator->ctrlUp();
+  }
+  
+  return osgQOpenGLWidget::eventFilter(watched, event);
 }
 
 slc::EventHandler* Widget::getSelectionEventHandler()

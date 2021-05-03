@@ -64,6 +64,8 @@ public:
     virtual void home(double) override;
     virtual bool handle(const osgGA::GUIEventAdapter &ea, osgGA::GUIActionAdapter &us) override;
     virtual void init(const osgGA::GUIEventAdapter &ea, osgGA::GUIActionAdapter &us) override;
+    void ctrlDown(); //for external qt eventfilter
+    void ctrlUp();
 
     void dump();
     void setView(const osg::Vec3d &lookDirection, const osg::Vec3d &upDirection);

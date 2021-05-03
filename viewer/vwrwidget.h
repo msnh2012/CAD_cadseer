@@ -52,6 +52,7 @@ namespace vwr
     QTextStream& getInfo(QTextStream &stream) const;
     double getDiagonalLength() const;
     void screenCapture(const std::string &, const std::string &);
+    bool eventFilter(QObject*, QEvent*) override;
   protected:
     bool event(QEvent *event) override;
     void keyPressEvent(QKeyEvent*) override;

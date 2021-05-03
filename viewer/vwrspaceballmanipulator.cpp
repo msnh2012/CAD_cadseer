@@ -192,6 +192,16 @@ void SpaceballManipulator::home(double)
     scaleFit();
 }
 
+void SpaceballManipulator::ctrlDown()
+{
+  currentStateMask = ControlKey; //this resets the state.
+}
+
+void SpaceballManipulator::ctrlUp()
+{
+  currentStateMask.reset();
+}
+
 bool SpaceballManipulator::handle(const osgGA::GUIEventAdapter &ea, osgGA::GUIActionAdapter &us)
 {
     if (ea.getEventType() == osgGA::GUIEventAdapter::USER)
@@ -224,21 +234,6 @@ bool SpaceballManipulator::handleMouse(const osgGA::GUIEventAdapter& ea, osgGA::
   typedef GUIEventAdapter EA;
   
   //control key is going to have to be down before dragging occurs.
-  //if a drag followed by the control key won't work.
-  if (ea.getKey() == EA::KEY_Control_L)
-  {
-    if (ea.getEventType() == EA::KEYDOWN)
-    {
-      currentStateMask = ControlKey; //this resets the state.
-      return true;
-    }
-    if (ea.getEventType() == EA::KEYUP)
-    {
-      currentStateMask.reset();
-      return true;
-    }
-  }
-  
   //nothing works unless the control is down.
   if ((currentStateMask & ControlKey).none())
     return false;
