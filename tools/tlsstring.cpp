@@ -61,7 +61,7 @@ std::string tls::valueString(const osg::Matrixd &m, int p)
   osg::Quat q = m.getRotate();
   osg::Vec3d t = m.getTrans();
   std::stringstream out;
-  out << "[" << prettyDouble(q.x(), p) << ", " << prettyDouble(q.y(), p) << ", " << prettyDouble(q.z(), p) << ", " << prettyDouble(q.w(), p)
-  << ", " << prettyDouble(t.x(), p) << ", " << prettyDouble(t.y(), p) << ", " << prettyDouble(t.z(), p) << "]";
+  out << "[[" << prettyDouble(q.x(), p) << ", " << prettyDouble(q.y(), p) << ", " << prettyDouble(q.z(), p) << ", " << prettyDouble(q.w(), p) << "]"
+  << ", [" << prettyDouble(t.x(), p) << ", " << prettyDouble(t.y(), p) << ", " << prettyDouble(t.z(), p) << "]]";
   return out.str();
 }

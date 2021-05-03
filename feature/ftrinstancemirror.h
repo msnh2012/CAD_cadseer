@@ -32,52 +32,43 @@ namespace prm{struct Observer;}
 
 namespace ftr
 {
-  /**
-  * @brief Feature for mirrored shapes.
-  */
-  class InstanceMirror : public Base
+  namespace InstanceMirror
   {
-  public:
-    constexpr static const char *mirrorPlane = "MirrorPlane";
+    enum PlaneType
+    {
+      Constant
+      , Pick
+    };
+    namespace Tags
+    {
+      inline constexpr std::string_view PlaneType = "PlaneType";
+      inline constexpr std::string_view Source = "Source";
+      inline constexpr std::string_view Plane = "Plane";
+      inline constexpr std::string_view IncludeSource = "IncludeSource";
+    }
     
-    InstanceMirror();
-    virtual ~InstanceMirror() override;
-    
-    virtual void updateModel(const UpdatePayload&) override;
-    virtual Type getType() const override {return Type::InstanceMirror;}
-    virtual const std::string& getTypeString() const override {return toString(Type::InstanceMirror);}
-    virtual const QIcon& getIcon() const override {return icon;}
-    virtual Descriptor getDescriptor() const override {return Descriptor::Create;}
-    
-    virtual void serialWrite(const boost::filesystem::path&) override;
-    void serialRead(const prj::srl::inms::InstanceMirror&);
-    
-    const Pick& getShapePick(){return shapePick;}
-    void setShapePick(const Pick&);
-    const Pick& getPlanePick(){return planePick;}
-    void setPlanePick(const Pick&);
-    void setCSys(const osg::Matrixd&); //when no plane pick
-    bool getIncludeSource();
-    void setIncludeSource(bool in);
-    
-  protected:
-    std::unique_ptr<prm::Parameter> csys;
-    std::unique_ptr<prm::Parameter> includeSource;
-    
-    std::unique_ptr<prm::Observer> csysObserver;
-    
-    std::unique_ptr<ann::SeerShape> sShape;
-    std::unique_ptr<ann::InstanceMapper> iMapper;
-    std::unique_ptr<ann::CSysDragger> csysDragger;
-    
-    osg::ref_ptr<lbr::PLabel> includeSourceLabel;
-    
-    Pick shapePick;
-    Pick planePick;
-
-  private:
-    static QIcon icon;
-  };
+    class Feature : public Base
+    {
+    public:
+      constexpr static const char *mirrorPlane = "MirrorPlane";
+      
+      Feature();
+      virtual ~Feature() override;
+      
+      void updateModel(const UpdatePayload&) override;
+      Type getType() const override {return Type::InstanceMirror;}
+      const std::string& getTypeString() const override {return toString(Type::InstanceMirror);}
+      const QIcon& getIcon() const override {return icon;}
+      Descriptor getDescriptor() const override {return Descriptor::Create;}
+      
+      void serialWrite(const boost::filesystem::path&) override;
+      void serialRead(const prj::srl::inms::InstanceMirror&);
+    private:
+      static QIcon icon;
+      struct Stow;
+      std::unique_ptr<Stow> stow;
+    };
+  }
 }
 
 #endif // FTR_INSTANCEMIRROR_H

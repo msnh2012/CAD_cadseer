@@ -488,7 +488,7 @@ std::shared_ptr<ftr::Base> FeatureLoad::loadInstanceMirror(const std::string &fi
   auto sr = srl::inms::instanceMirror(fileNameIn, flags);
   assert(sr);
   
-  auto freshInstanceMirror = std::make_shared<ftr::InstanceMirror>();
+  auto freshInstanceMirror = std::make_shared<ftr::InstanceMirror::Feature>();
   freshInstanceMirror->getAnnex<ann::SeerShape>().setOCCTShape(shapeVector.at(shapeOffsetIn), featureId);
   freshInstanceMirror->serialRead(*sr);
   

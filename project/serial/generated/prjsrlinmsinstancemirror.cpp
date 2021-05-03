@@ -73,6 +73,126 @@ namespace prj
         this->base_.set (std::move (x));
       }
 
+      const InstanceMirror::PlaneTypeType& InstanceMirror::
+      planeType () const
+      {
+        return this->planeType_.get ();
+      }
+
+      InstanceMirror::PlaneTypeType& InstanceMirror::
+      planeType ()
+      {
+        return this->planeType_.get ();
+      }
+
+      void InstanceMirror::
+      planeType (const PlaneTypeType& x)
+      {
+        this->planeType_.set (x);
+      }
+
+      void InstanceMirror::
+      planeType (::std::unique_ptr< PlaneTypeType > x)
+      {
+        this->planeType_.set (std::move (x));
+      }
+
+      const InstanceMirror::CsysType& InstanceMirror::
+      csys () const
+      {
+        return this->csys_.get ();
+      }
+
+      InstanceMirror::CsysType& InstanceMirror::
+      csys ()
+      {
+        return this->csys_.get ();
+      }
+
+      void InstanceMirror::
+      csys (const CsysType& x)
+      {
+        this->csys_.set (x);
+      }
+
+      void InstanceMirror::
+      csys (::std::unique_ptr< CsysType > x)
+      {
+        this->csys_.set (std::move (x));
+      }
+
+      const InstanceMirror::SourceType& InstanceMirror::
+      source () const
+      {
+        return this->source_.get ();
+      }
+
+      InstanceMirror::SourceType& InstanceMirror::
+      source ()
+      {
+        return this->source_.get ();
+      }
+
+      void InstanceMirror::
+      source (const SourceType& x)
+      {
+        this->source_.set (x);
+      }
+
+      void InstanceMirror::
+      source (::std::unique_ptr< SourceType > x)
+      {
+        this->source_.set (std::move (x));
+      }
+
+      const InstanceMirror::PlaneType& InstanceMirror::
+      plane () const
+      {
+        return this->plane_.get ();
+      }
+
+      InstanceMirror::PlaneType& InstanceMirror::
+      plane ()
+      {
+        return this->plane_.get ();
+      }
+
+      void InstanceMirror::
+      plane (const PlaneType& x)
+      {
+        this->plane_.set (x);
+      }
+
+      void InstanceMirror::
+      plane (::std::unique_ptr< PlaneType > x)
+      {
+        this->plane_.set (std::move (x));
+      }
+
+      const InstanceMirror::IncludeSourceType& InstanceMirror::
+      includeSource () const
+      {
+        return this->includeSource_.get ();
+      }
+
+      InstanceMirror::IncludeSourceType& InstanceMirror::
+      includeSource ()
+      {
+        return this->includeSource_.get ();
+      }
+
+      void InstanceMirror::
+      includeSource (const IncludeSourceType& x)
+      {
+        this->includeSource_.set (x);
+      }
+
+      void InstanceMirror::
+      includeSource (::std::unique_ptr< IncludeSourceType > x)
+      {
+        this->includeSource_.set (std::move (x));
+      }
+
       const InstanceMirror::SeerShapeType& InstanceMirror::
       seerShape () const
       {
@@ -145,102 +265,6 @@ namespace prj
         this->csysDragger_.set (std::move (x));
       }
 
-      const InstanceMirror::CsysType& InstanceMirror::
-      csys () const
-      {
-        return this->csys_.get ();
-      }
-
-      InstanceMirror::CsysType& InstanceMirror::
-      csys ()
-      {
-        return this->csys_.get ();
-      }
-
-      void InstanceMirror::
-      csys (const CsysType& x)
-      {
-        this->csys_.set (x);
-      }
-
-      void InstanceMirror::
-      csys (::std::unique_ptr< CsysType > x)
-      {
-        this->csys_.set (std::move (x));
-      }
-
-      const InstanceMirror::IncludeSourceType& InstanceMirror::
-      includeSource () const
-      {
-        return this->includeSource_.get ();
-      }
-
-      InstanceMirror::IncludeSourceType& InstanceMirror::
-      includeSource ()
-      {
-        return this->includeSource_.get ();
-      }
-
-      void InstanceMirror::
-      includeSource (const IncludeSourceType& x)
-      {
-        this->includeSource_.set (x);
-      }
-
-      void InstanceMirror::
-      includeSource (::std::unique_ptr< IncludeSourceType > x)
-      {
-        this->includeSource_.set (std::move (x));
-      }
-
-      const InstanceMirror::ShapePickType& InstanceMirror::
-      shapePick () const
-      {
-        return this->shapePick_.get ();
-      }
-
-      InstanceMirror::ShapePickType& InstanceMirror::
-      shapePick ()
-      {
-        return this->shapePick_.get ();
-      }
-
-      void InstanceMirror::
-      shapePick (const ShapePickType& x)
-      {
-        this->shapePick_.set (x);
-      }
-
-      void InstanceMirror::
-      shapePick (::std::unique_ptr< ShapePickType > x)
-      {
-        this->shapePick_.set (std::move (x));
-      }
-
-      const InstanceMirror::PlanePickType& InstanceMirror::
-      planePick () const
-      {
-        return this->planePick_.get ();
-      }
-
-      InstanceMirror::PlanePickType& InstanceMirror::
-      planePick ()
-      {
-        return this->planePick_.get ();
-      }
-
-      void InstanceMirror::
-      planePick (const PlanePickType& x)
-      {
-        this->planePick_.set (x);
-      }
-
-      void InstanceMirror::
-      planePick (::std::unique_ptr< PlanePickType > x)
-      {
-        this->planePick_.set (std::move (x));
-      }
-
       const InstanceMirror::IncludeSourceLabelType& InstanceMirror::
       includeSourceLabel () const
       {
@@ -264,24 +288,6 @@ namespace prj
       {
         this->includeSourceLabel_.set (std::move (x));
       }
-
-      const InstanceMirror::DraggerVisibleType& InstanceMirror::
-      draggerVisible () const
-      {
-        return this->draggerVisible_.get ();
-      }
-
-      InstanceMirror::DraggerVisibleType& InstanceMirror::
-      draggerVisible ()
-      {
-        return this->draggerVisible_.get ();
-      }
-
-      void InstanceMirror::
-      draggerVisible (const DraggerVisibleType& x)
-      {
-        this->draggerVisible_.set (x);
-      }
     }
   }
 }
@@ -299,51 +305,51 @@ namespace prj
 
       InstanceMirror::
       InstanceMirror (const BaseType& base,
+                      const PlaneTypeType& planeType,
+                      const CsysType& csys,
+                      const SourceType& source,
+                      const PlaneType& plane,
+                      const IncludeSourceType& includeSource,
                       const SeerShapeType& seerShape,
                       const InstanceMapsType& instanceMaps,
                       const CsysDraggerType& csysDragger,
-                      const CsysType& csys,
-                      const IncludeSourceType& includeSource,
-                      const ShapePickType& shapePick,
-                      const PlanePickType& planePick,
-                      const IncludeSourceLabelType& includeSourceLabel,
-                      const DraggerVisibleType& draggerVisible)
+                      const IncludeSourceLabelType& includeSourceLabel)
       : ::xml_schema::Type (),
         base_ (base, this),
+        planeType_ (planeType, this),
+        csys_ (csys, this),
+        source_ (source, this),
+        plane_ (plane, this),
+        includeSource_ (includeSource, this),
         seerShape_ (seerShape, this),
         instanceMaps_ (instanceMaps, this),
         csysDragger_ (csysDragger, this),
-        csys_ (csys, this),
-        includeSource_ (includeSource, this),
-        shapePick_ (shapePick, this),
-        planePick_ (planePick, this),
-        includeSourceLabel_ (includeSourceLabel, this),
-        draggerVisible_ (draggerVisible, this)
+        includeSourceLabel_ (includeSourceLabel, this)
       {
       }
 
       InstanceMirror::
       InstanceMirror (::std::unique_ptr< BaseType > base,
+                      ::std::unique_ptr< PlaneTypeType > planeType,
+                      ::std::unique_ptr< CsysType > csys,
+                      ::std::unique_ptr< SourceType > source,
+                      ::std::unique_ptr< PlaneType > plane,
+                      ::std::unique_ptr< IncludeSourceType > includeSource,
                       ::std::unique_ptr< SeerShapeType > seerShape,
                       ::std::unique_ptr< InstanceMapsType > instanceMaps,
                       ::std::unique_ptr< CsysDraggerType > csysDragger,
-                      ::std::unique_ptr< CsysType > csys,
-                      ::std::unique_ptr< IncludeSourceType > includeSource,
-                      ::std::unique_ptr< ShapePickType > shapePick,
-                      ::std::unique_ptr< PlanePickType > planePick,
-                      ::std::unique_ptr< IncludeSourceLabelType > includeSourceLabel,
-                      const DraggerVisibleType& draggerVisible)
+                      ::std::unique_ptr< IncludeSourceLabelType > includeSourceLabel)
       : ::xml_schema::Type (),
         base_ (std::move (base), this),
+        planeType_ (std::move (planeType), this),
+        csys_ (std::move (csys), this),
+        source_ (std::move (source), this),
+        plane_ (std::move (plane), this),
+        includeSource_ (std::move (includeSource), this),
         seerShape_ (std::move (seerShape), this),
         instanceMaps_ (std::move (instanceMaps), this),
         csysDragger_ (std::move (csysDragger), this),
-        csys_ (std::move (csys), this),
-        includeSource_ (std::move (includeSource), this),
-        shapePick_ (std::move (shapePick), this),
-        planePick_ (std::move (planePick), this),
-        includeSourceLabel_ (std::move (includeSourceLabel), this),
-        draggerVisible_ (draggerVisible, this)
+        includeSourceLabel_ (std::move (includeSourceLabel), this)
       {
       }
 
@@ -353,15 +359,15 @@ namespace prj
                       ::xml_schema::Container* c)
       : ::xml_schema::Type (x, f, c),
         base_ (x.base_, f, this),
+        planeType_ (x.planeType_, f, this),
+        csys_ (x.csys_, f, this),
+        source_ (x.source_, f, this),
+        plane_ (x.plane_, f, this),
+        includeSource_ (x.includeSource_, f, this),
         seerShape_ (x.seerShape_, f, this),
         instanceMaps_ (x.instanceMaps_, f, this),
         csysDragger_ (x.csysDragger_, f, this),
-        csys_ (x.csys_, f, this),
-        includeSource_ (x.includeSource_, f, this),
-        shapePick_ (x.shapePick_, f, this),
-        planePick_ (x.planePick_, f, this),
-        includeSourceLabel_ (x.includeSourceLabel_, f, this),
-        draggerVisible_ (x.draggerVisible_, f, this)
+        includeSourceLabel_ (x.includeSourceLabel_, f, this)
       {
       }
 
@@ -371,15 +377,15 @@ namespace prj
                       ::xml_schema::Container* c)
       : ::xml_schema::Type (e, f | ::xml_schema::Flags::base, c),
         base_ (this),
+        planeType_ (this),
+        csys_ (this),
+        source_ (this),
+        plane_ (this),
+        includeSource_ (this),
         seerShape_ (this),
         instanceMaps_ (this),
         csysDragger_ (this),
-        csys_ (this),
-        includeSource_ (this),
-        shapePick_ (this),
-        planePick_ (this),
-        includeSourceLabel_ (this),
-        draggerVisible_ (this)
+        includeSourceLabel_ (this)
       {
         if ((f & ::xml_schema::Flags::base) == 0)
         {
@@ -408,6 +414,76 @@ namespace prj
             if (!base_.present ())
             {
               this->base_.set (::std::move (r));
+              continue;
+            }
+          }
+
+          // planeType
+          //
+          if (n.name () == "planeType" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< PlaneTypeType > r (
+              PlaneTypeTraits::create (i, f, this));
+
+            if (!planeType_.present ())
+            {
+              this->planeType_.set (::std::move (r));
+              continue;
+            }
+          }
+
+          // csys
+          //
+          if (n.name () == "csys" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< CsysType > r (
+              CsysTraits::create (i, f, this));
+
+            if (!csys_.present ())
+            {
+              this->csys_.set (::std::move (r));
+              continue;
+            }
+          }
+
+          // source
+          //
+          if (n.name () == "source" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< SourceType > r (
+              SourceTraits::create (i, f, this));
+
+            if (!source_.present ())
+            {
+              this->source_.set (::std::move (r));
+              continue;
+            }
+          }
+
+          // plane
+          //
+          if (n.name () == "plane" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< PlaneType > r (
+              PlaneTraits::create (i, f, this));
+
+            if (!plane_.present ())
+            {
+              this->plane_.set (::std::move (r));
+              continue;
+            }
+          }
+
+          // includeSource
+          //
+          if (n.name () == "includeSource" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< IncludeSourceType > r (
+              IncludeSourceTraits::create (i, f, this));
+
+            if (!includeSource_.present ())
+            {
+              this->includeSource_.set (::std::move (r));
               continue;
             }
           }
@@ -454,62 +530,6 @@ namespace prj
             }
           }
 
-          // csys
-          //
-          if (n.name () == "csys" && n.namespace_ ().empty ())
-          {
-            ::std::unique_ptr< CsysType > r (
-              CsysTraits::create (i, f, this));
-
-            if (!csys_.present ())
-            {
-              this->csys_.set (::std::move (r));
-              continue;
-            }
-          }
-
-          // includeSource
-          //
-          if (n.name () == "includeSource" && n.namespace_ ().empty ())
-          {
-            ::std::unique_ptr< IncludeSourceType > r (
-              IncludeSourceTraits::create (i, f, this));
-
-            if (!includeSource_.present ())
-            {
-              this->includeSource_.set (::std::move (r));
-              continue;
-            }
-          }
-
-          // shapePick
-          //
-          if (n.name () == "shapePick" && n.namespace_ ().empty ())
-          {
-            ::std::unique_ptr< ShapePickType > r (
-              ShapePickTraits::create (i, f, this));
-
-            if (!shapePick_.present ())
-            {
-              this->shapePick_.set (::std::move (r));
-              continue;
-            }
-          }
-
-          // planePick
-          //
-          if (n.name () == "planePick" && n.namespace_ ().empty ())
-          {
-            ::std::unique_ptr< PlanePickType > r (
-              PlanePickTraits::create (i, f, this));
-
-            if (!planePick_.present ())
-            {
-              this->planePick_.set (::std::move (r));
-              continue;
-            }
-          }
-
           // includeSourceLabel
           //
           if (n.name () == "includeSourceLabel" && n.namespace_ ().empty ())
@@ -524,17 +544,6 @@ namespace prj
             }
           }
 
-          // draggerVisible
-          //
-          if (n.name () == "draggerVisible" && n.namespace_ ().empty ())
-          {
-            if (!draggerVisible_.present ())
-            {
-              this->draggerVisible_.set (DraggerVisibleTraits::create (i, f, this));
-              continue;
-            }
-          }
-
           break;
         }
 
@@ -542,6 +551,41 @@ namespace prj
         {
           throw ::xsd::cxx::tree::expected_element< char > (
             "base",
+            "");
+        }
+
+        if (!planeType_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "planeType",
+            "");
+        }
+
+        if (!csys_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "csys",
+            "");
+        }
+
+        if (!source_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "source",
+            "");
+        }
+
+        if (!plane_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "plane",
+            "");
+        }
+
+        if (!includeSource_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "includeSource",
             "");
         }
 
@@ -566,45 +610,10 @@ namespace prj
             "");
         }
 
-        if (!csys_.present ())
-        {
-          throw ::xsd::cxx::tree::expected_element< char > (
-            "csys",
-            "");
-        }
-
-        if (!includeSource_.present ())
-        {
-          throw ::xsd::cxx::tree::expected_element< char > (
-            "includeSource",
-            "");
-        }
-
-        if (!shapePick_.present ())
-        {
-          throw ::xsd::cxx::tree::expected_element< char > (
-            "shapePick",
-            "");
-        }
-
-        if (!planePick_.present ())
-        {
-          throw ::xsd::cxx::tree::expected_element< char > (
-            "planePick",
-            "");
-        }
-
         if (!includeSourceLabel_.present ())
         {
           throw ::xsd::cxx::tree::expected_element< char > (
             "includeSourceLabel",
-            "");
-        }
-
-        if (!draggerVisible_.present ())
-        {
-          throw ::xsd::cxx::tree::expected_element< char > (
-            "draggerVisible",
             "");
         }
       }
@@ -623,15 +632,15 @@ namespace prj
         {
           static_cast< ::xml_schema::Type& > (*this) = x;
           this->base_ = x.base_;
+          this->planeType_ = x.planeType_;
+          this->csys_ = x.csys_;
+          this->source_ = x.source_;
+          this->plane_ = x.plane_;
+          this->includeSource_ = x.includeSource_;
           this->seerShape_ = x.seerShape_;
           this->instanceMaps_ = x.instanceMaps_;
           this->csysDragger_ = x.csysDragger_;
-          this->csys_ = x.csys_;
-          this->includeSource_ = x.includeSource_;
-          this->shapePick_ = x.shapePick_;
-          this->planePick_ = x.planePick_;
           this->includeSourceLabel_ = x.includeSourceLabel_;
-          this->draggerVisible_ = x.draggerVisible_;
         }
 
         return *this;
@@ -950,6 +959,61 @@ namespace prj
           s << i.base ();
         }
 
+        // planeType
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "planeType",
+              e));
+
+          s << i.planeType ();
+        }
+
+        // csys
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "csys",
+              e));
+
+          s << i.csys ();
+        }
+
+        // source
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "source",
+              e));
+
+          s << i.source ();
+        }
+
+        // plane
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "plane",
+              e));
+
+          s << i.plane ();
+        }
+
+        // includeSource
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "includeSource",
+              e));
+
+          s << i.includeSource ();
+        }
+
         // seerShape
         //
         {
@@ -983,50 +1047,6 @@ namespace prj
           s << i.csysDragger ();
         }
 
-        // csys
-        //
-        {
-          ::xercesc::DOMElement& s (
-            ::xsd::cxx::xml::dom::create_element (
-              "csys",
-              e));
-
-          s << i.csys ();
-        }
-
-        // includeSource
-        //
-        {
-          ::xercesc::DOMElement& s (
-            ::xsd::cxx::xml::dom::create_element (
-              "includeSource",
-              e));
-
-          s << i.includeSource ();
-        }
-
-        // shapePick
-        //
-        {
-          ::xercesc::DOMElement& s (
-            ::xsd::cxx::xml::dom::create_element (
-              "shapePick",
-              e));
-
-          s << i.shapePick ();
-        }
-
-        // planePick
-        //
-        {
-          ::xercesc::DOMElement& s (
-            ::xsd::cxx::xml::dom::create_element (
-              "planePick",
-              e));
-
-          s << i.planePick ();
-        }
-
         // includeSourceLabel
         //
         {
@@ -1036,17 +1056,6 @@ namespace prj
               e));
 
           s << i.includeSourceLabel ();
-        }
-
-        // draggerVisible
-        //
-        {
-          ::xercesc::DOMElement& s (
-            ::xsd::cxx::xml::dom::create_element (
-              "draggerVisible",
-              e));
-
-          s << i.draggerVisible ();
         }
       }
 

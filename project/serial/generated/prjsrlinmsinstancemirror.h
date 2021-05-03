@@ -93,8 +93,6 @@ namespace prj
 
 #include "prjsrlsptoverlay.h"
 
-#include "prjsrlsptpick.h"
-
 #include "prjsrlsptseershape.h"
 
 #include "prjsrlsptinstancemapping.h"
@@ -126,6 +124,91 @@ namespace prj
 
         void
         base (::std::unique_ptr< BaseType > p);
+
+        // planeType
+        //
+        typedef ::prj::srl::spt::Parameter PlaneTypeType;
+        typedef ::xsd::cxx::tree::traits< PlaneTypeType, char > PlaneTypeTraits;
+
+        const PlaneTypeType&
+        planeType () const;
+
+        PlaneTypeType&
+        planeType ();
+
+        void
+        planeType (const PlaneTypeType& x);
+
+        void
+        planeType (::std::unique_ptr< PlaneTypeType > p);
+
+        // csys
+        //
+        typedef ::prj::srl::spt::Parameter CsysType;
+        typedef ::xsd::cxx::tree::traits< CsysType, char > CsysTraits;
+
+        const CsysType&
+        csys () const;
+
+        CsysType&
+        csys ();
+
+        void
+        csys (const CsysType& x);
+
+        void
+        csys (::std::unique_ptr< CsysType > p);
+
+        // source
+        //
+        typedef ::prj::srl::spt::Parameter SourceType;
+        typedef ::xsd::cxx::tree::traits< SourceType, char > SourceTraits;
+
+        const SourceType&
+        source () const;
+
+        SourceType&
+        source ();
+
+        void
+        source (const SourceType& x);
+
+        void
+        source (::std::unique_ptr< SourceType > p);
+
+        // plane
+        //
+        typedef ::prj::srl::spt::Parameter PlaneType;
+        typedef ::xsd::cxx::tree::traits< PlaneType, char > PlaneTraits;
+
+        const PlaneType&
+        plane () const;
+
+        PlaneType&
+        plane ();
+
+        void
+        plane (const PlaneType& x);
+
+        void
+        plane (::std::unique_ptr< PlaneType > p);
+
+        // includeSource
+        //
+        typedef ::prj::srl::spt::Parameter IncludeSourceType;
+        typedef ::xsd::cxx::tree::traits< IncludeSourceType, char > IncludeSourceTraits;
+
+        const IncludeSourceType&
+        includeSource () const;
+
+        IncludeSourceType&
+        includeSource ();
+
+        void
+        includeSource (const IncludeSourceType& x);
+
+        void
+        includeSource (::std::unique_ptr< IncludeSourceType > p);
 
         // seerShape
         //
@@ -178,74 +261,6 @@ namespace prj
         void
         csysDragger (::std::unique_ptr< CsysDraggerType > p);
 
-        // csys
-        //
-        typedef ::prj::srl::spt::Parameter CsysType;
-        typedef ::xsd::cxx::tree::traits< CsysType, char > CsysTraits;
-
-        const CsysType&
-        csys () const;
-
-        CsysType&
-        csys ();
-
-        void
-        csys (const CsysType& x);
-
-        void
-        csys (::std::unique_ptr< CsysType > p);
-
-        // includeSource
-        //
-        typedef ::prj::srl::spt::Parameter IncludeSourceType;
-        typedef ::xsd::cxx::tree::traits< IncludeSourceType, char > IncludeSourceTraits;
-
-        const IncludeSourceType&
-        includeSource () const;
-
-        IncludeSourceType&
-        includeSource ();
-
-        void
-        includeSource (const IncludeSourceType& x);
-
-        void
-        includeSource (::std::unique_ptr< IncludeSourceType > p);
-
-        // shapePick
-        //
-        typedef ::prj::srl::spt::Pick ShapePickType;
-        typedef ::xsd::cxx::tree::traits< ShapePickType, char > ShapePickTraits;
-
-        const ShapePickType&
-        shapePick () const;
-
-        ShapePickType&
-        shapePick ();
-
-        void
-        shapePick (const ShapePickType& x);
-
-        void
-        shapePick (::std::unique_ptr< ShapePickType > p);
-
-        // planePick
-        //
-        typedef ::prj::srl::spt::Pick PlanePickType;
-        typedef ::xsd::cxx::tree::traits< PlanePickType, char > PlanePickTraits;
-
-        const PlanePickType&
-        planePick () const;
-
-        PlanePickType&
-        planePick ();
-
-        void
-        planePick (const PlanePickType& x);
-
-        void
-        planePick (::std::unique_ptr< PlanePickType > p);
-
         // includeSourceLabel
         //
         typedef ::prj::srl::spt::PLabel IncludeSourceLabelType;
@@ -263,43 +278,29 @@ namespace prj
         void
         includeSourceLabel (::std::unique_ptr< IncludeSourceLabelType > p);
 
-        // draggerVisible
-        //
-        typedef ::xml_schema::Boolean DraggerVisibleType;
-        typedef ::xsd::cxx::tree::traits< DraggerVisibleType, char > DraggerVisibleTraits;
-
-        const DraggerVisibleType&
-        draggerVisible () const;
-
-        DraggerVisibleType&
-        draggerVisible ();
-
-        void
-        draggerVisible (const DraggerVisibleType& x);
-
         // Constructors.
         //
         InstanceMirror (const BaseType&,
+                        const PlaneTypeType&,
+                        const CsysType&,
+                        const SourceType&,
+                        const PlaneType&,
+                        const IncludeSourceType&,
                         const SeerShapeType&,
                         const InstanceMapsType&,
                         const CsysDraggerType&,
-                        const CsysType&,
-                        const IncludeSourceType&,
-                        const ShapePickType&,
-                        const PlanePickType&,
-                        const IncludeSourceLabelType&,
-                        const DraggerVisibleType&);
+                        const IncludeSourceLabelType&);
 
         InstanceMirror (::std::unique_ptr< BaseType >,
+                        ::std::unique_ptr< PlaneTypeType >,
+                        ::std::unique_ptr< CsysType >,
+                        ::std::unique_ptr< SourceType >,
+                        ::std::unique_ptr< PlaneType >,
+                        ::std::unique_ptr< IncludeSourceType >,
                         ::std::unique_ptr< SeerShapeType >,
                         ::std::unique_ptr< InstanceMapsType >,
                         ::std::unique_ptr< CsysDraggerType >,
-                        ::std::unique_ptr< CsysType >,
-                        ::std::unique_ptr< IncludeSourceType >,
-                        ::std::unique_ptr< ShapePickType >,
-                        ::std::unique_ptr< PlanePickType >,
-                        ::std::unique_ptr< IncludeSourceLabelType >,
-                        const DraggerVisibleType&);
+                        ::std::unique_ptr< IncludeSourceLabelType >);
 
         InstanceMirror (const ::xercesc::DOMElement& e,
                         ::xml_schema::Flags f = 0,
@@ -328,15 +329,15 @@ namespace prj
 
         protected:
         ::xsd::cxx::tree::one< BaseType > base_;
+        ::xsd::cxx::tree::one< PlaneTypeType > planeType_;
+        ::xsd::cxx::tree::one< CsysType > csys_;
+        ::xsd::cxx::tree::one< SourceType > source_;
+        ::xsd::cxx::tree::one< PlaneType > plane_;
+        ::xsd::cxx::tree::one< IncludeSourceType > includeSource_;
         ::xsd::cxx::tree::one< SeerShapeType > seerShape_;
         ::xsd::cxx::tree::one< InstanceMapsType > instanceMaps_;
         ::xsd::cxx::tree::one< CsysDraggerType > csysDragger_;
-        ::xsd::cxx::tree::one< CsysType > csys_;
-        ::xsd::cxx::tree::one< IncludeSourceType > includeSource_;
-        ::xsd::cxx::tree::one< ShapePickType > shapePick_;
-        ::xsd::cxx::tree::one< PlanePickType > planePick_;
         ::xsd::cxx::tree::one< IncludeSourceLabelType > includeSourceLabel_;
-        ::xsd::cxx::tree::one< DraggerVisibleType > draggerVisible_;
       };
     }
   }
