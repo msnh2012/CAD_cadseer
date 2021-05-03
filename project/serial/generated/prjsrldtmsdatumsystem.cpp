@@ -91,22 +91,10 @@ namespace prj
         this->systemType_.set (x);
       }
 
-      const DatumSystem::PicksSequence& DatumSystem::
-      picks () const
-      {
-        return this->picks_;
-      }
-
-      DatumSystem::PicksSequence& DatumSystem::
-      picks ()
-      {
-        return this->picks_;
-      }
-
       void DatumSystem::
-      picks (const PicksSequence& s)
+      systemType (::std::unique_ptr< SystemTypeType > x)
       {
-        this->picks_ = s;
+        this->systemType_.set (std::move (x));
       }
 
       const DatumSystem::CsysType& DatumSystem::
@@ -205,6 +193,36 @@ namespace prj
         this->offsetVector_.set (std::move (x));
       }
 
+      const DatumSystem::PicksOptional& DatumSystem::
+      picks () const
+      {
+        return this->picks_;
+      }
+
+      DatumSystem::PicksOptional& DatumSystem::
+      picks ()
+      {
+        return this->picks_;
+      }
+
+      void DatumSystem::
+      picks (const PicksType& x)
+      {
+        this->picks_.set (x);
+      }
+
+      void DatumSystem::
+      picks (const PicksOptional& x)
+      {
+        this->picks_ = x;
+      }
+
+      void DatumSystem::
+      picks (::std::unique_ptr< PicksType > x)
+      {
+        this->picks_.set (std::move (x));
+      }
+
       const DatumSystem::CsysDraggerType& DatumSystem::
       csysDragger () const
       {
@@ -300,6 +318,24 @@ namespace prj
       {
         this->offsetVectorLabel_.set (std::move (x));
       }
+
+      const DatumSystem::CachedSizeType& DatumSystem::
+      cachedSize () const
+      {
+        return this->cachedSize_.get ();
+      }
+
+      DatumSystem::CachedSizeType& DatumSystem::
+      cachedSize ()
+      {
+        return this->cachedSize_.get ();
+      }
+
+      void DatumSystem::
+      cachedSize (const CachedSizeType& x)
+      {
+        this->cachedSize_.set (x);
+      }
     }
   }
 }
@@ -325,25 +361,27 @@ namespace prj
                    const CsysDraggerType& csysDragger,
                    const AutoSizeLabelType& autoSizeLabel,
                    const SizeLabelType& sizeLabel,
-                   const OffsetVectorLabelType& offsetVectorLabel)
+                   const OffsetVectorLabelType& offsetVectorLabel,
+                   const CachedSizeType& cachedSize)
       : ::xml_schema::Type (),
         base_ (base, this),
         systemType_ (systemType, this),
-        picks_ (this),
         csys_ (csys, this),
         autoSize_ (autoSize, this),
         size_ (size, this),
         offsetVector_ (offsetVector, this),
+        picks_ (this),
         csysDragger_ (csysDragger, this),
         autoSizeLabel_ (autoSizeLabel, this),
         sizeLabel_ (sizeLabel, this),
-        offsetVectorLabel_ (offsetVectorLabel, this)
+        offsetVectorLabel_ (offsetVectorLabel, this),
+        cachedSize_ (cachedSize, this)
       {
       }
 
       DatumSystem::
       DatumSystem (::std::unique_ptr< BaseType > base,
-                   const SystemTypeType& systemType,
+                   ::std::unique_ptr< SystemTypeType > systemType,
                    ::std::unique_ptr< CsysType > csys,
                    ::std::unique_ptr< AutoSizeType > autoSize,
                    ::std::unique_ptr< SizeType > size,
@@ -351,19 +389,21 @@ namespace prj
                    ::std::unique_ptr< CsysDraggerType > csysDragger,
                    ::std::unique_ptr< AutoSizeLabelType > autoSizeLabel,
                    ::std::unique_ptr< SizeLabelType > sizeLabel,
-                   ::std::unique_ptr< OffsetVectorLabelType > offsetVectorLabel)
+                   ::std::unique_ptr< OffsetVectorLabelType > offsetVectorLabel,
+                   const CachedSizeType& cachedSize)
       : ::xml_schema::Type (),
         base_ (std::move (base), this),
-        systemType_ (systemType, this),
-        picks_ (this),
+        systemType_ (std::move (systemType), this),
         csys_ (std::move (csys), this),
         autoSize_ (std::move (autoSize), this),
         size_ (std::move (size), this),
         offsetVector_ (std::move (offsetVector), this),
+        picks_ (this),
         csysDragger_ (std::move (csysDragger), this),
         autoSizeLabel_ (std::move (autoSizeLabel), this),
         sizeLabel_ (std::move (sizeLabel), this),
-        offsetVectorLabel_ (std::move (offsetVectorLabel), this)
+        offsetVectorLabel_ (std::move (offsetVectorLabel), this),
+        cachedSize_ (cachedSize, this)
       {
       }
 
@@ -374,15 +414,16 @@ namespace prj
       : ::xml_schema::Type (x, f, c),
         base_ (x.base_, f, this),
         systemType_ (x.systemType_, f, this),
-        picks_ (x.picks_, f, this),
         csys_ (x.csys_, f, this),
         autoSize_ (x.autoSize_, f, this),
         size_ (x.size_, f, this),
         offsetVector_ (x.offsetVector_, f, this),
+        picks_ (x.picks_, f, this),
         csysDragger_ (x.csysDragger_, f, this),
         autoSizeLabel_ (x.autoSizeLabel_, f, this),
         sizeLabel_ (x.sizeLabel_, f, this),
-        offsetVectorLabel_ (x.offsetVectorLabel_, f, this)
+        offsetVectorLabel_ (x.offsetVectorLabel_, f, this),
+        cachedSize_ (x.cachedSize_, f, this)
       {
       }
 
@@ -393,15 +434,16 @@ namespace prj
       : ::xml_schema::Type (e, f | ::xml_schema::Flags::base, c),
         base_ (this),
         systemType_ (this),
-        picks_ (this),
         csys_ (this),
         autoSize_ (this),
         size_ (this),
         offsetVector_ (this),
+        picks_ (this),
         csysDragger_ (this),
         autoSizeLabel_ (this),
         sizeLabel_ (this),
-        offsetVectorLabel_ (this)
+        offsetVectorLabel_ (this),
+        cachedSize_ (this)
       {
         if ((f & ::xml_schema::Flags::base) == 0)
         {
@@ -438,22 +480,14 @@ namespace prj
           //
           if (n.name () == "systemType" && n.namespace_ ().empty ())
           {
+            ::std::unique_ptr< SystemTypeType > r (
+              SystemTypeTraits::create (i, f, this));
+
             if (!systemType_.present ())
             {
-              this->systemType_.set (SystemTypeTraits::create (i, f, this));
+              this->systemType_.set (::std::move (r));
               continue;
             }
-          }
-
-          // picks
-          //
-          if (n.name () == "picks" && n.namespace_ ().empty ())
-          {
-            ::std::unique_ptr< PicksType > r (
-              PicksTraits::create (i, f, this));
-
-            this->picks_.push_back (::std::move (r));
-            continue;
           }
 
           // csys
@@ -512,6 +546,20 @@ namespace prj
             }
           }
 
+          // picks
+          //
+          if (n.name () == "picks" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< PicksType > r (
+              PicksTraits::create (i, f, this));
+
+            if (!this->picks_)
+            {
+              this->picks_.set (::std::move (r));
+              continue;
+            }
+          }
+
           // csysDragger
           //
           if (n.name () == "csysDragger" && n.namespace_ ().empty ())
@@ -564,6 +612,17 @@ namespace prj
             if (!offsetVectorLabel_.present ())
             {
               this->offsetVectorLabel_.set (::std::move (r));
+              continue;
+            }
+          }
+
+          // cachedSize
+          //
+          if (n.name () == "cachedSize" && n.namespace_ ().empty ())
+          {
+            if (!cachedSize_.present ())
+            {
+              this->cachedSize_.set (CachedSizeTraits::create (i, f, this));
               continue;
             }
           }
@@ -640,6 +699,13 @@ namespace prj
             "offsetVectorLabel",
             "");
         }
+
+        if (!cachedSize_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "cachedSize",
+            "");
+        }
       }
 
       DatumSystem* DatumSystem::
@@ -657,15 +723,16 @@ namespace prj
           static_cast< ::xml_schema::Type& > (*this) = x;
           this->base_ = x.base_;
           this->systemType_ = x.systemType_;
-          this->picks_ = x.picks_;
           this->csys_ = x.csys_;
           this->autoSize_ = x.autoSize_;
           this->size_ = x.size_;
           this->offsetVector_ = x.offsetVector_;
+          this->picks_ = x.picks_;
           this->csysDragger_ = x.csysDragger_;
           this->autoSizeLabel_ = x.autoSizeLabel_;
           this->sizeLabel_ = x.sizeLabel_;
           this->offsetVectorLabel_ = x.offsetVectorLabel_;
+          this->cachedSize_ = x.cachedSize_;
         }
 
         return *this;
@@ -995,20 +1062,6 @@ namespace prj
           s << i.systemType ();
         }
 
-        // picks
-        //
-        for (DatumSystem::PicksConstIterator
-             b (i.picks ().begin ()), n (i.picks ().end ());
-             b != n; ++b)
-        {
-          ::xercesc::DOMElement& s (
-            ::xsd::cxx::xml::dom::create_element (
-              "picks",
-              e));
-
-          s << *b;
-        }
-
         // csys
         //
         {
@@ -1053,6 +1106,18 @@ namespace prj
           s << i.offsetVector ();
         }
 
+        // picks
+        //
+        if (i.picks ())
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "picks",
+              e));
+
+          s << *i.picks ();
+        }
+
         // csysDragger
         //
         {
@@ -1095,6 +1160,17 @@ namespace prj
               e));
 
           s << i.offsetVectorLabel ();
+        }
+
+        // cachedSize
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "cachedSize",
+              e));
+
+          s << ::xml_schema::AsDouble(i.cachedSize ());
         }
       }
 

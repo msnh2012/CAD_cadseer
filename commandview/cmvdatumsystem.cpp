@@ -26,10 +26,8 @@
 #include "project/prjproject.h"
 #include "message/msgmessage.h"
 #include "message/msgnode.h"
-#include "dialogs/dlgselectionbutton.h"
-#include "dialogs/dlgselectionwidget.h"
-#include "commandview/cmvparameterwidgets.h"
-#include "commandview/cmvcsyswidget.h"
+#include "commandview/cmvselectioncue.h"
+#include "commandview/cmvtable.h"
 #include "parameter/prmconstants.h"
 #include "parameter/prmparameter.h"
 #include "tools/featuretools.h"
@@ -47,151 +45,51 @@ struct DatumSystem::Stow
 {
   cmd::DatumSystem *command;
   cmv::DatumSystem *view;
-  QComboBox *typeCombo = nullptr;
-  QStackedWidget *stackedWidget = nullptr;
-  CSysWidget *csysWidget = nullptr;
-  dlg::SelectionWidget *selectionWidget3P = nullptr;
-  ParameterWidget *parameterWidget = nullptr;
-  prm::Parameter *csys = nullptr;
-  prm::Parameter *autoSize = nullptr;
-  prm::Parameter *size = nullptr;
-  
+  prm::Parameters parameters;
+  cmv::tbl::Model *prmModel = nullptr;
+  cmv::tbl::View *prmView = nullptr;
+ 
   Stow(cmd::DatumSystem *cIn, cmv::DatumSystem *vIn)
   : command(cIn)
   , view(vIn)
   {
+    parameters = command->feature->getParameters();
     buildGui();
-    
-    QSettings &settings = app::instance()->getUserSettings();
-    settings.beginGroup("cmv::DatumSystem");
-    //load settings
-    settings.endGroup();
-    
-    loadFeatureData();
-    glue();
+    connect(prmModel, &tbl::Model::dataChanged, view, &DatumSystem::modelChanged);
   }
   
   void buildGui()
   {
     QVBoxLayout *mainLayout = new QVBoxLayout();
     view->setLayout(mainLayout);
+    Base::clearContentMargins(view);
+    view->setSizePolicy(view->sizePolicy().horizontalPolicy(), QSizePolicy::Expanding);
     
-    typeCombo = new QComboBox(view);
-    typeCombo->addItem(tr("Parameter"));
-    typeCombo->addItem(tr("Through 3 points"));
-    mainLayout->addWidget(typeCombo);
+    prmModel = new tbl::Model(view, command->feature);
+    prmView = new tbl::View(view, prmModel, true);
+    mainLayout->addWidget(prmView);
     
-    parameterWidget = new ParameterWidget(view, {command->feature->getParameters()});
-    mainLayout->addWidget(parameterWidget);
+    const auto *ft = command->feature;
     
-    for (auto *p : command->feature->getParameters())
+    //no cues for constant
     {
-      if (p->getName() == prm::Names::CSys)
-        csys = p;
-      if (p->getName() == prm::Names::Size)
-        size = p;
-      if (p->getName() == prm::Names::AutoSize)
-        autoSize = p;
+      //linked
+      tbl::SelectionCue cue;
+      cue.singleSelection = true;
+      cue.mask = slc::ObjectsBoth;
+      cue.statusPrompt = tr("Select Feature To Link Axis");
+      cue.accrueEnabled = false;
+      prmModel->setCue(ft->getParameter(ftr::DatumSystem::Tags::Linked), cue);
     }
-    assert(csys);
-    assert(size);
-    assert(autoSize);
-    
-    csysWidget = dynamic_cast<cmv::CSysWidget*>(parameterWidget->getWidget(csys));
-    assert(csysWidget);
-    if (csysWidget)
     {
-      ftr::UpdatePayload payload = view->project->getPayload(command->feature->getId());
-      std::vector<const ftr::Base*> inputs = payload.getFeatures(ftr::InputType::linkCSys);
-      if (inputs.empty())
-        csysWidget->setCSysLinkId(gu::createNilId());
-      else
-        csysWidget->setCSysLinkId(inputs.front()->getId());
+      //points
+      tbl::SelectionCue cue;
+      cue.singleSelection = false;
+      cue.mask = slc::PointsBoth | slc::AllPointsEnabled | slc::EndPointsSelectable;
+      cue.statusPrompt = tr("Select 2 Points For Axis");
+      cue.accrueEnabled = false;
+      prmModel->setCue(ft->getParameter(ftr::DatumSystem::Tags::Points), cue);
     }
-    
-    stackedWidget = new QStackedWidget(view);
-    stackedWidget->setSizePolicy(stackedWidget->sizePolicy().horizontalPolicy(), QSizePolicy::Maximum);
-    mainLayout->addWidget(stackedWidget);
-    
-    //add dummy widget for 'by parameter'
-    stackedWidget->addWidget(new QWidget(stackedWidget));
-    
-    //through 3 points
-    dlg::SelectionWidgetCue cue;
-    cue.name.clear();
-    cue.singleSelection = false;
-    cue.showAccrueColumn = false;
-    cue.mask = slc::PointsEnabled | slc::PointsSelectable | slc::EndPointsEnabled
-      | slc::MidPointsEnabled | slc::CenterPointsEnabled | slc::QuadrantPointsEnabled;
-    cue.statusPrompt = tr("Select 3 points");
-    selectionWidget3P = new dlg::SelectionWidget(stackedWidget, {cue});
-    selectionWidget3P->getButton(0)->setChecked(true);
-    stackedWidget->addWidget(selectionWidget3P);
-    
-    mainLayout->addItem(new QSpacerItem(20, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
-  }
-  
-  void loadFeatureData()
-  {
-    csysWidget->setCSysLinkId(gu::createNilId()); //turn on if needed
-    csysWidget->setEnabled(false); //default to off turn on if needed
-    
-    const auto &cue = command->feature->getCue();
-    if (cue.systemType == ftr::DatumSystem::SystemType::Constant)
-    {
-      typeCombo->setCurrentIndex(0);
-      stackedWidget->setCurrentIndex(0);
-      csysWidget->setCSysLinkId(gu::createNilId());
-      csysWidget->setEnabled(true);
-    }
-    else if (cue.systemType == ftr::DatumSystem::SystemType::Linked)
-    {
-      typeCombo->setCurrentIndex(0);
-      stackedWidget->setCurrentIndex(0);
-      csysWidget->setEnabled(true);
-      const auto &pl = view->project->getPayload(command->feature->getId());
-      auto features = pl.getFeatures(ftr::InputType::linkCSys);
-      if (features.empty())
-      {
-        csysWidget->setCSysLinkId(gu::createNilId());
-        view->node->sendBlocked(msg::buildStatusMessage("Couldn't find linked csys feature"));
-      }
-      else
-        csysWidget->setCSysLinkId(features.front()->getId());
-    }
-    else if (cue.systemType == ftr::DatumSystem::SystemType::Through3Points)
-    {
-      typeCombo->setCurrentIndex(1);
-      stackedWidget->setCurrentIndex(1);
-      //for all types?
-      const auto &pl = view->project->getPayload(command->feature->getId());
-      tls::Resolver resolver(pl);
-      for (const auto &p : cue.picks)
-      {
-        if (!resolver.resolve(p))
-          continue;
-        selectionWidget3P->getButton(0)->addMessages(resolver.convertToMessages());
-      }
-      selectionWidget3P->activate(0);
-    }
-    
-    if (autoSize->getBool())
-      parameterWidget->disableWidget(size);
-    else
-      parameterWidget->enableWidget(size);
-  }
-  
-  void glue()
-  {
-    connect(typeCombo, SIGNAL(currentIndexChanged(int)), view, SLOT(comboChanged(int)));
-    connect(csysWidget, &CSysWidget::dirty, view, &DatumSystem::linkCSysChanged);
-    connect(selectionWidget3P->getButton(0), &dlg::SelectionButton::dirty, view, &DatumSystem::p3Changed);
-    connect(parameterWidget, &ParameterBase::prmValueChanged, view, &DatumSystem::parameterChanged);
-  }
-  
-  void goUpdate()
-  {
-    command->localUpdate();
   }
 };
 
@@ -202,34 +100,40 @@ DatumSystem::DatumSystem(cmd::DatumSystem *cIn)
 
 DatumSystem::~DatumSystem() = default;
 
-void DatumSystem::comboChanged(int index)
+void DatumSystem::modelChanged(const QModelIndex &index, const QModelIndex&)
 {
-  stow->stackedWidget->setCurrentIndex(index);
-  if (index == 0)
+  if (!index.isValid())
+    return;
+  
+  prm::Parameter *par = stow->parameters.at(index.row());
+  if (par->getTag() == ftr::DatumSystem::Tags::SystemType)
   {
-    stow->csysWidget->setEnabled(true);
-    linkCSysChanged();
+    const auto *ft = stow->command->feature;
+    auto systemType = static_cast<ftr::DatumSystem::SystemType>(par->getInt());
+    switch(systemType)
+    {
+      case ftr::DatumSystem::SystemType::Constant:{
+        stow->command->setConstant();
+        break;}
+      case ftr::DatumSystem::SystemType::Linked:{
+        const auto *p = ft->getParameter(ftr::DatumSystem::Tags::Linked);
+        stow->command->setLinked(stow->prmModel->getMessages(p));
+        break;}
+      case ftr::DatumSystem::SystemType::Through3Points:{
+        const auto *p = ft->getParameter(ftr::DatumSystem::Tags::Points);
+        stow->command->set3Points(stow->prmModel->getMessages(p));
+        break;}
+    }
+    stow->prmView->updateHideInactive();
   }
-  else if (index == 1)
-  {
-    stow->csysWidget->setEnabled(false);
-    p3Changed();
-  }
-}
-
-void DatumSystem::linkCSysChanged()
-{
-  stow->command->setLinked(stow->csysWidget->getCSysLinkId());
-  stow->goUpdate();
-}
-
-void DatumSystem::p3Changed()
-{
-  stow->command->set3Points(stow->selectionWidget3P->getButton(0)->getMessages());
-  stow->goUpdate();
-}
-
-void DatumSystem::parameterChanged()
-{
-  stow->goUpdate();
+  
+  if (par->getTag() == ftr::DatumSystem::Tags::Linked)
+    stow->command->setLinked(stow->prmModel->getMessages(par));
+  else if (par->getTag() == ftr::DatumSystem::Tags::Points)
+    stow->command->set3Points(stow->prmModel->getMessages(par));
+  else if (par->getTag() == prm::Tags::AutoSize)
+    stow->prmView->updateHideInactive();
+  
+  stow->command->localUpdate();
+  node->sendBlocked(msg::buildStatusMessage(stow->command->getStatusMessage()));
 }

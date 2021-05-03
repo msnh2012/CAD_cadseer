@@ -558,6 +558,7 @@ Parameter::Parameter(const QString &nameIn, const osg::Matrixd &valueIn, std::st
 }
 
 Parameter::Parameter(const QString &nameIn, const ftr::Picks &valueIn, std::string_view tagIn) :
+  expressionLinkable(false),
   name(nameIn),
   tag(tagIn),
   stow(new Stow(valueIn)),

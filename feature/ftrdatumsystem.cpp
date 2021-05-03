@@ -43,29 +43,230 @@ using namespace ftr::DatumSystem;
 
 QIcon Feature::icon;
 
-osg::Matrixd applyOffset(osg::Matrixd mIn, const osg::Vec3d &offset)
+struct Feature::Stow
 {
-  if (!offset.valid() || offset.length() < std::numeric_limits<float>::epsilon())
+  Feature &feature;
+  
+  prm::Parameter systemType;
+  prm::Parameter csys;
+  prm::Parameter autoSize;
+  prm::Parameter size;
+  prm::Parameter offsetVector;
+  prm::Parameter linkedPicks;
+  prm::Parameter pointsPicks;
+  prm::Observer csysObserver;
+  prm::Observer sizeObserver;
+  prm::Observer syncObserver;
+  ann::CSysDragger csysDragger;
+  
+  osg::ref_ptr<mdv::DatumSystem> display;
+  osg::ref_ptr<lbr::PLabel> autoSizeLabel;
+  osg::ref_ptr<lbr::PLabel> sizeLabel;
+  osg::ref_ptr<lbr::PLabel> offsetVectorLabel;
+  osg::ref_ptr<osg::PositionAttitudeTransform> scale;
+  double cachedSize;
+  
+  Stow(Feature &fIn)
+  : feature(fIn)
+  , systemType(QObject::tr("Type"), 0, Tags::SystemType)
+  , csys(prm::Names::CSys, osg::Matrixd::identity(), prm::Tags::CSys)
+  , autoSize(prm::Names::AutoSize, false, prm::Tags::AutoSize)
+  , size(prm::Names::Size, 10.0, prm::Tags::Size)
+  , offsetVector(prm::Names::Offset, osg::Vec3d(), prm::Tags::Offset)
+  , linkedPicks(QObject::tr("Linked"), ftr::Picks(), Tags::Linked)
+  , pointsPicks(QObject::tr("Points"), ftr::Picks(), Tags::Points)
+  , csysObserver(std::bind(&Feature::setModelDirty, &feature))
+  , sizeObserver(std::bind(&Feature::setVisualDirty, &feature))
+  , syncObserver(std::bind(&Stow::prmActiveSync, this))
+  , csysDragger(&feature, &csys)
+  , display(new mdv::DatumSystem())
+  , autoSizeLabel(new lbr::PLabel(&autoSize))
+  , sizeLabel(new lbr::PLabel(&size))
+  , offsetVectorLabel(new lbr::PLabel(&offsetVector))
+  , scale(new osg::PositionAttitudeTransform())
+  {
+    auto initPrm = [&](prm::Parameter &prmIn)
+    {
+      prmIn.connectValue(std::bind(&Feature::setModelDirty, &feature));
+      feature.parameters.push_back(&prmIn);
+    };
+    
+    QStringList tStrings = //keep in sync with enum in header.
+    {
+      QObject::tr("Constant")
+      , QObject::tr("Linked")
+      , QObject::tr("Points")
+    };
+    systemType.setEnumeration(tStrings);
+    systemType.connect(syncObserver);
+    autoSize.connect(syncObserver);
+    
+    initPrm(systemType);
+    initPrm(offsetVector);
+    initPrm(linkedPicks);
+    initPrm(pointsPicks);
+    initPrm(autoSize);
+    
+    csys.connect(csysObserver);
+    feature.parameters.push_back(&csys);
+  
+    size.connect(sizeObserver);
+    feature.parameters.push_back(&size);
+    
+    csysDragger.dragger->hide(lbr::CSysDragger::SwitchIndexes::LinkIcon);
+    feature.annexes.insert(std::make_pair(ann::Type::CSysDragger, &csysDragger));
+    feature.overlaySwitch->addChild(csysDragger.dragger);
+    
+    double temp = size.getDouble();
+    scale->setScale(osg::Vec3d(temp, temp, temp));
+    scale->addChild(display.get());
+    feature.mainTransform->addChild(scale.get());
+    
+    feature.overlaySwitch->addChild(autoSizeLabel);
+    feature.overlaySwitch->addChild(sizeLabel);
+    feature.overlaySwitch->addChild(offsetVectorLabel);
+    
+    cachedSize = size.getDouble();
+  }
+  
+  void prmActiveSync()
+  {
+    prm::ObserverBlocker syncBlocker(syncObserver);
+    
+    auto st = static_cast<SystemType>(systemType.getInt());
+    switch(st)
+    {
+      case Constant:{
+        csys.setActive(true);
+        offsetVector.setActive(false);
+        autoSize.setValue(false);
+        autoSize.setActive(false);
+        size.setActive(true);
+        linkedPicks.setActive(false);
+        pointsPicks.setActive(false);
+        break;}
+      case Linked:{
+        csys.setActive(false);
+        offsetVector.setActive(true);
+        autoSize.setValue(false);
+        autoSize.setActive(false);
+        size.setActive(true);
+        linkedPicks.setActive(true);
+        pointsPicks.setActive(false);
+        break;}
+      case Through3Points:{
+        csys.setActive(false);
+        offsetVector.setActive(true);
+        autoSize.setActive(true);
+        size.setActive(!autoSize.getBool());
+        linkedPicks.setActive(false);
+        pointsPicks.setActive(true);
+        break;}
+    }
+  }
+  
+  osg::Matrixd applyOffset(osg::Matrixd mIn, const osg::Vec3d &offset)
+  {
+    if (!offset.valid() || offset.length() < std::numeric_limits<float>::epsilon())
+      return mIn;
+    mIn.setTrans(offset * mIn);
     return mIn;
-  mIn.setTrans(offset * mIn);
-  return mIn;
-}
+  }
+  
+  void updateLinked(const UpdatePayload &pli)
+  {
+    const auto &cp = linkedPicks.getPicks();
+    if (cp.size() != 1)
+      throw std::runtime_error("Wrong number of linked picks");
+    
+    tls::Resolver resolver(pli);
+    if (!resolver.resolve(cp.front()))
+      throw std::runtime_error("Couldn't resolve linked pick");
+    
+    auto csysPrms = resolver.getFeature()->getParameters(prm::Tags::CSys);
+    if (csysPrms.empty())
+      throw std::runtime_error("Linked feature has no csys parameter");
+    const auto &cm = csysPrms.front()->getMatrix();
+    
+    osg::Matrixd newSys = applyOffset(cm, offsetVector.getVector());
+    
+    prm::ObserverBlocker blocker(csysObserver);
+    csys.setValue(newSys);
+    csysDragger.draggerUpdate();
+  }
+  
+  void update3Points(const UpdatePayload &pIn)
+  {
+    tls::Resolver pr(pIn);
+    std::vector<osg::Vec3d> points;
+    for (const auto &p : pointsPicks.getPicks())
+    {
+      if (!pr.resolve(p))
+        throw std::runtime_error("Through3P: Pick resolution failed");
+      auto tps = pr.getPoints();
+      if (tps.empty())
+        throw std::runtime_error("Through3P: No resolved points");
+      if (tps.size() > 1)
+      {
+        std::ostringstream s; s << "WARNING: Through3P: more than one resolved point. Using first" << std::endl;
+        feature.lastUpdateLog += s.str();
+      }
+      points.push_back(tps.front());
+    }
+    if (points.size() != 3)
+      throw std::runtime_error("Through3P: couldn't get 3 points");
+    std::array<std::optional<osg::Vec3d>, 4> oPoints;
+    oPoints[0] = points[0];
+    oPoints[1] = points[1];
+    oPoints[2] = points[2];
+    
+    auto ocsys = tls::matrixFromPoints(oPoints);
+    if (!ocsys)
+      throw std::runtime_error("Through3P: couldn't derive matrix from 3 points");
+    
+    osg::Matrixd newSys = applyOffset(*ocsys, offsetVector.getVector());
+    
+    prm::ObserverBlocker blocker(csysObserver);
+    csys.setValue(newSys);
+    csysDragger.draggerUpdate();
+    
+    osg::BoundingSphere bs;
+    bs.expandBy(points.at(0));
+    bs.expandBy(points.at(1));
+    bs.expandBy(points.at(2));
+    cachedSize = bs.radius();
+  }
+  
+  void updateVisual()
+  {
+    if (autoSize.getBool())
+    {
+      prm::ObserverBlocker blocker(sizeObserver);
+      size.setValue(cachedSize);
+    }
+    
+    const osg::Matrixd &cs = csys.getMatrix(); //current system
+    feature.mainTransform->setMatrix(cs);
+    
+    double ts = size.getDouble();
+    scale->setScale(osg::Vec3d(ts, ts, ts));
+    
+    double lo = ts * 1.2; //label offset
+    osg::Vec3d asll = osg::Vec3d (lo, 0, 0) * cs;
+    autoSizeLabel->setMatrix(osg::Matrixd::translate(asll));
+    
+    osg::Vec3d sll = osg::Vec3d (0, lo, 0) * cs;
+    sizeLabel->setMatrix(osg::Matrixd::translate(sll));
+    
+    osg::Vec3d ovll = osg::Vec3d (0, 0, 0) * cs;
+    offsetVectorLabel->setMatrix(osg::Matrixd::translate(ovll));
+  }
+};
 
 
 Feature::Feature()
 : Base()
-, csys(std::make_unique<prm::Parameter>(prm::Names::CSys, osg::Matrixd::identity(), prm::Tags::CSys))
-, csysObserver(std::make_unique<prm::Observer>(std::bind(&Feature::setModelDirty, this)))
-, autoSize(std::make_unique<prm::Parameter>(prm::Names::AutoSize, false, prm::Tags::AutoSize))
-, size(std::make_unique<prm::Parameter>(prm::Names::Size, 1.0, prm::Tags::Size))
-, sizeObserver(std::make_unique<prm::Observer>(std::bind(&Feature::setModelDirty, this)))
-, offsetVector(std::make_unique<prm::Parameter>(prm::Names::Offset, osg::Vec3d(), prm::Tags::Offset))
-, csysDragger(std::make_unique<ann::CSysDragger>(this, csys.get()))
-, display(new mdv::DatumSystem())
-, autoSizeLabel(new lbr::PLabel(autoSize.get()))
-, sizeLabel(new lbr::PLabel(size.get()))
-, offsetVectorLabel(new lbr::PLabel(offsetVector.get()))
-, scale(new osg::PositionAttitudeTransform())
+, stow(std::make_unique<Stow>(*this))
 {
   if (icon.isNull())
     icon = QIcon(":/resources/images/constructionDatumSystem.svg");
@@ -73,64 +274,10 @@ Feature::Feature()
   name = QObject::tr("Datum System");
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
   
-  csys->connect(*csysObserver);
-  parameters.push_back(csys.get());
-  
-  autoSize->connectValue(std::bind(&Feature::setModelDirty, this));
-  parameters.push_back(autoSize.get());
-  
-  size->connect(*sizeObserver);
-  parameters.push_back(size.get());
-  
-  offsetVector->connectValue(std::bind(&Feature::setModelDirty, this));
-  parameters.push_back(offsetVector.get());
-  
-  csysDragger->dragger->hide(lbr::CSysDragger::SwitchIndexes::LinkIcon);
-  annexes.insert(std::make_pair(ann::Type::CSysDragger, csysDragger.get()));
-  //update will add to overlay or remove from overlay.
-  
-  double temp = size->getDouble();
-  scale->setScale(osg::Vec3d(temp, temp, temp));
-  mainTransform->addChild(scale.get());
-  
-  scale->addChild(display.get());
+  stow->prmActiveSync();
 }
 
 Feature::~Feature() = default;
-
-void Feature::setCue(const Cue &cIn)
-{
-  cue = cIn;
-  setModelDirty();
-}
-
-void Feature::setCSys(const osg::Matrixd &csysIn)
-{
-  cue.systemType = SystemType::Constant;
-  
-  osg::Matrixd oldSystem = csys->getMatrix();
-  if (!csys->setValue(csysIn))
-    return; // already at this csys
-    
-  //apply the same transformation to dragger, so dragger moves with it.
-  osg::Matrixd diffMatrix = osg::Matrixd::inverse(oldSystem) * csysIn;
-  csysDragger->draggerUpdate(csysDragger->dragger->getMatrix() * diffMatrix);
-}
-
-osg::Matrixd Feature::getCSys() const
-{
-  return csys->getMatrix();
-}
-
-void Feature::setSize(double sizeIn)
-{
-  size->setValue(sizeIn);
-}
-
-void Feature::setAutoSize(bool vIn)
-{
-  autoSize->setValue(vIn);
-}
 
 void Feature::updateModel(const UpdatePayload &pIn)
 {
@@ -144,12 +291,19 @@ void Feature::updateModel(const UpdatePayload &pIn)
       throw std::runtime_error("feature is skipped");
     }
     
-    if (cue.systemType == SystemType::Constant)
-      updateNone(pIn);
-    if (cue.systemType == SystemType::Linked)
-      updateLinked(pIn);
-    else if (cue.systemType == SystemType::Through3Points)
-      update3Points(pIn);
+    auto sysType = static_cast<SystemType>(stow->systemType.getInt());
+    switch (sysType)
+    {
+      case Constant:{
+        stow->csysDragger.draggerUpdate();
+        break;}
+      case Linked:{
+        stow->updateLinked(pIn);
+        break;}
+      case Through3Points:{
+        stow->update3Points(pIn);
+        break;}
+    }
     
     setSuccess();
   }
@@ -173,142 +327,10 @@ void Feature::updateModel(const UpdatePayload &pIn)
     std::cout << std::endl << lastUpdateLog;
 }
 
-void Feature::updateNone(const UpdatePayload&)
-{
-}
-
-void Feature::updateLinked(const UpdatePayload &pIn)
-{
-  auto linkedFeatures = pIn.getFeatures(InputType::linkCSys);
-  if (linkedFeatures.empty())
-    throw std::runtime_error("No Features for linked csys");
-  auto systemParameters = linkedFeatures.front()->getParameters(prm::Tags::CSys);
-  if (systemParameters.empty())
-    throw std::runtime_error("Feature for csys link, doesn't have csys parameter");
-  
-  osg::Matrixd newSys = applyOffset
-  (
-    systemParameters.front()->getMatrix()
-    , offsetVector->getVector()
-  );
-  
-  prm::ObserverBlocker blocker(*csysObserver);
-  csys->setValue(newSys);
-  csysDragger->draggerUpdate();
-}
-
-void Feature::update3Points(const UpdatePayload &pIn)
-{
-  //for now I just copied this from datum plane.
-  if (cue.picks.size() != 3)
-    throw std::runtime_error("Through3P: Wrong number of picks");
-  
-  tls::Resolver pr(pIn);
-  std::vector<osg::Vec3d> points;
-  for (const auto &p : cue.picks)
-  {
-    if (!pr.resolve(p))
-      throw std::runtime_error("Through3P: Pick resolution failed");
-    auto tps = pr.getPoints();
-    if (tps.empty())
-      throw std::runtime_error("Through3P: No resolved points");
-    if (tps.size() > 1)
-    {
-      std::ostringstream s; s << "WARNING: Through3P: more than one resolved point. Using first" << std::endl;
-      lastUpdateLog += s.str();
-    }
-    points.push_back(tps.front());
-  }
-  if (points.size() != 3)
-    throw std::runtime_error("Through3P: couldn't get 3 points");
-  std::array<std::optional<osg::Vec3d>, 4> oPoints;
-  oPoints[0] = points[0];
-  oPoints[1] = points[1];
-  oPoints[2] = points[2];
-  
-  auto ocsys = tls::matrixFromPoints(oPoints);
-  if (!ocsys)
-    throw std::runtime_error("Through3P: couldn't derive matrix from 3 points");
-  
-  osg::Matrixd newSys = applyOffset(*ocsys, offsetVector->getVector());
-  
-  prm::ObserverBlocker blocker(*csysObserver);
-  csys->setValue(newSys);
-  csysDragger->draggerUpdate();
-  
-  if (autoSize->getBool())
-  {
-    osg::BoundingSphere bs;
-    bs.expandBy(points.at(0));
-    bs.expandBy(points.at(1));
-    bs.expandBy(points.at(2));
-    prm::ObserverBlocker blocker(*sizeObserver);
-    size->setValue(bs.radius());
-  }
-}
-
 void Feature::updateVisual()
 {
-  updateVisualInternal();
+  stow->updateVisual();
   setVisualClean();
-}
-
-void Feature::updateVisualInternal()
-{
-  mainTransform->setMatrix(csys->getMatrix());
-  
-  auto addLabel = [&](osg::Node *child)
-  {
-    //don't add duplicate
-    if (!overlaySwitch->containsNode(child))
-      overlaySwitch->addChild(child);
-  };
-  auto removeLabel = [&](osg::Node *child)
-  {
-    //looked at osg code and we don't need to test for child present. it will ignore if not.
-    overlaySwitch->removeChild(child);
-  };
-  
-  if (cue.systemType == SystemType::Constant)
-  {
-    addLabel(csysDragger->dragger.get());
-    removeLabel(offsetVectorLabel.get());
-    addLabel(sizeLabel.get());
-    removeLabel(autoSizeLabel.get());
-  }
-  else if (cue.systemType == SystemType::Linked)
-  {
-    //force size for now. maybe we should try to derive a size from input feature?
-    removeLabel(csysDragger->dragger.get());
-    addLabel(offsetVectorLabel.get());
-    removeLabel(autoSizeLabel.get());
-    addLabel(sizeLabel.get());
-  }
-  else
-  {
-    removeLabel(csysDragger->dragger.get());
-    addLabel(offsetVectorLabel.get());
-    if (autoSize->getBool())
-      removeLabel(sizeLabel.get());
-    else
-      addLabel(sizeLabel.get());
-    addLabel(autoSizeLabel.get());
-  }
-  
-  osg::Matrixd cs = csys->getMatrix(); //current system
-  
-  double ts = size->getDouble();
-  scale->setScale(osg::Vec3d(ts, ts, ts));
-  
-  double lo = ts * 1.2; //label offset
-  osg::Vec3d asll = osg::Vec3d (lo, 0, 0) * cs;
-  autoSizeLabel->setMatrix(osg::Matrixd::translate(asll));
-  
-  osg::Vec3d sll = osg::Vec3d (0, lo, 0) * cs;
-  sizeLabel->setMatrix(osg::Matrixd::translate(sll));
-  
-  osg::Vec3d ovll = osg::Vec3d (0, 0, 0) * cs;
-  offsetVectorLabel->setMatrix(osg::Matrixd::translate(ovll));
 }
 
 void Feature::serialWrite(const boost::filesystem::path &dIn)
@@ -316,18 +338,23 @@ void Feature::serialWrite(const boost::filesystem::path &dIn)
   prj::srl::dtms::DatumSystem so
   (
     Base::serialOut()
-    , static_cast<int>(cue.systemType)
-    , csys->serialOut()
-    , autoSize->serialOut()
-    , size->serialOut()
-    , offsetVector->serialOut()
-    , csysDragger->serialOut()
-    , autoSizeLabel->serialOut()
-    , sizeLabel->serialOut()
-    , offsetVectorLabel->serialOut()
+    , stow->systemType.serialOut()
+    , stow->csys.serialOut()
+    , stow->autoSize.serialOut()
+    , stow->size.serialOut()
+    , stow->offsetVector.serialOut()
+    , stow->csysDragger.serialOut()
+    , stow->autoSizeLabel->serialOut()
+    , stow->sizeLabel->serialOut()
+    , stow->offsetVectorLabel->serialOut()
+    , stow->cachedSize
   );
-  for (const auto &p : cue.picks)
-    so.picks().push_back(p);
+  
+  auto ct = static_cast<SystemType>(stow->systemType.getInt());
+  if (ct == Linked)
+    so.picks() = stow->linkedPicks.serialOut();
+  else if (ct == Through3Points)
+    so.picks() = stow->pointsPicks.serialOut();
   
   xml_schema::NamespaceInfomap infoMap;
   std::ofstream stream(buildFilePathName(dIn).string());
@@ -337,17 +364,22 @@ void Feature::serialWrite(const boost::filesystem::path &dIn)
 void Feature::serialRead(const prj::srl::dtms::DatumSystem &so)
 {
   Base::serialIn(so.base());
-  cue.systemType = static_cast<DatumSystem::SystemType>(so.systemType());
-  csys->serialIn(so.csys());
-  autoSize->serialIn(so.autoSize());
-  size->serialIn(so.size());
-  offsetVector->serialIn(so.offsetVector());
-  csysDragger->serialIn(so.csysDragger());
-  autoSizeLabel->serialIn(so.autoSizeLabel());
-  sizeLabel->serialIn(so.sizeLabel());
-  offsetVectorLabel->serialIn(so.offsetVectorLabel());
-  for (const auto &p : so. picks())
-    cue.picks.emplace_back(p);
+  stow->systemType.serialIn(so.systemType());
+  stow->csys.serialIn(so.csys());
+  stow->autoSize.serialIn(so.autoSize());
+  stow->size.serialIn(so.size());
+  stow->offsetVector.serialIn(so.offsetVector());
+  stow->csysDragger.serialIn(so.csysDragger());
+  stow->autoSizeLabel->serialIn(so.autoSizeLabel());
+  stow->sizeLabel->serialIn(so.sizeLabel());
+  stow->offsetVectorLabel->serialIn(so.offsetVectorLabel());
+  stow->cachedSize = so.cachedSize();
   
-  updateVisualInternal();
+  auto ct = static_cast<SystemType>(stow->systemType.getInt());
+  if (ct == Linked && so.picks())
+    stow->linkedPicks.serialIn(so.picks().get());
+  else if (ct == Through3Points && so.picks())
+    stow->pointsPicks.serialIn(so.picks().get());
+  
+  mainTransform->setMatrix(stow->csys.getMatrix());
 }

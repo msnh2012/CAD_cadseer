@@ -288,7 +288,7 @@ struct Feature::Stow
     auto csysPrms = resolver.getFeature()->getParameters(prm::Tags::CSys);
     if (csysPrms.empty())
       throw std::runtime_error("Linked feature has no csys parameter");
-    const auto cm = csysPrms.front()->getMatrix();
+    const auto &cm = csysPrms.front()->getMatrix();
     origin.setValue(cm.getTrans());
     int la = linkedAxis.getInt();
     switch (la)

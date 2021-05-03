@@ -38,10 +38,7 @@ namespace cmv
     DatumSystem(cmd::DatumSystem*);
     ~DatumSystem() override;
   private Q_SLOTS:
-    void comboChanged(int);
-    void linkCSysChanged();
-    void p3Changed();
-    void parameterChanged();
+    void modelChanged(const QModelIndex&, const QModelIndex&);
   private:
     struct Stow;
     std::unique_ptr<Stow> stow;

@@ -40,21 +40,18 @@ namespace ftr
 {
   namespace DatumSystem
   {
-    constexpr static const char *point0 = "point0";
-    constexpr static const char *point1 = "point1";
-    constexpr static const char *point2 = "point2";
     enum SystemType
     {
       Constant = 0
       , Linked
       , Through3Points
     };
-    
-    struct Cue
+    namespace Tags
     {
-      SystemType systemType;
-      Picks picks;
-    };
+      inline constexpr std::string_view SystemType = "SystemType";
+      inline constexpr std::string_view Linked = "Linked";
+      inline constexpr std::string_view Points = "Points";
+    }
     
     class Feature : public Base
     {
@@ -71,35 +68,10 @@ namespace ftr
       
       void serialWrite(const boost::filesystem::path&) override;
       void serialRead(const prj::srl::dtms::DatumSystem&);
-      
-      void setCue(const Cue&);
-      const Cue& getCue() const {return cue;}
-      void setCSys(const osg::Matrixd&); //converts to constant.
-      osg::Matrixd getCSys() const;
-      void setSize(double);
-      void setAutoSize(bool);
-      
     private:
       static QIcon icon;
-      Cue cue;
-      std::unique_ptr<prm::Parameter> csys;
-      std::unique_ptr<prm::Observer> csysObserver;
-      std::unique_ptr<prm::Parameter> autoSize;
-      std::unique_ptr<prm::Parameter> size;
-      std::unique_ptr<prm::Observer> sizeObserver;
-      std::unique_ptr<prm::Parameter> offsetVector;
-      std::unique_ptr<ann::CSysDragger> csysDragger;
-      
-      osg::ref_ptr<mdv::DatumSystem> display;
-      osg::ref_ptr<lbr::PLabel> autoSizeLabel;
-      osg::ref_ptr<lbr::PLabel> sizeLabel;
-      osg::ref_ptr<lbr::PLabel> offsetVectorLabel;
-      osg::ref_ptr<osg::PositionAttitudeTransform> scale;
-      
-      void updateNone(const UpdatePayload&);
-      void updateLinked(const UpdatePayload&);
-      void update3Points(const UpdatePayload&);
-      void updateVisualInternal();
+      struct Stow;
+      std::unique_ptr<Stow> stow;
     };
   }
 }

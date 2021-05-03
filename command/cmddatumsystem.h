@@ -44,9 +44,9 @@ namespace cmd
     void activate() override;
     void deactivate() override;
     
-    bool set3Points(const slc::Messages&);
-    void setLinked(const boost::uuids::uuid&); //!< pass nil id for constant by parameter
-    bool isValidSelection(const slc::Message&);
+    void setConstant();
+    void setLinked(const slc::Messages&);
+    void set3Points(const slc::Messages&);
     void localUpdate();
   private:
     cmd::LeafManager leafManager;

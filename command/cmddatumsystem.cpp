@@ -26,6 +26,8 @@
 #include "commandview/cmvmessage.h"
 #include "commandview/cmvdatumsystem.h"
 #include "annex/annseershape.h"
+#include "parameter/prmconstants.h"
+#include "parameter/prmparameter.h"
 #include "feature/ftrinputtype.h"
 #include "feature/ftrdatumsystem.h"
 #include "command/cmddatumsystem.h"
@@ -102,77 +104,60 @@ void DatumSystem::deactivate()
   isActive = false;
 }
 
-bool DatumSystem::set3Points(const slc::Messages &msIn)
+void DatumSystem::setConstant()
 {
   assert(isActive);
   project->clearAllInputs(feature->getId());
-  feature->setCue(ftr::DatumSystem::Cue()); //default to a constant system with no picks
   
-  if
-  (
-    msIn.size() != 3
-    || !slc::isPointType(msIn.at(0).type)
-    || !slc::isPointType(msIn.at(1).type)
-    || !slc::isPointType(msIn.at(2).type)
-  )
-  {
-    node->sendBlocked(msg::buildStatusMessage("invalid points", 2.0));
-    return false;
-  }
-  
-  Cue cue;
-  cue.systemType = Through3Points;
-  auto process = [&](const slc::Message& mIn, const char *tag)
-  {
-    auto *featureIn = project->findFeature(mIn.featureId);
-    assert(featureIn); //should already be verified.
+  auto *param = feature->getParameter(ftr::DatumSystem::Tags::SystemType);
+  param->setValue(static_cast<int>(ftr::DatumSystem::Constant));
+}
 
-    cue.picks.push_back(tls::convertToPick(mIn, featureIn->getAnnex<ann::SeerShape>(), project->getShapeHistory()));
-    cue.picks.back().tag = tag;
-    project->connect(mIn.featureId, feature->getId(), {cue.picks.back().tag});
+void DatumSystem::setLinked(const slc::Messages &msIn)
+{
+  assert(isActive);
+  project->clearAllInputs(feature->getId());
+  
+  auto *param = feature->getParameter(ftr::DatumSystem::Tags::SystemType);
+  param->setValue(static_cast<int>(ftr::DatumSystem::Linked));
+  
+  if (msIn.empty())
+    return;
+  const ftr::Base &parent = *project->findFeature(msIn.front().featureId);
+  auto pick = tls::convertToPick(msIn.front(), parent, project->getShapeHistory());
+  pick.tag = indexTag(ftr::InputType::linkCSys, 0);
+  feature->getParameter(ftr::DatumSystem::Tags::Linked)->setValue(pick);
+  project->connectInsert(parent.getId(), feature->getId(), {pick.tag});
+}
+
+void DatumSystem::set3Points(const slc::Messages &msIn)
+{
+  assert(isActive);
+  project->clearAllInputs(feature->getId());
+  
+  auto *param = feature->getParameter(ftr::DatumSystem::Tags::SystemType);
+  param->setValue(static_cast<int>(ftr::DatumSystem::Through3Points));
+  
+  auto notPoint = [](const slc::Message &m){return !slc::isPointType(m.type);};
+  if (msIn.size() != 3 || notPoint(msIn.at(0)) || notPoint(msIn.at(1)) || notPoint(msIn.at(2)))
+    return;
+  
+  ftr::Picks picks;
+  auto process = [&](const slc::Message& mIn, std::string_view sv)
+  {
+    const auto *featureIn = project->findFeature(mIn.featureId);
+    picks.push_back(tls::convertToPick(mIn, *featureIn, project->getShapeHistory()));
+    picks.back().tag = indexTag(sv, picks.size());
+    project->connect(mIn.featureId, feature->getId(), {picks.back().tag});
   };
-  
-  for (const auto &m : msIn)
-  {
-    if (!isValidSelection(m))
-    {
-      node->sendBlocked(msg::buildStatusMessage("invalid selection", 2.0));
-      return false;
-    }
-  }
-  process(msIn.at(0), point0);
-  process(msIn.at(1), point1);
-  process(msIn.at(2), point2);
-  feature->setCue(cue);
-  
-  return true;
-}
 
-void DatumSystem::setLinked(const uuid &idIn)
-{
-  assert(isActive);
-  project->clearAllInputs(feature->getId());
+  process(msIn.at(0), ftr::DatumSystem::Tags::Points);
+  process(msIn.at(1), ftr::DatumSystem::Tags::Points);
+  process(msIn.at(2), ftr::DatumSystem::Tags::Points);
+  auto *pp = feature->getParameter(ftr::DatumSystem::Tags::Points);
+  pp->setValue(picks);
   
-  ftr::DatumSystem::Cue cue;
-  if (idIn.is_nil())
-  {
-    cue.systemType = ftr::DatumSystem::SystemType::Constant;
-  }
-  else
-  {
-    cue.systemType = ftr::DatumSystem::SystemType::Linked;
-    project->connect(idIn, feature->getId(), {ftr::InputType::linkCSys});
-  }
-  
-  feature->setCue(cue);
-}
-
-bool DatumSystem::isValidSelection(const slc::Message &mIn)
-{
-  const ftr::Base *lf = project->findFeature(mIn.featureId);
-  if (!lf->hasAnnex(ann::Type::SeerShape) || lf->getAnnex<ann::SeerShape>().isNull())
-    return false;
-  return true;
+  return;
 }
 
 void DatumSystem::localUpdate()
@@ -190,12 +175,7 @@ void DatumSystem::go()
   
   slc::Messages targets;
   for (const auto &c : eventHandler->getSelections())
-  {
-    auto m = slc::EventHandler::containerToMessage(c);
-    if (!isValidSelection(m))
-      continue;
-    targets.push_back(m);
-  }
+    targets.push_back(eventHandler->containerToMessage(c));
   
   node->sendBlocked(msg::buildShowThreeD(feature->getId()));
   node->sendBlocked(msg::buildShowOverlay(feature->getId()));
@@ -203,9 +183,9 @@ void DatumSystem::go()
   
   auto goConstantSystem = [&]()
   {
-    //build constant system.
-    feature->setCSys(viewer->getCurrentSystem());
-    feature->setSize(viewer->getDiagonalLength() / 4.0);
+    setConstant();
+    feature->getParameter(prm::Tags::CSys)->setValue(viewer->getCurrentSystem());
+    feature->getParameter(prm::Tags::Size)->setValue(viewer->getDiagonalLength() / 4.0);
     localUpdate();
     node->sendBlocked(msg::buildStatusMessage("invalid pre selection", 2.0));
     viewBase = std::make_unique<cmv::DatumSystem>(this);
@@ -214,16 +194,24 @@ void DatumSystem::go()
   if (targets.size() == 1)
   {
     if (slc::isObjectType(targets.front().type))
-    {
-      setLinked(targets.front().featureId);
-    }
+      setLinked(targets);
   }
   else if (targets.size() == 3)
   {
-    if (set3Points(targets))
+    bool allPoints = true;
+    for (const auto &m : targets)
     {
+      if (!slc::isPointType(m.type))
+      {
+        allPoints = false;
+        break;
+      }
+    }
+    if (allPoints)
+    {
+      set3Points(targets);
       node->sendBlocked(msg::buildStatusMessage("System Through 3 Points Constructed", 2.0));
-      feature->setAutoSize(true);
+      feature->getParameter(prm::Tags::AutoSize)->setValue(true);
     }
     else
       goConstantSystem();
