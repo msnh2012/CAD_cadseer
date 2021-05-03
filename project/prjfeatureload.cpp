@@ -476,7 +476,7 @@ std::shared_ptr<ftr::Base> FeatureLoad::loadInstanceLinear(const std::string &fi
   auto sr = srl::inls::instanceLinear(fileNameIn, flags);
   assert(sr);
   
-  auto freshInstanceLinear = std::make_shared<ftr::InstanceLinear>();
+  auto freshInstanceLinear = std::make_shared<ftr::InstanceLinear::Feature>();
   freshInstanceLinear->getAnnex<ann::SeerShape>().setOCCTShape(shapeVector.at(shapeOffsetIn), featureId);
   freshInstanceLinear->serialRead(*sr);
   

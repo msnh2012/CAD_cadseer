@@ -22,80 +22,46 @@
 
 #include <osg/ref_ptr>
 
-#include "tools/occtools.h"
-#include "feature/ftrpick.h"
 #include "feature/ftrbase.h"
 
-namespace osg{class Node;}
-
-namespace ann{class SeerShape; class InstanceMapper; class CSysDragger;}
-namespace lbr{class PLabel;}
 namespace prj{namespace srl{namespace inls{class InstanceLinear;}}}
-namespace prm{struct Observer;}
 
 namespace ftr
 {
-  /**
-  * @brief Feature for linear patterns
-  * 
-  */
-  class InstanceLinear : public Base
+  namespace InstanceLinear
   {
-  public:
+    namespace Tags
+    {
+      inline constexpr std::string_view Source = "Source";
+      inline constexpr std::string_view XOffset = "XOffset";
+      inline constexpr std::string_view YOffset = "YOffset";
+      inline constexpr std::string_view ZOffset = "ZOffset";
+      inline constexpr std::string_view XCount = "XCount";
+      inline constexpr std::string_view YCount = "YCount";
+      inline constexpr std::string_view ZCount = "ZCount";
+      inline constexpr std::string_view IncludeSource = "IncludeSource";
+    }
     
-    InstanceLinear();
-    virtual ~InstanceLinear() override;
-    
-    virtual void updateModel(const UpdatePayload&) override;
-    virtual Type getType() const override {return Type::InstanceLinear;}
-    virtual const std::string& getTypeString() const override {return toString(Type::InstanceLinear);}
-    virtual const QIcon& getIcon() const override {return icon;}
-    virtual Descriptor getDescriptor() const override {return Descriptor::Create;}
-    
-    virtual void serialWrite(const boost::filesystem::path&) override;
-    void serialRead(const prj::srl::inls::InstanceLinear&);
-    
-    const Pick& getPick(){return pick;}
-    void setPick(const Pick&);
-    bool getIncludeSource();
-    void setIncludeSource(bool);
-    void setCSys(const osg::Matrixd&);
-    
-    
-  protected:
-    std::unique_ptr<prm::Parameter> xOffset;
-    std::unique_ptr<prm::Parameter> yOffset;
-    std::unique_ptr<prm::Parameter> zOffset;
-  
-    std::unique_ptr<prm::Parameter> xCount;
-    std::unique_ptr<prm::Parameter> yCount;
-    std::unique_ptr<prm::Parameter> zCount;
-  
-    std::unique_ptr<prm::Parameter> csys;
-  
-    std::unique_ptr<prm::Parameter> includeSource;
-    
-    std::unique_ptr<prm::Observer> prmObserver;
-    
-    std::unique_ptr<ann::SeerShape> sShape;
-    std::unique_ptr<ann::InstanceMapper> iMapper;
-    std::unique_ptr<ann::CSysDragger> csysDragger;
-    
-    osg::ref_ptr<lbr::PLabel> xOffsetLabel;
-    osg::ref_ptr<lbr::PLabel> yOffsetLabel;
-    osg::ref_ptr<lbr::PLabel> zOffsetLabel;
-    
-    osg::ref_ptr<lbr::PLabel> xCountLabel;
-    osg::ref_ptr<lbr::PLabel> yCountLabel;
-    osg::ref_ptr<lbr::PLabel> zCountLabel;
-    
-    osg::ref_ptr<lbr::PLabel> includeSourceLabel;
-    
-    Pick pick;
-    
-  private:
-    static QIcon icon;
-  };
+    class Feature : public Base
+    {
+    public:
+      Feature();
+      ~Feature() override;
+      
+      void updateModel(const UpdatePayload&) override;
+      Type getType() const override {return Type::InstanceLinear;}
+      const std::string& getTypeString() const override {return toString(Type::InstanceLinear);}
+      const QIcon& getIcon() const override {return icon;}
+      Descriptor getDescriptor() const override {return Descriptor::Create;}
+      
+      void serialWrite(const boost::filesystem::path&) override;
+      void serialRead(const prj::srl::inls::InstanceLinear&);
+    private:
+      static QIcon icon;
+      struct Stow;
+      std::unique_ptr<Stow> stow;
+    };
+  }
 }
 
 #endif // FTR_INSTANCELINEAR_H

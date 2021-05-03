@@ -93,8 +93,6 @@ namespace prj
 
 #include "prjsrlsptoverlay.h"
 
-#include "prjsrlsptpick.h"
-
 #include "prjsrlsptseershape.h"
 
 #include "prjsrlsptinstancemapping.h"
@@ -127,56 +125,39 @@ namespace prj
         void
         base (::std::unique_ptr< BaseType > p);
 
-        // seerShape
+        // source
         //
-        typedef ::prj::srl::spt::SeerShape SeerShapeType;
-        typedef ::xsd::cxx::tree::traits< SeerShapeType, char > SeerShapeTraits;
+        typedef ::prj::srl::spt::Parameter SourceType;
+        typedef ::xsd::cxx::tree::traits< SourceType, char > SourceTraits;
 
-        const SeerShapeType&
-        seerShape () const;
+        const SourceType&
+        source () const;
 
-        SeerShapeType&
-        seerShape ();
-
-        void
-        seerShape (const SeerShapeType& x);
+        SourceType&
+        source ();
 
         void
-        seerShape (::std::unique_ptr< SeerShapeType > p);
+        source (const SourceType& x);
 
-        // instanceMaps
+        void
+        source (::std::unique_ptr< SourceType > p);
+
+        // csys
         //
-        typedef ::prj::srl::spt::InstanceMaps InstanceMapsType;
-        typedef ::xsd::cxx::tree::traits< InstanceMapsType, char > InstanceMapsTraits;
+        typedef ::prj::srl::spt::Parameter CsysType;
+        typedef ::xsd::cxx::tree::traits< CsysType, char > CsysTraits;
 
-        const InstanceMapsType&
-        instanceMaps () const;
+        const CsysType&
+        csys () const;
 
-        InstanceMapsType&
-        instanceMaps ();
-
-        void
-        instanceMaps (const InstanceMapsType& x);
+        CsysType&
+        csys ();
 
         void
-        instanceMaps (::std::unique_ptr< InstanceMapsType > p);
-
-        // csysDragger
-        //
-        typedef ::prj::srl::spt::CSysDragger CsysDraggerType;
-        typedef ::xsd::cxx::tree::traits< CsysDraggerType, char > CsysDraggerTraits;
-
-        const CsysDraggerType&
-        csysDragger () const;
-
-        CsysDraggerType&
-        csysDragger ();
+        csys (const CsysType& x);
 
         void
-        csysDragger (const CsysDraggerType& x);
-
-        void
-        csysDragger (::std::unique_ptr< CsysDraggerType > p);
+        csys (::std::unique_ptr< CsysType > p);
 
         // xOffset
         //
@@ -280,23 +261,6 @@ namespace prj
         void
         zCount (::std::unique_ptr< ZCountType > p);
 
-        // csys
-        //
-        typedef ::prj::srl::spt::Parameter CsysType;
-        typedef ::xsd::cxx::tree::traits< CsysType, char > CsysTraits;
-
-        const CsysType&
-        csys () const;
-
-        CsysType&
-        csys ();
-
-        void
-        csys (const CsysType& x);
-
-        void
-        csys (::std::unique_ptr< CsysType > p);
-
         // includeSource
         //
         typedef ::prj::srl::spt::Parameter IncludeSourceType;
@@ -314,22 +278,56 @@ namespace prj
         void
         includeSource (::std::unique_ptr< IncludeSourceType > p);
 
-        // pick
+        // seerShape
         //
-        typedef ::prj::srl::spt::Pick PickType;
-        typedef ::xsd::cxx::tree::traits< PickType, char > PickTraits;
+        typedef ::prj::srl::spt::SeerShape SeerShapeType;
+        typedef ::xsd::cxx::tree::traits< SeerShapeType, char > SeerShapeTraits;
 
-        const PickType&
-        pick () const;
+        const SeerShapeType&
+        seerShape () const;
 
-        PickType&
-        pick ();
-
-        void
-        pick (const PickType& x);
+        SeerShapeType&
+        seerShape ();
 
         void
-        pick (::std::unique_ptr< PickType > p);
+        seerShape (const SeerShapeType& x);
+
+        void
+        seerShape (::std::unique_ptr< SeerShapeType > p);
+
+        // instanceMaps
+        //
+        typedef ::prj::srl::spt::InstanceMaps InstanceMapsType;
+        typedef ::xsd::cxx::tree::traits< InstanceMapsType, char > InstanceMapsTraits;
+
+        const InstanceMapsType&
+        instanceMaps () const;
+
+        InstanceMapsType&
+        instanceMaps ();
+
+        void
+        instanceMaps (const InstanceMapsType& x);
+
+        void
+        instanceMaps (::std::unique_ptr< InstanceMapsType > p);
+
+        // csysDragger
+        //
+        typedef ::prj::srl::spt::CSysDragger CsysDraggerType;
+        typedef ::xsd::cxx::tree::traits< CsysDraggerType, char > CsysDraggerTraits;
+
+        const CsysDraggerType&
+        csysDragger () const;
+
+        CsysDraggerType&
+        csysDragger ();
+
+        void
+        csysDragger (const CsysDraggerType& x);
+
+        void
+        csysDragger (::std::unique_ptr< CsysDraggerType > p);
 
         // xOffsetLabel
         //
@@ -453,18 +451,18 @@ namespace prj
         // Constructors.
         //
         InstanceLinear (const BaseType&,
-                        const SeerShapeType&,
-                        const InstanceMapsType&,
-                        const CsysDraggerType&,
+                        const SourceType&,
+                        const CsysType&,
                         const XOffsetType&,
                         const YOffsetType&,
                         const ZOffsetType&,
                         const XCountType&,
                         const YCountType&,
                         const ZCountType&,
-                        const CsysType&,
                         const IncludeSourceType&,
-                        const PickType&,
+                        const SeerShapeType&,
+                        const InstanceMapsType&,
+                        const CsysDraggerType&,
                         const XOffsetLabelType&,
                         const YOffsetLabelType&,
                         const ZOffsetLabelType&,
@@ -474,18 +472,18 @@ namespace prj
                         const IncludeSourceLabelType&);
 
         InstanceLinear (::std::unique_ptr< BaseType >,
-                        ::std::unique_ptr< SeerShapeType >,
-                        ::std::unique_ptr< InstanceMapsType >,
-                        ::std::unique_ptr< CsysDraggerType >,
+                        ::std::unique_ptr< SourceType >,
+                        ::std::unique_ptr< CsysType >,
                         ::std::unique_ptr< XOffsetType >,
                         ::std::unique_ptr< YOffsetType >,
                         ::std::unique_ptr< ZOffsetType >,
                         ::std::unique_ptr< XCountType >,
                         ::std::unique_ptr< YCountType >,
                         ::std::unique_ptr< ZCountType >,
-                        ::std::unique_ptr< CsysType >,
                         ::std::unique_ptr< IncludeSourceType >,
-                        ::std::unique_ptr< PickType >,
+                        ::std::unique_ptr< SeerShapeType >,
+                        ::std::unique_ptr< InstanceMapsType >,
+                        ::std::unique_ptr< CsysDraggerType >,
                         ::std::unique_ptr< XOffsetLabelType >,
                         ::std::unique_ptr< YOffsetLabelType >,
                         ::std::unique_ptr< ZOffsetLabelType >,
@@ -521,18 +519,18 @@ namespace prj
 
         protected:
         ::xsd::cxx::tree::one< BaseType > base_;
-        ::xsd::cxx::tree::one< SeerShapeType > seerShape_;
-        ::xsd::cxx::tree::one< InstanceMapsType > instanceMaps_;
-        ::xsd::cxx::tree::one< CsysDraggerType > csysDragger_;
+        ::xsd::cxx::tree::one< SourceType > source_;
+        ::xsd::cxx::tree::one< CsysType > csys_;
         ::xsd::cxx::tree::one< XOffsetType > xOffset_;
         ::xsd::cxx::tree::one< YOffsetType > yOffset_;
         ::xsd::cxx::tree::one< ZOffsetType > zOffset_;
         ::xsd::cxx::tree::one< XCountType > xCount_;
         ::xsd::cxx::tree::one< YCountType > yCount_;
         ::xsd::cxx::tree::one< ZCountType > zCount_;
-        ::xsd::cxx::tree::one< CsysType > csys_;
         ::xsd::cxx::tree::one< IncludeSourceType > includeSource_;
-        ::xsd::cxx::tree::one< PickType > pick_;
+        ::xsd::cxx::tree::one< SeerShapeType > seerShape_;
+        ::xsd::cxx::tree::one< InstanceMapsType > instanceMaps_;
+        ::xsd::cxx::tree::one< CsysDraggerType > csysDragger_;
         ::xsd::cxx::tree::one< XOffsetLabelType > xOffsetLabel_;
         ::xsd::cxx::tree::one< YOffsetLabelType > yOffsetLabel_;
         ::xsd::cxx::tree::one< ZOffsetLabelType > zOffsetLabel_;

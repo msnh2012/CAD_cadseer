@@ -73,76 +73,52 @@ namespace prj
         this->base_.set (std::move (x));
       }
 
-      const InstanceLinear::SeerShapeType& InstanceLinear::
-      seerShape () const
+      const InstanceLinear::SourceType& InstanceLinear::
+      source () const
       {
-        return this->seerShape_.get ();
+        return this->source_.get ();
       }
 
-      InstanceLinear::SeerShapeType& InstanceLinear::
-      seerShape ()
+      InstanceLinear::SourceType& InstanceLinear::
+      source ()
       {
-        return this->seerShape_.get ();
-      }
-
-      void InstanceLinear::
-      seerShape (const SeerShapeType& x)
-      {
-        this->seerShape_.set (x);
+        return this->source_.get ();
       }
 
       void InstanceLinear::
-      seerShape (::std::unique_ptr< SeerShapeType > x)
+      source (const SourceType& x)
       {
-        this->seerShape_.set (std::move (x));
-      }
-
-      const InstanceLinear::InstanceMapsType& InstanceLinear::
-      instanceMaps () const
-      {
-        return this->instanceMaps_.get ();
-      }
-
-      InstanceLinear::InstanceMapsType& InstanceLinear::
-      instanceMaps ()
-      {
-        return this->instanceMaps_.get ();
+        this->source_.set (x);
       }
 
       void InstanceLinear::
-      instanceMaps (const InstanceMapsType& x)
+      source (::std::unique_ptr< SourceType > x)
       {
-        this->instanceMaps_.set (x);
+        this->source_.set (std::move (x));
+      }
+
+      const InstanceLinear::CsysType& InstanceLinear::
+      csys () const
+      {
+        return this->csys_.get ();
+      }
+
+      InstanceLinear::CsysType& InstanceLinear::
+      csys ()
+      {
+        return this->csys_.get ();
       }
 
       void InstanceLinear::
-      instanceMaps (::std::unique_ptr< InstanceMapsType > x)
+      csys (const CsysType& x)
       {
-        this->instanceMaps_.set (std::move (x));
-      }
-
-      const InstanceLinear::CsysDraggerType& InstanceLinear::
-      csysDragger () const
-      {
-        return this->csysDragger_.get ();
-      }
-
-      InstanceLinear::CsysDraggerType& InstanceLinear::
-      csysDragger ()
-      {
-        return this->csysDragger_.get ();
+        this->csys_.set (x);
       }
 
       void InstanceLinear::
-      csysDragger (const CsysDraggerType& x)
+      csys (::std::unique_ptr< CsysType > x)
       {
-        this->csysDragger_.set (x);
-      }
-
-      void InstanceLinear::
-      csysDragger (::std::unique_ptr< CsysDraggerType > x)
-      {
-        this->csysDragger_.set (std::move (x));
+        this->csys_.set (std::move (x));
       }
 
       const InstanceLinear::XOffsetType& InstanceLinear::
@@ -289,30 +265,6 @@ namespace prj
         this->zCount_.set (std::move (x));
       }
 
-      const InstanceLinear::CsysType& InstanceLinear::
-      csys () const
-      {
-        return this->csys_.get ();
-      }
-
-      InstanceLinear::CsysType& InstanceLinear::
-      csys ()
-      {
-        return this->csys_.get ();
-      }
-
-      void InstanceLinear::
-      csys (const CsysType& x)
-      {
-        this->csys_.set (x);
-      }
-
-      void InstanceLinear::
-      csys (::std::unique_ptr< CsysType > x)
-      {
-        this->csys_.set (std::move (x));
-      }
-
       const InstanceLinear::IncludeSourceType& InstanceLinear::
       includeSource () const
       {
@@ -337,28 +289,76 @@ namespace prj
         this->includeSource_.set (std::move (x));
       }
 
-      const InstanceLinear::PickType& InstanceLinear::
-      pick () const
+      const InstanceLinear::SeerShapeType& InstanceLinear::
+      seerShape () const
       {
-        return this->pick_.get ();
+        return this->seerShape_.get ();
       }
 
-      InstanceLinear::PickType& InstanceLinear::
-      pick ()
+      InstanceLinear::SeerShapeType& InstanceLinear::
+      seerShape ()
       {
-        return this->pick_.get ();
-      }
-
-      void InstanceLinear::
-      pick (const PickType& x)
-      {
-        this->pick_.set (x);
+        return this->seerShape_.get ();
       }
 
       void InstanceLinear::
-      pick (::std::unique_ptr< PickType > x)
+      seerShape (const SeerShapeType& x)
       {
-        this->pick_.set (std::move (x));
+        this->seerShape_.set (x);
+      }
+
+      void InstanceLinear::
+      seerShape (::std::unique_ptr< SeerShapeType > x)
+      {
+        this->seerShape_.set (std::move (x));
+      }
+
+      const InstanceLinear::InstanceMapsType& InstanceLinear::
+      instanceMaps () const
+      {
+        return this->instanceMaps_.get ();
+      }
+
+      InstanceLinear::InstanceMapsType& InstanceLinear::
+      instanceMaps ()
+      {
+        return this->instanceMaps_.get ();
+      }
+
+      void InstanceLinear::
+      instanceMaps (const InstanceMapsType& x)
+      {
+        this->instanceMaps_.set (x);
+      }
+
+      void InstanceLinear::
+      instanceMaps (::std::unique_ptr< InstanceMapsType > x)
+      {
+        this->instanceMaps_.set (std::move (x));
+      }
+
+      const InstanceLinear::CsysDraggerType& InstanceLinear::
+      csysDragger () const
+      {
+        return this->csysDragger_.get ();
+      }
+
+      InstanceLinear::CsysDraggerType& InstanceLinear::
+      csysDragger ()
+      {
+        return this->csysDragger_.get ();
+      }
+
+      void InstanceLinear::
+      csysDragger (const CsysDraggerType& x)
+      {
+        this->csysDragger_.set (x);
+      }
+
+      void InstanceLinear::
+      csysDragger (::std::unique_ptr< CsysDraggerType > x)
+      {
+        this->csysDragger_.set (std::move (x));
       }
 
       const InstanceLinear::XOffsetLabelType& InstanceLinear::
@@ -545,18 +545,18 @@ namespace prj
 
       InstanceLinear::
       InstanceLinear (const BaseType& base,
-                      const SeerShapeType& seerShape,
-                      const InstanceMapsType& instanceMaps,
-                      const CsysDraggerType& csysDragger,
+                      const SourceType& source,
+                      const CsysType& csys,
                       const XOffsetType& xOffset,
                       const YOffsetType& yOffset,
                       const ZOffsetType& zOffset,
                       const XCountType& xCount,
                       const YCountType& yCount,
                       const ZCountType& zCount,
-                      const CsysType& csys,
                       const IncludeSourceType& includeSource,
-                      const PickType& pick,
+                      const SeerShapeType& seerShape,
+                      const InstanceMapsType& instanceMaps,
+                      const CsysDraggerType& csysDragger,
                       const XOffsetLabelType& xOffsetLabel,
                       const YOffsetLabelType& yOffsetLabel,
                       const ZOffsetLabelType& zOffsetLabel,
@@ -566,18 +566,18 @@ namespace prj
                       const IncludeSourceLabelType& includeSourceLabel)
       : ::xml_schema::Type (),
         base_ (base, this),
-        seerShape_ (seerShape, this),
-        instanceMaps_ (instanceMaps, this),
-        csysDragger_ (csysDragger, this),
+        source_ (source, this),
+        csys_ (csys, this),
         xOffset_ (xOffset, this),
         yOffset_ (yOffset, this),
         zOffset_ (zOffset, this),
         xCount_ (xCount, this),
         yCount_ (yCount, this),
         zCount_ (zCount, this),
-        csys_ (csys, this),
         includeSource_ (includeSource, this),
-        pick_ (pick, this),
+        seerShape_ (seerShape, this),
+        instanceMaps_ (instanceMaps, this),
+        csysDragger_ (csysDragger, this),
         xOffsetLabel_ (xOffsetLabel, this),
         yOffsetLabel_ (yOffsetLabel, this),
         zOffsetLabel_ (zOffsetLabel, this),
@@ -590,18 +590,18 @@ namespace prj
 
       InstanceLinear::
       InstanceLinear (::std::unique_ptr< BaseType > base,
-                      ::std::unique_ptr< SeerShapeType > seerShape,
-                      ::std::unique_ptr< InstanceMapsType > instanceMaps,
-                      ::std::unique_ptr< CsysDraggerType > csysDragger,
+                      ::std::unique_ptr< SourceType > source,
+                      ::std::unique_ptr< CsysType > csys,
                       ::std::unique_ptr< XOffsetType > xOffset,
                       ::std::unique_ptr< YOffsetType > yOffset,
                       ::std::unique_ptr< ZOffsetType > zOffset,
                       ::std::unique_ptr< XCountType > xCount,
                       ::std::unique_ptr< YCountType > yCount,
                       ::std::unique_ptr< ZCountType > zCount,
-                      ::std::unique_ptr< CsysType > csys,
                       ::std::unique_ptr< IncludeSourceType > includeSource,
-                      ::std::unique_ptr< PickType > pick,
+                      ::std::unique_ptr< SeerShapeType > seerShape,
+                      ::std::unique_ptr< InstanceMapsType > instanceMaps,
+                      ::std::unique_ptr< CsysDraggerType > csysDragger,
                       ::std::unique_ptr< XOffsetLabelType > xOffsetLabel,
                       ::std::unique_ptr< YOffsetLabelType > yOffsetLabel,
                       ::std::unique_ptr< ZOffsetLabelType > zOffsetLabel,
@@ -611,18 +611,18 @@ namespace prj
                       ::std::unique_ptr< IncludeSourceLabelType > includeSourceLabel)
       : ::xml_schema::Type (),
         base_ (std::move (base), this),
-        seerShape_ (std::move (seerShape), this),
-        instanceMaps_ (std::move (instanceMaps), this),
-        csysDragger_ (std::move (csysDragger), this),
+        source_ (std::move (source), this),
+        csys_ (std::move (csys), this),
         xOffset_ (std::move (xOffset), this),
         yOffset_ (std::move (yOffset), this),
         zOffset_ (std::move (zOffset), this),
         xCount_ (std::move (xCount), this),
         yCount_ (std::move (yCount), this),
         zCount_ (std::move (zCount), this),
-        csys_ (std::move (csys), this),
         includeSource_ (std::move (includeSource), this),
-        pick_ (std::move (pick), this),
+        seerShape_ (std::move (seerShape), this),
+        instanceMaps_ (std::move (instanceMaps), this),
+        csysDragger_ (std::move (csysDragger), this),
         xOffsetLabel_ (std::move (xOffsetLabel), this),
         yOffsetLabel_ (std::move (yOffsetLabel), this),
         zOffsetLabel_ (std::move (zOffsetLabel), this),
@@ -639,18 +639,18 @@ namespace prj
                       ::xml_schema::Container* c)
       : ::xml_schema::Type (x, f, c),
         base_ (x.base_, f, this),
-        seerShape_ (x.seerShape_, f, this),
-        instanceMaps_ (x.instanceMaps_, f, this),
-        csysDragger_ (x.csysDragger_, f, this),
+        source_ (x.source_, f, this),
+        csys_ (x.csys_, f, this),
         xOffset_ (x.xOffset_, f, this),
         yOffset_ (x.yOffset_, f, this),
         zOffset_ (x.zOffset_, f, this),
         xCount_ (x.xCount_, f, this),
         yCount_ (x.yCount_, f, this),
         zCount_ (x.zCount_, f, this),
-        csys_ (x.csys_, f, this),
         includeSource_ (x.includeSource_, f, this),
-        pick_ (x.pick_, f, this),
+        seerShape_ (x.seerShape_, f, this),
+        instanceMaps_ (x.instanceMaps_, f, this),
+        csysDragger_ (x.csysDragger_, f, this),
         xOffsetLabel_ (x.xOffsetLabel_, f, this),
         yOffsetLabel_ (x.yOffsetLabel_, f, this),
         zOffsetLabel_ (x.zOffsetLabel_, f, this),
@@ -667,18 +667,18 @@ namespace prj
                       ::xml_schema::Container* c)
       : ::xml_schema::Type (e, f | ::xml_schema::Flags::base, c),
         base_ (this),
-        seerShape_ (this),
-        instanceMaps_ (this),
-        csysDragger_ (this),
+        source_ (this),
+        csys_ (this),
         xOffset_ (this),
         yOffset_ (this),
         zOffset_ (this),
         xCount_ (this),
         yCount_ (this),
         zCount_ (this),
-        csys_ (this),
         includeSource_ (this),
-        pick_ (this),
+        seerShape_ (this),
+        instanceMaps_ (this),
+        csysDragger_ (this),
         xOffsetLabel_ (this),
         yOffsetLabel_ (this),
         zOffsetLabel_ (this),
@@ -718,44 +718,30 @@ namespace prj
             }
           }
 
-          // seerShape
+          // source
           //
-          if (n.name () == "seerShape" && n.namespace_ ().empty ())
+          if (n.name () == "source" && n.namespace_ ().empty ())
           {
-            ::std::unique_ptr< SeerShapeType > r (
-              SeerShapeTraits::create (i, f, this));
+            ::std::unique_ptr< SourceType > r (
+              SourceTraits::create (i, f, this));
 
-            if (!seerShape_.present ())
+            if (!source_.present ())
             {
-              this->seerShape_.set (::std::move (r));
+              this->source_.set (::std::move (r));
               continue;
             }
           }
 
-          // instanceMaps
+          // csys
           //
-          if (n.name () == "instanceMaps" && n.namespace_ ().empty ())
+          if (n.name () == "csys" && n.namespace_ ().empty ())
           {
-            ::std::unique_ptr< InstanceMapsType > r (
-              InstanceMapsTraits::create (i, f, this));
+            ::std::unique_ptr< CsysType > r (
+              CsysTraits::create (i, f, this));
 
-            if (!instanceMaps_.present ())
+            if (!csys_.present ())
             {
-              this->instanceMaps_.set (::std::move (r));
-              continue;
-            }
-          }
-
-          // csysDragger
-          //
-          if (n.name () == "csysDragger" && n.namespace_ ().empty ())
-          {
-            ::std::unique_ptr< CsysDraggerType > r (
-              CsysDraggerTraits::create (i, f, this));
-
-            if (!csysDragger_.present ())
-            {
-              this->csysDragger_.set (::std::move (r));
+              this->csys_.set (::std::move (r));
               continue;
             }
           }
@@ -844,20 +830,6 @@ namespace prj
             }
           }
 
-          // csys
-          //
-          if (n.name () == "csys" && n.namespace_ ().empty ())
-          {
-            ::std::unique_ptr< CsysType > r (
-              CsysTraits::create (i, f, this));
-
-            if (!csys_.present ())
-            {
-              this->csys_.set (::std::move (r));
-              continue;
-            }
-          }
-
           // includeSource
           //
           if (n.name () == "includeSource" && n.namespace_ ().empty ())
@@ -872,16 +844,44 @@ namespace prj
             }
           }
 
-          // pick
+          // seerShape
           //
-          if (n.name () == "pick" && n.namespace_ ().empty ())
+          if (n.name () == "seerShape" && n.namespace_ ().empty ())
           {
-            ::std::unique_ptr< PickType > r (
-              PickTraits::create (i, f, this));
+            ::std::unique_ptr< SeerShapeType > r (
+              SeerShapeTraits::create (i, f, this));
 
-            if (!pick_.present ())
+            if (!seerShape_.present ())
             {
-              this->pick_.set (::std::move (r));
+              this->seerShape_.set (::std::move (r));
+              continue;
+            }
+          }
+
+          // instanceMaps
+          //
+          if (n.name () == "instanceMaps" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< InstanceMapsType > r (
+              InstanceMapsTraits::create (i, f, this));
+
+            if (!instanceMaps_.present ())
+            {
+              this->instanceMaps_.set (::std::move (r));
+              continue;
+            }
+          }
+
+          // csysDragger
+          //
+          if (n.name () == "csysDragger" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< CsysDraggerType > r (
+              CsysDraggerTraits::create (i, f, this));
+
+            if (!csysDragger_.present ())
+            {
+              this->csysDragger_.set (::std::move (r));
               continue;
             }
           }
@@ -994,24 +994,17 @@ namespace prj
             "");
         }
 
-        if (!seerShape_.present ())
+        if (!source_.present ())
         {
           throw ::xsd::cxx::tree::expected_element< char > (
-            "seerShape",
+            "source",
             "");
         }
 
-        if (!instanceMaps_.present ())
+        if (!csys_.present ())
         {
           throw ::xsd::cxx::tree::expected_element< char > (
-            "instanceMaps",
-            "");
-        }
-
-        if (!csysDragger_.present ())
-        {
-          throw ::xsd::cxx::tree::expected_element< char > (
-            "csysDragger",
+            "csys",
             "");
         }
 
@@ -1057,13 +1050,6 @@ namespace prj
             "");
         }
 
-        if (!csys_.present ())
-        {
-          throw ::xsd::cxx::tree::expected_element< char > (
-            "csys",
-            "");
-        }
-
         if (!includeSource_.present ())
         {
           throw ::xsd::cxx::tree::expected_element< char > (
@@ -1071,10 +1057,24 @@ namespace prj
             "");
         }
 
-        if (!pick_.present ())
+        if (!seerShape_.present ())
         {
           throw ::xsd::cxx::tree::expected_element< char > (
-            "pick",
+            "seerShape",
+            "");
+        }
+
+        if (!instanceMaps_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "instanceMaps",
+            "");
+        }
+
+        if (!csysDragger_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "csysDragger",
             "");
         }
 
@@ -1142,18 +1142,18 @@ namespace prj
         {
           static_cast< ::xml_schema::Type& > (*this) = x;
           this->base_ = x.base_;
-          this->seerShape_ = x.seerShape_;
-          this->instanceMaps_ = x.instanceMaps_;
-          this->csysDragger_ = x.csysDragger_;
+          this->source_ = x.source_;
+          this->csys_ = x.csys_;
           this->xOffset_ = x.xOffset_;
           this->yOffset_ = x.yOffset_;
           this->zOffset_ = x.zOffset_;
           this->xCount_ = x.xCount_;
           this->yCount_ = x.yCount_;
           this->zCount_ = x.zCount_;
-          this->csys_ = x.csys_;
           this->includeSource_ = x.includeSource_;
-          this->pick_ = x.pick_;
+          this->seerShape_ = x.seerShape_;
+          this->instanceMaps_ = x.instanceMaps_;
+          this->csysDragger_ = x.csysDragger_;
           this->xOffsetLabel_ = x.xOffsetLabel_;
           this->yOffsetLabel_ = x.yOffsetLabel_;
           this->zOffsetLabel_ = x.zOffsetLabel_;
@@ -1479,37 +1479,26 @@ namespace prj
           s << i.base ();
         }
 
-        // seerShape
+        // source
         //
         {
           ::xercesc::DOMElement& s (
             ::xsd::cxx::xml::dom::create_element (
-              "seerShape",
+              "source",
               e));
 
-          s << i.seerShape ();
+          s << i.source ();
         }
 
-        // instanceMaps
+        // csys
         //
         {
           ::xercesc::DOMElement& s (
             ::xsd::cxx::xml::dom::create_element (
-              "instanceMaps",
+              "csys",
               e));
 
-          s << i.instanceMaps ();
-        }
-
-        // csysDragger
-        //
-        {
-          ::xercesc::DOMElement& s (
-            ::xsd::cxx::xml::dom::create_element (
-              "csysDragger",
-              e));
-
-          s << i.csysDragger ();
+          s << i.csys ();
         }
 
         // xOffset
@@ -1578,17 +1567,6 @@ namespace prj
           s << i.zCount ();
         }
 
-        // csys
-        //
-        {
-          ::xercesc::DOMElement& s (
-            ::xsd::cxx::xml::dom::create_element (
-              "csys",
-              e));
-
-          s << i.csys ();
-        }
-
         // includeSource
         //
         {
@@ -1600,15 +1578,37 @@ namespace prj
           s << i.includeSource ();
         }
 
-        // pick
+        // seerShape
         //
         {
           ::xercesc::DOMElement& s (
             ::xsd::cxx::xml::dom::create_element (
-              "pick",
+              "seerShape",
               e));
 
-          s << i.pick ();
+          s << i.seerShape ();
+        }
+
+        // instanceMaps
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "instanceMaps",
+              e));
+
+          s << i.instanceMaps ();
+        }
+
+        // csysDragger
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "csysDragger",
+              e));
+
+          s << i.csysDragger ();
         }
 
         // xOffsetLabel

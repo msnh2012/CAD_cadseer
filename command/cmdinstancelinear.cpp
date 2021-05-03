@@ -25,6 +25,7 @@
 #include "project/prjproject.h"
 #include "message/msgnode.h"
 #include "selection/slceventhandler.h"
+#include "parameter/prmconstants.h"
 #include "parameter/prmparameter.h"
 #include "feature/ftrinputtype.h"
 #include "feature/ftrinstancelinear.h"
@@ -70,13 +71,12 @@ void InstanceLinear::go()
     return;
   }
   
-  std::shared_ptr<ftr::InstanceLinear> instance(new ftr::InstanceLinear());
+  auto instance = std::make_shared<ftr::InstanceLinear::Feature>();
   
   ftr::Pick pick = tls::convertToPick(containers.front(), *bf, project->getShapeHistory());
   pick.tag = ftr::InputType::target;
-  instance->setPick(pick);
-  
-  instance->setCSys(viewer->getCurrentSystem());
+  instance->getParameter(ftr::InstanceLinear::Tags::Source)->setValue(pick);
+  instance->getParameter(prm::Tags::CSys)->setValue(viewer->getCurrentSystem());
   
   project->addFeature(instance);
   project->connectInsert(containers.front().featureId, instance->getId(), ftr::InputType{pick.tag});
