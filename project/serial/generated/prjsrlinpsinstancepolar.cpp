@@ -73,76 +73,28 @@ namespace prj
         this->base_.set (std::move (x));
       }
 
-      const InstancePolar::SeerShapeType& InstancePolar::
-      seerShape () const
+      const InstancePolar::AxisTypeType& InstancePolar::
+      axisType () const
       {
-        return this->seerShape_.get ();
+        return this->axisType_.get ();
       }
 
-      InstancePolar::SeerShapeType& InstancePolar::
-      seerShape ()
+      InstancePolar::AxisTypeType& InstancePolar::
+      axisType ()
       {
-        return this->seerShape_.get ();
-      }
-
-      void InstancePolar::
-      seerShape (const SeerShapeType& x)
-      {
-        this->seerShape_.set (x);
+        return this->axisType_.get ();
       }
 
       void InstancePolar::
-      seerShape (::std::unique_ptr< SeerShapeType > x)
+      axisType (const AxisTypeType& x)
       {
-        this->seerShape_.set (std::move (x));
-      }
-
-      const InstancePolar::InstanceMapsType& InstancePolar::
-      instanceMaps () const
-      {
-        return this->instanceMaps_.get ();
-      }
-
-      InstancePolar::InstanceMapsType& InstancePolar::
-      instanceMaps ()
-      {
-        return this->instanceMaps_.get ();
+        this->axisType_.set (x);
       }
 
       void InstancePolar::
-      instanceMaps (const InstanceMapsType& x)
+      axisType (::std::unique_ptr< AxisTypeType > x)
       {
-        this->instanceMaps_.set (x);
-      }
-
-      void InstancePolar::
-      instanceMaps (::std::unique_ptr< InstanceMapsType > x)
-      {
-        this->instanceMaps_.set (std::move (x));
-      }
-
-      const InstancePolar::CsysDraggerType& InstancePolar::
-      csysDragger () const
-      {
-        return this->csysDragger_.get ();
-      }
-
-      InstancePolar::CsysDraggerType& InstancePolar::
-      csysDragger ()
-      {
-        return this->csysDragger_.get ();
-      }
-
-      void InstancePolar::
-      csysDragger (const CsysDraggerType& x)
-      {
-        this->csysDragger_.set (x);
-      }
-
-      void InstancePolar::
-      csysDragger (::std::unique_ptr< CsysDraggerType > x)
-      {
-        this->csysDragger_.set (std::move (x));
+        this->axisType_.set (std::move (x));
       }
 
       const InstancePolar::CsysType& InstancePolar::
@@ -265,6 +217,132 @@ namespace prj
         this->includeSource_.set (std::move (x));
       }
 
+      const InstancePolar::SourceType& InstancePolar::
+      source () const
+      {
+        return this->source_.get ();
+      }
+
+      InstancePolar::SourceType& InstancePolar::
+      source ()
+      {
+        return this->source_.get ();
+      }
+
+      void InstancePolar::
+      source (const SourceType& x)
+      {
+        this->source_.set (x);
+      }
+
+      void InstancePolar::
+      source (::std::unique_ptr< SourceType > x)
+      {
+        this->source_.set (std::move (x));
+      }
+
+      const InstancePolar::AxisOptional& InstancePolar::
+      axis () const
+      {
+        return this->axis_;
+      }
+
+      InstancePolar::AxisOptional& InstancePolar::
+      axis ()
+      {
+        return this->axis_;
+      }
+
+      void InstancePolar::
+      axis (const AxisType& x)
+      {
+        this->axis_.set (x);
+      }
+
+      void InstancePolar::
+      axis (const AxisOptional& x)
+      {
+        this->axis_ = x;
+      }
+
+      void InstancePolar::
+      axis (::std::unique_ptr< AxisType > x)
+      {
+        this->axis_.set (std::move (x));
+      }
+
+      const InstancePolar::SeerShapeType& InstancePolar::
+      seerShape () const
+      {
+        return this->seerShape_.get ();
+      }
+
+      InstancePolar::SeerShapeType& InstancePolar::
+      seerShape ()
+      {
+        return this->seerShape_.get ();
+      }
+
+      void InstancePolar::
+      seerShape (const SeerShapeType& x)
+      {
+        this->seerShape_.set (x);
+      }
+
+      void InstancePolar::
+      seerShape (::std::unique_ptr< SeerShapeType > x)
+      {
+        this->seerShape_.set (std::move (x));
+      }
+
+      const InstancePolar::InstanceMapsType& InstancePolar::
+      instanceMaps () const
+      {
+        return this->instanceMaps_.get ();
+      }
+
+      InstancePolar::InstanceMapsType& InstancePolar::
+      instanceMaps ()
+      {
+        return this->instanceMaps_.get ();
+      }
+
+      void InstancePolar::
+      instanceMaps (const InstanceMapsType& x)
+      {
+        this->instanceMaps_.set (x);
+      }
+
+      void InstancePolar::
+      instanceMaps (::std::unique_ptr< InstanceMapsType > x)
+      {
+        this->instanceMaps_.set (std::move (x));
+      }
+
+      const InstancePolar::CsysDraggerType& InstancePolar::
+      csysDragger () const
+      {
+        return this->csysDragger_.get ();
+      }
+
+      InstancePolar::CsysDraggerType& InstancePolar::
+      csysDragger ()
+      {
+        return this->csysDragger_.get ();
+      }
+
+      void InstancePolar::
+      csysDragger (const CsysDraggerType& x)
+      {
+        this->csysDragger_.set (x);
+      }
+
+      void InstancePolar::
+      csysDragger (::std::unique_ptr< CsysDraggerType > x)
+      {
+        this->csysDragger_.set (std::move (x));
+      }
+
       const InstancePolar::CountLabelType& InstancePolar::
       countLabel () const
       {
@@ -360,72 +438,6 @@ namespace prj
       {
         this->includeSourceLabel_.set (std::move (x));
       }
-
-      const InstancePolar::ShapePickType& InstancePolar::
-      shapePick () const
-      {
-        return this->shapePick_.get ();
-      }
-
-      InstancePolar::ShapePickType& InstancePolar::
-      shapePick ()
-      {
-        return this->shapePick_.get ();
-      }
-
-      void InstancePolar::
-      shapePick (const ShapePickType& x)
-      {
-        this->shapePick_.set (x);
-      }
-
-      void InstancePolar::
-      shapePick (::std::unique_ptr< ShapePickType > x)
-      {
-        this->shapePick_.set (std::move (x));
-      }
-
-      const InstancePolar::AxisPickType& InstancePolar::
-      axisPick () const
-      {
-        return this->axisPick_.get ();
-      }
-
-      InstancePolar::AxisPickType& InstancePolar::
-      axisPick ()
-      {
-        return this->axisPick_.get ();
-      }
-
-      void InstancePolar::
-      axisPick (const AxisPickType& x)
-      {
-        this->axisPick_.set (x);
-      }
-
-      void InstancePolar::
-      axisPick (::std::unique_ptr< AxisPickType > x)
-      {
-        this->axisPick_.set (std::move (x));
-      }
-
-      const InstancePolar::DraggerVisibleType& InstancePolar::
-      draggerVisible () const
-      {
-        return this->draggerVisible_.get ();
-      }
-
-      InstancePolar::DraggerVisibleType& InstancePolar::
-      draggerVisible ()
-      {
-        return this->draggerVisible_.get ();
-      }
-
-      void InstancePolar::
-      draggerVisible (const DraggerVisibleType& x)
-      {
-        this->draggerVisible_.set (x);
-      }
     }
   }
 }
@@ -443,75 +455,73 @@ namespace prj
 
       InstancePolar::
       InstancePolar (const BaseType& base,
-                     const SeerShapeType& seerShape,
-                     const InstanceMapsType& instanceMaps,
-                     const CsysDraggerType& csysDragger,
+                     const AxisTypeType& axisType,
                      const CsysType& csys,
                      const CountType& count,
                      const AngleType& angle,
                      const InclusiveAngleType& inclusiveAngle,
                      const IncludeSourceType& includeSource,
+                     const SourceType& source,
+                     const SeerShapeType& seerShape,
+                     const InstanceMapsType& instanceMaps,
+                     const CsysDraggerType& csysDragger,
                      const CountLabelType& countLabel,
                      const AngleLabelType& angleLabel,
                      const InclusiveAngleLabelType& inclusiveAngleLabel,
-                     const IncludeSourceLabelType& includeSourceLabel,
-                     const ShapePickType& shapePick,
-                     const AxisPickType& axisPick,
-                     const DraggerVisibleType& draggerVisible)
+                     const IncludeSourceLabelType& includeSourceLabel)
       : ::xml_schema::Type (),
         base_ (base, this),
-        seerShape_ (seerShape, this),
-        instanceMaps_ (instanceMaps, this),
-        csysDragger_ (csysDragger, this),
+        axisType_ (axisType, this),
         csys_ (csys, this),
         count_ (count, this),
         angle_ (angle, this),
         inclusiveAngle_ (inclusiveAngle, this),
         includeSource_ (includeSource, this),
+        source_ (source, this),
+        axis_ (this),
+        seerShape_ (seerShape, this),
+        instanceMaps_ (instanceMaps, this),
+        csysDragger_ (csysDragger, this),
         countLabel_ (countLabel, this),
         angleLabel_ (angleLabel, this),
         inclusiveAngleLabel_ (inclusiveAngleLabel, this),
-        includeSourceLabel_ (includeSourceLabel, this),
-        shapePick_ (shapePick, this),
-        axisPick_ (axisPick, this),
-        draggerVisible_ (draggerVisible, this)
+        includeSourceLabel_ (includeSourceLabel, this)
       {
       }
 
       InstancePolar::
       InstancePolar (::std::unique_ptr< BaseType > base,
-                     ::std::unique_ptr< SeerShapeType > seerShape,
-                     ::std::unique_ptr< InstanceMapsType > instanceMaps,
-                     ::std::unique_ptr< CsysDraggerType > csysDragger,
+                     ::std::unique_ptr< AxisTypeType > axisType,
                      ::std::unique_ptr< CsysType > csys,
                      ::std::unique_ptr< CountType > count,
                      ::std::unique_ptr< AngleType > angle,
                      ::std::unique_ptr< InclusiveAngleType > inclusiveAngle,
                      ::std::unique_ptr< IncludeSourceType > includeSource,
+                     ::std::unique_ptr< SourceType > source,
+                     ::std::unique_ptr< SeerShapeType > seerShape,
+                     ::std::unique_ptr< InstanceMapsType > instanceMaps,
+                     ::std::unique_ptr< CsysDraggerType > csysDragger,
                      ::std::unique_ptr< CountLabelType > countLabel,
                      ::std::unique_ptr< AngleLabelType > angleLabel,
                      ::std::unique_ptr< InclusiveAngleLabelType > inclusiveAngleLabel,
-                     ::std::unique_ptr< IncludeSourceLabelType > includeSourceLabel,
-                     ::std::unique_ptr< ShapePickType > shapePick,
-                     ::std::unique_ptr< AxisPickType > axisPick,
-                     const DraggerVisibleType& draggerVisible)
+                     ::std::unique_ptr< IncludeSourceLabelType > includeSourceLabel)
       : ::xml_schema::Type (),
         base_ (std::move (base), this),
-        seerShape_ (std::move (seerShape), this),
-        instanceMaps_ (std::move (instanceMaps), this),
-        csysDragger_ (std::move (csysDragger), this),
+        axisType_ (std::move (axisType), this),
         csys_ (std::move (csys), this),
         count_ (std::move (count), this),
         angle_ (std::move (angle), this),
         inclusiveAngle_ (std::move (inclusiveAngle), this),
         includeSource_ (std::move (includeSource), this),
+        source_ (std::move (source), this),
+        axis_ (this),
+        seerShape_ (std::move (seerShape), this),
+        instanceMaps_ (std::move (instanceMaps), this),
+        csysDragger_ (std::move (csysDragger), this),
         countLabel_ (std::move (countLabel), this),
         angleLabel_ (std::move (angleLabel), this),
         inclusiveAngleLabel_ (std::move (inclusiveAngleLabel), this),
-        includeSourceLabel_ (std::move (includeSourceLabel), this),
-        shapePick_ (std::move (shapePick), this),
-        axisPick_ (std::move (axisPick), this),
-        draggerVisible_ (draggerVisible, this)
+        includeSourceLabel_ (std::move (includeSourceLabel), this)
       {
       }
 
@@ -521,21 +531,21 @@ namespace prj
                      ::xml_schema::Container* c)
       : ::xml_schema::Type (x, f, c),
         base_ (x.base_, f, this),
-        seerShape_ (x.seerShape_, f, this),
-        instanceMaps_ (x.instanceMaps_, f, this),
-        csysDragger_ (x.csysDragger_, f, this),
+        axisType_ (x.axisType_, f, this),
         csys_ (x.csys_, f, this),
         count_ (x.count_, f, this),
         angle_ (x.angle_, f, this),
         inclusiveAngle_ (x.inclusiveAngle_, f, this),
         includeSource_ (x.includeSource_, f, this),
+        source_ (x.source_, f, this),
+        axis_ (x.axis_, f, this),
+        seerShape_ (x.seerShape_, f, this),
+        instanceMaps_ (x.instanceMaps_, f, this),
+        csysDragger_ (x.csysDragger_, f, this),
         countLabel_ (x.countLabel_, f, this),
         angleLabel_ (x.angleLabel_, f, this),
         inclusiveAngleLabel_ (x.inclusiveAngleLabel_, f, this),
-        includeSourceLabel_ (x.includeSourceLabel_, f, this),
-        shapePick_ (x.shapePick_, f, this),
-        axisPick_ (x.axisPick_, f, this),
-        draggerVisible_ (x.draggerVisible_, f, this)
+        includeSourceLabel_ (x.includeSourceLabel_, f, this)
       {
       }
 
@@ -545,21 +555,21 @@ namespace prj
                      ::xml_schema::Container* c)
       : ::xml_schema::Type (e, f | ::xml_schema::Flags::base, c),
         base_ (this),
-        seerShape_ (this),
-        instanceMaps_ (this),
-        csysDragger_ (this),
+        axisType_ (this),
         csys_ (this),
         count_ (this),
         angle_ (this),
         inclusiveAngle_ (this),
         includeSource_ (this),
+        source_ (this),
+        axis_ (this),
+        seerShape_ (this),
+        instanceMaps_ (this),
+        csysDragger_ (this),
         countLabel_ (this),
         angleLabel_ (this),
         inclusiveAngleLabel_ (this),
-        includeSourceLabel_ (this),
-        shapePick_ (this),
-        axisPick_ (this),
-        draggerVisible_ (this)
+        includeSourceLabel_ (this)
       {
         if ((f & ::xml_schema::Flags::base) == 0)
         {
@@ -592,44 +602,16 @@ namespace prj
             }
           }
 
-          // seerShape
+          // axisType
           //
-          if (n.name () == "seerShape" && n.namespace_ ().empty ())
+          if (n.name () == "axisType" && n.namespace_ ().empty ())
           {
-            ::std::unique_ptr< SeerShapeType > r (
-              SeerShapeTraits::create (i, f, this));
+            ::std::unique_ptr< AxisTypeType > r (
+              AxisTypeTraits::create (i, f, this));
 
-            if (!seerShape_.present ())
+            if (!axisType_.present ())
             {
-              this->seerShape_.set (::std::move (r));
-              continue;
-            }
-          }
-
-          // instanceMaps
-          //
-          if (n.name () == "instanceMaps" && n.namespace_ ().empty ())
-          {
-            ::std::unique_ptr< InstanceMapsType > r (
-              InstanceMapsTraits::create (i, f, this));
-
-            if (!instanceMaps_.present ())
-            {
-              this->instanceMaps_.set (::std::move (r));
-              continue;
-            }
-          }
-
-          // csysDragger
-          //
-          if (n.name () == "csysDragger" && n.namespace_ ().empty ())
-          {
-            ::std::unique_ptr< CsysDraggerType > r (
-              CsysDraggerTraits::create (i, f, this));
-
-            if (!csysDragger_.present ())
-            {
-              this->csysDragger_.set (::std::move (r));
+              this->axisType_.set (::std::move (r));
               continue;
             }
           }
@@ -704,6 +686,76 @@ namespace prj
             }
           }
 
+          // source
+          //
+          if (n.name () == "source" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< SourceType > r (
+              SourceTraits::create (i, f, this));
+
+            if (!source_.present ())
+            {
+              this->source_.set (::std::move (r));
+              continue;
+            }
+          }
+
+          // axis
+          //
+          if (n.name () == "axis" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< AxisType > r (
+              AxisTraits::create (i, f, this));
+
+            if (!this->axis_)
+            {
+              this->axis_.set (::std::move (r));
+              continue;
+            }
+          }
+
+          // seerShape
+          //
+          if (n.name () == "seerShape" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< SeerShapeType > r (
+              SeerShapeTraits::create (i, f, this));
+
+            if (!seerShape_.present ())
+            {
+              this->seerShape_.set (::std::move (r));
+              continue;
+            }
+          }
+
+          // instanceMaps
+          //
+          if (n.name () == "instanceMaps" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< InstanceMapsType > r (
+              InstanceMapsTraits::create (i, f, this));
+
+            if (!instanceMaps_.present ())
+            {
+              this->instanceMaps_.set (::std::move (r));
+              continue;
+            }
+          }
+
+          // csysDragger
+          //
+          if (n.name () == "csysDragger" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< CsysDraggerType > r (
+              CsysDraggerTraits::create (i, f, this));
+
+            if (!csysDragger_.present ())
+            {
+              this->csysDragger_.set (::std::move (r));
+              continue;
+            }
+          }
+
           // countLabel
           //
           if (n.name () == "countLabel" && n.namespace_ ().empty ())
@@ -760,45 +812,6 @@ namespace prj
             }
           }
 
-          // shapePick
-          //
-          if (n.name () == "shapePick" && n.namespace_ ().empty ())
-          {
-            ::std::unique_ptr< ShapePickType > r (
-              ShapePickTraits::create (i, f, this));
-
-            if (!shapePick_.present ())
-            {
-              this->shapePick_.set (::std::move (r));
-              continue;
-            }
-          }
-
-          // axisPick
-          //
-          if (n.name () == "axisPick" && n.namespace_ ().empty ())
-          {
-            ::std::unique_ptr< AxisPickType > r (
-              AxisPickTraits::create (i, f, this));
-
-            if (!axisPick_.present ())
-            {
-              this->axisPick_.set (::std::move (r));
-              continue;
-            }
-          }
-
-          // draggerVisible
-          //
-          if (n.name () == "draggerVisible" && n.namespace_ ().empty ())
-          {
-            if (!draggerVisible_.present ())
-            {
-              this->draggerVisible_.set (DraggerVisibleTraits::create (i, f, this));
-              continue;
-            }
-          }
-
           break;
         }
 
@@ -809,24 +822,10 @@ namespace prj
             "");
         }
 
-        if (!seerShape_.present ())
+        if (!axisType_.present ())
         {
           throw ::xsd::cxx::tree::expected_element< char > (
-            "seerShape",
-            "");
-        }
-
-        if (!instanceMaps_.present ())
-        {
-          throw ::xsd::cxx::tree::expected_element< char > (
-            "instanceMaps",
-            "");
-        }
-
-        if (!csysDragger_.present ())
-        {
-          throw ::xsd::cxx::tree::expected_element< char > (
-            "csysDragger",
+            "axisType",
             "");
         }
 
@@ -865,6 +864,34 @@ namespace prj
             "");
         }
 
+        if (!source_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "source",
+            "");
+        }
+
+        if (!seerShape_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "seerShape",
+            "");
+        }
+
+        if (!instanceMaps_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "instanceMaps",
+            "");
+        }
+
+        if (!csysDragger_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "csysDragger",
+            "");
+        }
+
         if (!countLabel_.present ())
         {
           throw ::xsd::cxx::tree::expected_element< char > (
@@ -892,27 +919,6 @@ namespace prj
             "includeSourceLabel",
             "");
         }
-
-        if (!shapePick_.present ())
-        {
-          throw ::xsd::cxx::tree::expected_element< char > (
-            "shapePick",
-            "");
-        }
-
-        if (!axisPick_.present ())
-        {
-          throw ::xsd::cxx::tree::expected_element< char > (
-            "axisPick",
-            "");
-        }
-
-        if (!draggerVisible_.present ())
-        {
-          throw ::xsd::cxx::tree::expected_element< char > (
-            "draggerVisible",
-            "");
-        }
       }
 
       InstancePolar* InstancePolar::
@@ -929,21 +935,21 @@ namespace prj
         {
           static_cast< ::xml_schema::Type& > (*this) = x;
           this->base_ = x.base_;
-          this->seerShape_ = x.seerShape_;
-          this->instanceMaps_ = x.instanceMaps_;
-          this->csysDragger_ = x.csysDragger_;
+          this->axisType_ = x.axisType_;
           this->csys_ = x.csys_;
           this->count_ = x.count_;
           this->angle_ = x.angle_;
           this->inclusiveAngle_ = x.inclusiveAngle_;
           this->includeSource_ = x.includeSource_;
+          this->source_ = x.source_;
+          this->axis_ = x.axis_;
+          this->seerShape_ = x.seerShape_;
+          this->instanceMaps_ = x.instanceMaps_;
+          this->csysDragger_ = x.csysDragger_;
           this->countLabel_ = x.countLabel_;
           this->angleLabel_ = x.angleLabel_;
           this->inclusiveAngleLabel_ = x.inclusiveAngleLabel_;
           this->includeSourceLabel_ = x.includeSourceLabel_;
-          this->shapePick_ = x.shapePick_;
-          this->axisPick_ = x.axisPick_;
-          this->draggerVisible_ = x.draggerVisible_;
         }
 
         return *this;
@@ -1262,37 +1268,15 @@ namespace prj
           s << i.base ();
         }
 
-        // seerShape
+        // axisType
         //
         {
           ::xercesc::DOMElement& s (
             ::xsd::cxx::xml::dom::create_element (
-              "seerShape",
+              "axisType",
               e));
 
-          s << i.seerShape ();
-        }
-
-        // instanceMaps
-        //
-        {
-          ::xercesc::DOMElement& s (
-            ::xsd::cxx::xml::dom::create_element (
-              "instanceMaps",
-              e));
-
-          s << i.instanceMaps ();
-        }
-
-        // csysDragger
-        //
-        {
-          ::xercesc::DOMElement& s (
-            ::xsd::cxx::xml::dom::create_element (
-              "csysDragger",
-              e));
-
-          s << i.csysDragger ();
+          s << i.axisType ();
         }
 
         // csys
@@ -1350,6 +1334,62 @@ namespace prj
           s << i.includeSource ();
         }
 
+        // source
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "source",
+              e));
+
+          s << i.source ();
+        }
+
+        // axis
+        //
+        if (i.axis ())
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "axis",
+              e));
+
+          s << *i.axis ();
+        }
+
+        // seerShape
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "seerShape",
+              e));
+
+          s << i.seerShape ();
+        }
+
+        // instanceMaps
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "instanceMaps",
+              e));
+
+          s << i.instanceMaps ();
+        }
+
+        // csysDragger
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "csysDragger",
+              e));
+
+          s << i.csysDragger ();
+        }
+
         // countLabel
         //
         {
@@ -1392,39 +1432,6 @@ namespace prj
               e));
 
           s << i.includeSourceLabel ();
-        }
-
-        // shapePick
-        //
-        {
-          ::xercesc::DOMElement& s (
-            ::xsd::cxx::xml::dom::create_element (
-              "shapePick",
-              e));
-
-          s << i.shapePick ();
-        }
-
-        // axisPick
-        //
-        {
-          ::xercesc::DOMElement& s (
-            ::xsd::cxx::xml::dom::create_element (
-              "axisPick",
-              e));
-
-          s << i.axisPick ();
-        }
-
-        // draggerVisible
-        //
-        {
-          ::xercesc::DOMElement& s (
-            ::xsd::cxx::xml::dom::create_element (
-              "draggerVisible",
-              e));
-
-          s << i.draggerVisible ();
         }
       }
 

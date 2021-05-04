@@ -20,15 +20,9 @@
 #ifndef FTR_INSTANCEMIRROR_H
 #define FTR_INSTANCEMIRROR_H
 
-#include <osg/ref_ptr>
-
-#include "feature/ftrpick.h"
 #include "feature/ftrbase.h"
 
-namespace ann{class SeerShape; class InstanceMapper; class CSysDragger;}
-namespace lbr{class PLabel;}
 namespace prj{namespace srl{namespace inms{class InstanceMirror;}}}
-namespace prm{struct Observer;}
 
 namespace ftr
 {

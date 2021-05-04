@@ -23,6 +23,7 @@
 #include "message/msgnode.h"
 #include "selection/slceventhandler.h"
 #include "viewer/vwrwidget.h"
+#include "parameter/prmconstants.h"
 #include "parameter/prmparameter.h"
 #include "feature/ftrinputtype.h"
 #include "feature/ftrinstancepolar.h"
@@ -32,7 +33,7 @@
 using namespace cmd;
 
 InstancePolar::InstancePolar() : Base() {}
-InstancePolar::~InstancePolar() {}
+InstancePolar::~InstancePolar() = default;
 
 std::string InstancePolar::getStatusMessage()
 {
@@ -68,31 +69,32 @@ void InstancePolar::go()
     return;
   }
   
-  std::shared_ptr<ftr::InstancePolar> instance(new ftr::InstancePolar());
+  auto instance = std::make_shared<ftr::InstancePolar::Feature>();
   ftr::Pick shapePick = tls::convertToPick(containers.front(), *bf, project->getShapeHistory());
-  shapePick.tag = ftr::InputType::target;
-  instance->setShapePick(shapePick);
+  shapePick.tag = indexTag(ftr::InstancePolar::Tags::Source, 0);
+  auto *sourcePrm = instance->getParameter(ftr::InstancePolar::Tags::Source);
+  sourcePrm->setValue(shapePick);
   
   project->addFeature(instance);
-  project->connect(bf->getId(), instance->getId(), ftr::InputType{ftr::InputType::target});
+  project->connect(bf->getId(), instance->getId(), {shapePick.tag});
   
   node->sendBlocked(msg::buildHideThreeD(bf->getId()));
   node->sendBlocked(msg::buildHideOverlay(bf->getId()));
   
   if (containers.size() == 1)
   {
-    instance->setCSys(viewer->getCurrentSystem());
+    instance->getParameter(ftr::InstancePolar::Tags::AxisType)->setValue(static_cast<int>(ftr::InstancePolar::Constant));
+    instance->getParameter(prm::Tags::CSys)->setValue(viewer->getCurrentSystem());
   }
   else //size == 2
   {
+    instance->getParameter(ftr::InstancePolar::Tags::AxisType)->setValue(static_cast<int>(ftr::InstancePolar::Pick));
+    
     boost::uuids::uuid fId = containers.back().featureId;
     ftr::Pick axisPick = tls::convertToPick(containers.back(), *project->findFeature(fId), project->getShapeHistory());
-    axisPick.tag = ftr::InstancePolar::rotationAxis;
-    instance->setAxisPick(axisPick);
-    project->connect(fId, instance->getId(), ftr::InputType{ftr::InstancePolar::rotationAxis});
-    
-    node->sendBlocked(msg::buildHideThreeD(fId));
-    node->sendBlocked(msg::buildHideOverlay(fId));
+    axisPick.tag = indexTag(ftr::InstancePolar::Tags::Axis, 0);
+    instance->getParameter(ftr::InstancePolar::Tags::Axis)->setValue(axisPick);
+    project->connect(fId, instance->getId(), {axisPick.tag});
   }
   shouldUpdate = true;
   node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));

@@ -500,7 +500,7 @@ std::shared_ptr<ftr::Base> FeatureLoad::loadInstancePolar(const std::string &fil
   auto sr = srl::inps::instancePolar(fileNameIn, flags);
   assert(sr);
   
-  auto freshInstancePolar = std::make_shared<ftr::InstancePolar>();
+  auto freshInstancePolar = std::make_shared<ftr::InstancePolar::Feature>();
   freshInstancePolar->getAnnex<ann::SeerShape>().setOCCTShape(shapeVector.at(shapeOffsetIn), featureId);
   freshInstancePolar->serialRead(*sr);
   

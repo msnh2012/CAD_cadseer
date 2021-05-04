@@ -8,7 +8,6 @@
   
 <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptparameter.xsd"/>
 <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptoverlay.xsd"/>
-<xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptpick.xsd"/>
 <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptseershape.xsd"/>
 <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptinstancemapping.xsd"/>
 <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptbase.xsd"/>
@@ -16,25 +15,21 @@
 <xs:complexType name="InstancePolar">
   <xs:sequence>
     <xs:element name="base" type="spt:Base"/>
-    <xs:element name="seerShape" type="spt:SeerShape"/>
-    <xs:element name="instanceMaps" type="spt:InstanceMaps"/>
-    <xs:element name="csysDragger" type="spt:CSysDragger"/>
-    
+    <xs:element name="axisType" type="spt:Parameter"/>
     <xs:element name="csys" type="spt:Parameter"/>
     <xs:element name="count" type="spt:Parameter"/>
     <xs:element name="angle" type="spt:Parameter"/>
     <xs:element name="inclusiveAngle" type="spt:Parameter"/>
     <xs:element name="includeSource" type="spt:Parameter"/>
-    
+    <xs:element name="source" type="spt:Parameter"/>
+    <xs:element name="axis" type="spt:Parameter" minOccurs="0" maxOccurs="1"/>
+    <xs:element name="seerShape" type="spt:SeerShape"/>
+    <xs:element name="instanceMaps" type="spt:InstanceMaps"/>
+    <xs:element name="csysDragger" type="spt:CSysDragger"/>
     <xs:element name="countLabel" type="spt:PLabel"/>
     <xs:element name="angleLabel" type="spt:PLabel"/>
     <xs:element name="inclusiveAngleLabel" type="spt:PLabel"/>
     <xs:element name="includeSourceLabel" type="spt:PLabel"/>
-    
-    <xs:element name="shapePick" type="spt:Pick"/>
-    <xs:element name="axisPick" type="spt:Pick"/>
-    
-    <xs:element name="draggerVisible" type="xs:boolean"/>
   </xs:sequence>
 </xs:complexType>
 

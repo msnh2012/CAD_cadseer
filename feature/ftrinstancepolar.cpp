@@ -18,7 +18,6 @@
  */
 
 #include <boost/filesystem/path.hpp>
-#include <boost/optional/optional.hpp>
 
 #include <gp_Cylinder.hxx>
 #include <gp_Lin.hxx>
@@ -44,96 +43,122 @@
 #include "feature/ftrupdatepayload.h"
 #include "feature/ftrinstancepolar.h"
 
-using namespace ftr;
-
+using namespace ftr::InstancePolar;
 using boost::uuids::uuid;
+QIcon Feature::icon;
 
-QIcon InstancePolar::icon;
+struct Feature::Stow
+{
+  Feature &feature;
+  
+  prm::Parameter axisType{QObject::tr("Axis Type"), 0, Tags::AxisType};
+  prm::Parameter csys{prm::Names::CSys, osg::Matrixd::identity(), prm::Tags::CSys};
+  prm::Parameter count{QObject::tr("Count"), 3, Tags::Count};
+  prm::Parameter angle{prm::Names::Angle, 20.0, prm::Tags::Angle};
+  prm::Parameter inclusiveAngle{QObject::tr("Inclusive Angle"), false, Tags::InclusiveAngle};
+  prm::Parameter includeSource{QObject::tr("Include Source"), true, Tags::IncludeSource};
+  prm::Parameter source{QObject::tr("Source"), ftr::Picks(), Tags::Source};
+  prm::Parameter axis{QObject::tr("Axis"), ftr::Picks(), Tags::Axis};
+  
+  prm::Observer prmObserver;
+  
+  ann::SeerShape sShape;
+  ann::InstanceMapper iMapper;
+  ann::CSysDragger csysDragger;
+  
+  osg::ref_ptr<lbr::PLabel> countLabel{new lbr::PLabel(&count)};
+  osg::ref_ptr<lbr::PLabel> angleLabel{new lbr::PLabel(&angle)};
+  osg::ref_ptr<lbr::PLabel> inclusiveAngleLabel{new lbr::PLabel(&inclusiveAngle)};
+  osg::ref_ptr<lbr::PLabel> includeSourceLabel{new lbr::PLabel(&includeSource)};
+  
+  Stow() = delete;
+  Stow(Feature &fIn)
+  : feature(fIn)
+  , prmObserver(std::bind(&Feature::setModelDirty, &feature))
+  , csysDragger(&feature, &csys)
+  {
+    auto connectAndPush = [&](prm::Parameter &prmIn)
+    {
+      prmIn.connectValue(std::bind(&Feature::setModelDirty, &feature));
+      feature.parameters.push_back(&prmIn);
+    };
+    
+    QStringList tStrings = //keep in sync with enum in header.
+    {
+      QObject::tr("Constant")
+      , QObject::tr("Pick")
+    };
+    axisType.setEnumeration(tStrings);
+    axisType.connectValue(std::bind(&Feature::setModelDirty, &feature));
+    axisType.connectValue(std::bind(&Stow::prmActiveSync, this));
+    feature.parameters.push_back(&axisType);
+    
+    csys.connect(prmObserver);
+    feature.parameters.push_back(&csys);
+    
+    count.setConstraint(prm::Constraint::buildNonZeroPositive());
+    connectAndPush(count);
+    
+    angle.setConstraint(prm::Constraint::buildNonZeroAngle());
+    connectAndPush(angle);
+    
+    connectAndPush(inclusiveAngle);
+    connectAndPush(includeSource);
+    connectAndPush(source);
+    connectAndPush(axis);
+    
+    feature.overlaySwitch->addChild(countLabel.get());
+    feature.overlaySwitch->addChild(angleLabel.get());
+    feature.overlaySwitch->addChild(inclusiveAngleLabel.get());
+    feature.overlaySwitch->addChild(includeSourceLabel.get());
+    
+    csysDragger.dragger->unlinkToMatrix(feature.getMainTransform());
+    csysDragger.dragger->hide(lbr::CSysDragger::SwitchIndexes::LinkIcon);
+    feature.overlaySwitch->addChild(csysDragger.dragger);
+    
+    feature.annexes.insert(std::make_pair(ann::Type::SeerShape, &sShape));
+    feature.annexes.insert(std::make_pair(ann::Type::InstanceMapper, &iMapper));
+    feature.annexes.insert(std::make_pair(ann::Type::CSysDragger, &csysDragger));
+  }
+  
+  void prmActiveSync()
+  {
+    //shouldn't need to block anything
+    switch (static_cast<AxisType>(axisType.getInt()))
+    {
+      case AxisType::Constant:{
+        csys.setActive(true);
+        axis.setActive(false);
+        break;}
+      case AxisType::Pick:{
+        csys.setActive(false);
+        axis.setActive(true);
+        break;}
+    }
+  }
+};
 
-InstancePolar::InstancePolar() :
-Base(),
-csys(std::make_unique<prm::Parameter>(prm::Names::CSys, osg::Matrixd::identity(), prm::Tags::CSys)),
-count(std::make_unique<prm::Parameter>(QObject::tr("Count"), 3)),
-angle(std::make_unique<prm::Parameter>(prm::Names::Angle, 20.0)),
-inclusiveAngle(std::make_unique<prm::Parameter>(QObject::tr("Inclusive Angle"), false, prm::Tags::Angle)),
-includeSource(std::make_unique<prm::Parameter>(QObject::tr("Include Source"), true)),
-prmObserver(std::make_unique<prm::Observer>(std::bind(&InstancePolar::setModelDirty, this))),
-sShape(std::make_unique<ann::SeerShape>()),
-iMapper(std::make_unique<ann::InstanceMapper>()),
-csysDragger(std::make_unique<ann::CSysDragger>(this, csys.get()))
+Feature::Feature()
+: Base()
+, stow(std::make_unique<Stow>(*this))
 {
   if (icon.isNull())
     icon = QIcon(":/resources/images/constructionInstancePolar.svg");
   
   name = QObject::tr("Instance Polar");
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
-  
-  count->setConstraint(prm::Constraint::buildNonZeroPositive());
-  count->connectValue(std::bind(&InstancePolar::setModelDirty, this));
-  parameters.push_back(count.get());
-  
-  csys->connect(*prmObserver);
-  parameters.push_back(csys.get());
-  
-  angle->setConstraint(prm::Constraint::buildNonZeroAngle());
-  angle->connectValue(std::bind(&InstancePolar::setModelDirty, this));
-  parameters.push_back(angle.get());
-  
-  inclusiveAngle->connectValue(std::bind(&InstancePolar::setModelDirty, this));
-  parameters.push_back(inclusiveAngle.get());
-  
-  includeSource->connectValue(std::bind(&InstancePolar::setModelDirty, this));
-  parameters.push_back(includeSource.get());
-  
-  countLabel = new lbr::PLabel(count.get());
-  overlaySwitch->addChild(countLabel.get());
-  
-  angleLabel = new lbr::PLabel(angle.get());
-  overlaySwitch->addChild(angleLabel.get());
-  
-  inclusiveAngleLabel = new lbr::PLabel(inclusiveAngle.get());
-  overlaySwitch->addChild(inclusiveAngleLabel.get());
-  
-  csysDragger->dragger->unlinkToMatrix(getMainTransform());
-  csysDragger->dragger->hide(lbr::CSysDragger::SwitchIndexes::LinkIcon);
-  //don't worry about adding dragger. update takes care of it.
-//   overlaySwitch->addChild(csysDragger->dragger);
-  
-  includeSourceLabel = new lbr::PLabel(includeSource.get());
-  overlaySwitch->addChild(includeSourceLabel.get());
-  
-  annexes.insert(std::make_pair(ann::Type::SeerShape, sShape.get()));
-  annexes.insert(std::make_pair(ann::Type::InstanceMapper, iMapper.get()));
-  annexes.insert(std::make_pair(ann::Type::CSysDragger, csysDragger.get()));
 }
 
-InstancePolar::~InstancePolar() {}
+Feature::~Feature() = default;
 
-void InstancePolar::setShapePick(const Pick &pIn)
-{
-  shapePick = pIn;
-  setModelDirty();
-}
-
-void InstancePolar::setAxisPick(const Pick &aIn)
-{
-  axisPick = aIn;
-  setModelDirty();
-}
-
-void InstancePolar::setCSys(const osg::Matrixd &mIn)
-{
-  csys->setValue(mIn);
-}
-
-void InstancePolar::updateModel(const UpdatePayload &payloadIn)
+void Feature::updateModel(const UpdatePayload &payloadIn)
 {
   setFailure();
   lastUpdateLog.clear();
-  sShape->reset();
+  stow->sShape.reset();
   try
   {
-    prm::ObserverBlocker block(*prmObserver);
+    prm::ObserverBlocker block(stow->prmObserver);
     
     //no new failure state.
     if (isSkipped())
@@ -143,46 +168,51 @@ void InstancePolar::updateModel(const UpdatePayload &payloadIn)
     }
     
     //get the shapes to array.
+    const auto &sourcePicks = stow->source.getPicks();
     tls::Resolver resolver(payloadIn);
-    resolver.resolve(shapePick);
-    occt::ShapeVector tShapes = resolver.getShapes();
-    if (tShapes.empty())
-      throw std::runtime_error("invalid shape pick resolution");
-    assert(resolver.getSeerShape());
+    if (sourcePicks.empty() || !resolver.resolve(sourcePicks.front()))
+      throw std::runtime_error("Couldn't resolve source pick");
+    occt::ShapeVector tShapes;
     const ann::SeerShape &tss = *resolver.getSeerShape();
-    if (!slc::isShapeType(shapePick.selectionType))
-    {
-      assert(tShapes.size() == 1);
-      assert(tShapes.front().ShapeType() == TopAbs_COMPOUND);
-      tShapes = occt::getNonCompounds(tShapes.front());
-    }
+    if (slc::isObjectType(sourcePicks.front().selectionType))
+      tShapes = tss.useGetNonCompoundChildren();
+    else
+      tShapes = resolver.getShapes();
     if (tShapes.empty())
-      throw std::runtime_error("No shapes found.");
+      throw std::runtime_error("No source shapes found");
     
-    boost::optional<osg::Vec3d> newOrigin;
-    boost::optional<osg::Vec3d> newDirection;
-    std::vector<const Base*> rafs = payloadIn.getFeatures(InstancePolar::rotationAxis);
-    resolver.resolve(axisPick);
-    if (resolver.getFeature())
+    //set up csys. z axis will be rotation axis.
+    auto currentType = static_cast<AxisType>(stow->axisType.getInt());
+    //nothing to do if current type is constant.
+    if (currentType == Pick)
     {
-      //we have a rotation axis selection so make sure the csysdragger is hidden.
-      overlaySwitch->removeChild(csysDragger->dragger.get()); //ok if not present.
-      
-      if (slc::isObjectType(axisPick.selectionType))
+      std::optional<osg::Vec3d> newOrigin;
+      std::optional<osg::Vec3d> newDirection;
+      const auto &axisPicks = stow->axis.getPicks();
+      if (axisPicks.empty())
+        throw std::runtime_error("Axis picks are empty");
+      if (!resolver.resolve(axisPicks.front()))
+        throw std::runtime_error("Couldn't resolve axis pick");
+      if (slc::isObjectType(axisPicks.front().selectionType))
       {
         const auto originPrms = resolver.getFeature()->getParameters(prm::Tags::Origin);
         const auto directionPrms = resolver.getFeature()->getParameters(prm::Tags::Direction);
+        const auto csysPrms = resolver.getFeature()->getParameters(prm::Tags::CSys);
         if (!originPrms.empty() && !directionPrms.empty())
         {
           newOrigin = originPrms.front()->getVector();
           newDirection = directionPrms.front()->getVector();
         }
+        else if (!csysPrms.empty())
+        {
+          newOrigin = csysPrms.front()->getMatrix().getTrans();
+          newDirection = gu::getZVector(csysPrms.front()->getMatrix());
+        }
+        else
+          throw std::runtime_error("Couldn't get axis from input feature parameters");
       }
       else
       {
-        //can't do 2 points at this time?
-        if (!resolver.getSeerShape())
-          throw std::runtime_error("Input axis feature doesn't have seershape");
         occt::ShapeVector rShapes = resolver.getShapes();
         if (rShapes.empty())
           throw std::runtime_error("No resolved shapes for axis");
@@ -200,22 +230,20 @@ void InstancePolar::updateModel(const UpdatePayload &payloadIn)
         newDirection = gu::toOsg(gp_Vec(axis.Direction()));
         newOrigin = gu::toOsg(axis.Location());
       }
-      assert(newDirection && newOrigin);
-      csys->setValue(osg::Matrixd::rotate(osg::Vec3d(0.0, 0.0, 1.0), newDirection.get()) * osg::Matrixd::translate(newOrigin.get()));
-      csysDragger->draggerUpdate(); //keep dragger in sync with parameter.
-    }
-    else
-    {
-      //make sure dragger is visible
-      if(!overlaySwitch->containsNode(csysDragger->dragger.get()))
-        overlaySwitch->addChild(csysDragger->dragger.get());
-      newOrigin = csys->getMatrix().getTrans();
-      newDirection = gu::getZVector(csys->getMatrix());
+      
+      //just in case.
+      if (!newOrigin || !newDirection)
+        throw std::runtime_error("Couldn't get origin and direction from pick");
+      osg::Matrix fromTo = osg::Matrix::rotate(gu::getZVector(stow->csys.getMatrix()), *newDirection);
+      osg::Matrix finalCSys = stow->csys.getMatrix() * fromTo;
+      finalCSys.setTrans(*newOrigin);
+      stow->csys.setValue(finalCSys);
     }
     
-    int ac = count->getInt(); //actual count
-    double aa = angle->getDouble(); //actual angle
-    bool ai = inclusiveAngle->getBool(); //actual inclusive angle
+    //augment counts and angles for expected results.
+    int ac = stow->count.getInt(); //actual count
+    double aa = stow->angle.getDouble(); //actual angle
+    bool ai = stow->inclusiveAngle.getBool(); //actual inclusive angle
     
     if (ai)
     {
@@ -229,19 +257,24 @@ void InstancePolar::updateModel(const UpdatePayload &payloadIn)
       //stay under 360. don't overlap.
       int maxCount = static_cast<int>(360.0 / std::fabs(aa));
       ac = std::min(ac, maxCount);
-      if (ac != count->getInt())
+      if (ac != stow->count.getInt())
       {
         std::ostringstream s; s << "Count has been limited to less than full rotation"  << std::endl;
         lastUpdateLog.append(s.str());
       }
     }
     
+    //do instancing.
     occt::ShapeVector out;
-    gp_Ax1 ra(gp_Pnt(gu::toOcc(newOrigin.get()).XYZ()), gp_Dir(gu::toOcc(newDirection.get())));
+    gp_Ax1 ra
+    (
+      gp_Pnt(gu::toOcc(stow->csys.getMatrix().getTrans()).XYZ())
+      , gp_Dir(gu::toOcc(gu::getZVector(stow->csys.getMatrix())))
+    );
     
     for (int index = 0; index < ac; ++index)
     {
-      if (index == 0 && !(includeSource->getBool()))
+      if (index == 0 && !(stow->includeSource.getBool()))
         continue;
       gp_Trsf rotation;
       rotation.SetRotation(ra, osg::DegreesToRadians(static_cast<double>(index) * aa));
@@ -259,15 +292,15 @@ void InstancePolar::updateModel(const UpdatePayload &payloadIn)
     if (!check.isValid())
       throw std::runtime_error("shapeCheck failed");
     
-    sShape->setOCCTShape(result, getId());
+    stow->sShape.setOCCTShape(result, getId());
     
     for (const auto &s : tShapes)
     {
-      iMapper->startMapping(tss, tss.findId(s),  payloadIn.shapeHistory);
+      stow->iMapper.startMapping(tss, tss.findId(s),  payloadIn.shapeHistory);
       std::size_t sc = 0;
       for (const auto &si : out)
       {
-        iMapper->mapIndex(*sShape, si, sc);
+        stow->iMapper.mapIndex(stow->sShape, si, sc);
         sc++;
       }
     }
@@ -279,19 +312,19 @@ void InstancePolar::updateModel(const UpdatePayload &payloadIn)
     gp_Trsf clr; // count label rotation.
     clr.SetRotation(ra, osg::DegreesToRadians((ac - 1) * aa));
     gp_Pnt clo = inputCenter.Transformed(clr); //count label origin.
-    countLabel->setMatrix(osg::Matrixd::translate(gu::toOsg(clo)));
+    stow->countLabel->setMatrix(osg::Matrixd::translate(gu::toOsg(clo)));
     
     gp_Trsf alr; //angle label rotation.
     alr.SetRotation(ra, osg::DegreesToRadians(aa / 2.0));
     gp_Pnt alo = inputCenter.Transformed(alr);
-    angleLabel->setMatrix(osg::Matrixd::translate(gu::toOsg(alo)));
+    stow->angleLabel->setMatrix(osg::Matrixd::translate(gu::toOsg(alo)));
     
     Handle_Geom_Line rl = new Geom_Line(ra);
     GeomAPI_ProjectPointOnCurve projector(inputCenter, rl);
     gp_Pnt axisPoint = projector.NearestPoint();
-    inclusiveAngleLabel->setMatrix(osg::Matrixd::translate(gu::toOsg(axisPoint)));
+    stow->inclusiveAngleLabel->setMatrix(osg::Matrixd::translate(gu::toOsg(axisPoint)));
     
-    includeSourceLabel->setMatrix(osg::Matrixd::translate(gu::toOsg(inputCenter) + osg::Vec3d(0.0, 0.0, -inputBounds.getHeight() / 2.0)));
+    stow->includeSourceLabel->setMatrix(osg::Matrixd::translate(gu::toOsg(inputCenter) + osg::Vec3d(0.0, 0.0, -inputBounds.getHeight() / 2.0)));
     
     setSuccess();
   }
@@ -315,50 +348,54 @@ void InstancePolar::updateModel(const UpdatePayload &payloadIn)
     std::cout << std::endl << lastUpdateLog;
 }
 
-void InstancePolar::serialWrite(const boost::filesystem::path &dIn)
+void Feature::serialWrite(const boost::filesystem::path &dIn)
 {
   prj::srl::inps::InstancePolar sip
   (
     Base::serialOut(),
-    sShape->serialOut(),
-    iMapper->serialOut(),
-    csysDragger->serialOut(),
-    csys->serialOut(),
-    count->serialOut(),
-    angle->serialOut(),
-    inclusiveAngle->serialOut(),
-    includeSource->serialOut(),
-    countLabel->serialOut(),
-    angleLabel->serialOut(),
-    inclusiveAngleLabel->serialOut(),
-    includeSourceLabel->serialOut(),
-    shapePick.serialOut(),
-    axisPick.serialOut(),
-    overlaySwitch->containsNode(csysDragger->dragger.get())
+    stow->axisType.serialOut(),
+    stow->csys.serialOut(),
+    stow->count.serialOut(),
+    stow->angle.serialOut(),
+    stow->inclusiveAngle.serialOut(),
+    stow->includeSource.serialOut(),
+    stow->source.serialOut(),
+    stow->sShape.serialOut(),
+    stow->iMapper.serialOut(),
+    stow->csysDragger.serialOut(),
+    stow->countLabel->serialOut(),
+    stow->angleLabel->serialOut(),
+    stow->inclusiveAngleLabel->serialOut(),
+    stow->includeSourceLabel->serialOut()
   );
+  
+  auto ct = static_cast<AxisType>(stow->axisType.getInt());
+  if (ct == Pick)
+    sip.axis() = stow->axis.serialOut();
   
   xml_schema::NamespaceInfomap infoMap;
   std::ofstream stream(buildFilePathName(dIn).string());
   prj::srl::inps::instancePolar(stream, sip, infoMap);
 }
 
-void InstancePolar::serialRead(const prj::srl::inps::InstancePolar &sip)
+void Feature::serialRead(const prj::srl::inps::InstancePolar &sip)
 {
   Base::serialIn(sip.base());
-  sShape->serialIn(sip.seerShape());
-  iMapper->serialIn(sip.instanceMaps());
-  csysDragger->serialIn(sip.csysDragger());
-  csys->serialIn(sip.csys());
-  count->serialIn(sip.count());
-  angle->serialIn(sip.angle());
-  inclusiveAngle->serialIn(sip.inclusiveAngle());
-  includeSource->serialIn(sip.includeSource());
-  countLabel->serialIn(sip.countLabel());
-  angleLabel->serialIn(sip.angleLabel());
-  inclusiveAngleLabel->serialIn(sip.inclusiveAngleLabel());
-  includeSourceLabel->serialIn(sip.includeSourceLabel());
-  shapePick.serialIn(sip.shapePick());
-  axisPick.serialIn(sip.axisPick());
-  if (sip.draggerVisible())
-    overlaySwitch->addChild(csysDragger->dragger.get());
+  stow->axisType.serialIn(sip.axisType());
+  stow->csys.serialIn(sip.csys());
+  stow->count.serialIn(sip.count());
+  stow->angle.serialIn(sip.angle());
+  stow->inclusiveAngle.serialIn(sip.inclusiveAngle());
+  stow->includeSource.serialIn(sip.includeSource());
+  stow->source.serialIn(sip.source());
+  stow->sShape.serialIn(sip.seerShape());
+  stow->iMapper.serialIn(sip.instanceMaps());
+  stow->csysDragger.serialIn(sip.csysDragger());
+  stow->countLabel->serialIn(sip.countLabel());
+  stow->angleLabel->serialIn(sip.angleLabel());
+  stow->inclusiveAngleLabel->serialIn(sip.inclusiveAngleLabel());
+  stow->includeSourceLabel->serialIn(sip.includeSourceLabel());
+  
+  if (sip.axis())
+    stow->axis.serialIn(sip.axis().get());
 }

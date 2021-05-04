@@ -93,8 +93,6 @@ namespace prj
 
 #include "prjsrlsptoverlay.h"
 
-#include "prjsrlsptpick.h"
-
 #include "prjsrlsptseershape.h"
 
 #include "prjsrlsptinstancemapping.h"
@@ -127,56 +125,22 @@ namespace prj
         void
         base (::std::unique_ptr< BaseType > p);
 
-        // seerShape
+        // axisType
         //
-        typedef ::prj::srl::spt::SeerShape SeerShapeType;
-        typedef ::xsd::cxx::tree::traits< SeerShapeType, char > SeerShapeTraits;
+        typedef ::prj::srl::spt::Parameter AxisTypeType;
+        typedef ::xsd::cxx::tree::traits< AxisTypeType, char > AxisTypeTraits;
 
-        const SeerShapeType&
-        seerShape () const;
+        const AxisTypeType&
+        axisType () const;
 
-        SeerShapeType&
-        seerShape ();
-
-        void
-        seerShape (const SeerShapeType& x);
+        AxisTypeType&
+        axisType ();
 
         void
-        seerShape (::std::unique_ptr< SeerShapeType > p);
-
-        // instanceMaps
-        //
-        typedef ::prj::srl::spt::InstanceMaps InstanceMapsType;
-        typedef ::xsd::cxx::tree::traits< InstanceMapsType, char > InstanceMapsTraits;
-
-        const InstanceMapsType&
-        instanceMaps () const;
-
-        InstanceMapsType&
-        instanceMaps ();
+        axisType (const AxisTypeType& x);
 
         void
-        instanceMaps (const InstanceMapsType& x);
-
-        void
-        instanceMaps (::std::unique_ptr< InstanceMapsType > p);
-
-        // csysDragger
-        //
-        typedef ::prj::srl::spt::CSysDragger CsysDraggerType;
-        typedef ::xsd::cxx::tree::traits< CsysDraggerType, char > CsysDraggerTraits;
-
-        const CsysDraggerType&
-        csysDragger () const;
-
-        CsysDraggerType&
-        csysDragger ();
-
-        void
-        csysDragger (const CsysDraggerType& x);
-
-        void
-        csysDragger (::std::unique_ptr< CsysDraggerType > p);
+        axisType (::std::unique_ptr< AxisTypeType > p);
 
         // csys
         //
@@ -263,6 +227,95 @@ namespace prj
         void
         includeSource (::std::unique_ptr< IncludeSourceType > p);
 
+        // source
+        //
+        typedef ::prj::srl::spt::Parameter SourceType;
+        typedef ::xsd::cxx::tree::traits< SourceType, char > SourceTraits;
+
+        const SourceType&
+        source () const;
+
+        SourceType&
+        source ();
+
+        void
+        source (const SourceType& x);
+
+        void
+        source (::std::unique_ptr< SourceType > p);
+
+        // axis
+        //
+        typedef ::prj::srl::spt::Parameter AxisType;
+        typedef ::xsd::cxx::tree::optional< AxisType > AxisOptional;
+        typedef ::xsd::cxx::tree::traits< AxisType, char > AxisTraits;
+
+        const AxisOptional&
+        axis () const;
+
+        AxisOptional&
+        axis ();
+
+        void
+        axis (const AxisType& x);
+
+        void
+        axis (const AxisOptional& x);
+
+        void
+        axis (::std::unique_ptr< AxisType > p);
+
+        // seerShape
+        //
+        typedef ::prj::srl::spt::SeerShape SeerShapeType;
+        typedef ::xsd::cxx::tree::traits< SeerShapeType, char > SeerShapeTraits;
+
+        const SeerShapeType&
+        seerShape () const;
+
+        SeerShapeType&
+        seerShape ();
+
+        void
+        seerShape (const SeerShapeType& x);
+
+        void
+        seerShape (::std::unique_ptr< SeerShapeType > p);
+
+        // instanceMaps
+        //
+        typedef ::prj::srl::spt::InstanceMaps InstanceMapsType;
+        typedef ::xsd::cxx::tree::traits< InstanceMapsType, char > InstanceMapsTraits;
+
+        const InstanceMapsType&
+        instanceMaps () const;
+
+        InstanceMapsType&
+        instanceMaps ();
+
+        void
+        instanceMaps (const InstanceMapsType& x);
+
+        void
+        instanceMaps (::std::unique_ptr< InstanceMapsType > p);
+
+        // csysDragger
+        //
+        typedef ::prj::srl::spt::CSysDragger CsysDraggerType;
+        typedef ::xsd::cxx::tree::traits< CsysDraggerType, char > CsysDraggerTraits;
+
+        const CsysDraggerType&
+        csysDragger () const;
+
+        CsysDraggerType&
+        csysDragger ();
+
+        void
+        csysDragger (const CsysDraggerType& x);
+
+        void
+        csysDragger (::std::unique_ptr< CsysDraggerType > p);
+
         // countLabel
         //
         typedef ::prj::srl::spt::PLabel CountLabelType;
@@ -331,89 +384,39 @@ namespace prj
         void
         includeSourceLabel (::std::unique_ptr< IncludeSourceLabelType > p);
 
-        // shapePick
-        //
-        typedef ::prj::srl::spt::Pick ShapePickType;
-        typedef ::xsd::cxx::tree::traits< ShapePickType, char > ShapePickTraits;
-
-        const ShapePickType&
-        shapePick () const;
-
-        ShapePickType&
-        shapePick ();
-
-        void
-        shapePick (const ShapePickType& x);
-
-        void
-        shapePick (::std::unique_ptr< ShapePickType > p);
-
-        // axisPick
-        //
-        typedef ::prj::srl::spt::Pick AxisPickType;
-        typedef ::xsd::cxx::tree::traits< AxisPickType, char > AxisPickTraits;
-
-        const AxisPickType&
-        axisPick () const;
-
-        AxisPickType&
-        axisPick ();
-
-        void
-        axisPick (const AxisPickType& x);
-
-        void
-        axisPick (::std::unique_ptr< AxisPickType > p);
-
-        // draggerVisible
-        //
-        typedef ::xml_schema::Boolean DraggerVisibleType;
-        typedef ::xsd::cxx::tree::traits< DraggerVisibleType, char > DraggerVisibleTraits;
-
-        const DraggerVisibleType&
-        draggerVisible () const;
-
-        DraggerVisibleType&
-        draggerVisible ();
-
-        void
-        draggerVisible (const DraggerVisibleType& x);
-
         // Constructors.
         //
         InstancePolar (const BaseType&,
-                       const SeerShapeType&,
-                       const InstanceMapsType&,
-                       const CsysDraggerType&,
+                       const AxisTypeType&,
                        const CsysType&,
                        const CountType&,
                        const AngleType&,
                        const InclusiveAngleType&,
                        const IncludeSourceType&,
+                       const SourceType&,
+                       const SeerShapeType&,
+                       const InstanceMapsType&,
+                       const CsysDraggerType&,
                        const CountLabelType&,
                        const AngleLabelType&,
                        const InclusiveAngleLabelType&,
-                       const IncludeSourceLabelType&,
-                       const ShapePickType&,
-                       const AxisPickType&,
-                       const DraggerVisibleType&);
+                       const IncludeSourceLabelType&);
 
         InstancePolar (::std::unique_ptr< BaseType >,
-                       ::std::unique_ptr< SeerShapeType >,
-                       ::std::unique_ptr< InstanceMapsType >,
-                       ::std::unique_ptr< CsysDraggerType >,
+                       ::std::unique_ptr< AxisTypeType >,
                        ::std::unique_ptr< CsysType >,
                        ::std::unique_ptr< CountType >,
                        ::std::unique_ptr< AngleType >,
                        ::std::unique_ptr< InclusiveAngleType >,
                        ::std::unique_ptr< IncludeSourceType >,
+                       ::std::unique_ptr< SourceType >,
+                       ::std::unique_ptr< SeerShapeType >,
+                       ::std::unique_ptr< InstanceMapsType >,
+                       ::std::unique_ptr< CsysDraggerType >,
                        ::std::unique_ptr< CountLabelType >,
                        ::std::unique_ptr< AngleLabelType >,
                        ::std::unique_ptr< InclusiveAngleLabelType >,
-                       ::std::unique_ptr< IncludeSourceLabelType >,
-                       ::std::unique_ptr< ShapePickType >,
-                       ::std::unique_ptr< AxisPickType >,
-                       const DraggerVisibleType&);
+                       ::std::unique_ptr< IncludeSourceLabelType >);
 
         InstancePolar (const ::xercesc::DOMElement& e,
                        ::xml_schema::Flags f = 0,
@@ -442,21 +445,21 @@ namespace prj
 
         protected:
         ::xsd::cxx::tree::one< BaseType > base_;
-        ::xsd::cxx::tree::one< SeerShapeType > seerShape_;
-        ::xsd::cxx::tree::one< InstanceMapsType > instanceMaps_;
-        ::xsd::cxx::tree::one< CsysDraggerType > csysDragger_;
+        ::xsd::cxx::tree::one< AxisTypeType > axisType_;
         ::xsd::cxx::tree::one< CsysType > csys_;
         ::xsd::cxx::tree::one< CountType > count_;
         ::xsd::cxx::tree::one< AngleType > angle_;
         ::xsd::cxx::tree::one< InclusiveAngleType > inclusiveAngle_;
         ::xsd::cxx::tree::one< IncludeSourceType > includeSource_;
+        ::xsd::cxx::tree::one< SourceType > source_;
+        AxisOptional axis_;
+        ::xsd::cxx::tree::one< SeerShapeType > seerShape_;
+        ::xsd::cxx::tree::one< InstanceMapsType > instanceMaps_;
+        ::xsd::cxx::tree::one< CsysDraggerType > csysDragger_;
         ::xsd::cxx::tree::one< CountLabelType > countLabel_;
         ::xsd::cxx::tree::one< AngleLabelType > angleLabel_;
         ::xsd::cxx::tree::one< InclusiveAngleLabelType > inclusiveAngleLabel_;
         ::xsd::cxx::tree::one< IncludeSourceLabelType > includeSourceLabel_;
-        ::xsd::cxx::tree::one< ShapePickType > shapePick_;
-        ::xsd::cxx::tree::one< AxisPickType > axisPick_;
-        ::xsd::cxx::tree::one< DraggerVisibleType > draggerVisible_;
       };
     }
   }

@@ -20,8 +20,6 @@
 #ifndef FTR_INSTANCELINEAR_H
 #define FTR_INSTANCELINEAR_H
 
-#include <osg/ref_ptr>
-
 #include "feature/ftrbase.h"
 
 namespace prj{namespace srl{namespace inls{class InstanceLinear;}}}
