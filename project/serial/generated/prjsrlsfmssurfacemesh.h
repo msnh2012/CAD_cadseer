@@ -123,22 +123,22 @@ namespace prj
         void
         base (::std::unique_ptr< BaseType > p);
 
-        // surface
+        // meshType
         //
-        typedef ::prj::srl::mshs::Surface SurfaceType;
-        typedef ::xsd::cxx::tree::traits< SurfaceType, char > SurfaceTraits;
+        typedef ::prj::srl::spt::Parameter MeshTypeType;
+        typedef ::xsd::cxx::tree::traits< MeshTypeType, char > MeshTypeTraits;
 
-        const SurfaceType&
-        surface () const;
+        const MeshTypeType&
+        meshType () const;
 
-        SurfaceType&
-        surface ();
-
-        void
-        surface (const SurfaceType& x);
+        MeshTypeType&
+        meshType ();
 
         void
-        surface (::std::unique_ptr< SurfaceType > p);
+        meshType (const MeshTypeType& x);
+
+        void
+        meshType (::std::unique_ptr< MeshTypeType > p);
 
         // csys
         //
@@ -157,6 +157,23 @@ namespace prj
         void
         csys (::std::unique_ptr< CsysType > p);
 
+        // source
+        //
+        typedef ::prj::srl::spt::Parameter SourceType;
+        typedef ::xsd::cxx::tree::traits< SourceType, char > SourceTraits;
+
+        const SourceType&
+        source () const;
+
+        SourceType&
+        source ();
+
+        void
+        source (const SourceType& x);
+
+        void
+        source (::std::unique_ptr< SourceType > p);
+
         // csysDragger
         //
         typedef ::prj::srl::spt::CSysDragger CsysDraggerType;
@@ -174,19 +191,40 @@ namespace prj
         void
         csysDragger (::std::unique_ptr< CsysDraggerType > p);
 
+        // surface
+        //
+        typedef ::prj::srl::mshs::Surface SurfaceType;
+        typedef ::xsd::cxx::tree::traits< SurfaceType, char > SurfaceTraits;
+
+        const SurfaceType&
+        surface () const;
+
+        SurfaceType&
+        surface ();
+
+        void
+        surface (const SurfaceType& x);
+
+        void
+        surface (::std::unique_ptr< SurfaceType > p);
+
         // parametersOCCT
         //
         typedef ::prj::srl::mshs::ParametersOCCT ParametersOCCTType;
+        typedef ::xsd::cxx::tree::optional< ParametersOCCTType > ParametersOCCTOptional;
         typedef ::xsd::cxx::tree::traits< ParametersOCCTType, char > ParametersOCCTTraits;
 
-        const ParametersOCCTType&
+        const ParametersOCCTOptional&
         parametersOCCT () const;
 
-        ParametersOCCTType&
+        ParametersOCCTOptional&
         parametersOCCT ();
 
         void
         parametersOCCT (const ParametersOCCTType& x);
+
+        void
+        parametersOCCT (const ParametersOCCTOptional& x);
 
         void
         parametersOCCT (::std::unique_ptr< ParametersOCCTType > p);
@@ -194,16 +232,20 @@ namespace prj
         // parametersNetgen
         //
         typedef ::prj::srl::mshs::ParametersNetgen ParametersNetgenType;
+        typedef ::xsd::cxx::tree::optional< ParametersNetgenType > ParametersNetgenOptional;
         typedef ::xsd::cxx::tree::traits< ParametersNetgenType, char > ParametersNetgenTraits;
 
-        const ParametersNetgenType&
+        const ParametersNetgenOptional&
         parametersNetgen () const;
 
-        ParametersNetgenType&
+        ParametersNetgenOptional&
         parametersNetgen ();
 
         void
         parametersNetgen (const ParametersNetgenType& x);
+
+        void
+        parametersNetgen (const ParametersNetgenOptional& x);
 
         void
         parametersNetgen (::std::unique_ptr< ParametersNetgenType > p);
@@ -211,53 +253,39 @@ namespace prj
         // parametersGMSH
         //
         typedef ::prj::srl::mshs::ParametersGMSH ParametersGMSHType;
+        typedef ::xsd::cxx::tree::optional< ParametersGMSHType > ParametersGMSHOptional;
         typedef ::xsd::cxx::tree::traits< ParametersGMSHType, char > ParametersGMSHTraits;
 
-        const ParametersGMSHType&
+        const ParametersGMSHOptional&
         parametersGMSH () const;
 
-        ParametersGMSHType&
+        ParametersGMSHOptional&
         parametersGMSH ();
 
         void
         parametersGMSH (const ParametersGMSHType& x);
 
         void
-        parametersGMSH (::std::unique_ptr< ParametersGMSHType > p);
-
-        // meshType
-        //
-        typedef ::xml_schema::Int MeshTypeType;
-        typedef ::xsd::cxx::tree::traits< MeshTypeType, char > MeshTypeTraits;
-
-        const MeshTypeType&
-        meshType () const;
-
-        MeshTypeType&
-        meshType ();
+        parametersGMSH (const ParametersGMSHOptional& x);
 
         void
-        meshType (const MeshTypeType& x);
+        parametersGMSH (::std::unique_ptr< ParametersGMSHType > p);
 
         // Constructors.
         //
         SurfaceMesh (const BaseType&,
-                     const SurfaceType&,
+                     const MeshTypeType&,
                      const CsysType&,
+                     const SourceType&,
                      const CsysDraggerType&,
-                     const ParametersOCCTType&,
-                     const ParametersNetgenType&,
-                     const ParametersGMSHType&,
-                     const MeshTypeType&);
+                     const SurfaceType&);
 
         SurfaceMesh (::std::unique_ptr< BaseType >,
-                     ::std::unique_ptr< SurfaceType >,
+                     ::std::unique_ptr< MeshTypeType >,
                      ::std::unique_ptr< CsysType >,
+                     ::std::unique_ptr< SourceType >,
                      ::std::unique_ptr< CsysDraggerType >,
-                     ::std::unique_ptr< ParametersOCCTType >,
-                     ::std::unique_ptr< ParametersNetgenType >,
-                     ::std::unique_ptr< ParametersGMSHType >,
-                     const MeshTypeType&);
+                     ::std::unique_ptr< SurfaceType >);
 
         SurfaceMesh (const ::xercesc::DOMElement& e,
                      ::xml_schema::Flags f = 0,
@@ -286,13 +314,14 @@ namespace prj
 
         protected:
         ::xsd::cxx::tree::one< BaseType > base_;
-        ::xsd::cxx::tree::one< SurfaceType > surface_;
-        ::xsd::cxx::tree::one< CsysType > csys_;
-        ::xsd::cxx::tree::one< CsysDraggerType > csysDragger_;
-        ::xsd::cxx::tree::one< ParametersOCCTType > parametersOCCT_;
-        ::xsd::cxx::tree::one< ParametersNetgenType > parametersNetgen_;
-        ::xsd::cxx::tree::one< ParametersGMSHType > parametersGMSH_;
         ::xsd::cxx::tree::one< MeshTypeType > meshType_;
+        ::xsd::cxx::tree::one< CsysType > csys_;
+        ::xsd::cxx::tree::one< SourceType > source_;
+        ::xsd::cxx::tree::one< CsysDraggerType > csysDragger_;
+        ::xsd::cxx::tree::one< SurfaceType > surface_;
+        ParametersOCCTOptional parametersOCCT_;
+        ParametersNetgenOptional parametersNetgen_;
+        ParametersGMSHOptional parametersGMSH_;
       };
     }
   }

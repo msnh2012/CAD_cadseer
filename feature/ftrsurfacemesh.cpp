@@ -31,12 +31,14 @@
 #include "globalutilities.h"
 #include "tools/occtools.h"
 #include "tools/idtools.h"
+#include "tools/featuretools.h"
 #include "feature/ftrupdatepayload.h"
 #include "feature/ftrinputtype.h"
 #include "annex/annseershape.h"
 #include "annex/annsurfacemesh.h"
 #include "annex/anncsysdragger.h"
 #include "library/lbrcsysdragger.h"
+#include "feature/ftrpick.h"
 #include "parameter/prmconstants.h"
 #include "parameter/prmparameter.h"
 #include "mesh/mshocct.h"
@@ -45,47 +47,96 @@
 #include "project/serial/generated/prjsrlsfmssurfacemesh.h"
 #include "feature/ftrsurfacemesh.h"
 
-using namespace ftr;
+using namespace ftr::SurfaceMesh;
 using boost::uuids::uuid;
+QIcon Feature::icon;
 
-QIcon SurfaceMesh::icon;
+struct Feature::Stow
+{
+  Feature &feature;
+  
+  prm::Parameter meshType{QObject::tr("Mesh Type"), 0, Tags::MeshType};
+  prm::Parameter csys{prm::Names::CSys, osg::Matrixd::identity(), prm::Tags::CSys};
+  prm::Parameter source{QObject::tr("Source"), ftr::Picks(), Tags::Source};
+  prm::Observer csysObserver;
+  
+  ann::CSysDragger csysDragger;
+  std::unique_ptr<ann::SurfaceMesh> mesh{std::make_unique<ann::SurfaceMesh>()};
+  
+  msh::prm::OCCT occtParameters;
+  msh::prm::Netgen netgenParameters;
+  msh::prm::GMSH gmshParameters;
+  
+  Stow() = delete;
+  Stow(Feature &fIn)
+  :feature(fIn)
+  , csysObserver(std::bind(&Feature::setModelDirty, &feature))
+  , csysDragger(&feature, &csys)
+  {
+    QStringList tStrings = //keep in sync with enum in header.
+    {
+      QObject::tr("Inert")
+      , QObject::tr("Occt")
+      , QObject::tr("Netgen")
+      , QObject::tr("Gmsh")
+    };
+    meshType.setEnumeration(tStrings);
+    meshType.connectValue(std::bind(&Feature::setModelDirty, &feature));
+    meshType.connectValue(std::bind(&Stow::prmActiveSync, this));
+    feature.parameters.push_back(&meshType);
+    
+    csys.connect(csysObserver);
+    feature.parameters.push_back(&csys);
+    
+    source.connectValue(std::bind(&Feature::setModelDirty, &feature));
+    feature.parameters.push_back(&source);
+    
+    feature.annexes.insert(std::make_pair(ann::Type::SurfaceMesh, mesh.get()));
+    feature.annexes.insert(std::make_pair(ann::Type::CSysDragger, &csysDragger));
+    
+    feature.overlaySwitch->addChild(csysDragger.dragger);
+      //we don't use lod stuff that is in base by default. so remove
+    feature.mainTransform->removeChildren(0, feature.mainTransform->getNumChildren());
+  }
+  
+  void prmActiveSync()
+  {
+    //shouldn't need to block anything
+    switch (static_cast<MeshType>(meshType.getInt()))
+    {
+      case Inert:{
+        csysDragger.draggerUpdate();
+        csys.setActive(true);
+        source.setActive(false);
+        break;}
+      case Occt:{
+        csys.setActive(false);
+        source.setActive(true);
+        break;}
+      case Netgen:{
+        csys.setActive(false);
+        source.setActive(true);
+        break;}
+      case Gmsh:{
+        csys.setActive(false);
+        source.setActive(true);
+        break;}
+    }
+  }
+};
 
-SurfaceMesh::SurfaceMesh():
-Base()
-, csys(std::make_unique<prm::Parameter>(prm::Names::CSys, osg::Matrixd::identity(), prm::Tags::CSys))
-, csysDragger(std::make_unique<ann::CSysDragger>(this, csys.get()))
-, mesh(std::make_unique<ann::SurfaceMesh>())
+Feature::Feature()
+: Base()
+, stow(std::make_unique<Stow>(*this))
 {
   if (icon.isNull())
     icon = QIcon(":/resources/images/constructionSurfaceMesh.svg");
   
   name = QObject::tr("SurfaceMesh");
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
-  
-  parameters.push_back(csys.get());
-  
-  annexes.insert(std::make_pair(ann::Type::SurfaceMesh, mesh.get()));
-  annexes.insert(std::make_pair(ann::Type::CSysDragger, csysDragger.get()));
-  //update will decide if dragger is added to overlay
-  
-  //we don't use lod stuff that is in base by default. so remove
-  mainTransform->removeChildren(0, mainTransform->getNumChildren());
-  
-  csys->connectValue(std::bind(&SurfaceMesh::setModelDirty, this));
-  csys->connectActive(std::bind(&SurfaceMesh::csysActive, this));
 }
 
-SurfaceMesh::~SurfaceMesh(){}
-
-void SurfaceMesh::setMeshType(MeshType t)
-{
-  meshType = t;
-  if (meshType == MeshType::inert)
-    csys->setActive(true);
-  else
-    csys->setActive(false);
-  setModelDirty();
-}
+Feature::~Feature() = default;
 
 /*! @brief assigns mesh annex to feature
  * 
@@ -94,31 +145,41 @@ void SurfaceMesh::setMeshType(MeshType t)
  * marks visual dirty for display update.
  * 
  */
-void SurfaceMesh::setMesh(std::unique_ptr<ann::SurfaceMesh> mIn, bool setToInert)
+void Feature::setMesh(std::unique_ptr<ann::SurfaceMesh> mIn, bool setToInert)
 {
   if (setToInert)
-    setMeshType(MeshType::inert);
+    stow->meshType.setValue(static_cast<int>(Inert));
   annexes.erase(ann::Type::SurfaceMesh);
-  mesh = std::move(mIn);
-  annexes.insert(std::make_pair(ann::Type::SurfaceMesh, mesh.get()));
+  stow->mesh = std::move(mIn);
+  annexes.insert(std::make_pair(ann::Type::SurfaceMesh,stow->mesh.get()));
   setVisualDirty();
 }
 
-void SurfaceMesh::setOcctParameters(const msh::prm::OCCT &prmsIn)
+const msh::prm::OCCT& Feature::getOcctParameters() const
 {
-  occtParameters = prmsIn;
-  setMeshType(MeshType::occt);
+  return stow->occtParameters;
+}
+
+void Feature::setOcctParameters(const msh::prm::OCCT &prmsIn)
+{
+  stow->occtParameters = prmsIn;
+  stow->meshType.setValue(static_cast<int>(Occt));
+  setModelDirty(); //if we are already at occt type then above won't set dirty.
+}
+
+const msh::prm::Netgen& Feature::getNetgenParameters() const 
+{
+  return stow->netgenParameters;
+}
+
+void Feature::setNetgenParameters(const msh::prm::Netgen &prmsIn)
+{
+  stow->netgenParameters = prmsIn;
+  stow->meshType.setValue(static_cast<int>(Netgen));
   setModelDirty();
 }
 
-void SurfaceMesh::setNetgenParameters(const msh::prm::Netgen &prmsIn)
-{
-  netgenParameters = prmsIn;
-  setMeshType(MeshType::netgen);
-  setModelDirty();
-}
-
-void SurfaceMesh::updateModel(const UpdatePayload &pIn)
+void Feature::updateModel(const UpdatePayload &pIn)
 {
   setFailure();
   lastUpdateLog.clear();
@@ -129,30 +190,43 @@ void SurfaceMesh::updateModel(const UpdatePayload &pIn)
       setSuccess();
       throw std::runtime_error("feature is skipped");
     }
-    if (meshType == MeshType::inert)
+    auto ct = static_cast<MeshType>(stow->meshType.getInt());
+    if (ct == Inert)
     {
       //the csys parameter will have total transformation
       //we only want the increment that was applied
       osg::Matrixd increment = mainTransform->getMatrix();
       if (!increment.isIdentity())
       {
-        mesh->transform(increment);
+        stow->mesh->transform(increment);
         mainTransform->setMatrix(osg::Matrixd::identity());
       }
     }
     else
     {
-      std::vector<const Base*> tfs = pIn.getFeatures(InputType::target);
-      if (tfs.size() != 1)
-        throw std::runtime_error("wrong number of parents");
-      if (!tfs.front()->hasAnnex(ann::Type::SeerShape))
-        throw std::runtime_error("parent doesn't have seer shape.");
-      const ann::SeerShape &tss = tfs.front()->getAnnex<ann::SeerShape>();
-      if (tss.isNull())
-        throw std::runtime_error("target seer shape is null");
-      TopoDS_Shape temp = occt::getFirstNonCompound(tss.getRootOCCTShape());
+      const auto picks = stow->source.getPicks();
+      if (picks.empty())
+        throw std::runtime_error("No input shape picks");
+      tls::Resolver resolver(pIn);
+      if (!resolver.resolve(picks.front()))
+        throw std::runtime_error("Unable to resolve shape picks");
+      auto shapes = resolver.getShapes();
+      if (slc::isObjectType(picks.front().selectionType))
+      {
+        auto csysPrms = resolver.getFeature()->getParameters(prm::Tags::CSys);
+        if (!csysPrms.empty())
+        {
+          prm::ObserverBlocker(stow->csysObserver);
+          stow->csys.setValue(csysPrms.front()->getMatrix());
+        }
+        shapes = resolver.getSeerShape()->useGetNonCompoundChildren();
+      }
+      if (shapes.empty())
+        throw std::runtime_error("No resolved shapes");
+      
+      TopoDS_Shape temp = shapes.front();
       if (temp.IsNull())
-        throw std::runtime_error("root occt shape of seer shape is null");
+        throw std::runtime_error("occt shape is null");
       TopoDS_Shell stm;
       TopoDS_Face ftm;
       if (temp.ShapeType() == TopAbs_SOLID)
@@ -164,36 +238,36 @@ void SurfaceMesh::updateModel(const UpdatePayload &pIn)
       else
         throw std::runtime_error("unsupported shape type");
       
-      if (meshType == MeshType::occt)
+      if (ct == Occt)
       {
         if (!stm.IsNull())
-          setMesh(std::make_unique<ann::SurfaceMesh>(msh::srf::generate(stm, occtParameters)), false);
+          setMesh(std::make_unique<ann::SurfaceMesh>(msh::srf::generate(stm, stow->occtParameters)), false);
         else
-          setMesh(std::make_unique<ann::SurfaceMesh>(msh::srf::generate(ftm, occtParameters)), false);
+          setMesh(std::make_unique<ann::SurfaceMesh>(msh::srf::generate(ftm, stow->occtParameters)), false);
       }
-      else if (meshType == MeshType::netgen)
+      else if (ct == Netgen)
       {
 #ifndef NETGEN_PRESENT
         throw std::runtime_error("Netgen not available.");
 #endif
-        netgenParameters.filePath = boost::filesystem::temp_directory_path();
-        netgenParameters.filePath /= boost::filesystem::path(gu::idToString(getId()) + ".brep");
+        stow->netgenParameters.filePath = boost::filesystem::temp_directory_path();
+        stow->netgenParameters.filePath /= boost::filesystem::path(gu::idToString(getId()) + ".brep");
         if (!stm.IsNull())
-          setMesh(std::make_unique<ann::SurfaceMesh>(msh::srf::generate(stm, netgenParameters)), false);
+          setMesh(std::make_unique<ann::SurfaceMesh>(msh::srf::generate(stm, stow->netgenParameters)), false);
         else
-          setMesh(std::make_unique<ann::SurfaceMesh>(msh::srf::generate(ftm, netgenParameters)), false);
+          setMesh(std::make_unique<ann::SurfaceMesh>(msh::srf::generate(ftm, stow->netgenParameters)), false);
       }
-      else if (meshType == MeshType::gmsh)
+      else if (ct == Gmsh)
       {
 #ifndef GMSH_PRESENT
         throw std::runtime_error("Gmsh not available.");
 #endif
-        gmshParameters.filePath = boost::filesystem::temp_directory_path();
-        gmshParameters.filePath /= boost::filesystem::path(gu::idToString(getId()) + ".brep");
+        stow->gmshParameters.filePath = boost::filesystem::temp_directory_path();
+        stow->gmshParameters.filePath /= boost::filesystem::path(gu::idToString(getId()) + ".brep");
         if (!stm.IsNull())
-          setMesh(std::make_unique<ann::SurfaceMesh>(msh::srf::generate(stm, gmshParameters)), false);
+          setMesh(std::make_unique<ann::SurfaceMesh>(msh::srf::generate(stm, stow->gmshParameters)), false);
         else
-          setMesh(std::make_unique<ann::SurfaceMesh>(msh::srf::generate(ftm, gmshParameters)), false);
+          setMesh(std::make_unique<ann::SurfaceMesh>(msh::srf::generate(ftm, stow->gmshParameters)), false);
       }
     }
     
@@ -214,54 +288,56 @@ void SurfaceMesh::updateModel(const UpdatePayload &pIn)
     std::cout << std::endl << lastUpdateLog;
 }
 
-void SurfaceMesh::updateVisual()
+void Feature::updateVisual()
 {
   mainTransform->removeChildren(0, mainTransform->getNumChildren());
   setVisualClean();
-  if (!mesh)
+  if (!stow->mesh)
     return;
-  osg::Switch *viz = mdv::generate(*mesh);
+  osg::Switch *viz = mdv::generate(*stow->mesh);
   if (viz)
     mainTransform->addChild(viz);
 }
 
-void SurfaceMesh::serialWrite(const boost::filesystem::path &dIn)
+void Feature::serialWrite(const boost::filesystem::path &dIn)
 {
   prj::srl::sfms::SurfaceMesh so
   (
     Base::serialOut()
-    , mesh->serialOut()
-    , csys->serialOut()
-    , csysDragger->serialOut()
-    , occtParameters.serialOut()
-    , netgenParameters.serialOut()
-    , gmshParameters.serialOut()
-    , static_cast<int>(meshType)
+    , stow->meshType.serialOut()
+    , stow->csys.serialOut()
+    , stow->source.serialOut()
+    , stow->csysDragger.serialOut()
+    , stow->mesh->serialOut()
   );
+  
+  auto ct = static_cast<MeshType>(stow->meshType.getInt());
+  switch (ct)
+  {
+    case Inert: {break;} //no settings
+    case Occt: {so.parametersOCCT() = stow->occtParameters.serialOut(); break;}
+    case Netgen: {so.parametersNetgen() = stow->netgenParameters.serialOut(); break;}
+    case Gmsh: {so.parametersGMSH() = stow->gmshParameters.serialOut(); break;}
+  }
   
   xml_schema::NamespaceInfomap infoMap;
   std::ofstream stream(buildFilePathName(dIn).string());
   prj::srl::sfms::surfaceMesh(stream, so, infoMap);
 }
 
-void SurfaceMesh::serialRead(const prj::srl::sfms::SurfaceMesh &smIn)
+void Feature::serialRead(const prj::srl::sfms::SurfaceMesh &smIn)
 {
   Base::serialIn(smIn.base());
-  mesh->serialIn(smIn.surface());
-  csys->serialIn(smIn.csys());
-  csysDragger->serialIn(smIn.csysDragger());
-  occtParameters.serialIn(smIn.parametersOCCT());
-  netgenParameters.serialIn(smIn.parametersNetgen());
-  gmshParameters.serialIn(smIn.parametersGMSH());
-  meshType = static_cast<MeshType>(smIn.meshType());
+  stow->meshType.serialIn(smIn.meshType());
+  stow->csys.serialIn(smIn.csys());
+  stow->source.serialIn(smIn.source());
+  stow->csysDragger.serialIn(smIn.csysDragger());
+  stow->mesh->serialIn(smIn.surface());
   
-  csysActive();
-}
-
-void SurfaceMesh::csysActive()
-{
-  if (csys->isActive())
-    overlaySwitch->addChild(csysDragger->dragger);
-  else
-    overlaySwitch->removeChild(csysDragger->dragger);
+  if (smIn.parametersOCCT())
+    stow->occtParameters.serialIn(smIn.parametersOCCT().get());
+  if (smIn.parametersNetgen())
+    stow->netgenParameters.serialIn(smIn.parametersNetgen().get());
+  if (smIn.parametersGMSH())
+    stow->gmshParameters.serialIn(smIn.parametersGMSH().get());
 }

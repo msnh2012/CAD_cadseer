@@ -655,7 +655,7 @@ std::shared_ptr<ftr::Base> FeatureLoad::loadSurfaceMesh(const std::string &fileN
   auto ss = srl::sfms::surfaceMesh(fileNameIn, flags);
   assert(ss);
   
-  auto sf = std::make_shared<ftr::SurfaceMesh>();
+  auto sf = std::make_shared<ftr::SurfaceMesh::Feature>();
   sf->serialRead(*ss);
   
   return sf;

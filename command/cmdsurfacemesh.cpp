@@ -22,6 +22,8 @@
 #include "project/prjproject.h"
 #include "annex/annseershape.h"
 #include "selection/slceventhandler.h"
+#include "parameter/prmparameter.h"
+#include "tools/featuretools.h"
 #include "commandview/cmvmessage.h"
 #include "commandview/cmvsurfacemesh.h"
 #include "feature/ftrinputtype.h"
@@ -34,7 +36,7 @@ SurfaceMesh::SurfaceMesh()
 : Base("cmd::SurfaceMesh")
 , leafManager()
 {
-  auto nf = std::make_shared<ftr::SurfaceMesh>();
+  auto nf = std::make_shared<ftr::SurfaceMesh::Feature>();
   project->addFeature(nf);
   feature = nf.get();
   node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
@@ -46,7 +48,7 @@ SurfaceMesh::SurfaceMesh(ftr::Base *fIn)
 : Base("cmd::SurfaceMesh")
 , leafManager(fIn)
 {
-  feature = dynamic_cast<ftr::SurfaceMesh*>(fIn);
+  feature = dynamic_cast<ftr::SurfaceMesh::Feature*>(fIn);
   assert(feature);
   viewBase = std::make_unique<cmv::SurfaceMesh>(this);
   node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
@@ -116,7 +118,12 @@ void SurfaceMesh::setSelection(const slc::Message &mIn)
   
   project->clearAllInputs(feature->getId());
   if (isValidSelection(mIn))
-    project->connect(mIn.featureId, feature->getId(), {ftr::InputType::target});
+  {
+    ftr::Pick p = tls::convertToPick(mIn, *project->findFeature(mIn.featureId), project->getShapeHistory());
+    p.tag = indexTag(ftr::SurfaceMesh::Tags::Source, 0);
+    feature->getParameter(ftr::SurfaceMesh::Tags::Source)->setValue(p);
+    project->connect(mIn.featureId, feature->getId(), {p.tag});
+  }
 }
 
 void SurfaceMesh::localUpdate()
@@ -131,28 +138,24 @@ void SurfaceMesh::localUpdate()
 void SurfaceMesh::go()
 {
   const slc::Containers &cs = eventHandler->getSelections();
-  
-  boost::optional<slc::Message> target;
   for (const auto &c : cs)
   {
     auto m = slc::EventHandler::containerToMessage(c);
     if (isValidSelection(m))
     {
-      target = m;
+      setSelection(m);
+      node->sendBlocked(msg::buildHideThreeD(m.featureId));
+      node->sendBlocked(msg::buildHideOverlay(m.featureId));
       break;
     }
   }
   
-  if (target)
-  {
-    setSelection(target.get());
-    node->sendBlocked(msg::buildStatusMessage("SurfaceMesh Added", 2.0));
-    node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
-    return;
-  }
-  
+  feature->setOcctParameters(msh::prm::OCCT());
+  node->sendBlocked(msg::buildStatusMessage("SurfaceMesh Added", 2.0));
   node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
   node->sendBlocked(msg::buildShowThreeD(feature->getId()));
   node->sendBlocked(msg::buildShowOverlay(feature->getId()));
+  localUpdate();
+  
   viewBase = std::make_unique<cmv::SurfaceMesh>(this);
 }

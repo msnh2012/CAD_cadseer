@@ -31,6 +31,8 @@
 #include "dialogs/dlgselectionbutton.h"
 #include "dialogs/dlgselectionwidget.h"
 #include "feature/ftrinputtype.h"
+#include "tools/featuretools.h"
+#include "parameter/prmparameter.h"
 #include "dialogs/dlgnetgenparameters.h"
 #include "dialogs/dlgocctparameters.h"
 #include "feature/ftrsurfacemesh.h"
@@ -45,6 +47,7 @@ struct SurfaceMesh::Stow
 {
   cmd::SurfaceMesh *command;
   cmv::SurfaceMesh *view;
+  ftr::SurfaceMesh::Feature *feature;
   
   QVBoxLayout *verticalLayout = nullptr;
   QHBoxLayout *horizontalLayout = nullptr;
@@ -63,6 +66,7 @@ struct SurfaceMesh::Stow
   Stow(cmd::SurfaceMesh *cIn, cmv::SurfaceMesh *vIn)
   : command(cIn)
   , view(vIn)
+  , feature(cIn->feature)
   {
     buildGui();
     
@@ -82,21 +86,14 @@ struct SurfaceMesh::Stow
     verticalLayout->setObjectName(QString::fromUtf8("verticalLayout"));
     view->setLayout(verticalLayout);
     
-    //because we have preprocessor conditionals,
-    //the current index of comboBox is not static
-    //from one build to the next. so we add userdata
-    //to the combo box item to test for.
     mesherLabel = new QLabel(tr("Mesher:"), view);
     mesherLabel->setObjectName(QString::fromUtf8("mesherLabel"));
     mesherCombo = new QComboBox(view);
-    mesherCombo->addItem(tr("Inert"), QVariant(0));
-    mesherCombo->addItem(tr("OCCT"), QVariant(1));
-#ifdef NETGEN_PRESENT
-    mesherCombo->addItem(tr("Netgen"), QVariant(2));
-#endif
-#ifdef GMSH_PRESENT
-    mesherCombo->addItem(tr("GMSH"), QVariant(3));
-#endif
+    mesherCombo->addItem(tr("Inert"));
+    mesherCombo->addItem(tr("OCCT"));
+    mesherCombo->addItem(tr("Netgen"));
+    mesherCombo->addItem(tr("GMSH"));
+    
     mesherCombo->setObjectName(QString::fromUtf8("mesherCombo"));
     QHBoxLayout *comboHLayout = new QHBoxLayout();
     comboHLayout->addWidget(mesherLabel);
@@ -142,63 +139,49 @@ struct SurfaceMesh::Stow
   {
     auto setSelection = [&]()
     {
-      auto pl = view->project->getPayload(command->feature->getId());
-      auto features = pl.getFeatures(ftr::InputType::target);
-      if (features.empty())
+      const auto &picks = feature->getParameter(ftr::SurfaceMesh::Tags::Source)->getPicks();
+      if (!picks.empty())
       {
-        int index = mesherCombo->findData(0);
-        assert(index >= 0);
-        mesherCombo->setCurrentIndex(index);
-        return;
+        auto pl = view->project->getPayload(feature->getId());
+        tls::Resolver resolver(pl);
+        if (resolver.resolve(picks.front()))
+          selectionWidget->getButton(0)->setMessages(resolver.convertToMessages());
       }
-      slc::Message proto;
-      proto.type = slc::Type::Object;
-      proto.featureType = features.front()->getType();
-      proto.featureId = features.front()->getId();
-      selectionWidget->getButton(0)->setMessages(proto);
     };
-    if (command->feature->getMeshType() == ftr::SurfaceMesh::MeshType::inert)
+    
+    auto ct = static_cast<ftr::SurfaceMesh::MeshType>(feature->getParameter(ftr::SurfaceMesh::Tags::MeshType)->getInt());
+    if (ct == ftr::SurfaceMesh::Inert)
     {
-      int index = mesherCombo->findData(0);
-      assert(index >= 0);
-      mesherCombo->setCurrentIndex(index);
-      parameterStacked->setCurrentIndex(index);
+      mesherCombo->setCurrentIndex(0);
+      parameterStacked->setCurrentIndex(0);
       selectionWidget->hide();
     }
-    else if (command->feature->getMeshType() == ftr::SurfaceMesh::MeshType::occt)
+    else if (ct == ftr::SurfaceMesh::Occt)
     {
-      occtPage->setOCCT(command->feature->getOcctParameters());
-      int index = mesherCombo->findData(1);
-      assert(index >= 0);
-      mesherCombo->setCurrentIndex(index);
-      parameterStacked->setCurrentIndex(index);
+      occtPage->setOCCT(feature->getOcctParameters());
+      mesherCombo->setCurrentIndex(1);
+      parameterStacked->setCurrentIndex(1);
       setSelection();
     }
-    else if (command->feature->getMeshType() == ftr::SurfaceMesh::MeshType::netgen)
+    else if (ct == ftr::SurfaceMesh::MeshType::Netgen)
     {
 #ifdef NETGEN_PRESENT
-      netgenPage->setParameters(command->feature->getNetgenParameters());
-      int index = mesherCombo->findData(2);
-      assert(index >= 0);
-      mesherCombo->setCurrentIndex(index);
-      parameterStacked->setCurrentIndex(index);
+      netgenPage->setParameters(feature->getNetgenParameters());
+      mesherCombo->setCurrentIndex(2);
+      parameterStacked->setCurrentIndex(2);
       setSelection();
 #else
-      int index = mesherCombo->findData(1);
-      assert(index >= 0);
-      QTimer::singleShot(0, [this, index](){mesherCombo->setCurrentIndex(index);});
+      QTimer::singleShot(0, [this](){mesherCombo->setCurrentIndex(1);});
       view->node->send(msg::buildStatusMessage(tr("Netgen Not Present, Switching to OCCT").toStdString(), 2.0));
 #endif
     }
-    else if (command->feature->getMeshType() == ftr::SurfaceMesh::MeshType::gmsh)
+    else if (ct == ftr::SurfaceMesh::Gmsh)
     {
 #ifdef GMSH_PRESENT
-      //fill in data for gmsh
-      command->feature->getMeshType(); //dummy statement
+      //TODO fill in data for gmsh
+      feature->getType(); //dummy statement
 #else
-      int index = mesherCombo->findData(1);
-      assert(index >= 0);
-      QTimer::singleShot(0, [this, index](){mesherCombo->setCurrentIndex(index);});
+      QTimer::singleShot(0, [this](){mesherCombo->setCurrentIndex(1);});
       view->node->send(msg::buildStatusMessage(tr("Gmsh Not Present, Switching to OCCT").toStdString(), 2.0));
 #endif
     }
@@ -220,42 +203,53 @@ SurfaceMesh::SurfaceMesh(cmd::SurfaceMesh *cIn)
 
 SurfaceMesh::~SurfaceMesh() = default;
 
-void SurfaceMesh::typeChanged(int)
+void SurfaceMesh::typeChanged(int currentIndex)
 {
-  QVariant v = stow->mesherCombo->currentData();
-  assert(v.isValid());
-  int userData = v.toInt();
-  assert(userData >= 0 && userData <= 3);
-  stow->parameterStacked->setCurrentIndex(userData);
+  stow->parameterStacked->setCurrentIndex(currentIndex);
+  auto oldType = stow->feature->getParameter(ftr::SurfaceMesh::Tags::MeshType)->getInt();
+  assert(oldType >= 0 && oldType < stow->mesherCombo->count());
+  if (oldType == currentIndex)
+    return;
+  
   slc::Message tm;
   const auto &msgs = stow->selectionWidget->getMessages(0);
   if (!msgs.empty())
     tm = msgs.front();
   stow->command->setSelection(tm);
   
-  if (userData == 0)
+  if (currentIndex == 0)
   {
     stow->selectionWidget->getButton(0)->setMessagesQuietly(std::vector<slc::Message>()); //clear any selection
-    stow->command->feature->setMeshType(ftr::SurfaceMesh::MeshType::inert);
+    stow->feature->getParameter(ftr::SurfaceMesh::Tags::MeshType)->setValue(static_cast<int>(ftr::SurfaceMesh::Inert));
     stow->command->setSelection(slc::Message());
     stow->selectionWidget->hide();
   }
-  else if (userData == 1)
+  else if (currentIndex == 1)
   {
-    stow->command->feature->setOcctParameters(stow->occtPage->getParameters());
+    stow->feature->setOcctParameters(stow->occtPage->getParameters());
     stow->command->setSelection(tm);
     stow->selectionWidget->show();
   }
-  else if (userData == 2)
+  else if (currentIndex == 2)
   {
-    stow->command->feature->setNetgenParameters(stow->netgenPage->getParameters());
+#ifdef NETGEN_PRESENT
+    stow->feature->setNetgenParameters(stow->netgenPage->getParameters());
     stow->command->setSelection(tm);
     stow->selectionWidget->show();
+#else
+    node->send(msg::buildStatusMessage(tr("Netgen Not Present, Reverting Type Change").toStdString(), 2.0));
+    QTimer::singleShot(0, [this, oldType](){stow->mesherCombo->setCurrentIndex(oldType);});
+#endif
   }
-  else if (userData == 3)
+  else if (currentIndex == 3)
   {
-    stow->selectionWidget->show();
+#ifdef GMSH_PRESENT
     //TODO set gmsh parameters.
+    stow->selectionWidget->show();
+#else
+    node->send(msg::buildStatusMessage(tr("Gmsh Not Present, Reverting Type Change").toStdString(), 2.0));
+    QTimer::singleShot(0, [this, oldType](){stow->mesherCombo->setCurrentIndex(oldType);});
+#endif
   }
   
   stow->command->localUpdate();
@@ -263,7 +257,7 @@ void SurfaceMesh::typeChanged(int)
 
 void SurfaceMesh::selectionChanged()
 {
-  project->clearAllInputs(stow->command->feature->getId());
+  project->clearAllInputs(stow->feature->getId());
   
   const auto &msgs = stow->selectionWidget->getMessages(0);
   if (!msgs.empty())
@@ -275,12 +269,12 @@ void SurfaceMesh::selectionChanged()
 
 void SurfaceMesh::occtValueChanged()
 {
-  stow->command->feature->setOcctParameters(stow->occtPage->getParameters());
+  stow->feature->setOcctParameters(stow->occtPage->getParameters());
   stow->command->localUpdate();
 }
 
 void SurfaceMesh::netgenValueChanged()
 {
-  stow->command->feature->setNetgenParameters(stow->netgenPage->getParameters());
+  stow->feature->setNetgenParameters(stow->netgenPage->getParameters());
   stow->command->localUpdate();
 }

@@ -24,7 +24,7 @@
 #include "command/cmdleafmanager.h"
 #include "command/cmdbase.h"
 
-namespace ftr{class SurfaceMesh;}
+namespace ftr{namespace SurfaceMesh{class Feature;}}
 
 namespace cmd
 {
@@ -34,7 +34,7 @@ namespace cmd
   class SurfaceMesh : public Base
   {
   public:
-    ftr::SurfaceMesh *feature = nullptr;
+    ftr::SurfaceMesh::Feature *feature = nullptr;
     
     SurfaceMesh();
     SurfaceMesh(ftr::Base*);

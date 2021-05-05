@@ -73,28 +73,28 @@ namespace prj
         this->base_.set (std::move (x));
       }
 
-      const SurfaceMesh::SurfaceType& SurfaceMesh::
-      surface () const
+      const SurfaceMesh::MeshTypeType& SurfaceMesh::
+      meshType () const
       {
-        return this->surface_.get ();
+        return this->meshType_.get ();
       }
 
-      SurfaceMesh::SurfaceType& SurfaceMesh::
-      surface ()
+      SurfaceMesh::MeshTypeType& SurfaceMesh::
+      meshType ()
       {
-        return this->surface_.get ();
-      }
-
-      void SurfaceMesh::
-      surface (const SurfaceType& x)
-      {
-        this->surface_.set (x);
+        return this->meshType_.get ();
       }
 
       void SurfaceMesh::
-      surface (::std::unique_ptr< SurfaceType > x)
+      meshType (const MeshTypeType& x)
       {
-        this->surface_.set (std::move (x));
+        this->meshType_.set (x);
+      }
+
+      void SurfaceMesh::
+      meshType (::std::unique_ptr< MeshTypeType > x)
+      {
+        this->meshType_.set (std::move (x));
       }
 
       const SurfaceMesh::CsysType& SurfaceMesh::
@@ -121,6 +121,30 @@ namespace prj
         this->csys_.set (std::move (x));
       }
 
+      const SurfaceMesh::SourceType& SurfaceMesh::
+      source () const
+      {
+        return this->source_.get ();
+      }
+
+      SurfaceMesh::SourceType& SurfaceMesh::
+      source ()
+      {
+        return this->source_.get ();
+      }
+
+      void SurfaceMesh::
+      source (const SourceType& x)
+      {
+        this->source_.set (x);
+      }
+
+      void SurfaceMesh::
+      source (::std::unique_ptr< SourceType > x)
+      {
+        this->source_.set (std::move (x));
+      }
+
       const SurfaceMesh::CsysDraggerType& SurfaceMesh::
       csysDragger () const
       {
@@ -145,16 +169,40 @@ namespace prj
         this->csysDragger_.set (std::move (x));
       }
 
-      const SurfaceMesh::ParametersOCCTType& SurfaceMesh::
-      parametersOCCT () const
+      const SurfaceMesh::SurfaceType& SurfaceMesh::
+      surface () const
       {
-        return this->parametersOCCT_.get ();
+        return this->surface_.get ();
       }
 
-      SurfaceMesh::ParametersOCCTType& SurfaceMesh::
+      SurfaceMesh::SurfaceType& SurfaceMesh::
+      surface ()
+      {
+        return this->surface_.get ();
+      }
+
+      void SurfaceMesh::
+      surface (const SurfaceType& x)
+      {
+        this->surface_.set (x);
+      }
+
+      void SurfaceMesh::
+      surface (::std::unique_ptr< SurfaceType > x)
+      {
+        this->surface_.set (std::move (x));
+      }
+
+      const SurfaceMesh::ParametersOCCTOptional& SurfaceMesh::
+      parametersOCCT () const
+      {
+        return this->parametersOCCT_;
+      }
+
+      SurfaceMesh::ParametersOCCTOptional& SurfaceMesh::
       parametersOCCT ()
       {
-        return this->parametersOCCT_.get ();
+        return this->parametersOCCT_;
       }
 
       void SurfaceMesh::
@@ -164,21 +212,27 @@ namespace prj
       }
 
       void SurfaceMesh::
+      parametersOCCT (const ParametersOCCTOptional& x)
+      {
+        this->parametersOCCT_ = x;
+      }
+
+      void SurfaceMesh::
       parametersOCCT (::std::unique_ptr< ParametersOCCTType > x)
       {
         this->parametersOCCT_.set (std::move (x));
       }
 
-      const SurfaceMesh::ParametersNetgenType& SurfaceMesh::
+      const SurfaceMesh::ParametersNetgenOptional& SurfaceMesh::
       parametersNetgen () const
       {
-        return this->parametersNetgen_.get ();
+        return this->parametersNetgen_;
       }
 
-      SurfaceMesh::ParametersNetgenType& SurfaceMesh::
+      SurfaceMesh::ParametersNetgenOptional& SurfaceMesh::
       parametersNetgen ()
       {
-        return this->parametersNetgen_.get ();
+        return this->parametersNetgen_;
       }
 
       void SurfaceMesh::
@@ -188,21 +242,27 @@ namespace prj
       }
 
       void SurfaceMesh::
+      parametersNetgen (const ParametersNetgenOptional& x)
+      {
+        this->parametersNetgen_ = x;
+      }
+
+      void SurfaceMesh::
       parametersNetgen (::std::unique_ptr< ParametersNetgenType > x)
       {
         this->parametersNetgen_.set (std::move (x));
       }
 
-      const SurfaceMesh::ParametersGMSHType& SurfaceMesh::
+      const SurfaceMesh::ParametersGMSHOptional& SurfaceMesh::
       parametersGMSH () const
       {
-        return this->parametersGMSH_.get ();
+        return this->parametersGMSH_;
       }
 
-      SurfaceMesh::ParametersGMSHType& SurfaceMesh::
+      SurfaceMesh::ParametersGMSHOptional& SurfaceMesh::
       parametersGMSH ()
       {
-        return this->parametersGMSH_.get ();
+        return this->parametersGMSH_;
       }
 
       void SurfaceMesh::
@@ -212,27 +272,15 @@ namespace prj
       }
 
       void SurfaceMesh::
-      parametersGMSH (::std::unique_ptr< ParametersGMSHType > x)
+      parametersGMSH (const ParametersGMSHOptional& x)
       {
-        this->parametersGMSH_.set (std::move (x));
-      }
-
-      const SurfaceMesh::MeshTypeType& SurfaceMesh::
-      meshType () const
-      {
-        return this->meshType_.get ();
-      }
-
-      SurfaceMesh::MeshTypeType& SurfaceMesh::
-      meshType ()
-      {
-        return this->meshType_.get ();
+        this->parametersGMSH_ = x;
       }
 
       void SurfaceMesh::
-      meshType (const MeshTypeType& x)
+      parametersGMSH (::std::unique_ptr< ParametersGMSHType > x)
       {
-        this->meshType_.set (x);
+        this->parametersGMSH_.set (std::move (x));
       }
     }
   }
@@ -251,43 +299,41 @@ namespace prj
 
       SurfaceMesh::
       SurfaceMesh (const BaseType& base,
-                   const SurfaceType& surface,
+                   const MeshTypeType& meshType,
                    const CsysType& csys,
+                   const SourceType& source,
                    const CsysDraggerType& csysDragger,
-                   const ParametersOCCTType& parametersOCCT,
-                   const ParametersNetgenType& parametersNetgen,
-                   const ParametersGMSHType& parametersGMSH,
-                   const MeshTypeType& meshType)
+                   const SurfaceType& surface)
       : ::xml_schema::Type (),
         base_ (base, this),
-        surface_ (surface, this),
+        meshType_ (meshType, this),
         csys_ (csys, this),
+        source_ (source, this),
         csysDragger_ (csysDragger, this),
-        parametersOCCT_ (parametersOCCT, this),
-        parametersNetgen_ (parametersNetgen, this),
-        parametersGMSH_ (parametersGMSH, this),
-        meshType_ (meshType, this)
+        surface_ (surface, this),
+        parametersOCCT_ (this),
+        parametersNetgen_ (this),
+        parametersGMSH_ (this)
       {
       }
 
       SurfaceMesh::
       SurfaceMesh (::std::unique_ptr< BaseType > base,
-                   ::std::unique_ptr< SurfaceType > surface,
+                   ::std::unique_ptr< MeshTypeType > meshType,
                    ::std::unique_ptr< CsysType > csys,
+                   ::std::unique_ptr< SourceType > source,
                    ::std::unique_ptr< CsysDraggerType > csysDragger,
-                   ::std::unique_ptr< ParametersOCCTType > parametersOCCT,
-                   ::std::unique_ptr< ParametersNetgenType > parametersNetgen,
-                   ::std::unique_ptr< ParametersGMSHType > parametersGMSH,
-                   const MeshTypeType& meshType)
+                   ::std::unique_ptr< SurfaceType > surface)
       : ::xml_schema::Type (),
         base_ (std::move (base), this),
-        surface_ (std::move (surface), this),
+        meshType_ (std::move (meshType), this),
         csys_ (std::move (csys), this),
+        source_ (std::move (source), this),
         csysDragger_ (std::move (csysDragger), this),
-        parametersOCCT_ (std::move (parametersOCCT), this),
-        parametersNetgen_ (std::move (parametersNetgen), this),
-        parametersGMSH_ (std::move (parametersGMSH), this),
-        meshType_ (meshType, this)
+        surface_ (std::move (surface), this),
+        parametersOCCT_ (this),
+        parametersNetgen_ (this),
+        parametersGMSH_ (this)
       {
       }
 
@@ -297,13 +343,14 @@ namespace prj
                    ::xml_schema::Container* c)
       : ::xml_schema::Type (x, f, c),
         base_ (x.base_, f, this),
-        surface_ (x.surface_, f, this),
+        meshType_ (x.meshType_, f, this),
         csys_ (x.csys_, f, this),
+        source_ (x.source_, f, this),
         csysDragger_ (x.csysDragger_, f, this),
+        surface_ (x.surface_, f, this),
         parametersOCCT_ (x.parametersOCCT_, f, this),
         parametersNetgen_ (x.parametersNetgen_, f, this),
-        parametersGMSH_ (x.parametersGMSH_, f, this),
-        meshType_ (x.meshType_, f, this)
+        parametersGMSH_ (x.parametersGMSH_, f, this)
       {
       }
 
@@ -313,13 +360,14 @@ namespace prj
                    ::xml_schema::Container* c)
       : ::xml_schema::Type (e, f | ::xml_schema::Flags::base, c),
         base_ (this),
-        surface_ (this),
+        meshType_ (this),
         csys_ (this),
+        source_ (this),
         csysDragger_ (this),
+        surface_ (this),
         parametersOCCT_ (this),
         parametersNetgen_ (this),
-        parametersGMSH_ (this),
-        meshType_ (this)
+        parametersGMSH_ (this)
       {
         if ((f & ::xml_schema::Flags::base) == 0)
         {
@@ -352,16 +400,16 @@ namespace prj
             }
           }
 
-          // surface
+          // meshType
           //
-          if (n.name () == "surface" && n.namespace_ ().empty ())
+          if (n.name () == "meshType" && n.namespace_ ().empty ())
           {
-            ::std::unique_ptr< SurfaceType > r (
-              SurfaceTraits::create (i, f, this));
+            ::std::unique_ptr< MeshTypeType > r (
+              MeshTypeTraits::create (i, f, this));
 
-            if (!surface_.present ())
+            if (!meshType_.present ())
             {
-              this->surface_.set (::std::move (r));
+              this->meshType_.set (::std::move (r));
               continue;
             }
           }
@@ -380,6 +428,20 @@ namespace prj
             }
           }
 
+          // source
+          //
+          if (n.name () == "source" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< SourceType > r (
+              SourceTraits::create (i, f, this));
+
+            if (!source_.present ())
+            {
+              this->source_.set (::std::move (r));
+              continue;
+            }
+          }
+
           // csysDragger
           //
           if (n.name () == "csysDragger" && n.namespace_ ().empty ())
@@ -394,6 +456,20 @@ namespace prj
             }
           }
 
+          // surface
+          //
+          if (n.name () == "surface" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< SurfaceType > r (
+              SurfaceTraits::create (i, f, this));
+
+            if (!surface_.present ())
+            {
+              this->surface_.set (::std::move (r));
+              continue;
+            }
+          }
+
           // parametersOCCT
           //
           if (n.name () == "parametersOCCT" && n.namespace_ ().empty ())
@@ -401,7 +477,7 @@ namespace prj
             ::std::unique_ptr< ParametersOCCTType > r (
               ParametersOCCTTraits::create (i, f, this));
 
-            if (!parametersOCCT_.present ())
+            if (!this->parametersOCCT_)
             {
               this->parametersOCCT_.set (::std::move (r));
               continue;
@@ -415,7 +491,7 @@ namespace prj
             ::std::unique_ptr< ParametersNetgenType > r (
               ParametersNetgenTraits::create (i, f, this));
 
-            if (!parametersNetgen_.present ())
+            if (!this->parametersNetgen_)
             {
               this->parametersNetgen_.set (::std::move (r));
               continue;
@@ -429,20 +505,9 @@ namespace prj
             ::std::unique_ptr< ParametersGMSHType > r (
               ParametersGMSHTraits::create (i, f, this));
 
-            if (!parametersGMSH_.present ())
+            if (!this->parametersGMSH_)
             {
               this->parametersGMSH_.set (::std::move (r));
-              continue;
-            }
-          }
-
-          // meshType
-          //
-          if (n.name () == "meshType" && n.namespace_ ().empty ())
-          {
-            if (!meshType_.present ())
-            {
-              this->meshType_.set (MeshTypeTraits::create (i, f, this));
               continue;
             }
           }
@@ -457,10 +522,10 @@ namespace prj
             "");
         }
 
-        if (!surface_.present ())
+        if (!meshType_.present ())
         {
           throw ::xsd::cxx::tree::expected_element< char > (
-            "surface",
+            "meshType",
             "");
         }
 
@@ -471,6 +536,13 @@ namespace prj
             "");
         }
 
+        if (!source_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "source",
+            "");
+        }
+
         if (!csysDragger_.present ())
         {
           throw ::xsd::cxx::tree::expected_element< char > (
@@ -478,31 +550,10 @@ namespace prj
             "");
         }
 
-        if (!parametersOCCT_.present ())
+        if (!surface_.present ())
         {
           throw ::xsd::cxx::tree::expected_element< char > (
-            "parametersOCCT",
-            "");
-        }
-
-        if (!parametersNetgen_.present ())
-        {
-          throw ::xsd::cxx::tree::expected_element< char > (
-            "parametersNetgen",
-            "");
-        }
-
-        if (!parametersGMSH_.present ())
-        {
-          throw ::xsd::cxx::tree::expected_element< char > (
-            "parametersGMSH",
-            "");
-        }
-
-        if (!meshType_.present ())
-        {
-          throw ::xsd::cxx::tree::expected_element< char > (
-            "meshType",
+            "surface",
             "");
         }
       }
@@ -521,13 +572,14 @@ namespace prj
         {
           static_cast< ::xml_schema::Type& > (*this) = x;
           this->base_ = x.base_;
-          this->surface_ = x.surface_;
+          this->meshType_ = x.meshType_;
           this->csys_ = x.csys_;
+          this->source_ = x.source_;
           this->csysDragger_ = x.csysDragger_;
+          this->surface_ = x.surface_;
           this->parametersOCCT_ = x.parametersOCCT_;
           this->parametersNetgen_ = x.parametersNetgen_;
           this->parametersGMSH_ = x.parametersGMSH_;
-          this->meshType_ = x.meshType_;
         }
 
         return *this;
@@ -846,15 +898,15 @@ namespace prj
           s << i.base ();
         }
 
-        // surface
+        // meshType
         //
         {
           ::xercesc::DOMElement& s (
             ::xsd::cxx::xml::dom::create_element (
-              "surface",
+              "meshType",
               e));
 
-          s << i.surface ();
+          s << i.meshType ();
         }
 
         // csys
@@ -868,6 +920,17 @@ namespace prj
           s << i.csys ();
         }
 
+        // source
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "source",
+              e));
+
+          s << i.source ();
+        }
+
         // csysDragger
         //
         {
@@ -879,48 +942,51 @@ namespace prj
           s << i.csysDragger ();
         }
 
+        // surface
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "surface",
+              e));
+
+          s << i.surface ();
+        }
+
         // parametersOCCT
         //
+        if (i.parametersOCCT ())
         {
           ::xercesc::DOMElement& s (
             ::xsd::cxx::xml::dom::create_element (
               "parametersOCCT",
               e));
 
-          s << i.parametersOCCT ();
+          s << *i.parametersOCCT ();
         }
 
         // parametersNetgen
         //
+        if (i.parametersNetgen ())
         {
           ::xercesc::DOMElement& s (
             ::xsd::cxx::xml::dom::create_element (
               "parametersNetgen",
               e));
 
-          s << i.parametersNetgen ();
+          s << *i.parametersNetgen ();
         }
 
         // parametersGMSH
         //
+        if (i.parametersGMSH ())
         {
           ::xercesc::DOMElement& s (
             ::xsd::cxx::xml::dom::create_element (
               "parametersGMSH",
               e));
 
-          s << i.parametersGMSH ();
-        }
-
-        // meshType
-        //
-        {
-          ::xercesc::DOMElement& s (
-            ::xsd::cxx::xml::dom::create_element (
-              "meshType",
-              e));
-
-          s << i.meshType ();
+          s << *i.parametersGMSH ();
         }
       }
 

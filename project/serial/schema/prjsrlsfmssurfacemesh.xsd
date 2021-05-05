@@ -14,13 +14,14 @@
 <xs:complexType name="SurfaceMesh">
   <xs:sequence>
     <xs:element name="base" type="spt:Base"/>
-    <xs:element name="surface" type="mshs:Surface"/>
+    <xs:element name="meshType" type="spt:Parameter"/>
     <xs:element name="csys" type="spt:Parameter"/>
+    <xs:element name="source" type="spt:Parameter"/>
     <xs:element name="csysDragger" type="spt:CSysDragger"/>
-    <xs:element name="parametersOCCT" type="mshs:ParametersOCCT"/>
-    <xs:element name="parametersNetgen" type="mshs:ParametersNetgen"/>
-    <xs:element name="parametersGMSH" type="mshs:ParametersGMSH"/>
-    <xs:element name="meshType" type="xs:int"/>
+    <xs:element name="surface" type="mshs:Surface"/>
+    <xs:element name="parametersOCCT" type="mshs:ParametersOCCT" minOccurs="0" maxOccurs="1"/>
+    <xs:element name="parametersNetgen" type="mshs:ParametersNetgen" minOccurs="0" maxOccurs="1"/>
+    <xs:element name="parametersGMSH" type="mshs:ParametersGMSH" minOccurs="0" maxOccurs="1"/>
   </xs:sequence>
 </xs:complexType>
 

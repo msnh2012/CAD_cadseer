@@ -119,7 +119,7 @@ void Import::go()
     }
     else if (fn.endsWith(QObject::tr(".off")) || fn.endsWith(QObject::tr(".ply")) || fn.endsWith(QObject::tr(".stl")))
     {
-      std::shared_ptr<ftr::SurfaceMesh> meshFeature(new ftr::SurfaceMesh());
+      auto meshFeature(std::make_shared<ftr::SurfaceMesh::Feature>());
       project->addFeature(meshFeature);
       meshFeature->setName(QString::fromStdString(currentFilePath.stem().string()));
       
@@ -135,7 +135,6 @@ void Import::go()
       meshFeature->updateModel(project->getPayload(meshFeature->getId()));
       meshFeature->updateVisual();
       meshFeature->setModelDirty();
-      meshFeature->csysActive(); //to display dragger.
       node->sendBlocked(msg::buildStatusMessage("Surface Mesh Imported", 2.0));
       shouldUpdate = true;
     }
