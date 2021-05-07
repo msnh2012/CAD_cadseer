@@ -20,60 +20,38 @@
 #ifndef FTR_CYLINDER_H
 #define FTR_CYLINDER_H
 
-#include <osg/ref_ptr>
 
 #include "feature/ftrbase.h"
 
-namespace lbr{class IPGroup;}
 namespace prj{namespace srl{namespace cyls{class Cylinder;}}}
-namespace ann{class CSysDragger; class SeerShape;}
-namespace prm{struct Observer;}
 
 namespace ftr
 {
-  class CylinderBuilder;
-  
-  class Cylinder : public Base
+  enum CSysType
   {
-  public:
-    Cylinder();
-    virtual ~Cylinder() override;
-    void setRadius(double radiusIn);
-    void setHeight(double heightIn);
-    const prm::Parameter& getRadius() const;
-    const prm::Parameter& getHeight() const;
-    void setCSys(const osg::Matrixd&);
-    osg::Matrixd getCSys() const;
-    
-    virtual void updateModel(const UpdatePayload&) override;
-    virtual Type getType() const override {return Type::Cylinder;}
-    virtual const std::string& getTypeString() const override {return toString(Type::Cylinder);}
-    virtual const QIcon& getIcon() const override {return icon;}
-    virtual Descriptor getDescriptor() const override {return Descriptor::Create;}
-    virtual void serialWrite(const boost::filesystem::path&) override; //!< write xml file. not const, might reset a modified flag.
-    void serialRead(const prj::srl::cyls::Cylinder &sCylinderIn); //!<initializes this from sBox. not virtual, type already known.
-  
-  protected:
-    std::unique_ptr<prm::Parameter> radius;
-    std::unique_ptr<prm::Parameter> height;
-    std::unique_ptr<prm::Parameter> csys;
-    
-    std::unique_ptr<prm::Observer> prmObserver;
-    
-    std::unique_ptr<ann::CSysDragger> csysDragger;
-    std::unique_ptr<ann::SeerShape> sShape;
-    
-    osg::ref_ptr<lbr::IPGroup> heightIP;
-    osg::ref_ptr<lbr::IPGroup> radiusIP;
-    
-    void initializeMaps();
-    void setupIPGroup();
-    void updateIPGroup();
-    void updateResult(const CylinderBuilder &);
-    
-  private:
-    static QIcon icon;
+    Constant
+    , Linked
   };
+  namespace Cylinder
+  {
+    class Feature : public Base
+    {
+    public:
+      Feature();
+      ~Feature() override;
+      void updateModel(const UpdatePayload&) override;
+      Type getType() const override {return Type::Cylinder;}
+      const std::string& getTypeString() const override {return toString(Type::Cylinder);}
+      const QIcon& getIcon() const override {return icon;}
+      Descriptor getDescriptor() const override {return Descriptor::Create;}
+      void serialWrite(const boost::filesystem::path&) override; //!< write xml file. not const, might reset a modified flag.
+      void serialRead(const prj::srl::cyls::Cylinder &sCylinderIn); //!<initializes this from sBox. not virtual, type already known.
+    private:
+      static QIcon icon;
+      struct Stow;
+      std::unique_ptr<Stow> stow;
+    };
+  }
 }
 
 #endif // FTR_CYLINDER_H

@@ -23,90 +23,48 @@
 
 #include "feature/ftrbase.h"
 
-namespace osg{class Matrixd;}
-
 namespace prj{namespace srl{namespace thds{class Thread;}}}
-namespace ann{class CSysDragger; class SeerShape;}
-namespace lbr{class PLabel;}
-namespace prm{struct Observer;}
 
 namespace ftr
 {
-  /**
-  * @brief For creating screw threads.
-  * 
-  * Fake set true builds a simulated thread and
-  * ignores the internal parameter setting. Fake set to false
-  * allows Real threads to be internal or external.
-  * Note a 'male' body is always built. for internal threads,
-  * resulting body will need to be a tool for a subtraction.
-  */
-  class Thread : public Base
+  namespace Thread
   {
-  public:
-    Thread();
-    virtual ~Thread() override;
+    namespace Tags
+    {
+      inline constexpr std::string_view Internal = "Internal";
+      inline constexpr std::string_view Fake = "Fake";
+      inline constexpr std::string_view LeftHanded = "LeftHanded";
+    }
     
-    void setDiameter(double);
-    void setPitch(double);
-    void setLength(double);
-    void setAngle(double);
-    void setInternal(bool);
-    void setFake(bool);
-    void setLeftHanded(bool);
-    void setCSys(const osg::Matrixd&);
-    
-    double getDiameter() const;
-    double getPitch() const;
-    double getLength() const;
-    double getAngle() const;
-    bool getInternal() const;
-    bool getFake() const;
-    bool getLeftHanded() const;
-    osg::Matrixd getCSys() const;
-    
-    virtual void serialWrite(const boost::filesystem::path&) override;
-    void serialRead(const prj::srl::thds::Thread&);
-    
-    virtual void updateModel(const UpdatePayload&) override;
-    virtual Type getType() const override {return Type::Thread;}
-    virtual const std::string& getTypeString() const override {return toString(Type::Thread);}
-    virtual const QIcon& getIcon() const override {return icon;}
-    virtual Descriptor getDescriptor() const override {return Descriptor::Create;}
-    
-  protected:
-    std::unique_ptr<prm::Parameter> diameter; //!< major diameter.
-    std::unique_ptr<prm::Parameter> pitch;
-    std::unique_ptr<prm::Parameter> length;
-    std::unique_ptr<prm::Parameter> angle; //!< included angle of thread section in degrees.
-    std::unique_ptr<prm::Parameter> internal; //!< boolean to signal internal or external threads.
-    std::unique_ptr<prm::Parameter> fake; //!< true means no helical.
-    std::unique_ptr<prm::Parameter> leftHanded; //!< true means no helical.
-    std::unique_ptr<prm::Parameter> csys;
-    
-    std::unique_ptr<prm::Observer> prmObserver;
-    
-    osg::ref_ptr<lbr::PLabel> diameterLabel;
-    osg::ref_ptr<lbr::PLabel> pitchLabel;
-    osg::ref_ptr<lbr::PLabel> lengthLabel;
-    osg::ref_ptr<lbr::PLabel> angleLabel;
-    osg::ref_ptr<lbr::PLabel> internalLabel;
-    osg::ref_ptr<lbr::PLabel> fakeLabel;
-    osg::ref_ptr<lbr::PLabel> leftHandedLabel;
-  
-    std::unique_ptr<ann::CSysDragger> csysDragger;
-    std::unique_ptr<ann::SeerShape> sShape;
-    
-    boost::uuids::uuid solidId;
-    std::vector<boost::uuids::uuid> ids;
-    
-    void updateIds();
-    void updateLabels();
-    
-  private:
-    static QIcon icon;
-    
-  };
+    /**
+    * @brief For creating screw threads.
+    * 
+    * Fake set true builds a simulated thread and
+    * ignores the internal parameter setting. Fake set to false
+    * allows Real threads to be internal or external.
+    * Note a 'male' body is always built. for internal threads,
+    * resulting body will need to be a tool for a subtraction.
+    */
+    class Feature : public Base
+    {
+    public:
+      Feature();
+      ~Feature() override;
+      
+      void updateModel(const UpdatePayload&) override;
+      Type getType() const override {return Type::Thread;}
+      const std::string& getTypeString() const override {return toString(Type::Thread);}
+      const QIcon& getIcon() const override {return icon;}
+      Descriptor getDescriptor() const override {return Descriptor::Create;}
+      
+      void serialWrite(const boost::filesystem::path&) override;
+      void serialRead(const prj::srl::thds::Thread&);
+    private:
+      static QIcon icon;
+      struct Stow;
+      std::unique_ptr<Stow> stow;
+    };
+  }
 }
 
 #endif // FTR_THREAD_H

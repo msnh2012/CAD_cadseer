@@ -27,14 +27,17 @@
 #include "project/serial/generated/prjsrlcnscone.h"
 #include "annex/annseershape.h"
 #include "annex/anncsysdragger.h"
+#include "tools/featuretools.h"
+#include "feature/ftrpick.h"
 #include "feature/ftrconebuilder.h"
 #include "feature/ftrupdatepayload.h"
 #include "feature/ftrinputtype.h"
+#include "feature/ftrprimitive.h"
 #include "parameter/prmconstants.h"
 #include "parameter/prmparameter.h"
 #include "feature/ftrcone.h"
 
-using namespace ftr;
+using namespace ftr::Cone;
 using boost::uuids::uuid;
 
 enum class FeatureTag
@@ -73,115 +76,149 @@ static const std::map<FeatureTag, std::string> featureTagMap =
   {FeatureTag::VertexTop, "VertexTop"}
 };
 
-QIcon Cone::icon;
+QIcon Feature::icon;
 
 inline static const prf::Cone& pCone(){return prf::manager().rootPtr->features().cone().get();}
 
+struct Feature::Stow
+{
+  Feature &feature;
+  Primitive primitive;
+  
+  const osg::Matrixd radiusDimBase{osg::Matrixd::rotate(osg::PI_2, osg::Vec3d(0.0, 1.0, 0.0))};
+  const osg::Matrixd radiusDraggerBase{osg::Matrixd::rotate(osg::PI_2, osg::Vec3d(-1.0, 0.0, 0.0))};
+  
+  Stow() = delete;
+  Stow(Feature &fIn)
+  : feature(fIn)
+  , primitive(Primitive::Input{fIn, fIn.parameters, fIn.annexes})
+  {
+    primitive.addRadius1(pCone().radius1());
+    primitive.addRadius2(pCone().radius2());
+    primitive.addHeight(pCone().height());
+    
+    auto radiusAxisBase = std::make_tuple(osg::Vec3d(0.0, 0.0, 1.0), osg::Vec3d(-1.0, 0.0, 0.0));
+    
+    primitive.radius1IP->setMatrixDims(radiusDimBase);
+    primitive.radius1IP->setMatrixDragger(radiusDraggerBase);
+    primitive.radius1IP->setDimsFlipped(true);
+    primitive.radius1IP->setRotationAxis(std::get<0>(radiusAxisBase), std::get<1>(radiusAxisBase));
+    
+    primitive.radius2IP->setMatrixDims(radiusDimBase);
+    primitive.radius2IP->setMatrixDragger(radiusDraggerBase);
+    primitive.radius2IP->setDimsFlipped(true);
+    primitive.radius2IP->setRotationAxis(std::get<0>(radiusAxisBase), std::get<1>(radiusAxisBase));
+
+    primitive.heightIP->setMatrixDims(osg::Matrixd::rotate(osg::PI_2, osg::Vec3d(1.0, 0.0, 0.0)));
+    primitive.heightIP->setRotationAxis(osg::Vec3d(0.0, 0.0, 1.0), osg::Vec3d(0.0, -1.0, 0.0));
+    
+    initializeMaps();
+  }
+  
+  void updateIPs()
+  {
+    primitive.IPsToCsys();
+    
+    //radius1 on base is in correct location.
+    
+    //radius2 dragger and dims need to match height
+    primitive.radius2IP->setMatrixDims(radiusDimBase * osg::Matrixd::translate(0.0, 0.0, primitive.height->getDouble()));
+    primitive.radius2IP->setMatrixDragger(radiusDraggerBase * osg::Matrixd::translate(0.0, 0.0, primitive.height->getDouble()));
+    
+    //push height dimension of to max radius.
+    double offset = std::max(primitive.radius1->getDouble(), primitive.radius2->getDouble());
+    primitive.heightIP->mainDim->setSqueeze(offset);
+    primitive.heightIP->mainDim->setExtensionOffset(offset);
+  }
+  
+  //the quantity of cone shapes can change so generating maps from first update can lead to missing
+  //ids and shapes. So here we will generate the maps with all necessary rows.
+  void initializeMaps()
+  {
+    //result 
+    std::vector<uuid> tempIds; //save ids for later.
+    for (unsigned int index = 0; index < 14; ++index)
+    {
+      uuid tempId = gu::createRandomId();
+      tempIds.push_back(tempId);
+      primitive.sShape.insertEvolve(gu::createNilId(), tempId);
+    }
+    
+    //helper lamda
+    auto insertIntoFeatureMap = [this](const uuid &idIn, FeatureTag featureTagIn)
+    {
+      primitive.sShape.insertFeatureTag(idIn, featureTagMap.at(featureTagIn));
+    };
+    
+    //first we do the compound that is root. this is not in box maker.
+    insertIntoFeatureMap(tempIds.at(0), FeatureTag::Root);
+    insertIntoFeatureMap(tempIds.at(1), FeatureTag::Solid);
+    insertIntoFeatureMap(tempIds.at(2), FeatureTag::Shell);
+    insertIntoFeatureMap(tempIds.at(3), FeatureTag::FaceBottom);
+    insertIntoFeatureMap(tempIds.at(4), FeatureTag::FaceConical);
+    insertIntoFeatureMap(tempIds.at(5), FeatureTag::FaceTop);
+    insertIntoFeatureMap(tempIds.at(6), FeatureTag::WireBottom);
+    insertIntoFeatureMap(tempIds.at(7), FeatureTag::WireConical);
+    insertIntoFeatureMap(tempIds.at(8), FeatureTag::WireTop);
+    insertIntoFeatureMap(tempIds.at(9), FeatureTag::EdgeBottom);
+    insertIntoFeatureMap(tempIds.at(10), FeatureTag::EdgeConical);
+    insertIntoFeatureMap(tempIds.at(11), FeatureTag::EdgeTop);
+    insertIntoFeatureMap(tempIds.at(12), FeatureTag::VertexBottom);
+    insertIntoFeatureMap(tempIds.at(13), FeatureTag::VertexTop);
+    //   std::cout << std::endl << std::endl <<
+    //     "result Container: " << std::endl << resultContainer << std::endl << std::endl <<
+    //     "feature Container:" << std::endl << featureContainer << std::endl << std::endl <<
+    //     "evolution Container:" << std::endl << evolutionContainer << std::endl << std::endl;
+  }
+  
+  void updateResult(const ConeBuilder& coneBuilderIn)
+  {
+    //helper lamda
+    auto updateShapeByTag = [this](const TopoDS_Shape &shapeIn, FeatureTag featureTagIn)
+    {
+      //when a radius is set to zero we get null shapes, so skip
+      if (shapeIn.IsNull())
+        return;
+      uuid localId = primitive.sShape.featureTagId(featureTagMap.at(featureTagIn));
+      primitive.sShape.updateId(shapeIn, localId);
+    };
+    
+    updateShapeByTag(primitive.sShape.getRootOCCTShape(), FeatureTag::Root);
+    updateShapeByTag(coneBuilderIn.getSolid(), FeatureTag::Solid);
+    updateShapeByTag(coneBuilderIn.getShell(), FeatureTag::Shell);
+    updateShapeByTag(coneBuilderIn.getFaceBottom(), FeatureTag::FaceBottom);
+    updateShapeByTag(coneBuilderIn.getFaceConical(), FeatureTag::FaceConical);
+    updateShapeByTag(coneBuilderIn.getFaceTop(), FeatureTag::FaceTop);
+    updateShapeByTag(coneBuilderIn.getWireBottom(), FeatureTag::WireBottom);
+    updateShapeByTag(coneBuilderIn.getWireConical(), FeatureTag::WireConical);
+    updateShapeByTag(coneBuilderIn.getWireTop(), FeatureTag::WireTop);
+    updateShapeByTag(coneBuilderIn.getEdgeBottom(), FeatureTag::EdgeBottom);
+    updateShapeByTag(coneBuilderIn.getEdgeConical(), FeatureTag::EdgeConical);
+    updateShapeByTag(coneBuilderIn.getEdgeTop(), FeatureTag::EdgeTop);
+    updateShapeByTag(coneBuilderIn.getVertexBottom(), FeatureTag::VertexBottom);
+    updateShapeByTag(coneBuilderIn.getVertexTop(), FeatureTag::VertexTop);
+    
+    primitive.sShape.setRootShapeId(primitive.sShape.featureTagId(featureTagMap.at(FeatureTag::Root)));
+  }
+};
+
 //only complete rotational cone. no partials. because top or bottom radius
 //maybe 0.0, faces and wires might be null and edges maybe degenerate.
-Cone::Cone() : Base(),
-  radius1(std::make_unique<prm::Parameter>(prm::Names::Radius1, pCone().radius1(), prm::Tags::Radius)),
-  radius2(std::make_unique<prm::Parameter>(prm::Names::Radius2, pCone().radius2(), prm::Tags::Radius)),
-  height(std::make_unique<prm::Parameter>(prm::Names::Height, pCone().height(), prm::Tags::Height)),
-  csys(std::make_unique<prm::Parameter>(prm::Names::CSys, osg::Matrixd::identity(), prm::Tags::CSys)),
-  prmObserver(std::make_unique<prm::Observer>(std::bind(&Cone::setModelDirty, this))),
-  csysDragger(std::make_unique<ann::CSysDragger>(this, csys.get())),
-  sShape(std::make_unique<ann::SeerShape>())
+Feature::Feature()
+: Base()
+, stow(std::make_unique<Stow>(*this))
 {
   if (icon.isNull())
     icon = QIcon(":/resources/images/constructionCone.svg");
   
   name = QObject::tr("Cone");
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
-  
-  initializeMaps();
-  
-  radius1->setConstraint(prm::Constraint::buildZeroPositive());
-  radius2->setConstraint(prm::Constraint::buildZeroPositive());
-  height->setConstraint(prm::Constraint::buildNonZeroPositive());
-  
-  parameters.push_back(radius1.get());
-  parameters.push_back(radius2.get());
-  parameters.push_back(height.get());
-  parameters.push_back(csys.get());
-  
-  annexes.insert(std::make_pair(ann::Type::SeerShape, sShape.get()));
-  annexes.insert(std::make_pair(ann::Type::CSysDragger, csysDragger.get()));
-  overlaySwitch->addChild(csysDragger->dragger);
-  
-  radius1->connectValue(std::bind(&Cone::setModelDirty, this));
-  radius2->connectValue(std::bind(&Cone::setModelDirty, this));
-  height->connectValue(std::bind(&Cone::setModelDirty, this));
-  csys->connect(*prmObserver);
-  
-  setupIPGroup();
 }
 
-Cone::~Cone()
-{
+Feature::~Feature() = default;
 
-}
-
-void Cone::setupIPGroup()
-{
-  heightIP = new lbr::IPGroup(height.get());
-  heightIP->setMatrixDims(osg::Matrixd::rotate(osg::PI_2, osg::Vec3d(1.0, 0.0, 0.0)));
-  heightIP->setRotationAxis(osg::Vec3d(0.0, 0.0, 1.0), osg::Vec3d(0.0, -1.0, 0.0));
-  overlaySwitch->addChild(heightIP.get());
-  csysDragger->dragger->linkToMatrix(heightIP.get());
-  
-  radius1IP = new lbr::IPGroup(radius1.get());
-  radius1IP->setMatrixDims(osg::Matrixd::rotate(osg::PI_2, osg::Vec3d(0.0, 1.0, 0.0)));
-  radius1IP->setMatrixDragger(osg::Matrixd::rotate(osg::PI_2, osg::Vec3d(-1.0, 0.0, 0.0)));
-  radius1IP->setDimsFlipped(true);
-  radius1IP->setRotationAxis(osg::Vec3d(0.0, 0.0, 1.0), osg::Vec3d(-1.0, 0.0, 0.0));
-  overlaySwitch->addChild(radius1IP.get());
-  csysDragger->dragger->linkToMatrix(radius1IP.get());
-  
-  radius2IP = new lbr::IPGroup(radius2.get());
-  radius2IP->setMatrixDims(osg::Matrixd::rotate(osg::PI_2, osg::Vec3d(0.0, 1.0, 0.0)));
-  radius2IP->setMatrixDragger(osg::Matrixd::rotate(osg::PI_2, osg::Vec3d(-1.0, 0.0, 0.0)));
-  radius2IP->setDimsFlipped(true);
-  radius2IP->setRotationAxis(osg::Vec3d(0.0, 0.0, 1.0), osg::Vec3d(-1.0, 0.0, 0.0));
-  overlaySwitch->addChild(radius2IP.get());
-  csysDragger->dragger->linkToMatrix(radius2IP.get());
-  
-  updateIPGroup();
-}
-
-void Cone::updateIPGroup()
-{
-  //height of radius2 dragger
-  osg::Matrixd freshMatrix;
-  freshMatrix.setRotate(osg::Quat(osg::PI_2, osg::Vec3d(-1.0, 0.0, 0.0)));
-  freshMatrix.setTrans(osg::Vec3d (0.0, 0.0, height->getDouble()));
-  radius2IP->setMatrixDragger(freshMatrix);
-  radius2IP->setMatrixDims(osg::Matrixd::translate(osg::Vec3d(0.0, 0.0, height->getDouble())));
-  
-  heightIP->setMatrix(csys->getMatrix());
-  radius1IP->setMatrix(csys->getMatrix());
-  radius2IP->setMatrix(csys->getMatrix());
-  
-  heightIP->mainDim->setSqueeze(radius1->getDouble());
-  heightIP->mainDim->setExtensionOffset(radius1->getDouble());
-}
-
-void Cone::setRadius1(double radius1In)
-{
-  radius1->setValue(radius1In);
-}
-
-void Cone::setRadius2(double radius2In)
-{
-  radius2->setValue(radius2In);
-}
-
-void Cone::setHeight(double heightIn)
-{
-  height->setValue(heightIn);
-}
-
-void Cone::setCSys(const osg::Matrixd &csysIn)
+/*
+void Feature::setCSys(const osg::Matrixd &csysIn)
 {
   osg::Matrixd oldSystem = csys->getMatrix();
   if (!csys->setValue(csysIn))
@@ -191,61 +228,47 @@ void Cone::setCSys(const osg::Matrixd &csysIn)
   osg::Matrixd diffMatrix = osg::Matrixd::inverse(oldSystem) * csysIn;
   csysDragger->draggerUpdate(csysDragger->dragger->getMatrix() * diffMatrix);
 }
+*/
 
-const prm::Parameter& Cone::getRadius1() const
-{
-  return *radius1;
-}
-
-const prm::Parameter& Cone::getRadius2() const
-{
-  return *radius2;
-}
-
-const prm::Parameter& Cone::getHeight() const
-{
-  return *height;
-}
-
-osg::Matrixd Cone::getCSys() const
-{
-  return csys->getMatrix();
-}
-
-void Cone::updateModel(const UpdatePayload &plIn)
+void Feature::updateModel(const UpdatePayload &plIn)
 {
   setFailure();
   lastUpdateLog.clear();
-  sShape->reset();
+  stow->primitive.sShape.reset();
   try
   {
-    prm::ObserverBlocker block(*prmObserver);
-    
     if (isSkipped())
     {
       setSuccess();
       throw std::runtime_error("feature is skipped");
     }
     
-    std::vector<const Base*> tfs = plIn.getFeatures(ftr::InputType::linkCSys);
-    if (!tfs.empty())
+    //nothing for constant.
+    if (static_cast<CSysType>(stow->primitive.csysType.getInt()) == Linked)
     {
-      auto systemParameters =  tfs.front()->getParameters(prm::Tags::CSys);
-      if (systemParameters.empty())
-        throw std::runtime_error("Feature for csys link, doesn't have csys parameter");
-      csys->setValue(systemParameters.front()->getMatrix());
-      csysDragger->draggerUpdate();
+      const auto &picks = stow->primitive.csysLinked.getPicks();
+      if (picks.empty())
+        throw std::runtime_error("No picks for csys link");
+      tls::Resolver resolver(plIn);
+      if (!resolver.resolve(picks.front()))
+        throw std::runtime_error("Couldn't resolve csys link pick");
+      auto csysPrms = resolver.getFeature()->getParameters(prm::Tags::CSys);
+      if (csysPrms.empty())
+        throw std::runtime_error("csys link feature has no csys parameter");
+      prm::ObserverBlocker(stow->primitive.csysObserver);
+      stow->primitive.csys.setValue(csysPrms.front()->getMatrix());
+      stow->primitive.csysDragger.draggerUpdate();
     }
     
     ConeBuilder coneBuilder
     (
-      radius1->getDouble(),
-      radius2->getDouble(),
-      height->getDouble(),
-      gu::toOcc(csys->getMatrix())
+      stow->primitive.radius1->getDouble(),
+      stow->primitive.radius2->getDouble(),
+      stow->primitive.height->getDouble(),
+      gu::toOcc(stow->primitive.csys.getMatrix())
     );
-    sShape->setOCCTShape(coneBuilder.getSolid(), getId());
-    updateResult(coneBuilder);
+    stow->primitive.sShape.setOCCTShape(coneBuilder.getSolid(), getId());
+    stow->updateResult(coneBuilder);
     mainTransform->setMatrix(osg::Matrixd::identity());
     setSuccess();
   }
@@ -265,97 +288,27 @@ void Cone::updateModel(const UpdatePayload &plIn)
     lastUpdateLog += s.str();
   }
   setModelClean();
-  updateIPGroup();
+  stow->updateIPs();
   if (!lastUpdateLog.empty())
     std::cout << std::endl << lastUpdateLog;
 }
 
-void Cone::updateResult(const ConeBuilder& coneBuilderIn)
-{
-  //helper lamda
-  auto updateShapeByTag = [this](const TopoDS_Shape &shapeIn, FeatureTag featureTagIn)
-  {
-    //when a radius is set to zero we get null shapes, so skip
-    if (shapeIn.IsNull())
-      return;
-    uuid localId = sShape->featureTagId(featureTagMap.at(featureTagIn));
-    sShape->updateId(shapeIn, localId);
-  };
-  
-  updateShapeByTag(sShape->getRootOCCTShape(), FeatureTag::Root);
-  updateShapeByTag(coneBuilderIn.getSolid(), FeatureTag::Solid);
-  updateShapeByTag(coneBuilderIn.getShell(), FeatureTag::Shell);
-  updateShapeByTag(coneBuilderIn.getFaceBottom(), FeatureTag::FaceBottom);
-  updateShapeByTag(coneBuilderIn.getFaceConical(), FeatureTag::FaceConical);
-  updateShapeByTag(coneBuilderIn.getFaceTop(), FeatureTag::FaceTop);
-  updateShapeByTag(coneBuilderIn.getWireBottom(), FeatureTag::WireBottom);
-  updateShapeByTag(coneBuilderIn.getWireConical(), FeatureTag::WireConical);
-  updateShapeByTag(coneBuilderIn.getWireTop(), FeatureTag::WireTop);
-  updateShapeByTag(coneBuilderIn.getEdgeBottom(), FeatureTag::EdgeBottom);
-  updateShapeByTag(coneBuilderIn.getEdgeConical(), FeatureTag::EdgeConical);
-  updateShapeByTag(coneBuilderIn.getEdgeTop(), FeatureTag::EdgeTop);
-  updateShapeByTag(coneBuilderIn.getVertexBottom(), FeatureTag::VertexBottom);
-  updateShapeByTag(coneBuilderIn.getVertexTop(), FeatureTag::VertexTop);
-  
-  sShape->setRootShapeId(sShape->featureTagId(featureTagMap.at(FeatureTag::Root)));
-}
-
-//the quantity of cone shapes can change so generating maps from first update can lead to missing
-//ids and shapes. So here we will generate the maps with all necessary rows.
-void Cone::initializeMaps()
-{
-  //result 
-  std::vector<uuid> tempIds; //save ids for later.
-  for (unsigned int index = 0; index < 14; ++index)
-  {
-    uuid tempId = gu::createRandomId();
-    tempIds.push_back(tempId);
-    sShape->insertEvolve(gu::createNilId(), tempId);
-  }
-  
-  //helper lamda
-  auto insertIntoFeatureMap = [this](const uuid &idIn, FeatureTag featureTagIn)
-  {
-    sShape->insertFeatureTag(idIn, featureTagMap.at(featureTagIn));
-  };
-  
-  //first we do the compound that is root. this is not in box maker.
-  insertIntoFeatureMap(tempIds.at(0), FeatureTag::Root);
-  insertIntoFeatureMap(tempIds.at(1), FeatureTag::Solid);
-  insertIntoFeatureMap(tempIds.at(2), FeatureTag::Shell);
-  insertIntoFeatureMap(tempIds.at(3), FeatureTag::FaceBottom);
-  insertIntoFeatureMap(tempIds.at(4), FeatureTag::FaceConical);
-  insertIntoFeatureMap(tempIds.at(5), FeatureTag::FaceTop);
-  insertIntoFeatureMap(tempIds.at(6), FeatureTag::WireBottom);
-  insertIntoFeatureMap(tempIds.at(7), FeatureTag::WireConical);
-  insertIntoFeatureMap(tempIds.at(8), FeatureTag::WireTop);
-  insertIntoFeatureMap(tempIds.at(9), FeatureTag::EdgeBottom);
-  insertIntoFeatureMap(tempIds.at(10), FeatureTag::EdgeConical);
-  insertIntoFeatureMap(tempIds.at(11), FeatureTag::EdgeTop);
-  insertIntoFeatureMap(tempIds.at(12), FeatureTag::VertexBottom);
-  insertIntoFeatureMap(tempIds.at(13), FeatureTag::VertexTop);
-  
-  
-//   std::cout << std::endl << std::endl <<
-//     "result Container: " << std::endl << resultContainer << std::endl << std::endl <<
-//     "feature Container:" << std::endl << featureContainer << std::endl << std::endl <<
-//     "evolution Container:" << std::endl << evolutionContainer << std::endl << std::endl;
-}
-
-void Cone::serialWrite(const boost::filesystem::path &dIn)
+void Feature::serialWrite(const boost::filesystem::path &dIn)
 {
   prj::srl::cns::Cone coneOut
   (
     Base::serialOut(),
-    sShape->serialOut(),
-    radius1->serialOut(),
-    radius2->serialOut(),
-    height->serialOut(),
-    csys->serialOut(),
-    csysDragger->serialOut(),
-    heightIP->serialOut(),
-    radius1IP->serialOut(),
-    radius2IP->serialOut()
+    stow->primitive.csysType.serialOut(),
+    stow->primitive.radius1->serialOut(),
+    stow->primitive.radius2->serialOut(),
+    stow->primitive.height->serialOut(),
+    stow->primitive.csys.serialOut(),
+    stow->primitive.csysLinked.serialOut(),
+    stow->primitive.csysDragger.serialOut(),
+    stow->primitive.sShape.serialOut(),
+    stow->primitive.heightIP->serialOut(),
+    stow->primitive.radius1IP->serialOut(),
+    stow->primitive.radius2IP->serialOut()
   );
   
   xml_schema::NamespaceInfomap infoMap;
@@ -363,16 +316,18 @@ void Cone::serialWrite(const boost::filesystem::path &dIn)
   prj::srl::cns::cone(stream, coneOut, infoMap);
 }
 
-void Cone::serialRead(const prj::srl::cns::Cone& sCone)
+void Feature::serialRead(const prj::srl::cns::Cone& sCone)
 {
   Base::serialIn(sCone.base());
-  sShape->serialIn(sCone.seerShape());
-  radius1->serialIn(sCone.radius1());
-  radius2->serialIn(sCone.radius2());
-  height->serialIn(sCone.height());
-  csys->serialIn(sCone.csys());
-  csysDragger->serialIn(sCone.csysDragger());
-  heightIP->serialIn(sCone.heightIP());
-  radius1IP->serialIn(sCone.radius1IP());
-  radius2IP->serialIn(sCone.radius2IP());
+  stow->primitive.csysType.serialIn(sCone.csysType());
+  stow->primitive.radius1->serialIn(sCone.radius1());
+  stow->primitive.radius2->serialIn(sCone.radius2());
+  stow->primitive.height->serialIn(sCone.height());
+  stow->primitive.csys.serialIn(sCone.csys());
+  stow->primitive.csysLinked.serialIn(sCone.csysLinked());
+  stow->primitive.csysDragger.serialIn(sCone.csysDragger());
+  stow->primitive.sShape.serialIn(sCone.seerShape());
+  stow->primitive.heightIP->serialIn(sCone.heightIP());
+  stow->primitive.radius1IP->serialIn(sCone.radius1IP());
+  stow->primitive.radius2IP->serialIn(sCone.radius2IP());
 }

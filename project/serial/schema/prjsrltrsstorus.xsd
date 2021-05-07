@@ -13,15 +13,17 @@
   <xs:complexType name="Torus">
     <xs:sequence>
       <xs:element name="base" type="spt:Base"/>
-      <xs:element name="seerShape" type="spt:SeerShape"/>
+      <xs:element name="csysType" type="spt:Parameter"/>
       <xs:element name="radius1" type="spt:Parameter"/>
       <xs:element name="radius2" type="spt:Parameter"/>
       <xs:element name="seam" type="spt:Parameter"/>
       <xs:element name="csys" type="spt:Parameter"/>
+      <xs:element name="csysLinked" type="spt:Parameter"/>
+      <xs:element name="csysDragger" type="spt:CSysDragger"/>
+      <xs:element name="seerShape" type="spt:SeerShape"/>
       <xs:element name="radius1IP" type="spt:IPGroup"/>
       <xs:element name="radius2IP" type="spt:IPGroup"/>
       <xs:element name="seamLabel" type="spt:PLabel"/>
-      <xs:element name="csysDragger" type="spt:CSysDragger"/>
       <xs:element name="offsetIds" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
     </xs:sequence>
   </xs:complexType>

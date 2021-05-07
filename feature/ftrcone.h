@@ -20,66 +20,38 @@
 #ifndef FTR_CONE_H
 #define FTR_CONE_H
 
-#include <memory>
-
-#include <osg/ref_ptr>
-
 #include "feature/ftrbase.h"
 
-namespace lbr{class IPGroup;}
 namespace prj{namespace srl{namespace cns{class Cone;}}}
-namespace ann{class CSysDragger;}
-namespace prm{struct Observer;}
 
 namespace ftr
 {
-  class ConeBuilder;
-  
-  class Cone : public Base
+  namespace Cone
   {
-  public:
-    Cone();
-    virtual ~Cone() override;
-    void setRadius1(double radius1In);
-    void setRadius2(double radius2In);
-    void setHeight(double heightIn);
-    void setCSys(const osg::Matrixd&);
-    const prm::Parameter& getRadius1() const;
-    const prm::Parameter& getRadius2() const;
-    const prm::Parameter& getHeight() const;
-    osg::Matrixd getCSys() const;
-    
-    virtual void updateModel(const UpdatePayload&) override;
-    virtual Type getType() const override {return Type::Cone;}
-    virtual const std::string& getTypeString() const override {return toString(Type::Cone);}
-    virtual const QIcon& getIcon() const override {return icon;}
-    virtual Descriptor getDescriptor() const override {return Descriptor::Create;}
-    virtual void serialWrite(const boost::filesystem::path&) override; //!< write xml file. not const, might reset a modified flag.
-    void serialRead(const prj::srl::cns::Cone &sCone); //!<initializes this from sBox. not virtual, type already known.
-    
-  protected:
-    std::unique_ptr<prm::Parameter> radius1;
-    std::unique_ptr<prm::Parameter> radius2; //!< maybe zero.
-    std::unique_ptr<prm::Parameter> height;
-    std::unique_ptr<prm::Parameter> csys;
-    
-    std::unique_ptr<prm::Observer> prmObserver;
-  
-    std::unique_ptr<ann::CSysDragger> csysDragger;
-    std::unique_ptr<ann::SeerShape> sShape;
-    
-    osg::ref_ptr<lbr::IPGroup> heightIP;
-    osg::ref_ptr<lbr::IPGroup> radius1IP;
-    osg::ref_ptr<lbr::IPGroup> radius2IP;
-    
-    void initializeMaps();
-    void updateResult(const ConeBuilder &);
-    void setupIPGroup();
-    void updateIPGroup();
-    
-  private:
-    static QIcon icon;
-  };
+    enum CSysType
+    {
+      Constant
+      , Linked
+    };
+    class Feature : public Base
+    {
+    public:
+      Feature();
+      virtual ~Feature() override;
+      
+      void updateModel(const UpdatePayload&) override;
+      Type getType() const override {return Type::Cone;}
+      const std::string& getTypeString() const override {return toString(Type::Cone);}
+      const QIcon& getIcon() const override {return icon;}
+      Descriptor getDescriptor() const override {return Descriptor::Create;}
+      void serialWrite(const boost::filesystem::path&) override; //!< write xml file. not const, might reset a modified flag.
+      void serialRead(const prj::srl::cns::Cone &sCone); //!<initializes this from sBox. not virtual, type already known.
+    private:
+      static QIcon icon;
+      struct Stow;
+      std::unique_ptr<Stow> stow;
+    };
+  }
 }
 
 #endif // FTR_CONE_H

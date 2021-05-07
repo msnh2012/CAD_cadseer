@@ -767,7 +767,7 @@ void Manager::constructRemoveFacesDispatched(const msg::Message&)
 
 void Manager::constructThreadDispatched(const msg::Message&)
 {
-  auto nf = std::make_shared<ftr::Thread>();
+  auto nf = std::make_shared<ftr::Thread::Feature>();
   app::instance()->getProject()->addFeature(nf);
   auto c = std::make_shared<Primitive>(nf.get(), false);
   addCommand(c);
@@ -840,7 +840,7 @@ void Manager::constructChamferDispatched(const msg::Message&)
 
 void Manager::constructBoxDispatched(const msg::Message&)
 {
-  auto nf = std::make_shared<ftr::Box>();
+  auto nf = std::make_shared<ftr::Box::Feature>();
   app::instance()->getProject()->addFeature(nf);
   auto c = std::make_shared<Primitive>(nf.get(), false);
   addCommand(c);
@@ -848,7 +848,7 @@ void Manager::constructBoxDispatched(const msg::Message&)
 
 void Manager::constructOblongDispatched(const msg::Message&)
 {
-  auto nf = std::make_shared<ftr::Oblong>();
+  auto nf = std::make_shared<ftr::Oblong::Feature>();
   app::instance()->getProject()->addFeature(nf);
   auto c = std::make_shared<Primitive>(nf.get(), false);
   addCommand(c);
@@ -856,7 +856,7 @@ void Manager::constructOblongDispatched(const msg::Message&)
 
 void Manager::constructTorusDispatched(const msg::Message&)
 {
-  auto nf = std::make_shared<ftr::Torus>();
+  auto nf = std::make_shared<ftr::Torus::Feature>();
   app::instance()->getProject()->addFeature(nf);
   auto c = std::make_shared<Primitive>(nf.get(), false);
   addCommand(c);
@@ -864,7 +864,7 @@ void Manager::constructTorusDispatched(const msg::Message&)
 
 void Manager::constructCylinderDispatched(const msg::Message&)
 {
-  auto nf = std::make_shared<ftr::Cylinder>();
+  auto nf = std::make_shared<ftr::Cylinder::Feature>();
   app::instance()->getProject()->addFeature(nf);
   auto c = std::make_shared<Primitive>(nf.get(), false);
   addCommand(c);
@@ -872,7 +872,7 @@ void Manager::constructCylinderDispatched(const msg::Message&)
 
 void Manager::constructSphereDispatched(const msg::Message&)
 {
-  auto nf = std::make_shared<ftr::Sphere>();
+  auto nf = std::make_shared<ftr::Sphere::Feature>();
   app::instance()->getProject()->addFeature(nf);
   auto c = std::make_shared<Primitive>(nf.get(), false);
   addCommand(c);
@@ -880,7 +880,7 @@ void Manager::constructSphereDispatched(const msg::Message&)
 
 void Manager::constructConeDispatched(const msg::Message&)
 {
-  auto nf = std::make_shared<ftr::Cone>();
+  auto nf = std::make_shared<ftr::Cone::Feature>();
   app::instance()->getProject()->addFeature(nf);
   auto c = std::make_shared<Primitive>(nf.get(), false);
   addCommand(c);

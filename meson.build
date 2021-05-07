@@ -199,6 +199,7 @@ feature_sources = ['feature/ftrinputtype.cpp'
   , 'feature/ftruntrim.cpp'
   , 'feature/ftrface.cpp'
   , 'feature/ftrfill.cpp'
+  , 'feature/ftrprimitive.cpp'
   ]
   
 parameter_sources = ['parameter/prmparameter.cpp']

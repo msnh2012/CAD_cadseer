@@ -22,55 +22,32 @@
 
 #include <memory>
 
-#include <osg/ref_ptr>
-
 #include "feature/ftrbase.h"
 
-class BRepPrimAPI_MakeSphere;
-namespace lbr{class IPGroup;}
 namespace prj{namespace srl{namespace sprs{class Sphere;}}}
-namespace ann{class CSysDragger; class SeerShape;}
-namespace prm{struct Observer;}
 
 namespace ftr
 {
-  class Sphere : public Base
+  namespace Sphere
   {
-  public:
-    Sphere();
-    virtual ~Sphere() override;
-    void setRadius(double radiusIn);
-    void setCSys(const osg::Matrixd&);
-    const prm::Parameter& getRadius() const;
-    osg::Matrixd getCSys() const;
-    
-    virtual void updateModel(const UpdatePayload&) override;
-    virtual Type getType() const override {return Type::Sphere;}
-    virtual const std::string& getTypeString() const override {return toString(Type::Sphere);}
-    virtual const QIcon& getIcon() const override {return icon;}
-    virtual Descriptor getDescriptor() const override {return Descriptor::Create;}
-    virtual void serialWrite(const boost::filesystem::path&) override; //!< write xml file. not const, might reset a modified flag.
-    void serialRead(const prj::srl::sprs::Sphere &sSphere); //!<initializes this from sBox. not virtual, type already known.
-    
-  protected:
-    std::unique_ptr<prm::Parameter> radius;
-    std::unique_ptr<prm::Parameter> csys;
-    
-    std::unique_ptr<prm::Observer> prmObserver;
-  
-    std::unique_ptr<ann::CSysDragger> csysDragger;
-    std::unique_ptr<ann::SeerShape> sShape;
-    
-    osg::ref_ptr<lbr::IPGroup> radiusIP;
-    
-    void initializeMaps();
-    void updateResult(BRepPrimAPI_MakeSphere&);
-    void setupIPGroup();
-    void updateIPGroup();
-    
-  private:
-    static QIcon icon;
-  };
+    class Feature : public Base
+    {
+    public:
+      Feature();
+      ~Feature() override;
+      void updateModel(const UpdatePayload&) override;
+      Type getType() const override {return Type::Sphere;}
+      const std::string& getTypeString() const override {return toString(Type::Sphere);}
+      const QIcon& getIcon() const override {return icon;}
+      Descriptor getDescriptor() const override {return Descriptor::Create;}
+      void serialWrite(const boost::filesystem::path&) override; //!< write xml file. not const, might reset a modified flag.
+      void serialRead(const prj::srl::sprs::Sphere &sSphere); //!<initializes this from sBox. not virtual, type already known.
+    private:
+      static QIcon icon;
+      struct Stow;
+      std::unique_ptr<Stow> stow;
+    };
+  }
 }
 
 #endif // FTR_SPHERE_H

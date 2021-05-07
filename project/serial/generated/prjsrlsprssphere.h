@@ -123,22 +123,22 @@ namespace prj
         void
         base (::std::unique_ptr< BaseType > p);
 
-        // seerShape
+        // csysType
         //
-        typedef ::prj::srl::spt::SeerShape SeerShapeType;
-        typedef ::xsd::cxx::tree::traits< SeerShapeType, char > SeerShapeTraits;
+        typedef ::prj::srl::spt::Parameter CsysTypeType;
+        typedef ::xsd::cxx::tree::traits< CsysTypeType, char > CsysTypeTraits;
 
-        const SeerShapeType&
-        seerShape () const;
+        const CsysTypeType&
+        csysType () const;
 
-        SeerShapeType&
-        seerShape ();
-
-        void
-        seerShape (const SeerShapeType& x);
+        CsysTypeType&
+        csysType ();
 
         void
-        seerShape (::std::unique_ptr< SeerShapeType > p);
+        csysType (const CsysTypeType& x);
+
+        void
+        csysType (::std::unique_ptr< CsysTypeType > p);
 
         // radius
         //
@@ -174,6 +174,23 @@ namespace prj
         void
         csys (::std::unique_ptr< CsysType > p);
 
+        // csysLinked
+        //
+        typedef ::prj::srl::spt::Parameter CsysLinkedType;
+        typedef ::xsd::cxx::tree::traits< CsysLinkedType, char > CsysLinkedTraits;
+
+        const CsysLinkedType&
+        csysLinked () const;
+
+        CsysLinkedType&
+        csysLinked ();
+
+        void
+        csysLinked (const CsysLinkedType& x);
+
+        void
+        csysLinked (::std::unique_ptr< CsysLinkedType > p);
+
         // csysDragger
         //
         typedef ::prj::srl::spt::CSysDragger CsysDraggerType;
@@ -190,6 +207,23 @@ namespace prj
 
         void
         csysDragger (::std::unique_ptr< CsysDraggerType > p);
+
+        // seerShape
+        //
+        typedef ::prj::srl::spt::SeerShape SeerShapeType;
+        typedef ::xsd::cxx::tree::traits< SeerShapeType, char > SeerShapeTraits;
+
+        const SeerShapeType&
+        seerShape () const;
+
+        SeerShapeType&
+        seerShape ();
+
+        void
+        seerShape (const SeerShapeType& x);
+
+        void
+        seerShape (::std::unique_ptr< SeerShapeType > p);
 
         // radiusIP
         //
@@ -211,17 +245,21 @@ namespace prj
         // Constructors.
         //
         Sphere (const BaseType&,
-                const SeerShapeType&,
+                const CsysTypeType&,
                 const RadiusType&,
                 const CsysType&,
+                const CsysLinkedType&,
                 const CsysDraggerType&,
+                const SeerShapeType&,
                 const RadiusIPType&);
 
         Sphere (::std::unique_ptr< BaseType >,
-                ::std::unique_ptr< SeerShapeType >,
+                ::std::unique_ptr< CsysTypeType >,
                 ::std::unique_ptr< RadiusType >,
                 ::std::unique_ptr< CsysType >,
+                ::std::unique_ptr< CsysLinkedType >,
                 ::std::unique_ptr< CsysDraggerType >,
+                ::std::unique_ptr< SeerShapeType >,
                 ::std::unique_ptr< RadiusIPType >);
 
         Sphere (const ::xercesc::DOMElement& e,
@@ -251,10 +289,12 @@ namespace prj
 
         protected:
         ::xsd::cxx::tree::one< BaseType > base_;
-        ::xsd::cxx::tree::one< SeerShapeType > seerShape_;
+        ::xsd::cxx::tree::one< CsysTypeType > csysType_;
         ::xsd::cxx::tree::one< RadiusType > radius_;
         ::xsd::cxx::tree::one< CsysType > csys_;
+        ::xsd::cxx::tree::one< CsysLinkedType > csysLinked_;
         ::xsd::cxx::tree::one< CsysDraggerType > csysDragger_;
+        ::xsd::cxx::tree::one< SeerShapeType > seerShape_;
         ::xsd::cxx::tree::one< RadiusIPType > radiusIP_;
       };
     }

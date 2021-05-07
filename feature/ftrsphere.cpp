@@ -31,10 +31,12 @@
 #include "feature/ftrinputtype.h"
 #include "parameter/prmconstants.h"
 #include "parameter/prmparameter.h"
+#include "tools/featuretools.h"
+#include "feature/ftrprimitive.h"
 #include "feature/ftrupdatepayload.h"
 #include "feature/ftrsphere.h"
 
-using namespace ftr;
+using namespace ftr::Sphere;
 using namespace boost::uuids;
 
 enum class FeatureTag
@@ -61,52 +63,93 @@ static const std::map<FeatureTag, std::string> featureTagMap =
   {FeatureTag::VertexTop, "VertexTop"}
 };
 
-QIcon Sphere::icon;
+QIcon Feature::icon;
 
 inline static const prf::Sphere& pSph(){return prf::manager().rootPtr->features().sphere().get();}
 
-Sphere::Sphere() :
-Base(),
-radius(std::make_unique<prm::Parameter>(prm::Names::Radius, pSph().radius(), prm::Tags::Radius)),
-csys(std::make_unique<prm::Parameter>(prm::Names::CSys, osg::Matrixd::identity(), prm::Tags::CSys)),
-prmObserver(std::make_unique<prm::Observer>(std::bind(&Sphere::setModelDirty, this))),
-csysDragger(std::make_unique<ann::CSysDragger>(this, csys.get())),
-sShape(std::make_unique<ann::SeerShape>())
+struct Feature::Stow
+{
+  Primitive primitive;
+  
+  Stow(Feature &fIn)
+  : primitive(Primitive::Input{fIn, fIn.parameters, fIn.annexes})
+  {
+    primitive.addRadius(pSph().radius());
+    primitive.radiusIP->setMatrixDims(osg::Matrixd::rotate(osg::PI_2, osg::Vec3d(0.0, 1.0, 0.0)));
+    primitive.radiusIP->setMatrixDragger(osg::Matrixd::rotate(osg::PI_2, osg::Vec3d(-1.0, 0.0, 0.0)));
+    primitive.radiusIP->setDimsFlipped(true);
+    primitive.radiusIP->setRotationAxis(osg::Vec3d(0.0, 0.0, 1.0), osg::Vec3d(-1.0, 0.0, 0.0));
+    
+    initializeMaps();
+  }
+  
+  void initializeMaps()
+  {
+    //result 
+    std::vector<uuid> tempIds; //save ids for later.
+    for (unsigned int index = 0; index < 8; ++index)
+    {
+      uuid tempId = gu::createRandomId();
+      tempIds.push_back(tempId);
+      primitive.sShape.insertEvolve(gu::createNilId(), tempId);
+    }
+    
+    //helper lamda
+    auto insertIntoFeatureMap = [&](const uuid &idIn, FeatureTag featureTagIn)
+    {
+      primitive.sShape.insertFeatureTag(idIn, featureTagMap.at(featureTagIn));
+    };
+    
+    insertIntoFeatureMap(tempIds.at(0), FeatureTag::Root);
+    insertIntoFeatureMap(tempIds.at(1), FeatureTag::Solid);
+    insertIntoFeatureMap(tempIds.at(2), FeatureTag::Shell);
+    insertIntoFeatureMap(tempIds.at(3), FeatureTag::Face);
+    insertIntoFeatureMap(tempIds.at(4), FeatureTag::Wire);
+    insertIntoFeatureMap(tempIds.at(5), FeatureTag::Edge);
+    insertIntoFeatureMap(tempIds.at(6), FeatureTag::VertexBottom);
+    insertIntoFeatureMap(tempIds.at(7), FeatureTag::VertexTop);
+  }
+  
+  void updateResult(BRepPrimAPI_MakeSphere &sphereMaker)
+  {
+    //helper lamda
+    auto updateShapeByTag = [&](const TopoDS_Shape &shapeIn, FeatureTag featureTagIn)
+    {
+      uuid localId = primitive.sShape.featureTagId(featureTagMap.at(featureTagIn));
+      primitive.sShape.updateId(shapeIn, localId);
+    };
+    
+  //   updateShapeByTag(sShape->getRootOCCTShape(), FeatureTag::Root);
+    updateShapeByTag(sphereMaker.Shape(), FeatureTag::Solid);
+    
+    BRepPrim_Sphere &sphereSubMaker = sphereMaker.Sphere();
+    
+    updateShapeByTag(sphereSubMaker.Shell(), FeatureTag::Shell);
+    updateShapeByTag(sphereSubMaker.LateralFace(), FeatureTag::Face);
+    updateShapeByTag(sphereSubMaker.LateralWire(), FeatureTag::Wire);
+    updateShapeByTag(sphereSubMaker.StartEdge(), FeatureTag::Edge);
+    updateShapeByTag(sphereSubMaker.BottomStartVertex(), FeatureTag::VertexBottom);
+    updateShapeByTag(sphereSubMaker.TopStartVertex(), FeatureTag::VertexTop);
+    
+  //   sShape->setRootShapeId(sShape->featureTagId(featureTagMap.at(FeatureTag::Root)));
+  }
+};
+
+Feature::Feature()
+: Base()
+, stow(std::make_unique<Stow>(*this))
 {
   if (icon.isNull())
     icon = QIcon(":/resources/images/constructionSphere.svg");
   
   name = QObject::tr("Sphere");
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
-  
-  initializeMaps();
-  
-  radius->setConstraint(prm::Constraint::buildNonZeroPositive());
-  
-  parameters.push_back(radius.get());
-  parameters.push_back(csys.get());
-  
-  annexes.insert(std::make_pair(ann::Type::SeerShape, sShape.get()));
-  annexes.insert(std::make_pair(ann::Type::CSysDragger, csysDragger.get()));
-  overlaySwitch->addChild(csysDragger->dragger);
-  
-  radius->connectValue(std::bind(&Sphere::setModelDirty, this));
-  csys->connect(*prmObserver);
-  
-  setupIPGroup();
 }
 
-Sphere::~Sphere()
-{
+Feature::~Feature() = default;
 
-}
-
-void Sphere::setRadius(double radiusIn)
-{
-  radius->setValue(radiusIn);
-}
-
-void Sphere::setCSys(const osg::Matrixd &csysIn)
+/*
+void Feature::setCSys(const osg::Matrixd &csysIn)
 {
   osg::Matrixd oldSystem = csys->getMatrix();
   if (!csys->setValue(csysIn))
@@ -116,65 +159,43 @@ void Sphere::setCSys(const osg::Matrixd &csysIn)
   osg::Matrixd diffMatrix = osg::Matrixd::inverse(oldSystem) * csysIn;
   csysDragger->draggerUpdate(csysDragger->dragger->getMatrix() * diffMatrix);
 }
+*/
 
-const prm::Parameter& Sphere::getRadius() const
-{
-  return *radius;
-}
-
-osg::Matrixd Sphere::getCSys() const
-{
-  return csys->getMatrix();
-}
-
-void Sphere::setupIPGroup()
-{
-  radiusIP = new lbr::IPGroup(radius.get());
-  radiusIP->setMatrixDims(osg::Matrixd::rotate(osg::PI_2, osg::Vec3d(0.0, 1.0, 0.0)));
-  radiusIP->setMatrixDragger(osg::Matrixd::rotate(osg::PI_2, osg::Vec3d(-1.0, 0.0, 0.0)));
-  radiusIP->setDimsFlipped(true);
-  radiusIP->setRotationAxis(osg::Vec3d(0.0, 0.0, 1.0), osg::Vec3d(-1.0, 0.0, 0.0));
-  overlaySwitch->addChild(radiusIP.get());
-  csysDragger->dragger->linkToMatrix(radiusIP.get());
-  
-  updateIPGroup();
-}
-
-void Sphere::updateIPGroup()
-{
-  radiusIP->setMatrix(csys->getMatrix());
-}
-
-void Sphere::updateModel(const UpdatePayload &plIn)
+void Feature::updateModel(const UpdatePayload &plIn)
 {
   setFailure();
   lastUpdateLog.clear();
-  sShape->reset();
+  stow->primitive.sShape.reset();
   try
   {
-    prm::ObserverBlocker block(*prmObserver);
-    
     if (isSkipped())
     {
       setSuccess();
       throw std::runtime_error("feature is skipped");
     }
     
-    std::vector<const Base*> tfs = plIn.getFeatures(ftr::InputType::linkCSys);
-    if (!tfs.empty())
+    //nothing for constant.
+    if (static_cast<Primitive::CSysType>(stow->primitive.csysType.getInt()) == Primitive::Linked)
     {
-      auto systemParameters = tfs.front()->getParameters(prm::Tags::CSys);
-      if (systemParameters.empty())
-        throw std::runtime_error("Feature for csys link, doesn't have csys parameter");
-      csys->setValue(systemParameters.front()->getMatrix());
-      csysDragger->draggerUpdate();
+      const auto &picks = stow->primitive.csysLinked.getPicks();
+      if (picks.empty())
+        throw std::runtime_error("No picks for csys link");
+      tls::Resolver resolver(plIn);
+      if (!resolver.resolve(picks.front()))
+        throw std::runtime_error("Couldn't resolve csys link pick");
+      auto csysPrms = resolver.getFeature()->getParameters(prm::Tags::CSys);
+      if (csysPrms.empty())
+        throw std::runtime_error("csys link feature has no csys parameter");
+      prm::ObserverBlocker(stow->primitive.csysObserver);
+      stow->primitive.csys.setValue(csysPrms.front()->getMatrix());
+      stow->primitive.csysDragger.draggerUpdate();
     }
     
-    BRepPrimAPI_MakeSphere sphereMaker(gu::toOcc(csys->getMatrix()), radius->getDouble());
+    BRepPrimAPI_MakeSphere sphereMaker(gu::toOcc(stow->primitive.csys.getMatrix()), stow->primitive.radius->getDouble());
     sphereMaker.Build();
     assert(sphereMaker.IsDone());
-    sShape->setOCCTShape(sphereMaker.Shape(), getId());
-    updateResult(sphereMaker);
+    stow->primitive.sShape.setOCCTShape(sphereMaker.Shape(), getId());
+    stow->updateResult(sphereMaker);
     mainTransform->setMatrix(osg::Matrixd::identity());
     setSuccess();
   }
@@ -194,77 +215,23 @@ void Sphere::updateModel(const UpdatePayload &plIn)
     lastUpdateLog += s.str();
   }
   setModelClean();
-  updateIPGroup();
+  stow->primitive.IPsToCsys();
   if (!lastUpdateLog.empty())
     std::cout << std::endl << lastUpdateLog;
 }
 
-void Sphere::initializeMaps()
-{
-  //result 
-  std::vector<uuid> tempIds; //save ids for later.
-  for (unsigned int index = 0; index < 8; ++index)
-  {
-    uuid tempId = gu::createRandomId();
-    tempIds.push_back(tempId);
-    sShape->insertEvolve(gu::createNilId(), tempId);
-  }
-  
-  //helper lamda
-  auto insertIntoFeatureMap = [this](const uuid &idIn, FeatureTag featureTagIn)
-  {
-    sShape->insertFeatureTag(idIn, featureTagMap.at(featureTagIn));
-  };
-  
-  insertIntoFeatureMap(tempIds.at(0), FeatureTag::Root);
-  insertIntoFeatureMap(tempIds.at(1), FeatureTag::Solid);
-  insertIntoFeatureMap(tempIds.at(2), FeatureTag::Shell);
-  insertIntoFeatureMap(tempIds.at(3), FeatureTag::Face);
-  insertIntoFeatureMap(tempIds.at(4), FeatureTag::Wire);
-  insertIntoFeatureMap(tempIds.at(5), FeatureTag::Edge);
-  insertIntoFeatureMap(tempIds.at(6), FeatureTag::VertexBottom);
-  insertIntoFeatureMap(tempIds.at(7), FeatureTag::VertexTop);
-  
-//   std::cout << std::endl << std::endl <<
-//     "result Container: " << std::endl << resultContainer << std::endl << std::endl <<
-//     "feature Container:" << std::endl << featureContainer << std::endl << std::endl <<
-//     "evolution Container:" << std::endl << evolutionContainer << std::endl << std::endl;
-}
-
-void Sphere::updateResult(BRepPrimAPI_MakeSphere &sphereMaker)
-{
-  //helper lamda
-  auto updateShapeByTag = [this](const TopoDS_Shape &shapeIn, FeatureTag featureTagIn)
-  {
-    uuid localId = sShape->featureTagId(featureTagMap.at(featureTagIn));
-    sShape->updateId(shapeIn, localId);
-  };
-  
-//   updateShapeByTag(sShape->getRootOCCTShape(), FeatureTag::Root);
-  updateShapeByTag(sphereMaker.Shape(), FeatureTag::Solid);
-  
-  BRepPrim_Sphere &sphereSubMaker = sphereMaker.Sphere();
-  
-  updateShapeByTag(sphereSubMaker.Shell(), FeatureTag::Shell);
-  updateShapeByTag(sphereSubMaker.LateralFace(), FeatureTag::Face);
-  updateShapeByTag(sphereSubMaker.LateralWire(), FeatureTag::Wire);
-  updateShapeByTag(sphereSubMaker.StartEdge(), FeatureTag::Edge);
-  updateShapeByTag(sphereSubMaker.BottomStartVertex(), FeatureTag::VertexBottom);
-  updateShapeByTag(sphereSubMaker.TopStartVertex(), FeatureTag::VertexTop);
-  
-//   sShape->setRootShapeId(sShape->featureTagId(featureTagMap.at(FeatureTag::Root)));
-}
-
-void Sphere::serialWrite(const boost::filesystem::path &dIn)
+void Feature::serialWrite(const boost::filesystem::path &dIn)
 {
   prj::srl::sprs::Sphere sphereOut
   (
     Base::serialOut(),
-    sShape->serialOut(),
-    radius->serialOut(),
-    csys->serialOut(),
-    csysDragger->serialOut(),
-    radiusIP->serialOut()
+    stow->primitive.csysType.serialOut(),
+    stow->primitive.radius->serialOut(),
+    stow->primitive.csys.serialOut(),
+    stow->primitive.csysLinked.serialOut(),
+    stow->primitive.csysDragger.serialOut(),
+    stow->primitive.sShape.serialOut(),
+    stow->primitive.radiusIP->serialOut()
   );
   
   xml_schema::NamespaceInfomap infoMap;
@@ -272,12 +239,14 @@ void Sphere::serialWrite(const boost::filesystem::path &dIn)
   prj::srl::sprs::sphere(stream, sphereOut, infoMap);
 }
 
-void Sphere::serialRead(const prj::srl::sprs::Sphere& sSphereIn)
+void Feature::serialRead(const prj::srl::sprs::Sphere& sSphereIn)
 {
   Base::serialIn(sSphereIn.base());
-  sShape->serialIn(sSphereIn.seerShape());
-  radius->serialIn(sSphereIn.radius());
-  csys->serialIn(sSphereIn.csys());
-  csysDragger->serialIn(sSphereIn.csysDragger());
-  radiusIP->serialIn(sSphereIn.radiusIP());
+  stow->primitive.csysType.serialIn(sSphereIn.csysType());
+  stow->primitive.radius->serialIn(sSphereIn.radius());
+  stow->primitive.csys.serialIn(sSphereIn.csys());
+  stow->primitive.csysLinked.serialIn(sSphereIn.csysLinked());
+  stow->primitive.csysDragger.serialIn(sSphereIn.csysDragger());
+  stow->primitive.sShape.serialIn(sSphereIn.seerShape());
+  stow->primitive.radiusIP->serialIn(sSphereIn.radiusIP());
 }

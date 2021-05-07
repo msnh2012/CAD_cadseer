@@ -73,28 +73,28 @@ namespace prj
         this->base_.set (std::move (x));
       }
 
-      const Sphere::SeerShapeType& Sphere::
-      seerShape () const
+      const Sphere::CsysTypeType& Sphere::
+      csysType () const
       {
-        return this->seerShape_.get ();
+        return this->csysType_.get ();
       }
 
-      Sphere::SeerShapeType& Sphere::
-      seerShape ()
+      Sphere::CsysTypeType& Sphere::
+      csysType ()
       {
-        return this->seerShape_.get ();
-      }
-
-      void Sphere::
-      seerShape (const SeerShapeType& x)
-      {
-        this->seerShape_.set (x);
+        return this->csysType_.get ();
       }
 
       void Sphere::
-      seerShape (::std::unique_ptr< SeerShapeType > x)
+      csysType (const CsysTypeType& x)
       {
-        this->seerShape_.set (std::move (x));
+        this->csysType_.set (x);
+      }
+
+      void Sphere::
+      csysType (::std::unique_ptr< CsysTypeType > x)
+      {
+        this->csysType_.set (std::move (x));
       }
 
       const Sphere::RadiusType& Sphere::
@@ -145,6 +145,30 @@ namespace prj
         this->csys_.set (std::move (x));
       }
 
+      const Sphere::CsysLinkedType& Sphere::
+      csysLinked () const
+      {
+        return this->csysLinked_.get ();
+      }
+
+      Sphere::CsysLinkedType& Sphere::
+      csysLinked ()
+      {
+        return this->csysLinked_.get ();
+      }
+
+      void Sphere::
+      csysLinked (const CsysLinkedType& x)
+      {
+        this->csysLinked_.set (x);
+      }
+
+      void Sphere::
+      csysLinked (::std::unique_ptr< CsysLinkedType > x)
+      {
+        this->csysLinked_.set (std::move (x));
+      }
+
       const Sphere::CsysDraggerType& Sphere::
       csysDragger () const
       {
@@ -167,6 +191,30 @@ namespace prj
       csysDragger (::std::unique_ptr< CsysDraggerType > x)
       {
         this->csysDragger_.set (std::move (x));
+      }
+
+      const Sphere::SeerShapeType& Sphere::
+      seerShape () const
+      {
+        return this->seerShape_.get ();
+      }
+
+      Sphere::SeerShapeType& Sphere::
+      seerShape ()
+      {
+        return this->seerShape_.get ();
+      }
+
+      void Sphere::
+      seerShape (const SeerShapeType& x)
+      {
+        this->seerShape_.set (x);
+      }
+
+      void Sphere::
+      seerShape (::std::unique_ptr< SeerShapeType > x)
+      {
+        this->seerShape_.set (std::move (x));
       }
 
       const Sphere::RadiusIPType& Sphere::
@@ -209,34 +257,42 @@ namespace prj
 
       Sphere::
       Sphere (const BaseType& base,
-              const SeerShapeType& seerShape,
+              const CsysTypeType& csysType,
               const RadiusType& radius,
               const CsysType& csys,
+              const CsysLinkedType& csysLinked,
               const CsysDraggerType& csysDragger,
+              const SeerShapeType& seerShape,
               const RadiusIPType& radiusIP)
       : ::xml_schema::Type (),
         base_ (base, this),
-        seerShape_ (seerShape, this),
+        csysType_ (csysType, this),
         radius_ (radius, this),
         csys_ (csys, this),
+        csysLinked_ (csysLinked, this),
         csysDragger_ (csysDragger, this),
+        seerShape_ (seerShape, this),
         radiusIP_ (radiusIP, this)
       {
       }
 
       Sphere::
       Sphere (::std::unique_ptr< BaseType > base,
-              ::std::unique_ptr< SeerShapeType > seerShape,
+              ::std::unique_ptr< CsysTypeType > csysType,
               ::std::unique_ptr< RadiusType > radius,
               ::std::unique_ptr< CsysType > csys,
+              ::std::unique_ptr< CsysLinkedType > csysLinked,
               ::std::unique_ptr< CsysDraggerType > csysDragger,
+              ::std::unique_ptr< SeerShapeType > seerShape,
               ::std::unique_ptr< RadiusIPType > radiusIP)
       : ::xml_schema::Type (),
         base_ (std::move (base), this),
-        seerShape_ (std::move (seerShape), this),
+        csysType_ (std::move (csysType), this),
         radius_ (std::move (radius), this),
         csys_ (std::move (csys), this),
+        csysLinked_ (std::move (csysLinked), this),
         csysDragger_ (std::move (csysDragger), this),
+        seerShape_ (std::move (seerShape), this),
         radiusIP_ (std::move (radiusIP), this)
       {
       }
@@ -247,10 +303,12 @@ namespace prj
               ::xml_schema::Container* c)
       : ::xml_schema::Type (x, f, c),
         base_ (x.base_, f, this),
-        seerShape_ (x.seerShape_, f, this),
+        csysType_ (x.csysType_, f, this),
         radius_ (x.radius_, f, this),
         csys_ (x.csys_, f, this),
+        csysLinked_ (x.csysLinked_, f, this),
         csysDragger_ (x.csysDragger_, f, this),
+        seerShape_ (x.seerShape_, f, this),
         radiusIP_ (x.radiusIP_, f, this)
       {
       }
@@ -261,10 +319,12 @@ namespace prj
               ::xml_schema::Container* c)
       : ::xml_schema::Type (e, f | ::xml_schema::Flags::base, c),
         base_ (this),
-        seerShape_ (this),
+        csysType_ (this),
         radius_ (this),
         csys_ (this),
+        csysLinked_ (this),
         csysDragger_ (this),
+        seerShape_ (this),
         radiusIP_ (this)
       {
         if ((f & ::xml_schema::Flags::base) == 0)
@@ -298,16 +358,16 @@ namespace prj
             }
           }
 
-          // seerShape
+          // csysType
           //
-          if (n.name () == "seerShape" && n.namespace_ ().empty ())
+          if (n.name () == "csysType" && n.namespace_ ().empty ())
           {
-            ::std::unique_ptr< SeerShapeType > r (
-              SeerShapeTraits::create (i, f, this));
+            ::std::unique_ptr< CsysTypeType > r (
+              CsysTypeTraits::create (i, f, this));
 
-            if (!seerShape_.present ())
+            if (!csysType_.present ())
             {
-              this->seerShape_.set (::std::move (r));
+              this->csysType_.set (::std::move (r));
               continue;
             }
           }
@@ -340,6 +400,20 @@ namespace prj
             }
           }
 
+          // csysLinked
+          //
+          if (n.name () == "csysLinked" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< CsysLinkedType > r (
+              CsysLinkedTraits::create (i, f, this));
+
+            if (!csysLinked_.present ())
+            {
+              this->csysLinked_.set (::std::move (r));
+              continue;
+            }
+          }
+
           // csysDragger
           //
           if (n.name () == "csysDragger" && n.namespace_ ().empty ())
@@ -350,6 +424,20 @@ namespace prj
             if (!csysDragger_.present ())
             {
               this->csysDragger_.set (::std::move (r));
+              continue;
+            }
+          }
+
+          // seerShape
+          //
+          if (n.name () == "seerShape" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< SeerShapeType > r (
+              SeerShapeTraits::create (i, f, this));
+
+            if (!seerShape_.present ())
+            {
+              this->seerShape_.set (::std::move (r));
               continue;
             }
           }
@@ -378,10 +466,10 @@ namespace prj
             "");
         }
 
-        if (!seerShape_.present ())
+        if (!csysType_.present ())
         {
           throw ::xsd::cxx::tree::expected_element< char > (
-            "seerShape",
+            "csysType",
             "");
         }
 
@@ -399,10 +487,24 @@ namespace prj
             "");
         }
 
+        if (!csysLinked_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "csysLinked",
+            "");
+        }
+
         if (!csysDragger_.present ())
         {
           throw ::xsd::cxx::tree::expected_element< char > (
             "csysDragger",
+            "");
+        }
+
+        if (!seerShape_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "seerShape",
             "");
         }
 
@@ -428,10 +530,12 @@ namespace prj
         {
           static_cast< ::xml_schema::Type& > (*this) = x;
           this->base_ = x.base_;
-          this->seerShape_ = x.seerShape_;
+          this->csysType_ = x.csysType_;
           this->radius_ = x.radius_;
           this->csys_ = x.csys_;
+          this->csysLinked_ = x.csysLinked_;
           this->csysDragger_ = x.csysDragger_;
+          this->seerShape_ = x.seerShape_;
           this->radiusIP_ = x.radiusIP_;
         }
 
@@ -751,15 +855,15 @@ namespace prj
           s << i.base ();
         }
 
-        // seerShape
+        // csysType
         //
         {
           ::xercesc::DOMElement& s (
             ::xsd::cxx::xml::dom::create_element (
-              "seerShape",
+              "csysType",
               e));
 
-          s << i.seerShape ();
+          s << i.csysType ();
         }
 
         // radius
@@ -784,6 +888,17 @@ namespace prj
           s << i.csys ();
         }
 
+        // csysLinked
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "csysLinked",
+              e));
+
+          s << i.csysLinked ();
+        }
+
         // csysDragger
         //
         {
@@ -793,6 +908,17 @@ namespace prj
               e));
 
           s << i.csysDragger ();
+        }
+
+        // seerShape
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "seerShape",
+              e));
+
+          s << i.seerShape ();
         }
 
         // radiusIP

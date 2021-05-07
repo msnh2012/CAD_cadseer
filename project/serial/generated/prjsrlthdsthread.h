@@ -123,22 +123,22 @@ namespace prj
         void
         base (::std::unique_ptr< BaseType > p);
 
-        // seerShape
+        // csysType
         //
-        typedef ::prj::srl::spt::SeerShape SeerShapeType;
-        typedef ::xsd::cxx::tree::traits< SeerShapeType, char > SeerShapeTraits;
+        typedef ::prj::srl::spt::Parameter CsysTypeType;
+        typedef ::xsd::cxx::tree::traits< CsysTypeType, char > CsysTypeTraits;
 
-        const SeerShapeType&
-        seerShape () const;
+        const CsysTypeType&
+        csysType () const;
 
-        SeerShapeType&
-        seerShape ();
-
-        void
-        seerShape (const SeerShapeType& x);
+        CsysTypeType&
+        csysType ();
 
         void
-        seerShape (::std::unique_ptr< SeerShapeType > p);
+        csysType (const CsysTypeType& x);
+
+        void
+        csysType (::std::unique_ptr< CsysTypeType > p);
 
         // diameter
         //
@@ -276,6 +276,57 @@ namespace prj
         void
         csys (::std::unique_ptr< CsysType > p);
 
+        // csysLinked
+        //
+        typedef ::prj::srl::spt::Parameter CsysLinkedType;
+        typedef ::xsd::cxx::tree::traits< CsysLinkedType, char > CsysLinkedTraits;
+
+        const CsysLinkedType&
+        csysLinked () const;
+
+        CsysLinkedType&
+        csysLinked ();
+
+        void
+        csysLinked (const CsysLinkedType& x);
+
+        void
+        csysLinked (::std::unique_ptr< CsysLinkedType > p);
+
+        // csysDragger
+        //
+        typedef ::prj::srl::spt::CSysDragger CsysDraggerType;
+        typedef ::xsd::cxx::tree::traits< CsysDraggerType, char > CsysDraggerTraits;
+
+        const CsysDraggerType&
+        csysDragger () const;
+
+        CsysDraggerType&
+        csysDragger ();
+
+        void
+        csysDragger (const CsysDraggerType& x);
+
+        void
+        csysDragger (::std::unique_ptr< CsysDraggerType > p);
+
+        // seerShape
+        //
+        typedef ::prj::srl::spt::SeerShape SeerShapeType;
+        typedef ::xsd::cxx::tree::traits< SeerShapeType, char > SeerShapeTraits;
+
+        const SeerShapeType&
+        seerShape () const;
+
+        SeerShapeType&
+        seerShape ();
+
+        void
+        seerShape (const SeerShapeType& x);
+
+        void
+        seerShape (::std::unique_ptr< SeerShapeType > p);
+
         // diameterLabel
         //
         typedef ::prj::srl::spt::PLabel DiameterLabelType;
@@ -395,23 +446,6 @@ namespace prj
         void
         leftHandedLabel (::std::unique_ptr< LeftHandedLabelType > p);
 
-        // csysDragger
-        //
-        typedef ::prj::srl::spt::CSysDragger CsysDraggerType;
-        typedef ::xsd::cxx::tree::traits< CsysDraggerType, char > CsysDraggerTraits;
-
-        const CsysDraggerType&
-        csysDragger () const;
-
-        CsysDraggerType&
-        csysDragger ();
-
-        void
-        csysDragger (const CsysDraggerType& x);
-
-        void
-        csysDragger (::std::unique_ptr< CsysDraggerType > p);
-
         // solidId
         //
         typedef ::xml_schema::String SolidIdType;
@@ -452,7 +486,7 @@ namespace prj
         // Constructors.
         //
         Thread (const BaseType&,
-                const SeerShapeType&,
+                const CsysTypeType&,
                 const DiameterType&,
                 const PitchType&,
                 const LengthType&,
@@ -461,6 +495,9 @@ namespace prj
                 const FakeType&,
                 const LeftHandedType&,
                 const CsysType&,
+                const CsysLinkedType&,
+                const CsysDraggerType&,
+                const SeerShapeType&,
                 const DiameterLabelType&,
                 const PitchLabelType&,
                 const LengthLabelType&,
@@ -468,11 +505,10 @@ namespace prj
                 const InternalLabelType&,
                 const FakeLabelType&,
                 const LeftHandedLabelType&,
-                const CsysDraggerType&,
                 const SolidIdType&);
 
         Thread (::std::unique_ptr< BaseType >,
-                ::std::unique_ptr< SeerShapeType >,
+                ::std::unique_ptr< CsysTypeType >,
                 ::std::unique_ptr< DiameterType >,
                 ::std::unique_ptr< PitchType >,
                 ::std::unique_ptr< LengthType >,
@@ -481,6 +517,9 @@ namespace prj
                 ::std::unique_ptr< FakeType >,
                 ::std::unique_ptr< LeftHandedType >,
                 ::std::unique_ptr< CsysType >,
+                ::std::unique_ptr< CsysLinkedType >,
+                ::std::unique_ptr< CsysDraggerType >,
+                ::std::unique_ptr< SeerShapeType >,
                 ::std::unique_ptr< DiameterLabelType >,
                 ::std::unique_ptr< PitchLabelType >,
                 ::std::unique_ptr< LengthLabelType >,
@@ -488,7 +527,6 @@ namespace prj
                 ::std::unique_ptr< InternalLabelType >,
                 ::std::unique_ptr< FakeLabelType >,
                 ::std::unique_ptr< LeftHandedLabelType >,
-                ::std::unique_ptr< CsysDraggerType >,
                 const SolidIdType&);
 
         Thread (const ::xercesc::DOMElement& e,
@@ -518,7 +556,7 @@ namespace prj
 
         protected:
         ::xsd::cxx::tree::one< BaseType > base_;
-        ::xsd::cxx::tree::one< SeerShapeType > seerShape_;
+        ::xsd::cxx::tree::one< CsysTypeType > csysType_;
         ::xsd::cxx::tree::one< DiameterType > diameter_;
         ::xsd::cxx::tree::one< PitchType > pitch_;
         ::xsd::cxx::tree::one< LengthType > length_;
@@ -527,6 +565,9 @@ namespace prj
         ::xsd::cxx::tree::one< FakeType > fake_;
         ::xsd::cxx::tree::one< LeftHandedType > leftHanded_;
         ::xsd::cxx::tree::one< CsysType > csys_;
+        ::xsd::cxx::tree::one< CsysLinkedType > csysLinked_;
+        ::xsd::cxx::tree::one< CsysDraggerType > csysDragger_;
+        ::xsd::cxx::tree::one< SeerShapeType > seerShape_;
         ::xsd::cxx::tree::one< DiameterLabelType > diameterLabel_;
         ::xsd::cxx::tree::one< PitchLabelType > pitchLabel_;
         ::xsd::cxx::tree::one< LengthLabelType > lengthLabel_;
@@ -534,7 +575,6 @@ namespace prj
         ::xsd::cxx::tree::one< InternalLabelType > internalLabel_;
         ::xsd::cxx::tree::one< FakeLabelType > fakeLabel_;
         ::xsd::cxx::tree::one< LeftHandedLabelType > leftHandedLabel_;
-        ::xsd::cxx::tree::one< CsysDraggerType > csysDragger_;
         ::xsd::cxx::tree::one< SolidIdType > solidId_;
         static const SolidIdType solidId_default_value_;
         IdsSequence ids_;

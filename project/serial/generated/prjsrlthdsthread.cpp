@@ -73,28 +73,28 @@ namespace prj
         this->base_.set (std::move (x));
       }
 
-      const Thread::SeerShapeType& Thread::
-      seerShape () const
+      const Thread::CsysTypeType& Thread::
+      csysType () const
       {
-        return this->seerShape_.get ();
+        return this->csysType_.get ();
       }
 
-      Thread::SeerShapeType& Thread::
-      seerShape ()
+      Thread::CsysTypeType& Thread::
+      csysType ()
       {
-        return this->seerShape_.get ();
-      }
-
-      void Thread::
-      seerShape (const SeerShapeType& x)
-      {
-        this->seerShape_.set (x);
+        return this->csysType_.get ();
       }
 
       void Thread::
-      seerShape (::std::unique_ptr< SeerShapeType > x)
+      csysType (const CsysTypeType& x)
       {
-        this->seerShape_.set (std::move (x));
+        this->csysType_.set (x);
+      }
+
+      void Thread::
+      csysType (::std::unique_ptr< CsysTypeType > x)
+      {
+        this->csysType_.set (std::move (x));
       }
 
       const Thread::DiameterType& Thread::
@@ -289,6 +289,78 @@ namespace prj
         this->csys_.set (std::move (x));
       }
 
+      const Thread::CsysLinkedType& Thread::
+      csysLinked () const
+      {
+        return this->csysLinked_.get ();
+      }
+
+      Thread::CsysLinkedType& Thread::
+      csysLinked ()
+      {
+        return this->csysLinked_.get ();
+      }
+
+      void Thread::
+      csysLinked (const CsysLinkedType& x)
+      {
+        this->csysLinked_.set (x);
+      }
+
+      void Thread::
+      csysLinked (::std::unique_ptr< CsysLinkedType > x)
+      {
+        this->csysLinked_.set (std::move (x));
+      }
+
+      const Thread::CsysDraggerType& Thread::
+      csysDragger () const
+      {
+        return this->csysDragger_.get ();
+      }
+
+      Thread::CsysDraggerType& Thread::
+      csysDragger ()
+      {
+        return this->csysDragger_.get ();
+      }
+
+      void Thread::
+      csysDragger (const CsysDraggerType& x)
+      {
+        this->csysDragger_.set (x);
+      }
+
+      void Thread::
+      csysDragger (::std::unique_ptr< CsysDraggerType > x)
+      {
+        this->csysDragger_.set (std::move (x));
+      }
+
+      const Thread::SeerShapeType& Thread::
+      seerShape () const
+      {
+        return this->seerShape_.get ();
+      }
+
+      Thread::SeerShapeType& Thread::
+      seerShape ()
+      {
+        return this->seerShape_.get ();
+      }
+
+      void Thread::
+      seerShape (const SeerShapeType& x)
+      {
+        this->seerShape_.set (x);
+      }
+
+      void Thread::
+      seerShape (::std::unique_ptr< SeerShapeType > x)
+      {
+        this->seerShape_.set (std::move (x));
+      }
+
       const Thread::DiameterLabelType& Thread::
       diameterLabel () const
       {
@@ -457,30 +529,6 @@ namespace prj
         this->leftHandedLabel_.set (std::move (x));
       }
 
-      const Thread::CsysDraggerType& Thread::
-      csysDragger () const
-      {
-        return this->csysDragger_.get ();
-      }
-
-      Thread::CsysDraggerType& Thread::
-      csysDragger ()
-      {
-        return this->csysDragger_.get ();
-      }
-
-      void Thread::
-      csysDragger (const CsysDraggerType& x)
-      {
-        this->csysDragger_.set (x);
-      }
-
-      void Thread::
-      csysDragger (::std::unique_ptr< CsysDraggerType > x)
-      {
-        this->csysDragger_.set (std::move (x));
-      }
-
       const Thread::SolidIdType& Thread::
       solidId () const
       {
@@ -548,7 +596,7 @@ namespace prj
 
       Thread::
       Thread (const BaseType& base,
-              const SeerShapeType& seerShape,
+              const CsysTypeType& csysType,
               const DiameterType& diameter,
               const PitchType& pitch,
               const LengthType& length,
@@ -557,6 +605,9 @@ namespace prj
               const FakeType& fake,
               const LeftHandedType& leftHanded,
               const CsysType& csys,
+              const CsysLinkedType& csysLinked,
+              const CsysDraggerType& csysDragger,
+              const SeerShapeType& seerShape,
               const DiameterLabelType& diameterLabel,
               const PitchLabelType& pitchLabel,
               const LengthLabelType& lengthLabel,
@@ -564,11 +615,10 @@ namespace prj
               const InternalLabelType& internalLabel,
               const FakeLabelType& fakeLabel,
               const LeftHandedLabelType& leftHandedLabel,
-              const CsysDraggerType& csysDragger,
               const SolidIdType& solidId)
       : ::xml_schema::Type (),
         base_ (base, this),
-        seerShape_ (seerShape, this),
+        csysType_ (csysType, this),
         diameter_ (diameter, this),
         pitch_ (pitch, this),
         length_ (length, this),
@@ -577,6 +627,9 @@ namespace prj
         fake_ (fake, this),
         leftHanded_ (leftHanded, this),
         csys_ (csys, this),
+        csysLinked_ (csysLinked, this),
+        csysDragger_ (csysDragger, this),
+        seerShape_ (seerShape, this),
         diameterLabel_ (diameterLabel, this),
         pitchLabel_ (pitchLabel, this),
         lengthLabel_ (lengthLabel, this),
@@ -584,7 +637,6 @@ namespace prj
         internalLabel_ (internalLabel, this),
         fakeLabel_ (fakeLabel, this),
         leftHandedLabel_ (leftHandedLabel, this),
-        csysDragger_ (csysDragger, this),
         solidId_ (solidId, this),
         ids_ (this)
       {
@@ -592,7 +644,7 @@ namespace prj
 
       Thread::
       Thread (::std::unique_ptr< BaseType > base,
-              ::std::unique_ptr< SeerShapeType > seerShape,
+              ::std::unique_ptr< CsysTypeType > csysType,
               ::std::unique_ptr< DiameterType > diameter,
               ::std::unique_ptr< PitchType > pitch,
               ::std::unique_ptr< LengthType > length,
@@ -601,6 +653,9 @@ namespace prj
               ::std::unique_ptr< FakeType > fake,
               ::std::unique_ptr< LeftHandedType > leftHanded,
               ::std::unique_ptr< CsysType > csys,
+              ::std::unique_ptr< CsysLinkedType > csysLinked,
+              ::std::unique_ptr< CsysDraggerType > csysDragger,
+              ::std::unique_ptr< SeerShapeType > seerShape,
               ::std::unique_ptr< DiameterLabelType > diameterLabel,
               ::std::unique_ptr< PitchLabelType > pitchLabel,
               ::std::unique_ptr< LengthLabelType > lengthLabel,
@@ -608,11 +663,10 @@ namespace prj
               ::std::unique_ptr< InternalLabelType > internalLabel,
               ::std::unique_ptr< FakeLabelType > fakeLabel,
               ::std::unique_ptr< LeftHandedLabelType > leftHandedLabel,
-              ::std::unique_ptr< CsysDraggerType > csysDragger,
               const SolidIdType& solidId)
       : ::xml_schema::Type (),
         base_ (std::move (base), this),
-        seerShape_ (std::move (seerShape), this),
+        csysType_ (std::move (csysType), this),
         diameter_ (std::move (diameter), this),
         pitch_ (std::move (pitch), this),
         length_ (std::move (length), this),
@@ -621,6 +675,9 @@ namespace prj
         fake_ (std::move (fake), this),
         leftHanded_ (std::move (leftHanded), this),
         csys_ (std::move (csys), this),
+        csysLinked_ (std::move (csysLinked), this),
+        csysDragger_ (std::move (csysDragger), this),
+        seerShape_ (std::move (seerShape), this),
         diameterLabel_ (std::move (diameterLabel), this),
         pitchLabel_ (std::move (pitchLabel), this),
         lengthLabel_ (std::move (lengthLabel), this),
@@ -628,7 +685,6 @@ namespace prj
         internalLabel_ (std::move (internalLabel), this),
         fakeLabel_ (std::move (fakeLabel), this),
         leftHandedLabel_ (std::move (leftHandedLabel), this),
-        csysDragger_ (std::move (csysDragger), this),
         solidId_ (solidId, this),
         ids_ (this)
       {
@@ -640,7 +696,7 @@ namespace prj
               ::xml_schema::Container* c)
       : ::xml_schema::Type (x, f, c),
         base_ (x.base_, f, this),
-        seerShape_ (x.seerShape_, f, this),
+        csysType_ (x.csysType_, f, this),
         diameter_ (x.diameter_, f, this),
         pitch_ (x.pitch_, f, this),
         length_ (x.length_, f, this),
@@ -649,6 +705,9 @@ namespace prj
         fake_ (x.fake_, f, this),
         leftHanded_ (x.leftHanded_, f, this),
         csys_ (x.csys_, f, this),
+        csysLinked_ (x.csysLinked_, f, this),
+        csysDragger_ (x.csysDragger_, f, this),
+        seerShape_ (x.seerShape_, f, this),
         diameterLabel_ (x.diameterLabel_, f, this),
         pitchLabel_ (x.pitchLabel_, f, this),
         lengthLabel_ (x.lengthLabel_, f, this),
@@ -656,7 +715,6 @@ namespace prj
         internalLabel_ (x.internalLabel_, f, this),
         fakeLabel_ (x.fakeLabel_, f, this),
         leftHandedLabel_ (x.leftHandedLabel_, f, this),
-        csysDragger_ (x.csysDragger_, f, this),
         solidId_ (x.solidId_, f, this),
         ids_ (x.ids_, f, this)
       {
@@ -668,7 +726,7 @@ namespace prj
               ::xml_schema::Container* c)
       : ::xml_schema::Type (e, f | ::xml_schema::Flags::base, c),
         base_ (this),
-        seerShape_ (this),
+        csysType_ (this),
         diameter_ (this),
         pitch_ (this),
         length_ (this),
@@ -677,6 +735,9 @@ namespace prj
         fake_ (this),
         leftHanded_ (this),
         csys_ (this),
+        csysLinked_ (this),
+        csysDragger_ (this),
+        seerShape_ (this),
         diameterLabel_ (this),
         pitchLabel_ (this),
         lengthLabel_ (this),
@@ -684,7 +745,6 @@ namespace prj
         internalLabel_ (this),
         fakeLabel_ (this),
         leftHandedLabel_ (this),
-        csysDragger_ (this),
         solidId_ (this),
         ids_ (this)
       {
@@ -719,16 +779,16 @@ namespace prj
             }
           }
 
-          // seerShape
+          // csysType
           //
-          if (n.name () == "seerShape" && n.namespace_ ().empty ())
+          if (n.name () == "csysType" && n.namespace_ ().empty ())
           {
-            ::std::unique_ptr< SeerShapeType > r (
-              SeerShapeTraits::create (i, f, this));
+            ::std::unique_ptr< CsysTypeType > r (
+              CsysTypeTraits::create (i, f, this));
 
-            if (!seerShape_.present ())
+            if (!csysType_.present ())
             {
-              this->seerShape_.set (::std::move (r));
+              this->csysType_.set (::std::move (r));
               continue;
             }
           }
@@ -845,6 +905,48 @@ namespace prj
             }
           }
 
+          // csysLinked
+          //
+          if (n.name () == "csysLinked" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< CsysLinkedType > r (
+              CsysLinkedTraits::create (i, f, this));
+
+            if (!csysLinked_.present ())
+            {
+              this->csysLinked_.set (::std::move (r));
+              continue;
+            }
+          }
+
+          // csysDragger
+          //
+          if (n.name () == "csysDragger" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< CsysDraggerType > r (
+              CsysDraggerTraits::create (i, f, this));
+
+            if (!csysDragger_.present ())
+            {
+              this->csysDragger_.set (::std::move (r));
+              continue;
+            }
+          }
+
+          // seerShape
+          //
+          if (n.name () == "seerShape" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< SeerShapeType > r (
+              SeerShapeTraits::create (i, f, this));
+
+            if (!seerShape_.present ())
+            {
+              this->seerShape_.set (::std::move (r));
+              continue;
+            }
+          }
+
           // diameterLabel
           //
           if (n.name () == "diameterLabel" && n.namespace_ ().empty ())
@@ -943,20 +1045,6 @@ namespace prj
             }
           }
 
-          // csysDragger
-          //
-          if (n.name () == "csysDragger" && n.namespace_ ().empty ())
-          {
-            ::std::unique_ptr< CsysDraggerType > r (
-              CsysDraggerTraits::create (i, f, this));
-
-            if (!csysDragger_.present ())
-            {
-              this->csysDragger_.set (::std::move (r));
-              continue;
-            }
-          }
-
           // solidId
           //
           if (n.name () == "solidId" && n.namespace_ ().empty ())
@@ -992,10 +1080,10 @@ namespace prj
             "");
         }
 
-        if (!seerShape_.present ())
+        if (!csysType_.present ())
         {
           throw ::xsd::cxx::tree::expected_element< char > (
-            "seerShape",
+            "csysType",
             "");
         }
 
@@ -1055,6 +1143,27 @@ namespace prj
             "");
         }
 
+        if (!csysLinked_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "csysLinked",
+            "");
+        }
+
+        if (!csysDragger_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "csysDragger",
+            "");
+        }
+
+        if (!seerShape_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "seerShape",
+            "");
+        }
+
         if (!diameterLabel_.present ())
         {
           throw ::xsd::cxx::tree::expected_element< char > (
@@ -1104,13 +1213,6 @@ namespace prj
             "");
         }
 
-        if (!csysDragger_.present ())
-        {
-          throw ::xsd::cxx::tree::expected_element< char > (
-            "csysDragger",
-            "");
-        }
-
         if (!solidId_.present ())
         {
           throw ::xsd::cxx::tree::expected_element< char > (
@@ -1133,7 +1235,7 @@ namespace prj
         {
           static_cast< ::xml_schema::Type& > (*this) = x;
           this->base_ = x.base_;
-          this->seerShape_ = x.seerShape_;
+          this->csysType_ = x.csysType_;
           this->diameter_ = x.diameter_;
           this->pitch_ = x.pitch_;
           this->length_ = x.length_;
@@ -1142,6 +1244,9 @@ namespace prj
           this->fake_ = x.fake_;
           this->leftHanded_ = x.leftHanded_;
           this->csys_ = x.csys_;
+          this->csysLinked_ = x.csysLinked_;
+          this->csysDragger_ = x.csysDragger_;
+          this->seerShape_ = x.seerShape_;
           this->diameterLabel_ = x.diameterLabel_;
           this->pitchLabel_ = x.pitchLabel_;
           this->lengthLabel_ = x.lengthLabel_;
@@ -1149,7 +1254,6 @@ namespace prj
           this->internalLabel_ = x.internalLabel_;
           this->fakeLabel_ = x.fakeLabel_;
           this->leftHandedLabel_ = x.leftHandedLabel_;
-          this->csysDragger_ = x.csysDragger_;
           this->solidId_ = x.solidId_;
           this->ids_ = x.ids_;
         }
@@ -1470,15 +1574,15 @@ namespace prj
           s << i.base ();
         }
 
-        // seerShape
+        // csysType
         //
         {
           ::xercesc::DOMElement& s (
             ::xsd::cxx::xml::dom::create_element (
-              "seerShape",
+              "csysType",
               e));
 
-          s << i.seerShape ();
+          s << i.csysType ();
         }
 
         // diameter
@@ -1569,6 +1673,39 @@ namespace prj
           s << i.csys ();
         }
 
+        // csysLinked
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "csysLinked",
+              e));
+
+          s << i.csysLinked ();
+        }
+
+        // csysDragger
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "csysDragger",
+              e));
+
+          s << i.csysDragger ();
+        }
+
+        // seerShape
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "seerShape",
+              e));
+
+          s << i.seerShape ();
+        }
+
         // diameterLabel
         //
         {
@@ -1644,17 +1781,6 @@ namespace prj
               e));
 
           s << i.leftHandedLabel ();
-        }
-
-        // csysDragger
-        //
-        {
-          ::xercesc::DOMElement& s (
-            ::xsd::cxx::xml::dom::create_element (
-              "csysDragger",
-              e));
-
-          s << i.csysDragger ();
         }
 
         // solidId

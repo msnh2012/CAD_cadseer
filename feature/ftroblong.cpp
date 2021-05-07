@@ -29,14 +29,16 @@
 #include "feature/ftroblongbuilder.h"
 #include "feature/ftrupdatepayload.h"
 #include "feature/ftrinputtype.h"
+#include "feature/ftrprimitive.h"
+#include "tools/featuretools.h"
 #include "parameter/prmconstants.h"
 #include "parameter/prmparameter.h"
 #include "feature/ftroblong.h"
 
-using namespace ftr;
+using namespace ftr::Oblong;
 using boost::uuids::uuid;
 
-QIcon Oblong::icon;
+QIcon Feature::icon;
 
 //duplicated from box.
 enum class FeatureTag
@@ -119,121 +121,172 @@ static const std::map<FeatureTag, std::string> featureTagMap =
 
 inline static const prf::Oblong& pOb(){return prf::manager().rootPtr->features().oblong().get();}
 
-Oblong::Oblong() :
-  Base(),
-  length(std::make_unique<prm::Parameter>(prm::Names::Length, pOb().length(), prm::Tags::Length)),
-  width(std::make_unique<prm::Parameter>(prm::Names::Width, pOb().width(), prm::Tags::Width)),
-  height(std::make_unique<prm::Parameter>(prm::Names::Height, pOb().height(), prm::Tags::Height)),
-  csys(std::make_unique<prm::Parameter>(prm::Names::CSys, osg::Matrixd::identity(), prm::Tags::CSys)),
-  prmObserver(std::make_unique<prm::Observer>(std::bind(&Oblong::setModelDirty, this))),
-  csysDragger(std::make_unique<ann::CSysDragger>(this, csys.get())),
-  sShape(std::make_unique<ann::SeerShape>())
+struct Feature::Stow
+{
+  Feature &feature;
+  Primitive primitive;
+  
+  Stow() = delete;
+  Stow(Feature &fIn)
+  : feature(fIn)
+  , primitive(Primitive::Input{fIn, fIn.parameters, fIn.annexes})
+  {
+    primitive.addLength(pOb().length());
+    primitive.addWidth(pOb().width());
+    primitive.addHeight(pOb().height());
+    
+    primitive.lengthIP->setMatrixDims(osg::Matrixd::rotate(osg::PI_2, osg::Vec3d(0.0, 0.0, -1.0)));
+    primitive.lengthIP->setRotationAxis(osg::Vec3d(1.0, 0.0, 0.0), osg::Vec3d(0.0, 0.0, 1.0));
+    
+    // width matrixDims are good at default.
+    primitive.widthIP->setRotationAxis(osg::Vec3d(0.0, 1.0, 0.0), osg::Vec3d(0.0, 0.0, -1.0));
+    
+    primitive.heightIP->setMatrixDims(osg::Matrixd::rotate(osg::PI_2, osg::Vec3d(1.0, 0.0, 0.0)));
+    primitive.heightIP->setRotationAxis(osg::Vec3d(0.0, 0.0, 1.0), osg::Vec3d(0.0, 1.0, 0.0));
+    
+    initializeMaps();
+  }
+
+  
+  void updateIPs()
+  {
+    primitive.IPsToCsys();
+    
+    double l = primitive.length->getDouble() / 2.0;
+    double w = primitive.width->getDouble() / 2.0;
+    double h = primitive.height->getDouble() / 2.0;
+    
+    {
+      auto rotation = osg::Matrixd::rotate(osg::PI_2, osg::Vec3d(0.0, 1.0, 0.0));
+      auto translation = osg::Matrixd::translate(0.0, w, h);
+      primitive.lengthIP->setMatrixDragger(rotation * translation);
+    }
+    {
+      auto rotation = osg::Matrixd::rotate(osg::PI_2, osg::Vec3d(-1.0, 0.0, 0.0));
+      auto translation = osg::Matrixd::translate(l, 0.0, h);
+      primitive.widthIP->setMatrixDragger(rotation * translation);
+    }
+    //no need to rotate
+    primitive.heightIP->setMatrixDragger(osg::Matrixd::translate(l, w, 0.0));
+  }
+  
+  //duplicate of box.
+  void initializeMaps()
+  {
+    //result 
+    std::vector<uuid> tempIds; //save ids for later.
+    for (unsigned int index = 0; index < 35; ++index)
+    {
+      uuid tempId = gu::createRandomId();
+      tempIds.push_back(tempId);
+      primitive.sShape.insertEvolve(gu::createNilId(), tempId);
+    }
+    
+    //helper lamda
+    auto insertIntoFeatureMap = [this](const uuid &idIn, FeatureTag featureTagIn)
+    {
+      primitive.sShape.insertFeatureTag(idIn, featureTagMap.at(featureTagIn));
+    };
+    
+    insertIntoFeatureMap(tempIds.at(0), FeatureTag::Root);
+    insertIntoFeatureMap(tempIds.at(1), FeatureTag::Solid);
+    insertIntoFeatureMap(tempIds.at(2), FeatureTag::Shell);
+    insertIntoFeatureMap(tempIds.at(3), FeatureTag::FaceXP);
+    insertIntoFeatureMap(tempIds.at(4), FeatureTag::FaceXN);
+    insertIntoFeatureMap(tempIds.at(5), FeatureTag::FaceYP);
+    insertIntoFeatureMap(tempIds.at(6), FeatureTag::FaceYN);
+    insertIntoFeatureMap(tempIds.at(7), FeatureTag::FaceZP);
+    insertIntoFeatureMap(tempIds.at(8), FeatureTag::FaceZN);
+    insertIntoFeatureMap(tempIds.at(9), FeatureTag::WireXP);
+    insertIntoFeatureMap(tempIds.at(10), FeatureTag::WireXN);
+    insertIntoFeatureMap(tempIds.at(11), FeatureTag::WireYP);
+    insertIntoFeatureMap(tempIds.at(12), FeatureTag::WireYN);
+    insertIntoFeatureMap(tempIds.at(13), FeatureTag::WireZP);
+    insertIntoFeatureMap(tempIds.at(14), FeatureTag::WireZN);
+    insertIntoFeatureMap(tempIds.at(15), FeatureTag::EdgeXPYP);
+    insertIntoFeatureMap(tempIds.at(16), FeatureTag::EdgeXPZP);
+    insertIntoFeatureMap(tempIds.at(17), FeatureTag::EdgeXPYN);
+    insertIntoFeatureMap(tempIds.at(18), FeatureTag::EdgeXPZN);
+    insertIntoFeatureMap(tempIds.at(19), FeatureTag::EdgeXNYN);
+    insertIntoFeatureMap(tempIds.at(20), FeatureTag::EdgeXNZP);
+    insertIntoFeatureMap(tempIds.at(21), FeatureTag::EdgeXNYP);
+    insertIntoFeatureMap(tempIds.at(22), FeatureTag::EdgeXNZN);
+    insertIntoFeatureMap(tempIds.at(23), FeatureTag::EdgeYPZP);
+    insertIntoFeatureMap(tempIds.at(24), FeatureTag::EdgeYPZN);
+    insertIntoFeatureMap(tempIds.at(25), FeatureTag::EdgeYNZP);
+    insertIntoFeatureMap(tempIds.at(26), FeatureTag::EdgeYNZN);
+    insertIntoFeatureMap(tempIds.at(27), FeatureTag::VertexXPYPZP);
+    insertIntoFeatureMap(tempIds.at(28), FeatureTag::VertexXPYNZP);
+    insertIntoFeatureMap(tempIds.at(29), FeatureTag::VertexXPYNZN);
+    insertIntoFeatureMap(tempIds.at(30), FeatureTag::VertexXPYPZN);
+    insertIntoFeatureMap(tempIds.at(31), FeatureTag::VertexXNYNZP);
+    insertIntoFeatureMap(tempIds.at(32), FeatureTag::VertexXNYPZP);
+    insertIntoFeatureMap(tempIds.at(33), FeatureTag::VertexXNYPZN);
+    insertIntoFeatureMap(tempIds.at(34), FeatureTag::VertexXNYNZN);
+  }
+  
+  void updateResult(const OblongBuilder& oblongMakerIn)
+  {
+    //helper lamda
+    auto updateShapeByTag = [this](const TopoDS_Shape &shapeIn, FeatureTag featureTagIn)
+    {
+      uuid localId = primitive.sShape.featureTagId(featureTagMap.at(featureTagIn));
+      primitive.sShape.updateId(shapeIn, localId);
+    };
+    
+  //   updateShapeByTag(sShape->getRootOCCTShape(), FeatureTag::Root);
+    updateShapeByTag(oblongMakerIn.getSolid(), FeatureTag::Solid);
+    updateShapeByTag(oblongMakerIn.getShell(), FeatureTag::Shell);
+    updateShapeByTag(oblongMakerIn.getFaceXP(), FeatureTag::FaceXP);
+    updateShapeByTag(oblongMakerIn.getFaceXN(), FeatureTag::FaceXN);
+    updateShapeByTag(oblongMakerIn.getFaceYP(), FeatureTag::FaceYP);
+    updateShapeByTag(oblongMakerIn.getFaceYN(), FeatureTag::FaceYN);
+    updateShapeByTag(oblongMakerIn.getFaceZP(), FeatureTag::FaceZP);
+    updateShapeByTag(oblongMakerIn.getFaceZN(), FeatureTag::FaceZN);
+    updateShapeByTag(oblongMakerIn.getWireXP(), FeatureTag::WireXP);
+    updateShapeByTag(oblongMakerIn.getWireXN(), FeatureTag::WireXN);
+    updateShapeByTag(oblongMakerIn.getWireYP(), FeatureTag::WireYP);
+    updateShapeByTag(oblongMakerIn.getWireYN(), FeatureTag::WireYN);
+    updateShapeByTag(oblongMakerIn.getWireZP(), FeatureTag::WireZP);
+    updateShapeByTag(oblongMakerIn.getWireZN(), FeatureTag::WireZN);
+    updateShapeByTag(oblongMakerIn.getEdgeXPYP(), FeatureTag::EdgeXPYP);
+    updateShapeByTag(oblongMakerIn.getEdgeXPZP(), FeatureTag::EdgeXPZP);
+    updateShapeByTag(oblongMakerIn.getEdgeXPYN(), FeatureTag::EdgeXPYN);
+    updateShapeByTag(oblongMakerIn.getEdgeXPZN(), FeatureTag::EdgeXPZN);
+    updateShapeByTag(oblongMakerIn.getEdgeXNYN(), FeatureTag::EdgeXNYN);
+    updateShapeByTag(oblongMakerIn.getEdgeXNZP(), FeatureTag::EdgeXNZP);
+    updateShapeByTag(oblongMakerIn.getEdgeXNYP(), FeatureTag::EdgeXNYP);
+    updateShapeByTag(oblongMakerIn.getEdgeXNZN(), FeatureTag::EdgeXNZN);
+    updateShapeByTag(oblongMakerIn.getEdgeYPZP(), FeatureTag::EdgeYPZP);
+    updateShapeByTag(oblongMakerIn.getEdgeYPZN(), FeatureTag::EdgeYPZN);
+    updateShapeByTag(oblongMakerIn.getEdgeYNZP(), FeatureTag::EdgeYNZP);
+    updateShapeByTag(oblongMakerIn.getEdgeYNZN(), FeatureTag::EdgeYNZN);
+    updateShapeByTag(oblongMakerIn.getVertexXPYPZP(), FeatureTag::VertexXPYPZP);
+    updateShapeByTag(oblongMakerIn.getVertexXPYNZP(), FeatureTag::VertexXPYNZP);
+    updateShapeByTag(oblongMakerIn.getVertexXPYNZN(), FeatureTag::VertexXPYNZN);
+    updateShapeByTag(oblongMakerIn.getVertexXPYPZN(), FeatureTag::VertexXPYPZN);
+    updateShapeByTag(oblongMakerIn.getVertexXNYNZP(), FeatureTag::VertexXNYNZP);
+    updateShapeByTag(oblongMakerIn.getVertexXNYPZP(), FeatureTag::VertexXNYPZP);
+    updateShapeByTag(oblongMakerIn.getVertexXNYPZN(), FeatureTag::VertexXNYPZN);
+    updateShapeByTag(oblongMakerIn.getVertexXNYNZN(), FeatureTag::VertexXNYNZN);
+  }
+};
+
+Feature::Feature()
+: Base()
+, stow(std::make_unique<Stow>(*this))
 {
   if (icon.isNull())
     icon = QIcon(":/resources/images/constructionOblong.svg");
   
   name = QObject::tr("Oblong");
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
-  
-  initializeMaps();
-  
-  length->setConstraint(prm::Constraint::buildNonZeroPositive());
-  width->setConstraint(prm::Constraint::buildNonZeroPositive());
-  height->setConstraint(prm::Constraint::buildNonZeroPositive());
-  
-  parameters.push_back(length.get());
-  parameters.push_back(width.get());
-  parameters.push_back(height.get());
-  parameters.push_back(csys.get());
-  
-  annexes.insert(std::make_pair(ann::Type::SeerShape, sShape.get()));
-  annexes.insert(std::make_pair(ann::Type::CSysDragger, csysDragger.get()));
-  overlaySwitch->addChild(csysDragger->dragger);
-  
-  length->connectValue(std::bind(&Oblong::setModelDirty, this));
-  width->connectValue(std::bind(&Oblong::setModelDirty, this));
-  height->connectValue(std::bind(&Oblong::setModelDirty, this));
-  csys->connect(*prmObserver);
-  
-  setupIPGroup();
 }
 
-Oblong::~Oblong(){}
+Feature::~Feature() = default;
 
-//duplicate of box.
-void Oblong::initializeMaps()
-{
-  //result 
-  std::vector<uuid> tempIds; //save ids for later.
-  for (unsigned int index = 0; index < 35; ++index)
-  {
-    uuid tempId = gu::createRandomId();
-    tempIds.push_back(tempId);
-    sShape->insertEvolve(gu::createNilId(), tempId);
-  }
-  
-  //helper lamda
-  auto insertIntoFeatureMap = [this](const uuid &idIn, FeatureTag featureTagIn)
-  {
-    sShape->insertFeatureTag(idIn, featureTagMap.at(featureTagIn));
-  };
-  
-  insertIntoFeatureMap(tempIds.at(0), FeatureTag::Root);
-  insertIntoFeatureMap(tempIds.at(1), FeatureTag::Solid);
-  insertIntoFeatureMap(tempIds.at(2), FeatureTag::Shell);
-  insertIntoFeatureMap(tempIds.at(3), FeatureTag::FaceXP);
-  insertIntoFeatureMap(tempIds.at(4), FeatureTag::FaceXN);
-  insertIntoFeatureMap(tempIds.at(5), FeatureTag::FaceYP);
-  insertIntoFeatureMap(tempIds.at(6), FeatureTag::FaceYN);
-  insertIntoFeatureMap(tempIds.at(7), FeatureTag::FaceZP);
-  insertIntoFeatureMap(tempIds.at(8), FeatureTag::FaceZN);
-  insertIntoFeatureMap(tempIds.at(9), FeatureTag::WireXP);
-  insertIntoFeatureMap(tempIds.at(10), FeatureTag::WireXN);
-  insertIntoFeatureMap(tempIds.at(11), FeatureTag::WireYP);
-  insertIntoFeatureMap(tempIds.at(12), FeatureTag::WireYN);
-  insertIntoFeatureMap(tempIds.at(13), FeatureTag::WireZP);
-  insertIntoFeatureMap(tempIds.at(14), FeatureTag::WireZN);
-  insertIntoFeatureMap(tempIds.at(15), FeatureTag::EdgeXPYP);
-  insertIntoFeatureMap(tempIds.at(16), FeatureTag::EdgeXPZP);
-  insertIntoFeatureMap(tempIds.at(17), FeatureTag::EdgeXPYN);
-  insertIntoFeatureMap(tempIds.at(18), FeatureTag::EdgeXPZN);
-  insertIntoFeatureMap(tempIds.at(19), FeatureTag::EdgeXNYN);
-  insertIntoFeatureMap(tempIds.at(20), FeatureTag::EdgeXNZP);
-  insertIntoFeatureMap(tempIds.at(21), FeatureTag::EdgeXNYP);
-  insertIntoFeatureMap(tempIds.at(22), FeatureTag::EdgeXNZN);
-  insertIntoFeatureMap(tempIds.at(23), FeatureTag::EdgeYPZP);
-  insertIntoFeatureMap(tempIds.at(24), FeatureTag::EdgeYPZN);
-  insertIntoFeatureMap(tempIds.at(25), FeatureTag::EdgeYNZP);
-  insertIntoFeatureMap(tempIds.at(26), FeatureTag::EdgeYNZN);
-  insertIntoFeatureMap(tempIds.at(27), FeatureTag::VertexXPYPZP);
-  insertIntoFeatureMap(tempIds.at(28), FeatureTag::VertexXPYNZP);
-  insertIntoFeatureMap(tempIds.at(29), FeatureTag::VertexXPYNZN);
-  insertIntoFeatureMap(tempIds.at(30), FeatureTag::VertexXPYPZN);
-  insertIntoFeatureMap(tempIds.at(31), FeatureTag::VertexXNYNZP);
-  insertIntoFeatureMap(tempIds.at(32), FeatureTag::VertexXNYPZP);
-  insertIntoFeatureMap(tempIds.at(33), FeatureTag::VertexXNYPZN);
-  insertIntoFeatureMap(tempIds.at(34), FeatureTag::VertexXNYNZN);
-}
-
-void Oblong::setLength(double vIn)
-{
-  assert(length);
-  length->setValue(vIn);
-}
-
-void Oblong::setWidth(double vIn)
-{
-  assert(width);
-  width->setValue(vIn);
-}
-
-void Oblong::setHeight(double vIn)
-{
-  assert(height);
-  height->setValue(vIn);
-}
-
-void Oblong::setCSys(const osg::Matrixd &csysIn)
+/*
+void Feature::setCSys(const osg::Matrixd &csysIn)
 {
   osg::Matrixd oldSystem = csys->getMatrix();
   if (!csys->setValue(csysIn))
@@ -243,49 +296,50 @@ void Oblong::setCSys(const osg::Matrixd &csysIn)
   osg::Matrixd diffMatrix = osg::Matrixd::inverse(oldSystem) * csysIn;
   csysDragger->draggerUpdate(csysDragger->dragger->getMatrix() * diffMatrix);
 }
+*/
 
-osg::Matrixd Oblong::getCSys() const
-{
-  return csys->getMatrix();
-}
-
-void Oblong::updateModel(const UpdatePayload &plIn)
+void Feature::updateModel(const UpdatePayload &plIn)
 {
   setFailure();
   lastUpdateLog.clear();
-  sShape->reset();
+  stow->primitive.sShape.reset();
   try
   {
-    prm::ObserverBlocker block(*prmObserver);
-    
     if (isSkipped())
     {
       setSuccess();
       throw std::runtime_error("feature is skipped");
     }
     
-    std::vector<const Base*> tfs = plIn.getFeatures(ftr::InputType::linkCSys);
-    if (!tfs.empty())
-    {
-      auto systemParameters =  tfs.front()->getParameters(prm::Tags::CSys);
-      if (systemParameters.empty())
-        throw std::runtime_error("Feature for csys link, doesn't have csys parameter");
-      csys->setValue(systemParameters.front()->getMatrix());
-      csysDragger->draggerUpdate();
-    }
-    
-    if (!(length->getDouble() > width->getDouble()))
+    if (!(stow->primitive.length->getDouble() > stow->primitive.width->getDouble()))
       throw std::runtime_error("length must be greater than width");
+    
+    //nothing for constant.
+    if (static_cast<CSysType>(stow->primitive.csysType.getInt()) == Linked)
+    {
+      const auto &picks = stow->primitive.csysLinked.getPicks();
+      if (picks.empty())
+        throw std::runtime_error("No picks for csys link");
+      tls::Resolver resolver(plIn);
+      if (!resolver.resolve(picks.front()))
+        throw std::runtime_error("Couldn't resolve csys link pick");
+      auto csysPrms = resolver.getFeature()->getParameters(prm::Tags::CSys);
+      if (csysPrms.empty())
+        throw std::runtime_error("csys link feature has no csys parameter");
+      prm::ObserverBlocker(stow->primitive.csysObserver);
+      stow->primitive.csys.setValue(csysPrms.front()->getMatrix());
+      stow->primitive.csysDragger.draggerUpdate();
+    }
     
     OblongBuilder oblongMaker
     (
-      length->getDouble(),
-      width->getDouble(),
-      height->getDouble(),
-      gu::toOcc(csys->getMatrix())
+      stow->primitive.length->getDouble(),
+      stow->primitive.width->getDouble(),
+      stow->primitive.height->getDouble(),
+      gu::toOcc(stow->primitive.csys.getMatrix())
     );
-    sShape->setOCCTShape(oblongMaker.getSolid(), getId());
-    updateResult(oblongMaker);
+    stow->primitive.sShape.setOCCTShape(oblongMaker.getSolid(), getId());
+    stow->updateResult(oblongMaker);
     mainTransform->setMatrix(osg::Matrixd::identity());
     setSuccess();
   }
@@ -305,121 +359,27 @@ void Oblong::updateModel(const UpdatePayload &plIn)
     lastUpdateLog += s.str();
   }
   setModelClean();
-  updateIPGroup();
+  stow->updateIPs();
   if (!lastUpdateLog.empty())
     std::cout << std::endl << lastUpdateLog;
 }
 
-void Oblong::updateResult(const OblongBuilder& oblongMakerIn)
-{
-  //helper lamda
-  auto updateShapeByTag = [this](const TopoDS_Shape &shapeIn, FeatureTag featureTagIn)
-  {
-    uuid localId = sShape->featureTagId(featureTagMap.at(featureTagIn));
-    sShape->updateId(shapeIn, localId);
-  };
-  
-//   updateShapeByTag(sShape->getRootOCCTShape(), FeatureTag::Root);
-  updateShapeByTag(oblongMakerIn.getSolid(), FeatureTag::Solid);
-  updateShapeByTag(oblongMakerIn.getShell(), FeatureTag::Shell);
-  updateShapeByTag(oblongMakerIn.getFaceXP(), FeatureTag::FaceXP);
-  updateShapeByTag(oblongMakerIn.getFaceXN(), FeatureTag::FaceXN);
-  updateShapeByTag(oblongMakerIn.getFaceYP(), FeatureTag::FaceYP);
-  updateShapeByTag(oblongMakerIn.getFaceYN(), FeatureTag::FaceYN);
-  updateShapeByTag(oblongMakerIn.getFaceZP(), FeatureTag::FaceZP);
-  updateShapeByTag(oblongMakerIn.getFaceZN(), FeatureTag::FaceZN);
-  updateShapeByTag(oblongMakerIn.getWireXP(), FeatureTag::WireXP);
-  updateShapeByTag(oblongMakerIn.getWireXN(), FeatureTag::WireXN);
-  updateShapeByTag(oblongMakerIn.getWireYP(), FeatureTag::WireYP);
-  updateShapeByTag(oblongMakerIn.getWireYN(), FeatureTag::WireYN);
-  updateShapeByTag(oblongMakerIn.getWireZP(), FeatureTag::WireZP);
-  updateShapeByTag(oblongMakerIn.getWireZN(), FeatureTag::WireZN);
-  updateShapeByTag(oblongMakerIn.getEdgeXPYP(), FeatureTag::EdgeXPYP);
-  updateShapeByTag(oblongMakerIn.getEdgeXPZP(), FeatureTag::EdgeXPZP);
-  updateShapeByTag(oblongMakerIn.getEdgeXPYN(), FeatureTag::EdgeXPYN);
-  updateShapeByTag(oblongMakerIn.getEdgeXPZN(), FeatureTag::EdgeXPZN);
-  updateShapeByTag(oblongMakerIn.getEdgeXNYN(), FeatureTag::EdgeXNYN);
-  updateShapeByTag(oblongMakerIn.getEdgeXNZP(), FeatureTag::EdgeXNZP);
-  updateShapeByTag(oblongMakerIn.getEdgeXNYP(), FeatureTag::EdgeXNYP);
-  updateShapeByTag(oblongMakerIn.getEdgeXNZN(), FeatureTag::EdgeXNZN);
-  updateShapeByTag(oblongMakerIn.getEdgeYPZP(), FeatureTag::EdgeYPZP);
-  updateShapeByTag(oblongMakerIn.getEdgeYPZN(), FeatureTag::EdgeYPZN);
-  updateShapeByTag(oblongMakerIn.getEdgeYNZP(), FeatureTag::EdgeYNZP);
-  updateShapeByTag(oblongMakerIn.getEdgeYNZN(), FeatureTag::EdgeYNZN);
-  updateShapeByTag(oblongMakerIn.getVertexXPYPZP(), FeatureTag::VertexXPYPZP);
-  updateShapeByTag(oblongMakerIn.getVertexXPYNZP(), FeatureTag::VertexXPYNZP);
-  updateShapeByTag(oblongMakerIn.getVertexXPYNZN(), FeatureTag::VertexXPYNZN);
-  updateShapeByTag(oblongMakerIn.getVertexXPYPZN(), FeatureTag::VertexXPYPZN);
-  updateShapeByTag(oblongMakerIn.getVertexXNYNZP(), FeatureTag::VertexXNYNZP);
-  updateShapeByTag(oblongMakerIn.getVertexXNYPZP(), FeatureTag::VertexXNYPZP);
-  updateShapeByTag(oblongMakerIn.getVertexXNYPZN(), FeatureTag::VertexXNYPZN);
-  updateShapeByTag(oblongMakerIn.getVertexXNYNZN(), FeatureTag::VertexXNYNZN);
-  
-//   sShape->setRootShapeId(sShape->featureTagId(featureTagMap.at(FeatureTag::Root)));
-}
-
-void Oblong::setupIPGroup()
-{
-  lengthIP = new lbr::IPGroup(length.get());
-  lengthIP->setMatrixDims(osg::Matrixd::rotate(osg::PI_2, osg::Vec3d(0.0, 0.0, -1.0)));
-  lengthIP->noAutoRotateDragger();
-  lengthIP->setRotationAxis(osg::Vec3d(1.0, 0.0, 0.0), osg::Vec3d(0.0, 0.0, 1.0));
-  overlaySwitch->addChild(lengthIP.get());
-  csysDragger->dragger->linkToMatrix(lengthIP.get());
-  
-  widthIP = new lbr::IPGroup(width.get());
-  //   widthIP->setMatrixDims(osg::Matrixd::rotate(osg::PI_2, osg::Vec3d(0.0, 0.0, -1.0)));
-  widthIP->noAutoRotateDragger();
-  widthIP->setRotationAxis(osg::Vec3d(0.0, 1.0, 0.0), osg::Vec3d(0.0, 0.0, -1.0));
-  overlaySwitch->addChild(widthIP.get());
-  csysDragger->dragger->linkToMatrix(widthIP.get());
-  
-  heightIP = new lbr::IPGroup(height.get());
-  heightIP->setMatrixDims(osg::Matrixd::rotate(osg::PI_2, osg::Vec3d(1.0, 0.0, 0.0)));
-  heightIP->noAutoRotateDragger();
-  heightIP->setRotationAxis(osg::Vec3d(0.0, 0.0, 1.0), osg::Vec3d(0.0, 1.0, 0.0));
-  overlaySwitch->addChild(heightIP.get());
-  csysDragger->dragger->linkToMatrix(heightIP.get());
-  
-  updateIPGroup();
-}
-
-void Oblong::updateIPGroup()
-{
-  lengthIP->setMatrix(csys->getMatrix());
-  widthIP->setMatrix(csys->getMatrix());
-  heightIP->setMatrix(csys->getMatrix());
-  
-  osg::Matrix lMatrix;
-  lMatrix.setRotate(osg::Quat(osg::PI_2, osg::Vec3d(0.0, 1.0, 0.0)));
-  lMatrix.setTrans(osg::Vec3d(0.0, width->getDouble() / 2.0, height->getDouble() / 2.0));
-  lengthIP->setMatrixDragger(lMatrix);
-  
-  osg::Matrix wMatrix;
-  wMatrix.setRotate(osg::Quat(osg::PI_2, osg::Vec3d(-1.0, 0.0, 0.0)));
-  wMatrix.setTrans(osg::Vec3d(length->getDouble() / 2.0, 0.0, height->getDouble() / 2.0));
-  widthIP->setMatrixDragger(wMatrix);
-  
-  osg::Matrix hMatrix;
-  //no need to rotate
-  hMatrix.setTrans(osg::Vec3d(length->getDouble() / 2.0, width->getDouble() / 2.0, 0.0));
-  heightIP->setMatrixDragger(hMatrix);
-}
-
-void Oblong::serialWrite(const boost::filesystem::path &dIn)
+void Feature::serialWrite(const boost::filesystem::path &dIn)
 {
   prj::srl::obls::Oblong oblongOut
   (
     Base::serialOut(),
-    sShape->serialOut(),
-    length->serialOut(),
-    width->serialOut(),
-    height->serialOut(),
-    csys->serialOut(),
-    csysDragger->serialOut(),
-    lengthIP->serialOut(),
-    widthIP->serialOut(),
-    heightIP->serialOut()
+    stow->primitive.csysType.serialOut(),
+    stow->primitive.length->serialOut(),
+    stow->primitive.width->serialOut(),
+    stow->primitive.height->serialOut(),
+    stow->primitive.csys.serialOut(),
+    stow->primitive.csysLinked.serialOut(),
+    stow->primitive.csysDragger.serialOut(),
+    stow->primitive.sShape.serialOut(),
+    stow->primitive.lengthIP->serialOut(),
+    stow->primitive.widthIP->serialOut(),
+    stow->primitive.heightIP->serialOut()
   );
   
   xml_schema::NamespaceInfomap infoMap;
@@ -427,16 +387,18 @@ void Oblong::serialWrite(const boost::filesystem::path &dIn)
   prj::srl::obls::oblong(stream, oblongOut, infoMap);
 }
 
-void Oblong::serialRead(const prj::srl::obls::Oblong &sOblong)
+void Feature::serialRead(const prj::srl::obls::Oblong &sOblong)
 {
   Base::serialIn(sOblong.base());
-  sShape->serialIn(sOblong.seerShape());
-  length->serialIn(sOblong.length());
-  width->serialIn(sOblong.width());
-  height->serialIn(sOblong.height());
-  csys->serialIn(sOblong.csys());
-  csysDragger->serialIn(sOblong.csysDragger());
-  lengthIP->serialIn(sOblong.lengthIP());
-  widthIP->serialIn(sOblong.widthIP());
-  heightIP->serialIn(sOblong.heightIP());
+  stow->primitive.csysType.serialIn(sOblong.csysType());
+  stow->primitive.length->serialIn(sOblong.length());
+  stow->primitive.width->serialIn(sOblong.width());
+  stow->primitive.height->serialIn(sOblong.height());
+  stow->primitive.csys.serialIn(sOblong.csys());
+  stow->primitive.csysLinked.serialIn(sOblong.csysLinked());
+  stow->primitive.csysDragger.serialIn(sOblong.csysDragger());
+  stow->primitive.sShape.serialIn(sOblong.seerShape());
+  stow->primitive.lengthIP->serialIn(sOblong.lengthIP());
+  stow->primitive.widthIP->serialIn(sOblong.widthIP());
+  stow->primitive.heightIP->serialIn(sOblong.heightIP());
 }

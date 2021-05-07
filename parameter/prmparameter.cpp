@@ -596,6 +596,7 @@ Parameter& Parameter::operator=(const Parameter &other)
   id = other.id;
   constraint = other.constraint;
   pathType = other.pathType;
+  enumeration = other.enumeration;
   
   return *this;
 }

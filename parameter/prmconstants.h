@@ -41,6 +41,7 @@ namespace prm
     static const QString Angle = QObject::tr("Angle");
     static const QString Offset = QObject::tr("Offset");
     static const QString CSys = QObject::tr("CSys");
+    static const QString CSysType = QObject::tr("CSys Type");
     static const QString CSysLinked = QObject::tr("CSys Linked");
     static const QString Diameter = QObject::tr("Diameter");
     static const QString Origin = QObject::tr("Origin");
@@ -60,12 +61,15 @@ namespace prm
     constexpr std::string_view Height = "Height"; //!< cylinder, box, cone
     constexpr std::string_view Length = "Length"; //!< box
     constexpr std::string_view Width = "Width"; //!< box
+    constexpr std::string_view Radius1 = "Radius1"; //!< cone
+    constexpr std::string_view Radius2 = "Radius2"; //!< cone
     constexpr std::string_view Position = "Position"; //!< blend
     constexpr std::string_view Distance = "Distance"; //!< chamfer, sketch
     constexpr std::string_view Angle = "Angle"; //!< draft
     constexpr std::string_view Offset = "Offset"; //!< datum plane
     constexpr std::string_view CSys = "CSys"; //!< feature with a coordinate system.
-    constexpr std::string_view CSysLinked = "CSysLinked"; //!< feature with a coordinate system.
+    constexpr std::string_view CSysType = "CSysType"; //!< constant or linked
+    constexpr std::string_view CSysLinked = "CSysLinked"; //!< picks for csys link.
     constexpr std::string_view Diameter = "Diameter"; //!< sketch
     constexpr std::string_view Origin = "Origin"; //!< revolve, dieset
     constexpr std::string_view Direction = "Direction"; //!< extrude.

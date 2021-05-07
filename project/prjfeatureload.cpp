@@ -227,7 +227,7 @@ std::shared_ptr< ftr::Base > FeatureLoad::loadBox(const std::string& fileNameIn,
   auto box = srl::bxs::box(fileNameIn, flags);
   assert(box);
   
-  auto freshBox = std::make_shared<ftr::Box>();
+  auto freshBox = std::make_shared<ftr::Box::Feature>();
   freshBox->getAnnex<ann::SeerShape>().setOCCTShape(shapeVector.at(shapeOffsetIn), featureId);
   freshBox->serialRead(*box);
   
@@ -239,7 +239,7 @@ std::shared_ptr< ftr::Base > FeatureLoad::loadCylinder(const std::string& fileNa
   auto sCylinder = srl::cyls::cylinder(fileNameIn, flags);
   assert(sCylinder);
   
-  auto freshCylinder = std::make_shared<ftr::Cylinder>();
+  auto freshCylinder = std::make_shared<ftr::Cylinder::Feature>();
   freshCylinder->getAnnex<ann::SeerShape>().setOCCTShape(shapeVector.at(shapeOffsetIn), featureId);
   freshCylinder->serialRead(*sCylinder);
   
@@ -251,7 +251,7 @@ std::shared_ptr< ftr::Base > FeatureLoad::loadSphere(const std::string& fileName
   auto sSphere = srl::sprs::sphere(fileNameIn, flags);
   assert(sSphere);
   
-  auto freshSphere = std::make_shared<ftr::Sphere>();
+  auto freshSphere = std::make_shared<ftr::Sphere::Feature>();
   freshSphere->getAnnex<ann::SeerShape>().setOCCTShape(shapeVector.at(shapeOffsetIn), featureId);
   freshSphere->serialRead(*sSphere);
   
@@ -263,7 +263,7 @@ std::shared_ptr< ftr::Base > FeatureLoad::loadCone(const std::string& fileNameIn
   auto sCone = srl::cns::cone(fileNameIn, flags);
   assert(sCone);
   
-  auto freshCone = std::make_shared<ftr::Cone>();
+  auto freshCone = std::make_shared<ftr::Cone::Feature>();
   freshCone->getAnnex<ann::SeerShape>().setOCCTShape(shapeVector.at(shapeOffsetIn), featureId);
   freshCone->serialRead(*sCone);
   
@@ -381,7 +381,7 @@ std::shared_ptr<ftr::Base> FeatureLoad::loadOblong(const std::string &fileNameIn
   auto sOblong = srl::obls::oblong(fileNameIn, flags);
   assert(sOblong);
   
-  auto freshOblong = std::make_shared<ftr::Oblong>();
+  auto freshOblong = std::make_shared<ftr::Oblong::Feature>();
   freshOblong->getAnnex<ann::SeerShape>().setOCCTShape(shapeVector.at(shapeOffsetIn), featureId);
   freshOblong->serialRead(*sOblong);
   
@@ -572,7 +572,7 @@ std::shared_ptr<ftr::Base> FeatureLoad::loadTorus(const std::string &fileNameIn,
   auto st = srl::trss::torus(fileNameIn, flags);
   assert(st);
   
-  auto tf = std::make_shared<ftr::Torus>();
+  auto tf = std::make_shared<ftr::Torus::Feature>();
   tf->getAnnex<ann::SeerShape>().setOCCTShape(shapeVector.at(shapeOffsetIn), featureId);
   tf->serialRead(*st);
   
@@ -584,7 +584,7 @@ std::shared_ptr<ftr::Base> FeatureLoad::loadThread(const std::string &fileNameIn
   auto st = srl::thds::thread(fileNameIn, flags);
   assert(st);
   
-  auto tf = std::make_shared<ftr::Thread>();
+  auto tf = std::make_shared<ftr::Thread::Feature>();
   tf->getAnnex<ann::SeerShape>().setOCCTShape(shapeVector.at(shapeOffsetIn), featureId);
   tf->serialRead(*st);
   

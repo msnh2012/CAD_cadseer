@@ -26,6 +26,8 @@
 #include "parameter/prmparameter.h"
 #include "feature/ftrinputtype.h"
 #include "feature/ftrbase.h"
+#include "feature/ftrprimitive.h"
+#include "tools/featuretools.h"
 #include "commandview/cmvmessage.h"
 #include "commandview/cmvprimitive.h"
 #include "command/cmdprimitive.h"
@@ -42,7 +44,7 @@ Primitive::Primitive(ftr::Base *fIn, bool eIn)
   isEdit = eIn;
   if (isEdit.get())
   {
-    viewBase = std::make_unique<cmv::Primitive>(feature);
+    viewBase = std::make_unique<cmv::Primitive>(this);
     isFirstRun = false;
     node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
   }
@@ -97,18 +99,38 @@ void Primitive::deactivate()
   isActive = false;
 }
 
+void Primitive::setToLinked(const slc::Messages &msIn)
+{
+  assert(isActive);
+  project->clearAllInputs(feature->getId());
+  if (msIn.empty())
+    return;
+  
+  const ftr::Base &parent = *project->findFeature(msIn.front().featureId);
+  auto pick = tls::convertToPick(msIn.front(), parent, project->getShapeHistory());
+  pick.tag = indexTag(prm::Tags::CSysLinked, 0);
+  feature->getParameter(prm::Tags::CSysLinked)->setValue({pick});
+  project->connectInsert(parent.getId(), feature->getId(), {pick.tag});
+}
+
+void Primitive::setToConstant()
+{
+  assert(isActive);
+  project->clearAllInputs(feature->getId());
+}
+
 void Primitive::go()
 {
-  auto systemParameters = feature->getParameters(prm::Tags::CSys);
-  assert (!systemParameters.empty());
-  systemParameters.front()->setValue(viewer->getCurrentSystem());
+  auto systemParameter = feature->getParameter(prm::Tags::CSys);
+  systemParameter->setValue(viewer->getCurrentSystem());
   for (const auto &c : eventHandler->getSelections())
   {
     ftr::Base *tf = project->findFeature(c.featureId);
     if (!tf || tf->getParameters(prm::Tags::CSys).empty())
       continue;
-    project->connectInsert(tf->getId(), feature->getId(), ftr::InputType{ftr::InputType::linkCSys});
-    systemParameters.front()->setActive(false);
+    feature->getParameter(prm::Tags::CSysType)->setValue(static_cast<int>(ftr::Primitive::Linked));
+    auto msg = slc::EventHandler::containerToMessage(c);
+    setToLinked({msg});
     break;
   }
   

@@ -39,6 +39,9 @@ namespace cmd
     std::string getStatusMessage() override;
     void activate() override;
     void deactivate() override;
+    
+    void setToLinked(const std::vector<slc::Message>&);
+    void setToConstant();
   private:
     cmd::LeafManager leafManager;
     void go();

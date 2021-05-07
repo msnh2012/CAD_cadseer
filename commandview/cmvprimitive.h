@@ -25,6 +25,7 @@
 #include "commandview/cmvbase.h"
 
 namespace ftr{class Base;}
+namespace cmd{class Primitive;}
 
 namespace cmv
 {
@@ -35,11 +36,10 @@ namespace cmv
   {
     Q_OBJECT
   public:
-    Primitive(ftr::Base*);
+    Primitive(cmd::Primitive*);
     ~Primitive() override;
-  public Q_SLOTS:
-    void linkedCSysChanged();
-    void parameterChanged();
+  private Q_SLOTS:
+    void modelChanged(const QModelIndex&, const QModelIndex&);
   private:
     struct Stow;
     std::unique_ptr<Stow> stow;

@@ -20,64 +20,38 @@
 #ifndef FTR_OBLONG_H
 #define FTR_OBLONG_H
 
-#include <osg/ref_ptr>
-
 #include "feature/ftrbase.h"
 
-namespace lbr{class IPGroup;}
 namespace prj{namespace srl{namespace obls{class Oblong;}}}
-namespace ann{class CSysDragger; class SeerShape;}
-namespace prm{struct Observer;}
 
 namespace ftr
 {
-  class OblongBuilder;
-  
-  class Oblong : public Base
+  namespace Oblong
   {
-  public:
-    Oblong();
-    virtual ~Oblong() override;
-    
-    void setLength(double);
-    const std::shared_ptr<prm::Parameter>& getLength() const {return length;}
-    void setWidth(double);
-    const std::shared_ptr<prm::Parameter>& getWidth() const {return width;}
-    void setHeight(double);
-    const std::shared_ptr<prm::Parameter>& getHeight() const {return height;}
-    void setCSys(const osg::Matrixd&);
-    osg::Matrixd getCSys() const;
-    
-    virtual void updateModel(const UpdatePayload&) override;
-    virtual Type getType() const override {return Type::Oblong;}
-    virtual const std::string& getTypeString() const override {return toString(Type::Oblong);}
-    virtual const QIcon& getIcon() const override {return icon;}
-    virtual Descriptor getDescriptor() const override {return Descriptor::Create;}
-    virtual void serialWrite(const boost::filesystem::path&) override; //!< write xml file. not const, might reset a modified flag.
-    void serialRead(const prj::srl::obls::Oblong &sOblong);
-  protected:
-    std::shared_ptr<prm::Parameter> length;
-    std::shared_ptr<prm::Parameter> width;
-    std::shared_ptr<prm::Parameter> height;
-    std::unique_ptr<prm::Parameter> csys;
-    
-    std::unique_ptr<prm::Observer> prmObserver;
-  
-    std::unique_ptr<ann::CSysDragger> csysDragger;
-    std::unique_ptr<ann::SeerShape> sShape;
-    
-    osg::ref_ptr<lbr::IPGroup> lengthIP;
-    osg::ref_ptr<lbr::IPGroup> widthIP;
-    osg::ref_ptr<lbr::IPGroup> heightIP;
-    
-    void initializeMaps();
-    void updateResult(const OblongBuilder&);
-    void setupIPGroup();
-    void updateIPGroup();
-    
-  private:
-    static QIcon icon;
-  };
+    enum CSysType
+    {
+      Constant
+      , Linked
+    };
+    class Feature : public Base
+    {
+    public:
+      Feature();
+      ~Feature() override;
+      
+      void updateModel(const UpdatePayload&) override;
+      Type getType() const override {return Type::Oblong;}
+      const std::string& getTypeString() const override {return toString(Type::Oblong);}
+      const QIcon& getIcon() const override {return icon;}
+      Descriptor getDescriptor() const override {return Descriptor::Create;}
+      void serialWrite(const boost::filesystem::path&) override; //!< write xml file. not const, might reset a modified flag.
+      void serialRead(const prj::srl::obls::Oblong &sOblong);
+    private:
+      static QIcon icon;
+      struct Stow;
+      std::unique_ptr<Stow> stow;
+    };
+  }
 }
 
 #endif // FTR_OBLONG_H

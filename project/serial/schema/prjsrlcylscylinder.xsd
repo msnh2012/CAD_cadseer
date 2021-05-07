@@ -14,11 +14,13 @@
 <xs:complexType name="Cylinder">
   <xs:sequence>
     <xs:element name="base" type="spt:Base"/>
-    <xs:element name="seerShape" type="spt:SeerShape"/>
+    <xs:element name="csysType" type="spt:Parameter"/>
     <xs:element name="radius" type="spt:Parameter"/>
     <xs:element name="height" type="spt:Parameter"/>
     <xs:element name="csys" type="spt:Parameter"/>
+    <xs:element name="csysLinked" type="spt:Parameter"/>
     <xs:element name="csysDragger" type="spt:CSysDragger"/>
+    <xs:element name="seerShape" type="spt:SeerShape"/>
     <xs:element name="heightIP" type="spt:IPGroup"/>
     <xs:element name="radiusIP" type="spt:IPGroup"/>
   </xs:sequence>

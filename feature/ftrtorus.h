@@ -23,64 +23,29 @@
 #include "feature/ftrbase.h"
 
 namespace prj{namespace srl{namespace trss{class Torus;}}}
-namespace ann{class CSysDragger; class SeerShape;}
-namespace lbr{class IPGroup; class PLabel;}
-namespace prm{struct Observer;}
 
 namespace ftr
 {
-  /**
-  * @brief build a torus solid primitive
-  */
-  class Torus : public Base
+  namespace Torus
   {
-  public:
-    Torus();
-    virtual ~Torus() override;
-    
-    void setRadius1(double lengthIn);
-    void setRadius2(double lengthIn);
-    
-    const prm::Parameter& getRadius1() const;
-    const prm::Parameter& getRadius2() const;
-    
-    void setCSys(const osg::Matrixd&);
-    osg::Matrixd getCSys() const;
-    
-    virtual void serialWrite(const boost::filesystem::path&) override;
-    void serialRead(const prj::srl::trss::Torus&);
-    
-    virtual void updateModel(const UpdatePayload&) override;
-    virtual Type getType() const override {return Type::Torus;}
-    virtual const std::string& getTypeString() const override {return toString(Type::Torus);}
-    virtual const QIcon& getIcon() const override {return icon;}
-    virtual Descriptor getDescriptor() const override {return Descriptor::Create;}
-    
-  protected:
-    std::unique_ptr<prm::Parameter> radius1;
-    std::unique_ptr<prm::Parameter> radius2; //<! has to be smaller than radius 1.
-    std::unique_ptr<prm::Parameter> seam;
-    std::unique_ptr<prm::Parameter> csys;
-    
-    std::unique_ptr<prm::Observer> csysObserver;
-    
-    osg::ref_ptr<lbr::IPGroup> radius1IP;
-    osg::ref_ptr<lbr::IPGroup> radius2IP;
-    osg::ref_ptr<lbr::PLabel> seamLabel;
-  
-    std::unique_ptr<ann::CSysDragger> csysDragger;
-    std::unique_ptr<ann::SeerShape> sShape;
-    
-    std::vector<boost::uuids::uuid> offsetIds;
-    
-    void initializeMaps();
-    void setupIPGroup();
-    void updateIPGroup();
-    void updateResult(); //expects seershape to be set.
-    
-  private:
-    static QIcon icon;
-  };
+    class Feature : public Base
+    {
+    public:
+      Feature();
+      ~Feature() override;
+      void updateModel(const UpdatePayload&) override;
+      Type getType() const override {return Type::Torus;}
+      const std::string& getTypeString() const override {return toString(Type::Torus);}
+      const QIcon& getIcon() const override {return icon;}
+      Descriptor getDescriptor() const override {return Descriptor::Create;}
+      void serialWrite(const boost::filesystem::path&) override;
+      void serialRead(const prj::srl::trss::Torus&);
+    private:
+      static QIcon icon;
+      struct Stow;
+      std::unique_ptr<Stow> stow;
+    };
+  }
 }
 
 #endif // FTR_TORUS_H

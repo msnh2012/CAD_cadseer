@@ -123,22 +123,22 @@ namespace prj
         void
         base (::std::unique_ptr< BaseType > p);
 
-        // seerShape
+        // csysType
         //
-        typedef ::prj::srl::spt::SeerShape SeerShapeType;
-        typedef ::xsd::cxx::tree::traits< SeerShapeType, char > SeerShapeTraits;
+        typedef ::prj::srl::spt::Parameter CsysTypeType;
+        typedef ::xsd::cxx::tree::traits< CsysTypeType, char > CsysTypeTraits;
 
-        const SeerShapeType&
-        seerShape () const;
+        const CsysTypeType&
+        csysType () const;
 
-        SeerShapeType&
-        seerShape ();
-
-        void
-        seerShape (const SeerShapeType& x);
+        CsysTypeType&
+        csysType ();
 
         void
-        seerShape (::std::unique_ptr< SeerShapeType > p);
+        csysType (const CsysTypeType& x);
+
+        void
+        csysType (::std::unique_ptr< CsysTypeType > p);
 
         // radius1
         //
@@ -208,6 +208,57 @@ namespace prj
         void
         csys (::std::unique_ptr< CsysType > p);
 
+        // csysLinked
+        //
+        typedef ::prj::srl::spt::Parameter CsysLinkedType;
+        typedef ::xsd::cxx::tree::traits< CsysLinkedType, char > CsysLinkedTraits;
+
+        const CsysLinkedType&
+        csysLinked () const;
+
+        CsysLinkedType&
+        csysLinked ();
+
+        void
+        csysLinked (const CsysLinkedType& x);
+
+        void
+        csysLinked (::std::unique_ptr< CsysLinkedType > p);
+
+        // csysDragger
+        //
+        typedef ::prj::srl::spt::CSysDragger CsysDraggerType;
+        typedef ::xsd::cxx::tree::traits< CsysDraggerType, char > CsysDraggerTraits;
+
+        const CsysDraggerType&
+        csysDragger () const;
+
+        CsysDraggerType&
+        csysDragger ();
+
+        void
+        csysDragger (const CsysDraggerType& x);
+
+        void
+        csysDragger (::std::unique_ptr< CsysDraggerType > p);
+
+        // seerShape
+        //
+        typedef ::prj::srl::spt::SeerShape SeerShapeType;
+        typedef ::xsd::cxx::tree::traits< SeerShapeType, char > SeerShapeTraits;
+
+        const SeerShapeType&
+        seerShape () const;
+
+        SeerShapeType&
+        seerShape ();
+
+        void
+        seerShape (const SeerShapeType& x);
+
+        void
+        seerShape (::std::unique_ptr< SeerShapeType > p);
+
         // radius1IP
         //
         typedef ::prj::srl::spt::IPGroup Radius1IPType;
@@ -259,23 +310,6 @@ namespace prj
         void
         seamLabel (::std::unique_ptr< SeamLabelType > p);
 
-        // csysDragger
-        //
-        typedef ::prj::srl::spt::CSysDragger CsysDraggerType;
-        typedef ::xsd::cxx::tree::traits< CsysDraggerType, char > CsysDraggerTraits;
-
-        const CsysDraggerType&
-        csysDragger () const;
-
-        CsysDraggerType&
-        csysDragger ();
-
-        void
-        csysDragger (const CsysDraggerType& x);
-
-        void
-        csysDragger (::std::unique_ptr< CsysDraggerType > p);
-
         // offsetIds
         //
         typedef ::xml_schema::String OffsetIdsType;
@@ -296,26 +330,30 @@ namespace prj
         // Constructors.
         //
         Torus (const BaseType&,
-               const SeerShapeType&,
+               const CsysTypeType&,
                const Radius1Type&,
                const Radius2Type&,
                const SeamType&,
                const CsysType&,
+               const CsysLinkedType&,
+               const CsysDraggerType&,
+               const SeerShapeType&,
                const Radius1IPType&,
                const Radius2IPType&,
-               const SeamLabelType&,
-               const CsysDraggerType&);
+               const SeamLabelType&);
 
         Torus (::std::unique_ptr< BaseType >,
-               ::std::unique_ptr< SeerShapeType >,
+               ::std::unique_ptr< CsysTypeType >,
                ::std::unique_ptr< Radius1Type >,
                ::std::unique_ptr< Radius2Type >,
                ::std::unique_ptr< SeamType >,
                ::std::unique_ptr< CsysType >,
+               ::std::unique_ptr< CsysLinkedType >,
+               ::std::unique_ptr< CsysDraggerType >,
+               ::std::unique_ptr< SeerShapeType >,
                ::std::unique_ptr< Radius1IPType >,
                ::std::unique_ptr< Radius2IPType >,
-               ::std::unique_ptr< SeamLabelType >,
-               ::std::unique_ptr< CsysDraggerType >);
+               ::std::unique_ptr< SeamLabelType >);
 
         Torus (const ::xercesc::DOMElement& e,
                ::xml_schema::Flags f = 0,
@@ -344,15 +382,17 @@ namespace prj
 
         protected:
         ::xsd::cxx::tree::one< BaseType > base_;
-        ::xsd::cxx::tree::one< SeerShapeType > seerShape_;
+        ::xsd::cxx::tree::one< CsysTypeType > csysType_;
         ::xsd::cxx::tree::one< Radius1Type > radius1_;
         ::xsd::cxx::tree::one< Radius2Type > radius2_;
         ::xsd::cxx::tree::one< SeamType > seam_;
         ::xsd::cxx::tree::one< CsysType > csys_;
+        ::xsd::cxx::tree::one< CsysLinkedType > csysLinked_;
+        ::xsd::cxx::tree::one< CsysDraggerType > csysDragger_;
+        ::xsd::cxx::tree::one< SeerShapeType > seerShape_;
         ::xsd::cxx::tree::one< Radius1IPType > radius1IP_;
         ::xsd::cxx::tree::one< Radius2IPType > radius2IP_;
         ::xsd::cxx::tree::one< SeamLabelType > seamLabel_;
-        ::xsd::cxx::tree::one< CsysDraggerType > csysDragger_;
         OffsetIdsSequence offsetIds_;
       };
     }

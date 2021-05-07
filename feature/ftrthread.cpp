@@ -47,130 +47,152 @@
 #include "feature/ftrshapecheck.h"
 #include "feature/ftrupdatepayload.h"
 #include "feature/ftrinputtype.h"
+#include "feature/ftrprimitive.h"
+#include "tools/featuretools.h"
 #include "parameter/prmconstants.h"
 #include "parameter/prmparameter.h"
 #include "feature/ftrthread.h"
 
-using namespace ftr;
+using namespace ftr::Thread;
 
 using boost::uuids::uuid;
 
-QIcon Thread::icon;
+QIcon Feature::icon;
 
 inline static const prf::Thread& pTh(){return prf::manager().rootPtr->features().thread().get();}
 
+struct Feature::Stow
+{
+  Feature &feature;
+  Primitive primitive;
+  
+  prm::Parameter diameter{prm::Names::Diameter, pTh().diameter(), prm::Tags::Diameter}; //!< major diameter.
+  prm::Parameter pitch{prm::Names::Pitch, pTh().pitch(), prm::Tags::Pitch};
+  prm::Parameter length{prm::Names::Length, pTh().length(), prm::Tags::Length};
+  prm::Parameter angle{prm::Names::Angle, pTh().angle(), prm::Tags::Angle}; //!< included angle of thread section in degrees.
+  prm::Parameter internal{QObject::tr("Internal"), pTh().internal(), Tags::Internal}; //!< boolean to signal internal or external threads.
+  prm::Parameter fake{QObject::tr("Fake"), pTh().fake(), Tags::Fake}; //!< true means no helical.
+  prm::Parameter leftHanded{QObject::tr("Left Handed"), pTh().leftHanded(), Tags::LeftHanded};
+
+  osg::ref_ptr<lbr::PLabel> diameterLabel{new lbr::PLabel(&diameter)};
+  osg::ref_ptr<lbr::PLabel> pitchLabel{new lbr::PLabel(&pitch)};
+  osg::ref_ptr<lbr::PLabel> lengthLabel{new lbr::PLabel(&length)};
+  osg::ref_ptr<lbr::PLabel> angleLabel{new lbr::PLabel(&angle)};
+  osg::ref_ptr<lbr::PLabel> internalLabel{new lbr::PLabel(&internal)};
+  osg::ref_ptr<lbr::PLabel> fakeLabel{new lbr::PLabel(&fake)};
+  osg::ref_ptr<lbr::PLabel> leftHandedLabel{new lbr::PLabel(&leftHanded)};
+
+  uuid solidId = gu::createRandomId();
+  std::vector<uuid> ids;
+  
+  Stow(Feature& fIn)
+  : feature(fIn)
+  , primitive(Primitive::Input{fIn, fIn.parameters, fIn.annexes})
+  {
+    //not going to use any optional stuff from primitive.
+    
+    auto setupParameter = [&](prm::Parameter &p)
+    {
+      p.setConstraint(prm::Constraint::buildNonZeroPositive());
+      p.connectValue(std::bind(&Feature::setModelDirty, &feature));
+      feature.parameters.push_back(&p);
+    };
+    setupParameter(diameter);
+    setupParameter(pitch);
+    setupParameter(length);
+    
+    //angle has a special constraint
+    prm::Constraint angleConstraint;
+    prm::Boundary lower(0.0, prm::Boundary::End::Open);
+    prm::Boundary upper(180.0, prm::Boundary::End::Open);
+    prm::Interval interval(lower, upper);
+    angleConstraint.intervals.push_back(interval);
+    angle.setConstraint(angleConstraint);
+    angle.connectValue(std::bind(&Feature::setModelDirty, &feature));
+    feature.parameters.push_back(&angle);
+    
+    internal.connectValue(std::bind(&Feature::setModelDirty, &feature));
+    feature.parameters.push_back(&internal);
+    
+    fake.connectValue(std::bind(&Feature::setModelDirty, &feature));
+    feature.parameters.push_back(&fake);
+    
+    leftHanded.connectValue(std::bind(&Feature::setModelDirty, &feature));
+    feature.parameters.push_back(&leftHanded);
+    
+    feature.overlaySwitch->addChild(diameterLabel.get());
+    feature.overlaySwitch->addChild(pitchLabel.get());
+    feature.overlaySwitch->addChild(lengthLabel.get());
+    feature.overlaySwitch->addChild(angleLabel.get());
+    feature.overlaySwitch->addChild(internalLabel.get());
+    feature.overlaySwitch->addChild(fakeLabel.get());
+    feature.overlaySwitch->addChild(leftHandedLabel.get());
+  }
+  
+  void updateIds()
+  {
+    //the solid is the only shape guarenteed to be consistant. We just use a shape index
+    //mapping. This won't guarentee consistant ids, but should eliminate subsequant feature
+    //id bloat.
+    
+    occt::ShapeVector shapes = occt::mapShapes(primitive.sShape.getRootOCCTShape());
+    int diff = shapes.size() - ids.size();
+    if (diff < 0)
+      diff = 0;
+    for (int i = 0; i < diff; ++i)
+      ids.push_back(gu::createRandomId());
+    int si = 0; //shapeIndex.
+    for (const auto &s : shapes)
+    {
+      //don't overwrite the root compound
+      if (primitive.sShape.findId(s).is_nil())
+      {
+        primitive.sShape.updateId(s, ids.at(si));
+        if (!primitive.sShape.hasEvolveRecordOut(ids.at(si)))
+          primitive.sShape.insertEvolve(gu::createNilId(), ids.at(si));
+      }
+      si++;
+    }
+    
+    TopoDS_Shape solid = occt::getFirstNonCompound(primitive.sShape.getRootOCCTShape());
+    assert(solid.ShapeType() == TopAbs_SOLID);
+    primitive.sShape.updateId(solid, solidId);
+    if (!primitive.sShape.hasEvolveRecordOut(solidId))
+      primitive.sShape.insertEvolve(gu::createNilId(), solidId);
+  }
+
+  void updateLabels()
+  {
+    osg::Matrixd m = primitive.csys.getMatrix();
+    double d = diameter.getDouble();
+    double l = length.getDouble();
+    
+    diameterLabel->setMatrix(osg::Matrixd::translate(osg::Vec3d(d / 2.0, 0.0, l * .625) * m));
+    pitchLabel->setMatrix(osg::Matrixd::translate(osg::Vec3d(d / 2.0, 0.0, l * .875) * m));
+    lengthLabel->setMatrix(osg::Matrixd::translate(osg::Vec3d(0.0, 0.0, l) * m));
+    angleLabel->setMatrix(osg::Matrixd::translate(osg::Vec3d(d / 2.0, 0.0, l *.375) * m));
+    internalLabel->setMatrix(osg::Matrixd::translate(osg::Vec3d(-d / 2.0, 0.0, l * .875) * m));
+    fakeLabel->setMatrix(osg::Matrixd::translate(osg::Vec3d(-d / 2.0, 0.0, l * .625) * m));
+    leftHandedLabel->setMatrix(osg::Matrixd::translate(osg::Vec3d(-d / 2.0, 0.0, l *.375) * m));
+  }
+};
+
 //defaulting to 10mm screw. need to fill in with preferences.
-Thread::Thread():
-Base(),
-diameter(std::make_unique<prm::Parameter>(prm::Names::Diameter, pTh().diameter(), prm::Tags::Diameter)),
-pitch(std::make_unique<prm::Parameter>(prm::Names::Pitch, pTh().pitch(), prm::Tags::Pitch)),
-length(std::make_unique<prm::Parameter>(prm::Names::Length, pTh().length(), prm::Tags::Length)),
-angle(std::make_unique<prm::Parameter>(prm::Names::Angle, pTh().angle(), prm::Tags::Angle)),
-internal(std::make_unique<prm::Parameter>(QObject::tr("Internal Thread"), pTh().internal())),
-fake(std::make_unique<prm::Parameter>(QObject::tr("Fake"), pTh().fake())),
-leftHanded(std::make_unique<prm::Parameter>(QObject::tr("Left Handed"), pTh().leftHanded())),
-csys(std::make_unique<prm::Parameter>(prm::Names::CSys, osg::Matrixd::identity(), prm::Tags::CSys)),
-prmObserver(std::make_unique<prm::Observer>(std::bind(&Thread::setModelDirty, this))),
-diameterLabel(new lbr::PLabel(diameter.get())),
-pitchLabel(new lbr::PLabel(pitch.get())),
-lengthLabel(new lbr::PLabel(length.get())),
-angleLabel(new lbr::PLabel(angle.get())),
-internalLabel(new lbr::PLabel(internal.get())),
-fakeLabel(new lbr::PLabel(fake.get())),
-leftHandedLabel(new lbr::PLabel(leftHanded.get())),
-csysDragger(std::make_unique<ann::CSysDragger>(this, csys.get())),
-sShape(std::make_unique<ann::SeerShape>()),
-solidId(gu::createRandomId())
+Feature::Feature()
+: Base()
+, stow(std::make_unique<Stow>(*this))
 {
   if (icon.isNull())
     icon = QIcon(":/resources/images/constructionThread.svg");
   
   name = QObject::tr("Thread");
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
-  
-  auto setupParameter = [&](prm::Parameter *p)
-  {
-    p->setConstraint(prm::Constraint::buildNonZeroPositive());
-    p->connectValue(std::bind(&Thread::setModelDirty, this));
-    parameters.push_back(p);
-  };
-  setupParameter(diameter.get());
-  setupParameter(pitch.get());
-  setupParameter(length.get());
-  
-  //angle has a special constraint
-  prm::Constraint angleConstraint;
-  prm::Boundary lower(0.0, prm::Boundary::End::Open);
-  prm::Boundary upper(180.0, prm::Boundary::End::Open);
-  prm::Interval interval(lower, upper);
-  angleConstraint.intervals.push_back(interval);
-  angle->setConstraint(angleConstraint);
-  angle->connectValue(std::bind(&Thread::setModelDirty, this));
-  parameters.push_back(angle.get());
-  
-  internal->connectValue(std::bind(&Thread::setModelDirty, this));
-  parameters.push_back(internal.get());
-  
-  fake->connectValue(std::bind(&Thread::setModelDirty, this));
-  parameters.push_back(fake.get());
-  
-  leftHanded->connectValue(std::bind(&Thread::setModelDirty, this));
-  parameters.push_back(leftHanded.get());
-  
-  csys->connect(*prmObserver);
-  parameters.push_back(csys.get());
-  
-  overlaySwitch->addChild(diameterLabel.get());
-  overlaySwitch->addChild(pitchLabel.get());
-  overlaySwitch->addChild(lengthLabel.get());
-  overlaySwitch->addChild(angleLabel.get());
-  overlaySwitch->addChild(internalLabel.get());
-  overlaySwitch->addChild(fakeLabel.get());
-  overlaySwitch->addChild(leftHandedLabel.get());
-  
-  annexes.insert(std::make_pair(ann::Type::SeerShape, sShape.get()));
-  annexes.insert(std::make_pair(ann::Type::CSysDragger, csysDragger.get()));
-  overlaySwitch->addChild(csysDragger->dragger);
 }
 
-Thread::~Thread(){}
+Feature::~Feature() = default;
 
-void Thread::setDiameter(double dIn)
-{
-  diameter->setValue(dIn);
-}
-
-void Thread::setPitch(double pIn)
-{
-  pitch->setValue(pIn);
-}
-
-void Thread::setLength(double lIn)
-{
-  length->setValue(lIn);
-}
-
-void Thread::setAngle(double aIn)
-{
-  angle->setValue(aIn);
-}
-
-void Thread::setInternal(bool iIn)
-{
-  internal->setValue(iIn);
-}
-
-void Thread::setFake(bool fIn)
-{
-  fake->setValue(fIn);
-}
-
-void Thread::setLeftHanded(bool hIn)
-{
-  leftHanded->setValue(hIn);
-}
-
-void Thread::setCSys(const osg::Matrixd &csysIn)
+/*
+void Feature::setCSys(const osg::Matrixd &csysIn)
 {
   osg::Matrixd oldSystem = csys->getMatrix();
   if (!csys->setValue(csysIn))
@@ -180,46 +202,7 @@ void Thread::setCSys(const osg::Matrixd &csysIn)
   osg::Matrixd diffMatrix = osg::Matrixd::inverse(oldSystem) * csysIn;
   csysDragger->draggerUpdate(csysDragger->dragger->getMatrix() * diffMatrix);
 }
-
-double Thread::getDiameter() const
-{
-  return diameter->getDouble();
-}
-
-double Thread::getPitch() const
-{
-  return pitch->getDouble();
-}
-
-double Thread::getLength() const
-{
-  return length->getDouble();
-}
-
-double Thread::getAngle() const
-{
-  return angle->getDouble();
-}
-
-bool Thread::getInternal() const
-{
-  return internal->getBool();
-}
-
-bool Thread::getFake() const
-{
-  return fake->getBool();
-}
-
-bool Thread::getLeftHanded() const
-{
-  return leftHanded->getBool();
-}
-
-osg::Matrixd Thread::getCSys() const
-{
-  return csys->getMatrix();
-}
+*/
 
 //builds one revolution
 TopoDS_Edge buildOneHelix(double dia, double p)
@@ -239,41 +222,46 @@ TopoDS_Edge buildOneHelix(double dia, double p)
 //ref:
 //https://en.wikipedia.org/wiki/ISO_metric_screw_thread
 //tried using BRepBuilderAPI_FastSewing but it didn't work. FYI
-void Thread::updateModel(const UpdatePayload &plIn)
+void Feature::updateModel(const UpdatePayload &plIn)
 {
   setFailure();
   lastUpdateLog.clear();
-  sShape->reset();
+  stow->primitive.sShape.reset();
   try
   {
-    prm::ObserverBlocker block(*prmObserver);
-    
     if (isSkipped())
     {
       setSuccess();
       throw std::runtime_error("feature is skipped");
     }
     
-    std::vector<const Base*> tfs = plIn.getFeatures(ftr::InputType::linkCSys);
-    if (!tfs.empty())
+    //nothing for constant.
+    if (static_cast<Primitive::CSysType>(stow->primitive.csysType.getInt()) == Primitive::Linked)
     {
-      auto systemParameters =  tfs.front()->getParameters(prm::Tags::CSys);
-      if (systemParameters.empty())
-        throw std::runtime_error("Feature for csys link, doesn't have csys parameter");
-      csys->setValue(systemParameters.front()->getMatrix());
-      csysDragger->draggerUpdate();
+      const auto &picks = stow->primitive.csysLinked.getPicks();
+      if (picks.empty())
+        throw std::runtime_error("No picks for csys link");
+      tls::Resolver resolver(plIn);
+      if (!resolver.resolve(picks.front()))
+        throw std::runtime_error("Couldn't resolve csys link pick");
+      auto csysPrms = resolver.getFeature()->getParameters(prm::Tags::CSys);
+      if (csysPrms.empty())
+        throw std::runtime_error("csys link feature has no csys parameter");
+      prm::ObserverBlocker(stow->primitive.csysObserver);
+      stow->primitive.csys.setValue(csysPrms.front()->getMatrix());
+      stow->primitive.csysDragger.draggerUpdate();
     }
     
-    double d = diameter->getDouble();
-    double p = pitch->getDouble();
-    double l = length->getDouble();
-    double a = osg::DegreesToRadians(angle->getDouble());
+    double d = stow->diameter.getDouble();
+    double p = stow->pitch.getDouble();
+    double l = stow->length.getDouble();
+    double a = osg::DegreesToRadians(stow->angle.getDouble());
     
     double h = p / (2.0 * std::tan(a / 2.0));
     
     TopoDS_Shape proto;
     
-    if (!fake->getBool())
+    if (!stow->fake.getBool())
     {
       //internal or external
       TopoDS_Edge outside01 = buildOneHelix(d + .125 * h * 2.0, p);
@@ -294,7 +282,7 @@ void Thread::updateModel(const UpdatePayload &plIn)
       BRepBuilderAPI_Sewing sewOp;
       TopoDS_Shape edgeToBlend;
       double blendRadius = 0.0;
-      if (internal->getBool())
+      if (stow->internal.getBool())
       {
         //internal threads
         sewOp.Add(face02);
@@ -364,10 +352,10 @@ void Thread::updateModel(const UpdatePayload &plIn)
     gp_Pnt refPoint(d, 0.0, l / 2.0);
     TopoDS_Solid tool = BRepPrimAPI_MakeHalfSpace(TopoDS::Shell(proto), refPoint);
     TopoDS_Shape out;
-    if (!fake->getBool())
+    if (!stow->fake.getBool())
     {
       //real threads
-      if (internal->getBool())
+      if (stow->internal.getBool())
       {
         //internal
         
@@ -431,7 +419,7 @@ void Thread::updateModel(const UpdatePayload &plIn)
     }
     
     //doesn't hurt to mirror the fake threads.
-    if (leftHanded->getBool())
+    if (stow->leftHanded.getBool())
     {
       gp_Trsf mirror;
       mirror.SetMirror(gp_Ax2(gp_Pnt(0.0, 0.0, l / 2.0), gp_Dir(0.0, 0.0, 1.0)));
@@ -443,15 +431,15 @@ void Thread::updateModel(const UpdatePayload &plIn)
       throw std::runtime_error("shapeCheck failed");
     
     gp_Trsf nt; //new transformation
-    nt.SetTransformation(gp_Ax3(gu::toOcc(csys->getMatrix())));
+    nt.SetTransformation(gp_Ax3(gu::toOcc(stow->primitive.csys.getMatrix())));
     nt.Invert();
     TopLoc_Location nl(nt); //new location
     out.Location(nt);
     
-    sShape->setOCCTShape(out, getId());
-    updateIds();
-    sShape->ensureNoNils();
-    sShape->ensureNoDuplicates();
+    stow->primitive.sShape.setOCCTShape(out, getId());
+    stow->updateIds();
+    stow->primitive.sShape.ensureNoNils();
+    stow->primitive.sShape.ensureNoDuplicates();
         
     mainTransform->setMatrix(osg::Matrixd::identity());
     setSuccess();
@@ -472,84 +460,39 @@ void Thread::updateModel(const UpdatePayload &plIn)
     lastUpdateLog += s.str();
   }
   setModelClean();
-  updateLabels();
+  stow->updateLabels();
   if (!lastUpdateLog.empty())
     std::cout << std::endl << lastUpdateLog;
 }
 
-void Thread::updateIds()
-{
-  //the solid is the only shape guarenteed to be consistant. We just use a shape index
-  //mapping. This won't guarentee consistant ids, but should eliminate subsequant feature
-  //id bloat.
-  
-  occt::ShapeVector shapes = occt::mapShapes(sShape->getRootOCCTShape());
-  int diff = shapes.size() - ids.size();
-  if (diff < 0)
-    diff = 0;
-  for (int i = 0; i < diff; ++i)
-    ids.push_back(gu::createRandomId());
-  int si = 0; //shapeIndex.
-  for (const auto &s : shapes)
-  {
-    //don't overwrite the root compound
-    if (sShape->findId(s).is_nil())
-    {
-      sShape->updateId(s, ids.at(si));
-      if (!sShape->hasEvolveRecordOut(ids.at(si)))
-        sShape->insertEvolve(gu::createNilId(), ids.at(si));
-    }
-    si++;
-  }
-  
-  TopoDS_Shape solid = occt::getFirstNonCompound(sShape->getRootOCCTShape());
-  assert(solid.ShapeType() == TopAbs_SOLID);
-  sShape->updateId(solid, solidId);
-  if (!sShape->hasEvolveRecordOut(solidId))
-    sShape->insertEvolve(gu::createNilId(), solidId);
-}
-
-void Thread::updateLabels()
-{
-  osg::Matrixd m = csys->getMatrix();
-  double d = diameter->getDouble();
-  double l = length->getDouble();
-  
-  diameterLabel->setMatrix(osg::Matrixd::translate(osg::Vec3d(d / 2.0, 0.0, l * .625) * m));
-  pitchLabel->setMatrix(osg::Matrixd::translate(osg::Vec3d(d / 2.0, 0.0, l * .875) * m));
-  lengthLabel->setMatrix(osg::Matrixd::translate(osg::Vec3d(0.0, 0.0, l) * m));
-  angleLabel->setMatrix(osg::Matrixd::translate(osg::Vec3d(d / 2.0, 0.0, l *.375) * m));
-  internalLabel->setMatrix(osg::Matrixd::translate(osg::Vec3d(-d / 2.0, 0.0, l * .875) * m));
-  fakeLabel->setMatrix(osg::Matrixd::translate(osg::Vec3d(-d / 2.0, 0.0, l * .625) * m));
-  leftHandedLabel->setMatrix(osg::Matrixd::translate(osg::Vec3d(-d / 2.0, 0.0, l *.375) * m));
-}
-
-void Thread::serialWrite(const boost::filesystem::path &dIn)
+void Feature::serialWrite(const boost::filesystem::path &dIn)
 {
   prj::srl::thds::Thread to //thread out.
   (
     Base::serialOut(),
-    sShape->serialOut(),
-    diameter->serialOut(),
-    pitch->serialOut(),
-    length->serialOut(),
-    angle->serialOut(),
-    internal->serialOut(),
-    fake->serialOut(),
-    leftHanded->serialOut(),
-    csys->serialOut(),
-    diameterLabel->serialOut(),
-    pitchLabel->serialOut(),
-    lengthLabel->serialOut(),
-    angleLabel->serialOut(),
-    internalLabel->serialOut(),
-    fakeLabel->serialOut(),
-    leftHandedLabel->serialOut(),
-    csysDragger->serialOut(),
-    gu::idToString(solidId)
+    stow->primitive.csysType.serialOut(),
+    stow->diameter.serialOut(),
+    stow->pitch.serialOut(),
+    stow->length.serialOut(),
+    stow->angle.serialOut(),
+    stow->internal.serialOut(),
+    stow->fake.serialOut(),
+    stow->leftHanded.serialOut(),
+    stow->primitive.csys.serialOut(),
+    stow->primitive.csysLinked.serialOut(),
+    stow->primitive.csysDragger.serialOut(),
+    stow->primitive.sShape.serialOut(),
+    stow->diameterLabel->serialOut(),
+    stow->pitchLabel->serialOut(),
+    stow->lengthLabel->serialOut(),
+    stow->angleLabel->serialOut(),
+    stow->internalLabel->serialOut(),
+    stow->fakeLabel->serialOut(),
+    stow->leftHandedLabel->serialOut(),
+    gu::idToString(stow->solidId)
   );
   
-  for (const auto &idOut : ids)
+  for (const auto &idOut : stow->ids)
     to.ids().push_back(gu::idToString(idOut));
   
   xml_schema::NamespaceInfomap infoMap;
@@ -557,28 +500,30 @@ void Thread::serialWrite(const boost::filesystem::path &dIn)
   prj::srl::thds::thread(stream, to, infoMap);
 }
 
-void Thread::serialRead(const prj::srl::thds::Thread &ti)
+void Feature::serialRead(const prj::srl::thds::Thread &ti)
 {
   Base::serialIn(ti.base());
-  sShape->serialIn(ti.seerShape());
-  diameter->serialIn(ti.diameter());
-  pitch->serialIn(ti.pitch());
-  length->serialIn(ti.length());
-  angle->serialIn(ti.angle());
-  internal->serialIn(ti.internal());
-  fake->serialIn(ti.fake());
-  leftHanded->serialIn(ti.leftHanded());
-  csys->serialIn(ti.csys());
-  diameterLabel->serialIn(ti.diameterLabel());
-  pitchLabel->serialIn(ti.pitchLabel());
-  lengthLabel->serialIn(ti.lengthLabel());
-  angleLabel->serialIn(ti.angleLabel());
-  internalLabel->serialIn(ti.internalLabel());
-  fakeLabel->serialIn(ti.fakeLabel());
-  leftHandedLabel->serialIn(ti.leftHandedLabel());
-  csysDragger->serialIn(ti.csysDragger());
-  solidId = gu::stringToId(ti.solidId());
+  stow->primitive.csysType.serialIn(ti.csysType());
+  stow->diameter.serialIn(ti.diameter());
+  stow->pitch.serialIn(ti.pitch());
+  stow->length.serialIn(ti.length());
+  stow->angle.serialIn(ti.angle());
+  stow->internal.serialIn(ti.internal());
+  stow->fake.serialIn(ti.fake());
+  stow->leftHanded.serialIn(ti.leftHanded());
+  stow->primitive.csys.serialIn(ti.csys());
+  stow->primitive.csysLinked.serialIn(ti.csysLinked());
+  stow->primitive.csysDragger.serialIn(ti.csysDragger());
+  stow->primitive.sShape.serialIn(ti.seerShape());
+  stow->diameterLabel->serialIn(ti.diameterLabel());
+  stow->pitchLabel->serialIn(ti.pitchLabel());
+  stow->lengthLabel->serialIn(ti.lengthLabel());
+  stow->angleLabel->serialIn(ti.angleLabel());
+  stow->internalLabel->serialIn(ti.internalLabel());
+  stow->fakeLabel->serialIn(ti.fakeLabel());
+  stow->leftHandedLabel->serialIn(ti.leftHandedLabel());
+  stow->solidId = gu::stringToId(ti.solidId());
   
   for (const auto &idIn : ti.ids())
-    ids.push_back(gu::stringToId(idIn));
+    stow->ids.push_back(gu::stringToId(idIn));
 }

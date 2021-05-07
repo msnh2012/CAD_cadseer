@@ -23,13 +23,16 @@
 #include "application/appapplication.h"
 #include "project/prjproject.h"
 #include "message/msgnode.h"
-#include "commandview/cmvparameterwidgets.h"
-#include "commandview/cmvcsyswidget.h"
+#include "commandview/cmvselectioncue.h"
+#include "commandview/cmvtable.h"
 #include "parameter/prmconstants.h"
 #include "parameter/prmparameter.h"
 #include "tools/idtools.h"
+#include "selection/slcmessage.h"
 #include "feature/ftrinputtype.h"
 #include "feature/ftrbase.h"
+#include "feature/ftrprimitive.h"
+#include "command/cmdprimitive.h"
 #include "commandview/cmvprimitive.h"
 
 using boost::uuids::uuid;
@@ -38,53 +41,40 @@ using namespace cmv;
 
 struct Primitive::Stow
 {
-  ftr::Base *feature;
+  cmd::Primitive *command;
   cmv::Primitive *view;
-  cmv::ParameterWidget *parameterWidget = nullptr;
-  cmv::CSysWidget *csysWidget = nullptr;
+  ftr::Base *feature;
+  prm::Parameters parameters;
+  cmv::tbl::Model *prmModel = nullptr;
+  cmv::tbl::View *prmView = nullptr;
   
-  Stow(ftr::Base *fIn, cmv::Primitive *vIn)
-  : feature(fIn)
+  Stow(cmd::Primitive *cIn, cmv::Primitive *vIn)
+  : command(cIn)
   , view(vIn)
+  , feature(command->feature)
   {
+    parameters = feature->getParameters();
     buildGui();
-    
-    QSettings &settings = app::instance()->getUserSettings();
-    settings.beginGroup("cmv::Primitive");
-    //load settings
-    settings.endGroup();
-    
-    glue();
+    connect(prmModel, &tbl::Model::dataChanged, view, &Primitive::modelChanged);
   }
   
   void buildGui()
   {
-    QSizePolicy adjust = view->sizePolicy();
-    adjust.setVerticalPolicy(QSizePolicy::Maximum);
-    view->setSizePolicy(adjust);
-    
     QVBoxLayout *mainLayout = new QVBoxLayout();
     view->setLayout(mainLayout);
+    Base::clearContentMargins(view);
+    view->setSizePolicy(view->sizePolicy().horizontalPolicy(), QSizePolicy::Expanding);
     
-    parameterWidget = new cmv::ParameterWidget(view, feature->getParameters());
-    mainLayout->addWidget(parameterWidget);
-    prm::Parameter *csys = feature->getParameters(prm::Tags::CSys).front();
-    csysWidget = dynamic_cast<cmv::CSysWidget*>(parameterWidget->getWidget(csys));
-    assert(csysWidget);
-    ftr::UpdatePayload payload = view->project->getPayload(feature->getId());
-    std::vector<const ftr::Base*> inputs = payload.getFeatures(ftr::InputType::linkCSys);
-    if (inputs.empty())
-      csysWidget->setCSysLinkId(gu::createNilId());
-    else
-      csysWidget->setCSysLinkId(inputs.front()->getId());
+    prmModel = new tbl::Model(view, feature);
+    prmView = new tbl::View(view, prmModel, true);
+    mainLayout->addWidget(prmView);
     
-    mainLayout->addItem(new QSpacerItem(20, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
-  }
-  
-  void glue()
-  {
-    QObject::connect(csysWidget, &CSysWidget::dirty, view, &Primitive::linkedCSysChanged);
-    QObject::connect(parameterWidget, &ParameterBase::prmValueChanged, view, &Primitive::parameterChanged);
+    tbl::SelectionCue cue;
+    cue.singleSelection = true;
+    cue.mask = slc::ObjectsBoth;
+    cue.statusPrompt = tr("Select Feature To Link CSys");
+    cue.accrueEnabled = false;
+    prmModel->setCue(feature->getParameter(prm::Tags::CSysLinked), cue);
   }
   
   void goUpdate()
@@ -96,23 +86,33 @@ struct Primitive::Stow
   }
 };
 
-Primitive::Primitive(ftr::Base *fIn)
+Primitive::Primitive(cmd::Primitive *cmdIn)
 : Base("cmv::Primitive")
-, stow(new Stow(fIn, this))
+, stow(new Stow(cmdIn, this))
 {}
 
 Primitive::~Primitive() = default;
 
-void Primitive::linkedCSysChanged()
+void Primitive::modelChanged(const QModelIndex &index, const QModelIndex&)
 {
-  project->clearAllInputs(stow->feature->getId());
-  uuid lId = stow->csysWidget->getCSysLinkId();
-  if (!lId.is_nil())
-    project->connect(lId, stow->feature->getId(), {ftr::InputType::linkCSys});
-  stow->goUpdate();
-}
-
-void Primitive::parameterChanged()
-{
-  stow->goUpdate();
+  if (!index.isValid())
+    return;
+  
+  prm::Parameter *par = stow->parameters.at(index.row());
+  if (par->getTag() == prm::Tags::CSysType)
+  {
+    if (static_cast<ftr::Primitive::CSysType>(par->getInt()) == ftr::Primitive::Linked)
+      par = stow->feature->getParameter(prm::Tags::CSysLinked); //trick next if.
+    else
+      stow->command->setToConstant();
+    stow->prmView->updateHideInactive();
+  }
+  if (par->getTag() == prm::Tags::CSysLinked)
+  {
+    stow->command->setToLinked(stow->prmModel->getMessages(par));
+  }
+  stow->feature->updateModel(project->getPayload(stow->feature->getId()));
+  stow->feature->updateVisual();
+  stow->feature->setModelDirty();
+  node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
 }

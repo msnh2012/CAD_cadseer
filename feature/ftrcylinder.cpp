@@ -23,6 +23,7 @@
 #include "preferences/prfmanager.h"
 #include "globalutilities.h"
 #include "tools/idtools.h"
+#include "tools/featuretools.h"
 #include "library/lbrlineardimension.h"
 #include "library/lbripgroup.h"
 #include "library/lbrcsysdragger.h"
@@ -31,12 +32,14 @@
 #include "feature/ftrcylinderbuilder.h"
 #include "feature/ftrinputtype.h"
 #include "annex/annseershape.h"
+#include "feature/ftrpick.h"
 #include "feature/ftrupdatepayload.h"
+#include "feature/ftrprimitive.h"
 #include "parameter/prmconstants.h"
 #include "parameter/prmparameter.h"
 #include "feature/ftrcylinder.h"
 
-using namespace ftr;
+using namespace ftr::Cylinder;
 using boost::uuids::uuid;
 
 enum class FeatureTag
@@ -75,97 +78,126 @@ static const std::map<FeatureTag, std::string> featureTagMap =
   {FeatureTag::VertexTop, "VertexTop"}
 };
 
-QIcon Cylinder::icon;
+QIcon Feature::icon;
 
 inline static const prf::Cylinder& pCyl(){return prf::manager().rootPtr->features().cylinder().get();}
 
-Cylinder::Cylinder() : Base(),
-  radius(std::make_unique<prm::Parameter>(prm::Names::Radius, pCyl().radius(), prm::Tags::Radius)),
-  height(std::make_unique<prm::Parameter>(prm::Names::Height, pCyl().height(), prm::Tags::Height)),
-  csys(std::make_unique<prm::Parameter>(prm::Names::CSys, osg::Matrixd::identity(), prm::Tags::CSys)),
-  prmObserver(std::make_unique<prm::Observer>(std::bind(&Cylinder::setModelDirty, this))),
-  csysDragger(std::make_unique<ann::CSysDragger>(this, csys.get())),
-  sShape(std::make_unique<ann::SeerShape>())
+struct Feature::Stow
+{
+  Feature &feature;
+  Primitive primitive;
+  
+  Stow() = delete;
+  Stow(Feature &fIn)
+  : feature(fIn)
+  , primitive(Primitive::Input{fIn, fIn.parameters, fIn.annexes})
+  {
+    primitive.addRadius(pCyl().radius());
+    primitive.addHeight(pCyl().height());
+    
+    primitive.radiusIP->setMatrixDims(osg::Matrixd::rotate(osg::PI_2, osg::Vec3d(0.0, 1.0, 0.0)));
+    primitive.radiusIP->setMatrixDragger(osg::Matrixd::rotate(osg::PI_2, osg::Vec3d(-1.0, 0.0, 0.0)));
+    primitive.radiusIP->setDimsFlipped(true);
+    primitive.radiusIP->setRotationAxis(osg::Vec3d(0.0, 0.0, 1.0), osg::Vec3d(-1.0, 0.0, 0.0));
+
+    primitive.heightIP->setMatrixDims(osg::Matrixd::rotate(osg::PI_2, osg::Vec3d(1.0, 0.0, 0.0)));
+    primitive.heightIP->setRotationAxis(osg::Vec3d(0.0, 0.0, 1.0), osg::Vec3d(0.0, -1.0, 0.0));
+    
+    initializeMaps();
+  }
+  
+  void updateIPs()
+  {
+    primitive.IPsToCsys();
+    
+    //height of radius dragger
+    static const auto rot = osg::Matrixd::rotate(osg::Quat(osg::PI_2, osg::Vec3d(-1.0, 0.0, 0.0)));
+    auto trans = osg::Matrixd::translate(0.0, 0.0, primitive.height->getDouble() / 2.0);
+    primitive.radiusIP->setMatrixDragger(rot * trans);
+    primitive.radiusIP->mainDim->setSqueeze(primitive.height->getDouble() / 2.0);
+    primitive.radiusIP->mainDim->setExtensionOffset(primitive.height->getDouble() / 2.0);
+    
+    primitive.heightIP->mainDim->setSqueeze(primitive.radius->getDouble());
+    primitive.heightIP->mainDim->setExtensionOffset(primitive.radius->getDouble());
+  }
+  
+  void initializeMaps()
+  {
+    //result 
+    std::vector<uuid> tempIds; //save ids for later.
+    for (unsigned int index = 0; index < 14; ++index)
+    {
+      uuid tempId = gu::createRandomId();
+      tempIds.push_back(tempId);
+      primitive.sShape.insertEvolve(gu::createNilId(), tempId);
+    }
+    
+    //helper lamda
+    auto insertIntoFeatureMap = [this](const uuid &idIn, FeatureTag featureTagIn)
+    {
+      primitive.sShape.insertFeatureTag(idIn, featureTagMap.at(featureTagIn));
+    };
+    
+    //first we do the compound that is root. this is not in box maker.
+    insertIntoFeatureMap(tempIds.at(0), FeatureTag::Root);
+    insertIntoFeatureMap(tempIds.at(1), FeatureTag::Solid);
+    insertIntoFeatureMap(tempIds.at(2), FeatureTag::Shell);
+    insertIntoFeatureMap(tempIds.at(3), FeatureTag::FaceBottom);
+    insertIntoFeatureMap(tempIds.at(4), FeatureTag::FaceCylindrical);
+    insertIntoFeatureMap(tempIds.at(5), FeatureTag::FaceTop);
+    insertIntoFeatureMap(tempIds.at(6), FeatureTag::WireBottom);
+    insertIntoFeatureMap(tempIds.at(7), FeatureTag::WireCylindrical);
+    insertIntoFeatureMap(tempIds.at(8), FeatureTag::WireTop);
+    insertIntoFeatureMap(tempIds.at(9), FeatureTag::EdgeBottom);
+    insertIntoFeatureMap(tempIds.at(10), FeatureTag::EdgeCylindrical);
+    insertIntoFeatureMap(tempIds.at(11), FeatureTag::EdgeTop);
+    insertIntoFeatureMap(tempIds.at(12), FeatureTag::VertexBottom);
+    insertIntoFeatureMap(tempIds.at(13), FeatureTag::VertexTop);
+  }
+
+  void updateResult(const CylinderBuilder &cylinderBuilderIn)
+  {
+    //helper lamda
+    auto updateShapeByTag = [this](const TopoDS_Shape &shapeIn, FeatureTag featureTagIn)
+    {
+      uuid localId = primitive.sShape.featureTagId(featureTagMap.at(featureTagIn));
+      primitive.sShape.updateId(shapeIn, localId);
+    };
+    
+    updateShapeByTag(primitive.sShape.getRootOCCTShape(), FeatureTag::Root);
+    updateShapeByTag(cylinderBuilderIn.getSolid(), FeatureTag::Solid);
+    updateShapeByTag(cylinderBuilderIn.getShell(), FeatureTag::Shell);
+    updateShapeByTag(cylinderBuilderIn.getFaceBottom(), FeatureTag::FaceBottom);
+    updateShapeByTag(cylinderBuilderIn.getFaceCylindrical(), FeatureTag::FaceCylindrical);
+    updateShapeByTag(cylinderBuilderIn.getFaceTop(), FeatureTag::FaceTop);
+    updateShapeByTag(cylinderBuilderIn.getWireBottom(), FeatureTag::WireBottom);
+    updateShapeByTag(cylinderBuilderIn.getWireCylindrical(), FeatureTag::WireCylindrical);
+    updateShapeByTag(cylinderBuilderIn.getWireTop(), FeatureTag::WireTop);
+    updateShapeByTag(cylinderBuilderIn.getEdgeBottom(), FeatureTag::EdgeBottom);
+    updateShapeByTag(cylinderBuilderIn.getEdgeCylindrical(), FeatureTag::EdgeCylindrical);
+    updateShapeByTag(cylinderBuilderIn.getEdgeTop(), FeatureTag::EdgeTop);
+    updateShapeByTag(cylinderBuilderIn.getVertexBottom(), FeatureTag::VertexBottom);
+    updateShapeByTag(cylinderBuilderIn.getVertexTop(), FeatureTag::VertexTop);
+    
+    primitive.sShape.setRootShapeId(primitive.sShape.featureTagId(featureTagMap.at(FeatureTag::Root)));
+  }
+};
+
+Feature::Feature()
+: Base()
+, stow(std::make_unique<Stow>(*this))
 {
   if (icon.isNull())
     icon = QIcon(":/resources/images/constructionCylinder.svg");
   
   name = QObject::tr("Cylinder");
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
-  
-  initializeMaps();
-  
-  radius->setConstraint(prm::Constraint::buildNonZeroPositive());
-  height->setConstraint(prm::Constraint::buildNonZeroPositive());
-  
-  parameters.push_back(radius.get());
-  parameters.push_back(height.get());
-  parameters.push_back(csys.get());
-  
-  annexes.insert(std::make_pair(ann::Type::SeerShape, sShape.get()));
-  annexes.insert(std::make_pair(ann::Type::CSysDragger, csysDragger.get()));
-  overlaySwitch->addChild(csysDragger->dragger);
-  
-  radius->connectValue(std::bind(&Cylinder::setModelDirty, this));
-  height->connectValue(std::bind(&Cylinder::setModelDirty, this));
-  csys->connect(*prmObserver);
-  
-  setupIPGroup();
 }
 
-Cylinder::~Cylinder()
-{
+Feature::~Feature() = default;
 
-}
-
-void Cylinder::setupIPGroup()
-{
-  heightIP = new lbr::IPGroup(height.get());
-  heightIP->setMatrixDims(osg::Matrixd::rotate(osg::PI_2, osg::Vec3d(1.0, 0.0, 0.0)));
-  heightIP->setRotationAxis(osg::Vec3d(0.0, 0.0, 1.0), osg::Vec3d(0.0, -1.0, 0.0));
-  overlaySwitch->addChild(heightIP.get());
-  csysDragger->dragger->linkToMatrix(heightIP.get());
-  
-  radiusIP = new lbr::IPGroup(radius.get());
-  radiusIP->setMatrixDims(osg::Matrixd::rotate(osg::PI_2, osg::Vec3d(0.0, 1.0, 0.0)));
-  radiusIP->setMatrixDragger(osg::Matrixd::rotate(osg::PI_2, osg::Vec3d(-1.0, 0.0, 0.0)));
-  radiusIP->setDimsFlipped(true);
-  radiusIP->setRotationAxis(osg::Vec3d(0.0, 0.0, 1.0), osg::Vec3d(-1.0, 0.0, 0.0));
-  overlaySwitch->addChild(radiusIP.get());
-  csysDragger->dragger->linkToMatrix(radiusIP.get());
-  
-  updateIPGroup();
-}
-
-void Cylinder::updateIPGroup()
-{
-  //height of radius dragger
-  osg::Matrixd freshMatrix;
-  freshMatrix.setRotate(osg::Quat(osg::PI_2, osg::Vec3d(-1.0, 0.0, 0.0)));
-  freshMatrix.setTrans(osg::Vec3d (0.0, 0.0, height->getDouble() / 2.0));
-  radiusIP->setMatrixDragger(freshMatrix);
-  
-  heightIP->setMatrix(csys->getMatrix());
-  radiusIP->setMatrix(csys->getMatrix());
-  
-  heightIP->mainDim->setSqueeze(radius->getDouble());
-  heightIP->mainDim->setExtensionOffset(radius->getDouble());
-  
-  radiusIP->mainDim->setSqueeze(height->getDouble() / 2.0);
-  radiusIP->mainDim->setExtensionOffset(height->getDouble() / 2.0);
-}
-
-void Cylinder::setRadius(double radiusIn)
-{
-  radius->setValue(radiusIn);
-}
-
-void Cylinder::setHeight(double heightIn)
-{
-  height->setValue(heightIn);
-}
-
-void Cylinder::setCSys(const osg::Matrixd &csysIn)
+/*
+void Feature::setCSys(const osg::Matrixd &csysIn)
 {
   osg::Matrixd oldSystem = csys->getMatrix();
   if (!csys->setValue(csysIn))
@@ -175,55 +207,46 @@ void Cylinder::setCSys(const osg::Matrixd &csysIn)
   osg::Matrixd diffMatrix = osg::Matrixd::inverse(oldSystem) * csysIn;
   csysDragger->draggerUpdate(csysDragger->dragger->getMatrix() * diffMatrix);
 }
+*/
 
-const prm::Parameter& Cylinder::getRadius() const
-{
-  return *radius;
-}
-
-const prm::Parameter& Cylinder::getHeight() const
-{
-  return *height;
-}
-
-osg::Matrixd Cylinder::getCSys() const
-{
-  return csys->getMatrix();
-}
-
-void Cylinder::updateModel(const UpdatePayload &plIn)
+void Feature::updateModel(const UpdatePayload &plIn)
 {
   setFailure();
   lastUpdateLog.clear();
-  sShape->reset();
+  stow->primitive.sShape.reset();
   try
   {
-    prm::ObserverBlocker block(*prmObserver);
-    
     if (isSkipped())
     {
       setSuccess();
       throw std::runtime_error("feature is skipped");
     }
     
-    std::vector<const Base*> tfs = plIn.getFeatures(ftr::InputType::linkCSys);
-    if (!tfs.empty())
+    //nothing for constant.
+    if (static_cast<CSysType>(stow->primitive.csysType.getInt()) == Linked)
     {
-      auto systemParameters =  tfs.front()->getParameters(prm::Tags::CSys);
-      if (systemParameters.empty())
-        throw std::runtime_error("Feature for csys link, doesn't have csys parameter");
-      csys->setValue(systemParameters.front()->getMatrix());
-      csysDragger->draggerUpdate();
+      const auto &picks = stow->primitive.csysLinked.getPicks();
+      if (picks.empty())
+        throw std::runtime_error("No picks for csys link");
+      tls::Resolver resolver(plIn);
+      if (!resolver.resolve(picks.front()))
+        throw std::runtime_error("Couldn't resolve csys link pick");
+      auto csysPrms = resolver.getFeature()->getParameters(prm::Tags::CSys);
+      if (csysPrms.empty())
+        throw std::runtime_error("csys link feature has no csys parameter");
+      prm::ObserverBlocker(stow->primitive.csysObserver);
+      stow->primitive.csys.setValue(csysPrms.front()->getMatrix());
+      stow->primitive.csysDragger.draggerUpdate();
     }
     
     CylinderBuilder cylinderMaker
     (
-      radius->getDouble(),
-      height->getDouble(),
-      gu::toOcc(csys->getMatrix())
+      stow->primitive.radius->getDouble(),
+      stow->primitive.height->getDouble(),
+      gu::toOcc(stow->primitive.csys.getMatrix())
     );
-    sShape->setOCCTShape(cylinderMaker.getSolid(), getId());
-    updateResult(cylinderMaker);
+    stow->primitive.sShape.setOCCTShape(cylinderMaker.getSolid(), getId());
+    stow->updateResult(cylinderMaker);
     mainTransform->setMatrix(osg::Matrixd::identity());
     setSuccess();
   }
@@ -243,92 +266,25 @@ void Cylinder::updateModel(const UpdatePayload &plIn)
     lastUpdateLog += s.str();
   }
   setModelClean();
-  updateIPGroup();
+  stow->updateIPs();
   if (!lastUpdateLog.empty())
     std::cout << std::endl << lastUpdateLog;
 }
 
-//the quantity of cone shapes can change so generating maps from first update can lead to missing
-//ids and shapes. So here we will generate the maps with all necessary rows.
-void Cylinder::initializeMaps()
-{
-  //result 
-  std::vector<uuid> tempIds; //save ids for later.
-  for (unsigned int index = 0; index < 14; ++index)
-  {
-    uuid tempId = gu::createRandomId();
-    tempIds.push_back(tempId);
-    sShape->insertEvolve(gu::createNilId(), tempId);
-  }
-  
-  //helper lamda
-  auto insertIntoFeatureMap = [this](const uuid &idIn, FeatureTag featureTagIn)
-  {
-    sShape->insertFeatureTag(idIn, featureTagMap.at(featureTagIn));
-  };
-  
-  //first we do the compound that is root. this is not in box maker.
-  insertIntoFeatureMap(tempIds.at(0), FeatureTag::Root);
-  insertIntoFeatureMap(tempIds.at(1), FeatureTag::Solid);
-  insertIntoFeatureMap(tempIds.at(2), FeatureTag::Shell);
-  insertIntoFeatureMap(tempIds.at(3), FeatureTag::FaceBottom);
-  insertIntoFeatureMap(tempIds.at(4), FeatureTag::FaceCylindrical);
-  insertIntoFeatureMap(tempIds.at(5), FeatureTag::FaceTop);
-  insertIntoFeatureMap(tempIds.at(6), FeatureTag::WireBottom);
-  insertIntoFeatureMap(tempIds.at(7), FeatureTag::WireCylindrical);
-  insertIntoFeatureMap(tempIds.at(8), FeatureTag::WireTop);
-  insertIntoFeatureMap(tempIds.at(9), FeatureTag::EdgeBottom);
-  insertIntoFeatureMap(tempIds.at(10), FeatureTag::EdgeCylindrical);
-  insertIntoFeatureMap(tempIds.at(11), FeatureTag::EdgeTop);
-  insertIntoFeatureMap(tempIds.at(12), FeatureTag::VertexBottom);
-  insertIntoFeatureMap(tempIds.at(13), FeatureTag::VertexTop);
-  
-//   std::cout << std::endl << std::endl <<
-//     "result Container: " << std::endl << resultContainer << std::endl << std::endl <<
-//     "feature Container:" << std::endl << featureContainer << std::endl << std::endl <<
-//     "evolution Container:" << std::endl << evolutionContainer << std::endl << std::endl;
-}
-
-void Cylinder::updateResult(const CylinderBuilder &cylinderBuilderIn)
-{
-  //helper lamda
-  auto updateShapeByTag = [this](const TopoDS_Shape &shapeIn, FeatureTag featureTagIn)
-  {
-    uuid localId = sShape->featureTagId(featureTagMap.at(featureTagIn));
-    sShape->updateId(shapeIn, localId);
-  };
-  
-  updateShapeByTag(sShape->getRootOCCTShape(), FeatureTag::Root);
-  updateShapeByTag(cylinderBuilderIn.getSolid(), FeatureTag::Solid);
-  updateShapeByTag(cylinderBuilderIn.getShell(), FeatureTag::Shell);
-  updateShapeByTag(cylinderBuilderIn.getFaceBottom(), FeatureTag::FaceBottom);
-  updateShapeByTag(cylinderBuilderIn.getFaceCylindrical(), FeatureTag::FaceCylindrical);
-  updateShapeByTag(cylinderBuilderIn.getFaceTop(), FeatureTag::FaceTop);
-  updateShapeByTag(cylinderBuilderIn.getWireBottom(), FeatureTag::WireBottom);
-  updateShapeByTag(cylinderBuilderIn.getWireCylindrical(), FeatureTag::WireCylindrical);
-  updateShapeByTag(cylinderBuilderIn.getWireTop(), FeatureTag::WireTop);
-  updateShapeByTag(cylinderBuilderIn.getEdgeBottom(), FeatureTag::EdgeBottom);
-  updateShapeByTag(cylinderBuilderIn.getEdgeCylindrical(), FeatureTag::EdgeCylindrical);
-  updateShapeByTag(cylinderBuilderIn.getEdgeTop(), FeatureTag::EdgeTop);
-  updateShapeByTag(cylinderBuilderIn.getVertexBottom(), FeatureTag::VertexBottom);
-  updateShapeByTag(cylinderBuilderIn.getVertexTop(), FeatureTag::VertexTop);
-  
-  sShape->setRootShapeId(sShape->featureTagId(featureTagMap.at(FeatureTag::Root)));
-  
-}
-
-void Cylinder::serialWrite(const boost::filesystem::path &dIn)
+void Feature::serialWrite(const boost::filesystem::path &dIn)
 {
   prj::srl::cyls::Cylinder cylinderOut
   (
     Base::serialOut(),
-    sShape->serialOut(),
-    radius->serialOut(),
-    height->serialOut(),
-    csys->serialOut(),
-    csysDragger->serialOut(),
-    heightIP->serialOut(),
-    radiusIP->serialOut()
+    stow->primitive.csysType.serialOut(),
+    stow->primitive.radius->serialOut(),
+    stow->primitive.height->serialOut(),
+    stow->primitive.csys.serialOut(),
+    stow->primitive.csysLinked.serialOut(),
+    stow->primitive.csysDragger.serialOut(),
+    stow->primitive.sShape.serialOut(),
+    stow->primitive.heightIP->serialOut(),
+    stow->primitive.radiusIP->serialOut()
   );
   
   xml_schema::NamespaceInfomap infoMap;
@@ -336,14 +292,16 @@ void Cylinder::serialWrite(const boost::filesystem::path &dIn)
   prj::srl::cyls::cylinder(stream, cylinderOut, infoMap);
 }
 
-void Cylinder::serialRead(const prj::srl::cyls::Cylinder& sCylinderIn)
+void Feature::serialRead(const prj::srl::cyls::Cylinder& sCylinderIn)
 {
   Base::serialIn(sCylinderIn.base());
-  sShape->serialIn(sCylinderIn.seerShape());
-  radius->serialIn(sCylinderIn.radius());
-  height->serialIn(sCylinderIn.height());
-  csys->serialIn(sCylinderIn.csys());
-  csysDragger->serialIn(sCylinderIn.csysDragger());
-  heightIP->serialIn(sCylinderIn.heightIP());
-  radiusIP->serialIn(sCylinderIn.radiusIP());
+  stow->primitive.csysType.serialIn(sCylinderIn.csysType());
+  stow->primitive.radius->serialIn(sCylinderIn.radius());
+  stow->primitive.height->serialIn(sCylinderIn.height());
+  stow->primitive.csys.serialIn(sCylinderIn.csys());
+  stow->primitive.csysLinked.serialIn(sCylinderIn.csysLinked());
+  stow->primitive.csysDragger.serialIn(sCylinderIn.csysDragger());
+  stow->primitive.sShape.serialIn(sCylinderIn.seerShape());
+  stow->primitive.heightIP->serialIn(sCylinderIn.heightIP());
+  stow->primitive.radiusIP->serialIn(sCylinderIn.radiusIP());
 }
