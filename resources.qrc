@@ -42,6 +42,7 @@
     <file>resources/images/constructionSphere.svg</file>
     <file>resources/images/constructionCone.svg</file>
     <file>resources/images/constructionCylinder.svg</file>
+    <file>resources/images/constructionPrism.svg</file>
     <file>resources/images/constructionFinishing.svg</file>
     <file>resources/images/constructionBlend.svg</file>
     <file>resources/images/constructionChamfer.svg</file>
