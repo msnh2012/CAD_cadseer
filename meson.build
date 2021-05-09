@@ -200,6 +200,7 @@ feature_sources = ['feature/ftrinputtype.cpp'
   , 'feature/ftrface.cpp'
   , 'feature/ftrfill.cpp'
   , 'feature/ftrprimitive.cpp'
+  , 'feature/ftrprism.cpp'
   ]
   
 parameter_sources = ['parameter/prmparameter.cpp']
@@ -326,6 +327,7 @@ project_serial_sources = [
   , 'project/serial/generated/prjsrlutruntrim.cpp'
   , 'project/serial/generated/prjsrlfceface.cpp'
   , 'project/serial/generated/prjsrlflsfill.cpp'
+  , 'project/serial/generated/prjsrlprsmprism.cpp'
 ]
   
 application_sources = ['application/appmainwindow.cpp'

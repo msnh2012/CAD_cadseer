@@ -79,7 +79,8 @@ namespace ftr
     MapPCurve, //!< feature for mapping 2d pcurves to 3d surface curves
     Untrim, //!< feature for removing trim of faces.
     Face, //!< feature for creating a face. 
-    Fill //!< feature for creating a fill face. 
+    Fill, //!< feature for creating a fill face. 
+    Prism //!< feature for creating a fill face. 
   };
   
   inline const static std::string& toString(Type typeIn)
@@ -137,7 +138,8 @@ namespace ftr
       {Type::MapPCurve, "MapPCurve"},
       {Type::Untrim, "Untrim"},
       {Type::Face, "Face"},
-      {Type::Fill, "Fill"}
+      {Type::Fill, "Fill"},
+      {Type::Prism, "Prism"}
     };
     
     assert(strings.count(typeIn) > 0);

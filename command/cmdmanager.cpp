@@ -32,6 +32,7 @@
 #include "feature/ftrsphere.h"
 #include "feature/ftrcone.h"
 #include "feature/ftrthread.h"
+#include "feature/ftrprism.h"
 #include "command/cmdfeaturetosystem.h"
 #include "command/cmdsystemtofeature.h"
 #include "command/cmdfeaturetodragger.h"
@@ -459,6 +460,11 @@ void Manager::setupDispatcher()
       (
         msg::Request | msg::Construct | msg::Fill
       , std::bind(&Manager::constructFillDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Construct | msg::Prism
+        , std::bind(&Manager::constructPrismDispatched, this, std::placeholders::_1)
       )
       , std::make_pair
       (
@@ -926,6 +932,14 @@ void Manager::constructFillDispatched(const msg::Message&)
   addCommand(std::make_shared<Fill>());
 }
 
+void Manager::constructPrismDispatched(const msg::Message&)
+{
+  auto nf = std::make_shared<ftr::Prism::Feature>();
+  app::instance()->getProject()->addFeature(nf);
+  auto c = std::make_shared<Primitive>(nf.get(), false);
+  addCommand(c);
+}
+
 void Manager::importDispatched(const msg::Message&)
 {
   addCommand(std::make_shared<Import>());
@@ -1178,6 +1192,7 @@ void Manager::setupEditFunctionMap()
   editFunctionMap.insert(std::make_pair(ftr::Type::Sphere, std::bind(editPrimitive, std::placeholders::_1)));
   editFunctionMap.insert(std::make_pair(ftr::Type::Cone, std::bind(editPrimitive, std::placeholders::_1)));
   editFunctionMap.insert(std::make_pair(ftr::Type::Thread, std::bind(editPrimitive, std::placeholders::_1)));
+  editFunctionMap.insert(std::make_pair(ftr::Type::Prism, std::bind(editPrimitive, std::placeholders::_1)));
   editFunctionMap.insert(std::make_pair(ftr::Type::Hollow, std::bind(editHollow, std::placeholders::_1)));
   editFunctionMap.insert(std::make_pair(ftr::Type::DatumSystem, std::bind(editDatumSystem, std::placeholders::_1)));
   editFunctionMap.insert(std::make_pair(ftr::Type::SurfaceMesh, std::bind(editSurfaceMesh, std::placeholders::_1)));

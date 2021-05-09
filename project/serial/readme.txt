@@ -99,3 +99,4 @@ xsdcxx cxx-tree --std c++11 --generate-serialization --type-naming ucc --hxx-suf
 xsdcxx cxx-tree --std c++11 --generate-serialization --type-naming ucc --hxx-suffix .h --cxx-suffix .cpp --guard-prefix PRJ_SRL_UTR --extern-xml-schema ../../../xmlbase.xsd ../schema/prjsrlutruntrim.xsd
 xsdcxx cxx-tree --std c++11 --generate-serialization --type-naming ucc --hxx-suffix .h --cxx-suffix .cpp --guard-prefix PRJ_SRL_FCE --extern-xml-schema ../../../xmlbase.xsd ../schema/prjsrlfceface.xsd
 xsdcxx cxx-tree --std c++11 --generate-serialization --type-naming ucc --hxx-suffix .h --cxx-suffix .cpp --guard-prefix PRJ_SRL_FLS --extern-xml-schema ../../../xmlbase.xsd ../schema/prjsrlflsfill.xsd
+xsdcxx cxx-tree --std c++11 --generate-serialization --type-naming ucc --hxx-suffix .h --cxx-suffix .cpp --guard-prefix PRJ_SRL_PRSM --extern-xml-schema ../../../xmlbase.xsd ../schema/prjsrlprsmprism.xsd

@@ -312,6 +312,7 @@ void Manager::Stow::setAllMenu()
         constructionPrimitives.commandIds().push_back(18);
         constructionPrimitives.commandIds().push_back(19);
         constructionPrimitives.commandIds().push_back(20);
+        constructionPrimitives.commandIds().push_back(101);
         constructionBase.subMenus().push_back(constructionPrimitives);
       }
       {
@@ -554,6 +555,7 @@ void Manager::Stow::setAllToolbars()
       entry.commandIds().push_back(18);
       entry.commandIds().push_back(19);
       entry.commandIds().push_back(20);
+      entry.commandIds().push_back(101);
       toolbar.entries().push_back(entry);
     }
     {
@@ -1816,5 +1818,15 @@ void Manager::Stow::setAllCommands()
     , QObject::tr("Creates A Face Through Edges And Faces").toStdString() //whats this text
     , QObject::tr("Create A Fill Face").toStdString() // toolTipText
     , msg::Request | msg::Construct | msg::Fill
+  );
+  sc
+  (
+    101
+    , ":/resources/images/constructionPrism.svg"
+    , QObject::tr("Prism").toStdString() //icon text
+    , QObject::tr("Create A Prism").toStdString() //status text
+    , QObject::tr("Creates A Primitive Prism Feature").toStdString() //whats this text
+    , QObject::tr("Create A Prism").toStdString() // toolTipText
+    , msg::Request | msg::Construct | msg::Prism
   );
 }

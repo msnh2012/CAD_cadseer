@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xs:schema
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  xmlns:spt="http://www.cadseer.com/prj/srl/spt"
+  xmlns:prsm="http://www.cadseer.com/prj/srl/prsm"
+  targetNamespace="http://www.cadseer.com/prj/srl/prsm"
+>
+  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptparameter.xsd"/>
+  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptoverlay.xsd"/>
+  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptseershape.xsd"/>
+  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptbase.xsd"/>
+
+<xs:complexType name="Prism">
+  <xs:sequence>
+    <xs:element name="base" type="spt:Base"/>
+    <xs:element name="radiusType" type="spt:Parameter"/>
+    <xs:element name="sides" type="spt:Parameter"/>
+    <xs:element name="pyramid" type="spt:Parameter"/>
+    <xs:element name="radius" type="spt:Parameter"/>
+    <xs:element name="height" type="spt:Parameter"/>
+    <xs:element name="csysType" type="spt:Parameter"/>
+    <xs:element name="csys" type="spt:Parameter"/>
+    <xs:element name="csysLinked" type="spt:Parameter"/>
+    <xs:element name="csysDragger" type="spt:CSysDragger"/>
+    <xs:element name="seerShape" type="spt:SeerShape"/>
+    <xs:element name="radiusIP" type="spt:IPGroup"/>
+    <xs:element name="heightIP" type="spt:IPGroup"/>
+    <xs:element name="radiusTypeLabel" type="spt:PLabel"/>
+    <xs:element name="sidesLabel" type="spt:PLabel"/>
+    <xs:element name="pyramidLabel" type="spt:PLabel"/>
+    <xs:element name="apexId" type="xs:string"/>
+    <xs:element name="bottomWireId" type="xs:string"/>
+    <xs:element name="topWireId" type="xs:string"/>
+    <xs:element name="bottomFaceId" type="xs:string"/>
+    <xs:element name="topFaceId" type="xs:string"/>
+    <xs:element name="shellId" type="xs:string"/>
+    <xs:element name="solidId" type="xs:string"/>
+    <xs:element name="bottomVertexIds" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+    <xs:element name="topVertexIds" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+    <xs:element name="bottomEdgeIds" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+    <xs:element name="topEdgeIds" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+    <xs:element name="verticalEdgeIds" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+    <xs:element name="wireIds" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+    <xs:element name="faceIds" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+  </xs:sequence>
+</xs:complexType>
+
+<xs:element name="prism" type="prsm:Prism"/>
+  
+</xs:schema> 

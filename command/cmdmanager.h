@@ -116,6 +116,7 @@ namespace cmd
     void constructUntrimDispatched(const msg::Message&);
     void constructFaceDispatched(const msg::Message&);
     void constructFillDispatched(const msg::Message&);
+    void constructPrismDispatched(const msg::Message&);
     void revisionDispatched(const msg::Message&);
     void importDispatched(const msg::Message&);
     void exportDispatched(const msg::Message&);

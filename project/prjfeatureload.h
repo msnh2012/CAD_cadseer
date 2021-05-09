@@ -104,6 +104,7 @@ namespace prj
     std::shared_ptr<ftr::Base> loadUntrim(const std::string &, std::size_t);
     std::shared_ptr<ftr::Base> loadFace(const std::string &, std::size_t);
     std::shared_ptr<ftr::Base> loadFill(const std::string &, std::size_t);
+    std::shared_ptr<ftr::Base> loadPrism(const std::string &, std::size_t);
   };
 }
 
