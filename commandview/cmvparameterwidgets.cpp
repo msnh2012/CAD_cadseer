@@ -42,7 +42,6 @@
 #include "parameter/prmparameter.h"
 #include "expressions/exprmanager.h"
 #include "tools/idtools.h"
-#include "commandview/cmvcsyswidget.h"
 #include "commandview/cmvtrafficsignal.h"
 #include "commandview/cmvexpressionedit.h"
 #include "commandview/cmvparameterwidgets.h"
@@ -537,8 +536,8 @@ namespace cmv
     
     ParameterBase* buildMatrix() const
     {
-      cmv::CSysWidget *cw = new cmv::CSysWidget(parent, parameter);
-      return cw;
+      ParameterEdit *ee = new ParameterEdit(parent, parameter);
+      return ee;
     }
   };
 }
