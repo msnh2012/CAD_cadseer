@@ -634,7 +634,7 @@ std::shared_ptr<ftr::Base> FeatureLoad::loadSketch(const std::string &fileNameIn
   auto ss = srl::skts::sketch(fileNameIn, flags);
   assert(ss);
   
-  auto sf = std::make_shared<ftr::Sketch>();
+  auto sf = std::make_shared<ftr::Sketch::Feature>();
   sf->getAnnex<ann::SeerShape>().setOCCTShape(shapeVector.at(shapeOffsetIn), featureId);
   sf->serialRead(*ss);
   

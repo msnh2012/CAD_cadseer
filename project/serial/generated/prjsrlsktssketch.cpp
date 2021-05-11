@@ -983,6 +983,30 @@ namespace prj
         this->visual_.set (std::move (x));
       }
 
+      const Sketch::CsysTypeType& Sketch::
+      csysType () const
+      {
+        return this->csysType_.get ();
+      }
+
+      Sketch::CsysTypeType& Sketch::
+      csysType ()
+      {
+        return this->csysType_.get ();
+      }
+
+      void Sketch::
+      csysType (const CsysTypeType& x)
+      {
+        this->csysType_.set (x);
+      }
+
+      void Sketch::
+      csysType (::std::unique_ptr< CsysTypeType > x)
+      {
+        this->csysType_.set (std::move (x));
+      }
+
       const Sketch::CsysType& Sketch::
       csys () const
       {
@@ -1005,6 +1029,30 @@ namespace prj
       csys (::std::unique_ptr< CsysType > x)
       {
         this->csys_.set (std::move (x));
+      }
+
+      const Sketch::CsysLinkedType& Sketch::
+      csysLinked () const
+      {
+        return this->csysLinked_.get ();
+      }
+
+      Sketch::CsysLinkedType& Sketch::
+      csysLinked ()
+      {
+        return this->csysLinked_.get ();
+      }
+
+      void Sketch::
+      csysLinked (const CsysLinkedType& x)
+      {
+        this->csysLinked_.set (x);
+      }
+
+      void Sketch::
+      csysLinked (::std::unique_ptr< CsysLinkedType > x)
+      {
+        this->csysLinked_.set (std::move (x));
       }
 
       const Sketch::CsysDraggerType& Sketch::
@@ -2529,14 +2577,18 @@ namespace prj
               const SeerShapeType& seerShape,
               const SolverType& solver,
               const VisualType& visual,
+              const CsysTypeType& csysType,
               const CsysType& csys,
+              const CsysLinkedType& csysLinked,
               const CsysDraggerType& csysDragger)
       : ::xml_schema::Type (),
         base_ (base, this),
         seerShape_ (seerShape, this),
         solver_ (solver, this),
         visual_ (visual, this),
+        csysType_ (csysType, this),
         csys_ (csys, this),
+        csysLinked_ (csysLinked, this),
         csysDragger_ (csysDragger, this),
         wireIds_ (this),
         handleParameterPairs_ (this)
@@ -2548,14 +2600,18 @@ namespace prj
               ::std::unique_ptr< SeerShapeType > seerShape,
               ::std::unique_ptr< SolverType > solver,
               ::std::unique_ptr< VisualType > visual,
+              ::std::unique_ptr< CsysTypeType > csysType,
               ::std::unique_ptr< CsysType > csys,
+              ::std::unique_ptr< CsysLinkedType > csysLinked,
               ::std::unique_ptr< CsysDraggerType > csysDragger)
       : ::xml_schema::Type (),
         base_ (std::move (base), this),
         seerShape_ (std::move (seerShape), this),
         solver_ (std::move (solver), this),
         visual_ (std::move (visual), this),
+        csysType_ (std::move (csysType), this),
         csys_ (std::move (csys), this),
+        csysLinked_ (std::move (csysLinked), this),
         csysDragger_ (std::move (csysDragger), this),
         wireIds_ (this),
         handleParameterPairs_ (this)
@@ -2571,7 +2627,9 @@ namespace prj
         seerShape_ (x.seerShape_, f, this),
         solver_ (x.solver_, f, this),
         visual_ (x.visual_, f, this),
+        csysType_ (x.csysType_, f, this),
         csys_ (x.csys_, f, this),
+        csysLinked_ (x.csysLinked_, f, this),
         csysDragger_ (x.csysDragger_, f, this),
         wireIds_ (x.wireIds_, f, this),
         handleParameterPairs_ (x.handleParameterPairs_, f, this)
@@ -2587,7 +2645,9 @@ namespace prj
         seerShape_ (this),
         solver_ (this),
         visual_ (this),
+        csysType_ (this),
         csys_ (this),
+        csysLinked_ (this),
         csysDragger_ (this),
         wireIds_ (this),
         handleParameterPairs_ (this)
@@ -2665,6 +2725,20 @@ namespace prj
             }
           }
 
+          // csysType
+          //
+          if (n.name () == "csysType" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< CsysTypeType > r (
+              CsysTypeTraits::create (i, f, this));
+
+            if (!csysType_.present ())
+            {
+              this->csysType_.set (::std::move (r));
+              continue;
+            }
+          }
+
           // csys
           //
           if (n.name () == "csys" && n.namespace_ ().empty ())
@@ -2675,6 +2749,20 @@ namespace prj
             if (!csys_.present ())
             {
               this->csys_.set (::std::move (r));
+              continue;
+            }
+          }
+
+          // csysLinked
+          //
+          if (n.name () == "csysLinked" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< CsysLinkedType > r (
+              CsysLinkedTraits::create (i, f, this));
+
+            if (!csysLinked_.present ())
+            {
+              this->csysLinked_.set (::std::move (r));
               continue;
             }
           }
@@ -2746,10 +2834,24 @@ namespace prj
             "");
         }
 
+        if (!csysType_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "csysType",
+            "");
+        }
+
         if (!csys_.present ())
         {
           throw ::xsd::cxx::tree::expected_element< char > (
             "csys",
+            "");
+        }
+
+        if (!csysLinked_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "csysLinked",
             "");
         }
 
@@ -2778,7 +2880,9 @@ namespace prj
           this->seerShape_ = x.seerShape_;
           this->solver_ = x.solver_;
           this->visual_ = x.visual_;
+          this->csysType_ = x.csysType_;
           this->csys_ = x.csys_;
+          this->csysLinked_ = x.csysLinked_;
           this->csysDragger_ = x.csysDragger_;
           this->wireIds_ = x.wireIds_;
           this->handleParameterPairs_ = x.handleParameterPairs_;
@@ -3680,6 +3784,17 @@ namespace prj
           s << i.visual ();
         }
 
+        // csysType
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "csysType",
+              e));
+
+          s << i.csysType ();
+        }
+
         // csys
         //
         {
@@ -3689,6 +3804,17 @@ namespace prj
               e));
 
           s << i.csys ();
+        }
+
+        // csysLinked
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "csysLinked",
+              e));
+
+          s << i.csysLinked ();
         }
 
         // csysDragger

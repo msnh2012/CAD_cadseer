@@ -35,16 +35,18 @@
 #include "message/msgmessage.h"
 #include "message/msgnode.h"
 #include "message/msgsift.h"
-#include "commandview/cmvcsyswidget.h"
 #include "commandview/cmvexpressionedit.h"
 #include "parameter/prmconstants.h"
 #include "parameter/prmparameter.h"
+#include "feature/ftrprimitive.h"
 #include "feature/ftrinputtype.h"
 #include "feature/ftrsketch.h"
 #include "sketch/sktvisual.h"
 #include "sketch/sktselection.h"
 #include "sketch/sktsolver.h"
 #include "command/cmdsketch.h"
+#include "commandview/cmvselectioncue.h"
+#include "commandview/cmvtable.h"
 #include "commandview/cmvsketch.h"
 
 using boost::uuids::uuid;
@@ -55,13 +57,13 @@ struct Sketch::Stow
 {
   cmv::Sketch *view = nullptr;
   cmd::Sketch *command = nullptr;
-  ftr::Sketch *feature = nullptr;
+  ftr::Sketch::Feature *feature = nullptr;
   skt::Visual *visual = nullptr;
   osg::ref_ptr<skt::Selection> selection;
   prm::Parameter *parameter = nullptr; //!< currently selected parameter or nullptr
   cmv::ParameterEdit *pEdit = nullptr;
-  CSysWidget *csysWidget = nullptr;
-  
+  tbl::Model *prmModel = nullptr;
+  tbl::View *prmView  = nullptr;
   QRadioButton *sketchRadio = nullptr;
   QRadioButton *csysRadio = nullptr;
   QButtonGroup *radioGroup = nullptr;
@@ -307,23 +309,31 @@ struct Sketch::Stow
     siLayout->addSpacing(20);
     siLayout->addWidget(sketchGroup);
     
+    //limit the use of the new parameter table to the csys parameters
+    //and leave dimensional parameters as is using parameter edit.
+    prm::Parameters csysPrms
+    {
+      feature->getParameter(prm::Tags::CSysType)
+      , feature->getParameter(prm::Tags::CSys)
+      , feature->getParameter(prm::Tags::CSysLinked)
+    };
+    prmModel = new tbl::Model(view, feature, csysPrms);
+    prmView = new tbl::View(view, prmModel, true);
+    tbl::SelectionCue cue;
+    cue.singleSelection = true;
+    cue.mask = slc::ObjectsBoth;
+    cue.statusPrompt = tr("Select Feature To Link CSys");
+    cue.accrueEnabled = false;
+    prmModel->setCue(csysPrms.back(), cue);
+    mainLayout->addWidget(prmView);
     csysGroup = new QGroupBox(view);
     csysGroup->setDisabled(true);
-    auto systemParameters = feature->getParameters(prm::Tags::CSys);
-    if (!systemParameters.empty())
-    {
-      csysWidget = new CSysWidget(view, systemParameters.front());
-      ftr::UpdatePayload payload = view->project->getPayload(feature->getId());
-      std::vector<const ftr::Base*> inputs = payload.getFeatures(ftr::InputType::linkCSys);
-      if (inputs.empty())
-        csysWidget->setCSysLinkId(gu::createNilId());
-      else
-        csysWidget->setCSysLinkId(inputs.front()->getId());
-      QObject::connect(csysWidget, &CSysWidget::dirty, view, &Sketch::linkedCSysChanged);
-      QHBoxLayout *csysWrapLayout = new QHBoxLayout();
-      csysWrapLayout->addWidget(csysWidget);
-      csysGroup->setLayout(csysWrapLayout);
-    }
+    QHBoxLayout *csysWrapLayout = new QHBoxLayout();
+    csysWrapLayout->addWidget(prmView);
+    csysGroup->setLayout(csysWrapLayout);
+    clearContentMargins(csysGroup);
+    connect(prmModel, &tbl::Model::dataChanged, view, &Sketch::modelChanged);
+
     auto *ciLayout = new QHBoxLayout(); //csys indent layout.
     ciLayout->addSpacing(20);
     ciLayout->addWidget(csysGroup);
@@ -584,9 +594,7 @@ void Sketch::remove()
 {
   if (stow->parameter)
   {
-    uint32_t h = stow->feature->getHPHandle(stow->parameter);
-    if (h != 0)
-      stow->feature->removeHPPair(h);
+    stow->feature->removeHPPair(stow->parameter);
     stow->parameter = nullptr;
     delete stow->pEdit;
     stow->pEdit = nullptr;
@@ -595,7 +603,6 @@ void Sketch::remove()
   if (stow->visual->getState() != skt::State::selection)
     stow->visual->cancel();
   stow->visual->remove();
-  stow->feature->cleanHPPair();
 }
 
 void Sketch::cancel()
@@ -722,25 +729,13 @@ void Sketch::prmValueChanged()
 {
   assert(stow->pEdit);
   assert(stow->parameter);
-  
-  double pValue = stow->parameter->getDouble();
-  stow->feature->getSolver()->updateConstraintValue(stow->feature->getHPHandle(stow->parameter), pValue);
-  stow->feature->getSolver()->solve(stow->feature->getSolver()->getGroup(), true);
+  stow->feature->updateConstraintValue(stow->parameter);
   stow->visual->update();
 }
 
 void Sketch::prmConstantChanged()
 {
   prmValueChanged();
-}
-
-void Sketch::linkedCSysChanged()
-{
-  project->clearAllInputs(stow->feature->getId());
-  uuid lId = stow->csysWidget->getCSysLinkId();
-  if (!lId.is_nil())
-    project->connect(lId, stow->feature->getId(), {ftr::InputType::linkCSys});
-  stow->command->localUpdate();
 }
 
 void Sketch::viewEntitiesToggled(bool state)
@@ -795,4 +790,33 @@ void Sketch::selectWorkToggled(bool state)
     stow->selection->workPlaneAxesOff();
     stow->selection->workPlaneOriginOff();
   }
+}
+void Sketch::modelChanged(const QModelIndex &index, const QModelIndex&)
+{
+  if (!index.isValid())
+    return;
+  
+  prm::Parameter *par = stow->prmModel->getParameter(index);
+  
+  if (par->getTag() == prm::Tags::CSysType)
+  {
+    const auto *ft = stow->command->feature;
+    auto systemType = static_cast<ftr::Primitive::CSysType>(par->getInt());
+    switch(systemType)
+    {
+      case ftr::Primitive::Constant:{
+        stow->command->setConstant();
+        break;}
+      case ftr::Primitive::Linked:{
+        par = ft->getParameter(prm::Tags::CSysLinked); //just trick lower to call.
+        break;}
+    }
+    stow->prmView->updateHideInactive();
+  }
+  
+  if (par->getTag() == prm::Tags::CSysLinked)
+    stow->command->setLinked(stow->prmModel->getMessages(par));
+  
+  stow->command->localUpdate();
+  node->sendBlocked(msg::buildStatusMessage(stow->command->getStatusMessage()));
 }

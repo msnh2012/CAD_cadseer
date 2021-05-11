@@ -120,7 +120,7 @@ void MapPCurve::updateModel(const UpdatePayload &pIn)
       {
         if (pr.getFeature()->getType() == ftr::Type::Sketch && iss)
         {
-          const ftr::Sketch *sketch = dynamic_cast<const ftr::Sketch*>(pr.getFeature());
+          const auto *sketch = dynamic_cast<const Sketch::Feature*>(pr.getFeature());
           assert(sketch);
           auto systemParameters =  sketch->getParameters(prm::Tags::CSys);
           assert(!systemParameters.empty());

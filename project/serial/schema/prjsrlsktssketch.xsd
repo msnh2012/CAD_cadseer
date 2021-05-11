@@ -97,7 +97,9 @@
       <xs:element name="seerShape" type="spt:SeerShape"/>
       <xs:element name="solver" type="skts:Solver"/>
       <xs:element name="visual" type="skts:Visual"/>
+      <xs:element name="csysType" type="spt:Parameter"/>
       <xs:element name="csys" type="spt:Parameter"/>
+      <xs:element name="csysLinked" type="spt:Parameter"/>
       <xs:element name="csysDragger" type="spt:CSysDragger"/>
       <xs:element name="wireIds" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
       <xs:element name="handleParameterPairs" type="skts:HandleParameterPair" minOccurs="0" maxOccurs="unbounded"/>

@@ -23,63 +23,40 @@
 #include "feature/ftrbase.h"
 
 namespace prj{namespace srl{namespace skts{class Sketch;}}}
-namespace skt{struct Solver; class Visual;}
-namespace ann{class SeerShape; class CSysDragger;}
-namespace prm{struct Observer;}
+namespace skt{class Visual;}
 
 namespace ftr
 {
-  /**
-  * @brief 2d sketch feature.
-  */
-  class Sketch : public Base
+  namespace Sketch
   {
-  public:
-    Sketch();
-    virtual ~Sketch() override;
-    
-    virtual void updateModel(const UpdatePayload&) override;
-    virtual Type getType() const override {return Type::Sketch;}
-    virtual const std::string& getTypeString() const override {return toString(Type::Sketch);}
-    virtual const QIcon& getIcon() const override {return icon;}
-    virtual Descriptor getDescriptor() const override {return Descriptor::Create;}
-    
-    virtual void serialWrite(const boost::filesystem::path&) override;
-    void serialRead(const prj::srl::skts::Sketch&);
-    
-    skt::Solver* getSolver(){return solver.get();}
-    skt::Visual* getVisual(){return visual.get();}
-    void draggerShow();
-    void draggerHide();
-    void buildDefault(const osg::Matrixd&, double);
-    void setCSys(const osg::Matrixd&);
-    osg::Matrixd getCSys() const;
-    
-    bool hasHPPair(uint32_t);
-    bool hasHPPair(const prm::Parameter*);
-    void addHPPair(uint32_t, const std::shared_ptr<prm::Parameter>&);
-    void removeHPPair(uint32_t);
-    prm::Parameter* getHPParameter(uint32_t);
-    uint32_t getHPHandle(const prm::Parameter*);
-    void cleanHPPair(); //!< ensure handle of pair exists in solver.
-    
-  protected:
-    std::unique_ptr<ann::SeerShape> sShape;
-    std::unique_ptr<skt::Solver> solver;
-    std::unique_ptr<skt::Visual> visual;
-    std::unique_ptr<prm::Parameter> csys;
-    std::unique_ptr<prm::Observer> prmObserver;
-    std::unique_ptr<ann::CSysDragger> csysDragger;
-    osg::ref_ptr<osg::Switch> draggerSwitch;
-    std::vector<boost::uuids::uuid> wireIds;
-    std::vector<std::pair<uint32_t, std::shared_ptr<prm::Parameter>>> hpPairs;
-    
-    void updateSeerShape();
-    
-    
-  private:
-    static QIcon icon;
-  };
+    class Feature : public Base
+    {
+    public:
+      Feature();
+      ~Feature() override;
+      
+      void updateModel(const UpdatePayload&) override;
+      Type getType() const override {return Type::Sketch;}
+      const std::string& getTypeString() const override {return toString(Type::Sketch);}
+      const QIcon& getIcon() const override {return icon;}
+      Descriptor getDescriptor() const override {return Descriptor::Create;}
+      void serialWrite(const boost::filesystem::path&) override;
+      void serialRead(const prj::srl::skts::Sketch&);
+      
+      void buildDefault(const osg::Matrixd&, double); //used in command
+      skt::Visual* getVisual(); //commandview
+      void addHPPair(uint32_t, const std::shared_ptr<prm::Parameter>&); //commandview
+      void removeHPPair(const prm::Parameter*); //commandview
+      void updateConstraintValue(const prm::Parameter*); //commandview
+      
+      void draggerShow();
+      void draggerHide();
+    private:
+      static QIcon icon;
+      struct Stow;
+      std::unique_ptr<Stow> stow;
+    };
+  }
 }
 
 #endif // FTR_SKETCH_H

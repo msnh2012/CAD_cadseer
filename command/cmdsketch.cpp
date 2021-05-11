@@ -26,7 +26,9 @@
 #include "parameter/prmconstants.h"
 #include "parameter/prmparameter.h"
 #include "feature/ftrinputtype.h"
+#include "feature/ftrprimitive.h"
 #include "feature/ftrsketch.h"
+#include "tools/featuretools.h"
 #include "commandview/cmvmessage.h"
 #include "commandview/cmvsketch.h"
 #include "command/cmdsketch.h"
@@ -39,7 +41,7 @@ Sketch::Sketch()
 : Base("cmd::Sketch")
 , leafManager()
 {
-  auto nf = std::make_shared<ftr::Sketch>();
+  auto nf = std::make_shared<ftr::Sketch::Feature>();
   project->addFeature(nf);
   feature = nf.get();
   node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
@@ -51,7 +53,7 @@ Sketch::Sketch(ftr::Base *fIn)
 : Base("cmd::Sketch")
 , leafManager(fIn)
 {
-  feature = dynamic_cast<ftr::Sketch*>(fIn);
+  feature = dynamic_cast<ftr::Sketch::Feature*>(fIn);
   assert(feature);
   viewBase = std::make_unique<cmv::Sketch>(this);
   node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
@@ -109,11 +111,37 @@ void Sketch::deactivate()
   isActive = false;
 }
 
+void Sketch::setConstant()
+{
+  assert(isActive);
+  project->clearAllInputs(feature->getId());
+  
+  auto *param = feature->getParameter(prm::Tags::CSysType);
+  param->setValue(static_cast<int>(ftr::Primitive::Constant));
+}
+
+void Sketch::setLinked(const slc::Messages &msIn)
+{
+  assert(isActive);
+  project->clearAllInputs(feature->getId());
+  
+  auto *param = feature->getParameter(prm::Tags::CSysType);
+  param->setValue(static_cast<int>(ftr::Primitive::Linked));
+  
+  if (msIn.empty())
+    return;
+  
+  const ftr::Base &parent = *project->findFeature(msIn.front().featureId);
+  auto pick = tls::convertToPick(msIn.front(), parent, project->getShapeHistory());
+  pick.tag = indexTag(prm::Tags::CSysLinked, 0);
+  feature->getParameter(prm::Tags::CSysLinked)->setValue({pick});
+  project->connectInsert(parent.getId(), feature->getId(), {pick.tag});
+}
+
 void Sketch::localUpdate()
 {
   assert(isActive);
   feature->updateModel(project->getPayload(feature->getId()));
-  feature->draggerHide(); //update will turn it on.
   feature->updateVisual();
   feature->setModelDirty();
   node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);

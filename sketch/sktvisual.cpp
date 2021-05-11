@@ -2226,8 +2226,7 @@ boost::optional<std::pair<SSHandle, std::shared_ptr<prm::Parameter>>> Visual::ad
   }
   solver.solve(solver.getGroup(), true);
   
-  std::shared_ptr<prm::Parameter> parameter = std::make_shared<prm::Parameter>
-    (prm::Names::Distance, length);
+  std::shared_ptr<prm::Parameter> parameter = std::make_shared<prm::Parameter>(prm::Names::Distance, length);
   data->cMap.records.push_back(Map::Record());
   Map::Record &record = data->cMap.records.back();
   record.handle = dh;
@@ -2265,6 +2264,7 @@ void Visual::connectDistance(SSHandle cHandle, prm::Parameter *parameter, const 
   
   lbr::PLabel *label = new lbr::PLabel(parameter);
   label->setMatrix(osg::Matrixd::translate(location));
+  label->setShowName(false);
     
   osg::MatrixTransform *ld = lbr::buildLinearDimension(label);
   ld->setNodeMask(Constraint.to_ulong());
@@ -2289,6 +2289,7 @@ void Visual::connectDiameter(SSHandle cHandle, prm::Parameter *parameter, const 
   
   lbr::PLabel *label = new lbr::PLabel(parameter);
   label->setMatrix(osg::Matrixd::translate(location));
+  label->setShowName(false);
     
   osg::MatrixTransform *dd = lbr::buildDiameterDimension(label);
   dd->setNodeMask(Constraint.to_ulong());
@@ -2312,6 +2313,7 @@ void Visual::connectAngle(SSHandle cHandle, prm::Parameter *parameter, const osg
   
   lbr::PLabel *label = new lbr::PLabel(parameter);
   label->setMatrix(osg::Matrixd::translate(location));
+  label->setShowName(false);
   
   osg::MatrixTransform *angularDimension = lbr::buildAngularDimension(label);
   lbr::AngularDimensionCallback *cb = new lbr::AngularDimensionCallback(label->getName());

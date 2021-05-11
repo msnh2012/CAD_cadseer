@@ -1154,6 +1154,23 @@ namespace prj
         void
         visual (::std::unique_ptr< VisualType > p);
 
+        // csysType
+        //
+        typedef ::prj::srl::spt::Parameter CsysTypeType;
+        typedef ::xsd::cxx::tree::traits< CsysTypeType, char > CsysTypeTraits;
+
+        const CsysTypeType&
+        csysType () const;
+
+        CsysTypeType&
+        csysType ();
+
+        void
+        csysType (const CsysTypeType& x);
+
+        void
+        csysType (::std::unique_ptr< CsysTypeType > p);
+
         // csys
         //
         typedef ::prj::srl::spt::Parameter CsysType;
@@ -1170,6 +1187,23 @@ namespace prj
 
         void
         csys (::std::unique_ptr< CsysType > p);
+
+        // csysLinked
+        //
+        typedef ::prj::srl::spt::Parameter CsysLinkedType;
+        typedef ::xsd::cxx::tree::traits< CsysLinkedType, char > CsysLinkedTraits;
+
+        const CsysLinkedType&
+        csysLinked () const;
+
+        CsysLinkedType&
+        csysLinked ();
+
+        void
+        csysLinked (const CsysLinkedType& x);
+
+        void
+        csysLinked (::std::unique_ptr< CsysLinkedType > p);
 
         // csysDragger
         //
@@ -1228,14 +1262,18 @@ namespace prj
                 const SeerShapeType&,
                 const SolverType&,
                 const VisualType&,
+                const CsysTypeType&,
                 const CsysType&,
+                const CsysLinkedType&,
                 const CsysDraggerType&);
 
         Sketch (::std::unique_ptr< BaseType >,
                 ::std::unique_ptr< SeerShapeType >,
                 ::std::unique_ptr< SolverType >,
                 ::std::unique_ptr< VisualType >,
+                ::std::unique_ptr< CsysTypeType >,
                 ::std::unique_ptr< CsysType >,
+                ::std::unique_ptr< CsysLinkedType >,
                 ::std::unique_ptr< CsysDraggerType >);
 
         Sketch (const ::xercesc::DOMElement& e,
@@ -1268,7 +1306,9 @@ namespace prj
         ::xsd::cxx::tree::one< SeerShapeType > seerShape_;
         ::xsd::cxx::tree::one< SolverType > solver_;
         ::xsd::cxx::tree::one< VisualType > visual_;
+        ::xsd::cxx::tree::one< CsysTypeType > csysType_;
         ::xsd::cxx::tree::one< CsysType > csys_;
+        ::xsd::cxx::tree::one< CsysLinkedType > csysLinked_;
         ::xsd::cxx::tree::one< CsysDraggerType > csysDragger_;
         WireIdsSequence wireIds_;
         HandleParameterPairsSequence handleParameterPairs_;

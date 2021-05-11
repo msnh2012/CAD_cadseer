@@ -23,7 +23,7 @@
 #include "command/cmdleafmanager.h"
 #include "command/cmdbase.h"
 
-namespace ftr{class Sketch;}
+namespace ftr{namespace Sketch{class Feature;}}
 
 namespace cmd
 {
@@ -33,7 +33,7 @@ namespace cmd
   class Sketch : public Base
   {
     public:
-      ftr::Sketch *feature = nullptr;
+      ftr::Sketch::Feature *feature = nullptr;
       
       Sketch();
       Sketch(ftr::Base*);
@@ -44,6 +44,8 @@ namespace cmd
       void activate() override;
       void deactivate() override;
       
+      void setConstant();
+      void setLinked(const slc::Messages&);
       void localUpdate();
     private:
       cmd::LeafManager leafManager;

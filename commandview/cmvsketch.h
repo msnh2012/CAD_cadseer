@@ -42,7 +42,7 @@ namespace cmv
     void deactivate();
   private Q_SLOTS:
     void buttonToggled(int, bool);
-    void linkedCSysChanged();
+    void modelChanged(const QModelIndex&, const QModelIndex&);
     
   private:
     struct Stow;
