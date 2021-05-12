@@ -151,7 +151,7 @@ void Import::outputShape(const TopoDS_Shape &shapeIn, const std::string &namePre
   
   auto add = [&](const TopoDS_Shape &sIn, const std::string &nameIn)
   {
-    std::shared_ptr<ftr::Inert> inert(new ftr::Inert(sIn));
+    std::shared_ptr<ftr::Inert::Feature> inert(new ftr::Inert::Feature(sIn));
     project->addFeature(inert);
     inert->setName(QString::fromStdString(nameIn));
     inert->updateModel(project->getPayload(inert->getId()));

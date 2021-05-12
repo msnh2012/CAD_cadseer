@@ -46,9 +46,11 @@
 #include "tools/occtools.h"
 #include "feature/ftrbase.h"
 #include "annex/annseershape.h"
+#include "annex/anncsysdragger.h"
 #include "feature/ftrinert.h"
 #include "feature/ftrshapehistory.h"
 #include "feature/ftrmessage.h"
+#include "parameter/prmconstants.h"
 #include "parameter/prmparameter.h"
 #include "expressions/exprmanager.h"
 #include "message/msgmessage.h"
@@ -244,7 +246,7 @@ void Project::addOCCShape(const TopoDS_Shape &shapeIn, std::string name)
   
   auto addShape = [&](const TopoDS_Shape &shapeIn, const std::string &nameIn)
   {
-    auto inert = std::make_shared<ftr::Inert>(shapeIn);
+    auto inert = std::make_shared<ftr::Inert::Feature>(shapeIn);
     addFeature(inert);
     inert->setName(QString::fromStdString(nameIn));
   };
@@ -1053,8 +1055,13 @@ void Project::dissolveFeatureDispatched(const msg::Message &mIn)
     msg::Message(msg::Response | msg::Pre | msg::Project | msg::Feature | msg::Dissolve, pm)
   );
   
-  //create new feature and assign seershape and ids.
-  std::shared_ptr<ftr::Inert> nf(new ftr::Inert(oss.getRootOCCTShape()));
+  //create new inert feature.
+  std::shared_ptr<ftr::Inert::Feature> nf;
+  auto csysPrms = fb->getParameters(prm::Tags::CSys);
+  if (!csysPrms.empty())
+    nf = std::make_shared<ftr::Inert::Feature>(oss.getRootOCCTShape(), csysPrms.front()->getMatrix());
+  else
+    nf = std::make_shared<ftr::Inert::Feature>(oss.getRootOCCTShape());
   nf->setColor(fb->getColor());
   ann::SeerShape &nss = nf->getAnnex<ann::SeerShape>();
   occt::ShapeVector oshapes = oss.getAllShapes(); //original shapes

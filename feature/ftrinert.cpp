@@ -34,19 +34,37 @@
 #include "annex/anncsysdragger.h"
 #include "parameter/prmconstants.h"
 #include "parameter/prmparameter.h"
+#include "feature/ftrprimitive.h"
 #include "feature/ftrupdatepayload.h"
 #include "feature/ftrinert.h"
 
-using namespace ftr;
+using namespace ftr::Inert;
 using namespace boost::uuids;
 
-QIcon Inert::icon;
+QIcon Feature::icon;
 
-Inert::Inert(const TopoDS_Shape &shapeIn) :
-Base(),
-csys(std::make_unique<prm::Parameter>(prm::Names::CSys, osg::Matrixd::identity(), prm::Tags::CSys)),
-csysDragger(std::make_unique<ann::CSysDragger>(this, csys.get())),
-sShape(std::make_unique<ann::SeerShape>())
+struct Feature::Stow
+{
+  Feature &feature;
+  Primitive primitive;
+  osg::Matrixd cachedMatrix; //detect csys change
+  
+  Stow() = delete;
+  Stow(Feature &fIn)
+  : feature(fIn)
+  , primitive(Primitive::Input{fIn, fIn.parameters, fIn.annexes})
+  {
+  }
+};
+
+Feature::Feature(const TopoDS_Shape &shapeIn)
+// : Feature(shapeIn, gu::toOsg(shapeIn.Location().Transformation()))
+: Feature(shapeIn, osg::Matrixd::identity())
+{}
+
+Feature::Feature(const TopoDS_Shape &shapeIn, const osg::Matrixd &mIn)
+: Base()
+, stow(std::make_unique<Stow>(*this))
 {
   if (icon.isNull())
     icon = QIcon(":/resources/images/constructionInert.svg");
@@ -54,36 +72,17 @@ sShape(std::make_unique<ann::SeerShape>())
   name = QObject::tr("Inert");
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
   
-  sShape->setOCCTShape(shapeIn, getId());
-  sShape->ensureNoNils();
+  stow->primitive.sShape.setOCCTShape(shapeIn, getId());
+  stow->primitive.sShape.ensureNoNils();
   
-  parameters.push_back(csys.get());
-  
-  annexes.insert(std::make_pair(ann::Type::SeerShape, sShape.get()));
-  annexes.insert(std::make_pair(ann::Type::CSysDragger, csysDragger.get()));
-  overlaySwitch->addChild(csysDragger->dragger);
-  
-  //sync transformations.
-  csys->setValue(gu::toOsg(sShape->getRootOCCTShape().Location().Transformation()));
-  csysDragger->draggerUpdate(); //set dragger to parameter.
-  
-  csys->connectValue(std::bind(&Inert::setModelDirty, this));
+  stow->primitive.csys.setValue(mIn);
+  stow->primitive.csysDragger.draggerUpdate(); //set dragger to parameter.
+  stow->cachedMatrix = mIn;
 }
 
-Inert::~Inert(){}
+Feature::~Feature() = default;
 
-
-void Inert::setCSys(const osg::Matrixd &mIn)
-{
-  csys->setValue(mIn);
-}
-
-osg::Matrixd Inert::getCSys() const
-{
-  return csys->getMatrix();
-}
-
-void Inert::updateModel(const UpdatePayload&)
+void Feature::updateModel(const UpdatePayload&)
 {
   try
   {
@@ -92,54 +91,60 @@ void Inert::updateModel(const UpdatePayload&)
     
     //store a map of offset to id for restoration.
     std::vector<uuid> oldIds;
-    occt::ShapeVector shapes = occt::mapShapes(sShape->getRootOCCTShape());
+    occt::ShapeVector shapes = occt::mapShapes(stow->primitive.sShape.getRootOCCTShape());
     for (const auto &s : shapes)
     {
-      if (sShape->hasShape(s))
+      if (stow->primitive.sShape.hasShape(s))
       {
-        oldIds.push_back(sShape->findId(s));
+        oldIds.push_back(stow->primitive.sShape.findId(s));
       }
       else
       {
-        std::cerr << "WARNING: shape is not in shapeId container in Inert::updateModel" << std::endl;
+        std::cerr << "WARNING: shape is not in shapeId container in Feature::updateModel" << std::endl;
         oldIds.push_back(gu::createNilId()); //place holder will be skipped again.
       }
     }
-    uuid oldRootId = sShape->getRootShapeId();
+    uuid oldRootId = stow->primitive.sShape.getRootShapeId();
     
-    TopoDS_Shape tempShape(sShape->getRootOCCTShape());
-    gp_Ax3 tempAx3(gu::toOcc(osg::Matrixd::inverse(csys->getMatrix())));
+    const osg::Matrixd &prmMatrix = stow->primitive.csys.getMatrix();
+    osg::Matrixd diff = osg::Matrixd::inverse(stow->cachedMatrix) * prmMatrix;
+    
+    TopoDS_Shape tempShape(stow->primitive.sShape.getRootOCCTShape());
+    osg::Matrixd shapeMatrix = gu::toOsg(tempShape.Location().Transformation());
+    osg::Matrixd freshMatrix = shapeMatrix * diff;
+    //I have no idea why I have to 'inverse' here. I don't have to inverse when I pull the matrix out of the shape.
+    gp_Ax3 tempAx3(gu::toOcc(osg::Matrixd::inverse(freshMatrix)));
     gp_Trsf tempTrsf;
     tempTrsf.SetTransformation(tempAx3);
     TopLoc_Location freshLocation(tempTrsf);
     tempShape.Location(freshLocation);
-    sShape->setOCCTShape(tempShape, getId());
+    stow->primitive.sShape.setOCCTShape(tempShape, getId());
+    stow->primitive.sShape.updateId(stow->primitive.sShape.getRootOCCTShape(), oldRootId);
+    stow->primitive.sShape.setRootShapeId(oldRootId);
     
-    sShape->updateId(sShape->getRootOCCTShape(), oldRootId);
-    sShape->setRootShapeId(oldRootId);
-    
-    shapes = occt::mapShapes(sShape->getRootOCCTShape());
+    shapes = occt::mapShapes(stow->primitive.sShape.getRootOCCTShape());
     std::size_t count = 0;
     for (const auto &s : shapes)
     {
-      if (sShape->hasShape(s))
+      if (stow->primitive.sShape.hasShape(s))
       {
-        sShape->updateId(s, oldIds.at(count));
+        stow->primitive.sShape.updateId(s, oldIds.at(count));
       }
       else
       {
-        std::cerr << "WARNING: shape is not in moved shapeId container in Inert::updateModel" << std::endl;
+        std::cerr << "WARNING: shape is not in moved shapeId container in Feature::updateModel" << std::endl;
       }
       count++;
     }
     
-    sShape->dumpNils("inert");
-    sShape->dumpDuplicates("inert");
+    stow->primitive.sShape.dumpNils("inert");
+    stow->primitive.sShape.dumpDuplicates("inert");
     
-    sShape->ensureNoNils();
-    sShape->ensureNoDuplicates();
+    stow->primitive.sShape.ensureNoNils();
+    stow->primitive.sShape.ensureNoDuplicates();
     
     mainTransform->setMatrix(osg::Matrixd::identity());
+    stow->cachedMatrix = stow->primitive.csys.getMatrix();
     setSuccess();
   }
   catch (const Standard_Failure &e)
@@ -163,14 +168,14 @@ void Inert::updateModel(const UpdatePayload&)
     std::cout << std::endl << lastUpdateLog;
 }
 
-void Inert::serialWrite(const boost::filesystem::path &dIn)
+void Feature::serialWrite(const boost::filesystem::path &dIn)
 {
   prj::srl::ints::Inert inertOut
   (
     Base::serialOut(),
-    sShape->serialOut(),
-    csys->serialOut(),
-    csysDragger->serialOut()
+    stow->primitive.sShape.serialOut(),
+    stow->primitive.csys.serialOut(),
+    stow->primitive.csysDragger.serialOut()
   );
   
   xml_schema::NamespaceInfomap infoMap;
@@ -178,10 +183,11 @@ void Inert::serialWrite(const boost::filesystem::path &dIn)
   prj::srl::ints::inert(stream, inertOut, infoMap);
 }
 
-void Inert::serialRead(const prj::srl::ints::Inert& inert)
+void Feature::serialRead(const prj::srl::ints::Inert& inert)
 {
   Base::serialIn(inert.base());
-  sShape->serialIn(inert.seerShape());
-  csys->serialIn(inert.csys());
-  csysDragger->serialIn(inert.csysDragger());
+  stow->primitive.sShape.serialIn(inert.seerShape());
+  stow->primitive.csys.serialIn(inert.csys());
+  stow->primitive.csysDragger.serialIn(inert.csysDragger());
+  stow->cachedMatrix = stow->primitive.csys.getMatrix();
 }

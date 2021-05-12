@@ -23,40 +23,31 @@
 #include "feature/ftrbase.h"
 
 namespace prj{namespace srl{namespace ints{class Inert;}}}
-namespace ann{class CSysDragger;}
 
 namespace ftr
 {
-  /*! @brief static feature.
-   * 
-   * feature that has no real parameters or update.
-   * for example, used for import geometry.
-   */
-  class Inert : public Base
+  namespace Inert
   {
-  public:
-    Inert() = delete;
-    Inert(const TopoDS_Shape &shapeIn);
-    virtual ~Inert() override;
-    virtual void updateModel(const UpdatePayload&) override;
-    virtual Type getType() const override {return Type::Inert;}
-    virtual const std::string& getTypeString() const override {return toString(Type::Inert);}
-    virtual const QIcon& getIcon() const override {return icon;}
-    virtual Descriptor getDescriptor() const override {return Descriptor::Create;}
-    virtual void serialWrite(const boost::filesystem::path&) override;
-    void serialRead(const prj::srl::ints::Inert &sBox);
-    
-    void setCSys(const osg::Matrixd&);
-    osg::Matrixd getCSys() const;
-    
-  protected:
-    std::unique_ptr<prm::Parameter> csys;
-    std::unique_ptr<ann::CSysDragger> csysDragger;
-    std::unique_ptr<ann::SeerShape> sShape;
-    
-  private:
-    static QIcon icon;
-  };
+    class Feature : public Base
+    {
+    public:
+      Feature() = delete;
+      Feature(const TopoDS_Shape&);
+      Feature(const TopoDS_Shape&, const osg::Matrixd&);
+      ~Feature() override;
+      void updateModel(const UpdatePayload&) override;
+      Type getType() const override {return Type::Inert;}
+      const std::string& getTypeString() const override {return toString(Type::Inert);}
+      const QIcon& getIcon() const override {return icon;}
+      Descriptor getDescriptor() const override {return Descriptor::Create;}
+      void serialWrite(const boost::filesystem::path&) override;
+      void serialRead(const prj::srl::ints::Inert &sBox);
+    private:
+      static QIcon icon;
+      struct Stow;
+      std::unique_ptr<Stow> stow;
+    };
+  }
 }
 
 #endif // FTR_INERT_H

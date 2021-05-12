@@ -314,7 +314,7 @@ std::shared_ptr< ftr::Base > FeatureLoad::loadInert(const std::string &fileNameI
   auto sInert = srl::ints::inert(fileNameIn, flags);
   assert(sInert);
   
-  auto freshInert = std::make_shared<ftr::Inert>(shapeVector.at(shapeOffsetIn));
+  auto freshInert = std::make_shared<ftr::Inert::Feature>(shapeVector.at(shapeOffsetIn));
   freshInert->serialRead(*sInert);
   
   return freshInert;
