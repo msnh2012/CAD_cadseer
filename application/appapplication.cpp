@@ -47,7 +47,9 @@
 #include "dialogs/dlgproject.h"
 #include "dialogs/dlgabout.h"
 
+#ifdef SPNAV_PRESENT
 #include <spnav.h>
+#endif
 
 
 using namespace app;
@@ -97,7 +99,6 @@ Application::Application(int &argc, char **argv) :
 Application::~Application()
 {
   git2::stop();
-  spnav_close();
 }
 
 void Application::appStartSlot()
@@ -138,14 +139,9 @@ void Application::appStartSlot()
 
 void Application::quittingSlot()
 {
-    if (!spnav_close())// the not seems goofy.
-    {
-//        std::cout << "spaceball disconnected" << std::endl;
-    }
-    else
-    {
-//        std::cout << "couldn't disconnect spaceball" << std::endl;
-    }
+#ifdef SPNAV_PRESENT
+  spnav_close();
+#endif
 }
 
 void Application::queuedMessage(const msg::Message &message)
@@ -214,6 +210,7 @@ bool Application::notify(QObject* receiver, QEvent* e)
 
 void Application::initializeSpaceball()
 {
+#ifdef SPNAV_PRESENT
     if (!mainWindow)
         return;
 
@@ -232,10 +229,12 @@ void Application::initializeSpaceball()
       connect(spaceballTimer, &QTimer::timeout, this, &Application::spaceballPollSlot);
       spaceballTimer->start();
     }
+#endif
 }
 
 void Application::spaceballPollSlot()
 {
+#ifdef SPNAV_PRESENT
   spnav_event navEvent;
   if (!spnav_poll_event(&navEvent))
     return;
@@ -264,6 +263,7 @@ void Application::spaceballPollSlot()
     this->postEvent(currentWidget, qEvent);
     return;
   }
+#endif
 }
 
 boost::filesystem::path Application::getApplicationDirectory()
