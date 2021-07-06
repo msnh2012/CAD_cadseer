@@ -550,7 +550,7 @@ void Manager::addCommand(BasePtr pointerIn)
 
 void Manager::doneSlot()
 {
-  bool shouldCommandUpdate = true; //default to update.
+  bool shouldCommandUpdate = false;
   //only active command should trigger it is done.
   if (!stack.empty())
   {
