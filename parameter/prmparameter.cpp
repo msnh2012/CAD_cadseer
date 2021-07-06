@@ -512,6 +512,7 @@ Parameter::Parameter(const QString& nameIn, bool valueIn, std::string_view tagIn
 }
 
 Parameter::Parameter(const QString &nameIn, const std::string &valueIn, std::string_view tagIn) :
+  expressionLinkable(false),
   name(nameIn),
   tag(tagIn),
   stow(new Stow(valueIn)),
@@ -521,6 +522,7 @@ Parameter::Parameter(const QString &nameIn, const std::string &valueIn, std::str
 }
 
 Parameter::Parameter(const QString &nameIn, const boost::filesystem::path &valueIn, PathType ptIn, std::string_view tagIn) :
+  expressionLinkable(false),
   name(nameIn),
   tag(tagIn),
   stow(new Stow(valueIn)),
