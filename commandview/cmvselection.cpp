@@ -23,6 +23,8 @@
 #include <QHeaderView>
 #include <QMouseEvent>
 #include <QTimer>
+#include <QStyledItemDelegate>
+#include <QComboBox>
 
 #include "application/appapplication.h"
 #include "project/prjproject.h"
@@ -35,6 +37,62 @@
 #include "commandview/cmvselection.h"
 
 using boost::uuids::uuid;
+
+namespace
+{
+  class TableDelegate : public QStyledItemDelegate
+  {
+    QStringList items =
+    {
+      QObject::tr("None")
+      , QObject::tr("Tangent")
+    };
+    
+    mutable QComboBox *jfc = nullptr;
+  public:
+    explicit TableDelegate(QObject *parent)
+    : QStyledItemDelegate(parent)
+    {}
+    
+    QWidget* createEditor(QWidget* parent, const QStyleOptionViewItem&, const QModelIndex&) const override
+    {
+      jfc = new QComboBox(parent);
+      jfc->addItems(items);
+      return jfc;
+    }
+    
+    void updateEditorGeometry(QWidget* editor, const QStyleOptionViewItem& option, const QModelIndex&) const override
+    {
+      editor->setGeometry(option.rect);
+    }
+    
+    void accrueChanged(int)
+    {
+      commitData(jfc);
+      closeEditor(jfc);
+    }
+    
+    void setEditorData(QWidget*, const QModelIndex &index) const override
+    {
+      if (!index.isValid()) return;
+      
+      int entry = index.model()->data(index, Qt::EditRole).toInt();
+      jfc->setCurrentIndex(entry);
+      connect(jfc, qOverload<int>(&QComboBox::currentIndexChanged), this, &TableDelegate::accrueChanged);
+    }
+    
+    void setModelData(QWidget*, QAbstractItemModel* model, const QModelIndex& index) const override
+    {
+      if (!index.isValid())
+        return;
+      model->setData(index, jfc->currentIndex());
+      
+      auto *view = dynamic_cast<cmv::edt::View*>(this->parent());
+      assert(view);
+      view->selectionModel()->clear();
+    }
+  };
+}
 
 using namespace cmv::edt;
 
@@ -85,6 +143,7 @@ QVariant Model::data(const QModelIndex &indexIn, int role) const
   switch (indexIn.column())
   {
     case 0:
+    {
       switch (role)
       {
         case Qt::DisplayRole:
@@ -130,9 +189,17 @@ QVariant Model::data(const QModelIndex &indexIn, int role) const
           return QString::fromStdString(stream.str());
       }
       break;
+    }
     case 1:
-      return static_cast<QString>(msg.accrue);
-      break;
+    {
+      switch (role)
+      {
+        case Qt::DisplayRole:
+          {return static_cast<QString>(msg.accrue);}
+        case Qt::EditRole:
+          {return static_cast<int>(msg.accrue);}
+      }
+    }
   }
   
   return QVariant();
@@ -161,6 +228,7 @@ bool Model::setData(const QModelIndex &indexIn, const QVariant &variant, int rol
     int row = indexIn.row();
     assert (row >= 0 && row < static_cast<int>(stow->messages.size()));
     stow->messages.at(row).accrue = static_cast<slc::Accrue>(variant.toInt());
+    dataChanged(indexIn, indexIn, {Qt::EditRole});
     return true;
   }
   return false;
@@ -238,6 +306,10 @@ struct View::Stow
     }
     else
       go();
+    
+    //empty selections has column widths foobar
+    view->resizeRowsToContents();
+    view->resizeColumnsToContents();
   }
   
   void slcRemoved(const msg::Message &mIn)
@@ -323,7 +395,6 @@ struct View::Stow
   }
 };
 
-
 View::View(QWidget *parent, Model *model)
 : QTableView(parent)
 , stow(std::make_unique<Stow>(this, model))
@@ -336,9 +407,10 @@ View::View(QWidget *parent, Model *model)
   setSelectionMode(QAbstractItemView::SingleSelection);
   setModel(model);
   connect(selectionModel(), &QItemSelectionModel::selectionChanged, this, &View::selectionHasChanged);
-  resizeRowsToContents();
-  resizeColumnsToContents();
-  stow->syncAll();
+  setItemDelegateForColumn(1, new TableDelegate(this));
+  QTimer::singleShot(0, this, &View::resizeRowsToContents);
+  QTimer::singleShot(0, this, &View::resizeColumnsToContents);
+  QTimer::singleShot(0, [&](){stow->syncAll();});
 }
 
 View::~View() = default;

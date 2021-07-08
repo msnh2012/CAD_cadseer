@@ -20,6 +20,7 @@
 #ifndef CMV_SELECTIONCUE_H
 #define CMV_SELECTIONCUE_H
 
+#include "selection/slcdefinitions.h"
 #include "selection/slcaccrue.h"
 
 namespace cmv

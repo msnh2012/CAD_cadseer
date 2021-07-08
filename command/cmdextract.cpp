@@ -27,6 +27,8 @@
 #include "message/msgnode.h"
 #include "selection/slceventhandler.h"
 #include "annex/annseershape.h"
+#include "parameter/prmconstants.h"
+#include "parameter/prmparameter.h"
 #include "commandview/cmvmessage.h"
 #include "commandview/cmvextract.h"
 #include "feature/ftrinputtype.h"
@@ -55,7 +57,7 @@ Extract::Extract(ftr::Base *fIn)
 : Base("cmd::Extract")
 , leafManager(fIn)
 {
-  feature = dynamic_cast<ftr::Extract*>(fIn);
+  feature = dynamic_cast<ftr::Extract::Feature*>(fIn);
   assert(feature);
   viewBase = std::make_unique<cmv::Extract>(this);
   node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
@@ -121,7 +123,8 @@ void Extract::setSelections(const slc::Messages &targets)
   assert(isActive);
   assert(feature);
   project->clearAllInputs(feature->getId());
-  feature->setPicks(ftr::Picks());
+  prm::Parameter *prmPicks = feature->getParameter(prm::Tags::Picks);
+  prmPicks->setValue(ftr::Picks());
   
   if (targets.empty())
     return;
@@ -134,10 +137,10 @@ void Extract::setSelections(const slc::Messages &targets)
 
     const ftr::Base *lf = project->findFeature(m.featureId);
     freshPicks.push_back(tls::convertToPick(m, *lf, project->getShapeHistory()));
-    freshPicks.back().tag = ftr::InputType::createIndexedTag(ftr::InputType::target, freshPicks.size() - 1);
+    freshPicks.back().tag = indexTag(ftr::Extract::InputTags::pick, freshPicks.size() - 1);
     project->connect(lf->getId(), feature->getId(), {freshPicks.back().tag});
   }
-  feature->setPicks(freshPicks);
+  prmPicks->setValue(freshPicks);
 }
 
 void Extract::localUpdate()
@@ -159,7 +162,7 @@ void Extract::go()
     assert(!cs.empty());
     
     slc::Messages targets;
-    for (const auto c : cs)
+    for (const auto &c : cs)
     {
       auto m = slc::EventHandler::containerToMessage(c);
       if (!isValidSelection(m))
@@ -168,7 +171,7 @@ void Extract::go()
     }
     if (!targets.empty())
     {
-      auto nf = std::make_shared<ftr::Extract>();
+      auto nf = std::make_shared<ftr::Extract::Feature>();
       project->addFeature(nf);
       feature = nf.get();
       setSelections(targets);
@@ -184,7 +187,7 @@ void Extract::go()
   
   if (!created)
   {
-    auto nf = std::make_shared<ftr::Extract>();
+    auto nf = std::make_shared<ftr::Extract::Feature>();
     project->addFeature(nf);
     feature = nf.get();
     node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);

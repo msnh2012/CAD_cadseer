@@ -125,39 +125,22 @@ namespace prj
         void
         base (::std::unique_ptr< BaseType > p);
 
-        // seerShape
-        //
-        typedef ::prj::srl::spt::SeerShape SeerShapeType;
-        typedef ::xsd::cxx::tree::traits< SeerShapeType, char > SeerShapeTraits;
-
-        const SeerShapeType&
-        seerShape () const;
-
-        SeerShapeType&
-        seerShape ();
-
-        void
-        seerShape (const SeerShapeType& x);
-
-        void
-        seerShape (::std::unique_ptr< SeerShapeType > p);
-
         // picks
         //
-        typedef ::prj::srl::spt::Pick PicksType;
-        typedef ::xsd::cxx::tree::sequence< PicksType > PicksSequence;
-        typedef PicksSequence::iterator PicksIterator;
-        typedef PicksSequence::const_iterator PicksConstIterator;
+        typedef ::prj::srl::spt::Parameter PicksType;
         typedef ::xsd::cxx::tree::traits< PicksType, char > PicksTraits;
 
-        const PicksSequence&
+        const PicksType&
         picks () const;
 
-        PicksSequence&
+        PicksType&
         picks ();
 
         void
-        picks (const PicksSequence& s);
+        picks (const PicksType& x);
+
+        void
+        picks (::std::unique_ptr< PicksType > p);
 
         // angle
         //
@@ -175,6 +158,23 @@ namespace prj
 
         void
         angle (::std::unique_ptr< AngleType > p);
+
+        // seerShape
+        //
+        typedef ::prj::srl::spt::SeerShape SeerShapeType;
+        typedef ::xsd::cxx::tree::traits< SeerShapeType, char > SeerShapeTraits;
+
+        const SeerShapeType&
+        seerShape () const;
+
+        SeerShapeType&
+        seerShape ();
+
+        void
+        seerShape (const SeerShapeType& x);
+
+        void
+        seerShape (::std::unique_ptr< SeerShapeType > p);
 
         // label
         //
@@ -196,13 +196,15 @@ namespace prj
         // Constructors.
         //
         Extract (const BaseType&,
-                 const SeerShapeType&,
+                 const PicksType&,
                  const AngleType&,
+                 const SeerShapeType&,
                  const LabelType&);
 
         Extract (::std::unique_ptr< BaseType >,
-                 ::std::unique_ptr< SeerShapeType >,
+                 ::std::unique_ptr< PicksType >,
                  ::std::unique_ptr< AngleType >,
+                 ::std::unique_ptr< SeerShapeType >,
                  ::std::unique_ptr< LabelType >);
 
         Extract (const ::xercesc::DOMElement& e,
@@ -232,9 +234,9 @@ namespace prj
 
         protected:
         ::xsd::cxx::tree::one< BaseType > base_;
-        ::xsd::cxx::tree::one< SeerShapeType > seerShape_;
-        PicksSequence picks_;
+        ::xsd::cxx::tree::one< PicksType > picks_;
         ::xsd::cxx::tree::one< AngleType > angle_;
+        ::xsd::cxx::tree::one< SeerShapeType > seerShape_;
         ::xsd::cxx::tree::one< LabelType > label_;
       };
     }

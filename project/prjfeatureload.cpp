@@ -22,6 +22,7 @@
 #include <osg/Matrixd>
 
 #include "annex/annseershape.h"
+#include "tools/idtools.h"
 #include "feature/ftrbox.h"
 #include "feature/ftrcylinder.h"
 #include "feature/ftrcone.h"
@@ -396,7 +397,7 @@ std::shared_ptr<ftr::Base> FeatureLoad::loadExtract(const std::string &fileNameI
   auto sExtract = srl::exts::extract(fileNameIn, flags);
   assert(sExtract);
   
-  auto freshExtract = std::make_shared<ftr::Extract>();
+  auto freshExtract = std::make_shared<ftr::Extract::Feature>();
   freshExtract->getAnnex<ann::SeerShape>().setOCCTShape(shapeVector.at(shapeOffsetIn), featureId);
   freshExtract->serialRead(*sExtract);
   

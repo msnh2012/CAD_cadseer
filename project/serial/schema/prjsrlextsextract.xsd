@@ -15,9 +15,9 @@
 <xs:complexType name="Extract">
   <xs:sequence>
     <xs:element name="base" type="spt:Base"/>
-    <xs:element name="seerShape" type="spt:SeerShape"/>
-    <xs:element name="picks" type="spt:Pick" minOccurs="0" maxOccurs="unbounded"/>
+    <xs:element name="picks" type="spt:Parameter"/>
     <xs:element name="angle" type="spt:Parameter"/>
+    <xs:element name="seerShape" type="spt:SeerShape"/>
     <xs:element name="label" type="spt:PLabel"/>
   </xs:sequence>
 </xs:complexType>

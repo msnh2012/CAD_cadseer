@@ -22,9 +22,11 @@
 
 #include "application/appapplication.h"
 #include "project/prjproject.h"
-#include "dialogs/dlgselectionbutton.h"
-#include "dialogs/dlgselectionwidget.h"
-#include "commandview/cmvparameterwidgets.h"
+#include "message/msgmessage.h"
+#include "message/msgnode.h"
+#include "commandview/cmvselectioncue.h"
+#include "commandview/cmvtable.h"
+#include "parameter/prmconstants.h"
 #include "parameter/prmparameter.h"
 #include "tools/featuretools.h"
 #include "feature/ftrextract.h"
@@ -39,81 +41,36 @@ struct Extract::Stow
 {
   cmd::Extract *command;
   cmv::Extract *view;
-  dlg::SelectionWidget *selectionWidget = nullptr;
-  cmv::ParameterWidget *parameterWidget = nullptr;
+  prm::Parameters parameters;
+  cmv::tbl::Model *prmModel = nullptr;
+  cmv::tbl::View *prmView = nullptr;
   
   Stow(cmd::Extract *cIn, cmv::Extract *vIn)
   : command(cIn)
   , view(vIn)
   {
+    parameters = command->feature->getParameters();
     buildGui();
-    
-    QSettings &settings = app::instance()->getUserSettings();
-    settings.beginGroup("cmv::Extract");
-    //load settings
-    settings.endGroup();
-    
-    loadFeatureData();
-    glue();
-    selectionWidget->activate(0);
+    connect(prmModel, &tbl::Model::dataChanged, view, &Extract::modelChanged);
   }
   
   void buildGui()
   {
     QVBoxLayout *mainLayout = new QVBoxLayout();
     view->setLayout(mainLayout);
-  
-    std::vector<dlg::SelectionWidgetCue> cues;
-    dlg::SelectionWidgetCue cue;
+    Base::clearContentMargins(view);
+    view->setSizePolicy(view->sizePolicy().horizontalPolicy(), QSizePolicy::Expanding);
     
-    cue.name = tr("Entities");
+    prmModel = new tbl::Model(view, command->feature);
+    prmView = new tbl::View(view, prmModel, true);
+    mainLayout->addWidget(prmView);
+    
+    tbl::SelectionCue cue;
     cue.singleSelection = false;
     cue.mask = slc::AllEnabled & ~slc::PointsEnabled;
     cue.statusPrompt = tr("Select Entities");
-    cues.push_back(cue);
-    
-    selectionWidget = new dlg::SelectionWidget(view, cues);
-    mainLayout->addWidget(selectionWidget);
-    
-    //angle parameter
-    QHBoxLayout *eLayout = new QHBoxLayout();
-    eLayout->addStretch();
-    parameterWidget = new ParameterWidget(view, command->feature->getParameters());
-    eLayout->addWidget(parameterWidget);
-    mainLayout->addLayout(eLayout);
-    parameterWidget->setDisabled(true);
-    
-    mainLayout->addItem(new QSpacerItem(20, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
-  }
-  
-  void loadFeatureData()
-  {
-    ftr::UpdatePayload up = view->project->getPayload(command->feature->getId());
-    tls::Resolver resolver(up);
-    
-    auto picksToMessages = [&](const ftr::Picks &pIn) -> slc::Messages
-    {
-      slc::Messages out;
-      for (const auto &p : pIn)
-      {
-        if (resolver.resolve(p))
-        {
-          auto msgs = resolver.convertToMessages();
-          out.insert(out.end(), msgs.begin(), msgs.end());
-        }
-      }
-      return out;
-    };
-    selectionWidget->initializeButton(0, picksToMessages(command->feature->getPicks()));
-    
-    selectionWidget->setAngle(command->feature->getAngleParameter()->getDouble());
-  }
-  
-  void glue()
-  {
-    connect(selectionWidget, &dlg::SelectionWidget::accrueChanged, view, &Extract::accrueChanged);
-    connect(selectionWidget->getButton(0), &dlg::SelectionButton::dirty, view, &Extract::selectionChanged);
-    connect(parameterWidget, &ParameterBase::prmValueChanged, view, &Extract::parameterChanged);
+    cue.accrueEnabled = true;
+    prmModel->setCue(command->feature->getParameter(prm::Tags::Picks), cue);
   }
 };
 
@@ -121,54 +78,35 @@ Extract::Extract(cmd::Extract *cIn)
 : Base("cmv::Extract")
 , stow(new Stow(cIn, this))
 {
-  enableParameterWidget();
 }
 
 Extract::~Extract() = default;
 
-void Extract::accrueChanged()
+void Extract::modelChanged(const QModelIndex &index, const QModelIndex&)
 {
-  enableParameterWidget();
-  stow->command->setSelections(stow->selectionWidget->getButton(0)->getMessages());
-  stow->command->localUpdate();
-}
-
-void Extract::selectionChanged()
-{
-  stow->command->setSelections(stow->selectionWidget->getButton(0)->getMessages());
-  stow->command->localUpdate();
-}
-
-void Extract::enableParameterWidget()
-{
-  bool pwe = false; //parameter widget disabled by default
+  if (!index.isValid())
+    return;
   
-  auto hasTangent = [&](const dlg::SelectionButton *b) -> bool
+  auto changedTag = stow->parameters.at(index.row())->getTag();
+  if (changedTag == prm::Tags::Picks)
   {
-    for (const auto &m : b->getMessages())
+    const auto &picks = stow->prmModel->getMessages(stow->command->feature->getParameter(prm::Tags::Picks));
+    stow->command->setSelections(picks);
+    
+    //enable or disable tangle angle parameter.
+    bool enableAngle = false;
+    for (const auto &p : picks)
     {
-      if (m.accrue == slc::Accrue::Tangent)
-        return true;
+      if (p.accrue == slc::Accrue::Tangent)
+      {
+        enableAngle = true;
+        break;
+      }
     }
-    return false;
-  };
-  
-  int bc = stow->selectionWidget->getButtonCount();
-  for (int i = 0; i < bc; ++i)
-  {
-    auto *b = stow->selectionWidget->getButton(i);
-    if (hasTangent(b))
-    {
-      pwe = true;
-      break;
-    }
+    stow->command->feature->getParameter(prm::Tags::Angle)->setActive(enableAngle);
+    stow->prmView->updateHideInactive();
   }
-  stow->parameterWidget->setEnabled(pwe);
-}
-
-void Extract::parameterChanged()
-{
-  stow->selectionWidget->setAngle(stow->command->feature->getAngleParameter()->getDouble());
-  stow->selectionWidget->getButton(0)->syncToSelection();
+  
   stow->command->localUpdate();
+  node->sendBlocked(msg::buildStatusMessage(stow->command->getStatusMessage()));
 }

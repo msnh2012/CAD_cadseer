@@ -20,46 +20,41 @@
 #ifndef FTR_EXTRACT_H
 #define FTR_EXTRACT_H
 
-#include <osg/ref_ptr>
-
-#include "tools/idtools.h"
-#include "library/lbrplabel.h"
-#include "feature/ftrpick.h"
 #include "feature/ftrbase.h"
 
 namespace prj{namespace srl{namespace exts{class Extract;}}}
-namespace ann{class SeerShape;}
-namespace prm{class Parameter;}
 
 namespace ftr
 {
-  class Extract : public Base
+  namespace Extract
   {
-  public:
-    static std::shared_ptr<prm::Parameter> buildAngleParameter(double deg = 0.0); //set up default.
-    std::shared_ptr<prm::Parameter> getAngleParameter() const {return angle;}
-    void setAngleParameter(std::shared_ptr<prm::Parameter>);
-    
-    Extract();
-    virtual ~Extract() override;
-    virtual void updateModel(const UpdatePayload&) override;
-    virtual Type getType() const override {return Type::Extract;}
-    virtual const std::string& getTypeString() const override {return toString(Type::Extract);}
-    virtual const QIcon& getIcon() const override {return icon;}
-    virtual Descriptor getDescriptor() const override {return Descriptor::Create;}
-    virtual void serialWrite(const boost::filesystem::path&) override;
-    void serialRead(const prj::srl::exts::Extract&);
-
-    void setPicks(const Picks&);
-    const Picks& getPicks(){return picks;}
-  private:
-    static QIcon icon;
-    Picks picks;
-    
-    std::unique_ptr<ann::SeerShape> sShape;
-    std::shared_ptr<prm::Parameter> angle; //!< parameter containing tangent angle.
-    osg::ref_ptr<lbr::PLabel> label;
-  };
+    namespace InputTags
+    {
+      inline constexpr std::string_view pick = "pick";
+    }
+    /*! @class Feature
+     * @brief Create duplicate shapes
+     * @details Only one angle parameter that is shared among picks
+     * for tangent accrue.
+     */
+    class Feature : public Base
+    {
+    public:
+      Feature();
+      ~Feature() override;
+      void updateModel(const UpdatePayload&) override;
+      Type getType() const override {return Type::Extract;}
+      const std::string& getTypeString() const override {return toString(Type::Extract);}
+      const QIcon& getIcon() const override {return icon;}
+      Descriptor getDescriptor() const override {return Descriptor::Create;}
+      void serialWrite(const boost::filesystem::path&) override;
+      void serialRead(const prj::srl::exts::Extract&);
+    private:
+      static QIcon icon;
+      struct Stow;
+      std::unique_ptr<Stow> stow;
+    };
+  }
 }
 
 #endif // FTR_EXTRACT_H

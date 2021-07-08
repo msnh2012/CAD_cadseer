@@ -39,82 +39,66 @@
 #include "library/lbrplabel.h"
 #include "feature/ftrextract.h"
 
-using namespace ftr;
+using namespace ftr::Extract;
 
 using boost::uuids::uuid;
 
-QIcon Extract::icon;
+QIcon Feature::icon;
 
-Extract::Extract()
+struct Feature::Stow
+{
+  Feature &feature;
+  
+  prm::Parameter picks{prm::Names::Picks, ftr::Picks(), prm::Tags::Picks};
+  prm::Parameter angle{prm::Names::Angle, 0.0, prm::Tags::Angle};
+  
+  ann::SeerShape sShape;
+  
+  osg::ref_ptr<lbr::PLabel> angleLabel{new lbr::PLabel(&angle)};
+  
+  Stow() = delete;
+  Stow(Feature &fIn)
+  : feature(fIn)
+  {
+    picks.connectValue(std::bind(&Feature::setModelDirty, &feature));
+    feature.parameters.push_back(&picks);
+    
+    angle.connectValue(std::bind(&Feature::setModelDirty, &feature));
+    prm::Interval interval
+    (
+      prm::Boundary(0.0, prm::Boundary::End::Closed)
+      , prm::Boundary(180.0, prm::Boundary::End::Open)
+    );
+    prm::Constraint c;
+    c.intervals.push_back(interval);
+    angle.setConstraint(c);
+    angle.setActive(false);
+    feature.parameters.push_back(&angle);
+    
+    feature.overlaySwitch->addChild(angleLabel.get());
+    
+    feature.annexes.insert(std::make_pair(ann::Type::SeerShape, &sShape));
+  }
+};
+
+Feature::Feature()
 : Base()
-, sShape(std::make_unique<ann::SeerShape>())
-, angle(buildAngleParameter())
-, label(new lbr::PLabel(angle.get()))
+, stow(std::make_unique<Stow>(*this))
 {
   if (icon.isNull())
     icon = QIcon(":/resources/images/constructionExtract.svg");
   
   name = QObject::tr("Extract");
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
-  
-  annexes.insert(std::make_pair(ann::Type::SeerShape, sShape.get()));
-  
-  angle->connectValue(std::bind(&Extract::setModelDirty, this));
-  parameters.push_back(angle.get());
-  
-//   overlaySwitch->addChild(label.get());
 }
 
-Extract::~Extract(){}
+Feature::~Feature() = default;
 
-std::shared_ptr<prm::Parameter> Extract::buildAngleParameter(double deg)
-{
-  auto out = std::make_shared<prm::Parameter>(prm::Names::Angle, 0.0, prm::Tags::Angle);
-  //set the value after constraints have been set.
-  
-  prm::Boundary lower(0.0, prm::Boundary::End::Closed);
-  prm::Boundary upper(180.0, prm::Boundary::End::Open);
-  prm::Interval interval(lower, upper);
-  
-  prm::Constraint c;
-  c.intervals.push_back(interval);
-  out->setConstraint(c);
-  
-  out->setValue(deg);
-  
-  return out;
-}
-
-void Extract::setAngleParameter(std::shared_ptr<prm::Parameter> prmIn)
-{
-  assert(prmIn);
-  
-  //remove old
-  removeParameter(angle.get());
-  if (label)
-    overlaySwitch->removeChild(label.get());
-  
-  //add new
-  angle = prmIn;
-  angle->connectValue(std::bind(&Extract::setModelDirty, this));
-  parameters.push_back(angle.get());
-  label = new lbr::PLabel(angle.get());
-  overlaySwitch->addChild(label.get());
-  
-  setModelDirty();
-}
-
-void Extract::setPicks(const Picks &psIn)
-{
-  picks = psIn;
-  setModelDirty();
-}
-
-void Extract::updateModel(const UpdatePayload &payloadIn)
+void Feature::updateModel(const UpdatePayload &payloadIn)
 {
   setFailure();
   lastUpdateLog.clear();
-  sShape->reset();
+  stow->sShape.reset();
   try
   {
     //no new failure state.
@@ -135,7 +119,7 @@ void Extract::updateModel(const UpdatePayload &payloadIn)
     tls::Resolver pr(payloadIn);
     occt::ShapeVector outShapes;
     occt::FaceVector faces;
-    for (const auto &p : picks)
+    for (const auto &p : stow->picks.getPicks())
     {
       if (!pr.resolve(p))
         continue;
@@ -149,7 +133,7 @@ void Extract::updateModel(const UpdatePayload &payloadIn)
           {
             if (!accrueLocation)
               accrueLocation = osg::Matrixd::translate(p.getPoint(f));
-            occt::FaceVector tempFaces = occt::walkTangentFaces(pr.getSeerShape()->getRootOCCTShape(), f, angle->getDouble());
+            occt::FaceVector tempFaces = occt::walkTangentFaces(pr.getSeerShape()->getRootOCCTShape(), f, stow->angle.getDouble());
             std::copy(tempFaces.begin(), tempFaces.end(), std::back_inserter(faces));
           }
           else
@@ -160,13 +144,7 @@ void Extract::updateModel(const UpdatePayload &payloadIn)
       }
     }
     if (accrueLocation)
-      label->setMatrix(accrueLocation.get());
-    
-    //update feature visibility before shape construction in case of error.
-    if (accrueLocation)
-      overlaySwitch->addChild(label.get());
-    else
-      overlaySwitch->removeChild(label.get());
+      stow->angleLabel->setMatrix(accrueLocation.get());
     
     //apparently just throw all faces into the quilter and it will sort it out?
     if (faces.size() > 1)
@@ -199,15 +177,15 @@ void Extract::updateModel(const UpdatePayload &payloadIn)
       throw std::runtime_error("shapeCheck failed");
     
     //these seem to be taking care of it.
-    sShape->setOCCTShape(out, getId());
-    sShape->shapeMatch(targetSeerShape);
-    sShape->uniqueTypeMatch(targetSeerShape);
-    sShape->outerWireMatch(targetSeerShape);
-    sShape->derivedMatch();
-    sShape->dumpNils("extract feature");
-    sShape->dumpDuplicates("extract feature");
-    sShape->ensureNoNils();
-    sShape->ensureNoDuplicates();
+    stow->sShape.setOCCTShape(out, getId());
+    stow->sShape.shapeMatch(targetSeerShape);
+    stow->sShape.uniqueTypeMatch(targetSeerShape);
+    stow->sShape.outerWireMatch(targetSeerShape);
+    stow->sShape.derivedMatch();
+    stow->sShape.dumpNils("extract feature");
+    stow->sShape.dumpDuplicates("extract feature");
+    stow->sShape.ensureNoNils();
+    stow->sShape.ensureNoDuplicates();
     
     setSuccess();
   }
@@ -231,39 +209,27 @@ void Extract::updateModel(const UpdatePayload &payloadIn)
     std::cout << std::endl << lastUpdateLog;
 }
 
-void Extract::serialWrite(const boost::filesystem::path &dIn)
+void Feature::serialWrite(const boost::filesystem::path &dIn)
 {
   prj::srl::exts::Extract extractOut
   (
     Base::serialOut()
-    , sShape->serialOut()
-    , angle->serialOut()
-    , label->serialOut()
+    , stow->picks.serialOut()
+    , stow->angle.serialOut()
+    , stow->sShape.serialOut()
+    , stow->angleLabel->serialOut()
   );
-  for (const auto &p : picks)
-    extractOut.picks().push_back(p);
   
   xml_schema::NamespaceInfomap infoMap;
   std::ofstream stream(buildFilePathName(dIn).string());
   prj::srl::exts::extract(stream, extractOut, infoMap);
 }
 
-void Extract::serialRead(const prj::srl::exts::Extract &sExtractIn)
+void Feature::serialRead(const prj::srl::exts::Extract &sExtractIn)
 {
   Base::serialIn(sExtractIn.base());
-  sShape->serialIn(sExtractIn.seerShape());
-  angle->serialIn(sExtractIn.angle());
-  label->serialIn(sExtractIn.label());
-  for (const auto &p : sExtractIn.picks())
-    picks.emplace_back(p);
-  
-  //this sucks!
-  for (const auto &p : picks)
-  {
-    if (p.accrue == slc::Accrue::Tangent)
-    {
-      overlaySwitch->addChild(label.get());
-      break;
-    }
-  }
+  stow->picks.serialIn(sExtractIn.picks());
+  stow->angle.serialIn(sExtractIn.angle());
+  stow->sShape.serialIn(sExtractIn.seerShape());
+  stow->angleLabel->serialIn(sExtractIn.label());
 }

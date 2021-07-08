@@ -23,14 +23,14 @@
 #include "command/cmdleafmanager.h"
 #include "command/cmdbase.h"
 
-namespace ftr{class Extract;}
+namespace ftr{namespace Extract{class Feature;}}
 
 namespace cmd
 {
   class Extract : public Base
   {
   public:
-    ftr::Extract *feature = nullptr;
+    ftr::Extract::Feature *feature = nullptr;
     
     Extract();
     Extract(ftr::Base*);

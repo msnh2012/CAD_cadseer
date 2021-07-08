@@ -73,46 +73,28 @@ namespace prj
         this->base_.set (std::move (x));
       }
 
-      const Extract::SeerShapeType& Extract::
-      seerShape () const
-      {
-        return this->seerShape_.get ();
-      }
-
-      Extract::SeerShapeType& Extract::
-      seerShape ()
-      {
-        return this->seerShape_.get ();
-      }
-
-      void Extract::
-      seerShape (const SeerShapeType& x)
-      {
-        this->seerShape_.set (x);
-      }
-
-      void Extract::
-      seerShape (::std::unique_ptr< SeerShapeType > x)
-      {
-        this->seerShape_.set (std::move (x));
-      }
-
-      const Extract::PicksSequence& Extract::
+      const Extract::PicksType& Extract::
       picks () const
       {
-        return this->picks_;
+        return this->picks_.get ();
       }
 
-      Extract::PicksSequence& Extract::
+      Extract::PicksType& Extract::
       picks ()
       {
-        return this->picks_;
+        return this->picks_.get ();
       }
 
       void Extract::
-      picks (const PicksSequence& s)
+      picks (const PicksType& x)
       {
-        this->picks_ = s;
+        this->picks_.set (x);
+      }
+
+      void Extract::
+      picks (::std::unique_ptr< PicksType > x)
+      {
+        this->picks_.set (std::move (x));
       }
 
       const Extract::AngleType& Extract::
@@ -137,6 +119,30 @@ namespace prj
       angle (::std::unique_ptr< AngleType > x)
       {
         this->angle_.set (std::move (x));
+      }
+
+      const Extract::SeerShapeType& Extract::
+      seerShape () const
+      {
+        return this->seerShape_.get ();
+      }
+
+      Extract::SeerShapeType& Extract::
+      seerShape ()
+      {
+        return this->seerShape_.get ();
+      }
+
+      void Extract::
+      seerShape (const SeerShapeType& x)
+      {
+        this->seerShape_.set (x);
+      }
+
+      void Extract::
+      seerShape (::std::unique_ptr< SeerShapeType > x)
+      {
+        this->seerShape_.set (std::move (x));
       }
 
       const Extract::LabelType& Extract::
@@ -179,28 +185,30 @@ namespace prj
 
       Extract::
       Extract (const BaseType& base,
-               const SeerShapeType& seerShape,
+               const PicksType& picks,
                const AngleType& angle,
+               const SeerShapeType& seerShape,
                const LabelType& label)
       : ::xml_schema::Type (),
         base_ (base, this),
-        seerShape_ (seerShape, this),
-        picks_ (this),
+        picks_ (picks, this),
         angle_ (angle, this),
+        seerShape_ (seerShape, this),
         label_ (label, this)
       {
       }
 
       Extract::
       Extract (::std::unique_ptr< BaseType > base,
-               ::std::unique_ptr< SeerShapeType > seerShape,
+               ::std::unique_ptr< PicksType > picks,
                ::std::unique_ptr< AngleType > angle,
+               ::std::unique_ptr< SeerShapeType > seerShape,
                ::std::unique_ptr< LabelType > label)
       : ::xml_schema::Type (),
         base_ (std::move (base), this),
-        seerShape_ (std::move (seerShape), this),
-        picks_ (this),
+        picks_ (std::move (picks), this),
         angle_ (std::move (angle), this),
+        seerShape_ (std::move (seerShape), this),
         label_ (std::move (label), this)
       {
       }
@@ -211,9 +219,9 @@ namespace prj
                ::xml_schema::Container* c)
       : ::xml_schema::Type (x, f, c),
         base_ (x.base_, f, this),
-        seerShape_ (x.seerShape_, f, this),
         picks_ (x.picks_, f, this),
         angle_ (x.angle_, f, this),
+        seerShape_ (x.seerShape_, f, this),
         label_ (x.label_, f, this)
       {
       }
@@ -224,9 +232,9 @@ namespace prj
                ::xml_schema::Container* c)
       : ::xml_schema::Type (e, f | ::xml_schema::Flags::base, c),
         base_ (this),
-        seerShape_ (this),
         picks_ (this),
         angle_ (this),
+        seerShape_ (this),
         label_ (this)
       {
         if ((f & ::xml_schema::Flags::base) == 0)
@@ -260,20 +268,6 @@ namespace prj
             }
           }
 
-          // seerShape
-          //
-          if (n.name () == "seerShape" && n.namespace_ ().empty ())
-          {
-            ::std::unique_ptr< SeerShapeType > r (
-              SeerShapeTraits::create (i, f, this));
-
-            if (!seerShape_.present ())
-            {
-              this->seerShape_.set (::std::move (r));
-              continue;
-            }
-          }
-
           // picks
           //
           if (n.name () == "picks" && n.namespace_ ().empty ())
@@ -281,8 +275,11 @@ namespace prj
             ::std::unique_ptr< PicksType > r (
               PicksTraits::create (i, f, this));
 
-            this->picks_.push_back (::std::move (r));
-            continue;
+            if (!picks_.present ())
+            {
+              this->picks_.set (::std::move (r));
+              continue;
+            }
           }
 
           // angle
@@ -295,6 +292,20 @@ namespace prj
             if (!angle_.present ())
             {
               this->angle_.set (::std::move (r));
+              continue;
+            }
+          }
+
+          // seerShape
+          //
+          if (n.name () == "seerShape" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< SeerShapeType > r (
+              SeerShapeTraits::create (i, f, this));
+
+            if (!seerShape_.present ())
+            {
+              this->seerShape_.set (::std::move (r));
               continue;
             }
           }
@@ -323,10 +334,10 @@ namespace prj
             "");
         }
 
-        if (!seerShape_.present ())
+        if (!picks_.present ())
         {
           throw ::xsd::cxx::tree::expected_element< char > (
-            "seerShape",
+            "picks",
             "");
         }
 
@@ -334,6 +345,13 @@ namespace prj
         {
           throw ::xsd::cxx::tree::expected_element< char > (
             "angle",
+            "");
+        }
+
+        if (!seerShape_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "seerShape",
             "");
         }
 
@@ -359,9 +377,9 @@ namespace prj
         {
           static_cast< ::xml_schema::Type& > (*this) = x;
           this->base_ = x.base_;
-          this->seerShape_ = x.seerShape_;
           this->picks_ = x.picks_;
           this->angle_ = x.angle_;
+          this->seerShape_ = x.seerShape_;
           this->label_ = x.label_;
         }
 
@@ -681,29 +699,15 @@ namespace prj
           s << i.base ();
         }
 
-        // seerShape
-        //
-        {
-          ::xercesc::DOMElement& s (
-            ::xsd::cxx::xml::dom::create_element (
-              "seerShape",
-              e));
-
-          s << i.seerShape ();
-        }
-
         // picks
         //
-        for (Extract::PicksConstIterator
-             b (i.picks ().begin ()), n (i.picks ().end ());
-             b != n; ++b)
         {
           ::xercesc::DOMElement& s (
             ::xsd::cxx::xml::dom::create_element (
               "picks",
               e));
 
-          s << *b;
+          s << i.picks ();
         }
 
         // angle
@@ -715,6 +719,17 @@ namespace prj
               e));
 
           s << i.angle ();
+        }
+
+        // seerShape
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "seerShape",
+              e));
+
+          s << i.seerShape ();
         }
 
         // label
