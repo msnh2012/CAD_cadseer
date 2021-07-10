@@ -30,6 +30,8 @@
 #include <osg/Texture2D>
 
 #include "globalutilities.h"
+#include "application/appapplication.h" //loading of image
+#include "project/prjproject.h" //loading of image
 #include "parameter/prmconstants.h"
 #include "parameter/prmparameter.h"
 #include "tools/occtools.h"
@@ -65,12 +67,11 @@ Base()
   scale->setConstraint(prm::Constraint::buildNonZeroPositive());
   parameters.push_back(scale.get());
   
-  osg::ref_ptr<osg::MatrixTransform> labelDraggerTransform = new osg::MatrixTransform();
+  labelDraggerTransform = new osg::MatrixTransform();
   labelDraggerTransform->addChild(scaleLabel.get());
   overlaySwitch->addChild(labelDraggerTransform.get());
   csysDragger->dragger->linkToMatrix(labelDraggerTransform.get());
   
-  //we have to dirty feature or it won't be serialized.
   csys->connectValue(std::bind(&ImagePlane::setModelDirty, this));
   parameters.push_back(csys.get());
   
@@ -82,20 +83,19 @@ ImagePlane::~ImagePlane(){}
 
 std::string ImagePlane::setImage(const boost::filesystem::path &p)
 {
-  lastUpdateLog.clear();
-  
   if (!boost::filesystem::exists(p))
-  {
-    lastUpdateLog += "Image file not found\n";
     return std::string("Image file not found");
-  }
+  
+  imagePath = p.filename();
+  return buildGeometry();
+}
 
-  osg::ref_ptr<osg::Image> image = osgDB::readRefImageFile(p.string());
+std::string ImagePlane::buildGeometry()
+{
+  auto filePath = app::instance()->getProject()->getSaveDirectory() / imagePath;
+  osg::ref_ptr<osg::Image> image = osgDB::readRefImageFile(filePath.string());
   if (!image.valid())
-  {
-    lastUpdateLog += "osg::Image not valid\n";
     return std::string("osg::Image not valid");
-  }
   
   float width = 1.0;
   float height = 1.0 * (static_cast<float>(image->t()) / static_cast<float>(image->s()));
@@ -104,10 +104,7 @@ std::string ImagePlane::setImage(const boost::filesystem::path &p)
   osg::Vec3 heightVec(0.0, height, 0.0);
   osg::ref_ptr<osg::Geometry> tg = osg::createTexturedQuadGeometry(corner, widthVec, heightVec);
   if (!tg.valid())
-  {
-    lastUpdateLog += "geometry is not valid\n";
     return "geometry is not valid";
-  }
   
   if (geometry.valid())
   {
@@ -147,31 +144,22 @@ void ImagePlane::updateVisual()
   if (!geometry.valid())
     return;
   
+  updateVisualPrivate();
+
+  setVisualClean();
+}
+
+void ImagePlane::updateVisualPrivate()
+{
   double s = scale->getDouble();
   osg::Vec3d sv(s, s, 1.0);
   transform->setScale(sv);
   
   scaleLabel->setMatrix(osg::Matrix::translate(cornerVec * s));
-
-  setVisualClean();
 }
 
 void ImagePlane::serialWrite(const boost::filesystem::path &dIn)
 {
-  osg::ref_ptr<osgDB::Options> options = new osgDB::Options();
-  options->setPluginStringData("fileType", "Ascii");
-  
-  osgDB::ReaderWriter *rw = osgDB::Registry::instance()->getReaderWriterForExtension("osgt");
-  assert(rw);
-  std::ostringstream nodeStream;
-  auto wr = rw->writeNode(*geometry, nodeStream, options.get());
-  assert(wr.success());
-  
-  //debug
-//   std::ofstream fs;
-//   fs.open("/home/tanderson/temp/test.osgt");
-//   rw->writeNode(*geometry, fs, options.get());
-  
   prj::srl::imps::ImagePlane so
   (
     Base::serialOut()
@@ -180,7 +168,7 @@ void ImagePlane::serialWrite(const boost::filesystem::path &dIn)
     , csysDragger->serialOut()
     , scaleLabel->serialOut()
     , prj::srl::spt::Vec3d(cornerVec.x(), cornerVec.y(), cornerVec.z())
-    , nodeStream.str()
+    , imagePath.string()
   );
   
   xml_schema::NamespaceInfomap infoMap;
@@ -196,15 +184,12 @@ void ImagePlane::serialRead(const prj::srl::imps::ImagePlane &so)
   csysDragger->serialIn(so.csysDragger());
   scaleLabel->serialIn(so.scaleLabel());
   cornerVec = osg::Vec3d(so.cornerVec().x(), so.cornerVec().y(), so.cornerVec().z());
+  imagePath = so.imagePath();
   
-  osgDB::ReaderWriter *rw = osgDB::Registry::instance()->getReaderWriterForExtension("osgt");
-  assert(rw);
-  std::istringstream nodeStream(so.geometry());
-  auto rr = rw->readNode(nodeStream);
-  assert(rr.success());
-  geometry = dynamic_cast<osg::Geometry*>(rr.getNode());
-  assert(geometry.valid());
-  transform->addChild(geometry.get());
-  
+  auto result = buildGeometry();
+  if (!result.empty())
+    lastUpdateLog += result;
+  updateVisualPrivate();
   mainTransform->setMatrix(csys->getMatrix());
+  labelDraggerTransform->setMatrix(csys->getMatrix());
 }

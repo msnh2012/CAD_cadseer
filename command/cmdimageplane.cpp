@@ -17,7 +17,7 @@
  *
  */
 
-#include <boost/filesystem/path.hpp>
+#include <boost/filesystem.hpp>
 
 #include <QFileDialog>
 
@@ -76,22 +76,34 @@ void ImagePlane::go()
   
   for (const auto &fn : fileNames)
   {
-    //temp
-    boost::filesystem::path p = fn.toStdString();
+    //copy file to project directory.
+    boost::filesystem::path source = fn.toStdString();
+    boost::filesystem::path copy = app::instance()->getProject()->getSaveDirectory() / source.filename();
+    //we will just overwrite if already exits.
+    try
+    {
+      boost::filesystem::copy_file(source, copy, boost::filesystem::copy_option::overwrite_if_exists);
+    }
+    catch (const boost::filesystem::filesystem_error &e)
+    {
+      std::string failMessage = "Failed file copy in ImagePlane for: " + source.filename().string() + ". " + e.what();
+      node->sendBlocked(msg::buildStatusMessage(failMessage, 5.0));
+      continue;
+    }
     
     auto f = std::make_shared<ftr::ImagePlane>();
-    std::string result = f->setImage(p);
+    std::string result = f->setImage(copy);
     if (!result.empty())
     {
-      std::string failMessage = "ImagePlane failed for: " + p.filename().string();
+      std::string failMessage = "ImagePlane failure: " + result + ". for " + copy.filename().string();
       node->sendBlocked(msg::buildStatusMessage(failMessage, 5.0));
       continue;
     }
     project->addFeature(f);
-    f->setName(QString::fromStdString(p.filename().string()));
+    f->setName(QString::fromStdString(copy.filename().string()));
     f->setScale(viewer->getDiagonalLength() / 5.0);
     
-    std::string successMessage = "ImagePlane created for: " + p.filename().string();
+    std::string successMessage = "ImagePlane created for: " + copy.filename().string();
     node->sendBlocked(msg::buildStatusMessage(successMessage, 5.0));
   }
 }

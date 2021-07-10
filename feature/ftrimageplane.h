@@ -57,9 +57,13 @@ namespace ftr
     std::unique_ptr<prm::Parameter> csys; //!< exists just to pass to dragger
     std::unique_ptr<ann::CSysDragger> csysDragger;
     osg::ref_ptr<osg::PositionAttitudeTransform> transform; //used for scale only
+    osg::ref_ptr<osg::MatrixTransform> labelDraggerTransform; //so dragger can connect.
     osg::ref_ptr<lbr::PLabel> scaleLabel;
     osg::ref_ptr<osg::Geometry> geometry;
     osg::Vec3d cornerVec; //!< needed for label placement
+    boost::filesystem::path imagePath;
+    std::string buildGeometry(); //!< build geometry node from current image or return error string.
+    void updateVisualPrivate();
     static QIcon icon;
   };
 }

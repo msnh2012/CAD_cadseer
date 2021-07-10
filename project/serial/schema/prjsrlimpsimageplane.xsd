@@ -18,7 +18,7 @@
     <xs:element name="csysDragger" type="spt:CSysDragger"/>
     <xs:element name="scaleLabel" type="spt:PLabel"/>
     <xs:element name="cornerVec" type="spt:Vec3d"/>
-    <xs:element name="geometry" type="xs:string"/>
+    <xs:element name="imagePath" type="xs:anyURI"/>
   </xs:sequence>
 </xs:complexType>
 

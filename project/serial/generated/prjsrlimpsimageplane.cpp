@@ -193,28 +193,28 @@ namespace prj
         this->cornerVec_.set (std::move (x));
       }
 
-      const ImagePlane::GeometryType& ImagePlane::
-      geometry () const
+      const ImagePlane::ImagePathType& ImagePlane::
+      imagePath () const
       {
-        return this->geometry_.get ();
+        return this->imagePath_.get ();
       }
 
-      ImagePlane::GeometryType& ImagePlane::
-      geometry ()
+      ImagePlane::ImagePathType& ImagePlane::
+      imagePath ()
       {
-        return this->geometry_.get ();
-      }
-
-      void ImagePlane::
-      geometry (const GeometryType& x)
-      {
-        this->geometry_.set (x);
+        return this->imagePath_.get ();
       }
 
       void ImagePlane::
-      geometry (::std::unique_ptr< GeometryType > x)
+      imagePath (const ImagePathType& x)
       {
-        this->geometry_.set (std::move (x));
+        this->imagePath_.set (x);
+      }
+
+      void ImagePlane::
+      imagePath (::std::unique_ptr< ImagePathType > x)
+      {
+        this->imagePath_.set (std::move (x));
       }
     }
   }
@@ -238,7 +238,7 @@ namespace prj
                   const CsysDraggerType& csysDragger,
                   const ScaleLabelType& scaleLabel,
                   const CornerVecType& cornerVec,
-                  const GeometryType& geometry)
+                  const ImagePathType& imagePath)
       : ::xml_schema::Type (),
         base_ (base, this),
         scale_ (scale, this),
@@ -246,7 +246,7 @@ namespace prj
         csysDragger_ (csysDragger, this),
         scaleLabel_ (scaleLabel, this),
         cornerVec_ (cornerVec, this),
-        geometry_ (geometry, this)
+        imagePath_ (imagePath, this)
       {
       }
 
@@ -257,7 +257,7 @@ namespace prj
                   ::std::unique_ptr< CsysDraggerType > csysDragger,
                   ::std::unique_ptr< ScaleLabelType > scaleLabel,
                   ::std::unique_ptr< CornerVecType > cornerVec,
-                  const GeometryType& geometry)
+                  const ImagePathType& imagePath)
       : ::xml_schema::Type (),
         base_ (std::move (base), this),
         scale_ (std::move (scale), this),
@@ -265,7 +265,7 @@ namespace prj
         csysDragger_ (std::move (csysDragger), this),
         scaleLabel_ (std::move (scaleLabel), this),
         cornerVec_ (std::move (cornerVec), this),
-        geometry_ (geometry, this)
+        imagePath_ (imagePath, this)
       {
       }
 
@@ -280,7 +280,7 @@ namespace prj
         csysDragger_ (x.csysDragger_, f, this),
         scaleLabel_ (x.scaleLabel_, f, this),
         cornerVec_ (x.cornerVec_, f, this),
-        geometry_ (x.geometry_, f, this)
+        imagePath_ (x.imagePath_, f, this)
       {
       }
 
@@ -295,7 +295,7 @@ namespace prj
         csysDragger_ (this),
         scaleLabel_ (this),
         cornerVec_ (this),
-        geometry_ (this)
+        imagePath_ (this)
       {
         if ((f & ::xml_schema::Flags::base) == 0)
         {
@@ -398,16 +398,16 @@ namespace prj
             }
           }
 
-          // geometry
+          // imagePath
           //
-          if (n.name () == "geometry" && n.namespace_ ().empty ())
+          if (n.name () == "imagePath" && n.namespace_ ().empty ())
           {
-            ::std::unique_ptr< GeometryType > r (
-              GeometryTraits::create (i, f, this));
+            ::std::unique_ptr< ImagePathType > r (
+              ImagePathTraits::create (i, f, this));
 
-            if (!geometry_.present ())
+            if (!imagePath_.present ())
             {
-              this->geometry_.set (::std::move (r));
+              this->imagePath_.set (::std::move (r));
               continue;
             }
           }
@@ -457,10 +457,10 @@ namespace prj
             "");
         }
 
-        if (!geometry_.present ())
+        if (!imagePath_.present ())
         {
           throw ::xsd::cxx::tree::expected_element< char > (
-            "geometry",
+            "imagePath",
             "");
         }
       }
@@ -484,7 +484,7 @@ namespace prj
           this->csysDragger_ = x.csysDragger_;
           this->scaleLabel_ = x.scaleLabel_;
           this->cornerVec_ = x.cornerVec_;
-          this->geometry_ = x.geometry_;
+          this->imagePath_ = x.imagePath_;
         }
 
         return *this;
@@ -858,15 +858,15 @@ namespace prj
           s << i.cornerVec ();
         }
 
-        // geometry
+        // imagePath
         //
         {
           ::xercesc::DOMElement& s (
             ::xsd::cxx::xml::dom::create_element (
-              "geometry",
+              "imagePath",
               e));
 
-          s << i.geometry ();
+          s << i.imagePath ();
         }
       }
 

@@ -206,22 +206,22 @@ namespace prj
         void
         cornerVec (::std::unique_ptr< CornerVecType > p);
 
-        // geometry
+        // imagePath
         //
-        typedef ::xml_schema::String GeometryType;
-        typedef ::xsd::cxx::tree::traits< GeometryType, char > GeometryTraits;
+        typedef ::xml_schema::Uri ImagePathType;
+        typedef ::xsd::cxx::tree::traits< ImagePathType, char > ImagePathTraits;
 
-        const GeometryType&
-        geometry () const;
+        const ImagePathType&
+        imagePath () const;
 
-        GeometryType&
-        geometry ();
-
-        void
-        geometry (const GeometryType& x);
+        ImagePathType&
+        imagePath ();
 
         void
-        geometry (::std::unique_ptr< GeometryType > p);
+        imagePath (const ImagePathType& x);
+
+        void
+        imagePath (::std::unique_ptr< ImagePathType > p);
 
         // Constructors.
         //
@@ -231,7 +231,7 @@ namespace prj
                     const CsysDraggerType&,
                     const ScaleLabelType&,
                     const CornerVecType&,
-                    const GeometryType&);
+                    const ImagePathType&);
 
         ImagePlane (::std::unique_ptr< BaseType >,
                     ::std::unique_ptr< ScaleType >,
@@ -239,7 +239,7 @@ namespace prj
                     ::std::unique_ptr< CsysDraggerType >,
                     ::std::unique_ptr< ScaleLabelType >,
                     ::std::unique_ptr< CornerVecType >,
-                    const GeometryType&);
+                    const ImagePathType&);
 
         ImagePlane (const ::xercesc::DOMElement& e,
                     ::xml_schema::Flags f = 0,
@@ -273,7 +273,7 @@ namespace prj
         ::xsd::cxx::tree::one< CsysDraggerType > csysDragger_;
         ::xsd::cxx::tree::one< ScaleLabelType > scaleLabel_;
         ::xsd::cxx::tree::one< CornerVecType > cornerVec_;
-        ::xsd::cxx::tree::one< GeometryType > geometry_;
+        ::xsd::cxx::tree::one< ImagePathType > imagePath_;
       };
     }
   }
