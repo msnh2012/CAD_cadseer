@@ -29,6 +29,7 @@ namespace app
   {
     Message();
     QString infoMessage;
+    int toolbar = -1;
   };
 }
 

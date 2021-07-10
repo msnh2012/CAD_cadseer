@@ -173,7 +173,8 @@ namespace msg
     static const Mask Untrim(Mask().set(                       129));//!< command
     static const Mask Wireframe(Mask().set(                    130));//!< render style
     static const Mask Face(Mask().set(                         131));//!< command
-    static const Mask Prism(Mask().set(                         132));//!< command
+    static const Mask Prism(Mask().set(                        132));//!< command
+    static const Mask Toolbar(Mask().set(                      133));//!< application main window
 
     struct Stow; // forward declare see message/variant.h
     struct Message

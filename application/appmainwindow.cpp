@@ -33,6 +33,7 @@
 #include "dagview/dagview.h"
 #include "expressions/exprwidget.h"
 #include "application/appapplication.h"
+#include "application/appmessage.h"
 #include "dialogs/dlgsplitterdecorated.h"
 #include "viewer/vwrwidget.h"
 #include "selection/slcmanager.h"
@@ -288,6 +289,13 @@ struct MainWindow::Stow
       }
     }
   }
+  
+  void showToolbarDispatched(const msg::Message &mIn)
+  {
+    int index = mIn.getAPP().toolbar;
+    assert(index >= 0 && index < tabToolWidget->count());
+    tabToolWidget->setCurrentIndex(index);
+  }
 };
 
 MainWindow::MainWindow(QWidget *parent)
@@ -472,6 +480,11 @@ void MainWindow::setupDispatcher()
       (
         msg::Request | msg::Command | msg::View | msg::Hide
         , std::bind(&MainWindow::hideCommandViewDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Toolbar | msg::Show
+        , std::bind(&Stow::showToolbarDispatched, stow.get(), std::placeholders::_1)
       )
     }
   );

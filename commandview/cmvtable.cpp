@@ -31,6 +31,7 @@
 #include <QStyledItemDelegate>
 
 #include "application/appapplication.h"
+#include "application/appmessage.h"
 #include "project/prjproject.h"
 #include "expressions/exprmanager.h"
 #include "feature/ftrbase.h"
@@ -120,6 +121,10 @@ namespace
         assert(!slcEditor);
         slcEditor = new cmv::edt::View(parent, edtModel);
         out = slcEditor;
+        //set toolbar to selection tab
+        app::Message am;
+        am.toolbar = 0;
+        app::instance()->messageSlot(msg::Message(msg::Request | msg::Toolbar | msg::Show, am));
       }
       else
       {
