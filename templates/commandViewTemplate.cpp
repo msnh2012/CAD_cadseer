@@ -37,13 +37,11 @@
 // #include "preferences/prfmanager.h"
 // #include "message/msgmessage.h"
 // #include "message/msgnode.h"
-// #include "dialogs/dlgselectionbutton.h"
-// #include "dialogs/dlgselectionlist.h"
-// #include "dialogs/dlgselectionwidget.h"
-// #include "commandview/cmvparameterwidgets.h"
+// #include "commandview/cmvselectioncue.h"
+// #include "commandview/cmvtable.h"
+// #include "parameter/prmconstants.h"
 // #include "parameter/prmparameter.h"
 // #include "expressions/exprmanager.h"
-// #include "expressions/exprstringtranslator.h"
 // #include "expressions/exprvalue.h"
 // #include "library/lbrplabel.h"
 // #include "tools/featuretools.h"
@@ -61,30 +59,40 @@ struct %CLASSNAME%::Stow
 {
   cmd::%CLASSNAME% *command;
   cmv::%CLASSNAME% *view;
-//   dlg::SelectionWidget *selectionWidget = nullptr;
-//   cmv::ParameterWidget *parameterWidget = nullptr;
+//   prm::Parameters parameters;
+//   cmv::tbl::Model *prmModel = nullptr;
+//   cmv::tbl::View *prmView = nullptr;
 //   std::vector<prm::Observer> observers;
   
   Stow(cmd::%CLASSNAME% *cIn, cmv::%CLASSNAME% *vIn)
   : command(cIn)
   , view(vIn)
   {
+//     parameters = command->feature->getParameters();
     buildGui();
-    
-    QSettings &settings = app::instance()->getUserSettings();
-    settings.beginGroup("cmv::%CLASSNAME%");
-    //load settings
-    settings.endGroup();
-    
-    loadFeatureData();
-//     selectionWidget->activate(0);
+//     connect(prmModel, &tbl::Model::dataChanged, view, &%CLASSNAME%::modelChanged);
   }
   
   void buildGui()
-  {}
-  
-  void loadFeatureData()
-  {}
+  {
+    /*
+    QVBoxLayout *mainLayout = new QVBoxLayout();
+    view->setLayout(mainLayout);
+    Base::clearContentMargins(view);
+    view->setSizePolicy(view->sizePolicy().horizontalPolicy(), QSizePolicy::Expanding);
+    
+    prmModel = new tbl::Model(view, command->feature);
+    prmView = new tbl::View(view, prmModel, true);
+    mainLayout->addWidget(prmView);
+    
+    tbl::SelectionCue cue;
+    cue.singleSelection = false;
+    cue.mask = slc::AllEnabled & ~slc::PointsEnabled;
+    cue.statusPrompt = tr("Select Entities");
+    cue.accrueEnabled = true;
+    prmModel->setCue(command->feature->getParameter(prm::Tags::Picks), cue);
+    */
+  }
 };
 
 %CLASSNAME%::%CLASSNAME%(cmd::%CLASSNAME% *cIn)
@@ -93,3 +101,21 @@ struct %CLASSNAME%::Stow
 {}
 
 %CLASSNAME%::~%CLASSNAME%() = default;
+
+void %CLASSNAME%::modelChanged(const QModelIndex &index, const QModelIndex&)
+{
+  if (!index.isValid())
+    return;
+  /*
+  auto changedTag = stow->parameters.at(index.row())->getTag();
+  if (changedTag == prm::Tags::Picks)
+  {
+    const auto &picks = stow->prmModel->getMessages(stow->command->feature->getParameter(prm::Tags::Picks));
+    stow->command->setSelections(picks);
+
+    stow->prmView->updateHideInactive();
+  }
+  */
+  stow->command->localUpdate();
+  node->sendBlocked(msg::buildStatusMessage(stow->command->getStatusMessage()));
+}

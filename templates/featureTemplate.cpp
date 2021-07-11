@@ -36,94 +36,72 @@
 // #include "project/serial/generated/prjsrl_FIX_%CLASSNAMELOWERCASE%.h"
 #include "feature/ftr%CLASSNAMELOWERCASE%.h"
 
-using namespace ftr;
+using namespace ftr::%CLASSNAME%;
 using boost::uuids::uuid;
 
-QIcon %CLASSNAME%::icon;
+QIcon Feature::icon;
 
-%CLASSNAME%::%CLASSNAME%():
-Base()
-// , sShape(new ann::SeerShape())
-// , direction(std::make_unique<prm::Parameter>(prm::Names::Direction, osg::Vec3d(0.0, 0.0, 1.0), prm::Tags::Direction))
-// , distance(std::make_unique<prm::Parameter>(prm::Names::Distance, 1.0, prm::Tags::Distance))
-// , csys(std::make_unique<prm::Parameter>(prm::Names::CSys, osg::Matrixd::identity(), prm::Tags::CSys))
-// , prmObserver(std::make_unique<prm::Observer>(std::bind(&%CLASSNAME%::setModelDirty, this)))
-// , csysDragger(std::make_unique<ann::CSysDragger>(this, csys.get()))
-// , directionLabel(new lbr::PLabel(direction.get()))
-// , distanceIPGroup(new lbr::IPGroup(distance.get()))
+struct Feature::Stow
+{
+  Feature &feature;
+  ann::SeerShape sShape;
+  prm::Parameter parameter;
+  prm::Observer observer;
+  osg::ref_ptr<lbr::PLabel> label;
+  osg::ref_ptr<lbr::IPGroup> iLabel;
+  
+  Stow(Feature &fIn)
+  : feature(fIn)
+  , sShape()
+  , parameter(prm::Names::parameter, 1.0, prm::Tags::parameter)
+  , observer(std::bind(&Feature::setModelDirty, &feature))
+  , label(new lbr::PLabel(&parameter))
+  , iLabel(new lbr::IPGroup(&parameter))
+  {
+    QStringList tStrings =
+    {
+      QObject::tr("Constant")
+      , QObject::tr("Infer")
+      , QObject::tr("Picks")
+    };
+    parameter.setEnumeration(tStrings);
+    parameter.connectValue(std::bind(&Feature::setModelDirty, &feature));
+    parameter.connectValue(std::bind(&Stow::prmActiveSync, this));
+    parameter.connect(observer);
+    feature.parameters.push_back(&parametr);
+    
+    feature.annexes.insert(std::make_pair(ann::Type::SeerShape, &sShape));
+    
+    feature.overlaySwitch->addChild(label.get());
+    feature.overlaySwitch->addChild(iLabel.get());
+  }
+  
+  void prmActiveSync()
+  {
+
+  }
+};
+
+Feature::Feature()
+: Base()
+, stow(std::make_unique<Stow>(*this))
 {
   if (icon.isNull())
     icon = QIcon(":/resources/images/constructionBase.svg"); //fix me
   
   name = QObject::tr("%CLASSNAME%");
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
-  
-//   direction->connect(*prmObserver);
-//   parameters.push_back(direction.get());
-  
-//   distance->connect(*prmObserver);
-//   parameters.push_back(distance.get());
-  
-//   csys->connect(*prmObserver);
-//   parameters.push_back(csys.get());
-  
-  //shouldn't have to do anything for plabels
-  
-  //setup a IPGroup
-//   distanceIPGroup->setMatrixDims(osg::Matrixd::rotate(osg::PI_2, osg::Vec3d(0.0, 0.0, -1.0)));
-//   distanceIPGroup->noAutoRotateDragger();
-//   distanceIPGroup->setRotationAxis(osg::Vec3d(1.0, 0.0, 0.0), osg::Vec3d(0.0, 0.0, 1.0));
-//   overlaySwitch->addChild(distanceIPGroup.get());
-//   csysDragger->dragger->linkToMatrix(distanceIPGroup.get());
-  
-//   annexes.insert(std::make_pair(ann::Type::SeerShape, sShape.get()));
-//   annexes.insert(std::make_pair(ann::Type::CSysDragger, csysDragger.get()));
 }
 
-%CLASSNAME%::~%CLASSNAME%() = default;
+Feature::~Feature() = default;
 
-// void %CLASSNAME%::setPicks(const Picks &pIn)
-// {
-//   picks = pIn;
-//   setModelDirty();
-// }
-
-void %CLASSNAME%::updateModel(const UpdatePayload &/*pIn*/)
+void Feature::updateModel(const UpdatePayload &/*pIn*/)
 {
   setFailure();
   lastUpdateLog.clear();
 //   sShape->reset();
   try
   {
-//     auto getFeature = [&](const std::string& tagIn) -> const Base&
-//     {
-//       std::vector<const Base*> tfs = pIn.getFeatures(tagIn);
-//       if (tfs.size() != 1)
-//         throw std::runtime_error("wrong number of parents");
-//       return *(tfs.front());
-//     };
-//     
-//     auto getSeerShape = [&](const Base &bfIn) -> const ann::SeerShape&
-//     {
-//       if (!bfIn.hasAnnex(ann::Type::SeerShape))
-//         throw std::runtime_error("parent doesn't have seer shape.");
-//       const ann::SeerShape &tss = bfIn.getAnnex<ann::SeerShape>();
-//       if (tss.isNull())
-//         throw std::runtime_error("target seer shape is null");
-//       return tss;
-//     };
-//     
-//     const Base &tbf0 = getFeature(pickZero);
-//     const ann::SeerShape &tss0 = getSeerShape(tbf0);
-//     
-//     const Base &tbf1 = getFeature(pickOne);
-//     const ann::SeerShape &tss1 = getSeerShape(tbf1);
-//     
-//     tls::Resolver pr(pIn);
-//     if (!pr.resolve(picks.front()))
-//       throw std::runtime_error("invalid pick resolution");
-
-    
     //setup new failure state.
 //     sShape->setOCCTShape(tss.getRootOCCTShape());
 //     sShape->shapeMatch(tss);
@@ -138,6 +116,10 @@ void %CLASSNAME%::updateModel(const UpdatePayload &/*pIn*/)
       setSuccess();
       throw std::runtime_error("feature is skipped");
     }
+    
+//     tls::Resolver pr(pIn);
+//     if (!pr.resolve(picks.front()))
+//       throw std::runtime_error("invalid pick resolution");
     
     //update goes here.
     
@@ -167,7 +149,7 @@ void %CLASSNAME%::updateModel(const UpdatePayload &/*pIn*/)
     std::cout << std::endl << lastUpdateLog;
 }
 
-void %CLASSNAME%::serialWrite(const boost::filesystem::path &/*dIn*/)
+void Feature::serialWrite(const boost::filesystem::path &/*dIn*/)
 {
 //   prj::srl::FIX::%CLASSNAME% so
 //   (
@@ -185,7 +167,7 @@ void %CLASSNAME%::serialWrite(const boost::filesystem::path &/*dIn*/)
 //   prj::srl::FIX::%CLASSNAMELOWERCASE%(stream, so, infoMap);
 }
 
-// void %CLASSNAME%::serialRead(const prj::srl::FIXME::%CLASSNAME% &so)
+// void Feature::serialRead(const prj::srl::FIXME::%CLASSNAME% &so)
 // {
 //   Base::serialIn(so.base());
 //   sShape->serialIn(so.seerShape());

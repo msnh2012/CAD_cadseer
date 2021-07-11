@@ -20,50 +20,44 @@
 #ifndef FTR_%CLASSNAMEUPPERCASE%_H
 #define FTR_%CLASSNAMEUPPERCASE%_H
 
-// #include "feature/ftrpick.h"
 #include "feature/ftrbase.h"
 
-// namespace ann{class SeerShape;}
 // namespace prj{namespace srl{namespace FIXME{class %CLASSNAME%;}}}
-// namespace lbr{class IPGroup; class PLabel;}
-// namespace prm{struct Observer;}
 
 namespace ftr
 {
-  class %CLASSNAME% : public Base
+  namespace %CLASSNAME%
   {
-  public:
-    %CLASSNAME%();
-    ~%CLASSNAME%() override;
+    namespace InputTags
+    {
+      inline constexpr std::string_view inputTag = "inputTag";
+    }
     
-    void updateModel(const UpdatePayload&) override;
-    Type getType() const override {return Type::%CLASSNAME%;}
-    const std::string& getTypeString() const override {return toString(Type::%CLASSNAME%);}
-    const QIcon& getIcon() const override {return icon;}
-    Descriptor getDescriptor() const override {return Descriptor::Create;}
+    namespace PrmTags
+    {
+      inline constexpr std::string_view prmTag = "prmTag";
+    }
     
-    void serialWrite(const boost::filesystem::path&) override;
-//     void serialRead(const prj::srl::FIXME::%CLASSNAME%&);
-    
-//     void setPicks(const Picks&);
-//     const Picks& getPicks() const {return picks;}
-    
-  private:
-//     std::unique_ptr<ann::SeerShape> sShape;
-//     std::unique_ptr<prm::Parameter> direction;
-//     std::unique_ptr<prm::Parameter> distance;
-//     std::unique_ptr<prm::Parameter> csys;
-//     std::unique_ptr<prm::Observer> prmObserver;
-//     Picks picks;
-//     std::unique_ptr<prm::Parameter> picks; //experimental 
-    
-//     std::unique_ptr<ann::CSysDragger> csysDragger;
-    
-//     osg::ref_ptr<lbr::PLabel> directionLabel;
-//     osg::ref_ptr<lbr::IPGroup> distanceIPGroup;
-    
-    static QIcon icon;
-  };
+    class Feature : public Base
+    {
+    public:
+      Feature();
+      ~Feature() override;
+      
+      void updateModel(const UpdatePayload&) override;
+      Type getType() const override {return Type::%CLASSNAME%;}
+      const std::string& getTypeString() const override {return toString(Type::%CLASSNAME%);}
+      const QIcon& getIcon() const override {return icon;}
+      Descriptor getDescriptor() const override {return Descriptor::Create;}
+      
+      void serialWrite(const boost::filesystem::path&) override;
+  //     void serialRead(const prj::srl::FIXME::%CLASSNAME%&);
+    private:
+      static QIcon icon;
+      struct Stow;
+      std::unique_ptr<Stow> stow;
+    };
+  }
 }
 
 #endif //FTR_%CLASSNAMEUPPERCASE%_H
