@@ -20,13 +20,10 @@
 #ifndef CMD_BOOLEAN_H
 #define CMD_BOOLEAN_H
 
-#include <variant>
-#include <tuple>
-
 #include "command/cmdleafmanager.h"
 #include "command/cmdbase.h"
 
-namespace ftr{class Base; class Intersect; class Subtract; class Union;}
+namespace ftr{class Base; namespace Boolean{class Feature;}}
 
 namespace cmd
 {
@@ -36,11 +33,9 @@ namespace cmd
   class Boolean : public Base
   {
   public:
-    using Variant = std::variant<ftr::Intersect*, ftr::Subtract*, ftr::Union*>;
-    Variant feature;
-    ftr::Base *basePtr = nullptr; //don't need a visit for some things.
+    ftr::Boolean::Feature *feature = nullptr;
     
-    Boolean(ftr::Type); //new feature
+    Boolean(int); //new feature
     Boolean(ftr::Base*); //edit feature
     ~Boolean() override;
     
@@ -49,8 +44,10 @@ namespace cmd
     void activate() override;
     void deactivate() override;
     
-    void setSelections(const std::vector<slc::Message>&, const std::vector<slc::Message>&);
-    std::tuple<std::vector<slc::Message>, std::vector<slc::Message>> getSelections();
+    void setSelections(const std::vector<slc::Message>&);
+    slc::Messages getSelections();
+    void setType(int);
+    int getType();
     void localUpdate();
   private:
     cmd::LeafManager leafManager;

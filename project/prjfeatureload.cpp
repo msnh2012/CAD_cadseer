@@ -27,9 +27,7 @@
 #include "feature/ftrcylinder.h"
 #include "feature/ftrcone.h"
 #include "feature/ftrsphere.h"
-#include "feature/ftrunion.h"
-#include "feature/ftrsubtract.h"
-#include "feature/ftrintersect.h"
+#include "feature/ftrboolean.h"
 #include "feature/ftrblend.h"
 #include "feature/ftrchamfer.h"
 #include "feature/ftrdraft.h"
@@ -90,7 +88,7 @@
 #include "project/serial/generated/prjsrlinlsinstancelinear.h"
 #include "project/serial/generated/prjsrlinmsinstancemirror.h"
 #include "project/serial/generated/prjsrlinpsinstancepolar.h"
-#include "project/serial/generated/prjsrlinssintersect.h"
+#include "project/serial/generated/prjsrlblsboolean.h"
 #include "project/serial/generated/prjsrllnsline.h"
 #include "project/serial/generated/prjsrlnstsnest.h"
 #include "project/serial/generated/prjsrloblsoblong.h"
@@ -105,7 +103,6 @@
 #include "project/serial/generated/prjsrlsprssphere.h"
 #include "project/serial/generated/prjsrlsqsssquash.h"
 #include "project/serial/generated/prjsrlstpsstrip.h"
-#include "project/serial/generated/prjsrlsbtssubtract.h"
 #include "project/serial/generated/prjsrlsfmssurfacemesh.h"
 #include "project/serial/generated/prjsrlsmfssurfacemeshfill.h"
 #include "project/serial/generated/prjsrlsrmssurfaceremesh.h"
@@ -115,7 +112,6 @@
 #include "project/serial/generated/prjsrltrsstorus.h"
 #include "project/serial/generated/prjsrltscstransitioncurve.h"
 #include "project/serial/generated/prjsrltrmstrim.h"
-#include "project/serial/generated/prjsrlunnsunion.h"
 #include "project/serial/generated/prjsrlmpcmappcurve.h"
 #include "project/serial/generated/prjsrlutruntrim.h"
 #include "project/serial/generated/prjsrlfceface.h"
@@ -151,9 +147,7 @@ FeatureLoad::FeatureLoad(const path& directoryIn, const TopoDS_Shape &masterShap
   functionMap.insert(std::make_pair(ftr::toString(ftr::Type::Cylinder), std::bind(&FeatureLoad::loadCylinder, this, std::placeholders::_1, std::placeholders::_2)));
   functionMap.insert(std::make_pair(ftr::toString(ftr::Type::Sphere), std::bind(&FeatureLoad::loadSphere, this, std::placeholders::_1, std::placeholders::_2)));
   functionMap.insert(std::make_pair(ftr::toString(ftr::Type::Cone), std::bind(&FeatureLoad::loadCone, this, std::placeholders::_1, std::placeholders::_2)));
-  functionMap.insert(std::make_pair(ftr::toString(ftr::Type::Union), std::bind(&FeatureLoad::loadUnion, this, std::placeholders::_1, std::placeholders::_2)));
-  functionMap.insert(std::make_pair(ftr::toString(ftr::Type::Intersect), std::bind(&FeatureLoad::loadIntersect, this, std::placeholders::_1, std::placeholders::_2)));
-  functionMap.insert(std::make_pair(ftr::toString(ftr::Type::Subtract), std::bind(&FeatureLoad::loadSubtract, this, std::placeholders::_1, std::placeholders::_2)));
+  functionMap.insert(std::make_pair(ftr::toString(ftr::Type::Boolean), std::bind(&FeatureLoad::loadBoolean, this, std::placeholders::_1, std::placeholders::_2)));
   functionMap.insert(std::make_pair(ftr::toString(ftr::Type::Inert), std::bind(&FeatureLoad::loadInert, this, std::placeholders::_1, std::placeholders::_2)));
   functionMap.insert(std::make_pair(ftr::toString(ftr::Type::Blend), std::bind(&FeatureLoad::loadBlend, this, std::placeholders::_1, std::placeholders::_2)));
   functionMap.insert(std::make_pair(ftr::toString(ftr::Type::Chamfer), std::bind(&FeatureLoad::loadChamfer, this, std::placeholders::_1, std::placeholders::_2)));
@@ -274,40 +268,16 @@ std::shared_ptr< ftr::Base > FeatureLoad::loadCone(const std::string& fileNameIn
   return freshCone;
 }
 
-std::shared_ptr< ftr::Base > FeatureLoad::loadUnion(const std::string& fileNameIn, std::size_t shapeOffsetIn)
+std::shared_ptr< ftr::Base > FeatureLoad::loadBoolean(const std::string& fileNameIn, std::size_t shapeOffsetIn)
 {
-  auto sUnion = srl::unns::fUnion(fileNameIn, flags);
-  assert(sUnion);
+  auto sBoolean = srl::bls::boolean(fileNameIn, flags);
+  assert(sBoolean);
   
-  auto freshUnion = std::make_shared<ftr::Union>();
-  freshUnion->getAnnex<ann::SeerShape>().setOCCTShape(shapeVector.at(shapeOffsetIn), featureId);
-  freshUnion->serialRead(*sUnion);
+  auto freshBoolean = std::make_shared<ftr::Boolean::Feature>();
+  freshBoolean->getAnnex<ann::SeerShape>().setOCCTShape(shapeVector.at(shapeOffsetIn), featureId);
+  freshBoolean->serialRead(*sBoolean);
   
-  return freshUnion;
-}
-
-std::shared_ptr< ftr::Base > FeatureLoad::loadIntersect(const std::string& fileNameIn, std::size_t shapeOffsetIn)
-{
-  auto sIntersect = srl::inss::intersect(fileNameIn, flags);
-  assert(sIntersect);
-  
-  auto freshIntersect = std::make_shared<ftr::Intersect>();
-  freshIntersect->getAnnex<ann::SeerShape>().setOCCTShape(shapeVector.at(shapeOffsetIn), featureId);
-  freshIntersect->serialRead(*sIntersect);
-  
-  return freshIntersect;
-}
-
-std::shared_ptr< ftr::Base > FeatureLoad::loadSubtract(const std::string& fileNameIn, std::size_t shapeOffsetIn)
-{
-  auto sSubtract = srl::sbts::subtract(fileNameIn, flags);
-  assert(sSubtract);
-  
-  auto freshSubtract = std::make_shared<ftr::Subtract>();
-  freshSubtract->getAnnex<ann::SeerShape>().setOCCTShape(shapeVector.at(shapeOffsetIn), featureId);
-  freshSubtract->serialRead(*sSubtract);
-  
-  return freshSubtract;
+  return freshBoolean;
 }
 
 std::shared_ptr< ftr::Base > FeatureLoad::loadInert(const std::string &fileNameIn, std::size_t shapeOffsetIn)

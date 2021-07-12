@@ -60,9 +60,7 @@ namespace prj
     std::shared_ptr<ftr::Base> loadCylinder(const std::string &, std::size_t);
     std::shared_ptr<ftr::Base> loadSphere(const std::string &, std::size_t);
     std::shared_ptr<ftr::Base> loadCone(const std::string &, std::size_t);
-    std::shared_ptr<ftr::Base> loadUnion(const std::string &, std::size_t);
-    std::shared_ptr<ftr::Base> loadIntersect(const std::string &, std::size_t);
-    std::shared_ptr<ftr::Base> loadSubtract(const std::string &, std::size_t);
+    std::shared_ptr<ftr::Base> loadBoolean(const std::string &, std::size_t);
     std::shared_ptr<ftr::Base> loadInert(const std::string &, std::size_t);
     std::shared_ptr<ftr::Base> loadBlend(const std::string &, std::size_t);
     std::shared_ptr<ftr::Base> loadChamfer(const std::string &, std::size_t);

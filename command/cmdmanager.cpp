@@ -734,11 +734,11 @@ void Manager::constructInstancePolarDispatched(const msg::Message&)
 void Manager::constructBooleanDispatched(const msg::Message &mIn)
 {
   if ((mIn.mask & msg::Intersect) != 0)
-    addCommand(std::make_shared<Boolean>(ftr::Type::Intersect));
+    addCommand(std::make_shared<Boolean>(0));
   else if ((mIn.mask & msg::Subtract) != 0)
-    addCommand(std::make_shared<Boolean>(ftr::Type::Subtract));
+    addCommand(std::make_shared<Boolean>(1));
   else if ((mIn.mask & msg::Union) != 0)
-    addCommand(std::make_shared<Boolean>(ftr::Type::Union));
+    addCommand(std::make_shared<Boolean>(2));
 }
 
 void Manager::constructOffsetDispatched(const msg::Message&)
@@ -1037,17 +1037,7 @@ BasePtr editQuote(ftr::Base *feature)
   return std::make_shared<Quote>(feature);
 }
 
-BasePtr editIntersect(ftr::Base *feature)
-{
-  return std::make_shared<Boolean>(feature);
-}
-
-BasePtr editSubtract(ftr::Base *feature)
-{
-  return std::make_shared<Boolean>(feature);
-}
-
-BasePtr editUnion(ftr::Base *feature)
+BasePtr editBoolean(ftr::Base *feature)
 {
   return std::make_shared<Boolean>(feature);
 }
@@ -1177,9 +1167,7 @@ void Manager::setupEditFunctionMap()
   editFunctionMap.insert(std::make_pair(ftr::Type::Blend, std::bind(editBlend, std::placeholders::_1)));
   editFunctionMap.insert(std::make_pair(ftr::Type::Strip, std::bind(editStrip, std::placeholders::_1)));
   editFunctionMap.insert(std::make_pair(ftr::Type::Quote, std::bind(editQuote, std::placeholders::_1)));
-  editFunctionMap.insert(std::make_pair(ftr::Type::Intersect, std::bind(editIntersect, std::placeholders::_1)));
-  editFunctionMap.insert(std::make_pair(ftr::Type::Subtract, std::bind(editSubtract, std::placeholders::_1)));
-  editFunctionMap.insert(std::make_pair(ftr::Type::Union, std::bind(editUnion, std::placeholders::_1)));
+  editFunctionMap.insert(std::make_pair(ftr::Type::Boolean, std::bind(editBoolean, std::placeholders::_1)));
   editFunctionMap.insert(std::make_pair(ftr::Type::Sketch, std::bind(editSketch, std::placeholders::_1)));
   editFunctionMap.insert(std::make_pair(ftr::Type::Sweep, std::bind(editSweep, std::placeholders::_1)));
   editFunctionMap.insert(std::make_pair(ftr::Type::Draft, std::bind(editDraft, std::placeholders::_1)));

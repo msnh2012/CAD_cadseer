@@ -22,12 +22,13 @@
 
 #include "application/appapplication.h"
 #include "project/prjproject.h"
-#include "dialogs/dlgselectionbutton.h"
-#include "dialogs/dlgselectionwidget.h"
-#include "feature/ftrsubtract.h"
-#include "feature/ftrintersect.h"
-#include "feature/ftrunion.h"
+#include "message/msgmessage.h"
+#include "message/msgnode.h"
+#include "parameter/prmparameter.h"
+#include "feature/ftrboolean.h"
 #include "command/cmdboolean.h"
+#include "commandview/cmvselectioncue.h"
+#include "commandview/cmvtable.h"
 #include "commandview/cmvboolean.h"
 
 using boost::uuids::uuid;
@@ -38,66 +39,36 @@ struct Boolean::Stow
 {
   cmd::Boolean *command;
   cmv::Boolean *view;
-  dlg::SelectionWidget *selectionWidget = nullptr;
+  prm::Parameters parameters;
+  cmv::tbl::Model *prmModel = nullptr;
+  cmv::tbl::View *prmView = nullptr;
   
   Stow(cmd::Boolean *cIn, cmv::Boolean *vIn)
   : command(cIn)
   , view(vIn)
   {
+    parameters = command->feature->getParameters();
     buildGui();
-    
-    QSettings &settings = app::instance()->getUserSettings();
-    settings.beginGroup("cmv::Boolean");
-    //load settings
-    settings.endGroup();
-    
-    loadFeatureData();
-    glue();
-    selectionWidget->activate(0);
+    connect(prmModel, &tbl::Model::dataChanged, view, &Boolean::modelChanged);
   }
   
   void buildGui()
   {
-    QSizePolicy adjust = view->sizePolicy();
-    adjust.setVerticalPolicy(QSizePolicy::Maximum);
-    view->setSizePolicy(adjust);
-    
     QVBoxLayout *mainLayout = new QVBoxLayout();
     view->setLayout(mainLayout);
+    Base::clearContentMargins(view);
+    view->setSizePolicy(view->sizePolicy().horizontalPolicy(), QSizePolicy::Expanding);
     
-    std::vector<dlg::SelectionWidgetCue> cues;
-    dlg::SelectionWidgetCue cue;
-    cue.name = tr("Target");
-    cue.singleSelection = true;
-    cue.mask = slc::ObjectsEnabled | slc::ObjectsSelectable | slc::SolidsEnabled;
-    cue.statusPrompt = tr("Select Target Object Or Solid");
-    cue.showAccrueColumn = false;
-    cues.push_back(cue);
-    cue.name = tr("Tools");
+    prmModel = new tbl::Model(view, command->feature);
+    prmView = new tbl::View(view, prmModel, true);
+    mainLayout->addWidget(prmView);
+    
+    tbl::SelectionCue cue;
     cue.singleSelection = false;
     cue.mask = slc::ObjectsEnabled | slc::ObjectsSelectable | slc::SolidsEnabled;
-    cue.statusPrompt = tr("Select Tool Object Or Solid");
-    cues.push_back(cue);
-    selectionWidget = new dlg::SelectionWidget(view, cues);
-    mainLayout->addWidget(selectionWidget);
-    
-    mainLayout->addItem(new QSpacerItem(20, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
-  }
-  
-  void loadFeatureData()
-  {
-    slc::Messages targets;
-    slc::Messages tools;
-    std::tie(targets, tools) = command->getSelections();
-    
-    selectionWidget->initializeButton(0, targets);
-    selectionWidget->initializeButton(1, tools);
-  }
-  
-  void glue()
-  {
-    connect(selectionWidget->getButton(0), &dlg::SelectionButton::dirty, view, &Boolean::selectionChanged);
-    connect(selectionWidget->getButton(1), &dlg::SelectionButton::dirty, view, &Boolean::selectionChanged);
+    cue.statusPrompt = tr("Select Targets For Boolean");
+    cue.accrueEnabled = false;
+    prmModel->setCue(command->feature->getParameter(ftr::Boolean::PrmTags::picks), cue);
   }
 };
 
@@ -108,8 +79,18 @@ Boolean::Boolean(cmd::Boolean *cIn)
 
 Boolean::~Boolean() = default;
 
-void Boolean::selectionChanged()
+void Boolean::modelChanged(const QModelIndex &index, const QModelIndex&)
 {
-  stow->command->setSelections(stow->selectionWidget->getMessages(0), stow->selectionWidget->getMessages(1));
+  if (!index.isValid())
+    return;
+  
+  auto changedTag = stow->parameters.at(index.row())->getTag();
+  if (changedTag == ftr::Boolean::PrmTags::picks)
+  {
+    const auto &picks = stow->prmModel->getMessages(stow->command->feature->getParameter(ftr::Boolean::PrmTags::picks));
+    stow->command->setSelections(picks);
+  }
+  
   stow->command->localUpdate();
+  node->sendBlocked(msg::buildStatusMessage(stow->command->getStatusMessage()));
 }

@@ -25,99 +25,28 @@
 #include "message/msgnode.h"
 #include "selection/slceventhandler.h"
 #include "annex/annseershape.h"
+#include "parameter/prmparameter.h"
 #include "commandview/cmvmessage.h"
 #include "commandview/cmvboolean.h"
 #include "tools/featuretools.h"
 #include "feature/ftrinputtype.h"
-#include "feature/ftrintersect.h"
-#include "feature/ftrsubtract.h"
-#include "feature/ftrunion.h"
+#include "feature/ftrboolean.h"
 #include "command/cmdboolean.h"
-
-namespace
-{
-  struct SetPickVisitor
-  {
-    const ftr::Picks &targets;
-    const ftr::Picks &tools;
-    SetPickVisitor(const ftr::Picks &targetsIn, ftr::Picks &toolsIn):targets(targetsIn),tools(toolsIn){}
-
-    void operator()(ftr::Intersect *iIn)
-    {
-      iIn->setTargetPicks(targets);
-      iIn->setToolPicks(tools);
-    }
-    
-    void operator()(ftr::Subtract *sIn)
-    {
-      sIn->setTargetPicks(targets);
-      sIn->setToolPicks(tools);
-    }
-    
-    void operator()(ftr::Union *uIn)
-    {
-      uIn->setTargetPicks(targets);
-      uIn->setToolPicks(tools);
-    }
-  };
-  
-  struct GetPickVisitor
-  {
-    ftr::Picks &targets;
-    ftr::Picks &tools;
-    GetPickVisitor(ftr::Picks &targetsIn, ftr::Picks &toolsIn):targets(targetsIn),tools(toolsIn){}
-
-    void operator()(ftr::Intersect *iIn)
-    {
-      targets = iIn->getTargetPicks();
-      tools = iIn->getToolPicks();
-    }
-    
-    void operator()(ftr::Subtract *sIn)
-    {
-      targets = sIn->getTargetPicks();
-      tools = sIn->getToolPicks();
-    }
-    
-    void operator()(ftr::Union *uIn)
-    {
-      targets = uIn->getTargetPicks();
-      tools = uIn->getToolPicks();
-    }
-  };
-}
 
 using namespace cmd;
 
-Boolean::Boolean(ftr::Type tIn) //new feature
+Boolean::Boolean(int tIn) //new feature
 : Base("cmd::Boolean")
 , leafManager()
 {
-  if (tIn == ftr::Type::Intersect)
-  {
-    auto nf = std::make_shared<ftr::Intersect>();
-    project->addFeature(nf);
-    feature = nf.get();
-    basePtr = nf.get();
-  }
-  else if (tIn == ftr::Type::Subtract)
-  {
-    auto nf = std::make_shared<ftr::Subtract>();
-    project->addFeature(nf);
-    feature = nf.get();
-    basePtr = nf.get();
-  }
-  else if (tIn == ftr::Type::Union)
-  {
-    auto nf = std::make_shared<ftr::Union>();
-    project->addFeature(nf);
-    feature = nf.get();
-    basePtr = nf.get();
-  }
-  else
-  {
-    assert(0); //wrong type to cmd boolean constructor.
-  }
+  auto nf = std::make_shared<ftr::Boolean::Feature>();
+  project->addFeature(nf);
+  feature = nf.get();
+  
+  assert(tIn >= 0 && tIn < 3);
+  auto *typePrm = feature->getParameter(ftr::Boolean::PrmTags::booleanType);
+  typePrm->setValue(tIn);
+
   node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
   isEdit = false;
   isFirstRun = true;
@@ -125,19 +54,9 @@ Boolean::Boolean(ftr::Type tIn) //new feature
 
 Boolean::Boolean(ftr::Base *fIn) //edit feature
 : Base("cmd::Boolean")
-, basePtr(fIn)
+, feature(static_cast<ftr::Boolean::Feature*>(fIn))
 , leafManager(fIn)
 {
-  ftr::Type tIn = fIn->getType();
-  if (tIn == ftr::Type::Intersect)
-    feature = static_cast<ftr::Intersect*>(fIn);
-  else if (tIn == ftr::Type::Subtract)
-    feature = static_cast<ftr::Subtract*>(fIn);
-  else if (tIn == ftr::Type::Union)
-    feature = static_cast<ftr::Union*>(fIn);
-  else
-    assert(0); //wrong type to cmd boolean constructor.
-  
   viewBase = std::make_unique<cmv::Boolean>(this);
   node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
   isEdit = true;
@@ -148,11 +67,10 @@ Boolean::~Boolean() = default;
 
 std::string Boolean::getCommandName()
 {
-  std::string out = QObject::tr("Create ").toStdString();
+  std::string out = QObject::tr("Create Boolean").toStdString();
   if (isEdit)
-    out = QObject::tr("Edit ").toStdString();
-  
-  return out + basePtr->getTypeString();
+    out = QObject::tr("Edit Boolean").toStdString();
+  return out;
 }
 
 std::string Boolean::getStatusMessage()
@@ -172,7 +90,7 @@ void Boolean::activate()
   }
   if (viewBase)
   {
-    basePtr->setEditing();
+    feature->setEditing();
     cmv::Message vm(viewBase.get(), viewBase->getPaneWidth());
     msg::Message out(msg::Mask(msg::Request | msg::Command | msg::View | msg::Show), vm);
     node->sendBlocked(out);
@@ -185,15 +103,15 @@ void Boolean::deactivate()
 {
   if (viewBase)
   {
-    basePtr->setNotEditing();
+    feature->setNotEditing();
     msg::Message out(msg::Mask(msg::Request | msg::Command | msg::View | msg::Hide));
     node->sendBlocked(out);
   }
   leafManager.fastForward();
   if (!isEdit.get())
   {
-    node->sendBlocked(msg::buildShowThreeD(basePtr->getId()));
-    node->sendBlocked(msg::buildShowOverlay(basePtr->getId()));
+    node->sendBlocked(msg::buildShowThreeD(feature->getId()));
+    node->sendBlocked(msg::buildShowOverlay(feature->getId()));
   }
   isActive = false;
 }
@@ -212,37 +130,28 @@ bool Boolean::isValidSelection(const slc::Message &mIn)
   return false;
 }
 
-void Boolean::setSelections(const slc::Messages &targets, const slc::Messages &tools)
+void Boolean::setSelections(const slc::Messages &targets)
 {
   assert(isActive);
+  project->clearAllInputs(feature->getId());
   
-  project->clearAllInputs(basePtr->getId());
-  
-  auto connect = [&](const slc::Messages &msgs, const std::string &tag) -> ftr::Picks
+  auto *picksPrm = feature->getParameter(ftr::Boolean::PrmTags::picks);
+  ftr::Picks picks;
+  for (const auto &m : targets)
   {
-    ftr::Picks picks;
-    for (const auto &m : msgs)
-    {
-      const ftr::Base *lf = project->findFeature(m.featureId);
-      picks.push_back(tls::convertToPick(m, *lf, project->getShapeHistory()));
-      picks.back().tag = ftr::InputType::createIndexedTag(tag, picks.size() - 1);
-      project->connect(lf->getId(), basePtr->getId(), {picks.back().tag});
-    }
-    return picks;
-  };
-  
-  ftr::Picks targetPicks = connect(targets, ftr::InputType::target);
-  ftr::Picks toolPicks = connect(tools, ftr::InputType::tool);
-  std::visit(SetPickVisitor(targetPicks, toolPicks), feature);
+    const ftr::Base *lf = project->findFeature(m.featureId);
+    picks.push_back(tls::convertToPick(m, *lf, project->getShapeHistory()));
+    picks.back().tag = indexTag(ftr::Boolean::InputTags::pick, picks.size() - 1);
+    project->connect(lf->getId(), feature->getId(), {picks.back().tag});
+  }
+  picksPrm->setValue(picks);
 }
 
-std::tuple<slc::Messages, slc::Messages> Boolean::getSelections()
+slc::Messages Boolean::getSelections()
 {
-  ftr::Picks targetPicks;
-  ftr::Picks toolPicks;
-  std::visit(GetPickVisitor(targetPicks, toolPicks), feature);
+  const ftr::Picks &targetPicks = feature->getParameter(ftr::Boolean::PrmTags::picks)->getPicks();
   
-  auto payload = project->getPayload(basePtr->getId());
+  auto payload = project->getPayload(feature->getId());
   tls::Resolver resolver(payload);
   slc::Messages targetMessages;
   for (const auto &p : targetPicks)
@@ -252,59 +161,57 @@ std::tuple<slc::Messages, slc::Messages> Boolean::getSelections()
     auto msgs = resolver.convertToMessages();
     targetMessages.insert(targetMessages.end(), msgs.begin(), msgs.end());
   }
-  
-  slc::Messages toolMessages;
-  for (const auto &p : toolPicks)
-  {
-    if (!resolver.resolve(p))
-      continue;
-    auto msgs = resolver.convertToMessages();
-    toolMessages.insert(toolMessages.end(), msgs.begin(), msgs.end());
-  }
-  
-  return std::make_tuple(targetMessages, toolMessages);
+  return targetMessages;
+}
+
+void Boolean::setType(int tIn)
+{
+  assert(tIn >= 0 && tIn < 3);
+  auto *typePrm = feature->getParameter(ftr::Boolean::PrmTags::booleanType);
+  typePrm->setValue(tIn);
+}
+
+int Boolean::getType()
+{
+  return feature->getParameter(ftr::Boolean::PrmTags::booleanType)->getInt();
 }
 
 void Boolean::localUpdate()
 {
   assert(isActive);
-  basePtr->updateModel(project->getPayload(basePtr->getId()));
-  basePtr->updateVisual();
-  basePtr->setModelDirty();
+  feature->updateModel(project->getPayload(feature->getId()));
+  feature->updateVisual();
+  feature->setModelDirty();
   node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
 }
 
 void Boolean::go()
 {
   const slc::Containers &containers = eventHandler->getSelections();
-  if (containers.size() > 1)
+  if (!containers.empty())
   {
-    slc::Messages targets; //pick first only supports 1 target
-    slc::Messages tools;
+    slc::Messages targets;
     for (const auto &c : containers)
     {
       auto m = slc::EventHandler::containerToMessage(c);
       if (!isValidSelection(m))
         continue;
-      if (targets.empty())
-      {
-        targets.push_back(m);
-        continue;
-      }
-      tools.push_back(m);
+      targets.push_back(m);
+      node->sendBlocked(msg::buildHideThreeD(m.featureId));
+      node->sendBlocked(msg::buildHideOverlay(m.featureId));
     }
-    if (!targets.empty() && !tools.empty())
+    if (!targets.empty())
     {
-      setSelections(targets, tools);
-      node->sendBlocked(msg::buildStatusMessage(basePtr->getTypeString() + " Added", 2.0));
+      setSelections(targets);
+      node->sendBlocked(msg::buildStatusMessage(feature->getTypeString() + " Added", 2.0));
       node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
       return;
     }
   }
   
   node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
-  node->sendBlocked(msg::buildShowThreeD(basePtr->getId()));
-  node->sendBlocked(msg::buildShowOverlay(basePtr->getId()));
+  node->sendBlocked(msg::buildShowThreeD(feature->getId()));
+  node->sendBlocked(msg::buildShowOverlay(feature->getId()));
   node->sendBlocked(msg::buildStatusMessage("invalid pre selection", 2.0));
   viewBase = std::make_unique<cmv::Boolean>(this);
 }

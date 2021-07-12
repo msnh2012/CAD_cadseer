@@ -65,7 +65,7 @@ xsdcxx cxx-tree --std c++11 --generate-serialization --type-naming ucc --hxx-suf
 xsdcxx cxx-tree --std c++11 --generate-serialization --type-naming ucc --hxx-suffix .h --cxx-suffix .cpp --guard-prefix PRJ_SRL_INLS --extern-xml-schema ../../../xmlbase.xsd ../schema/prjsrlinlsinstancelinear.xsd
 xsdcxx cxx-tree --std c++11 --generate-serialization --type-naming ucc --hxx-suffix .h --cxx-suffix .cpp --guard-prefix PRJ_SRL_INMS --extern-xml-schema ../../../xmlbase.xsd ../schema/prjsrlinmsinstancemirror.xsd
 xsdcxx cxx-tree --std c++11 --generate-serialization --type-naming ucc --hxx-suffix .h --cxx-suffix .cpp --guard-prefix PRJ_SRL_INPS --extern-xml-schema ../../../xmlbase.xsd ../schema/prjsrlinpsinstancepolar.xsd
-xsdcxx cxx-tree --std c++11 --generate-serialization --type-naming ucc --hxx-suffix .h --cxx-suffix .cpp --guard-prefix PRJ_SRL_INSS --extern-xml-schema ../../../xmlbase.xsd ../schema/prjsrlinssintersect.xsd
+xsdcxx cxx-tree --std c++11 --generate-serialization --type-naming ucc --hxx-suffix .h --cxx-suffix .cpp --guard-prefix PRJ_SRL_BLS --extern-xml-schema ../../../xmlbase.xsd ../schema/prjsrlblsboolean.xsd
 xsdcxx cxx-tree --std c++11 --generate-serialization --type-naming ucc --hxx-suffix .h --cxx-suffix .cpp --guard-prefix PRJ_SRL_LNS --extern-xml-schema ../../../xmlbase.xsd ../schema/prjsrllnsline.xsd
 xsdcxx cxx-tree --std c++11 --generate-serialization --type-naming ucc --hxx-suffix .h --cxx-suffix .cpp --guard-prefix PRJ_SRL_NSTS --extern-xml-schema ../../../xmlbase.xsd ../schema/prjsrlnstsnest.xsd
 xsdcxx cxx-tree --std c++11 --generate-serialization --type-naming ucc --hxx-suffix .h --cxx-suffix .cpp --guard-prefix PRJ_SRL_OBLS --extern-xml-schema ../../../xmlbase.xsd ../schema/prjsrloblsoblong.xsd
@@ -80,7 +80,6 @@ xsdcxx cxx-tree --std c++11 --generate-serialization --type-naming ucc --hxx-suf
 xsdcxx cxx-tree --std c++11 --generate-serialization --type-naming ucc --hxx-suffix .h --cxx-suffix .cpp --guard-prefix PRJ_SRL_SPRS --extern-xml-schema ../../../xmlbase.xsd ../schema/prjsrlsprssphere.xsd
 xsdcxx cxx-tree --std c++11 --generate-serialization --type-naming ucc --hxx-suffix .h --cxx-suffix .cpp --guard-prefix PRJ_SRL_SQSS --extern-xml-schema ../../../xmlbase.xsd ../schema/prjsrlsqsssquash.xsd
 xsdcxx cxx-tree --std c++11 --generate-serialization --type-naming ucc --hxx-suffix .h --cxx-suffix .cpp --guard-prefix PRJ_SRL_STPS --extern-xml-schema ../../../xmlbase.xsd ../schema/prjsrlstpsstrip.xsd
-xsdcxx cxx-tree --std c++11 --generate-serialization --type-naming ucc --hxx-suffix .h --cxx-suffix .cpp --guard-prefix PRJ_SRL_SBTS --extern-xml-schema ../../../xmlbase.xsd ../schema/prjsrlsbtssubtract.xsd
 xsdcxx cxx-tree --std c++11 --generate-serialization --type-naming ucc --hxx-suffix .h --cxx-suffix .cpp --guard-prefix PRJ_SRL_MSHS --extern-xml-schema ../../../xmlbase.xsd ../schema/prjsrlmshsmesh.xsd
 xsdcxx cxx-tree --std c++11 --generate-serialization --type-naming ucc --hxx-suffix .h --cxx-suffix .cpp --guard-prefix PRJ_SRL_SFMS --extern-xml-schema ../../../xmlbase.xsd ../schema/prjsrlsfmssurfacemesh.xsd
 xsdcxx cxx-tree --std c++11 --generate-serialization --type-naming ucc --hxx-suffix .h --cxx-suffix .cpp --guard-prefix PRJ_SRL_SMFS --extern-xml-schema ../../../xmlbase.xsd ../schema/prjsrlsmfssurfacemeshfill.xsd
@@ -92,7 +91,6 @@ xsdcxx cxx-tree --std c++11 --generate-serialization --type-naming ucc --hxx-suf
 xsdcxx cxx-tree --std c++11 --generate-serialization --type-naming ucc --hxx-suffix .h --cxx-suffix .cpp --guard-prefix PRJ_SRL_TRSS --extern-xml-schema ../../../xmlbase.xsd ../schema/prjsrltrsstorus.xsd
 xsdcxx cxx-tree --std c++11 --generate-serialization --type-naming ucc --hxx-suffix .h --cxx-suffix .cpp --guard-prefix PRJ_SRL_TSCS --extern-xml-schema ../../../xmlbase.xsd ../schema/prjsrltscstransitioncurve.xsd
 xsdcxx cxx-tree --std c++11 --generate-serialization --type-naming ucc --hxx-suffix .h --cxx-suffix .cpp --guard-prefix PRJ_SRL_TRMS --extern-xml-schema ../../../xmlbase.xsd ../schema/prjsrltrmstrim.xsd
-xsdcxx cxx-tree --std c++11 --generate-serialization --type-naming ucc --hxx-suffix .h --cxx-suffix .cpp --guard-prefix PRJ_SRL_UNNS --extern-xml-schema ../../../xmlbase.xsd ../schema/prjsrlunnsunion.xsd
 xsdcxx cxx-tree --std c++11 --generate-serialization --type-naming ucc --hxx-suffix .h --cxx-suffix .cpp --guard-prefix PRJ_SRL_PRJS --extern-xml-schema ../../../xmlbase.xsd ../schema/prjsrlprjsproject.xsd
 xsdcxx cxx-tree --std c++11 --generate-serialization --type-naming ucc --hxx-suffix .h --cxx-suffix .cpp --guard-prefix PRJ_SRL_VWS --extern-xml-schema ../../../xmlbase.xsd ../schema/prjsrlvwsview.xsd
 xsdcxx cxx-tree --std c++11 --generate-serialization --type-naming ucc --hxx-suffix .h --cxx-suffix .cpp --guard-prefix PRJ_SRL_MPC --extern-xml-schema ../../../xmlbase.xsd ../schema/prjsrlmpcmappcurve.xsd

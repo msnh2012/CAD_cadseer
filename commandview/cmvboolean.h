@@ -37,8 +37,8 @@ namespace cmv
   public:
     Boolean(cmd::Boolean*);
     ~Boolean() override;
-  public Q_SLOTS:
-    void selectionChanged();
+  private Q_SLOTS:
+    void modelChanged(const QModelIndex&, const QModelIndex&);
   private:
     struct Stow;
     std::unique_ptr<Stow> stow;

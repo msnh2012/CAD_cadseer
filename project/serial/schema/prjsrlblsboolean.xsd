@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xs:schema
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  xmlns:spt="http://www.cadseer.com/prj/srl/spt"
+  xmlns:bls="http://www.cadseer.com/prj/srl/bls"
+  targetNamespace="http://www.cadseer.com/prj/srl/bls"
+>
+  
+<xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptparameter.xsd"/>
+<xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptseershape.xsd"/>
+<xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptintersectionmapping.xsd"/>
+<xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptbase.xsd"/>
+
+<xs:complexType name="Boolean">
+  <xs:sequence>
+    <xs:element name="base" type="spt:Base"/>
+    <xs:element name="booleanType" type="spt:Parameter"/>
+    <xs:element name="picks" type="spt:Parameter"/>
+    <xs:element name="seerShape" type="spt:SeerShape"/>
+    <xs:element name="intersectionMapper" type="spt:IntersectionMapper"/>
+  </xs:sequence>
+</xs:complexType>
+
+<xs:element name="boolean" type="bls:Boolean"/>
+  
+</xs:schema> 
