@@ -1,21 +1,28 @@
-[submodule "project/libgit2pp"]
+[submodule "libgit2pp"]
 	path = subprojects/libgit2pp
 	url = https://gitlab.com/blobfish/libgit2pp.git
-[submodule "libreoffice/libzippp"]
+	branch = cadseer
+[submodule "libzippp"]
 	path = subprojects/libzippp
 	url = https://gitlab.com/blobfish/libzippp.git
-[submodule "sketch/solvespace"]
+	branch = cadseer
+[submodule "solvespace"]
 	path = subprojects/solvespace
 	url = https://gitlab.com/blobfish/solvespace.git
-[submodule "subprojects/libigl"]
+	branch = cadseer
+[submodule "libigl"]
 	path = subprojects/libigl
 	url = https://gitlab.com/blobfish/libigl.git
-[submodule "subprojects/osgQt"]
+	branch = cadseer
+[submodule "osgQt"]
 	path = subprojects/osgQt
 	url = https://gitlab.com/blobfish/osgqt.git
-[submodule "subprojects/pmp-library"]
+	branch = cadseer
+[submodule "pmp-library"]
 	path = subprojects/pmp-library
 	url = https://gitlab.com/blobfish/pmp-library.git
-[submodule "subprojects/libcadcalc"]
+	branch = cadseer
+[submodule "libcadcalc"]
 	path = subprojects/libcadcalc
 	url = https://gitlab.com/blobfish/libcadcalc.git
+	branch = master
