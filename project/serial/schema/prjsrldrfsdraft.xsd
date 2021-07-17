@@ -8,17 +8,16 @@
   
 <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptparameter.xsd"/>
 <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptoverlay.xsd"/>
-<xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptpick.xsd"/>
 <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptseershape.xsd"/>
 <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptbase.xsd"/>
 
 <xs:complexType name="Draft">
   <xs:sequence>
     <xs:element name="base" type="spt:Base"/>
-    <xs:element name="seerShape" type="spt:SeerShape"/>
-    <xs:element name="targetPicks" type="spt:Pick" minOccurs="0" maxOccurs="unbounded"/>
-    <xs:element name="neutralPick" type="spt:Pick"/>
+    <xs:element name="neutralPick" type="spt:Parameter"/>
+    <xs:element name="targetPicks" type="spt:Parameter"/>
     <xs:element name="angle" type="spt:Parameter"/>
+    <xs:element name="seerShape" type="spt:SeerShape"/>
     <xs:element name="plabel" type="spt:PLabel"/>
   </xs:sequence>
 </xs:complexType>

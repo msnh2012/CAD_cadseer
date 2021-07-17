@@ -27,6 +27,7 @@
 #include "project/prjproject.h"
 #include "message/msgnode.h"
 #include "selection/slceventhandler.h"
+#include "parameter/prmconstants.h"
 #include "parameter/prmparameter.h"
 #include "dialogs/dlgparameter.h"
 #include "commandview/cmvmessage.h"
@@ -42,11 +43,10 @@ Draft::Draft()
 : Base("cmd::Draft")
 , leafManager()
 {
-  //build multiples in go. so don't build a feature by default.
-//   auto nf = std::make_shared<ftr::Draft>();
-//   project->addFeature(nf);
-//   feature = nf.get();
-//   node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
+  auto nf = std::make_shared<ftr::Draft::Feature>();
+  project->addFeature(nf);
+  feature = nf.get();
+  node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
   isEdit = false;
   isFirstRun = true;
 }
@@ -55,7 +55,7 @@ Draft::Draft(ftr::Base *fIn)
 : Base("cmd::Draft")
 , leafManager(fIn)
 {
-  feature = dynamic_cast<ftr::Draft*>(fIn);
+  feature = dynamic_cast<ftr::Draft::Feature*>(fIn);
   assert(feature);
   viewBase = std::make_unique<cmv::Draft>(this);
   node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
@@ -108,13 +108,27 @@ void Draft::deactivate()
   isActive = false;
 }
 
-bool Draft::isValidSelection(const slc::Message &mIn)
+bool Draft::isValidTarget(const slc::Message &mIn)
 {
   const ftr::Base *lf = project->findFeature(mIn.featureId);
   if (!lf->hasAnnex(ann::Type::SeerShape) || lf->getAnnex<ann::SeerShape>().isNull())
     return false;
   
-  if (mIn.type != slc::Type::Face)
+  if (mIn.type != slc::Type::Face) //could expand on drafts subset of face types.
+    return false;
+  return true;
+}
+
+bool Draft::isValidNeutral(const slc::Message &mIn)
+{
+  const ftr::Base *lf = project->findFeature(mIn.featureId);
+  auto prms = lf->getParameters(prm::Tags::CSys);
+  if (!prms.empty())
+    return true;
+  
+  if (!lf->hasAnnex(ann::Type::SeerShape) || lf->getAnnex<ann::SeerShape>().isNull())
+    return false;
+  if (mIn.type != slc::Type::Face) //could expand on drafts subset of face types.
     return false;
   return true;
 }
@@ -124,35 +138,51 @@ void Draft::setSelections(const slc::Messages &neutral, const slc::Messages &tar
   assert(isActive);
   assert(feature);
   project->clearAllInputs(feature->getId());
-  feature->setNeutralPick(ftr::Pick());
-  feature->setTargetPicks(ftr::Picks());
+  auto *targetsPrm = feature->getParameter(ftr::Draft::PrmTags::targetPicks);
+  auto *neutralPrm = feature->getParameter(ftr::Draft::PrmTags::neutralPick);
+  targetsPrm->setValue(ftr::Picks());
+  neutralPrm->setValue(ftr::Picks());
   
-  if (neutral.empty() || targets.empty())
-    return;
-  
-  //currently draft feature only supports the neutral pick to be a planar face.
-  //this will change as we will want datum planes and maybe more.
-  //so don't validate consistent feature ids to neutral.
-  
-  const ftr::Base *nf = project->findFeature(neutral.front().featureId);
-  ftr::Pick neutralPick = tls::convertToPick(neutral.front(), *nf, project->getShapeHistory());
-  neutralPick.tag = ftr::Draft::neutral;
-  feature->setNeutralPick(neutralPick);
-  project->connect(nf->getId(), feature->getId(), {neutralPick.tag});
-  
-  ftr::Picks targetPicks;
-  const ftr::Base *lf = project->findFeature(targets.front().featureId);
-  for (const auto &m : targets)
+  if (!neutral.empty())
   {
-    if (!isValidSelection(m))
-      continue;
-    if (lf->getId() != m.featureId)
-      continue;
-    targetPicks.push_back(tls::convertToPick(m, *lf, project->getShapeHistory()));
-    targetPicks.back().tag = ftr::InputType::createIndexedTag(ftr::InputType::target, targetPicks.size() - 1);
-    project->connect(lf->getId(), feature->getId(), {targetPicks.back().tag});
+    if (isValidNeutral(neutral.front()))
+    {
+      //neutral plane can be outside of target body so don't validate consistent feature ids to neutral.
+      const ftr::Base *nf = project->findFeature(neutral.front().featureId);
+      ftr::Pick neutralPick = tls::convertToPick(neutral.front(), *nf, project->getShapeHistory());
+      neutralPick.tag = indexTag(ftr::Draft::InputTags::neutralPick, 0);
+      neutralPrm->setValue({neutralPick});
+      if (targets.empty() || neutral.front().featureId != targets.front().featureId)
+        project->connect(nf->getId(), feature->getId(), {neutralPick.tag, ftr::InputType::sever});
+      else
+        project->connect(nf->getId(), feature->getId(), {neutralPick.tag});
+    }
+    else
+      node->sendBlocked(msg::buildStatusMessage("Invalid Neutral Plane", 2.0));
   }
-  feature->setTargetPicks(targetPicks);
+  
+  if (!targets.empty())
+  {
+    ftr::Picks targetPicks;
+    const ftr::Base *lf = project->findFeature(targets.front().featureId);
+    for (const auto &m : targets)
+    {
+      if (!isValidTarget(m))
+      {
+        node->sendBlocked(msg::buildStatusMessage("Skipping Invalid Target", 2.0));
+        continue;
+      }
+      if (lf->getId() != m.featureId)
+      {
+        node->sendBlocked(msg::buildStatusMessage("Target Face Should Belong To Same Feature", 2.0));
+        continue;
+      }
+      targetPicks.push_back(tls::convertToPick(m, *lf, project->getShapeHistory()));
+      targetPicks.back().tag = indexTag(ftr::Draft::InputTags::targetPick, targetPicks.size() - 1);
+      project->connect(lf->getId(), feature->getId(), {targetPicks.back().tag});
+    }
+    targetsPrm->setValue(targetPicks);
+  }
 }
 
 void Draft::localUpdate()
@@ -168,50 +198,40 @@ void Draft::go()
 {
   bool created = false;
   const slc::Containers &containers = eventHandler->getSelections();
-  std::vector<slc::Containers> splits = slc::split(containers); //grouped by featureId.
-  for (const auto &cs : splits)
+  std::optional<slc::Message> neutral;
+  slc::Messages targets;
+  for (const auto &cs : containers)
   {
-    assert(!cs.empty());
-    
-    boost::optional<slc::Message> neutral;
-    slc::Messages targets;
-    
-    for (const auto c : cs)
+    auto m = slc::EventHandler::containerToMessage(cs);
+    if (!neutral)
     {
-      auto m = slc::EventHandler::containerToMessage(c);
-      if (!isValidSelection(m))
-        continue;
-      if (neutral)
-        targets.push_back(m);
-      else
+      if (isValidNeutral(m))
         neutral = m;
     }
-    if (neutral && !targets.empty())
+    else
     {
-      auto nf = std::make_shared<ftr::Draft>();
-      project->addFeature(nf);
-      feature = nf.get();
-      setSelections(slc::Messages(1, neutral.get()), targets);
-      feature->setColor(project->findFeature(targets.front().featureId)->getColor());
-      created = true;
-      node->sendBlocked(msg::buildHideThreeD(targets.front().featureId));
-      node->sendBlocked(msg::buildHideOverlay(targets.front().featureId));
-      node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
-      dlg::Parameter *pDialog = new dlg::Parameter(feature->getAngleParameter().get(), feature->getId());
-      pDialog->show();
-      pDialog->raise();
-      pDialog->activateWindow();
+      if (isValidTarget(m))
+        targets.push_back(m);
     }
+  }
+  if (neutral && !targets.empty())
+  {
+    setSelections(slc::Messages(1, *neutral), targets);
+    feature->setColor(project->findFeature(targets.front().featureId)->getColor());
+    created = true;
+    node->sendBlocked(msg::buildHideThreeD(targets.front().featureId));
+    node->sendBlocked(msg::buildHideOverlay(targets.front().featureId));
+    node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
+    dlg::Parameter *pDialog = new dlg::Parameter(feature->getParameter(prm::Tags::Angle), feature->getId());
+    pDialog->show();
+    pDialog->raise();
+    pDialog->activateWindow();
   }
   
   node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
   
   if (!created)
   {
-    auto nf = std::make_shared<ftr::Draft>();
-    project->addFeature(nf);
-    feature = nf.get();
-    node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
     node->sendBlocked(msg::buildStatusMessage("invalid pre selection", 2.0));
     viewBase = std::make_unique<cmv::Draft>(this);
   }

@@ -23,7 +23,7 @@
 #include "command/cmdleafmanager.h"
 #include "command/cmdbase.h"
 
-namespace ftr{class Draft;}
+namespace ftr{namespace Draft{class Feature;}}
 
 namespace cmd
 {
@@ -33,7 +33,7 @@ namespace cmd
   class Draft : public Base
   {
   public:
-    ftr::Draft *feature;
+    ftr::Draft::Feature *feature;
     
     Draft();
     Draft(ftr::Base*);
@@ -44,7 +44,8 @@ namespace cmd
     void activate() override;
     void deactivate() override;
     
-    bool isValidSelection(const slc::Message&);
+    bool isValidTarget(const slc::Message&);
+    bool isValidNeutral(const slc::Message&);
     void setSelections(const slc::Messages&, const slc::Messages&);
     void localUpdate();
   private:

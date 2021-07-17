@@ -93,8 +93,6 @@ namespace prj
 
 #include "prjsrlsptoverlay.h"
 
-#include "prjsrlsptpick.h"
-
 #include "prjsrlsptseershape.h"
 
 #include "prjsrlsptbase.h"
@@ -125,43 +123,9 @@ namespace prj
         void
         base (::std::unique_ptr< BaseType > p);
 
-        // seerShape
-        //
-        typedef ::prj::srl::spt::SeerShape SeerShapeType;
-        typedef ::xsd::cxx::tree::traits< SeerShapeType, char > SeerShapeTraits;
-
-        const SeerShapeType&
-        seerShape () const;
-
-        SeerShapeType&
-        seerShape ();
-
-        void
-        seerShape (const SeerShapeType& x);
-
-        void
-        seerShape (::std::unique_ptr< SeerShapeType > p);
-
-        // targetPicks
-        //
-        typedef ::prj::srl::spt::Pick TargetPicksType;
-        typedef ::xsd::cxx::tree::sequence< TargetPicksType > TargetPicksSequence;
-        typedef TargetPicksSequence::iterator TargetPicksIterator;
-        typedef TargetPicksSequence::const_iterator TargetPicksConstIterator;
-        typedef ::xsd::cxx::tree::traits< TargetPicksType, char > TargetPicksTraits;
-
-        const TargetPicksSequence&
-        targetPicks () const;
-
-        TargetPicksSequence&
-        targetPicks ();
-
-        void
-        targetPicks (const TargetPicksSequence& s);
-
         // neutralPick
         //
-        typedef ::prj::srl::spt::Pick NeutralPickType;
+        typedef ::prj::srl::spt::Parameter NeutralPickType;
         typedef ::xsd::cxx::tree::traits< NeutralPickType, char > NeutralPickTraits;
 
         const NeutralPickType&
@@ -175,6 +139,23 @@ namespace prj
 
         void
         neutralPick (::std::unique_ptr< NeutralPickType > p);
+
+        // targetPicks
+        //
+        typedef ::prj::srl::spt::Parameter TargetPicksType;
+        typedef ::xsd::cxx::tree::traits< TargetPicksType, char > TargetPicksTraits;
+
+        const TargetPicksType&
+        targetPicks () const;
+
+        TargetPicksType&
+        targetPicks ();
+
+        void
+        targetPicks (const TargetPicksType& x);
+
+        void
+        targetPicks (::std::unique_ptr< TargetPicksType > p);
 
         // angle
         //
@@ -192,6 +173,23 @@ namespace prj
 
         void
         angle (::std::unique_ptr< AngleType > p);
+
+        // seerShape
+        //
+        typedef ::prj::srl::spt::SeerShape SeerShapeType;
+        typedef ::xsd::cxx::tree::traits< SeerShapeType, char > SeerShapeTraits;
+
+        const SeerShapeType&
+        seerShape () const;
+
+        SeerShapeType&
+        seerShape ();
+
+        void
+        seerShape (const SeerShapeType& x);
+
+        void
+        seerShape (::std::unique_ptr< SeerShapeType > p);
 
         // plabel
         //
@@ -213,15 +211,17 @@ namespace prj
         // Constructors.
         //
         Draft (const BaseType&,
-               const SeerShapeType&,
                const NeutralPickType&,
+               const TargetPicksType&,
                const AngleType&,
+               const SeerShapeType&,
                const PlabelType&);
 
         Draft (::std::unique_ptr< BaseType >,
-               ::std::unique_ptr< SeerShapeType >,
                ::std::unique_ptr< NeutralPickType >,
+               ::std::unique_ptr< TargetPicksType >,
                ::std::unique_ptr< AngleType >,
+               ::std::unique_ptr< SeerShapeType >,
                ::std::unique_ptr< PlabelType >);
 
         Draft (const ::xercesc::DOMElement& e,
@@ -251,10 +251,10 @@ namespace prj
 
         protected:
         ::xsd::cxx::tree::one< BaseType > base_;
-        ::xsd::cxx::tree::one< SeerShapeType > seerShape_;
-        TargetPicksSequence targetPicks_;
         ::xsd::cxx::tree::one< NeutralPickType > neutralPick_;
+        ::xsd::cxx::tree::one< TargetPicksType > targetPicks_;
         ::xsd::cxx::tree::one< AngleType > angle_;
+        ::xsd::cxx::tree::one< SeerShapeType > seerShape_;
         ::xsd::cxx::tree::one< PlabelType > plabel_;
       };
     }

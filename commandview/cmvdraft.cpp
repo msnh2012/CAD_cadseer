@@ -22,10 +22,12 @@
 
 #include "application/appapplication.h"
 #include "project/prjproject.h"
-#include "dialogs/dlgselectionbutton.h"
-#include "dialogs/dlgselectionwidget.h"
-#include "commandview/cmvparameterwidgets.h"
+#include "message/msgmessage.h"
+#include "message/msgnode.h"
+#include "parameter/prmconstants.h"
 #include "parameter/prmparameter.h"
+#include "commandview/cmvselectioncue.h"
+#include "commandview/cmvtable.h"
 #include "tools/featuretools.h"
 #include "feature/ftrdraft.h"
 #include "command/cmddraft.h"
@@ -39,80 +41,44 @@ struct Draft::Stow
 {
   cmd::Draft *command;
   cmv::Draft *view;
-  dlg::SelectionWidget *selectionWidget = nullptr;
-  cmv::ParameterWidget *parameterWidget = nullptr;
+  prm::Parameters parameters;
+  cmv::tbl::Model *prmModel = nullptr;
+  cmv::tbl::View *prmView = nullptr;
   
   Stow(cmd::Draft *cIn, cmv::Draft *vIn)
   : command(cIn)
   , view(vIn)
   {
+    parameters = command->feature->getParameters();
     buildGui();
-    
-    QSettings &settings = app::instance()->getUserSettings();
-    settings.beginGroup("cmv::Draft");
-    //load settings
-    settings.endGroup();
-    
-    loadFeatureData();
-    glue();
-    selectionWidget->activate(0);
+    connect(prmModel, &tbl::Model::dataChanged, view, &Draft::modelChanged);
   }
   
   void buildGui()
   {
     QVBoxLayout *mainLayout = new QVBoxLayout();
     view->setLayout(mainLayout);
-  
-    std::vector<dlg::SelectionWidgetCue> cues;
-    dlg::SelectionWidgetCue cue;
+    Base::clearContentMargins(view);
+    view->setSizePolicy(view->sizePolicy().horizontalPolicy(), QSizePolicy::Expanding);
     
-    cue.name = tr("Neutral");
+    prmModel = new tbl::Model(view, command->feature);
+    prmView = new tbl::View(view, prmModel, true);
+    mainLayout->addWidget(prmView);
+    
+    tbl::SelectionCue cue;
     cue.singleSelection = true;
-    cue.mask = slc::FacesEnabled | slc::FacesSelectable;
-    cue.statusPrompt = tr("Select Neutral Face");
-    cue.showAccrueColumn = false;
-    cues.push_back(cue);
+    cue.mask = slc::ObjectsEnabled | slc::FacesBoth | slc::EdgesEnabled;
+    cue.statusPrompt = tr("Select Neutral Plane");
+    cue.accrueEnabled = false;
+    prmModel->setCue(command->feature->getParameter(ftr::Draft::PrmTags::neutralPick), cue);
     
-    cue.name = tr("Draft");
-    cue.singleSelection = false;
-    cue.statusPrompt = tr("Select Faces To Draft");
-    cues.push_back(cue);
-    
-    selectionWidget = new dlg::SelectionWidget(view, cues);
-    mainLayout->addWidget(selectionWidget);
-    
-    parameterWidget = new ParameterWidget(view, command->feature->getParameters());
-    mainLayout->addWidget(parameterWidget);
-    mainLayout->addItem(new QSpacerItem(20, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
-  }
-  
-  void loadFeatureData()
-  {
-    ftr::UpdatePayload up = view->project->getPayload(command->feature->getId());
-    tls::Resolver resolver(up);
-    
-    auto picksToMessages = [&](const ftr::Picks &pIn) -> slc::Messages
-    {
-      slc::Messages out;
-      for (const auto &p : pIn)
-      {
-        if (resolver.resolve(p))
-        {
-          auto msgs = resolver.convertToMessages();
-          out.insert(out.end(), msgs.begin(), msgs.end());
-        }
-      }
-      return out;
-    };
-    selectionWidget->initializeButton(0, picksToMessages(ftr::Picks(1, command->feature->getNeutralPick())));
-    selectionWidget->initializeButton(1, picksToMessages(command->feature->getTargetPicks()));
-  }
-  
-  void glue()
-  {
-    connect(selectionWidget->getButton(0), &dlg::SelectionButton::dirty, view, &Draft::selectionChanged);
-    connect(selectionWidget->getButton(1), &dlg::SelectionButton::dirty, view, &Draft::selectionChanged);
-    connect(parameterWidget, &ParameterBase::prmValueChanged, view, &Draft::parameterChanged);
+    tbl::SelectionCue targetCue;
+    targetCue.singleSelection = false;
+    targetCue.mask = slc::FacesBoth;
+    targetCue.statusPrompt = tr("Select Target Faces");
+    targetCue.accrueEnabled = false;
+    targetCue.forceTangentAccrue = true;
+    prmModel->setCue(command->feature->getParameter(ftr::Draft::PrmTags::targetPicks), targetCue);
   }
 };
 
@@ -123,13 +89,18 @@ Draft::Draft(cmd::Draft *cIn)
 
 Draft::~Draft() = default;
 
-void Draft::selectionChanged()
+void Draft::modelChanged(const QModelIndex &index, const QModelIndex&)
 {
-  stow->command->setSelections(stow->selectionWidget->getButton(0)->getMessages(), stow->selectionWidget->getButton(1)->getMessages());
+  if (!index.isValid())
+    return;
+  auto changedTag = stow->parameters.at(index.row())->getTag();
+  if (changedTag == ftr::Draft::PrmTags::neutralPick || changedTag == ftr::Draft::PrmTags::targetPicks)
+  {
+    const auto &neutralPick = stow->prmModel->getMessages(stow->command->feature->getParameter(ftr::Draft::PrmTags::neutralPick));
+    const auto &targetPicks = stow->prmModel->getMessages(stow->command->feature->getParameter(ftr::Draft::PrmTags::targetPicks));
+    stow->command->setSelections(neutralPick, targetPicks);
+  }
+  
   stow->command->localUpdate();
-}
-
-void Draft::parameterChanged()
-{
-  stow->command->localUpdate();
+  node->sendBlocked(msg::buildStatusMessage(stow->command->getStatusMessage()));
 }

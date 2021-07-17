@@ -20,58 +20,46 @@
 #ifndef FTR_DRAFT_H
 #define FTR_DRAFT_H
 
-#include <osg/ref_ptr>
-
-#include "feature/ftrpick.h"
 #include "feature/ftrbase.h"
 
-class BRepOffsetAPI_DraftAngle;
-class TopoDS_Face;
-class gp_Pln;
-
-namespace lbr{class PLabel;}
 namespace prj{namespace srl{namespace drfs{class Draft;}}}
-namespace ann{class SeerShape;}
+
 namespace ftr
 {
-  class Draft : public Base
+  namespace Draft
   {
-    public:
-      constexpr static const char *neutral = "neutral";
-      
-      Draft();
-      ~Draft();
-      
-      virtual void updateModel(const UpdatePayload&) override;
-      virtual Type getType() const override {return Type::Draft;}
-      virtual const std::string& getTypeString() const override {return toString(Type::Draft);}
-      virtual const QIcon& getIcon() const override {return icon;}
-      virtual Descriptor getDescriptor() const override {return Descriptor::Alter;}
-      virtual void serialWrite(const boost::filesystem::path&) override;
-      void serialRead(const prj::srl::drfs::Draft&);
-      
-      void setTargetPicks(const Picks&);
-      const Picks& getTargetPicks() const {return targetPicks;}
-      void setNeutralPick(const Pick&);
-      const Pick& getNeutralPick() const {return neutralPick;}
-      
-      std::shared_ptr<prm::Parameter> getAngleParameter() const {return angle;}
-      void setAngleParameter(std::shared_ptr<prm::Parameter>);
-      
-    protected:
-      Picks targetPicks;
-      Pick neutralPick;
-      
-      std::unique_ptr<ann::SeerShape> sShape;
-      
-      std::shared_ptr<prm::Parameter> buildAngleParameter();
-      std::shared_ptr<prm::Parameter> angle; //!< parameter containing draft angle.
-      osg::ref_ptr<lbr::PLabel> label; //!< graphic icon
-    private:
-      static QIcon icon;
-      void generatedMatch(BRepOffsetAPI_DraftAngle&, const ann::SeerShape &);
-      gp_Pln derivePlaneFromShape(const TopoDS_Shape &);
-  };
+    namespace InputTags
+    {
+      inline constexpr std::string_view targetPick = "targetPick";
+      inline constexpr std::string_view neutralPick = "neutralPick";
+    }
+    namespace PrmTags
+    {
+      inline constexpr std::string_view targetPicks = "targetPicks";
+      inline constexpr std::string_view neutralPick = "neutralPick";
+    }
+    class Feature : public Base
+    {
+      public:
+        constexpr static const char *neutral = "neutral";
+        
+        Feature();
+        ~Feature() override;
+        
+        void updateModel(const UpdatePayload&) override;
+        Type getType() const override {return Type::Draft;}
+        const std::string& getTypeString() const override {return toString(Type::Draft);}
+        const QIcon& getIcon() const override {return icon;}
+        Descriptor getDescriptor() const override {return Descriptor::Alter;}
+        void serialWrite(const boost::filesystem::path&) override;
+        void serialRead(const prj::srl::drfs::Draft&);
+      private:
+        static QIcon icon;
+        struct Stow;
+        std::unique_ptr<Stow> stow;
+
+    };
+  }
 }
 
 #endif // FTR_DRAFT_H

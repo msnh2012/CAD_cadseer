@@ -283,6 +283,11 @@ struct View::Stow
     {
       model->beginInsertRows(QModelIndex(), model->stow->messages.size(), model->stow->messages.size());
       model->stow->messages.push_back(mIn.getSLC());
+      if (model->getCue().forceTangentAccrue)
+      {
+        model->stow->messages.back().accrue = slc::Accrue::Tangent;
+        syncAll();
+      }
       model->endInsertRows();
     };
     
@@ -292,6 +297,8 @@ struct View::Stow
       model->beginResetModel();
       model->stow->messages.clear();
       model->stow->messages.push_back(mIn.getSLC());
+      if (model->getCue().forceTangentAccrue)
+        model->stow->messages.back().accrue = slc::Accrue::Tangent;
       model->endResetModel();
       syncAll();
       return;

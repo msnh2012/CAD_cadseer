@@ -320,7 +320,7 @@ std::shared_ptr< ftr::Base > FeatureLoad::loadDraft(const std::string &fileNameI
   auto sDraft = srl::drfs::draft(fileNameIn, flags);
   assert(sDraft);
   
-  auto freshDraft = std::make_shared<ftr::Draft>();
+  auto freshDraft = std::make_shared<ftr::Draft::Feature>();
   freshDraft->getAnnex<ann::SeerShape>().setOCCTShape(shapeVector.at(shapeOffsetIn), featureId);
   freshDraft->serialRead(*sDraft);
   

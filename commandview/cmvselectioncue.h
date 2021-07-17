@@ -32,7 +32,8 @@ namespace cmv
       QString statusPrompt = "Make Selection";
       slc::Mask mask = slc::None;
       bool singleSelection = false;
-      bool accrueEnabled = false;
+      bool accrueEnabled = false; //!< user presented combobox for accrue selection
+      bool forceTangentAccrue = false; //!< no user combobox and tangent accrue always active
       slc::Accrue::Type accrueDefault = slc::Accrue::None;
     };
   }

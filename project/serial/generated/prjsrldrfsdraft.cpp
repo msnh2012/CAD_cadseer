@@ -73,48 +73,6 @@ namespace prj
         this->base_.set (std::move (x));
       }
 
-      const Draft::SeerShapeType& Draft::
-      seerShape () const
-      {
-        return this->seerShape_.get ();
-      }
-
-      Draft::SeerShapeType& Draft::
-      seerShape ()
-      {
-        return this->seerShape_.get ();
-      }
-
-      void Draft::
-      seerShape (const SeerShapeType& x)
-      {
-        this->seerShape_.set (x);
-      }
-
-      void Draft::
-      seerShape (::std::unique_ptr< SeerShapeType > x)
-      {
-        this->seerShape_.set (std::move (x));
-      }
-
-      const Draft::TargetPicksSequence& Draft::
-      targetPicks () const
-      {
-        return this->targetPicks_;
-      }
-
-      Draft::TargetPicksSequence& Draft::
-      targetPicks ()
-      {
-        return this->targetPicks_;
-      }
-
-      void Draft::
-      targetPicks (const TargetPicksSequence& s)
-      {
-        this->targetPicks_ = s;
-      }
-
       const Draft::NeutralPickType& Draft::
       neutralPick () const
       {
@@ -139,6 +97,30 @@ namespace prj
         this->neutralPick_.set (std::move (x));
       }
 
+      const Draft::TargetPicksType& Draft::
+      targetPicks () const
+      {
+        return this->targetPicks_.get ();
+      }
+
+      Draft::TargetPicksType& Draft::
+      targetPicks ()
+      {
+        return this->targetPicks_.get ();
+      }
+
+      void Draft::
+      targetPicks (const TargetPicksType& x)
+      {
+        this->targetPicks_.set (x);
+      }
+
+      void Draft::
+      targetPicks (::std::unique_ptr< TargetPicksType > x)
+      {
+        this->targetPicks_.set (std::move (x));
+      }
+
       const Draft::AngleType& Draft::
       angle () const
       {
@@ -161,6 +143,30 @@ namespace prj
       angle (::std::unique_ptr< AngleType > x)
       {
         this->angle_.set (std::move (x));
+      }
+
+      const Draft::SeerShapeType& Draft::
+      seerShape () const
+      {
+        return this->seerShape_.get ();
+      }
+
+      Draft::SeerShapeType& Draft::
+      seerShape ()
+      {
+        return this->seerShape_.get ();
+      }
+
+      void Draft::
+      seerShape (const SeerShapeType& x)
+      {
+        this->seerShape_.set (x);
+      }
+
+      void Draft::
+      seerShape (::std::unique_ptr< SeerShapeType > x)
+      {
+        this->seerShape_.set (std::move (x));
       }
 
       const Draft::PlabelType& Draft::
@@ -203,32 +209,34 @@ namespace prj
 
       Draft::
       Draft (const BaseType& base,
-             const SeerShapeType& seerShape,
              const NeutralPickType& neutralPick,
+             const TargetPicksType& targetPicks,
              const AngleType& angle,
+             const SeerShapeType& seerShape,
              const PlabelType& plabel)
       : ::xml_schema::Type (),
         base_ (base, this),
-        seerShape_ (seerShape, this),
-        targetPicks_ (this),
         neutralPick_ (neutralPick, this),
+        targetPicks_ (targetPicks, this),
         angle_ (angle, this),
+        seerShape_ (seerShape, this),
         plabel_ (plabel, this)
       {
       }
 
       Draft::
       Draft (::std::unique_ptr< BaseType > base,
-             ::std::unique_ptr< SeerShapeType > seerShape,
              ::std::unique_ptr< NeutralPickType > neutralPick,
+             ::std::unique_ptr< TargetPicksType > targetPicks,
              ::std::unique_ptr< AngleType > angle,
+             ::std::unique_ptr< SeerShapeType > seerShape,
              ::std::unique_ptr< PlabelType > plabel)
       : ::xml_schema::Type (),
         base_ (std::move (base), this),
-        seerShape_ (std::move (seerShape), this),
-        targetPicks_ (this),
         neutralPick_ (std::move (neutralPick), this),
+        targetPicks_ (std::move (targetPicks), this),
         angle_ (std::move (angle), this),
+        seerShape_ (std::move (seerShape), this),
         plabel_ (std::move (plabel), this)
       {
       }
@@ -239,10 +247,10 @@ namespace prj
              ::xml_schema::Container* c)
       : ::xml_schema::Type (x, f, c),
         base_ (x.base_, f, this),
-        seerShape_ (x.seerShape_, f, this),
-        targetPicks_ (x.targetPicks_, f, this),
         neutralPick_ (x.neutralPick_, f, this),
+        targetPicks_ (x.targetPicks_, f, this),
         angle_ (x.angle_, f, this),
+        seerShape_ (x.seerShape_, f, this),
         plabel_ (x.plabel_, f, this)
       {
       }
@@ -253,10 +261,10 @@ namespace prj
              ::xml_schema::Container* c)
       : ::xml_schema::Type (e, f | ::xml_schema::Flags::base, c),
         base_ (this),
-        seerShape_ (this),
-        targetPicks_ (this),
         neutralPick_ (this),
+        targetPicks_ (this),
         angle_ (this),
+        seerShape_ (this),
         plabel_ (this)
       {
         if ((f & ::xml_schema::Flags::base) == 0)
@@ -290,31 +298,6 @@ namespace prj
             }
           }
 
-          // seerShape
-          //
-          if (n.name () == "seerShape" && n.namespace_ ().empty ())
-          {
-            ::std::unique_ptr< SeerShapeType > r (
-              SeerShapeTraits::create (i, f, this));
-
-            if (!seerShape_.present ())
-            {
-              this->seerShape_.set (::std::move (r));
-              continue;
-            }
-          }
-
-          // targetPicks
-          //
-          if (n.name () == "targetPicks" && n.namespace_ ().empty ())
-          {
-            ::std::unique_ptr< TargetPicksType > r (
-              TargetPicksTraits::create (i, f, this));
-
-            this->targetPicks_.push_back (::std::move (r));
-            continue;
-          }
-
           // neutralPick
           //
           if (n.name () == "neutralPick" && n.namespace_ ().empty ())
@@ -329,6 +312,20 @@ namespace prj
             }
           }
 
+          // targetPicks
+          //
+          if (n.name () == "targetPicks" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< TargetPicksType > r (
+              TargetPicksTraits::create (i, f, this));
+
+            if (!targetPicks_.present ())
+            {
+              this->targetPicks_.set (::std::move (r));
+              continue;
+            }
+          }
+
           // angle
           //
           if (n.name () == "angle" && n.namespace_ ().empty ())
@@ -339,6 +336,20 @@ namespace prj
             if (!angle_.present ())
             {
               this->angle_.set (::std::move (r));
+              continue;
+            }
+          }
+
+          // seerShape
+          //
+          if (n.name () == "seerShape" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< SeerShapeType > r (
+              SeerShapeTraits::create (i, f, this));
+
+            if (!seerShape_.present ())
+            {
+              this->seerShape_.set (::std::move (r));
               continue;
             }
           }
@@ -367,13 +378,6 @@ namespace prj
             "");
         }
 
-        if (!seerShape_.present ())
-        {
-          throw ::xsd::cxx::tree::expected_element< char > (
-            "seerShape",
-            "");
-        }
-
         if (!neutralPick_.present ())
         {
           throw ::xsd::cxx::tree::expected_element< char > (
@@ -381,10 +385,24 @@ namespace prj
             "");
         }
 
+        if (!targetPicks_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "targetPicks",
+            "");
+        }
+
         if (!angle_.present ())
         {
           throw ::xsd::cxx::tree::expected_element< char > (
             "angle",
+            "");
+        }
+
+        if (!seerShape_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "seerShape",
             "");
         }
 
@@ -410,10 +428,10 @@ namespace prj
         {
           static_cast< ::xml_schema::Type& > (*this) = x;
           this->base_ = x.base_;
-          this->seerShape_ = x.seerShape_;
-          this->targetPicks_ = x.targetPicks_;
           this->neutralPick_ = x.neutralPick_;
+          this->targetPicks_ = x.targetPicks_;
           this->angle_ = x.angle_;
+          this->seerShape_ = x.seerShape_;
           this->plabel_ = x.plabel_;
         }
 
@@ -733,31 +751,6 @@ namespace prj
           s << i.base ();
         }
 
-        // seerShape
-        //
-        {
-          ::xercesc::DOMElement& s (
-            ::xsd::cxx::xml::dom::create_element (
-              "seerShape",
-              e));
-
-          s << i.seerShape ();
-        }
-
-        // targetPicks
-        //
-        for (Draft::TargetPicksConstIterator
-             b (i.targetPicks ().begin ()), n (i.targetPicks ().end ());
-             b != n; ++b)
-        {
-          ::xercesc::DOMElement& s (
-            ::xsd::cxx::xml::dom::create_element (
-              "targetPicks",
-              e));
-
-          s << *b;
-        }
-
         // neutralPick
         //
         {
@@ -769,6 +762,17 @@ namespace prj
           s << i.neutralPick ();
         }
 
+        // targetPicks
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "targetPicks",
+              e));
+
+          s << i.targetPicks ();
+        }
+
         // angle
         //
         {
@@ -778,6 +782,17 @@ namespace prj
               e));
 
           s << i.angle ();
+        }
+
+        // seerShape
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "seerShape",
+              e));
+
+          s << i.seerShape ();
         }
 
         // plabel

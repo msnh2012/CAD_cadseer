@@ -41,152 +41,186 @@
 #include "project/serial/generated/prjsrldrfsdraft.h"
 #include "annex/annseershape.h"
 #include "tools/featuretools.h"
+#include "tools/occtools.h"
 #include "feature/ftrupdatepayload.h"
 #include "feature/ftrinputtype.h"
 #include "parameter/prmconstants.h"
 #include "parameter/prmparameter.h"
 #include "feature/ftrdraft.h"
 
-using namespace ftr;
 using boost::uuids::uuid;
+using namespace ftr::Draft;
 
-QIcon Draft::icon;
+QIcon Feature::icon;
 
-Draft::Draft()
+struct Feature::Stow
+{
+  Feature &feature;
+  
+  prm::Parameter neutralPick{QObject::tr("Neutral Pick"), ftr::Picks(), PrmTags::neutralPick};
+  prm::Parameter targetPicks{QObject::tr("Target Picks"), ftr::Picks(), PrmTags::targetPicks};
+  prm::Parameter angle{prm::Names::Angle, prf::manager().rootPtr->features().draft().get().angle(), prm::Tags::Angle};
+  
+  ann::SeerShape sShape;
+  
+  osg::ref_ptr<lbr::PLabel> angleLabel{new lbr::PLabel(&angle)};
+  
+  Stow() = delete;
+  Stow(Feature &fIn)
+  : feature(fIn)
+  {
+    neutralPick.connectValue(std::bind(&Feature::setModelDirty, &feature));
+    feature.parameters.push_back(&neutralPick);
+    
+    targetPicks.connectValue(std::bind(&Feature::setModelDirty, &feature));
+    feature.parameters.push_back(&targetPicks);
+    
+    angle.setConstraint(prm::Constraint::buildNonZeroAngle());
+    angle.connectValue(std::bind(&Feature::setModelDirty, &feature));
+    feature.parameters.push_back(&angle);
+    
+    feature.annexes.insert(std::make_pair(ann::Type::SeerShape, &sShape));
+    
+    feature.overlaySwitch->addChild(angleLabel.get());
+  }
+  
+  void generatedMatch(BRepOffsetAPI_DraftAngle &dMaker, const ann::SeerShape &targetShapeIn)
+  {
+    using boost::uuids::uuid;
+    std::vector<uuid> targetShapeIds = targetShapeIn.getAllShapeIds();
+    
+    for (const auto &cId : targetShapeIds)
+    {
+      const TopTools_ListOfShape &shapes = dMaker.Generated(targetShapeIn.findShape(cId));
+      if (shapes.Extent() < 1)
+        continue;
+      assert(shapes.Extent() == 1); //want to know about a situation where we have more than 1.
+      uuid freshId;
+      if (sShape.hasEvolveRecordIn(cId))
+        freshId = sShape.evolve(cId).front();
+      else
+      {
+        freshId = gu::createRandomId();
+        sShape.insertEvolve(cId, freshId);
+      }
+      sShape.updateId(shapes.First(), freshId);
+    }
+  }
+};
+
+Feature::Feature()
 : Base()
-, sShape(std::make_unique<ann::SeerShape>())
-, angle(buildAngleParameter())
-, label(new lbr::PLabel(angle.get()))
+, stow(std::make_unique<Stow>(*this))
 {
   if (icon.isNull())
     icon = QIcon(":/resources/images/constructionDraft.svg");
   
   name = QObject::tr("Draft");
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
-  
-  annexes.insert(std::make_pair(ann::Type::SeerShape, sShape.get()));
-  
-  angle->setConstraint(prm::Constraint::buildNonZeroAngle());
-  angle->connectValue(std::bind(&Draft::setModelDirty, this));
-  parameters.push_back(angle.get());
-  
-  overlaySwitch->addChild(label.get());
 }
 
-Draft::~Draft() //for forward declare with osg::ref_ptr
-{
-}
+Feature::~Feature() = default;
 
-void Draft::setTargetPicks(const Picks &psIn)
-{
-  targetPicks = psIn;
-  setModelDirty();
-}
-
-void Draft::setNeutralPick(const Pick &pIn)
-{
-  neutralPick = pIn;
-  setModelDirty();
-}
-
-void Draft::setAngleParameter(std::shared_ptr<prm::Parameter> prmIn)
-{
-  assert(prmIn);
-  
-  //remove old
-  removeParameter(angle.get());
-  if (label)
-    overlaySwitch->removeChild(label.get());
-  
-  //add new
-  angle = prmIn;
-  angle->connectValue(std::bind(&Draft::setModelDirty, this));
-  parameters.push_back(angle.get());
-  label = new lbr::PLabel(angle.get());
-  overlaySwitch->addChild(label.get());
-  
-  setModelDirty();
-}
-
-std::shared_ptr<prm::Parameter> Draft::buildAngleParameter()
-{
-  auto out = std::make_shared<prm::Parameter>
-  (
-    prm::Names::Angle
-    , prf::manager().rootPtr->features().draft().get().angle()
-    , prm::Tags::Angle
-  );
-  out->setConstraint(prm::Constraint::buildNonZeroAngle());
-  return out;
-}
-
-void Draft::updateModel(const UpdatePayload &payloadIn)
+void Feature::updateModel(const UpdatePayload &payloadIn)
 {
   setFailure();
   lastUpdateLog.clear();
-  sShape->reset();
+  stow->sShape.reset();
   try
   {
-    std::vector<const Base*> features = payloadIn.getFeatures(std::string());
-    if (features.size() != 1)
-      throw std::runtime_error("no parent");
-    if (!features.front()->hasAnnex(ann::Type::SeerShape))
-      throw std::runtime_error("no seer shape in parent");
-    const ann::SeerShape &targetSeerShape = features.front()->getAnnex<ann::SeerShape>();
-    if (targetSeerShape.isNull())
-      throw std::runtime_error("target seer shape is null");
+    std::vector<tls::Resolver> resolvedTargets;
+    for (const auto &p: stow->targetPicks.getPicks())
+    {
+      resolvedTargets.emplace_back(payloadIn);
+      if (!resolvedTargets.back().resolve(p))
+      {
+        std::ostringstream stream;
+        stream << "Warning: Couldn't resolve target pick: " << gu::idToString(p.shapeHistory.getRootId()) << std::endl;
+        lastUpdateLog += stream.str();
+        resolvedTargets.pop_back();
+      }
+    }
+    if (resolvedTargets.empty())
+      throw std::runtime_error("No input shapes");
+    const ann::SeerShape &targetSeerShape = *resolvedTargets.front().getSeerShape();
     
-    //setup new failure state.
-    sShape->setOCCTShape(targetSeerShape.getRootOCCTShape(), getId());
-    sShape->shapeMatch(targetSeerShape);
-    sShape->uniqueTypeMatch(targetSeerShape);
-    sShape->outerWireMatch(targetSeerShape);
-    sShape->derivedMatch();
-    sShape->ensureNoNils(); //just in case
-    sShape->ensureNoDuplicates(); //just in case
+    auto setFailureState = [&]()
+    {
+      stow->sShape.setOCCTShape(targetSeerShape.getRootOCCTShape(), getId());
+      stow->sShape.shapeMatch(targetSeerShape);
+      stow->sShape.uniqueTypeMatch(targetSeerShape);
+      stow->sShape.outerWireMatch(targetSeerShape);
+      stow->sShape.derivedMatch();
+      stow->sShape.ensureNoNils(); //just in case
+      stow->sShape.ensureNoDuplicates(); //just in case
+    };
     
     if (isSkipped())
     {
+      setFailureState();
       setSuccess();
       throw std::runtime_error("feature is skipped");
     }
     
-    //neutral plane might be outside of target, but we prevent this at feature creation at this time.
+    tls::Resolver resolvedNeutral(payloadIn);
+    if (stow->neutralPick.getPicks().empty() || !resolvedNeutral.resolve(stow->neutralPick.getPicks().front()))
+    {
+      setFailureState();
+      throw std::runtime_error("Couldn't resolve neutral plane pick");
+    }
+    
+    //establish neutral plane
+    std::optional<gp_Pln> nPlane;
+    auto planeFromShape = [&](const TopoDS_Shape &shapeIn)
+    {
+      auto axis = occt::gleanAxis(shapeIn);
+      if (!axis.second)
+        return;
+      nPlane = gp_Pln(axis.first.Location(), axis.first.Direction());
+    };
+    
+    if (slc::isObjectType(resolvedNeutral.getPick().selectionType))
+    {
+      auto csysPrms = resolvedNeutral.getFeature()->getParameters(prm::Tags::CSys);
+      if (!csysPrms.empty())
+      {
+        const auto &csys = csysPrms.front()->getMatrix();
+        nPlane = gp_Pln(gp_Pnt(gu::toOcc(csys.getTrans()).XYZ()), gp_Dir(gu::toOcc(gu::getZVector(csys))));
+      }
+      else if (resolvedNeutral.getSeerShape())
+      {
+        auto shapes = resolvedNeutral.getSeerShape()->useGetNonCompoundChildren();
+        if (!shapes.empty())
+          planeFromShape(shapes.front());
+      }
+    }
+    else
+    {
+      auto shapes = resolvedNeutral.getShapes();
+      if (!shapes.empty())
+        planeFromShape(shapes.front());
+    }
+    if (!nPlane)
+    {
+      setFailureState();
+      throw std::runtime_error("Couldn't derive neutral plane");
+    }
     
     //not sure exactly how the pull direction affects the operation, but it does.
     //rotation of planar faces happens around intersection of neutral plane and draft face.
     //multiple target faces and 1 neutral plane.
     //not going to expose pull direction yet. Not sure how useful it is.
-    //of course we will have a reverse direction, but the direction will be derived from the neutral plane.
+    //we don't need a parameter for reverse direction, user can just use negative angle.
     
     BRepOffsetAPI_DraftAngle dMaker(targetSeerShape.getRootOCCTShape());
-    
-    tls::Resolver nResolver(payloadIn);
-    if (!nResolver.resolve(neutralPick))
-      throw std::runtime_error("Neutral pick resolution failed");
-    auto rShapes = nResolver.getShapes();
-    if (rShapes.empty())
-      throw std::runtime_error("Neutral pick has no shapes");
-    if (rShapes.size() > 1)
-    {
-      std::ostringstream s; s << "Warning: more than 1 neutral face, using first." << std::endl;
-      lastUpdateLog += s.str();
-    }
-    gp_Pln plane = derivePlaneFromShape(rShapes.front());
-    double localAngle = osg::DegreesToRadians(angle->getDouble());
-    gp_Dir direction = plane.Axis().Direction();
+
+    double localAngle = osg::DegreesToRadians(stow->angle.getDouble());
+    gp_Dir direction = nPlane->Axis().Direction();
     
     bool labelDone = false; //set label position to first pick.
-    tls::Resolver tResolver(payloadIn);
-    for (const auto &p : targetPicks)
+    for (const auto &rt : resolvedTargets)
     {
-      if (!tResolver.resolve(p))
-      {
-        std::ostringstream s; s << "Warning: Skipping unresolved target face." << std::endl;
-        lastUpdateLog += s.str();
-        continue;
-      }
-      for (const auto &s : tResolver.getShapes())
+      for (const auto &s : rt.getShapes())
       {
         if (s.ShapeType() != TopAbs_FACE)
         {
@@ -195,7 +229,7 @@ void Draft::updateModel(const UpdatePayload &payloadIn)
           continue;
         }
         const TopoDS_Face &face = TopoDS::Face(s);
-        dMaker.Add(face, direction, localAngle, plane);
+        dMaker.Add(face, direction, localAngle, *nPlane);
         if (!dMaker.AddDone())
         {
           std::ostringstream s; s << "Warning: Draft failed adding face. Removing" << std::endl;
@@ -205,7 +239,7 @@ void Draft::updateModel(const UpdatePayload &payloadIn)
         if (!labelDone)
         {
           labelDone = true;
-          label->setMatrix(osg::Matrixd::translate(p.getPoint(face)));
+          stow->angleLabel->setMatrix(osg::Matrixd::translate(rt.getPick().getPoint(face)));
         }
       }
     }
@@ -217,17 +251,17 @@ void Draft::updateModel(const UpdatePayload &payloadIn)
     if (!check.isValid())
       throw std::runtime_error("shapeCheck failed");
     
-    sShape->setOCCTShape(dMaker.Shape(), getId());
-    sShape->shapeMatch(targetSeerShape);
-    sShape->uniqueTypeMatch(targetSeerShape);
-    sShape->modifiedMatch(dMaker, targetSeerShape);
-    generatedMatch(dMaker, targetSeerShape);
-    sShape->outerWireMatch(targetSeerShape);
-    sShape->derivedMatch();
-    sShape->dumpNils("draft feature"); //only if there are shapes with nil ids.
-    sShape->dumpDuplicates("draft feature");
-    sShape->ensureNoNils();
-    sShape->ensureNoDuplicates();
+    stow->sShape.setOCCTShape(dMaker.Shape(), getId());
+    stow->sShape.shapeMatch(targetSeerShape);
+    stow->sShape.uniqueTypeMatch(targetSeerShape);
+    stow->sShape.modifiedMatch(dMaker, targetSeerShape);
+    stow->generatedMatch(dMaker, targetSeerShape);
+    stow->sShape.outerWireMatch(targetSeerShape);
+    stow->sShape.derivedMatch();
+    stow->sShape.dumpNils("draft feature"); //only if there are shapes with nil ids.
+    stow->sShape.dumpDuplicates("draft feature");
+    stow->sShape.ensureNoNils();
+    stow->sShape.ensureNoDuplicates();
     
     setSuccess();
   }
@@ -251,65 +285,29 @@ void Draft::updateModel(const UpdatePayload &payloadIn)
     std::cout << std::endl << lastUpdateLog;
 }
 
-gp_Pln Draft::derivePlaneFromShape(const TopoDS_Shape &shapeIn)
+void Feature::serialWrite(const boost::filesystem::path &dIn)
 {
-  //just planar surfaces for now.
-  BRepAdaptor_Surface sAdapt(TopoDS::Face(shapeIn));
-  if (sAdapt.GetType() != GeomAbs_Plane)
-    throw std::runtime_error("wrong surface type");
-  return sAdapt.Plane();
-}
-
-void Draft::generatedMatch(BRepOffsetAPI_DraftAngle &dMaker, const ann::SeerShape &targetShapeIn)
-{
-  using boost::uuids::uuid;
-  std::vector<uuid> targetShapeIds = targetShapeIn.getAllShapeIds();
-  
-  for (const auto &cId : targetShapeIds)
-  {
-    const TopTools_ListOfShape &shapes = dMaker.Generated(targetShapeIn.findShape(cId));
-    if (shapes.Extent() < 1)
-      continue;
-    assert(shapes.Extent() == 1); //want to know about a situation where we have more than 1.
-    uuid freshId;
-    if (sShape->hasEvolveRecordIn(cId))
-      freshId = sShape->evolve(cId).front();
-    else
-    {
-      freshId = gu::createRandomId();
-      sShape->insertEvolve(cId, freshId);
-    }
-    
-    sShape->updateId(shapes.First(), freshId);
-  }
-}
-
-void Draft::serialWrite(const boost::filesystem::path &dIn)
-{
-  prj::srl::spt::Pick neutralPickOut = neutralPick.serialOut();
   prj::srl::drfs::Draft draftOut
   (
     Base::serialOut(),
-    sShape->serialOut(),
-    neutralPickOut,
-    angle->serialOut(),
-    label->serialOut()
+    stow->neutralPick.serialOut(),
+    stow->targetPicks.serialOut(),
+    stow->angle.serialOut(),
+    stow->sShape.serialOut(),
+    stow->angleLabel->serialOut()
   );
-  for (const auto &p : targetPicks)
-    draftOut.targetPicks().push_back(p);
   
   xml_schema::NamespaceInfomap infoMap;
   std::ofstream stream(buildFilePathName(dIn).string());
   prj::srl::drfs::draft(stream, draftOut, infoMap);
 }
 
-void Draft::serialRead(const prj::srl::drfs::Draft &sDraftIn)
+void Feature::serialRead(const prj::srl::drfs::Draft &sDraftIn)
 {
   Base::serialIn(sDraftIn.base());
-  sShape->serialIn(sDraftIn.seerShape());
-  neutralPick.serialIn(sDraftIn.neutralPick());
-  angle->serialIn(sDraftIn.angle());
-  for (const auto &p : sDraftIn.targetPicks())
-    targetPicks.emplace_back(p);
-  label->serialIn(sDraftIn.plabel());
+  stow->neutralPick.serialIn(sDraftIn.neutralPick());
+  stow->targetPicks.serialIn(sDraftIn.targetPicks());
+  stow->angle.serialIn(sDraftIn.angle());
+  stow->sShape.serialIn(sDraftIn.seerShape());
+  stow->angleLabel->serialIn(sDraftIn.plabel());
 }
