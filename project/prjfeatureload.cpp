@@ -744,7 +744,7 @@ std::shared_ptr<ftr::Base> FeatureLoad::loadFace(const std::string &fileNameIn, 
   auto ss = srl::fce::face(fileNameIn, flags);
   assert(ss);
   
-  auto sf = std::make_shared<ftr::Face>();
+  auto sf = std::make_shared<ftr::Face::Feature>();
   sf->getAnnex<ann::SeerShape>().setOCCTShape(shapeVector.at(shapeOffsetIn), featureId);
   sf->serialRead(*ss);
   

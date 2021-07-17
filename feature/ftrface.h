@@ -20,42 +20,39 @@
 #ifndef FTR_FACE_H
 #define FTR_FACE_H
 
-#include "feature/ftrpick.h"
 #include "feature/ftrbase.h"
 
-namespace ann{class SeerShape;}
 namespace prj{namespace srl{namespace fce{class Face;}}}
 
 namespace ftr
 {
-  class Face : public Base
+  namespace Face
   {
-  public:
-    Face();
-    ~Face() override;
+    namespace InputTags
+    {
+      inline constexpr std::string_view pick = "pick";
+    }
     
-    void updateModel(const UpdatePayload&) override;
-    Type getType() const override {return Type::Face;}
-    const std::string& getTypeString() const override {return toString(Type::Face);}
-    const QIcon& getIcon() const override {return icon;}
-    Descriptor getDescriptor() const override {return Descriptor::Create;}
-    
-    void serialWrite(const boost::filesystem::path&) override;
-    void serialRead(const prj::srl::fce::Face&);
-    
-    void setPicks(const Picks&);
-    const Picks& getPicks() const {return picks;}
-    
-  private:
-    std::unique_ptr<ann::SeerShape> sShape;
-    Picks picks;
-    
-    using uuid = boost::uuids::uuid;
-    uuid faceId;
-    uuid wireId;
-    
-    static QIcon icon;
-  };
+    class Feature : public Base
+    {
+    public:
+      Feature();
+      ~Feature() override;
+      
+      void updateModel(const UpdatePayload&) override;
+      Type getType() const override {return Type::Face;}
+      const std::string& getTypeString() const override {return toString(Type::Face);}
+      const QIcon& getIcon() const override {return icon;}
+      Descriptor getDescriptor() const override {return Descriptor::Create;}
+      
+      void serialWrite(const boost::filesystem::path&) override;
+      void serialRead(const prj::srl::fce::Face&);
+    private:
+      static QIcon icon;
+      struct Stow;
+      std::unique_ptr<Stow> stow;
+    };
+  }
 }
 
 #endif //FTR_FACE_H

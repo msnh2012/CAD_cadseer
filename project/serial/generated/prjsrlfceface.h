@@ -91,7 +91,7 @@ namespace prj
 
 #include "prjsrlsptseershape.h"
 
-#include "prjsrlsptpick.h"
+#include "prjsrlsptparameter.h"
 
 #include "prjsrlsptbase.h"
 
@@ -121,6 +121,23 @@ namespace prj
         void
         base (::std::unique_ptr< BaseType > p);
 
+        // picks
+        //
+        typedef ::prj::srl::spt::Parameter PicksType;
+        typedef ::xsd::cxx::tree::traits< PicksType, char > PicksTraits;
+
+        const PicksType&
+        picks () const;
+
+        PicksType&
+        picks ();
+
+        void
+        picks (const PicksType& x);
+
+        void
+        picks (::std::unique_ptr< PicksType > p);
+
         // seerShape
         //
         typedef ::prj::srl::spt::SeerShape SeerShapeType;
@@ -138,30 +155,53 @@ namespace prj
         void
         seerShape (::std::unique_ptr< SeerShapeType > p);
 
-        // picks
+        // wireId
         //
-        typedef ::prj::srl::spt::Pick PicksType;
-        typedef ::xsd::cxx::tree::sequence< PicksType > PicksSequence;
-        typedef PicksSequence::iterator PicksIterator;
-        typedef PicksSequence::const_iterator PicksConstIterator;
-        typedef ::xsd::cxx::tree::traits< PicksType, char > PicksTraits;
+        typedef ::xml_schema::String WireIdType;
+        typedef ::xsd::cxx::tree::traits< WireIdType, char > WireIdTraits;
 
-        const PicksSequence&
-        picks () const;
+        const WireIdType&
+        wireId () const;
 
-        PicksSequence&
-        picks ();
+        WireIdType&
+        wireId ();
 
         void
-        picks (const PicksSequence& s);
+        wireId (const WireIdType& x);
+
+        void
+        wireId (::std::unique_ptr< WireIdType > p);
+
+        // faceId
+        //
+        typedef ::xml_schema::String FaceIdType;
+        typedef ::xsd::cxx::tree::traits< FaceIdType, char > FaceIdTraits;
+
+        const FaceIdType&
+        faceId () const;
+
+        FaceIdType&
+        faceId ();
+
+        void
+        faceId (const FaceIdType& x);
+
+        void
+        faceId (::std::unique_ptr< FaceIdType > p);
 
         // Constructors.
         //
         Face (const BaseType&,
-              const SeerShapeType&);
+              const PicksType&,
+              const SeerShapeType&,
+              const WireIdType&,
+              const FaceIdType&);
 
         Face (::std::unique_ptr< BaseType >,
-              ::std::unique_ptr< SeerShapeType >);
+              ::std::unique_ptr< PicksType >,
+              ::std::unique_ptr< SeerShapeType >,
+              const WireIdType&,
+              const FaceIdType&);
 
         Face (const ::xercesc::DOMElement& e,
               ::xml_schema::Flags f = 0,
@@ -190,8 +230,10 @@ namespace prj
 
         protected:
         ::xsd::cxx::tree::one< BaseType > base_;
+        ::xsd::cxx::tree::one< PicksType > picks_;
         ::xsd::cxx::tree::one< SeerShapeType > seerShape_;
-        PicksSequence picks_;
+        ::xsd::cxx::tree::one< WireIdType > wireId_;
+        ::xsd::cxx::tree::one< FaceIdType > faceId_;
       };
     }
   }

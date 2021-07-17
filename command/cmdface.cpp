@@ -21,6 +21,7 @@
 #include "annex/annseershape.h"
 #include "message/msgnode.h"
 #include "selection/slceventhandler.h"
+#include "parameter/prmconstants.h"
 #include "parameter/prmparameter.h"
 #include "feature/ftrinputtype.h"
 #include "feature/ftrface.h"
@@ -35,7 +36,7 @@ Face::Face()
 : Base("cmd::Face")
 , leafManager()
 {
-  auto nf = std::make_shared<ftr::Face>();
+  auto nf = std::make_shared<ftr::Face::Feature>();
   project->addFeature(nf);
   feature = nf.get();
   node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
@@ -47,7 +48,7 @@ Face::Face(ftr::Base *fIn)
 : Base("cmd::Face")
 , leafManager(fIn)
 {
-  feature = dynamic_cast<ftr::Face*>(fIn);
+  feature = dynamic_cast<ftr::Face::Feature*>(fIn);
   assert(feature);
   viewBase = std::make_unique<cmv::Face>(this);
   node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
@@ -121,11 +122,6 @@ void Face::setSelections(const std::vector<slc::Message> &targets)
   assert(isActive);
   
   project->clearAllInputs(feature->getId());
-  feature->setPicks(ftr::Picks());
-  
-  if (targets.empty())
-    return;
-  
   ftr::Picks freshPicks;
   for (const auto &m : targets)
   {
@@ -134,10 +130,10 @@ void Face::setSelections(const std::vector<slc::Message> &targets)
 
     const ftr::Base *lf = project->findFeature(m.featureId);
     freshPicks.push_back(tls::convertToPick(m, *lf, project->getShapeHistory()));
-    freshPicks.back().tag = ftr::InputType::createIndexedTag(ftr::InputType::target, freshPicks.size() - 1);
+    freshPicks.back().tag = indexTag(ftr::Face::InputTags::pick, freshPicks.size() - 1);
     project->connect(lf->getId(), feature->getId(), {freshPicks.back().tag});
   }
-  feature->setPicks(freshPicks);
+  feature->getParameter(prm::Tags::Picks)->setValue(freshPicks);
 }
 
 void Face::localUpdate()

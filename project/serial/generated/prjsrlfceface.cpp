@@ -73,6 +73,30 @@ namespace prj
         this->base_.set (std::move (x));
       }
 
+      const Face::PicksType& Face::
+      picks () const
+      {
+        return this->picks_.get ();
+      }
+
+      Face::PicksType& Face::
+      picks ()
+      {
+        return this->picks_.get ();
+      }
+
+      void Face::
+      picks (const PicksType& x)
+      {
+        this->picks_.set (x);
+      }
+
+      void Face::
+      picks (::std::unique_ptr< PicksType > x)
+      {
+        this->picks_.set (std::move (x));
+      }
+
       const Face::SeerShapeType& Face::
       seerShape () const
       {
@@ -97,22 +121,52 @@ namespace prj
         this->seerShape_.set (std::move (x));
       }
 
-      const Face::PicksSequence& Face::
-      picks () const
+      const Face::WireIdType& Face::
+      wireId () const
       {
-        return this->picks_;
+        return this->wireId_.get ();
       }
 
-      Face::PicksSequence& Face::
-      picks ()
+      Face::WireIdType& Face::
+      wireId ()
       {
-        return this->picks_;
+        return this->wireId_.get ();
       }
 
       void Face::
-      picks (const PicksSequence& s)
+      wireId (const WireIdType& x)
       {
-        this->picks_ = s;
+        this->wireId_.set (x);
+      }
+
+      void Face::
+      wireId (::std::unique_ptr< WireIdType > x)
+      {
+        this->wireId_.set (std::move (x));
+      }
+
+      const Face::FaceIdType& Face::
+      faceId () const
+      {
+        return this->faceId_.get ();
+      }
+
+      Face::FaceIdType& Face::
+      faceId ()
+      {
+        return this->faceId_.get ();
+      }
+
+      void Face::
+      faceId (const FaceIdType& x)
+      {
+        this->faceId_.set (x);
+      }
+
+      void Face::
+      faceId (::std::unique_ptr< FaceIdType > x)
+      {
+        this->faceId_.set (std::move (x));
       }
     }
   }
@@ -131,21 +185,31 @@ namespace prj
 
       Face::
       Face (const BaseType& base,
-            const SeerShapeType& seerShape)
+            const PicksType& picks,
+            const SeerShapeType& seerShape,
+            const WireIdType& wireId,
+            const FaceIdType& faceId)
       : ::xml_schema::Type (),
         base_ (base, this),
+        picks_ (picks, this),
         seerShape_ (seerShape, this),
-        picks_ (this)
+        wireId_ (wireId, this),
+        faceId_ (faceId, this)
       {
       }
 
       Face::
       Face (::std::unique_ptr< BaseType > base,
-            ::std::unique_ptr< SeerShapeType > seerShape)
+            ::std::unique_ptr< PicksType > picks,
+            ::std::unique_ptr< SeerShapeType > seerShape,
+            const WireIdType& wireId,
+            const FaceIdType& faceId)
       : ::xml_schema::Type (),
         base_ (std::move (base), this),
+        picks_ (std::move (picks), this),
         seerShape_ (std::move (seerShape), this),
-        picks_ (this)
+        wireId_ (wireId, this),
+        faceId_ (faceId, this)
       {
       }
 
@@ -155,8 +219,10 @@ namespace prj
             ::xml_schema::Container* c)
       : ::xml_schema::Type (x, f, c),
         base_ (x.base_, f, this),
+        picks_ (x.picks_, f, this),
         seerShape_ (x.seerShape_, f, this),
-        picks_ (x.picks_, f, this)
+        wireId_ (x.wireId_, f, this),
+        faceId_ (x.faceId_, f, this)
       {
       }
 
@@ -166,8 +232,10 @@ namespace prj
             ::xml_schema::Container* c)
       : ::xml_schema::Type (e, f | ::xml_schema::Flags::base, c),
         base_ (this),
+        picks_ (this),
         seerShape_ (this),
-        picks_ (this)
+        wireId_ (this),
+        faceId_ (this)
       {
         if ((f & ::xml_schema::Flags::base) == 0)
         {
@@ -200,6 +268,20 @@ namespace prj
             }
           }
 
+          // picks
+          //
+          if (n.name () == "picks" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< PicksType > r (
+              PicksTraits::create (i, f, this));
+
+            if (!picks_.present ())
+            {
+              this->picks_.set (::std::move (r));
+              continue;
+            }
+          }
+
           // seerShape
           //
           if (n.name () == "seerShape" && n.namespace_ ().empty ())
@@ -214,15 +296,32 @@ namespace prj
             }
           }
 
-          // picks
+          // wireId
           //
-          if (n.name () == "picks" && n.namespace_ ().empty ())
+          if (n.name () == "wireId" && n.namespace_ ().empty ())
           {
-            ::std::unique_ptr< PicksType > r (
-              PicksTraits::create (i, f, this));
+            ::std::unique_ptr< WireIdType > r (
+              WireIdTraits::create (i, f, this));
 
-            this->picks_.push_back (::std::move (r));
-            continue;
+            if (!wireId_.present ())
+            {
+              this->wireId_.set (::std::move (r));
+              continue;
+            }
+          }
+
+          // faceId
+          //
+          if (n.name () == "faceId" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< FaceIdType > r (
+              FaceIdTraits::create (i, f, this));
+
+            if (!faceId_.present ())
+            {
+              this->faceId_.set (::std::move (r));
+              continue;
+            }
           }
 
           break;
@@ -235,10 +334,31 @@ namespace prj
             "");
         }
 
+        if (!picks_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "picks",
+            "");
+        }
+
         if (!seerShape_.present ())
         {
           throw ::xsd::cxx::tree::expected_element< char > (
             "seerShape",
+            "");
+        }
+
+        if (!wireId_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "wireId",
+            "");
+        }
+
+        if (!faceId_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "faceId",
             "");
         }
       }
@@ -257,8 +377,10 @@ namespace prj
         {
           static_cast< ::xml_schema::Type& > (*this) = x;
           this->base_ = x.base_;
-          this->seerShape_ = x.seerShape_;
           this->picks_ = x.picks_;
+          this->seerShape_ = x.seerShape_;
+          this->wireId_ = x.wireId_;
+          this->faceId_ = x.faceId_;
         }
 
         return *this;
@@ -577,6 +699,17 @@ namespace prj
           s << i.base ();
         }
 
+        // picks
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "picks",
+              e));
+
+          s << i.picks ();
+        }
+
         // seerShape
         //
         {
@@ -588,18 +721,26 @@ namespace prj
           s << i.seerShape ();
         }
 
-        // picks
+        // wireId
         //
-        for (Face::PicksConstIterator
-             b (i.picks ().begin ()), n (i.picks ().end ());
-             b != n; ++b)
         {
           ::xercesc::DOMElement& s (
             ::xsd::cxx::xml::dom::create_element (
-              "picks",
+              "wireId",
               e));
 
-          s << *b;
+          s << i.wireId ();
+        }
+
+        // faceId
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "faceId",
+              e));
+
+          s << i.faceId ();
         }
       }
 

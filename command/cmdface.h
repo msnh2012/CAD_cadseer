@@ -23,14 +23,14 @@
 #include "command/cmdleafmanager.h"
 #include "command/cmdbase.h"
 
-namespace ftr{class Face;}
+namespace ftr{namespace Face{class Feature;}}
 
 namespace cmd
 {
   class Face : public Base
   {
   public:
-    ftr::Face *feature = nullptr;
+    ftr::Face::Feature *feature = nullptr;
     
     Face();
     Face(ftr::Base*);

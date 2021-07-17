@@ -28,6 +28,8 @@
 #include <osg/Switch>
 
 #include "globalutilities.h"
+#include "parameter/prmconstants.h"
+#include "parameter/prmparameter.h"
 #include "annex/annseershape.h"
 #include "tools/occtools.h"
 #include "tools/featuretools.h"
@@ -38,40 +40,48 @@
 #include "project/serial/generated/prjsrlfceface.h"
 #include "feature/ftrface.h"
 
-using namespace ftr;
+using namespace ftr::Face;
 using boost::uuids::uuid;
 
-QIcon Face::icon;
+QIcon Feature::icon;
 
-Face::Face():
+struct Feature::Stow
+{
+  Feature &feature;
+  prm::Parameter picks{prm::Names::Picks, ftr::Picks(), prm::Tags::Picks};
+  ann::SeerShape sShape;
+  uuid wireId;
+  uuid faceId;
+  
+  Stow() = delete;
+  Stow(Feature &fIn)
+  : feature(fIn)
+  {
+    picks.connectValue(std::bind(&Feature::setModelDirty, &feature));
+    feature.parameters.push_back(&picks);
+    feature.annexes.insert(std::make_pair(ann::Type::SeerShape, &sShape));
+    wireId = gu::createRandomId();
+    faceId = gu::createRandomId();
+  }
+};
+
+Feature::Feature():
 Base()
-, sShape(std::make_unique<ann::SeerShape>())
+, stow(std::make_unique<Stow>(*this))
 {
   if (icon.isNull())
     icon = QIcon(":/resources/images/constructionFace.svg");
-  
   name = QObject::tr("Face");
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
-  
-  annexes.insert(std::make_pair(ann::Type::SeerShape, sShape.get()));
-  
-  faceId = gu::createRandomId();
-  wireId = gu::createRandomId();
 }
 
-Face::~Face() = default;
+Feature::~Feature() = default;
 
-void Face::setPicks(const Picks &pIn)
-{
-  picks = pIn;
-  setModelDirty();
-}
-
-void Face::updateModel(const UpdatePayload &pIn)
+void Feature::updateModel(const UpdatePayload &pIn)
 {
   setFailure();
   lastUpdateLog.clear();
-  sShape->reset();
+  stow->sShape.reset();
   try
   {
     if (isSkipped())
@@ -83,7 +93,7 @@ void Face::updateModel(const UpdatePayload &pIn)
     tls::Resolver pr(pIn);
     tls::ShapeIdContainer tempIds;
     occt::EdgeVector edges;
-    for (const auto &p : picks)
+    for (const auto &p : stow->picks.getPicks())
     {
       if (!pr.resolve(p))
       {
@@ -97,9 +107,9 @@ void Face::updateModel(const UpdatePayload &pIn)
         {
           edges.push_back(eIn);
           uuid eId = pr.getSeerShape()->findId(eIn);
-          if (!sShape->hasEvolveRecordIn(eId))
-            sShape->insertEvolve(eId, gu::createRandomId());
-          tempIds.insert(sShape->evolve(eId).front(), eIn);
+          if (!stow->sShape.hasEvolveRecordIn(eId))
+            stow->sShape.insertEvolve(eId, gu::createRandomId());
+          tempIds.insert(stow->sShape.evolve(eId).front(), eIn);
         };
         
         if (s.ShapeType() == TopAbs_EDGE)
@@ -109,7 +119,7 @@ void Face::updateModel(const UpdatePayload &pIn)
         else if (s.ShapeType() == TopAbs_COMPOUND || s.ShapeType() == TopAbs_WIRE)
         {
           auto ce = pr.getSeerShape()->useGetChildrenOfType(s, TopAbs_EDGE);
-          for (const auto e : ce)
+          for (const auto &e : ce)
             processEdge(TopoDS::Edge(e));
         }
       }
@@ -144,9 +154,9 @@ void Face::updateModel(const UpdatePayload &pIn)
         tempIds.update(e, temp);
     }
     
-    if (!sShape->hasEvolveRecordOut(wireId))
-      sShape->insertEvolve(gu::createNilId(), wireId);
-    tempIds.insert(wireId, wireOut);
+    if (!stow->sShape.hasEvolveRecordOut(stow->wireId))
+      stow->sShape.insertEvolve(gu::createNilId(), stow->wireId);
+    tempIds.insert(stow->wireId, wireOut);
     
     BRepBuilderAPI_MakeFace faceMaker(wireOut);
     if (!faceMaker.IsDone())
@@ -154,25 +164,25 @@ void Face::updateModel(const UpdatePayload &pIn)
     TopoDS_Face faceOut = faceMaker;
     if (faceOut.IsNull())
       throw std::runtime_error("face out is null");
-    if (!sShape->hasEvolveRecordOut(faceId))
-      sShape->insertEvolve(gu::createNilId(), faceId);
-    tempIds.insert(faceId, faceOut);
+    if (!stow->sShape.hasEvolveRecordOut(stow->faceId))
+      stow->sShape.insertEvolve(gu::createNilId(), stow->faceId);
+    tempIds.insert(stow->faceId, faceOut);
     
     ShapeCheck check(faceOut);
     if (!check.isValid())
       throw std::runtime_error("shapeCheck failed");
     
-    sShape->setOCCTShape(faceOut, getId());
-    for (const auto &s : sShape->getAllShapes())
+    stow->sShape.setOCCTShape(faceOut, getId());
+    for (const auto &s : stow->sShape.getAllShapes())
     {
       if (tempIds.has(s))
-        sShape->updateId(s, tempIds.find(s));
+        stow->sShape.updateId(s, tempIds.find(s));
     }
-    sShape->derivedMatch();
-    sShape->dumpNils(getTypeString());
-    sShape->dumpDuplicates(getTypeString());
-    sShape->ensureNoNils();
-    sShape->ensureNoDuplicates();
+    stow->sShape.derivedMatch();
+    stow->sShape.dumpNils(getTypeString());
+    stow->sShape.dumpDuplicates(getTypeString());
+    stow->sShape.ensureNoNils();
+    stow->sShape.ensureNoDuplicates();
     
     setSuccess();
   }
@@ -196,25 +206,27 @@ void Face::updateModel(const UpdatePayload &pIn)
     std::cout << std::endl << lastUpdateLog;
 }
 
-void Face::serialWrite(const boost::filesystem::path &dIn)
+void Feature::serialWrite(const boost::filesystem::path &dIn)
 {
   prj::srl::fce::Face so
   (
     Base::serialOut()
-    , sShape->serialOut()
+    , stow->picks.serialOut()
+    , stow->sShape.serialOut()
+    , gu::idToString(stow->wireId)
+    , gu::idToString(stow->faceId)
   );
-  for (const auto &p : picks)
-    so.picks().push_back(p);
   
   xml_schema::NamespaceInfomap infoMap;
   std::ofstream stream(buildFilePathName(dIn).string());
   prj::srl::fce::face(stream, so, infoMap);
 }
 
-void Face::serialRead(const prj::srl::fce::Face &so)
+void Feature::serialRead(const prj::srl::fce::Face &so)
 {
   Base::serialIn(so.base());
-  sShape->serialIn(so.seerShape());
-  for (const auto &p : so.picks())
-    picks.emplace_back(p);
+  stow->picks.serialIn(so.picks());
+  stow->sShape.serialIn(so.seerShape());
+  stow->wireId = gu::stringToId(so.wireId());
+  stow->faceId = gu::stringToId(so.faceId());
 }

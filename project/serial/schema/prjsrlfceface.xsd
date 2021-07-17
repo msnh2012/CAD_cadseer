@@ -6,14 +6,16 @@
   targetNamespace="http://www.cadseer.com/prj/srl/fce"
 >
   <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptseershape.xsd"/>
-  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptpick.xsd"/>
+  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptparameter.xsd"/>
   <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptbase.xsd"/>
 
 <xs:complexType name="Face">
   <xs:sequence>
     <xs:element name="base" type="spt:Base"/>
+    <xs:element name="picks" type="spt:Parameter"/>
     <xs:element name="seerShape" type="spt:SeerShape"/>
-    <xs:element name="picks" type="spt:Pick" minOccurs="0" maxOccurs="unbounded"/>
+    <xs:element name="wireId" type="xs:string"/>
+    <xs:element name="faceId" type="xs:string"/>
   </xs:sequence>
 </xs:complexType>
 
