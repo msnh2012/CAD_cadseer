@@ -18,9 +18,6 @@
  */
 
 #include "tools/featuretools.h"
-// #include "application/appmainwindow.h"
-// #include "application/appapplication.h"
-// #include "viewer/vwrwidget.h"
 #include "project/prjproject.h"
 #include "annex/annseershape.h"
 #include "message/msgnode.h"
@@ -121,153 +118,65 @@ bool Fill::isValidSelection(const slc::Message &mIn)
   return true;
 }
 
-/* JFC. Maybe we just enforce for strict grouping from the interface.
- * This is a lot of shit trying to associate edges and faces
- */
-void Fill::setSelections(const Datas &datas)
+void Fill::setSelections(const Data &data)
 {
   assert(isActive);
-  
   project->clearAllInputs(feature->getId());
-  feature->clearEntries();
   
-  if (datas.empty())
-    return;
-  
-  //group together all messages belonging to the same feature.
-  //this is a start to organize edges and faces.
-  std::vector<Datas> grouped;
-  auto findGroupIt = [&](const Data &mIn) -> decltype(grouped)::iterator
+  auto messageToPick = [&](const slc::Message &mIn) -> ftr::Pick
   {
-    for (auto it = grouped.begin(); it != grouped.end(); ++it)
-    {
-      //there is always one. because we don't add an empty vector
-      if (std::get<0>(it->front()).featureId == std::get<0>(mIn).featureId)
-        return it;
-    }
-    return grouped.end();
+    const ftr::Base *lf = project->findFeature(mIn.featureId);
+    return tls::convertToPick(mIn, *lf, project->getShapeHistory());
   };
   
-  for (const auto &d : datas)
+  //initial pick
+  if(std::get<0>(data.front()).empty())
   {
-    if (!isValidSelection(std::get<0>(d)))
-    {
-      node->sendBlocked(msg::buildStatusMessage(QObject::tr("No or invalid seershape").toStdString(), 2.0));
-      continue;
-    }
-    auto it = findGroupIt(d);
-    if (it == grouped.end())
-      grouped.push_back({d});
-    else
-      it->push_back(d);
+    feature->getParameter(ftr::Fill::PrmTags::initialPick)->setValue(ftr::Picks());
+  }
+  else
+  {
+    const auto &m = std::get<0>(data.front()).front();
+    ftr::Pick initialPick = messageToPick(m);
+    initialPick.tag = indexTag(ftr::Fill::InputTags::initialPick, 0);
+    feature->getParameter(ftr::Fill::PrmTags::initialPick)->setValue(initialPick);
+    project->connect(m.featureId, feature->getId(), {initialPick.tag});
   }
   
-  //ok now we should have faces and edges belonging to the same feature in grouped.
-  //We have to make sure each groups edge belongs to the groups face
-  //also what if there are more than 2 in a group because multiple boundaries
-  //are on same feature. A single face might have 2 boundary edges, think of
-  //a trimmed cylinder. So we can't remove faces as they are discovered from an edge
-  int edgeCount = 0;
-  int faceCount = 0;
-  for (const auto &group : grouped)
+  //do all internal constraints if any.
+  ftr::Picks ips;
+  for (const auto &m : std::get<1>(data.front()))
   {
-    ftr::Base *f = project->findFeature(std::get<0>(group.front()).featureId);
-    const ann::SeerShape &ss = f->getAnnex<ann::SeerShape>();
-    
-    Datas justEdges;
-    Datas justFaces;
-    std::vector<Datas> edgeFaces;
-    for (const auto &t : group)
+    ips.emplace_back(messageToPick(m));
+    ips.back().tag = indexTag(ftr::Fill::InputTags::internalPicks, ips.size() - 1);
+    project->connect(m.featureId, feature->getId(), {ips.back().tag});
+  }
+  feature->getParameter(ftr::Fill::PrmTags::internalPicks)->setValue(ips);
+  
+  //do boundaries.
+  //make sure command view in sync with feature. off by 1 because we use first entry in vector
+  //for the initial face pick and internal boundary picks.
+  assert(data.size() - 1 == feature->getBoundaries().size());
+  auto dIt = data.begin() + 1;
+  auto bIt = feature->getBoundaries().begin();
+  for (; bIt != feature->getBoundaries().end(); ++dIt, ++bIt)
+  {
+    const auto &es = std::get<0>(*dIt); //edge selections
+    if (!es.empty())
     {
-      const auto &cm = std::get<0>(t);
-      
-      auto lookForFace = [&]() -> std::optional<Data>
-      {
-        for (const auto &lff : group)
-        {
-          if (std::get<0>(lff).type != slc::Type::Face)
-            continue;
-          if (ss.useIsEdgeOfFace(cm.shapeId, std::get<0>(lff).shapeId))
-            return lff;
-        }
-        return std::nullopt;
-      };
-      
-      auto lookForEdge = [&]() -> std::optional<Data>
-      {
-        for (const auto &lff : group)
-        {
-          if (std::get<0>(lff).type != slc::Type::Edge)
-            continue;
-          if (ss.useIsEdgeOfFace(std::get<0>(lff).shapeId, cm.shapeId))
-            return lff;
-        }
-        return std::nullopt;
-      };
-      
-      if (cm.type == slc::Type::Edge)
-      {
-        auto oFace = lookForFace();
-        if (oFace)
-        {
-          Datas temp;
-          temp.push_back(t); //edge
-          temp.push_back(*oFace); //face
-          edgeFaces.push_back(temp);
-        }
-        else
-          justEdges.push_back(t);
-        continue;
-      }
-      if (cm.type == slc::Type::Face)
-      {
-        auto oEdge = lookForEdge();
-        if (oEdge)
-          continue; //let the search of edge to face add this to 'edgeFaces'
-        justFaces.push_back(t);
-
-      }
+      ftr::Pick ep = messageToPick(es.front());
+      ep.tag = indexTag(ftr::Fill::InputTags::edgePick, std::distance(feature->getBoundaries().begin(), bIt));
+      bIt->edgePick.setValue(ep);
+      project->connect(es.front().featureId, feature->getId(), {ep.tag});
     }
     
-    //now we should have the datas split into 3 groups.
-    for (const auto &je : justEdges)
+    const auto &fs = std::get<1>(*dIt); //face selections
+    if (!fs.empty())
     {
-      ftr::Fill::Entry entry;
-      entry.edgePick = tls::convertToPick(std::get<0>(je), ss, project->getShapeHistory());
-      entry.continuity = std::get<1>(je); //single edges should always be C0.
-      entry.createLabel();
-      entry.boundary = std::get<2>(je);
-      entry.edgePick->tag = ftr::InputType::createIndexedTag(ftr::Fill::edgeTag, edgeCount++);
-      project->connect(std::get<0>(je).featureId, feature->getId(), {entry.edgePick->tag});
-      feature->addEntry(entry);
-    }
-    for (const auto &jf : justFaces)
-    {
-      ftr::Fill::Entry entry;
-      entry.facePick = tls::convertToPick(std::get<0>(jf), ss, project->getShapeHistory());
-      entry.continuity = std::get<1>(jf);
-      entry.createLabel();
-      entry.boundary = true; //single face with no edge is always boundary.
-      entry.facePick->tag = ftr::InputType::createIndexedTag(ftr::Fill::faceTag, faceCount++);
-      project->connect(std::get<0>(jf).featureId, feature->getId(), {entry.facePick->tag});
-      feature->addEntry(entry);
-    }
-    for (const auto &ef : edgeFaces)
-    {
-      assert(ef.size() == 2);
-      if (ef.size() != 2)
-        continue;
-      ftr::Fill::Entry entry;
-      entry.edgePick = tls::convertToPick(std::get<0>(ef.front()), ss, project->getShapeHistory());
-      entry.facePick = tls::convertToPick(std::get<0>(ef.back()), ss, project->getShapeHistory());
-      entry.continuity = std::get<1>(ef.back()); //use continuity parameter from face
-      entry.createLabel();
-      entry.boundary = std::get<2>(ef.front()), //use boundary setting from edge.
-      entry.edgePick->tag = ftr::InputType::createIndexedTag(ftr::Fill::edgeTag, edgeCount++);
-      entry.facePick->tag = ftr::InputType::createIndexedTag(ftr::Fill::faceTag, faceCount++);
-      project->connect(std::get<0>(ef.front()).featureId, feature->getId(), {entry.edgePick->tag});
-      project->connect(std::get<0>(ef.back()).featureId, feature->getId(), {entry.facePick->tag});
-      feature->addEntry(entry);
+      ftr::Pick fp = messageToPick(fs.front());
+      fp.tag = indexTag(ftr::Fill::InputTags::facePick, std::distance(feature->getBoundaries().begin(), bIt));
+      bIt->facePick.setValue(fp);
+      project->connect(es.front().featureId, feature->getId(), {fp.tag});
     }
   }
 }
@@ -283,24 +192,33 @@ void Fill::localUpdate()
 
 void Fill::go()
 {
+  /* any pre selection is assumed a boundary.
+   * this means that if user wants to have a face for continuity constraint
+   * or an edge or point for internal constraint.
+   * they will need to do so via the command view.
+   */
   const slc::Containers &cs = eventHandler->getSelections();
   
-  std::vector<slc::Message> tm; //target messages
-  Datas datas;
+  Data data;
+  data.emplace_back(); //no initial face or internal constraints.
   for (const auto &c : cs)
   {
     auto m = slc::EventHandler::containerToMessage(c);
-    auto p = ftr::Fill::buildContinuityParameter();
     if (m.type == slc::Type::Edge)
-      p->setValue(0);
+    {
+      data.emplace_back(std::make_tuple(slc::Messages(1, m), slc::Messages()));
+      feature->addBoundary();
+    }
     else if (m.type == slc::Type::Face)
-      p->setValue(1);
-    datas.push_back({m, p, true});
+    {
+      data.emplace_back(std::make_tuple(slc::Messages(), slc::Messages(1, m)));
+      feature->addBoundary();
+    }
   }
   
-  if (!datas.empty())
+  if (data.size() != 1)
   {
-    setSelections(datas);
+    setSelections(data);
     node->sendBlocked(msg::buildStatusMessage("Fill Added", 2.0));
     node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
     return;

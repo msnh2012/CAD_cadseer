@@ -81,7 +81,7 @@ namespace cmv
       void removeParameter(const QModelIndex&);
       void removeParameter(const prm::Parameter*);
       
-      void setMessages(prm::Parameter*, const slc::Messages&) const;
+      void setMessages(prm::Parameter*, const slc::Messages&);
       const slc::Messages& getMessages(const QModelIndex&) const;
       const slc::Messages& getMessages(const prm::Parameter*) const;
       
@@ -119,6 +119,10 @@ namespace cmv
       ~View() override;
       
       void updateHideInactive();
+      void closePersistent(bool = true);
+    Q_SIGNALS:
+      void openingPersistent(); //signal emitted before
+      void closingPersistent(); //signal emitted after
     protected:
       void mouseReleaseEvent(QMouseEvent*) override;
       void mouseDoubleClickEvent(QMouseEvent*) override;
@@ -129,7 +133,6 @@ namespace cmv
       void selectionHasChanged(const QItemSelection&, const QItemSelection&);
     private:
       bool hideInactive = false;
-      void closePersistent(bool = true);
     };
   }
 }

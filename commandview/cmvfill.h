@@ -24,6 +24,7 @@
 
 #include "commandview/cmvbase.h"
 
+class QItemSelection;
 namespace cmd{class Fill;}
 
 namespace cmv
@@ -38,12 +39,12 @@ namespace cmv
     Fill(cmd::Fill*);
     ~Fill() override;
   private Q_SLOTS:
-    void boundaryAdded(int);
-    void boundaryRemoved(int);
-    void boundarySelectionChanged();
-    void continuityChanged();
-    void internalAdded(int);
-    void internalRemoved(int);
+    void modelChanged(const QModelIndex&, const QModelIndex&);
+    void boundaryAdded();
+    void boundaryRemoved();
+    void boundarySelectionChanged(const QItemSelection&, const QItemSelection&);
+    void boundaryModelChanged(const QModelIndex&, const QModelIndex&);
+    void openingPersistentEditor();
   private:
     struct Stow;
     std::unique_ptr<Stow> stow;

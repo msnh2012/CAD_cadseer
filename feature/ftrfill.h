@@ -33,23 +33,36 @@ namespace ftr
 {
   namespace Fill
   {
-    constexpr static const char *edgeTag = "edge";
-    constexpr static const char *faceTag = "face";
-    
-    struct Entry
+    namespace InputTags
     {
-      Entry();
-      ~Entry();
-      void createLabel(); //create label from parameter
-      std::optional<Pick> facePick;
-      std::optional<Pick> edgePick;
-      bool boundary = true;
-      
-      std::shared_ptr<prm::Parameter> continuity; //!< parameter containing blend radius.
-      osg::ref_ptr<lbr::PLabel> continuityLabel; //!< graphic icon
-    };
+      inline constexpr std::string_view initialPick = "initialPick";
+      inline constexpr std::string_view edgePick = "edgePick";
+      inline constexpr std::string_view facePick = "facePick";
+      inline constexpr std::string_view internalPicks = "internalPicks"; //can be empty
+    }
+    namespace PrmTags
+    {
+      inline constexpr std::string_view initialPick = "initialPick"; //input face to deform, can be null
+      inline constexpr std::string_view edgePick = "edgePick";
+      inline constexpr std::string_view facePick = "facePick";
+      inline constexpr std::string_view internalPicks = "internalPicks"; //can be empty
+      inline constexpr std::string_view continuity = "continuity";
+    }
     
-    std::shared_ptr<prm::Parameter> buildContinuityParameter();
+    struct Boundary
+    {
+      Boundary();
+      ~Boundary() noexcept;
+      Boundary(const Boundary&) = delete;
+      Boundary& operator=(const Boundary&) = delete;
+      Boundary(Boundary&&) noexcept = default;
+      Boundary& operator=(Boundary&&) noexcept = default;
+      prm::Parameter edgePick;
+      prm::Parameter facePick;
+      prm::Parameter continuity;
+      osg::ref_ptr<lbr::PLabel> continuityLabel;
+    };
+    using Boundaries = std::list<Boundary>;
     
     class Feature : public Base
     {
@@ -67,15 +80,14 @@ namespace ftr
       void serialWrite(const boost::filesystem::path&) override;
       void serialRead(const prj::srl::fls::Fill&);
       
-      void clearEntries();
-      void addEntry(const Entry&);
-      const std::vector<Entry>& getEntries() const {return entries;}
+      Boundary& addBoundary();
+      void removeBoundary(int);
+      Boundaries& getBoundaries() const;
       
     private:
-      std::unique_ptr<ann::SeerShape> sShape;
-      std::vector<Entry> entries;
-      
       static QIcon icon;
+      struct Stow;
+      std::unique_ptr<Stow> stow;
     };
   }
 }

@@ -69,7 +69,7 @@ namespace prj
   {
     namespace fls
     {
-      class Entry;
+      class Boundary;
       class Fill;
     }
   }
@@ -106,64 +106,42 @@ namespace prj
   {
     namespace fls
     {
-      class Entry: public ::xml_schema::Type
+      class Boundary: public ::xml_schema::Type
       {
         public:
         // edgePick
         //
-        typedef ::prj::srl::spt::Pick EdgePickType;
-        typedef ::xsd::cxx::tree::optional< EdgePickType > EdgePickOptional;
+        typedef ::prj::srl::spt::Parameter EdgePickType;
         typedef ::xsd::cxx::tree::traits< EdgePickType, char > EdgePickTraits;
 
-        const EdgePickOptional&
+        const EdgePickType&
         edgePick () const;
 
-        EdgePickOptional&
+        EdgePickType&
         edgePick ();
 
         void
         edgePick (const EdgePickType& x);
 
         void
-        edgePick (const EdgePickOptional& x);
-
-        void
         edgePick (::std::unique_ptr< EdgePickType > p);
 
         // facePick
         //
-        typedef ::prj::srl::spt::Pick FacePickType;
-        typedef ::xsd::cxx::tree::optional< FacePickType > FacePickOptional;
+        typedef ::prj::srl::spt::Parameter FacePickType;
         typedef ::xsd::cxx::tree::traits< FacePickType, char > FacePickTraits;
 
-        const FacePickOptional&
+        const FacePickType&
         facePick () const;
 
-        FacePickOptional&
+        FacePickType&
         facePick ();
 
         void
         facePick (const FacePickType& x);
 
         void
-        facePick (const FacePickOptional& x);
-
-        void
         facePick (::std::unique_ptr< FacePickType > p);
-
-        // boundary
-        //
-        typedef ::xml_schema::Boolean BoundaryType;
-        typedef ::xsd::cxx::tree::traits< BoundaryType, char > BoundaryTraits;
-
-        const BoundaryType&
-        boundary () const;
-
-        BoundaryType&
-        boundary ();
-
-        void
-        boundary (const BoundaryType& x);
 
         // continuity
         //
@@ -201,31 +179,33 @@ namespace prj
 
         // Constructors.
         //
-        Entry (const BoundaryType&,
-               const ContinuityType&,
-               const ContinuityLabelType&);
+        Boundary (const EdgePickType&,
+                  const FacePickType&,
+                  const ContinuityType&,
+                  const ContinuityLabelType&);
 
-        Entry (const BoundaryType&,
-               ::std::unique_ptr< ContinuityType >,
-               ::std::unique_ptr< ContinuityLabelType >);
+        Boundary (::std::unique_ptr< EdgePickType >,
+                  ::std::unique_ptr< FacePickType >,
+                  ::std::unique_ptr< ContinuityType >,
+                  ::std::unique_ptr< ContinuityLabelType >);
 
-        Entry (const ::xercesc::DOMElement& e,
-               ::xml_schema::Flags f = 0,
-               ::xml_schema::Container* c = 0);
+        Boundary (const ::xercesc::DOMElement& e,
+                  ::xml_schema::Flags f = 0,
+                  ::xml_schema::Container* c = 0);
 
-        Entry (const Entry& x,
-               ::xml_schema::Flags f = 0,
-               ::xml_schema::Container* c = 0);
+        Boundary (const Boundary& x,
+                  ::xml_schema::Flags f = 0,
+                  ::xml_schema::Container* c = 0);
 
-        virtual Entry*
+        virtual Boundary*
         _clone (::xml_schema::Flags f = 0,
                 ::xml_schema::Container* c = 0) const;
 
-        Entry&
-        operator= (const Entry& x);
+        Boundary&
+        operator= (const Boundary& x);
 
         virtual 
-        ~Entry ();
+        ~Boundary ();
 
         // Implementation.
         //
@@ -235,9 +215,8 @@ namespace prj
                ::xml_schema::Flags);
 
         protected:
-        EdgePickOptional edgePick_;
-        FacePickOptional facePick_;
-        ::xsd::cxx::tree::one< BoundaryType > boundary_;
+        ::xsd::cxx::tree::one< EdgePickType > edgePick_;
+        ::xsd::cxx::tree::one< FacePickType > facePick_;
         ::xsd::cxx::tree::one< ContinuityType > continuity_;
         ::xsd::cxx::tree::one< ContinuityLabelType > continuityLabel_;
       };
@@ -262,6 +241,57 @@ namespace prj
         void
         base (::std::unique_ptr< BaseType > p);
 
+        // initialPick
+        //
+        typedef ::prj::srl::spt::Parameter InitialPickType;
+        typedef ::xsd::cxx::tree::traits< InitialPickType, char > InitialPickTraits;
+
+        const InitialPickType&
+        initialPick () const;
+
+        InitialPickType&
+        initialPick ();
+
+        void
+        initialPick (const InitialPickType& x);
+
+        void
+        initialPick (::std::unique_ptr< InitialPickType > p);
+
+        // internalPicks
+        //
+        typedef ::prj::srl::spt::Parameter InternalPicksType;
+        typedef ::xsd::cxx::tree::traits< InternalPicksType, char > InternalPicksTraits;
+
+        const InternalPicksType&
+        internalPicks () const;
+
+        InternalPicksType&
+        internalPicks ();
+
+        void
+        internalPicks (const InternalPicksType& x);
+
+        void
+        internalPicks (::std::unique_ptr< InternalPicksType > p);
+
+        // boundaries
+        //
+        typedef ::prj::srl::fls::Boundary BoundariesType;
+        typedef ::xsd::cxx::tree::sequence< BoundariesType > BoundariesSequence;
+        typedef BoundariesSequence::iterator BoundariesIterator;
+        typedef BoundariesSequence::const_iterator BoundariesConstIterator;
+        typedef ::xsd::cxx::tree::traits< BoundariesType, char > BoundariesTraits;
+
+        const BoundariesSequence&
+        boundaries () const;
+
+        BoundariesSequence&
+        boundaries ();
+
+        void
+        boundaries (const BoundariesSequence& s);
+
         // seerShape
         //
         typedef ::prj::srl::spt::SeerShape SeerShapeType;
@@ -279,30 +309,55 @@ namespace prj
         void
         seerShape (::std::unique_ptr< SeerShapeType > p);
 
-        // entries
+        // wireId
         //
-        typedef ::prj::srl::fls::Entry EntriesType;
-        typedef ::xsd::cxx::tree::sequence< EntriesType > EntriesSequence;
-        typedef EntriesSequence::iterator EntriesIterator;
-        typedef EntriesSequence::const_iterator EntriesConstIterator;
-        typedef ::xsd::cxx::tree::traits< EntriesType, char > EntriesTraits;
+        typedef ::xml_schema::String WireIdType;
+        typedef ::xsd::cxx::tree::traits< WireIdType, char > WireIdTraits;
 
-        const EntriesSequence&
-        entries () const;
+        const WireIdType&
+        wireId () const;
 
-        EntriesSequence&
-        entries ();
+        WireIdType&
+        wireId ();
 
         void
-        entries (const EntriesSequence& s);
+        wireId (const WireIdType& x);
+
+        void
+        wireId (::std::unique_ptr< WireIdType > p);
+
+        // faceId
+        //
+        typedef ::xml_schema::String FaceIdType;
+        typedef ::xsd::cxx::tree::traits< FaceIdType, char > FaceIdTraits;
+
+        const FaceIdType&
+        faceId () const;
+
+        FaceIdType&
+        faceId ();
+
+        void
+        faceId (const FaceIdType& x);
+
+        void
+        faceId (::std::unique_ptr< FaceIdType > p);
 
         // Constructors.
         //
         Fill (const BaseType&,
-              const SeerShapeType&);
+              const InitialPickType&,
+              const InternalPicksType&,
+              const SeerShapeType&,
+              const WireIdType&,
+              const FaceIdType&);
 
         Fill (::std::unique_ptr< BaseType >,
-              ::std::unique_ptr< SeerShapeType >);
+              ::std::unique_ptr< InitialPickType >,
+              ::std::unique_ptr< InternalPicksType >,
+              ::std::unique_ptr< SeerShapeType >,
+              const WireIdType&,
+              const FaceIdType&);
 
         Fill (const ::xercesc::DOMElement& e,
               ::xml_schema::Flags f = 0,
@@ -331,8 +386,12 @@ namespace prj
 
         protected:
         ::xsd::cxx::tree::one< BaseType > base_;
+        ::xsd::cxx::tree::one< InitialPickType > initialPick_;
+        ::xsd::cxx::tree::one< InternalPicksType > internalPicks_;
+        BoundariesSequence boundaries_;
         ::xsd::cxx::tree::one< SeerShapeType > seerShape_;
-        EntriesSequence entries_;
+        ::xsd::cxx::tree::one< WireIdType > wireId_;
+        ::xsd::cxx::tree::one< FaceIdType > faceId_;
       };
     }
   }
@@ -461,7 +520,7 @@ namespace prj
     namespace fls
     {
       void
-      operator<< (::xercesc::DOMElement&, const Entry&);
+      operator<< (::xercesc::DOMElement&, const Boundary&);
 
       void
       operator<< (::xercesc::DOMElement&, const Fill&);

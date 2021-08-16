@@ -20,6 +20,7 @@
 #include <boost/filesystem/path.hpp>
 
 #include <TopoDS.hxx>
+#include <BRepTools.hxx>
 #include <BRepFill_Filling.hxx>
 #include <ShapeBuild_ReShape.hxx>
 #include <ShapeFix_Face.hxx>
@@ -45,75 +46,117 @@ using boost::uuids::uuid;
 
 QIcon Feature::icon;
 
-std::shared_ptr<prm::Parameter> ftr::Fill::buildContinuityParameter()
+Boundary::Boundary()
+: edgePick{QObject::tr("Edge Pick"), ftr::Picks(), PrmTags::edgePick}
+, facePick{QObject::tr("Face Pick"), ftr::Picks(), PrmTags::facePick}
+, continuity{QObject::tr("Continuity"), 0, PrmTags::continuity}
+, continuityLabel(new lbr::PLabel(&continuity))
 {
-  auto out = std::make_shared<prm::Parameter>(QObject::tr("Continuity"), 0);
-  
   QStringList tStrings =
   {
     QObject::tr("C0")
     , QObject::tr("G1")
     , QObject::tr("G2")
   };
-  out->setEnumeration(tStrings);
+  continuity.setEnumeration(tStrings);
+}
+
+Boundary::~Boundary() noexcept = default;
+
+struct Feature::Stow
+{
+  Feature &feature;
+  prm::Parameter initialPick{QObject::tr("Initial Pick"), ftr::Picks(), PrmTags::initialPick};
+  prm::Parameter internalPicks{QObject::tr("Internal Picks"), ftr::Picks(), PrmTags::internalPicks};
+  Boundaries boundaries;
+  ann::SeerShape sShape;
+  uuid faceId = gu::createRandomId();
+  uuid wireId = gu::createRandomId();
   
-  return out;
-}
+  Stow() = delete;
+  Stow(Feature &fIn)
+  : feature(fIn)
+  {
+    initialPick.connectValue(std::bind(&Feature::setModelDirty, &feature));
+    feature.parameters.push_back(&initialPick);
+    
+    internalPicks.connectValue(std::bind(&Feature::setModelDirty, &feature));
+    feature.parameters.push_back(&internalPicks);
+    
+    feature.annexes.insert(std::make_pair(ann::Type::SeerShape, &sShape));
+  }
+  
+  Boundary& addBoundary()
+  {
+    boundaries.emplace_back();
+    auto &b = boundaries.back();
+    b.edgePick.connectValue(std::bind(&Feature::setModelDirty, &feature));
+    feature.parameters.push_back(&b.edgePick);
+    b.facePick.connectValue(std::bind(&Feature::setModelDirty, &feature));
+    b.facePick.connectValue(std::bind(&Stow::prmActiveSync, this));
+    feature.parameters.push_back(&b.facePick);
+    b.continuity.connectValue(std::bind(&Feature::setModelDirty, &feature));
+    feature.parameters.push_back(&b.continuity);
+    b.continuity.setActive(false);
+    feature.overlaySwitch->addChild(b.continuityLabel.get());
+    return b;
+  }
+  
+  //watch face pick and enable or disable continuity parameter.
+  void prmActiveSync()
+  {
+    for (auto &b : boundaries)
+    {
+      if (b.facePick.getPicks().empty())
+        b.continuity.setActive(false);
+      else
+        b.continuity.setActive(true);
+    }
+  }
+};
 
-Entry::Entry()
-: continuity(buildContinuityParameter())
-{
-  createLabel();
-}
-
-Entry::~Entry() = default;
-
-void Entry::createLabel()
-{
-  assert(continuity);
-  continuityLabel = new lbr::PLabel(continuity.get());
-}
-
-Feature::Feature():
-Base()
-, sShape(std::make_unique<ann::SeerShape>())
+Feature::Feature()
+: Base()
+, stow(std::make_unique<Stow>(*this))
 {
   if (icon.isNull())
-    icon = QIcon(":/resources/images/constructionFill.svg"); //fix me
+    icon = QIcon(":/resources/images/constructionFill.svg");
   
   name = QObject::tr("Fill");
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
-  
-  annexes.insert(std::make_pair(ann::Type::SeerShape, sShape.get()));
 }
 
 Feature::~Feature() = default;
 
-void Feature::clearEntries()
+Boundary& Feature::addBoundary()
 {
-  for (const auto& e : entries)
-  {
-    removeParameter(e.continuity.get());
-    overlaySwitch->removeChild(e.continuityLabel.get());
-  }
-  entries.clear();
   setModelDirty();
+  return stow->addBoundary();
 }
 
-void Feature::addEntry(const Entry &eIn)
+void Feature::removeBoundary(int index)
 {
-  entries.emplace_back(eIn);
-  entries.back().continuity->connectValue(std::bind(&Feature::setModelDirty, this));
-  parameters.push_back(entries.back().continuity.get());
-  overlaySwitch->addChild(entries.back().continuityLabel.get());
+  assert (index >=0 && index < static_cast<int>(stow->boundaries.size()));
+  auto lit = stow->boundaries.begin();
+  for (int i = 0; i < index; ++i, ++lit);
+  const auto &b = *lit;
+  removeParameter(&b.edgePick);
+  removeParameter(&b.facePick);
+  removeParameter(&b.continuity);
+  overlaySwitch->removeChild(b.continuityLabel.get());
+  stow->boundaries.erase(lit);
   setModelDirty();
+}
+Boundaries& Feature::getBoundaries() const
+{
+  return stow->boundaries;
 }
 
 void Feature::updateModel(const UpdatePayload &pIn)
 {
   setFailure();
   lastUpdateLog.clear();
-  sShape->reset();
+  stow->sShape.reset();
   try
   {
     if (isSkipped())
@@ -124,60 +167,116 @@ void Feature::updateModel(const UpdatePayload &pIn)
     
     tls::Resolver pr(pIn);
     tls::ShapeIdContainer tempIds;
-    occt::EdgeVector edges;
+    auto forceEvolve = [&](const uuid &oldId) -> uuid
+    {
+      if (stow->sShape.hasEvolveRecordIn(oldId))
+        return stow->sShape.evolve(oldId).front();
+      uuid freshId = gu::createRandomId();
+      stow->sShape.insertEvolve(oldId, freshId);
+      return freshId;
+    };
     
     BRepFill_Filling filler;
     
-    for (const auto &e : entries)
+    //initial face if applicable.
+    const ftr::Picks &ip = stow->initialPick.getPicks();
+    if (!ip.empty())
+    {
+      if (!pr.resolve(ip.front()))
+        throw std::runtime_error("Couldn't resolve initial surface");
+      occt::ShapeVector shapes = pr.getShapes();
+      if (shapes.empty() || shapes.front().ShapeType() != TopAbs_FACE)
+        throw std::runtime_error("No or invalid initial surface");
+      const auto oldId = pr.getSeerShape()->findId(shapes.front());
+      tempIds.insert(forceEvolve(oldId), shapes.front());
+      filler.LoadInitSurface(TopoDS::Face(shapes.front()));
+      
+    }
+    
+    //do boundaries.
+    for (const auto &e : stow->boundaries)
     {
       GeomAbs_Shape c = GeomAbs_C0;
-      if (e.continuity->getInt() == 1)
+      if (e.continuity.getInt() == 1)
         c = GeomAbs_G1;
-      else if (e.continuity->getInt() == 2)
+      else if (e.continuity.getInt() == 2)
         c = GeomAbs_G2;
-      if (e.edgePick && !e.facePick)
+      const auto &ep = e.edgePick.getPicks();
+      const auto &fp = e.facePick.getPicks();
+      if (!ep.empty() && fp.empty())
       {
         //edge, no face
-        overlaySwitch->removeChild(e.continuityLabel.get()); //don't show, it is always c0
-        if (!pr.resolve(*e.edgePick))
+        
+        //this brings up the question of prmActiveSync between the face selection
+        //and the continuity parameter????
+        if (!pr.resolve(ep.front()))
           continue;
         auto shapes = pr.getShapes();
         if (!shapes.empty() && shapes.front().ShapeType() == TopAbs_EDGE)
-          filler.Add(TopoDS::Edge(shapes.front()), c, e.boundary);
+        {
+          const auto oldId = pr.getSeerShape()->findId(shapes.front());
+          tempIds.insert(forceEvolve(oldId), shapes.front());
+          filler.Add(TopoDS::Edge(shapes.front()), c);
+        }
       }
-      else if (!e.edgePick && e.facePick)
+      else if (ep.empty() && !fp.empty())
       {
         //no edge, face
         if (!overlaySwitch->containsNode(e.continuityLabel.get()))
           overlaySwitch->addChild(e.continuityLabel.get());
-        if (!pr.resolve(*e.facePick))
+        if (!pr.resolve(fp.front()))
           continue;
         auto shapes = pr.getShapes();
         if (!shapes.empty() && shapes.front().ShapeType() == TopAbs_FACE)
         {
           const TopoDS_Face &f = TopoDS::Face(shapes.front());
-          filler.Add(f, c); //faces without edges are always boundary
-          e.continuityLabel->setMatrix(osg::Matrixd::translate(e.facePick->getPoint(f)));
+          filler.Add(f, c); //faces without edges are always boundary. id mapping not relevant.
+          e.continuityLabel->setMatrix(osg::Matrixd::translate(fp.front().getPoint(f)));
         }
       }
-      else if (e.edgePick && e.facePick)
+      else if (!ep.empty() && !fp.empty())
       {
         //edge, face
-        if (!overlaySwitch->containsNode(e.continuityLabel.get()))
-          overlaySwitch->addChild(e.continuityLabel.get());
-        if (!pr.resolve(*e.edgePick))
+        if (!pr.resolve(ep.front()))
           continue;
         auto edgeShapes = pr.getShapes();
         if (edgeShapes.empty() || edgeShapes.front().ShapeType() != TopAbs_EDGE)
           continue;
+        uuid oldEdgeId = pr.getSeerShape()->findId(edgeShapes.front());
+        tempIds.insert(forceEvolve(oldEdgeId), edgeShapes.front());
         
-        if (!pr.resolve(*e.facePick))
+        if (!pr.resolve(fp.front()))
           continue;
         auto faceShapes = pr.getShapes();
         if (faceShapes.empty() || faceShapes.front().ShapeType() != TopAbs_FACE)
           continue;
-        filler.Add(TopoDS::Edge(edgeShapes.front()), TopoDS::Face(faceShapes.front()), c, e.boundary);
-        e.continuityLabel->setMatrix(osg::Matrixd::translate(e.facePick->getPoint(TopoDS::Face(faceShapes.front()))));
+        uuid oldFaceId = pr.getSeerShape()->findId(faceShapes.front());
+        tempIds.insert(forceEvolve(oldFaceId), faceShapes.front());
+        
+        filler.Add(TopoDS::Edge(edgeShapes.front()), TopoDS::Face(faceShapes.front()), c);
+        e.continuityLabel->setMatrix(osg::Matrixd::translate(fp.front().getPoint(TopoDS::Face(faceShapes.front()))));
+      }
+    }
+    
+    //do internals. Id mapping not needed for internals
+    for (const auto &ip : stow->internalPicks.getPicks())
+    {
+      if (!pr.resolve(ip))
+        continue;
+      if (slc::isPointType(ip.selectionType))
+      {
+        auto points = pr.getPoints();
+        if (!points.empty())
+          filler.Add(gu::toOcc(points.front()).XYZ());
+      }
+      else if (ip.selectionType == slc::Type::Edge)
+      {
+        auto shapes = pr.getShapes();
+        if (shapes.empty())
+          continue;
+        assert(shapes.front().ShapeType() == TopAbs_EDGE);
+        TopoDS_Edge e = TopoDS::Edge(shapes.front());
+        filler.Add(e, GeomAbs_C0, false);
       }
     }
     
@@ -210,9 +309,16 @@ void Feature::updateModel(const UpdatePayload &pIn)
         throw std::runtime_error("couldn't fix shape");
     }
     
-    sShape->setOCCTShape(out, getId());
-    sShape->ensureNoNils();
-    sShape->ensureNoDuplicates();
+    stow->sShape.setOCCTShape(out, getId());
+    stow->sShape.updateId(out, stow->faceId);
+    stow->sShape.updateId(BRepTools::OuterWire(out), stow->wireId);
+    for (const auto &s : stow->sShape.getAllShapes())
+    {
+      if (tempIds.has(s))
+        stow->sShape.updateId(s, tempIds.find(s));
+    }
+    stow->sShape.ensureNoNils();
+    stow->sShape.ensureNoDuplicates();
     
     setSuccess();
   }
@@ -241,17 +347,22 @@ void Feature::serialWrite(const boost::filesystem::path &dIn)
   prj::srl::fls::Fill so
   (
     Base::serialOut()
-    , sShape->serialOut()
-
+    , stow->initialPick.serialOut()
+    , stow->internalPicks.serialOut()
+    , stow->sShape.serialOut()
+    , gu::idToString(stow->faceId)
+    , gu::idToString(stow->wireId)
   );
-  for (const auto &e : entries)
+  for (const auto &e : stow->boundaries)
   {
-    prj::srl::fls::Entry eOut(e.boundary, e.continuity->serialOut(), e.continuityLabel->serialOut());
-    if (e.edgePick)
-      eOut.edgePick() = e.edgePick->serialOut();
-    if (e.facePick)
-      eOut.facePick() = e.facePick->serialOut();
-    so.entries().push_back(eOut);
+    prj::srl::fls::Boundary eOut
+    (
+      e.edgePick.serialOut()
+      , e.facePick.serialOut()
+      , e.continuity.serialOut()
+      , e.continuityLabel->serialOut()
+    );
+    so.boundaries().push_back(eOut);
   }
   
   xml_schema::NamespaceInfomap infoMap;
@@ -262,19 +373,18 @@ void Feature::serialWrite(const boost::filesystem::path &dIn)
 void Feature::serialRead(const prj::srl::fls::Fill &so)
 {
   Base::serialIn(so.base());
-  sShape->serialIn(so.seerShape());
+  stow->initialPick.serialIn(so.initialPick());
+  stow->internalPicks.serialIn(so.internalPicks());
+  stow->sShape.serialIn(so.seerShape());
+  stow->faceId = gu::stringToId(so.faceId());
+  stow->wireId = gu::stringToId(so.wireId());
   
-  for (const auto &eIn : so.entries())
+  for (const auto &eIn : so.boundaries())
   {
-    Entry entry;
-    if (eIn.edgePick())
-      entry.edgePick = Pick(eIn.edgePick().get());
-    if (eIn.facePick())
-      entry.facePick = Pick(eIn.facePick().get());
-    entry.boundary = eIn.boundary();
-    entry.continuity = buildContinuityParameter();
-    entry.continuity->serialIn(eIn.continuity());
-    entry.continuityLabel = new lbr::PLabel(entry.continuity.get());
-    entries.push_back(entry);
+    Boundary &entry = stow->addBoundary();
+    entry.edgePick.serialIn(eIn.edgePick());
+    entry.facePick.serialIn(eIn.facePick());
+    entry.continuity.serialIn(eIn.continuity());
+    entry.continuityLabel->serialIn(eIn.continuityLabel());
   }
 }

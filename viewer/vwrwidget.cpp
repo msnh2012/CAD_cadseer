@@ -1060,7 +1060,7 @@ struct Widget::Stow
     
     //get screen resolution. do I need this?
     osg::GraphicsContext::WindowingSystemInterface *wsi = getContext()->getWindowingSystemInterface();
-    assert(wsi->getNumScreens() > 0);
+//     assert(wsi->getNumScreens() > 0);
     osg::GraphicsContext::ScreenSettings settings;
     wsi->getScreenSettings(osg::GraphicsContext::ScreenIdentifier(0), settings);
     //wsi->getDisplaySettings is null here and also in myUpdate.

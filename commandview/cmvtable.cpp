@@ -487,11 +487,13 @@ bool Model::mySetData(const QModelIndex &index, const QWidget *widget)
   return result;
 }
 
-void Model::setMessages(prm::Parameter *prmIn, const slc::Messages &msgsIn) const
+void Model::setMessages(prm::Parameter *prmIn, const slc::Messages &msgsIn)
 {
   auto it = stow->messageMap.find(prmIn);
   assert(it != stow->messageMap.end());
   it->second = msgsIn;
+  auto index = createIndex(std::distance(stow->messageMap.begin(), it), 0);
+  dataChanged(index, index, {Qt::EditRole});
 }
 
 prm::Parameter* Model::getParameter(const QModelIndex &index) const
@@ -596,7 +598,6 @@ View::View(QWidget *parent, Model *theModel, bool stateIn)
   connect(selectionModel(), &QItemSelectionModel::selectionChanged, this, &View::selectionHasChanged);
   connect(theModel, &QAbstractItemModel::modelReset, this, &View::updateHideInactive);
   setItemDelegateForColumn(1, new TableDelegate(this));
-  app::instance()->queuedMessage(msg::buildSelectionMask(slc::None));
   QTimer::singleShot(0, this, &View::resizeRowsToContents);
   QTimer::singleShot(0, this, &View::updateHideInactive);
 }
@@ -661,6 +662,7 @@ void View::mouseDoubleClickEvent(QMouseEvent *event)
       height = std::min(height, static_cast<int>(size().height() * 0.8)); //max at 80% of main table.
       
       setRowHeight(index.row(), height);
+      openingPersistent();
       openPersistentEditor(index);
       app::instance()->installEventFilter(this);
       return;
@@ -807,9 +809,9 @@ void View::closePersistent(bool shouldCommit)
       closePersistentEditor(i);
       app::instance()->removeEventFilter(this);
       app::instance()->messageSlot(msg::Message(msg::Request | msg::Selection | msg::Clear));
+      closingPersistent();
       break; //should only be one.
     }
   }
   resizeRowsToContents();
-  app::instance()->messageSlot(msg::buildSelectionMask(slc::None));
 }

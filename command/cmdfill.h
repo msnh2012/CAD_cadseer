@@ -31,8 +31,12 @@ namespace cmd
   {
   public:
     
-    using Data = std::tuple<slc::Message, std::shared_ptr<prm::Parameter>, bool>;
-    using Datas = std::vector<Data>;
+    /* selection messages from view to command
+     * the first entry is for the initial face and the internal constraints and will always exist.
+     * the rest of the entries in the vector will be edge selection and face selection
+     * of the boundaries. The number of those entries will vary. 
+     */
+    using Data = std::vector<std::tuple<slc::Messages, slc::Messages>>;
     
     ftr::Fill::Feature *feature = nullptr;
     
@@ -45,7 +49,7 @@ namespace cmd
     void activate() override;
     void deactivate() override;
     
-    void setSelections(const Datas&);
+    void setSelections(const Data&);
     void localUpdate();
   private:
     cmd::LeafManager leafManager;

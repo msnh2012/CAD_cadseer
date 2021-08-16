@@ -46,130 +46,100 @@ namespace prj
   {
     namespace fls
     {
-      // Entry
+      // Boundary
       // 
 
-      const Entry::EdgePickOptional& Entry::
+      const Boundary::EdgePickType& Boundary::
       edgePick () const
       {
-        return this->edgePick_;
+        return this->edgePick_.get ();
       }
 
-      Entry::EdgePickOptional& Entry::
+      Boundary::EdgePickType& Boundary::
       edgePick ()
       {
-        return this->edgePick_;
+        return this->edgePick_.get ();
       }
 
-      void Entry::
+      void Boundary::
       edgePick (const EdgePickType& x)
       {
         this->edgePick_.set (x);
       }
 
-      void Entry::
-      edgePick (const EdgePickOptional& x)
-      {
-        this->edgePick_ = x;
-      }
-
-      void Entry::
+      void Boundary::
       edgePick (::std::unique_ptr< EdgePickType > x)
       {
         this->edgePick_.set (std::move (x));
       }
 
-      const Entry::FacePickOptional& Entry::
+      const Boundary::FacePickType& Boundary::
       facePick () const
       {
-        return this->facePick_;
+        return this->facePick_.get ();
       }
 
-      Entry::FacePickOptional& Entry::
+      Boundary::FacePickType& Boundary::
       facePick ()
       {
-        return this->facePick_;
+        return this->facePick_.get ();
       }
 
-      void Entry::
+      void Boundary::
       facePick (const FacePickType& x)
       {
         this->facePick_.set (x);
       }
 
-      void Entry::
-      facePick (const FacePickOptional& x)
-      {
-        this->facePick_ = x;
-      }
-
-      void Entry::
+      void Boundary::
       facePick (::std::unique_ptr< FacePickType > x)
       {
         this->facePick_.set (std::move (x));
       }
 
-      const Entry::BoundaryType& Entry::
-      boundary () const
-      {
-        return this->boundary_.get ();
-      }
-
-      Entry::BoundaryType& Entry::
-      boundary ()
-      {
-        return this->boundary_.get ();
-      }
-
-      void Entry::
-      boundary (const BoundaryType& x)
-      {
-        this->boundary_.set (x);
-      }
-
-      const Entry::ContinuityType& Entry::
+      const Boundary::ContinuityType& Boundary::
       continuity () const
       {
         return this->continuity_.get ();
       }
 
-      Entry::ContinuityType& Entry::
+      Boundary::ContinuityType& Boundary::
       continuity ()
       {
         return this->continuity_.get ();
       }
 
-      void Entry::
+      void Boundary::
       continuity (const ContinuityType& x)
       {
         this->continuity_.set (x);
       }
 
-      void Entry::
+      void Boundary::
       continuity (::std::unique_ptr< ContinuityType > x)
       {
         this->continuity_.set (std::move (x));
       }
 
-      const Entry::ContinuityLabelType& Entry::
+      const Boundary::ContinuityLabelType& Boundary::
       continuityLabel () const
       {
         return this->continuityLabel_.get ();
       }
 
-      Entry::ContinuityLabelType& Entry::
+      Boundary::ContinuityLabelType& Boundary::
       continuityLabel ()
       {
         return this->continuityLabel_.get ();
       }
 
-      void Entry::
+      void Boundary::
       continuityLabel (const ContinuityLabelType& x)
       {
         this->continuityLabel_.set (x);
       }
 
-      void Entry::
+      void Boundary::
       continuityLabel (::std::unique_ptr< ContinuityLabelType > x)
       {
         this->continuityLabel_.set (std::move (x));
@@ -203,6 +173,72 @@ namespace prj
         this->base_.set (std::move (x));
       }
 
+      const Fill::InitialPickType& Fill::
+      initialPick () const
+      {
+        return this->initialPick_.get ();
+      }
+
+      Fill::InitialPickType& Fill::
+      initialPick ()
+      {
+        return this->initialPick_.get ();
+      }
+
+      void Fill::
+      initialPick (const InitialPickType& x)
+      {
+        this->initialPick_.set (x);
+      }
+
+      void Fill::
+      initialPick (::std::unique_ptr< InitialPickType > x)
+      {
+        this->initialPick_.set (std::move (x));
+      }
+
+      const Fill::InternalPicksType& Fill::
+      internalPicks () const
+      {
+        return this->internalPicks_.get ();
+      }
+
+      Fill::InternalPicksType& Fill::
+      internalPicks ()
+      {
+        return this->internalPicks_.get ();
+      }
+
+      void Fill::
+      internalPicks (const InternalPicksType& x)
+      {
+        this->internalPicks_.set (x);
+      }
+
+      void Fill::
+      internalPicks (::std::unique_ptr< InternalPicksType > x)
+      {
+        this->internalPicks_.set (std::move (x));
+      }
+
+      const Fill::BoundariesSequence& Fill::
+      boundaries () const
+      {
+        return this->boundaries_;
+      }
+
+      Fill::BoundariesSequence& Fill::
+      boundaries ()
+      {
+        return this->boundaries_;
+      }
+
+      void Fill::
+      boundaries (const BoundariesSequence& s)
+      {
+        this->boundaries_ = s;
+      }
+
       const Fill::SeerShapeType& Fill::
       seerShape () const
       {
@@ -227,22 +263,52 @@ namespace prj
         this->seerShape_.set (std::move (x));
       }
 
-      const Fill::EntriesSequence& Fill::
-      entries () const
+      const Fill::WireIdType& Fill::
+      wireId () const
       {
-        return this->entries_;
+        return this->wireId_.get ();
       }
 
-      Fill::EntriesSequence& Fill::
-      entries ()
+      Fill::WireIdType& Fill::
+      wireId ()
       {
-        return this->entries_;
+        return this->wireId_.get ();
       }
 
       void Fill::
-      entries (const EntriesSequence& s)
+      wireId (const WireIdType& x)
       {
-        this->entries_ = s;
+        this->wireId_.set (x);
+      }
+
+      void Fill::
+      wireId (::std::unique_ptr< WireIdType > x)
+      {
+        this->wireId_.set (std::move (x));
+      }
+
+      const Fill::FaceIdType& Fill::
+      faceId () const
+      {
+        return this->faceId_.get ();
+      }
+
+      Fill::FaceIdType& Fill::
+      faceId ()
+      {
+        return this->faceId_.get ();
+      }
+
+      void Fill::
+      faceId (const FaceIdType& x)
+      {
+        this->faceId_.set (x);
+      }
+
+      void Fill::
+      faceId (::std::unique_ptr< FaceIdType > x)
+      {
+        this->faceId_.set (std::move (x));
       }
     }
   }
@@ -256,56 +322,54 @@ namespace prj
   {
     namespace fls
     {
-      // Entry
+      // Boundary
       //
 
-      Entry::
-      Entry (const BoundaryType& boundary,
-             const ContinuityType& continuity,
-             const ContinuityLabelType& continuityLabel)
+      Boundary::
+      Boundary (const EdgePickType& edgePick,
+                const FacePickType& facePick,
+                const ContinuityType& continuity,
+                const ContinuityLabelType& continuityLabel)
       : ::xml_schema::Type (),
-        edgePick_ (this),
-        facePick_ (this),
-        boundary_ (boundary, this),
+        edgePick_ (edgePick, this),
+        facePick_ (facePick, this),
         continuity_ (continuity, this),
         continuityLabel_ (continuityLabel, this)
       {
       }
 
-      Entry::
-      Entry (const BoundaryType& boundary,
-             ::std::unique_ptr< ContinuityType > continuity,
-             ::std::unique_ptr< ContinuityLabelType > continuityLabel)
+      Boundary::
+      Boundary (::std::unique_ptr< EdgePickType > edgePick,
+                ::std::unique_ptr< FacePickType > facePick,
+                ::std::unique_ptr< ContinuityType > continuity,
+                ::std::unique_ptr< ContinuityLabelType > continuityLabel)
       : ::xml_schema::Type (),
-        edgePick_ (this),
-        facePick_ (this),
-        boundary_ (boundary, this),
+        edgePick_ (std::move (edgePick), this),
+        facePick_ (std::move (facePick), this),
         continuity_ (std::move (continuity), this),
         continuityLabel_ (std::move (continuityLabel), this)
       {
       }
 
-      Entry::
-      Entry (const Entry& x,
-             ::xml_schema::Flags f,
-             ::xml_schema::Container* c)
+      Boundary::
+      Boundary (const Boundary& x,
+                ::xml_schema::Flags f,
+                ::xml_schema::Container* c)
       : ::xml_schema::Type (x, f, c),
         edgePick_ (x.edgePick_, f, this),
         facePick_ (x.facePick_, f, this),
-        boundary_ (x.boundary_, f, this),
         continuity_ (x.continuity_, f, this),
         continuityLabel_ (x.continuityLabel_, f, this)
       {
       }
 
-      Entry::
-      Entry (const ::xercesc::DOMElement& e,
-             ::xml_schema::Flags f,
-             ::xml_schema::Container* c)
+      Boundary::
+      Boundary (const ::xercesc::DOMElement& e,
+                ::xml_schema::Flags f,
+                ::xml_schema::Container* c)
       : ::xml_schema::Type (e, f | ::xml_schema::Flags::base, c),
         edgePick_ (this),
         facePick_ (this),
-        boundary_ (this),
         continuity_ (this),
         continuityLabel_ (this)
       {
@@ -316,7 +380,7 @@ namespace prj
         }
       }
 
-      void Entry::
+      void Boundary::
       parse (::xsd::cxx::xml::dom::parser< char >& p,
              ::xml_schema::Flags f)
       {
@@ -333,7 +397,7 @@ namespace prj
             ::std::unique_ptr< EdgePickType > r (
               EdgePickTraits::create (i, f, this));
 
-            if (!this->edgePick_)
+            if (!edgePick_.present ())
             {
               this->edgePick_.set (::std::move (r));
               continue;
@@ -347,20 +411,9 @@ namespace prj
             ::std::unique_ptr< FacePickType > r (
               FacePickTraits::create (i, f, this));
 
-            if (!this->facePick_)
+            if (!facePick_.present ())
             {
               this->facePick_.set (::std::move (r));
-              continue;
-            }
-          }
-
-          // boundary
-          //
-          if (n.name () == "boundary" && n.namespace_ ().empty ())
-          {
-            if (!boundary_.present ())
-            {
-              this->boundary_.set (BoundaryTraits::create (i, f, this));
               continue;
             }
           }
@@ -396,10 +449,17 @@ namespace prj
           break;
         }
 
-        if (!boundary_.present ())
+        if (!edgePick_.present ())
         {
           throw ::xsd::cxx::tree::expected_element< char > (
-            "boundary",
+            "edgePick",
+            "");
+        }
+
+        if (!facePick_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "facePick",
             "");
         }
 
@@ -418,22 +478,21 @@ namespace prj
         }
       }
 
-      Entry* Entry::
+      Boundary* Boundary::
       _clone (::xml_schema::Flags f,
               ::xml_schema::Container* c) const
       {
-        return new class Entry (*this, f, c);
+        return new class Boundary (*this, f, c);
       }
 
-      Entry& Entry::
-      operator= (const Entry& x)
+      Boundary& Boundary::
+      operator= (const Boundary& x)
       {
         if (this != &x)
         {
           static_cast< ::xml_schema::Type& > (*this) = x;
           this->edgePick_ = x.edgePick_;
           this->facePick_ = x.facePick_;
-          this->boundary_ = x.boundary_;
           this->continuity_ = x.continuity_;
           this->continuityLabel_ = x.continuityLabel_;
         }
@@ -441,8 +500,8 @@ namespace prj
         return *this;
       }
 
-      Entry::
-      ~Entry ()
+      Boundary::
+      ~Boundary ()
       {
       }
 
@@ -451,21 +510,37 @@ namespace prj
 
       Fill::
       Fill (const BaseType& base,
-            const SeerShapeType& seerShape)
+            const InitialPickType& initialPick,
+            const InternalPicksType& internalPicks,
+            const SeerShapeType& seerShape,
+            const WireIdType& wireId,
+            const FaceIdType& faceId)
       : ::xml_schema::Type (),
         base_ (base, this),
+        initialPick_ (initialPick, this),
+        internalPicks_ (internalPicks, this),
+        boundaries_ (this),
         seerShape_ (seerShape, this),
-        entries_ (this)
+        wireId_ (wireId, this),
+        faceId_ (faceId, this)
       {
       }
 
       Fill::
       Fill (::std::unique_ptr< BaseType > base,
-            ::std::unique_ptr< SeerShapeType > seerShape)
+            ::std::unique_ptr< InitialPickType > initialPick,
+            ::std::unique_ptr< InternalPicksType > internalPicks,
+            ::std::unique_ptr< SeerShapeType > seerShape,
+            const WireIdType& wireId,
+            const FaceIdType& faceId)
       : ::xml_schema::Type (),
         base_ (std::move (base), this),
+        initialPick_ (std::move (initialPick), this),
+        internalPicks_ (std::move (internalPicks), this),
+        boundaries_ (this),
         seerShape_ (std::move (seerShape), this),
-        entries_ (this)
+        wireId_ (wireId, this),
+        faceId_ (faceId, this)
       {
       }
 
@@ -475,8 +550,12 @@ namespace prj
             ::xml_schema::Container* c)
       : ::xml_schema::Type (x, f, c),
         base_ (x.base_, f, this),
+        initialPick_ (x.initialPick_, f, this),
+        internalPicks_ (x.internalPicks_, f, this),
+        boundaries_ (x.boundaries_, f, this),
         seerShape_ (x.seerShape_, f, this),
-        entries_ (x.entries_, f, this)
+        wireId_ (x.wireId_, f, this),
+        faceId_ (x.faceId_, f, this)
       {
       }
 
@@ -486,8 +565,12 @@ namespace prj
             ::xml_schema::Container* c)
       : ::xml_schema::Type (e, f | ::xml_schema::Flags::base, c),
         base_ (this),
+        initialPick_ (this),
+        internalPicks_ (this),
+        boundaries_ (this),
         seerShape_ (this),
-        entries_ (this)
+        wireId_ (this),
+        faceId_ (this)
       {
         if ((f & ::xml_schema::Flags::base) == 0)
         {
@@ -520,6 +603,45 @@ namespace prj
             }
           }
 
+          // initialPick
+          //
+          if (n.name () == "initialPick" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< InitialPickType > r (
+              InitialPickTraits::create (i, f, this));
+
+            if (!initialPick_.present ())
+            {
+              this->initialPick_.set (::std::move (r));
+              continue;
+            }
+          }
+
+          // internalPicks
+          //
+          if (n.name () == "internalPicks" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< InternalPicksType > r (
+              InternalPicksTraits::create (i, f, this));
+
+            if (!internalPicks_.present ())
+            {
+              this->internalPicks_.set (::std::move (r));
+              continue;
+            }
+          }
+
+          // boundaries
+          //
+          if (n.name () == "boundaries" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< BoundariesType > r (
+              BoundariesTraits::create (i, f, this));
+
+            this->boundaries_.push_back (::std::move (r));
+            continue;
+          }
+
           // seerShape
           //
           if (n.name () == "seerShape" && n.namespace_ ().empty ())
@@ -534,15 +656,32 @@ namespace prj
             }
           }
 
-          // entries
+          // wireId
           //
-          if (n.name () == "entries" && n.namespace_ ().empty ())
+          if (n.name () == "wireId" && n.namespace_ ().empty ())
           {
-            ::std::unique_ptr< EntriesType > r (
-              EntriesTraits::create (i, f, this));
+            ::std::unique_ptr< WireIdType > r (
+              WireIdTraits::create (i, f, this));
 
-            this->entries_.push_back (::std::move (r));
-            continue;
+            if (!wireId_.present ())
+            {
+              this->wireId_.set (::std::move (r));
+              continue;
+            }
+          }
+
+          // faceId
+          //
+          if (n.name () == "faceId" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< FaceIdType > r (
+              FaceIdTraits::create (i, f, this));
+
+            if (!faceId_.present ())
+            {
+              this->faceId_.set (::std::move (r));
+              continue;
+            }
           }
 
           break;
@@ -555,10 +694,38 @@ namespace prj
             "");
         }
 
+        if (!initialPick_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "initialPick",
+            "");
+        }
+
+        if (!internalPicks_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "internalPicks",
+            "");
+        }
+
         if (!seerShape_.present ())
         {
           throw ::xsd::cxx::tree::expected_element< char > (
             "seerShape",
+            "");
+        }
+
+        if (!wireId_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "wireId",
+            "");
+        }
+
+        if (!faceId_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "faceId",
             "");
         }
       }
@@ -577,8 +744,12 @@ namespace prj
         {
           static_cast< ::xml_schema::Type& > (*this) = x;
           this->base_ = x.base_;
+          this->initialPick_ = x.initialPick_;
+          this->internalPicks_ = x.internalPicks_;
+          this->boundaries_ = x.boundaries_;
           this->seerShape_ = x.seerShape_;
-          this->entries_ = x.entries_;
+          this->wireId_ = x.wireId_;
+          this->faceId_ = x.faceId_;
         }
 
         return *this;
@@ -882,43 +1053,30 @@ namespace prj
     namespace fls
     {
       void
-      operator<< (::xercesc::DOMElement& e, const Entry& i)
+      operator<< (::xercesc::DOMElement& e, const Boundary& i)
       {
         e << static_cast< const ::xml_schema::Type& > (i);
 
         // edgePick
         //
-        if (i.edgePick ())
         {
           ::xercesc::DOMElement& s (
             ::xsd::cxx::xml::dom::create_element (
               "edgePick",
               e));
 
-          s << *i.edgePick ();
+          s << i.edgePick ();
         }
 
         // facePick
         //
-        if (i.facePick ())
         {
           ::xercesc::DOMElement& s (
             ::xsd::cxx::xml::dom::create_element (
               "facePick",
               e));
 
-          s << *i.facePick ();
-        }
-
-        // boundary
-        //
-        {
-          ::xercesc::DOMElement& s (
-            ::xsd::cxx::xml::dom::create_element (
-              "boundary",
-              e));
-
-          s << i.boundary ();
+          s << i.facePick ();
         }
 
         // continuity
@@ -960,6 +1118,42 @@ namespace prj
           s << i.base ();
         }
 
+        // initialPick
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "initialPick",
+              e));
+
+          s << i.initialPick ();
+        }
+
+        // internalPicks
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "internalPicks",
+              e));
+
+          s << i.internalPicks ();
+        }
+
+        // boundaries
+        //
+        for (Fill::BoundariesConstIterator
+             b (i.boundaries ().begin ()), n (i.boundaries ().end ());
+             b != n; ++b)
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "boundaries",
+              e));
+
+          s << *b;
+        }
+
         // seerShape
         //
         {
@@ -971,18 +1165,26 @@ namespace prj
           s << i.seerShape ();
         }
 
-        // entries
+        // wireId
         //
-        for (Fill::EntriesConstIterator
-             b (i.entries ().begin ()), n (i.entries ().end ());
-             b != n; ++b)
         {
           ::xercesc::DOMElement& s (
             ::xsd::cxx::xml::dom::create_element (
-              "entries",
+              "wireId",
               e));
 
-          s << *b;
+          s << i.wireId ();
+        }
+
+        // faceId
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "faceId",
+              e));
+
+          s << i.faceId ();
         }
       }
 

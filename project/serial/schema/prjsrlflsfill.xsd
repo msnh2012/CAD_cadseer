@@ -11,11 +11,10 @@
   <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptpick.xsd"/>
   <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptbase.xsd"/>
 
-<xs:complexType name="Entry">
+<xs:complexType name="Boundary">
   <xs:sequence>
-    <xs:element name="edgePick" type="spt:Pick" minOccurs="0" maxOccurs="1"/>
-    <xs:element name="facePick" type="spt:Pick" minOccurs="0" maxOccurs="1"/>
-    <xs:element name="boundary" type="xs:boolean"/>
+    <xs:element name="edgePick" type="spt:Parameter"/>
+    <xs:element name="facePick" type="spt:Parameter"/>
     <xs:element name="continuity" type="spt:Parameter"/>
     <xs:element name="continuityLabel" type="spt:PLabel"/>
   </xs:sequence>
@@ -24,8 +23,12 @@
 <xs:complexType name="Fill">
   <xs:sequence>
     <xs:element name="base" type="spt:Base"/>
+    <xs:element name="initialPick" type="spt:Parameter"/>
+    <xs:element name="internalPicks" type="spt:Parameter"/>
+    <xs:element name="boundaries" type="fls:Boundary" minOccurs="0" maxOccurs="unbounded"/>
     <xs:element name="seerShape" type="spt:SeerShape"/>
-    <xs:element name="entries" type="fls:Entry" minOccurs="0" maxOccurs="unbounded"/>
+    <xs:element name="wireId" type="xs:string"/>
+    <xs:element name="faceId" type="xs:string"/>
   </xs:sequence>
 </xs:complexType>
 
