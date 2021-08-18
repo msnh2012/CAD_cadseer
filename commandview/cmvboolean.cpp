@@ -75,7 +75,10 @@ struct Boolean::Stow
 Boolean::Boolean(cmd::Boolean *cIn)
 : Base("cmv::Boolean")
 , stow(new Stow(cIn, this))
-{}
+{
+  goSelectionToolbar();
+  goMaskDefault();
+}
 
 Boolean::~Boolean() = default;
 
@@ -93,4 +96,5 @@ void Boolean::modelChanged(const QModelIndex &index, const QModelIndex&)
   
   stow->command->localUpdate();
   node->sendBlocked(msg::buildStatusMessage(stow->command->getStatusMessage()));
+  goMaskDefault();
 }

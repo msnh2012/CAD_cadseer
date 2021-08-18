@@ -75,6 +75,7 @@ namespace cmv
       QVariant data(const QModelIndex&, int) const override;
       Qt::ItemFlags flags(const QModelIndex&) const override;
       bool mySetData(const QModelIndex&, const QWidget*);
+      void mySetData(prm::Parameter*, const slc::Messages&);
       
       prm::Parameter* getParameter(const QModelIndex&) const;
       QModelIndex addParameter(prm::Parameter*);

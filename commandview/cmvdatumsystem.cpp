@@ -96,7 +96,11 @@ struct DatumSystem::Stow
 DatumSystem::DatumSystem(cmd::DatumSystem *cIn)
 : Base("cmv::DatumSystem")
 , stow(new Stow(cIn, this))
-{}
+{
+  node->sendBlocked(msg::buildStatusMessage("Double Click Parameter To Edit"));
+  goSelectionToolbar();
+  goMaskDefault();
+}
 
 DatumSystem::~DatumSystem() = default;
 
@@ -136,4 +140,5 @@ void DatumSystem::modelChanged(const QModelIndex &index, const QModelIndex&)
   
   stow->command->localUpdate();
   node->sendBlocked(msg::buildStatusMessage(stow->command->getStatusMessage()));
+  goMaskDefault();
 }

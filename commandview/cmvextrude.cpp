@@ -93,7 +93,10 @@ struct Extrude::Stow
 Extrude::Extrude(cmd::Extrude *cIn)
 : Base("cmv::Extrude")
 , stow(new Stow(cIn, this))
-{}
+{
+  goSelectionToolbar();
+  goMaskDefault();
+}
 
 Extrude::~Extrude() = default;
 
@@ -133,4 +136,5 @@ void Extrude::modelChanged(const QModelIndex &index, const QModelIndex&)
   
   stow->command->localUpdate();
   node->sendBlocked(msg::buildStatusMessage(stow->command->getStatusMessage()));
+  goMaskDefault();
 }

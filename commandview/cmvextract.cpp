@@ -78,6 +78,8 @@ Extract::Extract(cmd::Extract *cIn)
 : Base("cmv::Extract")
 , stow(new Stow(cIn, this))
 {
+  goSelectionToolbar();
+  goMaskDefault();
 }
 
 Extract::~Extract() = default;
@@ -109,4 +111,5 @@ void Extract::modelChanged(const QModelIndex &index, const QModelIndex&)
   
   stow->command->localUpdate();
   node->sendBlocked(msg::buildStatusMessage(stow->command->getStatusMessage()));
+  goMaskDefault();
 }

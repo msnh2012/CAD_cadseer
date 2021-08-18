@@ -24,6 +24,8 @@
 
 #include <QWidget>
 
+#include "selection/slcdefinitions.h"
+
 namespace ftr{class Base;}
 namespace msg{struct Node; struct Sift;}
 namespace prj{class Project;}
@@ -35,7 +37,7 @@ namespace cmv
    * @details No parent widget for constructor as the 
    * command will own them.
    * 
-   * Managing feature states to be handeled by editing commands not gui views.
+   * Managing feature states to be handled by editing commands not gui views.
    */
   class Base : public QWidget
   {
@@ -46,6 +48,8 @@ namespace cmv
     ~Base() override;
     void setPaneWidth(int);
     int getPaneWidth(){return paneWidth;};
+    void goMaskDefault(bool = true); //!<qtimer delayed by default
+    void goSelectionToolbar();
     
     static void clearContentMargins(QWidget*);
   protected:
@@ -54,6 +58,7 @@ namespace cmv
     prj::Project *project = nullptr;
     QString name; //<! should be unique
     int paneWidth = 100;
+    slc::Mask maskDefault = slc::None;
   };
 }
 

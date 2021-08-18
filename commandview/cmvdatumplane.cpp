@@ -114,6 +114,8 @@ DatumPlane::DatumPlane(cmd::DatumPlane *cIn)
 , stow(new Stow(cIn, this))
 {
   node->sendBlocked(msg::buildStatusMessage("Double Click Parameter To Edit"));
+  goSelectionToolbar();
+  goMaskDefault();
 }
 
 DatumPlane::~DatumPlane() = default;
@@ -172,4 +174,5 @@ void DatumPlane::modelChanged(const QModelIndex &index, const QModelIndex&)
   
   stow->command->localUpdate();
   node->sendBlocked(msg::buildStatusMessage(stow->command->getStatusMessage()));
+  goMaskDefault();
 }

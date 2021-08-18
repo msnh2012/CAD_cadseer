@@ -76,20 +76,15 @@ struct Primitive::Stow
     cue.accrueEnabled = false;
     prmModel->setCue(feature->getParameter(prm::Tags::CSysLinked), cue);
   }
-  
-  void goUpdate()
-  {
-    feature->updateModel(view->project->getPayload(feature->getId()));
-    feature->updateVisual();
-    feature->setModelDirty();
-    view->node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
-  }
 };
 
 Primitive::Primitive(cmd::Primitive *cmdIn)
 : Base("cmv::Primitive")
 , stow(new Stow(cmdIn, this))
-{}
+{
+  goSelectionToolbar();
+  goMaskDefault();
+}
 
 Primitive::~Primitive() = default;
 
@@ -115,4 +110,5 @@ void Primitive::modelChanged(const QModelIndex &index, const QModelIndex&)
   stow->feature->updateVisual();
   stow->feature->setModelDirty();
   node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
+  goMaskDefault();
 }

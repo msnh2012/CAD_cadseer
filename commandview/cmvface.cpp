@@ -76,7 +76,10 @@ struct Face::Stow
 Face::Face(cmd::Face *cIn)
 : Base("cmv::Face")
 , stow(new Stow(cIn, this))
-{}
+{
+  goSelectionToolbar();
+  goMaskDefault();
+}
 
 Face::~Face() = default;
 
@@ -93,4 +96,5 @@ void Face::modelChanged(const QModelIndex &index, const QModelIndex&)
   
   stow->command->localUpdate();
   node->sendBlocked(msg::buildStatusMessage(stow->command->getStatusMessage()));
+  goMaskDefault();
 }

@@ -487,13 +487,22 @@ bool Model::mySetData(const QModelIndex &index, const QWidget *widget)
   return result;
 }
 
-void Model::setMessages(prm::Parameter *prmIn, const slc::Messages &msgsIn)
+//use externally
+void Model::mySetData(prm::Parameter *prmIn, const slc::Messages &msgsIn)
 {
   auto it = stow->messageMap.find(prmIn);
   assert(it != stow->messageMap.end());
   it->second = msgsIn;
   auto index = createIndex(std::distance(stow->messageMap.begin(), it), 0);
   dataChanged(index, index, {Qt::EditRole});
+}
+
+//Used in visitor where visitor emits datachanged
+void Model::setMessages(prm::Parameter *prmIn, const slc::Messages &msgsIn)
+{
+  auto it = stow->messageMap.find(prmIn);
+  assert(it != stow->messageMap.end());
+  it->second = msgsIn;
 }
 
 prm::Parameter* Model::getParameter(const QModelIndex &index) const

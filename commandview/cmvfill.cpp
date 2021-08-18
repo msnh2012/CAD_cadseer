@@ -73,7 +73,6 @@ struct Fill::Stow
     boundarySplitter->restoreSettings(QString::fromUtf8("Fill::BoundarySplitter"));
     mainSplitter->restoreSettings(QString::fromUtf8("Fill::MainSplitter"));
     boundaryStack->setEnabled(false); //controlled by list selection.
-    goGlobalBoundarySelection();
   }
   
   void buildGui()
@@ -176,12 +175,8 @@ struct Fill::Stow
   void goGlobalBoundarySelection()
   {
     isGlobalBoundarySelection = true;
-    app::instance()->queuedMessage(msg::buildSelectionMask(slc::FacesEnabled | slc::EdgesBoth));
-    // note: we don't remember any selection mask changes the user makes.
-    //set toolbar to selection tab
-    app::Message am;
-    am.toolbar = 0;
-    app::instance()->messageSlot(msg::Message(msg::Request | msg::Toolbar | msg::Show, am));
+    view->goMaskDefault(); // note: we don't remember any selection mask changes the user makes.
+    view->goSelectionToolbar();
   }
   
   void stopGlobalBoundarySelection()
@@ -208,9 +203,9 @@ struct Fill::Stow
     assert(tblModel);
     
     if (mIn.getSLC().type == slc::Type::Face)
-      tblModel->setMessages(&b.facePick, {mIn.getSLC()});
+      tblModel->mySetData(&b.facePick, {mIn.getSLC()});
     else
-      tblModel->setMessages(&b.edgePick, {mIn.getSLC()});
+      tblModel->mySetData(&b.edgePick, {mIn.getSLC()});
     auto li = boundaryList->model()->index(boundaryList->count() - 1, 0);
     boundaryList->selectionModel()->select(li, QItemSelectionModel::ClearAndSelect);
   }
@@ -235,7 +230,10 @@ struct Fill::Stow
 Fill::Fill(cmd::Fill *cIn)
 : Base("cmv::Fill")
 , stow(new Stow(cIn, this))
-{}
+{
+  maskDefault = slc::FacesEnabled | slc::EdgesBoth;
+  stow->goGlobalBoundarySelection();
+}
 
 Fill::~Fill() = default;
 

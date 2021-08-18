@@ -85,7 +85,10 @@ struct Draft::Stow
 Draft::Draft(cmd::Draft *cIn)
 : Base("cmv::Draft")
 , stow(new Stow(cIn, this))
-{}
+{
+  goSelectionToolbar();
+  goMaskDefault();
+}
 
 Draft::~Draft() = default;
 
@@ -103,4 +106,5 @@ void Draft::modelChanged(const QModelIndex &index, const QModelIndex&)
   
   stow->command->localUpdate();
   node->sendBlocked(msg::buildStatusMessage(stow->command->getStatusMessage()));
+  goMaskDefault();
 }

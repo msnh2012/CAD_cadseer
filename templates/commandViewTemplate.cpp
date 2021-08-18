@@ -98,7 +98,10 @@ struct %CLASSNAME%::Stow
 %CLASSNAME%::%CLASSNAME%(cmd::%CLASSNAME% *cIn)
 : Base("cmv::%CLASSNAME%")
 , stow(std::make_uniue<Stow>(cIn, this))
-{}
+{
+  goSelectionToolbar();
+  goMaskDefault();
+}
 
 %CLASSNAME%::~%CLASSNAME%() = default;
 
@@ -118,4 +121,5 @@ void %CLASSNAME%::modelChanged(const QModelIndex &index, const QModelIndex&)
   */
   stow->command->localUpdate();
   node->sendBlocked(msg::buildStatusMessage(stow->command->getStatusMessage()));
+  goMaskDefault();
 }

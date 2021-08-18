@@ -19,8 +19,10 @@
 
 #include <QSettings>
 #include <QLayout>
+#include <QTimer>
 
 #include "application/appapplication.h"
+#include "application/appmessage.h"
 #include "project/prjproject.h"
 #include "message/msgnode.h"
 #include "message/msgsift.h"
@@ -58,6 +60,23 @@ void Base::setPaneWidth(int nw)
   settings.beginGroup(name);
   settings.setValue("paneWidth", paneWidth);
   settings.endGroup();
+}
+
+void Base::goMaskDefault(bool delayed)
+{
+  if (delayed)
+  {
+    QTimer::singleShot(0, [this](){this->node->sendBlocked(msg::buildSelectionMask(this->maskDefault));});
+  }
+  else
+    node->sendBlocked(msg::buildSelectionMask(maskDefault));
+}
+
+void Base::goSelectionToolbar()
+{
+  app::Message am;
+  am.toolbar = 0;
+  node->sendBlocked(msg::Message(msg::Request | msg::Toolbar | msg::Show, am));
 }
 
 void Base::clearContentMargins(QWidget *w)

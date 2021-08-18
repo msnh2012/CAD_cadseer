@@ -109,7 +109,10 @@ struct DatumAxis::Stow
 DatumAxis::DatumAxis(cmd::DatumAxis *cIn)
 : Base("cmv::DatumAxis")
 , stow(new Stow(cIn, this))
-{}
+{
+  goSelectionToolbar();
+  goMaskDefault();
+}
 
 DatumAxis::~DatumAxis() = default;
 
@@ -168,4 +171,5 @@ void DatumAxis::modelChanged(const QModelIndex &index, const QModelIndex&)
   
   stow->command->localUpdate();
   node->sendBlocked(msg::buildStatusMessage(stow->command->getStatusMessage()));
+  goMaskDefault();
 }
