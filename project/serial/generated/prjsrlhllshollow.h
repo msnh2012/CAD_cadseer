@@ -93,8 +93,6 @@ namespace prj
 
 #include "prjsrlsptoverlay.h"
 
-#include "prjsrlsptpick.h"
-
 #include "prjsrlsptseershape.h"
 
 #include "prjsrlsptbase.h"
@@ -125,40 +123,6 @@ namespace prj
         void
         base (::std::unique_ptr< BaseType > p);
 
-        // seerShape
-        //
-        typedef ::prj::srl::spt::SeerShape SeerShapeType;
-        typedef ::xsd::cxx::tree::traits< SeerShapeType, char > SeerShapeTraits;
-
-        const SeerShapeType&
-        seerShape () const;
-
-        SeerShapeType&
-        seerShape ();
-
-        void
-        seerShape (const SeerShapeType& x);
-
-        void
-        seerShape (::std::unique_ptr< SeerShapeType > p);
-
-        // hollowPicks
-        //
-        typedef ::prj::srl::spt::Pick HollowPicksType;
-        typedef ::xsd::cxx::tree::sequence< HollowPicksType > HollowPicksSequence;
-        typedef HollowPicksSequence::iterator HollowPicksIterator;
-        typedef HollowPicksSequence::const_iterator HollowPicksConstIterator;
-        typedef ::xsd::cxx::tree::traits< HollowPicksType, char > HollowPicksTraits;
-
-        const HollowPicksSequence&
-        hollowPicks () const;
-
-        HollowPicksSequence&
-        hollowPicks ();
-
-        void
-        hollowPicks (const HollowPicksSequence& s);
-
         // offset
         //
         typedef ::prj::srl::spt::Parameter OffsetType;
@@ -176,22 +140,56 @@ namespace prj
         void
         offset (::std::unique_ptr< OffsetType > p);
 
-        // plabel
+        // picks
         //
-        typedef ::prj::srl::spt::PLabel PlabelType;
-        typedef ::xsd::cxx::tree::traits< PlabelType, char > PlabelTraits;
+        typedef ::prj::srl::spt::Parameter PicksType;
+        typedef ::xsd::cxx::tree::traits< PicksType, char > PicksTraits;
 
-        const PlabelType&
-        plabel () const;
+        const PicksType&
+        picks () const;
 
-        PlabelType&
-        plabel ();
-
-        void
-        plabel (const PlabelType& x);
+        PicksType&
+        picks ();
 
         void
-        plabel (::std::unique_ptr< PlabelType > p);
+        picks (const PicksType& x);
+
+        void
+        picks (::std::unique_ptr< PicksType > p);
+
+        // seerShape
+        //
+        typedef ::prj::srl::spt::SeerShape SeerShapeType;
+        typedef ::xsd::cxx::tree::traits< SeerShapeType, char > SeerShapeTraits;
+
+        const SeerShapeType&
+        seerShape () const;
+
+        SeerShapeType&
+        seerShape ();
+
+        void
+        seerShape (const SeerShapeType& x);
+
+        void
+        seerShape (::std::unique_ptr< SeerShapeType > p);
+
+        // offsetLabel
+        //
+        typedef ::prj::srl::spt::PLabel OffsetLabelType;
+        typedef ::xsd::cxx::tree::traits< OffsetLabelType, char > OffsetLabelTraits;
+
+        const OffsetLabelType&
+        offsetLabel () const;
+
+        OffsetLabelType&
+        offsetLabel ();
+
+        void
+        offsetLabel (const OffsetLabelType& x);
+
+        void
+        offsetLabel (::std::unique_ptr< OffsetLabelType > p);
 
         // shapeMap
         //
@@ -213,14 +211,16 @@ namespace prj
         // Constructors.
         //
         Hollow (const BaseType&,
-                const SeerShapeType&,
                 const OffsetType&,
-                const PlabelType&);
+                const PicksType&,
+                const SeerShapeType&,
+                const OffsetLabelType&);
 
         Hollow (::std::unique_ptr< BaseType >,
-                ::std::unique_ptr< SeerShapeType >,
                 ::std::unique_ptr< OffsetType >,
-                ::std::unique_ptr< PlabelType >);
+                ::std::unique_ptr< PicksType >,
+                ::std::unique_ptr< SeerShapeType >,
+                ::std::unique_ptr< OffsetLabelType >);
 
         Hollow (const ::xercesc::DOMElement& e,
                 ::xml_schema::Flags f = 0,
@@ -249,10 +249,10 @@ namespace prj
 
         protected:
         ::xsd::cxx::tree::one< BaseType > base_;
-        ::xsd::cxx::tree::one< SeerShapeType > seerShape_;
-        HollowPicksSequence hollowPicks_;
         ::xsd::cxx::tree::one< OffsetType > offset_;
-        ::xsd::cxx::tree::one< PlabelType > plabel_;
+        ::xsd::cxx::tree::one< PicksType > picks_;
+        ::xsd::cxx::tree::one< SeerShapeType > seerShape_;
+        ::xsd::cxx::tree::one< OffsetLabelType > offsetLabel_;
         ShapeMapSequence shapeMap_;
       };
     }

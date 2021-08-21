@@ -8,17 +8,16 @@
   
 <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptparameter.xsd"/>
 <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptoverlay.xsd"/>
-<xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptpick.xsd"/>
 <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptseershape.xsd"/>
 <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptbase.xsd"/>
 
 <xs:complexType name="Hollow">
   <xs:sequence>
     <xs:element name="base" type="spt:Base"/>
-    <xs:element name="seerShape" type="spt:SeerShape"/>
-    <xs:element name="hollowPicks" type="spt:Pick" minOccurs="0" maxOccurs="unbounded"/>
     <xs:element name="offset" type="spt:Parameter"/>
-    <xs:element name="plabel" type="spt:PLabel"/>
+    <xs:element name="picks" type="spt:Parameter"/>
+    <xs:element name="seerShape" type="spt:SeerShape"/>
+    <xs:element name="offsetLabel" type="spt:PLabel"/>
     <xs:element name="shapeMap" type="spt:EvolveRecord" minOccurs="0" maxOccurs="unbounded"/>
   </xs:sequence>
 </xs:complexType>

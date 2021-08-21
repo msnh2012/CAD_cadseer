@@ -25,7 +25,6 @@
 #include "feature/ftrpick.h"
 #include "feature/ftrbase.h"
 
-namespace ann{class SeerShape;}
 namespace prj{namespace srl{namespace fls{class Fill;}}}
 namespace lbr{class PLabel;}
 

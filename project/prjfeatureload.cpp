@@ -343,7 +343,7 @@ std::shared_ptr< ftr::Base > FeatureLoad::loadHollow(const std::string &fileName
   auto sHollow = srl::hlls::hollow(fileNameIn, flags);
   assert(sHollow);
   
-  auto freshHollow = std::make_shared<ftr::Hollow>();
+  auto freshHollow = std::make_shared<ftr::Hollow::Feature>();
   freshHollow->getAnnex<ann::SeerShape>().setOCCTShape(shapeVector.at(shapeOffsetIn), featureId);
   freshHollow->serialRead(*sHollow);
   

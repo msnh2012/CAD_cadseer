@@ -22,10 +22,11 @@
 
 #include "application/appapplication.h"
 #include "project/prjproject.h"
-#include "dialogs/dlgselectionbutton.h"
-#include "dialogs/dlgselectionwidget.h"
-#include "commandview/cmvparameterwidgets.h"
+#include "message/msgnode.h"
+#include "parameter/prmconstants.h"
 #include "parameter/prmparameter.h"
+#include "commandview/cmvselectioncue.h"
+#include "commandview/cmvtable.h"
 #include "tools/featuretools.h"
 #include "feature/ftrhollow.h"
 #include "command/cmdhollow.h"
@@ -39,90 +40,61 @@ struct Hollow::Stow
 {
   cmd::Hollow *command;
   cmv::Hollow *view;
-  dlg::SelectionWidget *selectionWidget = nullptr;
-  cmv::ParameterWidget *parameterWidget = nullptr;
+  prm::Parameters parameters;
+  cmv::tbl::Model *prmModel = nullptr;
+  cmv::tbl::View *prmView = nullptr;
   
   Stow(cmd::Hollow *cIn, cmv::Hollow *vIn)
   : command(cIn)
   , view(vIn)
   {
+    parameters = command->feature->getParameters();
     buildGui();
-    
-    QSettings &settings = app::instance()->getUserSettings();
-    settings.beginGroup("cmv::Hollow");
-    //load settings
-    settings.endGroup();
-    
-    loadFeatureData();
-    glue();
-    selectionWidget->activate(0);
+    connect(prmModel, &tbl::Model::dataChanged, view, &Hollow::modelChanged);
   }
   
   void buildGui()
   {
     QVBoxLayout *mainLayout = new QVBoxLayout();
     view->setLayout(mainLayout);
-  
-    std::vector<dlg::SelectionWidgetCue> cues;
-    dlg::SelectionWidgetCue cue;
+    Base::clearContentMargins(view);
+    view->setSizePolicy(view->sizePolicy().horizontalPolicy(), QSizePolicy::Expanding);
     
-    cue.name = tr("Pierce Faces");
+    prmModel = new tbl::Model(view, command->feature);
+    prmView = new tbl::View(view, prmModel, true);
+    mainLayout->addWidget(prmView);
+    
+    tbl::SelectionCue cue;
     cue.singleSelection = false;
-    cue.mask = slc::FacesEnabled | slc::FacesSelectable;
+    cue.mask = slc::FacesBoth;
     cue.statusPrompt = tr("Select Pierce Faces");
-    cue.showAccrueColumn = false;
-    cues.push_back(cue);
-    
-    selectionWidget = new dlg::SelectionWidget(view, cues);
-    mainLayout->addWidget(selectionWidget);
-    
-    parameterWidget = new cmv::ParameterWidget(view, command->feature->getParameters());
-    mainLayout->addWidget(parameterWidget);
-    mainLayout->addItem(new QSpacerItem(20, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
-  }
-  
-  void loadFeatureData()
-  {
-    ftr::UpdatePayload up = view->project->getPayload(command->feature->getId());
-    tls::Resolver resolver(up);
-    
-    auto picksToMessages = [&](const ftr::Picks &pIn) -> slc::Messages
-    {
-      slc::Messages out;
-      for (const auto &p : pIn)
-      {
-        if (resolver.resolve(p))
-        {
-          auto msgs = resolver.convertToMessages();
-          out.insert(out.end(), msgs.begin(), msgs.end());
-        }
-      }
-      return out;
-    };
-    selectionWidget->initializeButton(0, picksToMessages(command->feature->getHollowPicks()));
-  }
-  
-  void glue()
-  {
-    connect(selectionWidget->getButton(0), &dlg::SelectionButton::dirty, view, &Hollow::selectionChanged);
-    connect(parameterWidget, &ParameterBase::prmValueChanged, view, &Hollow::parameterChanged);
+    cue.accrueEnabled = false;
+    prmModel->setCue(command->feature->getParameter(prm::Tags::Picks), cue);
   }
 };
 
 Hollow::Hollow(cmd::Hollow *cIn)
 : Base("cmv::Hollow")
 , stow(new Stow(cIn, this))
-{}
+{
+  goSelectionToolbar();
+  goMaskDefault();
+}
 
 Hollow::~Hollow() = default;
 
-void Hollow::selectionChanged()
+void Hollow::modelChanged(const QModelIndex &index, const QModelIndex&)
 {
-  stow->command->setSelections(stow->selectionWidget->getButton(0)->getMessages());
+  if (!index.isValid())
+    return;
+  const auto *prm = stow->parameters.at(index.row());
+  if (prm->getTag() == prm::Tags::Picks)
+  {
+    const auto &picks = stow->prmModel->getMessages(prm);
+    stow->command->setSelections(picks);
+  }
+  
   stow->command->localUpdate();
-}
-
-void Hollow::parameterChanged()
-{
-  stow->command->localUpdate();
+  node->sendBlocked(msg::buildStatusMessage(stow->command->getStatusMessage()));
+  goMaskDefault();
 }

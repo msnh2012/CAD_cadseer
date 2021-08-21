@@ -23,7 +23,7 @@
 #include "command/cmdleafmanager.h"
 #include "command/cmdbase.h"
 
-namespace ftr{class Hollow;}
+namespace ftr{ namespace Hollow {class Feature;}}
 
 namespace cmd
 {
@@ -33,7 +33,7 @@ namespace cmd
   class Hollow : public Base
   {
   public:
-    ftr::Hollow *feature = nullptr;
+    ftr::Hollow::Feature *feature = nullptr;
     
     Hollow();
     Hollow(ftr::Base*);

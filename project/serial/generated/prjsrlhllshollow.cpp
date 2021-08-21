@@ -73,48 +73,6 @@ namespace prj
         this->base_.set (std::move (x));
       }
 
-      const Hollow::SeerShapeType& Hollow::
-      seerShape () const
-      {
-        return this->seerShape_.get ();
-      }
-
-      Hollow::SeerShapeType& Hollow::
-      seerShape ()
-      {
-        return this->seerShape_.get ();
-      }
-
-      void Hollow::
-      seerShape (const SeerShapeType& x)
-      {
-        this->seerShape_.set (x);
-      }
-
-      void Hollow::
-      seerShape (::std::unique_ptr< SeerShapeType > x)
-      {
-        this->seerShape_.set (std::move (x));
-      }
-
-      const Hollow::HollowPicksSequence& Hollow::
-      hollowPicks () const
-      {
-        return this->hollowPicks_;
-      }
-
-      Hollow::HollowPicksSequence& Hollow::
-      hollowPicks ()
-      {
-        return this->hollowPicks_;
-      }
-
-      void Hollow::
-      hollowPicks (const HollowPicksSequence& s)
-      {
-        this->hollowPicks_ = s;
-      }
-
       const Hollow::OffsetType& Hollow::
       offset () const
       {
@@ -139,28 +97,76 @@ namespace prj
         this->offset_.set (std::move (x));
       }
 
-      const Hollow::PlabelType& Hollow::
-      plabel () const
+      const Hollow::PicksType& Hollow::
+      picks () const
       {
-        return this->plabel_.get ();
+        return this->picks_.get ();
       }
 
-      Hollow::PlabelType& Hollow::
-      plabel ()
+      Hollow::PicksType& Hollow::
+      picks ()
       {
-        return this->plabel_.get ();
-      }
-
-      void Hollow::
-      plabel (const PlabelType& x)
-      {
-        this->plabel_.set (x);
+        return this->picks_.get ();
       }
 
       void Hollow::
-      plabel (::std::unique_ptr< PlabelType > x)
+      picks (const PicksType& x)
       {
-        this->plabel_.set (std::move (x));
+        this->picks_.set (x);
+      }
+
+      void Hollow::
+      picks (::std::unique_ptr< PicksType > x)
+      {
+        this->picks_.set (std::move (x));
+      }
+
+      const Hollow::SeerShapeType& Hollow::
+      seerShape () const
+      {
+        return this->seerShape_.get ();
+      }
+
+      Hollow::SeerShapeType& Hollow::
+      seerShape ()
+      {
+        return this->seerShape_.get ();
+      }
+
+      void Hollow::
+      seerShape (const SeerShapeType& x)
+      {
+        this->seerShape_.set (x);
+      }
+
+      void Hollow::
+      seerShape (::std::unique_ptr< SeerShapeType > x)
+      {
+        this->seerShape_.set (std::move (x));
+      }
+
+      const Hollow::OffsetLabelType& Hollow::
+      offsetLabel () const
+      {
+        return this->offsetLabel_.get ();
+      }
+
+      Hollow::OffsetLabelType& Hollow::
+      offsetLabel ()
+      {
+        return this->offsetLabel_.get ();
+      }
+
+      void Hollow::
+      offsetLabel (const OffsetLabelType& x)
+      {
+        this->offsetLabel_.set (x);
+      }
+
+      void Hollow::
+      offsetLabel (::std::unique_ptr< OffsetLabelType > x)
+      {
+        this->offsetLabel_.set (std::move (x));
       }
 
       const Hollow::ShapeMapSequence& Hollow::
@@ -197,30 +203,32 @@ namespace prj
 
       Hollow::
       Hollow (const BaseType& base,
-              const SeerShapeType& seerShape,
               const OffsetType& offset,
-              const PlabelType& plabel)
+              const PicksType& picks,
+              const SeerShapeType& seerShape,
+              const OffsetLabelType& offsetLabel)
       : ::xml_schema::Type (),
         base_ (base, this),
-        seerShape_ (seerShape, this),
-        hollowPicks_ (this),
         offset_ (offset, this),
-        plabel_ (plabel, this),
+        picks_ (picks, this),
+        seerShape_ (seerShape, this),
+        offsetLabel_ (offsetLabel, this),
         shapeMap_ (this)
       {
       }
 
       Hollow::
       Hollow (::std::unique_ptr< BaseType > base,
-              ::std::unique_ptr< SeerShapeType > seerShape,
               ::std::unique_ptr< OffsetType > offset,
-              ::std::unique_ptr< PlabelType > plabel)
+              ::std::unique_ptr< PicksType > picks,
+              ::std::unique_ptr< SeerShapeType > seerShape,
+              ::std::unique_ptr< OffsetLabelType > offsetLabel)
       : ::xml_schema::Type (),
         base_ (std::move (base), this),
-        seerShape_ (std::move (seerShape), this),
-        hollowPicks_ (this),
         offset_ (std::move (offset), this),
-        plabel_ (std::move (plabel), this),
+        picks_ (std::move (picks), this),
+        seerShape_ (std::move (seerShape), this),
+        offsetLabel_ (std::move (offsetLabel), this),
         shapeMap_ (this)
       {
       }
@@ -231,10 +239,10 @@ namespace prj
               ::xml_schema::Container* c)
       : ::xml_schema::Type (x, f, c),
         base_ (x.base_, f, this),
-        seerShape_ (x.seerShape_, f, this),
-        hollowPicks_ (x.hollowPicks_, f, this),
         offset_ (x.offset_, f, this),
-        plabel_ (x.plabel_, f, this),
+        picks_ (x.picks_, f, this),
+        seerShape_ (x.seerShape_, f, this),
+        offsetLabel_ (x.offsetLabel_, f, this),
         shapeMap_ (x.shapeMap_, f, this)
       {
       }
@@ -245,10 +253,10 @@ namespace prj
               ::xml_schema::Container* c)
       : ::xml_schema::Type (e, f | ::xml_schema::Flags::base, c),
         base_ (this),
-        seerShape_ (this),
-        hollowPicks_ (this),
         offset_ (this),
-        plabel_ (this),
+        picks_ (this),
+        seerShape_ (this),
+        offsetLabel_ (this),
         shapeMap_ (this)
       {
         if ((f & ::xml_schema::Flags::base) == 0)
@@ -282,31 +290,6 @@ namespace prj
             }
           }
 
-          // seerShape
-          //
-          if (n.name () == "seerShape" && n.namespace_ ().empty ())
-          {
-            ::std::unique_ptr< SeerShapeType > r (
-              SeerShapeTraits::create (i, f, this));
-
-            if (!seerShape_.present ())
-            {
-              this->seerShape_.set (::std::move (r));
-              continue;
-            }
-          }
-
-          // hollowPicks
-          //
-          if (n.name () == "hollowPicks" && n.namespace_ ().empty ())
-          {
-            ::std::unique_ptr< HollowPicksType > r (
-              HollowPicksTraits::create (i, f, this));
-
-            this->hollowPicks_.push_back (::std::move (r));
-            continue;
-          }
-
           // offset
           //
           if (n.name () == "offset" && n.namespace_ ().empty ())
@@ -321,16 +304,44 @@ namespace prj
             }
           }
 
-          // plabel
+          // picks
           //
-          if (n.name () == "plabel" && n.namespace_ ().empty ())
+          if (n.name () == "picks" && n.namespace_ ().empty ())
           {
-            ::std::unique_ptr< PlabelType > r (
-              PlabelTraits::create (i, f, this));
+            ::std::unique_ptr< PicksType > r (
+              PicksTraits::create (i, f, this));
 
-            if (!plabel_.present ())
+            if (!picks_.present ())
             {
-              this->plabel_.set (::std::move (r));
+              this->picks_.set (::std::move (r));
+              continue;
+            }
+          }
+
+          // seerShape
+          //
+          if (n.name () == "seerShape" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< SeerShapeType > r (
+              SeerShapeTraits::create (i, f, this));
+
+            if (!seerShape_.present ())
+            {
+              this->seerShape_.set (::std::move (r));
+              continue;
+            }
+          }
+
+          // offsetLabel
+          //
+          if (n.name () == "offsetLabel" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< OffsetLabelType > r (
+              OffsetLabelTraits::create (i, f, this));
+
+            if (!offsetLabel_.present ())
+            {
+              this->offsetLabel_.set (::std::move (r));
               continue;
             }
           }
@@ -356,13 +367,6 @@ namespace prj
             "");
         }
 
-        if (!seerShape_.present ())
-        {
-          throw ::xsd::cxx::tree::expected_element< char > (
-            "seerShape",
-            "");
-        }
-
         if (!offset_.present ())
         {
           throw ::xsd::cxx::tree::expected_element< char > (
@@ -370,10 +374,24 @@ namespace prj
             "");
         }
 
-        if (!plabel_.present ())
+        if (!picks_.present ())
         {
           throw ::xsd::cxx::tree::expected_element< char > (
-            "plabel",
+            "picks",
+            "");
+        }
+
+        if (!seerShape_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "seerShape",
+            "");
+        }
+
+        if (!offsetLabel_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "offsetLabel",
             "");
         }
       }
@@ -392,10 +410,10 @@ namespace prj
         {
           static_cast< ::xml_schema::Type& > (*this) = x;
           this->base_ = x.base_;
-          this->seerShape_ = x.seerShape_;
-          this->hollowPicks_ = x.hollowPicks_;
           this->offset_ = x.offset_;
-          this->plabel_ = x.plabel_;
+          this->picks_ = x.picks_;
+          this->seerShape_ = x.seerShape_;
+          this->offsetLabel_ = x.offsetLabel_;
           this->shapeMap_ = x.shapeMap_;
         }
 
@@ -715,31 +733,6 @@ namespace prj
           s << i.base ();
         }
 
-        // seerShape
-        //
-        {
-          ::xercesc::DOMElement& s (
-            ::xsd::cxx::xml::dom::create_element (
-              "seerShape",
-              e));
-
-          s << i.seerShape ();
-        }
-
-        // hollowPicks
-        //
-        for (Hollow::HollowPicksConstIterator
-             b (i.hollowPicks ().begin ()), n (i.hollowPicks ().end ());
-             b != n; ++b)
-        {
-          ::xercesc::DOMElement& s (
-            ::xsd::cxx::xml::dom::create_element (
-              "hollowPicks",
-              e));
-
-          s << *b;
-        }
-
         // offset
         //
         {
@@ -751,15 +744,37 @@ namespace prj
           s << i.offset ();
         }
 
-        // plabel
+        // picks
         //
         {
           ::xercesc::DOMElement& s (
             ::xsd::cxx::xml::dom::create_element (
-              "plabel",
+              "picks",
               e));
 
-          s << i.plabel ();
+          s << i.picks ();
+        }
+
+        // seerShape
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "seerShape",
+              e));
+
+          s << i.seerShape ();
+        }
+
+        // offsetLabel
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "offsetLabel",
+              e));
+
+          s << i.offsetLabel ();
         }
 
         // shapeMap

@@ -45,59 +45,109 @@
 #include "parameter/prmparameter.h"
 #include "feature/ftrhollow.h"
 
-using namespace ftr;
-
 using boost::uuids::uuid;
+using namespace ftr::Hollow;
 
-QIcon Hollow::icon;
+QIcon Feature::icon;
 
-Hollow::Hollow() :
-Base(),
-offset
-(
-  std::make_unique<prm::Parameter>
-  (
-    prm::Names::Offset
-    , prf::manager().rootPtr->features().hollow().get().offset()
-    , prm::Tags::Offset
-  )
-),
-sShape(std::make_unique<ann::SeerShape>())
+struct Feature::Stow
+{
+  Feature &feature;
+  prm::Parameter offset{prm::Names::Offset, prf::manager().rootPtr->features().hollow().get().offset(), prm::Tags::Offset};
+  prm::Parameter picks{prm::Names::Picks, ftr::Picks(), prm::Tags::Picks};
+  ann::SeerShape sShape;
+  osg::ref_ptr<lbr::PLabel> offsetLabel{new lbr::PLabel(&offset)};
+  /*! used to map new geometry to old geometry. this will end up
+   * more complicated than this as hollow can make splits.
+   */ 
+  std::map<uuid, uuid> shapeMap;
+  
+  Stow() = delete;
+  Stow(Feature &fIn)
+  : feature(fIn)
+  {
+    offset.setConstraint(prm::Constraint::buildNonZero());
+    offset.connectValue(std::bind(&Feature::setModelDirty, &feature));
+    feature.parameters.push_back(&offset);
+    
+    picks.connectValue(std::bind(&Feature::setModelDirty, &feature));
+    feature.parameters.push_back(&picks);
+    
+    feature.annexes.insert(std::make_pair(ann::Type::SeerShape, &sShape));
+    
+    feature.overlaySwitch->addChild(offsetLabel.get());
+  }
+  
+  void generatedMatch(BRepOffsetAPI_MakeThickSolid &operationIn, const ann::SeerShape &targetShapeIn)
+  {
+    //note: makeThickSolid::generated is returning all kinds of shapes.
+    for (const auto &targetId : targetShapeIn.getAllShapeIds())
+    {
+      const TopoDS_Shape &originalShape = targetShapeIn.getOCCTShape(targetId);
+      const TopTools_ListOfShape &list = operationIn.Generated(originalShape);
+      if (list.IsEmpty())
+        continue;
+      if (list.Size() > 1)
+      {
+        std::ostringstream s; s << "Warning: unexpected list size: " << list.Size()
+        << "    in Hollow::generatedMatch " << std::endl;
+        feature.lastUpdateLog += s.str();
+      }
+      const TopoDS_Shape &newShape = list.First();
+      assert(!newShape.IsNull());
+      
+      //I think generated is returning all the geometry from operation
+      //so we have to skip non-existing geometry. like other half of a split.
+      if (!sShape.hasShape(newShape))
+        continue;
+      
+      if (!sShape.findId(newShape).is_nil())
+        continue; //only set ids for shapes with nil ids.
+        
+      //should only have faces left to assign. why don't nil wires come through?
+      //occt 7.4 started producing vertices here. Just going to skip for now.
+      //but maybe we want to map those also.
+      //     assert(newShape.ShapeType() == TopAbs_FACE);
+      if (newShape.ShapeType() != TopAbs_FACE)
+        continue;
+        
+      uuid freshFaceId = gu::createRandomId();
+      bool results;
+      std::map<uuid, uuid>::iterator it;
+      std::tie(it, results) = shapeMap.insert(std::make_pair(targetId, freshFaceId));
+      if (!results)
+        freshFaceId = it->second;
+      sShape.updateId(newShape, freshFaceId);
+      
+      //in a hollow these generated entities are actually new entities, whereas for
+      //other features, like draft and blend, this is not the case. So these get a nil evolve in.
+      if (!sShape.hasEvolveRecordOut(freshFaceId))
+        sShape.insertEvolve(gu::createNilId(), freshFaceId);
+      
+      //update the outerwire.
+      uuid freshWireId = gu::createRandomId();
+      std::tie(it, results) = shapeMap.insert(std::make_pair(freshFaceId, freshWireId));
+      if (!results)
+        freshWireId = it->second;
+      
+      const TopoDS_Shape &wireShape = BRepTools::OuterWire(TopoDS::Face(newShape));
+      sShape.updateId(wireShape, freshWireId);
+    }
+  }
+};
+
+Feature::Feature()
+: Base()
+, stow(std::make_unique<Stow>(*this))
 {
   if (icon.isNull())
     icon = QIcon(":/resources/images/constructionHollow.svg");
   
   name = QObject::tr("Hollow");
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
-  
-  offset->setConstraint(prm::Constraint::buildNonZero());
-  offset->connectValue(std::bind(&Hollow::setModelDirty, this));
-  parameters.push_back(offset.get());
-  
-  label = new lbr::PLabel(offset.get());
-  overlaySwitch->addChild(label.get());
-  
-  annexes.insert(std::make_pair(ann::Type::SeerShape, sShape.get()));
 }
 
-Hollow::~Hollow(){}
-
-
-void Hollow::setHollowPicks(const Picks &picksIn)
-{
-  hollowPicks = picksIn;
-  setModelDirty();
-}
-
-void Hollow::setOffset(double oIn)
-{
-  offset->setValue(oIn);
-}
-
-prm::Parameter& Hollow::getOffset() const
-{
-  return *offset;
-}
+Feature::~Feature() = default;
 
 /* as occt v7.1(actually commit 4d97335) there seems to be a tolerance bug
  * in BRepOffsetAPI_MakeThickSolid. to reproduce the bug in drawexe:
@@ -115,11 +165,11 @@ prm::Parameter& Hollow::getOffset() const
  * 
  * will this work with no removal faces?
  */
-void Hollow::updateModel(const UpdatePayload &payloadIn)
+void Feature::updateModel(const UpdatePayload &payloadIn)
 {
   setFailure();
   lastUpdateLog.clear();
-  sShape->reset();
+  stow->sShape.reset();
   try
   {
     std::vector<const Base*> tfs = payloadIn.getFeatures(std::string());
@@ -132,13 +182,13 @@ void Hollow::updateModel(const UpdatePayload &payloadIn)
       throw std::runtime_error("target seer shape is null");
     
     //setup new failure state.
-    sShape->setOCCTShape(tss.getRootOCCTShape(), getId());
-    sShape->shapeMatch(tss);
-    sShape->uniqueTypeMatch(tss);
-    sShape->outerWireMatch(tss);
-    sShape->derivedMatch();
-    sShape->ensureNoNils(); //just in case
-    sShape->ensureNoDuplicates(); //just in case
+    stow->sShape.setOCCTShape(tss.getRootOCCTShape(), getId());
+    stow->sShape.shapeMatch(tss);
+    stow->sShape.uniqueTypeMatch(tss);
+    stow->sShape.outerWireMatch(tss);
+    stow->sShape.derivedMatch();
+    stow->sShape.ensureNoNils(); //just in case
+    stow->sShape.ensureNoDuplicates(); //just in case
     
     if (isSkipped())
     {
@@ -149,7 +199,7 @@ void Hollow::updateModel(const UpdatePayload &payloadIn)
     bool labelSet = false;
     occt::ShapeVector closingFaceShapes;
     tls::Resolver resolver(payloadIn);
-    for (const auto &p : hollowPicks)
+    for (const auto &p : stow->picks.getPicks())
     {
       resolver.resolve(p);
       if (!resolver.getFeature() || !resolver.getSeerShape() || resolver.getResolvedIds().empty())
@@ -166,7 +216,7 @@ void Hollow::updateModel(const UpdatePayload &payloadIn)
         if (!labelSet)
         {
           labelSet = true;
-          label->setMatrix(osg::Matrixd::translate(p.getPoint(TopoDS::Face(rs))));
+          stow->offsetLabel->setMatrix(osg::Matrixd::translate(p.getPoint(TopoDS::Face(rs))));
         }
       }
     }
@@ -179,7 +229,7 @@ void Hollow::updateModel(const UpdatePayload &payloadIn)
     (
       tss.getRootOCCTShape(),
       occt::ShapeVectorCast(closingFaceShapes),
-      -offset->getDouble(), //default direction sucks.
+      -stow->offset.getDouble(), //default direction sucks.
       Precision::Confusion(),
       BRepOffset_Skin,
       Standard_False,
@@ -193,17 +243,17 @@ void Hollow::updateModel(const UpdatePayload &payloadIn)
     if (!check.isValid())
       throw std::runtime_error("shapeCheck failed in hollow feature");
     
-    sShape->setOCCTShape(operation.Shape(), getId());
-    sShape->shapeMatch(tss);
-    sShape->uniqueTypeMatch(tss);
-    sShape->modifiedMatch(operation, tss);
-    generatedMatch(operation, tss);
-    sShape->outerWireMatch(tss);
-    sShape->derivedMatch();
-    sShape->dumpNils("hollow feature");
-    sShape->dumpDuplicates("hollow feature");
-    sShape->ensureNoNils();
-    sShape->ensureNoDuplicates();
+    stow->sShape.setOCCTShape(operation.Shape(), getId());
+    stow->sShape.shapeMatch(tss);
+    stow->sShape.uniqueTypeMatch(tss);
+    stow->sShape.modifiedMatch(operation, tss);
+    stow->generatedMatch(operation, tss);
+    stow->sShape.outerWireMatch(tss);
+    stow->sShape.derivedMatch();
+    stow->sShape.dumpNils("hollow feature");
+    stow->sShape.dumpDuplicates("hollow feature");
+    stow->sShape.ensureNoNils();
+    stow->sShape.ensureNoDuplicates();
     
     setSuccess();
   }
@@ -227,92 +277,34 @@ void Hollow::updateModel(const UpdatePayload &payloadIn)
     std::cout << std::endl << lastUpdateLog;
 }
 
-void Hollow::generatedMatch(BRepOffsetAPI_MakeThickSolid &operationIn, const ann::SeerShape &targetShapeIn)
+void Feature::serialWrite(const boost::filesystem::path &dIn)
 {
-  //note: makeThickSolid::generated is returning all kinds of shapes.
-  for (const auto &targetId : targetShapeIn.getAllShapeIds())
-  {
-    const TopoDS_Shape &originalShape = targetShapeIn.getOCCTShape(targetId);
-    const TopTools_ListOfShape &list = operationIn.Generated(originalShape);
-    if (list.IsEmpty())
-      continue;
-    if (list.Size() > 1)
-    {
-      std::ostringstream s; s << "Warning: unexpected list size: " << list.Size()
-        << "    in Hollow::generatedMatch " << std::endl;
-      lastUpdateLog += s.str();
-    }
-    const TopoDS_Shape &newShape = list.First();
-    assert(!newShape.IsNull());
-    
-    //I think generated is returning all the geometry from operation
-    //so we have to skip non-existing geometry. like other half of a split.
-    if (!sShape->hasShape(newShape))
-      continue;
-    
-    if (!sShape->findId(newShape).is_nil())
-      continue; //only set ids for shapes with nil ids.
-      
-    //should only have faces left to assign. why don't nil wires come through?
-    //occt 7.4 started producing vertices here. Just going to skip for now.
-    //but maybe we want to map those also.
-//     assert(newShape.ShapeType() == TopAbs_FACE);
-    if(newShape.ShapeType() != TopAbs_FACE)
-      continue;
-      
-    uuid freshFaceId = gu::createRandomId();
-    bool results;
-    std::map<uuid, uuid>::iterator it;
-    std::tie(it, results) = shapeMap.insert(std::make_pair(targetId, freshFaceId));
-    if (!results)
-      freshFaceId = it->second;
-    sShape->updateId(newShape, freshFaceId);
-    
-    //in a hollow these generated entities are actually new entities, whereas for
-    //other features, like draft and blend, this is not the case. So these get a nil evolve in.
-    if (!sShape->hasEvolveRecordOut(freshFaceId))
-      sShape->insertEvolve(gu::createNilId(), freshFaceId);
-    
-    //update the outerwire.
-    uuid freshWireId = gu::createRandomId();
-    std::tie(it, results) = shapeMap.insert(std::make_pair(freshFaceId, freshWireId));
-    if (!results)
-      freshWireId = it->second;
-    
-    const TopoDS_Shape &wireShape = BRepTools::OuterWire(TopoDS::Face(newShape));
-    sShape->updateId(wireShape, freshWireId);
-  }
-}
-
-void Hollow::serialWrite(const boost::filesystem::path &dIn)
-{
-  namespace serial = prj::srl::hlls;
+  using prj::srl::hlls::Hollow;
   
-  serial::Hollow hollowOut
+  Hollow hollowOut
   (
     Base::serialOut(),
-    sShape->serialOut(),
-    offset->serialOut(),
-    label->serialOut()
+    stow->offset.serialOut(),
+    stow->picks.serialOut(),
+    stow->sShape.serialOut(),
+    stow->offsetLabel->serialOut()
   );
-  for (const auto &p : hollowPicks)
-    hollowOut.hollowPicks().push_back(p);
-  for (const auto &p : shapeMap)
-    hollowOut.shapeMap().push_back(serial::Hollow::ShapeMapType(gu::idToString(p.first), gu::idToString(p.second)));
+
+  for (const auto &p : stow->shapeMap)
+    hollowOut.shapeMap().push_back(Hollow::ShapeMapType(gu::idToString(p.first), gu::idToString(p.second)));
   
   xml_schema::NamespaceInfomap infoMap;
   std::ofstream stream(buildFilePathName(dIn).string());
-  serial::hollow(stream, hollowOut, infoMap);
+  prj::srl::hlls::hollow(stream, hollowOut, infoMap);
 }
 
-void Hollow::serialRead(const prj::srl::hlls::Hollow &sHollowIn)
+void Feature::serialRead(const prj::srl::hlls::Hollow &sHollowIn)
 {
   Base::serialIn(sHollowIn.base());
-  sShape->serialIn(sHollowIn.seerShape());
-  offset->serialIn(sHollowIn.offset());
-  label->serialIn(sHollowIn.plabel());
-  for (const auto &p : sHollowIn.hollowPicks())
-    hollowPicks.emplace_back(p);
+  stow->offset.serialIn(sHollowIn.offset());
+  stow->picks.serialIn(sHollowIn.picks());
+  stow->sShape.serialIn(sHollowIn.seerShape());
+  stow->offsetLabel->serialIn(sHollowIn.offsetLabel());
   for (const auto &p : sHollowIn.shapeMap())
-    shapeMap.insert(std::make_pair(gu::stringToId(p.idIn()), gu::stringToId(p.idOut())));
+    stow->shapeMap.insert(std::make_pair(gu::stringToId(p.idIn()), gu::stringToId(p.idOut())));
 }

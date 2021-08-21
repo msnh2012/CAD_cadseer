@@ -19,13 +19,11 @@
 
 #include <osg/Geometry>
 
-// #include "tools/featuretools.h"
 #include "application/appmainwindow.h"
-// #include "application/appapplication.h"
 #include "project/prjproject.h"
-// #include "viewer/vwrwidget.h"
 #include "message/msgnode.h"
 #include "selection/slceventhandler.h"
+#include "parameter/prmconstants.h"
 #include "parameter/prmparameter.h"
 #include "dialogs/dlgparameter.h"
 #include "commandview/cmvmessage.h"
@@ -44,7 +42,7 @@ Hollow::Hollow()
 : Base("cmd::Hollow")
 , leafManager()
 {
-  auto nf = std::make_shared<ftr::Hollow>();
+  auto nf = std::make_shared<ftr::Hollow::Feature>();
   project->addFeature(nf);
   feature = nf.get();
   node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
@@ -56,7 +54,7 @@ Hollow::Hollow(ftr::Base *fIn)
 : Base("cmd::Hollow")
 , leafManager(fIn)
 {
-  feature = dynamic_cast<ftr::Hollow*>(fIn);
+  feature = dynamic_cast<ftr::Hollow::Feature*>(fIn);
   assert(feature);
   viewBase = std::make_unique<cmv::Hollow>(this);
   node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
@@ -124,7 +122,9 @@ void Hollow::setSelections(const slc::Messages &targets)
 {
   assert(isActive);
   project->clearAllInputs(feature->getId());
-  feature->setHollowPicks(ftr::Picks());
+  
+  auto *picks = feature->getParameter(prm::Tags::Picks);
+  picks->setValue(ftr::Picks());
   
   if (targets.empty())
     return;
@@ -142,10 +142,10 @@ void Hollow::setSelections(const slc::Messages &targets)
 
     const ftr::Base *lf = project->findFeature(m.featureId);
     freshPicks.push_back(tls::convertToPick(m, *lf, project->getShapeHistory()));
-    freshPicks.back().tag = ftr::InputType::createIndexedTag(ftr::InputType::target, freshPicks.size() - 1);
+    freshPicks.back().tag = indexTag(ftr::Hollow::InputTags::pick, freshPicks.size() - 1);
     project->connect(lf->getId(), feature->getId(), {freshPicks.back().tag});
   }
-  feature->setHollowPicks(freshPicks);
+  picks->setValue(freshPicks);
 }
 
 void Hollow::localUpdate()
@@ -175,7 +175,7 @@ void Hollow::go()
       setSelections(targets);
       node->sendBlocked(msg::buildHideThreeD(targets.front().featureId));
       node->sendBlocked(msg::buildHideOverlay(targets.front().featureId));
-      dlg::Parameter *pDialog = new dlg::Parameter(&feature->getOffset(), feature->getId());
+      dlg::Parameter *pDialog = new dlg::Parameter(feature->getParameter(prm::Tags::Offset), feature->getId());
       pDialog->show();
       pDialog->raise();
       pDialog->activateWindow();

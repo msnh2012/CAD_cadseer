@@ -27,42 +27,33 @@
 
 class BRepOffsetAPI_MakeThickSolid;
 
-namespace lbr{class PLabel;}
 namespace prj{namespace srl{namespace hlls{class Hollow;}}}
-namespace ann{class SeerShape;}
 namespace ftr
 {
-  class Hollow : public Base
+  namespace Hollow
   {
-  public:
-    Hollow();
-    virtual ~Hollow() override;
-    virtual void updateModel(const UpdatePayload&) override;
-    virtual Type getType() const override {return Type::Hollow;}
-    virtual const std::string& getTypeString() const override {return toString(Type::Hollow);}
-    virtual const QIcon& getIcon() const override {return icon;}
-    virtual Descriptor getDescriptor() const override {return Descriptor::Alter;}
-    virtual void serialWrite(const boost::filesystem::path&) override;
-    void serialRead(const prj::srl::hlls::Hollow&);
-    
-    void setHollowPicks(const Picks&);
-    const Picks& getHollowPicks() const {return hollowPicks;}
-    void setOffset(double);
-    prm::Parameter& getOffset() const;
-  private:
-    static QIcon icon;
-    std::unique_ptr<prm::Parameter> offset;
-    osg::ref_ptr<lbr::PLabel> label; //!< graphic icon
-    Picks hollowPicks;
-    std::unique_ptr<ann::SeerShape> sShape;
-    
-    /*! used to map new geometry to old geometry. this will end up
-     * more complicated than this as hollow can make splits.
-     */ 
-    std::map<boost::uuids::uuid, boost::uuids::uuid> shapeMap;
-    
-    void generatedMatch(BRepOffsetAPI_MakeThickSolid&, const ann::SeerShape &);
-  };
+    namespace InputTags
+    {
+      inline constexpr std::string_view pick = "pick";
+    }
+    class Feature : public Base
+    {
+    public:
+      Feature();
+      ~Feature() override;
+      void updateModel(const UpdatePayload&) override;
+      Type getType() const override {return Type::Hollow;}
+      const std::string& getTypeString() const override {return toString(Type::Hollow);}
+      const QIcon& getIcon() const override {return icon;}
+      Descriptor getDescriptor() const override {return Descriptor::Alter;}
+      void serialWrite(const boost::filesystem::path&) override;
+      void serialRead(const prj::srl::hlls::Hollow&);
+    private:
+      static QIcon icon;
+      struct Stow;
+      std::unique_ptr<Stow> stow;
+    };
+  }
 }
 
 #endif // FTR_HOLLOW_H
