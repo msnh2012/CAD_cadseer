@@ -48,55 +48,63 @@
 #include "project/serial/generated/prjsrlmpcmappcurve.h"
 #include "feature/ftrmappcurve.h"
 
-using namespace ftr;
+using namespace ftr::MapPCurve;
 using boost::uuids::uuid;
+QIcon Feature::icon = QIcon(":/resources/images/constructionMapPCurve.svg");
 
-QIcon MapPCurve::icon;
-
-MapPCurve::MapPCurve():
-Base()
-, sShape(std::make_unique<ann::SeerShape>())
+struct Feature::Stow
 {
-  if (icon.isNull())
-    icon = QIcon(":/resources/images/constructionMapPCurve.svg");
+  Feature &feature;
+  prm::Parameter facePick{QObject::tr("Face Pick"), ftr::Picks(), Tags::facePick};
+  prm::Parameter edgePicks{QObject::tr("Edge Picks"), ftr::Picks(), Tags::edgePicks};
+  ann::SeerShape sShape;
   
+  Stow() = delete;
+  Stow(Feature &fIn)
+  : feature(fIn)
+  {
+    facePick.connectValue(std::bind(&Feature::setModelDirty, &feature));
+    feature.parameters.push_back(&facePick);
+    
+    edgePicks.connectValue(std::bind(&Feature::setModelDirty, &feature));
+    feature.parameters.push_back(&edgePicks);
+    
+    feature.annexes.insert(std::make_pair(ann::Type::SeerShape, &sShape));
+  }
+};
+
+Feature::Feature():
+Base()
+, stow(std::make_unique<Stow>(*this))
+{
   name = QObject::tr("MapPCurve");
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
-  
-  annexes.insert(std::make_pair(ann::Type::SeerShape, sShape.get()));
 }
 
-MapPCurve::~MapPCurve(){}
+Feature::~Feature(){}
 
-void MapPCurve::setFacePick(const Pick &pIn)
-{
-  facePick = pIn;
-  setModelDirty();
-}
-
-void MapPCurve::setEdgePicks(const Picks &pIn)
-{
-  edgePicks = pIn;
-  setModelDirty();
-}
-
-void MapPCurve::updateModel(const UpdatePayload &pIn)
+/* Only supporting mapping a sketch for now. Sketch has a csys and makes it easy to build
+ * PCurves from the wire. Free wires and edges have no reference csys, so in order to map
+ * those, there will have to be some reference csys. Not sure how we will do that.
+ */
+void Feature::updateModel(const UpdatePayload &pIn)
 {
   setFailure();
   lastUpdateLog.clear();
-  sShape->reset();
+  stow->sShape.reset();
   try
   {
-    
     if (isSkipped())
     {
       setSuccess();
       throw std::runtime_error("feature is skipped");
     }
     
+    if (stow->facePick.getPicks().empty())
+      throw std::runtime_error("no selected face");
     tls::Resolver pr(pIn);
     
-    if (!pr.resolve(facePick))
+    if (!pr.resolve(stow->facePick.getPicks().front()))
       throw std::runtime_error("invalid pick resolution for face");
     auto faceShapes = pr.getShapes();
     if (faceShapes.empty())
@@ -111,7 +119,7 @@ void MapPCurve::updateModel(const UpdatePayload &pIn)
     occt::EdgeVector freeEdges;
     occt::WireVector wires;
     tls::ShapeIdContainer tempIdMap; //store shapes and ids to assign to seershape after the fact.
-    for (const auto &ep : edgePicks)
+    for (const auto &ep : stow->edgePicks.getPicks())
     {
       if (!pr.resolve(ep))
         throw std::runtime_error("invalid pick resolution for edge");
@@ -136,8 +144,8 @@ void MapPCurve::updateModel(const UpdatePayload &pIn)
             {
               assert(iss->hasShape(we.Current()));
               uuid oldEdgeId = iss->findId(we.Current());
-              if (!sShape->hasEvolveRecordIn(oldEdgeId))
-                sShape->insertEvolve(oldEdgeId, gu::createRandomId());
+              if (!stow->sShape.hasEvolveRecordIn(oldEdgeId))
+                stow->sShape.insertEvolve(oldEdgeId, gu::createRandomId());
               BRepAdaptor_Curve curveAdaptor(we.Current());
               opencascade::handle<Geom2d_Curve> curve2d = GeomAPI::To2d(curveAdaptor.Curve().Curve(), sketchPlane);
               BRepBuilderAPI_MakeEdge em(curve2d, surfaceCopy, curveAdaptor.FirstParameter(), curveAdaptor.LastParameter());
@@ -146,13 +154,13 @@ void MapPCurve::updateModel(const UpdatePayload &pIn)
               nwm.Add(em);
               if (nwm.Error() != BRepBuilderAPI_WireDone)
                 throw std::runtime_error("Adding edge to wire failed");
-              tempIdMap.insert(sShape->evolve(oldEdgeId).front(), nwm.Edge());
+              tempIdMap.insert(stow->sShape.evolve(oldEdgeId).front(), nwm.Edge());
             }
             wires.push_back(nwm);
             uuid oldWireId = iss->findId(wire);
-            if (!sShape->hasEvolveRecordIn(oldWireId))
-              sShape->insertEvolve(oldWireId, gu::createRandomId());
-            tempIdMap.insert(sShape->evolve(oldWireId).front(), wires.back());
+            if (!stow->sShape.hasEvolveRecordIn(oldWireId))
+              stow->sShape.insertEvolve(oldWireId, gu::createRandomId());
+            tempIdMap.insert(stow->sShape.evolve(oldWireId).front(), wires.back());
           }
         }
       }
@@ -167,18 +175,18 @@ void MapPCurve::updateModel(const UpdatePayload &pIn)
     if (!check.isValid())
       throw std::runtime_error("shapeCheck failed");
     
-    sShape->setOCCTShape(out, getId());
-    for (const auto &s : sShape->getAllShapes())
+    stow->sShape.setOCCTShape(out, getId());
+    for (const auto &s : stow->sShape.getAllShapes())
     {
       if (tempIdMap.has(s))
-        sShape->updateId(s, tempIdMap.find(s));
+        stow->sShape.updateId(s, tempIdMap.find(s));
     }
     //create vertex ids from edges. This is a hack as we loose vertex evolution from input feature.
     //BRepTools_WireExplorer seems to skip the first vertex and it is a PIA to try and sync the
     //vertices between WireExplorer with the WireMaker.
-    sShape->derivedMatch();
-    sShape->dumpNils(getTypeString());
-    sShape->ensureNoNils();
+    stow->sShape.derivedMatch();
+    stow->sShape.dumpNils(getTypeString());
+    stow->sShape.ensureNoNils();
     
     setSuccess();
   }
@@ -202,27 +210,25 @@ void MapPCurve::updateModel(const UpdatePayload &pIn)
     std::cout << std::endl << lastUpdateLog;
 }
 
-void MapPCurve::serialWrite(const boost::filesystem::path &dIn)
+void Feature::serialWrite(const boost::filesystem::path &dIn)
 {
   prj::srl::mpc::MapPCurve so
   (
     Base::serialOut()
-    , sShape->serialOut()
-    , facePick.serialOut()
+    , stow->facePick.serialOut()
+    , stow->edgePicks.serialOut()
+    , stow->sShape.serialOut()
   );
-  for (const auto &p : edgePicks)
-    so.edgePicks().push_back(p);
   
   xml_schema::NamespaceInfomap infoMap;
   std::ofstream stream(buildFilePathName(dIn).string());
   prj::srl::mpc::mappcurve(stream, so, infoMap);
 }
 
-void MapPCurve::serialRead(const prj::srl::mpc::MapPCurve &so)
+void Feature::serialRead(const prj::srl::mpc::MapPCurve &so)
 {
   Base::serialIn(so.base());
-  sShape->serialIn(so.seerShape());
-  facePick.serialIn(so.facePick());
-  for (const auto &p : so.edgePicks())
-    edgePicks.emplace_back(p);
+  stow->facePick.serialIn(so.facePick());
+  stow->edgePicks.serialIn(so.edgePicks());
+  stow->sShape.serialIn(so.seerShape());
 }

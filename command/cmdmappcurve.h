@@ -23,14 +23,14 @@
 #include "command/cmdleafmanager.h"
 #include "command/cmdbase.h"
 
-namespace ftr{class MapPCurve;}
+namespace ftr{namespace MapPCurve {class Feature;}}
 
 namespace cmd
 {
   class MapPCurve : public Base
   {
   public:
-    ftr::MapPCurve *feature = nullptr;
+    ftr::MapPCurve::Feature *feature = nullptr;
     
     MapPCurve();
     MapPCurve(ftr::Base*);

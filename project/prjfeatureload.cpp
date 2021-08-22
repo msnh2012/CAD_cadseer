@@ -720,7 +720,7 @@ std::shared_ptr<ftr::Base> FeatureLoad::loadMapPCurve(const std::string &fileNam
   auto ss = srl::mpc::mappcurve(fileNameIn, flags);
   assert(ss);
   
-  auto sf = std::make_shared<ftr::MapPCurve>();
+  auto sf = std::make_shared<ftr::MapPCurve::Feature>();
   sf->getAnnex<ann::SeerShape>().setOCCTShape(shapeVector.at(shapeOffsetIn), featureId);
   sf->serialRead(*ss);
   

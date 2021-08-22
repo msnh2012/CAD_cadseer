@@ -20,43 +20,39 @@
 #ifndef FTR_MAPPCURVE_H
 #define FTR_MAPPCURVE_H
 
-#include "feature/ftrpick.h"
 #include "feature/ftrbase.h"
 
-namespace ann{class SeerShape;}
 namespace prj{namespace srl{namespace mpc{class MapPCurve;}}}
 
 namespace ftr
 {
-  class MapPCurve : public Base
+  namespace MapPCurve
   {
-  public:
-    constexpr static const char *faceTag = "face";
-    constexpr static const char *curveTag = "curve";
-    
-    MapPCurve();
-    ~MapPCurve() override;
-    
-    void updateModel(const UpdatePayload&) override;
-    Type getType() const override {return Type::MapPCurve;}
-    const std::string& getTypeString() const override {return toString(Type::MapPCurve);}
-    const QIcon& getIcon() const override {return icon;}
-    Descriptor getDescriptor() const override {return Descriptor::Create;}
-    
-    void serialWrite(const boost::filesystem::path&) override;
-    void serialRead(const prj::srl::mpc::MapPCurve&);
-    
-    void setFacePick(const Pick&);
-    const Pick& getFacePick() const {return facePick;}
-    void setEdgePicks(const Picks&);
-    const Picks& getEdgePicks() const {return edgePicks;}
-    
-  private:
-    std::unique_ptr<ann::SeerShape> sShape;
-    Pick facePick;
-    Picks edgePicks;
-    static QIcon icon;
-  };
+    namespace Tags
+    {
+      inline constexpr std::string_view facePick = "facePick";
+      inline constexpr std::string_view edgePicks = "edgePicks";
+    }
+    class Feature : public Base
+    {
+    public:
+      Feature();
+      ~Feature() override;
+      
+      void updateModel(const UpdatePayload&) override;
+      Type getType() const override {return Type::MapPCurve;}
+      const std::string& getTypeString() const override {return toString(Type::MapPCurve);}
+      const QIcon& getIcon() const override {return icon;}
+      Descriptor getDescriptor() const override {return Descriptor::Create;}
+      
+      void serialWrite(const boost::filesystem::path&) override;
+      void serialRead(const prj::srl::mpc::MapPCurve&);
+    private:
+      static QIcon icon;
+      struct Stow;
+      std::unique_ptr<Stow> stow;
+    };
+  }
 }
 
 #endif //FTR_MAPPCURVE_H

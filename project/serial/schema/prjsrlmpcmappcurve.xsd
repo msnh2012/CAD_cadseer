@@ -6,17 +6,15 @@
   targetNamespace="http://www.cadseer.com/prj/srl/mpc"
 >
   <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptparameter.xsd"/>
-  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptoverlay.xsd"/>
   <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptseershape.xsd"/>
-  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptpick.xsd"/>
   <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptbase.xsd"/>
 
 <xs:complexType name="MapPCurve">
   <xs:sequence>
     <xs:element name="base" type="spt:Base"/>
+    <xs:element name="facePick" type="spt:Parameter"/>
+    <xs:element name="edgePicks" type="spt:Parameter"/>
     <xs:element name="seerShape" type="spt:SeerShape"/>
-    <xs:element name="facePick" type="spt:Pick"/>
-    <xs:element name="edgePicks" type="spt:Pick" minOccurs="0" maxOccurs="unbounded"/>
   </xs:sequence>
 </xs:complexType>
 

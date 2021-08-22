@@ -73,30 +73,6 @@ namespace prj
         this->base_.set (std::move (x));
       }
 
-      const MapPCurve::SeerShapeType& MapPCurve::
-      seerShape () const
-      {
-        return this->seerShape_.get ();
-      }
-
-      MapPCurve::SeerShapeType& MapPCurve::
-      seerShape ()
-      {
-        return this->seerShape_.get ();
-      }
-
-      void MapPCurve::
-      seerShape (const SeerShapeType& x)
-      {
-        this->seerShape_.set (x);
-      }
-
-      void MapPCurve::
-      seerShape (::std::unique_ptr< SeerShapeType > x)
-      {
-        this->seerShape_.set (std::move (x));
-      }
-
       const MapPCurve::FacePickType& MapPCurve::
       facePick () const
       {
@@ -121,22 +97,52 @@ namespace prj
         this->facePick_.set (std::move (x));
       }
 
-      const MapPCurve::EdgePicksSequence& MapPCurve::
+      const MapPCurve::EdgePicksType& MapPCurve::
       edgePicks () const
       {
-        return this->edgePicks_;
+        return this->edgePicks_.get ();
       }
 
-      MapPCurve::EdgePicksSequence& MapPCurve::
+      MapPCurve::EdgePicksType& MapPCurve::
       edgePicks ()
       {
-        return this->edgePicks_;
+        return this->edgePicks_.get ();
       }
 
       void MapPCurve::
-      edgePicks (const EdgePicksSequence& s)
+      edgePicks (const EdgePicksType& x)
       {
-        this->edgePicks_ = s;
+        this->edgePicks_.set (x);
+      }
+
+      void MapPCurve::
+      edgePicks (::std::unique_ptr< EdgePicksType > x)
+      {
+        this->edgePicks_.set (std::move (x));
+      }
+
+      const MapPCurve::SeerShapeType& MapPCurve::
+      seerShape () const
+      {
+        return this->seerShape_.get ();
+      }
+
+      MapPCurve::SeerShapeType& MapPCurve::
+      seerShape ()
+      {
+        return this->seerShape_.get ();
+      }
+
+      void MapPCurve::
+      seerShape (const SeerShapeType& x)
+      {
+        this->seerShape_.set (x);
+      }
+
+      void MapPCurve::
+      seerShape (::std::unique_ptr< SeerShapeType > x)
+      {
+        this->seerShape_.set (std::move (x));
       }
     }
   }
@@ -155,25 +161,27 @@ namespace prj
 
       MapPCurve::
       MapPCurve (const BaseType& base,
-                 const SeerShapeType& seerShape,
-                 const FacePickType& facePick)
+                 const FacePickType& facePick,
+                 const EdgePicksType& edgePicks,
+                 const SeerShapeType& seerShape)
       : ::xml_schema::Type (),
         base_ (base, this),
-        seerShape_ (seerShape, this),
         facePick_ (facePick, this),
-        edgePicks_ (this)
+        edgePicks_ (edgePicks, this),
+        seerShape_ (seerShape, this)
       {
       }
 
       MapPCurve::
       MapPCurve (::std::unique_ptr< BaseType > base,
-                 ::std::unique_ptr< SeerShapeType > seerShape,
-                 ::std::unique_ptr< FacePickType > facePick)
+                 ::std::unique_ptr< FacePickType > facePick,
+                 ::std::unique_ptr< EdgePicksType > edgePicks,
+                 ::std::unique_ptr< SeerShapeType > seerShape)
       : ::xml_schema::Type (),
         base_ (std::move (base), this),
-        seerShape_ (std::move (seerShape), this),
         facePick_ (std::move (facePick), this),
-        edgePicks_ (this)
+        edgePicks_ (std::move (edgePicks), this),
+        seerShape_ (std::move (seerShape), this)
       {
       }
 
@@ -183,9 +191,9 @@ namespace prj
                  ::xml_schema::Container* c)
       : ::xml_schema::Type (x, f, c),
         base_ (x.base_, f, this),
-        seerShape_ (x.seerShape_, f, this),
         facePick_ (x.facePick_, f, this),
-        edgePicks_ (x.edgePicks_, f, this)
+        edgePicks_ (x.edgePicks_, f, this),
+        seerShape_ (x.seerShape_, f, this)
       {
       }
 
@@ -195,9 +203,9 @@ namespace prj
                  ::xml_schema::Container* c)
       : ::xml_schema::Type (e, f | ::xml_schema::Flags::base, c),
         base_ (this),
-        seerShape_ (this),
         facePick_ (this),
-        edgePicks_ (this)
+        edgePicks_ (this),
+        seerShape_ (this)
       {
         if ((f & ::xml_schema::Flags::base) == 0)
         {
@@ -230,20 +238,6 @@ namespace prj
             }
           }
 
-          // seerShape
-          //
-          if (n.name () == "seerShape" && n.namespace_ ().empty ())
-          {
-            ::std::unique_ptr< SeerShapeType > r (
-              SeerShapeTraits::create (i, f, this));
-
-            if (!seerShape_.present ())
-            {
-              this->seerShape_.set (::std::move (r));
-              continue;
-            }
-          }
-
           // facePick
           //
           if (n.name () == "facePick" && n.namespace_ ().empty ())
@@ -265,8 +259,25 @@ namespace prj
             ::std::unique_ptr< EdgePicksType > r (
               EdgePicksTraits::create (i, f, this));
 
-            this->edgePicks_.push_back (::std::move (r));
-            continue;
+            if (!edgePicks_.present ())
+            {
+              this->edgePicks_.set (::std::move (r));
+              continue;
+            }
+          }
+
+          // seerShape
+          //
+          if (n.name () == "seerShape" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< SeerShapeType > r (
+              SeerShapeTraits::create (i, f, this));
+
+            if (!seerShape_.present ())
+            {
+              this->seerShape_.set (::std::move (r));
+              continue;
+            }
           }
 
           break;
@@ -279,17 +290,24 @@ namespace prj
             "");
         }
 
-        if (!seerShape_.present ())
-        {
-          throw ::xsd::cxx::tree::expected_element< char > (
-            "seerShape",
-            "");
-        }
-
         if (!facePick_.present ())
         {
           throw ::xsd::cxx::tree::expected_element< char > (
             "facePick",
+            "");
+        }
+
+        if (!edgePicks_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "edgePicks",
+            "");
+        }
+
+        if (!seerShape_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "seerShape",
             "");
         }
       }
@@ -308,9 +326,9 @@ namespace prj
         {
           static_cast< ::xml_schema::Type& > (*this) = x;
           this->base_ = x.base_;
-          this->seerShape_ = x.seerShape_;
           this->facePick_ = x.facePick_;
           this->edgePicks_ = x.edgePicks_;
+          this->seerShape_ = x.seerShape_;
         }
 
         return *this;
@@ -629,17 +647,6 @@ namespace prj
           s << i.base ();
         }
 
-        // seerShape
-        //
-        {
-          ::xercesc::DOMElement& s (
-            ::xsd::cxx::xml::dom::create_element (
-              "seerShape",
-              e));
-
-          s << i.seerShape ();
-        }
-
         // facePick
         //
         {
@@ -653,16 +660,24 @@ namespace prj
 
         // edgePicks
         //
-        for (MapPCurve::EdgePicksConstIterator
-             b (i.edgePicks ().begin ()), n (i.edgePicks ().end ());
-             b != n; ++b)
         {
           ::xercesc::DOMElement& s (
             ::xsd::cxx::xml::dom::create_element (
               "edgePicks",
               e));
 
-          s << *b;
+          s << i.edgePicks ();
+        }
+
+        // seerShape
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "seerShape",
+              e));
+
+          s << i.seerShape ();
         }
       }
 

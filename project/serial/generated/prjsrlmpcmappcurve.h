@@ -91,11 +91,7 @@ namespace prj
 
 #include "prjsrlsptparameter.h"
 
-#include "prjsrlsptoverlay.h"
-
 #include "prjsrlsptseershape.h"
-
-#include "prjsrlsptpick.h"
 
 #include "prjsrlsptbase.h"
 
@@ -125,6 +121,40 @@ namespace prj
         void
         base (::std::unique_ptr< BaseType > p);
 
+        // facePick
+        //
+        typedef ::prj::srl::spt::Parameter FacePickType;
+        typedef ::xsd::cxx::tree::traits< FacePickType, char > FacePickTraits;
+
+        const FacePickType&
+        facePick () const;
+
+        FacePickType&
+        facePick ();
+
+        void
+        facePick (const FacePickType& x);
+
+        void
+        facePick (::std::unique_ptr< FacePickType > p);
+
+        // edgePicks
+        //
+        typedef ::prj::srl::spt::Parameter EdgePicksType;
+        typedef ::xsd::cxx::tree::traits< EdgePicksType, char > EdgePicksTraits;
+
+        const EdgePicksType&
+        edgePicks () const;
+
+        EdgePicksType&
+        edgePicks ();
+
+        void
+        edgePicks (const EdgePicksType& x);
+
+        void
+        edgePicks (::std::unique_ptr< EdgePicksType > p);
+
         // seerShape
         //
         typedef ::prj::srl::spt::SeerShape SeerShapeType;
@@ -142,49 +172,17 @@ namespace prj
         void
         seerShape (::std::unique_ptr< SeerShapeType > p);
 
-        // facePick
-        //
-        typedef ::prj::srl::spt::Pick FacePickType;
-        typedef ::xsd::cxx::tree::traits< FacePickType, char > FacePickTraits;
-
-        const FacePickType&
-        facePick () const;
-
-        FacePickType&
-        facePick ();
-
-        void
-        facePick (const FacePickType& x);
-
-        void
-        facePick (::std::unique_ptr< FacePickType > p);
-
-        // edgePicks
-        //
-        typedef ::prj::srl::spt::Pick EdgePicksType;
-        typedef ::xsd::cxx::tree::sequence< EdgePicksType > EdgePicksSequence;
-        typedef EdgePicksSequence::iterator EdgePicksIterator;
-        typedef EdgePicksSequence::const_iterator EdgePicksConstIterator;
-        typedef ::xsd::cxx::tree::traits< EdgePicksType, char > EdgePicksTraits;
-
-        const EdgePicksSequence&
-        edgePicks () const;
-
-        EdgePicksSequence&
-        edgePicks ();
-
-        void
-        edgePicks (const EdgePicksSequence& s);
-
         // Constructors.
         //
         MapPCurve (const BaseType&,
-                   const SeerShapeType&,
-                   const FacePickType&);
+                   const FacePickType&,
+                   const EdgePicksType&,
+                   const SeerShapeType&);
 
         MapPCurve (::std::unique_ptr< BaseType >,
-                   ::std::unique_ptr< SeerShapeType >,
-                   ::std::unique_ptr< FacePickType >);
+                   ::std::unique_ptr< FacePickType >,
+                   ::std::unique_ptr< EdgePicksType >,
+                   ::std::unique_ptr< SeerShapeType >);
 
         MapPCurve (const ::xercesc::DOMElement& e,
                    ::xml_schema::Flags f = 0,
@@ -213,9 +211,9 @@ namespace prj
 
         protected:
         ::xsd::cxx::tree::one< BaseType > base_;
-        ::xsd::cxx::tree::one< SeerShapeType > seerShape_;
         ::xsd::cxx::tree::one< FacePickType > facePick_;
-        EdgePicksSequence edgePicks_;
+        ::xsd::cxx::tree::one< EdgePicksType > edgePicks_;
+        ::xsd::cxx::tree::one< SeerShapeType > seerShape_;
       };
     }
   }

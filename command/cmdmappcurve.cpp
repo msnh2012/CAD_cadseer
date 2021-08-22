@@ -35,7 +35,7 @@ MapPCurve::MapPCurve()
 : Base("cmd::MapPCurve")
 , leafManager()
 {
-  auto nf = std::make_shared<ftr::MapPCurve>();
+  auto nf = std::make_shared<ftr::MapPCurve::Feature>();
   project->addFeature(nf);
   feature = nf.get();
   node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
@@ -47,7 +47,7 @@ MapPCurve::MapPCurve(ftr::Base *fIn)
 : Base("cmd::MapPCurve")
 , leafManager(fIn)
 {
-  feature = dynamic_cast<ftr::MapPCurve*>(fIn);
+  feature = dynamic_cast<ftr::MapPCurve::Feature*>(fIn);
   assert(feature);
   viewBase = std::make_unique<cmv::MapPCurve>(this);
   node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
@@ -136,25 +136,27 @@ void MapPCurve::setSelections(const std::vector<slc::Message> &faces, const std:
   assert(isActive);
   
   project->clearAllInputs(feature->getId());
-  feature->setFacePick(ftr::Pick());
-  feature->setEdgePicks(std::vector<ftr::Pick>());
+  auto *facePick = feature->getParameter(ftr::MapPCurve::Tags::facePick);
+  auto *edgePicks = feature->getParameter(ftr::MapPCurve::Tags::edgePicks);
+  facePick->setValue(ftr::Picks());
+  edgePicks->setValue(ftr::Picks());
   if (faces.empty() || edges.empty())
     return;
   
-  ftr::Pick facePick = tls::convertToPick(faces.front(), *project->findFeature(faces.front().featureId), project->getShapeHistory());
-  facePick.tag = ftr::MapPCurve::faceTag;
-  feature->setFacePick(facePick);
-  project->connect(faces.front().featureId, feature->getId(), {facePick.tag});
+  ftr::Pick face = tls::convertToPick(faces.front(), *project->findFeature(faces.front().featureId), project->getShapeHistory());
+  face.tag = indexTag(ftr::MapPCurve::Tags::facePick, 0);
+  facePick->setValue(face);
+  project->connect(faces.front().featureId, feature->getId(), {face.tag});
 
-  ftr::Picks edgePicks;
+  ftr::Picks te;
   for (const auto &m : edges)
   {
     const ftr::Base *lf = project->findFeature(m.featureId);
-    edgePicks.push_back(tls::convertToPick(m, *lf, project->getShapeHistory()));
-    edgePicks.back().tag = ftr::InputType::createIndexedTag(ftr::MapPCurve::curveTag, edgePicks.size() - 1);
-    project->connect(lf->getId(), feature->getId(), {edgePicks.back().tag});
+    te.push_back(tls::convertToPick(m, *lf, project->getShapeHistory()));
+    te.back().tag = indexTag(ftr::MapPCurve::Tags::edgePicks, te.size() - 1);
+    project->connect(lf->getId(), feature->getId(), {te.back().tag});
   }
-  feature->setEdgePicks(edgePicks);
+  edgePicks->setValue(te);
 }
 
 void MapPCurve::localUpdate()

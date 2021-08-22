@@ -17,17 +17,16 @@
  *
  */
 
-// #include <cassert>
-// #include <boost/optional/optional.hpp>
-
 #include <QSettings>
 #include <QVBoxLayout>
 
 #include "application/appapplication.h"
 #include "project/prjproject.h"
-#include "dialogs/dlgselectionbutton.h"
-#include "dialogs/dlgselectionwidget.h"
-#include "tools/featuretools.h"
+#include "message/msgnode.h"
+#include "parameter/prmconstants.h"
+#include "parameter/prmparameter.h"
+#include "commandview/cmvselectioncue.h"
+#include "commandview/cmvtable.h"
 #include "feature/ftrmappcurve.h"
 #include "command/cmdmappcurve.h"
 #include "commandview/cmvmappcurve.h"
@@ -40,91 +39,73 @@ struct MapPCurve::Stow
 {
   cmd::MapPCurve *command;
   cmv::MapPCurve *view;
-  dlg::SelectionWidget *selectionWidget = nullptr;
+  prm::Parameters parameters;
+  cmv::tbl::Model *prmModel = nullptr;
+  cmv::tbl::View *prmView = nullptr;
   
   Stow(cmd::MapPCurve *cIn, cmv::MapPCurve *vIn)
   : command(cIn)
   , view(vIn)
   {
+    parameters = command->feature->getParameters();
     buildGui();
-    
-    QSettings &settings = app::instance()->getUserSettings();
-    settings.beginGroup("cmv::MapPCurve");
-    //load settings
-    settings.endGroup();
-    
-    loadFeatureData();
-    glue();
+    connect(prmModel, &tbl::Model::dataChanged, view, &MapPCurve::modelChanged);
   }
   
   void buildGui()
   {
-    QSizePolicy adjust = view->sizePolicy();
-    adjust.setVerticalPolicy(QSizePolicy::Maximum);
-    view->setSizePolicy(adjust);
-    
     QVBoxLayout *mainLayout = new QVBoxLayout();
     view->setLayout(mainLayout);
+    Base::clearContentMargins(view);
+    view->setSizePolicy(view->sizePolicy().horizontalPolicy(), QSizePolicy::Expanding);
     
-    std::vector<dlg::SelectionWidgetCue> cues;
-    dlg::SelectionWidgetCue cue;
-    cue.name = tr("Face");
-    cue.singleSelection = true;
-    cue.mask = slc::ObjectsEnabled | slc::ObjectsSelectable | slc::FacesEnabled | slc::FacesSelectable;
-    cue.statusPrompt = tr("Select Target Face");
-    cue.showAccrueColumn = false;
-    cues.push_back(cue);
-    cue.name = tr("Edges");
-    cue.singleSelection = false;
-    cue.mask = slc::ObjectsEnabled | slc::ObjectsSelectable | slc::WiresEnabled | slc::WiresSelectable | slc::EdgesEnabled | slc::EdgesSelectable;
-    cue.statusPrompt = tr("Select Edges To Map");
-    cues.push_back(cue);
-    selectionWidget = new dlg::SelectionWidget(view, cues);
-    mainLayout->addWidget(selectionWidget);
+    prmModel = new tbl::Model(view, command->feature);
+    prmView = new tbl::View(view, prmModel, true);
+    mainLayout->addWidget(prmView);
     
-    mainLayout->addItem(new QSpacerItem(20, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
-  }
-  
-  void loadFeatureData()
-  {
-    ftr::UpdatePayload up = view->project->getPayload(command->feature->getId());
-    tls::Resolver resolver(up);
-    
-    auto picksToMessages = [&](const ftr::Picks &pIn) -> slc::Messages
     {
-      slc::Messages out;
-      for (const auto &p : pIn)
-      {
-        if (resolver.resolve(p))
-        {
-          auto msgs = resolver.convertToMessages();
-          out.insert(out.end(), msgs.begin(), msgs.end());
-        }
-      }
-      return out;
-    };
+      tbl::SelectionCue cue;
+      cue.singleSelection = true;
+      cue.mask = slc::ObjectsEnabled | slc::FacesBoth;
+      cue.statusPrompt = tr("Select Face");
+      cue.accrueEnabled = false;
+      prmModel->setCue(command->feature->getParameter(ftr::MapPCurve::Tags::facePick), cue);
+    }
     
-    selectionWidget->initializeButton(0, picksToMessages({command->feature->getFacePick()}));
-    selectionWidget->initializeButton(1, picksToMessages(command->feature->getEdgePicks()));
-    selectionWidget->activate(0);
-  }
-  
-  void glue()
-  {
-    QObject::connect(selectionWidget->getButton(0), &dlg::SelectionButton::dirty, view, &MapPCurve::selectionChanged);
-    QObject::connect(selectionWidget->getButton(1), &dlg::SelectionButton::dirty, view, &MapPCurve::selectionChanged);
+    {
+      tbl::SelectionCue cue;
+      cue.singleSelection = false;
+      cue.mask = slc::ObjectsBoth;
+      cue.statusPrompt = tr("Select Sketch To Project");
+      cue.accrueEnabled = false;
+      prmModel->setCue(command->feature->getParameter(ftr::MapPCurve::Tags::edgePicks), cue);
+    }
   }
 };
 
 MapPCurve::MapPCurve(cmd::MapPCurve *cIn)
 : Base("cmv::MapPCurve")
 , stow(new Stow(cIn, this))
-{}
+{
+  goSelectionToolbar();
+  goMaskDefault();
+}
 
 MapPCurve::~MapPCurve() = default;
 
-void MapPCurve::selectionChanged()
+void MapPCurve::modelChanged(const QModelIndex &index, const QModelIndex&)
 {
-  stow->command->setSelections(stow->selectionWidget->getMessages(0), stow->selectionWidget->getMessages(1));
+  if (!index.isValid())
+    return;
+  auto tag = stow->parameters.at(index.row())->getTag();
+  if (tag == ftr::MapPCurve::Tags::facePick || tag == ftr::MapPCurve::Tags::edgePicks)
+  {
+    const auto &fs = stow->prmModel->getMessages(stow->command->feature->getParameter(ftr::MapPCurve::Tags::facePick));
+    const auto &es = stow->prmModel->getMessages(stow->command->feature->getParameter(ftr::MapPCurve::Tags::edgePicks));
+    stow->command->setSelections(fs, es);
+  }
+  
   stow->command->localUpdate();
+  node->sendBlocked(msg::buildStatusMessage(stow->command->getStatusMessage()));
+  goMaskDefault();
 }
