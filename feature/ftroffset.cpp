@@ -38,58 +38,127 @@
 #include "parameter/prmparameter.h"
 #include "feature/ftroffset.h"
 
-using namespace ftr;
-
 using boost::uuids::uuid;
+using namespace ftr::Offset;
+QIcon Feature::icon = QIcon(":/resources/images/constructionOffset.svg");
 
-QIcon Offset::icon;
-
-Offset::Offset():
-Base(),
-distance(std::make_unique<prm::Parameter>(prm::Names::Distance, 0.1, prm::Tags::Distance)),
-sShape(std::make_unique<ann::SeerShape>())
+namespace
 {
-  if (icon.isNull())
-    icon = QIcon(":/resources/images/constructionOffset.svg");
+  std::string getErrorString(const BRepOffset_MakeOffset &bIn)
+  {
+    static const std::map<BRepOffset_Error, std::string> errors = 
+    {
+      std::make_pair(BRepOffset_NoError, "BRepOffset_NoError"),
+      std::make_pair(BRepOffset_UnknownError, "BRepOffset_UnknownError"),
+      std::make_pair(BRepOffset_BadNormalsOnGeometry, "BRepOffset_BadNormalsOnGeometry"),
+      std::make_pair(BRepOffset_C0Geometry, "BRepOffset_C0Geometry"),
+      std::make_pair(BRepOffset_NullOffset, "BRepOffset_NullOffset"),
+      std::make_pair(BRepOffset_NotConnectedShell, "BRepOffset_NotConnectedShell")
+    };
+    
+    BRepOffset_Error e = bIn.Error();
+    std::ostringstream stream;
+    stream << "failed with error: " << errors.at(e);
+    return stream.str();
+  }
+}
+
+struct Feature::Stow
+{
+  Feature &feature;
+  prm::Parameter picks{QObject::tr("Face Picks"), ftr::Picks(), prm::Tags::Picks};
+  prm::Parameter distance{prm::Names::Distance, 1.0, prm::Tags::Distance};
+  ann::SeerShape sShape;
+  osg::ref_ptr<lbr::PLabel> distanceLabel{new lbr::PLabel(&distance)};
   
+  Stow() = delete;
+  Stow(Feature &fIn)
+  : feature(fIn)
+  {
+    picks.connectValue(std::bind(&Feature::setModelDirty, &feature));
+    feature.parameters.push_back(&picks);
+    
+    distance.setConstraint(prm::Constraint::buildNonZero());
+    distance.connectValue(std::bind(&Feature::setModelDirty, &feature));
+    feature.parameters.push_back(&distance);
+    
+    feature.annexes.insert(std::make_pair(ann::Type::SeerShape, &sShape));
+    
+    feature.overlaySwitch->addChild(distanceLabel.get());
+  }
+  
+  void offsetMatch(const BRepOffset_MakeOffset &offseter, const ann::SeerShape &tss)
+  {
+    const BRepAlgo_Image &oFaces = offseter.OffsetFacesFromShapes();
+    const BRepAlgo_Image &oEdges = offseter.OffsetEdgesFromShapes();
+    occt::ShapeVector as = tss.getAllShapes();
+    
+    //testing results
+    //   int fc = 0;
+    //   int ec = 0;
+    //   for (const auto &s : as)
+    //   {
+    //     if (oFaces.HasImage(s))
+    //       fc++;
+    //     if (oEdges.HasImage(s))
+    //       ec++;
+    //   }
+    //   std::cout << std::endl << "face count is: " << fc
+    //   << "    edge count is: " << ec << std::endl;
+    //output of offseting 1 face of a box
+    //"face count is: 6    edge count is: 12"
+    //output of offseting feature consisting of extracted, tangent region of a box with 1 edge blended.
+    //face count is: 3    edge count is: 10
+    //it looks like offset is creating all new shapes.
+    
+    auto update = [&](const TopoDS_Shape &original, const TopoDS_Shape &offsetShape)
+    {
+      assert(tss.hasShape(original));
+      assert(sShape.hasShape(offsetShape));
+      uuid oid = tss.findId(original);
+      uuid nid = gu::createRandomId();
+      if (sShape.hasEvolveRecordIn(oid))
+        nid = sShape.evolve(oid).front(); //should be 1 to 1.
+        else
+          sShape.insertEvolve(oid, nid);
+        sShape.updateId(offsetShape, nid);
+    };
+    
+    for (const auto &s : as)
+    {
+      if (oFaces.HasImage(s))
+      {
+        const TopTools_ListOfShape &images = oFaces.Image(s);
+        if (!images.IsEmpty())
+        {
+          if (images.Extent() > 1)
+            std::cout << "WARNING: more than 1 face image in Offset::offsetMatch" << std::endl;
+          update(s, images.First());
+        }
+      }
+      if (oEdges.HasImage(s))
+      {
+        const TopTools_ListOfShape &images = oEdges.Image(s);
+        if (!images.IsEmpty())
+        {
+          if (images.Extent() > 1)
+            std::cout << "WARNING: more than 1 edge image in Offset::offsetMatch" << std::endl;
+          update(s, images.First());
+        }
+      }
+    }
+  }
+};
+
+Feature::Feature()
+: Base()
+, stow(std::make_unique<Stow>(*this))
+{
   name = QObject::tr("Offset");
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
-  
-  distance->setConstraint(prm::Constraint::buildNonZero());
-  distance->connectValue(std::bind(&Offset::setModelDirty, this));
-  parameters.push_back(distance.get());
-  
-  distanceLabel = new lbr::PLabel(distance.get());
-  overlaySwitch->addChild(distanceLabel.get());
-  
-  annexes.insert(std::make_pair(ann::Type::SeerShape, sShape.get()));
 }
 
-Offset::~Offset(){}
-
-void Offset::setPicks(const Picks &pIn)
-{
-  picks = pIn;
-  setModelDirty();
-}
-
-static std::string getErrorString(const BRepOffset_MakeOffset &bIn)
-{
-  static const std::map<BRepOffset_Error, std::string> errors = 
-  {
-    std::make_pair(BRepOffset_NoError, "BRepOffset_NoError"),
-    std::make_pair(BRepOffset_UnknownError, "BRepOffset_UnknownError"),
-    std::make_pair(BRepOffset_BadNormalsOnGeometry, "BRepOffset_BadNormalsOnGeometry"),
-    std::make_pair(BRepOffset_C0Geometry, "BRepOffset_C0Geometry"),
-    std::make_pair(BRepOffset_NullOffset, "BRepOffset_NullOffset"),
-    std::make_pair(BRepOffset_NotConnectedShell, "BRepOffset_NotConnectedShell")
-  };
-  
-  BRepOffset_Error e = bIn.Error();
-  std::ostringstream stream;
-  stream << "failed with error: " << errors.at(e);
-  return stream.str();
-}
+Feature::~Feature(){}
 
 /*notes:
  * occt 7.2 checked source and 'BRepOffset_MakeOffset::myBadShape' is never set. This member is returned
@@ -97,11 +166,11 @@ static std::string getErrorString(const BRepOffset_MakeOffset &bIn)
  * hollow feature. When passing in the target shape compound, the occt offset algorithm will ignore a
  * solid and return a shell. But if we pass in a solid we will get a solid back.
  */
-void Offset::updateModel(const UpdatePayload &payloadIn)
+void Feature::updateModel(const UpdatePayload &payloadIn)
 {
   setFailure();
   lastUpdateLog.clear();
-  sShape->reset();
+  stow->sShape.reset();
   try
   {
     std::vector<const Base*> tfs = payloadIn.getFeatures(std::string());
@@ -114,13 +183,13 @@ void Offset::updateModel(const UpdatePayload &payloadIn)
       throw std::runtime_error("target seer shape is null");
     
     //setup failure state.
-    sShape->setOCCTShape(tss.getRootOCCTShape(), getId());
-    sShape->shapeMatch(tss);
-    sShape->uniqueTypeMatch(tss);
-    sShape->outerWireMatch(tss);
-    sShape->derivedMatch();
-    sShape->ensureNoNils();
-    sShape->ensureNoDuplicates();
+    stow->sShape.setOCCTShape(tss.getRootOCCTShape(), getId());
+    stow->sShape.shapeMatch(tss);
+    stow->sShape.uniqueTypeMatch(tss);
+    stow->sShape.outerWireMatch(tss);
+    stow->sShape.derivedMatch();
+    stow->sShape.ensureNoNils();
+    stow->sShape.ensureNoDuplicates();
     
     if (isSkipped())
     {
@@ -128,18 +197,18 @@ void Offset::updateModel(const UpdatePayload &payloadIn)
       throw std::runtime_error("feature is skipped");
     }
     
-    if (picks.empty())
+    if (stow->picks.getPicks().empty())
       throw std::runtime_error("No picks");
     
     //we basically have 2 modes. 1 is where we offset the whole shape. 2 is where we offset faces.
     osg::Matrixd labelPosition = osg::Matrixd::identity();
-    if (slc::isObjectType(picks.front().selectionType))
+    if (slc::isObjectType(stow->picks.getPicks().front().selectionType))
     {
       //this offsetting the whole shape.
-      if (picks.size() != 1)
+      if (stow->picks.getPicks().size() != 1)
         throw std::runtime_error("Should have only 1 pick for whole object");
       tls::Resolver pr(payloadIn);
-      if (!pr.resolve(picks.front()))
+      if (!pr.resolve(stow->picks.getPicks().front()))
         throw std::runtime_error("Pick resolution failed for whole object");
       if (!pr.getSeerShape() || pr.getSeerShape()->isNull())
         throw std::runtime_error("No or invalid seer shape for whole object");
@@ -165,7 +234,7 @@ void Offset::updateModel(const UpdatePayload &payloadIn)
       builder.PerformByJoin
       (
         sto,
-        distance->getDouble(),
+        stow->distance.getDouble(),
         1.0e-06, //same tolerance as the sewing default.
         BRepOffset_Skin,
         Standard_False,
@@ -179,17 +248,17 @@ void Offset::updateModel(const UpdatePayload &payloadIn)
       if (!check.isValid())
         throw std::runtime_error("shapeCheck failed");
       
-      sShape->setOCCTShape(builder.Shape(), getId());
-      sShape->shapeMatch(*pr.getSeerShape());
-      sShape->uniqueTypeMatch(*pr.getSeerShape());
-      sShape->modifiedMatch(builder, *pr.getSeerShape());
-      offsetMatch(builder.MakeOffset(), *pr.getSeerShape());
-      sShape->outerWireMatch(*pr.getSeerShape());
-      sShape->derivedMatch();
-      sShape->dumpNils("offset feature");
-      sShape->dumpDuplicates("offset feature");
-      sShape->ensureNoNils();
-      sShape->ensureNoDuplicates();
+      stow->sShape.setOCCTShape(builder.Shape(), getId());
+      stow->sShape.shapeMatch(*pr.getSeerShape());
+      stow->sShape.uniqueTypeMatch(*pr.getSeerShape());
+      stow->sShape.modifiedMatch(builder, *pr.getSeerShape());
+      stow->offsetMatch(builder.MakeOffset(), *pr.getSeerShape());
+      stow->sShape.outerWireMatch(*pr.getSeerShape());
+      stow->sShape.derivedMatch();
+      stow->sShape.dumpNils("offset feature");
+      stow->sShape.dumpDuplicates("offset feature");
+      stow->sShape.ensureNoNils();
+      stow->sShape.ensureNoDuplicates();
       
       occt::BoundingBox bb(builder.Shape());
       labelPosition = osg::Matrixd::translate(gu::toOsg(bb.getCenter()));
@@ -212,7 +281,7 @@ void Offset::updateModel(const UpdatePayload &payloadIn)
       );
       
       tls::Resolver pr(payloadIn);
-      for (const auto &p : picks)
+      for (const auto &p : stow->picks.getPicks())
       {
         if (p.selectionType != slc::Type::Face)
           throw std::runtime_error("Non face selection type");
@@ -227,7 +296,7 @@ void Offset::updateModel(const UpdatePayload &payloadIn)
             labelDone = true;
             labelPosition = osg::Matrixd::translate(p.getPoint(TopoDS::Face(s)));
           }
-          builder.SetOffsetOnFace(TopoDS::Face(s), distance->getDouble());
+          builder.SetOffsetOnFace(TopoDS::Face(s), stow->distance.getDouble());
         }
       }
       
@@ -249,18 +318,18 @@ void Offset::updateModel(const UpdatePayload &payloadIn)
       if (!check.isValid())
         throw std::runtime_error("shapeCheck failed");
       
-      sShape->setOCCTShape(workShape, getId());
-      sShape->shapeMatch(tss);
-      sShape->uniqueTypeMatch(tss);
-      offsetMatch(builder, tss);
-      sShape->outerWireMatch(tss);
-      sShape->derivedMatch();
-      sShape->dumpNils("offset feature");
-      sShape->dumpDuplicates("offset feature");
-      sShape->ensureNoNils();
-      sShape->ensureNoDuplicates();
+      stow->sShape.setOCCTShape(workShape, getId());
+      stow->sShape.shapeMatch(tss);
+      stow->sShape.uniqueTypeMatch(tss);
+      stow->offsetMatch(builder, tss);
+      stow->sShape.outerWireMatch(tss);
+      stow->sShape.derivedMatch();
+      stow->sShape.dumpNils("offset feature");
+      stow->sShape.dumpDuplicates("offset feature");
+      stow->sShape.ensureNoNils();
+      stow->sShape.ensureNoDuplicates();
     }
-    distanceLabel->setMatrix(labelPosition);
+    stow->distanceLabel->setMatrix(labelPosition);
     setSuccess();
   }
   catch (const Standard_Failure &e)
@@ -283,91 +352,27 @@ void Offset::updateModel(const UpdatePayload &payloadIn)
     std::cout << std::endl << lastUpdateLog;
 }
 
-void Offset::offsetMatch(const BRepOffset_MakeOffset &offseter, const ann::SeerShape &tss)
-{
-  const BRepAlgo_Image &oFaces = offseter.OffsetFacesFromShapes();
-  const BRepAlgo_Image &oEdges = offseter.OffsetEdgesFromShapes();
-  occt::ShapeVector as = tss.getAllShapes();
-  
-  //testing results
-//   int fc = 0;
-//   int ec = 0;
-//   for (const auto &s : as)
-//   {
-//     if (oFaces.HasImage(s))
-//       fc++;
-//     if (oEdges.HasImage(s))
-//       ec++;
-//   }
-//   std::cout << std::endl << "face count is: " << fc
-//   << "    edge count is: " << ec << std::endl;
-  //output of offseting 1 face of a box
-    //"face count is: 6    edge count is: 12"
-  //output of offseting feature consisting of extracted, tangent region of a box with 1 edge blended.
-    //face count is: 3    edge count is: 10
-  //it looks like offset is creating all new shapes.
-  
-  auto update = [&](const TopoDS_Shape &original, const TopoDS_Shape &offsetShape)
-  {
-    assert(tss.hasShape(original));
-    assert(sShape->hasShape(offsetShape));
-    uuid oid = tss.findId(original);
-    uuid nid = gu::createRandomId();
-    if (sShape->hasEvolveRecordIn(oid))
-      nid = sShape->evolve(oid).front(); //should be 1 to 1.
-    else
-      sShape->insertEvolve(oid, nid);
-    sShape->updateId(offsetShape, nid);
-  };
-  
-  for (const auto &s : as)
-  {
-    if (oFaces.HasImage(s))
-    {
-      const TopTools_ListOfShape &images = oFaces.Image(s);
-      if (!images.IsEmpty())
-      {
-        if (images.Extent() > 1)
-          std::cout << "WARNING: more than 1 face image in Offset::offsetMatch" << std::endl;
-        update(s, images.First());
-      }
-    }
-    if (oEdges.HasImage(s))
-    {
-      const TopTools_ListOfShape &images = oEdges.Image(s);
-      if (!images.IsEmpty())
-      {
-        if (images.Extent() > 1)
-          std::cout << "WARNING: more than 1 edge image in Offset::offsetMatch" << std::endl;
-        update(s, images.First());
-      }
-    }
-  }
-}
-
-void Offset::serialWrite(const boost::filesystem::path &dIn)
+void Feature::serialWrite(const boost::filesystem::path &dIn)
 {
   prj::srl::offs::Offset so
   (
     Base::serialOut(),
-    sShape->serialOut(),
-    distance->serialOut(),
-    distanceLabel->serialOut()
+    stow->picks.serialOut(),
+    stow->distance.serialOut(),
+    stow->sShape.serialOut(),
+    stow->distanceLabel->serialOut()
   );
-  for (const auto &p : picks)
-    so.picks().push_back(p);
   
   xml_schema::NamespaceInfomap infoMap;
   std::ofstream stream(buildFilePathName(dIn).string());
   prj::srl::offs::offset(stream, so, infoMap);
 }
 
-void Offset::serialRead(const prj::srl::offs::Offset &so)
+void Feature::serialRead(const prj::srl::offs::Offset &so)
 {
   Base::serialIn(so.base());
-  sShape->serialIn(so.seerShape());
-  distance->serialIn(so.distance());
-  distanceLabel->serialIn(so.distanceLabel());
-  for (const auto &p : so.picks())
-    picks.emplace_back(p);
+  stow->picks.serialIn(so.picks());
+  stow->distance.serialIn(so.distance());
+  stow->sShape.serialIn(so.seerShape());
+  stow->distanceLabel->serialIn(so.distanceLabel());
 }

@@ -23,7 +23,7 @@
 #include "command/cmdleafmanager.h"
 #include "command/cmdbase.h"
 
-namespace ftr{class Offset;}
+namespace ftr{namespace Offset{class Feature;}}
 
 namespace cmd
 {
@@ -33,7 +33,7 @@ namespace cmd
   class Offset : public Base
   {
   public:
-    ftr::Offset *feature = nullptr;
+    ftr::Offset::Feature *feature = nullptr;
     
     Offset();
     Offset(ftr::Base*);

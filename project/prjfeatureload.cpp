@@ -486,7 +486,7 @@ std::shared_ptr<ftr::Base> FeatureLoad::loadOffset(const std::string &fileNameIn
   auto sr = srl::offs::offset(fileNameIn, flags);
   assert(sr);
   
-  auto offset = std::make_shared<ftr::Offset>();
+  auto offset = std::make_shared<ftr::Offset::Feature>();
   offset->getAnnex<ann::SeerShape>().setOCCTShape(shapeVector.at(shapeOffsetIn), featureId);
   offset->serialRead(*sr);
   

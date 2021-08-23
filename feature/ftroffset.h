@@ -20,53 +20,38 @@
 #ifndef FTR_OFFSET_H
 #define FTR_OFFSET_H
 
-#include <osg/ref_ptr>
-
-#include "feature/ftrpick.h"
 #include "feature/ftrbase.h"
 
-class BRepOffset_MakeOffset;
-
-namespace lbr{class PLabel;}
-namespace ann{class SeerShape;}
 namespace prj{namespace srl{namespace offs{class Offset;}}}
 
 namespace ftr
 {
-  /**
-  * @todo write docs
-  */
-  class Offset : public Base
+  namespace Offset
   {
-  public:
-    Offset();
-    virtual ~Offset() override;
-    
-    virtual void updateModel(const UpdatePayload&) override;
-    virtual Type getType() const override {return Type::Offset;}
-    virtual const std::string& getTypeString() const override {return toString(Type::Offset);}
-    virtual const QIcon& getIcon() const override {return icon;}
-    virtual Descriptor getDescriptor() const override {return Descriptor::Alter;}
-    
-    virtual void serialWrite(const boost::filesystem::path&) override;
-    void serialRead(const prj::srl::offs::Offset&);
-    
-    void setPicks(const Picks&);
-    const Picks& getPicks(){return picks;}
-    
-  protected:
-    std::unique_ptr<prm::Parameter> distance;
-    
-    std::unique_ptr<ann::SeerShape> sShape;
-    
-    osg::ref_ptr<lbr::PLabel> distanceLabel;
-    
-    Picks picks;
-    
-    void offsetMatch(const BRepOffset_MakeOffset&, const ann::SeerShape&);
-  private:
-    static QIcon icon;
-  };
+    namespace InputTags
+    {
+      inline constexpr std::string_view pick = "pick";
+    }
+    class Feature : public Base
+    {
+    public:
+      Feature();
+      ~Feature() override;
+      
+      void updateModel(const UpdatePayload&) override;
+      Type getType() const override {return Type::Offset;}
+      const std::string& getTypeString() const override {return toString(Type::Offset);}
+      const QIcon& getIcon() const override {return icon;}
+      Descriptor getDescriptor() const override {return Descriptor::Alter;}
+      
+      void serialWrite(const boost::filesystem::path&) override;
+      void serialRead(const prj::srl::offs::Offset&);
+    private:
+      static QIcon icon;
+      struct Stow;
+      std::unique_ptr<Stow> stow;
+    };
+  }
 }
 
 #endif // FTR_OFFSET_H

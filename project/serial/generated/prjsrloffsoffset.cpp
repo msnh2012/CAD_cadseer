@@ -73,46 +73,28 @@ namespace prj
         this->base_.set (std::move (x));
       }
 
-      const Offset::SeerShapeType& Offset::
-      seerShape () const
-      {
-        return this->seerShape_.get ();
-      }
-
-      Offset::SeerShapeType& Offset::
-      seerShape ()
-      {
-        return this->seerShape_.get ();
-      }
-
-      void Offset::
-      seerShape (const SeerShapeType& x)
-      {
-        this->seerShape_.set (x);
-      }
-
-      void Offset::
-      seerShape (::std::unique_ptr< SeerShapeType > x)
-      {
-        this->seerShape_.set (std::move (x));
-      }
-
-      const Offset::PicksSequence& Offset::
+      const Offset::PicksType& Offset::
       picks () const
       {
-        return this->picks_;
+        return this->picks_.get ();
       }
 
-      Offset::PicksSequence& Offset::
+      Offset::PicksType& Offset::
       picks ()
       {
-        return this->picks_;
+        return this->picks_.get ();
       }
 
       void Offset::
-      picks (const PicksSequence& s)
+      picks (const PicksType& x)
       {
-        this->picks_ = s;
+        this->picks_.set (x);
+      }
+
+      void Offset::
+      picks (::std::unique_ptr< PicksType > x)
+      {
+        this->picks_.set (std::move (x));
       }
 
       const Offset::DistanceType& Offset::
@@ -137,6 +119,30 @@ namespace prj
       distance (::std::unique_ptr< DistanceType > x)
       {
         this->distance_.set (std::move (x));
+      }
+
+      const Offset::SeerShapeType& Offset::
+      seerShape () const
+      {
+        return this->seerShape_.get ();
+      }
+
+      Offset::SeerShapeType& Offset::
+      seerShape ()
+      {
+        return this->seerShape_.get ();
+      }
+
+      void Offset::
+      seerShape (const SeerShapeType& x)
+      {
+        this->seerShape_.set (x);
+      }
+
+      void Offset::
+      seerShape (::std::unique_ptr< SeerShapeType > x)
+      {
+        this->seerShape_.set (std::move (x));
       }
 
       const Offset::DistanceLabelType& Offset::
@@ -179,28 +185,30 @@ namespace prj
 
       Offset::
       Offset (const BaseType& base,
-              const SeerShapeType& seerShape,
+              const PicksType& picks,
               const DistanceType& distance,
+              const SeerShapeType& seerShape,
               const DistanceLabelType& distanceLabel)
       : ::xml_schema::Type (),
         base_ (base, this),
-        seerShape_ (seerShape, this),
-        picks_ (this),
+        picks_ (picks, this),
         distance_ (distance, this),
+        seerShape_ (seerShape, this),
         distanceLabel_ (distanceLabel, this)
       {
       }
 
       Offset::
       Offset (::std::unique_ptr< BaseType > base,
-              ::std::unique_ptr< SeerShapeType > seerShape,
+              ::std::unique_ptr< PicksType > picks,
               ::std::unique_ptr< DistanceType > distance,
+              ::std::unique_ptr< SeerShapeType > seerShape,
               ::std::unique_ptr< DistanceLabelType > distanceLabel)
       : ::xml_schema::Type (),
         base_ (std::move (base), this),
-        seerShape_ (std::move (seerShape), this),
-        picks_ (this),
+        picks_ (std::move (picks), this),
         distance_ (std::move (distance), this),
+        seerShape_ (std::move (seerShape), this),
         distanceLabel_ (std::move (distanceLabel), this)
       {
       }
@@ -211,9 +219,9 @@ namespace prj
               ::xml_schema::Container* c)
       : ::xml_schema::Type (x, f, c),
         base_ (x.base_, f, this),
-        seerShape_ (x.seerShape_, f, this),
         picks_ (x.picks_, f, this),
         distance_ (x.distance_, f, this),
+        seerShape_ (x.seerShape_, f, this),
         distanceLabel_ (x.distanceLabel_, f, this)
       {
       }
@@ -224,9 +232,9 @@ namespace prj
               ::xml_schema::Container* c)
       : ::xml_schema::Type (e, f | ::xml_schema::Flags::base, c),
         base_ (this),
-        seerShape_ (this),
         picks_ (this),
         distance_ (this),
+        seerShape_ (this),
         distanceLabel_ (this)
       {
         if ((f & ::xml_schema::Flags::base) == 0)
@@ -260,20 +268,6 @@ namespace prj
             }
           }
 
-          // seerShape
-          //
-          if (n.name () == "seerShape" && n.namespace_ ().empty ())
-          {
-            ::std::unique_ptr< SeerShapeType > r (
-              SeerShapeTraits::create (i, f, this));
-
-            if (!seerShape_.present ())
-            {
-              this->seerShape_.set (::std::move (r));
-              continue;
-            }
-          }
-
           // picks
           //
           if (n.name () == "picks" && n.namespace_ ().empty ())
@@ -281,8 +275,11 @@ namespace prj
             ::std::unique_ptr< PicksType > r (
               PicksTraits::create (i, f, this));
 
-            this->picks_.push_back (::std::move (r));
-            continue;
+            if (!picks_.present ())
+            {
+              this->picks_.set (::std::move (r));
+              continue;
+            }
           }
 
           // distance
@@ -295,6 +292,20 @@ namespace prj
             if (!distance_.present ())
             {
               this->distance_.set (::std::move (r));
+              continue;
+            }
+          }
+
+          // seerShape
+          //
+          if (n.name () == "seerShape" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< SeerShapeType > r (
+              SeerShapeTraits::create (i, f, this));
+
+            if (!seerShape_.present ())
+            {
+              this->seerShape_.set (::std::move (r));
               continue;
             }
           }
@@ -323,10 +334,10 @@ namespace prj
             "");
         }
 
-        if (!seerShape_.present ())
+        if (!picks_.present ())
         {
           throw ::xsd::cxx::tree::expected_element< char > (
-            "seerShape",
+            "picks",
             "");
         }
 
@@ -334,6 +345,13 @@ namespace prj
         {
           throw ::xsd::cxx::tree::expected_element< char > (
             "distance",
+            "");
+        }
+
+        if (!seerShape_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "seerShape",
             "");
         }
 
@@ -359,9 +377,9 @@ namespace prj
         {
           static_cast< ::xml_schema::Type& > (*this) = x;
           this->base_ = x.base_;
-          this->seerShape_ = x.seerShape_;
           this->picks_ = x.picks_;
           this->distance_ = x.distance_;
+          this->seerShape_ = x.seerShape_;
           this->distanceLabel_ = x.distanceLabel_;
         }
 
@@ -681,29 +699,15 @@ namespace prj
           s << i.base ();
         }
 
-        // seerShape
-        //
-        {
-          ::xercesc::DOMElement& s (
-            ::xsd::cxx::xml::dom::create_element (
-              "seerShape",
-              e));
-
-          s << i.seerShape ();
-        }
-
         // picks
         //
-        for (Offset::PicksConstIterator
-             b (i.picks ().begin ()), n (i.picks ().end ());
-             b != n; ++b)
         {
           ::xercesc::DOMElement& s (
             ::xsd::cxx::xml::dom::create_element (
               "picks",
               e));
 
-          s << *b;
+          s << i.picks ();
         }
 
         // distance
@@ -715,6 +719,17 @@ namespace prj
               e));
 
           s << i.distance ();
+        }
+
+        // seerShape
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "seerShape",
+              e));
+
+          s << i.seerShape ();
         }
 
         // distanceLabel

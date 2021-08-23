@@ -39,7 +39,7 @@
 using namespace ftr::%CLASSNAME%;
 using boost::uuids::uuid;
 
-QIcon Feature::icon;
+QIcon Feature::icon = QIcon(":/resources/images/constructionBase.svg"); //fix me
 
 struct Feature::Stow
 {
@@ -86,9 +86,6 @@ Feature::Feature()
 : Base()
 , stow(std::make_unique<Stow>(*this))
 {
-  if (icon.isNull())
-    icon = QIcon(":/resources/images/constructionBase.svg"); //fix me
-  
   name = QObject::tr("%CLASSNAME%");
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
 }

@@ -27,6 +27,7 @@
 #include "message/msgnode.h"
 #include "selection/slceventhandler.h"
 #include "annex/annseershape.h"
+#include "parameter/prmconstants.h"
 #include "parameter/prmparameter.h"
 #include "feature/ftrinputtype.h"
 #include "feature/ftroffset.h"
@@ -42,7 +43,7 @@ Offset::Offset()
 : Base()
 , leafManager()
 {
-  auto offset = std::make_shared<ftr::Offset>();
+  auto offset = std::make_shared<ftr::Offset::Feature>();
   project->addFeature(offset);
   feature = offset.get();
   node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
@@ -54,7 +55,7 @@ Offset::Offset(ftr::Base *fIn)
 : Base("cmd::Offset")
 , leafManager(fIn)
 {
-  feature = dynamic_cast<ftr::Offset*>(fIn);
+  feature = dynamic_cast<ftr::Offset::Feature*>(fIn);
   assert(feature);
   viewBase = std::make_unique<cmv::Offset>(this);
   node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
@@ -111,7 +112,8 @@ void Offset::setSelections(const std::vector<slc::Message> &targets)
 {
   assert(isActive);
   project->clearAllInputs(feature->getId());
-  feature->setPicks(ftr::Picks());
+  auto *picks = feature->getParameter(prm::Tags::Picks);
+  picks->setValue(ftr::Picks());
   
   if (targets.empty())
     return;
@@ -136,10 +138,10 @@ void Offset::setSelections(const std::vector<slc::Message> &targets)
     if (!validFeature(lf))
       continue;
     freshPicks.push_back(tls::convertToPick(m, *lf, project->getShapeHistory()));
-    freshPicks.back().tag = ftr::InputType::createIndexedTag(ftr::InputType::target, freshPicks.size() - 1);
+    freshPicks.back().tag = indexTag(ftr::Offset::InputTags::pick, freshPicks.size() - 1);
     project->connectInsert(tf->getId(), feature->getId(), {freshPicks.back().tag});
   }
-  feature->setPicks(freshPicks);
+  picks->setValue(freshPicks);
   feature->setColor(tf->getColor());
 }
 
