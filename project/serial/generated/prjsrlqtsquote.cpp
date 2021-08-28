@@ -73,76 +73,124 @@ namespace prj
         this->base_.set (std::move (x));
       }
 
-      const Quote::TemplateFileType& Quote::
-      templateFile () const
+      const Quote::StripPickType& Quote::
+      stripPick () const
       {
-        return this->templateFile_.get ();
+        return this->stripPick_.get ();
       }
 
-      Quote::TemplateFileType& Quote::
-      templateFile ()
+      Quote::StripPickType& Quote::
+      stripPick ()
       {
-        return this->templateFile_.get ();
-      }
-
-      void Quote::
-      templateFile (const TemplateFileType& x)
-      {
-        this->templateFile_.set (x);
+        return this->stripPick_.get ();
       }
 
       void Quote::
-      templateFile (::std::unique_ptr< TemplateFileType > x)
+      stripPick (const StripPickType& x)
       {
-        this->templateFile_.set (std::move (x));
-      }
-
-      const Quote::OutFileType& Quote::
-      outFile () const
-      {
-        return this->outFile_.get ();
-      }
-
-      Quote::OutFileType& Quote::
-      outFile ()
-      {
-        return this->outFile_.get ();
+        this->stripPick_.set (x);
       }
 
       void Quote::
-      outFile (const OutFileType& x)
+      stripPick (::std::unique_ptr< StripPickType > x)
       {
-        this->outFile_.set (x);
+        this->stripPick_.set (std::move (x));
+      }
+
+      const Quote::DiesetPickType& Quote::
+      diesetPick () const
+      {
+        return this->diesetPick_.get ();
+      }
+
+      Quote::DiesetPickType& Quote::
+      diesetPick ()
+      {
+        return this->diesetPick_.get ();
       }
 
       void Quote::
-      outFile (::std::unique_ptr< OutFileType > x)
+      diesetPick (const DiesetPickType& x)
       {
-        this->outFile_.set (std::move (x));
-      }
-
-      const Quote::PictureFileType& Quote::
-      pictureFile () const
-      {
-        return this->pictureFile_.get ();
-      }
-
-      Quote::PictureFileType& Quote::
-      pictureFile ()
-      {
-        return this->pictureFile_.get ();
+        this->diesetPick_.set (x);
       }
 
       void Quote::
-      pictureFile (const PictureFileType& x)
+      diesetPick (::std::unique_ptr< DiesetPickType > x)
       {
-        this->pictureFile_.set (x);
+        this->diesetPick_.set (std::move (x));
+      }
+
+      const Quote::TFileType& Quote::
+      tFile () const
+      {
+        return this->tFile_.get ();
+      }
+
+      Quote::TFileType& Quote::
+      tFile ()
+      {
+        return this->tFile_.get ();
       }
 
       void Quote::
-      pictureFile (::std::unique_ptr< PictureFileType > x)
+      tFile (const TFileType& x)
       {
-        this->pictureFile_.set (std::move (x));
+        this->tFile_.set (x);
+      }
+
+      void Quote::
+      tFile (::std::unique_ptr< TFileType > x)
+      {
+        this->tFile_.set (std::move (x));
+      }
+
+      const Quote::OFileType& Quote::
+      oFile () const
+      {
+        return this->oFile_.get ();
+      }
+
+      Quote::OFileType& Quote::
+      oFile ()
+      {
+        return this->oFile_.get ();
+      }
+
+      void Quote::
+      oFile (const OFileType& x)
+      {
+        this->oFile_.set (x);
+      }
+
+      void Quote::
+      oFile (::std::unique_ptr< OFileType > x)
+      {
+        this->oFile_.set (std::move (x));
+      }
+
+      const Quote::PFileType& Quote::
+      pFile () const
+      {
+        return this->pFile_.get ();
+      }
+
+      Quote::PFileType& Quote::
+      pFile ()
+      {
+        return this->pFile_.get ();
+      }
+
+      void Quote::
+      pFile (const PFileType& x)
+      {
+        this->pFile_.set (x);
+      }
+
+      void Quote::
+      pFile (::std::unique_ptr< PFileType > x)
+      {
+        this->pFile_.set (std::move (x));
       }
 
       const Quote::QuoteNumberType& Quote::
@@ -161,6 +209,12 @@ namespace prj
       quoteNumber (const QuoteNumberType& x)
       {
         this->quoteNumber_.set (x);
+      }
+
+      void Quote::
+      quoteNumber (::std::unique_ptr< QuoteNumberType > x)
+      {
+        this->quoteNumber_.set (std::move (x));
       }
 
       const Quote::CustomerNameType& Quote::
@@ -349,6 +403,12 @@ namespace prj
         this->materialThickness_.set (x);
       }
 
+      void Quote::
+      materialThickness (::std::unique_ptr< MaterialThicknessType > x)
+      {
+        this->materialThickness_.set (std::move (x));
+      }
+
       const Quote::ProcessTypeType& Quote::
       processType () const
       {
@@ -391,52 +451,82 @@ namespace prj
         this->annualVolume_.set (x);
       }
 
-      const Quote::TLabelType& Quote::
-      tLabel () const
+      void Quote::
+      annualVolume (::std::unique_ptr< AnnualVolumeType > x)
       {
-        return this->tLabel_.get ();
+        this->annualVolume_.set (std::move (x));
       }
 
-      Quote::TLabelType& Quote::
-      tLabel ()
+      const Quote::TFileLabelType& Quote::
+      tFileLabel () const
       {
-        return this->tLabel_.get ();
+        return this->tFileLabel_.get ();
+      }
+
+      Quote::TFileLabelType& Quote::
+      tFileLabel ()
+      {
+        return this->tFileLabel_.get ();
       }
 
       void Quote::
-      tLabel (const TLabelType& x)
+      tFileLabel (const TFileLabelType& x)
       {
-        this->tLabel_.set (x);
+        this->tFileLabel_.set (x);
       }
 
       void Quote::
-      tLabel (::std::unique_ptr< TLabelType > x)
+      tFileLabel (::std::unique_ptr< TFileLabelType > x)
       {
-        this->tLabel_.set (std::move (x));
+        this->tFileLabel_.set (std::move (x));
       }
 
-      const Quote::OLabelType& Quote::
-      oLabel () const
+      const Quote::OFileLabelType& Quote::
+      oFileLabel () const
       {
-        return this->oLabel_.get ();
+        return this->oFileLabel_.get ();
       }
 
-      Quote::OLabelType& Quote::
-      oLabel ()
+      Quote::OFileLabelType& Quote::
+      oFileLabel ()
       {
-        return this->oLabel_.get ();
-      }
-
-      void Quote::
-      oLabel (const OLabelType& x)
-      {
-        this->oLabel_.set (x);
+        return this->oFileLabel_.get ();
       }
 
       void Quote::
-      oLabel (::std::unique_ptr< OLabelType > x)
+      oFileLabel (const OFileLabelType& x)
       {
-        this->oLabel_.set (std::move (x));
+        this->oFileLabel_.set (x);
+      }
+
+      void Quote::
+      oFileLabel (::std::unique_ptr< OFileLabelType > x)
+      {
+        this->oFileLabel_.set (std::move (x));
+      }
+
+      const Quote::PFileLabelType& Quote::
+      pFileLabel () const
+      {
+        return this->pFileLabel_.get ();
+      }
+
+      Quote::PFileLabelType& Quote::
+      pFileLabel ()
+      {
+        return this->pFileLabel_.get ();
+      }
+
+      void Quote::
+      pFileLabel (const PFileLabelType& x)
+      {
+        this->pFileLabel_.set (x);
+      }
+
+      void Quote::
+      pFileLabel (::std::unique_ptr< PFileLabelType > x)
+      {
+        this->pFileLabel_.set (std::move (x));
       }
     }
   }
@@ -455,9 +545,11 @@ namespace prj
 
       Quote::
       Quote (const BaseType& base,
-             const TemplateFileType& templateFile,
-             const OutFileType& outFile,
-             const PictureFileType& pictureFile,
+             const StripPickType& stripPick,
+             const DiesetPickType& diesetPick,
+             const TFileType& tFile,
+             const OFileType& oFile,
+             const PFileType& pFile,
              const QuoteNumberType& quoteNumber,
              const CustomerNameType& customerName,
              const CustomerIdType& customerId,
@@ -469,13 +561,16 @@ namespace prj
              const MaterialThicknessType& materialThickness,
              const ProcessTypeType& processType,
              const AnnualVolumeType& annualVolume,
-             const TLabelType& tLabel,
-             const OLabelType& oLabel)
+             const TFileLabelType& tFileLabel,
+             const OFileLabelType& oFileLabel,
+             const PFileLabelType& pFileLabel)
       : ::xml_schema::Type (),
         base_ (base, this),
-        templateFile_ (templateFile, this),
-        outFile_ (outFile, this),
-        pictureFile_ (pictureFile, this),
+        stripPick_ (stripPick, this),
+        diesetPick_ (diesetPick, this),
+        tFile_ (tFile, this),
+        oFile_ (oFile, this),
+        pFile_ (pFile, this),
         quoteNumber_ (quoteNumber, this),
         customerName_ (customerName, this),
         customerId_ (customerId, this),
@@ -487,47 +582,54 @@ namespace prj
         materialThickness_ (materialThickness, this),
         processType_ (processType, this),
         annualVolume_ (annualVolume, this),
-        tLabel_ (tLabel, this),
-        oLabel_ (oLabel, this)
+        tFileLabel_ (tFileLabel, this),
+        oFileLabel_ (oFileLabel, this),
+        pFileLabel_ (pFileLabel, this)
       {
       }
 
       Quote::
       Quote (::std::unique_ptr< BaseType > base,
-             ::std::unique_ptr< TemplateFileType > templateFile,
-             ::std::unique_ptr< OutFileType > outFile,
-             const PictureFileType& pictureFile,
-             const QuoteNumberType& quoteNumber,
-             const CustomerNameType& customerName,
-             const CustomerIdType& customerId,
-             const PartNameType& partName,
-             const PartNumberType& partNumber,
-             const PartSetupType& partSetup,
-             const PartRevisionType& partRevision,
-             const MaterialTypeType& materialType,
-             const MaterialThicknessType& materialThickness,
-             const ProcessTypeType& processType,
-             const AnnualVolumeType& annualVolume,
-             ::std::unique_ptr< TLabelType > tLabel,
-             ::std::unique_ptr< OLabelType > oLabel)
+             ::std::unique_ptr< StripPickType > stripPick,
+             ::std::unique_ptr< DiesetPickType > diesetPick,
+             ::std::unique_ptr< TFileType > tFile,
+             ::std::unique_ptr< OFileType > oFile,
+             ::std::unique_ptr< PFileType > pFile,
+             ::std::unique_ptr< QuoteNumberType > quoteNumber,
+             ::std::unique_ptr< CustomerNameType > customerName,
+             ::std::unique_ptr< CustomerIdType > customerId,
+             ::std::unique_ptr< PartNameType > partName,
+             ::std::unique_ptr< PartNumberType > partNumber,
+             ::std::unique_ptr< PartSetupType > partSetup,
+             ::std::unique_ptr< PartRevisionType > partRevision,
+             ::std::unique_ptr< MaterialTypeType > materialType,
+             ::std::unique_ptr< MaterialThicknessType > materialThickness,
+             ::std::unique_ptr< ProcessTypeType > processType,
+             ::std::unique_ptr< AnnualVolumeType > annualVolume,
+             ::std::unique_ptr< TFileLabelType > tFileLabel,
+             ::std::unique_ptr< OFileLabelType > oFileLabel,
+             ::std::unique_ptr< PFileLabelType > pFileLabel)
       : ::xml_schema::Type (),
         base_ (std::move (base), this),
-        templateFile_ (std::move (templateFile), this),
-        outFile_ (std::move (outFile), this),
-        pictureFile_ (pictureFile, this),
-        quoteNumber_ (quoteNumber, this),
-        customerName_ (customerName, this),
-        customerId_ (customerId, this),
-        partName_ (partName, this),
-        partNumber_ (partNumber, this),
-        partSetup_ (partSetup, this),
-        partRevision_ (partRevision, this),
-        materialType_ (materialType, this),
-        materialThickness_ (materialThickness, this),
-        processType_ (processType, this),
-        annualVolume_ (annualVolume, this),
-        tLabel_ (std::move (tLabel), this),
-        oLabel_ (std::move (oLabel), this)
+        stripPick_ (std::move (stripPick), this),
+        diesetPick_ (std::move (diesetPick), this),
+        tFile_ (std::move (tFile), this),
+        oFile_ (std::move (oFile), this),
+        pFile_ (std::move (pFile), this),
+        quoteNumber_ (std::move (quoteNumber), this),
+        customerName_ (std::move (customerName), this),
+        customerId_ (std::move (customerId), this),
+        partName_ (std::move (partName), this),
+        partNumber_ (std::move (partNumber), this),
+        partSetup_ (std::move (partSetup), this),
+        partRevision_ (std::move (partRevision), this),
+        materialType_ (std::move (materialType), this),
+        materialThickness_ (std::move (materialThickness), this),
+        processType_ (std::move (processType), this),
+        annualVolume_ (std::move (annualVolume), this),
+        tFileLabel_ (std::move (tFileLabel), this),
+        oFileLabel_ (std::move (oFileLabel), this),
+        pFileLabel_ (std::move (pFileLabel), this)
       {
       }
 
@@ -537,9 +639,11 @@ namespace prj
              ::xml_schema::Container* c)
       : ::xml_schema::Type (x, f, c),
         base_ (x.base_, f, this),
-        templateFile_ (x.templateFile_, f, this),
-        outFile_ (x.outFile_, f, this),
-        pictureFile_ (x.pictureFile_, f, this),
+        stripPick_ (x.stripPick_, f, this),
+        diesetPick_ (x.diesetPick_, f, this),
+        tFile_ (x.tFile_, f, this),
+        oFile_ (x.oFile_, f, this),
+        pFile_ (x.pFile_, f, this),
         quoteNumber_ (x.quoteNumber_, f, this),
         customerName_ (x.customerName_, f, this),
         customerId_ (x.customerId_, f, this),
@@ -551,8 +655,9 @@ namespace prj
         materialThickness_ (x.materialThickness_, f, this),
         processType_ (x.processType_, f, this),
         annualVolume_ (x.annualVolume_, f, this),
-        tLabel_ (x.tLabel_, f, this),
-        oLabel_ (x.oLabel_, f, this)
+        tFileLabel_ (x.tFileLabel_, f, this),
+        oFileLabel_ (x.oFileLabel_, f, this),
+        pFileLabel_ (x.pFileLabel_, f, this)
       {
       }
 
@@ -562,9 +667,11 @@ namespace prj
              ::xml_schema::Container* c)
       : ::xml_schema::Type (e, f | ::xml_schema::Flags::base, c),
         base_ (this),
-        templateFile_ (this),
-        outFile_ (this),
-        pictureFile_ (this),
+        stripPick_ (this),
+        diesetPick_ (this),
+        tFile_ (this),
+        oFile_ (this),
+        pFile_ (this),
         quoteNumber_ (this),
         customerName_ (this),
         customerId_ (this),
@@ -576,8 +683,9 @@ namespace prj
         materialThickness_ (this),
         processType_ (this),
         annualVolume_ (this),
-        tLabel_ (this),
-        oLabel_ (this)
+        tFileLabel_ (this),
+        oFileLabel_ (this),
+        pFileLabel_ (this)
       {
         if ((f & ::xml_schema::Flags::base) == 0)
         {
@@ -610,44 +718,72 @@ namespace prj
             }
           }
 
-          // templateFile
+          // stripPick
           //
-          if (n.name () == "templateFile" && n.namespace_ ().empty ())
+          if (n.name () == "stripPick" && n.namespace_ ().empty ())
           {
-            ::std::unique_ptr< TemplateFileType > r (
-              TemplateFileTraits::create (i, f, this));
+            ::std::unique_ptr< StripPickType > r (
+              StripPickTraits::create (i, f, this));
 
-            if (!templateFile_.present ())
+            if (!stripPick_.present ())
             {
-              this->templateFile_.set (::std::move (r));
+              this->stripPick_.set (::std::move (r));
               continue;
             }
           }
 
-          // outFile
+          // diesetPick
           //
-          if (n.name () == "outFile" && n.namespace_ ().empty ())
+          if (n.name () == "diesetPick" && n.namespace_ ().empty ())
           {
-            ::std::unique_ptr< OutFileType > r (
-              OutFileTraits::create (i, f, this));
+            ::std::unique_ptr< DiesetPickType > r (
+              DiesetPickTraits::create (i, f, this));
 
-            if (!outFile_.present ())
+            if (!diesetPick_.present ())
             {
-              this->outFile_.set (::std::move (r));
+              this->diesetPick_.set (::std::move (r));
               continue;
             }
           }
 
-          // pictureFile
+          // tFile
           //
-          if (n.name () == "pictureFile" && n.namespace_ ().empty ())
+          if (n.name () == "tFile" && n.namespace_ ().empty ())
           {
-            ::std::unique_ptr< PictureFileType > r (
-              PictureFileTraits::create (i, f, this));
+            ::std::unique_ptr< TFileType > r (
+              TFileTraits::create (i, f, this));
 
-            if (!pictureFile_.present ())
+            if (!tFile_.present ())
             {
-              this->pictureFile_.set (::std::move (r));
+              this->tFile_.set (::std::move (r));
+              continue;
+            }
+          }
+
+          // oFile
+          //
+          if (n.name () == "oFile" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< OFileType > r (
+              OFileTraits::create (i, f, this));
+
+            if (!oFile_.present ())
+            {
+              this->oFile_.set (::std::move (r));
+              continue;
+            }
+          }
+
+          // pFile
+          //
+          if (n.name () == "pFile" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< PFileType > r (
+              PFileTraits::create (i, f, this));
+
+            if (!pFile_.present ())
+            {
+              this->pFile_.set (::std::move (r));
               continue;
             }
           }
@@ -656,9 +792,12 @@ namespace prj
           //
           if (n.name () == "quoteNumber" && n.namespace_ ().empty ())
           {
+            ::std::unique_ptr< QuoteNumberType > r (
+              QuoteNumberTraits::create (i, f, this));
+
             if (!quoteNumber_.present ())
             {
-              this->quoteNumber_.set (QuoteNumberTraits::create (i, f, this));
+              this->quoteNumber_.set (::std::move (r));
               continue;
             }
           }
@@ -765,9 +904,12 @@ namespace prj
           //
           if (n.name () == "materialThickness" && n.namespace_ ().empty ())
           {
+            ::std::unique_ptr< MaterialThicknessType > r (
+              MaterialThicknessTraits::create (i, f, this));
+
             if (!materialThickness_.present ())
             {
-              this->materialThickness_.set (MaterialThicknessTraits::create (i, f, this));
+              this->materialThickness_.set (::std::move (r));
               continue;
             }
           }
@@ -790,37 +932,54 @@ namespace prj
           //
           if (n.name () == "annualVolume" && n.namespace_ ().empty ())
           {
+            ::std::unique_ptr< AnnualVolumeType > r (
+              AnnualVolumeTraits::create (i, f, this));
+
             if (!annualVolume_.present ())
             {
-              this->annualVolume_.set (AnnualVolumeTraits::create (i, f, this));
+              this->annualVolume_.set (::std::move (r));
               continue;
             }
           }
 
-          // tLabel
+          // tFileLabel
           //
-          if (n.name () == "tLabel" && n.namespace_ ().empty ())
+          if (n.name () == "tFileLabel" && n.namespace_ ().empty ())
           {
-            ::std::unique_ptr< TLabelType > r (
-              TLabelTraits::create (i, f, this));
+            ::std::unique_ptr< TFileLabelType > r (
+              TFileLabelTraits::create (i, f, this));
 
-            if (!tLabel_.present ())
+            if (!tFileLabel_.present ())
             {
-              this->tLabel_.set (::std::move (r));
+              this->tFileLabel_.set (::std::move (r));
               continue;
             }
           }
 
-          // oLabel
+          // oFileLabel
           //
-          if (n.name () == "oLabel" && n.namespace_ ().empty ())
+          if (n.name () == "oFileLabel" && n.namespace_ ().empty ())
           {
-            ::std::unique_ptr< OLabelType > r (
-              OLabelTraits::create (i, f, this));
+            ::std::unique_ptr< OFileLabelType > r (
+              OFileLabelTraits::create (i, f, this));
 
-            if (!oLabel_.present ())
+            if (!oFileLabel_.present ())
             {
-              this->oLabel_.set (::std::move (r));
+              this->oFileLabel_.set (::std::move (r));
+              continue;
+            }
+          }
+
+          // pFileLabel
+          //
+          if (n.name () == "pFileLabel" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< PFileLabelType > r (
+              PFileLabelTraits::create (i, f, this));
+
+            if (!pFileLabel_.present ())
+            {
+              this->pFileLabel_.set (::std::move (r));
               continue;
             }
           }
@@ -835,24 +994,38 @@ namespace prj
             "");
         }
 
-        if (!templateFile_.present ())
+        if (!stripPick_.present ())
         {
           throw ::xsd::cxx::tree::expected_element< char > (
-            "templateFile",
+            "stripPick",
             "");
         }
 
-        if (!outFile_.present ())
+        if (!diesetPick_.present ())
         {
           throw ::xsd::cxx::tree::expected_element< char > (
-            "outFile",
+            "diesetPick",
             "");
         }
 
-        if (!pictureFile_.present ())
+        if (!tFile_.present ())
         {
           throw ::xsd::cxx::tree::expected_element< char > (
-            "pictureFile",
+            "tFile",
+            "");
+        }
+
+        if (!oFile_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "oFile",
+            "");
+        }
+
+        if (!pFile_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "pFile",
             "");
         }
 
@@ -933,17 +1106,24 @@ namespace prj
             "");
         }
 
-        if (!tLabel_.present ())
+        if (!tFileLabel_.present ())
         {
           throw ::xsd::cxx::tree::expected_element< char > (
-            "tLabel",
+            "tFileLabel",
             "");
         }
 
-        if (!oLabel_.present ())
+        if (!oFileLabel_.present ())
         {
           throw ::xsd::cxx::tree::expected_element< char > (
-            "oLabel",
+            "oFileLabel",
+            "");
+        }
+
+        if (!pFileLabel_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "pFileLabel",
             "");
         }
       }
@@ -962,9 +1142,11 @@ namespace prj
         {
           static_cast< ::xml_schema::Type& > (*this) = x;
           this->base_ = x.base_;
-          this->templateFile_ = x.templateFile_;
-          this->outFile_ = x.outFile_;
-          this->pictureFile_ = x.pictureFile_;
+          this->stripPick_ = x.stripPick_;
+          this->diesetPick_ = x.diesetPick_;
+          this->tFile_ = x.tFile_;
+          this->oFile_ = x.oFile_;
+          this->pFile_ = x.pFile_;
           this->quoteNumber_ = x.quoteNumber_;
           this->customerName_ = x.customerName_;
           this->customerId_ = x.customerId_;
@@ -976,8 +1158,9 @@ namespace prj
           this->materialThickness_ = x.materialThickness_;
           this->processType_ = x.processType_;
           this->annualVolume_ = x.annualVolume_;
-          this->tLabel_ = x.tLabel_;
-          this->oLabel_ = x.oLabel_;
+          this->tFileLabel_ = x.tFileLabel_;
+          this->oFileLabel_ = x.oFileLabel_;
+          this->pFileLabel_ = x.pFileLabel_;
         }
 
         return *this;
@@ -1296,37 +1479,59 @@ namespace prj
           s << i.base ();
         }
 
-        // templateFile
+        // stripPick
         //
         {
           ::xercesc::DOMElement& s (
             ::xsd::cxx::xml::dom::create_element (
-              "templateFile",
+              "stripPick",
               e));
 
-          s << i.templateFile ();
+          s << i.stripPick ();
         }
 
-        // outFile
+        // diesetPick
         //
         {
           ::xercesc::DOMElement& s (
             ::xsd::cxx::xml::dom::create_element (
-              "outFile",
+              "diesetPick",
               e));
 
-          s << i.outFile ();
+          s << i.diesetPick ();
         }
 
-        // pictureFile
+        // tFile
         //
         {
           ::xercesc::DOMElement& s (
             ::xsd::cxx::xml::dom::create_element (
-              "pictureFile",
+              "tFile",
               e));
 
-          s << i.pictureFile ();
+          s << i.tFile ();
+        }
+
+        // oFile
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "oFile",
+              e));
+
+          s << i.oFile ();
+        }
+
+        // pFile
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "pFile",
+              e));
+
+          s << i.pFile ();
         }
 
         // quoteNumber
@@ -1425,7 +1630,7 @@ namespace prj
               "materialThickness",
               e));
 
-          s << ::xml_schema::AsDouble(i.materialThickness ());
+          s << i.materialThickness ();
         }
 
         // processType
@@ -1450,26 +1655,37 @@ namespace prj
           s << i.annualVolume ();
         }
 
-        // tLabel
+        // tFileLabel
         //
         {
           ::xercesc::DOMElement& s (
             ::xsd::cxx::xml::dom::create_element (
-              "tLabel",
+              "tFileLabel",
               e));
 
-          s << i.tLabel ();
+          s << i.tFileLabel ();
         }
 
-        // oLabel
+        // oFileLabel
         //
         {
           ::xercesc::DOMElement& s (
             ::xsd::cxx::xml::dom::create_element (
-              "oLabel",
+              "oFileLabel",
               e));
 
-          s << i.oLabel ();
+          s << i.oFileLabel ();
+        }
+
+        // pFileLabel
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "pFileLabel",
+              e));
+
+          s << i.pFileLabel ();
         }
       }
 

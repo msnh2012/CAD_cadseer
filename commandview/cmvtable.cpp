@@ -73,6 +73,7 @@ namespace
       QModelIndex i = index;
       
       //csys strings are really long and eat up the table for no benefit.
+      //paths can be really long also.
       //so we cheat here and just pass in the index for the name column
       //and let the table clip the long string. Also let's not fill
       //up the screen with disabled picks...or disabled anything.
@@ -80,7 +81,12 @@ namespace
       {
         const auto *m = static_cast<const cmv::tbl::Model*>(index.model());
         prm::Parameter *prm = m->getParameter(index);
-        if (prm->getValueType() == typeid(osg::Matrixd) || !prm->isActive())
+        if
+        (
+          prm->getValueType() == typeid(osg::Matrixd)
+          || prm->getValueType() == typeid(boost::filesystem::path)
+          || !prm->isActive()
+        )
           i = m->index(i.row(), 0);
       }
       
@@ -235,9 +241,9 @@ namespace
     
     bool operator()(const boost::filesystem::path&) const
     {
-      const QLineEdit *lineEdit = dynamic_cast<const QLineEdit*>(editor);
-      assert(lineEdit);
-      return parameter->setValue(boost::filesystem::path(lineEdit->text().toStdString()));
+      const auto *pathEdit = dynamic_cast<const cmv::tbl::PathEdit*>(editor);
+      assert(pathEdit);
+      return parameter->setValue(boost::filesystem::path(pathEdit->text().toStdString()));
     }
     
     bool operator()(const osg::Vec3d&) const

@@ -92,7 +92,17 @@ void PLabel::setText()
   std::ostringstream stream;
   if (showName)
     stream << parameter->getName().toStdString() << " = ";
-  stream << parameter->adaptToString(3);
+  
+  if (parameter->getValueType() == typeid(boost::filesystem::path))
+  {
+    const auto &p = parameter->getPath();
+    if (p.has_filename())
+      stream << p.filename().string();
+    else if (p.has_parent_path())
+      stream << (*p.parent_path().rbegin()).string();
+  }
+  else
+    stream << parameter->adaptToString(3);
   text->setText(stream.str());
 }
 

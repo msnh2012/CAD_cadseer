@@ -17,12 +17,18 @@
  *
  */
 
+#include <boost/filesystem.hpp>
+
+#include "application/appapplication.h"
 #include "application/appmainwindow.h"
 #include "project/prjproject.h"
 #include "message/msgnode.h"
 #include "selection/slceventhandler.h"
 #include "feature/ftrinputtype.h"
 #include "feature/ftrquote.h"
+#include "parameter/prmparameter.h"
+#include "tools/featuretools.h"
+#include "viewer/vwrwidget.h"
 #include "commandview/cmvmessage.h"
 #include "commandview/cmvquote.h"
 #include "command/cmdquote.h"
@@ -35,7 +41,7 @@ Quote::Quote()
 : Base("cmd::Quote")
 , leafManager()
 {
-  auto nf = std::make_shared<ftr::Quote>();
+  auto nf = std::make_shared<ftr::Quote::Feature>();
   project->addFeature(nf);
   feature = nf.get();
   node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
@@ -47,7 +53,7 @@ Quote::Quote(ftr::Base *fIn)
 : Base("cmd::Quote")
 , leafManager(fIn)
 {
-  feature = dynamic_cast<ftr::Quote*>(fIn);
+  feature = dynamic_cast<ftr::Quote::Feature*>(fIn);
   assert(feature);
   viewBase = std::make_unique<cmv::Quote>(this);
   node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
@@ -99,17 +105,32 @@ void Quote::deactivate()
   isActive = false;
 }
 
-void Quote::setSelections(const std::vector<slc::Message> &strip, const std::vector<slc::Message> &dieset)
+void Quote::setSelections(const slc::Messages &strip, const slc::Messages &dieset)
 {
   assert(isActive);
   
   project->clearAllInputs(feature->getId());
+  auto *stripPick = feature->getParameter(ftr::Quote::PrmTags::stripPick);
+  stripPick->setValue(ftr::Picks());
+  auto *diesetPick = feature->getParameter(ftr::Quote::PrmTags::diesetPick);
+  diesetPick->setValue(ftr::Picks());
   
-  if (!strip.empty())
-    project->connect(strip.front().featureId, feature->getId(), {ftr::Quote::strip});
-  
-  if (!dieset.empty())
-    project->connect(dieset.front().featureId, feature->getId(), {ftr::Quote::dieSet});
+  if (strip.empty() || dieset.empty())
+    return;
+  {
+    const ftr::Base *inputFeature = project->findFeature(strip.front().featureId);
+    auto pick = tls::convertToPick(strip.front(), *inputFeature, project->getShapeHistory());
+    pick.tag = indexTag(ftr::Quote::InputTags::stripPick, 0);
+    stripPick->setValue(pick);
+    project->connect(inputFeature->getId(), feature->getId(), {pick.tag});
+  }
+  {
+    const ftr::Base *inputFeature = project->findFeature(dieset.front().featureId);
+    auto pick = tls::convertToPick(dieset.front(), *inputFeature, project->getShapeHistory());
+    pick.tag = indexTag(ftr::Quote::InputTags::diesetPick, 0);
+    diesetPick->setValue(pick);
+    project->connect(inputFeature->getId(), feature->getId(), {pick.tag});
+  }
 }
 
 void Quote::localUpdate()
@@ -168,7 +189,25 @@ void Quote::go()
   }
 
   setSelections(strip, dieset);
+//   goScreenCapture(); //screen capture is broke see viewer widget.
   
   node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
   viewBase = std::make_unique<cmv::Quote>(this);
+}
+
+void Quote::goScreenCapture()
+{
+  namespace bfs = boost::filesystem;
+  
+  bfs::path pp = (app::instance()->getProject()->getSaveDirectory());
+  assert(bfs::exists(pp));
+  bfs::path fp = pp /= gu::idToString(feature->getId());
+  std::string ext = "png";
+  bfs::path fullPath = fp.string() + "_0." + ext;
+  
+  auto *picturePrm = feature->getParameter(ftr::Quote::PrmTags::pFile);
+  picturePrm->setValue(fullPath);
+  
+  app::instance()->getMainWindow()->getViewer()->screenCapture(fp.string(), ext);
 }

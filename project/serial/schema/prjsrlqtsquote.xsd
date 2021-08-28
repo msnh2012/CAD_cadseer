@@ -13,22 +13,25 @@
 <xs:complexType name="Quote">
   <xs:sequence>
     <xs:element name="base" type="spt:Base"/>
-    <xs:element name="templateFile" type="spt:Parameter"/>
-    <xs:element name="outFile" type="spt:Parameter"/>
-    <xs:element name="pictureFile" type="xs:string"/>
-    <xs:element name="quoteNumber" type="xs:int"/>
-    <xs:element name="customerName" type="xs:string"/>
-    <xs:element name="customerId" type="xs:string"/>
-    <xs:element name="partName" type="xs:string"/>
-    <xs:element name="partNumber" type="xs:string"/>
-    <xs:element name="partSetup" type="xs:string"/>
-    <xs:element name="partRevision" type="xs:string"/>
-    <xs:element name="materialType" type="xs:string"/>
-    <xs:element name="materialThickness" type="xs:double"/>
-    <xs:element name="processType" type="xs:string"/>
-    <xs:element name="annualVolume" type="xs:int"/>
-    <xs:element name="tLabel" type="spt:PLabel"/>
-    <xs:element name="oLabel" type="spt:PLabel"/>
+    <xs:element name="stripPick" type="spt:Parameter"/>
+    <xs:element name="diesetPick" type="spt:Parameter"/>
+    <xs:element name="tFile" type="spt:Parameter"/>
+    <xs:element name="oFile" type="spt:Parameter"/>
+    <xs:element name="pFile" type="spt:Parameter"/>
+    <xs:element name="quoteNumber" type="spt:Parameter"/>
+    <xs:element name="customerName" type="spt:Parameter"/>
+    <xs:element name="customerId" type="spt:Parameter"/>
+    <xs:element name="partName" type="spt:Parameter"/>
+    <xs:element name="partNumber" type="spt:Parameter"/>
+    <xs:element name="partSetup" type="spt:Parameter"/>
+    <xs:element name="partRevision" type="spt:Parameter"/>
+    <xs:element name="materialType" type="spt:Parameter"/>
+    <xs:element name="materialThickness" type="spt:Parameter"/>
+    <xs:element name="processType" type="spt:Parameter"/>
+    <xs:element name="annualVolume" type="spt:Parameter"/>
+    <xs:element name="tFileLabel" type="spt:PLabel"/>
+    <xs:element name="oFileLabel" type="spt:PLabel"/>
+    <xs:element name="pFileLabel" type="spt:PLabel"/>
   </xs:sequence>
 </xs:complexType>
 

@@ -121,60 +121,94 @@ namespace prj
         void
         base (::std::unique_ptr< BaseType > p);
 
-        // templateFile
+        // stripPick
         //
-        typedef ::prj::srl::spt::Parameter TemplateFileType;
-        typedef ::xsd::cxx::tree::traits< TemplateFileType, char > TemplateFileTraits;
+        typedef ::prj::srl::spt::Parameter StripPickType;
+        typedef ::xsd::cxx::tree::traits< StripPickType, char > StripPickTraits;
 
-        const TemplateFileType&
-        templateFile () const;
+        const StripPickType&
+        stripPick () const;
 
-        TemplateFileType&
-        templateFile ();
-
-        void
-        templateFile (const TemplateFileType& x);
+        StripPickType&
+        stripPick ();
 
         void
-        templateFile (::std::unique_ptr< TemplateFileType > p);
+        stripPick (const StripPickType& x);
 
-        // outFile
+        void
+        stripPick (::std::unique_ptr< StripPickType > p);
+
+        // diesetPick
         //
-        typedef ::prj::srl::spt::Parameter OutFileType;
-        typedef ::xsd::cxx::tree::traits< OutFileType, char > OutFileTraits;
+        typedef ::prj::srl::spt::Parameter DiesetPickType;
+        typedef ::xsd::cxx::tree::traits< DiesetPickType, char > DiesetPickTraits;
 
-        const OutFileType&
-        outFile () const;
+        const DiesetPickType&
+        diesetPick () const;
 
-        OutFileType&
-        outFile ();
-
-        void
-        outFile (const OutFileType& x);
+        DiesetPickType&
+        diesetPick ();
 
         void
-        outFile (::std::unique_ptr< OutFileType > p);
+        diesetPick (const DiesetPickType& x);
 
-        // pictureFile
+        void
+        diesetPick (::std::unique_ptr< DiesetPickType > p);
+
+        // tFile
         //
-        typedef ::xml_schema::String PictureFileType;
-        typedef ::xsd::cxx::tree::traits< PictureFileType, char > PictureFileTraits;
+        typedef ::prj::srl::spt::Parameter TFileType;
+        typedef ::xsd::cxx::tree::traits< TFileType, char > TFileTraits;
 
-        const PictureFileType&
-        pictureFile () const;
+        const TFileType&
+        tFile () const;
 
-        PictureFileType&
-        pictureFile ();
-
-        void
-        pictureFile (const PictureFileType& x);
+        TFileType&
+        tFile ();
 
         void
-        pictureFile (::std::unique_ptr< PictureFileType > p);
+        tFile (const TFileType& x);
+
+        void
+        tFile (::std::unique_ptr< TFileType > p);
+
+        // oFile
+        //
+        typedef ::prj::srl::spt::Parameter OFileType;
+        typedef ::xsd::cxx::tree::traits< OFileType, char > OFileTraits;
+
+        const OFileType&
+        oFile () const;
+
+        OFileType&
+        oFile ();
+
+        void
+        oFile (const OFileType& x);
+
+        void
+        oFile (::std::unique_ptr< OFileType > p);
+
+        // pFile
+        //
+        typedef ::prj::srl::spt::Parameter PFileType;
+        typedef ::xsd::cxx::tree::traits< PFileType, char > PFileTraits;
+
+        const PFileType&
+        pFile () const;
+
+        PFileType&
+        pFile ();
+
+        void
+        pFile (const PFileType& x);
+
+        void
+        pFile (::std::unique_ptr< PFileType > p);
 
         // quoteNumber
         //
-        typedef ::xml_schema::Int QuoteNumberType;
+        typedef ::prj::srl::spt::Parameter QuoteNumberType;
         typedef ::xsd::cxx::tree::traits< QuoteNumberType, char > QuoteNumberTraits;
 
         const QuoteNumberType&
@@ -186,9 +220,12 @@ namespace prj
         void
         quoteNumber (const QuoteNumberType& x);
 
+        void
+        quoteNumber (::std::unique_ptr< QuoteNumberType > p);
+
         // customerName
         //
-        typedef ::xml_schema::String CustomerNameType;
+        typedef ::prj::srl::spt::Parameter CustomerNameType;
         typedef ::xsd::cxx::tree::traits< CustomerNameType, char > CustomerNameTraits;
 
         const CustomerNameType&
@@ -205,7 +242,7 @@ namespace prj
 
         // customerId
         //
-        typedef ::xml_schema::String CustomerIdType;
+        typedef ::prj::srl::spt::Parameter CustomerIdType;
         typedef ::xsd::cxx::tree::traits< CustomerIdType, char > CustomerIdTraits;
 
         const CustomerIdType&
@@ -222,7 +259,7 @@ namespace prj
 
         // partName
         //
-        typedef ::xml_schema::String PartNameType;
+        typedef ::prj::srl::spt::Parameter PartNameType;
         typedef ::xsd::cxx::tree::traits< PartNameType, char > PartNameTraits;
 
         const PartNameType&
@@ -239,7 +276,7 @@ namespace prj
 
         // partNumber
         //
-        typedef ::xml_schema::String PartNumberType;
+        typedef ::prj::srl::spt::Parameter PartNumberType;
         typedef ::xsd::cxx::tree::traits< PartNumberType, char > PartNumberTraits;
 
         const PartNumberType&
@@ -256,7 +293,7 @@ namespace prj
 
         // partSetup
         //
-        typedef ::xml_schema::String PartSetupType;
+        typedef ::prj::srl::spt::Parameter PartSetupType;
         typedef ::xsd::cxx::tree::traits< PartSetupType, char > PartSetupTraits;
 
         const PartSetupType&
@@ -273,7 +310,7 @@ namespace prj
 
         // partRevision
         //
-        typedef ::xml_schema::String PartRevisionType;
+        typedef ::prj::srl::spt::Parameter PartRevisionType;
         typedef ::xsd::cxx::tree::traits< PartRevisionType, char > PartRevisionTraits;
 
         const PartRevisionType&
@@ -290,7 +327,7 @@ namespace prj
 
         // materialType
         //
-        typedef ::xml_schema::String MaterialTypeType;
+        typedef ::prj::srl::spt::Parameter MaterialTypeType;
         typedef ::xsd::cxx::tree::traits< MaterialTypeType, char > MaterialTypeTraits;
 
         const MaterialTypeType&
@@ -307,8 +344,8 @@ namespace prj
 
         // materialThickness
         //
-        typedef ::xml_schema::Double MaterialThicknessType;
-        typedef ::xsd::cxx::tree::traits< MaterialThicknessType, char, ::xsd::cxx::tree::schema_type::double_ > MaterialThicknessTraits;
+        typedef ::prj::srl::spt::Parameter MaterialThicknessType;
+        typedef ::xsd::cxx::tree::traits< MaterialThicknessType, char > MaterialThicknessTraits;
 
         const MaterialThicknessType&
         materialThickness () const;
@@ -319,9 +356,12 @@ namespace prj
         void
         materialThickness (const MaterialThicknessType& x);
 
+        void
+        materialThickness (::std::unique_ptr< MaterialThicknessType > p);
+
         // processType
         //
-        typedef ::xml_schema::String ProcessTypeType;
+        typedef ::prj::srl::spt::Parameter ProcessTypeType;
         typedef ::xsd::cxx::tree::traits< ProcessTypeType, char > ProcessTypeTraits;
 
         const ProcessTypeType&
@@ -338,7 +378,7 @@ namespace prj
 
         // annualVolume
         //
-        typedef ::xml_schema::Int AnnualVolumeType;
+        typedef ::prj::srl::spt::Parameter AnnualVolumeType;
         typedef ::xsd::cxx::tree::traits< AnnualVolumeType, char > AnnualVolumeTraits;
 
         const AnnualVolumeType&
@@ -350,46 +390,68 @@ namespace prj
         void
         annualVolume (const AnnualVolumeType& x);
 
-        // tLabel
+        void
+        annualVolume (::std::unique_ptr< AnnualVolumeType > p);
+
+        // tFileLabel
         //
-        typedef ::prj::srl::spt::PLabel TLabelType;
-        typedef ::xsd::cxx::tree::traits< TLabelType, char > TLabelTraits;
+        typedef ::prj::srl::spt::PLabel TFileLabelType;
+        typedef ::xsd::cxx::tree::traits< TFileLabelType, char > TFileLabelTraits;
 
-        const TLabelType&
-        tLabel () const;
+        const TFileLabelType&
+        tFileLabel () const;
 
-        TLabelType&
-        tLabel ();
-
-        void
-        tLabel (const TLabelType& x);
+        TFileLabelType&
+        tFileLabel ();
 
         void
-        tLabel (::std::unique_ptr< TLabelType > p);
+        tFileLabel (const TFileLabelType& x);
 
-        // oLabel
+        void
+        tFileLabel (::std::unique_ptr< TFileLabelType > p);
+
+        // oFileLabel
         //
-        typedef ::prj::srl::spt::PLabel OLabelType;
-        typedef ::xsd::cxx::tree::traits< OLabelType, char > OLabelTraits;
+        typedef ::prj::srl::spt::PLabel OFileLabelType;
+        typedef ::xsd::cxx::tree::traits< OFileLabelType, char > OFileLabelTraits;
 
-        const OLabelType&
-        oLabel () const;
+        const OFileLabelType&
+        oFileLabel () const;
 
-        OLabelType&
-        oLabel ();
-
-        void
-        oLabel (const OLabelType& x);
+        OFileLabelType&
+        oFileLabel ();
 
         void
-        oLabel (::std::unique_ptr< OLabelType > p);
+        oFileLabel (const OFileLabelType& x);
+
+        void
+        oFileLabel (::std::unique_ptr< OFileLabelType > p);
+
+        // pFileLabel
+        //
+        typedef ::prj::srl::spt::PLabel PFileLabelType;
+        typedef ::xsd::cxx::tree::traits< PFileLabelType, char > PFileLabelTraits;
+
+        const PFileLabelType&
+        pFileLabel () const;
+
+        PFileLabelType&
+        pFileLabel ();
+
+        void
+        pFileLabel (const PFileLabelType& x);
+
+        void
+        pFileLabel (::std::unique_ptr< PFileLabelType > p);
 
         // Constructors.
         //
         Quote (const BaseType&,
-               const TemplateFileType&,
-               const OutFileType&,
-               const PictureFileType&,
+               const StripPickType&,
+               const DiesetPickType&,
+               const TFileType&,
+               const OFileType&,
+               const PFileType&,
                const QuoteNumberType&,
                const CustomerNameType&,
                const CustomerIdType&,
@@ -401,26 +463,30 @@ namespace prj
                const MaterialThicknessType&,
                const ProcessTypeType&,
                const AnnualVolumeType&,
-               const TLabelType&,
-               const OLabelType&);
+               const TFileLabelType&,
+               const OFileLabelType&,
+               const PFileLabelType&);
 
         Quote (::std::unique_ptr< BaseType >,
-               ::std::unique_ptr< TemplateFileType >,
-               ::std::unique_ptr< OutFileType >,
-               const PictureFileType&,
-               const QuoteNumberType&,
-               const CustomerNameType&,
-               const CustomerIdType&,
-               const PartNameType&,
-               const PartNumberType&,
-               const PartSetupType&,
-               const PartRevisionType&,
-               const MaterialTypeType&,
-               const MaterialThicknessType&,
-               const ProcessTypeType&,
-               const AnnualVolumeType&,
-               ::std::unique_ptr< TLabelType >,
-               ::std::unique_ptr< OLabelType >);
+               ::std::unique_ptr< StripPickType >,
+               ::std::unique_ptr< DiesetPickType >,
+               ::std::unique_ptr< TFileType >,
+               ::std::unique_ptr< OFileType >,
+               ::std::unique_ptr< PFileType >,
+               ::std::unique_ptr< QuoteNumberType >,
+               ::std::unique_ptr< CustomerNameType >,
+               ::std::unique_ptr< CustomerIdType >,
+               ::std::unique_ptr< PartNameType >,
+               ::std::unique_ptr< PartNumberType >,
+               ::std::unique_ptr< PartSetupType >,
+               ::std::unique_ptr< PartRevisionType >,
+               ::std::unique_ptr< MaterialTypeType >,
+               ::std::unique_ptr< MaterialThicknessType >,
+               ::std::unique_ptr< ProcessTypeType >,
+               ::std::unique_ptr< AnnualVolumeType >,
+               ::std::unique_ptr< TFileLabelType >,
+               ::std::unique_ptr< OFileLabelType >,
+               ::std::unique_ptr< PFileLabelType >);
 
         Quote (const ::xercesc::DOMElement& e,
                ::xml_schema::Flags f = 0,
@@ -449,9 +515,11 @@ namespace prj
 
         protected:
         ::xsd::cxx::tree::one< BaseType > base_;
-        ::xsd::cxx::tree::one< TemplateFileType > templateFile_;
-        ::xsd::cxx::tree::one< OutFileType > outFile_;
-        ::xsd::cxx::tree::one< PictureFileType > pictureFile_;
+        ::xsd::cxx::tree::one< StripPickType > stripPick_;
+        ::xsd::cxx::tree::one< DiesetPickType > diesetPick_;
+        ::xsd::cxx::tree::one< TFileType > tFile_;
+        ::xsd::cxx::tree::one< OFileType > oFile_;
+        ::xsd::cxx::tree::one< PFileType > pFile_;
         ::xsd::cxx::tree::one< QuoteNumberType > quoteNumber_;
         ::xsd::cxx::tree::one< CustomerNameType > customerName_;
         ::xsd::cxx::tree::one< CustomerIdType > customerId_;
@@ -463,8 +531,9 @@ namespace prj
         ::xsd::cxx::tree::one< MaterialThicknessType > materialThickness_;
         ::xsd::cxx::tree::one< ProcessTypeType > processType_;
         ::xsd::cxx::tree::one< AnnualVolumeType > annualVolume_;
-        ::xsd::cxx::tree::one< TLabelType > tLabel_;
-        ::xsd::cxx::tree::one< OLabelType > oLabel_;
+        ::xsd::cxx::tree::one< TFileLabelType > tFileLabel_;
+        ::xsd::cxx::tree::one< OFileLabelType > oFileLabel_;
+        ::xsd::cxx::tree::one< PFileLabelType > pFileLabel_;
       };
     }
   }

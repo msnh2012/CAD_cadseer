@@ -1056,7 +1056,7 @@ struct Widget::Stow
     v->addEventHandler(selectionHandler.get());
     screenCaptureHandler = new osgViewer::ScreenCaptureHandler();
     screenCaptureHandler->setKeyEventTakeScreenShot(-1); //no keyboard execution
-    screenCaptureHandler->setKeyEventToggleContinuousCapture(-1); //no keyboard execution
+    screenCaptureHandler->setKeyEventToggleContinuousCapture(-1); //no continuous capture
     
     //get screen resolution. do I need this?
     osg::GraphicsContext::WindowingSystemInterface *wsi = getContext()->getWindowingSystemInterface();
@@ -1209,7 +1209,8 @@ double Widget::getDiagonalLength() const
  * 
  * @param fp file path without dot and extension.
  * @param e extension without the dot
- * 
+ * @note screen capture was broke by osgQt's switch to QOpenGLWidget
+ * Looked into it for 2 days. gave up posted an issue to osgQt's github.
  */
 void Widget::screenCapture(const std::string &fp, const std::string &e)
 {

@@ -38,15 +38,16 @@ namespace cmv
     Quote(cmd::Quote*);
     ~Quote() override;
   private Q_SLOTS:
-    void browseForTemplateSlot();
-    void browseForOutputSlot();
-    void takePictureSlot();
-    void loadLabelPixmapSlot();
-    void selectionsChanged();
-    void valueChanged();
-    void comboValueChanged(int);
-    void templateChanged(const QString&);
-    void outputChanged(const QString&);
+//     void browseForTemplateSlot();
+//     void browseForOutputSlot();
+//     void takePictureSlot();
+//     void loadLabelPixmapSlot();
+//     void selectionsChanged();
+//     void valueChanged();
+//     void comboValueChanged(int);
+//     void templateChanged(const QString&);
+//     void outputChanged(const QString&);
+    void modelChanged(const QModelIndex&, const QModelIndex&);
   private:
     struct Stow;
     std::unique_ptr<Stow> stow;

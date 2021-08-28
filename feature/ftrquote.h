@@ -20,62 +20,59 @@
 #ifndef FTR_QUOTE_H
 #define FTR_QUOTE_H
 
-#include <boost/filesystem/path.hpp>
-
-#include <osg/ref_ptr>
-
 #include "feature/ftrbase.h"
 
-namespace lbr{class PLabel;}
 namespace prj{namespace srl{namespace qts{class Quote;}}}
 
 namespace ftr
 {
-  struct QuoteData
+  namespace Quote
   {
-    int quoteNumber;
-    QString customerName;
-    boost::uuids::uuid customerId; //not used yet.
-    QString partName;
-    QString partNumber;
-    QString partSetup;
-    QString partRevision;
-    QString materialType;
-    double materialThickness; //eventually from somewhere else.
-    QString processType;
-    int annualVolume;
-  };
-  
-  
-  class Quote : public Base
-  {
-  public:
-    constexpr static const char *strip = "Strip";
-    constexpr static const char *dieSet = "DieSet";
-    
-    Quote();
-    virtual ~Quote() override;
-    
-    virtual void updateModel(const UpdatePayload&) override;
-    virtual Type getType() const override {return Type::Quote;}
-    virtual const std::string& getTypeString() const override {return toString(Type::Quote);}
-    virtual const QIcon& getIcon() const override {return icon;}
-    virtual Descriptor getDescriptor() const override {return Descriptor::Create;}
-    virtual void serialWrite(const boost::filesystem::path&) override;
-    void serialRead(const prj::srl::qts::Quote&);
-    
-    std::unique_ptr<prm::Parameter> tFile; //!< template file.
-    std::unique_ptr<prm::Parameter> oFile; //!< output file.
-    boost::filesystem::path pFile; //!< picture file.
-    
-    osg::ref_ptr<lbr::PLabel> tLabel;
-    osg::ref_ptr<lbr::PLabel> oLabel;
-    
-    QuoteData quoteData;
-    
-  private:
-    static QIcon icon;
-  };
+    namespace InputTags
+    {
+      inline constexpr std::string_view stripPick = "stripPick";
+      inline constexpr std::string_view diesetPick = "diesetPick";
+    }
+    namespace PrmTags
+    {
+      inline constexpr std::string_view stripPick = "stripPick";
+      inline constexpr std::string_view diesetPick = "diesetPick";
+      inline constexpr std::string_view tFile = "tFile";
+      inline constexpr std::string_view oFile = "oFile";
+      inline constexpr std::string_view pFile = "pFile";
+      
+      inline constexpr std::string_view quoteNumber = "quoteNumber";
+      inline constexpr std::string_view customerName = "customerName";
+      inline constexpr std::string_view customerId = "customerId";
+      inline constexpr std::string_view partName = "partName";
+      inline constexpr std::string_view partNumber = "partNumber";
+      inline constexpr std::string_view partSetup = "partSetup";
+      inline constexpr std::string_view partRevision = "partRevision";
+      inline constexpr std::string_view materialType = "materialType";
+      inline constexpr std::string_view materialThickness = "materialThickness";
+      inline constexpr std::string_view processType = "processType";
+      inline constexpr std::string_view annualVolume = "annualVolume";
+    }
+    class Feature : public Base
+    {
+    public:
+      Feature();
+      ~Feature() override;
+      
+      void updateModel(const UpdatePayload&) override;
+      Type getType() const override {return Type::Quote;}
+      const std::string& getTypeString() const override {return toString(Type::Quote);}
+      const QIcon& getIcon() const override {return icon;}
+      Descriptor getDescriptor() const override {return Descriptor::Create;}
+      void serialWrite(const boost::filesystem::path&) override;
+      void serialRead(const prj::srl::qts::Quote&);
+      
+    private:
+      static QIcon icon;
+      struct Stow;
+      std::unique_ptr<Stow> stow;
+    };
+  }
 }
 
 #endif // FTR_QUOTE_H

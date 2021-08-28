@@ -37,70 +37,131 @@
 #include "project/serial/generated/prjsrlqtsquote.h"
 #include "feature/ftrupdatepayload.h"
 #include "feature/ftrinputtype.h"
+#include "parameter/prmconstants.h"
 #include "parameter/prmparameter.h"
+#include "tools/featuretools.h"
 #include "feature/ftrquote.h"
 
-using namespace ftr;
+using namespace ftr::Quote;
 using boost::filesystem::path;
+QIcon Feature::icon = QIcon(":/resources/images/constructionQuote.svg");
 
-QIcon Quote::icon;
-
-Quote::Quote() : Base(),
-tFile(std::make_unique<prm::Parameter>("Template File", prf::manager().rootPtr->features().quote().get().templateSheet(), prm::PathType::Read)),
-oFile(std::make_unique<prm::Parameter>("Output File",  path(app::instance()->getProject()->getSaveDirectory()) /= "Quote.ods", prm::PathType::Write))
+namespace
 {
-  if (icon.isNull())
-    icon = QIcon(":/resources/images/constructionQuote.svg");
+  path getTemplatePath()
+  {
+    return path(prf::manager().rootPtr->features().quote().get().templateSheet());
+  }
+  path getOutputPath()
+  {
+    return path(app::instance()->getProject()->getSaveDirectory()) /= "Quote.ods";
+  }
+}
+
+struct Feature::Stow
+{
+  Feature &feature;
+  prm::Parameter stripPick{QObject::tr("Strip"), ftr::Picks(), PrmTags::stripPick};
+  prm::Parameter diesetPick{QObject::tr("Die Set"), ftr::Picks(), PrmTags::diesetPick};
+  prm::Parameter tFile{QObject::tr("Template File"), getTemplatePath(), prm::PathType::Read, PrmTags::tFile};
+  prm::Parameter oFile{QObject::tr("Output File"), getOutputPath(), prm::PathType::Write, PrmTags::oFile};
+  prm::Parameter pFile{QObject::tr("Picture File"), path(), prm::PathType::Read, PrmTags::pFile};
+  prm::Parameter quoteNumber{QObject::tr("Quote Number"), 1, PrmTags::quoteNumber};
+  prm::Parameter customerName{QObject::tr("Customer Name"), std::string("customer"), PrmTags::customerName};
+  prm::Parameter customerId{QObject::tr("Customer Id"), 1, PrmTags::customerId};
+  prm::Parameter partName{QObject::tr("Part Name"), std::string("part"), PrmTags::partName};
+  prm::Parameter partNumber{QObject::tr("Part Number"), std::string("number"), PrmTags::partNumber};
+  prm::Parameter partSetup{QObject::tr("Part Setup"), 0, PrmTags::partSetup};
+  prm::Parameter partRevision{QObject::tr("Part Revision"), std::string("revision"), PrmTags::partRevision};
+  prm::Parameter materialType{QObject::tr("Material Type"), std::string("material"), PrmTags::materialType};
+  prm::Parameter materialThickness{QObject::tr("Material Thickness"), 1.0, PrmTags::materialThickness};
+  prm::Parameter processType{QObject::tr("Process"), 0, PrmTags::processType};
+  prm::Parameter annualVolume{QObject::tr("Volume"), 1, PrmTags::annualVolume};
   
+  osg::ref_ptr<lbr::PLabel> tFileLabel{new lbr::PLabel(&tFile)};
+  osg::ref_ptr<lbr::PLabel> oFileLabel{new lbr::PLabel(&oFile)};
+  osg::ref_ptr<lbr::PLabel> pFileLabel{new lbr::PLabel(&pFile)};
+  
+  Stow() = delete;
+  Stow(Feature &fIn)
+  : feature(fIn)
+  {
+    auto processPrm = [&](prm::Parameter &prmIn)
+    {
+      prmIn.connectValue(std::bind(&Feature::setModelDirty, &feature));
+      feature.parameters.push_back(&prmIn);
+    };
+    
+    processPrm(stripPick);
+    processPrm(diesetPick);
+    processPrm(tFile);
+    processPrm(oFile);
+    processPrm(pFile);
+    processPrm(quoteNumber);
+    processPrm(customerName);
+    processPrm(customerId);
+    processPrm(partName);
+    processPrm(partNumber);
+    processPrm(partSetup);
+    processPrm(partRevision);
+    processPrm(materialType);
+    processPrm(materialThickness);
+    processPrm(processType);
+    processPrm(annualVolume);
+    
+    QStringList pSetup =
+    {
+      QObject::tr("One Out")
+      , QObject::tr("Two Out")
+      , QObject::tr("Symmetrical Opposite")
+      , QObject::tr("Other")
+    };
+    partSetup.setEnumeration(pSetup);
+    QStringList pType =
+    {
+      QObject::tr("Prog")
+      , QObject::tr("Prog Partial")
+      , QObject::tr("Mechanical Transfer")
+      , QObject::tr("Hand Transfer")
+      , QObject::tr("Other")
+    };
+    processType.setEnumeration(pType);
+    
+    feature.overlaySwitch->addChild(tFileLabel.get());
+    feature.overlaySwitch->addChild(oFileLabel.get());
+    feature.overlaySwitch->addChild(pFileLabel.get());
+  }
+};
+
+Feature::Feature()
+: Base()
+, stow(std::make_unique<Stow>(*this))
+{
   name = QObject::tr("Quote");
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
-  
-  quoteData.quoteNumber = 0;
-  quoteData.customerName = "aCustomer";
-  quoteData.customerId = gu::createRandomId();
-  quoteData.partName = "aName";
-  quoteData.partNumber = "aNumber";
-  quoteData.partSetup = "aSetup";
-  quoteData.partRevision = "aRevision";
-  quoteData.materialType = "aMaterialType";
-  quoteData.materialThickness = 0.0;
-  quoteData.processType = "aProcessType";
-  quoteData.annualVolume = 0;
-  
-  parameters.push_back(tFile.get());
-  parameters.push_back(oFile.get());
-  
-  tLabel = new lbr::PLabel(tFile.get());
-  overlaySwitch->addChild(tLabel.get());
-  
-  oLabel = new lbr::PLabel(oFile.get());
-  overlaySwitch->addChild(oLabel.get());
 }
 
-Quote::~Quote()
-{
+Feature::~Feature() = default;
 
-}
-
-void Quote::updateModel(const UpdatePayload &payloadIn)
+void Feature::updateModel(const UpdatePayload &payloadIn)
 {
   setFailure();
   lastUpdateLog.clear();
   try
   {
-    std::vector<const Base*> stripFeatures = payloadIn.getFeatures(strip);
-    if (stripFeatures.size() != 1)
-      throw std::runtime_error("wrong number of 'strip' inputs");
-    const Strip *sf = dynamic_cast<const Strip*>(stripFeatures.front());
-    assert(sf);
+    tls::Resolver resolver(payloadIn);
+    
+    const auto &sPicks = stow->stripPick.getPicks();
+    if (sPicks.empty() || !resolver.resolve(sPicks.front()))
+      throw std::runtime_error("Invalid strip input");
+    const Strip *sf = dynamic_cast<const Strip*>(resolver.getFeature());
     if(!sf)
       throw std::runtime_error("can not cast to strip feature");
     
-    std::vector<const Base*> diesetFeatures = payloadIn.getFeatures(dieSet);
-    if (diesetFeatures.size() != 1)
-      throw std::runtime_error("wrong number of 'dieset' inputs");
-    const DieSet *dsf = dynamic_cast<const DieSet*>(diesetFeatures.front());
-    assert(dsf);
+    const auto &dPicks = stow->diesetPick.getPicks();
+    if (dPicks.empty() || !resolver.resolve(dPicks.front()))
+      throw std::runtime_error("Invalid dieset input");
+    const DieSet *dsf = dynamic_cast<const DieSet*>(resolver.getFeature());
     if (!dsf)
       throw std::runtime_error("can not cast to dieset feature");
     
@@ -110,12 +171,14 @@ void Quote::updateModel(const UpdatePayload &payloadIn)
       throw std::runtime_error("die set seer shape is null");
     const TopoDS_Shape &ds = dss.getRootOCCTShape(); //part shape.
     occt::BoundingBox sbbox(ds); //blank bounding box.
-    osg::Vec3d tLoc = gu::toOsg(sbbox.getCenter()) + osg::Vec3d(0.0, 50.0, 0.0);
-    tLabel->setMatrix(osg::Matrixd::translate(tLoc));
-    osg::Vec3d oLoc = gu::toOsg(sbbox.getCenter()) + osg::Vec3d(0.0, -50.0, 0.0);
-    oLabel->setMatrix(osg::Matrixd::translate(oLoc));
+    osg::Vec3d tLoc = gu::toOsg(sbbox.getCorners().at(0));
+    stow->tFileLabel->setMatrix(osg::Matrixd::translate(tLoc));
+    osg::Vec3d pLoc = gu::toOsg(sbbox.getCorners().at(2));
+    stow->pFileLabel->setMatrix(osg::Matrixd::translate(pLoc));
+    osg::Vec3d oLoc = gu::toOsg(sbbox.getCorners().at(3));
+    stow->oFileLabel->setMatrix(osg::Matrixd::translate(oLoc));
     
-    if (!boost::filesystem::exists(tFile->getPath()))
+    if (!boost::filesystem::exists(stow->tFile.getPath()))
       throw std::runtime_error("template file doesn't exist");
     /* we change the entries in a specific sheet and these values are linked into
     * a customer designed sheet. The links are not updated when we open the sheet in calc by default.
@@ -124,12 +187,12 @@ void Quote::updateModel(const UpdatePayload &payloadIn)
     */
     boost::filesystem::copy_file
     (
-      tFile->getPath(),
-      oFile->getPath(),
+      stow->tFile.getPath(),
+      stow->oFile.getPath(),
       boost::filesystem::copy_option::overwrite_if_exists
     );
     
-    libzippp::ZipArchive zip(oFile->getPath().string());
+    libzippp::ZipArchive zip(stow->oFile.getPath().string());
     zip.open(libzippp::ZipArchive::WRITE);
     for(const auto &e : zip.getEntries())
     {
@@ -141,17 +204,17 @@ void Quote::updateModel(const UpdatePayload &payloadIn)
         
         lbo::Map map = 
         {
-          (std::make_pair(std::make_pair(0, 0), std::to_string(quoteData.quoteNumber))),
-          (std::make_pair(std::make_pair(1, 0), quoteData.customerName.toStdString())),
-          (std::make_pair(std::make_pair(2, 0), gu::idToString(quoteData.customerId))),
-          (std::make_pair(std::make_pair(3, 0), quoteData.partName.toStdString())),
-          (std::make_pair(std::make_pair(4, 0), quoteData.partNumber.toStdString())),
-          (std::make_pair(std::make_pair(5, 0), quoteData.partSetup.toStdString())),
-          (std::make_pair(std::make_pair(6, 0), quoteData.partRevision.toStdString())),
-          (std::make_pair(std::make_pair(7, 0), quoteData.materialType.toStdString())),
-          (std::make_pair(std::make_pair(8, 0), std::to_string(quoteData.materialThickness))),
-          (std::make_pair(std::make_pair(9, 0), quoteData.processType.toStdString())),
-          (std::make_pair(std::make_pair(10, 0), std::to_string(quoteData.annualVolume))),
+          (std::make_pair(std::make_pair(0, 0), std::to_string(stow->quoteNumber.getInt()))),
+          (std::make_pair(std::make_pair(1, 0), stow->customerName.getString())),
+          (std::make_pair(std::make_pair(2, 0), std::to_string(stow->customerId.getInt()))),
+          (std::make_pair(std::make_pair(3, 0), stow->partName.getString())),
+          (std::make_pair(std::make_pair(4, 0), stow->partNumber.getString())),
+          (std::make_pair(std::make_pair(5, 0), stow->partSetup.getEnumerationString().toStdString())),
+          (std::make_pair(std::make_pair(6, 0), stow->partRevision.getString())),
+          (std::make_pair(std::make_pair(7, 0), stow->materialType.getString())),
+          (std::make_pair(std::make_pair(8, 0), std::to_string(stow->materialThickness.getDouble()))),
+          (std::make_pair(std::make_pair(9, 0), stow->processType.getEnumerationString().toStdString())),
+          (std::make_pair(std::make_pair(10, 0), std::to_string(stow->annualVolume.getInt()))),
           (std::make_pair(std::make_pair(11, 0), std::to_string(sf->stations.size()))),
           (std::make_pair(std::make_pair(12, 0), std::to_string(sf->getPitch()))),
           (std::make_pair(std::make_pair(13, 0), std::to_string(sf->getWidth()))),
@@ -191,8 +254,8 @@ void Quote::updateModel(const UpdatePayload &payloadIn)
       
       if (cPath.parent_path() == "Pictures" && cPath.extension() == ".png")
       {
-        if (boost::filesystem::exists(pFile))
-          zip.addFile(e.getName(), pFile.string());
+        if (boost::filesystem::exists(stow->pFile.getPath()))
+          zip.addFile(e.getName(), stow->pFile.getPath().string());
       }
     }
     
@@ -220,27 +283,55 @@ void Quote::updateModel(const UpdatePayload &payloadIn)
     std::cout << std::endl << lastUpdateLog;
 }
 
-void Quote::serialWrite(const boost::filesystem::path &dIn)
+
+/*
+ < xs:element name="base" type="spt:Base"/>        *
+ <xs:element name="stripPick" type="spt:Parameter"/>
+ <xs:element name="diesetPick" type="spt:Parameter"/>
+ <xs:element name="tFile" type="spt:Parameter"/>
+ <xs:element name="oFile" type="spt:Parameter"/>
+ <xs:element name="pFile" type="spt:Parameter"/>
+ <xs:element name="quoteNumber" type="spt:Parameter"/>
+ <xs:element name="customerName" type="spt:Parameter"/>
+ <xs:element name="customerId" type="spt:Parameter"/>
+ <xs:element name="partName" type="spt:Parameter"/>
+ <xs:element name="partNumber" type="spt:Parameter"/>
+ <xs:element name="partSetup" type="spt:Parameter"/>
+ <xs:element name="partRevision" type="spt:Parameter"/>
+ <xs:element name="materialType" type="spt:Parameter"/>
+ <xs:element name="materialThickness" type="spt:Parameter"/>
+ <xs:element name="processType" type="spt:Parameter"/>
+ <xs:element name="annualVolume" type="spt:Parameter"/>
+ <xs:element name="tFileLabel" type="spt:PLabel"/>
+ <xs:element name="oFileLabel" type="spt:PLabel"/>
+ <xs:element name="pFileLabel" type="spt:PLabel"/>
+*/
+
+
+void Feature::serialWrite(const boost::filesystem::path &dIn)
 {
   prj::srl::qts::Quote qo
   (
-    Base::serialOut(),
-    tFile->serialOut(),
-    oFile->serialOut(),
-    pFile.string(),
-    quoteData.quoteNumber,
-    quoteData.customerName.toStdString(),
-    gu::idToString(quoteData.customerId),
-    quoteData.partName.toStdString(),
-    quoteData.partNumber.toStdString(),
-    quoteData.partSetup.toStdString(),
-    quoteData.partRevision.toStdString(),
-    quoteData.materialType.toStdString(),
-    quoteData.materialThickness,
-    quoteData.processType.toStdString(),
-    quoteData.annualVolume,
-    tLabel->serialOut(),
-    oLabel->serialOut()
+    Base::serialOut()
+    , stow->stripPick.serialOut()
+    , stow->diesetPick.serialOut()
+    , stow->tFile.serialOut()
+    , stow->oFile.serialOut()
+    , stow->pFile.serialOut()
+    , stow->quoteNumber.serialOut()
+    , stow->customerName.serialOut()
+    , stow->customerId.serialOut()
+    , stow->partName.serialOut()
+    , stow->partNumber.serialOut()
+    , stow->partSetup.serialOut()
+    , stow->partRevision.serialOut()
+    , stow->materialType.serialOut()
+    , stow->materialThickness.serialOut()
+    , stow->processType.serialOut()
+    , stow->annualVolume.serialOut()
+    , stow->tFileLabel->serialOut()
+    , stow->oFileLabel->serialOut()
+    , stow->pFileLabel->serialOut()
   );
   
   xml_schema::NamespaceInfomap infoMap;
@@ -248,23 +339,26 @@ void Quote::serialWrite(const boost::filesystem::path &dIn)
   prj::srl::qts::quote(stream, qo, infoMap);
 }
 
-void Quote::serialRead(const prj::srl::qts::Quote &qIn)
+void Feature::serialRead(const prj::srl::qts::Quote &qIn)
 {
   Base::serialIn(qIn.base());
-  tFile->serialIn(qIn.templateFile());
-  oFile->serialIn(qIn.outFile());
-  pFile = qIn.pictureFile();
-  quoteData.quoteNumber = qIn.quoteNumber();
-  quoteData.customerName = QString::fromStdString(qIn.customerName());
-  quoteData.customerId = gu::stringToId(qIn.customerId());
-  quoteData.partName = QString::fromStdString(qIn.partName());
-  quoteData.partNumber = QString::fromStdString(qIn.partNumber());
-  quoteData.partSetup = QString::fromStdString(qIn.partSetup());
-  quoteData.partRevision = QString::fromStdString(qIn.partRevision());
-  quoteData.materialType = QString::fromStdString(qIn.materialType());
-  quoteData.materialThickness = qIn.materialThickness();
-  quoteData.processType = QString::fromStdString(qIn.processType());
-  quoteData.annualVolume = qIn.annualVolume();
-  tLabel->serialIn(qIn.tLabel());
-  oLabel->serialIn(qIn.oLabel());
+  stow->stripPick.serialIn(qIn.stripPick());
+  stow->diesetPick.serialIn(qIn.diesetPick());
+  stow->tFile.serialIn(qIn.tFile());
+  stow->oFile.serialIn(qIn.oFile());
+  stow->pFile.serialIn(qIn.pFile());
+  stow->quoteNumber.serialIn(qIn.quoteNumber());
+  stow->customerName.serialIn(qIn.customerName());
+  stow->customerId.serialIn(qIn.customerId());
+  stow->partName.serialIn(qIn.partName());
+  stow->partNumber.serialIn(qIn.partNumber());
+  stow->partSetup.serialIn(qIn.partSetup());
+  stow->partRevision.serialIn(qIn.partRevision());
+  stow->materialType.serialIn(qIn.materialType());
+  stow->materialThickness.serialIn(qIn.materialThickness());
+  stow->processType.serialIn(qIn.processType());
+  stow->annualVolume.serialIn(qIn.annualVolume());
+  stow->tFileLabel->serialIn(qIn.tFileLabel());
+  stow->oFileLabel->serialIn(qIn.oFileLabel());
+  stow->pFileLabel->serialIn(qIn.pFileLabel());
 }

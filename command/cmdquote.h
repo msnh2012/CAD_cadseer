@@ -23,14 +23,14 @@
 #include "command/cmdleafmanager.h"
 #include "command/cmdbase.h"
 
-namespace ftr{class Base; class Quote;}
+namespace ftr{namespace Quote{class Feature;}}
 
 namespace cmd
 {
   class Quote : public Base
   {
   public:
-    ftr::Quote *feature = nullptr;
+    ftr::Quote::Feature *feature = nullptr;
     
     Quote();
     Quote(ftr::Base*);
@@ -41,8 +41,10 @@ namespace cmd
     void activate() override;
     void deactivate() override;
     
-    void setSelections(const std::vector<slc::Message>&, const std::vector<slc::Message>&);
+    void setSelections(const slc::Messages&, const slc::Messages&);
     void localUpdate();
+    
+    void goScreenCapture();
   private:
     cmd::LeafManager leafManager;
     void go();

@@ -31,10 +31,7 @@
 #include "selection/slccontainer.h"
 
 class QTextStream;
-namespace vwr{class SpaceballManipulator;}
-namespace slc{class EventHandler; class OverlayHandler;}
-namespace lbr{class CSysDragger; class CSysCallBack;}
-namespace msg{struct Message; struct Node; struct Sift;}
+namespace slc{class EventHandler;}
 
 namespace vwr
 {

@@ -110,7 +110,7 @@ namespace
     
     QWidget* buildString() const
     {
-      return new QLineEdit(parameter->adaptToQString());
+      return new QLineEdit(parameter->adaptToQString(), parent);
     }
     
     QWidget* buildPath() const

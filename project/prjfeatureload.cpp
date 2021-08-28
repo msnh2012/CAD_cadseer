@@ -427,7 +427,7 @@ std::shared_ptr<ftr::Base> FeatureLoad::loadQuote(const std::string &fileNameIn,
   auto sq = srl::qts::quote(fileNameIn, flags);
   assert(sq);
   
-  auto freshQuote = std::make_shared<ftr::Quote>();
+  auto freshQuote = std::make_shared<ftr::Quote::Feature>();
   freshQuote->serialRead(*sq);
   
   return freshQuote;
