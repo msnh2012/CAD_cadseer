@@ -262,9 +262,9 @@ namespace prm
   };
   struct Subject::Stow
   {
-    boost::signals2::signal<void ()> valueSignal;
-    boost::signals2::signal<void ()> constantSignal;
-    boost::signals2::signal<void ()> activeSignal;
+    boost::signals2::signal_type<void (), boost::signals2::keywords::mutex_type<boost::signals2::dummy_mutex>>::type valueSignal;
+    boost::signals2::signal_type<void (), boost::signals2::keywords::mutex_type<boost::signals2::dummy_mutex>>::type constantSignal;
+    boost::signals2::signal_type<void (), boost::signals2::keywords::mutex_type<boost::signals2::dummy_mutex>>::type activeSignal;
   };
 }
 

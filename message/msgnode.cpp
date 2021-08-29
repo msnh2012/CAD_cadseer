@@ -26,7 +26,7 @@ namespace msg
   struct Node::Stow
   {
     std::vector<boost::signals2::scoped_connection> connections;
-    boost::signals2::signal<void (const msg::Message &)> signal;
+    boost::signals2::signal_type<void (const msg::Message &), boost::signals2::keywords::mutex_type<boost::signals2::dummy_mutex>>::type signal;
   };
 }
 
