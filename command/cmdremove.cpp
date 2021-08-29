@@ -25,7 +25,6 @@
 #include "project/prjmessage.h"
 #include "selection/slceventhandler.h"
 #include "commandview/cmvmessage.h"
-#include "commandview/cmvremove.h"
 #include "command/cmdremove.h"
 
 using namespace cmd;
@@ -42,41 +41,17 @@ std::string Remove::getStatusMessage()
 void Remove::activate()
 {
   isActive = true;
-  
-  if (isFirstRun.get())
-  {
-    isFirstRun = false;
-    go();
-  }
-  if (viewBase)
-  {
-    cmv::Message vm(viewBase.get(), viewBase->getPaneWidth());
-    msg::Message out(msg::Mask(msg::Request | msg::Command | msg::View | msg::Show), vm);
-    node->sendBlocked(out);
-  }
-  else
-    sendDone();
+  go();
+  sendDone();
 }
 
 void Remove::deactivate()
 {
-  if (viewBase)
-  {
-    msg::Message out(msg::Mask(msg::Request | msg::Command | msg::View | msg::Hide));
-    node->sendBlocked(out);
-  }
   isActive = false;
 }
 
 void Remove::go()
 {
-  auto goView = [&]()
-  {
-    node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
-    viewBase = std::make_unique<cmv::Remove>(this);
-    node->sendBlocked(msg::buildStatusMessage("invalid pre selection", 2.0));
-  };
-  
   const slc::Containers &cs = eventHandler->getSelections();
   slc::Containers rs;
   for (const auto &s : cs)
@@ -86,7 +61,8 @@ void Remove::go()
   }
   if (rs.empty())
   {
-    goView();
+    node->sendBlocked(msg::buildStatusMessage("invalid pre selection", 2.0));
+    shouldUpdate = false;
     return;
   }
   node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
