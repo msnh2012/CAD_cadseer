@@ -534,7 +534,7 @@ std::shared_ptr<ftr::Base> FeatureLoad::loadRemoveFaces(const std::string &fileN
   auto sr = srl::rmfs::removeFaces(fileNameIn, flags);
   assert(sr);
   
-  auto rfs = std::make_shared<ftr::RemoveFaces>();
+  auto rfs = std::make_shared<ftr::RemoveFaces::Feature>();
   rfs->getAnnex<ann::SeerShape>().setOCCTShape(shapeVector.at(shapeOffsetIn), featureId);
   rfs->serialRead(*sr);
   

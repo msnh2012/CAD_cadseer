@@ -20,41 +20,41 @@
 #ifndef FTR_REMOVEFACES_H
 #define FTR_REMOVEFACES_H
 
-#include "feature/ftrpick.h"
 #include "feature/ftrbase.h"
 
 namespace prj{namespace srl{namespace rmfs{class RemoveFaces;}}}
 
 namespace ftr
 {
-  /**
-  * @brief remove faces from a solid.
-  */
-  class RemoveFaces : public Base
+  namespace RemoveFaces
   {
-    public:
-      RemoveFaces();
-      virtual ~RemoveFaces() override;
-      
-      virtual void updateModel(const UpdatePayload&) override;
-      virtual Type getType() const override {return Type::RemoveFaces;}
-      virtual const std::string& getTypeString() const override {return toString(Type::RemoveFaces);}
-      virtual const QIcon& getIcon() const override {return icon;}
-      virtual Descriptor getDescriptor() const override {return Descriptor::Alter;}
-      
-      virtual void serialWrite(const boost::filesystem::path&) override;
-      void serialRead(const prj::srl::rmfs::RemoveFaces&);
-      
-      void setPicks(const Picks&);
-      Picks getPicks(){return picks;}
-      
-    protected:
-      std::unique_ptr<ann::SeerShape> sShape;
-      Picks picks;
-      
-    private:
-      static QIcon icon;
-  };
+    namespace InputTags
+    {
+      inline constexpr std::string_view pick = "pick";
+    }
+    /**
+    * @brief remove faces from a solid.
+    */
+    class Feature : public Base
+    {
+      public:
+        Feature();
+        ~Feature() override;
+        
+        void updateModel(const UpdatePayload&) override;
+        Type getType() const override {return Type::RemoveFaces;}
+        const std::string& getTypeString() const override {return toString(Type::RemoveFaces);}
+        const QIcon& getIcon() const override {return icon;}
+        Descriptor getDescriptor() const override {return Descriptor::Alter;}
+        
+        void serialWrite(const boost::filesystem::path&) override;
+        void serialRead(const prj::srl::rmfs::RemoveFaces&);
+      private:
+        static QIcon icon;
+        struct Stow;
+        std::unique_ptr<Stow> stow;
+    };
+  }
 }
 
 #endif // FTR_REMOVEFACES_H

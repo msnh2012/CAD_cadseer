@@ -38,7 +38,7 @@ namespace cmv
     RemoveFaces(cmd::RemoveFaces*);
     ~RemoveFaces() override;
   public Q_SLOTS:
-    void selectionChanged();
+    void modelChanged(const QModelIndex&, const QModelIndex&);
   private:
     struct Stow;
     std::unique_ptr<Stow> stow;

@@ -33,60 +33,71 @@
 #include "feature/ftrinputtype.h"
 #include "feature/ftrshapecheck.h"
 #include "annex/annseershape.h"
+#include "parameter/prmconstants.h"
+#include "parameter/prmparameter.h"
 #include "feature/ftrremovefaces.h"
 
-using namespace ftr;
-
 using boost::uuids::uuid;
+using namespace ftr::RemoveFaces;
+QIcon Feature::icon = QIcon(":/resources/images/constructionRemoveFaces.svg");
 
-QIcon RemoveFaces::icon;
-
-RemoveFaces::RemoveFaces():
-Base(),
-sShape(std::make_unique<ann::SeerShape>())
+struct Feature::Stow
 {
-  if (icon.isNull())
-    icon = QIcon(":/resources/images/constructionRemoveFaces.svg");
+  Feature &feature;
+  prm::Parameter picks{QObject::tr("Face Picks"), ftr::Picks(), prm::Tags::Picks};
+  ann::SeerShape sShape;
   
+  Stow() = delete;
+  Stow(Feature &fIn)
+  : feature(fIn)
+  {
+    picks.connectValue(std::bind(&Feature::setModelDirty, &feature));
+    feature.parameters.push_back(&picks);
+    
+    feature.annexes.insert(std::make_pair(ann::Type::SeerShape, &sShape));
+  }
+};
+
+Feature::Feature()
+: Base()
+, stow(std::make_unique<Stow>(*this))
+{
   name = QObject::tr("RemoveFaces");
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
-  
-  annexes.insert(std::make_pair(ann::Type::SeerShape, sShape.get()));
 }
 
-RemoveFaces::~RemoveFaces(){}
+Feature::~Feature() = default;
 
-
-void RemoveFaces::setPicks(const Picks &pIn)
-{
-  picks = pIn;
-  setModelDirty();
-}
-
-void RemoveFaces::updateModel(const UpdatePayload &payloadIn)
+void Feature::updateModel(const UpdatePayload &payloadIn)
 {
   setFailure();
   lastUpdateLog.clear();
-  sShape->reset();
+  stow->sShape.reset();
   try
   {
-    std::vector<const Base*> tfs = payloadIn.getFeatures(std::string());
-    if (tfs.size() != 1)
-      throw std::runtime_error("wrong number of parents");
-    if (!tfs.front()->hasAnnex(ann::Type::SeerShape))
-      throw std::runtime_error("parent doesn't have seer shape.");
-    const ann::SeerShape &tss = tfs.front()->getAnnex<ann::SeerShape>();
-    if (tss.isNull())
-      throw std::runtime_error("target seer shape is null");
+    const auto &ps = stow->picks.getPicks();
+    if (ps.empty())
+      throw std::runtime_error("No picks");
+    
+    const ftr::Base *inputFeature = nullptr;
+    const ann::SeerShape *inputSeerShape = nullptr;
+    
+    tls::Resolver resolver(payloadIn);
+    if (!resolver.resolve(ps.front()))
+      throw std::runtime_error("Couldn't resolve first pick");
+    inputFeature = resolver.getFeature();
+    inputSeerShape = resolver.getSeerShape();
+    if (!inputFeature || !inputSeerShape)
+      throw std::runtime_error("Invalid Input Feature Or SeerShape");
     
     //setup failure state.
-    sShape->setOCCTShape(tss.getRootOCCTShape(), getId());
-    sShape->shapeMatch(tss);
-    sShape->uniqueTypeMatch(tss);
-    sShape->outerWireMatch(tss);
-    sShape->derivedMatch();
-    sShape->ensureNoNils();
-    sShape->ensureNoDuplicates();
+    stow->sShape.setOCCTShape(inputSeerShape->getRootOCCTShape(), getId());
+    stow->sShape.shapeMatch(*inputSeerShape);
+    stow->sShape.uniqueTypeMatch(*inputSeerShape);
+    stow->sShape.outerWireMatch(*inputSeerShape);
+    stow->sShape.derivedMatch();
+    stow->sShape.ensureNoNils();
+    stow->sShape.ensureNoDuplicates();
     
     if (isSkipped())
     {
@@ -94,13 +105,12 @@ void RemoveFaces::updateModel(const UpdatePayload &payloadIn)
       throw std::runtime_error("feature is skipped");
     }
     
-    tls::Resolver resolver(payloadIn);
     BRepAlgoAPI_Defeaturing algo;
     algo.SetRunParallel(true);
     algo.SetToFillHistory(true);
-    algo.SetShape(tss.getRootOCCTShape());
+    algo.SetShape(inputSeerShape->getRootOCCTShape());
     
-    for (const auto &p : picks)
+    for (const auto &p : ps)
     {
       resolver.resolve(p);
       auto rShapes = resolver.getShapes();
@@ -129,16 +139,16 @@ void RemoveFaces::updateModel(const UpdatePayload &payloadIn)
     if (!check.isValid())
       throw std::runtime_error("shapeCheck failed");
     
-    sShape->setOCCTShape(algo.Shape(), getId());
-    sShape->shapeMatch(tss);
-    sShape->uniqueTypeMatch(tss);
-    sShape->modifiedMatch(algo, tss);
-    sShape->outerWireMatch(tss);
-    sShape->derivedMatch();
-    sShape->dumpNils("remove faces feature");
-    sShape->dumpDuplicates("remove faces feature");
-    sShape->ensureNoNils();
-    sShape->ensureNoDuplicates();
+    stow->sShape.setOCCTShape(algo.Shape(), getId());
+    stow->sShape.shapeMatch(*inputSeerShape);
+    stow->sShape.uniqueTypeMatch(*inputSeerShape);
+    stow->sShape.modifiedMatch(algo, *inputSeerShape);
+    stow->sShape.outerWireMatch(*inputSeerShape);
+    stow->sShape.derivedMatch();
+    stow->sShape.dumpNils("remove faces feature");
+    stow->sShape.dumpDuplicates("remove faces feature");
+    stow->sShape.ensureNoNils();
+    stow->sShape.ensureNoDuplicates();
     
     setSuccess();
   }
@@ -162,25 +172,23 @@ void RemoveFaces::updateModel(const UpdatePayload &payloadIn)
     std::cout << std::endl << lastUpdateLog;
 }
 
-void RemoveFaces::serialWrite(const boost::filesystem::path &dIn)
+void Feature::serialWrite(const boost::filesystem::path &dIn)
 {
   prj::srl::rmfs::RemoveFaces srf
   (
-    Base::serialOut(),
-    sShape->serialOut()
+    Base::serialOut()
+    , stow->picks.serialOut()
+    , stow->sShape.serialOut()
   );
-  for (const auto &p : picks)
-    srf.picks().push_back(p);
   
   xml_schema::NamespaceInfomap infoMap;
   std::ofstream stream(buildFilePathName(dIn).string());
   prj::srl::rmfs::removeFaces(stream, srf, infoMap);
 }
 
-void RemoveFaces::serialRead(const prj::srl::rmfs::RemoveFaces &srf)
+void Feature::serialRead(const prj::srl::rmfs::RemoveFaces &srf)
 {
   Base::serialIn(srf.base());
-  sShape->serialIn(srf.seerShape());
-  for (const auto &p : srf.picks())
-    picks.emplace_back(p);
+  stow->picks.serialIn(srf.picks());
+  stow->sShape.serialIn(srf.seerShape());
 }

@@ -23,7 +23,7 @@
 #include "command/cmdleafmanager.h"
 #include "command/cmdbase.h"
 
-namespace ftr{class RemoveFaces;}
+namespace ftr{namespace RemoveFaces{class Feature;}}
 
 namespace cmd
 {
@@ -33,7 +33,7 @@ namespace cmd
   class RemoveFaces : public Base
   {
     public:
-      ftr::RemoveFaces *feature = nullptr;
+      ftr::RemoveFaces::Feature *feature = nullptr;
       
       RemoveFaces();
       RemoveFaces(ftr::Base*);
