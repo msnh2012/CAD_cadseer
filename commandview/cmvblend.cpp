@@ -225,7 +225,7 @@ namespace
       cue.singleSelection = false;
       cue.showAccrueColumn = false;
       cue.accrueDefault = slc::Accrue::Tangent;
-      cue.mask = slc::None | slc::PointsEnabled | slc::PointsSelectable  | slc::EndPointsEnabled  | slc::EndPointsSelectable | slc::NearestPointsEnabled | slc::MidPointsEnabled;
+      cue.mask = slc::None | slc::EndPointsBoth | slc::NearestPointsEnabled | slc::MidPointsEnabled;
       cue.statusPrompt = tr("Select Point to assign radius");
       cues.push_back(cue);
       pointSelections = new dlg::SelectionWidget(this, cues, group);

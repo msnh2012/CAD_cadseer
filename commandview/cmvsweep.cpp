@@ -420,11 +420,9 @@ namespace cmv
       binormalButton = new dlg::SelectionButton(pmap, QString(), view);
       binormalButton->isSingleSelection = false;
       binormalButton->mask
-        = slc::ObjectsEnabled
-        | slc::ObjectsSelectable
+        = slc::ObjectsBoth
         | slc::FacesEnabled
         | slc::EdgesEnabled
-        | slc::PointsEnabled
         | slc::EndPointsEnabled
         | slc::MidPointsEnabled
         | slc::CenterPointsEnabled;

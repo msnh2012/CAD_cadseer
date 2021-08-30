@@ -73,7 +73,7 @@ struct Extrude::Stow
     {
       tbl::SelectionCue cue;
       cue.singleSelection = false;
-      cue.mask = slc::ObjectsBoth | slc::FacesBoth | slc::WiresEnabled | slc::EdgesBoth | slc::PointsBoth | slc::AllPointsEnabled;
+      cue.mask = slc::ObjectsBoth | slc::FacesBoth | slc::WiresEnabled | slc::EdgesBoth | slc::AllPointsEnabled;
       cue.statusPrompt = tr("Select Profiles To Extrude");
       cue.accrueEnabled = false;
       prmModel->setCue(command->feature->getParameter(ftr::Extrude::PrmTags::profilePicks), cue);
@@ -82,7 +82,7 @@ struct Extrude::Stow
     {
       tbl::SelectionCue cue;
       cue.singleSelection = false;
-      cue.mask = slc::ObjectsBoth | slc::FacesEnabled | slc::PointsBoth | slc::AllPointsEnabled | slc::EndPointsSelectable;
+      cue.mask = slc::ObjectsBoth | slc::FacesEnabled | slc::AllPointsEnabled | slc::EndPointsSelectable;
       cue.statusPrompt = tr("Select Axis. Two Points, One Face or One Datum Axis");
       cue.accrueEnabled = false;
       prmModel->setCue(command->feature->getParameter(ftr::Extrude::PrmTags::axisPicks), cue);

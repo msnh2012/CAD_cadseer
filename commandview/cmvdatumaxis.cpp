@@ -80,7 +80,7 @@ struct DatumAxis::Stow
       //points
       tbl::SelectionCue cue;
       cue.singleSelection = false;
-      cue.mask = slc::PointsBoth | slc::AllPointsEnabled | slc::EndPointsSelectable;
+      cue.mask = slc::AllPointsEnabled | slc::EndPointsSelectable;
       cue.statusPrompt = tr("Select 2 Points For Axis");
       cue.accrueEnabled = false;
       prmModel->setCue(ft->getParameter(ftr::DatumAxis::Tags::Points), cue);

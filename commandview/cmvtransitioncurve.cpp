@@ -71,7 +71,7 @@ struct TransitionCurve::Stow
     dlg::SelectionWidgetCue cue;
     cue.name = tr("Item 1");
     cue.singleSelection = true;
-    cue.mask = slc::PointsEnabled | slc::PointsSelectable | slc::AllPointsEnabled | slc::EndPointsEnabled;
+    cue.mask = slc::AllPointsEnabled | slc::EndPointsSelectable;
     cue.statusPrompt = tr("Select Point On Curve");
     cue.showAccrueColumn = false;
     cues.push_back(cue);

@@ -99,7 +99,7 @@ struct Fill::Stow
     {
       tbl::SelectionCue cue;
       cue.singleSelection = false;
-      cue.mask = slc::EdgesBoth | slc::PointsBoth | slc::AllPointsEnabled;
+      cue.mask = slc::EdgesBoth | slc::AllPointsEnabled;
       cue.statusPrompt = tr("Select Internal Constraints");
       cue.accrueEnabled = false;
       prmModel->setCue(parameters.at(1), cue);

@@ -63,7 +63,7 @@ void MeasureLinear::buildGui()
   dlg::SelectionWidgetCue cue;
   cue.name = tr("Item 1");
   cue.singleSelection = true;
-  cue.mask = slc::AllEnabled | slc::AllPointsEnabled | slc::PointsSelectable | slc::EndPointsSelectable | slc::CenterPointsSelectable;
+  cue.mask = slc::AllEnabled | slc::AllPointsEnabled | slc::EndPointsSelectable | slc::CenterPointsSelectable;
   cue.statusPrompt = tr("Select First Item");
   cue.showAccrueColumn = false;
   cues.push_back(cue);

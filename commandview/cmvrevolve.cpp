@@ -78,16 +78,14 @@ struct Revolve::Stow
     dlg::SelectionWidgetCue cue;
     cue.name = tr("Profile");
     cue.singleSelection = true; //eventually false.
-    cue.mask = slc::ObjectsEnabled | slc::ObjectsSelectable | slc::FacesEnabled  | slc::FacesSelectable
-      | slc::WiresEnabled | slc::EdgesEnabled | slc::PointsEnabled | slc::PointsSelectable | slc::AllPointsEnabled;
+    cue.mask = slc::ObjectsBoth | slc::FacesBoth | slc::WiresEnabled | slc::EdgesEnabled | slc::AllPointsEnabled;
     cue.statusPrompt = tr("Select Profile Geometry");
     cue.showAccrueColumn = false;
     cues.push_back(cue);
     
     cue.name = tr("Axis");
     cue.singleSelection = false;
-    cue.mask = slc::ObjectsEnabled | slc::ObjectsSelectable | slc::FacesEnabled | slc::EdgesEnabled | slc::EdgesSelectable
-      | slc::PointsEnabled | slc::PointsSelectable | slc::AllPointsEnabled;
+    cue.mask = slc::ObjectsBoth | slc::FacesEnabled | slc::EdgesBoth | slc::AllPointsEnabled;
     cue.statusPrompt = tr("Select Points, Edge, Face Or Datum For Axis");
     cues.push_back(cue);
     selection = new dlg::SelectionWidget(view, cues);

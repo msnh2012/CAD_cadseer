@@ -103,7 +103,7 @@ struct DatumPlane::Stow
     prmModel->setCue(getTaggedParameter(ftr::DatumPlane::PrmTags::averagePicks), cue);
     
     //points
-    cue.mask = slc::PointsEnabled | slc::AllPointsEnabled | slc::PointsSelectable | slc::EndPointsSelectable;
+    cue.mask = slc::AllPointsEnabled | slc::EndPointsSelectable;
     cue.statusPrompt = tr("Select Origin Point, Then X Vector Point, Then Z Vector Point");
     prmModel->setCue(getTaggedParameter(ftr::DatumPlane::PrmTags::pointsPicks), cue);
   }

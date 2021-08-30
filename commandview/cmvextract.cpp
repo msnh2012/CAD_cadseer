@@ -67,7 +67,7 @@ struct Extract::Stow
     
     tbl::SelectionCue cue;
     cue.singleSelection = false;
-    cue.mask = slc::AllEnabled & ~slc::PointsEnabled;
+    cue.mask = slc::AllEnabled;
     cue.statusPrompt = tr("Select Entities");
     cue.accrueEnabled = true;
     prmModel->setCue(command->feature->getParameter(prm::Tags::Picks), cue);

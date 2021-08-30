@@ -45,8 +45,6 @@ namespace slc
   static const Mask WiresSelectable(Mask().set(                     12));
   static const Mask EdgesEnabled(Mask().set(                        13));
   static const Mask EdgesSelectable(Mask().set(                     14));
-  static const Mask PointsEnabled(Mask().set(                       15));
-  static const Mask PointsSelectable(Mask().set(                    16));
   static const Mask EndPointsEnabled(Mask().set(                    17));
   static const Mask EndPointsSelectable(Mask().set(                 18));
   static const Mask MidPointsEnabled(Mask().set(                    19));
@@ -61,16 +59,25 @@ namespace slc
   static const Mask ScreenPointsSelectable(Mask().set(              28));
   static const Mask All(Mask().set(                                   )); //set with no parameters sets all bits
   static const Mask AllEnabled(ObjectsEnabled | FeaturesEnabled | SolidsEnabled
-    | ShellsEnabled | FacesEnabled | WiresEnabled | EdgesEnabled | PointsEnabled);
+    | ShellsEnabled | FacesEnabled | WiresEnabled | EdgesEnabled);
+  static const Mask AllSelectable(ObjectsSelectable | FeaturesSelectable | SolidsSelectable
+    | ShellsSelectable | FacesSelectable | WiresSelectable | EdgesSelectable);
   static const Mask AllPointsEnabled(EndPointsEnabled | MidPointsEnabled
-    | CenterPointsEnabled | QuadrantPointsEnabled | NearestPointsEnabled);
+    | CenterPointsEnabled | QuadrantPointsEnabled | NearestPointsEnabled | ScreenPointsEnabled);
+  static const Mask AllPointsSelectable(EndPointsSelectable | MidPointsSelectable
+    | CenterPointsSelectable | QuadrantPointsSelectable | NearestPointsSelectable | ScreenPointsSelectable);
   static const Mask ObjectsBoth(ObjectsEnabled | ObjectsSelectable);
   static const Mask SolidsBoth(SolidsEnabled | SolidsSelectable);
   static const Mask ShellsBoth(ShellsEnabled | ShellsSelectable);
   static const Mask FacesBoth(FacesEnabled | FacesSelectable);
   static const Mask WiresBoth(WiresEnabled | WiresSelectable);
   static const Mask EdgesBoth(EdgesEnabled | EdgesSelectable);
-  static const Mask PointsBoth(PointsEnabled | PointsSelectable);
+  static const Mask EndPointsBoth(EndPointsEnabled | EndPointsSelectable);
+  static const Mask MidPointsBoth(MidPointsEnabled | MidPointsSelectable);
+  static const Mask CenterPointsBoth(CenterPointsEnabled | CenterPointsSelectable);
+  static const Mask QuadrantPointsBoth(QuadrantPointsEnabled | QuadrantPointsSelectable);
+  static const Mask NearestPointsBoth(NearestPointsEnabled | NearestPointsSelectable);
+  static const Mask ScreenPointsBoth(ScreenPointsEnabled | ScreenPointsSelectable);
 
   enum class Type
   {
@@ -152,38 +159,38 @@ namespace slc
   
   inline bool canSelectEndPoints(Mask maskIn)
   {
-    Mask temp = EndPointsEnabled | EndPointsSelectable | PointsEnabled | PointsSelectable;
-    return (maskIn & temp).count() == 4;
+    Mask temp = EndPointsEnabled | EndPointsSelectable;
+    return (maskIn & temp).count() == 2;
   }
   
   inline bool canSelectMidPoints(Mask maskIn)
   {
-    Mask temp = MidPointsEnabled | MidPointsSelectable | PointsEnabled | PointsSelectable;
-    return (maskIn & temp).count() == 4;
+    Mask temp = MidPointsEnabled | MidPointsSelectable;
+    return (maskIn & temp).count() == 2;
   }
   
   inline bool canSelectCenterPoints(Mask maskIn)
   {
-    Mask temp = CenterPointsEnabled | CenterPointsSelectable | PointsEnabled | PointsSelectable;
-    return (maskIn & temp).count() == 4;
+    Mask temp = CenterPointsEnabled | CenterPointsSelectable;
+    return (maskIn & temp).count() == 2;
   }
   
   inline bool canSelectQuadrantPoints(Mask maskIn)
   {
-    Mask temp = QuadrantPointsEnabled | QuadrantPointsSelectable | PointsEnabled | PointsSelectable;
-    return (maskIn & temp).count() == 4;
+    Mask temp = QuadrantPointsEnabled | QuadrantPointsSelectable;
+    return (maskIn & temp).count() == 2;
   }
   
   inline bool canSelectNearestPoints(Mask maskIn)
   {
-    Mask temp = NearestPointsEnabled | NearestPointsSelectable | PointsEnabled | PointsSelectable;
-    return (maskIn & temp).count() == 4;
+    Mask temp = NearestPointsEnabled | NearestPointsSelectable;
+    return (maskIn & temp).count() == 2;
   }
   
   inline bool canSelectScreenPoints(Mask maskIn)
   {
-    Mask temp = ScreenPointsEnabled | ScreenPointsSelectable | PointsEnabled | PointsSelectable;
-    return (maskIn & temp).count() == 4;
+    Mask temp = ScreenPointsEnabled | ScreenPointsSelectable;
+    return (maskIn & temp).count() == 2;
   }
   
   inline bool canSelectPoints(Mask maskIn)

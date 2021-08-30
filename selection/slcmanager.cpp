@@ -38,7 +38,7 @@
 using namespace slc;
 
 Manager::Manager(QObject *parent) :
-  QObject(parent), selectionMask(slc::AllEnabled)
+  QObject(parent), selectionMask(slc::AllEnabled | slc::AllPointsEnabled)
 {
   node = std::make_unique<msg::Node>();
   node->connect(msg::hub());
@@ -46,7 +46,7 @@ Manager::Manager(QObject *parent) :
   sift->name = "slc::Manager";
   node->setHandler(std::bind(&msg::Sift::receive, sift.get(), std::placeholders::_1));
   setupDispatcher();
-  app::instance()->queuedMessage(msg::buildSelectionMask(slc::AllEnabled));
+  app::instance()->queuedMessage(msg::buildSelectionMask(selectionMask));
 }
 
 Manager::~Manager() {}
@@ -111,30 +111,6 @@ void Manager::triggeredEdges(bool edgeStateIn)
     selectionMask |= slc::EdgesSelectable;
   else
     selectionMask &= ~slc::EdgesSelectable;
-  sendUpdatedMask();
-}
-
-void Manager::triggeredVertices(bool vertexStateIn)
-{
-  if (vertexStateIn)
-  {
-    selectionMask |= slc::PointsSelectable;
-    selectionMask |= slc::EndPointsEnabled;
-    selectionMask |= slc::MidPointsEnabled;
-    selectionMask |= slc::CenterPointsEnabled;
-    selectionMask |= slc::QuadrantPointsEnabled;
-    selectionMask |= slc::NearestPointsEnabled;
-  }
-  else
-  {
-    selectionMask &= ~slc::PointsSelectable;
-    selectionMask &= ~slc::EndPointsEnabled;
-    selectionMask &= ~slc::MidPointsEnabled;
-    selectionMask &= ~slc::CenterPointsEnabled;
-    selectionMask &= ~slc::QuadrantPointsEnabled;
-    selectionMask &= ~slc::NearestPointsEnabled;
-  }
-  updateToolbar();
   sendUpdatedMask();
 }
 
@@ -224,8 +200,6 @@ void Manager::updateToolbar()
   actionSelectWires->setChecked((slc::WiresSelectable & selectionMask).any());
   actionSelectEdges->setEnabled((slc::EdgesEnabled & selectionMask).any());
   actionSelectEdges->setChecked((slc::EdgesSelectable & selectionMask).any());
-  actionSelectVertices->setEnabled((slc::PointsEnabled & selectionMask).any());
-  actionSelectVertices->setChecked((slc::PointsSelectable & selectionMask).any());
   actionSelectEndPoints->setEnabled((slc::EndPointsEnabled & selectionMask).any());
   actionSelectEndPoints->setChecked((slc::EndPointsSelectable & selectionMask).any());
   actionSelectMidPoints->setEnabled((slc::MidPointsEnabled & selectionMask).any());

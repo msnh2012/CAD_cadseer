@@ -17,7 +17,8 @@
  *
  */
 
-#include <assert.h>
+#include <iostream>
+#include <cassert>
 #include <limits>
 
 #include <QHBoxLayout>
@@ -49,6 +50,11 @@
 #include "application/appinfowindow.h"
 #include "application/appmainwindow.h"
 
+namespace
+{
+  const char *propertyName = "PropertyName";
+}
+
 using boost::uuids::uuid;
 using namespace app;
 
@@ -65,7 +71,6 @@ struct MainWindow::Stow
   QAction *actionSelectFaces;
   QAction *actionSelectWires;
   QAction *actionSelectEdges;
-  QAction *actionSelectVertices;
   QAction *actionSelectEndPoints;
   QAction *actionSelectMidPoints;
   QAction *actionSelectCenterPoints;
@@ -127,7 +132,6 @@ struct MainWindow::Stow
     actionSelectFaces = ssa(":/resources/images/selectFaces.svg", tr("Select Faces"), tr("Faces"));
     actionSelectWires = ssa(":/resources/images/selectWires.svg", tr("Select Wires"), tr("Wires"));
     actionSelectEdges = ssa(":/resources/images/selectEdges.svg", tr("Select Edges"), tr("Edges"));
-    actionSelectVertices = ssa(":/resources/images/selectVertices.svg", tr("Select Vertices"), tr("Vertices"));
     actionSelectEndPoints = ssa(":/resources/images/selectPointsEnd.svg", tr("Select End Points"), tr("End"));
     actionSelectMidPoints = ssa(":/resources/images/selectPointsMid.svg", tr("Select Mid Points"), tr("Mid"));
     actionSelectCenterPoints = ssa(":/resources/images/selectPointsCenter.svg", tr("Select Center Points"), tr("Center"));
@@ -405,6 +409,59 @@ void MainWindow::closeEvent (QCloseEvent *event)
   QMainWindow::closeEvent(event);
 }
 
+/* We install this as an eventfilter on the selection tool buttons.
+ * This filter allows us to use the right click to isolate
+ * individual selection masks.
+ */
+bool MainWindow::eventFilter(QObject *watched, QEvent *event)
+{
+  QToolButton *button = dynamic_cast<QToolButton*>(watched);
+  if (!button)
+  {
+    //we should install this on anything but toolbutton so write error to console.
+    std::cout << "Error: Failed casting to toolbutton. app main window." << std::endl;
+    return false;
+  }
+  if (!button->isEnabled())
+    return false;
+  if (event->type() != QEvent::MouseButtonPress)
+    return false;
+  auto *me = dynamic_cast<QMouseEvent*>(event);
+  if (!me)
+  {
+    std::cout << "Error: Couldn't cast to mouse event. app main window." << std::endl;
+    return false;
+  }
+  if (me->buttons() != Qt::RightButton)
+    return false;
+  QVariant prop = button->property(propertyName);
+  if (!prop.isValid())
+    return false;
+  slc::Type bt = static_cast<slc::Type>(prop.toInt());
+  slc::Mask outMask = stow->selectionManager->getState() & ~(slc::AllSelectable | slc::AllPointsSelectable);
+  switch (bt)
+  {
+    case slc::Type::Object: {outMask |= slc::ObjectsSelectable; break;}
+    case slc::Type::Feature: {outMask |= slc::FeaturesSelectable; break;}
+    case slc::Type::Solid: {outMask |= slc::SolidsSelectable; break;}
+    case slc::Type::Shell: {outMask |= slc::ShellsSelectable; break;}
+    case slc::Type::Face: {outMask |= slc::FacesSelectable; break;}
+    case slc::Type::Wire: {outMask |= slc::WiresSelectable; break;}
+    case slc::Type::Edge: {outMask |= slc::EdgesSelectable; break;}
+    case slc::Type::StartPoint: {outMask |= slc::EndPointsSelectable; break;}
+    case slc::Type::MidPoint: {outMask |= slc::MidPointsSelectable; break;}
+    case slc::Type::CenterPoint: {outMask |= slc::CenterPointsSelectable; break;}
+    case slc::Type::QuadrantPoint: {outMask |= slc::QuadrantPointsSelectable; break;}
+    case slc::Type::NearestPoint: {outMask |= slc::NearestPointsSelectable; break;}
+    case slc::Type::ScreenPoint: {outMask |= slc::ScreenPointsSelectable; break;}
+    default: {std::cout << "Error: Unrecognized button type. app main window." << std::endl; break;}
+  }
+  if (outMask == slc::None)
+    return false;
+  stow->node.send(msg::buildSelectionMask(outMask));
+  return false; //we never actually filter anything.
+}
+
 void MainWindow::actionTriggeredSlot()
 {
   QAction *action = dynamic_cast<QAction *>(QObject::sender());
@@ -432,7 +489,6 @@ void MainWindow::setupSelectionToolbar()
   stow->selectionManager->actionSelectFaces = stow->actionSelectFaces;
   stow->selectionManager->actionSelectWires = stow->actionSelectWires;
   stow->selectionManager->actionSelectEdges = stow->actionSelectEdges;
-  stow->selectionManager->actionSelectVertices = stow->actionSelectVertices;
   stow->selectionManager->actionSelectEndPoints = stow->actionSelectEndPoints;
   stow->selectionManager->actionSelectMidPoints = stow->actionSelectMidPoints;
   stow->selectionManager->actionSelectCenterPoints = stow->actionSelectCenterPoints;
@@ -447,13 +503,32 @@ void MainWindow::setupSelectionToolbar()
   connect(stow->actionSelectFaces, SIGNAL(triggered(bool)), stow->selectionManager, SLOT(triggeredFaces(bool)));
   connect(stow->actionSelectWires, SIGNAL(triggered(bool)), stow->selectionManager, SLOT(triggeredWires(bool)));
   connect(stow->actionSelectEdges, SIGNAL(triggered(bool)), stow->selectionManager, SLOT(triggeredEdges(bool)));
-  connect(stow->actionSelectVertices, SIGNAL(triggered(bool)), stow->selectionManager, SLOT(triggeredVertices(bool)));
   connect(stow->actionSelectEndPoints, SIGNAL(triggered(bool)), stow->selectionManager, SLOT(triggeredEndPoints(bool)));
   connect(stow->actionSelectMidPoints, SIGNAL(triggered(bool)), stow->selectionManager, SLOT(triggeredMidPoints(bool)));
   connect(stow->actionSelectCenterPoints, SIGNAL(triggered(bool)), stow->selectionManager, SLOT(triggeredCenterPoints(bool)));
   connect(stow->actionSelectQuandrantPoints, SIGNAL(triggered(bool)), stow->selectionManager, SLOT(triggeredQuadrantPoints(bool)));
   connect(stow->actionSelectNearestPoints, SIGNAL(triggered(bool)), stow->selectionManager, SLOT(triggeredNearestPoints(bool)));
   connect(stow->actionSelectScreenPoints, SIGNAL(triggered(bool)), stow->selectionManager, SLOT(triggeredScreenPoints(bool)));
+  
+  auto setupWidget = [&](QAction *a, int p)
+  {
+    auto *w = stow->selectionBar->widgetForAction(a); assert(w);
+    w->setProperty(propertyName, p);
+    w->installEventFilter(this);
+  };
+  setupWidget(stow->actionSelectObjects, static_cast<int>(slc::Type::Object));
+  setupWidget(stow->actionSelectFeatures, static_cast<int>(slc::Type::Feature));
+  setupWidget(stow->actionSelectSolids, static_cast<int>(slc::Type::Solid));
+  setupWidget(stow->actionSelectShells, static_cast<int>(slc::Type::Shell));
+  setupWidget(stow->actionSelectFaces, static_cast<int>(slc::Type::Face));
+  setupWidget(stow->actionSelectWires, static_cast<int>(slc::Type::Wire));
+  setupWidget(stow->actionSelectEdges, static_cast<int>(slc::Type::Edge));
+  setupWidget(stow->actionSelectEndPoints, static_cast<int>(slc::Type::StartPoint));
+  setupWidget(stow->actionSelectMidPoints, static_cast<int>(slc::Type::MidPoint));
+  setupWidget(stow->actionSelectCenterPoints, static_cast<int>(slc::Type::CenterPoint));
+  setupWidget(stow->actionSelectQuandrantPoints, static_cast<int>(slc::Type::QuadrantPoint));
+  setupWidget(stow->actionSelectNearestPoints, static_cast<int>(slc::Type::NearestPoint));
+  setupWidget(stow->actionSelectScreenPoints, static_cast<int>(slc::Type::ScreenPoint));
 }
 
 void MainWindow::setupDispatcher()

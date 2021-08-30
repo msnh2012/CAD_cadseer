@@ -48,7 +48,6 @@ namespace slc
     QAction *actionSelectFaces;
     QAction *actionSelectWires;
     QAction *actionSelectEdges;
-    QAction *actionSelectVertices;
     QAction *actionSelectEndPoints;
     QAction *actionSelectMidPoints;
     QAction *actionSelectCenterPoints;
@@ -64,7 +63,6 @@ namespace slc
     void triggeredFaces(bool faceStateIn);
     void triggeredWires(bool wireStateIn);
     void triggeredEdges(bool edgeStateIn);
-    void triggeredVertices(bool vertexStateIn);
     void triggeredEndPoints(bool endPointStateIn);
     void triggeredMidPoints(bool midPointStateIn);
     void triggeredCenterPoints(bool centerPointStateIn);

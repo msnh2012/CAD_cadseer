@@ -42,7 +42,8 @@ namespace app
     slc::Manager* getSelectionManager();
       
   protected:
-    virtual void closeEvent (QCloseEvent*) override;
+    void closeEvent (QCloseEvent*) override;
+    bool eventFilter(QObject*, QEvent*) override;
     
   private Q_SLOTS:
     void actionTriggeredSlot();
