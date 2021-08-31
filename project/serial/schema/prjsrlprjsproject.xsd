@@ -5,8 +5,6 @@
   xmlns:prjs="http://www.cadseer.com/prj/srl/prjs"
   targetNamespace="http://www.cadseer.com/prj/srl/prjs"
 >
-  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptshapehistory.xsd"/>
-
   <xs:complexType name="Feature">
     <xs:sequence>
       <xs:element name="id" type="xs:string" default="00000000-0000-0000-0000-000000000000"/>
@@ -76,7 +74,6 @@
       <xs:element name="states" type="prjs:FeatureState" minOccurs="0" maxOccurs="unbounded"/>
       <xs:element name="connections" type="prjs:Connection" minOccurs="0" maxOccurs="unbounded"/>
       <xs:element name="expression" type="prjs:Expression"/>
-      <xs:element name="shapeHistory" type="spt:ShapeHistory"/>
     </xs:sequence>
   </xs:complexType>
 

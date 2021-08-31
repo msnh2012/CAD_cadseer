@@ -97,8 +97,6 @@ namespace prj
 
 #include <xsd/cxx/xml/dom/parsing-header.hxx>
 
-#include "prjsrlsptshapehistory.h"
-
 namespace prj
 {
   namespace srl
@@ -663,34 +661,15 @@ namespace prj
         void
         expression (::std::unique_ptr< ExpressionType > p);
 
-        // shapeHistory
-        //
-        typedef ::prj::srl::spt::ShapeHistory ShapeHistoryType;
-        typedef ::xsd::cxx::tree::traits< ShapeHistoryType, char > ShapeHistoryTraits;
-
-        const ShapeHistoryType&
-        shapeHistory () const;
-
-        ShapeHistoryType&
-        shapeHistory ();
-
-        void
-        shapeHistory (const ShapeHistoryType& x);
-
-        void
-        shapeHistory (::std::unique_ptr< ShapeHistoryType > p);
-
         // Constructors.
         //
         Project (const AppVersionType&,
                  const FileVersionType&,
-                 const ExpressionType&,
-                 const ShapeHistoryType&);
+                 const ExpressionType&);
 
         Project (::std::unique_ptr< AppVersionType >,
                  const FileVersionType&,
-                 ::std::unique_ptr< ExpressionType >,
-                 ::std::unique_ptr< ShapeHistoryType >);
+                 ::std::unique_ptr< ExpressionType >);
 
         Project (const ::xercesc::DOMElement& e,
                  ::xml_schema::Flags f = 0,
@@ -724,7 +703,6 @@ namespace prj
         StatesSequence states_;
         ConnectionsSequence connections_;
         ::xsd::cxx::tree::one< ExpressionType > expression_;
-        ::xsd::cxx::tree::one< ShapeHistoryType > shapeHistory_;
       };
 
       class Expressions: public ::xml_schema::Type

@@ -26,15 +26,18 @@
 
 #include <osg/Vec4>
 
-#include <boost/uuid/uuid.hpp>
-#include <boost/filesystem/path.hpp>
-
 #include "feature/ftrupdatepayload.h"
+
+namespace boost
+{
+  namespace uuids{struct uuid;}
+  namespace filesystem{class path;}
+}
 
 class QTextStream;
 class TopoDS_Shape;
 
-namespace msg{struct Message; struct Node; struct Sift;}
+namespace msg{struct Message;}
 namespace expr{class Manager;}
 namespace prm{class Parameter;}
 namespace ftr{class ShapeHistory; class InputType;}
@@ -50,7 +53,7 @@ public:
     Project();
     ~Project();
     void readOCC(const std::string &fileName);
-    void addOCCShape(const TopoDS_Shape &shapeIn, std::string name = "");
+    void addOCCShape(const TopoDS_Shape &shapeIn, std::string);
     prm::Parameter* findParameter(const boost::uuids::uuid &idIn) const;
     void updateModel();
     void updateVisual();
@@ -87,12 +90,12 @@ public:
     bool isFeatureNonLeaf(const boost::uuids::uuid&);
     
     void setSaveDirectory(const boost::filesystem::path &directoryIn);
-    boost::filesystem::path getSaveDirectory() const {return saveDirectory;}
+    const boost::filesystem::path& getSaveDirectory() const;
     void save();
     void open(); //!< call setSaveDirectory prior.
     void initializeNew(); //!< call setSaveDirectory prior.
     
-    const ftr::ShapeHistory& getShapeHistory() const {return *shapeHistory;}
+    const ftr::ShapeHistory& getShapeHistory() const;
     void shapeTrackDump(const boost::uuids::uuid &shapeId, const boost::filesystem::path &directory) const;
     ftr::UpdatePayload::UpdateMap getParentMap(const boost::uuids::uuid&) const;
     ftr::UpdatePayload getPayload(const boost::uuids::uuid&) const;
@@ -101,8 +104,8 @@ public:
     std::vector<boost::uuids::uuid> getRewindInputs(const boost::uuids::uuid&) const;
     void hideAlterParents(const boost::uuids::uuid&) const;
     
-    expr::Manager& getManager(){return *expressionManager;}
-    GitManager& getGitManager(){return *gitManager;}
+    expr::Manager& getManager();
+    GitManager& getGitManager();
     
     QTextStream& getInfo(QTextStream&) const;
     
@@ -110,33 +113,7 @@ public:
     void expressionUnlink(const boost::uuids::uuid&);
     
 private:
-    void updateLeafStatus();
-    
-    boost::filesystem::path saveDirectory;
     void serialWrite();
-    std::unique_ptr<GitManager> gitManager;
-    std::unique_ptr<expr::Manager> expressionManager;
-    std::unique_ptr<ftr::ShapeHistory> shapeHistory;
-    bool isLoading = false;
-    
-    std::unique_ptr<msg::Node> node;
-    std::unique_ptr<msg::Sift> sift;
-    void setupDispatcher();
-    void setCurrentLeafDispatched(const msg::Message &);
-    void removeFeatureDispatched(const msg::Message &);
-    void updateDispatched(const msg::Message &);
-    void forceUpdateDispatched(const msg::Message &);
-    void updateModelDispatched(const msg::Message &);
-    void updateVisualDispatched(const msg::Message &);
-    void saveProjectRequestDispatched(const msg::Message &);
-    void checkShapeIdsDispatched(const msg::Message &);
-    void featureStateChangedDispatched(const msg::Message &);
-    void dumpProjectGraphDispatched(const msg::Message &);
-    void shownThreeDDispatched(const msg::Message&);
-    void reorderFeatureDispatched(const msg::Message&);
-    void toggleSkippedDispatched(const msg::Message&);
-    void dissolveFeatureDispatched(const msg::Message&);
-    
     std::unique_ptr<Stow> stow; //think pimpl
 };
 }

@@ -22,8 +22,6 @@
 #include <stack>
 
 #include <QTextStream>
-#include <QUrl>
-#include <QDesktopServices>
 
 #include <boost/graph/topological_sort.hpp>
 #include <boost/graph/filtered_graph.hpp>
@@ -48,16 +46,9 @@
 #include "annex/annseershape.h"
 #include "annex/anncsysdragger.h"
 #include "feature/ftrinert.h"
-#include "feature/ftrshapehistory.h"
 #include "feature/ftrmessage.h"
-#include "parameter/prmconstants.h"
 #include "parameter/prmparameter.h"
-#include "expressions/exprmanager.h"
 #include "message/msgmessage.h"
-#include "message/msgnode.h"
-#include "message/msgsift.h"
-#include "viewer/vwrmessage.h"
-#include "project/prjgitmanager.h"
 #include "project/prjmessage.h"
 #include "tools/graphtools.h"
 #include "tools/tlsnameindexer.h"
@@ -72,23 +63,13 @@ using namespace boost::filesystem;
 using namespace prj;
 using boost::uuids::uuid;
 
-Project::Project() :
-gitManager(new GitManager()),
-expressionManager(new expr::Manager()),
-shapeHistory(new ftr::ShapeHistory()),
-stow(new Stow())
+Project::Project()
+: stow(new Stow(*this))
 {
-  node = std::make_unique<msg::Node>();
-  node->connect(msg::hub());
-  sift = std::make_unique<msg::Sift>();
-  sift->name = "prj::Project";
-  node->setHandler(std::bind(&msg::Sift::receive, sift.get(), std::placeholders::_1));
-  setupDispatcher();
+  
 }
 
-Project::~Project()
-{
-}
+Project::~Project() = default;
 
 QTextStream& Project::getInfo(QTextStream &stream) const
 {
@@ -96,14 +77,24 @@ QTextStream& Project::getInfo(QTextStream &stream) const
   << QObject::tr("Project Directory: ") << QString::fromStdString(getSaveDirectory().string()) << Qt::endl;
   //maybe some git stuff.
   
-  expressionManager->getInfo(stream);
+  stow->expressionManager.getInfo(stream);
   
   return stream;
 }
 
+expr::Manager& Project::getManager()
+{
+  return stow->expressionManager;
+}
+
+GitManager& Project::getGitManager()
+{
+  return stow->gitManager;
+}
+
 void Project::updateModel()
 {
-  node->send(msg::Message(msg::Response | msg::Pre | msg::Project | msg::Update | msg::Model));
+  stow->node.send(msg::Message(msg::Response | msg::Pre | msg::Project | msg::Update | msg::Model));
   
   Vertices sorted;
   try
@@ -120,9 +111,9 @@ void Project::updateModel()
   //the update of a feature will trigger a state change signal.
   //we don't want to handle that state change here in the project
   //so we block.
-  auto block = node->createBlocker();
+  auto block = stow->node.createBlocker();
   
-  shapeHistory->clear(); //reset history structure.
+  stow->shapeHistory.clear(); //reset history structure.
   
   //loop through and update each feature.
   for (auto it = sorted.rbegin(); it != sorted.rend(); ++it)
@@ -139,13 +130,13 @@ void Project::updateModel()
       (stow->isFeatureInactive(currentVertex))
     )
     {
-      cFeature->fillInHistory(*shapeHistory);
+      cFeature->fillInHistory(stow->shapeHistory);
       continue;
     }
     
     std::ostringstream messageStream;
     messageStream << "Updating: " << cFeature->getName().toStdString() << "    Id: " << gu::idToShortString(cFeature->getId());
-    node->send(msg::buildStatusMessage(messageStream.str()));
+    stow->node.send(msg::buildStatusMessage(messageStream.str()));
     qApp->processEvents(); //need this or we won't see messages.
     
     RemovedGraph removedGraph = buildRemovedGraph(stow->graph);
@@ -157,33 +148,33 @@ void Project::updateModel()
       boost::graph_traits<ReversedGraph>::vertex_descriptor
     >(reversedGraph, currentVertex);
     
-    ftr::UpdatePayload payload(updateMap, *shapeHistory);
+    ftr::UpdatePayload payload(updateMap, stow->shapeHistory);
     cFeature->updateModel(payload);
-    cFeature->serialWrite(saveDirectory);
-    cFeature->fillInHistory(*shapeHistory);
+    cFeature->serialWrite(stow->saveDirectory);
+    cFeature->fillInHistory(stow->shapeHistory);
   }
   
-  updateLeafStatus();
+  stow->updateLeafStatus();
   serialWrite();
   /* this is here to give others a chance to make changes before git makes a commit.
    * if this causes problems, then we will want git manager to use more messaging.
    */
-  node->send(msg::Message(msg::Response | msg::Post | msg::Project | msg::Update | msg::Model));
-  gitManager->update();
+  stow->node.send(msg::Message(msg::Response | msg::Post | msg::Project | msg::Update | msg::Model));
+  stow->gitManager.update();
   
-//   shapeHistory->writeGraphViz("/home/tanderson/.CadSeer/ShapeHistory.dot");
+//   stow->shapeHistory.writeGraphViz("/home/tanderson/.CadSeer/ShapeHistory.dot");
   
-  node->send(msg::buildStatusMessage("Model Update Complete", 2.0));
+  stow->node.send(msg::buildStatusMessage("Model Update Complete", 2.0));
 }
 
 void Project::updateVisual()
 {
   //if we have selection and then destroy the geometry when the
   //the visual updates, things get out of sync. so clear the selection.
-  node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
-  node->send(msg::Message(msg::Response | msg::Pre | msg::Project | msg::Update | msg::Visual));
+  stow->node.send(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  stow->node.send(msg::Message(msg::Response | msg::Pre | msg::Project | msg::Update | msg::Visual));
   
-  auto block = node->createBlocker();
+  auto block = stow->node.createBlocker();
   
   //don't think we need to topo sort for visual.
   for(auto its = boost::vertices(stow->graph); its.first != its.second; ++its.first)
@@ -202,9 +193,9 @@ void Project::updateVisual()
       feature->updateVisual();
   }
   
-  node->send(msg::Message(msg::Response | msg::Post | msg::Project | msg::Update | msg::Visual));
+  stow->node.send(msg::Message(msg::Response | msg::Post | msg::Project | msg::Update | msg::Visual));
   
-  node->send(msg::buildStatusMessage("Visual Update Complete", 2.0));
+  stow->node.send(msg::buildStatusMessage("Visual Update Complete", 2.0));
 }
 
 void Project::writeGraphViz(const std::string& fileName)
@@ -279,11 +270,11 @@ void Project::addFeature(std::shared_ptr<ftr::Base> feature)
   stow->addFeature(feature);
   
   //log action to git if not loading.
-  if (!isLoading)
+  if (!stow->isLoading)
   {
     std::ostringstream gitMessage;
     gitMessage << QObject::tr("Adding feature ").toStdString() << feature->getTypeString();
-    gitManager->appendGitMessage(gitMessage.str());
+    stow->gitManager.appendGitMessage(gitMessage.str());
   }
   
   prj::Message pMessage;
@@ -293,7 +284,7 @@ void Project::addFeature(std::shared_ptr<ftr::Base> feature)
     msg::Response | msg::Post | msg::Add | msg::Feature
     , pMessage
   );
-  node->send(postMessage);
+  stow->node.send(postMessage);
 }
 
 void Project::removeFeature(const uuid& idIn)
@@ -302,7 +293,7 @@ void Project::removeFeature(const uuid& idIn)
   stow->graph[vertex].feature->setModelDirty(); //this will make all children dirty. Do before block.
   
   //shouldn't need anymore messages into project for this function call.
-  auto block = node->createBlocker().front();
+  auto block = stow->node.createBlocker().front();
   
   auto workGraph = buildRemovedSeveredGraph(stow->graph); //removed and Severed
   auto workGraphReversed = boost::make_reverse_graph(workGraph);
@@ -343,14 +334,14 @@ void Project::removeFeature(const uuid& idIn)
       << lf->getName().toStdString()
       << ". With id: "
       << gu::idToShortString(lf->getId());
-    gitManager->appendGitMessage(gitMessage.str());
+    stow->gitManager.appendGitMessage(gitMessage.str());
   };
   
   //remove file if exists.
   auto removeFile = [&](Vertex vIn)
   {
-    assert(exists(saveDirectory));
-    path filePath = saveDirectory / stow->graph[vIn].feature->getFileName();
+    assert(exists(stow->saveDirectory));
+    path filePath = stow->saveDirectory / stow->graph[vIn].feature->getFileName();
     if (exists(filePath))
       remove(filePath);
   };
@@ -461,11 +452,11 @@ void Project::removeFeature(const uuid& idIn)
       if (feature->isVisible3D())
       {
         block.unblock();
-        node->send(msg::buildShowThreeD(reversedGraph[*its.first].feature->getId()));
+        stow->node.send(msg::buildShowThreeD(reversedGraph[*its.first].feature->getId()));
         block.block();
       }
       else
-        node->send(msg::buildHideThreeD(reversedGraph[*its.first].feature->getId()));
+        stow->node.send(msg::buildHideThreeD(reversedGraph[*its.first].feature->getId()));
    * 
    * I don't think this was correct. How can we know what should be shown as we don't
    * know leaf status of other features. Left this out for now. Notice the call to 'unblock'
@@ -481,12 +472,12 @@ void Project::setCurrentLeaf(const uuid& idIn)
   //sometimes the visual of a feature is dirty and doesn't get updated 
   //until we try to show it. However it might be selected meaning that
   //we will destroy the old geometry that is highlighted. So clear the seleciton.
-  node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  stow->node.send(msg::Message(msg::Request | msg::Selection | msg::Clear));
   
   //the visitor will be setting features to an inactive state which
   //triggers the signal and we would end up back into this->stateChangedSlot.
   //so we block all the connections to avoid this.
-  auto block = node->createBlocker().front();
+  auto block = stow->node.createBlocker().front();
   
   auto vertex = stow->findVertex(idIn);
   RemovedGraph removedGraph = buildRemovedGraph(stow->graph); //children
@@ -505,14 +496,14 @@ void Project::setCurrentLeaf(const uuid& idIn)
   for (auto its = boost::vertices(fg); its.first != its.second; ++its.first)
   {
     stow->setFeatureActive(*its.first);
-    node->send(msg::buildHideThreeD(stow->graph[*its.first].feature->getId()));
+    stow->node.send(msg::buildHideThreeD(stow->graph[*its.first].feature->getId()));
   }
   
   stow->setFeatureActive(vertex);
   //project is responsible for generating visuals, so buildShowThreeD
   //can cause us to be back her in project. in short, don't block.
   block.unblock();
-  node->send(msg::buildShowThreeD(stow->graph[vertex].feature->getId()));
+  stow->node.send(msg::buildShowThreeD(stow->graph[vertex].feature->getId()));
   block.block();
   
   //children
@@ -524,49 +515,10 @@ void Project::setCurrentLeaf(const uuid& idIn)
     if (v == vertex) //don't hide the new current.
       continue;
     stow->setFeatureInactive(v);
-    node->send(msg::buildHideThreeD(removedGraph[v].feature->getId()));
+    stow->node.send(msg::buildHideThreeD(removedGraph[v].feature->getId()));
   }
   
-  updateLeafStatus();
-}
-
-void Project::updateLeafStatus()
-{
-  //we end up in here twice when set current leaf from dag view.
-  //once when make the change and once when we call an update.
-  
-  //first set all features to non leaf.
-  RemovedGraph removedGraph = buildRemovedGraph(stow->graph);
-  for (auto v : boost::make_iterator_range(boost::vertices(removedGraph)))
-    stow->setFeatureNonLeaf(v);
-  
-  //build filtered graph for active features and no sever edges.
-  ComboFilterVertex<Graph> vf(stow->graph); //filters for alive vertices by default.
-  vf.active = true;
-  ComboFilterEdge<Graph> ef(stow->graph);
-  ef.sever = true;
-  boost::filtered_graph<Graph, decltype(ef), decltype(vf)> filteredGraph(stow->graph, ef, vf);
-  
-  for (auto v : boost::make_iterator_range(boost::vertices(filteredGraph)))
-  {
-    if (boost::out_degree(v, filteredGraph) == 0)
-      stow->setFeatureLeaf(v);
-    else
-    {
-      //if all children are of the type 'create' then it is also considered leaf.
-      bool allCreate = true;
-      for (auto av : boost::make_iterator_range(boost::adjacent_vertices(v, filteredGraph)))
-      {
-        if (filteredGraph[av].feature->getDescriptor() != ftr::Descriptor::Create)
-        {
-          allCreate = false;
-          break;
-        }
-      }
-      if (allCreate)
-        stow->setFeatureLeaf(v);
-    }
-  }
+  stow->updateLeafStatus();
 }
 
 void Project::connect(const boost::uuids::uuid& parentIn, const boost::uuids::uuid& childIn, const ftr::InputType &type)
@@ -633,549 +585,6 @@ void Project::clearAllInputs(const boost::uuids::uuid &idIn)
   for (auto its = boost::in_edges(vertex, stow->graph); its.first != its.second; ++its.first)
     inEdges.push_back(*its.first);
   stow->removeEdges(inEdges);
-}
-
-void Project::setupDispatcher()
-{
-  sift->insert
-  (
-    {
-      std::make_pair
-      (
-        msg::Request | msg::SetCurrentLeaf
-        , std::bind(&Project::setCurrentLeafDispatched, this, std::placeholders::_1)
-      )
-      , std::make_pair
-      (
-        msg::Request | msg::Remove | msg::Feature
-        , std::bind(&Project::removeFeatureDispatched, this, std::placeholders::_1)
-      )
-      , std::make_pair
-      (
-        msg::Request | msg::Project | msg::Update
-        , std::bind(&Project::updateDispatched, this, std::placeholders::_1)
-      )
-      , std::make_pair
-      (
-        msg::Request | msg::Force | msg::Update
-        , std::bind(&Project::forceUpdateDispatched, this, std::placeholders::_1)
-      )
-      , std::make_pair
-      (
-        msg::Request | msg::Project | msg::Update | msg::Model
-        , std::bind(&Project::updateModelDispatched, this, std::placeholders::_1)
-      )
-      , std::make_pair
-      (
-        msg::Request | msg::Project | msg::Update | msg::Visual
-        , std::bind(&Project::updateVisualDispatched, this, std::placeholders::_1)
-      )
-      , std::make_pair
-      (
-        msg::Request | msg::Save | msg::Project
-        , std::bind(&Project::saveProjectRequestDispatched, this, std::placeholders::_1)
-      )
-      , std::make_pair
-      (
-        msg::Request | msg::CheckShapeIds
-        , std::bind(&Project::checkShapeIdsDispatched, this, std::placeholders::_1)
-      )
-      , std::make_pair
-      (
-        msg::Response | msg::Feature | msg::Status
-        , std::bind(&Project::featureStateChangedDispatched, this, std::placeholders::_1)
-      )
-      , std::make_pair
-      (
-        msg::Request | msg::Project | msg::Graph | msg::Dump
-        , std::bind(&Project::dumpProjectGraphDispatched, this, std::placeholders::_1)
-      )
-      , std::make_pair
-      (
-        msg::Response | msg::View | msg::Show | msg::ThreeD
-        , std::bind(&Project::shownThreeDDispatched, this, std::placeholders::_1)
-      )
-      , std::make_pair
-      (
-        msg::Request | msg::Project | msg::Feature | msg::Reorder
-        , std::bind(&Project::reorderFeatureDispatched, this, std::placeholders::_1)
-      )
-      , std::make_pair
-      (
-        msg::Request | msg::Feature | msg::Skipped | msg::Toggle
-        , std::bind(&Project::toggleSkippedDispatched, this, std::placeholders::_1)
-      )
-      , std::make_pair
-      (
-        msg::Request | msg::Project | msg::Feature | msg::Dissolve
-        , std::bind(&Project::dissolveFeatureDispatched, this, std::placeholders::_1)
-      )
-    }
-  );
-}
-
-void Project::featureStateChangedDispatched(const msg::Message &messageIn)
-{
-  //here we want to dirty depenedent features when applicable.
-  ftr::Message fMessage = messageIn.getFTR();
-  std::size_t co = fMessage.stateOffset; //changed offset.
-  
-  //we only care about dirty and skipped states.
-  if ((co != ftr::StateOffset::ModelDirty) && (co != ftr::StateOffset::Skipped))
-    return;
-  
-  //we don't care about feature set to clean.
-  if ((co == ftr::StateOffset::ModelDirty) && (!fMessage.state.test(ftr::StateOffset::ModelDirty)))
-    return;
-    
-  //this code blocks all incoming messages to the project while it
-  //executes. This prevents the cycles from setting a dependent fetures dirty.
-  auto block = node->createBlocker();
-  
-  Vertex vertex = stow->findVertex(fMessage.featureId);
-  Vertices vertices;
-  gu::BFSLimitVisitor<Vertex> visitor(vertices);
-  boost::breadth_first_search(stow->graph, vertex, boost::visitor(visitor));
-  
-  //we don't need to set the feature responsible for getting here.
-  vertices.erase(std::remove_if(vertices.begin(), vertices.end(), [&](Vertex v){return v == vertex;}), vertices.end());
-  for (const auto &v : vertices)
-    stow->graph[v].feature->setModelDirty();
-}
-
-void Project::setCurrentLeafDispatched(const msg::Message &messageIn)
-{
-  prj::Message message = messageIn.getPRJ();
-  //send response signal out 'pre set current feature'.
-  assert(message.featureIds.size() == 1);
-  setCurrentLeaf(message.featureIds.front());
-  //send response signal out 'post set current feature'.
-}
-
-void Project::removeFeatureDispatched(const msg::Message &messageIn)
-{
-  prj::Message message = messageIn.getPRJ();
-  assert(message.featureIds.size() == 1);
-  removeFeature(message.featureIds.front());
-}
-
-void Project::updateDispatched(const msg::Message&)
-{
-  app::WaitCursor waitCursor;
-  updateModel();
-  updateVisual();
-  
-  node->sendBlocked(msg::buildStatusMessage(std::string()));
-}
-
-void Project::forceUpdateDispatched(const msg::Message&)
-{
-  RemovedGraph rg = buildRemovedGraph(stow->graph);
-  for (auto its = boost::vertices(rg); its.first != its.second; ++its.first)
-    rg[*its.first].feature->setModelDirty();
-  
-  app::WaitCursor waitCursor;
-  updateModel();
-  updateVisual();
-  
-  node->sendBlocked(msg::buildStatusMessage(std::string()));
-}
-
-void Project::updateModelDispatched(const msg::Message&)
-{
-  updateModel();
-}
-
-void Project::updateVisualDispatched(const msg::Message&)
-{
-  updateVisual();
-}
-
-void Project::saveProjectRequestDispatched(const msg::Message&)
-{
-  save();
-}
-
-void Project::checkShapeIdsDispatched(const msg::Message&)
-{
-  /* initially shapeIds were being copied from parent feature to child feature.
-   * decided to make each shape unique to feature and use evolution container
-   * to map shapes between related features. This command visits graph and checks 
-   * for duplicated ids, which we shouldn't have anymore.
-   */
-  
-  
-  // this has not been updated to the new graph.
-  std::cout << "command is out of date" << std::endl;
-  
-  /*
-  using boost::uuids::uuid;
-  
-  typedef std::vector<uuid> FeaturesIds;
-  typedef std::map<uuid, FeaturesIds> IdMap;
-  IdMap idMap;
-  
-  BGL_FORALL_VERTICES(currentVertex, projectGraph, Graph)
-  {
-    const ftr::Base *feature = projectGraph[currentVertex].feature.get();
-    if (!feature->hasSeerShape())
-      continue;
-    for (const auto &id : feature->getSeerShape().getAllShapeIds())
-    {
-      IdMap::iterator it = idMap.find(id);
-      if (it == idMap.end())
-      {
-        std::vector<uuid> freshFeatureIds;
-        freshFeatureIds.push_back(feature->getId());
-        idMap.insert(std::make_pair(id, freshFeatureIds));
-      }
-      else
-      {
-        it->second.push_back(id);
-      }
-    }
-  }
-  
-  std::cout << std::endl << std::endl << "Check shape ids:";
-  
-  bool foundDuplicate = false;
-  for (const auto &entry : idMap)
-  {
-    if (entry.second.size() < 2)
-      continue;
-    foundDuplicate = true;
-    std::cout << std::endl << "shape id of: " << gu::idToString(entry.first) << "    is in feature id of:";
-    for (const auto &it : entry.second)
-    {
-      std::cout << " " << gu::idToString(it);
-    }
-  }
-  
-  if (!foundDuplicate)
-    std::cout << std::endl << "No duplicate ids found. Test passed" << std::endl;
-  
-  */
-}
-
-void Project::dumpProjectGraphDispatched(const msg::Message &)
-{
-//   indexVerticesEdges();
-  
-  path filePath = app::instance()->getApplicationDirectory() / "project.dot";
-  stow->writeGraphViz(filePath.string());
-  
-  QDesktopServices::openUrl(QUrl(QString::fromStdString(filePath.string())));
-}
-
-void Project::shownThreeDDispatched(const msg::Message &mIn)
-{
-  uuid id = mIn.getVWR().featureId;
-  auto feature = stow->findFeature(id);
-  if
-  (
-    feature->isModelClean() &&
-    feature->isVisible3D() &&
-    isFeatureActive(id) &&
-    feature->isVisualDirty()
-  )
-    feature->updateVisual();
-}
-
-void Project::reorderFeatureDispatched(const msg::Message &mIn)
-{
-  const prj::Message &pm = mIn.getPRJ();
-  Vertices fvs; //feature vertices.
-  for (const auto &id : pm.featureIds)
-  {
-    fvs.push_back(stow->findVertex(id));
-    stow->graph[fvs.back()].feature->setModelDirty();
-  }
-  assert(fvs.size() == 2 || fvs.size() == 3);
-  if (fvs.size() !=2 && fvs.size() != 3)
-  {
-    std::cout << "Warning: wrong vertex count in Project::reorderFeatureDispatched" << std::endl;
-    return;
-  }
-  
-  //shouldn't need anymore messages into project.
-  auto block = node->createBlocker();
-  
-  /* reorder operation. Real simple For now. This only supports
-   * an edge as the drop target. source node can only have 1
-   * or less in-edge. same is true for out-edge.
-   */
-  struct Reorder
-  {
-    struct DragNode
-    {
-      boost::optional<Vertex> parent;
-      Vertex v;
-      boost::optional<Vertex> child;
-      boost::optional<Edge> oldInEdge;
-      boost::optional<Edge> oldOutEdge;
-    };
-    struct DropNode
-    {
-      Vertex parent;
-      Vertex child;
-      Edge edge;
-    };
-    
-    Reorder() = delete;
-    Reorder(Stow &stowIn, Vertex drag, Edge drop) : stow(stowIn)
-    {
-      if
-      (
-        (boost::in_degree(drag, stow.graph) > 1)
-        || (boost::out_degree(drag, stow.graph) > 1)
-      )
-      {
-        std::cout << "unsupported reorder" << std::endl;
-        return;
-      }
-      
-      dragNode.v = drag;
-      for (auto its = boost::in_edges(drag, stow.graph); its.first != its.second; ++its.first)
-      {
-        dragNode.oldInEdge = *its.first;
-        dragNode.parent = boost::source(*its.first, stow.graph);
-      }
-      for (auto its = boost::out_edges(drag, stow.graph); its.first != its.second; ++its.first)
-      {
-        dragNode.oldOutEdge = *its.first;
-        dragNode.child = boost::target(*its.first, stow.graph);
-      }
-      
-      dropNode.edge = drop;
-      dropNode.parent = boost::source(drop, stow.graph);
-      dropNode.child = boost::target(drop, stow.graph);
-      
-      go();
-    }
-    
-    void go()
-    {
-      //make all new connections.
-      ftr::InputType ph = (dragNode.oldInEdge) ? (stow.graph[*dragNode.oldInEdge].inputType) : (ftr::InputType()); // place holder
-      stow.connect(dropNode.parent, dragNode.v, ph);
-      stow.connect(dragNode.v, dropNode.child, stow.graph[dropNode.edge].inputType);
-      if (dragNode.parent && dragNode.oldOutEdge) //if an out edge then the child vertex is present also.
-        stow.connect(*dragNode.parent, *dragNode.child, stow.graph[*dragNode.oldOutEdge].inputType);
-      //collect old connections for erasure.
-      oldEdges.push_back(dropNode.edge);
-      if (dragNode.oldInEdge)
-        oldEdges.push_back(*dragNode.oldInEdge);
-      if (dragNode.oldOutEdge)
-        oldEdges.push_back(*dragNode.oldOutEdge);
-    }
-    
-    Stow &stow;
-    DragNode dragNode;
-    DropNode dropNode;
-    Edges oldEdges;
-  };
-  
-  if (pm.featureIds.size() == 2) //drop onto vertex.
-  {
-    //first is the feature to move and the last is feature to land.
-    //forward and reverse dictate whether the feature is moved before or after the landing vertex.
-    std::vector<Vertices> fps = getAllPaths<Graph>(fvs.front(), fvs.back(), stow->graph);
-    if (!fps.empty())
-      std::cout << "forward drag with vertex drop" << std::endl;
-    
-    std::vector<Vertices> rps = getAllPaths<Graph>(fvs.back(), fvs.front(), stow->graph);
-    if (!rps.empty())
-      std::cout << "reverse drag with vertex drop" << std::endl;
-  }
-  if (pm.featureIds.size() == 3) //drop onto edge.
-  {
-    //first is the feature to move and the last two are the source and target of edge, respectively.
-    //we don't care about forward and reverse when landing on edge.
-    bool results;
-    Edge ce; //connecting edge.
-    std::tie(ce, results) = boost::edge(fvs.at(1), fvs.back(), stow->graph);
-    assert(results);
-    if (!results)
-    {
-      std::cout << "Warning: couldn't find edge in Project::reorderFeatureDispatched" << std::endl;
-      return;
-    }
-    std::cout << "drag with edge drop" << std::endl;
-    Reorder re(*stow, fvs.front(), ce);
-    stow->removeEdges(re.oldEdges);
-  }
-  
-  //assuming everything went well.
-  //should I call these here? maybe let source of reorder request call update on the project?
-  updateModel();
-  updateVisual();
-}
-
-void Project::toggleSkippedDispatched(const msg::Message &mIn)
-{
-  //log action to git.
-  std::ostringstream gitMessage;
-  gitMessage << QObject::tr("Toggling skip status for: ").toStdString();
-  
-  const prj::Message &pm = mIn.getPRJ();
-  for (const auto& id : pm.featureIds)
-  {
-    ftr::Base *f = stow->findFeature(id);
-    if (f->isSkipped())
-      f->setNotSkipped();
-    else
-      f->setSkipped();
-    gitMessage << f->getName().toStdString() << " " << gu::idToShortString(id) << "    ";
-  }
-  gitManager->appendGitMessage(gitMessage.str());
-}
-
-void Project::dissolveFeatureDispatched(const msg::Message &mIn)
-{
-  const prj::Message &pm = mIn.getPRJ();
-  assert(pm.featureIds.size() == 1);
-  assert(hasFeature(pm.featureIds.front()));
-  if (!hasFeature(pm.featureIds.front()))
-    return;
-  
-  ftr::Base *fb = findFeature(pm.featureIds.front());
-  if (!fb->hasAnnex(ann::Type::SeerShape))
-    return; //for now we only care about features with shape.
-  //should dissolve be a virtual member of ftr::Base?
-    
-  const ann::SeerShape &oss = fb->getAnnex<ann::SeerShape>();
-  if (oss.isNull())
-    return; //do we really care about this here?
-    
-  fb->setModelDirty(); //this will make all children dirty.
-  auto block = node->createBlocker();
-  
-  node->send
-  (
-    msg::Message(msg::Response | msg::Pre | msg::Project | msg::Feature | msg::Dissolve, pm)
-  );
-  
-  //create new inert feature.
-  std::shared_ptr<ftr::Inert::Feature> nf;
-  auto csysPrms = fb->getParameters(prm::Tags::CSys);
-  if (!csysPrms.empty())
-    nf = std::make_shared<ftr::Inert::Feature>(oss.getRootOCCTShape(), csysPrms.front()->getMatrix());
-  else
-    nf = std::make_shared<ftr::Inert::Feature>(oss.getRootOCCTShape());
-  nf->setColor(fb->getColor());
-  ann::SeerShape &nss = nf->getAnnex<ann::SeerShape>();
-  occt::ShapeVector oshapes = oss.getAllShapes(); //original shapes
-  for (const auto &s : oshapes)
-  {
-    assert(nss.hasShape(s));
-    if (!nss.hasShape(s))
-    {
-      std::cerr << "WARNING: new dissolved inert feature doesn't have original shape in Project::dissolveFeatureDispatched" << std::endl;
-      continue;
-    }
-    auto id = oss.findId(s);
-    nss.updateId(s, id);
-    nss.insertEvolve(gu::createNilId(), id);
-  }
-  nss.setRootShapeId(oss.getRootShapeId());
-  Vertex nfv = stow->addFeature(nf); //new feature vertex.
-  prj::Message addPMessage;
-  addPMessage.feature = nf;
-  msg::Message postMessage
-  (
-    msg::Response | msg::Post | msg::Add | msg::Feature
-    , addPMessage
-  );
-  node->send(postMessage);
-  
-  //give new feature same visualization status as old.
-  if (fb->isHiddenOverlay())
-    node->send(msg::buildHideOverlay(nf->getId()));
-  if (fb->isHidden3D())
-    node->send(msg::buildHideThreeD(nf->getId()));
-  
-  //get children of original feature and setup graph edges from new inert feature.
-  Vertex ov = stow->findVertex(pm.featureIds.front());
-  RemovedGraph removedGraph = buildRemovedGraph(stow->graph);
-  for (auto its = boost::adjacent_vertices(ov, removedGraph); its.first != its.second; ++its.first)
-  {
-    auto e = boost::edge(ov, *its.first, removedGraph);
-    assert(e.second);
-    stow->connect(nfv, *its.first, removedGraph[e.first].inputType);
-  }
-  
-  //now we can remove original feature and applicable parents.
-  Vertices vertsToRemove;
-  vertsToRemove.push_back(ov);
-  ReversedGraph reversedGraph = boost::make_reverse_graph(removedGraph);
-  if (fb->getDescriptor() != ftr::Descriptor::Create)
-  {
-    //walk parent paths to first create.
-    Vertices vertexes;
-    gu::BFSLimitVisitor<Vertex> rVis(vertexes);
-    boost::breadth_first_search(reversedGraph, ov, visitor(rVis));
-  
-    //filter on the accumulated vertexes.
-    gu::SubsetFilter<ReversedGraph> vertexFilter(reversedGraph, vertexes);
-    typedef boost::filtered_graph<ReversedGraph, boost::keep_all, gu::SubsetFilter<ReversedGraph> > FilteredGraph;
-    FilteredGraph filteredGraph(reversedGraph, boost::keep_all(), vertexFilter);
-    
-    AlterVisitor apv(vertsToRemove, AlterVisitor::Create::Inclusion);
-    boost::depth_first_search(filteredGraph, visitor(apv).root_vertex(ov));
-  }
-  
-  //remove edges from vertices that are to be removed
-  Edges etr; //edges to remove
-  for (const auto &v : vertsToRemove)
-  {
-    for (auto its = boost::adjacent_vertices(v, reversedGraph); its.first != its.second; ++its.first)
-    {
-      //notice we are using the removedGraph with vertices reversed.
-      auto ce = boost::edge(*its.first, v, removedGraph);
-      assert(ce.second);
-      etr.push_back(ce.first);
-    }
-  }
-  for (auto its = boost::adjacent_vertices(ov, removedGraph); its.first != its.second; ++its.first)
-  {
-    auto ce = boost::edge(ov, *its.first, removedGraph);
-    assert(ce.second);
-    etr.push_back(ce.first);
-  }
-  stow->removeEdges(etr);
-  
-  //now finally remove the actual vertices.
-  for (const auto &v : vertsToRemove)
-  {
-    assert (boost::degree(v, stow->graph) == 0);
-    
-    prj::Message pMessage;
-    pMessage.feature = stow->graph[v].feature;
-    msg::Message preMessage
-    (
-      msg::Response | msg::Pre | msg::Remove | msg::Feature
-      , pMessage
-    );
-    node->send(preMessage);
-    
-    //remove file if exists.
-    assert(exists(saveDirectory));
-    path filePath = saveDirectory / fb->getFileName();
-    if (exists(filePath))
-      remove(filePath);
-    
-    boost::clear_vertex(v, stow->graph); //should be redundent.
-    stow->graph[v].alive = false;
-  }
-  
-  node->send
-  (
-    msg::Message(msg::Response | msg::Post | msg::Project | msg::Feature | msg::Dissolve, pm)
-  );
-  
-  std::ostringstream gitMessage;
-  gitMessage << QObject::tr("Disolving feature: ").toStdString() << gu::idToShortString(fb->getId());
-  gitManager->appendGitMessage(gitMessage.str());
 }
 
 void Project::setAllVisualDirty()
@@ -1246,7 +655,7 @@ void Project::setColor(const boost::uuids::uuid &featureIdIn, const osg::Vec4 &c
     //and causing models to be recalculated seems excessive for such a minor change as
     //object color. So here we just serialize the changed features to 'sneak' the
     //color change into the git commit.
-    stow->graph[v].feature->serialWrite(saveDirectory);
+    stow->graph[v].feature->serialWrite(stow->saveDirectory);
     
     //log action to git.
     std::ostringstream gitMessage;
@@ -1254,7 +663,7 @@ void Project::setColor(const boost::uuids::uuid &featureIdIn, const osg::Vec4 &c
       << findFeature(featureIdIn)->getName().toStdString()
       << "    Id: "
       << gu::idToShortString(featureIdIn);
-    gitManager->appendGitMessage(gitMessage.str());
+    stow->gitManager.appendGitMessage(gitMessage.str());
   }
 }
 
@@ -1274,7 +683,12 @@ std::vector<boost::uuids::uuid> Project::getAllFeatureIds() const
 
 void Project::setSaveDirectory(const boost::filesystem::path& directoryIn)
 {
-  saveDirectory = directoryIn;
+  stow->saveDirectory = directoryIn;
+}
+
+const boost::filesystem::path& Project::getSaveDirectory() const
+{
+  return stow->saveDirectory;
 }
 
 void Project::serialWrite()
@@ -1291,8 +705,7 @@ void Project::serialWrite()
   (
     srl::prjs::AppVersion(0, 0, 0),
     0,
-    expressionManager->serialOut(),
-    shapeHistory->serialOut()
+    stow->expressionManager.serialOut()
   );
   
   RemovedGraph removedGraph = buildRemovedGraph(stow->graph);
@@ -1326,7 +739,7 @@ void Project::serialWrite()
   }
   
   //write out master compound
-  path cPath = saveDirectory / "project.brep";
+  path cPath = stow->saveDirectory / "project.brep";
   BRepTools::Clean(compound);
   BRepTools::Write(compound, cPath.string().c_str());
   
@@ -1342,7 +755,7 @@ void Project::serialWrite()
     po.connections().push_back(connection);
   }
 
-  path pPath = saveDirectory / "project.prjt";
+  path pPath = stow->saveDirectory / "project.prjt";
   std::ofstream stream(pPath.string());
   xml_schema::NamespaceInfomap infoMap;
   srl::prjs::project(stream, po, infoMap);
@@ -1350,30 +763,30 @@ void Project::serialWrite()
 
 void Project::save()
 {
-  node->send(msg::Message(msg::Response | msg::Pre | msg::Save | msg::Project));
+  stow->node.send(msg::Message(msg::Response | msg::Pre | msg::Save | msg::Project));
   
-  gitManager->save();
+  stow->gitManager.save();
   
-  node->send(msg::Message(msg::Response | msg::Post | msg::Save | msg::Project));
+  stow->node.send(msg::Message(msg::Response | msg::Post | msg::Save | msg::Project));
 }
 
 void Project::initializeNew()
 {
   serialWrite();
-  gitManager->create(saveDirectory.string());
+  stow->gitManager.create(stow->saveDirectory.string());
 }
 
 void Project::open()
 {
   app::WaitCursor waitCursor;
   
-  isLoading = true;
-  node->send(msg::Message(msg::Request | msg::Git | msg::Freeze));
+  stow->isLoading = true;
+  stow->node.send(msg::Message(msg::Request | msg::Git | msg::Freeze));
   
-  path pPath = saveDirectory / "project.prjt";
-  path sPath = saveDirectory / "project.brep";
+  path pPath = stow->saveDirectory / "project.prjt";
+  path sPath = stow->saveDirectory / "project.brep";
   
-  gitManager->open((saveDirectory / ".git").string());
+  stow->gitManager.open((stow->saveDirectory / ".git").string());
   
   try
   {
@@ -1384,12 +797,12 @@ void Project::open()
     BRepTools::Read(masterShape, file, junk);
     
     auto project = srl::prjs::project(pPath.string(), ::xml_schema::Flags::dont_validate);
-    FeatureLoad fLoader(saveDirectory, masterShape);
+    FeatureLoad fLoader(stow->saveDirectory, masterShape);
     for (const auto &feature : project->features())
     {
       std::ostringstream messageStream;
       messageStream << "Loading: " << feature.type() << "    Id: " << feature.id();
-      node->sendBlocked(msg::buildStatusMessage(messageStream.str()));
+      stow->node.sendBlocked(msg::buildStatusMessage(messageStream.str()));
       qApp->processEvents(); //need this or we won't see messages.
       
       std::shared_ptr<ftr::Base> featurePtr = fLoader.load(feature.id(), feature.type(), feature.shapeOffset());
@@ -1400,11 +813,11 @@ void Project::open()
         //send state message
         ftr::Message fMessage(featurePtr->getId(), featurePtr->getState(), ftr::StateOffset::Loading);
         msg::Message mMessage(msg::Response | msg::Feature | msg::Status, fMessage);
-        node->sendBlocked(mMessage);
+        stow->node.sendBlocked(mMessage);
       }
     }
     
-    node->sendBlocked(msg::buildStatusMessage("Loading: Project States"));
+    stow->node.sendBlocked(msg::buildStatusMessage("Loading: Project States"));
     qApp->processEvents();
     for (const auto &state : project->states())
     {
@@ -1415,10 +828,10 @@ void Project::open()
       //send state message
       ftr::Message fMessage(fId, fState, ftr::StateOffset::Loading);
       msg::Message mMessage(msg::Response | msg::Project | msg::Feature | msg::Status, fMessage);
-      node->sendBlocked(mMessage);
+      stow->node.sendBlocked(mMessage);
     }
     
-    node->sendBlocked(msg::buildStatusMessage("Loading: Feature Connections"));
+    stow->node.sendBlocked(msg::buildStatusMessage("Loading: Feature Connections"));
     qApp->processEvents();
     for (const auto &fConnection : project->connections())
     {
@@ -1431,17 +844,17 @@ void Project::open()
       connect(source, target, inputType);
     }
     
-    node->sendBlocked(msg::buildStatusMessage("Loading: Expressions"));
+    stow->node.sendBlocked(msg::buildStatusMessage("Loading: Expressions"));
     qApp->processEvents();
-    expressionManager->serialIn(project->expression());
+    stow->expressionManager.serialIn(project->expression());
     
-    node->sendBlocked(msg::buildStatusMessage("Loading: Shape History"));
+    stow->node.sendBlocked(msg::buildStatusMessage("Building: Shape History"));
     qApp->processEvents();
-    shapeHistory->serialIn(project->shapeHistory());
+    stow->buildShapeHistory();
     
-    node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
-    node->sendBlocked(msg::buildStatusMessage(std::string()));
-    node->sendBlocked(msg::buildStatusMessage("Project Opened", 2.0));
+    stow->node.sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
+    stow->node.sendBlocked(msg::buildStatusMessage(std::string()));
+    stow->node.sendBlocked(msg::buildStatusMessage("Project Opened", 2.0));
   }
   catch (const xsd::cxx::xml::invalid_utf16_string&)
   {
@@ -1456,8 +869,13 @@ void Project::open()
     std::cerr << e << std::endl;
   }
   
-  node->send(msg::Message(msg::Request | msg::Git | msg::Thaw));
-  isLoading = false;
+  stow->node.send(msg::Message(msg::Request | msg::Git | msg::Thaw));
+  stow->isLoading = false;
+}
+
+const ftr::ShapeHistory& Project::getShapeHistory() const
+{
+  return stow->shapeHistory;
 }
 
 void Project::shapeTrackDump(const uuid &shapeId, const path &directory) const
@@ -1465,10 +883,10 @@ void Project::shapeTrackDump(const uuid &shapeId, const path &directory) const
   if (!exists(directory) || !is_directory(directory))
     return;
   
-  ftr::ShapeHistory devolve = shapeHistory->createDevolveHistory(shapeId);
+  ftr::ShapeHistory devolve = stow->shapeHistory.createDevolveHistory(shapeId);
   devolve.writeGraphViz((directory / "devolveHistory.dot").string());
   
-  ftr::ShapeHistory evolve = shapeHistory->createEvolveHistory(shapeId);
+  ftr::ShapeHistory evolve = stow->shapeHistory.createEvolveHistory(shapeId);
   evolve.writeGraphViz((directory / "evolveHistory.dot").string());
 }
 
@@ -1490,7 +908,7 @@ ftr::UpdatePayload::UpdateMap Project::getParentMap(const boost::uuids::uuid &id
 
 ftr::UpdatePayload Project::getPayload(const boost::uuids::uuid &idIn) const
 {
-  return ftr::UpdatePayload(getParentMap(idIn), *shapeHistory);
+  return ftr::UpdatePayload(getParentMap(idIn), stow->shapeHistory);
 }
 
 template <typename VertexT>
@@ -1682,8 +1100,8 @@ void Project::hideAlterParents(const boost::uuids::uuid &childIdIn) const
   auto rBaseGraph = boost::make_reverse_graph(baseGraph);
   for (auto p : boost::make_iterator_range(boost::adjacent_vertices(editFeatureVertex, rBaseGraph)))
   {
-    node->send(msg::buildHideThreeD(stow->graph[p].feature->getId()));
-    node->send(msg::buildHideOverlay(stow->graph[p].feature->getId()));
+    stow->node.send(msg::buildHideThreeD(stow->graph[p].feature->getId()));
+    stow->node.send(msg::buildHideOverlay(stow->graph[p].feature->getId()));
   }
 }
 
@@ -1738,7 +1156,7 @@ void Project::expressionLink(const boost::uuids::uuid &pId, int eId)
    * sets the parameter value if types match and expression contains a valid value for the parameter.
    * even writes the git message.
    */
-  expressionManager->addLink(pId, eId);
+  stow->expressionManager.addLink(pId, eId);
 }
 
 /*! @brief Unlink a parameter to an expression.
@@ -1747,5 +1165,5 @@ void Project::expressionLink(const boost::uuids::uuid &pId, int eId)
  */
 void Project::expressionUnlink(const boost::uuids::uuid &pId)
 {
-  expressionManager->removeLink(pId);
+  stow->expressionManager.removeLink(pId);
 }
