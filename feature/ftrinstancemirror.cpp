@@ -44,8 +44,7 @@ using namespace ftr::InstanceMirror;
 
 using boost::uuids::uuid;
 
-QIcon Feature::icon;
-
+QIcon Feature::icon = QIcon(":/resources/images/constructionInstanceMirror.svg");
 
 struct Feature::Stow
 {
@@ -128,9 +127,6 @@ Feature::Feature()
 : Base()
 , stow(std::make_unique<Stow>(*this))
 {
-  if (icon.isNull())
-    icon = QIcon(":/resources/images/constructionInstanceMirror.svg");
-  
   name = QObject::tr("Instance Mirror");
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
 }

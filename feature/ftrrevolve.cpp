@@ -42,7 +42,7 @@
 using namespace ftr;
 using boost::uuids::uuid;
 
-QIcon Revolve::icon;
+QIcon Revolve::icon = QIcon(":/resources/images/constructionRevolve.svg");
 
 Revolve::Revolve():
 Base()
@@ -56,9 +56,6 @@ Base()
 , angleLabel(new lbr::PLabel(angle.get()))
 , internalSwitch(new osg::Switch())
 {
-  if (icon.isNull())
-    icon = QIcon(":/resources/images/constructionRevolve.svg");
-  
   name = QObject::tr("Revolve");
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
   

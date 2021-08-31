@@ -63,7 +63,7 @@ static const std::map<FeatureTag, std::string> featureTagMap =
   {FeatureTag::VertexTop, "VertexTop"}
 };
 
-QIcon Feature::icon;
+QIcon Feature::icon = QIcon(":/resources/images/constructionSphere.svg");
 
 inline static const prf::Sphere& pSph(){return prf::manager().rootPtr->features().sphere().get();}
 
@@ -139,9 +139,6 @@ Feature::Feature()
 : Base()
 , stow(std::make_unique<Stow>(*this))
 {
-  if (icon.isNull())
-    icon = QIcon(":/resources/images/constructionSphere.svg");
-  
   name = QObject::tr("Sphere");
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
 }

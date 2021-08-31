@@ -40,7 +40,7 @@
 using namespace ftr::Boolean;
 using boost::uuids::uuid;
 
-QIcon Feature::icon;
+QIcon Feature::icon = QIcon(":/resources/images/constructionBoolean.svg");
 
 struct Feature::Stow
 {
@@ -79,9 +79,6 @@ Feature::Feature()
 : Base()
 , stow(std::make_unique<Stow>(*this))
 {
-  if (icon.isNull())
-    icon = QIcon(":/resources/images/constructionBoolean.svg");
-  
   name = QObject::tr("Boolean");
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
 }

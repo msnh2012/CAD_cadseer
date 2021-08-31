@@ -49,7 +49,7 @@
 
 using namespace ftr::SurfaceMesh;
 using boost::uuids::uuid;
-QIcon Feature::icon;
+QIcon Feature::icon = QIcon(":/resources/images/constructionSurfaceMesh.svg");
 
 struct Feature::Stow
 {
@@ -129,9 +129,6 @@ Feature::Feature()
 : Base()
 , stow(std::make_unique<Stow>(*this))
 {
-  if (icon.isNull())
-    icon = QIcon(":/resources/images/constructionSurfaceMesh.svg");
-  
   name = QObject::tr("SurfaceMesh");
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
 }

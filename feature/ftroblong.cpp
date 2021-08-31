@@ -38,7 +38,7 @@
 using namespace ftr::Oblong;
 using boost::uuids::uuid;
 
-QIcon Feature::icon;
+QIcon Feature::icon = QIcon(":/resources/images/constructionOblong.svg");
 
 //duplicated from box.
 enum class FeatureTag
@@ -276,9 +276,6 @@ Feature::Feature()
 : Base()
 , stow(std::make_unique<Stow>(*this))
 {
-  if (icon.isNull())
-    icon = QIcon(":/resources/images/constructionOblong.svg");
-  
   name = QObject::tr("Oblong");
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
 }

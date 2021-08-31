@@ -60,7 +60,7 @@
 using namespace ftr;
 using boost::uuids::uuid;
 
-QIcon Sweep::icon;
+QIcon Sweep::icon = QIcon(":/resources/images/constructionSweep.svg");
 
 SweepProfile::SweepProfile(): SweepProfile(Pick()){}
 SweepProfile::SweepProfile(const Pick &pIn): SweepProfile(pIn, false, false){}
@@ -195,9 +195,6 @@ Base()
 , firstFaceId(gu::createRandomId())
 , lastFaceId(gu::createRandomId())
 {
-  if (icon.isNull())
-    icon = QIcon(":/resources/images/constructionSweep.svg");
-  
   name = QObject::tr("Sweep");
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
   

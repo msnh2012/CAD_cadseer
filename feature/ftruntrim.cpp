@@ -45,8 +45,7 @@
 #include "feature/ftruntrim.h"
 
 using namespace ftr;
-
-QIcon Untrim::icon;
+QIcon Untrim::icon = QIcon(":/resources/images/constructionUntrim.svg");
 
 Untrim::Untrim():
 Base()
@@ -60,9 +59,6 @@ Base()
 , closeVLabel(new lbr::PLabel(closeV.get()))
 , makeSolidLabel(new lbr::PLabel(makeSolid.get()))
 {
-  if (icon.isNull())
-    icon = QIcon(":/resources/images/constructionUntrim.svg");
-  
   name = QObject::tr("Untrim");
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
   

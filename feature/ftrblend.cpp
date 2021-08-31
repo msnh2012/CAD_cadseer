@@ -110,13 +110,10 @@ std::vector<uuid> ftr::Blend::getSpineEnds(const ann::SeerShape &ssIn, const uui
   return out;
 }
 
-QIcon Feature::icon;
+QIcon Feature::icon = QIcon(":/resources/images/constructionBlend.svg");
 
 Feature::Feature() : Base(), sShape(std::make_unique<ann::SeerShape>())
 {
-  if (icon.isNull())
-    icon = QIcon(":/resources/images/constructionBlend.svg");
-  
   name = QObject::tr("Blend");
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
   

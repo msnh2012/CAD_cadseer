@@ -45,7 +45,7 @@
 using namespace ftr;
 using boost::uuids::uuid;
 
-QIcon ImagePlane::icon;
+QIcon ImagePlane::icon = QIcon(":/resources/images/constructionImagePlane.svg");
 
 ImagePlane::ImagePlane():
 Base()
@@ -55,9 +55,6 @@ Base()
 , transform(new osg::PositionAttitudeTransform())
 , scaleLabel(new lbr::PLabel(scale.get()))
 {
-  if (icon.isNull())
-    icon = QIcon(":/resources/images/constructionImagePlane.svg");
-  
   name = QObject::tr("ImagePlane");
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
   

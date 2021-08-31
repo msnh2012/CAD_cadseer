@@ -42,7 +42,7 @@ using namespace ftr::InstanceLinear;
 
 using boost::uuids::uuid;
 
-QIcon Feature::icon;
+QIcon Feature::icon = QIcon(":/resources/images/constructionInstanceLinear.svg");
 
 struct Feature::Stow
 {
@@ -129,9 +129,6 @@ Feature::Feature()
 : Base()
 , stow(std::make_unique<Stow>(*this))
 {
-  if (icon.isNull())
-    icon = QIcon(":/resources/images/constructionInstanceLinear.svg");
-  
   name = QObject::tr("Instance Linear");
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
 }

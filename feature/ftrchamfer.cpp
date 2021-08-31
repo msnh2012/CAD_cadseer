@@ -49,7 +49,7 @@
 using namespace ftr::Chamfer;
 using boost::uuids::uuid;
 
-QIcon Feature::icon;
+QIcon Feature::icon = QIcon(":/resources/images/constructionChamfer.svg");
 
 Entry::Entry(const Entry &other, bool)
 {
@@ -168,9 +168,6 @@ Entry Entry::buildDefaultDistanceAngle()
 
 Feature::Feature() : Base(), sShape(std::make_unique<ann::SeerShape>())
 {
-  if (icon.isNull())
-    icon = QIcon(":/resources/images/constructionChamfer.svg");
-  
   name = QObject::tr("Chamfer");
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
   

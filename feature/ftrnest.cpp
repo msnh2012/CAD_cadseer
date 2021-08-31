@@ -40,7 +40,7 @@ using namespace ftr;
 
 using boost::uuids::uuid;
 
-QIcon Nest::icon;
+QIcon Nest::icon = QIcon(":/resources/images/constructionNest.svg");
 
 Nest::Nest() : 
 Base(),
@@ -50,9 +50,6 @@ feedDirection(std::make_unique<prm::Parameter>(QObject::tr("Feed Direction"), os
 sShape(std::make_unique<ann::SeerShape>())
 
 {
-  if (icon.isNull())
-    icon = QIcon(":/resources/images/constructionNest.svg");
-  
   name = QObject::tr("Nest");
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
   

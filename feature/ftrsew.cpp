@@ -41,15 +41,12 @@ using namespace ftr;
 
 using boost::uuids::uuid;
 
-QIcon Sew::icon;
+QIcon Sew::icon = QIcon(":/resources/images/constructionSew.svg");
 
 Sew::Sew():
 Base(),
 sShape(std::make_unique<ann::SeerShape>())
 {
-  if (icon.isNull())
-    icon = QIcon(":/resources/images/constructionSew.svg");
-  
   name = QObject::tr("Sew");
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
   

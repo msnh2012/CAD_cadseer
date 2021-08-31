@@ -37,13 +37,10 @@ using namespace ftr;
 
 using boost::uuids::uuid;
 
-QIcon Refine::icon;
+QIcon Refine::icon = QIcon(":/resources/images/constructionRefine.svg");
 
 Refine::Refine() : Base(), sShape(std::make_unique<ann::SeerShape>())
 {
-  if (icon.isNull())
-    icon = QIcon(":/resources/images/constructionRefine.svg");
-  
   name = QObject::tr("Refine");
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
   

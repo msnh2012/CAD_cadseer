@@ -35,7 +35,7 @@
 using namespace ftr;
 using boost::uuids::uuid;
 
-QIcon SurfaceMeshFill::icon;
+QIcon SurfaceMeshFill::icon = QIcon(":/resources/images/constructionSurfaceMeshFill.svg");
 
 SurfaceMeshFill::SurfaceMeshFill():
 Base()
@@ -43,9 +43,6 @@ Base()
 , algorithm(std::make_unique<prm::Parameter>(QObject::tr("Algorithm"), 1))
 , algorithmLabel(new lbr::PLabel(algorithm.get()))
 {
-  if (icon.isNull())
-    icon = QIcon(":/resources/images/constructionSurfaceMeshFill.svg");
-  
   name = QObject::tr("SurfaceMeshFill");
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
   

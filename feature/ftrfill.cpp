@@ -44,7 +44,7 @@
 using namespace ftr::Fill;
 using boost::uuids::uuid;
 
-QIcon Feature::icon;
+QIcon Feature::icon = QIcon(":/resources/images/constructionFill.svg");
 
 Boundary::Boundary()
 : edgePick{QObject::tr("Edge Pick"), ftr::Picks(), PrmTags::edgePick}
@@ -119,9 +119,6 @@ Feature::Feature()
 : Base()
 , stow(std::make_unique<Stow>(*this))
 {
-  if (icon.isNull())
-    icon = QIcon(":/resources/images/constructionFill.svg");
-  
   name = QObject::tr("Fill");
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
 }

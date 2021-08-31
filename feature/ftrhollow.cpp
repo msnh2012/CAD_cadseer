@@ -48,7 +48,7 @@
 using boost::uuids::uuid;
 using namespace ftr::Hollow;
 
-QIcon Feature::icon;
+QIcon Feature::icon = QIcon(":/resources/images/constructionHollow.svg");
 
 struct Feature::Stow
 {
@@ -140,9 +140,6 @@ Feature::Feature()
 : Base()
 , stow(std::make_unique<Stow>(*this))
 {
-  if (icon.isNull())
-    icon = QIcon(":/resources/images/constructionHollow.svg");
-  
   name = QObject::tr("Hollow");
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
 }

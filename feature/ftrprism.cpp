@@ -49,7 +49,7 @@
 using namespace ftr::Prism;
 using boost::uuids::uuid;
 
-QIcon Feature::icon;
+QIcon Feature::icon = QIcon(":/resources/images/constructionPrism.svg");
 
 struct Feature::Stow
 {
@@ -383,9 +383,6 @@ Feature::Feature()
 , stow(std::make_unique<Stow>(*this))
 
 {
-  if (icon.isNull())
-    icon = QIcon(":/resources/images/constructionPrism.svg");
-  
   name = QObject::tr("Prism");
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
 }

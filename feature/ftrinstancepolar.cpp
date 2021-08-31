@@ -45,7 +45,7 @@
 
 using namespace ftr::InstancePolar;
 using boost::uuids::uuid;
-QIcon Feature::icon;
+QIcon Feature::icon = QIcon(":/resources/images/constructionInstancePolar.svg");
 
 struct Feature::Stow
 {
@@ -142,9 +142,6 @@ Feature::Feature()
 : Base()
 , stow(std::make_unique<Stow>(*this))
 {
-  if (icon.isNull())
-    icon = QIcon(":/resources/images/constructionInstancePolar.svg");
-  
   name = QObject::tr("Instance Polar");
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
 }

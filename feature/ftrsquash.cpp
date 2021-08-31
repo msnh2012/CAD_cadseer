@@ -42,13 +42,10 @@ using namespace ftr;
 
 using boost::uuids::uuid;
 
-QIcon Squash::icon;
+QIcon Squash::icon = QIcon(":/resources/images/constructionSquash.svg");
 
 Squash::Squash() : Base(), sShape(std::make_unique<ann::SeerShape>())
 {
-  if (icon.isNull())
-    icon = QIcon(":/resources/images/constructionSquash.svg");
-  
   name = QObject::tr("Squash");
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
   

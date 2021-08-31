@@ -57,7 +57,7 @@ using namespace ftr::Thread;
 
 using boost::uuids::uuid;
 
-QIcon Feature::icon;
+QIcon Feature::icon = QIcon(":/resources/images/constructionThread.svg");
 
 inline static const prf::Thread& pTh(){return prf::manager().rootPtr->features().thread().get();}
 
@@ -182,9 +182,6 @@ Feature::Feature()
 : Base()
 , stow(std::make_unique<Stow>(*this))
 {
-  if (icon.isNull())
-    icon = QIcon(":/resources/images/constructionThread.svg");
-  
   name = QObject::tr("Thread");
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
 }

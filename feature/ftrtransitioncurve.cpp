@@ -45,7 +45,7 @@
 using namespace ftr;
 using boost::uuids::uuid;
 
-QIcon TransitionCurve::icon;
+QIcon TransitionCurve::icon = QIcon(":/resources/images/sketchBezeir.svg");
 
 TransitionCurve::TransitionCurve():
 Base()
@@ -62,9 +62,6 @@ Base()
 , vertex0Id(gu::createRandomId())
 , vertex1Id(gu::createRandomId())
 {
-  if (icon.isNull())
-    icon = QIcon(":/resources/images/sketchBezeir.svg");
-  
   name = QObject::tr("Transition Curve");
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
   

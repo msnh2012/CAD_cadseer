@@ -43,16 +43,13 @@ using namespace ftr;
 
 using boost::uuids::uuid;
 
-QIcon Thicken::icon;
+QIcon Thicken::icon = QIcon(":/resources/images/constructionThicken.svg");
 
 Thicken::Thicken():
 Base(),
 distance(std::make_unique<prm::Parameter>(prm::Names::Distance, 0.1, prm::Tags::Distance)),
 sShape(std::make_unique<ann::SeerShape>())
 {
-  if (icon.isNull())
-    icon = QIcon(":/resources/images/constructionThicken.svg");
-  
   name = QObject::tr("Thicken");
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
   

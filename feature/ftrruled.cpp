@@ -44,16 +44,13 @@
 using namespace ftr;
 using boost::uuids::uuid;
 
-QIcon Ruled::icon;
+QIcon Ruled::icon = QIcon(":/resources/images/constructionRuled.svg");
 
 Ruled::Ruled():
 Base()
 , sShape(std::make_unique<ann::SeerShape>())
 , parentId(gu::createRandomId())
 {
-  if (icon.isNull())
-    icon = QIcon(":/resources/images/constructionRuled.svg");
-  
   name = QObject::tr("Ruled");
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
   

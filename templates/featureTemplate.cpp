@@ -36,9 +36,8 @@
 // #include "project/serial/generated/prjsrl_FIX_%CLASSNAMELOWERCASE%.h"
 #include "feature/ftr%CLASSNAMELOWERCASE%.h"
 
-using namespace ftr::%CLASSNAME%;
 using boost::uuids::uuid;
-
+using namespace ftr::%CLASSNAME%;
 QIcon Feature::icon = QIcon(":/resources/images/constructionBase.svg"); //fix me
 
 struct Feature::Stow

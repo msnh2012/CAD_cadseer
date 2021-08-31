@@ -52,7 +52,7 @@ using namespace ftr::DatumAxis;
 
 using boost::uuids::uuid;
 
-QIcon Feature::icon;
+QIcon Feature::icon = QIcon(":/resources/images/constructionDatumAxis.svg");
 
 struct Feature::Stow
 {
@@ -475,10 +475,7 @@ struct Feature::Stow
 Feature::Feature()
 : Base()
 , stow(std::make_unique<Stow>(*this))
-
 {
-  if (icon.isNull())
-    icon = QIcon(":/resources/images/constructionDatumAxis.svg");
   name = QObject::tr("Datum Axis");
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
   

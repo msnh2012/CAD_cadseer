@@ -39,7 +39,7 @@
 using namespace ftr;
 using boost::uuids::uuid;
 
-QIcon Line::icon;
+QIcon Line::icon = QIcon(":/resources/images/sketchLine.svg");
 
 Line::Line()
 : Base()
@@ -48,9 +48,6 @@ Line::Line()
 , v0Id(gu::createRandomId())
 , v1Id(gu::createRandomId())
 {
-  if (icon.isNull())
-    icon = QIcon(":/resources/images/sketchLine.svg");
-  
   name = QObject::tr("Line");
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
   

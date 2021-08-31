@@ -38,16 +38,13 @@ using namespace ftr;
 
 using boost::uuids::uuid;
 
-QIcon DieSet::icon;
+QIcon DieSet::icon = QIcon(":/resources/images/constructionDieSet.svg");
 
 DieSet::DieSet()
 : Base()
 , prmObserver(std::make_unique<prm::Observer>(std::bind(&DieSet::setModelDirty, this)))
 , sShape(std::make_unique<ann::SeerShape>())
 {
-  if (icon.isNull())
-    icon = QIcon(":/resources/images/constructionDieSet.svg");
-  
   name = QObject::tr("DieSet");
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
   

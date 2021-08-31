@@ -51,7 +51,7 @@
 using boost::uuids::uuid;
 using namespace ftr::Draft;
 
-QIcon Feature::icon;
+QIcon Feature::icon = QIcon(":/resources/images/constructionDraft.svg");
 
 struct Feature::Stow
 {
@@ -112,9 +112,6 @@ Feature::Feature()
 : Base()
 , stow(std::make_unique<Stow>(*this))
 {
-  if (icon.isNull())
-    icon = QIcon(":/resources/images/constructionDraft.svg");
-  
   name = QObject::tr("Draft");
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
 }

@@ -52,7 +52,7 @@ using namespace ftr;
 
 using boost::uuids::uuid;
 
-QIcon Strip::icon;
+QIcon Strip::icon = QIcon(":/resources/images/constructionStrip.svg");
 
 TopoDS_Edge makeEdge(const osg::Vec3d &v1, const osg::Vec3d &v2)
 {
@@ -72,9 +72,6 @@ autoCalc(std::make_unique<prm::Parameter>(prm::Names::AutoSize, true, prm::Tags:
 prmObserver(std::make_unique<prm::Observer>(std::bind(&Strip::setModelDirty, this))),
 sShape(std::make_unique<ann::SeerShape>())
 {
-  if (icon.isNull())
-    icon = QIcon(":/resources/images/constructionStrip.svg");
-  
   name = QObject::tr("Strip");
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
   

@@ -41,7 +41,7 @@
 using namespace ftr::Inert;
 using namespace boost::uuids;
 
-QIcon Feature::icon;
+QIcon Feature::icon = QIcon(":/resources/images/constructionInert.svg");
 
 struct Feature::Stow
 {
@@ -66,9 +66,6 @@ Feature::Feature(const TopoDS_Shape &shapeIn, const osg::Matrixd &mIn)
 : Base()
 , stow(std::make_unique<Stow>(*this))
 {
-  if (icon.isNull())
-    icon = QIcon(":/resources/images/constructionInert.svg");
-  
   name = QObject::tr("Inert");
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
   

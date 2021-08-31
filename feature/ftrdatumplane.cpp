@@ -64,7 +64,7 @@
 
 using namespace ftr::DatumPlane;
 
-QIcon Feature::icon;
+QIcon Feature::icon = QIcon(":/resources/images/constructionDatumPlane.svg");
 
 using boost::uuids::uuid;
 
@@ -770,9 +770,6 @@ Feature::Feature() :
 Base()
 , stow(std::make_unique<Stow>(*this))
 {
-  if (icon.isNull())
-    icon = QIcon(":/resources/images/constructionDatumPlane.svg");
-  
   name = QObject::tr("Datum Plane");
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
   

@@ -41,11 +41,9 @@
 #include "feature/ftrinputtype.h"
 #include "feature/ftrtorus.h"
 
-using namespace ftr::Torus;
-
 using boost::uuids::uuid;
-
-QIcon Feature::icon;
+using namespace ftr::Torus;
+QIcon Feature::icon = QIcon(":/resources/images/constructionTorus.svg");
 
 inline static const prf::Torus& pTor(){return prf::manager().rootPtr->features().torus().get();}
 
@@ -140,15 +138,11 @@ Feature::Feature()
 : Base()
 , stow(std::make_unique<Stow>(*this))
 {
-  if (icon.isNull())
-    icon = QIcon(":/resources/images/constructionTorus.svg");
-  
   name = QObject::tr("Torus");
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
 }
 
 Feature::~Feature() = default;
-
 
 /*
 void Feature::setCSys(const osg::Matrixd &csysIn)

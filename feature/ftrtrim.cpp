@@ -46,11 +46,9 @@
 #include "feature/ftrinputtype.h"
 #include "feature/ftrtrim.h"
 
-using namespace ftr;
-
 using boost::uuids::uuid;
-
-QIcon Trim::icon;
+using namespace ftr;
+QIcon Trim::icon = QIcon(":/resources/images/constructionTrim.svg");
 
 Trim::Trim():
 Base(),
@@ -60,9 +58,6 @@ iMapper(std::make_unique<ann::IntersectionMapper>()),
 dpFaceId(gu::createRandomId()),
 dpWireId(gu::createRandomId())
 {
-  if (icon.isNull())
-    icon = QIcon(":/resources/images/constructionTrim.svg");
-  
   name = QObject::tr("Trim");
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
   

@@ -36,7 +36,7 @@
 using namespace ftr;
 using boost::uuids::uuid;
 
-QIcon SurfaceReMesh::icon;
+QIcon SurfaceReMesh::icon = QIcon(":/resources/images/constructionSurfaceReMesh.svg");
 
 SurfaceReMesh::SurfaceReMesh():
 Base()
@@ -50,9 +50,6 @@ Base()
 , maxEdgeLengthLabel(new lbr::PLabel(maxEdgeLength.get()))
 , iterationsLabel(new lbr::PLabel(iterations.get()))
 {
-  if (icon.isNull())
-    icon = QIcon(":/resources/images/constructionSurfaceReMesh.svg");
-  
   name = QObject::tr("SurfaceReMesh");
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
   

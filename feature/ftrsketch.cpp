@@ -58,8 +58,7 @@ using namespace ftr::Sketch;
 
 using boost::uuids::uuid;
 
-QIcon Feature::icon;
-
+QIcon Feature::icon = QIcon(":/resources/images/constructionSketch.svg");
 
 struct Feature::Stow
 {
@@ -465,9 +464,6 @@ Feature::Feature()
 , stow(std::make_unique<Stow>(*this))
 
 {
-  if (icon.isNull())
-    icon = QIcon(":/resources/images/constructionSketch.svg");
-  
   name = QObject::tr("Sketch");
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
 }

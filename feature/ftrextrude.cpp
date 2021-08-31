@@ -53,7 +53,7 @@
 using namespace ftr::Extrude;
 using boost::uuids::uuid;
 
-QIcon Feature::icon;
+QIcon Feature::icon = QIcon(":/resources/images/constructionExtrude.svg");
 
 namespace
 {
@@ -360,9 +360,6 @@ Feature::Feature()
 : Base()
 , stow(std::make_unique<Stow>(*this))
 {
-  if (icon.isNull())
-    icon = QIcon(":/resources/images/constructionExtrude.svg");
-  
   name = QObject::tr("Extrude");
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
 }
