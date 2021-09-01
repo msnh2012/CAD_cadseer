@@ -40,9 +40,8 @@ RemoveFaces::RemoveFaces()
 : Base()
 , leafManager()
 {
-  auto nf = std::make_shared<ftr::RemoveFaces::Feature>();
-  project->addFeature(nf);
-  feature = nf.get();
+  feature = new ftr::RemoveFaces::Feature();
+  project->addFeature(std::unique_ptr<ftr::RemoveFaces::Feature>(feature));
   node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
   isEdit = false;
   isFirstRun = true;

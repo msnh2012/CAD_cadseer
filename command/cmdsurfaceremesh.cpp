@@ -98,8 +98,8 @@ void SurfaceReMesh::go()
     return;
   }
   
-  auto f = std::make_shared<ftr::SurfaceReMesh>();
-  project->addFeature(f);
+  auto *f = new ftr::SurfaceReMesh();
+  project->addFeature(std::unique_ptr<ftr::SurfaceReMesh>(f));
   project->connectInsert(cs.front().featureId, f->getId(), {ftr::InputType::target});
   
   node->sendBlocked(msg::buildHideThreeD(cs.front().featureId));

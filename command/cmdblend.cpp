@@ -221,7 +221,7 @@ void Blend::go()
     assert(!cs.empty());
     
     slc::Messages targets;
-    for (const auto c : cs)
+    for (const auto &c : cs)
     {
       auto m = slc::EventHandler::containerToMessage(c);
       if (!isValidSelection(m))
@@ -230,9 +230,8 @@ void Blend::go()
     }
     if (!targets.empty())
     {
-      auto nf = std::make_shared<ftr::Blend::Feature>();
-      project->addFeature(nf);
-      feature = nf.get();
+      feature = new ftr::Blend::Feature();
+      project->addFeature(std::unique_ptr<ftr::Blend::Feature>(feature));
       feature->setColor(project->findFeature(targets.front().featureId)->getColor());
       ftr::Blend::Constant simpleBlend;
       simpleBlend.radius = ftr::Blend::buildRadiusParameter();
@@ -253,9 +252,8 @@ void Blend::go()
   
   if (!created)
   {
-    auto nf = std::make_shared<ftr::Blend::Feature>();
-    project->addFeature(nf);
-    feature = nf.get();
+    feature = new ftr::Blend::Feature();
+    project->addFeature(std::unique_ptr<ftr::Blend::Feature>(feature));
     node->sendBlocked(msg::buildHideOverlay(feature->getId()));
     node->sendBlocked(msg::buildHideThreeD(feature->getId()));
     node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);

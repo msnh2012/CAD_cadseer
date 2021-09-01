@@ -37,9 +37,8 @@ Fill::Fill()
 : Base("cmd::Fill")
 , leafManager()
 {
-  auto nf = std::make_shared<ftr::Fill::Feature>();
-  project->addFeature(nf);
-  feature = nf.get();
+  feature = new ftr::Fill::Feature();
+  project->addFeature(std::unique_ptr<ftr::Fill::Feature>(feature));
   node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
   isEdit = false;
   isFirstRun = true;

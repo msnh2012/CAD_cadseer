@@ -69,13 +69,13 @@ void InstancePolar::go()
     return;
   }
   
-  auto instance = std::make_shared<ftr::InstancePolar::Feature>();
+  auto *instance = new ftr::InstancePolar::Feature();
   ftr::Pick shapePick = tls::convertToPick(containers.front(), *bf, project->getShapeHistory());
   shapePick.tag = indexTag(ftr::InstancePolar::Tags::Source, 0);
   auto *sourcePrm = instance->getParameter(ftr::InstancePolar::Tags::Source);
   sourcePrm->setValue(shapePick);
   
-  project->addFeature(instance);
+  project->addFeature(std::unique_ptr<ftr::InstancePolar::Feature>(instance));
   project->connect(bf->getId(), instance->getId(), {shapePick.tag});
   
   node->sendBlocked(msg::buildHideThreeD(bf->getId()));

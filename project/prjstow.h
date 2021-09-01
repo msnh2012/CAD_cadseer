@@ -45,7 +45,7 @@ namespace prj
     Stow(Project&);
     ~Stow();
     
-    Vertex addFeature(std::shared_ptr<ftr::Base> feature);
+    Vertex addFeature(std::unique_ptr<ftr::Base> feature);
     void removeFeature(Vertex);
     Edge connect(const Vertex &parentIn, const Vertex &childIn, const ftr::InputType &type);
     void sendConnectMessage(const Vertex&, const Vertex&, const ftr::InputType&) const;

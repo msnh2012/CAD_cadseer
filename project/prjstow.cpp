@@ -54,17 +54,17 @@ Stow::Stow(Project &pIn)
 
 Stow::~Stow() = default;
 
-Vertex Stow::addFeature(std::shared_ptr<ftr::Base> feature)
+Vertex Stow::addFeature(std::unique_ptr<ftr::Base> feature)
 {
   Vertex newVertex = boost::add_vertex(graph);
-  graph[newVertex].feature = feature;
+  graph[newVertex].feature = std::move(feature);
   return newVertex;
 }
 
 void Stow::removeFeature(Vertex remove)
 {
   prj::Message pMessage;
-  pMessage.feature = graph[remove].feature;
+  pMessage.feature = graph[remove].feature.get();
   msg::Message preMessage
   (
     msg::Response | msg::Pre | msg::Remove | msg::Feature
@@ -677,12 +677,12 @@ void Stow::dissolveFeatureDispatched(const msg::Message &mIn)
   );
   
   //create new inert feature.
-  std::shared_ptr<ftr::Inert::Feature> nf;
+  std::unique_ptr<ftr::Base> nf;
   auto csysPrms = fb->getParameters(prm::Tags::CSys);
   if (!csysPrms.empty())
-    nf = std::make_shared<ftr::Inert::Feature>(oss.getRootOCCTShape(), csysPrms.front()->getMatrix());
+    nf = std::make_unique<ftr::Inert::Feature>(oss.getRootOCCTShape(), csysPrms.front()->getMatrix());
   else
-    nf = std::make_shared<ftr::Inert::Feature>(oss.getRootOCCTShape());
+    nf = std::make_unique<ftr::Inert::Feature>(oss.getRootOCCTShape());
   nf->setColor(fb->getColor());
   ann::SeerShape &nss = nf->getAnnex<ann::SeerShape>();
   occt::ShapeVector oshapes = oss.getAllShapes(); //original shapes
@@ -699,9 +699,9 @@ void Stow::dissolveFeatureDispatched(const msg::Message &mIn)
     nss.insertEvolve(gu::createNilId(), id);
   }
   nss.setRootShapeId(oss.getRootShapeId());
-  Vertex nfv = addFeature(nf); //new feature vertex.
+  Vertex nfv = addFeature(std::move(nf)); //new feature vertex.
   prj::Message addPMessage;
-  addPMessage.feature = nf;
+  addPMessage.feature = graph[nfv].feature.get();
   msg::Message postMessage
   (
     msg::Response | msg::Post | msg::Add | msg::Feature
@@ -771,7 +771,7 @@ void Stow::dissolveFeatureDispatched(const msg::Message &mIn)
     assert (boost::degree(v, graph) == 0);
     
     prj::Message pMessage;
-    pMessage.feature = graph[v].feature;
+    pMessage.feature = graph[v].feature.get();
     msg::Message preMessage
     (
       msg::Response | msg::Pre | msg::Remove | msg::Feature

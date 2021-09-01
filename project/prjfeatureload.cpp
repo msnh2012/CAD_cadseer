@@ -192,7 +192,7 @@ FeatureLoad::FeatureLoad(const path& directoryIn, const TopoDS_Shape &masterShap
   functionMap.insert(std::make_pair(ftr::toString(ftr::Type::Prism), std::bind(&FeatureLoad::loadPrism, this, std::placeholders::_1, std::placeholders::_2)));
 }
 
-std::shared_ptr< ftr::Base > FeatureLoad::load(const std::string& idIn, const std::string& typeIn, std::size_t shapeOffsetIn)
+std::unique_ptr<ftr::Base> FeatureLoad::load(const std::string& idIn, const std::string& typeIn, std::size_t shapeOffsetIn)
 {
   featureId = gu::stringToId(idIn);
   
@@ -217,558 +217,558 @@ std::shared_ptr< ftr::Base > FeatureLoad::load(const std::string& idIn, const st
     std::cerr << e << std::endl;
   }
   
-  return std::shared_ptr< ftr::Base >();
+  return std::unique_ptr<ftr::Base>();
 }
 
-std::shared_ptr< ftr::Base > FeatureLoad::loadBox(const std::string& fileNameIn, std::size_t shapeOffsetIn)
+std::unique_ptr<ftr::Base> FeatureLoad::loadBox(const std::string& fileNameIn, std::size_t shapeOffsetIn)
 {
   auto box = srl::bxs::box(fileNameIn, flags);
   assert(box);
   
-  auto freshBox = std::make_shared<ftr::Box::Feature>();
+  auto freshBox = std::make_unique<ftr::Box::Feature>();
   freshBox->getAnnex<ann::SeerShape>().setOCCTShape(shapeVector.at(shapeOffsetIn), featureId);
   freshBox->serialRead(*box);
   
   return freshBox;
 }
 
-std::shared_ptr< ftr::Base > FeatureLoad::loadCylinder(const std::string& fileNameIn, std::size_t shapeOffsetIn)
+std::unique_ptr<ftr::Base> FeatureLoad::loadCylinder(const std::string& fileNameIn, std::size_t shapeOffsetIn)
 {
   auto sCylinder = srl::cyls::cylinder(fileNameIn, flags);
   assert(sCylinder);
   
-  auto freshCylinder = std::make_shared<ftr::Cylinder::Feature>();
+  auto freshCylinder = std::make_unique<ftr::Cylinder::Feature>();
   freshCylinder->getAnnex<ann::SeerShape>().setOCCTShape(shapeVector.at(shapeOffsetIn), featureId);
   freshCylinder->serialRead(*sCylinder);
   
   return freshCylinder;
 }
 
-std::shared_ptr< ftr::Base > FeatureLoad::loadSphere(const std::string& fileNameIn, std::size_t shapeOffsetIn)
+std::unique_ptr<ftr::Base> FeatureLoad::loadSphere(const std::string& fileNameIn, std::size_t shapeOffsetIn)
 {
   auto sSphere = srl::sprs::sphere(fileNameIn, flags);
   assert(sSphere);
   
-  auto freshSphere = std::make_shared<ftr::Sphere::Feature>();
+  auto freshSphere = std::make_unique<ftr::Sphere::Feature>();
   freshSphere->getAnnex<ann::SeerShape>().setOCCTShape(shapeVector.at(shapeOffsetIn), featureId);
   freshSphere->serialRead(*sSphere);
   
   return freshSphere;
 }
 
-std::shared_ptr< ftr::Base > FeatureLoad::loadCone(const std::string& fileNameIn, std::size_t shapeOffsetIn)
+std::unique_ptr<ftr::Base> FeatureLoad::loadCone(const std::string& fileNameIn, std::size_t shapeOffsetIn)
 {
   auto sCone = srl::cns::cone(fileNameIn, flags);
   assert(sCone);
   
-  auto freshCone = std::make_shared<ftr::Cone::Feature>();
+  auto freshCone = std::make_unique<ftr::Cone::Feature>();
   freshCone->getAnnex<ann::SeerShape>().setOCCTShape(shapeVector.at(shapeOffsetIn), featureId);
   freshCone->serialRead(*sCone);
   
   return freshCone;
 }
 
-std::shared_ptr< ftr::Base > FeatureLoad::loadBoolean(const std::string& fileNameIn, std::size_t shapeOffsetIn)
+std::unique_ptr<ftr::Base> FeatureLoad::loadBoolean(const std::string& fileNameIn, std::size_t shapeOffsetIn)
 {
   auto sBoolean = srl::bls::boolean(fileNameIn, flags);
   assert(sBoolean);
   
-  auto freshBoolean = std::make_shared<ftr::Boolean::Feature>();
+  auto freshBoolean = std::make_unique<ftr::Boolean::Feature>();
   freshBoolean->getAnnex<ann::SeerShape>().setOCCTShape(shapeVector.at(shapeOffsetIn), featureId);
   freshBoolean->serialRead(*sBoolean);
   
   return freshBoolean;
 }
 
-std::shared_ptr< ftr::Base > FeatureLoad::loadInert(const std::string &fileNameIn, std::size_t shapeOffsetIn)
+std::unique_ptr<ftr::Base> FeatureLoad::loadInert(const std::string &fileNameIn, std::size_t shapeOffsetIn)
 {
   auto sInert = srl::ints::inert(fileNameIn, flags);
   assert(sInert);
   
-  auto freshInert = std::make_shared<ftr::Inert::Feature>(shapeVector.at(shapeOffsetIn));
+  auto freshInert = std::make_unique<ftr::Inert::Feature>(shapeVector.at(shapeOffsetIn));
   freshInert->serialRead(*sInert);
   
   return freshInert;
 }
 
-std::shared_ptr< ftr::Base > FeatureLoad::loadBlend(const std::string& fileNameIn, std::size_t shapeOffsetIn)
+std::unique_ptr<ftr::Base> FeatureLoad::loadBlend(const std::string& fileNameIn, std::size_t shapeOffsetIn)
 {
   auto sBlend = srl::blns::blend(fileNameIn, flags);
   assert(sBlend);
   
-  auto freshBlend = std::make_shared<ftr::Blend::Feature>();
+  auto freshBlend = std::make_unique<ftr::Blend::Feature>();
   freshBlend->getAnnex<ann::SeerShape>().setOCCTShape(shapeVector.at(shapeOffsetIn), featureId);
   freshBlend->serialRead(*sBlend);
   
   return freshBlend;
 }
 
-std::shared_ptr< ftr::Base > FeatureLoad::loadChamfer(const std::string &fileNameIn, std::size_t shapeOffsetIn)
+std::unique_ptr<ftr::Base> FeatureLoad::loadChamfer(const std::string &fileNameIn, std::size_t shapeOffsetIn)
 {
   auto sChamfer = srl::chms::chamfer(fileNameIn, flags);
   assert(sChamfer);
   
-  auto freshChamfer = std::make_shared<ftr::Chamfer::Feature>();
+  auto freshChamfer = std::make_unique<ftr::Chamfer::Feature>();
   freshChamfer->getAnnex<ann::SeerShape>().setOCCTShape(shapeVector.at(shapeOffsetIn), featureId);
   freshChamfer->serialRead(*sChamfer);
   
   return freshChamfer;
 }
 
-std::shared_ptr< ftr::Base > FeatureLoad::loadDraft(const std::string &fileNameIn, std::size_t shapeOffsetIn)
+std::unique_ptr<ftr::Base> FeatureLoad::loadDraft(const std::string &fileNameIn, std::size_t shapeOffsetIn)
 {
   auto sDraft = srl::drfs::draft(fileNameIn, flags);
   assert(sDraft);
   
-  auto freshDraft = std::make_shared<ftr::Draft::Feature>();
+  auto freshDraft = std::make_unique<ftr::Draft::Feature>();
   freshDraft->getAnnex<ann::SeerShape>().setOCCTShape(shapeVector.at(shapeOffsetIn), featureId);
   freshDraft->serialRead(*sDraft);
   
   return freshDraft;
 }
 
-std::shared_ptr< ftr::Base > FeatureLoad::loadDatumPlane(const std::string &fileNameIn, std::size_t)
+std::unique_ptr<ftr::Base> FeatureLoad::loadDatumPlane(const std::string &fileNameIn, std::size_t)
 {
   auto sDatumPlane = srl::dtps::datumPlane(fileNameIn, flags);
   assert(sDatumPlane);
   
-  auto freshDatumPlane = std::make_shared<ftr::DatumPlane::Feature>();
+  auto freshDatumPlane = std::make_unique<ftr::DatumPlane::Feature>();
   freshDatumPlane->serialRead(*sDatumPlane);
   
   return freshDatumPlane;
 }
 
-std::shared_ptr< ftr::Base > FeatureLoad::loadHollow(const std::string &fileNameIn, std::size_t shapeOffsetIn)
+std::unique_ptr<ftr::Base> FeatureLoad::loadHollow(const std::string &fileNameIn, std::size_t shapeOffsetIn)
 {
   auto sHollow = srl::hlls::hollow(fileNameIn, flags);
   assert(sHollow);
   
-  auto freshHollow = std::make_shared<ftr::Hollow::Feature>();
+  auto freshHollow = std::make_unique<ftr::Hollow::Feature>();
   freshHollow->getAnnex<ann::SeerShape>().setOCCTShape(shapeVector.at(shapeOffsetIn), featureId);
   freshHollow->serialRead(*sHollow);
   
   return freshHollow;
 }
 
-std::shared_ptr<ftr::Base> FeatureLoad::loadOblong(const std::string &fileNameIn, std::size_t shapeOffsetIn)
+std::unique_ptr<ftr::Base> FeatureLoad::loadOblong(const std::string &fileNameIn, std::size_t shapeOffsetIn)
 {
   auto sOblong = srl::obls::oblong(fileNameIn, flags);
   assert(sOblong);
   
-  auto freshOblong = std::make_shared<ftr::Oblong::Feature>();
+  auto freshOblong = std::make_unique<ftr::Oblong::Feature>();
   freshOblong->getAnnex<ann::SeerShape>().setOCCTShape(shapeVector.at(shapeOffsetIn), featureId);
   freshOblong->serialRead(*sOblong);
   
   return freshOblong;
 }
 
-std::shared_ptr<ftr::Base> FeatureLoad::loadExtract(const std::string &fileNameIn, std::size_t shapeOffsetIn)
+std::unique_ptr<ftr::Base> FeatureLoad::loadExtract(const std::string &fileNameIn, std::size_t shapeOffsetIn)
 {
   auto sExtract = srl::exts::extract(fileNameIn, flags);
   assert(sExtract);
   
-  auto freshExtract = std::make_shared<ftr::Extract::Feature>();
+  auto freshExtract = std::make_unique<ftr::Extract::Feature>();
   freshExtract->getAnnex<ann::SeerShape>().setOCCTShape(shapeVector.at(shapeOffsetIn), featureId);
   freshExtract->serialRead(*sExtract);
   
   return freshExtract;
 }
 
-std::shared_ptr<ftr::Base> FeatureLoad::loadSquash(const std::string &fileNameIn, std::size_t shapeOffsetIn)
+std::unique_ptr<ftr::Base> FeatureLoad::loadSquash(const std::string &fileNameIn, std::size_t shapeOffsetIn)
 {
   auto sSquash = srl::sqss::squash(fileNameIn, flags);
   assert(sSquash);
   
-  auto freshSquash = std::make_shared<ftr::Squash>();
+  auto freshSquash = std::make_unique<ftr::Squash>();
   freshSquash->getAnnex<ann::SeerShape>().setOCCTShape(shapeVector.at(shapeOffsetIn), featureId);
   freshSquash->serialRead(*sSquash);
   
   return freshSquash;
 }
 
-std::shared_ptr<ftr::Base> FeatureLoad::loadNest(const std::string &fileNameIn, std::size_t shapeOffsetIn)
+std::unique_ptr<ftr::Base> FeatureLoad::loadNest(const std::string &fileNameIn, std::size_t shapeOffsetIn)
 {
   auto sNest = srl::nsts::nest(fileNameIn, flags);
   assert(sNest);
   
-  auto freshNest = std::make_shared<ftr::Nest>();
+  auto freshNest = std::make_unique<ftr::Nest>();
   freshNest->getAnnex<ann::SeerShape>().setOCCTShape(shapeVector.at(shapeOffsetIn), featureId);
   freshNest->serialRead(*sNest);
   
   return freshNest;
 }
 
-std::shared_ptr<ftr::Base> FeatureLoad::loadDieSet(const std::string &fileNameIn, std::size_t shapeOffsetIn)
+std::unique_ptr<ftr::Base> FeatureLoad::loadDieSet(const std::string &fileNameIn, std::size_t shapeOffsetIn)
 {
   auto sds = srl::dsts::dieset(fileNameIn, flags);
   assert(sds);
   
-  auto freshDieSet = std::make_shared<ftr::DieSet>();
+  auto freshDieSet = std::make_unique<ftr::DieSet>();
   freshDieSet->getAnnex<ann::SeerShape>().setOCCTShape(shapeVector.at(shapeOffsetIn), featureId);
   freshDieSet->serialRead(*sds);
   
   return freshDieSet;
 }
 
-std::shared_ptr<ftr::Base> FeatureLoad::loadStrip(const std::string &fileNameIn, std::size_t shapeOffsetIn)
+std::unique_ptr<ftr::Base> FeatureLoad::loadStrip(const std::string &fileNameIn, std::size_t shapeOffsetIn)
 {
   auto ss = srl::stps::strip(fileNameIn, flags);
   assert(ss);
   
-  auto freshStrip = std::make_shared<ftr::Strip>();
+  auto freshStrip = std::make_unique<ftr::Strip>();
   freshStrip->getAnnex<ann::SeerShape>().setOCCTShape(shapeVector.at(shapeOffsetIn), featureId);
   freshStrip->serialRead(*ss);
   
   return freshStrip;
 }
 
-std::shared_ptr<ftr::Base> FeatureLoad::loadQuote(const std::string &fileNameIn, std::size_t)
+std::unique_ptr<ftr::Base> FeatureLoad::loadQuote(const std::string &fileNameIn, std::size_t)
 {
   auto sq = srl::qts::quote(fileNameIn, flags);
   assert(sq);
   
-  auto freshQuote = std::make_shared<ftr::Quote::Feature>();
+  auto freshQuote = std::make_unique<ftr::Quote::Feature>();
   freshQuote->serialRead(*sq);
   
   return freshQuote;
 }
 
-std::shared_ptr<ftr::Base> FeatureLoad::loadRefine(const std::string &fileNameIn, std::size_t shapeOffsetIn)
+std::unique_ptr<ftr::Base> FeatureLoad::loadRefine(const std::string &fileNameIn, std::size_t shapeOffsetIn)
 {
   auto sr = srl::rfns::refine(fileNameIn, flags);
   assert(sr);
   
-  auto freshRefine = std::make_shared<ftr::Refine>();
+  auto freshRefine = std::make_unique<ftr::Refine>();
   freshRefine->getAnnex<ann::SeerShape>().setOCCTShape(shapeVector.at(shapeOffsetIn), featureId);
   freshRefine->serialRead(*sr);
   
   return freshRefine;
 }
 
-std::shared_ptr<ftr::Base> FeatureLoad::loadInstanceLinear(const std::string &fileNameIn, std::size_t shapeOffsetIn)
+std::unique_ptr<ftr::Base> FeatureLoad::loadInstanceLinear(const std::string &fileNameIn, std::size_t shapeOffsetIn)
 {
   auto sr = srl::inls::instanceLinear(fileNameIn, flags);
   assert(sr);
   
-  auto freshInstanceLinear = std::make_shared<ftr::InstanceLinear::Feature>();
+  auto freshInstanceLinear = std::make_unique<ftr::InstanceLinear::Feature>();
   freshInstanceLinear->getAnnex<ann::SeerShape>().setOCCTShape(shapeVector.at(shapeOffsetIn), featureId);
   freshInstanceLinear->serialRead(*sr);
   
   return freshInstanceLinear;
 }
 
-std::shared_ptr<ftr::Base> FeatureLoad::loadInstanceMirror(const std::string &fileNameIn, std::size_t shapeOffsetIn)
+std::unique_ptr<ftr::Base> FeatureLoad::loadInstanceMirror(const std::string &fileNameIn, std::size_t shapeOffsetIn)
 {
   auto sr = srl::inms::instanceMirror(fileNameIn, flags);
   assert(sr);
   
-  auto freshInstanceMirror = std::make_shared<ftr::InstanceMirror::Feature>();
+  auto freshInstanceMirror = std::make_unique<ftr::InstanceMirror::Feature>();
   freshInstanceMirror->getAnnex<ann::SeerShape>().setOCCTShape(shapeVector.at(shapeOffsetIn), featureId);
   freshInstanceMirror->serialRead(*sr);
   
   return freshInstanceMirror;
 }
 
-std::shared_ptr<ftr::Base> FeatureLoad::loadInstancePolar(const std::string &fileNameIn, std::size_t shapeOffsetIn)
+std::unique_ptr<ftr::Base> FeatureLoad::loadInstancePolar(const std::string &fileNameIn, std::size_t shapeOffsetIn)
 {
   auto sr = srl::inps::instancePolar(fileNameIn, flags);
   assert(sr);
   
-  auto freshInstancePolar = std::make_shared<ftr::InstancePolar::Feature>();
+  auto freshInstancePolar = std::make_unique<ftr::InstancePolar::Feature>();
   freshInstancePolar->getAnnex<ann::SeerShape>().setOCCTShape(shapeVector.at(shapeOffsetIn), featureId);
   freshInstancePolar->serialRead(*sr);
   
   return freshInstancePolar;
 }
 
-std::shared_ptr<ftr::Base> FeatureLoad::loadOffset(const std::string &fileNameIn, std::size_t shapeOffsetIn)
+std::unique_ptr<ftr::Base> FeatureLoad::loadOffset(const std::string &fileNameIn, std::size_t shapeOffsetIn)
 {
   auto sr = srl::offs::offset(fileNameIn, flags);
   assert(sr);
   
-  auto offset = std::make_shared<ftr::Offset::Feature>();
+  auto offset = std::make_unique<ftr::Offset::Feature>();
   offset->getAnnex<ann::SeerShape>().setOCCTShape(shapeVector.at(shapeOffsetIn), featureId);
   offset->serialRead(*sr);
   
   return offset;
 }
 
-std::shared_ptr<ftr::Base> FeatureLoad::loadThicken(const std::string &fileNameIn, std::size_t shapeOffsetIn)
+std::unique_ptr<ftr::Base> FeatureLoad::loadThicken(const std::string &fileNameIn, std::size_t shapeOffsetIn)
 {
   auto sr = srl::thks::thicken(fileNameIn, flags);
   assert(sr);
   
-  auto thicken = std::make_shared<ftr::Thicken>();
+  auto thicken = std::make_unique<ftr::Thicken>();
   thicken->getAnnex<ann::SeerShape>().setOCCTShape(shapeVector.at(shapeOffsetIn), featureId);
   thicken->serialRead(*sr);
   
   return thicken;
 }
 
-std::shared_ptr<ftr::Base> FeatureLoad::loadSew(const std::string &fileNameIn, std::size_t shapeOffsetIn)
+std::unique_ptr<ftr::Base> FeatureLoad::loadSew(const std::string &fileNameIn, std::size_t shapeOffsetIn)
 {
   auto sr = srl::sws::sew(fileNameIn, flags);
   assert(sr);
   
-  auto sew = std::make_shared<ftr::Sew>();
+  auto sew = std::make_unique<ftr::Sew>();
   sew->getAnnex<ann::SeerShape>().setOCCTShape(shapeVector.at(shapeOffsetIn), featureId);
   sew->serialRead(*sr);
   
   return sew;
 }
 
-std::shared_ptr<ftr::Base> FeatureLoad::loadTrim(const std::string &fileNameIn, std::size_t shapeOffsetIn)
+std::unique_ptr<ftr::Base> FeatureLoad::loadTrim(const std::string &fileNameIn, std::size_t shapeOffsetIn)
 {
   auto sr = srl::trms::trim(fileNameIn, flags);
   assert(sr);
   
-  auto trim = std::make_shared<ftr::Trim>();
+  auto trim = std::make_unique<ftr::Trim>();
   trim->getAnnex<ann::SeerShape>().setOCCTShape(shapeVector.at(shapeOffsetIn), featureId);
   trim->serialRead(*sr);
   
   return trim;
 }
 
-std::shared_ptr<ftr::Base> FeatureLoad::loadRemoveFaces(const std::string &fileNameIn, std::size_t shapeOffsetIn)
+std::unique_ptr<ftr::Base> FeatureLoad::loadRemoveFaces(const std::string &fileNameIn, std::size_t shapeOffsetIn)
 {
   auto sr = srl::rmfs::removeFaces(fileNameIn, flags);
   assert(sr);
   
-  auto rfs = std::make_shared<ftr::RemoveFaces::Feature>();
+  auto rfs = std::make_unique<ftr::RemoveFaces::Feature>();
   rfs->getAnnex<ann::SeerShape>().setOCCTShape(shapeVector.at(shapeOffsetIn), featureId);
   rfs->serialRead(*sr);
   
   return rfs;
 }
 
-std::shared_ptr<ftr::Base> FeatureLoad::loadTorus(const std::string &fileNameIn, std::size_t shapeOffsetIn)
+std::unique_ptr<ftr::Base> FeatureLoad::loadTorus(const std::string &fileNameIn, std::size_t shapeOffsetIn)
 {
   auto st = srl::trss::torus(fileNameIn, flags);
   assert(st);
   
-  auto tf = std::make_shared<ftr::Torus::Feature>();
+  auto tf = std::make_unique<ftr::Torus::Feature>();
   tf->getAnnex<ann::SeerShape>().setOCCTShape(shapeVector.at(shapeOffsetIn), featureId);
   tf->serialRead(*st);
   
   return tf;
 }
 
-std::shared_ptr<ftr::Base> FeatureLoad::loadThread(const std::string &fileNameIn, std::size_t shapeOffsetIn)
+std::unique_ptr<ftr::Base> FeatureLoad::loadThread(const std::string &fileNameIn, std::size_t shapeOffsetIn)
 {
   auto st = srl::thds::thread(fileNameIn, flags);
   assert(st);
   
-  auto tf = std::make_shared<ftr::Thread::Feature>();
+  auto tf = std::make_unique<ftr::Thread::Feature>();
   tf->getAnnex<ann::SeerShape>().setOCCTShape(shapeVector.at(shapeOffsetIn), featureId);
   tf->serialRead(*st);
   
   return tf;
 }
 
-std::shared_ptr<ftr::Base> FeatureLoad::loadDatumAxis(const std::string &fileNameIn, std::size_t)
+std::unique_ptr<ftr::Base> FeatureLoad::loadDatumAxis(const std::string &fileNameIn, std::size_t)
 {
   auto sda = srl::dtas::datumAxis(fileNameIn, flags);
   assert(sda);
   
-  auto daf = std::make_shared<ftr::DatumAxis::Feature>();
+  auto daf = std::make_unique<ftr::DatumAxis::Feature>();
   daf->serialRead(*sda);
   
   return daf;
 }
 
-std::shared_ptr<ftr::Base> FeatureLoad::loadExtrude(const std::string &fileNameIn, std::size_t shapeOffsetIn)
+std::unique_ptr<ftr::Base> FeatureLoad::loadExtrude(const std::string &fileNameIn, std::size_t shapeOffsetIn)
 {
   auto se = srl::exrs::extrude(fileNameIn, flags);
   assert(se);
   
-  auto ef = std::make_shared<ftr::Extrude::Feature>();
+  auto ef = std::make_unique<ftr::Extrude::Feature>();
   ef->getAnnex<ann::SeerShape>().setOCCTShape(shapeVector.at(shapeOffsetIn), featureId);
   ef->serialRead(*se);
   
   return ef;
 }
 
-std::shared_ptr<ftr::Base> FeatureLoad::loadRevolve(const std::string &fileNameIn, std::size_t shapeOffsetIn)
+std::unique_ptr<ftr::Base> FeatureLoad::loadRevolve(const std::string &fileNameIn, std::size_t shapeOffsetIn)
 {
   auto se = srl::rvls::revolve(fileNameIn, flags);
   assert(se);
   
-  auto ef = std::make_shared<ftr::Revolve>();
+  auto ef = std::make_unique<ftr::Revolve>();
   ef->getAnnex<ann::SeerShape>().setOCCTShape(shapeVector.at(shapeOffsetIn), featureId);
   ef->serialRead(*se);
   
   return ef;
 }
 
-std::shared_ptr<ftr::Base> FeatureLoad::loadSketch(const std::string &fileNameIn, std::size_t shapeOffsetIn)
+std::unique_ptr<ftr::Base> FeatureLoad::loadSketch(const std::string &fileNameIn, std::size_t shapeOffsetIn)
 {
   auto ss = srl::skts::sketch(fileNameIn, flags);
   assert(ss);
   
-  auto sf = std::make_shared<ftr::Sketch::Feature>();
+  auto sf = std::make_unique<ftr::Sketch::Feature>();
   sf->getAnnex<ann::SeerShape>().setOCCTShape(shapeVector.at(shapeOffsetIn), featureId);
   sf->serialRead(*ss);
   
   return sf;
 }
 
-std::shared_ptr<ftr::Base> FeatureLoad::loadLine(const std::string &fileNameIn, std::size_t shapeOffsetIn)
+std::unique_ptr<ftr::Base> FeatureLoad::loadLine(const std::string &fileNameIn, std::size_t shapeOffsetIn)
 {
   auto ss = srl::lns::line(fileNameIn, flags);
   assert(ss);
   
-  auto sf = std::make_shared<ftr::Line>();
+  auto sf = std::make_unique<ftr::Line>();
   sf->getAnnex<ann::SeerShape>().setOCCTShape(shapeVector.at(shapeOffsetIn), featureId);
   sf->serialRead(*ss);
   
   return sf;
 }
 
-std::shared_ptr<ftr::Base> FeatureLoad::loadSurfaceMesh(const std::string &fileNameIn, std::size_t)
+std::unique_ptr<ftr::Base> FeatureLoad::loadSurfaceMesh(const std::string &fileNameIn, std::size_t)
 {
   auto ss = srl::sfms::surfaceMesh(fileNameIn, flags);
   assert(ss);
   
-  auto sf = std::make_shared<ftr::SurfaceMesh::Feature>();
+  auto sf = std::make_unique<ftr::SurfaceMesh::Feature>();
   sf->serialRead(*ss);
   
   return sf;
 }
 
-std::shared_ptr<ftr::Base> FeatureLoad::loadTransitionCurve(const std::string &fileNameIn, std::size_t shapeOffsetIn)
+std::unique_ptr<ftr::Base> FeatureLoad::loadTransitionCurve(const std::string &fileNameIn, std::size_t shapeOffsetIn)
 {
   auto ss = srl::tscs::transitionCurve(fileNameIn, flags);
   assert(ss);
   
-  auto sf = std::make_shared<ftr::TransitionCurve>();
+  auto sf = std::make_unique<ftr::TransitionCurve>();
   sf->getAnnex<ann::SeerShape>().setOCCTShape(shapeVector.at(shapeOffsetIn), featureId);
   sf->serialRead(*ss);
   
   return sf;
 }
 
-std::shared_ptr<ftr::Base> FeatureLoad::loadRuled(const std::string &fileNameIn, std::size_t shapeOffsetIn)
+std::unique_ptr<ftr::Base> FeatureLoad::loadRuled(const std::string &fileNameIn, std::size_t shapeOffsetIn)
 {
   auto ss = srl::rlds::ruled(fileNameIn, flags);
   assert(ss);
   
-  auto sf = std::make_shared<ftr::Ruled>();
+  auto sf = std::make_unique<ftr::Ruled>();
   sf->getAnnex<ann::SeerShape>().setOCCTShape(shapeVector.at(shapeOffsetIn), featureId);
   sf->serialRead(*ss);
   
   return sf;
 }
 
-std::shared_ptr<ftr::Base> FeatureLoad::loadImagePlane(const std::string &fileNameIn, std::size_t)
+std::unique_ptr<ftr::Base> FeatureLoad::loadImagePlane(const std::string &fileNameIn, std::size_t)
 {
   auto ss = srl::imps::imageplane(fileNameIn, flags);
   assert(ss);
   
-  auto sf = std::make_shared<ftr::ImagePlane>();
+  auto sf = std::make_unique<ftr::ImagePlane>();
   sf->serialRead(*ss);
   
   return sf;
 }
 
-std::shared_ptr<ftr::Base> FeatureLoad::loadSweep(const std::string &fileNameIn, std::size_t shapeOffsetIn)
+std::unique_ptr<ftr::Base> FeatureLoad::loadSweep(const std::string &fileNameIn, std::size_t shapeOffsetIn)
 {
   auto ss = srl::swps::sweep(fileNameIn, flags);
   assert(ss);
   
-  auto sf = std::make_shared<ftr::Sweep>();
+  auto sf = std::make_unique<ftr::Sweep>();
   sf->getAnnex<ann::SeerShape>().setOCCTShape(shapeVector.at(shapeOffsetIn), featureId);
   sf->serialRead(*ss);
   
   return sf;
 }
 
-std::shared_ptr<ftr::Base> FeatureLoad::loadDatumSystem(const std::string &fileNameIn, std::size_t)
+std::unique_ptr<ftr::Base> FeatureLoad::loadDatumSystem(const std::string &fileNameIn, std::size_t)
 {
   auto sds = srl::dtms::datumsystem(fileNameIn, flags);
   assert(sds);
   
-  auto daf = std::make_shared<ftr::DatumSystem::Feature>();
+  auto daf = std::make_unique<ftr::DatumSystem::Feature>();
   daf->serialRead(*sds);
   
   return daf;
 }
 
-std::shared_ptr<ftr::Base> FeatureLoad::loadSurfaceReMesh(const std::string &fileNameIn, std::size_t)
+std::unique_ptr<ftr::Base> FeatureLoad::loadSurfaceReMesh(const std::string &fileNameIn, std::size_t)
 {
   auto ssrm = srl::srms::surfaceremesh(fileNameIn, flags);
   assert(ssrm);
   
-  auto daf = std::make_shared<ftr::SurfaceReMesh>();
+  auto daf = std::make_unique<ftr::SurfaceReMesh>();
   daf->serialRead(*ssrm);
   
   return daf;
 }
 
-std::shared_ptr<ftr::Base> FeatureLoad::loadSurfaceMeshFill(const std::string &fileNameIn, std::size_t)
+std::unique_ptr<ftr::Base> FeatureLoad::loadSurfaceMeshFill(const std::string &fileNameIn, std::size_t)
 {
   auto ssrm = srl::smfs::surfacemeshfill(fileNameIn, flags);
   assert(ssrm);
   
-  auto daf = std::make_shared<ftr::SurfaceMeshFill>();
+  auto daf = std::make_unique<ftr::SurfaceMeshFill>();
   daf->serialRead(*ssrm);
   
   return daf;
 }
 
-std::shared_ptr<ftr::Base> FeatureLoad::loadMapPCurve(const std::string &fileNameIn, std::size_t shapeOffsetIn)
+std::unique_ptr<ftr::Base> FeatureLoad::loadMapPCurve(const std::string &fileNameIn, std::size_t shapeOffsetIn)
 {
   auto ss = srl::mpc::mappcurve(fileNameIn, flags);
   assert(ss);
   
-  auto sf = std::make_shared<ftr::MapPCurve::Feature>();
+  auto sf = std::make_unique<ftr::MapPCurve::Feature>();
   sf->getAnnex<ann::SeerShape>().setOCCTShape(shapeVector.at(shapeOffsetIn), featureId);
   sf->serialRead(*ss);
   
   return sf;
 }
 
-std::shared_ptr<ftr::Base> FeatureLoad::loadUntrim(const std::string &fileNameIn, std::size_t shapeOffsetIn)
+std::unique_ptr<ftr::Base> FeatureLoad::loadUntrim(const std::string &fileNameIn, std::size_t shapeOffsetIn)
 {
   auto ss = srl::utr::untrim(fileNameIn, flags);
   assert(ss);
   
-  auto sf = std::make_shared<ftr::Untrim>();
+  auto sf = std::make_unique<ftr::Untrim>();
   sf->getAnnex<ann::SeerShape>().setOCCTShape(shapeVector.at(shapeOffsetIn), featureId);
   sf->serialRead(*ss);
   
   return sf;
 }
 
-std::shared_ptr<ftr::Base> FeatureLoad::loadFace(const std::string &fileNameIn, std::size_t shapeOffsetIn)
+std::unique_ptr<ftr::Base> FeatureLoad::loadFace(const std::string &fileNameIn, std::size_t shapeOffsetIn)
 {
   auto ss = srl::fce::face(fileNameIn, flags);
   assert(ss);
   
-  auto sf = std::make_shared<ftr::Face::Feature>();
+  auto sf = std::make_unique<ftr::Face::Feature>();
   sf->getAnnex<ann::SeerShape>().setOCCTShape(shapeVector.at(shapeOffsetIn), featureId);
   sf->serialRead(*ss);
   
   return sf;
 }
 
-std::shared_ptr<ftr::Base> FeatureLoad::loadFill(const std::string &fileNameIn, std::size_t shapeOffsetIn)
+std::unique_ptr<ftr::Base> FeatureLoad::loadFill(const std::string &fileNameIn, std::size_t shapeOffsetIn)
 {
   auto ss = srl::fls::fill(fileNameIn, flags);
   assert(ss);
   
-  auto sf = std::make_shared<ftr::Fill::Feature>();
+  auto sf = std::make_unique<ftr::Fill::Feature>();
   sf->getAnnex<ann::SeerShape>().setOCCTShape(shapeVector.at(shapeOffsetIn), featureId);
   sf->serialRead(*ss);
   
   return sf;
 }
 
-std::shared_ptr<ftr::Base> FeatureLoad::loadPrism(const std::string &fileNameIn, std::size_t shapeOffsetIn)
+std::unique_ptr<ftr::Base> FeatureLoad::loadPrism(const std::string &fileNameIn, std::size_t shapeOffsetIn)
 {
   auto ss = srl::prsm::prism(fileNameIn, flags);
   assert(ss);
   
-  auto sf = std::make_shared<ftr::Prism::Feature>();
+  auto sf = std::make_unique<ftr::Prism::Feature>();
   sf->getAnnex<ann::SeerShape>().setOCCTShape(shapeVector.at(shapeOffsetIn), featureId);
   sf->serialRead(*ss);
   

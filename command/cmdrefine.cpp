@@ -59,8 +59,8 @@ void Refine::go()
     if (!bf->hasAnnex(ann::Type::SeerShape))
       continue;
     
-    std::shared_ptr<ftr::Refine> refine(new ftr::Refine());
-    project->addFeature(refine);
+    auto *refine = new ftr::Refine();
+    project->addFeature(std::unique_ptr<ftr::Refine>(refine));
     project->connectInsert(c.featureId, refine->getId(), ftr::InputType{ftr::InputType::target});
     created = true;
     

@@ -33,7 +33,7 @@ namespace prj
   {
     Message();
     std::vector<boost::uuids::uuid> featureIds;
-    std::shared_ptr<ftr::Base> feature;
+    ftr::Base *feature = nullptr;
     ftr::InputType inputType;
     std::string directory;
     std::string gitMessage;

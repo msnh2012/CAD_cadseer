@@ -71,14 +71,14 @@ void InstanceLinear::go()
     return;
   }
   
-  auto instance = std::make_shared<ftr::InstanceLinear::Feature>();
+  auto *instance = new ftr::InstanceLinear::Feature();
   
   ftr::Pick pick = tls::convertToPick(containers.front(), *bf, project->getShapeHistory());
   pick.tag = indexTag(ftr::InstanceLinear::Tags::Source, 0);
   instance->getParameter(ftr::InstanceLinear::Tags::Source)->setValue(pick);
   instance->getParameter(prm::Tags::CSys)->setValue(viewer->getCurrentSystem());
   
-  project->addFeature(instance);
+  project->addFeature(std::unique_ptr<ftr::InstanceLinear::Feature>(instance));
   project->connectInsert(containers.front().featureId, instance->getId(), {pick.tag});
   
   node->sendBlocked(msg::buildHideThreeD(containers.front().featureId));

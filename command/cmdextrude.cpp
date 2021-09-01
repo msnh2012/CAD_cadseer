@@ -38,9 +38,8 @@ Extrude::Extrude()
 : Base()
 , leafManager()
 {
-  auto extrude = std::make_shared<ftr::Extrude::Feature>();
-  project->addFeature(extrude);
-  feature = extrude.get();
+  feature = new ftr::Extrude::Feature();
+  project->addFeature(std::unique_ptr<ftr::Extrude::Feature>(feature));
   node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
   isEdit = false;
   isFirstRun = true;

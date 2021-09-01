@@ -102,8 +102,8 @@ void Squash::go()
     shouldUpdate = false;
     return;
   }
-  std::shared_ptr<ftr::Squash> squash(new ftr::Squash());
-  project->addFeature(squash);
+  auto *squash = new ftr::Squash();
+  project->addFeature(std::unique_ptr<ftr::Squash>(squash));
   project->connect(f->getId(), squash->getId(), ftr::InputType{ftr::InputType::target});
   squash->setPicks(fps);
   squash->setColor(f->getColor());

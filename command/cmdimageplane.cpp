@@ -91,7 +91,7 @@ void ImagePlane::go()
       continue;
     }
     
-    auto f = std::make_shared<ftr::ImagePlane>();
+    auto f = std::make_unique<ftr::ImagePlane>();
     std::string result = f->setImage(copy);
     if (!result.empty())
     {
@@ -99,7 +99,7 @@ void ImagePlane::go()
       node->sendBlocked(msg::buildStatusMessage(failMessage, 5.0));
       continue;
     }
-    project->addFeature(f);
+    project->addFeature(std::move(f));
     f->setName(QString::fromStdString(copy.filename().string()));
     f->setScale(viewer->getDiagonalLength() / 5.0);
     

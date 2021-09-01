@@ -43,7 +43,7 @@ namespace prj
   struct VertexProperty
   {
     bool alive = true;
-    std::shared_ptr<ftr::Base> feature;
+    std::unique_ptr<ftr::Base> feature;
     ftr::State state;
   };
   struct EdgeProperty
@@ -271,14 +271,14 @@ namespace prj
   }
   
   template <typename G, typename V>
-  std::vector<std::vector<V>> getAllPaths(V source, V target, G graph)
+  std::vector<std::vector<V>> getAllPaths(V source, V target, const G &graph)
   {
     //filter
     std::vector<V> slvs; //source limit vertices 
     gu::BFSLimitVisitor<V> slv(slvs); //source limit visitor
     boost::breadth_first_search(graph, source, boost::visitor(slv));
     
-    typedef boost::reverse_graph<G, G&> RG;
+    typedef boost::reverse_graph<G, const G&> RG;
     RG rGraph = boost::make_reverse_graph(graph);
     std::vector<V> tlvs; //target limit vertices
     gu::BFSLimitVisitor<V> tlv(tlvs); //target limit visitor

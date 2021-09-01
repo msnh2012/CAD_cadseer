@@ -35,9 +35,8 @@ Untrim::Untrim()
 : Base("cmd::Untrim")
 , leafManager()
 {
-  auto nf = std::make_shared<ftr::Untrim>();
-  project->addFeature(nf);
-  feature = nf.get();
+  feature = new ftr::Untrim();
+  project->addFeature(std::unique_ptr<ftr::Untrim>(feature));
   node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
   isEdit = false;
   isFirstRun = true;

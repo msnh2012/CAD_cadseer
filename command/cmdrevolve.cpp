@@ -39,9 +39,8 @@ Revolve::Revolve()
 : Base()
 , leafManager()
 {
-  auto revolve = std::make_shared<ftr::Revolve>();
-  project->addFeature(revolve);
-  feature = revolve.get();
+  feature = new ftr::Revolve();
+  project->addFeature(std::unique_ptr<ftr::Revolve>(feature));
   node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
   isEdit = false;
   isFirstRun = true;

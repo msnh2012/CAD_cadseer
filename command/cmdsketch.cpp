@@ -41,9 +41,8 @@ Sketch::Sketch()
 : Base("cmd::Sketch")
 , leafManager()
 {
-  auto nf = std::make_shared<ftr::Sketch::Feature>();
-  project->addFeature(nf);
-  feature = nf.get();
+  feature = new ftr::Sketch::Feature();
+  project->addFeature(std::unique_ptr<ftr::Sketch::Feature>(feature));
   node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
   isEdit = false;
   isFirstRun = true;

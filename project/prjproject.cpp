@@ -181,7 +181,7 @@ void Project::updateVisual()
   {
     if (!stow->graph[*its.first].alive)
       continue;
-    auto feature = stow->graph[*its.first].feature;
+    auto *feature = stow->graph[*its.first].feature.get();
     if
     (
       feature->isModelClean() &&
@@ -237,9 +237,9 @@ void Project::addOCCShape(const TopoDS_Shape &shapeIn, std::string name)
   
   auto addShape = [&](const TopoDS_Shape &shapeIn, const std::string &nameIn)
   {
-    auto inert = std::make_shared<ftr::Inert::Feature>(shapeIn);
-    addFeature(inert);
+    auto inert = std::make_unique<ftr::Inert::Feature>(shapeIn);
     inert->setName(QString::fromStdString(nameIn));
+    addFeature(std::move(inert));
   };
   
   if (shapes.empty())
@@ -264,27 +264,28 @@ void Project::addOCCShape(const TopoDS_Shape &shapeIn, std::string name)
   }
 }
 
-void Project::addFeature(std::shared_ptr<ftr::Base> feature)
+ftr::Base* Project::addFeature(std::unique_ptr<ftr::Base> feature)
 {
   //no pre message.
-  stow->addFeature(feature);
+  auto nfv = stow->addFeature(std::move(feature));
   
   //log action to git if not loading.
   if (!stow->isLoading)
   {
     std::ostringstream gitMessage;
-    gitMessage << QObject::tr("Adding feature ").toStdString() << feature->getTypeString();
+    gitMessage << QObject::tr("Adding feature ").toStdString() << stow->graph[nfv].feature->getTypeString();
     stow->gitManager.appendGitMessage(gitMessage.str());
   }
   
   prj::Message pMessage;
-  pMessage.feature = feature;
+  pMessage.feature = stow->graph[nfv].feature.get();
   msg::Message postMessage
   (
     msg::Response | msg::Post | msg::Add | msg::Feature
     , pMessage
   );
   stow->node.send(postMessage);
+  return stow->graph[nfv].feature.get();
 }
 
 void Project::removeFeature(const uuid& idIn)
@@ -805,13 +806,13 @@ void Project::open()
       stow->node.sendBlocked(msg::buildStatusMessage(messageStream.str()));
       qApp->processEvents(); //need this or we won't see messages.
       
-      std::shared_ptr<ftr::Base> featurePtr = fLoader.load(feature.id(), feature.type(), feature.shapeOffset());
+      std::unique_ptr<ftr::Base> featurePtr = fLoader.load(feature.id(), feature.type(), feature.shapeOffset());
       if (featurePtr)
       {
-        addFeature(featurePtr);
+        ftr::Base * f = addFeature(std::move(featurePtr));
         
         //send state message
-        ftr::Message fMessage(featurePtr->getId(), featurePtr->getState(), ftr::StateOffset::Loading);
+        ftr::Message fMessage(f->getId(), f->getState(), ftr::StateOffset::Loading);
         msg::Message mMessage(msg::Response | msg::Feature | msg::Status, fMessage);
         stow->node.sendBlocked(mMessage);
       }

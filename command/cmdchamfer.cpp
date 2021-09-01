@@ -176,7 +176,7 @@ void Chamfer::go()
     assert(!cs.empty());
     
     slc::Messages targets;
-    for (const auto c : cs)
+    for (const auto &c : cs)
     {
       auto m = slc::EventHandler::containerToMessage(c);
       if (!isValidSelection(m))
@@ -185,9 +185,8 @@ void Chamfer::go()
     }
     if (!targets.empty())
     {
-      auto nf = std::make_shared<ftr::Chamfer::Feature>();
-      project->addFeature(nf);
-      feature = nf.get();
+      feature = new ftr::Chamfer::Feature();
+      project->addFeature(std::unique_ptr<ftr::Chamfer::Feature>(feature));
       feature->setColor(project->findFeature(targets.front().featureId)->getColor());
       feature->setMode(ftr::Chamfer::Mode::Classic);
       feature->addSymmetric();
@@ -207,9 +206,8 @@ void Chamfer::go()
   
   if (!created)
   {
-    auto nf = std::make_shared<ftr::Chamfer::Feature>();
-    project->addFeature(nf);
-    feature = nf.get();
+    feature = new ftr::Chamfer::Feature();
+    project->addFeature(std::unique_ptr<ftr::Chamfer::Feature>(feature));
     node->sendBlocked(msg::buildHideOverlay(feature->getId()));
     node->sendBlocked(msg::buildHideThreeD(feature->getId()));
     node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);

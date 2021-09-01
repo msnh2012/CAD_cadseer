@@ -38,9 +38,8 @@ using namespace cmd;
 : Base("cmd::%CLASSNAME%")
 , leafManager()
 {
-  auto nf = std::make_shared<ftr::%CLASSNAME%>();
-  project->addFeature(nf);
-  feature = nf.get();
+  feature = new ftr::%CLASSNAME%::Feature();
+  project->addFeature(std::unique_ptr<ftr::%CLASSNAME%::Feature);
   node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
   isEdit = false;
   isFirstRun = true;
@@ -50,7 +49,7 @@ using namespace cmd;
 : Base("cmd::%CLASSNAME%")
 , leafManager(fIn)
 {
-  feature = dynamic_cast<ftr::%CLASSNAME%*>(fIn);
+  feature = dynamic_cast<ftr::%CLASSNAME%::Feature*>(fIn);
   assert(feature);
   viewBase = std::make_unique<cmv::%CLASSNAME%>(this);
   node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));

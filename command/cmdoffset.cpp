@@ -43,9 +43,8 @@ Offset::Offset()
 : Base()
 , leafManager()
 {
-  auto offset = std::make_shared<ftr::Offset::Feature>();
-  project->addFeature(offset);
-  feature = offset.get();
+  feature = new ftr::Offset::Feature();
+  project->addFeature(std::unique_ptr<ftr::Offset::Feature>(feature));
   node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
   isEdit = false;
   isFirstRun = true;

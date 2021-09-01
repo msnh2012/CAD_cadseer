@@ -41,9 +41,8 @@ DatumAxis::DatumAxis()
 : Base()
 , leafManager()
 {
-  auto daxis = std::make_shared<ftr::DatumAxis::Feature>();
-  project->addFeature(daxis);
-  feature = daxis.get();
+  feature = new ftr::DatumAxis::Feature();
+  project->addFeature(std::unique_ptr<ftr::DatumAxis::Feature>(feature));
   node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
   isEdit = false;
   isFirstRun = true;

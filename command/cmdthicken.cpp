@@ -38,9 +38,8 @@ Thicken::Thicken()
 : Base("cmd::Thicken")
 , leafManager()
 {
-  auto nf = std::make_shared<ftr::Thicken>();
-  project->addFeature(nf);
-  feature = nf.get();
+  feature = new ftr::Thicken();
+  project->addFeature(std::unique_ptr<ftr::Thicken>(feature));
   node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
   isEdit = false;
   isFirstRun = true;

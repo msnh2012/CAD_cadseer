@@ -62,7 +62,7 @@ void DieSet::go()
   
   //grab first selected strip feature.
   const slc::Containers &containers = eventHandler->getSelections();
-  for (const auto c : containers)
+  for (const auto &c : containers)
   {
     if (c.featureType == ftr::Type::Strip)
     {
@@ -92,9 +92,8 @@ void DieSet::go()
     return;
   }
   
-  std::shared_ptr<ftr::DieSet> ds(new ftr::DieSet());
-  project->addFeature(ds);
-  project->connect(stripId, ds->getId(), ftr::InputType{ftr::DieSet::strip});
+  auto *bf = project->addFeature(std::make_unique<ftr::DieSet>());
+  project->connect(stripId, bf->getId(), ftr::InputType{ftr::DieSet::strip});
   
   node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
 }

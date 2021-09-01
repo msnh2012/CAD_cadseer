@@ -39,10 +39,8 @@ Boolean::Boolean(int tIn) //new feature
 : Base("cmd::Boolean")
 , leafManager()
 {
-  auto nf = std::make_shared<ftr::Boolean::Feature>();
-  project->addFeature(nf);
-  feature = nf.get();
-  
+  feature = new ftr::Boolean::Feature();
+  project->addFeature(std::unique_ptr<ftr::Boolean::Feature>(feature));
   assert(tIn >= 0 && tIn < 3);
   auto *typePrm = feature->getParameter(ftr::Boolean::PrmTags::booleanType);
   typePrm->setValue(tIn);

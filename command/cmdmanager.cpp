@@ -773,9 +773,9 @@ void Manager::constructRemoveFacesDispatched(const msg::Message&)
 
 void Manager::constructThreadDispatched(const msg::Message&)
 {
-  auto nf = std::make_shared<ftr::Thread::Feature>();
-  app::instance()->getProject()->addFeature(nf);
-  auto c = std::make_shared<Primitive>(nf.get(), false);
+  auto *nf = new ftr::Thread::Feature();
+  app::instance()->getProject()->addFeature(std::unique_ptr<ftr::Thread::Feature>(nf));
+  auto c = std::make_shared<Primitive>(nf, false);
   addCommand(c);
 }
 
@@ -846,49 +846,49 @@ void Manager::constructChamferDispatched(const msg::Message&)
 
 void Manager::constructBoxDispatched(const msg::Message&)
 {
-  auto nf = std::make_shared<ftr::Box::Feature>();
-  app::instance()->getProject()->addFeature(nf);
-  auto c = std::make_shared<Primitive>(nf.get(), false);
+  auto *nf = new ftr::Box::Feature();
+  app::instance()->getProject()->addFeature(std::unique_ptr<ftr::Box::Feature>(nf));
+  auto c = std::make_shared<Primitive>(nf, false);
   addCommand(c);
 }
 
 void Manager::constructOblongDispatched(const msg::Message&)
 {
-  auto nf = std::make_shared<ftr::Oblong::Feature>();
-  app::instance()->getProject()->addFeature(nf);
-  auto c = std::make_shared<Primitive>(nf.get(), false);
+  auto *nf = new ftr::Oblong::Feature();
+  app::instance()->getProject()->addFeature(std::unique_ptr<ftr::Oblong::Feature>(nf));
+  auto c = std::make_shared<Primitive>(nf, false);
   addCommand(c);
 }
 
 void Manager::constructTorusDispatched(const msg::Message&)
 {
-  auto nf = std::make_shared<ftr::Torus::Feature>();
-  app::instance()->getProject()->addFeature(nf);
-  auto c = std::make_shared<Primitive>(nf.get(), false);
+  auto *nf = new ftr::Torus::Feature();
+  app::instance()->getProject()->addFeature(std::unique_ptr<ftr::Torus::Feature>(nf));
+  auto c = std::make_shared<Primitive>(nf, false);
   addCommand(c);
 }
 
 void Manager::constructCylinderDispatched(const msg::Message&)
 {
-  auto nf = std::make_shared<ftr::Cylinder::Feature>();
-  app::instance()->getProject()->addFeature(nf);
-  auto c = std::make_shared<Primitive>(nf.get(), false);
+  auto *nf = new ftr::Cylinder::Feature();
+  app::instance()->getProject()->addFeature(std::unique_ptr<ftr::Cylinder::Feature>(nf));
+  auto c = std::make_shared<Primitive>(nf, false);
   addCommand(c);
 }
 
 void Manager::constructSphereDispatched(const msg::Message&)
 {
-  auto nf = std::make_shared<ftr::Sphere::Feature>();
-  app::instance()->getProject()->addFeature(nf);
-  auto c = std::make_shared<Primitive>(nf.get(), false);
+  auto *nf = new ftr::Sphere::Feature();
+  app::instance()->getProject()->addFeature(std::unique_ptr<ftr::Sphere::Feature>(nf));
+  auto c = std::make_shared<Primitive>(nf, false);
   addCommand(c);
 }
 
 void Manager::constructConeDispatched(const msg::Message&)
 {
-  auto nf = std::make_shared<ftr::Cone::Feature>();
-  app::instance()->getProject()->addFeature(nf);
-  auto c = std::make_shared<Primitive>(nf.get(), false);
+  auto *nf = new ftr::Cone::Feature();
+  app::instance()->getProject()->addFeature(std::unique_ptr<ftr::Cone::Feature>(nf));
+  auto c = std::make_shared<Primitive>(nf, false);
   addCommand(c);
 }
 
@@ -934,9 +934,9 @@ void Manager::constructFillDispatched(const msg::Message&)
 
 void Manager::constructPrismDispatched(const msg::Message&)
 {
-  auto nf = std::make_shared<ftr::Prism::Feature>();
-  app::instance()->getProject()->addFeature(nf);
-  auto c = std::make_shared<Primitive>(nf.get(), false);
+  auto *nf = new ftr::Prism::Feature();
+  app::instance()->getProject()->addFeature(std::unique_ptr<ftr::Prism::Feature>(nf));
+  auto c = std::make_shared<Primitive>(nf, false);
   addCommand(c);
 }
 

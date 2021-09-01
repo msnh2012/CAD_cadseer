@@ -171,9 +171,8 @@ void Extract::go()
     }
     if (!targets.empty())
     {
-      auto nf = std::make_shared<ftr::Extract::Feature>();
-      project->addFeature(nf);
-      feature = nf.get();
+      feature = new ftr::Extract::Feature();
+      project->addFeature(std::unique_ptr<ftr::Extract::Feature>(feature));
       setSelections(targets);
       feature->setColor(project->findFeature(targets.front().featureId)->getColor());
       created = true;
@@ -187,9 +186,8 @@ void Extract::go()
   
   if (!created)
   {
-    auto nf = std::make_shared<ftr::Extract::Feature>();
-    project->addFeature(nf);
-    feature = nf.get();
+    feature = new ftr::Extract::Feature();
+    project->addFeature(std::unique_ptr<ftr::Extract::Feature>(feature));
     node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
     node->sendBlocked(msg::buildStatusMessage("invalid pre selection", 2.0));
     viewBase = std::make_unique<cmv::Extract>(this);

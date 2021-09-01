@@ -38,9 +38,8 @@ Trim::Trim()
 : Base()
 , leafManager()
 {
-  auto trim = std::make_shared<ftr::Trim>();
-  project->addFeature(trim);
-  feature = trim.get();
+  feature = new ftr::Trim();
+  project->addFeature(std::unique_ptr<ftr::Trim>(feature));
   node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
   isEdit = false;
   isFirstRun = true;

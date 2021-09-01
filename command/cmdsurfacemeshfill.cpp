@@ -98,8 +98,8 @@ void SurfaceMeshFill::go()
     return;
   }
   
-  auto f = std::make_shared<ftr::SurfaceMeshFill>();
-  project->addFeature(f);
+  auto *f = new ftr::SurfaceMeshFill();
+  project->addFeature(std::unique_ptr<ftr::SurfaceMeshFill>(f));
   project->connectInsert(cs.front().featureId, f->getId(), {ftr::InputType::target});
   
   node->sendBlocked(msg::buildHideThreeD(cs.front().featureId));

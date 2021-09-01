@@ -62,7 +62,7 @@ public:
     void setColor(const boost::uuids::uuid&, const osg::Vec4&);
     std::vector<boost::uuids::uuid> getAllFeatureIds() const;
     
-    void addFeature(std::shared_ptr<ftr::Base> feature);
+    ftr::Base* addFeature(std::unique_ptr<ftr::Base> feature);
     bool hasFeature(const boost::uuids::uuid &idIn) const;
     ftr::Base* findFeature(const boost::uuids::uuid &idIn) const;
     void removeFeature(const boost::uuids::uuid &idIn);

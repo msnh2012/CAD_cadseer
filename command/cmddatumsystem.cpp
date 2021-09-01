@@ -40,9 +40,9 @@ DatumSystem::DatumSystem()
 : Base("cmd::DatumSystem")
 , leafManager()
 {
+  feature = new ftr::DatumSystem::Feature();
   auto nf = std::make_shared<ftr::DatumSystem::Feature>();
-  project->addFeature(nf);
-  feature = nf.get();
+  project->addFeature(std::unique_ptr<ftr::DatumSystem::Feature>(feature));
   node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
   isEdit = false;
   isFirstRun = true;

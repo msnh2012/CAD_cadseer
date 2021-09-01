@@ -47,9 +47,8 @@ DatumPlane::DatumPlane()
 : Base()
 , leafManager()
 {
-  auto dPlane = std::make_shared<ftr::DatumPlane::Feature>();
-  project->addFeature(dPlane);
-  feature = dPlane.get();
+  feature = new ftr::DatumPlane::Feature();
+  project->addFeature(std::unique_ptr<ftr::DatumPlane::Feature>(feature));
   node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
   isEdit = false;
   isFirstRun = true;

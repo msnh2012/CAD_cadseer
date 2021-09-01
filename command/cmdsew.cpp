@@ -39,9 +39,8 @@ Sew::Sew()
 : Base("cmd::Sew")
 , leafManager()
 {
-  auto nf = std::make_shared<ftr::Sew>();
-  project->addFeature(nf);
-  feature = nf.get();
+  feature = new ftr::Sew();
+  project->addFeature(std::unique_ptr<ftr::Sew>(feature));
   node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
   isEdit = false;
   isFirstRun = true;

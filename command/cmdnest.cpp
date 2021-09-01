@@ -28,15 +28,8 @@ using namespace cmd;
 
 using boost::uuids::uuid;
 
-Nest::Nest()
-{
-
-}
-
-Nest::~Nest()
-{
-
-}
+Nest::Nest() = default;
+Nest::~Nest() = default;
 
 std::string Nest::getStatusMessage()
 {
@@ -67,8 +60,8 @@ void Nest::go()
   }
   uuid bId = containers.at(0).featureId;
   
-  std::shared_ptr<ftr::Nest> nest(new ftr::Nest());
-  project->addFeature(nest);
+  auto *nest = new ftr::Nest();
+  project->addFeature(std::unique_ptr<ftr::Nest>(nest));
   project->connect(bId, nest->getId(), ftr::InputType{ftr::Nest::blank});
   
   node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));

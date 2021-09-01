@@ -119,8 +119,8 @@ void Import::go()
     }
     else if (fn.endsWith(QObject::tr(".off")) || fn.endsWith(QObject::tr(".ply")) || fn.endsWith(QObject::tr(".stl")))
     {
-      auto meshFeature(std::make_shared<ftr::SurfaceMesh::Feature>());
-      project->addFeature(meshFeature);
+      auto *meshFeature = new ftr::SurfaceMesh::Feature();
+      project->addFeature(std::unique_ptr<ftr::SurfaceMesh::Feature>(meshFeature));
       meshFeature->setName(QString::fromStdString(currentFilePath.stem().string()));
       
       std::unique_ptr<ann::SurfaceMesh> mesh = std::make_unique<ann::SurfaceMesh>();
@@ -151,8 +151,8 @@ void Import::outputShape(const TopoDS_Shape &shapeIn, const std::string &namePre
   
   auto add = [&](const TopoDS_Shape &sIn, const std::string &nameIn)
   {
-    std::shared_ptr<ftr::Inert::Feature> inert(new ftr::Inert::Feature(sIn));
-    project->addFeature(inert);
+    auto *inert = new ftr::Inert::Feature(sIn);
+    project->addFeature(std::unique_ptr<ftr::Inert::Feature>(inert));
     inert->setName(QString::fromStdString(nameIn));
     inert->updateModel(project->getPayload(inert->getId()));
     inert->updateVisual();

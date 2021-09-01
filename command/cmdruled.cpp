@@ -34,9 +34,8 @@ Ruled::Ruled()
 : Base("cmd::Ruled")
 , leafManager()
 {
-  auto nf = std::make_shared<ftr::Ruled>();
-  project->addFeature(nf);
-  feature = nf.get();
+  feature = new ftr::Ruled();
+  project->addFeature(std::unique_ptr<ftr::Ruled>(feature));
   node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
   isEdit = false;
   isFirstRun = true;

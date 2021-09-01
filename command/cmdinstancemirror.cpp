@@ -68,14 +68,14 @@ void InstanceMirror::go()
     node->sendBlocked(msg::buildStatusMessage("First selection should have shape for instance mirror", 2.0));
     return;
   }
-  auto instance = std::make_shared<ftr::InstanceMirror::Feature>();
+  auto *instance = new ftr::InstanceMirror::Feature();
   
   ftr::Pick shapePick = tls::convertToPick(containers.front(), *bf, project->getShapeHistory());
   shapePick.tag = indexTag(ftr::InstanceMirror::Tags::Source, 0);
   prm::Parameter *ppick = instance->getParameter(ftr::InstanceMirror::Tags::Source);
   ppick->setValue(shapePick);
   
-  project->addFeature(instance);
+  project->addFeature(std::unique_ptr<ftr::InstanceMirror::Feature>(instance));
   project->connect(bf->getId(), instance->getId(), ftr::InputType{shapePick.tag});
   
   node->sendBlocked(msg::buildHideThreeD(bf->getId()));

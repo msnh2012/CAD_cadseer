@@ -34,9 +34,8 @@ Strip::Strip()
 : Base("cmd::Strip")
 , leafManager()
 {
-  auto nf = std::make_shared<ftr::Strip>();
-  project->addFeature(nf);
-  feature = nf.get();
+  feature = new ftr::Strip();
+  project->addFeature(std::unique_ptr<ftr::Strip>(feature));
   node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
   isEdit = false;
   isFirstRun = true;

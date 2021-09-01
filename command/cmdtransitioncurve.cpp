@@ -38,9 +38,8 @@ TransitionCurve::TransitionCurve()
 : Base("cmd::TransitionCurve")
 , leafManager()
 {
-  auto nf = std::make_shared<ftr::TransitionCurve>();
-  project->addFeature(nf);
-  feature = nf.get();
+  feature = new ftr::TransitionCurve();
+  project->addFeature(std::unique_ptr<ftr::TransitionCurve>(feature));
   node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
   isEdit = false;
   isFirstRun = true;

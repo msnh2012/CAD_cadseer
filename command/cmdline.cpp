@@ -84,9 +84,9 @@ void Line::go()
   picks.push_back(tls::convertToPick(cs.back(), ss1, project->getShapeHistory()));
   picks.back().tag = ftr::Line::pickOne;
   
-  std::shared_ptr<ftr::Line> fl(new ftr::Line());
+  auto *fl = new ftr::Line();
   fl->setPicks(picks);
-  project->addFeature(fl);
+  project->addFeature(std::unique_ptr<ftr::Line>(fl));
   project->connectInsert(cs.front().featureId, fl->getId(), ftr::InputType{ftr::Line::pickZero});
   project->connectInsert(cs.back().featureId, fl->getId(), ftr::InputType{ftr::Line::pickOne});
   
