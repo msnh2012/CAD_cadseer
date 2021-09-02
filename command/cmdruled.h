@@ -23,7 +23,7 @@
 #include "command/cmdleafmanager.h"
 #include "command/cmdbase.h"
 
-namespace ftr{class Ruled;}
+namespace ftr{namespace Ruled{class Feature;}}
 
 namespace cmd
 {
@@ -33,7 +33,7 @@ namespace cmd
   class Ruled : public Base
   {
   public:
-    ftr::Ruled *feature = nullptr;
+    ftr::Ruled::Feature *feature = nullptr;
     
     Ruled();
     Ruled(ftr::Base*);
@@ -44,7 +44,7 @@ namespace cmd
     void activate() override;
     void deactivate() override;
     
-    void setSelections(const std::vector<slc::Message>&);
+    void setSelections(const slc::Messages&);
     void localUpdate();
   private:
     cmd::LeafManager leafManager;

@@ -73,6 +73,30 @@ namespace prj
         this->base_.set (std::move (x));
       }
 
+      const Ruled::PicksType& Ruled::
+      picks () const
+      {
+        return this->picks_.get ();
+      }
+
+      Ruled::PicksType& Ruled::
+      picks ()
+      {
+        return this->picks_.get ();
+      }
+
+      void Ruled::
+      picks (const PicksType& x)
+      {
+        this->picks_.set (x);
+      }
+
+      void Ruled::
+      picks (::std::unique_ptr< PicksType > x)
+      {
+        this->picks_.set (std::move (x));
+      }
+
       const Ruled::SeerShapeType& Ruled::
       seerShape () const
       {
@@ -95,24 +119,6 @@ namespace prj
       seerShape (::std::unique_ptr< SeerShapeType > x)
       {
         this->seerShape_.set (std::move (x));
-      }
-
-      const Ruled::PicksSequence& Ruled::
-      picks () const
-      {
-        return this->picks_;
-      }
-
-      Ruled::PicksSequence& Ruled::
-      picks ()
-      {
-        return this->picks_;
-      }
-
-      void Ruled::
-      picks (const PicksSequence& s)
-      {
-        this->picks_ = s;
       }
 
       const Ruled::ParentIdType& Ruled::
@@ -218,12 +224,13 @@ namespace prj
 
       Ruled::
       Ruled (const BaseType& base,
+             const PicksType& picks,
              const SeerShapeType& seerShape,
              const ParentIdType& parentId)
       : ::xml_schema::Type (),
         base_ (base, this),
+        picks_ (picks, this),
         seerShape_ (seerShape, this),
-        picks_ (this),
         parentId_ (parentId, this),
         efMap_ (this),
         veMap_ (this),
@@ -233,12 +240,13 @@ namespace prj
 
       Ruled::
       Ruled (::std::unique_ptr< BaseType > base,
+             ::std::unique_ptr< PicksType > picks,
              ::std::unique_ptr< SeerShapeType > seerShape,
              const ParentIdType& parentId)
       : ::xml_schema::Type (),
         base_ (std::move (base), this),
+        picks_ (std::move (picks), this),
         seerShape_ (std::move (seerShape), this),
-        picks_ (this),
         parentId_ (parentId, this),
         efMap_ (this),
         veMap_ (this),
@@ -252,8 +260,8 @@ namespace prj
              ::xml_schema::Container* c)
       : ::xml_schema::Type (x, f, c),
         base_ (x.base_, f, this),
-        seerShape_ (x.seerShape_, f, this),
         picks_ (x.picks_, f, this),
+        seerShape_ (x.seerShape_, f, this),
         parentId_ (x.parentId_, f, this),
         efMap_ (x.efMap_, f, this),
         veMap_ (x.veMap_, f, this),
@@ -267,8 +275,8 @@ namespace prj
              ::xml_schema::Container* c)
       : ::xml_schema::Type (e, f | ::xml_schema::Flags::base, c),
         base_ (this),
-        seerShape_ (this),
         picks_ (this),
+        seerShape_ (this),
         parentId_ (this),
         efMap_ (this),
         veMap_ (this),
@@ -305,6 +313,20 @@ namespace prj
             }
           }
 
+          // picks
+          //
+          if (n.name () == "picks" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< PicksType > r (
+              PicksTraits::create (i, f, this));
+
+            if (!picks_.present ())
+            {
+              this->picks_.set (::std::move (r));
+              continue;
+            }
+          }
+
           // seerShape
           //
           if (n.name () == "seerShape" && n.namespace_ ().empty ())
@@ -317,17 +339,6 @@ namespace prj
               this->seerShape_.set (::std::move (r));
               continue;
             }
-          }
-
-          // picks
-          //
-          if (n.name () == "picks" && n.namespace_ ().empty ())
-          {
-            ::std::unique_ptr< PicksType > r (
-              PicksTraits::create (i, f, this));
-
-            this->picks_.push_back (::std::move (r));
-            continue;
           }
 
           // parentId
@@ -387,6 +398,13 @@ namespace prj
             "");
         }
 
+        if (!picks_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "picks",
+            "");
+        }
+
         if (!seerShape_.present ())
         {
           throw ::xsd::cxx::tree::expected_element< char > (
@@ -416,8 +434,8 @@ namespace prj
         {
           static_cast< ::xml_schema::Type& > (*this) = x;
           this->base_ = x.base_;
-          this->seerShape_ = x.seerShape_;
           this->picks_ = x.picks_;
+          this->seerShape_ = x.seerShape_;
           this->parentId_ = x.parentId_;
           this->efMap_ = x.efMap_;
           this->veMap_ = x.veMap_;
@@ -740,6 +758,17 @@ namespace prj
           s << i.base ();
         }
 
+        // picks
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "picks",
+              e));
+
+          s << i.picks ();
+        }
+
         // seerShape
         //
         {
@@ -749,20 +778,6 @@ namespace prj
               e));
 
           s << i.seerShape ();
-        }
-
-        // picks
-        //
-        for (Ruled::PicksConstIterator
-             b (i.picks ().begin ()), n (i.picks ().end ());
-             b != n; ++b)
-        {
-          ::xercesc::DOMElement& s (
-            ::xsd::cxx::xml::dom::create_element (
-              "picks",
-              e));
-
-          s << *b;
         }
 
         // parentId

@@ -652,7 +652,7 @@ std::unique_ptr<ftr::Base> FeatureLoad::loadRuled(const std::string &fileNameIn,
   auto ss = srl::rlds::ruled(fileNameIn, flags);
   assert(ss);
   
-  auto sf = std::make_unique<ftr::Ruled>();
+  auto sf = std::make_unique<ftr::Ruled::Feature>();
   sf->getAnnex<ann::SeerShape>().setOCCTShape(shapeVector.at(shapeOffsetIn), featureId);
   sf->serialRead(*ss);
   

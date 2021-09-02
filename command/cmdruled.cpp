@@ -22,6 +22,8 @@
 #include "message/msgnode.h"
 #include "selection/slceventhandler.h"
 #include "annex/annseershape.h"
+#include "parameter/prmconstants.h"
+#include "parameter/prmparameter.h"
 #include "feature/ftrinputtype.h"
 #include "feature/ftrruled.h"
 #include "commandview/cmvmessage.h"
@@ -34,8 +36,8 @@ Ruled::Ruled()
 : Base("cmd::Ruled")
 , leafManager()
 {
-  feature = new ftr::Ruled();
-  project->addFeature(std::unique_ptr<ftr::Ruled>(feature));
+  feature = new ftr::Ruled::Feature();
+  project->addFeature(std::unique_ptr<ftr::Ruled::Feature>(feature));
   node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
   isEdit = false;
   isFirstRun = true;
@@ -45,7 +47,7 @@ Ruled::Ruled(ftr::Base *fIn)
 : Base("cmd::Ruled")
 , leafManager(fIn)
 {
-  feature = dynamic_cast<ftr::Ruled*>(fIn);
+  feature = dynamic_cast<ftr::Ruled::Feature*>(fIn);
   assert(feature);
   viewBase = std::make_unique<cmv::Ruled>(this);
   node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
@@ -114,14 +116,15 @@ bool Ruled::isValidSelection(const slc::Message &mIn)
   return true;
 }
 
-void Ruled::setSelections(const std::vector<slc::Message> &targets)
+void Ruled::setSelections(const slc::Messages &targets)
 {
   assert(isActive);
   
+  auto *pickPrm = feature->getParameter(prm::Tags::Picks);
   auto reset = [&]()
   {
     project->clearAllInputs(feature->getId());
-    feature->setPicks(ftr::Picks());
+    pickPrm->setValue(ftr::Picks());
   };
   reset();
   
@@ -136,10 +139,10 @@ void Ruled::setSelections(const std::vector<slc::Message> &targets)
 
     const ftr::Base *lf = project->findFeature(m.featureId);
     freshPicks.push_back(tls::convertToPick(m, *lf, project->getShapeHistory()));
-    freshPicks.back().tag = ftr::InputType::createIndexedTag(ftr::InputType::target, freshPicks.size() - 1);
+    freshPicks.back().tag = indexTag(ftr::Ruled::InputTags::pick, freshPicks.size() - 1);
     project->connect(lf->getId(), feature->getId(), {freshPicks.back().tag});
   }
-  feature->setPicks(freshPicks);
+  pickPrm->setValue(freshPicks);
   
   if (freshPicks.size() != 2)
     reset();

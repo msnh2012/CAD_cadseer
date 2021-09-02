@@ -22,8 +22,11 @@
 
 #include "application/appapplication.h"
 #include "project/prjproject.h"
-#include "dialogs/dlgselectionbutton.h"
-#include "dialogs/dlgselectionwidget.h"
+#include "message/msgnode.h"
+#include "parameter/prmconstants.h"
+#include "parameter/prmparameter.h"
+#include "commandview/cmvselectioncue.h"
+#include "commandview/cmvtable.h"
 #include "tools/featuretools.h"
 #include "feature/ftrruled.h"
 #include "command/cmdruled.h"
@@ -37,93 +40,61 @@ struct Ruled::Stow
 {
   cmd::Ruled *command;
   cmv::Ruled *view;
-  dlg::SelectionWidget *selectionWidget = nullptr;
+  prm::Parameters parameters;
+  cmv::tbl::Model *prmModel = nullptr;
+  cmv::tbl::View *prmView = nullptr;
   
   Stow(cmd::Ruled *cIn, cmv::Ruled *vIn)
   : command(cIn)
   , view(vIn)
   {
+    parameters = command->feature->getParameters();
     buildGui();
-    
-    QSettings &settings = app::instance()->getUserSettings();
-    settings.beginGroup("cmv::Ruled");
-    //load settings
-    settings.endGroup();
-    
-    loadFeatureData();
+    connect(prmModel, &tbl::Model::dataChanged, view, &Ruled::modelChanged);
   }
   
   void buildGui()
   {
-    QSizePolicy adjust = view->sizePolicy();
-    adjust.setVerticalPolicy(QSizePolicy::Maximum);
-    view->setSizePolicy(adjust);
-    
     QVBoxLayout *mainLayout = new QVBoxLayout();
     view->setLayout(mainLayout);
+    Base::clearContentMargins(view);
+    view->setSizePolicy(view->sizePolicy().horizontalPolicy(), QSizePolicy::Expanding);
     
-    std::vector<dlg::SelectionWidgetCue> cues;
-    dlg::SelectionWidgetCue cue;
-    cue.name = tr("Item 1");
-    cue.singleSelection = true;
-    cue.mask = slc::ObjectsEnabled | slc::ObjectsSelectable | slc::WiresEnabled | slc::WiresSelectable | slc::EdgesEnabled | slc::EdgesSelectable;
-    cue.statusPrompt = tr("Select Item 1");
-    cue.showAccrueColumn = false;
-    cues.push_back(cue);
-    cue.name = tr("Item 2");
-    cue.statusPrompt = tr("Select Item 2");
-    cues.push_back(cue);
+    prmModel = new tbl::Model(view, command->feature);
+    prmView = new tbl::View(view, prmModel, true);
+    mainLayout->addWidget(prmView);
     
-    selectionWidget = new dlg::SelectionWidget(view, cues);
-    mainLayout->addWidget(selectionWidget);
-    
-    mainLayout->addItem(new QSpacerItem(20, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
-    
-    QObject::connect(selectionWidget->getButton(0), &dlg::SelectionButton::dirty, view, &Ruled::selectionChanged);
-    QObject::connect(selectionWidget->getButton(1), &dlg::SelectionButton::dirty, view, &Ruled::selectionChanged);
-  }
-  
-  void loadFeatureData()
-  {
-    ftr::UpdatePayload up = view->project->getPayload(command->feature->getId());
-    tls::Resolver resolver(up);
-    
-    auto pickToMessages = [&](const ftr::Pick &pIn) -> slc::Messages
-    {
-      slc::Messages out;
-      if (resolver.resolve(pIn))
-      {
-        auto msgs = resolver.convertToMessages();
-        out.insert(out.end(), msgs.begin(), msgs.end());
-      }
-      return out;
-    };
-    
-    const auto &cp = command->feature->getPicks();
-    if (!cp.empty())
-      selectionWidget->initializeButton(0, pickToMessages(cp.front()));
-    if (cp.size() > 1)
-      selectionWidget->initializeButton(1, pickToMessages(cp.at(1)));
-    selectionWidget->activate(0);
-  }
-  
-  void goSelections()
-  {
-    auto msgs = selectionWidget->getMessages(0);
-    msgs.insert(msgs.begin(), selectionWidget->getMessages(1).begin(), selectionWidget->getMessages(1).end());
-    command->setSelections(msgs);
-    command->localUpdate();
+    tbl::SelectionCue cue;
+    cue.singleSelection = false;
+    cue.mask = slc::ObjectsBoth | slc::WiresBoth | slc::EdgesBoth;
+    cue.statusPrompt = tr("Select 2 edges");
+    cue.accrueEnabled = false;
+    cue.forceTangentAccrue = false;
+    prmModel->setCue(command->feature->getParameter(prm::Tags::Picks), cue);
   }
 };
 
 Ruled::Ruled(cmd::Ruled *cIn)
 : Base("cmv::Ruled")
 , stow(new Stow(cIn, this))
-{}
+{
+  goSelectionToolbar();
+  goMaskDefault();
+}
 
 Ruled::~Ruled() = default;
 
-void Ruled::selectionChanged()
+void Ruled::modelChanged(const QModelIndex &index, const QModelIndex&)
 {
-  stow->goSelections();
+  if (!index.isValid())
+    return;
+  auto tag = stow->parameters.at(index.row())->getTag();
+  if (tag == prm::Tags::Picks)
+  {
+    const auto &fs = stow->prmModel->getMessages(stow->parameters.at(index.row()));
+    stow->command->setSelections(fs);
+  }
+  stow->command->localUpdate();
+  node->sendBlocked(msg::buildStatusMessage(stow->command->getStatusMessage()));
+  goMaskDefault();
 }
