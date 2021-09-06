@@ -21,6 +21,7 @@
 #include "message/msgnode.h"
 #include "selection/slceventhandler.h"
 #include "annex/annseershape.h"
+#include "parameter/prmconstants.h"
 #include "parameter/prmparameter.h"
 #include "feature/ftrinputtype.h"
 #include "feature/ftrthicken.h"
@@ -38,8 +39,8 @@ Thicken::Thicken()
 : Base("cmd::Thicken")
 , leafManager()
 {
-  feature = new ftr::Thicken();
-  project->addFeature(std::unique_ptr<ftr::Thicken>(feature));
+  feature = new ftr::Thicken::Feature();
+  project->addFeature(std::unique_ptr<ftr::Thicken::Feature>(feature));
   node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
   isEdit = false;
   isFirstRun = true;
@@ -49,7 +50,7 @@ Thicken::Thicken(ftr::Base *fIn)
 : Base("cmd::Thicken")
 , leafManager(fIn)
 {
-  feature = dynamic_cast<ftr::Thicken*>(fIn);
+  feature = dynamic_cast<ftr::Thicken::Feature*>(fIn);
   assert(feature);
   viewBase = std::make_unique<cmv::Thicken>(this);
   node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
@@ -123,7 +124,8 @@ void Thicken::setSelections(const std::vector<slc::Message> &targets)
   assert(isActive);
   
   project->clearAllInputs(feature->getId());
-  feature->setPicks(ftr::Picks());
+  auto *picks = feature->getParameter(prm::Tags::Picks);
+  picks->setValue(ftr::Picks());
   
   if (targets.empty())
     return;
@@ -136,10 +138,10 @@ void Thicken::setSelections(const std::vector<slc::Message> &targets)
 
     const ftr::Base *lf = project->findFeature(m.featureId);
     freshPicks.push_back(tls::convertToPick(m, *lf, project->getShapeHistory()));
-    freshPicks.back().tag = ftr::InputType::createIndexedTag(ftr::InputType::target, freshPicks.size() - 1);
+    freshPicks.back().tag = indexTag(ftr::Thicken::InputTags::pick, freshPicks.size() - 1);
     project->connect(lf->getId(), feature->getId(), {freshPicks.back().tag});
   }
-  feature->setPicks(freshPicks);
+  picks->setValue(freshPicks);
 }
 
 void Thicken::localUpdate()

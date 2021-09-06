@@ -73,46 +73,28 @@ namespace prj
         this->base_.set (std::move (x));
       }
 
-      const Thicken::SeerShapeType& Thicken::
-      seerShape () const
-      {
-        return this->seerShape_.get ();
-      }
-
-      Thicken::SeerShapeType& Thicken::
-      seerShape ()
-      {
-        return this->seerShape_.get ();
-      }
-
-      void Thicken::
-      seerShape (const SeerShapeType& x)
-      {
-        this->seerShape_.set (x);
-      }
-
-      void Thicken::
-      seerShape (::std::unique_ptr< SeerShapeType > x)
-      {
-        this->seerShape_.set (std::move (x));
-      }
-
-      const Thicken::PicksSequence& Thicken::
+      const Thicken::PicksType& Thicken::
       picks () const
       {
-        return this->picks_;
+        return this->picks_.get ();
       }
 
-      Thicken::PicksSequence& Thicken::
+      Thicken::PicksType& Thicken::
       picks ()
       {
-        return this->picks_;
+        return this->picks_.get ();
       }
 
       void Thicken::
-      picks (const PicksSequence& s)
+      picks (const PicksType& x)
       {
-        this->picks_ = s;
+        this->picks_.set (x);
+      }
+
+      void Thicken::
+      picks (::std::unique_ptr< PicksType > x)
+      {
+        this->picks_.set (std::move (x));
       }
 
       const Thicken::DistanceType& Thicken::
@@ -139,6 +121,30 @@ namespace prj
         this->distance_.set (std::move (x));
       }
 
+      const Thicken::SeerShapeType& Thicken::
+      seerShape () const
+      {
+        return this->seerShape_.get ();
+      }
+
+      Thicken::SeerShapeType& Thicken::
+      seerShape ()
+      {
+        return this->seerShape_.get ();
+      }
+
+      void Thicken::
+      seerShape (const SeerShapeType& x)
+      {
+        this->seerShape_.set (x);
+      }
+
+      void Thicken::
+      seerShape (::std::unique_ptr< SeerShapeType > x)
+      {
+        this->seerShape_.set (std::move (x));
+      }
+
       const Thicken::DistanceLabelType& Thicken::
       distanceLabel () const
       {
@@ -161,6 +167,66 @@ namespace prj
       distanceLabel (::std::unique_ptr< DistanceLabelType > x)
       {
         this->distanceLabel_.set (std::move (x));
+      }
+
+      const Thicken::SolidIdType& Thicken::
+      solidId () const
+      {
+        return this->solidId_.get ();
+      }
+
+      Thicken::SolidIdType& Thicken::
+      solidId ()
+      {
+        return this->solidId_.get ();
+      }
+
+      void Thicken::
+      solidId (const SolidIdType& x)
+      {
+        this->solidId_.set (x);
+      }
+
+      void Thicken::
+      solidId (::std::unique_ptr< SolidIdType > x)
+      {
+        this->solidId_.set (std::move (x));
+      }
+
+      const Thicken::SolidIdType& Thicken::
+      solidId_default_value ()
+      {
+        return solidId_default_value_;
+      }
+
+      const Thicken::ShellIdType& Thicken::
+      shellId () const
+      {
+        return this->shellId_.get ();
+      }
+
+      Thicken::ShellIdType& Thicken::
+      shellId ()
+      {
+        return this->shellId_.get ();
+      }
+
+      void Thicken::
+      shellId (const ShellIdType& x)
+      {
+        this->shellId_.set (x);
+      }
+
+      void Thicken::
+      shellId (::std::unique_ptr< ShellIdType > x)
+      {
+        this->shellId_.set (std::move (x));
+      }
+
+      const Thicken::ShellIdType& Thicken::
+      shellId_default_value ()
+      {
+        return shellId_default_value_;
       }
 
       const Thicken::FaceMapSequence& Thicken::
@@ -234,66 +300,6 @@ namespace prj
       {
         this->oWireMap_ = s;
       }
-
-      const Thicken::SolidIdType& Thicken::
-      solidId () const
-      {
-        return this->solidId_.get ();
-      }
-
-      Thicken::SolidIdType& Thicken::
-      solidId ()
-      {
-        return this->solidId_.get ();
-      }
-
-      void Thicken::
-      solidId (const SolidIdType& x)
-      {
-        this->solidId_.set (x);
-      }
-
-      void Thicken::
-      solidId (::std::unique_ptr< SolidIdType > x)
-      {
-        this->solidId_.set (std::move (x));
-      }
-
-      const Thicken::SolidIdType& Thicken::
-      solidId_default_value ()
-      {
-        return solidId_default_value_;
-      }
-
-      const Thicken::ShellIdType& Thicken::
-      shellId () const
-      {
-        return this->shellId_.get ();
-      }
-
-      Thicken::ShellIdType& Thicken::
-      shellId ()
-      {
-        return this->shellId_.get ();
-      }
-
-      void Thicken::
-      shellId (const ShellIdType& x)
-      {
-        this->shellId_.set (x);
-      }
-
-      void Thicken::
-      shellId (::std::unique_ptr< ShellIdType > x)
-      {
-        this->shellId_.set (std::move (x));
-      }
-
-      const Thicken::ShellIdType& Thicken::
-      shellId_default_value ()
-      {
-        return shellId_default_value_;
-      }
     }
   }
 }
@@ -317,45 +323,47 @@ namespace prj
 
       Thicken::
       Thicken (const BaseType& base,
-               const SeerShapeType& seerShape,
+               const PicksType& picks,
                const DistanceType& distance,
+               const SeerShapeType& seerShape,
                const DistanceLabelType& distanceLabel,
                const SolidIdType& solidId,
                const ShellIdType& shellId)
       : ::xml_schema::Type (),
         base_ (base, this),
-        seerShape_ (seerShape, this),
-        picks_ (this),
+        picks_ (picks, this),
         distance_ (distance, this),
+        seerShape_ (seerShape, this),
         distanceLabel_ (distanceLabel, this),
+        solidId_ (solidId, this),
+        shellId_ (shellId, this),
         faceMap_ (this),
         edgeMap_ (this),
         boundaryMap_ (this),
-        oWireMap_ (this),
-        solidId_ (solidId, this),
-        shellId_ (shellId, this)
+        oWireMap_ (this)
       {
       }
 
       Thicken::
       Thicken (::std::unique_ptr< BaseType > base,
-               ::std::unique_ptr< SeerShapeType > seerShape,
+               ::std::unique_ptr< PicksType > picks,
                ::std::unique_ptr< DistanceType > distance,
+               ::std::unique_ptr< SeerShapeType > seerShape,
                ::std::unique_ptr< DistanceLabelType > distanceLabel,
                const SolidIdType& solidId,
                const ShellIdType& shellId)
       : ::xml_schema::Type (),
         base_ (std::move (base), this),
-        seerShape_ (std::move (seerShape), this),
-        picks_ (this),
+        picks_ (std::move (picks), this),
         distance_ (std::move (distance), this),
+        seerShape_ (std::move (seerShape), this),
         distanceLabel_ (std::move (distanceLabel), this),
+        solidId_ (solidId, this),
+        shellId_ (shellId, this),
         faceMap_ (this),
         edgeMap_ (this),
         boundaryMap_ (this),
-        oWireMap_ (this),
-        solidId_ (solidId, this),
-        shellId_ (shellId, this)
+        oWireMap_ (this)
       {
       }
 
@@ -365,16 +373,16 @@ namespace prj
                ::xml_schema::Container* c)
       : ::xml_schema::Type (x, f, c),
         base_ (x.base_, f, this),
-        seerShape_ (x.seerShape_, f, this),
         picks_ (x.picks_, f, this),
         distance_ (x.distance_, f, this),
+        seerShape_ (x.seerShape_, f, this),
         distanceLabel_ (x.distanceLabel_, f, this),
+        solidId_ (x.solidId_, f, this),
+        shellId_ (x.shellId_, f, this),
         faceMap_ (x.faceMap_, f, this),
         edgeMap_ (x.edgeMap_, f, this),
         boundaryMap_ (x.boundaryMap_, f, this),
-        oWireMap_ (x.oWireMap_, f, this),
-        solidId_ (x.solidId_, f, this),
-        shellId_ (x.shellId_, f, this)
+        oWireMap_ (x.oWireMap_, f, this)
       {
       }
 
@@ -384,16 +392,16 @@ namespace prj
                ::xml_schema::Container* c)
       : ::xml_schema::Type (e, f | ::xml_schema::Flags::base, c),
         base_ (this),
-        seerShape_ (this),
         picks_ (this),
         distance_ (this),
+        seerShape_ (this),
         distanceLabel_ (this),
+        solidId_ (this),
+        shellId_ (this),
         faceMap_ (this),
         edgeMap_ (this),
         boundaryMap_ (this),
-        oWireMap_ (this),
-        solidId_ (this),
-        shellId_ (this)
+        oWireMap_ (this)
       {
         if ((f & ::xml_schema::Flags::base) == 0)
         {
@@ -426,20 +434,6 @@ namespace prj
             }
           }
 
-          // seerShape
-          //
-          if (n.name () == "seerShape" && n.namespace_ ().empty ())
-          {
-            ::std::unique_ptr< SeerShapeType > r (
-              SeerShapeTraits::create (i, f, this));
-
-            if (!seerShape_.present ())
-            {
-              this->seerShape_.set (::std::move (r));
-              continue;
-            }
-          }
-
           // picks
           //
           if (n.name () == "picks" && n.namespace_ ().empty ())
@@ -447,8 +441,11 @@ namespace prj
             ::std::unique_ptr< PicksType > r (
               PicksTraits::create (i, f, this));
 
-            this->picks_.push_back (::std::move (r));
-            continue;
+            if (!picks_.present ())
+            {
+              this->picks_.set (::std::move (r));
+              continue;
+            }
           }
 
           // distance
@@ -465,6 +462,20 @@ namespace prj
             }
           }
 
+          // seerShape
+          //
+          if (n.name () == "seerShape" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< SeerShapeType > r (
+              SeerShapeTraits::create (i, f, this));
+
+            if (!seerShape_.present ())
+            {
+              this->seerShape_.set (::std::move (r));
+              continue;
+            }
+          }
+
           // distanceLabel
           //
           if (n.name () == "distanceLabel" && n.namespace_ ().empty ())
@@ -475,6 +486,34 @@ namespace prj
             if (!distanceLabel_.present ())
             {
               this->distanceLabel_.set (::std::move (r));
+              continue;
+            }
+          }
+
+          // solidId
+          //
+          if (n.name () == "solidId" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< SolidIdType > r (
+              SolidIdTraits::create (i, f, this));
+
+            if (!solidId_.present ())
+            {
+              this->solidId_.set (::std::move (r));
+              continue;
+            }
+          }
+
+          // shellId
+          //
+          if (n.name () == "shellId" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< ShellIdType > r (
+              ShellIdTraits::create (i, f, this));
+
+            if (!shellId_.present ())
+            {
+              this->shellId_.set (::std::move (r));
               continue;
             }
           }
@@ -523,34 +562,6 @@ namespace prj
             continue;
           }
 
-          // solidId
-          //
-          if (n.name () == "solidId" && n.namespace_ ().empty ())
-          {
-            ::std::unique_ptr< SolidIdType > r (
-              SolidIdTraits::create (i, f, this));
-
-            if (!solidId_.present ())
-            {
-              this->solidId_.set (::std::move (r));
-              continue;
-            }
-          }
-
-          // shellId
-          //
-          if (n.name () == "shellId" && n.namespace_ ().empty ())
-          {
-            ::std::unique_ptr< ShellIdType > r (
-              ShellIdTraits::create (i, f, this));
-
-            if (!shellId_.present ())
-            {
-              this->shellId_.set (::std::move (r));
-              continue;
-            }
-          }
-
           break;
         }
 
@@ -561,10 +572,10 @@ namespace prj
             "");
         }
 
-        if (!seerShape_.present ())
+        if (!picks_.present ())
         {
           throw ::xsd::cxx::tree::expected_element< char > (
-            "seerShape",
+            "picks",
             "");
         }
 
@@ -572,6 +583,13 @@ namespace prj
         {
           throw ::xsd::cxx::tree::expected_element< char > (
             "distance",
+            "");
+        }
+
+        if (!seerShape_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "seerShape",
             "");
         }
 
@@ -611,16 +629,16 @@ namespace prj
         {
           static_cast< ::xml_schema::Type& > (*this) = x;
           this->base_ = x.base_;
-          this->seerShape_ = x.seerShape_;
           this->picks_ = x.picks_;
           this->distance_ = x.distance_;
+          this->seerShape_ = x.seerShape_;
           this->distanceLabel_ = x.distanceLabel_;
+          this->solidId_ = x.solidId_;
+          this->shellId_ = x.shellId_;
           this->faceMap_ = x.faceMap_;
           this->edgeMap_ = x.edgeMap_;
           this->boundaryMap_ = x.boundaryMap_;
           this->oWireMap_ = x.oWireMap_;
-          this->solidId_ = x.solidId_;
-          this->shellId_ = x.shellId_;
         }
 
         return *this;
@@ -939,29 +957,15 @@ namespace prj
           s << i.base ();
         }
 
-        // seerShape
-        //
-        {
-          ::xercesc::DOMElement& s (
-            ::xsd::cxx::xml::dom::create_element (
-              "seerShape",
-              e));
-
-          s << i.seerShape ();
-        }
-
         // picks
         //
-        for (Thicken::PicksConstIterator
-             b (i.picks ().begin ()), n (i.picks ().end ());
-             b != n; ++b)
         {
           ::xercesc::DOMElement& s (
             ::xsd::cxx::xml::dom::create_element (
               "picks",
               e));
 
-          s << *b;
+          s << i.picks ();
         }
 
         // distance
@@ -975,6 +979,17 @@ namespace prj
           s << i.distance ();
         }
 
+        // seerShape
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "seerShape",
+              e));
+
+          s << i.seerShape ();
+        }
+
         // distanceLabel
         //
         {
@@ -984,6 +999,28 @@ namespace prj
               e));
 
           s << i.distanceLabel ();
+        }
+
+        // solidId
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "solidId",
+              e));
+
+          s << i.solidId ();
+        }
+
+        // shellId
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "shellId",
+              e));
+
+          s << i.shellId ();
         }
 
         // faceMap
@@ -1040,28 +1077,6 @@ namespace prj
               e));
 
           s << *b;
-        }
-
-        // solidId
-        //
-        {
-          ::xercesc::DOMElement& s (
-            ::xsd::cxx::xml::dom::create_element (
-              "solidId",
-              e));
-
-          s << i.solidId ();
-        }
-
-        // shellId
-        //
-        {
-          ::xercesc::DOMElement& s (
-            ::xsd::cxx::xml::dom::create_element (
-              "shellId",
-              e));
-
-          s << i.shellId ();
         }
       }
 

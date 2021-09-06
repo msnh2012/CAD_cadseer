@@ -20,61 +20,41 @@
 #ifndef FTR_THICKEN_H
 #define FTR_THICKEN_H
 
-#include <osg/ref_ptr>
-
-#include "feature/ftrpick.h"
 #include "feature/ftrbase.h"
 
-class BRepOffset_MakeOffset;
-
-namespace lbr{class PLabel;}
-namespace ann{class SeerShape;}
 namespace prj{namespace srl{namespace thks{class Thicken;}}}
 
 namespace ftr
 {
-
-  /**
-  * @todo write docs
-  */
-  class Thicken : public Base
+  namespace Thicken
   {
-  public:
-    Thicken();
-    virtual ~Thicken() override;
-    
-    virtual void updateModel(const UpdatePayload&) override;
-    virtual Type getType() const override {return Type::Thicken;}
-    virtual const std::string& getTypeString() const override {return toString(Type::Thicken);}
-    virtual const QIcon& getIcon() const override {return icon;}
-    virtual Descriptor getDescriptor() const override {return Descriptor::Create;}
-    
-    virtual void serialWrite(const boost::filesystem::path&) override;
-    void serialRead(const prj::srl::thks::Thicken&);
-    
-    const ftr::Picks& getPicks(){return picks;}
-    void setPicks(const ftr::Picks&);
-    
-  protected:
-    ftr::Picks picks; //only going to use one, but empty will be null.
-    std::unique_ptr<prm::Parameter> distance;
-    
-    std::unique_ptr<ann::SeerShape> sShape;
-    
-    osg::ref_ptr<lbr::PLabel> distanceLabel;
-    
-    void thickenMatch(const BRepOffset_MakeOffset&);
-    std::map<boost::uuids::uuid, boost::uuids::uuid> faceMap; //map face from target to offset face.
-    std::map<boost::uuids::uuid, boost::uuids::uuid> edgeMap; //map edge from target to offset edge.
-    std::map<boost::uuids::uuid, boost::uuids::uuid> boundaryMap; //map edge from target to perimeter face.
-    std::map<boost::uuids::uuid, boost::uuids::uuid> oWireMap; //map new face to outer wire.
-    
-    boost::uuids::uuid solidId;
-    boost::uuids::uuid shellId;
-    
-  private:
-    static QIcon icon;
-  };
+    namespace InputTags
+    {
+      inline constexpr std::string_view pick = "pick";
+    }
+    /**
+    * @todo write docs
+    */
+    class Feature : public Base
+    {
+    public:
+      Feature();
+      ~Feature() override;
+      
+      void updateModel(const UpdatePayload&) override;
+      Type getType() const override {return Type::Thicken;}
+      const std::string& getTypeString() const override {return toString(Type::Thicken);}
+      const QIcon& getIcon() const override {return icon;}
+      Descriptor getDescriptor() const override {return Descriptor::Create;}
+      
+      void serialWrite(const boost::filesystem::path&) override;
+      void serialRead(const prj::srl::thks::Thicken&);
+    private:
+      static QIcon icon;
+      struct Stow;
+      std::unique_ptr<Stow> stow;
+    };
+  }
 }
 
 #endif // FTR_THICKEN_H

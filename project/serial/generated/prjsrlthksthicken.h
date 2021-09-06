@@ -93,8 +93,6 @@ namespace prj
 
 #include "prjsrlsptparameter.h"
 
-#include "prjsrlsptpick.h"
-
 #include "prjsrlsptoverlay.h"
 
 #include "prjsrlsptbase.h"
@@ -125,39 +123,22 @@ namespace prj
         void
         base (::std::unique_ptr< BaseType > p);
 
-        // seerShape
-        //
-        typedef ::prj::srl::spt::SeerShape SeerShapeType;
-        typedef ::xsd::cxx::tree::traits< SeerShapeType, char > SeerShapeTraits;
-
-        const SeerShapeType&
-        seerShape () const;
-
-        SeerShapeType&
-        seerShape ();
-
-        void
-        seerShape (const SeerShapeType& x);
-
-        void
-        seerShape (::std::unique_ptr< SeerShapeType > p);
-
         // picks
         //
-        typedef ::prj::srl::spt::Pick PicksType;
-        typedef ::xsd::cxx::tree::sequence< PicksType > PicksSequence;
-        typedef PicksSequence::iterator PicksIterator;
-        typedef PicksSequence::const_iterator PicksConstIterator;
+        typedef ::prj::srl::spt::Parameter PicksType;
         typedef ::xsd::cxx::tree::traits< PicksType, char > PicksTraits;
 
-        const PicksSequence&
+        const PicksType&
         picks () const;
 
-        PicksSequence&
+        PicksType&
         picks ();
 
         void
-        picks (const PicksSequence& s);
+        picks (const PicksType& x);
+
+        void
+        picks (::std::unique_ptr< PicksType > p);
 
         // distance
         //
@@ -176,6 +157,23 @@ namespace prj
         void
         distance (::std::unique_ptr< DistanceType > p);
 
+        // seerShape
+        //
+        typedef ::prj::srl::spt::SeerShape SeerShapeType;
+        typedef ::xsd::cxx::tree::traits< SeerShapeType, char > SeerShapeTraits;
+
+        const SeerShapeType&
+        seerShape () const;
+
+        SeerShapeType&
+        seerShape ();
+
+        void
+        seerShape (const SeerShapeType& x);
+
+        void
+        seerShape (::std::unique_ptr< SeerShapeType > p);
+
         // distanceLabel
         //
         typedef ::prj::srl::spt::PLabel DistanceLabelType;
@@ -192,6 +190,46 @@ namespace prj
 
         void
         distanceLabel (::std::unique_ptr< DistanceLabelType > p);
+
+        // solidId
+        //
+        typedef ::xml_schema::String SolidIdType;
+        typedef ::xsd::cxx::tree::traits< SolidIdType, char > SolidIdTraits;
+
+        const SolidIdType&
+        solidId () const;
+
+        SolidIdType&
+        solidId ();
+
+        void
+        solidId (const SolidIdType& x);
+
+        void
+        solidId (::std::unique_ptr< SolidIdType > p);
+
+        static const SolidIdType&
+        solidId_default_value ();
+
+        // shellId
+        //
+        typedef ::xml_schema::String ShellIdType;
+        typedef ::xsd::cxx::tree::traits< ShellIdType, char > ShellIdTraits;
+
+        const ShellIdType&
+        shellId () const;
+
+        ShellIdType&
+        shellId ();
+
+        void
+        shellId (const ShellIdType& x);
+
+        void
+        shellId (::std::unique_ptr< ShellIdType > p);
+
+        static const ShellIdType&
+        shellId_default_value ();
 
         // faceMap
         //
@@ -261,58 +299,20 @@ namespace prj
         void
         oWireMap (const OWireMapSequence& s);
 
-        // solidId
-        //
-        typedef ::xml_schema::String SolidIdType;
-        typedef ::xsd::cxx::tree::traits< SolidIdType, char > SolidIdTraits;
-
-        const SolidIdType&
-        solidId () const;
-
-        SolidIdType&
-        solidId ();
-
-        void
-        solidId (const SolidIdType& x);
-
-        void
-        solidId (::std::unique_ptr< SolidIdType > p);
-
-        static const SolidIdType&
-        solidId_default_value ();
-
-        // shellId
-        //
-        typedef ::xml_schema::String ShellIdType;
-        typedef ::xsd::cxx::tree::traits< ShellIdType, char > ShellIdTraits;
-
-        const ShellIdType&
-        shellId () const;
-
-        ShellIdType&
-        shellId ();
-
-        void
-        shellId (const ShellIdType& x);
-
-        void
-        shellId (::std::unique_ptr< ShellIdType > p);
-
-        static const ShellIdType&
-        shellId_default_value ();
-
         // Constructors.
         //
         Thicken (const BaseType&,
-                 const SeerShapeType&,
+                 const PicksType&,
                  const DistanceType&,
+                 const SeerShapeType&,
                  const DistanceLabelType&,
                  const SolidIdType&,
                  const ShellIdType&);
 
         Thicken (::std::unique_ptr< BaseType >,
-                 ::std::unique_ptr< SeerShapeType >,
+                 ::std::unique_ptr< PicksType >,
                  ::std::unique_ptr< DistanceType >,
+                 ::std::unique_ptr< SeerShapeType >,
                  ::std::unique_ptr< DistanceLabelType >,
                  const SolidIdType&,
                  const ShellIdType&);
@@ -344,18 +344,18 @@ namespace prj
 
         protected:
         ::xsd::cxx::tree::one< BaseType > base_;
-        ::xsd::cxx::tree::one< SeerShapeType > seerShape_;
-        PicksSequence picks_;
+        ::xsd::cxx::tree::one< PicksType > picks_;
         ::xsd::cxx::tree::one< DistanceType > distance_;
+        ::xsd::cxx::tree::one< SeerShapeType > seerShape_;
         ::xsd::cxx::tree::one< DistanceLabelType > distanceLabel_;
-        FaceMapSequence faceMap_;
-        EdgeMapSequence edgeMap_;
-        BoundaryMapSequence boundaryMap_;
-        OWireMapSequence oWireMap_;
         ::xsd::cxx::tree::one< SolidIdType > solidId_;
         static const SolidIdType solidId_default_value_;
         ::xsd::cxx::tree::one< ShellIdType > shellId_;
         static const ShellIdType shellId_default_value_;
+        FaceMapSequence faceMap_;
+        EdgeMapSequence edgeMap_;
+        BoundaryMapSequence boundaryMap_;
+        OWireMapSequence oWireMap_;
       };
     }
   }

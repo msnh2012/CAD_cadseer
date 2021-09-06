@@ -23,7 +23,7 @@
 #include "command/cmdleafmanager.h"
 #include "command/cmdbase.h"
 
-namespace ftr{class Thicken;}
+namespace ftr{namespace Thicken{class Feature;}}
 
 namespace cmd
 {
@@ -33,7 +33,7 @@ namespace cmd
   class Thicken : public Base
   {
   public:
-    ftr::Thicken *feature = nullptr;
+    ftr::Thicken::Feature *feature = nullptr;
     
     Thicken();
     Thicken(ftr::Base*);

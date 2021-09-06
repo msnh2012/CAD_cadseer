@@ -22,10 +22,11 @@
 
 #include "application/appapplication.h"
 #include "project/prjproject.h"
-#include "dialogs/dlgselectionbutton.h"
-#include "dialogs/dlgselectionwidget.h"
-#include "commandview/cmvparameterwidgets.h"
+#include "message/msgnode.h"
+#include "parameter/prmconstants.h"
 #include "parameter/prmparameter.h"
+#include "commandview/cmvselectioncue.h"
+#include "commandview/cmvtable.h"
 #include "tools/featuretools.h"
 #include "feature/ftrthicken.h"
 #include "command/cmdthicken.h"
@@ -39,104 +40,61 @@ struct Thicken::Stow
 {
   cmd::Thicken *command;
   cmv::Thicken *view;
-  dlg::SelectionWidget *selectionWidget = nullptr;
-  cmv::ParameterWidget *parameterWidget = nullptr;
+  prm::Parameters parameters;
+  cmv::tbl::Model *prmModel = nullptr;
+  cmv::tbl::View *prmView = nullptr;
   
   Stow(cmd::Thicken *cIn, cmv::Thicken *vIn)
   : command(cIn)
   , view(vIn)
   {
+    parameters = command->feature->getParameters();
     buildGui();
-    
-    QSettings &settings = app::instance()->getUserSettings();
-    settings.beginGroup("cmv::Thicken");
-    //load settings
-    settings.endGroup();
-    
-    loadFeatureData();
-    glue();
-    selectionWidget->activate(0);
+    connect(prmModel, &tbl::Model::dataChanged, view, &Thicken::modelChanged);
   }
   
   void buildGui()
   {
-    QSizePolicy adjust = view->sizePolicy();
-    adjust.setVerticalPolicy(QSizePolicy::Maximum);
-    view->setSizePolicy(adjust);
-    
     QVBoxLayout *mainLayout = new QVBoxLayout();
     view->setLayout(mainLayout);
+    Base::clearContentMargins(view);
+    view->setSizePolicy(view->sizePolicy().horizontalPolicy(), QSizePolicy::Expanding);
     
-    std::vector<dlg::SelectionWidgetCue> cues;
-    dlg::SelectionWidgetCue cue;
-    cue.name = tr("Item");
-    cue.singleSelection = false;
-    cue.mask = slc::ObjectsEnabled | slc::ObjectsSelectable | slc::ShellsEnabled | slc::ShellsSelectable | slc::FacesEnabled | slc::FacesSelectable;
-    cue.statusPrompt = tr("Select Object Or Shells Or Faces To Thicken");
-    cue.showAccrueColumn = false;
-    cues.push_back(cue);
-    selectionWidget = new dlg::SelectionWidget(view, cues);
-    mainLayout->addWidget(selectionWidget);
+    prmModel = new tbl::Model(view, command->feature);
+    prmView = new tbl::View(view, prmModel, true);
+    mainLayout->addWidget(prmView);
     
-    parameterWidget = new cmv::ParameterWidget(view, command->feature->getParameters());
-    mainLayout->addWidget(parameterWidget);
-    mainLayout->addItem(new QSpacerItem(20, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
-    
-  }
-  
-  void loadFeatureData()
-  {
-    ftr::UpdatePayload up = view->project->getPayload(command->feature->getId());
-    tls::Resolver resolver(up);
-    
-    auto picksToMessages = [&](const ftr::Picks &pIn) -> slc::Messages
-    {
-      slc::Messages out;
-      for (const auto &p : pIn)
-      {
-        if (resolver.resolve(p))
-        {
-          auto msgs = resolver.convertToMessages();
-          out.insert(out.end(), msgs.begin(), msgs.end());
-        }
-      }
-      return out;
-    };
-    
-    selectionWidget->initializeButton(0, picksToMessages(command->feature->getPicks()));
-  }
-  
-  void glue()
-  {
-    QObject::connect(selectionWidget->getButton(0), &dlg::SelectionButton::dirty, view, &Thicken::selectionChanged);
-    QObject::connect(parameterWidget, &ParameterBase::prmValueChanged, view, &Thicken::parameterChanged);
-  }
-  
-  void goSelections()
-  {
-    command->setSelections(selectionWidget->getMessages(0));
-    goUpdate();
-  }
-  
-  void goUpdate()
-  {
-    command->localUpdate();
+    tbl::SelectionCue cue;
+    cue.singleSelection = true;
+    cue.mask = slc::ObjectsBoth | slc::ShellsBoth | slc::FacesBoth;
+    cue.statusPrompt = tr("Select Entities To Thicken");
+    cue.accrueEnabled = false;
+    cue.forceTangentAccrue = false;
+    prmModel->setCue(command->feature->getParameter(prm::Tags::Picks), cue);
   }
 };
 
 Thicken::Thicken(cmd::Thicken *cIn)
 : Base("cmv::Thicken")
 , stow(new Stow(cIn, this))
-{}
+{
+  goSelectionToolbar();
+  goMaskDefault();
+}
 
 Thicken::~Thicken() = default;
 
-void Thicken::selectionChanged()
+void Thicken::modelChanged(const QModelIndex &index, const QModelIndex&)
 {
-  stow->goSelections();
-}
-
-void Thicken::parameterChanged()
-{
-  stow->goUpdate();
+  if (!index.isValid())
+    return;
+  auto tag = stow->parameters.at(index.row())->getTag();
+  if (tag == prm::Tags::Picks)
+  {
+    const auto &fs = stow->prmModel->getMessages(stow->parameters.at(index.row()));
+    stow->command->setSelections(fs);
+  }
+  stow->command->localUpdate();
+  node->sendBlocked(msg::buildStatusMessage(stow->command->getStatusMessage()));
+  goMaskDefault();
 }

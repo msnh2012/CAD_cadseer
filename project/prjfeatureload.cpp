@@ -498,7 +498,7 @@ std::unique_ptr<ftr::Base> FeatureLoad::loadThicken(const std::string &fileNameI
   auto sr = srl::thks::thicken(fileNameIn, flags);
   assert(sr);
   
-  auto thicken = std::make_unique<ftr::Thicken>();
+  auto thicken = std::make_unique<ftr::Thicken::Feature>();
   thicken->getAnnex<ann::SeerShape>().setOCCTShape(shapeVector.at(shapeOffsetIn), featureId);
   thicken->serialRead(*sr);
   
