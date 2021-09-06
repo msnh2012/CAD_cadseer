@@ -22,6 +22,7 @@
 #include "annex/annseershape.h"
 #include "message/msgnode.h"
 #include "selection/slceventhandler.h"
+#include "parameter/prmconstants.h"
 #include "parameter/prmparameter.h"
 #include "feature/ftrinputtype.h"
 #include "feature/ftruntrim.h"
@@ -35,8 +36,8 @@ Untrim::Untrim()
 : Base("cmd::Untrim")
 , leafManager()
 {
-  feature = new ftr::Untrim();
-  project->addFeature(std::unique_ptr<ftr::Untrim>(feature));
+  feature = new ftr::Untrim::Feature();
+  project->addFeature(std::unique_ptr<ftr::Untrim::Feature>(feature));
   node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
   isEdit = false;
   isFirstRun = true;
@@ -46,7 +47,7 @@ Untrim::Untrim(ftr::Base *fIn)
 : Base("cmd::Untrim")
 , leafManager(fIn)
 {
-  feature = dynamic_cast<ftr::Untrim*>(fIn);
+  feature = dynamic_cast<ftr::Untrim::Feature*>(fIn);
   assert(feature);
   viewBase = std::make_unique<cmv::Untrim>(this);
   node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
@@ -110,20 +111,21 @@ bool Untrim::isValidSelection(const slc::Message &mIn)
   return true;
 }
 
-void Untrim::setSelection(const slc::Message &target)
+void Untrim::setSelections(const slc::Messages &target)
 {
   assert(isActive);
   
   project->clearAllInputs(feature->getId());
-  feature->setPick(ftr::Pick());
+  auto *picks = feature->getParameter(prm::Tags::Picks);
+  picks->setValue(ftr::Pick());
   
-  if (!isValidSelection(target))
+  if (target.empty() || !isValidSelection(target.front()))
     return;
 
-  const ftr::Base *lf = project->findFeature(target.featureId);
-  ftr::Pick pick = tls::convertToPick(target, *lf, project->getShapeHistory());
-  pick.tag = ftr::InputType::createIndexedTag(ftr::InputType::target, 0);
-  feature->setPick(pick);
+  const ftr::Base *lf = project->findFeature(target.front().featureId);
+  ftr::Pick pick = tls::convertToPick(target.front(), *lf, project->getShapeHistory());
+  pick.tag = indexTag(ftr::Untrim::InputTags::pick, 0);
+  picks->setValue(pick);
   project->connect(lf->getId(), feature->getId(), {pick.tag});
 }
 
@@ -150,7 +152,7 @@ void Untrim::go()
   
   if (!tm.empty())
   {
-    setSelection(tm.front());
+    setSelections(tm);
     node->sendBlocked(msg::buildStatusMessage("Untrim Added", 2.0));
     node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
     return;

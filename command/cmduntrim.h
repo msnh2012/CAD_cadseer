@@ -23,14 +23,14 @@
 #include "command/cmdleafmanager.h"
 #include "command/cmdbase.h"
 
-namespace ftr{class Untrim;}
+namespace ftr{namespace Untrim{class Feature;}}
 
 namespace cmd
 {
   class Untrim : public Base
   {
   public:
-    ftr::Untrim *feature = nullptr;
+    ftr::Untrim::Feature *feature = nullptr;
     
     Untrim();
     Untrim(ftr::Base*);
@@ -41,7 +41,7 @@ namespace cmd
     void activate() override;
     void deactivate() override;
     
-    void setSelection(const slc::Message&);
+    void setSelections(const slc::Messages&);
     void localUpdate();
   private:
     cmd::LeafManager leafManager;

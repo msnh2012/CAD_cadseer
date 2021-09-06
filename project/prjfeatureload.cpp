@@ -732,7 +732,7 @@ std::unique_ptr<ftr::Base> FeatureLoad::loadUntrim(const std::string &fileNameIn
   auto ss = srl::utr::untrim(fileNameIn, flags);
   assert(ss);
   
-  auto sf = std::make_unique<ftr::Untrim>();
+  auto sf = std::make_unique<ftr::Untrim::Feature>();
   sf->getAnnex<ann::SeerShape>().setOCCTShape(shapeVector.at(shapeOffsetIn), featureId);
   sf->serialRead(*ss);
   

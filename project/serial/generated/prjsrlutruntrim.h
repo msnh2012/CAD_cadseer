@@ -96,8 +96,6 @@ namespace prj
 
 #include "prjsrlsptseershape.h"
 
-#include "prjsrlsptpick.h"
-
 #include "prjsrlsptbase.h"
 
 namespace prj
@@ -248,7 +246,7 @@ namespace prj
 
         // pick
         //
-        typedef ::prj::srl::spt::Pick PickType;
+        typedef ::prj::srl::spt::Parameter PickType;
         typedef ::xsd::cxx::tree::traits< PickType, char > PickTraits;
 
         const PickType&

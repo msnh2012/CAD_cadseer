@@ -44,69 +44,86 @@
 #include "project/serial/generated/prjsrlutruntrim.h"
 #include "feature/ftruntrim.h"
 
-using namespace ftr;
-QIcon Untrim::icon = QIcon(":/resources/images/constructionUntrim.svg");
+using uuid = boost::uuids::uuid;
+using namespace ftr::Untrim;
+QIcon Feature::icon = QIcon(":/resources/images/constructionUntrim.svg");
 
-Untrim::Untrim():
-Base()
-, sShape(std::make_unique<ann::SeerShape>())
-, offset(std::make_unique<prm::Parameter>(prm::Names::Offset, 0.1, prm::Tags::Offset))
-, closeU(std::make_unique<prm::Parameter>(QObject::tr("Close U"), false))
-, closeV(std::make_unique<prm::Parameter>(QObject::tr("Close V"), false))
-, makeSolid(std::make_unique<prm::Parameter>(QObject::tr("Make Solid"), false))
-, offsetLabel(new lbr::PLabel(offset.get()))
-, closeULabel(new lbr::PLabel(closeU.get()))
-, closeVLabel(new lbr::PLabel(closeV.get()))
-, makeSolidLabel(new lbr::PLabel(makeSolid.get()))
+struct Feature::Stow
+{
+  Feature &feature;
+  prm::Parameter picks{prm::Names::Picks, ftr::Picks(), prm::Tags::Picks};
+  prm::Parameter offset{prm::Names::Offset, 0.1, prm::Tags::Offset};
+  prm::Parameter closeU{QObject::tr("Close U"), false, PrmTags::closeU};
+  prm::Parameter closeV{QObject::tr("Close V"), false, PrmTags::closeV};
+  prm::Parameter makeSolid{QObject::tr("Make Solid"), false, PrmTags::makeSolid};
+  
+  ann::SeerShape sShape;
+  
+  osg::ref_ptr<lbr::PLabel> offsetLabel{new lbr::PLabel(&offset)};
+  osg::ref_ptr<lbr::PLabel> closeULabel{new lbr::PLabel(&closeU)};
+  osg::ref_ptr<lbr::PLabel> closeVLabel{new lbr::PLabel(&closeV)};
+  osg::ref_ptr<lbr::PLabel> makeSolidLabel{new lbr::PLabel(&makeSolid)};
+  
+  uuid solidId{gu::createRandomId()};
+  uuid shellId{gu::createRandomId()};
+  std::vector<uuid> uvEdgeIds; //ids from creating face from surface and u v ranges.
+  std::map<uuid, std::pair<uuid, uuid>> edgeToCap; //first is face, second is wire.
+  
+  Stow() = delete;
+  Stow(Feature &fIn)
+  : feature(fIn)
+  {
+    picks.connectValue(std::bind(&Feature::setModelDirty, &feature));
+    feature.parameters.push_back(&picks);
+    
+    offset.setConstraint(prm::Constraint::buildZeroPositive());
+    offset.connectValue(std::bind(&Feature::setModelDirty, &feature));
+    feature.parameters.push_back(&offset);
+    
+    closeU.connectValue(std::bind(&Feature::setModelDirty, &feature));
+    feature.parameters.push_back(&closeU);
+    
+    closeV.connectValue(std::bind(&Feature::setModelDirty, &feature));
+    feature.parameters.push_back(&closeV);
+    
+    makeSolid.connectValue(std::bind(&Feature::setModelDirty, &feature));
+    feature.parameters.push_back(&makeSolid);
+    
+    feature.annexes.insert(std::make_pair(ann::Type::SeerShape, &sShape));
+    
+    feature.overlaySwitch->addChild(offsetLabel.get());
+    feature.overlaySwitch->addChild(closeULabel.get());
+    feature.overlaySwitch->addChild(closeVLabel.get());
+    feature.overlaySwitch->addChild(makeSolidLabel.get());
+  }
+};
+
+Feature::Feature()
+: Base()
+, stow(std::make_unique<Stow>(*this))
 {
   name = QObject::tr("Untrim");
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
-  
-  offset->setConstraint(prm::Constraint::buildZeroPositive());
-  offset->connectValue(std::bind(&Untrim::setModelDirty, this));
-  parameters.push_back(offset.get());
-  
-  closeU->connectValue(std::bind(&Untrim::setModelDirty, this));
-  parameters.push_back(closeU.get());
-  
-  closeV->connectValue(std::bind(&Untrim::setModelDirty, this));
-  parameters.push_back(closeV.get());
-  
-  makeSolid->connectValue(std::bind(&Untrim::setModelDirty, this));
-  parameters.push_back(makeSolid.get());
-  
-  overlaySwitch->addChild(offsetLabel.get());
-  overlaySwitch->addChild(closeULabel.get());
-  overlaySwitch->addChild(closeVLabel.get());
-  overlaySwitch->addChild(makeSolidLabel.get());
-  
-  annexes.insert(std::make_pair(ann::Type::SeerShape, sShape.get()));
-  
-  solidId = gu::createRandomId();
-  shellId = gu::createRandomId();
 }
 
-Untrim::~Untrim() = default;
-
-void Untrim::setPick(const Pick &pIn)
-{
-  pick = pIn;
-  setModelDirty();
-}
+Feature::~Feature() = default;
 
 //cones will probably need some special attention. The uv bounds
 //don't consider apex and we can lengthen them right through the apex.
 //I created a solid with the cone surface lengthened through the apex,
 //bopargcheck didn't bitch, so maybe leave it.
-void Untrim::updateModel(const UpdatePayload &pIn)
+void Feature::updateModel(const UpdatePayload &pIn)
 {
   setFailure();
   lastUpdateLog.clear();
-  sShape->reset();
+  stow->sShape.reset();
   try
   {
+    const auto &picks = stow->picks.getPicks();
+    if (picks.empty())
+      throw std::runtime_error("Empty picks");
     tls::Resolver pr(pIn);
-    if (!pr.resolve(pick))
+    if (!pr.resolve(picks.front()))
       throw std::runtime_error("invalid pick resolution");
     
     auto shapes = pr.getShapes();
@@ -125,13 +142,13 @@ void Untrim::updateModel(const UpdatePayload &pIn)
       throw std::runtime_error("Invalid shape to untrim");
 
     //setup new failure state.
-    sShape->setOCCTShape(shapeToUntrim, getId());
-    sShape->shapeMatch(*pr.getSeerShape());
-    sShape->uniqueTypeMatch(*pr.getSeerShape());
-    sShape->outerWireMatch(*pr.getSeerShape());
-    sShape->derivedMatch();
-    sShape->ensureNoNils(); //just in case
-    sShape->ensureNoDuplicates(); //just in case
+    stow->sShape.setOCCTShape(shapeToUntrim, getId());
+    stow->sShape.shapeMatch(*pr.getSeerShape());
+    stow->sShape.uniqueTypeMatch(*pr.getSeerShape());
+    stow->sShape.outerWireMatch(*pr.getSeerShape());
+    stow->sShape.derivedMatch();
+    stow->sShape.ensureNoNils(); //just in case
+    stow->sShape.ensureNoDuplicates(); //just in case
     
     if (isSkipped())
     {
@@ -142,7 +159,7 @@ void Untrim::updateModel(const UpdatePayload &pIn)
     BRepAdaptor_Surface as(TopoDS::Face(shapeToUntrim));
     opencascade::handle<Geom_Surface> surfaceCopy = dynamic_cast<Geom_Surface*>(as.Surface().Surface()->Copy().get());
     
-    double ov = offset->getDouble();
+    double ov = stow->offset.getDouble();
     
     double u0 = as.FirstUParameter() - ov;
     double u1 = as.LastUParameter() + ov;
@@ -151,33 +168,31 @@ void Untrim::updateModel(const UpdatePayload &pIn)
     
     if (as.IsUPeriodic())
     {
-      if (closeU->getBool())
+      if (stow->closeU.getBool())
       {
         u0 = 0.0;
         u1 = as.UPeriod();
       }
       u0 = std::max(0.0, u0);
       u1 = std::min(as.UPeriod(), u1);
-      if (!overlaySwitch->containsNode(closeULabel.get()))
-        overlaySwitch->addChild(closeULabel.get());
+      stow->closeU.setActive(true);
     }
     else
-      overlaySwitch->removeChild(closeULabel.get());
+      stow->closeU.setActive(false);
     
     if (as.IsVPeriodic())
     {
-      if (closeV->getBool())
+      if (stow->closeV.getBool())
       {
         v0 = 0.0;
         v1 = as.VPeriod();
       }
       v0 = std::max(0.0, v0);
       v1 = std::min(as.VPeriod(), v1);
-      if (!overlaySwitch->containsNode(closeVLabel.get()))
-        overlaySwitch->addChild(closeVLabel.get());
+      stow->closeV.setActive(true);
     }
     else
-      overlaySwitch->removeChild(closeVLabel.get());
+      stow->closeV.setActive(false);
     
     //make sure we are not over the surface bounds
     double bu0, bu1, bv0, bv1;
@@ -190,8 +205,8 @@ void Untrim::updateModel(const UpdatePayload &pIn)
     tls::ShapeIdContainer tempIds;
     auto &originalId = pr.getSeerShape()->findId(shapeToUntrim);
     assert(!originalId.is_nil());
-    if (!sShape->hasEvolveRecordIn(originalId))
-      sShape->insertEvolve(originalId, gu::createRandomId());
+    if (!stow->sShape.hasEvolveRecordIn(originalId))
+      stow->sShape.insertEvolve(originalId, gu::createRandomId());
     
     BRepBuilderAPI_MakeFace fm(surfaceCopy, u0, u1, v0, v1, Precision::Confusion());
     if (!fm.IsDone())
@@ -199,16 +214,16 @@ void Untrim::updateModel(const UpdatePayload &pIn)
     TopoDS_Shape untrimmedFace = fm.Face();
     untrimmedFace.Location(as.Trsf());
     TopoDS_Shape out = untrimmedFace;
-    tempIds.insert(sShape->evolve(originalId).front(), untrimmedFace);
+    tempIds.insert(stow->sShape.evolve(originalId).front(), untrimmedFace);
     //here we are going to assume that the edges always come in the same order.
-    auto uvEdgeIt = uvEdgeIds.begin();
+    auto uvEdgeIt = stow->uvEdgeIds.begin();
     for (const auto &e : static_cast<occt::EdgeVector>(occt::ShapeVectorCast(occt::mapShapes(untrimmedFace))))
     {
-      if (uvEdgeIt == uvEdgeIds.end())
+      if (uvEdgeIt == stow->uvEdgeIds.end())
       {
-        uvEdgeIds.push_back(gu::createRandomId());
-        tempIds.insert(uvEdgeIds.back(), e);
-        uvEdgeIt = uvEdgeIds.end(); //push_back might invalidate
+        stow->uvEdgeIds.push_back(gu::createRandomId());
+        tempIds.insert(stow->uvEdgeIds.back(), e);
+        uvEdgeIt = stow->uvEdgeIds.end(); //push_back might invalidate
         continue;
       }
       else
@@ -219,7 +234,7 @@ void Untrim::updateModel(const UpdatePayload &pIn)
     }
     
     
-    if (makeSolid->getBool())
+    if (stow->makeSolid.getBool())
     {
       //BRepBuilderAPI_MakeShell making corrupt shape when off of period boundaries
       BRep_Builder builder;
@@ -236,12 +251,12 @@ void Untrim::updateModel(const UpdatePayload &pIn)
           if (result)
           {
             out = result.get();
-            if (!sShape->hasEvolveRecordOut(shellId))
-              sShape->insertEvolve(gu::createNilId(), shellId);
-            tempIds.insert(shellId, shell);
-            if (!sShape->hasEvolveRecordOut(solidId))
-              sShape->insertEvolve(gu::createNilId(), solidId);
-            tempIds.insert(solidId, out);
+            if (!stow->sShape.hasEvolveRecordOut(stow->shellId))
+              stow->sShape.insertEvolve(gu::createNilId(), stow->shellId);
+            tempIds.insert(stow->shellId, shell);
+            if (!stow->sShape.hasEvolveRecordOut(stow->solidId))
+              stow->sShape.insertEvolve(gu::createNilId(), stow->solidId);
+            tempIds.insert(stow->solidId, out);
             
             return true;
           }
@@ -272,15 +287,15 @@ void Untrim::updateModel(const UpdatePayload &pIn)
             {
               //should only be one edge in wire.
               auto edgeId = tempIds.find(edges.front());
-              if (edgeToCap.count(edgeId) == 0)
+              if (stow->edgeToCap.count(edgeId) == 0)
               {
                 uuid freshFace = gu::createRandomId();
                 uuid freshWire = gu::createRandomId();
-                edgeToCap.insert({edgeId, std::make_pair(freshFace, freshWire)});
-                sShape->insertEvolve(gu::createNilId(), freshFace);
-                sShape->insertEvolve(gu::createNilId(), freshWire);
+                stow->edgeToCap.insert({edgeId, std::make_pair(freshFace, freshWire)});
+                stow->sShape.insertEvolve(gu::createNilId(), freshFace);
+                stow->sShape.insertEvolve(gu::createNilId(), freshWire);
               }
-              auto it = edgeToCap.find(edgeId);
+              auto it = stow->edgeToCap.find(edgeId);
               tempIds.insert(it->second.first, face);
               tempIds.insert(it->second.second, wire);
             }
@@ -320,39 +335,39 @@ void Untrim::updateModel(const UpdatePayload &pIn)
     //update position of offset label. center of surface.
     gp_Pnt olp;
     surfaceCopy->D0(midU, midV, olp);
-    offsetLabel->setMatrix(osg::Matrixd::translate(gu::toOsg(olp.Transformed(as.Trsf()))));
+    stow->offsetLabel->setMatrix(osg::Matrixd::translate(gu::toOsg(olp.Transformed(as.Trsf()))));
     
     //update position of close u label. be on u period half way in v
     gp_Pnt culp;
     surfaceCopy->D0(u0, midV, culp);
-    closeULabel->setMatrix(osg::Matrixd::translate(gu::toOsg(culp.Transformed(as.Trsf()))));
+    stow->closeULabel->setMatrix(osg::Matrixd::translate(gu::toOsg(culp.Transformed(as.Trsf()))));
     
     //update position of close v label. be half way in u on period in v
     gp_Pnt cvlp;
     surfaceCopy->D0(midU, 0.0, cvlp);
-    closeVLabel->setMatrix(osg::Matrixd::translate(gu::toOsg(cvlp.Transformed(as.Trsf()))));
+    stow->closeVLabel->setMatrix(osg::Matrixd::translate(gu::toOsg(cvlp.Transformed(as.Trsf()))));
     
     //update position of make solid label. at max u and v.
     gp_Pnt mslp;
     surfaceCopy->D0(u0, v1, mslp);
-    makeSolidLabel->setMatrix(osg::Matrixd::translate(gu::toOsg(mslp.Transformed(as.Trsf()))));
+    stow->makeSolidLabel->setMatrix(osg::Matrixd::translate(gu::toOsg(mslp.Transformed(as.Trsf()))));
     
     ShapeCheck check(out);
     if (!check.isValid())
       throw std::runtime_error("shapeCheck failed");
     
-    sShape->setOCCTShape(out, getId());
-    for (const auto &s : sShape->getAllShapes())
+    stow->sShape.setOCCTShape(out, getId());
+    for (const auto &s : stow->sShape.getAllShapes())
     {
       if (tempIds.has(s))
-        sShape->updateId(s, tempIds.find(s));
+        stow->sShape.updateId(s, tempIds.find(s));
     }
-    sShape->outerWireMatch(*pr.getSeerShape());
-    sShape->derivedMatch();
-    sShape->dumpNils(getTypeString());
-    sShape->dumpDuplicates(getTypeString());
-    sShape->ensureNoNils();
-    sShape->ensureNoDuplicates();
+    stow->sShape.outerWireMatch(*pr.getSeerShape());
+    stow->sShape.derivedMatch();
+    stow->sShape.dumpNils(getTypeString());
+    stow->sShape.dumpDuplicates(getTypeString());
+    stow->sShape.ensureNoNils();
+    stow->sShape.ensureNoDuplicates();
     
     setSuccess();
   }
@@ -376,28 +391,28 @@ void Untrim::updateModel(const UpdatePayload &pIn)
     std::cout << std::endl << lastUpdateLog;
 }
 
-void Untrim::serialWrite(const boost::filesystem::path &dIn)
+void Feature::serialWrite(const boost::filesystem::path &dIn)
 {
   prj::srl::utr::Untrim so
   (
     Base::serialOut()
-    , sShape->serialOut()
-    , pick.serialOut()
-    , offset->serialOut()
-    , closeU->serialOut()
-    , closeV->serialOut()
-    , makeSolid->serialOut()
-    , offsetLabel->serialOut()
-    , closeULabel->serialOut()
-    , closeVLabel->serialOut()
-    , makeSolidLabel->serialOut()
-    , gu::idToString(solidId)
-    , gu::idToString(shellId)
+    , stow->sShape.serialOut()
+    , stow->picks.serialOut()
+    , stow->offset.serialOut()
+    , stow->closeU.serialOut()
+    , stow->closeV.serialOut()
+    , stow->makeSolid.serialOut()
+    , stow->offsetLabel->serialOut()
+    , stow->closeULabel->serialOut()
+    , stow->closeVLabel->serialOut()
+    , stow->makeSolidLabel->serialOut()
+    , gu::idToString(stow->solidId)
+    , gu::idToString(stow->shellId)
   );
   
-  for (const auto &id : uvEdgeIds)
+  for (const auto &id : stow->uvEdgeIds)
     so.uvEdgeIds().push_back(gu::idToString(id));
-  for (const auto &entry : edgeToCap)
+  for (const auto &entry : stow->edgeToCap)
     so.edgeToCap().push_back({gu::idToString(entry.first), gu::idToString(entry.second.first), gu::idToString(entry.second.second)});
   
   xml_schema::NamespaceInfomap infoMap;
@@ -405,27 +420,24 @@ void Untrim::serialWrite(const boost::filesystem::path &dIn)
   prj::srl::utr::untrim(stream, so, infoMap);
 }
 
-void Untrim::serialRead(const prj::srl::utr::Untrim &so)
+void Feature::serialRead(const prj::srl::utr::Untrim &so)
 {
   Base::serialIn(so.base());
-  sShape->serialIn(so.seerShape());
-  pick.serialIn(so.pick());
-  offset->serialIn(so.offset());
-  closeU->serialIn(so.closeU());
-  closeV->serialIn(so.closeV());
-  makeSolid->serialIn(so.makeSolid());
-  offsetLabel->serialIn(so.offsetLabel());
-  closeULabel->serialIn(so.closeULabel());
-  closeVLabel->serialIn(so.closeVLabel());
-  makeSolidLabel->serialIn(so.makeSolidLabel());
-  solidId = gu::stringToId(so.solidId());
-  shellId = gu::stringToId(so.shellId());
+  stow->sShape.serialIn(so.seerShape());
+  stow->picks.serialIn(so.pick());
+  stow->offset.serialIn(so.offset());
+  stow->closeU.serialIn(so.closeU());
+  stow->closeV.serialIn(so.closeV());
+  stow->makeSolid.serialIn(so.makeSolid());
+  stow->offsetLabel->serialIn(so.offsetLabel());
+  stow->closeULabel->serialIn(so.closeULabel());
+  stow->closeVLabel->serialIn(so.closeVLabel());
+  stow->makeSolidLabel->serialIn(so.makeSolidLabel());
+  stow->solidId = gu::stringToId(so.solidId());
+  stow->shellId = gu::stringToId(so.shellId());
   
   for (const auto &sid : so.uvEdgeIds())
-    uvEdgeIds.emplace_back(gu::stringToId(sid));
+    stow->uvEdgeIds.emplace_back(gu::stringToId(sid));
   for (const auto &entry : so.edgeToCap())
-    edgeToCap.insert(std::make_pair(gu::stringToId(entry.keyId()), std::make_pair(gu::stringToId(entry.faceId()), gu::stringToId(entry.wireId()))));
-  
-//   offsetLabel->valueHasChanged();
-//   offsetLabel->constantHasChanged();
+    stow->edgeToCap.insert(std::make_pair(gu::stringToId(entry.keyId()), std::make_pair(gu::stringToId(entry.faceId()), gu::stringToId(entry.wireId()))));
 }

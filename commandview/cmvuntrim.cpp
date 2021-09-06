@@ -22,10 +22,11 @@
 
 #include "application/appapplication.h"
 #include "project/prjproject.h"
-#include "dialogs/dlgselectionbutton.h"
-#include "dialogs/dlgselectionwidget.h"
-#include "commandview/cmvparameterwidgets.h"
+#include "message/msgnode.h"
+#include "parameter/prmconstants.h"
 #include "parameter/prmparameter.h"
+#include "commandview/cmvselectioncue.h"
+#include "commandview/cmvtable.h"
 #include "tools/featuretools.h"
 #include "feature/ftruntrim.h"
 #include "command/cmduntrim.h"
@@ -39,81 +40,62 @@ struct Untrim::Stow
 {
   cmd::Untrim *command;
   cmv::Untrim *view;
-  dlg::SelectionWidget *selectionWidget = nullptr;
-  cmv::ParameterWidget *parameterWidget = nullptr;
+  prm::Parameters parameters;
+  cmv::tbl::Model *prmModel = nullptr;
+  cmv::tbl::View *prmView = nullptr;
   
   Stow(cmd::Untrim *cIn, cmv::Untrim *vIn)
   : command(cIn)
   , view(vIn)
   {
+    parameters = command->feature->getParameters();
     buildGui();
-    
-    QSettings &settings = app::instance()->getUserSettings();
-    settings.beginGroup("cmv::Untrim");
-    //load settings
-    settings.endGroup();
-    
-    loadFeatureData();
-    glue();
-    selectionWidget->activate(0);
+    connect(prmModel, &tbl::Model::dataChanged, view, &Untrim::modelChanged);
   }
   
   void buildGui()
   {
     QVBoxLayout *mainLayout = new QVBoxLayout();
     view->setLayout(mainLayout);
-  
-    std::vector<dlg::SelectionWidgetCue> cues;
-    dlg::SelectionWidgetCue cue;
-    cue.name = tr("Face");
+    Base::clearContentMargins(view);
+    view->setSizePolicy(view->sizePolicy().horizontalPolicy(), QSizePolicy::Expanding);
+    
+    prmModel = new tbl::Model(view, command->feature);
+    prmView = new tbl::View(view, prmModel, true);
+    mainLayout->addWidget(prmView);
+    
+    tbl::SelectionCue cue;
     cue.singleSelection = true;
-    cue.mask = slc::FacesEnabled | slc::FacesSelectable;
-    cue.statusPrompt = tr("Select Face To Untrim");
-    cue.showAccrueColumn = false;
-    cues.push_back(cue);
-    
-    selectionWidget = new dlg::SelectionWidget(view, cues);
-    mainLayout->addWidget(selectionWidget);
-    
-    parameterWidget = new ParameterWidget(view, command->feature->getParameters());
-    mainLayout->addWidget(parameterWidget);
-    
-    mainLayout->addItem(new QSpacerItem(20, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
-  }
-  
-  void loadFeatureData()
-  {
-    ftr::UpdatePayload up = view->project->getPayload(command->feature->getId());
-    tls::Resolver resolver(up);
-    
-    if (resolver.resolve(command->feature->getPick()))
-      selectionWidget->initializeButton(0, resolver.convertToMessages());
-  }
-  
-  void glue()
-  {
-    connect(selectionWidget->getButton(0), &dlg::SelectionButton::dirty, view, &Untrim::selectionChanged);
-    connect(parameterWidget, &ParameterBase::prmValueChanged, view, &Untrim::parameterChanged);
+    cue.mask = slc::FacesBoth;
+    cue.statusPrompt = tr("Select Faces To Untrim");
+    cue.accrueEnabled = false;
+    cue.forceTangentAccrue = false;
+    prmModel->setCue(command->feature->getParameter(prm::Tags::Picks), cue);
   }
 };
 
 Untrim::Untrim(cmd::Untrim *cIn)
 : Base("cmv::Untrim")
 , stow(new Stow(cIn, this))
-{}
+{
+  goSelectionToolbar();
+  goMaskDefault();
+}
 
 Untrim::~Untrim() = default;
 
-void Untrim::selectionChanged()
+void Untrim::modelChanged(const QModelIndex &index, const QModelIndex&)
 {
-  const auto &msgs = stow->selectionWidget->getButton(0)->getMessages();
-  if (msgs.empty())
+  if (!index.isValid())
     return;
-  stow->command->setSelection(stow->selectionWidget->getButton(0)->getMessages().front());
+  auto tag = stow->parameters.at(index.row())->getTag();
+  if (tag == prm::Tags::Picks)
+  {
+    const auto &fs = stow->prmModel->getMessages(stow->parameters.at(index.row()));
+    stow->command->setSelections(fs);
+  }
   stow->command->localUpdate();
-}
-
-void Untrim::parameterChanged()
-{
-  stow->command->localUpdate();
+  stow->prmView->updateHideInactive();
+  node->sendBlocked(msg::buildStatusMessage(stow->command->getStatusMessage()));
+  goMaskDefault();
 }

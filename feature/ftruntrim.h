@@ -20,54 +20,44 @@
 #ifndef FTR_UNTRIM_H
 #define FTR_UNTRIM_H
 
-#include "feature/ftrpick.h"
 #include "feature/ftrbase.h"
 
-namespace ann{class SeerShape;}
 namespace prj{namespace srl{namespace utr{class Untrim;}}}
-namespace lbr{class IPGroup; class PLabel;}
 
 namespace ftr
 {
-  class Untrim : public Base
+  namespace Untrim
   {
-  public:
-    Untrim();
-    ~Untrim() override;
-    
-    void updateModel(const UpdatePayload&) override;
-    Type getType() const override {return Type::Untrim;}
-    const std::string& getTypeString() const override {return toString(Type::Untrim);}
-    const QIcon& getIcon() const override {return icon;}
-    Descriptor getDescriptor() const override {return Descriptor::Create;}
-    
-    void serialWrite(const boost::filesystem::path&) override;
-    void serialRead(const prj::srl::utr::Untrim&);
-    
-    void setPick(const Pick&);
-    const Pick& getPick() const {return pick;}
-    
-  private:
-    std::unique_ptr<ann::SeerShape> sShape;
-    std::unique_ptr<prm::Parameter> offset;
-    std::unique_ptr<prm::Parameter> closeU;
-    std::unique_ptr<prm::Parameter> closeV;
-    std::unique_ptr<prm::Parameter> makeSolid;
-    Pick pick;
-    
-    osg::ref_ptr<lbr::PLabel> offsetLabel;
-    osg::ref_ptr<lbr::PLabel> closeULabel;
-    osg::ref_ptr<lbr::PLabel> closeVLabel;
-    osg::ref_ptr<lbr::PLabel> makeSolidLabel;
-    
-    using uuid = boost::uuids::uuid;
-    uuid solidId;
-    uuid shellId;
-    std::vector<uuid> uvEdgeIds; //ids from creating face from surface and u v ranges.
-    std::map<uuid, std::pair<uuid, uuid>> edgeToCap; //first is face, second is wire.
-    
-    static QIcon icon;
-  };
+    namespace InputTags
+    {
+      inline constexpr std::string_view pick = "pick";
+    }
+    namespace PrmTags
+    {
+      inline constexpr std::string_view closeU = "closeU"; //input face to deform, can be null
+      inline constexpr std::string_view closeV = "closeV"; //input face to deform, can be null
+      inline constexpr std::string_view makeSolid = "makeSolid"; //input face to deform, can be null
+    }
+    class Feature : public Base
+    {
+    public:
+      Feature();
+      ~Feature() override;
+      
+      void updateModel(const UpdatePayload&) override;
+      Type getType() const override {return Type::Untrim;}
+      const std::string& getTypeString() const override {return toString(Type::Untrim);}
+      const QIcon& getIcon() const override {return icon;}
+      Descriptor getDescriptor() const override {return Descriptor::Create;}
+      
+      void serialWrite(const boost::filesystem::path&) override;
+      void serialRead(const prj::srl::utr::Untrim&);
+    private:
+      static QIcon icon;
+      struct Stow;
+      std::unique_ptr<Stow> stow;
+    };
+  }
 }
 
 #endif //FTR_UNTRIM_H

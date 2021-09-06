@@ -8,7 +8,6 @@
   <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptparameter.xsd"/>
   <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptoverlay.xsd"/>
   <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptseershape.xsd"/>
-  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptpick.xsd"/>
   <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptbase.xsd"/>
   
 <xs:complexType name="EdgeToCap">
@@ -23,7 +22,7 @@
   <xs:sequence>
     <xs:element name="base" type="spt:Base"/>
     <xs:element name="seerShape" type="spt:SeerShape"/>
-    <xs:element name="pick" type="spt:Pick"/>
+    <xs:element name="pick" type="spt:Parameter"/>
     <xs:element name="offset" type="spt:Parameter"/>
     <xs:element name="closeU" type="spt:Parameter"/>
     <xs:element name="closeV" type="spt:Parameter"/>
