@@ -20,12 +20,8 @@
 #ifndef FTR_RULED_H
 #define FTR_RULED_H
 
-#include <set>
-
-#include "feature/ftrpick.h"
 #include "feature/ftrbase.h"
 
-namespace ann{class SeerShape;}
 namespace prj{namespace srl{namespace rlds{class Ruled;}}}
 
 namespace ftr

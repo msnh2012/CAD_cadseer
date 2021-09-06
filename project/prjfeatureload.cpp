@@ -510,7 +510,7 @@ std::unique_ptr<ftr::Base> FeatureLoad::loadSew(const std::string &fileNameIn, s
   auto sr = srl::sws::sew(fileNameIn, flags);
   assert(sr);
   
-  auto sew = std::make_unique<ftr::Sew>();
+  auto sew = std::make_unique<ftr::Sew::Feature>();
   sew->getAnnex<ann::SeerShape>().setOCCTShape(shapeVector.at(shapeOffsetIn), featureId);
   sew->serialRead(*sr);
   

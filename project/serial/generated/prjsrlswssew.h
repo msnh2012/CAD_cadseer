@@ -89,11 +89,11 @@ namespace prj
 
 #include <xsd/cxx/xml/dom/parsing-header.hxx>
 
-#include "prjsrlsptseershape.h"
-
 #include "prjsrlsptbase.h"
 
-#include "prjsrlsptpick.h"
+#include "prjsrlsptparameter.h"
+
+#include "prjsrlsptseershape.h"
 
 namespace prj
 {
@@ -121,6 +121,23 @@ namespace prj
         void
         base (::std::unique_ptr< BaseType > p);
 
+        // picks
+        //
+        typedef ::prj::srl::spt::Parameter PicksType;
+        typedef ::xsd::cxx::tree::traits< PicksType, char > PicksTraits;
+
+        const PicksType&
+        picks () const;
+
+        PicksType&
+        picks ();
+
+        void
+        picks (const PicksType& x);
+
+        void
+        picks (::std::unique_ptr< PicksType > p);
+
         // seerShape
         //
         typedef ::prj::srl::spt::SeerShape SeerShapeType;
@@ -137,23 +154,6 @@ namespace prj
 
         void
         seerShape (::std::unique_ptr< SeerShapeType > p);
-
-        // picks
-        //
-        typedef ::prj::srl::spt::Pick PicksType;
-        typedef ::xsd::cxx::tree::sequence< PicksType > PicksSequence;
-        typedef PicksSequence::iterator PicksIterator;
-        typedef PicksSequence::const_iterator PicksConstIterator;
-        typedef ::xsd::cxx::tree::traits< PicksType, char > PicksTraits;
-
-        const PicksSequence&
-        picks () const;
-
-        PicksSequence&
-        picks ();
-
-        void
-        picks (const PicksSequence& s);
 
         // solidId
         //
@@ -198,11 +198,13 @@ namespace prj
         // Constructors.
         //
         Sew (const BaseType&,
+             const PicksType&,
              const SeerShapeType&,
              const SolidIdType&,
              const ShellIdType&);
 
         Sew (::std::unique_ptr< BaseType >,
+             ::std::unique_ptr< PicksType >,
              ::std::unique_ptr< SeerShapeType >,
              const SolidIdType&,
              const ShellIdType&);
@@ -234,8 +236,8 @@ namespace prj
 
         protected:
         ::xsd::cxx::tree::one< BaseType > base_;
+        ::xsd::cxx::tree::one< PicksType > picks_;
         ::xsd::cxx::tree::one< SeerShapeType > seerShape_;
-        PicksSequence picks_;
         ::xsd::cxx::tree::one< SolidIdType > solidId_;
         static const SolidIdType solidId_default_value_;
         ::xsd::cxx::tree::one< ShellIdType > shellId_;

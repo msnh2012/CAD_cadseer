@@ -20,49 +20,41 @@
 #ifndef FTR_SEW_H
 #define FTR_SEW_H
 
-#include "feature/ftrpick.h"
 #include "feature/ftrbase.h"
 
-class BRepBuilderAPI_Sewing;
-
-namespace ann{class SeerShape;}
 namespace prj{namespace srl{namespace sws{class Sew;}}}
 
 namespace ftr
 {
-  /**
-  * @todo write docs
-  */
-  class Sew : public Base
+  namespace Sew
   {
-  public:
-    Sew();
-    virtual ~Sew() override;
-    
-    virtual void updateModel(const UpdatePayload&) override;
-    virtual Type getType() const override {return Type::Sew;}
-    virtual const std::string& getTypeString() const override {return toString(Type::Sew);}
-    virtual const QIcon& getIcon() const override {return icon;}
-    virtual Descriptor getDescriptor() const override {return Descriptor::Create;}
-    
-    virtual void serialWrite(const boost::filesystem::path&) override;
-    void serialRead(const prj::srl::sws::Sew&);
-    
-    void setPicks(const Picks&);
-    const Picks& getPicks(){return picks;}
-    
-  protected:
-    std::unique_ptr<ann::SeerShape> sShape;
-    Picks picks;
-    
-    void assignSolidShell();
-    void sewModifiedMatch(const BRepBuilderAPI_Sewing&, const ann::SeerShape&);
-    boost::uuids::uuid solidId;
-    boost::uuids::uuid shellId;
-    
-  private:
-    static QIcon icon;
-  };
+    namespace InputTags
+    {
+      inline constexpr std::string_view pick = "pick";
+    }
+    /**
+    * @todo write docs
+    */
+    class Feature : public Base
+    {
+    public:
+      Feature();
+      ~Feature() override;
+      
+      void updateModel(const UpdatePayload&) override;
+      Type getType() const override {return Type::Sew;}
+      const std::string& getTypeString() const override {return toString(Type::Sew);}
+      const QIcon& getIcon() const override {return icon;}
+      Descriptor getDescriptor() const override {return Descriptor::Create;}
+      
+      void serialWrite(const boost::filesystem::path&) override;
+      void serialRead(const prj::srl::sws::Sew&);
+    private:
+      static QIcon icon;
+      struct Stow;
+      std::unique_ptr<Stow> stow;
+    };
+  }
 }
 
 #endif // FTR_SEW_H

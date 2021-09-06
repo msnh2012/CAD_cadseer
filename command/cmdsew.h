@@ -23,7 +23,7 @@
 #include "command/cmdleafmanager.h"
 #include "command/cmdbase.h"
 
-namespace ftr{class Sew;}
+namespace ftr{namespace Sew{class Feature;}}
 
 namespace cmd
 {
@@ -33,7 +33,7 @@ namespace cmd
   class Sew : public Base
   {
     public:
-      ftr::Sew *feature = nullptr;
+      ftr::Sew::Feature *feature = nullptr;
       
       Sew();
       Sew(ftr::Base*);

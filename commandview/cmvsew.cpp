@@ -22,8 +22,11 @@
 
 #include "application/appapplication.h"
 #include "project/prjproject.h"
-#include "dialogs/dlgselectionbutton.h"
-#include "dialogs/dlgselectionwidget.h"
+#include "message/msgnode.h"
+#include "parameter/prmconstants.h"
+#include "parameter/prmparameter.h"
+#include "commandview/cmvselectioncue.h"
+#include "commandview/cmvtable.h"
 #include "tools/featuretools.h"
 #include "feature/ftrsew.h"
 #include "command/cmdsew.h"
@@ -37,85 +40,62 @@ struct Sew::Stow
 {
   cmd::Sew *command;
   cmv::Sew *view;
-  dlg::SelectionWidget *selectionWidget = nullptr;
+  prm::Parameters parameters;
+  cmv::tbl::Model *prmModel = nullptr;
+  cmv::tbl::View *prmView = nullptr;
   
   Stow(cmd::Sew *cIn, cmv::Sew *vIn)
   : command(cIn)
   , view(vIn)
   {
+    parameters = command->feature->getParameters();
     buildGui();
-    
-    QSettings &settings = app::instance()->getUserSettings();
-    settings.beginGroup("cmv::Sew");
-    //load settings
-    settings.endGroup();
-    
-    loadFeatureData();
+    connect(prmModel, &tbl::Model::dataChanged, view, &Sew::modelChanged);
   }
   
   void buildGui()
   {
-    QSizePolicy adjust = view->sizePolicy();
-    adjust.setVerticalPolicy(QSizePolicy::Maximum);
-    view->setSizePolicy(adjust);
-    
     QVBoxLayout *mainLayout = new QVBoxLayout();
     view->setLayout(mainLayout);
+    Base::clearContentMargins(view);
+    view->setSizePolicy(view->sizePolicy().horizontalPolicy(), QSizePolicy::Expanding);
     
-    std::vector<dlg::SelectionWidgetCue> cues;
-    dlg::SelectionWidgetCue cue;
-    cue.name = tr("Items");
+    prmModel = new tbl::Model(view, command->feature);
+    prmView = new tbl::View(view, prmModel, true);
+    mainLayout->addWidget(prmView);
+    
+    tbl::SelectionCue cue;
     cue.singleSelection = false;
-    cue.mask = slc::ObjectsEnabled | slc::ObjectsSelectable | slc::FacesEnabled | slc::FacesSelectable;
-    cue.statusPrompt = tr("Select Items");
-    cue.showAccrueColumn = false;
-    cues.push_back(cue);
-    
-    selectionWidget = new dlg::SelectionWidget(view, cues);
-    mainLayout->addWidget(selectionWidget);
-    
-    mainLayout->addItem(new QSpacerItem(20, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
-    
-    QObject::connect(selectionWidget->getButton(0), &dlg::SelectionButton::dirty, view, &Sew::selectionChanged);
-  }
-  
-  void loadFeatureData()
-  {
-    ftr::UpdatePayload up = view->project->getPayload(command->feature->getId());
-    tls::Resolver resolver(up);
-    
-    auto picksToMessages = [&](const ftr::Picks &pIn) -> slc::Messages
-    {
-      slc::Messages out;
-      for (const auto &p : pIn)
-      {
-        if (resolver.resolve(p))
-        {
-          auto msgs = resolver.convertToMessages();
-          out.insert(out.end(), msgs.begin(), msgs.end());
-        }
-      }
-      return out;
-    };
-    selectionWidget->initializeButton(0, picksToMessages(command->feature->getPicks()));
-    selectionWidget->activate(0);
-  }
-  
-  void goSelections()
-  {
-    command->setSelections(selectionWidget->getMessages(0));
-    command->localUpdate();
+    cue.mask = slc::ObjectsBoth | slc::ShellsEnabled | slc::FacesBoth;
+    cue.statusPrompt = tr("Select Entities To Sew");
+    cue.accrueEnabled = false;
+    cue.forceTangentAccrue = false;
+    prmModel->setCue(command->feature->getParameter(prm::Tags::Picks), cue);
   }
 };
 
 Sew::Sew(cmd::Sew *cIn)
 : Base("cmv::Sew")
 , stow(new Stow(cIn, this))
-{}
+{
+  goSelectionToolbar();
+  goMaskDefault();
+}
 
 Sew::~Sew() = default;
 
-void Sew::selectionChanged()
+void Sew::modelChanged(const QModelIndex &index, const QModelIndex&)
 {
-  stow->goSelections();
+  if (!index.isValid())
+    return;
+  auto tag = stow->parameters.at(index.row())->getTag();
+  if (tag == prm::Tags::Picks)
+  {
+    const auto &fs = stow->prmModel->getMessages(stow->parameters.at(index.row()));
+    stow->command->setSelections(fs);
+  }
+  stow->command->localUpdate();
+  node->sendBlocked(msg::buildStatusMessage(stow->command->getStatusMessage()));
+  goMaskDefault();
 }
+

@@ -30,6 +30,8 @@
 #include "tools/occtools.h"
 #include "tools/idtools.h"
 #include "tools/featuretools.h"
+#include "parameter/prmconstants.h"
+#include "parameter/prmparameter.h"
 #include "annex/annseershape.h"
 #include "project/serial/generated/prjsrlswssew.h"
 #include "feature/ftrshapecheck.h"
@@ -37,38 +39,114 @@
 #include "feature/ftrinputtype.h"
 #include "feature/ftrsew.h"
 
-using namespace ftr;
+using namespace ftr::Sew;
 
 using boost::uuids::uuid;
+QIcon Feature::icon = QIcon(":/resources/images/constructionSew.svg");
 
-QIcon Sew::icon = QIcon(":/resources/images/constructionSew.svg");
+struct Feature::Stow
+{
+  Feature &feature;
+  prm::Parameter picks{prm::Names::Picks, ftr::Picks(), prm::Tags::Picks};
+  ann::SeerShape sShape;
+  uuid solidId{gu::createRandomId()};
+  uuid shellId{gu::createRandomId()};
+  
+  Stow() = delete;
+  Stow(Feature &fIn)
+  : feature(fIn)
+  {
+    picks.connectValue(std::bind(&Feature::setModelDirty, &feature));
+    feature.parameters.push_back(&picks);
+    
+    feature.annexes.insert(std::make_pair(ann::Type::SeerShape, &sShape));
+  }
+  
+  void assignSolidShell()
+  {
+    occt::ShapeVector solids = sShape.useGetChildrenOfType(sShape.getRootOCCTShape(), TopAbs_SOLID);
+    if (!solids.empty())
+    {
+      assert(solids.size() == 1);
+      if (solids.size() > 1)
+        std::cout << "WARNING: have more than 1 solid in Sew::assignSolidShell" << std::endl;
+      sShape.updateId(solids.front(), solidId);
+      if (!sShape.hasEvolveRecordOut(solidId))
+        sShape.insertEvolve(gu::createNilId(), solidId);
+      TopoDS_Shell shell = BRepClass3d::OuterShell(TopoDS::Solid(solids.front()));
+      sShape.updateId(shell, shellId);
+      if (!sShape.hasEvolveRecordOut(shellId))
+        sShape.insertEvolve(gu::createNilId(), shellId);
+    }
+    else
+    {
+      occt::ShapeVector shells = sShape.useGetChildrenOfType(sShape.getRootOCCTShape(), TopAbs_SHELL);
+      if (!shells.empty())
+      {
+        assert(shells.size() == 1);
+        if (shells.size() > 1)
+          std::cout << "WARNING: have more than 1 shell in Sew::assignSolidShell" << std::endl;
+        sShape.updateId(shells.front(), shellId);
+        if (!sShape.hasEvolveRecordOut(shellId))
+          sShape.insertEvolve(gu::createNilId(), shellId);
+      }
+    }
+  }
+  
+  void sewModifiedMatch(const BRepBuilderAPI_Sewing &builder, const ann::SeerShape &target)
+  {
+    occt::ShapeVector shapes = target.getAllShapes();
+    for (const auto &ts : shapes)
+    {
+      uuid tid = target.findId(ts);
+      
+      auto goEvolve = [&](const TopoDS_Shape &result)
+      {
+        if (!sShape.hasShape(result))
+        {
+          //no warning this is pretty common.
+          return;
+        }
+        
+        //make sure the shape has nil for an id. Don't overwrite.
+        uuid nid = sShape.findId(result);
+        if (!nid.is_nil())
+          return;
+        
+        if (sShape.hasEvolveRecordIn(tid))
+          nid = sShape.evolve(tid).front(); //should only be 1 to 1
+          else
+          {
+            nid = gu::createRandomId();
+            sShape.insertEvolve(tid, nid);
+          }
+          sShape.updateId(result, nid);
+      };
+      
+      //some shapes are in both modified and modifiedSubShape lists.
+      if (builder.IsModified(ts))
+        goEvolve(builder.Modified(ts));
+      else if (builder.IsModifiedSubShape(ts))
+        goEvolve(builder.ModifiedSubShape(ts));
+    }
+  }
+};
 
-Sew::Sew():
-Base(),
-sShape(std::make_unique<ann::SeerShape>())
+Feature::Feature()
+: Base()
+, stow(std::make_unique<Stow>(*this))
 {
   name = QObject::tr("Sew");
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
-  
-  annexes.insert(std::make_pair(ann::Type::SeerShape, sShape.get()));
-  
-  solidId = gu::createRandomId();
-  shellId = gu::createRandomId();
 }
 
-Sew::~Sew() = default;
+Feature::~Feature() = default;
 
-void Sew::setPicks(const Picks &pIn)
-{
-  picks = pIn;
-  setModelDirty();
-}
-
-void Sew::updateModel(const UpdatePayload &payloadIn)
+void Feature::updateModel(const UpdatePayload &payloadIn)
 {
   setFailure();
   lastUpdateLog.clear();
-  sShape->reset();
+  stow->sShape.reset();
   try
   {
     if (isSkipped())
@@ -76,6 +154,8 @@ void Sew::updateModel(const UpdatePayload &payloadIn)
       setSuccess();
       throw std::runtime_error("feature is skipped");
     }
+    
+    const auto &picks = stow->picks.getPicks();
     
     tls::Resolver pr(payloadIn);
     std::vector<std::reference_wrapper<const ann::SeerShape>> seerShapes;
@@ -156,20 +236,20 @@ void Sew::updateModel(const UpdatePayload &payloadIn)
     if (!check.isValid())
       throw std::runtime_error("shapeCheck failed");
     
-    sShape->setOCCTShape(out, getId());
+    stow->sShape.setOCCTShape(out, getId());
     for (const auto &ss : seerShapes)
-      sShape->shapeMatch(ss);
-//     sShape->uniqueTypeMatch(ss);
-    assignSolidShell();
+      stow->sShape.shapeMatch(ss);
+//     stow->sShape.uniqueTypeMatch(ss);
+    stow->assignSolidShell();
     for (const auto &ss : seerShapes)
-      sewModifiedMatch(builder, ss);
+      stow->sewModifiedMatch(builder, ss);
     for (const auto &ss : seerShapes)
-      sShape->outerWireMatch(ss);
-    sShape->derivedMatch();
-    sShape->dumpNils("sew feature");
-    sShape->dumpDuplicates("sew feature");
-    sShape->ensureNoNils();
-    sShape->ensureNoDuplicates();
+      stow->sShape.outerWireMatch(ss);
+    stow->sShape.derivedMatch();
+    stow->sShape.dumpNils("sew feature");
+    stow->sShape.dumpDuplicates("sew feature");
+    stow->sShape.ensureNoNils();
+    stow->sShape.ensureNoDuplicates();
     
     setSuccess();
   }
@@ -193,100 +273,27 @@ void Sew::updateModel(const UpdatePayload &payloadIn)
     std::cout << std::endl << lastUpdateLog;
 }
 
-void Sew::assignSolidShell()
-{
-  occt::ShapeVector solids = sShape->useGetChildrenOfType(sShape->getRootOCCTShape(), TopAbs_SOLID);
-  if (!solids.empty())
-  {
-    assert(solids.size() == 1);
-    if (solids.size() > 1)
-      std::cout << "WARNING: have more than 1 solid in Sew::assignSolidShell" << std::endl;
-    sShape->updateId(solids.front(), solidId);
-    if (!sShape->hasEvolveRecordOut(solidId))
-      sShape->insertEvolve(gu::createNilId(), solidId);
-    TopoDS_Shell shell = BRepClass3d::OuterShell(TopoDS::Solid(solids.front()));
-    sShape->updateId(shell, shellId);
-    if (!sShape->hasEvolveRecordOut(shellId))
-      sShape->insertEvolve(gu::createNilId(), shellId);
-  }
-  else
-  {
-    occt::ShapeVector shells = sShape->useGetChildrenOfType(sShape->getRootOCCTShape(), TopAbs_SHELL);
-    if (!shells.empty())
-    {
-      assert(shells.size() == 1);
-      if (shells.size() > 1)
-        std::cout << "WARNING: have more than 1 shell in Sew::assignSolidShell" << std::endl;
-      sShape->updateId(shells.front(), shellId);
-      if (!sShape->hasEvolveRecordOut(shellId))
-        sShape->insertEvolve(gu::createNilId(), shellId);
-    }
-  }
-}
-
-void Sew::sewModifiedMatch(const BRepBuilderAPI_Sewing &builder, const ann::SeerShape &target)
-{
-  occt::ShapeVector shapes = target.getAllShapes();
-  for (const auto &ts : shapes)
-  {
-    uuid tid = target.findId(ts);
-    
-    auto goEvolve = [&](const TopoDS_Shape &result)
-    {
-      if (!sShape->hasShape(result))
-      {
-        //no warning this is pretty common.
-        return;
-      }
-      
-      //make sure the shape has nil for an id. Don't overwrite.
-      uuid nid = sShape->findId(result);
-      if (!nid.is_nil())
-        return;
-      
-      if (sShape->hasEvolveRecordIn(tid))
-        nid = sShape->evolve(tid).front(); //should only be 1 to 1
-      else
-      {
-        nid = gu::createRandomId();
-        sShape->insertEvolve(tid, nid);
-      }
-      sShape->updateId(result, nid);
-    };
-    
-    //some shapes are in both modified and modifiedSubShape lists.
-    if (builder.IsModified(ts))
-      goEvolve(builder.Modified(ts));
-    else if (builder.IsModifiedSubShape(ts))
-      goEvolve(builder.ModifiedSubShape(ts));
-  }
-}
-
-void Sew::serialWrite(const boost::filesystem::path &dIn)
+void Feature::serialWrite(const boost::filesystem::path &dIn)
 {
   prj::srl::sws::Sew so
   (
-    Base::serialOut(),
-    sShape->serialOut(),
-    gu::idToString(solidId),
-    gu::idToString(shellId)
+    Base::serialOut()
+    , stow->picks.serialOut()
+    , stow->sShape.serialOut()
+    , gu::idToString(stow->solidId)
+    , gu::idToString(stow->shellId)
   );
-  for (const auto &p : picks)
-    so.picks().push_back(p);
-  
+
   xml_schema::NamespaceInfomap infoMap;
   std::ofstream stream(buildFilePathName(dIn).string());
   prj::srl::sws::sew(stream, so, infoMap);
 }
 
-void Sew::serialRead(const prj::srl::sws::Sew &si)
+void Feature::serialRead(const prj::srl::sws::Sew &si)
 {
   Base::serialIn(si.base());
-  sShape->serialIn(si.seerShape());
-  solidId = gu::stringToId(si.solidId());
-  shellId = gu::stringToId(si.shellId());
-  for (const auto &p : si.picks())
-    picks.emplace_back(p);
+  stow->picks.serialIn(si.picks());
+  stow->sShape.serialIn(si.seerShape());
+  stow->solidId = gu::stringToId(si.solidId());
+  stow->shellId = gu::stringToId(si.shellId());
 }
-
-

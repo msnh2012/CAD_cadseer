@@ -23,6 +23,7 @@
 #include "message/msgnode.h"
 #include "selection/slceventhandler.h"
 #include "annex/annseershape.h"
+#include "parameter/prmconstants.h"
 #include "parameter/prmparameter.h"
 #include "feature/ftrinputtype.h"
 #include "feature/ftrsew.h"
@@ -39,8 +40,8 @@ Sew::Sew()
 : Base("cmd::Sew")
 , leafManager()
 {
-  feature = new ftr::Sew();
-  project->addFeature(std::unique_ptr<ftr::Sew>(feature));
+  feature = new ftr::Sew::Feature();
+  project->addFeature(std::unique_ptr<ftr::Sew::Feature>(feature));
   node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
   isEdit = false;
   isFirstRun = true;
@@ -50,7 +51,7 @@ Sew::Sew(ftr::Base *fIn)
 : Base("cmd::Sew")
 , leafManager(fIn)
 {
-  feature = dynamic_cast<ftr::Sew*>(fIn);
+  feature = dynamic_cast<ftr::Sew::Feature*>(fIn);
   assert(feature);
   viewBase = std::make_unique<cmv::Sew>(this);
   node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
@@ -123,7 +124,10 @@ void Sew::setSelections(const std::vector<slc::Message> &targets)
 {
   assert(isActive);
   project->clearAllInputs(feature->getId());
-  feature->setPicks(ftr::Picks());
+  
+  auto *picks = feature->getParameter(prm::Tags::Picks);
+  
+  picks->setValue(ftr::Picks());
   
   if (targets.empty())
     return;
@@ -136,10 +140,10 @@ void Sew::setSelections(const std::vector<slc::Message> &targets)
 
     const ftr::Base *lf = project->findFeature(m.featureId);
     freshPicks.push_back(tls::convertToPick(m, *lf, project->getShapeHistory()));
-    freshPicks.back().tag = ftr::InputType::createIndexedTag(ftr::InputType::target, freshPicks.size() - 1);
+    freshPicks.back().tag = indexTag(ftr::Sew::InputTags::pick, freshPicks.size() - 1);
     project->connect(lf->getId(), feature->getId(), {freshPicks.back().tag});
   }
-  feature->setPicks(freshPicks);
+  picks->setValue(freshPicks);
 }
 
 void Sew::localUpdate()

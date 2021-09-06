@@ -73,6 +73,30 @@ namespace prj
         this->base_.set (std::move (x));
       }
 
+      const Sew::PicksType& Sew::
+      picks () const
+      {
+        return this->picks_.get ();
+      }
+
+      Sew::PicksType& Sew::
+      picks ()
+      {
+        return this->picks_.get ();
+      }
+
+      void Sew::
+      picks (const PicksType& x)
+      {
+        this->picks_.set (x);
+      }
+
+      void Sew::
+      picks (::std::unique_ptr< PicksType > x)
+      {
+        this->picks_.set (std::move (x));
+      }
+
       const Sew::SeerShapeType& Sew::
       seerShape () const
       {
@@ -95,24 +119,6 @@ namespace prj
       seerShape (::std::unique_ptr< SeerShapeType > x)
       {
         this->seerShape_.set (std::move (x));
-      }
-
-      const Sew::PicksSequence& Sew::
-      picks () const
-      {
-        return this->picks_;
-      }
-
-      Sew::PicksSequence& Sew::
-      picks ()
-      {
-        return this->picks_;
-      }
-
-      void Sew::
-      picks (const PicksSequence& s)
-      {
-        this->picks_ = s;
       }
 
       const Sew::SolidIdType& Sew::
@@ -197,13 +203,14 @@ namespace prj
 
       Sew::
       Sew (const BaseType& base,
+           const PicksType& picks,
            const SeerShapeType& seerShape,
            const SolidIdType& solidId,
            const ShellIdType& shellId)
       : ::xml_schema::Type (),
         base_ (base, this),
+        picks_ (picks, this),
         seerShape_ (seerShape, this),
-        picks_ (this),
         solidId_ (solidId, this),
         shellId_ (shellId, this)
       {
@@ -211,13 +218,14 @@ namespace prj
 
       Sew::
       Sew (::std::unique_ptr< BaseType > base,
+           ::std::unique_ptr< PicksType > picks,
            ::std::unique_ptr< SeerShapeType > seerShape,
            const SolidIdType& solidId,
            const ShellIdType& shellId)
       : ::xml_schema::Type (),
         base_ (std::move (base), this),
+        picks_ (std::move (picks), this),
         seerShape_ (std::move (seerShape), this),
-        picks_ (this),
         solidId_ (solidId, this),
         shellId_ (shellId, this)
       {
@@ -229,8 +237,8 @@ namespace prj
            ::xml_schema::Container* c)
       : ::xml_schema::Type (x, f, c),
         base_ (x.base_, f, this),
-        seerShape_ (x.seerShape_, f, this),
         picks_ (x.picks_, f, this),
+        seerShape_ (x.seerShape_, f, this),
         solidId_ (x.solidId_, f, this),
         shellId_ (x.shellId_, f, this)
       {
@@ -242,8 +250,8 @@ namespace prj
            ::xml_schema::Container* c)
       : ::xml_schema::Type (e, f | ::xml_schema::Flags::base, c),
         base_ (this),
-        seerShape_ (this),
         picks_ (this),
+        seerShape_ (this),
         solidId_ (this),
         shellId_ (this)
       {
@@ -278,6 +286,20 @@ namespace prj
             }
           }
 
+          // picks
+          //
+          if (n.name () == "picks" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< PicksType > r (
+              PicksTraits::create (i, f, this));
+
+            if (!picks_.present ())
+            {
+              this->picks_.set (::std::move (r));
+              continue;
+            }
+          }
+
           // seerShape
           //
           if (n.name () == "seerShape" && n.namespace_ ().empty ())
@@ -290,17 +312,6 @@ namespace prj
               this->seerShape_.set (::std::move (r));
               continue;
             }
-          }
-
-          // picks
-          //
-          if (n.name () == "picks" && n.namespace_ ().empty ())
-          {
-            ::std::unique_ptr< PicksType > r (
-              PicksTraits::create (i, f, this));
-
-            this->picks_.push_back (::std::move (r));
-            continue;
           }
 
           // solidId
@@ -341,6 +352,13 @@ namespace prj
             "");
         }
 
+        if (!picks_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "picks",
+            "");
+        }
+
         if (!seerShape_.present ())
         {
           throw ::xsd::cxx::tree::expected_element< char > (
@@ -377,8 +395,8 @@ namespace prj
         {
           static_cast< ::xml_schema::Type& > (*this) = x;
           this->base_ = x.base_;
-          this->seerShape_ = x.seerShape_;
           this->picks_ = x.picks_;
+          this->seerShape_ = x.seerShape_;
           this->solidId_ = x.solidId_;
           this->shellId_ = x.shellId_;
         }
@@ -699,6 +717,17 @@ namespace prj
           s << i.base ();
         }
 
+        // picks
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "picks",
+              e));
+
+          s << i.picks ();
+        }
+
         // seerShape
         //
         {
@@ -708,20 +737,6 @@ namespace prj
               e));
 
           s << i.seerShape ();
-        }
-
-        // picks
-        //
-        for (Sew::PicksConstIterator
-             b (i.picks ().begin ()), n (i.picks ().end ());
-             b != n; ++b)
-        {
-          ::xercesc::DOMElement& s (
-            ::xsd::cxx::xml::dom::create_element (
-              "picks",
-              e));
-
-          s << *b;
         }
 
         // solidId
