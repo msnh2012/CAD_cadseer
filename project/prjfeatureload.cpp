@@ -593,7 +593,7 @@ std::unique_ptr<ftr::Base> FeatureLoad::loadRevolve(const std::string &fileNameI
   auto se = srl::rvls::revolve(fileNameIn, flags);
   assert(se);
   
-  auto ef = std::make_unique<ftr::Revolve>();
+  auto ef = std::make_unique<ftr::Revolve::Feature>();
   ef->getAnnex<ann::SeerShape>().setOCCTShape(shapeVector.at(shapeOffsetIn), featureId);
   ef->serialRead(*se);
   

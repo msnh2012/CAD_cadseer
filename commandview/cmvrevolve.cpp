@@ -23,10 +23,11 @@
 
 #include "application/appapplication.h"
 #include "project/prjproject.h"
-#include "dialogs/dlgselectionwidget.h"
-#include "dialogs/dlgselectionbutton.h"
-#include "commandview/cmvparameterwidgets.h"
+#include "message/msgnode.h"
+#include "parameter/prmconstants.h"
 #include "parameter/prmparameter.h"
+#include "commandview/cmvselectioncue.h"
+#include "commandview/cmvtable.h"
 #include "tools/featuretools.h"
 #include "feature/ftrrevolve.h"
 #include "command/cmdrevolve.h"
@@ -40,161 +41,92 @@ struct Revolve::Stow
 {
   cmd::Revolve *command;
   cmv::Revolve *view;
-  QComboBox *combo = nullptr;
-  dlg::SelectionWidget *selection = nullptr;
-  cmv::ParameterWidget *parameterWidget = nullptr;
+  prm::Parameters parameters;
+  cmv::tbl::Model *prmModel = nullptr;
+  cmv::tbl::View *prmView = nullptr;
   
   Stow(cmd::Revolve *cIn, cmv::Revolve *vIn)
   : command(cIn)
   , view(vIn)
   {
+    parameters = command->feature->getParameters();
     buildGui();
-    
-    QSettings &settings = app::instance()->getUserSettings();
-    settings.beginGroup("cmv::Revolve");
-    //load settings
-    settings.endGroup();
-    
-    loadFeatureData();
-    glue();
-    selection->activate(0);
+    connect(prmModel, &tbl::Model::dataChanged, view, &Revolve::modelChanged);
   }
   
   void buildGui()
   {
-    QSizePolicy adjust = view->sizePolicy();
-    adjust.setVerticalPolicy(QSizePolicy::Maximum);
-    view->setSizePolicy(adjust);
-    
     QVBoxLayout *mainLayout = new QVBoxLayout();
     view->setLayout(mainLayout);
+    Base::clearContentMargins(view);
+    view->setSizePolicy(view->sizePolicy().horizontalPolicy(), QSizePolicy::Expanding);
     
-    combo = new QComboBox(view);
-    combo->addItem(QObject::tr("Pick Axis"));
-    combo->addItem(QObject::tr("Parameter Axis"));
-    mainLayout->addWidget(combo);
+    prmModel = new tbl::Model(view, command->feature);
+    prmView = new tbl::View(view, prmModel, true);
+    mainLayout->addWidget(prmView);
     
-    std::vector<dlg::SelectionWidgetCue> cues;
-    dlg::SelectionWidgetCue cue;
-    cue.name = tr("Profile");
-    cue.singleSelection = true; //eventually false.
+    tbl::SelectionCue cue;
+    cue.singleSelection = true; //temp. eventually false.
     cue.mask = slc::ObjectsBoth | slc::FacesBoth | slc::WiresEnabled | slc::EdgesEnabled | slc::AllPointsEnabled;
     cue.statusPrompt = tr("Select Profile Geometry");
-    cue.showAccrueColumn = false;
-    cues.push_back(cue);
+    cue.accrueEnabled = false;
+    cue.forceTangentAccrue = false;
+    prmModel->setCue(command->feature->getParameter(ftr::Revolve::PrmTags::profilePicks), cue);
     
-    cue.name = tr("Axis");
     cue.singleSelection = false;
     cue.mask = slc::ObjectsBoth | slc::FacesEnabled | slc::EdgesBoth | slc::AllPointsEnabled;
     cue.statusPrompt = tr("Select Points, Edge, Face Or Datum For Axis");
-    cues.push_back(cue);
-    selection = new dlg::SelectionWidget(view, cues);
-    mainLayout->addWidget(selection);
-    
-    parameterWidget = new cmv::ParameterWidget(view, command->feature->getParameters());
-    mainLayout->addWidget(parameterWidget);
-    mainLayout->addItem(new QSpacerItem(20, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
-  }
-  
-  void loadFeatureData()
-  {
-    ftr::UpdatePayload up = view->project->getPayload(command->feature->getId());
-    tls::Resolver resolver(up);
-    
-    auto picksToMessages = [&](const ftr::Picks &pIn) -> slc::Messages
-    {
-      slc::Messages out;
-      for (const auto &p : pIn)
-      {
-        if (resolver.resolve(p))
-        {
-          auto msgs = resolver.convertToMessages();
-          out.insert(out.end(), msgs.begin(), msgs.end());
-        }
-      }
-      return out;
-    };
-    
-    selection->initializeButton(0, picksToMessages(command->feature->getPicks()));
-    
-    ftr::Revolve::AxisType at = command->feature->getAxisType();
-    if (at == ftr::Revolve::AxisType::Parameter)
-      selection->hideEntry(1);
-    else
-      selection->initializeButton(1, picksToMessages(command->feature->getAxisPicks()));
-    
-    combo->setCurrentIndex(static_cast<int>(at));
-  }
-  
-  void glue()
-  {
-    QObject::connect(combo, SIGNAL(currentIndexChanged(int)), view, SLOT(comboChanged(int)));
-    QObject::connect(selection->getButton(0), &dlg::SelectionButton::dirty, view, &Revolve::profileSelectionChanged);
-    QObject::connect(selection->getButton(1), &dlg::SelectionButton::dirty, view, &Revolve::axisSelectionChanged);
-    QObject::connect(parameterWidget, &ParameterBase::prmValueChanged, view, &Revolve::parameterChanged);
-  }
-  
-  void parameterChanged()
-  {
-    if (!parameterWidget->isVisible())
-      return;
-    goUpdate();
-  }
-  
-  void goAxisPicks()
-  {
-    command->setToAxisPicks(selection->getMessages(0), selection->getMessages(1));
-    goUpdate();
-  }
-  
-  void goAxisParameter()
-  {
-    command->setToAxisParameter(selection->getMessages(0));
-    goUpdate();
-  }
-  
-  void goUpdate()
-  {
-    command->localUpdate();
+    prmModel->setCue(command->feature->getParameter(ftr::Revolve::PrmTags::axisPicks), cue);
   }
 };
 
 Revolve::Revolve(cmd::Revolve *cIn)
 : Base("cmv::Revolve")
 , stow(new Stow(cIn, this))
-{}
+{
+  goSelectionToolbar();
+  goMaskDefault();
+}
 
 Revolve::~Revolve() = default;
 
-void Revolve::comboChanged(int cIndex)
+void Revolve::modelChanged(const QModelIndex &index, const QModelIndex&)
 {
-  if (cIndex == 0)
+  if (!index.isValid())
+    return;
+  
+  auto *profilePicks = stow->command->feature->getParameter(ftr::Revolve::PrmTags::profilePicks);
+  auto *axisPicks = stow->command->feature->getParameter(ftr::Revolve::PrmTags::axisPicks);
+  
+  auto goPicks = [&]()
   {
-    stow->selection->showEntry(1);
-    stow->goAxisPicks();
-  }
-  else if (cIndex == 1)
+    const auto &profile = stow->prmModel->getMessages(profilePicks);
+    const auto &axis = stow->prmModel->getMessages(axisPicks);
+    stow->command->setToAxisPicks(profile, axis);
+  };
+  
+  auto goParameters = [&]()
   {
-    stow->selection->hideEntry(1);
-    stow->goAxisParameter();
+    const auto &profile = stow->prmModel->getMessages(profilePicks);
+    stow->command->setToAxisParameter(profile);
+  };
+  
+  auto tag = stow->parameters.at(index.row())->getTag();
+  if
+  (
+    tag == ftr::Revolve::PrmTags::axisType
+    || tag == ftr::Revolve::PrmTags::profilePicks
+    || tag == ftr::Revolve::PrmTags::axisPicks
+  )
+  {
+    int type = stow->command->feature->getParameter(ftr::Revolve::PrmTags::axisType)->getInt();
+    if (type == 0)
+      goPicks();
+    else if (type == 1)
+      goParameters();
   }
-}
-
-void Revolve::profileSelectionChanged()
-{
-  int current = stow->combo->currentIndex();
-  if (current == 0)
-    stow->goAxisPicks();
-  else if (current == 1)
-    stow->goAxisParameter();
-}
-
-void Revolve::axisSelectionChanged()
-{
-  stow->goAxisPicks();
-}
-
-void Revolve::parameterChanged()
-{
-  stow->goUpdate();
+  stow->command->localUpdate();
+  stow->prmView->updateHideInactive();
+  node->sendBlocked(msg::buildStatusMessage(stow->command->getStatusMessage()));
+  goMaskDefault();
 }

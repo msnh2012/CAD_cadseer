@@ -7,23 +7,23 @@
 >
   <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptparameter.xsd"/>
   <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptseershape.xsd"/>
-  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptpick.xsd"/>
   <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptoverlay.xsd"/>
   <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptbase.xsd"/>
 
 <xs:complexType name="Revolve">
   <xs:sequence>
     <xs:element name="base" type="spt:Base"/>
-    <xs:element name="seerShape" type="spt:SeerShape"/>
-    <xs:element name="picks" type="spt:Pick" minOccurs="0" maxOccurs="unbounded"/>
-    <xs:element name="axisPicks" type="spt:Pick" minOccurs="0" maxOccurs="unbounded"/>
+    <xs:element name="axisType" type="spt:Parameter"/>
+    <xs:element name="profilePicks" type="spt:Parameter"/>
+    <xs:element name="axisPicks" type="spt:Parameter"/>
     <xs:element name="axisOrigin" type="spt:Parameter"/>
-    <xs:element name="axisOriginLabel" type="spt:PLabel"/>
     <xs:element name="axisDirection" type="spt:Parameter"/>
-    <xs:element name="axisDirectionLabel" type="spt:PLabel"/>
     <xs:element name="angle" type="spt:Parameter"/>
+    <xs:element name="seerShape" type="spt:SeerShape"/>
+    <xs:element name="axisTypeLabel" type="spt:PLabel"/>
+    <xs:element name="axisOriginLabel" type="spt:PLabel"/>
+    <xs:element name="axisDirectionLabel" type="spt:PLabel"/>
     <xs:element name="angleLabel" type="spt:PLabel"/>
-    <xs:element name="axisType" type="xs:int"/>
     <xs:element name="generatedMap" type="spt:EvolveRecord" minOccurs="0" maxOccurs="unbounded"/>
     <xs:element name="lastMap" type="spt:EvolveRecord" minOccurs="0" maxOccurs="unbounded"/>
     <xs:element name="oWireMap" type="spt:EvolveRecord" minOccurs="0" maxOccurs="unbounded"/>

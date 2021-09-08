@@ -23,7 +23,7 @@
 #include "command/cmdleafmanager.h"
 #include "command/cmdbase.h"
 
-namespace ftr{class Revolve; struct Pick; typedef std::vector<Pick> Picks;}
+namespace ftr{namespace Revolve{class Feature;}}
 
 namespace cmd
 {
@@ -33,7 +33,7 @@ namespace cmd
   class Revolve : public Base
   {
   public:
-    ftr::Revolve *feature = nullptr;
+    ftr::Revolve::Feature *feature = nullptr;
     
     Revolve();
     Revolve(ftr::Base*);
@@ -45,12 +45,12 @@ namespace cmd
     void deactivate() override;
     
     void localUpdate();
-    void setToAxisPicks(const std::vector<slc::Message>&, const std::vector<slc::Message>&);
-    void setToAxisParameter(const std::vector<slc::Message>&);
+    void setToAxisPicks(const slc::Messages&, const slc::Messages&);
+    void setToAxisParameter(const slc::Messages&);
   private:
     cmd::LeafManager leafManager;
     void go();
-    ftr::Picks connect(const std::vector<slc::Message>&, const std::string&);
+    ftr::Picks connect(const slc::Messages&, std::string_view);
   };
 }
 

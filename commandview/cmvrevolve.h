@@ -38,11 +38,7 @@ namespace cmv
     Revolve(cmd::Revolve*);
     ~Revolve() override;
   public Q_SLOTS:
-    void comboChanged(int);
-    void profileSelectionChanged();
-    void axisSelectionChanged();
-    void parameterChanged();
-    
+    void modelChanged(const QModelIndex&, const QModelIndex&);
   private:
     struct Stow;
     std::unique_ptr<Stow> stow;

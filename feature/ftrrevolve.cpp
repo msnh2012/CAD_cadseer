@@ -39,94 +39,118 @@
 #include "project/serial/generated/prjsrlrvlsrevolve.h"
 #include "feature/ftrrevolve.h"
 
-using namespace ftr;
+using namespace ftr::Revolve;
 using boost::uuids::uuid;
+QIcon Feature::icon = QIcon(":/resources/images/constructionRevolve.svg");
 
-QIcon Revolve::icon = QIcon(":/resources/images/constructionRevolve.svg");
+struct Feature::Stow
+{
+  Feature &feature;
+  prm::Parameter axisType{QObject::tr("Axis Type"), 0, PrmTags::axisType};
+  prm::Parameter profilePicks{QObject::tr("Profile"), ftr::Picks(), PrmTags::profilePicks};
+  prm::Parameter axisPicks{QObject::tr("Axis Picks"), ftr::Picks(), PrmTags::axisPicks};
+  prm::Parameter axisOrigin{QObject::tr("Axis Origin"), osg::Vec3d(), PrmTags::axisOrigin};
+  prm::Parameter axisDirection{QObject::tr("Axis Direction"), osg::Vec3d(), PrmTags::axisDirection};
+  prm::Parameter angle{prm::Names::Angle, 360.0, prm::Tags::Angle};
+  prm::Observer syncObserver{std::bind(&Stow::prmActiveSync, this)};
+  prm::Observer blockObserver{std::bind(&Feature::setModelDirty, &feature)};
+  
+  ann::SeerShape sShape;
+  
+  osg::ref_ptr<lbr::PLabel> axisTypeLabel{new lbr::PLabel(&axisType)};
+  osg::ref_ptr<lbr::PLabel> axisOriginLabel{new lbr::PLabel(&axisOrigin)};
+  osg::ref_ptr<lbr::PLabel> axisDirectionLabel{new lbr::PLabel(&axisDirection)};
+  osg::ref_ptr<lbr::PLabel> angleLabel{new lbr::PLabel(&angle)};
+  
+  std::map<uuid, uuid> generatedMap; //map transition shapes.
+  std::map<uuid, uuid> lastMap; //map 'top' shapes.
+  std::map<uuid, uuid> oWireMap; //map new face to outer wire.
+  
+  Stow() = delete;
+  Stow(Feature &fIn)
+  : feature(fIn)
+  {
+    QStringList types =
+    {
+      QObject::tr("Picks")
+      , QObject::tr("Parameters")
+    };
+    axisType.setEnumeration(types);
+    axisType.connectValue(std::bind(&Feature::setModelDirty, &feature));
+    axisType.connect(syncObserver);
+    feature.parameters.push_back(&axisType);
+    
+    profilePicks.connectValue(std::bind(&Feature::setModelDirty, &feature));
+    feature.parameters.push_back(&profilePicks);
+    
+    axisPicks.connectValue(std::bind(&Feature::setModelDirty, &feature));
+    feature.parameters.push_back(&axisPicks);
+    
+    axisOrigin.connect(blockObserver);
+    feature.parameters.push_back(&axisOrigin);
+    
+    axisDirection.connect(blockObserver);
+    feature.parameters.push_back(&axisDirection);
+    
+    angle.setConstraint(prm::Constraint::buildNonZeroAngle());
+    angle.connectValue(std::bind(&Feature::setModelDirty, &feature));
+    feature.parameters.push_back(&angle);
+    
+    feature.annexes.insert(std::make_pair(ann::Type::SeerShape, &sShape));
+    
+    feature.overlaySwitch->addChild(axisTypeLabel.get());
+    feature.overlaySwitch->addChild(axisOriginLabel.get());
+    feature.overlaySwitch->addChild(axisDirectionLabel.get());
+    feature.overlaySwitch->addChild(angleLabel.get());
+    
+    prmActiveSync();
+    axisTypeLabel->refresh(); //need to update after set enumeration.
+  }
+  
+  void prmActiveSync()
+  {
+    int type = axisType.getInt();
+    if (type == 0) //picks
+    {
+      axisPicks.setActive(true);
+      axisOrigin.setActive(false);
+      axisDirection.setActive(false);
+    }
+    else if (type == 1) //parameters
+    {
+      axisPicks.setActive(false);
+      axisOrigin.setActive(true);
+      axisDirection.setActive(true);
+    }
+  }
+  
+  void updateLabels(occt::BoundingBox &bb)
+  {
+    axisOriginLabel->setMatrix(osg::Matrixd::translate(axisOrigin.getVector()));
+    axisDirectionLabel->setMatrix(osg::Matrixd::translate(axisOrigin.getVector() + axisDirection.getVector()));
+    angleLabel->setMatrix(osg::Matrixd::translate(gu::toOsg(bb.getCenter())));
+    
+    osg::Vec3d projection = axisDirection.getVector() * 0.5;
+    osg::Vec3d location = axisOrigin.getVector() + projection;
+    axisTypeLabel->setMatrix(osg::Matrixd::translate(location));
+  }
+};
 
-Revolve::Revolve():
-Base()
-, sShape(std::make_unique<ann::SeerShape>())
-, axisOrigin(std::make_unique<prm::Parameter>(prm::Names::Origin, osg::Vec3d(0.0, 0.0, 0.0), prm::Tags::Origin))
-, axisDirection(std::make_unique<prm::Parameter>(prm::Names::Direction, osg::Vec3d(0.0, 1.0, 0.0), prm::Tags::Direction))
-, angle(std::make_unique<prm::Parameter>(prm::Names::Angle, 360.0, prm::Tags::Angle))
-, prmObserver(std::make_unique<prm::Observer>(std::bind(&Revolve::setModelDirty, this)))
-, axisOriginLabel(new lbr::PLabel(axisOrigin.get()))
-, axisDirectionLabel(new lbr::PLabel(axisDirection.get()))
-, angleLabel(new lbr::PLabel(angle.get()))
-, internalSwitch(new osg::Switch())
+Feature::Feature()
+: Base()
+, stow(std::make_unique<Stow>(*this))
 {
   name = QObject::tr("Revolve");
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
-  
-  axisOrigin->connect(*prmObserver);
-  parameters.push_back(axisOrigin.get());
-  
-  axisDirection->connect(*prmObserver);
-  parameters.push_back(axisDirection.get());
-  
-  angle->setConstraint(prm::Constraint::buildNonZeroAngle());
-  angle->connectValue(std::bind(&Revolve::setModelDirty, this));
-  parameters.push_back(angle.get());
-  
-  internalSwitch->addChild(axisOriginLabel);
-  internalSwitch->addChild(axisDirectionLabel);
-  internalSwitch->addChild(angleLabel);
-  
-  overlaySwitch->addChild(internalSwitch.get());
-  
-  annexes.insert(std::make_pair(ann::Type::SeerShape, sShape.get()));
 }
 
-Revolve::~Revolve(){}
+Feature::~Feature() = default;
 
-void Revolve::setPicks(const Picks &pIn)
-{
-  picks = pIn;
-  setModelDirty();
-}
-
-void Revolve::setAxisPicks(const Picks &pIn)
-{
-  axisPicks = pIn;
-  setAxisType(AxisType::Picks);
-}
-
-void Revolve::setAxisType(AxisType ai)
-{
-  axisType = ai;
-  setModelDirty();
-  updateLabelVisibility();
-}
-
-void Revolve::updateLabelVisibility()
-{
-  if (axisType == AxisType::Picks)
-  {
-    internalSwitch->setChildValue(axisOriginLabel.get(), false);
-    internalSwitch->setChildValue(axisDirectionLabel.get(), false);
-  }
-  else
-  {
-    internalSwitch->setChildValue(axisOriginLabel.get(), true);
-    internalSwitch->setChildValue(axisDirectionLabel.get(), true);
-  }
-}
-
-void Revolve::updateLabels(occt::BoundingBox &bb)
-{
-  updateLabelVisibility();
-  
-  axisOriginLabel->setMatrix(osg::Matrixd::translate(axisOrigin->getVector()));
-  axisDirectionLabel->setMatrix(osg::Matrixd::translate(axisDirection->getVector()));
-  angleLabel->setMatrix(osg::Matrixd::translate(gu::toOsg(bb.getCenter())));
-}
-
-void Revolve::updateModel(const UpdatePayload &pIn)
+void Feature::updateModel(const UpdatePayload &pIn)
 {
   setFailure();
   lastUpdateLog.clear();
-  sShape->reset();
+  stow->sShape.reset();
   try
   {
     if (isSkipped())
@@ -134,7 +158,8 @@ void Revolve::updateModel(const UpdatePayload &pIn)
       setSuccess();
       throw std::runtime_error("feature is skipped");
     }
-    
+    prm::ObserverBlocker block(stow->blockObserver);
+    const auto &picks = stow->profilePicks.getPicks();
     if (picks.size() != 1) //only 1 for now.
       throw std::runtime_error("wrong number of target picks.");
     tls::Resolver tResolver(pIn);
@@ -187,8 +212,9 @@ void Revolve::updateModel(const UpdatePayload &pIn)
       throw std::runtime_error("Nothing to revolve");
     occt::BoundingBox bb;
     bb.add(str);
-    
-    if (axisType == AxisType::Picks)
+    int axisType = stow->axisType.getInt();
+    const auto &axisPicks = stow->axisPicks.getPicks();
+    if (axisType == 0) //picks
     {
       if (axisPicks.empty() || axisPicks.size() > 2)
         throw std::runtime_error("Wrong number of axis picks");
@@ -203,8 +229,8 @@ void Revolve::updateModel(const UpdatePayload &pIn)
           const auto directionPrms = aResolver.getFeature()->getParameters(prm::Tags::Direction);
           if (!originPrms.empty() && !directionPrms.empty())
           {
-            axisOrigin->setValue(originPrms.front()->getVector());
-            axisDirection->setValue(directionPrms.front()->getVector());
+            stow->axisOrigin.setValue(originPrms.front()->getVector());
+            stow->axisDirection.setValue(directionPrms.front()->getVector());
           }
         }
         else
@@ -222,8 +248,8 @@ void Revolve::updateModel(const UpdatePayload &pIn)
           auto glean = occt::gleanAxis(rShapes.front());
           if (!glean.second)
             throw std::runtime_error("Couldn't glean axis from single axis pick");
-          axisOrigin->setValue(gu::toOsg(glean.first.Location()));
-          axisDirection->setValue(gu::toOsg(glean.first.Direction()));
+          stow->axisOrigin.setValue(gu::toOsg(glean.first.Location()));
+          stow->axisDirection.setValue(gu::toOsg(glean.first.Direction()));
         }
       }
       else //axisPicks size == 2
@@ -243,23 +269,23 @@ void Revolve::updateModel(const UpdatePayload &pIn)
         }
         osg::Vec3d tAxis = points0.front() - points1.front();
         tAxis.normalize();
-        axisOrigin->setValue(points1.front());
-        axisDirection->setValue(tAxis);
+        stow->axisOrigin.setValue(points1.front());
+        stow->axisDirection.setValue(tAxis);
       }
     }
     
     TopoDS_Compound strc = static_cast<TopoDS_Compound>(occt::ShapeVectorCast(str));
     gp_Ax1 axis
     (
-      gp_Pnt(gu::toOcc(axisOrigin->getVector()).XYZ()),
-      gp_Dir(gu::toOcc(axisDirection->getVector()))
+      gp_Pnt(gu::toOcc(stow->axisOrigin.getVector()).XYZ()),
+      gp_Dir(gu::toOcc(stow->axisDirection.getVector()))
     );
-    double la = angle->getDouble();
+    double la = stow->angle.getDouble();
     BRepPrimAPI_MakeRevol revolver(strc, axis, osg::DegreesToRadians(la));
     revolver.Check(); //throw occ exception if failed
     
-    sShape->setOCCTShape(revolver.Shape(), getId());
-    sShape->shapeMatch(*tResolver.getSeerShape());
+    stow->sShape.setOCCTShape(revolver.Shape(), getId());
+    stow->sShape.shapeMatch(*tResolver.getSeerShape());
     
     int count = -1;
     for (const auto &s : occt::mapShapes(strc))
@@ -276,19 +302,19 @@ void Revolve::updateModel(const UpdatePayload &pIn)
       //transition from FirstShapes to LastShapes.
       //I am getting a wire that generates a shell but the shell is not in the shape. bug?
       const TopTools_ListOfShape &generated = revolver.Generated(s);
-      if (!generated.IsEmpty() && sShape->hasShape(generated.First()))
+      if (!generated.IsEmpty() && stow->sShape.hasShape(generated.First()))
       {
         uuid gId = gu::createRandomId();
-        auto gIt = generatedMap.find(oldId);
-        if (gIt == generatedMap.end())
-          generatedMap.insert(std::make_pair(oldId, gId));
+        auto gIt = stow->generatedMap.find(oldId);
+        if (gIt == stow->generatedMap.end())
+          stow->generatedMap.insert(std::make_pair(oldId, gId));
         else
           gId = gIt->second;
-        sShape->updateId(generated.First(), gId);
-        if (!sShape->hasEvolveRecord(gu::createNilId(), gId))
+        stow->sShape.updateId(generated.First(), gId);
+        if (!stow->sShape.hasEvolveRecord(gu::createNilId(), gId))
         {
-          assert(!sShape->hasEvolveRecordOut(gId));
-          sShape->insertEvolve(gu::createNilId(), gId);
+          assert(!stow->sShape.hasEvolveRecordOut(gId));
+          stow->sShape.insertEvolve(gu::createNilId(), gId);
         }
         if (generated.Extent() > 1)
           std::cout << "Warning: more than 1 generated shape in revolve." << std::endl;
@@ -297,59 +323,59 @@ void Revolve::updateModel(const UpdatePayload &pIn)
       //this is for the new shapes at the top of the prism.
       //in BRepPrimAPI_MakePrism terminology these are 'LastShape'
       const TopoDS_Shape &last = revolver.LastShape(s);
-      if (!last.IsNull() && sShape->hasShape(last))
+      if (!last.IsNull() && stow->sShape.hasShape(last))
       {
         uuid lId = gu::createRandomId();
-        auto lIt = lastMap.find(oldId);
-        if (lIt == lastMap.end())
-          lastMap.insert(std::make_pair(oldId, lId));
+        auto lIt = stow->lastMap.find(oldId);
+        if (lIt == stow->lastMap.end())
+          stow->lastMap.insert(std::make_pair(oldId, lId));
         else
           lId = lIt->second;
-        sShape->updateId(last, lId);
-        if (!sShape->hasEvolveRecord(gu::createNilId(), lId))
+        stow->sShape.updateId(last, lId);
+        if (!stow->sShape.hasEvolveRecord(gu::createNilId(), lId))
         {
-          assert(!sShape->hasEvolveRecordOut(lId));
-          sShape->insertEvolve(gu::createNilId(), lId);
+          assert(!stow->sShape.hasEvolveRecordOut(lId));
+          stow->sShape.insertEvolve(gu::createNilId(), lId);
         }
       }
     }
     
-    sShape->outerWireMatch(*tResolver.getSeerShape());
+    stow->sShape.outerWireMatch(*tResolver.getSeerShape());
     
     //this should assign ids to nil outerwires based upon parent face id.
-    occt::ShapeVector ns = sShape->getAllNilShapes();
+    occt::ShapeVector ns = stow->sShape.getAllNilShapes();
     for (const auto &s : ns)
     {
       if (s.ShapeType() != TopAbs_WIRE)
         continue;
-      occt::ShapeVector ps = sShape->useGetParentsOfType(s, TopAbs_FACE);
+      occt::ShapeVector ps = stow->sShape.useGetParentsOfType(s, TopAbs_FACE);
       if (ps.empty())
         continue;
-      uuid fId = sShape->findId(ps.front());
+      uuid fId = stow->sShape.findId(ps.front());
       if (fId.is_nil())
         continue;
       uuid wId = gu::createRandomId();
-      auto it = oWireMap.find(fId);
-      if (it == oWireMap.end())
-        oWireMap.insert(std::make_pair(fId, wId));
+      auto it = stow->oWireMap.find(fId);
+      if (it == stow->oWireMap.end())
+        stow->oWireMap.insert(std::make_pair(fId, wId));
       else
         wId = it->second;
-      sShape->updateId(s, wId);
-      if (!sShape->hasEvolveRecord(gu::createNilId(), wId))
+      stow->sShape.updateId(s, wId);
+      if (!stow->sShape.hasEvolveRecord(gu::createNilId(), wId))
       {
-        assert(!sShape->hasEvolveRecordOut(wId));
-        sShape->insertEvolve(gu::createNilId(), wId);
+        assert(!stow->sShape.hasEvolveRecordOut(wId));
+        stow->sShape.insertEvolve(gu::createNilId(), wId);
       }
     }
     
-    sShape->derivedMatch();
-    sShape->uniqueTypeMatch(*tResolver.getSeerShape());
-    sShape->dumpNils("revolve feature");
-    sShape->dumpDuplicates("revolve feature");
-    sShape->ensureNoNils();
-    sShape->ensureNoDuplicates();
+    stow->sShape.derivedMatch();
+    stow->sShape.uniqueTypeMatch(*tResolver.getSeerShape());
+    stow->sShape.dumpNils("revolve feature");
+    stow->sShape.dumpDuplicates("revolve feature");
+    stow->sShape.ensureNoNils();
+    stow->sShape.ensureNoDuplicates();
     
-    updateLabels(bb);
+    stow->updateLabels(bb);
     setSuccess();
   }
   catch (const Standard_Failure &e)
@@ -372,30 +398,29 @@ void Revolve::updateModel(const UpdatePayload &pIn)
     std::cout << std::endl << lastUpdateLog;
 }
 
-void Revolve::serialWrite(const boost::filesystem::path &dIn)
+void Feature::serialWrite(const boost::filesystem::path &dIn)
 {
   prj::srl::rvls::Revolve so
   (
-    Base::serialOut(),
-    sShape->serialOut(),
-    axisOrigin->serialOut(),
-    axisOriginLabel->serialOut(),
-    axisDirection->serialOut(),
-    axisDirectionLabel->serialOut(),
-    angle->serialOut(),
-    angleLabel->serialOut(),
-    static_cast<int>(axisType)
+    Base::serialOut()
+    , stow->axisType.serialOut()
+    , stow->profilePicks.serialOut()
+    , stow->axisPicks.serialOut()
+    , stow->axisOrigin.serialOut()
+    , stow->axisDirection.serialOut()
+    , stow->angle.serialOut()
+    , stow->sShape.serialOut()
+    , stow->axisTypeLabel->serialOut()
+    , stow->axisOriginLabel->serialOut()
+    , stow->axisDirectionLabel->serialOut()
+    , stow->angleLabel->serialOut()
   );
-  
-  for (const auto &p : picks)
-    so.picks().push_back(p);
-  for (const auto &p : axisPicks)
-    so.axisPicks().push_back(p);
-  for (const auto &p : generatedMap)
+
+  for (const auto &p : stow->generatedMap)
     so.generatedMap().push_back(prj::srl::spt::EvolveRecord(gu::idToString(p.first), gu::idToString(p.second)));
-  for (const auto &p : lastMap)
+  for (const auto &p : stow->lastMap)
     so.lastMap().push_back(prj::srl::spt::EvolveRecord(gu::idToString(p.first), gu::idToString(p.second)));
-  for (const auto &p : oWireMap)
+  for (const auto &p : stow->oWireMap)
     so.oWireMap().push_back(prj::srl::spt::EvolveRecord(gu::idToString(p.first), gu::idToString(p.second)));
   
   xml_schema::NamespaceInfomap infoMap;
@@ -403,28 +428,25 @@ void Revolve::serialWrite(const boost::filesystem::path &dIn)
   prj::srl::rvls::revolve(stream, so, infoMap);
 }
 
-void Revolve::serialRead(const prj::srl::rvls::Revolve &so)
+void Feature::serialRead(const prj::srl::rvls::Revolve &so)
 {
   Base::serialIn(so.base());
-  sShape->serialIn(so.seerShape());
-  axisOrigin->serialIn(so.axisOrigin());
-  axisOriginLabel->serialIn(so.axisOriginLabel());
-  axisDirection->serialIn(so.axisDirection());
-  axisDirectionLabel->serialIn(so.axisDirectionLabel());
-  angle->serialIn(so.angle());
-  angleLabel->serialIn(so.angleLabel());
-  axisType = static_cast<AxisType>(so.axisType());
+  stow->axisType.serialIn(so.axisType());
+  stow->profilePicks.serialIn(so.profilePicks());
+  stow->axisPicks.serialIn(so.axisPicks());
+  stow->axisOrigin.serialIn(so.axisOrigin());
+  stow->axisDirection.serialIn(so.axisDirection());
+  stow->angle.serialIn(so.angle());
+  stow->sShape.serialIn(so.seerShape());
+  stow->axisTypeLabel->serialIn(so.axisTypeLabel());
+  stow->axisOriginLabel->serialIn(so.axisOriginLabel());
+  stow->axisDirectionLabel->serialIn(so.axisDirectionLabel());
+  stow->angleLabel->serialIn(so.angleLabel());
   
-  for (const auto &p : so.picks())
-    picks.emplace_back(p);
-  for (const auto &p : so.axisPicks())
-    axisPicks.emplace_back(p);
   for (const auto &p : so.generatedMap())
-    generatedMap.insert(std::make_pair(gu::stringToId(p.idIn()), gu::stringToId(p.idOut())));
+    stow->generatedMap.insert(std::make_pair(gu::stringToId(p.idIn()), gu::stringToId(p.idOut())));
   for (const auto &p : so.lastMap())
-    lastMap.insert(std::make_pair(gu::stringToId(p.idIn()), gu::stringToId(p.idOut())));
+    stow->lastMap.insert(std::make_pair(gu::stringToId(p.idIn()), gu::stringToId(p.idOut())));
   for (const auto &p : so.oWireMap())
-    oWireMap.insert(std::make_pair(gu::stringToId(p.idIn()), gu::stringToId(p.idOut())));
-  
-  updateLabelVisibility();
+    stow->oWireMap.insert(std::make_pair(gu::stringToId(p.idIn()), gu::stringToId(p.idOut())));
 }

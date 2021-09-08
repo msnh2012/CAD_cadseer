@@ -24,6 +24,8 @@
 #include "message/msgnode.h"
 #include "project/prjproject.h"
 #include "selection/slceventhandler.h"
+#include "parameter/prmconstants.h"
+#include "parameter/prmparameter.h"
 #include "annex/annseershape.h"
 #include "feature/ftrinputtype.h"
 #include "feature/ftrrevolve.h"
@@ -32,15 +34,14 @@
 #include "command/cmdrevolve.h"
 
 using boost::uuids::uuid;
-
 using namespace cmd;
 
 Revolve::Revolve()
 : Base()
 , leafManager()
 {
-  feature = new ftr::Revolve();
-  project->addFeature(std::unique_ptr<ftr::Revolve>(feature));
+  feature = new ftr::Revolve::Feature();
+  project->addFeature(std::unique_ptr<ftr::Revolve::Feature>(feature));
   node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
   isEdit = false;
   isFirstRun = true;
@@ -50,7 +51,7 @@ Revolve::Revolve(ftr::Base *fIn)
 : Base()
 , leafManager(fIn)
 {
-  feature = dynamic_cast<ftr::Revolve*>(fIn);
+  feature = dynamic_cast<ftr::Revolve::Feature*>(fIn);
   assert(feature);
   viewBase = std::make_unique<cmv::Revolve>(this);
   node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
@@ -111,36 +112,36 @@ void Revolve::localUpdate()
   node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
 }
 
-ftr::Picks Revolve::connect(const std::vector<slc::Message> &msIn, const std::string &prefix)
+ftr::Picks Revolve::connect(const slc::Messages &msIn, std::string_view prefix)
 {
   ftr::Picks out;
   for (const auto &mIn : msIn)
   {
     const ftr::Base *f = project->findFeature(mIn.featureId);
     ftr::Pick pick = tls::convertToPick(mIn, *f, project->getShapeHistory());
-    pick.tag = ftr::InputType::createIndexedTag(prefix, out.size());
+    pick.tag = indexTag(prefix, out.size());
     out.push_back(pick);
     project->connectInsert(f->getId(), feature->getId(), {pick.tag});
   };
   return out;
 }
 
-void Revolve::setToAxisPicks(const std::vector<slc::Message> &profileMessages, const std::vector<slc::Message> &axisMessages)
+void Revolve::setToAxisPicks(const slc::Messages &profileMessages, const slc::Messages &axisMessages)
 {
   assert(isActive);
   project->clearAllInputs(feature->getId());
-  feature->setAxisType(ftr::Revolve::AxisType::Picks);
-  feature->setPicks(connect(profileMessages, ftr::InputType::target));
-  feature->setAxisPicks(connect(axisMessages, ftr::Revolve::axisName));
+  feature->getParameter(ftr::Revolve::PrmTags::axisType)->setValue(0);
+  feature->getParameter(ftr::Revolve::PrmTags::profilePicks)->setValue(connect(profileMessages, ftr::Revolve::PrmTags::profilePicks));
+  feature->getParameter(ftr::Revolve::PrmTags::axisPicks)->setValue(connect(axisMessages, ftr::Revolve::PrmTags::axisPicks));
 }
 
 
-void Revolve::setToAxisParameter(const std::vector<slc::Message> &profileMessages)
+void Revolve::setToAxisParameter(const slc::Messages &profileMessages)
 {
   assert(isActive);
   project->clearAllInputs(feature->getId());
-  feature->setAxisType(ftr::Revolve::AxisType::Parameter);
-  feature->setPicks(connect(profileMessages, ftr::InputType::target));
+  feature->getParameter(ftr::Revolve::PrmTags::axisType)->setValue(1);
+  feature->getParameter(ftr::Revolve::PrmTags::profilePicks)->setValue(connect(profileMessages, ftr::Revolve::PrmTags::profilePicks));
 }
 
 void Revolve::go()

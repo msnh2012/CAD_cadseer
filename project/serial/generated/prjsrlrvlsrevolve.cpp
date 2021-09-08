@@ -73,64 +73,76 @@ namespace prj
         this->base_.set (std::move (x));
       }
 
-      const Revolve::SeerShapeType& Revolve::
-      seerShape () const
+      const Revolve::AxisTypeType& Revolve::
+      axisType () const
       {
-        return this->seerShape_.get ();
+        return this->axisType_.get ();
       }
 
-      Revolve::SeerShapeType& Revolve::
-      seerShape ()
+      Revolve::AxisTypeType& Revolve::
+      axisType ()
       {
-        return this->seerShape_.get ();
-      }
-
-      void Revolve::
-      seerShape (const SeerShapeType& x)
-      {
-        this->seerShape_.set (x);
+        return this->axisType_.get ();
       }
 
       void Revolve::
-      seerShape (::std::unique_ptr< SeerShapeType > x)
+      axisType (const AxisTypeType& x)
       {
-        this->seerShape_.set (std::move (x));
-      }
-
-      const Revolve::PicksSequence& Revolve::
-      picks () const
-      {
-        return this->picks_;
-      }
-
-      Revolve::PicksSequence& Revolve::
-      picks ()
-      {
-        return this->picks_;
+        this->axisType_.set (x);
       }
 
       void Revolve::
-      picks (const PicksSequence& s)
+      axisType (::std::unique_ptr< AxisTypeType > x)
       {
-        this->picks_ = s;
+        this->axisType_.set (std::move (x));
       }
 
-      const Revolve::AxisPicksSequence& Revolve::
+      const Revolve::ProfilePicksType& Revolve::
+      profilePicks () const
+      {
+        return this->profilePicks_.get ();
+      }
+
+      Revolve::ProfilePicksType& Revolve::
+      profilePicks ()
+      {
+        return this->profilePicks_.get ();
+      }
+
+      void Revolve::
+      profilePicks (const ProfilePicksType& x)
+      {
+        this->profilePicks_.set (x);
+      }
+
+      void Revolve::
+      profilePicks (::std::unique_ptr< ProfilePicksType > x)
+      {
+        this->profilePicks_.set (std::move (x));
+      }
+
+      const Revolve::AxisPicksType& Revolve::
       axisPicks () const
       {
-        return this->axisPicks_;
+        return this->axisPicks_.get ();
       }
 
-      Revolve::AxisPicksSequence& Revolve::
+      Revolve::AxisPicksType& Revolve::
       axisPicks ()
       {
-        return this->axisPicks_;
+        return this->axisPicks_.get ();
       }
 
       void Revolve::
-      axisPicks (const AxisPicksSequence& s)
+      axisPicks (const AxisPicksType& x)
       {
-        this->axisPicks_ = s;
+        this->axisPicks_.set (x);
+      }
+
+      void Revolve::
+      axisPicks (::std::unique_ptr< AxisPicksType > x)
+      {
+        this->axisPicks_.set (std::move (x));
       }
 
       const Revolve::AxisOriginType& Revolve::
@@ -157,30 +169,6 @@ namespace prj
         this->axisOrigin_.set (std::move (x));
       }
 
-      const Revolve::AxisOriginLabelType& Revolve::
-      axisOriginLabel () const
-      {
-        return this->axisOriginLabel_.get ();
-      }
-
-      Revolve::AxisOriginLabelType& Revolve::
-      axisOriginLabel ()
-      {
-        return this->axisOriginLabel_.get ();
-      }
-
-      void Revolve::
-      axisOriginLabel (const AxisOriginLabelType& x)
-      {
-        this->axisOriginLabel_.set (x);
-      }
-
-      void Revolve::
-      axisOriginLabel (::std::unique_ptr< AxisOriginLabelType > x)
-      {
-        this->axisOriginLabel_.set (std::move (x));
-      }
-
       const Revolve::AxisDirectionType& Revolve::
       axisDirection () const
       {
@@ -203,30 +191,6 @@ namespace prj
       axisDirection (::std::unique_ptr< AxisDirectionType > x)
       {
         this->axisDirection_.set (std::move (x));
-      }
-
-      const Revolve::AxisDirectionLabelType& Revolve::
-      axisDirectionLabel () const
-      {
-        return this->axisDirectionLabel_.get ();
-      }
-
-      Revolve::AxisDirectionLabelType& Revolve::
-      axisDirectionLabel ()
-      {
-        return this->axisDirectionLabel_.get ();
-      }
-
-      void Revolve::
-      axisDirectionLabel (const AxisDirectionLabelType& x)
-      {
-        this->axisDirectionLabel_.set (x);
-      }
-
-      void Revolve::
-      axisDirectionLabel (::std::unique_ptr< AxisDirectionLabelType > x)
-      {
-        this->axisDirectionLabel_.set (std::move (x));
       }
 
       const Revolve::AngleType& Revolve::
@@ -253,6 +217,102 @@ namespace prj
         this->angle_.set (std::move (x));
       }
 
+      const Revolve::SeerShapeType& Revolve::
+      seerShape () const
+      {
+        return this->seerShape_.get ();
+      }
+
+      Revolve::SeerShapeType& Revolve::
+      seerShape ()
+      {
+        return this->seerShape_.get ();
+      }
+
+      void Revolve::
+      seerShape (const SeerShapeType& x)
+      {
+        this->seerShape_.set (x);
+      }
+
+      void Revolve::
+      seerShape (::std::unique_ptr< SeerShapeType > x)
+      {
+        this->seerShape_.set (std::move (x));
+      }
+
+      const Revolve::AxisTypeLabelType& Revolve::
+      axisTypeLabel () const
+      {
+        return this->axisTypeLabel_.get ();
+      }
+
+      Revolve::AxisTypeLabelType& Revolve::
+      axisTypeLabel ()
+      {
+        return this->axisTypeLabel_.get ();
+      }
+
+      void Revolve::
+      axisTypeLabel (const AxisTypeLabelType& x)
+      {
+        this->axisTypeLabel_.set (x);
+      }
+
+      void Revolve::
+      axisTypeLabel (::std::unique_ptr< AxisTypeLabelType > x)
+      {
+        this->axisTypeLabel_.set (std::move (x));
+      }
+
+      const Revolve::AxisOriginLabelType& Revolve::
+      axisOriginLabel () const
+      {
+        return this->axisOriginLabel_.get ();
+      }
+
+      Revolve::AxisOriginLabelType& Revolve::
+      axisOriginLabel ()
+      {
+        return this->axisOriginLabel_.get ();
+      }
+
+      void Revolve::
+      axisOriginLabel (const AxisOriginLabelType& x)
+      {
+        this->axisOriginLabel_.set (x);
+      }
+
+      void Revolve::
+      axisOriginLabel (::std::unique_ptr< AxisOriginLabelType > x)
+      {
+        this->axisOriginLabel_.set (std::move (x));
+      }
+
+      const Revolve::AxisDirectionLabelType& Revolve::
+      axisDirectionLabel () const
+      {
+        return this->axisDirectionLabel_.get ();
+      }
+
+      Revolve::AxisDirectionLabelType& Revolve::
+      axisDirectionLabel ()
+      {
+        return this->axisDirectionLabel_.get ();
+      }
+
+      void Revolve::
+      axisDirectionLabel (const AxisDirectionLabelType& x)
+      {
+        this->axisDirectionLabel_.set (x);
+      }
+
+      void Revolve::
+      axisDirectionLabel (::std::unique_ptr< AxisDirectionLabelType > x)
+      {
+        this->axisDirectionLabel_.set (std::move (x));
+      }
+
       const Revolve::AngleLabelType& Revolve::
       angleLabel () const
       {
@@ -275,24 +335,6 @@ namespace prj
       angleLabel (::std::unique_ptr< AngleLabelType > x)
       {
         this->angleLabel_.set (std::move (x));
-      }
-
-      const Revolve::AxisTypeType& Revolve::
-      axisType () const
-      {
-        return this->axisType_.get ();
-      }
-
-      Revolve::AxisTypeType& Revolve::
-      axisType ()
-      {
-        return this->axisType_.get ();
-      }
-
-      void Revolve::
-      axisType (const AxisTypeType& x)
-      {
-        this->axisType_.set (x);
       }
 
       const Revolve::GeneratedMapSequence& Revolve::
@@ -365,26 +407,30 @@ namespace prj
 
       Revolve::
       Revolve (const BaseType& base,
-               const SeerShapeType& seerShape,
+               const AxisTypeType& axisType,
+               const ProfilePicksType& profilePicks,
+               const AxisPicksType& axisPicks,
                const AxisOriginType& axisOrigin,
-               const AxisOriginLabelType& axisOriginLabel,
                const AxisDirectionType& axisDirection,
-               const AxisDirectionLabelType& axisDirectionLabel,
                const AngleType& angle,
-               const AngleLabelType& angleLabel,
-               const AxisTypeType& axisType)
+               const SeerShapeType& seerShape,
+               const AxisTypeLabelType& axisTypeLabel,
+               const AxisOriginLabelType& axisOriginLabel,
+               const AxisDirectionLabelType& axisDirectionLabel,
+               const AngleLabelType& angleLabel)
       : ::xml_schema::Type (),
         base_ (base, this),
-        seerShape_ (seerShape, this),
-        picks_ (this),
-        axisPicks_ (this),
-        axisOrigin_ (axisOrigin, this),
-        axisOriginLabel_ (axisOriginLabel, this),
-        axisDirection_ (axisDirection, this),
-        axisDirectionLabel_ (axisDirectionLabel, this),
-        angle_ (angle, this),
-        angleLabel_ (angleLabel, this),
         axisType_ (axisType, this),
+        profilePicks_ (profilePicks, this),
+        axisPicks_ (axisPicks, this),
+        axisOrigin_ (axisOrigin, this),
+        axisDirection_ (axisDirection, this),
+        angle_ (angle, this),
+        seerShape_ (seerShape, this),
+        axisTypeLabel_ (axisTypeLabel, this),
+        axisOriginLabel_ (axisOriginLabel, this),
+        axisDirectionLabel_ (axisDirectionLabel, this),
+        angleLabel_ (angleLabel, this),
         generatedMap_ (this),
         lastMap_ (this),
         oWireMap_ (this)
@@ -393,26 +439,30 @@ namespace prj
 
       Revolve::
       Revolve (::std::unique_ptr< BaseType > base,
-               ::std::unique_ptr< SeerShapeType > seerShape,
+               ::std::unique_ptr< AxisTypeType > axisType,
+               ::std::unique_ptr< ProfilePicksType > profilePicks,
+               ::std::unique_ptr< AxisPicksType > axisPicks,
                ::std::unique_ptr< AxisOriginType > axisOrigin,
-               ::std::unique_ptr< AxisOriginLabelType > axisOriginLabel,
                ::std::unique_ptr< AxisDirectionType > axisDirection,
-               ::std::unique_ptr< AxisDirectionLabelType > axisDirectionLabel,
                ::std::unique_ptr< AngleType > angle,
-               ::std::unique_ptr< AngleLabelType > angleLabel,
-               const AxisTypeType& axisType)
+               ::std::unique_ptr< SeerShapeType > seerShape,
+               ::std::unique_ptr< AxisTypeLabelType > axisTypeLabel,
+               ::std::unique_ptr< AxisOriginLabelType > axisOriginLabel,
+               ::std::unique_ptr< AxisDirectionLabelType > axisDirectionLabel,
+               ::std::unique_ptr< AngleLabelType > angleLabel)
       : ::xml_schema::Type (),
         base_ (std::move (base), this),
-        seerShape_ (std::move (seerShape), this),
-        picks_ (this),
-        axisPicks_ (this),
+        axisType_ (std::move (axisType), this),
+        profilePicks_ (std::move (profilePicks), this),
+        axisPicks_ (std::move (axisPicks), this),
         axisOrigin_ (std::move (axisOrigin), this),
-        axisOriginLabel_ (std::move (axisOriginLabel), this),
         axisDirection_ (std::move (axisDirection), this),
-        axisDirectionLabel_ (std::move (axisDirectionLabel), this),
         angle_ (std::move (angle), this),
+        seerShape_ (std::move (seerShape), this),
+        axisTypeLabel_ (std::move (axisTypeLabel), this),
+        axisOriginLabel_ (std::move (axisOriginLabel), this),
+        axisDirectionLabel_ (std::move (axisDirectionLabel), this),
         angleLabel_ (std::move (angleLabel), this),
-        axisType_ (axisType, this),
         generatedMap_ (this),
         lastMap_ (this),
         oWireMap_ (this)
@@ -425,16 +475,17 @@ namespace prj
                ::xml_schema::Container* c)
       : ::xml_schema::Type (x, f, c),
         base_ (x.base_, f, this),
-        seerShape_ (x.seerShape_, f, this),
-        picks_ (x.picks_, f, this),
+        axisType_ (x.axisType_, f, this),
+        profilePicks_ (x.profilePicks_, f, this),
         axisPicks_ (x.axisPicks_, f, this),
         axisOrigin_ (x.axisOrigin_, f, this),
-        axisOriginLabel_ (x.axisOriginLabel_, f, this),
         axisDirection_ (x.axisDirection_, f, this),
-        axisDirectionLabel_ (x.axisDirectionLabel_, f, this),
         angle_ (x.angle_, f, this),
+        seerShape_ (x.seerShape_, f, this),
+        axisTypeLabel_ (x.axisTypeLabel_, f, this),
+        axisOriginLabel_ (x.axisOriginLabel_, f, this),
+        axisDirectionLabel_ (x.axisDirectionLabel_, f, this),
         angleLabel_ (x.angleLabel_, f, this),
-        axisType_ (x.axisType_, f, this),
         generatedMap_ (x.generatedMap_, f, this),
         lastMap_ (x.lastMap_, f, this),
         oWireMap_ (x.oWireMap_, f, this)
@@ -447,16 +498,17 @@ namespace prj
                ::xml_schema::Container* c)
       : ::xml_schema::Type (e, f | ::xml_schema::Flags::base, c),
         base_ (this),
-        seerShape_ (this),
-        picks_ (this),
+        axisType_ (this),
+        profilePicks_ (this),
         axisPicks_ (this),
         axisOrigin_ (this),
-        axisOriginLabel_ (this),
         axisDirection_ (this),
-        axisDirectionLabel_ (this),
         angle_ (this),
+        seerShape_ (this),
+        axisTypeLabel_ (this),
+        axisOriginLabel_ (this),
+        axisDirectionLabel_ (this),
         angleLabel_ (this),
-        axisType_ (this),
         generatedMap_ (this),
         lastMap_ (this),
         oWireMap_ (this)
@@ -492,29 +544,32 @@ namespace prj
             }
           }
 
-          // seerShape
+          // axisType
           //
-          if (n.name () == "seerShape" && n.namespace_ ().empty ())
+          if (n.name () == "axisType" && n.namespace_ ().empty ())
           {
-            ::std::unique_ptr< SeerShapeType > r (
-              SeerShapeTraits::create (i, f, this));
+            ::std::unique_ptr< AxisTypeType > r (
+              AxisTypeTraits::create (i, f, this));
 
-            if (!seerShape_.present ())
+            if (!axisType_.present ())
             {
-              this->seerShape_.set (::std::move (r));
+              this->axisType_.set (::std::move (r));
               continue;
             }
           }
 
-          // picks
+          // profilePicks
           //
-          if (n.name () == "picks" && n.namespace_ ().empty ())
+          if (n.name () == "profilePicks" && n.namespace_ ().empty ())
           {
-            ::std::unique_ptr< PicksType > r (
-              PicksTraits::create (i, f, this));
+            ::std::unique_ptr< ProfilePicksType > r (
+              ProfilePicksTraits::create (i, f, this));
 
-            this->picks_.push_back (::std::move (r));
-            continue;
+            if (!profilePicks_.present ())
+            {
+              this->profilePicks_.set (::std::move (r));
+              continue;
+            }
           }
 
           // axisPicks
@@ -524,8 +579,11 @@ namespace prj
             ::std::unique_ptr< AxisPicksType > r (
               AxisPicksTraits::create (i, f, this));
 
-            this->axisPicks_.push_back (::std::move (r));
-            continue;
+            if (!axisPicks_.present ())
+            {
+              this->axisPicks_.set (::std::move (r));
+              continue;
+            }
           }
 
           // axisOrigin
@@ -538,20 +596,6 @@ namespace prj
             if (!axisOrigin_.present ())
             {
               this->axisOrigin_.set (::std::move (r));
-              continue;
-            }
-          }
-
-          // axisOriginLabel
-          //
-          if (n.name () == "axisOriginLabel" && n.namespace_ ().empty ())
-          {
-            ::std::unique_ptr< AxisOriginLabelType > r (
-              AxisOriginLabelTraits::create (i, f, this));
-
-            if (!axisOriginLabel_.present ())
-            {
-              this->axisOriginLabel_.set (::std::move (r));
               continue;
             }
           }
@@ -570,20 +614,6 @@ namespace prj
             }
           }
 
-          // axisDirectionLabel
-          //
-          if (n.name () == "axisDirectionLabel" && n.namespace_ ().empty ())
-          {
-            ::std::unique_ptr< AxisDirectionLabelType > r (
-              AxisDirectionLabelTraits::create (i, f, this));
-
-            if (!axisDirectionLabel_.present ())
-            {
-              this->axisDirectionLabel_.set (::std::move (r));
-              continue;
-            }
-          }
-
           // angle
           //
           if (n.name () == "angle" && n.namespace_ ().empty ())
@@ -598,6 +628,62 @@ namespace prj
             }
           }
 
+          // seerShape
+          //
+          if (n.name () == "seerShape" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< SeerShapeType > r (
+              SeerShapeTraits::create (i, f, this));
+
+            if (!seerShape_.present ())
+            {
+              this->seerShape_.set (::std::move (r));
+              continue;
+            }
+          }
+
+          // axisTypeLabel
+          //
+          if (n.name () == "axisTypeLabel" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< AxisTypeLabelType > r (
+              AxisTypeLabelTraits::create (i, f, this));
+
+            if (!axisTypeLabel_.present ())
+            {
+              this->axisTypeLabel_.set (::std::move (r));
+              continue;
+            }
+          }
+
+          // axisOriginLabel
+          //
+          if (n.name () == "axisOriginLabel" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< AxisOriginLabelType > r (
+              AxisOriginLabelTraits::create (i, f, this));
+
+            if (!axisOriginLabel_.present ())
+            {
+              this->axisOriginLabel_.set (::std::move (r));
+              continue;
+            }
+          }
+
+          // axisDirectionLabel
+          //
+          if (n.name () == "axisDirectionLabel" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< AxisDirectionLabelType > r (
+              AxisDirectionLabelTraits::create (i, f, this));
+
+            if (!axisDirectionLabel_.present ())
+            {
+              this->axisDirectionLabel_.set (::std::move (r));
+              continue;
+            }
+          }
+
           // angleLabel
           //
           if (n.name () == "angleLabel" && n.namespace_ ().empty ())
@@ -608,17 +694,6 @@ namespace prj
             if (!angleLabel_.present ())
             {
               this->angleLabel_.set (::std::move (r));
-              continue;
-            }
-          }
-
-          // axisType
-          //
-          if (n.name () == "axisType" && n.namespace_ ().empty ())
-          {
-            if (!axisType_.present ())
-            {
-              this->axisType_.set (AxisTypeTraits::create (i, f, this));
               continue;
             }
           }
@@ -666,10 +741,24 @@ namespace prj
             "");
         }
 
-        if (!seerShape_.present ())
+        if (!axisType_.present ())
         {
           throw ::xsd::cxx::tree::expected_element< char > (
-            "seerShape",
+            "axisType",
+            "");
+        }
+
+        if (!profilePicks_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "profilePicks",
+            "");
+        }
+
+        if (!axisPicks_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "axisPicks",
             "");
         }
 
@@ -680,24 +769,10 @@ namespace prj
             "");
         }
 
-        if (!axisOriginLabel_.present ())
-        {
-          throw ::xsd::cxx::tree::expected_element< char > (
-            "axisOriginLabel",
-            "");
-        }
-
         if (!axisDirection_.present ())
         {
           throw ::xsd::cxx::tree::expected_element< char > (
             "axisDirection",
-            "");
-        }
-
-        if (!axisDirectionLabel_.present ())
-        {
-          throw ::xsd::cxx::tree::expected_element< char > (
-            "axisDirectionLabel",
             "");
         }
 
@@ -708,17 +783,38 @@ namespace prj
             "");
         }
 
+        if (!seerShape_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "seerShape",
+            "");
+        }
+
+        if (!axisTypeLabel_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "axisTypeLabel",
+            "");
+        }
+
+        if (!axisOriginLabel_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "axisOriginLabel",
+            "");
+        }
+
+        if (!axisDirectionLabel_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "axisDirectionLabel",
+            "");
+        }
+
         if (!angleLabel_.present ())
         {
           throw ::xsd::cxx::tree::expected_element< char > (
             "angleLabel",
-            "");
-        }
-
-        if (!axisType_.present ())
-        {
-          throw ::xsd::cxx::tree::expected_element< char > (
-            "axisType",
             "");
         }
       }
@@ -737,16 +833,17 @@ namespace prj
         {
           static_cast< ::xml_schema::Type& > (*this) = x;
           this->base_ = x.base_;
-          this->seerShape_ = x.seerShape_;
-          this->picks_ = x.picks_;
+          this->axisType_ = x.axisType_;
+          this->profilePicks_ = x.profilePicks_;
           this->axisPicks_ = x.axisPicks_;
           this->axisOrigin_ = x.axisOrigin_;
-          this->axisOriginLabel_ = x.axisOriginLabel_;
           this->axisDirection_ = x.axisDirection_;
-          this->axisDirectionLabel_ = x.axisDirectionLabel_;
           this->angle_ = x.angle_;
+          this->seerShape_ = x.seerShape_;
+          this->axisTypeLabel_ = x.axisTypeLabel_;
+          this->axisOriginLabel_ = x.axisOriginLabel_;
+          this->axisDirectionLabel_ = x.axisDirectionLabel_;
           this->angleLabel_ = x.angleLabel_;
-          this->axisType_ = x.axisType_;
           this->generatedMap_ = x.generatedMap_;
           this->lastMap_ = x.lastMap_;
           this->oWireMap_ = x.oWireMap_;
@@ -1068,43 +1165,37 @@ namespace prj
           s << i.base ();
         }
 
-        // seerShape
+        // axisType
         //
         {
           ::xercesc::DOMElement& s (
             ::xsd::cxx::xml::dom::create_element (
-              "seerShape",
+              "axisType",
               e));
 
-          s << i.seerShape ();
+          s << i.axisType ();
         }
 
-        // picks
+        // profilePicks
         //
-        for (Revolve::PicksConstIterator
-             b (i.picks ().begin ()), n (i.picks ().end ());
-             b != n; ++b)
         {
           ::xercesc::DOMElement& s (
             ::xsd::cxx::xml::dom::create_element (
-              "picks",
+              "profilePicks",
               e));
 
-          s << *b;
+          s << i.profilePicks ();
         }
 
         // axisPicks
         //
-        for (Revolve::AxisPicksConstIterator
-             b (i.axisPicks ().begin ()), n (i.axisPicks ().end ());
-             b != n; ++b)
         {
           ::xercesc::DOMElement& s (
             ::xsd::cxx::xml::dom::create_element (
               "axisPicks",
               e));
 
-          s << *b;
+          s << i.axisPicks ();
         }
 
         // axisOrigin
@@ -1118,17 +1209,6 @@ namespace prj
           s << i.axisOrigin ();
         }
 
-        // axisOriginLabel
-        //
-        {
-          ::xercesc::DOMElement& s (
-            ::xsd::cxx::xml::dom::create_element (
-              "axisOriginLabel",
-              e));
-
-          s << i.axisOriginLabel ();
-        }
-
         // axisDirection
         //
         {
@@ -1138,17 +1218,6 @@ namespace prj
               e));
 
           s << i.axisDirection ();
-        }
-
-        // axisDirectionLabel
-        //
-        {
-          ::xercesc::DOMElement& s (
-            ::xsd::cxx::xml::dom::create_element (
-              "axisDirectionLabel",
-              e));
-
-          s << i.axisDirectionLabel ();
         }
 
         // angle
@@ -1162,6 +1231,50 @@ namespace prj
           s << i.angle ();
         }
 
+        // seerShape
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "seerShape",
+              e));
+
+          s << i.seerShape ();
+        }
+
+        // axisTypeLabel
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "axisTypeLabel",
+              e));
+
+          s << i.axisTypeLabel ();
+        }
+
+        // axisOriginLabel
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "axisOriginLabel",
+              e));
+
+          s << i.axisOriginLabel ();
+        }
+
+        // axisDirectionLabel
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "axisDirectionLabel",
+              e));
+
+          s << i.axisDirectionLabel ();
+        }
+
         // angleLabel
         //
         {
@@ -1171,17 +1284,6 @@ namespace prj
               e));
 
           s << i.angleLabel ();
-        }
-
-        // axisType
-        //
-        {
-          ::xercesc::DOMElement& s (
-            ::xsd::cxx::xml::dom::create_element (
-              "axisType",
-              e));
-
-          s << i.axisType ();
         }
 
         // generatedMap

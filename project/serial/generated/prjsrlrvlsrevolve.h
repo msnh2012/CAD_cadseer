@@ -93,8 +93,6 @@ namespace prj
 
 #include "prjsrlsptseershape.h"
 
-#include "prjsrlsptpick.h"
-
 #include "prjsrlsptoverlay.h"
 
 #include "prjsrlsptbase.h"
@@ -125,56 +123,56 @@ namespace prj
         void
         base (::std::unique_ptr< BaseType > p);
 
-        // seerShape
+        // axisType
         //
-        typedef ::prj::srl::spt::SeerShape SeerShapeType;
-        typedef ::xsd::cxx::tree::traits< SeerShapeType, char > SeerShapeTraits;
+        typedef ::prj::srl::spt::Parameter AxisTypeType;
+        typedef ::xsd::cxx::tree::traits< AxisTypeType, char > AxisTypeTraits;
 
-        const SeerShapeType&
-        seerShape () const;
+        const AxisTypeType&
+        axisType () const;
 
-        SeerShapeType&
-        seerShape ();
-
-        void
-        seerShape (const SeerShapeType& x);
+        AxisTypeType&
+        axisType ();
 
         void
-        seerShape (::std::unique_ptr< SeerShapeType > p);
+        axisType (const AxisTypeType& x);
 
-        // picks
+        void
+        axisType (::std::unique_ptr< AxisTypeType > p);
+
+        // profilePicks
         //
-        typedef ::prj::srl::spt::Pick PicksType;
-        typedef ::xsd::cxx::tree::sequence< PicksType > PicksSequence;
-        typedef PicksSequence::iterator PicksIterator;
-        typedef PicksSequence::const_iterator PicksConstIterator;
-        typedef ::xsd::cxx::tree::traits< PicksType, char > PicksTraits;
+        typedef ::prj::srl::spt::Parameter ProfilePicksType;
+        typedef ::xsd::cxx::tree::traits< ProfilePicksType, char > ProfilePicksTraits;
 
-        const PicksSequence&
-        picks () const;
+        const ProfilePicksType&
+        profilePicks () const;
 
-        PicksSequence&
-        picks ();
+        ProfilePicksType&
+        profilePicks ();
 
         void
-        picks (const PicksSequence& s);
+        profilePicks (const ProfilePicksType& x);
+
+        void
+        profilePicks (::std::unique_ptr< ProfilePicksType > p);
 
         // axisPicks
         //
-        typedef ::prj::srl::spt::Pick AxisPicksType;
-        typedef ::xsd::cxx::tree::sequence< AxisPicksType > AxisPicksSequence;
-        typedef AxisPicksSequence::iterator AxisPicksIterator;
-        typedef AxisPicksSequence::const_iterator AxisPicksConstIterator;
+        typedef ::prj::srl::spt::Parameter AxisPicksType;
         typedef ::xsd::cxx::tree::traits< AxisPicksType, char > AxisPicksTraits;
 
-        const AxisPicksSequence&
+        const AxisPicksType&
         axisPicks () const;
 
-        AxisPicksSequence&
+        AxisPicksType&
         axisPicks ();
 
         void
-        axisPicks (const AxisPicksSequence& s);
+        axisPicks (const AxisPicksType& x);
+
+        void
+        axisPicks (::std::unique_ptr< AxisPicksType > p);
 
         // axisOrigin
         //
@@ -193,23 +191,6 @@ namespace prj
         void
         axisOrigin (::std::unique_ptr< AxisOriginType > p);
 
-        // axisOriginLabel
-        //
-        typedef ::prj::srl::spt::PLabel AxisOriginLabelType;
-        typedef ::xsd::cxx::tree::traits< AxisOriginLabelType, char > AxisOriginLabelTraits;
-
-        const AxisOriginLabelType&
-        axisOriginLabel () const;
-
-        AxisOriginLabelType&
-        axisOriginLabel ();
-
-        void
-        axisOriginLabel (const AxisOriginLabelType& x);
-
-        void
-        axisOriginLabel (::std::unique_ptr< AxisOriginLabelType > p);
-
         // axisDirection
         //
         typedef ::prj::srl::spt::Parameter AxisDirectionType;
@@ -226,23 +207,6 @@ namespace prj
 
         void
         axisDirection (::std::unique_ptr< AxisDirectionType > p);
-
-        // axisDirectionLabel
-        //
-        typedef ::prj::srl::spt::PLabel AxisDirectionLabelType;
-        typedef ::xsd::cxx::tree::traits< AxisDirectionLabelType, char > AxisDirectionLabelTraits;
-
-        const AxisDirectionLabelType&
-        axisDirectionLabel () const;
-
-        AxisDirectionLabelType&
-        axisDirectionLabel ();
-
-        void
-        axisDirectionLabel (const AxisDirectionLabelType& x);
-
-        void
-        axisDirectionLabel (::std::unique_ptr< AxisDirectionLabelType > p);
 
         // angle
         //
@@ -261,6 +225,74 @@ namespace prj
         void
         angle (::std::unique_ptr< AngleType > p);
 
+        // seerShape
+        //
+        typedef ::prj::srl::spt::SeerShape SeerShapeType;
+        typedef ::xsd::cxx::tree::traits< SeerShapeType, char > SeerShapeTraits;
+
+        const SeerShapeType&
+        seerShape () const;
+
+        SeerShapeType&
+        seerShape ();
+
+        void
+        seerShape (const SeerShapeType& x);
+
+        void
+        seerShape (::std::unique_ptr< SeerShapeType > p);
+
+        // axisTypeLabel
+        //
+        typedef ::prj::srl::spt::PLabel AxisTypeLabelType;
+        typedef ::xsd::cxx::tree::traits< AxisTypeLabelType, char > AxisTypeLabelTraits;
+
+        const AxisTypeLabelType&
+        axisTypeLabel () const;
+
+        AxisTypeLabelType&
+        axisTypeLabel ();
+
+        void
+        axisTypeLabel (const AxisTypeLabelType& x);
+
+        void
+        axisTypeLabel (::std::unique_ptr< AxisTypeLabelType > p);
+
+        // axisOriginLabel
+        //
+        typedef ::prj::srl::spt::PLabel AxisOriginLabelType;
+        typedef ::xsd::cxx::tree::traits< AxisOriginLabelType, char > AxisOriginLabelTraits;
+
+        const AxisOriginLabelType&
+        axisOriginLabel () const;
+
+        AxisOriginLabelType&
+        axisOriginLabel ();
+
+        void
+        axisOriginLabel (const AxisOriginLabelType& x);
+
+        void
+        axisOriginLabel (::std::unique_ptr< AxisOriginLabelType > p);
+
+        // axisDirectionLabel
+        //
+        typedef ::prj::srl::spt::PLabel AxisDirectionLabelType;
+        typedef ::xsd::cxx::tree::traits< AxisDirectionLabelType, char > AxisDirectionLabelTraits;
+
+        const AxisDirectionLabelType&
+        axisDirectionLabel () const;
+
+        AxisDirectionLabelType&
+        axisDirectionLabel ();
+
+        void
+        axisDirectionLabel (const AxisDirectionLabelType& x);
+
+        void
+        axisDirectionLabel (::std::unique_ptr< AxisDirectionLabelType > p);
+
         // angleLabel
         //
         typedef ::prj::srl::spt::PLabel AngleLabelType;
@@ -277,20 +309,6 @@ namespace prj
 
         void
         angleLabel (::std::unique_ptr< AngleLabelType > p);
-
-        // axisType
-        //
-        typedef ::xml_schema::Int AxisTypeType;
-        typedef ::xsd::cxx::tree::traits< AxisTypeType, char > AxisTypeTraits;
-
-        const AxisTypeType&
-        axisType () const;
-
-        AxisTypeType&
-        axisType ();
-
-        void
-        axisType (const AxisTypeType& x);
 
         // generatedMap
         //
@@ -346,24 +364,30 @@ namespace prj
         // Constructors.
         //
         Revolve (const BaseType&,
-                 const SeerShapeType&,
+                 const AxisTypeType&,
+                 const ProfilePicksType&,
+                 const AxisPicksType&,
                  const AxisOriginType&,
-                 const AxisOriginLabelType&,
                  const AxisDirectionType&,
-                 const AxisDirectionLabelType&,
                  const AngleType&,
-                 const AngleLabelType&,
-                 const AxisTypeType&);
+                 const SeerShapeType&,
+                 const AxisTypeLabelType&,
+                 const AxisOriginLabelType&,
+                 const AxisDirectionLabelType&,
+                 const AngleLabelType&);
 
         Revolve (::std::unique_ptr< BaseType >,
-                 ::std::unique_ptr< SeerShapeType >,
+                 ::std::unique_ptr< AxisTypeType >,
+                 ::std::unique_ptr< ProfilePicksType >,
+                 ::std::unique_ptr< AxisPicksType >,
                  ::std::unique_ptr< AxisOriginType >,
-                 ::std::unique_ptr< AxisOriginLabelType >,
                  ::std::unique_ptr< AxisDirectionType >,
-                 ::std::unique_ptr< AxisDirectionLabelType >,
                  ::std::unique_ptr< AngleType >,
-                 ::std::unique_ptr< AngleLabelType >,
-                 const AxisTypeType&);
+                 ::std::unique_ptr< SeerShapeType >,
+                 ::std::unique_ptr< AxisTypeLabelType >,
+                 ::std::unique_ptr< AxisOriginLabelType >,
+                 ::std::unique_ptr< AxisDirectionLabelType >,
+                 ::std::unique_ptr< AngleLabelType >);
 
         Revolve (const ::xercesc::DOMElement& e,
                  ::xml_schema::Flags f = 0,
@@ -392,16 +416,17 @@ namespace prj
 
         protected:
         ::xsd::cxx::tree::one< BaseType > base_;
-        ::xsd::cxx::tree::one< SeerShapeType > seerShape_;
-        PicksSequence picks_;
-        AxisPicksSequence axisPicks_;
-        ::xsd::cxx::tree::one< AxisOriginType > axisOrigin_;
-        ::xsd::cxx::tree::one< AxisOriginLabelType > axisOriginLabel_;
-        ::xsd::cxx::tree::one< AxisDirectionType > axisDirection_;
-        ::xsd::cxx::tree::one< AxisDirectionLabelType > axisDirectionLabel_;
-        ::xsd::cxx::tree::one< AngleType > angle_;
-        ::xsd::cxx::tree::one< AngleLabelType > angleLabel_;
         ::xsd::cxx::tree::one< AxisTypeType > axisType_;
+        ::xsd::cxx::tree::one< ProfilePicksType > profilePicks_;
+        ::xsd::cxx::tree::one< AxisPicksType > axisPicks_;
+        ::xsd::cxx::tree::one< AxisOriginType > axisOrigin_;
+        ::xsd::cxx::tree::one< AxisDirectionType > axisDirection_;
+        ::xsd::cxx::tree::one< AngleType > angle_;
+        ::xsd::cxx::tree::one< SeerShapeType > seerShape_;
+        ::xsd::cxx::tree::one< AxisTypeLabelType > axisTypeLabel_;
+        ::xsd::cxx::tree::one< AxisOriginLabelType > axisOriginLabel_;
+        ::xsd::cxx::tree::one< AxisDirectionLabelType > axisDirectionLabel_;
+        ::xsd::cxx::tree::one< AngleLabelType > angleLabel_;
         GeneratedMapSequence generatedMap_;
         LastMapSequence lastMap_;
         OWireMapSequence oWireMap_;
