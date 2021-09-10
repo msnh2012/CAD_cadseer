@@ -22,10 +22,11 @@
 
 #include "application/appapplication.h"
 #include "project/prjproject.h"
-#include "dialogs/dlgselectionbutton.h"
-#include "dialogs/dlgselectionwidget.h"
-#include "commandview/cmvparameterwidgets.h"
+#include "message/msgnode.h"
+#include "parameter/prmconstants.h"
 #include "parameter/prmparameter.h"
+#include "commandview/cmvselectioncue.h"
+#include "commandview/cmvtable.h"
 #include "feature/ftrinputtype.h"
 #include "feature/ftrtrim.h"
 #include "command/cmdtrim.h"
@@ -39,121 +40,66 @@ struct Trim::Stow
 {
   cmd::Trim *command;
   cmv::Trim *view;
-  dlg::SelectionWidget *selectionWidget = nullptr;
-  cmv::ParameterWidget *parameterWidget = nullptr;
+  prm::Parameters parameters;
+  cmv::tbl::Model *prmModel = nullptr;
+  cmv::tbl::View *prmView = nullptr;
   
   Stow(cmd::Trim *cIn, cmv::Trim *vIn)
   : command(cIn)
   , view(vIn)
   {
+    parameters = command->feature->getParameters();
     buildGui();
-    
-    QSettings &settings = app::instance()->getUserSettings();
-    settings.beginGroup("cmv::Trim");
-    //load settings
-    settings.endGroup();
-    
-    loadFeatureData();
-    glue();
-    selectionWidget->activate(0);
+    connect(prmModel, &tbl::Model::dataChanged, view, &Trim::modelChanged);
   }
   
   void buildGui()
   {
-    QSizePolicy adjust = view->sizePolicy();
-    adjust.setVerticalPolicy(QSizePolicy::Maximum);
-    view->setSizePolicy(adjust);
-    
     QVBoxLayout *mainLayout = new QVBoxLayout();
     view->setLayout(mainLayout);
+    Base::clearContentMargins(view);
+    view->setSizePolicy(view->sizePolicy().horizontalPolicy(), QSizePolicy::Expanding);
     
-    std::vector<dlg::SelectionWidgetCue> cues;
-    dlg::SelectionWidgetCue cue;
-    cue.name = tr("Target");
+    prmModel = new tbl::Model(view, command->feature);
+    prmView = new tbl::View(view, prmModel, true);
+    mainLayout->addWidget(prmView);
+    
+    tbl::SelectionCue cue;
     cue.singleSelection = true;
-    cue.mask = slc::ObjectsEnabled | slc::ObjectsSelectable; //limited to current feature
-    cue.statusPrompt = tr("Select Object To Trim ");
-    cue.showAccrueColumn = false;
-    cues.push_back(cue);
-    cue.name = tr("Tool");
-    cue.statusPrompt = tr("Select Trimming Object");
-    cues.push_back(cue);
-    selectionWidget = new dlg::SelectionWidget(view, cues);
-    mainLayout->addWidget(selectionWidget);
+    cue.mask = slc::ObjectsBoth | slc::SolidsEnabled | slc::ShellsEnabled | slc::FacesEnabled;
+    cue.statusPrompt = tr("Select Entity To Trim");
+    cue.accrueEnabled = false;
+    cue.forceTangentAccrue = false;
+    prmModel->setCue(command->feature->getParameter(ftr::Trim::PrmTags::targetPicks), cue);
     
-    parameterWidget = new cmv::ParameterWidget(view, command->feature->getParameters());
-    mainLayout->addWidget(parameterWidget);
-    mainLayout->addItem(new QSpacerItem(20, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
-  }
-  
-  void loadFeatureData()
-  {
-    auto pl = view->project->getPayload(command->feature->getId());
-    
-    auto buildMessage = [](const ftr::Base *fIn) -> slc::Message
-    {
-      slc::Message m;
-      m.type = slc::Type::Object;
-      m.featureType = fIn->getType();
-      m.featureId = fIn->getId();
-      
-      return m;
-    };
-    
-    auto tfs = pl.getFeatures(ftr::InputType::target);
-    if (!tfs.empty())
-    {
-      slc::Message tm = buildMessage(tfs.front());
-      selectionWidget->initializeButton(0, tm);
-    }
-    
-    auto trfs = pl.getFeatures(ftr::InputType::tool);
-    if (!trfs.empty())
-    {
-      slc::Message tm = buildMessage(trfs.front());
-      selectionWidget->initializeButton(1, tm);
-    }
-  }
-  
-  void glue()
-  {
-    QObject::connect(selectionWidget->getButton(0), &dlg::SelectionButton::dirty, view, &Trim::selectionChanged);
-    QObject::connect(selectionWidget->getButton(1), &dlg::SelectionButton::dirty, view, &Trim::selectionChanged);
-    QObject::connect(parameterWidget, &ParameterBase::prmValueChanged, view, &Trim::parameterChanged);
-  }
-  
-  void parameterChanged()
-  {
-    if (!parameterWidget->isVisible())
-      return;
-    goUpdate();
-  }
-  
-  void goSelections()
-  {
-    command->setSelections(selectionWidget->getMessages(0), selectionWidget->getMessages(1));
-    goUpdate();
-  }
-  
-  void goUpdate()
-  {
-    command->localUpdate();
+    cue.statusPrompt = tr("Select Trimming Entity");
+    cue.mask = slc::ObjectsBoth | slc::ShellsEnabled | slc::FacesEnabled;
+    prmModel->setCue(command->feature->getParameter(ftr::Trim::PrmTags::toolPicks), cue);
   }
 };
 
 Trim::Trim(cmd::Trim *cIn)
 : Base("cmv::Trim")
 , stow(new Stow(cIn, this))
-{}
+{
+  goSelectionToolbar();
+  goMaskDefault();
+}
 
 Trim::~Trim() = default;
 
-void Trim::selectionChanged()
+void Trim::modelChanged(const QModelIndex &index, const QModelIndex&)
 {
-  stow->goSelections();
-}
-
-void Trim::parameterChanged()
-{
-  stow->goUpdate();
+  if (!index.isValid())
+    return;
+  auto tag = stow->parameters.at(index.row())->getTag();
+  if (tag == ftr::Trim::PrmTags::targetPicks || tag == ftr::Trim::PrmTags::toolPicks)
+  {
+    const auto &targets = stow->prmModel->getMessages(stow->command->feature->getParameter(ftr::Trim::PrmTags::targetPicks));
+    const auto &tools = stow->prmModel->getMessages(stow->command->feature->getParameter(ftr::Trim::PrmTags::toolPicks));
+    stow->command->setSelections(targets, tools);
+  }
+  stow->command->localUpdate();
+  node->sendBlocked(msg::buildStatusMessage(stow->command->getStatusMessage()));
+  goMaskDefault();
 }

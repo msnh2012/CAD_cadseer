@@ -38,8 +38,7 @@ namespace cmv
     Trim(cmd::Trim*);
     ~Trim() override;
   public Q_SLOTS:
-    void selectionChanged();
-    void parameterChanged();
+    void modelChanged(const QModelIndex&, const QModelIndex&);
   private:
     struct Stow;
     std::unique_ptr<Stow> stow;

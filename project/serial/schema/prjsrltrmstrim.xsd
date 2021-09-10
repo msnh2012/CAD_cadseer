@@ -14,12 +14,13 @@
   <xs:complexType name="Trim">
     <xs:sequence>
       <xs:element name="base" type="spt:Base"/>
-      <xs:element name="seerShape" type="spt:SeerShape"/>
+      <xs:element name="targetPicks" type="spt:Parameter"/>
+      <xs:element name="toolPicks" type="spt:Parameter"/>
       <xs:element name="reversed" type="spt:Parameter"/>
-      <xs:element name="reversedLabel" type="spt:PLabel"/>
+      <xs:element name="seerShape" type="spt:SeerShape"/>
       <xs:element name="intersectionMapper" type="spt:IntersectionMapper"/>
-      <xs:element name="dpFaceId" type="xs:string"/>
-      <xs:element name="dpWireId" type="xs:string"/>
+      <xs:element name="reversedLabel" type="spt:PLabel"/>
+      <xs:element name="dpMap" type="spt:EvolveRecord" minOccurs="0" maxOccurs="unbounded"/>
     </xs:sequence>
   </xs:complexType>
 

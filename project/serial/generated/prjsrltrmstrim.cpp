@@ -73,28 +73,52 @@ namespace prj
         this->base_.set (std::move (x));
       }
 
-      const Trim::SeerShapeType& Trim::
-      seerShape () const
+      const Trim::TargetPicksType& Trim::
+      targetPicks () const
       {
-        return this->seerShape_.get ();
+        return this->targetPicks_.get ();
       }
 
-      Trim::SeerShapeType& Trim::
-      seerShape ()
+      Trim::TargetPicksType& Trim::
+      targetPicks ()
       {
-        return this->seerShape_.get ();
-      }
-
-      void Trim::
-      seerShape (const SeerShapeType& x)
-      {
-        this->seerShape_.set (x);
+        return this->targetPicks_.get ();
       }
 
       void Trim::
-      seerShape (::std::unique_ptr< SeerShapeType > x)
+      targetPicks (const TargetPicksType& x)
       {
-        this->seerShape_.set (std::move (x));
+        this->targetPicks_.set (x);
+      }
+
+      void Trim::
+      targetPicks (::std::unique_ptr< TargetPicksType > x)
+      {
+        this->targetPicks_.set (std::move (x));
+      }
+
+      const Trim::ToolPicksType& Trim::
+      toolPicks () const
+      {
+        return this->toolPicks_.get ();
+      }
+
+      Trim::ToolPicksType& Trim::
+      toolPicks ()
+      {
+        return this->toolPicks_.get ();
+      }
+
+      void Trim::
+      toolPicks (const ToolPicksType& x)
+      {
+        this->toolPicks_.set (x);
+      }
+
+      void Trim::
+      toolPicks (::std::unique_ptr< ToolPicksType > x)
+      {
+        this->toolPicks_.set (std::move (x));
       }
 
       const Trim::ReversedType& Trim::
@@ -121,28 +145,28 @@ namespace prj
         this->reversed_.set (std::move (x));
       }
 
-      const Trim::ReversedLabelType& Trim::
-      reversedLabel () const
+      const Trim::SeerShapeType& Trim::
+      seerShape () const
       {
-        return this->reversedLabel_.get ();
+        return this->seerShape_.get ();
       }
 
-      Trim::ReversedLabelType& Trim::
-      reversedLabel ()
+      Trim::SeerShapeType& Trim::
+      seerShape ()
       {
-        return this->reversedLabel_.get ();
-      }
-
-      void Trim::
-      reversedLabel (const ReversedLabelType& x)
-      {
-        this->reversedLabel_.set (x);
+        return this->seerShape_.get ();
       }
 
       void Trim::
-      reversedLabel (::std::unique_ptr< ReversedLabelType > x)
+      seerShape (const SeerShapeType& x)
       {
-        this->reversedLabel_.set (std::move (x));
+        this->seerShape_.set (x);
+      }
+
+      void Trim::
+      seerShape (::std::unique_ptr< SeerShapeType > x)
+      {
+        this->seerShape_.set (std::move (x));
       }
 
       const Trim::IntersectionMapperType& Trim::
@@ -169,52 +193,46 @@ namespace prj
         this->intersectionMapper_.set (std::move (x));
       }
 
-      const Trim::DpFaceIdType& Trim::
-      dpFaceId () const
+      const Trim::ReversedLabelType& Trim::
+      reversedLabel () const
       {
-        return this->dpFaceId_.get ();
+        return this->reversedLabel_.get ();
       }
 
-      Trim::DpFaceIdType& Trim::
-      dpFaceId ()
+      Trim::ReversedLabelType& Trim::
+      reversedLabel ()
       {
-        return this->dpFaceId_.get ();
-      }
-
-      void Trim::
-      dpFaceId (const DpFaceIdType& x)
-      {
-        this->dpFaceId_.set (x);
+        return this->reversedLabel_.get ();
       }
 
       void Trim::
-      dpFaceId (::std::unique_ptr< DpFaceIdType > x)
+      reversedLabel (const ReversedLabelType& x)
       {
-        this->dpFaceId_.set (std::move (x));
-      }
-
-      const Trim::DpWireIdType& Trim::
-      dpWireId () const
-      {
-        return this->dpWireId_.get ();
-      }
-
-      Trim::DpWireIdType& Trim::
-      dpWireId ()
-      {
-        return this->dpWireId_.get ();
+        this->reversedLabel_.set (x);
       }
 
       void Trim::
-      dpWireId (const DpWireIdType& x)
+      reversedLabel (::std::unique_ptr< ReversedLabelType > x)
       {
-        this->dpWireId_.set (x);
+        this->reversedLabel_.set (std::move (x));
+      }
+
+      const Trim::DpMapSequence& Trim::
+      dpMap () const
+      {
+        return this->dpMap_;
+      }
+
+      Trim::DpMapSequence& Trim::
+      dpMap ()
+      {
+        return this->dpMap_;
       }
 
       void Trim::
-      dpWireId (::std::unique_ptr< DpWireIdType > x)
+      dpMap (const DpMapSequence& s)
       {
-        this->dpWireId_.set (std::move (x));
+        this->dpMap_ = s;
       }
     }
   }
@@ -233,39 +251,41 @@ namespace prj
 
       Trim::
       Trim (const BaseType& base,
-            const SeerShapeType& seerShape,
+            const TargetPicksType& targetPicks,
+            const ToolPicksType& toolPicks,
             const ReversedType& reversed,
-            const ReversedLabelType& reversedLabel,
+            const SeerShapeType& seerShape,
             const IntersectionMapperType& intersectionMapper,
-            const DpFaceIdType& dpFaceId,
-            const DpWireIdType& dpWireId)
+            const ReversedLabelType& reversedLabel)
       : ::xml_schema::Type (),
         base_ (base, this),
-        seerShape_ (seerShape, this),
+        targetPicks_ (targetPicks, this),
+        toolPicks_ (toolPicks, this),
         reversed_ (reversed, this),
-        reversedLabel_ (reversedLabel, this),
+        seerShape_ (seerShape, this),
         intersectionMapper_ (intersectionMapper, this),
-        dpFaceId_ (dpFaceId, this),
-        dpWireId_ (dpWireId, this)
+        reversedLabel_ (reversedLabel, this),
+        dpMap_ (this)
       {
       }
 
       Trim::
       Trim (::std::unique_ptr< BaseType > base,
-            ::std::unique_ptr< SeerShapeType > seerShape,
+            ::std::unique_ptr< TargetPicksType > targetPicks,
+            ::std::unique_ptr< ToolPicksType > toolPicks,
             ::std::unique_ptr< ReversedType > reversed,
-            ::std::unique_ptr< ReversedLabelType > reversedLabel,
+            ::std::unique_ptr< SeerShapeType > seerShape,
             ::std::unique_ptr< IntersectionMapperType > intersectionMapper,
-            const DpFaceIdType& dpFaceId,
-            const DpWireIdType& dpWireId)
+            ::std::unique_ptr< ReversedLabelType > reversedLabel)
       : ::xml_schema::Type (),
         base_ (std::move (base), this),
-        seerShape_ (std::move (seerShape), this),
+        targetPicks_ (std::move (targetPicks), this),
+        toolPicks_ (std::move (toolPicks), this),
         reversed_ (std::move (reversed), this),
-        reversedLabel_ (std::move (reversedLabel), this),
+        seerShape_ (std::move (seerShape), this),
         intersectionMapper_ (std::move (intersectionMapper), this),
-        dpFaceId_ (dpFaceId, this),
-        dpWireId_ (dpWireId, this)
+        reversedLabel_ (std::move (reversedLabel), this),
+        dpMap_ (this)
       {
       }
 
@@ -275,12 +295,13 @@ namespace prj
             ::xml_schema::Container* c)
       : ::xml_schema::Type (x, f, c),
         base_ (x.base_, f, this),
-        seerShape_ (x.seerShape_, f, this),
+        targetPicks_ (x.targetPicks_, f, this),
+        toolPicks_ (x.toolPicks_, f, this),
         reversed_ (x.reversed_, f, this),
-        reversedLabel_ (x.reversedLabel_, f, this),
+        seerShape_ (x.seerShape_, f, this),
         intersectionMapper_ (x.intersectionMapper_, f, this),
-        dpFaceId_ (x.dpFaceId_, f, this),
-        dpWireId_ (x.dpWireId_, f, this)
+        reversedLabel_ (x.reversedLabel_, f, this),
+        dpMap_ (x.dpMap_, f, this)
       {
       }
 
@@ -290,12 +311,13 @@ namespace prj
             ::xml_schema::Container* c)
       : ::xml_schema::Type (e, f | ::xml_schema::Flags::base, c),
         base_ (this),
-        seerShape_ (this),
+        targetPicks_ (this),
+        toolPicks_ (this),
         reversed_ (this),
-        reversedLabel_ (this),
+        seerShape_ (this),
         intersectionMapper_ (this),
-        dpFaceId_ (this),
-        dpWireId_ (this)
+        reversedLabel_ (this),
+        dpMap_ (this)
       {
         if ((f & ::xml_schema::Flags::base) == 0)
         {
@@ -328,16 +350,30 @@ namespace prj
             }
           }
 
-          // seerShape
+          // targetPicks
           //
-          if (n.name () == "seerShape" && n.namespace_ ().empty ())
+          if (n.name () == "targetPicks" && n.namespace_ ().empty ())
           {
-            ::std::unique_ptr< SeerShapeType > r (
-              SeerShapeTraits::create (i, f, this));
+            ::std::unique_ptr< TargetPicksType > r (
+              TargetPicksTraits::create (i, f, this));
 
-            if (!seerShape_.present ())
+            if (!targetPicks_.present ())
             {
-              this->seerShape_.set (::std::move (r));
+              this->targetPicks_.set (::std::move (r));
+              continue;
+            }
+          }
+
+          // toolPicks
+          //
+          if (n.name () == "toolPicks" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< ToolPicksType > r (
+              ToolPicksTraits::create (i, f, this));
+
+            if (!toolPicks_.present ())
+            {
+              this->toolPicks_.set (::std::move (r));
               continue;
             }
           }
@@ -356,16 +392,16 @@ namespace prj
             }
           }
 
-          // reversedLabel
+          // seerShape
           //
-          if (n.name () == "reversedLabel" && n.namespace_ ().empty ())
+          if (n.name () == "seerShape" && n.namespace_ ().empty ())
           {
-            ::std::unique_ptr< ReversedLabelType > r (
-              ReversedLabelTraits::create (i, f, this));
+            ::std::unique_ptr< SeerShapeType > r (
+              SeerShapeTraits::create (i, f, this));
 
-            if (!reversedLabel_.present ())
+            if (!seerShape_.present ())
             {
-              this->reversedLabel_.set (::std::move (r));
+              this->seerShape_.set (::std::move (r));
               continue;
             }
           }
@@ -384,32 +420,29 @@ namespace prj
             }
           }
 
-          // dpFaceId
+          // reversedLabel
           //
-          if (n.name () == "dpFaceId" && n.namespace_ ().empty ())
+          if (n.name () == "reversedLabel" && n.namespace_ ().empty ())
           {
-            ::std::unique_ptr< DpFaceIdType > r (
-              DpFaceIdTraits::create (i, f, this));
+            ::std::unique_ptr< ReversedLabelType > r (
+              ReversedLabelTraits::create (i, f, this));
 
-            if (!dpFaceId_.present ())
+            if (!reversedLabel_.present ())
             {
-              this->dpFaceId_.set (::std::move (r));
+              this->reversedLabel_.set (::std::move (r));
               continue;
             }
           }
 
-          // dpWireId
+          // dpMap
           //
-          if (n.name () == "dpWireId" && n.namespace_ ().empty ())
+          if (n.name () == "dpMap" && n.namespace_ ().empty ())
           {
-            ::std::unique_ptr< DpWireIdType > r (
-              DpWireIdTraits::create (i, f, this));
+            ::std::unique_ptr< DpMapType > r (
+              DpMapTraits::create (i, f, this));
 
-            if (!dpWireId_.present ())
-            {
-              this->dpWireId_.set (::std::move (r));
-              continue;
-            }
+            this->dpMap_.push_back (::std::move (r));
+            continue;
           }
 
           break;
@@ -422,10 +455,17 @@ namespace prj
             "");
         }
 
-        if (!seerShape_.present ())
+        if (!targetPicks_.present ())
         {
           throw ::xsd::cxx::tree::expected_element< char > (
-            "seerShape",
+            "targetPicks",
+            "");
+        }
+
+        if (!toolPicks_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "toolPicks",
             "");
         }
 
@@ -436,10 +476,10 @@ namespace prj
             "");
         }
 
-        if (!reversedLabel_.present ())
+        if (!seerShape_.present ())
         {
           throw ::xsd::cxx::tree::expected_element< char > (
-            "reversedLabel",
+            "seerShape",
             "");
         }
 
@@ -450,17 +490,10 @@ namespace prj
             "");
         }
 
-        if (!dpFaceId_.present ())
+        if (!reversedLabel_.present ())
         {
           throw ::xsd::cxx::tree::expected_element< char > (
-            "dpFaceId",
-            "");
-        }
-
-        if (!dpWireId_.present ())
-        {
-          throw ::xsd::cxx::tree::expected_element< char > (
-            "dpWireId",
+            "reversedLabel",
             "");
         }
       }
@@ -479,12 +512,13 @@ namespace prj
         {
           static_cast< ::xml_schema::Type& > (*this) = x;
           this->base_ = x.base_;
-          this->seerShape_ = x.seerShape_;
+          this->targetPicks_ = x.targetPicks_;
+          this->toolPicks_ = x.toolPicks_;
           this->reversed_ = x.reversed_;
-          this->reversedLabel_ = x.reversedLabel_;
+          this->seerShape_ = x.seerShape_;
           this->intersectionMapper_ = x.intersectionMapper_;
-          this->dpFaceId_ = x.dpFaceId_;
-          this->dpWireId_ = x.dpWireId_;
+          this->reversedLabel_ = x.reversedLabel_;
+          this->dpMap_ = x.dpMap_;
         }
 
         return *this;
@@ -803,15 +837,26 @@ namespace prj
           s << i.base ();
         }
 
-        // seerShape
+        // targetPicks
         //
         {
           ::xercesc::DOMElement& s (
             ::xsd::cxx::xml::dom::create_element (
-              "seerShape",
+              "targetPicks",
               e));
 
-          s << i.seerShape ();
+          s << i.targetPicks ();
+        }
+
+        // toolPicks
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "toolPicks",
+              e));
+
+          s << i.toolPicks ();
         }
 
         // reversed
@@ -825,15 +870,15 @@ namespace prj
           s << i.reversed ();
         }
 
-        // reversedLabel
+        // seerShape
         //
         {
           ::xercesc::DOMElement& s (
             ::xsd::cxx::xml::dom::create_element (
-              "reversedLabel",
+              "seerShape",
               e));
 
-          s << i.reversedLabel ();
+          s << i.seerShape ();
         }
 
         // intersectionMapper
@@ -847,26 +892,29 @@ namespace prj
           s << i.intersectionMapper ();
         }
 
-        // dpFaceId
+        // reversedLabel
         //
         {
           ::xercesc::DOMElement& s (
             ::xsd::cxx::xml::dom::create_element (
-              "dpFaceId",
+              "reversedLabel",
               e));
 
-          s << i.dpFaceId ();
+          s << i.reversedLabel ();
         }
 
-        // dpWireId
+        // dpMap
         //
+        for (Trim::DpMapConstIterator
+             b (i.dpMap ().begin ()), n (i.dpMap ().end ());
+             b != n; ++b)
         {
           ::xercesc::DOMElement& s (
             ::xsd::cxx::xml::dom::create_element (
-              "dpWireId",
+              "dpMap",
               e));
 
-          s << i.dpWireId ();
+          s << *b;
         }
       }
 

@@ -20,51 +20,40 @@
 #ifndef FTR_TRIM_H
 #define FTR_TRIM_H
 
-#include <osg/ref_ptr>
-
 #include "feature/ftrbase.h"
 
-class TopoDS_Solid;
-
-namespace lbr{class PLabel;}
-namespace ann{class SeerShape; class IntersectionMapper;}
 namespace prj{namespace srl{namespace trms{class Trim;}}}
 
 namespace ftr
 {
-  /**
-  * @todo write docs
-  */
-  class Trim : public Base
+  namespace Trim
   {
-    public:
-      Trim();
-      virtual ~Trim() override;
-      
-      virtual void updateModel(const UpdatePayload&) override;
-      virtual Type getType() const override {return Type::Trim;}
-      virtual const std::string& getTypeString() const override {return toString(Type::Trim);}
-      virtual const QIcon& getIcon() const override {return icon;}
-      virtual Descriptor getDescriptor() const override {return Descriptor::Alter;}
-      
-      virtual void serialWrite(const boost::filesystem::path&) override;
-      void serialRead(const prj::srl::trms::Trim&);
-      
-    protected:
-      std::unique_ptr<prm::Parameter> reversed;
-      std::unique_ptr<ann::SeerShape> sShape;
-      std::unique_ptr<ann::IntersectionMapper> iMapper;
-      osg::ref_ptr<lbr::PLabel> reversedLabel;
-      
-      TopoDS_Solid makeHalfSpace(const ann::SeerShape &seerShapeIn, const TopoDS_Shape &shapeIn);
-      void datumPlaneId(const boost::uuids::uuid&);
-      
-      boost::uuids::uuid dpFaceId; //!< id for face with datum plane trim.
-      boost::uuids::uuid dpWireId; //!< id for wire with datum plane trim.
-      
-    private:
-      static QIcon icon;
-  };
+    namespace PrmTags
+    {
+      inline constexpr std::string_view targetPicks = "targetPicks";
+      inline constexpr std::string_view toolPicks = "toolPicks";
+      inline constexpr std::string_view reversed = "reversed";
+    }
+    class Feature : public Base
+    {
+      public:
+        Feature();
+        ~Feature() override;
+        
+        void updateModel(const UpdatePayload&) override;
+        Type getType() const override {return Type::Trim;}
+        const std::string& getTypeString() const override {return toString(Type::Trim);}
+        const QIcon& getIcon() const override {return icon;}
+        Descriptor getDescriptor() const override {return Descriptor::Alter;}
+        
+        void serialWrite(const boost::filesystem::path&) override;
+        void serialRead(const prj::srl::trms::Trim&);
+      private:
+        static QIcon icon;
+        struct Stow;
+        std::unique_ptr<Stow> stow;
+    };
+  }
 }
 
 #endif // FTR_TRIM_H

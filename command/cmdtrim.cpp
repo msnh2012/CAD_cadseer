@@ -26,6 +26,8 @@
 #include "parameter/prmparameter.h"
 #include "feature/ftrinputtype.h"
 #include "feature/ftrtrim.h"
+#include "feature/ftrpick.h"
+#include "tools/featuretools.h"
 #include "commandview/cmvmessage.h"
 #include "commandview/cmvtrim.h"
 #include "command/cmdtrim.h"
@@ -38,8 +40,8 @@ Trim::Trim()
 : Base()
 , leafManager()
 {
-  feature = new ftr::Trim();
-  project->addFeature(std::unique_ptr<ftr::Trim>(feature));
+  feature = new ftr::Trim::Feature();
+  project->addFeature(std::unique_ptr<ftr::Trim::Feature>(feature));
   node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
   isEdit = false;
   isFirstRun = true;
@@ -49,7 +51,7 @@ Trim::Trim(ftr::Base *fIn)
 : Base()
 , leafManager(fIn)
 {
-  feature = dynamic_cast<ftr::Trim*>(fIn);
+  feature = dynamic_cast<ftr::Trim::Feature*>(fIn);
   assert(feature);
   viewBase = std::make_unique<cmv::Trim>(this);
   node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
@@ -102,22 +104,32 @@ void Trim::deactivate()
   isActive = false;
 }
 
-void Trim::setSelections(const std::vector<slc::Message> &target, const std::vector<slc::Message> &tool)
+void Trim::setSelections(const slc::Messages &target, const slc::Messages &tool)
 {
   assert(isActive);
   project->clearAllInputs(feature->getId());
+  auto *targetPrm = feature->getParameter(ftr::Trim::PrmTags::targetPicks);
+  targetPrm->setValue(ftr::Picks());
+  auto *toolPrm = feature->getParameter(ftr::Trim::PrmTags::toolPicks);
+  toolPrm->setValue(ftr::Picks());
   
-  if (target.empty() || tool.empty())
-    return;
+  if (!target.empty())
+  {
+    auto targetPick = tls::convertToPick(target.front(), *project->findFeature(target.front().featureId), project->getShapeHistory());
+    targetPick.tag = indexTag(ftr::Trim::PrmTags::targetPicks, 0);
+    targetPrm->setValue(targetPick);
+    project->connectInsert(target.front().featureId, feature->getId(), {targetPick.tag});
+    feature->setColor(project->findFeature(target.front().featureId)->getColor());
+  }
   
-  project->connectInsert(target.front().featureId, feature->getId(), {ftr::InputType::target});
-  project->connect(tool.front().featureId, feature->getId(), {ftr::InputType::tool});
-  project->connect(tool.front().featureId, feature->getId(), {ftr::InputType::sever}); //break alter chain
-  
-  node->sendBlocked(msg::buildHideThreeD(target.front().featureId));
-  node->sendBlocked(msg::buildHideOverlay(target.front().featureId));
-  ftr::Base *t = project->findFeature(target.front().featureId);
-  feature->setColor(t->getColor());
+  if (!tool.empty())
+  {
+    auto toolPick = tls::convertToPick(tool.front(), *project->findFeature(tool.front().featureId), project->getShapeHistory());
+    toolPick.tag = indexTag(ftr::Trim::PrmTags::toolPicks, 0);
+    toolPrm->setValue(toolPick);
+    //adding 'sever' to tool to break the 'alter' chain
+    project->connect(tool.front().featureId, feature->getId(), {toolPick.tag, ftr::InputType::sever});
+  }
 }
 
 void Trim::localUpdate()
@@ -131,21 +143,37 @@ void Trim::localUpdate()
 
 void Trim::go()
 {
-  slc::Containers filtered;
   const slc::Containers &containers = eventHandler->getSelections();
-  for (const auto &c : containers)
+  if (containers.size() == 2)
   {
-    if (c.selectionType == slc::Type::Object)
-      filtered.push_back(c);
-  }
-  if (filtered.size() == 2)
-  {
-    std::vector<slc::Message> targets(1, slc::EventHandler::containerToMessage(filtered.front()));
-    std::vector<slc::Message> tools(1, slc::EventHandler::containerToMessage(filtered.back()));
-    setSelections(targets, tools);
-    node->sendBlocked(msg::buildStatusMessage("Trim added", 2.0));
-    node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
-    return;
+    slc::Messages targets;
+    if
+    (
+      containers.front().selectionType == slc::Type::Object
+      || containers.front().selectionType == slc::Type::Solid
+      || containers.front().selectionType == slc::Type::Shell
+      || containers.front().selectionType == slc::Type::Face
+    )
+      targets.push_back(slc::EventHandler::containerToMessage(containers.front()));
+      
+    slc::Messages tools;
+    if
+    (
+      containers.back().selectionType == slc::Type::Object
+      || containers.back().selectionType == slc::Type::Shell
+      || containers.back().selectionType == slc::Type::Face
+    )
+      tools.push_back(slc::EventHandler::containerToMessage(containers.back()));
+    
+    if (!targets.empty() && !tools.empty())
+    {
+      setSelections(targets, tools);
+      node->sendBlocked(msg::buildHideThreeD(targets.front().featureId));
+      node->sendBlocked(msg::buildHideOverlay(targets.front().featureId));
+      node->sendBlocked(msg::buildStatusMessage("Trim added", 2.0));
+      node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+      return;
+    }
   }
   
   node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));

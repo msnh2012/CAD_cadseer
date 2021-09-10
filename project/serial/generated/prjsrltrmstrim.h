@@ -125,22 +125,39 @@ namespace prj
         void
         base (::std::unique_ptr< BaseType > p);
 
-        // seerShape
+        // targetPicks
         //
-        typedef ::prj::srl::spt::SeerShape SeerShapeType;
-        typedef ::xsd::cxx::tree::traits< SeerShapeType, char > SeerShapeTraits;
+        typedef ::prj::srl::spt::Parameter TargetPicksType;
+        typedef ::xsd::cxx::tree::traits< TargetPicksType, char > TargetPicksTraits;
 
-        const SeerShapeType&
-        seerShape () const;
+        const TargetPicksType&
+        targetPicks () const;
 
-        SeerShapeType&
-        seerShape ();
-
-        void
-        seerShape (const SeerShapeType& x);
+        TargetPicksType&
+        targetPicks ();
 
         void
-        seerShape (::std::unique_ptr< SeerShapeType > p);
+        targetPicks (const TargetPicksType& x);
+
+        void
+        targetPicks (::std::unique_ptr< TargetPicksType > p);
+
+        // toolPicks
+        //
+        typedef ::prj::srl::spt::Parameter ToolPicksType;
+        typedef ::xsd::cxx::tree::traits< ToolPicksType, char > ToolPicksTraits;
+
+        const ToolPicksType&
+        toolPicks () const;
+
+        ToolPicksType&
+        toolPicks ();
+
+        void
+        toolPicks (const ToolPicksType& x);
+
+        void
+        toolPicks (::std::unique_ptr< ToolPicksType > p);
 
         // reversed
         //
@@ -159,22 +176,22 @@ namespace prj
         void
         reversed (::std::unique_ptr< ReversedType > p);
 
-        // reversedLabel
+        // seerShape
         //
-        typedef ::prj::srl::spt::PLabel ReversedLabelType;
-        typedef ::xsd::cxx::tree::traits< ReversedLabelType, char > ReversedLabelTraits;
+        typedef ::prj::srl::spt::SeerShape SeerShapeType;
+        typedef ::xsd::cxx::tree::traits< SeerShapeType, char > SeerShapeTraits;
 
-        const ReversedLabelType&
-        reversedLabel () const;
+        const SeerShapeType&
+        seerShape () const;
 
-        ReversedLabelType&
-        reversedLabel ();
-
-        void
-        reversedLabel (const ReversedLabelType& x);
+        SeerShapeType&
+        seerShape ();
 
         void
-        reversedLabel (::std::unique_ptr< ReversedLabelType > p);
+        seerShape (const SeerShapeType& x);
+
+        void
+        seerShape (::std::unique_ptr< SeerShapeType > p);
 
         // intersectionMapper
         //
@@ -193,57 +210,57 @@ namespace prj
         void
         intersectionMapper (::std::unique_ptr< IntersectionMapperType > p);
 
-        // dpFaceId
+        // reversedLabel
         //
-        typedef ::xml_schema::String DpFaceIdType;
-        typedef ::xsd::cxx::tree::traits< DpFaceIdType, char > DpFaceIdTraits;
+        typedef ::prj::srl::spt::PLabel ReversedLabelType;
+        typedef ::xsd::cxx::tree::traits< ReversedLabelType, char > ReversedLabelTraits;
 
-        const DpFaceIdType&
-        dpFaceId () const;
+        const ReversedLabelType&
+        reversedLabel () const;
 
-        DpFaceIdType&
-        dpFaceId ();
-
-        void
-        dpFaceId (const DpFaceIdType& x);
+        ReversedLabelType&
+        reversedLabel ();
 
         void
-        dpFaceId (::std::unique_ptr< DpFaceIdType > p);
+        reversedLabel (const ReversedLabelType& x);
 
-        // dpWireId
+        void
+        reversedLabel (::std::unique_ptr< ReversedLabelType > p);
+
+        // dpMap
         //
-        typedef ::xml_schema::String DpWireIdType;
-        typedef ::xsd::cxx::tree::traits< DpWireIdType, char > DpWireIdTraits;
+        typedef ::prj::srl::spt::EvolveRecord DpMapType;
+        typedef ::xsd::cxx::tree::sequence< DpMapType > DpMapSequence;
+        typedef DpMapSequence::iterator DpMapIterator;
+        typedef DpMapSequence::const_iterator DpMapConstIterator;
+        typedef ::xsd::cxx::tree::traits< DpMapType, char > DpMapTraits;
 
-        const DpWireIdType&
-        dpWireId () const;
+        const DpMapSequence&
+        dpMap () const;
 
-        DpWireIdType&
-        dpWireId ();
+        DpMapSequence&
+        dpMap ();
 
         void
-        dpWireId (const DpWireIdType& x);
-
-        void
-        dpWireId (::std::unique_ptr< DpWireIdType > p);
+        dpMap (const DpMapSequence& s);
 
         // Constructors.
         //
         Trim (const BaseType&,
-              const SeerShapeType&,
+              const TargetPicksType&,
+              const ToolPicksType&,
               const ReversedType&,
-              const ReversedLabelType&,
+              const SeerShapeType&,
               const IntersectionMapperType&,
-              const DpFaceIdType&,
-              const DpWireIdType&);
+              const ReversedLabelType&);
 
         Trim (::std::unique_ptr< BaseType >,
-              ::std::unique_ptr< SeerShapeType >,
+              ::std::unique_ptr< TargetPicksType >,
+              ::std::unique_ptr< ToolPicksType >,
               ::std::unique_ptr< ReversedType >,
-              ::std::unique_ptr< ReversedLabelType >,
+              ::std::unique_ptr< SeerShapeType >,
               ::std::unique_ptr< IntersectionMapperType >,
-              const DpFaceIdType&,
-              const DpWireIdType&);
+              ::std::unique_ptr< ReversedLabelType >);
 
         Trim (const ::xercesc::DOMElement& e,
               ::xml_schema::Flags f = 0,
@@ -272,12 +289,13 @@ namespace prj
 
         protected:
         ::xsd::cxx::tree::one< BaseType > base_;
-        ::xsd::cxx::tree::one< SeerShapeType > seerShape_;
+        ::xsd::cxx::tree::one< TargetPicksType > targetPicks_;
+        ::xsd::cxx::tree::one< ToolPicksType > toolPicks_;
         ::xsd::cxx::tree::one< ReversedType > reversed_;
-        ::xsd::cxx::tree::one< ReversedLabelType > reversedLabel_;
+        ::xsd::cxx::tree::one< SeerShapeType > seerShape_;
         ::xsd::cxx::tree::one< IntersectionMapperType > intersectionMapper_;
-        ::xsd::cxx::tree::one< DpFaceIdType > dpFaceId_;
-        ::xsd::cxx::tree::one< DpWireIdType > dpWireId_;
+        ::xsd::cxx::tree::one< ReversedLabelType > reversedLabel_;
+        DpMapSequence dpMap_;
       };
     }
   }
