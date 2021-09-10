@@ -31,6 +31,7 @@
 #include "application/appapplication.h"
 #include "application/appmainwindow.h"
 #include "project/prjproject.h"
+#include "expressions/exprmanager.h"
 #include "viewer/vwrwidget.h"
 #include "message/msgmessage.h"
 #include "message/msgnode.h"
@@ -594,6 +595,11 @@ void Sketch::remove()
 {
   if (stow->parameter)
   {
+    auto &em = app::instance()->getProject()->getManager();
+    if (em.isLinked(stow->parameter->getId()))
+      em.removeLink(stow->parameter->getId());
+    node->sendBlocked(msg::buildStatusMessage("Expression UnLinked", 2.0));
+    
     stow->feature->removeHPPair(stow->parameter);
     stow->parameter = nullptr;
     delete stow->pEdit;
