@@ -32,6 +32,7 @@
 #include "globalutilities.h"
 #include "annex/annseershape.h"
 #include "library/lbrplabel.h"
+#include "parameter/prmconstants.h"
 #include "parameter/prmparameter.h"
 #include "tools/occtools.h"
 #include "tools/featuretools.h"
@@ -42,65 +43,92 @@
 #include "project/serial/generated/prjsrltscstransitioncurve.h"
 #include "feature/ftrtransitioncurve.h"
 
-using namespace ftr;
 using boost::uuids::uuid;
+using namespace ftr::TransitionCurve;
+QIcon Feature::icon = QIcon(":/resources/images/sketchBezeir.svg");
 
-QIcon TransitionCurve::icon = QIcon(":/resources/images/sketchBezeir.svg");
+struct Feature::Stow
+{
+  Feature &feature;
+  prm::Parameter picks{prm::Names::Picks, ftr::Picks(), prm::Tags::Picks};
+  prm::Parameter direction0{QObject::tr("Direction 0"), false, PrmTags::direction0};
+  prm::Parameter direction1{QObject::tr("Direction 1"), false, PrmTags::direction1};
+  prm::Parameter magnitude0{QObject::tr("Magnitude 0"), 1.0, PrmTags::magnitude0};
+  prm::Parameter magnitude1{QObject::tr("Magnitude 1"), 1.0, PrmTags::magnitude1};
+  prm::Parameter autoScale{QObject::tr("Auto Scale"), true, PrmTags::autoScale};
+  prm::Observer syncObserver{std::bind(&Stow::prmActiveSync, this)};
+  prm::Observer blockObserver{std::bind(&Feature::setModelDirty, &feature)};
+  
+  ann::SeerShape sShape;
+  
+  osg::ref_ptr<lbr::PLabel> direction0Label{new lbr::PLabel(&direction0)};
+  osg::ref_ptr<lbr::PLabel> direction1Label{new lbr::PLabel(&direction1)};
+  osg::ref_ptr<lbr::PLabel> magnitude0Label{new lbr::PLabel(&magnitude0)};
+  osg::ref_ptr<lbr::PLabel> magnitude1Label{new lbr::PLabel(&magnitude1)};
+  osg::ref_ptr<lbr::PLabel> autoScaleLabel{new lbr::PLabel(&autoScale)};
+  
+  uuid curveId{gu::createRandomId()};
+  uuid vertex0Id{gu::createRandomId()};
+  uuid vertex1Id{gu::createRandomId()};
+  
+  Stow() = delete;
+  Stow(Feature &fIn)
+  : feature(fIn)
+  {
+    picks.connectValue(std::bind(&Feature::setModelDirty, &feature));
+    feature.parameters.push_back(&picks);
+    
+    direction0.connectValue(std::bind(&Feature::setModelDirty, &feature));
+    feature.parameters.push_back(&direction0);
+    
+    direction1.connectValue(std::bind(&Feature::setModelDirty, &feature));
+    feature.parameters.push_back(&direction1);
+    
+    magnitude0.connect(blockObserver);
+    feature.parameters.push_back(&magnitude0);
+    
+    magnitude1.connect(blockObserver);
+    feature.parameters.push_back(&magnitude1);
+    
+    autoScale.connectValue(std::bind(&Feature::setModelDirty, &feature));
+    autoScale.connect(syncObserver);
+    feature.parameters.push_back(&autoScale);
+    
+    feature.annexes.insert(std::make_pair(ann::Type::SeerShape, &sShape));
+    
+    feature.overlaySwitch->addChild(direction0Label.get());
+    feature.overlaySwitch->addChild(direction1Label.get());
+    feature.overlaySwitch->addChild(magnitude0Label.get());
+    feature.overlaySwitch->addChild(magnitude1Label.get());
+    feature.overlaySwitch->addChild(autoScaleLabel.get());
+    
+    prmActiveSync();
+  }
+  
+  void prmActiveSync()
+  {
+    if (autoScale.getBool())
+    {
+      magnitude0.setActive(false);
+      magnitude1.setActive(false);
+    }
+    else
+    {
+      magnitude0.setActive(true);
+      magnitude1.setActive(true);
+    }
+  }
+};
 
-TransitionCurve::TransitionCurve():
-Base()
-, sShape(std::make_unique<ann::SeerShape>())
-, pick0Direction(std::make_unique<prm::Parameter>(QObject::tr("Reversed"), false))
-, pick1Direction(std::make_unique<prm::Parameter>(QObject::tr("Reversed"), false))
-, pick0Magnitude(std::make_unique<prm::Parameter>(QObject::tr("Magnitude"), 1.0))
-, pick1Magnitude(std::make_unique<prm::Parameter>(QObject::tr("Magnitude"), 1.0))
-, directionLabel0(new lbr::PLabel(pick0Direction.get()))
-, directionLabel1(new lbr::PLabel(pick1Direction.get()))
-, magnitudeLabel0(new lbr::PLabel(pick0Magnitude.get()))
-, magnitudeLabel1(new lbr::PLabel(pick1Magnitude.get()))
-, curveId(gu::createRandomId())
-, vertex0Id(gu::createRandomId())
-, vertex1Id(gu::createRandomId())
+Feature::Feature()
+: Base()
+, stow(std::make_unique<Stow>(*this))
 {
   name = QObject::tr("Transition Curve");
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
-  
-  pick0Direction->connectValue(std::bind(&TransitionCurve::setModelDirty, this));
-  parameters.push_back(pick0Direction.get());
-  pick1Direction->connectValue(std::bind(&TransitionCurve::setModelDirty, this));
-  parameters.push_back(pick1Direction.get());
-  pick0Magnitude->connectValue(std::bind(&TransitionCurve::setModelDirty, this));
-  pick0Magnitude->setConstraint(prm::Constraint::buildNonZeroPositive());
-  parameters.push_back(pick0Magnitude.get());
-  pick1Magnitude->connectValue(std::bind(&TransitionCurve::setModelDirty, this));
-  pick1Magnitude->setConstraint(prm::Constraint::buildNonZeroPositive());
-  parameters.push_back(pick1Magnitude.get());
-  
-  annexes.insert(std::make_pair(ann::Type::SeerShape, sShape.get()));
-  
-  overlaySwitch->addChild(directionLabel0.get());
-  overlaySwitch->addChild(directionLabel1.get());
-  overlaySwitch->addChild(magnitudeLabel0.get());
-  overlaySwitch->addChild(magnitudeLabel1.get());
 }
 
-TransitionCurve::~TransitionCurve(){}
-
-void TransitionCurve::setPicks(const Picks &pIn)
-{
-  picks = pIn;
-  setModelDirty();
-}
-
-void TransitionCurve::setDirection0(bool vIn)
-{
-  pick0Direction->setValue(vIn);
-}
-
-void TransitionCurve::setDirection1(bool vIn)
-{
-  pick1Direction->setValue(vIn);
-}
+Feature::~Feature() = default;
 
 /*! @brief Detects default direction for first pick
  * 
@@ -108,13 +136,14 @@ void TransitionCurve::setDirection1(bool vIn)
  * @details asserts that picks have been set. @see setPicks
  * 
  */
-void TransitionCurve::gleanDirection0(const TopoDS_Edge &eIn)
+void Feature::gleanDirection0(const TopoDS_Edge &eIn)
 {
   /* Note: StartPoint and EndPoint consider edge orientation. The
    * parameter driven selection types don't consider edge orientation.
    * see ftr::Pick
    */
-  assert(picks.size() == 2);
+  const auto &picks = stow->picks.getPicks();
+  assert(!picks.empty());
   
   bool outValue = false;
   const Pick &p = picks.at(0);
@@ -128,7 +157,7 @@ void TransitionCurve::gleanDirection0(const TopoDS_Edge &eIn)
       outValue = !outValue;
   }
   
-  setDirection0(outValue);
+  stow->direction0.setValue(outValue);
 }
 
 /*! @brief Detects default direction for second pick
@@ -137,9 +166,10 @@ void TransitionCurve::gleanDirection0(const TopoDS_Edge &eIn)
  * @details asserts that picks have been set. @see setPicks
  * 
  */
-void TransitionCurve::gleanDirection1(const TopoDS_Edge &eIn)
+void Feature::gleanDirection1(const TopoDS_Edge &eIn)
 {
-  assert(picks.size() == 2);
+  const auto &picks = stow->picks.getPicks();
+  assert(picks.size() > 1);
   
   bool outValue = false;
   const Pick &p = picks.at(1);
@@ -153,14 +183,14 @@ void TransitionCurve::gleanDirection1(const TopoDS_Edge &eIn)
       outValue = !outValue;
   }
   
-  setDirection1(outValue);
+  stow->direction1.setValue(outValue);
 }
 
-void TransitionCurve::updateModel(const UpdatePayload &pIn)
+void Feature::updateModel(const UpdatePayload &pIn)
 {
   setFailure();
   lastUpdateLog.clear();
-  sShape->reset();
+  stow->sShape.reset();
   try
   {
     if (isSkipped())
@@ -169,6 +199,7 @@ void TransitionCurve::updateModel(const UpdatePayload &pIn)
       throw std::runtime_error("feature is skipped");
     }
     
+    const auto &picks = stow->picks.getPicks();
     if (picks.size() != 2)
       throw std::runtime_error("wrong number of picks");
     tls::Resolver resolver(pIn);
@@ -216,25 +247,25 @@ void TransitionCurve::updateModel(const UpdatePayload &pIn)
     p1.Transform(adapt1.Trsf());
     v1.Transform(adapt1.Trsf());
     
-    if (pick0Direction->getBool())
+    if (stow->direction0.getBool())
       v0.Reverse();
-    if (pick1Direction->getBool())
+    if (stow->direction1.getBool())
       v1.Reverse();
     
-    v0 *= pick0Magnitude->getDouble();
-    v1 *= pick1Magnitude->getDouble();
+    v0 *= stow->magnitude0.getDouble();
+    v1 *= stow->magnitude1.getDouble();
     
-    directionLabel0->setMatrix(osg::Matrixd::translate(gu::toOsg(p0)));
-    directionLabel1->setMatrix(osg::Matrixd::translate(gu::toOsg(p1)));
-    magnitudeLabel0->setMatrix(osg::Matrixd::translate(gu::toOsg(p0) + gu::toOsg(v0) * pick0Magnitude->getDouble()));
-    magnitudeLabel1->setMatrix(osg::Matrixd::translate(gu::toOsg(p1) + gu::toOsg(v1) * pick1Magnitude->getDouble()));
+    stow->direction0Label->setMatrix(osg::Matrixd::translate(gu::toOsg(p0)));
+    stow->direction1Label->setMatrix(osg::Matrixd::translate(gu::toOsg(p1)));
+    stow->magnitude0Label->setMatrix(osg::Matrixd::translate(gu::toOsg(p0) + gu::toOsg(v0) * stow->magnitude0.getDouble()));
+    stow->magnitude1Label->setMatrix(osg::Matrixd::translate(gu::toOsg(p1) + gu::toOsg(-v1) * stow->magnitude1.getDouble()));
     
     opencascade::handle<TColgp_HArray1OfPnt> points = new TColgp_HArray1OfPnt(1,2);
     points->SetValue(1, p0);
     points->SetValue(2, p1);
     
     GeomAPI_Interpolate trans(points, Standard_False, Precision::Confusion());
-    trans.Load(v0, v1, Standard_False);
+    trans.Load(v0, v1, stow->autoScale.getBool());
     trans.Perform();
     if (!trans.IsDone())
       throw std::runtime_error("Perform failed");
@@ -243,25 +274,47 @@ void TransitionCurve::updateModel(const UpdatePayload &pIn)
     if (!edgeMaker.IsDone())
       throw std::runtime_error("edgeMaker failed");
     
-    sShape->setOCCTShape(edgeMaker.Edge(), getId());
-    sShape->updateId(edgeMaker.Edge(), curveId);
-    if (!sShape->hasEvolveRecordOut(curveId))
-      sShape->insertEvolve(gu::createNilId(), curveId);
+    if (stow->autoScale.getBool())
+    {
+      //update the magnitudes if auto calc.
+      prm::ObserverBlocker(stow->blockObserver);
+      BRepAdaptor_Curve ca(edgeMaker);
+      auto getMag = [&](double pIn) -> double
+      {
+        gp_Pnt point;
+        gp_Vec vector;
+        ca.D1(pIn, point, vector);
+        return vector.Magnitude();
+      };
+      //do I need to reverse.
+      stow->magnitude0.setValue(getMag(ca.FirstParameter()));
+      stow->magnitude1.setValue(getMag(ca.LastParameter()));
+    }
+    
+    stow->sShape.setOCCTShape(edgeMaker.Edge(), getId());
+    stow->sShape.updateId(edgeMaker.Edge(), stow->curveId);
+    if (!stow->sShape.hasEvolveRecordOut(stow->curveId))
+      stow->sShape.insertEvolve(gu::createNilId(), stow->curveId);
     
     TopoDS_Vertex vertex0 = TopExp::FirstVertex(edgeMaker.Edge(), Standard_True);
-    assert(sShape->hasShape(vertex0));
-    sShape->updateId(vertex0, vertex0Id);
-    if (!sShape->hasEvolveRecordOut(vertex0Id))
-      sShape->insertEvolve(gu::createNilId(), vertex0Id);
+    assert(stow->sShape.hasShape(vertex0));
+    stow->sShape.updateId(vertex0, stow->vertex0Id);
+    if (!stow->sShape.hasEvolveRecordOut(stow->vertex0Id))
+      stow->sShape.insertEvolve(gu::createNilId(), stow->vertex0Id);
     
     TopoDS_Vertex vertex1 = TopExp::LastVertex(edgeMaker.Edge(), Standard_True);
-    assert(sShape->hasShape(vertex1));
-    sShape->updateId(vertex1, vertex1Id);
-    if (!sShape->hasEvolveRecordOut(vertex1Id))
-      sShape->insertEvolve(gu::createNilId(), vertex1Id);
+    assert(stow->sShape.hasShape(vertex1));
+    stow->sShape.updateId(vertex1, stow->vertex1Id);
+    if (!stow->sShape.hasEvolveRecordOut(stow->vertex1Id))
+      stow->sShape.insertEvolve(gu::createNilId(), stow->vertex1Id);
     
-    sShape->ensureNoNils();
-    sShape->ensureNoDuplicates();
+    stow->sShape.ensureNoNils();
+    stow->sShape.ensureNoDuplicates();
+    
+    auto midPoints = stow->sShape.useGetMidPoint(stow->curveId);
+    if (!midPoints.empty())
+      stow->autoScaleLabel->setMatrix(osg::Matrixd::translate(midPoints.front()));
+    
     setSuccess();
   }
   catch (const Standard_Failure &e)
@@ -284,47 +337,49 @@ void TransitionCurve::updateModel(const UpdatePayload &pIn)
     std::cout << std::endl << lastUpdateLog;
 }
 
-void TransitionCurve::serialWrite(const boost::filesystem::path &dIn)
+void Feature::serialWrite(const boost::filesystem::path &dIn)
 {
   prj::srl::tscs::TransitionCurve so
   (
     Base::serialOut()
-    , sShape->serialOut()
-    , pick0Direction->serialOut()
-    , pick1Direction->serialOut()
-    , pick0Magnitude->serialOut()
-    , pick1Magnitude->serialOut()
-    , directionLabel0->serialOut()
-    , directionLabel1->serialOut()
-    , magnitudeLabel0->serialOut()
-    , magnitudeLabel1->serialOut()
-    , gu::idToString(curveId)
-    , gu::idToString(vertex0Id)
-    , gu::idToString(vertex1Id)
+    , stow->picks.serialOut()
+    , stow->direction0.serialOut()
+    , stow->direction1.serialOut()
+    , stow->magnitude0.serialOut()
+    , stow->magnitude1.serialOut()
+    , stow->autoScale.serialOut()
+    , stow->sShape.serialOut()
+    , stow->direction0Label->serialOut()
+    , stow->direction1Label->serialOut()
+    , stow->magnitude0Label->serialOut()
+    , stow->magnitude1Label->serialOut()
+    , stow->autoScaleLabel->serialOut()
+    , gu::idToString(stow->curveId)
+    , gu::idToString(stow->vertex0Id)
+    , gu::idToString(stow->vertex1Id)
   );
-  for (const auto &p : picks)
-    so.picks().push_back(p);
   
   xml_schema::NamespaceInfomap infoMap;
   std::ofstream stream(buildFilePathName(dIn).string());
   prj::srl::tscs::transitionCurve(stream, so, infoMap);
 }
 
-void TransitionCurve::serialRead(const prj::srl::tscs::TransitionCurve &so)
+void Feature::serialRead(const prj::srl::tscs::TransitionCurve &so)
 {
   Base::serialIn(so.base());
-  sShape->serialIn(so.seerShape());
-  pick0Direction->serialIn(so.pick0Direction());
-  pick1Direction->serialIn(so.pick1Direction());
-  pick0Magnitude->serialIn(so.pick0Magnitude());
-  pick1Magnitude->serialIn(so.pick1Magnitude());
-  directionLabel0->serialIn(so.directionLabel0());
-  directionLabel1->serialIn(so.directionLabel1());
-  magnitudeLabel0->serialIn(so.magnitudeLabel0());
-  magnitudeLabel1->serialIn(so.magnitudeLabel1());
-  curveId = gu::stringToId(so.curveId());
-  vertex0Id = gu::stringToId(so.vertex0Id());
-  vertex1Id = gu::stringToId(so.vertex1Id());
-  for (const auto &p : so.picks())
-    picks.emplace_back(p);
+  stow->picks.serialIn(so.picks());
+  stow->direction0.serialIn(so.direction0());
+  stow->direction1.serialIn(so.direction1());
+  stow->magnitude0.serialIn(so.magnitude0());
+  stow->magnitude1.serialIn(so.magnitude1());
+  stow->autoScale.serialIn(so.autoScale());
+  stow->sShape.serialIn(so.seerShape());
+  stow->direction0Label->serialIn(so.direction0Label());
+  stow->direction1Label->serialIn(so.direction1Label());
+  stow->magnitude0Label->serialIn(so.magnitude0Label());
+  stow->magnitude1Label->serialIn(so.magnitude1Label());
+  stow->autoScaleLabel->serialIn(so.autoScaleLabel());
+  stow->curveId = gu::stringToId(so.curveId());
+  stow->vertex0Id = gu::stringToId(so.vertex0Id());
+  stow->vertex1Id = gu::stringToId(so.vertex1Id());
 }

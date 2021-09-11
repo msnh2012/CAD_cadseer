@@ -26,6 +26,8 @@
 #include "message/msgnode.h"
 #include "selection/slceventhandler.h"
 #include "annex/annseershape.h"
+#include "parameter/prmconstants.h"
+#include "parameter/prmparameter.h"
 #include "feature/ftrinputtype.h"
 #include "feature/ftrtransitioncurve.h"
 #include "commandview/cmvmessage.h"
@@ -38,8 +40,8 @@ TransitionCurve::TransitionCurve()
 : Base("cmd::TransitionCurve")
 , leafManager()
 {
-  feature = new ftr::TransitionCurve();
-  project->addFeature(std::unique_ptr<ftr::TransitionCurve>(feature));
+  feature = new ftr::TransitionCurve::Feature();
+  project->addFeature(std::unique_ptr<ftr::TransitionCurve::Feature>(feature));
   node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
   isEdit = false;
   isFirstRun = true;
@@ -50,7 +52,7 @@ TransitionCurve::TransitionCurve(ftr::Base *fIn)
 : Base("cmd::TransitionCurve")
 , leafManager(fIn)
 {
-  feature = dynamic_cast<ftr::TransitionCurve*>(fIn);
+  feature = dynamic_cast<ftr::TransitionCurve::Feature*>(fIn);
   assert(feature);
   viewBase = std::make_unique<cmv::TransitionCurve>(this);
   node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
@@ -122,18 +124,15 @@ bool TransitionCurve::isValidSelection(const slc::Message &mIn)
   return false;
 }
 
-void TransitionCurve::setSelections(const std::vector<slc::Message> &targets)
+void TransitionCurve::setSelections(const slc::Messages &targets)
 {
   assert(isActive);
   
-  auto reset = [&]()
-  {
-    project->clearAllInputs(feature->getId());
-    feature->setPicks(ftr::Picks());
-  };
-  reset();
+  project->clearAllInputs(feature->getId());
+  auto *picks = feature->getParameter(prm::Tags::Picks);
+  picks->setValue(ftr::Picks());
   
-  if (targets.size() != 2)
+  if (targets.empty())
     return;
   
   ftr::Picks freshPicks;
@@ -144,7 +143,7 @@ void TransitionCurve::setSelections(const std::vector<slc::Message> &targets)
 
     const ftr::Base *lf = project->findFeature(m.featureId);
     freshPicks.push_back(tls::convertToPick(m, *lf, project->getShapeHistory()));
-    freshPicks.back().tag = ftr::InputType::createIndexedTag(ftr::InputType::target, freshPicks.size() - 1);
+    freshPicks.back().tag = indexTag(ftr::TransitionCurve::InputTags::pick, freshPicks.size() - 1);
     //conversion to pick will resolve shape history to vertices for end points.
     //we can't have that because transition needs edge also.
     //so here we will hack back in the edge history.
@@ -154,13 +153,8 @@ void TransitionCurve::setSelections(const std::vector<slc::Message> &targets)
     
     project->connect(lf->getId(), feature->getId(), {freshPicks.back().tag});
   }
-  if (freshPicks.size() != 2)
-  {
-    reset();
-    return;
-  }
-  
-  feature->setPicks(freshPicks);
+  picks->setValue(freshPicks);
+
   if (gleanDirection)
   {
     gleanDirection = false;

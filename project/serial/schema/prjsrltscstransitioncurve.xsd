@@ -7,23 +7,24 @@
 >
   <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptseershape.xsd"/>
   <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptparameter.xsd"/>
-  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptpick.xsd"/>
   <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptoverlay.xsd"/>
   <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptbase.xsd"/>
 
 <xs:complexType name="TransitionCurve">
   <xs:sequence>
     <xs:element name="base" type="spt:Base"/>
+    <xs:element name="picks" type="spt:Parameter"/>
+    <xs:element name="direction0" type="spt:Parameter"/>
+    <xs:element name="direction1" type="spt:Parameter"/>
+    <xs:element name="magnitude0" type="spt:Parameter"/>
+    <xs:element name="magnitude1" type="spt:Parameter"/>
+    <xs:element name="autoScale" type="spt:Parameter"/>
     <xs:element name="seerShape" type="spt:SeerShape"/>
-    <xs:element name="picks" type="spt:Pick" minOccurs="0" maxOccurs="unbounded"/>
-    <xs:element name="pick0Direction" type="spt:Parameter"/>
-    <xs:element name="pick1Direction" type="spt:Parameter"/>
-    <xs:element name="pick0Magnitude" type="spt:Parameter"/>
-    <xs:element name="pick1Magnitude" type="spt:Parameter"/>
-    <xs:element name="directionLabel0" type="spt:PLabel"/>
-    <xs:element name="directionLabel1" type="spt:PLabel"/>
-    <xs:element name="magnitudeLabel0" type="spt:PLabel"/>
-    <xs:element name="magnitudeLabel1" type="spt:PLabel"/>
+    <xs:element name="direction0Label" type="spt:PLabel"/>
+    <xs:element name="direction1Label" type="spt:PLabel"/>
+    <xs:element name="magnitude0Label" type="spt:PLabel"/>
+    <xs:element name="magnitude1Label" type="spt:PLabel"/>
+    <xs:element name="autoScaleLabel" type="spt:PLabel"/>
     <xs:element name="curveId" type="xs:string" default="00000000-0000-0000-0000-000000000000"/>
     <xs:element name="vertex0Id" type="xs:string" default="00000000-0000-0000-0000-000000000000"/>
     <xs:element name="vertex1Id" type="xs:string" default="00000000-0000-0000-0000-000000000000"/>

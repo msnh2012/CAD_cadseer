@@ -93,8 +93,6 @@ namespace prj
 
 #include "prjsrlsptparameter.h"
 
-#include "prjsrlsptpick.h"
-
 #include "prjsrlsptoverlay.h"
 
 #include "prjsrlsptbase.h"
@@ -125,6 +123,108 @@ namespace prj
         void
         base (::std::unique_ptr< BaseType > p);
 
+        // picks
+        //
+        typedef ::prj::srl::spt::Parameter PicksType;
+        typedef ::xsd::cxx::tree::traits< PicksType, char > PicksTraits;
+
+        const PicksType&
+        picks () const;
+
+        PicksType&
+        picks ();
+
+        void
+        picks (const PicksType& x);
+
+        void
+        picks (::std::unique_ptr< PicksType > p);
+
+        // direction0
+        //
+        typedef ::prj::srl::spt::Parameter Direction0Type;
+        typedef ::xsd::cxx::tree::traits< Direction0Type, char > Direction0Traits;
+
+        const Direction0Type&
+        direction0 () const;
+
+        Direction0Type&
+        direction0 ();
+
+        void
+        direction0 (const Direction0Type& x);
+
+        void
+        direction0 (::std::unique_ptr< Direction0Type > p);
+
+        // direction1
+        //
+        typedef ::prj::srl::spt::Parameter Direction1Type;
+        typedef ::xsd::cxx::tree::traits< Direction1Type, char > Direction1Traits;
+
+        const Direction1Type&
+        direction1 () const;
+
+        Direction1Type&
+        direction1 ();
+
+        void
+        direction1 (const Direction1Type& x);
+
+        void
+        direction1 (::std::unique_ptr< Direction1Type > p);
+
+        // magnitude0
+        //
+        typedef ::prj::srl::spt::Parameter Magnitude0Type;
+        typedef ::xsd::cxx::tree::traits< Magnitude0Type, char > Magnitude0Traits;
+
+        const Magnitude0Type&
+        magnitude0 () const;
+
+        Magnitude0Type&
+        magnitude0 ();
+
+        void
+        magnitude0 (const Magnitude0Type& x);
+
+        void
+        magnitude0 (::std::unique_ptr< Magnitude0Type > p);
+
+        // magnitude1
+        //
+        typedef ::prj::srl::spt::Parameter Magnitude1Type;
+        typedef ::xsd::cxx::tree::traits< Magnitude1Type, char > Magnitude1Traits;
+
+        const Magnitude1Type&
+        magnitude1 () const;
+
+        Magnitude1Type&
+        magnitude1 ();
+
+        void
+        magnitude1 (const Magnitude1Type& x);
+
+        void
+        magnitude1 (::std::unique_ptr< Magnitude1Type > p);
+
+        // autoScale
+        //
+        typedef ::prj::srl::spt::Parameter AutoScaleType;
+        typedef ::xsd::cxx::tree::traits< AutoScaleType, char > AutoScaleTraits;
+
+        const AutoScaleType&
+        autoScale () const;
+
+        AutoScaleType&
+        autoScale ();
+
+        void
+        autoScale (const AutoScaleType& x);
+
+        void
+        autoScale (::std::unique_ptr< AutoScaleType > p);
+
         // seerShape
         //
         typedef ::prj::srl::spt::SeerShape SeerShapeType;
@@ -142,158 +242,90 @@ namespace prj
         void
         seerShape (::std::unique_ptr< SeerShapeType > p);
 
-        // picks
+        // direction0Label
         //
-        typedef ::prj::srl::spt::Pick PicksType;
-        typedef ::xsd::cxx::tree::sequence< PicksType > PicksSequence;
-        typedef PicksSequence::iterator PicksIterator;
-        typedef PicksSequence::const_iterator PicksConstIterator;
-        typedef ::xsd::cxx::tree::traits< PicksType, char > PicksTraits;
+        typedef ::prj::srl::spt::PLabel Direction0LabelType;
+        typedef ::xsd::cxx::tree::traits< Direction0LabelType, char > Direction0LabelTraits;
 
-        const PicksSequence&
-        picks () const;
+        const Direction0LabelType&
+        direction0Label () const;
 
-        PicksSequence&
-        picks ();
+        Direction0LabelType&
+        direction0Label ();
 
         void
-        picks (const PicksSequence& s);
+        direction0Label (const Direction0LabelType& x);
 
-        // pick0Direction
+        void
+        direction0Label (::std::unique_ptr< Direction0LabelType > p);
+
+        // direction1Label
         //
-        typedef ::prj::srl::spt::Parameter Pick0DirectionType;
-        typedef ::xsd::cxx::tree::traits< Pick0DirectionType, char > Pick0DirectionTraits;
+        typedef ::prj::srl::spt::PLabel Direction1LabelType;
+        typedef ::xsd::cxx::tree::traits< Direction1LabelType, char > Direction1LabelTraits;
 
-        const Pick0DirectionType&
-        pick0Direction () const;
+        const Direction1LabelType&
+        direction1Label () const;
 
-        Pick0DirectionType&
-        pick0Direction ();
-
-        void
-        pick0Direction (const Pick0DirectionType& x);
+        Direction1LabelType&
+        direction1Label ();
 
         void
-        pick0Direction (::std::unique_ptr< Pick0DirectionType > p);
+        direction1Label (const Direction1LabelType& x);
 
-        // pick1Direction
+        void
+        direction1Label (::std::unique_ptr< Direction1LabelType > p);
+
+        // magnitude0Label
         //
-        typedef ::prj::srl::spt::Parameter Pick1DirectionType;
-        typedef ::xsd::cxx::tree::traits< Pick1DirectionType, char > Pick1DirectionTraits;
+        typedef ::prj::srl::spt::PLabel Magnitude0LabelType;
+        typedef ::xsd::cxx::tree::traits< Magnitude0LabelType, char > Magnitude0LabelTraits;
 
-        const Pick1DirectionType&
-        pick1Direction () const;
+        const Magnitude0LabelType&
+        magnitude0Label () const;
 
-        Pick1DirectionType&
-        pick1Direction ();
-
-        void
-        pick1Direction (const Pick1DirectionType& x);
+        Magnitude0LabelType&
+        magnitude0Label ();
 
         void
-        pick1Direction (::std::unique_ptr< Pick1DirectionType > p);
+        magnitude0Label (const Magnitude0LabelType& x);
 
-        // pick0Magnitude
+        void
+        magnitude0Label (::std::unique_ptr< Magnitude0LabelType > p);
+
+        // magnitude1Label
         //
-        typedef ::prj::srl::spt::Parameter Pick0MagnitudeType;
-        typedef ::xsd::cxx::tree::traits< Pick0MagnitudeType, char > Pick0MagnitudeTraits;
+        typedef ::prj::srl::spt::PLabel Magnitude1LabelType;
+        typedef ::xsd::cxx::tree::traits< Magnitude1LabelType, char > Magnitude1LabelTraits;
 
-        const Pick0MagnitudeType&
-        pick0Magnitude () const;
+        const Magnitude1LabelType&
+        magnitude1Label () const;
 
-        Pick0MagnitudeType&
-        pick0Magnitude ();
-
-        void
-        pick0Magnitude (const Pick0MagnitudeType& x);
+        Magnitude1LabelType&
+        magnitude1Label ();
 
         void
-        pick0Magnitude (::std::unique_ptr< Pick0MagnitudeType > p);
+        magnitude1Label (const Magnitude1LabelType& x);
 
-        // pick1Magnitude
+        void
+        magnitude1Label (::std::unique_ptr< Magnitude1LabelType > p);
+
+        // autoScaleLabel
         //
-        typedef ::prj::srl::spt::Parameter Pick1MagnitudeType;
-        typedef ::xsd::cxx::tree::traits< Pick1MagnitudeType, char > Pick1MagnitudeTraits;
+        typedef ::prj::srl::spt::PLabel AutoScaleLabelType;
+        typedef ::xsd::cxx::tree::traits< AutoScaleLabelType, char > AutoScaleLabelTraits;
 
-        const Pick1MagnitudeType&
-        pick1Magnitude () const;
+        const AutoScaleLabelType&
+        autoScaleLabel () const;
 
-        Pick1MagnitudeType&
-        pick1Magnitude ();
-
-        void
-        pick1Magnitude (const Pick1MagnitudeType& x);
+        AutoScaleLabelType&
+        autoScaleLabel ();
 
         void
-        pick1Magnitude (::std::unique_ptr< Pick1MagnitudeType > p);
-
-        // directionLabel0
-        //
-        typedef ::prj::srl::spt::PLabel DirectionLabel0Type;
-        typedef ::xsd::cxx::tree::traits< DirectionLabel0Type, char > DirectionLabel0Traits;
-
-        const DirectionLabel0Type&
-        directionLabel0 () const;
-
-        DirectionLabel0Type&
-        directionLabel0 ();
+        autoScaleLabel (const AutoScaleLabelType& x);
 
         void
-        directionLabel0 (const DirectionLabel0Type& x);
-
-        void
-        directionLabel0 (::std::unique_ptr< DirectionLabel0Type > p);
-
-        // directionLabel1
-        //
-        typedef ::prj::srl::spt::PLabel DirectionLabel1Type;
-        typedef ::xsd::cxx::tree::traits< DirectionLabel1Type, char > DirectionLabel1Traits;
-
-        const DirectionLabel1Type&
-        directionLabel1 () const;
-
-        DirectionLabel1Type&
-        directionLabel1 ();
-
-        void
-        directionLabel1 (const DirectionLabel1Type& x);
-
-        void
-        directionLabel1 (::std::unique_ptr< DirectionLabel1Type > p);
-
-        // magnitudeLabel0
-        //
-        typedef ::prj::srl::spt::PLabel MagnitudeLabel0Type;
-        typedef ::xsd::cxx::tree::traits< MagnitudeLabel0Type, char > MagnitudeLabel0Traits;
-
-        const MagnitudeLabel0Type&
-        magnitudeLabel0 () const;
-
-        MagnitudeLabel0Type&
-        magnitudeLabel0 ();
-
-        void
-        magnitudeLabel0 (const MagnitudeLabel0Type& x);
-
-        void
-        magnitudeLabel0 (::std::unique_ptr< MagnitudeLabel0Type > p);
-
-        // magnitudeLabel1
-        //
-        typedef ::prj::srl::spt::PLabel MagnitudeLabel1Type;
-        typedef ::xsd::cxx::tree::traits< MagnitudeLabel1Type, char > MagnitudeLabel1Traits;
-
-        const MagnitudeLabel1Type&
-        magnitudeLabel1 () const;
-
-        MagnitudeLabel1Type&
-        magnitudeLabel1 ();
-
-        void
-        magnitudeLabel1 (const MagnitudeLabel1Type& x);
-
-        void
-        magnitudeLabel1 (::std::unique_ptr< MagnitudeLabel1Type > p);
+        autoScaleLabel (::std::unique_ptr< AutoScaleLabelType > p);
 
         // curveId
         //
@@ -358,29 +390,35 @@ namespace prj
         // Constructors.
         //
         TransitionCurve (const BaseType&,
+                         const PicksType&,
+                         const Direction0Type&,
+                         const Direction1Type&,
+                         const Magnitude0Type&,
+                         const Magnitude1Type&,
+                         const AutoScaleType&,
                          const SeerShapeType&,
-                         const Pick0DirectionType&,
-                         const Pick1DirectionType&,
-                         const Pick0MagnitudeType&,
-                         const Pick1MagnitudeType&,
-                         const DirectionLabel0Type&,
-                         const DirectionLabel1Type&,
-                         const MagnitudeLabel0Type&,
-                         const MagnitudeLabel1Type&,
+                         const Direction0LabelType&,
+                         const Direction1LabelType&,
+                         const Magnitude0LabelType&,
+                         const Magnitude1LabelType&,
+                         const AutoScaleLabelType&,
                          const CurveIdType&,
                          const Vertex0IdType&,
                          const Vertex1IdType&);
 
         TransitionCurve (::std::unique_ptr< BaseType >,
+                         ::std::unique_ptr< PicksType >,
+                         ::std::unique_ptr< Direction0Type >,
+                         ::std::unique_ptr< Direction1Type >,
+                         ::std::unique_ptr< Magnitude0Type >,
+                         ::std::unique_ptr< Magnitude1Type >,
+                         ::std::unique_ptr< AutoScaleType >,
                          ::std::unique_ptr< SeerShapeType >,
-                         ::std::unique_ptr< Pick0DirectionType >,
-                         ::std::unique_ptr< Pick1DirectionType >,
-                         ::std::unique_ptr< Pick0MagnitudeType >,
-                         ::std::unique_ptr< Pick1MagnitudeType >,
-                         ::std::unique_ptr< DirectionLabel0Type >,
-                         ::std::unique_ptr< DirectionLabel1Type >,
-                         ::std::unique_ptr< MagnitudeLabel0Type >,
-                         ::std::unique_ptr< MagnitudeLabel1Type >,
+                         ::std::unique_ptr< Direction0LabelType >,
+                         ::std::unique_ptr< Direction1LabelType >,
+                         ::std::unique_ptr< Magnitude0LabelType >,
+                         ::std::unique_ptr< Magnitude1LabelType >,
+                         ::std::unique_ptr< AutoScaleLabelType >,
                          const CurveIdType&,
                          const Vertex0IdType&,
                          const Vertex1IdType&);
@@ -412,16 +450,18 @@ namespace prj
 
         protected:
         ::xsd::cxx::tree::one< BaseType > base_;
+        ::xsd::cxx::tree::one< PicksType > picks_;
+        ::xsd::cxx::tree::one< Direction0Type > direction0_;
+        ::xsd::cxx::tree::one< Direction1Type > direction1_;
+        ::xsd::cxx::tree::one< Magnitude0Type > magnitude0_;
+        ::xsd::cxx::tree::one< Magnitude1Type > magnitude1_;
+        ::xsd::cxx::tree::one< AutoScaleType > autoScale_;
         ::xsd::cxx::tree::one< SeerShapeType > seerShape_;
-        PicksSequence picks_;
-        ::xsd::cxx::tree::one< Pick0DirectionType > pick0Direction_;
-        ::xsd::cxx::tree::one< Pick1DirectionType > pick1Direction_;
-        ::xsd::cxx::tree::one< Pick0MagnitudeType > pick0Magnitude_;
-        ::xsd::cxx::tree::one< Pick1MagnitudeType > pick1Magnitude_;
-        ::xsd::cxx::tree::one< DirectionLabel0Type > directionLabel0_;
-        ::xsd::cxx::tree::one< DirectionLabel1Type > directionLabel1_;
-        ::xsd::cxx::tree::one< MagnitudeLabel0Type > magnitudeLabel0_;
-        ::xsd::cxx::tree::one< MagnitudeLabel1Type > magnitudeLabel1_;
+        ::xsd::cxx::tree::one< Direction0LabelType > direction0Label_;
+        ::xsd::cxx::tree::one< Direction1LabelType > direction1Label_;
+        ::xsd::cxx::tree::one< Magnitude0LabelType > magnitude0Label_;
+        ::xsd::cxx::tree::one< Magnitude1LabelType > magnitude1Label_;
+        ::xsd::cxx::tree::one< AutoScaleLabelType > autoScaleLabel_;
         ::xsd::cxx::tree::one< CurveIdType > curveId_;
         static const CurveIdType curveId_default_value_;
         ::xsd::cxx::tree::one< Vertex0IdType > vertex0Id_;

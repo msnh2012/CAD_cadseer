@@ -73,6 +73,150 @@ namespace prj
         this->base_.set (std::move (x));
       }
 
+      const TransitionCurve::PicksType& TransitionCurve::
+      picks () const
+      {
+        return this->picks_.get ();
+      }
+
+      TransitionCurve::PicksType& TransitionCurve::
+      picks ()
+      {
+        return this->picks_.get ();
+      }
+
+      void TransitionCurve::
+      picks (const PicksType& x)
+      {
+        this->picks_.set (x);
+      }
+
+      void TransitionCurve::
+      picks (::std::unique_ptr< PicksType > x)
+      {
+        this->picks_.set (std::move (x));
+      }
+
+      const TransitionCurve::Direction0Type& TransitionCurve::
+      direction0 () const
+      {
+        return this->direction0_.get ();
+      }
+
+      TransitionCurve::Direction0Type& TransitionCurve::
+      direction0 ()
+      {
+        return this->direction0_.get ();
+      }
+
+      void TransitionCurve::
+      direction0 (const Direction0Type& x)
+      {
+        this->direction0_.set (x);
+      }
+
+      void TransitionCurve::
+      direction0 (::std::unique_ptr< Direction0Type > x)
+      {
+        this->direction0_.set (std::move (x));
+      }
+
+      const TransitionCurve::Direction1Type& TransitionCurve::
+      direction1 () const
+      {
+        return this->direction1_.get ();
+      }
+
+      TransitionCurve::Direction1Type& TransitionCurve::
+      direction1 ()
+      {
+        return this->direction1_.get ();
+      }
+
+      void TransitionCurve::
+      direction1 (const Direction1Type& x)
+      {
+        this->direction1_.set (x);
+      }
+
+      void TransitionCurve::
+      direction1 (::std::unique_ptr< Direction1Type > x)
+      {
+        this->direction1_.set (std::move (x));
+      }
+
+      const TransitionCurve::Magnitude0Type& TransitionCurve::
+      magnitude0 () const
+      {
+        return this->magnitude0_.get ();
+      }
+
+      TransitionCurve::Magnitude0Type& TransitionCurve::
+      magnitude0 ()
+      {
+        return this->magnitude0_.get ();
+      }
+
+      void TransitionCurve::
+      magnitude0 (const Magnitude0Type& x)
+      {
+        this->magnitude0_.set (x);
+      }
+
+      void TransitionCurve::
+      magnitude0 (::std::unique_ptr< Magnitude0Type > x)
+      {
+        this->magnitude0_.set (std::move (x));
+      }
+
+      const TransitionCurve::Magnitude1Type& TransitionCurve::
+      magnitude1 () const
+      {
+        return this->magnitude1_.get ();
+      }
+
+      TransitionCurve::Magnitude1Type& TransitionCurve::
+      magnitude1 ()
+      {
+        return this->magnitude1_.get ();
+      }
+
+      void TransitionCurve::
+      magnitude1 (const Magnitude1Type& x)
+      {
+        this->magnitude1_.set (x);
+      }
+
+      void TransitionCurve::
+      magnitude1 (::std::unique_ptr< Magnitude1Type > x)
+      {
+        this->magnitude1_.set (std::move (x));
+      }
+
+      const TransitionCurve::AutoScaleType& TransitionCurve::
+      autoScale () const
+      {
+        return this->autoScale_.get ();
+      }
+
+      TransitionCurve::AutoScaleType& TransitionCurve::
+      autoScale ()
+      {
+        return this->autoScale_.get ();
+      }
+
+      void TransitionCurve::
+      autoScale (const AutoScaleType& x)
+      {
+        this->autoScale_.set (x);
+      }
+
+      void TransitionCurve::
+      autoScale (::std::unique_ptr< AutoScaleType > x)
+      {
+        this->autoScale_.set (std::move (x));
+      }
+
       const TransitionCurve::SeerShapeType& TransitionCurve::
       seerShape () const
       {
@@ -97,214 +241,124 @@ namespace prj
         this->seerShape_.set (std::move (x));
       }
 
-      const TransitionCurve::PicksSequence& TransitionCurve::
-      picks () const
+      const TransitionCurve::Direction0LabelType& TransitionCurve::
+      direction0Label () const
       {
-        return this->picks_;
+        return this->direction0Label_.get ();
       }
 
-      TransitionCurve::PicksSequence& TransitionCurve::
-      picks ()
+      TransitionCurve::Direction0LabelType& TransitionCurve::
+      direction0Label ()
       {
-        return this->picks_;
-      }
-
-      void TransitionCurve::
-      picks (const PicksSequence& s)
-      {
-        this->picks_ = s;
-      }
-
-      const TransitionCurve::Pick0DirectionType& TransitionCurve::
-      pick0Direction () const
-      {
-        return this->pick0Direction_.get ();
-      }
-
-      TransitionCurve::Pick0DirectionType& TransitionCurve::
-      pick0Direction ()
-      {
-        return this->pick0Direction_.get ();
+        return this->direction0Label_.get ();
       }
 
       void TransitionCurve::
-      pick0Direction (const Pick0DirectionType& x)
+      direction0Label (const Direction0LabelType& x)
       {
-        this->pick0Direction_.set (x);
+        this->direction0Label_.set (x);
       }
 
       void TransitionCurve::
-      pick0Direction (::std::unique_ptr< Pick0DirectionType > x)
+      direction0Label (::std::unique_ptr< Direction0LabelType > x)
       {
-        this->pick0Direction_.set (std::move (x));
+        this->direction0Label_.set (std::move (x));
       }
 
-      const TransitionCurve::Pick1DirectionType& TransitionCurve::
-      pick1Direction () const
+      const TransitionCurve::Direction1LabelType& TransitionCurve::
+      direction1Label () const
       {
-        return this->pick1Direction_.get ();
+        return this->direction1Label_.get ();
       }
 
-      TransitionCurve::Pick1DirectionType& TransitionCurve::
-      pick1Direction ()
+      TransitionCurve::Direction1LabelType& TransitionCurve::
+      direction1Label ()
       {
-        return this->pick1Direction_.get ();
-      }
-
-      void TransitionCurve::
-      pick1Direction (const Pick1DirectionType& x)
-      {
-        this->pick1Direction_.set (x);
+        return this->direction1Label_.get ();
       }
 
       void TransitionCurve::
-      pick1Direction (::std::unique_ptr< Pick1DirectionType > x)
+      direction1Label (const Direction1LabelType& x)
       {
-        this->pick1Direction_.set (std::move (x));
-      }
-
-      const TransitionCurve::Pick0MagnitudeType& TransitionCurve::
-      pick0Magnitude () const
-      {
-        return this->pick0Magnitude_.get ();
-      }
-
-      TransitionCurve::Pick0MagnitudeType& TransitionCurve::
-      pick0Magnitude ()
-      {
-        return this->pick0Magnitude_.get ();
+        this->direction1Label_.set (x);
       }
 
       void TransitionCurve::
-      pick0Magnitude (const Pick0MagnitudeType& x)
+      direction1Label (::std::unique_ptr< Direction1LabelType > x)
       {
-        this->pick0Magnitude_.set (x);
+        this->direction1Label_.set (std::move (x));
+      }
+
+      const TransitionCurve::Magnitude0LabelType& TransitionCurve::
+      magnitude0Label () const
+      {
+        return this->magnitude0Label_.get ();
+      }
+
+      TransitionCurve::Magnitude0LabelType& TransitionCurve::
+      magnitude0Label ()
+      {
+        return this->magnitude0Label_.get ();
       }
 
       void TransitionCurve::
-      pick0Magnitude (::std::unique_ptr< Pick0MagnitudeType > x)
+      magnitude0Label (const Magnitude0LabelType& x)
       {
-        this->pick0Magnitude_.set (std::move (x));
-      }
-
-      const TransitionCurve::Pick1MagnitudeType& TransitionCurve::
-      pick1Magnitude () const
-      {
-        return this->pick1Magnitude_.get ();
-      }
-
-      TransitionCurve::Pick1MagnitudeType& TransitionCurve::
-      pick1Magnitude ()
-      {
-        return this->pick1Magnitude_.get ();
+        this->magnitude0Label_.set (x);
       }
 
       void TransitionCurve::
-      pick1Magnitude (const Pick1MagnitudeType& x)
+      magnitude0Label (::std::unique_ptr< Magnitude0LabelType > x)
       {
-        this->pick1Magnitude_.set (x);
+        this->magnitude0Label_.set (std::move (x));
+      }
+
+      const TransitionCurve::Magnitude1LabelType& TransitionCurve::
+      magnitude1Label () const
+      {
+        return this->magnitude1Label_.get ();
+      }
+
+      TransitionCurve::Magnitude1LabelType& TransitionCurve::
+      magnitude1Label ()
+      {
+        return this->magnitude1Label_.get ();
       }
 
       void TransitionCurve::
-      pick1Magnitude (::std::unique_ptr< Pick1MagnitudeType > x)
+      magnitude1Label (const Magnitude1LabelType& x)
       {
-        this->pick1Magnitude_.set (std::move (x));
-      }
-
-      const TransitionCurve::DirectionLabel0Type& TransitionCurve::
-      directionLabel0 () const
-      {
-        return this->directionLabel0_.get ();
-      }
-
-      TransitionCurve::DirectionLabel0Type& TransitionCurve::
-      directionLabel0 ()
-      {
-        return this->directionLabel0_.get ();
+        this->magnitude1Label_.set (x);
       }
 
       void TransitionCurve::
-      directionLabel0 (const DirectionLabel0Type& x)
+      magnitude1Label (::std::unique_ptr< Magnitude1LabelType > x)
       {
-        this->directionLabel0_.set (x);
+        this->magnitude1Label_.set (std::move (x));
+      }
+
+      const TransitionCurve::AutoScaleLabelType& TransitionCurve::
+      autoScaleLabel () const
+      {
+        return this->autoScaleLabel_.get ();
+      }
+
+      TransitionCurve::AutoScaleLabelType& TransitionCurve::
+      autoScaleLabel ()
+      {
+        return this->autoScaleLabel_.get ();
       }
 
       void TransitionCurve::
-      directionLabel0 (::std::unique_ptr< DirectionLabel0Type > x)
+      autoScaleLabel (const AutoScaleLabelType& x)
       {
-        this->directionLabel0_.set (std::move (x));
-      }
-
-      const TransitionCurve::DirectionLabel1Type& TransitionCurve::
-      directionLabel1 () const
-      {
-        return this->directionLabel1_.get ();
-      }
-
-      TransitionCurve::DirectionLabel1Type& TransitionCurve::
-      directionLabel1 ()
-      {
-        return this->directionLabel1_.get ();
+        this->autoScaleLabel_.set (x);
       }
 
       void TransitionCurve::
-      directionLabel1 (const DirectionLabel1Type& x)
+      autoScaleLabel (::std::unique_ptr< AutoScaleLabelType > x)
       {
-        this->directionLabel1_.set (x);
-      }
-
-      void TransitionCurve::
-      directionLabel1 (::std::unique_ptr< DirectionLabel1Type > x)
-      {
-        this->directionLabel1_.set (std::move (x));
-      }
-
-      const TransitionCurve::MagnitudeLabel0Type& TransitionCurve::
-      magnitudeLabel0 () const
-      {
-        return this->magnitudeLabel0_.get ();
-      }
-
-      TransitionCurve::MagnitudeLabel0Type& TransitionCurve::
-      magnitudeLabel0 ()
-      {
-        return this->magnitudeLabel0_.get ();
-      }
-
-      void TransitionCurve::
-      magnitudeLabel0 (const MagnitudeLabel0Type& x)
-      {
-        this->magnitudeLabel0_.set (x);
-      }
-
-      void TransitionCurve::
-      magnitudeLabel0 (::std::unique_ptr< MagnitudeLabel0Type > x)
-      {
-        this->magnitudeLabel0_.set (std::move (x));
-      }
-
-      const TransitionCurve::MagnitudeLabel1Type& TransitionCurve::
-      magnitudeLabel1 () const
-      {
-        return this->magnitudeLabel1_.get ();
-      }
-
-      TransitionCurve::MagnitudeLabel1Type& TransitionCurve::
-      magnitudeLabel1 ()
-      {
-        return this->magnitudeLabel1_.get ();
-      }
-
-      void TransitionCurve::
-      magnitudeLabel1 (const MagnitudeLabel1Type& x)
-      {
-        this->magnitudeLabel1_.set (x);
-      }
-
-      void TransitionCurve::
-      magnitudeLabel1 (::std::unique_ptr< MagnitudeLabel1Type > x)
-      {
-        this->magnitudeLabel1_.set (std::move (x));
+        this->autoScaleLabel_.set (std::move (x));
       }
 
       const TransitionCurve::CurveIdType& TransitionCurve::
@@ -422,30 +476,35 @@ namespace prj
 
       TransitionCurve::
       TransitionCurve (const BaseType& base,
+                       const PicksType& picks,
+                       const Direction0Type& direction0,
+                       const Direction1Type& direction1,
+                       const Magnitude0Type& magnitude0,
+                       const Magnitude1Type& magnitude1,
+                       const AutoScaleType& autoScale,
                        const SeerShapeType& seerShape,
-                       const Pick0DirectionType& pick0Direction,
-                       const Pick1DirectionType& pick1Direction,
-                       const Pick0MagnitudeType& pick0Magnitude,
-                       const Pick1MagnitudeType& pick1Magnitude,
-                       const DirectionLabel0Type& directionLabel0,
-                       const DirectionLabel1Type& directionLabel1,
-                       const MagnitudeLabel0Type& magnitudeLabel0,
-                       const MagnitudeLabel1Type& magnitudeLabel1,
+                       const Direction0LabelType& direction0Label,
+                       const Direction1LabelType& direction1Label,
+                       const Magnitude0LabelType& magnitude0Label,
+                       const Magnitude1LabelType& magnitude1Label,
+                       const AutoScaleLabelType& autoScaleLabel,
                        const CurveIdType& curveId,
                        const Vertex0IdType& vertex0Id,
                        const Vertex1IdType& vertex1Id)
       : ::xml_schema::Type (),
         base_ (base, this),
+        picks_ (picks, this),
+        direction0_ (direction0, this),
+        direction1_ (direction1, this),
+        magnitude0_ (magnitude0, this),
+        magnitude1_ (magnitude1, this),
+        autoScale_ (autoScale, this),
         seerShape_ (seerShape, this),
-        picks_ (this),
-        pick0Direction_ (pick0Direction, this),
-        pick1Direction_ (pick1Direction, this),
-        pick0Magnitude_ (pick0Magnitude, this),
-        pick1Magnitude_ (pick1Magnitude, this),
-        directionLabel0_ (directionLabel0, this),
-        directionLabel1_ (directionLabel1, this),
-        magnitudeLabel0_ (magnitudeLabel0, this),
-        magnitudeLabel1_ (magnitudeLabel1, this),
+        direction0Label_ (direction0Label, this),
+        direction1Label_ (direction1Label, this),
+        magnitude0Label_ (magnitude0Label, this),
+        magnitude1Label_ (magnitude1Label, this),
+        autoScaleLabel_ (autoScaleLabel, this),
         curveId_ (curveId, this),
         vertex0Id_ (vertex0Id, this),
         vertex1Id_ (vertex1Id, this)
@@ -454,30 +513,35 @@ namespace prj
 
       TransitionCurve::
       TransitionCurve (::std::unique_ptr< BaseType > base,
+                       ::std::unique_ptr< PicksType > picks,
+                       ::std::unique_ptr< Direction0Type > direction0,
+                       ::std::unique_ptr< Direction1Type > direction1,
+                       ::std::unique_ptr< Magnitude0Type > magnitude0,
+                       ::std::unique_ptr< Magnitude1Type > magnitude1,
+                       ::std::unique_ptr< AutoScaleType > autoScale,
                        ::std::unique_ptr< SeerShapeType > seerShape,
-                       ::std::unique_ptr< Pick0DirectionType > pick0Direction,
-                       ::std::unique_ptr< Pick1DirectionType > pick1Direction,
-                       ::std::unique_ptr< Pick0MagnitudeType > pick0Magnitude,
-                       ::std::unique_ptr< Pick1MagnitudeType > pick1Magnitude,
-                       ::std::unique_ptr< DirectionLabel0Type > directionLabel0,
-                       ::std::unique_ptr< DirectionLabel1Type > directionLabel1,
-                       ::std::unique_ptr< MagnitudeLabel0Type > magnitudeLabel0,
-                       ::std::unique_ptr< MagnitudeLabel1Type > magnitudeLabel1,
+                       ::std::unique_ptr< Direction0LabelType > direction0Label,
+                       ::std::unique_ptr< Direction1LabelType > direction1Label,
+                       ::std::unique_ptr< Magnitude0LabelType > magnitude0Label,
+                       ::std::unique_ptr< Magnitude1LabelType > magnitude1Label,
+                       ::std::unique_ptr< AutoScaleLabelType > autoScaleLabel,
                        const CurveIdType& curveId,
                        const Vertex0IdType& vertex0Id,
                        const Vertex1IdType& vertex1Id)
       : ::xml_schema::Type (),
         base_ (std::move (base), this),
+        picks_ (std::move (picks), this),
+        direction0_ (std::move (direction0), this),
+        direction1_ (std::move (direction1), this),
+        magnitude0_ (std::move (magnitude0), this),
+        magnitude1_ (std::move (magnitude1), this),
+        autoScale_ (std::move (autoScale), this),
         seerShape_ (std::move (seerShape), this),
-        picks_ (this),
-        pick0Direction_ (std::move (pick0Direction), this),
-        pick1Direction_ (std::move (pick1Direction), this),
-        pick0Magnitude_ (std::move (pick0Magnitude), this),
-        pick1Magnitude_ (std::move (pick1Magnitude), this),
-        directionLabel0_ (std::move (directionLabel0), this),
-        directionLabel1_ (std::move (directionLabel1), this),
-        magnitudeLabel0_ (std::move (magnitudeLabel0), this),
-        magnitudeLabel1_ (std::move (magnitudeLabel1), this),
+        direction0Label_ (std::move (direction0Label), this),
+        direction1Label_ (std::move (direction1Label), this),
+        magnitude0Label_ (std::move (magnitude0Label), this),
+        magnitude1Label_ (std::move (magnitude1Label), this),
+        autoScaleLabel_ (std::move (autoScaleLabel), this),
         curveId_ (curveId, this),
         vertex0Id_ (vertex0Id, this),
         vertex1Id_ (vertex1Id, this)
@@ -490,16 +554,18 @@ namespace prj
                        ::xml_schema::Container* c)
       : ::xml_schema::Type (x, f, c),
         base_ (x.base_, f, this),
-        seerShape_ (x.seerShape_, f, this),
         picks_ (x.picks_, f, this),
-        pick0Direction_ (x.pick0Direction_, f, this),
-        pick1Direction_ (x.pick1Direction_, f, this),
-        pick0Magnitude_ (x.pick0Magnitude_, f, this),
-        pick1Magnitude_ (x.pick1Magnitude_, f, this),
-        directionLabel0_ (x.directionLabel0_, f, this),
-        directionLabel1_ (x.directionLabel1_, f, this),
-        magnitudeLabel0_ (x.magnitudeLabel0_, f, this),
-        magnitudeLabel1_ (x.magnitudeLabel1_, f, this),
+        direction0_ (x.direction0_, f, this),
+        direction1_ (x.direction1_, f, this),
+        magnitude0_ (x.magnitude0_, f, this),
+        magnitude1_ (x.magnitude1_, f, this),
+        autoScale_ (x.autoScale_, f, this),
+        seerShape_ (x.seerShape_, f, this),
+        direction0Label_ (x.direction0Label_, f, this),
+        direction1Label_ (x.direction1Label_, f, this),
+        magnitude0Label_ (x.magnitude0Label_, f, this),
+        magnitude1Label_ (x.magnitude1Label_, f, this),
+        autoScaleLabel_ (x.autoScaleLabel_, f, this),
         curveId_ (x.curveId_, f, this),
         vertex0Id_ (x.vertex0Id_, f, this),
         vertex1Id_ (x.vertex1Id_, f, this)
@@ -512,16 +578,18 @@ namespace prj
                        ::xml_schema::Container* c)
       : ::xml_schema::Type (e, f | ::xml_schema::Flags::base, c),
         base_ (this),
-        seerShape_ (this),
         picks_ (this),
-        pick0Direction_ (this),
-        pick1Direction_ (this),
-        pick0Magnitude_ (this),
-        pick1Magnitude_ (this),
-        directionLabel0_ (this),
-        directionLabel1_ (this),
-        magnitudeLabel0_ (this),
-        magnitudeLabel1_ (this),
+        direction0_ (this),
+        direction1_ (this),
+        magnitude0_ (this),
+        magnitude1_ (this),
+        autoScale_ (this),
+        seerShape_ (this),
+        direction0Label_ (this),
+        direction1Label_ (this),
+        magnitude0Label_ (this),
+        magnitude1Label_ (this),
+        autoScaleLabel_ (this),
         curveId_ (this),
         vertex0Id_ (this),
         vertex1Id_ (this)
@@ -557,6 +625,90 @@ namespace prj
             }
           }
 
+          // picks
+          //
+          if (n.name () == "picks" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< PicksType > r (
+              PicksTraits::create (i, f, this));
+
+            if (!picks_.present ())
+            {
+              this->picks_.set (::std::move (r));
+              continue;
+            }
+          }
+
+          // direction0
+          //
+          if (n.name () == "direction0" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< Direction0Type > r (
+              Direction0Traits::create (i, f, this));
+
+            if (!direction0_.present ())
+            {
+              this->direction0_.set (::std::move (r));
+              continue;
+            }
+          }
+
+          // direction1
+          //
+          if (n.name () == "direction1" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< Direction1Type > r (
+              Direction1Traits::create (i, f, this));
+
+            if (!direction1_.present ())
+            {
+              this->direction1_.set (::std::move (r));
+              continue;
+            }
+          }
+
+          // magnitude0
+          //
+          if (n.name () == "magnitude0" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< Magnitude0Type > r (
+              Magnitude0Traits::create (i, f, this));
+
+            if (!magnitude0_.present ())
+            {
+              this->magnitude0_.set (::std::move (r));
+              continue;
+            }
+          }
+
+          // magnitude1
+          //
+          if (n.name () == "magnitude1" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< Magnitude1Type > r (
+              Magnitude1Traits::create (i, f, this));
+
+            if (!magnitude1_.present ())
+            {
+              this->magnitude1_.set (::std::move (r));
+              continue;
+            }
+          }
+
+          // autoScale
+          //
+          if (n.name () == "autoScale" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< AutoScaleType > r (
+              AutoScaleTraits::create (i, f, this));
+
+            if (!autoScale_.present ())
+            {
+              this->autoScale_.set (::std::move (r));
+              continue;
+            }
+          }
+
           // seerShape
           //
           if (n.name () == "seerShape" && n.namespace_ ().empty ())
@@ -571,125 +723,72 @@ namespace prj
             }
           }
 
-          // picks
+          // direction0Label
           //
-          if (n.name () == "picks" && n.namespace_ ().empty ())
+          if (n.name () == "direction0Label" && n.namespace_ ().empty ())
           {
-            ::std::unique_ptr< PicksType > r (
-              PicksTraits::create (i, f, this));
+            ::std::unique_ptr< Direction0LabelType > r (
+              Direction0LabelTraits::create (i, f, this));
 
-            this->picks_.push_back (::std::move (r));
-            continue;
-          }
-
-          // pick0Direction
-          //
-          if (n.name () == "pick0Direction" && n.namespace_ ().empty ())
-          {
-            ::std::unique_ptr< Pick0DirectionType > r (
-              Pick0DirectionTraits::create (i, f, this));
-
-            if (!pick0Direction_.present ())
+            if (!direction0Label_.present ())
             {
-              this->pick0Direction_.set (::std::move (r));
+              this->direction0Label_.set (::std::move (r));
               continue;
             }
           }
 
-          // pick1Direction
+          // direction1Label
           //
-          if (n.name () == "pick1Direction" && n.namespace_ ().empty ())
+          if (n.name () == "direction1Label" && n.namespace_ ().empty ())
           {
-            ::std::unique_ptr< Pick1DirectionType > r (
-              Pick1DirectionTraits::create (i, f, this));
+            ::std::unique_ptr< Direction1LabelType > r (
+              Direction1LabelTraits::create (i, f, this));
 
-            if (!pick1Direction_.present ())
+            if (!direction1Label_.present ())
             {
-              this->pick1Direction_.set (::std::move (r));
+              this->direction1Label_.set (::std::move (r));
               continue;
             }
           }
 
-          // pick0Magnitude
+          // magnitude0Label
           //
-          if (n.name () == "pick0Magnitude" && n.namespace_ ().empty ())
+          if (n.name () == "magnitude0Label" && n.namespace_ ().empty ())
           {
-            ::std::unique_ptr< Pick0MagnitudeType > r (
-              Pick0MagnitudeTraits::create (i, f, this));
+            ::std::unique_ptr< Magnitude0LabelType > r (
+              Magnitude0LabelTraits::create (i, f, this));
 
-            if (!pick0Magnitude_.present ())
+            if (!magnitude0Label_.present ())
             {
-              this->pick0Magnitude_.set (::std::move (r));
+              this->magnitude0Label_.set (::std::move (r));
               continue;
             }
           }
 
-          // pick1Magnitude
+          // magnitude1Label
           //
-          if (n.name () == "pick1Magnitude" && n.namespace_ ().empty ())
+          if (n.name () == "magnitude1Label" && n.namespace_ ().empty ())
           {
-            ::std::unique_ptr< Pick1MagnitudeType > r (
-              Pick1MagnitudeTraits::create (i, f, this));
+            ::std::unique_ptr< Magnitude1LabelType > r (
+              Magnitude1LabelTraits::create (i, f, this));
 
-            if (!pick1Magnitude_.present ())
+            if (!magnitude1Label_.present ())
             {
-              this->pick1Magnitude_.set (::std::move (r));
+              this->magnitude1Label_.set (::std::move (r));
               continue;
             }
           }
 
-          // directionLabel0
+          // autoScaleLabel
           //
-          if (n.name () == "directionLabel0" && n.namespace_ ().empty ())
+          if (n.name () == "autoScaleLabel" && n.namespace_ ().empty ())
           {
-            ::std::unique_ptr< DirectionLabel0Type > r (
-              DirectionLabel0Traits::create (i, f, this));
+            ::std::unique_ptr< AutoScaleLabelType > r (
+              AutoScaleLabelTraits::create (i, f, this));
 
-            if (!directionLabel0_.present ())
+            if (!autoScaleLabel_.present ())
             {
-              this->directionLabel0_.set (::std::move (r));
-              continue;
-            }
-          }
-
-          // directionLabel1
-          //
-          if (n.name () == "directionLabel1" && n.namespace_ ().empty ())
-          {
-            ::std::unique_ptr< DirectionLabel1Type > r (
-              DirectionLabel1Traits::create (i, f, this));
-
-            if (!directionLabel1_.present ())
-            {
-              this->directionLabel1_.set (::std::move (r));
-              continue;
-            }
-          }
-
-          // magnitudeLabel0
-          //
-          if (n.name () == "magnitudeLabel0" && n.namespace_ ().empty ())
-          {
-            ::std::unique_ptr< MagnitudeLabel0Type > r (
-              MagnitudeLabel0Traits::create (i, f, this));
-
-            if (!magnitudeLabel0_.present ())
-            {
-              this->magnitudeLabel0_.set (::std::move (r));
-              continue;
-            }
-          }
-
-          // magnitudeLabel1
-          //
-          if (n.name () == "magnitudeLabel1" && n.namespace_ ().empty ())
-          {
-            ::std::unique_ptr< MagnitudeLabel1Type > r (
-              MagnitudeLabel1Traits::create (i, f, this));
-
-            if (!magnitudeLabel1_.present ())
-            {
-              this->magnitudeLabel1_.set (::std::move (r));
+              this->autoScaleLabel_.set (::std::move (r));
               continue;
             }
           }
@@ -746,6 +845,48 @@ namespace prj
             "");
         }
 
+        if (!picks_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "picks",
+            "");
+        }
+
+        if (!direction0_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "direction0",
+            "");
+        }
+
+        if (!direction1_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "direction1",
+            "");
+        }
+
+        if (!magnitude0_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "magnitude0",
+            "");
+        }
+
+        if (!magnitude1_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "magnitude1",
+            "");
+        }
+
+        if (!autoScale_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "autoScale",
+            "");
+        }
+
         if (!seerShape_.present ())
         {
           throw ::xsd::cxx::tree::expected_element< char > (
@@ -753,59 +894,38 @@ namespace prj
             "");
         }
 
-        if (!pick0Direction_.present ())
+        if (!direction0Label_.present ())
         {
           throw ::xsd::cxx::tree::expected_element< char > (
-            "pick0Direction",
+            "direction0Label",
             "");
         }
 
-        if (!pick1Direction_.present ())
+        if (!direction1Label_.present ())
         {
           throw ::xsd::cxx::tree::expected_element< char > (
-            "pick1Direction",
+            "direction1Label",
             "");
         }
 
-        if (!pick0Magnitude_.present ())
+        if (!magnitude0Label_.present ())
         {
           throw ::xsd::cxx::tree::expected_element< char > (
-            "pick0Magnitude",
+            "magnitude0Label",
             "");
         }
 
-        if (!pick1Magnitude_.present ())
+        if (!magnitude1Label_.present ())
         {
           throw ::xsd::cxx::tree::expected_element< char > (
-            "pick1Magnitude",
+            "magnitude1Label",
             "");
         }
 
-        if (!directionLabel0_.present ())
+        if (!autoScaleLabel_.present ())
         {
           throw ::xsd::cxx::tree::expected_element< char > (
-            "directionLabel0",
-            "");
-        }
-
-        if (!directionLabel1_.present ())
-        {
-          throw ::xsd::cxx::tree::expected_element< char > (
-            "directionLabel1",
-            "");
-        }
-
-        if (!magnitudeLabel0_.present ())
-        {
-          throw ::xsd::cxx::tree::expected_element< char > (
-            "magnitudeLabel0",
-            "");
-        }
-
-        if (!magnitudeLabel1_.present ())
-        {
-          throw ::xsd::cxx::tree::expected_element< char > (
-            "magnitudeLabel1",
+            "autoScaleLabel",
             "");
         }
 
@@ -845,16 +965,18 @@ namespace prj
         {
           static_cast< ::xml_schema::Type& > (*this) = x;
           this->base_ = x.base_;
-          this->seerShape_ = x.seerShape_;
           this->picks_ = x.picks_;
-          this->pick0Direction_ = x.pick0Direction_;
-          this->pick1Direction_ = x.pick1Direction_;
-          this->pick0Magnitude_ = x.pick0Magnitude_;
-          this->pick1Magnitude_ = x.pick1Magnitude_;
-          this->directionLabel0_ = x.directionLabel0_;
-          this->directionLabel1_ = x.directionLabel1_;
-          this->magnitudeLabel0_ = x.magnitudeLabel0_;
-          this->magnitudeLabel1_ = x.magnitudeLabel1_;
+          this->direction0_ = x.direction0_;
+          this->direction1_ = x.direction1_;
+          this->magnitude0_ = x.magnitude0_;
+          this->magnitude1_ = x.magnitude1_;
+          this->autoScale_ = x.autoScale_;
+          this->seerShape_ = x.seerShape_;
+          this->direction0Label_ = x.direction0Label_;
+          this->direction1Label_ = x.direction1Label_;
+          this->magnitude0Label_ = x.magnitude0Label_;
+          this->magnitude1Label_ = x.magnitude1Label_;
+          this->autoScaleLabel_ = x.autoScaleLabel_;
           this->curveId_ = x.curveId_;
           this->vertex0Id_ = x.vertex0Id_;
           this->vertex1Id_ = x.vertex1Id_;
@@ -1176,6 +1298,72 @@ namespace prj
           s << i.base ();
         }
 
+        // picks
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "picks",
+              e));
+
+          s << i.picks ();
+        }
+
+        // direction0
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "direction0",
+              e));
+
+          s << i.direction0 ();
+        }
+
+        // direction1
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "direction1",
+              e));
+
+          s << i.direction1 ();
+        }
+
+        // magnitude0
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "magnitude0",
+              e));
+
+          s << i.magnitude0 ();
+        }
+
+        // magnitude1
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "magnitude1",
+              e));
+
+          s << i.magnitude1 ();
+        }
+
+        // autoScale
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "autoScale",
+              e));
+
+          s << i.autoScale ();
+        }
+
         // seerShape
         //
         {
@@ -1187,106 +1375,59 @@ namespace prj
           s << i.seerShape ();
         }
 
-        // picks
+        // direction0Label
         //
-        for (TransitionCurve::PicksConstIterator
-             b (i.picks ().begin ()), n (i.picks ().end ());
-             b != n; ++b)
         {
           ::xercesc::DOMElement& s (
             ::xsd::cxx::xml::dom::create_element (
-              "picks",
+              "direction0Label",
               e));
 
-          s << *b;
+          s << i.direction0Label ();
         }
 
-        // pick0Direction
+        // direction1Label
         //
         {
           ::xercesc::DOMElement& s (
             ::xsd::cxx::xml::dom::create_element (
-              "pick0Direction",
+              "direction1Label",
               e));
 
-          s << i.pick0Direction ();
+          s << i.direction1Label ();
         }
 
-        // pick1Direction
+        // magnitude0Label
         //
         {
           ::xercesc::DOMElement& s (
             ::xsd::cxx::xml::dom::create_element (
-              "pick1Direction",
+              "magnitude0Label",
               e));
 
-          s << i.pick1Direction ();
+          s << i.magnitude0Label ();
         }
 
-        // pick0Magnitude
+        // magnitude1Label
         //
         {
           ::xercesc::DOMElement& s (
             ::xsd::cxx::xml::dom::create_element (
-              "pick0Magnitude",
+              "magnitude1Label",
               e));
 
-          s << i.pick0Magnitude ();
+          s << i.magnitude1Label ();
         }
 
-        // pick1Magnitude
+        // autoScaleLabel
         //
         {
           ::xercesc::DOMElement& s (
             ::xsd::cxx::xml::dom::create_element (
-              "pick1Magnitude",
+              "autoScaleLabel",
               e));
 
-          s << i.pick1Magnitude ();
-        }
-
-        // directionLabel0
-        //
-        {
-          ::xercesc::DOMElement& s (
-            ::xsd::cxx::xml::dom::create_element (
-              "directionLabel0",
-              e));
-
-          s << i.directionLabel0 ();
-        }
-
-        // directionLabel1
-        //
-        {
-          ::xercesc::DOMElement& s (
-            ::xsd::cxx::xml::dom::create_element (
-              "directionLabel1",
-              e));
-
-          s << i.directionLabel1 ();
-        }
-
-        // magnitudeLabel0
-        //
-        {
-          ::xercesc::DOMElement& s (
-            ::xsd::cxx::xml::dom::create_element (
-              "magnitudeLabel0",
-              e));
-
-          s << i.magnitudeLabel0 ();
-        }
-
-        // magnitudeLabel1
-        //
-        {
-          ::xercesc::DOMElement& s (
-            ::xsd::cxx::xml::dom::create_element (
-              "magnitudeLabel1",
-              e));
-
-          s << i.magnitudeLabel1 ();
+          s << i.autoScaleLabel ();
         }
 
         // curveId

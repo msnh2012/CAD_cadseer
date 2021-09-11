@@ -31,51 +31,43 @@ namespace prj{namespace srl{namespace tscs{class TransitionCurve;}}}
 
 namespace ftr
 {
-  class TransitionCurve : public Base
+  namespace TransitionCurve
   {
-  public:
-    constexpr static const char *pickZero = "pickZero";
-    constexpr static const char *pickOne = "pickOne";
-    
-    TransitionCurve();
-    ~TransitionCurve() override;
-    
-    void updateModel(const UpdatePayload&) override;
-    Type getType() const override {return Type::TransitionCurve;}
-    const std::string& getTypeString() const override {return toString(Type::TransitionCurve);}
-    const QIcon& getIcon() const override {return icon;}
-    Descriptor getDescriptor() const override {return Descriptor::Create;}
-    
-    void serialWrite(const boost::filesystem::path&) override;
-    void serialRead(const prj::srl::tscs::TransitionCurve&);
-    
-    void setPicks(const Picks&);
-    const Picks& getPicks() const {return picks;}
-    
-    void setDirection0(bool);
-    void setDirection1(bool);
-    void gleanDirection0(const TopoDS_Edge&);
-    void gleanDirection1(const TopoDS_Edge&);
-    
-  private:
-    std::unique_ptr<ann::SeerShape> sShape;
-    std::unique_ptr<prm::Parameter> pick0Direction;
-    std::unique_ptr<prm::Parameter> pick1Direction;
-    std::unique_ptr<prm::Parameter> pick0Magnitude;
-    std::unique_ptr<prm::Parameter> pick1Magnitude;
-    Picks picks;
-    
-    osg::ref_ptr<lbr::PLabel> directionLabel0;
-    osg::ref_ptr<lbr::PLabel> directionLabel1;
-    osg::ref_ptr<lbr::PLabel> magnitudeLabel0;
-    osg::ref_ptr<lbr::PLabel> magnitudeLabel1;
-    
-    boost::uuids::uuid curveId;
-    boost::uuids::uuid vertex0Id;
-    boost::uuids::uuid vertex1Id;
-    
-    static QIcon icon;
-  };
+    namespace InputTags
+    {
+      inline constexpr std::string_view pick = "pick";
+    }
+    namespace PrmTags
+    {
+      inline constexpr std::string_view direction0 = "direction0";
+      inline constexpr std::string_view direction1 = "direction1";
+      inline constexpr std::string_view magnitude0 = "magnitude0";
+      inline constexpr std::string_view magnitude1 = "magnitude1";
+      inline constexpr std::string_view autoScale = "autoScale";
+    }
+    class Feature : public Base
+    {
+    public:
+      Feature();
+      ~Feature() override;
+      
+      void updateModel(const UpdatePayload&) override;
+      Type getType() const override {return Type::TransitionCurve;}
+      const std::string& getTypeString() const override {return toString(Type::TransitionCurve);}
+      const QIcon& getIcon() const override {return icon;}
+      Descriptor getDescriptor() const override {return Descriptor::Create;}
+      
+      void serialWrite(const boost::filesystem::path&) override;
+      void serialRead(const prj::srl::tscs::TransitionCurve&);
+      
+      void gleanDirection0(const TopoDS_Edge&);
+      void gleanDirection1(const TopoDS_Edge&);
+    private:
+      static QIcon icon;
+      struct Stow;
+      std::unique_ptr<Stow> stow;
+    };
+  }
 }
 
 #endif //FTR_TRANSITIONCURVE_H

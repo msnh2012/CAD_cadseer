@@ -640,7 +640,7 @@ std::unique_ptr<ftr::Base> FeatureLoad::loadTransitionCurve(const std::string &f
   auto ss = srl::tscs::transitionCurve(fileNameIn, flags);
   assert(ss);
   
-  auto sf = std::make_unique<ftr::TransitionCurve>();
+  auto sf = std::make_unique<ftr::TransitionCurve::Feature>();
   sf->getAnnex<ann::SeerShape>().setOCCTShape(shapeVector.at(shapeOffsetIn), featureId);
   sf->serialRead(*ss);
   

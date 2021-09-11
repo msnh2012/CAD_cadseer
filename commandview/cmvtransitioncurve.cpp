@@ -22,10 +22,11 @@
 
 #include "application/appapplication.h"
 #include "project/prjproject.h"
-#include "dialogs/dlgselectionbutton.h"
-#include "dialogs/dlgselectionwidget.h"
-#include "commandview/cmvparameterwidgets.h"
+#include "message/msgnode.h"
+#include "parameter/prmconstants.h"
 #include "parameter/prmparameter.h"
+#include "commandview/cmvselectioncue.h"
+#include "commandview/cmvtable.h"
 #include "tools/featuretools.h"
 #include "feature/ftrtransitioncurve.h"
 #include "command/cmdtransitioncurve.h"
@@ -39,114 +40,64 @@ struct TransitionCurve::Stow
 {
   cmd::TransitionCurve *command;
   cmv::TransitionCurve *view;
-  dlg::SelectionWidget *selectionWidget = nullptr;
-  cmv::ParameterWidget *parameterWidget = nullptr;
+  prm::Parameters parameters;
+  cmv::tbl::Model *prmModel = nullptr;
+  cmv::tbl::View *prmView = nullptr;
   
   Stow(cmd::TransitionCurve *cIn, cmv::TransitionCurve *vIn)
   : command(cIn)
   , view(vIn)
   {
+    parameters = command->feature->getParameters();
     buildGui();
-    
-    QSettings &settings = app::instance()->getUserSettings();
-    settings.beginGroup("cmv::TransitionCurve");
-    //load settings
-    settings.endGroup();
-    
-    loadFeatureData();
-    glue();
-    selectionWidget->activate(0);
+    connect(prmModel, &tbl::Model::dataChanged, view, &TransitionCurve::modelChanged);
   }
   
   void buildGui()
   {
-    QSizePolicy adjust = view->sizePolicy();
-    adjust.setVerticalPolicy(QSizePolicy::Maximum);
-    view->setSizePolicy(adjust);
-    
     QVBoxLayout *mainLayout = new QVBoxLayout();
     view->setLayout(mainLayout);
+    Base::clearContentMargins(view);
+    view->setSizePolicy(view->sizePolicy().horizontalPolicy(), QSizePolicy::Expanding);
     
-    std::vector<dlg::SelectionWidgetCue> cues;
-    dlg::SelectionWidgetCue cue;
-    cue.name = tr("Item 1");
-    cue.singleSelection = true;
+    prmModel = new tbl::Model(view, command->feature);
+    prmView = new tbl::View(view, prmModel, true);
+    mainLayout->addWidget(prmView);
+    
+    tbl::SelectionCue cue;
+    cue.singleSelection = false;
     cue.mask = slc::AllPointsEnabled | slc::EndPointsSelectable;
     cue.statusPrompt = tr("Select Point On Curve");
-    cue.showAccrueColumn = false;
-    cues.push_back(cue);
-    cue.name = tr("Item 2");
-    cues.push_back(cue);
-    
-    selectionWidget = new dlg::SelectionWidget(view, cues);
-    mainLayout->addWidget(selectionWidget);
-    
-    parameterWidget = new cmv::ParameterWidget(view, command->feature->getParameters());
-    mainLayout->addWidget(parameterWidget);
-    mainLayout->addItem(new QSpacerItem(20, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
-  }
-  
-  void loadFeatureData()
-  {
-    ftr::UpdatePayload up = view->project->getPayload(command->feature->getId());
-    tls::Resolver resolver(up);
-    
-    auto picksToMessages = [&](const ftr::Picks &pIn) -> slc::Messages
-    {
-      slc::Messages out;
-      for (const auto &p : pIn)
-      {
-        if (resolver.resolve(p))
-        {
-          auto msgs = resolver.convertToMessages();
-          out.insert(out.end(), msgs.begin(), msgs.end());
-        }
-      }
-      return out;
-    };
-    
-    const auto &ps = picksToMessages(command->feature->getPicks());
-    if (ps.size() > 0)
-      selectionWidget->initializeButton(0, ps.at(0));
-    if (ps.size() > 1)
-      selectionWidget->initializeButton(1, ps.at(1));
-  }
-  
-  void glue()
-  {
-    QObject::connect(selectionWidget->getButton(0), &dlg::SelectionButton::dirty, view, &TransitionCurve::selectionChanged);
-    QObject::connect(selectionWidget->getButton(1), &dlg::SelectionButton::dirty, view, &TransitionCurve::selectionChanged);
-    QObject::connect(parameterWidget, &ParameterBase::prmValueChanged, view, &TransitionCurve::parameterChanged);
-  }
-  
-  void goSelections()
-  {
-    auto msgs = selectionWidget->getMessages(0);
-    const auto &temp = selectionWidget->getMessages(1);
-    msgs.insert(msgs.end(), temp.begin(), temp.end());
-    command->setSelections(msgs);
-    goUpdate();
-  }
-  
-  void goUpdate()
-  {
-    command->localUpdate();
+    cue.accrueEnabled = false;
+    cue.forceTangentAccrue = false;
+    prmModel->setCue(command->feature->getParameter(prm::Tags::Picks), cue);
   }
 };
 
 TransitionCurve::TransitionCurve(cmd::TransitionCurve *cIn)
 : Base("cmv::TransitionCurve")
 , stow(new Stow(cIn, this))
-{}
+{
+  goSelectionToolbar();
+  goMaskDefault();
+}
 
 TransitionCurve::~TransitionCurve() = default;
 
-void TransitionCurve::selectionChanged()
+void TransitionCurve::modelChanged(const QModelIndex &index, const QModelIndex&)
 {
-  stow->goSelections();
-}
-
-void TransitionCurve::parameterChanged()
-{
-  stow->goUpdate();
+  if (!index.isValid())
+    return;
+  
+  auto tag = stow->parameters.at(index.row())->getTag();
+  if (tag == prm::Tags::Picks)
+  {
+    stow->command->setSelections(stow->prmModel->getMessages(index));
+    //when user changes selection lets enable auto scale.
+    stow->command->feature->getParameter(ftr::TransitionCurve::PrmTags::autoScale)->setValue(true);
+  }
+  stow->command->localUpdate();
+  stow->prmView->updateHideInactive();
+  node->sendBlocked(msg::buildStatusMessage(stow->command->getStatusMessage()));
+  goMaskDefault();
 }
