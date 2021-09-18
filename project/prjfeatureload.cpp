@@ -415,7 +415,7 @@ std::unique_ptr<ftr::Base> FeatureLoad::loadStrip(const std::string &fileNameIn,
   auto ss = srl::stps::strip(fileNameIn, flags);
   assert(ss);
   
-  auto freshStrip = std::make_unique<ftr::Strip>();
+  auto freshStrip = std::make_unique<ftr::Strip::Feature>();
   freshStrip->getAnnex<ann::SeerShape>().setOCCTShape(shapeVector.at(shapeOffsetIn), featureId);
   freshStrip->serialRead(*ss);
   

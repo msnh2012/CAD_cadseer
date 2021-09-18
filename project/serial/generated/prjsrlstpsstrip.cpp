@@ -49,52 +49,46 @@ namespace prj
       // Station
       // 
 
-      const Station::TextType& Station::
-      text () const
+      const Station::IndexType& Station::
+      index () const
       {
-        return this->text_.get ();
+        return this->index_.get ();
       }
 
-      Station::TextType& Station::
-      text ()
+      Station::IndexType& Station::
+      index ()
       {
-        return this->text_.get ();
-      }
-
-      void Station::
-      text (const TextType& x)
-      {
-        this->text_.set (x);
+        return this->index_.get ();
       }
 
       void Station::
-      text (::std::unique_ptr< TextType > x)
+      index (const IndexType& x)
       {
-        this->text_.set (std::move (x));
+        this->index_.set (x);
       }
 
-      const Station::MatrixType& Station::
-      matrix () const
+      const Station::LabelType& Station::
+      label () const
       {
-        return this->matrix_.get ();
+        return this->label_.get ();
       }
 
-      Station::MatrixType& Station::
-      matrix ()
+      Station::LabelType& Station::
+      label ()
       {
-        return this->matrix_.get ();
-      }
-
-      void Station::
-      matrix (const MatrixType& x)
-      {
-        this->matrix_.set (x);
+        return this->label_.get ();
       }
 
       void Station::
-      matrix (::std::unique_ptr< MatrixType > x)
+      label (const LabelType& x)
       {
-        this->matrix_.set (std::move (x));
+        this->label_.set (x);
+      }
+
+      void Station::
+      label (::std::unique_ptr< LabelType > x)
+      {
+        this->label_.set (std::move (x));
       }
 
 
@@ -125,28 +119,76 @@ namespace prj
         this->base_.set (std::move (x));
       }
 
-      const Strip::SeerShapeType& Strip::
-      seerShape () const
+      const Strip::PartType& Strip::
+      part () const
       {
-        return this->seerShape_.get ();
+        return this->part_.get ();
       }
 
-      Strip::SeerShapeType& Strip::
-      seerShape ()
+      Strip::PartType& Strip::
+      part ()
       {
-        return this->seerShape_.get ();
-      }
-
-      void Strip::
-      seerShape (const SeerShapeType& x)
-      {
-        this->seerShape_.set (x);
+        return this->part_.get ();
       }
 
       void Strip::
-      seerShape (::std::unique_ptr< SeerShapeType > x)
+      part (const PartType& x)
       {
-        this->seerShape_.set (std::move (x));
+        this->part_.set (x);
+      }
+
+      void Strip::
+      part (::std::unique_ptr< PartType > x)
+      {
+        this->part_.set (std::move (x));
+      }
+
+      const Strip::BlankType& Strip::
+      blank () const
+      {
+        return this->blank_.get ();
+      }
+
+      Strip::BlankType& Strip::
+      blank ()
+      {
+        return this->blank_.get ();
+      }
+
+      void Strip::
+      blank (const BlankType& x)
+      {
+        this->blank_.set (x);
+      }
+
+      void Strip::
+      blank (::std::unique_ptr< BlankType > x)
+      {
+        this->blank_.set (std::move (x));
+      }
+
+      const Strip::NestType& Strip::
+      nest () const
+      {
+        return this->nest_.get ();
+      }
+
+      Strip::NestType& Strip::
+      nest ()
+      {
+        return this->nest_.get ();
+      }
+
+      void Strip::
+      nest (const NestType& x)
+      {
+        this->nest_.set (x);
+      }
+
+      void Strip::
+      nest (::std::unique_ptr< NestType > x)
+      {
+        this->nest_.set (std::move (x));
       }
 
       const Strip::FeedDirectionType& Strip::
@@ -309,6 +351,36 @@ namespace prj
       stripHeight (const StripHeightType& x)
       {
         this->stripHeight_.set (x);
+      }
+
+      void Strip::
+      stripHeight (::std::unique_ptr< StripHeightType > x)
+      {
+        this->stripHeight_.set (std::move (x));
+      }
+
+      const Strip::SeerShapeType& Strip::
+      seerShape () const
+      {
+        return this->seerShape_.get ();
+      }
+
+      Strip::SeerShapeType& Strip::
+      seerShape ()
+      {
+        return this->seerShape_.get ();
+      }
+
+      void Strip::
+      seerShape (const SeerShapeType& x)
+      {
+        this->seerShape_.set (x);
+      }
+
+      void Strip::
+      seerShape (::std::unique_ptr< SeerShapeType > x)
+      {
+        this->seerShape_.set (std::move (x));
       }
 
       const Strip::FeedDirectionLabelType& Strip::
@@ -488,20 +560,20 @@ namespace prj
       //
 
       Station::
-      Station (const TextType& text,
-               const MatrixType& matrix)
+      Station (const IndexType& index,
+               const LabelType& label)
       : ::xml_schema::Type (),
-        text_ (text, this),
-        matrix_ (matrix, this)
+        index_ (index, this),
+        label_ (label, this)
       {
       }
 
       Station::
-      Station (const TextType& text,
-               ::std::unique_ptr< MatrixType > matrix)
+      Station (const IndexType& index,
+               ::std::unique_ptr< LabelType > label)
       : ::xml_schema::Type (),
-        text_ (text, this),
-        matrix_ (std::move (matrix), this)
+        index_ (index, this),
+        label_ (std::move (label), this)
       {
       }
 
@@ -510,8 +582,8 @@ namespace prj
                ::xml_schema::Flags f,
                ::xml_schema::Container* c)
       : ::xml_schema::Type (x, f, c),
-        text_ (x.text_, f, this),
-        matrix_ (x.matrix_, f, this)
+        index_ (x.index_, f, this),
+        label_ (x.label_, f, this)
       {
       }
 
@@ -520,8 +592,8 @@ namespace prj
                ::xml_schema::Flags f,
                ::xml_schema::Container* c)
       : ::xml_schema::Type (e, f | ::xml_schema::Flags::base, c),
-        text_ (this),
-        matrix_ (this)
+        index_ (this),
+        label_ (this)
       {
         if ((f & ::xml_schema::Flags::base) == 0)
         {
@@ -540,30 +612,27 @@ namespace prj
           const ::xsd::cxx::xml::qualified_name< char > n (
             ::xsd::cxx::xml::dom::name< char > (i));
 
-          // text
+          // index
           //
-          if (n.name () == "text" && n.namespace_ ().empty ())
+          if (n.name () == "index" && n.namespace_ ().empty ())
           {
-            ::std::unique_ptr< TextType > r (
-              TextTraits::create (i, f, this));
-
-            if (!text_.present ())
+            if (!index_.present ())
             {
-              this->text_.set (::std::move (r));
+              this->index_.set (IndexTraits::create (i, f, this));
               continue;
             }
           }
 
-          // matrix
+          // label
           //
-          if (n.name () == "matrix" && n.namespace_ ().empty ())
+          if (n.name () == "label" && n.namespace_ ().empty ())
           {
-            ::std::unique_ptr< MatrixType > r (
-              MatrixTraits::create (i, f, this));
+            ::std::unique_ptr< LabelType > r (
+              LabelTraits::create (i, f, this));
 
-            if (!matrix_.present ())
+            if (!label_.present ())
             {
-              this->matrix_.set (::std::move (r));
+              this->label_.set (::std::move (r));
               continue;
             }
           }
@@ -571,17 +640,17 @@ namespace prj
           break;
         }
 
-        if (!text_.present ())
+        if (!index_.present ())
         {
           throw ::xsd::cxx::tree::expected_element< char > (
-            "text",
+            "index",
             "");
         }
 
-        if (!matrix_.present ())
+        if (!label_.present ())
         {
           throw ::xsd::cxx::tree::expected_element< char > (
-            "matrix",
+            "label",
             "");
         }
       }
@@ -599,8 +668,8 @@ namespace prj
         if (this != &x)
         {
           static_cast< ::xml_schema::Type& > (*this) = x;
-          this->text_ = x.text_;
-          this->matrix_ = x.matrix_;
+          this->index_ = x.index_;
+          this->label_ = x.label_;
         }
 
         return *this;
@@ -616,7 +685,9 @@ namespace prj
 
       Strip::
       Strip (const BaseType& base,
-             const SeerShapeType& seerShape,
+             const PartType& part,
+             const BlankType& blank,
+             const NestType& nest,
              const FeedDirectionType& feedDirection,
              const PitchType& pitch,
              const WidthType& width,
@@ -624,6 +695,7 @@ namespace prj
              const GapType& gap,
              const AutoCalcType& autoCalc,
              const StripHeightType& stripHeight,
+             const SeerShapeType& seerShape,
              const FeedDirectionLabelType& feedDirectionLabel,
              const PitchLabelType& pitchLabel,
              const WidthLabelType& widthLabel,
@@ -632,7 +704,9 @@ namespace prj
              const AutoCalcLabelType& autoCalcLabel)
       : ::xml_schema::Type (),
         base_ (base, this),
-        seerShape_ (seerShape, this),
+        part_ (part, this),
+        blank_ (blank, this),
+        nest_ (nest, this),
         feedDirection_ (feedDirection, this),
         pitch_ (pitch, this),
         width_ (width, this),
@@ -640,6 +714,7 @@ namespace prj
         gap_ (gap, this),
         autoCalc_ (autoCalc, this),
         stripHeight_ (stripHeight, this),
+        seerShape_ (seerShape, this),
         feedDirectionLabel_ (feedDirectionLabel, this),
         pitchLabel_ (pitchLabel, this),
         widthLabel_ (widthLabel, this),
@@ -652,14 +727,17 @@ namespace prj
 
       Strip::
       Strip (::std::unique_ptr< BaseType > base,
-             ::std::unique_ptr< SeerShapeType > seerShape,
+             ::std::unique_ptr< PartType > part,
+             ::std::unique_ptr< BlankType > blank,
+             ::std::unique_ptr< NestType > nest,
              ::std::unique_ptr< FeedDirectionType > feedDirection,
              ::std::unique_ptr< PitchType > pitch,
              ::std::unique_ptr< WidthType > width,
              ::std::unique_ptr< WidthOffsetType > widthOffset,
              ::std::unique_ptr< GapType > gap,
              ::std::unique_ptr< AutoCalcType > autoCalc,
-             const StripHeightType& stripHeight,
+             ::std::unique_ptr< StripHeightType > stripHeight,
+             ::std::unique_ptr< SeerShapeType > seerShape,
              ::std::unique_ptr< FeedDirectionLabelType > feedDirectionLabel,
              ::std::unique_ptr< PitchLabelType > pitchLabel,
              ::std::unique_ptr< WidthLabelType > widthLabel,
@@ -668,14 +746,17 @@ namespace prj
              ::std::unique_ptr< AutoCalcLabelType > autoCalcLabel)
       : ::xml_schema::Type (),
         base_ (std::move (base), this),
-        seerShape_ (std::move (seerShape), this),
+        part_ (std::move (part), this),
+        blank_ (std::move (blank), this),
+        nest_ (std::move (nest), this),
         feedDirection_ (std::move (feedDirection), this),
         pitch_ (std::move (pitch), this),
         width_ (std::move (width), this),
         widthOffset_ (std::move (widthOffset), this),
         gap_ (std::move (gap), this),
         autoCalc_ (std::move (autoCalc), this),
-        stripHeight_ (stripHeight, this),
+        stripHeight_ (std::move (stripHeight), this),
+        seerShape_ (std::move (seerShape), this),
         feedDirectionLabel_ (std::move (feedDirectionLabel), this),
         pitchLabel_ (std::move (pitchLabel), this),
         widthLabel_ (std::move (widthLabel), this),
@@ -692,7 +773,9 @@ namespace prj
              ::xml_schema::Container* c)
       : ::xml_schema::Type (x, f, c),
         base_ (x.base_, f, this),
-        seerShape_ (x.seerShape_, f, this),
+        part_ (x.part_, f, this),
+        blank_ (x.blank_, f, this),
+        nest_ (x.nest_, f, this),
         feedDirection_ (x.feedDirection_, f, this),
         pitch_ (x.pitch_, f, this),
         width_ (x.width_, f, this),
@@ -700,6 +783,7 @@ namespace prj
         gap_ (x.gap_, f, this),
         autoCalc_ (x.autoCalc_, f, this),
         stripHeight_ (x.stripHeight_, f, this),
+        seerShape_ (x.seerShape_, f, this),
         feedDirectionLabel_ (x.feedDirectionLabel_, f, this),
         pitchLabel_ (x.pitchLabel_, f, this),
         widthLabel_ (x.widthLabel_, f, this),
@@ -716,7 +800,9 @@ namespace prj
              ::xml_schema::Container* c)
       : ::xml_schema::Type (e, f | ::xml_schema::Flags::base, c),
         base_ (this),
-        seerShape_ (this),
+        part_ (this),
+        blank_ (this),
+        nest_ (this),
         feedDirection_ (this),
         pitch_ (this),
         width_ (this),
@@ -724,6 +810,7 @@ namespace prj
         gap_ (this),
         autoCalc_ (this),
         stripHeight_ (this),
+        seerShape_ (this),
         feedDirectionLabel_ (this),
         pitchLabel_ (this),
         widthLabel_ (this),
@@ -763,16 +850,44 @@ namespace prj
             }
           }
 
-          // seerShape
+          // part
           //
-          if (n.name () == "seerShape" && n.namespace_ ().empty ())
+          if (n.name () == "part" && n.namespace_ ().empty ())
           {
-            ::std::unique_ptr< SeerShapeType > r (
-              SeerShapeTraits::create (i, f, this));
+            ::std::unique_ptr< PartType > r (
+              PartTraits::create (i, f, this));
 
-            if (!seerShape_.present ())
+            if (!part_.present ())
             {
-              this->seerShape_.set (::std::move (r));
+              this->part_.set (::std::move (r));
+              continue;
+            }
+          }
+
+          // blank
+          //
+          if (n.name () == "blank" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< BlankType > r (
+              BlankTraits::create (i, f, this));
+
+            if (!blank_.present ())
+            {
+              this->blank_.set (::std::move (r));
+              continue;
+            }
+          }
+
+          // nest
+          //
+          if (n.name () == "nest" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< NestType > r (
+              NestTraits::create (i, f, this));
+
+            if (!nest_.present ())
+            {
+              this->nest_.set (::std::move (r));
               continue;
             }
           }
@@ -865,9 +980,26 @@ namespace prj
           //
           if (n.name () == "stripHeight" && n.namespace_ ().empty ())
           {
+            ::std::unique_ptr< StripHeightType > r (
+              StripHeightTraits::create (i, f, this));
+
             if (!stripHeight_.present ())
             {
-              this->stripHeight_.set (StripHeightTraits::create (i, f, this));
+              this->stripHeight_.set (::std::move (r));
+              continue;
+            }
+          }
+
+          // seerShape
+          //
+          if (n.name () == "seerShape" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< SeerShapeType > r (
+              SeerShapeTraits::create (i, f, this));
+
+            if (!seerShape_.present ())
+            {
+              this->seerShape_.set (::std::move (r));
               continue;
             }
           }
@@ -977,10 +1109,24 @@ namespace prj
             "");
         }
 
-        if (!seerShape_.present ())
+        if (!part_.present ())
         {
           throw ::xsd::cxx::tree::expected_element< char > (
-            "seerShape",
+            "part",
+            "");
+        }
+
+        if (!blank_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "blank",
+            "");
+        }
+
+        if (!nest_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "nest",
             "");
         }
 
@@ -1030,6 +1176,13 @@ namespace prj
         {
           throw ::xsd::cxx::tree::expected_element< char > (
             "stripHeight",
+            "");
+        }
+
+        if (!seerShape_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "seerShape",
             "");
         }
 
@@ -1090,7 +1243,9 @@ namespace prj
         {
           static_cast< ::xml_schema::Type& > (*this) = x;
           this->base_ = x.base_;
-          this->seerShape_ = x.seerShape_;
+          this->part_ = x.part_;
+          this->blank_ = x.blank_;
+          this->nest_ = x.nest_;
           this->feedDirection_ = x.feedDirection_;
           this->pitch_ = x.pitch_;
           this->width_ = x.width_;
@@ -1098,6 +1253,7 @@ namespace prj
           this->gap_ = x.gap_;
           this->autoCalc_ = x.autoCalc_;
           this->stripHeight_ = x.stripHeight_;
+          this->seerShape_ = x.seerShape_;
           this->feedDirectionLabel_ = x.feedDirectionLabel_;
           this->pitchLabel_ = x.pitchLabel_;
           this->widthLabel_ = x.widthLabel_;
@@ -1412,26 +1568,26 @@ namespace prj
       {
         e << static_cast< const ::xml_schema::Type& > (i);
 
-        // text
+        // index
         //
         {
           ::xercesc::DOMElement& s (
             ::xsd::cxx::xml::dom::create_element (
-              "text",
+              "index",
               e));
 
-          s << i.text ();
+          s << i.index ();
         }
 
-        // matrix
+        // label
         //
         {
           ::xercesc::DOMElement& s (
             ::xsd::cxx::xml::dom::create_element (
-              "matrix",
+              "label",
               e));
 
-          s << i.matrix ();
+          s << i.label ();
         }
       }
 
@@ -1451,15 +1607,37 @@ namespace prj
           s << i.base ();
         }
 
-        // seerShape
+        // part
         //
         {
           ::xercesc::DOMElement& s (
             ::xsd::cxx::xml::dom::create_element (
-              "seerShape",
+              "part",
               e));
 
-          s << i.seerShape ();
+          s << i.part ();
+        }
+
+        // blank
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "blank",
+              e));
+
+          s << i.blank ();
+        }
+
+        // nest
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "nest",
+              e));
+
+          s << i.nest ();
         }
 
         // feedDirection
@@ -1536,7 +1714,18 @@ namespace prj
               "stripHeight",
               e));
 
-          s << ::xml_schema::AsDouble(i.stripHeight ());
+          s << i.stripHeight ();
+        }
+
+        // seerShape
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "seerShape",
+              e));
+
+          s << i.seerShape ();
         }
 
         // feedDirectionLabel

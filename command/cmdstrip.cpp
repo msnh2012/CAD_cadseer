@@ -21,8 +21,11 @@
 #include "project/prjproject.h"
 #include "message/msgnode.h"
 #include "selection/slceventhandler.h"
+#include "parameter/prmparameter.h"
 #include "feature/ftrinputtype.h"
 #include "feature/ftrstrip.h"
+#include "feature/ftrpick.h"
+#include "tools/featuretools.h"
 #include "commandview/cmvmessage.h"
 #include "commandview/cmvstrip.h"
 #include "command/cmdstrip.h"
@@ -34,18 +37,27 @@ Strip::Strip()
 : Base("cmd::Strip")
 , leafManager()
 {
-  feature = new ftr::Strip();
-  project->addFeature(std::unique_ptr<ftr::Strip>(feature));
+  feature = new ftr::Strip::Feature();
+  project->addFeature(std::unique_ptr<ftr::Strip::Feature>(feature));
   node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
   isEdit = false;
   isFirstRun = true;
+  
+  ftr::Strip::Stations basic
+  {
+    ftr::Strip::Station::Blank
+    , ftr::Strip::Station::Blank
+    , ftr::Strip::Station::Blank
+    , ftr::Strip::Station::Form
+  };
+  feature->setStations(basic);
 }
 
 Strip::Strip(ftr::Base *fIn)
 : Base("cmd::Strip")
 , leafManager(fIn)
 {
-  feature = dynamic_cast<ftr::Strip*>(fIn);
+  feature = dynamic_cast<ftr::Strip::Feature*>(fIn);
   assert(feature);
   viewBase = std::make_unique<cmv::Strip>(this);
   node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
@@ -99,13 +111,21 @@ void Strip::deactivate()
 
 void Strip::setSelections(const slc::Messages &parts, const slc::Messages &blanks, const slc::Messages &nests)
 {
+  auto connect = [&](const slc::Message &mIn, std::string_view tag)
+  {
+    const ftr::Base *lf = project->findFeature(mIn.featureId);
+    ftr::Pick pick = tls::convertToPick(mIn, *lf, project->getShapeHistory());
+    pick.tag = indexTag(tag, 0);
+    feature->getParameter(tag)->setValue(pick);
+    project->connect(lf->getId(), feature->getId(), {pick.tag});
+  };
   project->clearAllInputs(feature->getId());
   if (!parts.empty())
-    project->connect(parts.front().featureId, feature->getId(), {ftr::Strip::part});
+    connect(parts.front(), ftr::Strip::PrmTags::part);
   if (!blanks.empty())
-    project->connect(blanks.front().featureId, feature->getId(), {ftr::Strip::blank});
+    connect(blanks.front(), ftr::Strip::PrmTags::blank);
   if (!nests.empty())
-    project->connect(nests.front().featureId, feature->getId(), {ftr::Strip::nest});
+    connect(nests.front(), ftr::Strip::PrmTags::nest);
 }
 
 void Strip::localUpdate()
@@ -119,45 +139,38 @@ void Strip::localUpdate()
 
 void Strip::go()
 {
-  uuid partId = gu::createNilId();
-  uuid blankId = gu::createNilId();
-  uuid nestId = gu::createNilId();
+  slc::Messages parts;
+  slc::Messages blanks;
+  slc::Messages nests;
   
   const slc::Containers &containers = eventHandler->getSelections();
   for (const auto &c : containers)
   {
     if (c.featureType == ftr::Type::Squash)
-      blankId = c.featureId;
+      blanks.push_back(slc::EventHandler::containerToMessage(c));
     else if (c.featureType == ftr::Type::Nest)
-      nestId = c.featureId;
+      nests.push_back(slc::EventHandler::containerToMessage(c));
     else
-      partId = c.featureId;
+      parts.push_back(slc::EventHandler::containerToMessage(c));
   }
   node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
   
   //this scans the entire project to find a blank feature and a nest feature.
-  if (blankId.is_nil() || nestId.is_nil())
+  auto ids = project->getAllFeatureIds();
+  for (const auto &id : ids)
   {
-    auto ids = project->getAllFeatureIds();
-    for (const auto &id : ids)
-    {
-      ftr::Base *bf = project->findFeature(id);
-      if ((bf->getType() == ftr::Type::Squash) && (blankId.is_nil()))
-        blankId = id;
-      if ((bf->getType() == ftr::Type::Nest) && (nestId.is_nil()))
-        nestId = id;
-    }
+    ftr::Base *bf = project->findFeature(id);
+    slc::Message m;
+    m.featureId = id;
+    m.type = slc::Type::Object;
+    m.featureType = bf->getType();
+    if ((bf->getType() == ftr::Type::Squash) && (blanks.empty()))
+      blanks.push_back(m);
+    if ((bf->getType() == ftr::Type::Nest) && (nests.empty()))
+      nests.push_back(m);
   }
   
-  //we will make connections to parents and let the view initialize.
-  if (!partId.is_nil())
-    project->connect(partId, feature->getId(), {ftr::Strip::part});
-  if (!blankId.is_nil())
-    project->connect(blankId, feature->getId(), {ftr::Strip::blank});
-  if (!nestId.is_nil())
-    project->connect(nestId, feature->getId(), {ftr::Strip::nest});
-  
-  //try to update with default parameters.
+  setSelections(parts, blanks, nests);
   localUpdate();
   
   viewBase = std::make_unique<cmv::Strip>(this);

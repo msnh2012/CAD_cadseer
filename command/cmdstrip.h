@@ -23,14 +23,14 @@
 #include "command/cmdleafmanager.h"
 #include "command/cmdbase.h"
 
-namespace ftr{class Strip;}
+namespace ftr{namespace Strip{class Feature;}}
 
 namespace cmd
 {
   class Strip : public Base
   {
   public:
-    ftr::Strip *feature = nullptr;
+    ftr::Strip::Feature *feature = nullptr;
     
     Strip();
     Strip(ftr::Base*);

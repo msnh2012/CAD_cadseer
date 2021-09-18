@@ -107,47 +107,44 @@ namespace prj
       class Station: public ::xml_schema::Type
       {
         public:
-        // text
+        // index
         //
-        typedef ::xml_schema::String TextType;
-        typedef ::xsd::cxx::tree::traits< TextType, char > TextTraits;
+        typedef ::xml_schema::Int IndexType;
+        typedef ::xsd::cxx::tree::traits< IndexType, char > IndexTraits;
 
-        const TextType&
-        text () const;
+        const IndexType&
+        index () const;
 
-        TextType&
-        text ();
-
-        void
-        text (const TextType& x);
+        IndexType&
+        index ();
 
         void
-        text (::std::unique_ptr< TextType > p);
+        index (const IndexType& x);
 
-        // matrix
+        // label
         //
-        typedef ::prj::srl::spt::Matrixd MatrixType;
-        typedef ::xsd::cxx::tree::traits< MatrixType, char > MatrixTraits;
+        typedef ::prj::srl::spt::PLabel LabelType;
+        typedef ::xsd::cxx::tree::traits< LabelType, char > LabelTraits;
 
-        const MatrixType&
-        matrix () const;
+        const LabelType&
+        label () const;
 
-        MatrixType&
-        matrix ();
-
-        void
-        matrix (const MatrixType& x);
+        LabelType&
+        label ();
 
         void
-        matrix (::std::unique_ptr< MatrixType > p);
+        label (const LabelType& x);
+
+        void
+        label (::std::unique_ptr< LabelType > p);
 
         // Constructors.
         //
-        Station (const TextType&,
-                 const MatrixType&);
+        Station (const IndexType&,
+                 const LabelType&);
 
-        Station (const TextType&,
-                 ::std::unique_ptr< MatrixType >);
+        Station (const IndexType&,
+                 ::std::unique_ptr< LabelType >);
 
         Station (const ::xercesc::DOMElement& e,
                  ::xml_schema::Flags f = 0,
@@ -175,8 +172,8 @@ namespace prj
                ::xml_schema::Flags);
 
         protected:
-        ::xsd::cxx::tree::one< TextType > text_;
-        ::xsd::cxx::tree::one< MatrixType > matrix_;
+        ::xsd::cxx::tree::one< IndexType > index_;
+        ::xsd::cxx::tree::one< LabelType > label_;
       };
 
       class Strip: public ::xml_schema::Type
@@ -199,22 +196,56 @@ namespace prj
         void
         base (::std::unique_ptr< BaseType > p);
 
-        // seerShape
+        // part
         //
-        typedef ::prj::srl::spt::SeerShape SeerShapeType;
-        typedef ::xsd::cxx::tree::traits< SeerShapeType, char > SeerShapeTraits;
+        typedef ::prj::srl::spt::Parameter PartType;
+        typedef ::xsd::cxx::tree::traits< PartType, char > PartTraits;
 
-        const SeerShapeType&
-        seerShape () const;
+        const PartType&
+        part () const;
 
-        SeerShapeType&
-        seerShape ();
-
-        void
-        seerShape (const SeerShapeType& x);
+        PartType&
+        part ();
 
         void
-        seerShape (::std::unique_ptr< SeerShapeType > p);
+        part (const PartType& x);
+
+        void
+        part (::std::unique_ptr< PartType > p);
+
+        // blank
+        //
+        typedef ::prj::srl::spt::Parameter BlankType;
+        typedef ::xsd::cxx::tree::traits< BlankType, char > BlankTraits;
+
+        const BlankType&
+        blank () const;
+
+        BlankType&
+        blank ();
+
+        void
+        blank (const BlankType& x);
+
+        void
+        blank (::std::unique_ptr< BlankType > p);
+
+        // nest
+        //
+        typedef ::prj::srl::spt::Parameter NestType;
+        typedef ::xsd::cxx::tree::traits< NestType, char > NestTraits;
+
+        const NestType&
+        nest () const;
+
+        NestType&
+        nest ();
+
+        void
+        nest (const NestType& x);
+
+        void
+        nest (::std::unique_ptr< NestType > p);
 
         // feedDirection
         //
@@ -320,8 +351,8 @@ namespace prj
 
         // stripHeight
         //
-        typedef ::xml_schema::Double StripHeightType;
-        typedef ::xsd::cxx::tree::traits< StripHeightType, char, ::xsd::cxx::tree::schema_type::double_ > StripHeightTraits;
+        typedef ::prj::srl::spt::Parameter StripHeightType;
+        typedef ::xsd::cxx::tree::traits< StripHeightType, char > StripHeightTraits;
 
         const StripHeightType&
         stripHeight () const;
@@ -331,6 +362,26 @@ namespace prj
 
         void
         stripHeight (const StripHeightType& x);
+
+        void
+        stripHeight (::std::unique_ptr< StripHeightType > p);
+
+        // seerShape
+        //
+        typedef ::prj::srl::spt::SeerShape SeerShapeType;
+        typedef ::xsd::cxx::tree::traits< SeerShapeType, char > SeerShapeTraits;
+
+        const SeerShapeType&
+        seerShape () const;
+
+        SeerShapeType&
+        seerShape ();
+
+        void
+        seerShape (const SeerShapeType& x);
+
+        void
+        seerShape (::std::unique_ptr< SeerShapeType > p);
 
         // feedDirectionLabel
         //
@@ -454,7 +505,9 @@ namespace prj
         // Constructors.
         //
         Strip (const BaseType&,
-               const SeerShapeType&,
+               const PartType&,
+               const BlankType&,
+               const NestType&,
                const FeedDirectionType&,
                const PitchType&,
                const WidthType&,
@@ -462,6 +515,7 @@ namespace prj
                const GapType&,
                const AutoCalcType&,
                const StripHeightType&,
+               const SeerShapeType&,
                const FeedDirectionLabelType&,
                const PitchLabelType&,
                const WidthLabelType&,
@@ -470,14 +524,17 @@ namespace prj
                const AutoCalcLabelType&);
 
         Strip (::std::unique_ptr< BaseType >,
-               ::std::unique_ptr< SeerShapeType >,
+               ::std::unique_ptr< PartType >,
+               ::std::unique_ptr< BlankType >,
+               ::std::unique_ptr< NestType >,
                ::std::unique_ptr< FeedDirectionType >,
                ::std::unique_ptr< PitchType >,
                ::std::unique_ptr< WidthType >,
                ::std::unique_ptr< WidthOffsetType >,
                ::std::unique_ptr< GapType >,
                ::std::unique_ptr< AutoCalcType >,
-               const StripHeightType&,
+               ::std::unique_ptr< StripHeightType >,
+               ::std::unique_ptr< SeerShapeType >,
                ::std::unique_ptr< FeedDirectionLabelType >,
                ::std::unique_ptr< PitchLabelType >,
                ::std::unique_ptr< WidthLabelType >,
@@ -512,7 +569,9 @@ namespace prj
 
         protected:
         ::xsd::cxx::tree::one< BaseType > base_;
-        ::xsd::cxx::tree::one< SeerShapeType > seerShape_;
+        ::xsd::cxx::tree::one< PartType > part_;
+        ::xsd::cxx::tree::one< BlankType > blank_;
+        ::xsd::cxx::tree::one< NestType > nest_;
         ::xsd::cxx::tree::one< FeedDirectionType > feedDirection_;
         ::xsd::cxx::tree::one< PitchType > pitch_;
         ::xsd::cxx::tree::one< WidthType > width_;
@@ -520,6 +579,7 @@ namespace prj
         ::xsd::cxx::tree::one< GapType > gap_;
         ::xsd::cxx::tree::one< AutoCalcType > autoCalc_;
         ::xsd::cxx::tree::one< StripHeightType > stripHeight_;
+        ::xsd::cxx::tree::one< SeerShapeType > seerShape_;
         ::xsd::cxx::tree::one< FeedDirectionLabelType > feedDirectionLabel_;
         ::xsd::cxx::tree::one< PitchLabelType > pitchLabel_;
         ::xsd::cxx::tree::one< WidthLabelType > widthLabel_;

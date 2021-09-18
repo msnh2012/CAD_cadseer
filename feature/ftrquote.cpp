@@ -39,6 +39,7 @@
 #include "feature/ftrinputtype.h"
 #include "parameter/prmconstants.h"
 #include "parameter/prmparameter.h"
+#include "library/lbrplabel.h"
 #include "tools/featuretools.h"
 #include "feature/ftrquote.h"
 
@@ -154,7 +155,7 @@ void Feature::updateModel(const UpdatePayload &payloadIn)
     const auto &sPicks = stow->stripPick.getPicks();
     if (sPicks.empty() || !resolver.resolve(sPicks.front()))
       throw std::runtime_error("Invalid strip input");
-    const Strip *sf = dynamic_cast<const Strip*>(resolver.getFeature());
+    const Strip::Feature *sf = dynamic_cast<const Strip::Feature*>(resolver.getFeature());
     if(!sf)
       throw std::runtime_error("can not cast to strip feature");
     
@@ -202,6 +203,9 @@ void Feature::updateModel(const UpdatePayload &payloadIn)
         boost::filesystem::path temp(boost::filesystem::temp_directory_path());
         temp /= "content.xml";
         
+        double stripPitch = sf->getParameter(ftr::Strip::PrmTags::pitch)->getDouble();
+        double stripWidth = sf->getParameter(ftr::Strip::PrmTags::width)->getDouble();
+        double stripHeight = sf->getParameter(ftr::Strip::PrmTags::stripHeight)->getDouble();
         lbo::Map map = 
         {
           (std::make_pair(std::make_pair(0, 0), std::to_string(stow->quoteNumber.getInt()))),
@@ -215,19 +219,19 @@ void Feature::updateModel(const UpdatePayload &payloadIn)
           (std::make_pair(std::make_pair(8, 0), std::to_string(stow->materialThickness.getDouble()))),
           (std::make_pair(std::make_pair(9, 0), stow->processType.getEnumerationString().toStdString())),
           (std::make_pair(std::make_pair(10, 0), std::to_string(stow->annualVolume.getInt()))),
-          (std::make_pair(std::make_pair(11, 0), std::to_string(sf->stations.size()))),
-          (std::make_pair(std::make_pair(12, 0), std::to_string(sf->getPitch()))),
-          (std::make_pair(std::make_pair(13, 0), std::to_string(sf->getWidth()))),
-          (std::make_pair(std::make_pair(14, 0), std::to_string(sf->getPitch() * sf->getWidth()))),
+          (std::make_pair(std::make_pair(11, 0), std::to_string(sf->getStations().size()))),
+          (std::make_pair(std::make_pair(12, 0), std::to_string(stripPitch))),
+          (std::make_pair(std::make_pair(13, 0), std::to_string(stripWidth))),
+          (std::make_pair(std::make_pair(14, 0), std::to_string(stripPitch * stripWidth))),
           (std::make_pair(std::make_pair(15, 0), std::to_string(dsf->getLength()))),
           (std::make_pair(std::make_pair(16, 0), std::to_string(dsf->getWidth()))),
-          (std::make_pair(std::make_pair(17, 0), std::to_string(sf->getHeight() + 25.0))),
-          (std::make_pair(std::make_pair(18, 0), std::to_string(sf->getHeight() + 25.0)))
+          (std::make_pair(std::make_pair(17, 0), std::to_string(stripHeight + 25.0))),
+          (std::make_pair(std::make_pair(18, 0), std::to_string(stripHeight + 25.0)))
         };
         int index = 19;
-        for (const auto &s : sf->stations)
+        for (const auto &s : sf->getStations())
         {
-          map.insert(std::make_pair(std::make_pair(index, 0), s.toStdString()));
+          map.insert(std::make_pair(std::make_pair(index, 0), ftr::Strip::getStationString(s).toStdString()));
           index++;
         }
         lbo::replace(contents, map);

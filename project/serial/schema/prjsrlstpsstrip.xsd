@@ -12,22 +12,25 @@
 
   <xs:complexType name="Station">
     <xs:sequence>
-      <xs:element name="text" type="xs:string"/>
-      <xs:element name="matrix" type="spt:Matrixd"/>
+      <xs:element name="index" type="xs:int"/>
+      <xs:element name="label" type="spt:PLabel"/>
     </xs:sequence>
   </xs:complexType>
 
   <xs:complexType name="Strip">
     <xs:sequence>
       <xs:element name="base" type="spt:Base"/>
-      <xs:element name="seerShape" type="spt:SeerShape"/>
+      <xs:element name="part" type="spt:Parameter"/>
+      <xs:element name="blank" type="spt:Parameter"/>
+      <xs:element name="nest" type="spt:Parameter"/>
       <xs:element name="feedDirection" type="spt:Parameter"/>
       <xs:element name="pitch" type="spt:Parameter"/>
       <xs:element name="width" type="spt:Parameter"/>
       <xs:element name="widthOffset" type="spt:Parameter"/>
       <xs:element name="gap" type="spt:Parameter"/>
       <xs:element name="autoCalc" type="spt:Parameter"/>
-      <xs:element name="stripHeight" type="xs:double"/>
+      <xs:element name="stripHeight" type="spt:Parameter"/>
+      <xs:element name="seerShape" type="spt:SeerShape"/>
       <xs:element name="feedDirectionLabel" type="spt:PLabel"/>
       <xs:element name="pitchLabel" type="spt:PLabel"/>
       <xs:element name="widthLabel" type="spt:PLabel"/>

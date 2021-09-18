@@ -20,71 +20,70 @@
 #ifndef FTR_STRIP_H
 #define FTR_STRIP_H
 
-#include "parameter/prmparameter.h"
-#include "library/lbrplabel.h"
 #include "feature/ftrbase.h"
 
-class TopoDS_Shape;
-
 namespace prj{namespace srl{namespace stps{class Strip;}}}
-namespace ann{class SeerShape;}
-namespace occt{class BoundingBox;}
-namespace prm{struct Observer;}
 namespace ftr
 {
-  class Strip : public Base
+  namespace Strip
   {
-  public:
-    constexpr static const char *part = "Part";
-    constexpr static const char *blank = "Blank";
-    constexpr static const char *nest = "Nest";
+    //try to only add or break file format. Update anonymous map in source file.
+    enum Station
+    {
+      AerialCam
+      , Blank
+      , Cam
+      , Coin
+      , Cutoff
+      , Draw
+      , Flange
+      , Form
+      , Idle
+      , Pierce
+      , Restrike
+      , Tip
+      , Trim
+    };
+    using Stations = std::vector<Station>;
+    QString getStationString(Station);
+    QStringList getAllStationStrings();
+    Stations getAllStations();
     
-    Strip();
-    virtual ~Strip() override;
-    
-    virtual void updateModel(const UpdatePayload&) override;
-    virtual Type getType() const override {return Type::Strip;}
-    virtual const std::string& getTypeString() const override {return toString(Type::Strip);}
-    virtual const QIcon& getIcon() const override {return icon;}
-    virtual Descriptor getDescriptor() const override {return Descriptor::Create;}
-    virtual void serialWrite(const boost::filesystem::path&) override;
-    void serialRead(const prj::srl::stps::Strip&);
-    
-    void setAutoCalc(bool acIn){autoCalc->setValue(acIn);}
-    bool isAutoCalc() const {return autoCalc->getBool();}
-    double getPitch() const {return pitch->getDouble();}
-    double getWidth() const {return width->getDouble();}
-    double getHeight() const {return stripHeight;}
-    
-    std::vector<QString> stations;
-    
-  protected:
-    std::unique_ptr<prm::Parameter> feedDirection;
-    std::unique_ptr<prm::Parameter> pitch;
-    std::unique_ptr<prm::Parameter> width;
-    std::unique_ptr<prm::Parameter> widthOffset;
-    std::unique_ptr<prm::Parameter> gap;
-    std::unique_ptr<prm::Parameter> autoCalc;
-    
-    std::unique_ptr<prm::Observer> prmObserver;
-    
-    std::unique_ptr<ann::SeerShape> sShape;
-    
-    osg::ref_ptr<lbr::PLabel> feedDirectionLabel;
-    osg::ref_ptr<lbr::PLabel> pitchLabel;
-    osg::ref_ptr<lbr::PLabel> widthLabel;
-    osg::ref_ptr<lbr::PLabel> widthOffsetLabel; //!< centerline of die.
-    osg::ref_ptr<lbr::PLabel> gapLabel;
-    osg::ref_ptr<lbr::PLabel> autoCalcLabel;
-    std::vector<osg::ref_ptr<osg::MatrixTransform>> stationLabels;
-    
-    double stripHeight; //!< used by quote to get travel.
-    
-    void goAutoCalc(const TopoDS_Shape&, occt::BoundingBox&);
-    
-  private:
-    static QIcon icon;
-  };
+    namespace PrmTags
+    {
+      inline constexpr std::string_view part = "part";
+      inline constexpr std::string_view blank = "blank";
+      inline constexpr std::string_view nest = "nest";
+      inline constexpr std::string_view feedDirection = "feedDirection";
+      inline constexpr std::string_view pitch = "pitch";
+      inline constexpr std::string_view width = "width";
+      inline constexpr std::string_view widthOffset = "widthOffset";
+      inline constexpr std::string_view gap = "gap";
+      inline constexpr std::string_view autoCalc = "autoCalc";
+      inline constexpr std::string_view stripHeight = "stripHeight";
+    }
+    class Feature : public Base
+    {
+    public:
+      Feature();
+      ~Feature() override;
+      
+      void updateModel(const UpdatePayload&) override;
+      Type getType() const override {return Type::Strip;}
+      const std::string& getTypeString() const override {return toString(Type::Strip);}
+      const QIcon& getIcon() const override {return icon;}
+      Descriptor getDescriptor() const override {return Descriptor::Create;}
+      void serialWrite(const boost::filesystem::path&) override;
+      void serialRead(const prj::srl::stps::Strip&);
+      
+      const Stations& getStations() const;
+      void setStations(const Stations&);
+    private:
+      static QIcon icon;
+      struct Stow;
+      std::unique_ptr<Stow> stow;
+    };
+  }
 }
 
 #endif // FTR_STRIP_H

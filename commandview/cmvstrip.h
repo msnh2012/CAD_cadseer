@@ -22,12 +22,36 @@
 
 #include <memory>
 
+#include <QLabel>
+
 #include "commandview/cmvbase.h"
 
+class QMimeData;
 namespace cmd{class Strip;}
 
 namespace cmv
 {
+  /*! This is a simple QLabel with a picture
+   * to absorb drags.
+   */
+  class TrashCan : public QLabel
+  {
+    Q_OBJECT
+  public:
+    TrashCan() = delete;
+    explicit TrashCan(QWidget*);
+  Q_SIGNALS:
+    void droppedIndex(int);
+  protected:
+    void dragEnterEvent(QDragEnterEvent *event) override;
+    void dragMoveEvent(QDragMoveEvent *event) override;
+    void dragLeaveEvent(QDragLeaveEvent *event) override;
+    void dropEvent(QDropEvent *event) override;
+  private:
+    bool isDataOk(const QMimeData*);
+    int stationIndex;
+  };
+  
   /**
   * @todo write docs
   */
@@ -38,14 +62,11 @@ namespace cmv
     Strip(cmd::Strip*);
     ~Strip() override;
   public Q_SLOTS:
-    void selectionChanged();
-    void parameterChanged();
-    void stationsChanged(const QModelIndex&, int, int);
-    void dataChanged(const QModelIndex&, const QModelIndex&, const QVector<int>&);
+    void modelChanged(const QModelIndex&, const QModelIndex&);
+    void trashed(int);
   private:
     struct Stow;
     std::unique_ptr<Stow> stow;
-    void eyeroll();
   };
 }
 

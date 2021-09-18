@@ -39,214 +39,351 @@
 #include "preferences/prfmanager.h"
 #include "globalutilities.h"
 #include "tools/occtools.h"
+#include "tools/featuretools.h"
 #include "annex/annseershape.h"
 #include "parameter/prmconstants.h"
+#include "parameter/prmparameter.h"
 #include "feature/ftrshapecheck.h"
 #include "feature/ftrnest.h"
+#include "feature/ftrpick.h"
+#include "library/lbrplabel.h"
 #include "project/serial/generated/prjsrlstpsstrip.h"
 #include "feature/ftrupdatepayload.h"
 #include "feature/ftrinputtype.h"
 #include "feature/ftrstrip.h"
 
-using namespace ftr;
-
 using boost::uuids::uuid;
+using namespace ftr::Strip;
+QIcon Feature::icon = QIcon(":/resources/images/constructionStrip.svg");
 
-QIcon Strip::icon = QIcon(":/resources/images/constructionStrip.svg");
-
-TopoDS_Edge makeEdge(const osg::Vec3d &v1, const osg::Vec3d &v2)
+namespace
 {
-  gp_Pnt p1(v1.x(), v1.y(), v1.z());
-  gp_Pnt p2(v2.x(), v2.y(), v2.z());
-  return BRepBuilderAPI_MakeEdge(p1, p2);
-}
-
-Strip::Strip() :
-Base(),
-feedDirection(std::make_unique<prm::Parameter>(QObject::tr("Feed Direction"), osg::Vec3d(-1.0, 0.0, 0.0), prm::Tags::Direction)),
-pitch(std::make_unique<prm::Parameter>(prm::Names::Pitch, 1.0, prm::Tags::Pitch)),
-width(std::make_unique<prm::Parameter>(QObject::tr("Width"), 1.0, prm::Tags::Width)),
-widthOffset(std::make_unique<prm::Parameter>(QObject::tr("Width Offset"), 1.0, prm::Tags::Offset)),
-gap(std::make_unique<prm::Parameter>(QObject::tr("Gap"), prf::manager().rootPtr->features().strip().get().gap())),
-autoCalc(std::make_unique<prm::Parameter>(prm::Names::AutoSize, true, prm::Tags::AutoSize)),
-prmObserver(std::make_unique<prm::Observer>(std::bind(&Strip::setModelDirty, this))),
-sShape(std::make_unique<ann::SeerShape>())
-{
-  name = QObject::tr("Strip");
-  mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
-  
-  annexes.insert(std::make_pair(ann::Type::SeerShape, sShape.get()));
-  
-  feedDirection->connect(*prmObserver);
-  parameters.push_back(feedDirection.get());
-  
-  pitch->setConstraint(prm::Constraint::buildNonZeroPositive());
-  pitch->connect(*prmObserver);
-  parameters.push_back(pitch.get());
-  
-  width->setConstraint(prm::Constraint::buildNonZeroPositive());
-  width->connect(*prmObserver);
-  parameters.push_back(width.get());
-  
-  widthOffset->setConstraint(prm::Constraint::buildAll());
-  widthOffset->connect(*prmObserver);
-  parameters.push_back(widthOffset.get());
-  
-  gap->setConstraint(prm::Constraint::buildNonZeroPositive());
-  gap->connect(*prmObserver);
-  parameters.push_back(gap.get());
-  
-  autoCalc->connectValue(std::bind(&Strip::setModelDirty, this));
-  parameters.push_back(autoCalc.get());
-  
-  feedDirectionLabel = new lbr::PLabel(feedDirection.get());
-  overlaySwitch->addChild(feedDirectionLabel.get());
-  
-  pitchLabel = new lbr::PLabel(pitch.get());
-  overlaySwitch->addChild(pitchLabel.get());
-  
-  widthLabel = new lbr::PLabel(width.get());
-  overlaySwitch->addChild(widthLabel.get());
-  
-  widthOffsetLabel = new lbr::PLabel(widthOffset.get());
-  overlaySwitch->addChild(widthOffsetLabel.get());
-  
-  gapLabel = new lbr::PLabel(gap.get());
-  overlaySwitch->addChild(gapLabel.get());
-  
-  autoCalcLabel = new lbr::PLabel(autoCalc.get());
-  overlaySwitch->addChild(autoCalcLabel.get());
-  
-  stations.push_back("Blank");
-  stations.push_back("Blank");
-  stations.push_back("Blank");
-  stations.push_back("Form");
-}
-
-Strip::~Strip(){}
-
-//copied from lbr::PLabel::build
-osg::Node* buildStationLabel(const std::string &sIn)
-{
-  const prf::InteractiveParameter& iPref = prf::manager().rootPtr->interactiveParameter();
-  
-  osg::AutoTransform *autoTransform = new osg::AutoTransform();
-  autoTransform->getOrCreateStateSet()->setMode(GL_LIGHTING, osg::StateAttribute::OFF);
-  autoTransform->setAutoRotateMode(osg::AutoTransform::ROTATE_TO_SCREEN);
-  autoTransform->setAutoScaleToScreen(true);
-  
-  osgText::Text *text = new osgText::Text();
-  text->setName(sIn);
-  text->setText(sIn);
-  osg::ref_ptr<QFontImplementation> fontImplement(new QFontImplementation(qApp->font()));
-  osg::ref_ptr<osgText::Font> textFont(new osgText::Font(fontImplement.get()));
-  text->setFont(textFont.get());
-  text->setColor(osg::Vec4(1.0, 1.0, 1.0, 1.0));
-  text->setBackdropType(osgText::Text::OUTLINE);
-  text->setBackdropColor(osg::Vec4(0.0, 0.0, 0.0, 1.0));
-  text->setCharacterSize(iPref.characterSize());
-  text->setAlignment(osgText::Text::CENTER_CENTER);
-  autoTransform->addChild(text);
-  
-  return autoTransform;
-}
-
-void Strip::updateModel(const UpdatePayload &payloadIn)
-{
-  setFailure();
-  lastUpdateLog.clear();
-  sShape->reset();
-  try
+  TopoDS_Edge makeEdge(const osg::Vec3d &v1, const osg::Vec3d &v2)
   {
-    prm::ObserverBlocker block(*prmObserver);
+    gp_Pnt p1(v1.x(), v1.y(), v1.z());
+    gp_Pnt p2(v2.x(), v2.y(), v2.z());
+    return BRepBuilderAPI_MakeEdge(p1, p2);
+  }
+  
+  double getGapPref()
+  {
+    return prf::manager().rootPtr->features().strip().get().gap();
+  }
+  
+  static const std::map<Station, QString> stationStringMap
+  {
+    {Station::AerialCam, QObject::tr("Aerial Cam")}
+    , {Station::Blank, QObject::tr("Blank")}
+    , {Station::Cam, QObject::tr("Cam")}
+    , {Station::Coin, QObject::tr("Coin")}
+    , {Station::Cutoff, QObject::tr("Cutoff")}
+    , {Station::Draw, QObject::tr("Draw")}
+    , {Station::Flange, QObject::tr("Flange")}
+    , {Station::Form, QObject::tr("Form")}
+    , {Station::Idle, QObject::tr("Idle")}
+    , {Station::Pierce, QObject::tr("Pierce")}
+    , {Station::Restrike, QObject::tr("Restrike")}
+    , {Station::Tip, QObject::tr("Tip")}
+    , {Station::Trim, QObject::tr("Trim")}
+  };
+  
+  osg::ref_ptr<osg::AutoTransform> buildStationLabel(const std::string &sIn)
+  {
+    //trick lbr::PLabel to build our station labels
+    prm::Parameter tempPrm(QObject::tr("Station"), sIn, "No Tag");
+    osg::ref_ptr<lbr::PLabel> tempLabel = new lbr::PLabel(&tempPrm);
+    tempLabel->setShowName(false);
+    tempLabel->setTextColor(osg::Vec4(1.0, 1.0, 1.0, 1.0));
     
-    std::vector<const Base*> pfs = payloadIn.getFeatures(part);
-    if (pfs.size() != 1)
-      throw std::runtime_error("wrong number of 'part' inputs");
-    if(!pfs.front()->hasAnnex(ann::Type::SeerShape))
-      throw std::runtime_error("no seer shape for part");
-    const ann::SeerShape &pss = pfs.front()->getAnnex<ann::SeerShape>(); //part seer shape.
-    if (pss.isNull())
-      throw std::runtime_error("part seer shape is null");
-    const TopoDS_Shape &ps = occt::getFirstNonCompound(pss.getRootOCCTShape()); //part shape.
-    
-    std::vector<const Base*> bfs = payloadIn.getFeatures(blank);
-    if (bfs.size() != 1)
-      throw std::runtime_error("wrong number of 'blank' inputs");
-    if(!bfs.front()->hasAnnex(ann::Type::SeerShape))
-      throw std::runtime_error("no seer shape for blank");
-    const ann::SeerShape &bss = bfs.front()->getAnnex<ann::SeerShape>(); //blank seer shape.
-    if (bss.isNull())
-      throw std::runtime_error("blank seer shape is null");
-    const TopoDS_Shape &bs = occt::getFirstNonCompound(bss.getRootOCCTShape()); //blank shape.
-    
-    std::vector<const Base*> nfs = payloadIn.getFeatures(nest);
-    if (nfs.size() != 1)
-      throw std::runtime_error("couldn't find 'nest' input");
-    
-    occt::BoundingBox bbbox(bs); //blank bounding box.
-    
-    if (autoCalc->getBool())
+    //assuming the plabel has one child that is autotransform.
+    osg::ref_ptr<osg::AutoTransform> out = dynamic_cast<osg::AutoTransform*>(tempLabel->getChild(0));
+    return out;
+  }
+}
+
+QString ftr::Strip::getStationString(Station station)
+{
+  return stationStringMap.at(station);
+}
+
+QStringList ftr::Strip::getAllStationStrings()
+{
+  QStringList out;
+  for (const auto &p : stationStringMap)
+    out.append(p.second);
+  return out;
+}
+
+Stations ftr::Strip::getAllStations()
+{
+  Stations out;
+  for (const auto &p : stationStringMap)
+    out.push_back(p.first);
+  return out;
+}
+
+struct Feature::Stow
+{
+  Feature &feature;
+  
+  prm::Parameter part{QObject::tr("Part"), ftr::Picks(), PrmTags::part};
+  prm::Parameter blank{QObject::tr("Blank"), ftr::Picks(), PrmTags::blank};
+  prm::Parameter nest{QObject::tr("Nest"), ftr::Picks(), PrmTags::nest};
+  prm::Parameter feedDirection{QObject::tr("Feed Direction"), osg::Vec3d(-1.0, 0.0, 0.0), PrmTags::feedDirection};
+  prm::Parameter pitch{QObject::tr("Pitch"), 100.0, PrmTags::pitch};
+  prm::Parameter width{QObject::tr("Width"), 100.0, PrmTags::width};
+  prm::Parameter widthOffset{QObject::tr("Width Offset"), 10.0, PrmTags::widthOffset};
+  prm::Parameter gap{QObject::tr("Gap"), getGapPref(), PrmTags::gap};
+  prm::Parameter autoCalc{QObject::tr("Auto Calc"), true, PrmTags::autoCalc};
+  prm::Parameter stripHeight{QObject::tr("Strip Height"), 1.0, PrmTags::stripHeight}; //!< used by quote to get travel.
+  prm::Observer prmObserver{std::bind(&Feature::setModelDirty, &feature)};
+  prm::Observer syncObserver{std::bind(&Stow::prmActiveSync, this)};
+  
+  ann::SeerShape sShape;
+  
+  osg::ref_ptr<lbr::PLabel> feedDirectionLabel{new lbr::PLabel(&feedDirection)};
+  osg::ref_ptr<lbr::PLabel> pitchLabel{new lbr::PLabel(&pitch)};
+  osg::ref_ptr<lbr::PLabel> widthLabel{new lbr::PLabel(&width)};
+  osg::ref_ptr<lbr::PLabel> widthOffsetLabel{new lbr::PLabel(&widthOffset)}; //!< centerline of die.
+  osg::ref_ptr<lbr::PLabel> gapLabel{new lbr::PLabel(&gap)};
+  osg::ref_ptr<lbr::PLabel> autoCalcLabel{new lbr::PLabel(&autoCalc)};
+  std::vector<osg::ref_ptr<osg::MatrixTransform>> stationLabels;
+  
+  Stations stations;
+  
+  Stow() = delete;
+  Stow(Feature &fIn)
+  : feature(fIn)
+  {
+    auto setupObserve = [&](prm::Parameter *param)
     {
-      osg::Vec4 cIn(1.0, 0.0, 0.0, 1.0);
-      feedDirectionLabel->setTextColor(cIn);
-      pitchLabel->setTextColor(cIn);
-      widthLabel->setTextColor(cIn);
-      widthOffsetLabel->setTextColor(cIn);
-      gapLabel->setTextColor(cIn);
-      
-      const Nest *nf = dynamic_cast<const Nest *>(nfs.front());
-      assert(nf);
-      if (!nf)
-        throw std::runtime_error("Bad cast to Nest");
-      feedDirection->setValue(nf->getFeedDirection());
-      pitch->setValue(nf->getPitch());
-      gap->setValue(nf->getGap());
-      
-      goAutoCalc(bs, bbbox);
+      param->connect(prmObserver);
+      feature.parameters.push_back(param);
+    };
+    setupObserve(&part);
+    setupObserve(&blank);
+    setupObserve(&nest);
+    setupObserve(&feedDirection);
+    setupObserve(&pitch);
+    setupObserve(&width);
+    setupObserve(&widthOffset);
+    setupObserve(&gap);
+    setupObserve(&stripHeight); //output only, so connection dirty is not needed.
+    setupObserve(&autoCalc);
+    autoCalc.connect(syncObserver);
+    
+    pitch.setConstraint(prm::Constraint::buildNonZeroPositive());
+    width.setConstraint(prm::Constraint::buildNonZeroPositive());
+    gap.setConstraint(prm::Constraint::buildNonZeroPositive());
+    
+    feature.annexes.insert(std::make_pair(ann::Type::SeerShape, &sShape));
+    
+    feature.overlaySwitch->addChild(feedDirectionLabel.get());
+    feature.overlaySwitch->addChild(pitchLabel.get());
+    feature.overlaySwitch->addChild(widthLabel.get());
+    feature.overlaySwitch->addChild(widthOffsetLabel.get());
+    feature.overlaySwitch->addChild(gapLabel.get());
+    feature.overlaySwitch->addChild(autoCalcLabel.get());
+    
+    prmActiveSync();
+  }
+  
+  void prmActiveSync()
+  {
+    if (autoCalc.getBool())
+    {
+      feedDirection.setActive(false);
+      pitch.setActive(false);
+      width.setActive(false);
+      widthOffset.setActive(false);
+      gap.setActive(false);
     }
     else
     {
-      feedDirectionLabel->setTextColor();
-      pitchLabel->setTextColor();
-      widthLabel->setTextColor();
-      widthOffsetLabel->setTextColor();
-      gapLabel->setTextColor();
+      feedDirection.setActive(true);
+      pitch.setActive(true);
+      width.setActive(true);
+      widthOffset.setActive(true);
+      gap.setActive(true);
     }
+  }
+  
+  void goAutoCalc(const TopoDS_Shape &sIn, occt::BoundingBox &bbbox)
+  {
+    double offset = bbbox.getDiagonal() / 2.0;
+    osg::Vec3d feed = feedDirection.getVector();
+    osg::Vec3d norm = feed * osg::Matrixd::rotate(osg::PI_2, osg::Vec3d(0.0, 0.0, -1.0));
+    
+    gp_Ax3 orientation(gp_Pnt(0.0, 0.0, 0.0), gu::toOcc(norm), gu::toOcc(feed));
+    gp_Pln plane(orientation);
+    TopoDS_Face face1 = BRepBuilderAPI_MakeFace(plane, -offset, offset, -offset, offset);
+    //   double linear = prf::manager().rootPtr->visual().mesh().linearDeflection();
+    //   double angular = prf::manager().rootPtr->visual().mesh().angularDeflection();
+    //   BRepMesh_IncrementalMesh(face1, linear, Standard_False, angular, Standard_True);
+    //   BRepMesh_IncrementalMesh(sIn, linear, Standard_False, angular, Standard_True);
+    
+    gp_Trsf t1;
+    t1.SetTranslation(gu::toOcc(gu::toOsg(bbbox.getCenter()) + (norm * offset)));
+    face1.Location(TopLoc_Location(t1));
+    
+    TopoDS_Face face2 = face1;
+    gp_Trsf t2;
+    t2.SetTranslation(gu::toOcc(gu::toOsg(bbbox.getCenter()) + (norm * -offset)));
+    face2.Location(TopLoc_Location(t2));
+    
+    auto getDistance = [](const TopoDS_Shape &s1, const TopoDS_Shape &s2) -> double
+    {
+      //shape
+      double tol = 0.1;
+      BRepExtrema_DistShapeShape dc(s1, s2, tol, Extrema_ExtFlag_MIN);
+      if (!dc.IsDone())
+        throw std::runtime_error("BRepExtrema_DistShapeShape failed");;
+      if (dc.NbSolution() < 1)
+        throw std::runtime_error("BRepExtrema_DistShapeShape failed");;
+      return dc.Value();
+      
+      
+      /* I couldn't get poly to work. Not sure why.
+       * I am guessing it had to do with orthogonal planes
+       */
+      //     gp_Pnt p1, p2;
+      //     double distance;
+      //     if (BRepExtrema_Poly::Distance(s1, s2, p1, p2, distance))
+      //       return distance;
+      //     
+      //     throw std::runtime_error("BRepExtrema_Poly failed");
+    };
+    
+    double d1 = getDistance(sIn, face1);
+    double d2 = getDistance(sIn, face2);
+    double widthCalc = 2 * offset - d1 - d2 + 2 * gap.getDouble();
+    width.setValue(widthCalc);
+    
+    osg::Vec3d projection = (norm * (offset - d1)) + (-norm * (offset - d2));
+    osg::Vec3d center = gu::toOsg(bbbox.getCenter()) + (projection * 0.5);
+    osg::Vec3d aux = feed * (feed * center);
+    osg::Vec3d auxProjection = center - aux;
+    double directionFactor = ((auxProjection * norm) < 0.0) ? -1.0 : 1.0;
+    widthOffset.setValue(auxProjection.length() * directionFactor);
+  }
+};
+
+Feature::Feature()
+: Base()
+, stow(std::make_unique<Stow>(*this))
+{
+  name = QObject::tr("Strip");
+  mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
+}
+
+Feature::~Feature() = default;
+
+const Stations& Feature::getStations() const
+{
+  return stow->stations;
+}
+
+void Feature::setStations(const Stations &sIn)
+{
+  stow->stations = sIn;
+  
+  //we need to keep the stations and labels in sync.
+  for (const auto &l : stow->stationLabels)
+    overlaySwitch->removeChild(l);
+  stow->stationLabels.clear();
+  
+  bool cv = overlaySwitch->getValue(0); //cache switch value for added labels
+  for (std::size_t index = 0; index < stow->stations.size(); ++index)
+  {
+    osg::ref_ptr<osg::MatrixTransform> sl = new osg::MatrixTransform(); // station label
+    sl->addChild(buildStationLabel(getStationString(stow->stations.at(index)).toStdString()));
+    stow->stationLabels.push_back(sl);
+    overlaySwitch->addChild(sl.get(), cv);
+  }
+  
+  setModelDirty();
+}
+
+void Feature::updateModel(const UpdatePayload &payloadIn)
+{
+  setFailure();
+  lastUpdateLog.clear();
+  stow->sShape.reset();
+  try
+  {
+    prm::ObserverBlocker block(stow->prmObserver);
+    
+    auto getPickResolve = [&](std::string_view tag) -> tls::Resolver
+    {
+      const auto &picks = getParameter(tag)->getPicks();
+      if (picks.empty())
+        throw std::runtime_error(std::string("No ") + std::string(tag) + " Picks");
+      tls::Resolver resolver(payloadIn);
+      if (!resolver.resolve(picks.front()))
+        throw std::runtime_error(std::string("Failed To Resolve ") + std::string(tag) + " Picks");
+      if (resolver.getShapes().empty())
+        throw std::runtime_error(std::string("No Shapes For ") + std::string(tag) + " Picks");
+      return resolver;
+    };
+    
+    tls::Resolver partResolver = getPickResolve(PrmTags::part);
+    tls::Resolver blankResolver = getPickResolve(PrmTags::blank);
+    tls::Resolver nestResolver = getPickResolve(PrmTags::nest);
+    
+    TopoDS_Shape ps = partResolver.getShapes().front();
+    TopoDS_Shape bs = blankResolver.getShapes().front();
+    //we don't need nest shape
+    
+    occt::BoundingBox bbbox(bs); //blank bounding box.
+    
+    if (stow->autoCalc.getBool())
+    {
+      const Nest *nf = dynamic_cast<const Nest *>(nestResolver.getFeature());
+      if (!nf)
+        throw std::runtime_error("Nest Input Is Not A Nest Feature");
+      stow->feedDirection.setValue(nf->getFeedDirection());
+      stow->pitch.setValue(nf->getPitch());
+      stow->gap.setValue(nf->getGap());
+      
+      stow->goAutoCalc(bs, bbbox);
+    }
+    
+    if (stow->stations.empty())
+      throw std::runtime_error("No Stations Defined");
     
     occt::ShapeVector shapes;
     shapes.push_back(ps); //original part shape.
     shapes.push_back(bs); //original blank shape.
     //find first not blank index
     std::size_t nb = 0;
-    for (std::size_t index = 0; index < stations.size(); ++index)
+    for (std::size_t index = 0; index < stow->stations.size(); ++index)
     {
-      if (stations.at(index) != "Blank")
+      if (stow->stations.at(index) != Station::Blank)
       {
         nb = index;
         break;
       }
     }
     
-    osg::Vec3d lFeed = feedDirection->getVector();
+    osg::Vec3d lFeed = stow->feedDirection.getVector();
     osg::Vec3d fNorm = lFeed * osg::Matrixd::rotate(osg::PI_2, osg::Vec3d(0.0, 0.0, -1.0));
       
     for (std::size_t i = 1; i < nb + 1; ++i) //blanks
-      shapes.push_back(occt::instanceShape(bs, gu::toOcc(-lFeed), pitch->getDouble() * i));
-    for (std::size_t i = 1; i < stations.size() - nb; ++i) //parts
-      shapes.push_back(occt::instanceShape(ps, gu::toOcc(lFeed), pitch->getDouble() * i));
+      shapes.push_back(occt::instanceShape(bs, gu::toOcc(-lFeed), stow->pitch.getDouble() * i));
+    for (std::size_t i = 1; i < stow->stations.size() - nb; ++i) //parts
+      shapes.push_back(occt::instanceShape(ps, gu::toOcc(lFeed), stow->pitch.getDouble() * i));
     
     //add edges representing the incoming strip.
-    double edgeLength = nb * pitch->getDouble();
-    osg::Vec3d centerLinePoint = fNorm * widthOffset->getDouble();
+    double edgeLength = nb * stow->pitch.getDouble();
+    osg::Vec3d centerLinePoint = fNorm * stow->widthOffset.getDouble();
     centerLinePoint += lFeed * (gu::toOsg(bbbox.getCenter()) * lFeed);
     
-    osg::Vec3d backLinePoint = centerLinePoint + (fNorm * width->getDouble() / 2.0);
+    osg::Vec3d backLinePoint = centerLinePoint + (fNorm * stow->width.getDouble() / 2.0);
     osg::Vec3d backLineEnd1 = backLinePoint;
     osg::Vec3d backLineEnd2 = backLinePoint + (-lFeed * edgeLength);
     shapes.push_back(makeEdge(backLineEnd1, backLineEnd2));
     
-    osg::Vec3d frontLinePoint = centerLinePoint + (-fNorm * width->getDouble() / 2.0);
+    osg::Vec3d frontLinePoint = centerLinePoint + (-fNorm * stow->width.getDouble() / 2.0);
     osg::Vec3d frontLineEnd1 = frontLinePoint;
     osg::Vec3d frontLineEnd2 = frontLinePoint + (-lFeed * edgeLength);
     shapes.push_back(makeEdge(frontLineEnd1, frontLineEnd2));
@@ -257,67 +394,51 @@ void Strip::updateModel(const UpdatePayload &payloadIn)
       throw std::runtime_error("shapeCheck failed");
     
     //for now, we are only going to have consistent ids for face and outer wire.
-    sShape->setOCCTShape(out, getId());
-    sShape->ensureNoNils();
-    
+    stow->sShape.setOCCTShape(out, getId());
+    stow->sShape.ensureNoNils();
     
     //update label locations
     osg::Vec3d plLoc = //pitch label location.
       gu::toOsg(bbbox.getCenter())
-      + (-lFeed * pitch->getDouble() * 0.5)
+      + (-lFeed * stow->pitch.getDouble() * 0.5)
       + (fNorm * bbbox.getWidth() * 0.5);
-    pitchLabel->setMatrix(osg::Matrixd::translate(plLoc));
+    stow->pitchLabel->setMatrix(osg::Matrixd::translate(plLoc));
     
     osg::Vec3d glLoc = //gap label location.
       gu::toOsg(bbbox.getCenter())
-      + (-lFeed * pitch->getDouble() * 0.5)
+      + (-lFeed * stow->pitch.getDouble() * 0.5)
       + (-fNorm * bbbox.getWidth() * 0.5);
-    gapLabel->setMatrix(osg::Matrixd::translate(glLoc));
+    stow->gapLabel->setMatrix(osg::Matrixd::translate(glLoc));
     
     osg::Vec3d wolLoc = //width offset location.
       gu::toOsg(bbbox.getCenter())
-      + (-lFeed * (pitch->getDouble() * (static_cast<double>(nb) + 0.5)));
-    widthOffsetLabel->setMatrix(osg::Matrixd::translate(wolLoc));
+      + (-lFeed * (stow->pitch.getDouble() * (static_cast<double>(nb) + 0.5)));
+    stow->widthOffsetLabel->setMatrix(osg::Matrixd::translate(wolLoc));
     
     osg::Vec3d wlLoc = //width location.
       gu::toOsg(bbbox.getCenter())
-      + (-lFeed * (pitch->getDouble() * (static_cast<double>(nb) + 0.5)))
+      + (-lFeed * (stow->pitch.getDouble() * (static_cast<double>(nb) + 0.5)))
       + (fNorm * bbbox.getWidth() * 0.5);
-    widthLabel->setMatrix(osg::Matrixd::translate(wlLoc));
+    stow->widthLabel->setMatrix(osg::Matrixd::translate(wlLoc));
     
     osg::Vec3d acLoc = gu::toOsg(bbbox.getCenter()); //autocalc label location
-    autoCalcLabel->setMatrix(osg::Matrixd::translate(acLoc + osg::Vec3d(0.0, bbbox.getWidth(), 0.0)));
+    stow->autoCalcLabel->setMatrix(osg::Matrixd::translate(acLoc + osg::Vec3d(0.0, bbbox.getWidth(), 0.0)));
     
     osg::Vec3d fdLoc = gu::toOsg(bbbox.getCenter()) + osg::Vec3d(0.0, -bbbox.getWidth(), 0.0);
-    feedDirectionLabel->setMatrix(osg::Matrixd::translate(fdLoc));
+    stow->feedDirectionLabel->setMatrix(osg::Matrixd::translate(fdLoc));
     
-    for (const auto &l : stationLabels)
+    for (std::size_t i = 0; i < nb; ++i)
     {
-      for (const auto &pg : l->getParents()) //parent group
-        pg->removeChild(l.get());
+      stow->stationLabels.at(i)->setMatrix(osg::Matrixd::translate(gu::toOsg(bbbox.getCenter()) + (-lFeed * stow->pitch.getDouble() * (i + 1))));
     }
-    stationLabels.clear();
-    bool cv = overlaySwitch->getValue(0); //overlaySwitch always has at least four children.
-    for (std::size_t i = 1; i < nb + 1; ++i)
+    for (std::size_t i = nb; i < stow->stations.size(); ++i)
     {
-      osg::ref_ptr<osg::MatrixTransform> sl = new osg::MatrixTransform(); // station label
-      sl->setMatrix(osg::Matrixd::translate(gu::toOsg(bbbox.getCenter()) + (-lFeed * pitch->getDouble() * i)));
-      sl->addChild(buildStationLabel("Blank"));
-      stationLabels.push_back(sl);
-      overlaySwitch->addChild(sl.get(), cv);
-    }
-    for (std::size_t i = nb; i < stations.size(); ++i)
-    {
-      osg::ref_ptr<osg::MatrixTransform> sl = new osg::MatrixTransform(); // station label
-      sl->setMatrix(osg::Matrixd::translate(gu::toOsg(bbbox.getCenter()) + (lFeed * pitch->getDouble() * (i - nb))));
-      sl->addChild(buildStationLabel(stations.at(i).toStdString()));
-      stationLabels.push_back(sl);
-      overlaySwitch->addChild(sl.get(), cv);
+      stow->stationLabels.at(i)->setMatrix(osg::Matrixd::translate(gu::toOsg(bbbox.getCenter()) + (lFeed * stow->pitch.getDouble() * (i - nb))));
     }
     
     //boundingbox of whole strip. used for travel estimation.
     occt::BoundingBox sbb(out);
-    stripHeight = sbb.getHeight();
+    stow->stripHeight.setValue(sbb.getHeight());
     
     setSuccess();
   }
@@ -341,99 +462,43 @@ void Strip::updateModel(const UpdatePayload &payloadIn)
     std::cout << std::endl << lastUpdateLog;
 }
 
-void Strip::goAutoCalc(const TopoDS_Shape &sIn, occt::BoundingBox &bbbox)
+/* The serializing of the station labels is FUBAR
+ * but I am not going to do anything about it now.
+ */
+void Feature::serialWrite(const boost::filesystem::path &dIn)
 {
-  double offset = bbbox.getDiagonal() / 2.0;
-  osg::Vec3d feed = feedDirection->getVector();
-  osg::Vec3d norm = feed * osg::Matrixd::rotate(osg::PI_2, osg::Vec3d(0.0, 0.0, -1.0));
-  
-  gp_Ax3 orientation(gp_Pnt(0.0, 0.0, 0.0), gu::toOcc(norm), gu::toOcc(feed));
-  gp_Pln plane(orientation);
-  TopoDS_Face face1 = BRepBuilderAPI_MakeFace(plane, -offset, offset, -offset, offset);
-//   double linear = prf::manager().rootPtr->visual().mesh().linearDeflection();
-//   double angular = prf::manager().rootPtr->visual().mesh().angularDeflection();
-//   BRepMesh_IncrementalMesh(face1, linear, Standard_False, angular, Standard_True);
-//   BRepMesh_IncrementalMesh(sIn, linear, Standard_False, angular, Standard_True);
-  
-  gp_Trsf t1;
-  t1.SetTranslation(gu::toOcc(gu::toOsg(bbbox.getCenter()) + (norm * offset)));
-  face1.Location(TopLoc_Location(t1));
-  
-  TopoDS_Face face2 = face1;
-  gp_Trsf t2;
-  t2.SetTranslation(gu::toOcc(gu::toOsg(bbbox.getCenter()) + (norm * -offset)));
-  face2.Location(TopLoc_Location(t2));
-  
-  auto getDistance = [](const TopoDS_Shape &s1, const TopoDS_Shape &s2) -> double
-  {
-    //shape
-    double tol = 0.1;
-    BRepExtrema_DistShapeShape dc(s1, s2, tol, Extrema_ExtFlag_MIN);
-    if (!dc.IsDone())
-      throw std::runtime_error("BRepExtrema_DistShapeShape failed");;
-    if (dc.NbSolution() < 1)
-      throw std::runtime_error("BRepExtrema_DistShapeShape failed");;
-    return dc.Value();
-    
-    
-    /* I couldn't get poly to work. Not sure why.
-     * I am guessing it had to do with orthogonal planes
-     */
-//     gp_Pnt p1, p2;
-//     double distance;
-//     if (BRepExtrema_Poly::Distance(s1, s2, p1, p2, distance))
-//       return distance;
-//     
-//     throw std::runtime_error("BRepExtrema_Poly failed");
-  };
-  
-  double d1 = getDistance(sIn, face1);
-  double d2 = getDistance(sIn, face2);
-  double widthCalc = 2 * offset - d1 - d2 + 2 * gap->getDouble();
-  width->setValue(widthCalc);
-  
-  osg::Vec3d projection = (norm * (offset - d1)) + (-norm * (offset - d2));
-  osg::Vec3d center = gu::toOsg(bbbox.getCenter()) + (projection * 0.5);
-  osg::Vec3d aux = feed * (feed * center);
-  osg::Vec3d auxProjection = center - aux;
-  double directionFactor = ((auxProjection * norm) < 0.0) ? -1.0 : 1.0;
-  widthOffset->setValue(auxProjection.length() * directionFactor);
-}
-
-void Strip::serialWrite(const boost::filesystem::path &dIn)
-{
-  assert(stations.size() == stationLabels.size());
-  
   prj::srl::stps::Strip stripOut
   (
-    Base::serialOut(),
-    sShape->serialOut(),
-    feedDirection->serialOut(),
-    pitch->serialOut(),
-    width->serialOut(),
-    widthOffset->serialOut(),
-    gap->serialOut(),
-    autoCalc->serialOut(),
-    stripHeight,
-    feedDirectionLabel->serialOut(),
-    pitchLabel->serialOut(),
-    widthLabel->serialOut(),
-    widthOffsetLabel->serialOut(),
-    gapLabel->serialOut(),
-    autoCalcLabel->serialOut()
+    Base::serialOut()
+    , stow->part.serialOut()
+    , stow->blank.serialOut()
+    , stow->nest.serialOut()
+    , stow->feedDirection.serialOut()
+    , stow->pitch.serialOut()
+    , stow->width.serialOut()
+    , stow->widthOffset.serialOut()
+    , stow->gap.serialOut()
+    , stow->autoCalc.serialOut()
+    , stow->stripHeight.serialOut()
+    , stow->sShape.serialOut()
+    , stow->feedDirectionLabel->serialOut()
+    , stow->pitchLabel->serialOut()
+    , stow->widthLabel->serialOut()
+    , stow->widthOffsetLabel->serialOut()
+    , stow->gapLabel->serialOut()
+    , stow->autoCalcLabel->serialOut()
   );
   
-  for (std::size_t index = 0; index < stations.size(); ++index)
+  assert(stow->stations.size() && stow->stationLabels.size());
+  for (std::size_t i = 0; i < stow->stations.size(); ++i)
   {
-    const osg::Matrixd &m = stationLabels.at(index)->getMatrix();
-    prj::srl::spt::Matrixd mOut
-    (
-      m(0,0), m(0,1), m(0,2), m(0,3),
-      m(1,0), m(1,1), m(1,2), m(1,3),
-      m(2,0), m(2,1), m(2,2), m(2,3),
-      m(3,0), m(3,1), m(3,2), m(3,3)
-    );
-    stripOut.stations().push_back(prj::srl::stps::Station(stations.at(index).toStdString(), mOut));
+    auto index = stow->stations.at(i);
+    prm::Parameter tempPrm(QObject::tr("Station"), std::string("junk"), "No Tag");
+    osg::ref_ptr<lbr::PLabel> tempLabel = new lbr::PLabel(&tempPrm);
+    tempLabel->setShowName(false);
+    tempLabel->setTextColor(osg::Vec4(1.0, 1.0, 1.0, 1.0));
+    tempLabel->setMatrix(stow->stationLabels.at(i)->getMatrix());
+    stripOut.stations().push_back(prj::srl::stps::Station(index, tempLabel->serialOut()));
   }
   
   xml_schema::NamespaceInfomap infoMap;
@@ -441,42 +506,41 @@ void Strip::serialWrite(const boost::filesystem::path &dIn)
   prj::srl::stps::strip(stream, stripOut, infoMap);
 }
 
-void Strip::serialRead(const prj::srl::stps::Strip &sIn)
+void Feature::serialRead(const prj::srl::stps::Strip &sIn)
 {
   Base::serialIn(sIn.base());
-  sShape->serialIn(sIn.seerShape());
-  feedDirection->serialIn(sIn.feedDirection());
-  pitch->serialIn(sIn.pitch());
-  width->serialIn(sIn.width());
-  widthOffset->serialIn(sIn.widthOffset());
-  gap->serialIn(sIn.gap());
-  autoCalc->serialIn(sIn.autoCalc());
-  stripHeight = sIn.stripHeight();
-  feedDirectionLabel->serialIn(sIn.feedDirectionLabel());
-  pitchLabel->serialIn(sIn.pitchLabel());
-  widthLabel->serialIn(sIn.widthLabel());
-  widthOffsetLabel->serialIn(sIn.widthOffsetLabel());
-  gapLabel->serialIn(sIn.gapLabel());
-  autoCalcLabel->serialIn(sIn.autoCalcLabel());
+  stow->part.serialIn(sIn.part());
+  stow->blank.serialIn(sIn.blank());
+  stow->nest.serialIn(sIn.nest());
+  stow->feedDirection.serialIn(sIn.feedDirection());
+  stow->pitch.serialIn(sIn.pitch());
+  stow->width.serialIn(sIn.width());
+  stow->widthOffset.serialIn(sIn.widthOffset());
+  stow->gap.serialIn(sIn.gap());
+  stow->autoCalc.serialIn(sIn.autoCalc());
+  stow->stripHeight.serialIn(sIn.stripHeight());
+  stow->sShape.serialIn(sIn.seerShape());
+  stow->feedDirectionLabel->serialIn(sIn.feedDirectionLabel());
+  stow->pitchLabel->serialIn(sIn.pitchLabel());
+  stow->widthLabel->serialIn(sIn.widthLabel());
+  stow->widthOffsetLabel->serialIn(sIn.widthOffsetLabel());
+  stow->gapLabel->serialIn(sIn.gapLabel());
+  stow->autoCalcLabel->serialIn(sIn.autoCalcLabel());
   
-  stations.clear();
-  stationLabels.clear();
+  stow->stations.clear();
+  stow->stationLabels.clear();
   for (const auto &stationIn : sIn.stations())
   {
-    stations.push_back(QString::fromStdString(stationIn.text()));
-    
-    osg::ref_ptr<osg::MatrixTransform> sl = new osg::MatrixTransform();
-    const auto &mIn = stationIn.matrix();
-    osg::Matrixd position
-    (
-      mIn.i0j0(), mIn.i0j1(), mIn.i0j2(), mIn.i0j3(),
-      mIn.i1j0(), mIn.i1j1(), mIn.i1j2(), mIn.i1j3(),
-      mIn.i2j0(), mIn.i2j1(), mIn.i2j2(), mIn.i2j3(),
-      mIn.i3j0(), mIn.i3j1(), mIn.i3j2(), mIn.i3j3()
-    );
-    sl->setMatrix(position);
-    sl->addChild(buildStationLabel(stationIn.text()));
-    stationLabels.push_back(sl);
-    overlaySwitch->addChild(sl.get(), overlaySwitch->getValue(0));
+    stow->stations.push_back(static_cast<Station>(stationIn.index()));
+    prm::Parameter tempPrm(QObject::tr("Station"), getStationString(stow->stations.back()).toStdString(), "No Tag");
+    osg::ref_ptr<lbr::PLabel> tempLabel = new lbr::PLabel(&tempPrm);
+    tempLabel->serialIn(stationIn.label());
+    tempLabel->setShowName(false);
+    tempLabel->setTextColor(osg::Vec4(1.0, 1.0, 1.0, 1.0));
+    osg::ref_ptr<osg::MatrixTransform> sl = new osg::MatrixTransform(); // station label
+    sl->setMatrix(tempLabel->getMatrix());
+    sl->addChild(tempLabel->getChild(0));
+    stow->stationLabels.push_back(sl);
+    overlaySwitch->addChild(sl.get());
   }
 }
