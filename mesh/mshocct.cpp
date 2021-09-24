@@ -43,7 +43,8 @@
 #define OCCGEOMETRY
 namespace nglib //what the fuck is this nonsense!
 {
-  #include <nglib.h>
+  //had to 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib/x86_64-linux-gnu/netgen'
+  #include <netgen/nglib.h>
 }
 using namespace nglib;
 #endif
