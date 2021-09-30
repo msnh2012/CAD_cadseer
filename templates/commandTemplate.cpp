@@ -123,7 +123,8 @@ void %CLASSNAME%::setSelections(const std::vector<slc::Message> &targets)
   assert(isActive);
   
 //   project->clearAllInputs(feature->getId());
-//   feature->setPicks(ftr::Picks());
+//   auto *parameter = feature->getParameter(prm::Tags::pick);
+//   parameter->setValue(ftr::Picks());
 //   
 //   if (targets.empty())
 //     return;
@@ -136,10 +137,10 @@ void %CLASSNAME%::setSelections(const std::vector<slc::Message> &targets)
 // 
 //     const ftr::Base *lf = project->findFeature(m.featureId);
 //     freshPicks.push_back(tls::convertToPick(m, *lf, project->getShapeHistory()));
-//     freshPicks.back().tag = ftr::InputType::createIndexedTag(ftr::InputType::target, freshPicks.size() - 1);
+//     freshPicks.back().tag = indexTag(prm::Tags::pick, freshPicks.size() - 1);
 //     project->connect(lf->getId(), feature->getId(), {freshPicks.back().tag});
 //   }
-//   feature->setPicks(freshPicks);
+//   parameter->setValue(freshPicks);
 }
 
 void %CLASSNAME%::localUpdate()
