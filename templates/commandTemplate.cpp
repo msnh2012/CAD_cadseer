@@ -39,7 +39,7 @@ using namespace cmd;
 , leafManager()
 {
   feature = new ftr::%CLASSNAME%::Feature();
-  project->addFeature(std::unique_ptr<ftr::%CLASSNAME%::Feature);
+  project->addFeature(std::unique_ptr<ftr::%CLASSNAME%::Feature>(feature));
   node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
   isEdit = false;
   isFirstRun = true;
