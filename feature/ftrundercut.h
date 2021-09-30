@@ -35,7 +35,11 @@ namespace ftr
     
     namespace PrmTags
     {
-      inline constexpr std::string_view prmTag = "prmTag";
+      inline constexpr std::string_view sourcePick = "sourcePick";
+      inline constexpr std::string_view directionType = "directionType";
+      inline constexpr std::string_view directionPicks = "directionPicks";
+      inline constexpr std::string_view direction = "direction";
+      inline constexpr std::string_view subdivision = "subdivision";
     }
     
     class Feature : public Base

@@ -20,15 +20,16 @@
 #include <boost/filesystem/path.hpp>
 
 #include <osg/Switch>
+#include <osg/Geometry>
 
 #include "globalutilities.h"
 // #include "annex/annseershape.h"
-// #include "library/lbrplabel.h"
-// #include "library/lbripgroup.h"
-// #include "parameter/prmconstants.h"
-// #include "parameter/prmparameter.h"
+#include "library/lbrplabel.h"
+#include "parameter/prmconstants.h"
+#include "parameter/prmparameter.h"
 #include "tools/occtools.h"
-// #include "tools/featuretools.h"
+#include "tools/featuretools.h"
+#include "tools/tlsosgtools.h"
 // #include "tools/idtools.h"
 // #include "feature/ftrshapecheck.h"
 #include "feature/ftrupdatepayload.h"
@@ -43,41 +44,121 @@ QIcon Feature::icon = QIcon(":/resources/images/constructionBase.svg"); //fix me
 struct Feature::Stow
 {
   Feature &feature;
-  ann::SeerShape sShape;
-  prm::Parameter parameter;
-  prm::Observer observer;
-  osg::ref_ptr<lbr::PLabel> label;
-  osg::ref_ptr<lbr::IPGroup> iLabel;
+  prm::Parameter sourcePick{QObject::tr("Source"), ftr::Picks(), PrmTags::sourcePick};
+  prm::Parameter directionType{QObject::tr("Type"), 0, PrmTags::directionType};
+  prm::Parameter directionPicks{QObject::tr("Direction Picks"), ftr::Picks(), PrmTags::directionPicks};
+  prm::Parameter direction{QObject::tr("Direction"), osg::Vec3d(), PrmTags::direction};
+  prm::Parameter subdivision{QObject::tr("Subdivision"), 1, PrmTags::subdivision};
+  osg::ref_ptr<lbr::PLabel> directionTypeLabel{new lbr::PLabel(&directionType)};
+  osg::ref_ptr<lbr::PLabel> directionLabel{new lbr::PLabel(&direction)};
+  osg::ref_ptr<lbr::PLabel> subdivisionLabel{new lbr::PLabel(&subdivision)};
+  prm::Observer blockObserver{std::bind(&Feature::setModelDirty, &feature)};
   
   Stow(Feature &fIn)
   : feature(fIn)
-  , sShape()
-  , parameter(prm::Names::parameter, 1.0, prm::Tags::parameter)
-  , observer(std::bind(&Feature::setModelDirty, &feature))
-  , label(new lbr::PLabel(&parameter))
-  , iLabel(new lbr::IPGroup(&parameter))
   {
+    sourcePick.connectValue(std::bind(&Feature::setModelDirty, &feature));
+    feature.parameters.push_back(&sourcePick);
+    
     QStringList tStrings =
     {
-      QObject::tr("Constant")
-      , QObject::tr("Infer")
-      , QObject::tr("Picks")
+      QObject::tr("Picks")
+      , QObject::tr("Constant")
     };
-    parameter.setEnumeration(tStrings);
-    parameter.connectValue(std::bind(&Feature::setModelDirty, &feature));
-    parameter.connectValue(std::bind(&Stow::prmActiveSync, this));
-    parameter.connect(observer);
-    feature.parameters.push_back(&parametr);
+    directionType.setEnumeration(tStrings);
+    directionType.connectValue(std::bind(&Feature::setModelDirty, &feature));
+    directionType.connectValue(std::bind(&Stow::prmActiveSync, this));
+    feature.parameters.push_back(&directionType);
+    directionTypeLabel->refresh();
     
-    feature.annexes.insert(std::make_pair(ann::Type::SeerShape, &sShape));
+    directionPicks.connectValue(std::bind(&Feature::setModelDirty, &feature));
+    feature.parameters.push_back(&directionPicks);
     
-    feature.overlaySwitch->addChild(label.get());
-    feature.overlaySwitch->addChild(iLabel.get());
+    prm::Boundary lower(1.0, prm::Boundary::End::Closed);
+    prm::Boundary upper(10.0, prm::Boundary::End::Closed);
+    prm::Interval interval(lower, upper);
+    prm::Constraint subConstraint;
+    subConstraint.intervals.push_back(interval);
+    subdivision.setConstraint(subConstraint);
+    subdivision.connectValue(std::bind(&Feature::setModelDirty, &feature));
+    feature.parameters.push_back(&subdivision);
+    
+    direction.connect(blockObserver);
+    feature.parameters.push_back(&direction);
+    
+    feature.overlaySwitch->addChild(directionTypeLabel.get());
+    feature.overlaySwitch->addChild(directionLabel.get());
+    feature.overlaySwitch->addChild(subdivisionLabel.get());
   }
   
   void prmActiveSync()
   {
-
+    switch (directionType.getInt())
+    {
+      case 0:
+      {
+        directionPicks.setActive(true);
+        direction.setActive(false);
+        break;
+      }
+      case 1:
+      {
+        directionPicks.setActive(false);
+        direction.setActive(true);
+        break;
+      }
+      default:
+      {
+        assert(0); //unrecognized type
+        break;
+      }
+    }
+  }
+  
+  std::vector<osg::Vec3d> buildGrid(const osg::BoundingSphere &sphereIn)
+  {
+    std::vector<osg::Vec3d> out;
+    
+    if (!sphereIn.valid() || (sphereIn.radius() < std::numeric_limits<float>::epsilon()))
+      return out;
+    
+    //in any case the direction/intersection vector is the x-axis of matrix.
+    auto buildMatrix = [&](const osg::Vec3d &yAxis) -> std::optional<osg::Matrixd>
+    {
+      std::array<std::optional<osg::Vec3d>, 4> attempt0 =
+      {
+        direction.getVector()
+        , yAxis
+        , std::nullopt
+        , sphereIn.center()
+      };
+      return tls::matrixFromAxes(attempt0);
+    };
+    
+    auto m = buildMatrix(osg::Vec3d(0.0, 0.0, 1.0));
+    if (!m)
+    {
+      m = buildMatrix(osg::Vec3d(0.0, 1.0, 0.0));
+      if (!m)
+        return out;
+    }
+    
+    osg::Vec3d gridX = gu::getYVector(*m);
+    osg::Vec3d gridY = gu::getZVector(*m);
+    double gridLength = M_SQRT1_2 * sphereIn.radius() * 2.0;
+    if (gridLength < std::numeric_limits<float>::epsilon())
+      return out;
+    int projectionCount = std::pow(2, (subdivision.getInt()));
+    double projectionDistance = gridLength / std::pow(2, projectionCount);
+    osg::Vec3d rowStart = sphereIn.center() + (-gridX * gridLength / 2.0) + (-gridY * gridLength / 2.0); //lower left
+    for (int row = 0; row <= projectionCount; ++row) // <= because we start at zero
+    {
+      for (int column = 0; column <= projectionCount; ++column) // <= because we start at zero.
+        out.push_back(rowStart + gridX * (column * projectionDistance));
+      rowStart += gridY * projectionDistance;
+    }
+    
+    return out;
   }
 };
 
@@ -91,37 +172,78 @@ Feature::Feature()
 
 Feature::~Feature() = default;
 
-void Feature::updateModel(const UpdatePayload &/*pIn*/)
+void Feature::updateModel(const UpdatePayload &pIn)
 {
   setFailure();
   lastUpdateLog.clear();
-//   sShape->reset();
   try
   {
-    //setup new failure state.
-//     sShape->setOCCTShape(tss.getRootOCCTShape());
-//     sShape->shapeMatch(tss);
-//     sShape->uniqueTypeMatch(tss);
-//     sShape->outerWireMatch(tss);
-//     sShape->derivedMatch();
-//     sShape->ensureNoNils(); //just in case
-//     sShape->ensureNoDuplicates(); //just in case
-    
     if (isSkipped())
     {
       setSuccess();
       throw std::runtime_error("feature is skipped");
     }
     
-//     tls::Resolver pr(pIn);
-//     if (!pr.resolve(picks.front()))
-//       throw std::runtime_error("invalid pick resolution");
+    const auto &sPicks = stow->sourcePick.getPicks();
+    if (sPicks.empty())
+      throw std::runtime_error("No source inputs");
+    tls::Resolver sourceResolver(pIn);
+    if (!sourceResolver.resolve(sPicks.front()))
+      throw std::runtime_error("invalid pick resolution");
     
-    //update goes here.
+    if (stow->directionType.getInt() == 0) //picks
+    {
+      prm::ObserverBlocker blocker(stow->blockObserver);
+      const auto &dp = stow->directionPicks.getPicks();
+      if (dp.empty())
+        throw std::runtime_error("No picks for direction");
+      tls::Resolver directionResolver(pIn);
+      std::vector<osg::Vec3d> points;
+      for (const auto &p : dp)
+      {
+        if (!directionResolver.resolve(p))
+          throw std::runtime_error("Can't resolve direction pick");
+        if (slc::isObjectType(p.selectionType))
+        {
+          prm::Parameters params = directionResolver.getFeature()->getParameters(prm::Tags::Direction);
+          if (params.empty())
+            throw std::runtime_error("No direction parameter from direction input");
+          else
+          {
+            stow->direction.setValue(params.front()->getVector());
+            break;
+          }
+          //TODO look for csys parameter and take z-axis
+        }
+        else if (slc::isPointType(p.selectionType))
+        {
+          auto localPoints = directionResolver.getPoints();
+          points.insert(points.end(), localPoints.begin(), localPoints.end());
+        }
+      }
+      if (!points.empty())
+      {
+        if (points.size() != 2)
+          throw std::runtime_error("Incorrect number of points for direction");
+        osg::Vec3d temp = points.front() - points.back();
+        temp.normalize();
+        stow->direction.setValue(temp);
+      }
+    }
     
-//     ShapeCheck check(out);
-//     if (!check.isValid())
-//       throw std::runtime_error("shapeCheck failed");
+    const auto *inputTransform = sourceResolver.getFeature()->getMainTransform();
+    const auto &inputBound = inputTransform->getBound();
+    auto gridPoints = stow->buildGrid(inputBound);
+    
+    //temp just to test out grid construction.
+    osg::Vec3Array *points = new osg::Vec3Array(gridPoints.begin(), gridPoints.end());
+    osg::Vec4Array *colors = new osg::Vec4Array(); colors->push_back(osg::Vec4(1.0, 1.0, 1.0, 1.0));
+    osg::Geometry *geometry = new osg::Geometry();
+    geometry->setVertexArray(points);
+    geometry->setColorArray(colors);
+    geometry->setColorBinding(osg::Geometry::BIND_OVERALL);
+    geometry->addPrimitiveSet(new osg::DrawArrays(GL_POINTS, 0, points->size()));
+    mainTransform->addChild(geometry);
     
     setSuccess();
   }
