@@ -23,14 +23,14 @@
 #include "command/cmdleafmanager.h"
 #include "command/cmdbase.h"
 
-namespace ftr{class %CLASSNAME%;}
+namespace ftr{namespace %CLASSNAME%{class Feature};}
 
 namespace cmd
 {
   class %CLASSNAME% : public Base
   {
   public:
-    ftr::%CLASSNAME% *feature = nullptr;
+    ftr::%CLASSNAME%::Feature *feature = nullptr;
     
     %CLASSNAME%();
     %CLASSNAME%(ftr::Base*);
