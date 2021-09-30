@@ -41,7 +41,7 @@ namespace cmd
     void activate() override;
     void deactivate() override;
     
-    void setSelections(const std::vector<slc::Message>&);
+    void setSelections(const slc::Messages&);
     void localUpdate();
   private:
     cmd::LeafManager leafManager;

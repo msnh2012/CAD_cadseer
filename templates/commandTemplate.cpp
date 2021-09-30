@@ -118,7 +118,7 @@ bool %CLASSNAME%::isValidSelection(const slc::Message &mIn)
   return true;
 }
 
-void %CLASSNAME%::setSelections(const std::vector<slc::Message> &targets)
+void %CLASSNAME%::setSelections(const slc::Messages &targets)
 {
   assert(isActive);
   
