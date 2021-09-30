@@ -37,6 +37,8 @@ namespace cmv
   public:
     %CLASSNAME%(cmd::%CLASSNAME%*);
     ~%CLASSNAME%() override;
+  private Q_SLOTS:
+    void modelChanged(const QModelIndex&, const QModelIndex&);
   private:
     struct Stow;
     std::unique_ptr<Stow> stow;

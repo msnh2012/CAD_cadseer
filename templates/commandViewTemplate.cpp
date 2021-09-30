@@ -97,7 +97,7 @@ struct %CLASSNAME%::Stow
 
 %CLASSNAME%::%CLASSNAME%(cmd::%CLASSNAME% *cIn)
 : Base("cmv::%CLASSNAME%")
-, stow(std::make_uniue<Stow>(cIn, this))
+, stow(std::make_unique<Stow>(cIn, this))
 {
   goSelectionToolbar();
   goMaskDefault();
