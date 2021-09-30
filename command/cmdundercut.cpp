@@ -17,7 +17,7 @@
  *
  */
 
-// #include "tools/featuretools.h"
+#include "tools/featuretools.h"
 // #include "application/appmainwindow.h"
 // #include "application/appapplication.h"
 // #include "viewer/vwrwidget.h"
@@ -39,7 +39,7 @@ UnderCut::UnderCut()
 , leafManager()
 {
   feature = new ftr::UnderCut::Feature();
-  project->addFeature(std::unique_ptr<ftr::UnderCut::Feature);
+  project->addFeature(std::unique_ptr<ftr::UnderCut::Feature>(feature));
   node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
   isEdit = false;
   isFirstRun = true;
@@ -101,45 +101,36 @@ void UnderCut::deactivate()
   isActive = false;
 }
 
-bool UnderCut::isValidSelection(const slc::Message &mIn)
-{
-//   const ftr::Base *lf = project->findFeature(mIn.featureId);
-//   if (!lf->hasAnnex(ann::Type::SeerShape) || lf->getAnnex<ann::SeerShape>().isNull())
-//     return false;
-//   
-//   auto t = mIn.type;
-//   if
-//   (
-//     (t != slc::Type::Object)
-//     && (t != slc::Type::Shell)
-//     && (t != slc::Type::Face)
-//   )
-//     return false;
-  return true;
-}
 
-void UnderCut::setSelections(const std::vector<slc::Message> &targets)
+void UnderCut::setSelections(const slc::Messages &sources, const slc::Messages &directions)
 {
   assert(isActive);
   
-//   project->clearAllInputs(feature->getId());
-//   feature->setPicks(ftr::Picks());
-//   
-//   if (targets.empty())
-//     return;
-//   
-//   ftr::Picks freshPicks;
-//   for (const auto &m : targets)
-//   {
-//     if (!isValidSelection(m))
-//       continue;
-// 
-//     const ftr::Base *lf = project->findFeature(m.featureId);
-//     freshPicks.push_back(tls::convertToPick(m, *lf, project->getShapeHistory()));
-//     freshPicks.back().tag = ftr::InputType::createIndexedTag(ftr::InputType::target, freshPicks.size() - 1);
-//     project->connect(lf->getId(), feature->getId(), {freshPicks.back().tag});
-//   }
-//   feature->setPicks(freshPicks);
+  auto *sourcePicks = feature->getParameter(ftr::UnderCut::PrmTags::sourcePick);
+  auto *directionPicks = feature->getParameter(ftr::UnderCut::PrmTags::directionPicks);
+  
+  project->clearAllInputs(feature->getId());
+  sourcePicks->setValue(ftr::Picks());
+  directionPicks->setValue(ftr::Picks());
+  
+  for (const auto &m : sources)
+  {
+    const ftr::Base *lf = project->findFeature(m.featureId);
+    auto sp = tls::convertToPick(m, *lf, project->getShapeHistory());
+    sp.tag = indexTag(ftr::UnderCut::PrmTags::sourcePick, 0);
+    project->connect(lf->getId(), feature->getId(), {sp.tag});
+    break; //should only be 1
+  }
+
+  ftr::Picks freshPicks;
+  for (const auto &m : directions)
+  {
+    const ftr::Base *lf = project->findFeature(m.featureId);
+    freshPicks.push_back(tls::convertToPick(m, *lf, project->getShapeHistory()));
+    freshPicks.back().tag = indexTag(ftr::UnderCut::PrmTags::directionPicks, freshPicks.size() - 1);
+    project->connect(lf->getId(), feature->getId(), {freshPicks.back().tag});
+  }
+  directionPicks->setValue(freshPicks);
 }
 
 void UnderCut::localUpdate()
@@ -153,26 +144,31 @@ void UnderCut::localUpdate()
 
 void UnderCut::go()
 {
-//   const slc::Containers &cs = eventHandler->getSelections();
-//   
-//   std::vector<slc::Message> tm; //target messages
-//   for (const auto &c : cs)
-//   {
-//     auto m = slc::EventHandler::containerToMessage(c);
-//     if (isValidSelection(m))
-//       tm.push_back(m);
-//   }
-//   
-//   if (!tm.empty())
-//   {
-//     setSelections(tm);
-//     node->sendBlocked(msg::buildStatusMessage("UnderCut Added", 2.0));
-//     node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
-//     return;
-//   }
-//   
-//   node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
-//   node->sendBlocked(msg::buildShowThreeD(feature->getId()));
-//   node->sendBlocked(msg::buildShowOverlay(feature->getId()));
-//   viewBase = std::make_unique<cmv::UnderCut>(this);
+  slc::Messages sources;
+  slc::Messages directions;
+  
+  const slc::Containers &cs = eventHandler->getSelections();
+  slc::Messages tm; //target messages
+  for (const auto &c : cs)
+  {
+    auto m = slc::EventHandler::containerToMessage(c);
+    if (slc::isObjectType(m.type) && sources.empty())
+      sources.push_back(m);
+    else
+      directions.push_back(m);
+  }
+  
+  if (!sources.empty() && !directions.empty())
+  {
+    setSelections(sources, directions);
+    node->sendBlocked(msg::buildStatusMessage("UnderCut Added", 2.0));
+    node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+    return;
+  }
+  
+  node->sendBlocked(msg::buildStatusMessage("Invalid pre-selection", 2.0));
+  node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  node->sendBlocked(msg::buildShowThreeD(feature->getId()));
+  node->sendBlocked(msg::buildShowOverlay(feature->getId()));
+  viewBase = std::make_unique<cmv::UnderCut>(this);
 }

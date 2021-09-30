@@ -23,14 +23,14 @@
 #include "command/cmdleafmanager.h"
 #include "command/cmdbase.h"
 
-namespace ftr{class UnderCut;}
+namespace ftr{namespace UnderCut{class Feature;}}
 
 namespace cmd
 {
   class UnderCut : public Base
   {
   public:
-    ftr::UnderCut *feature = nullptr;
+    ftr::UnderCut::Feature *feature = nullptr;
     
     UnderCut();
     UnderCut(ftr::Base*);
@@ -41,12 +41,11 @@ namespace cmd
     void activate() override;
     void deactivate() override;
     
-    void setSelections(const std::vector<slc::Message>&);
+    void setSelections(const slc::Messages&, const slc::Messages&);
     void localUpdate();
   private:
     cmd::LeafManager leafManager;
     void go();
-    bool isValidSelection(const slc::Message&);
   };
 }
 #endif // CMD_UNDERCUT_H
