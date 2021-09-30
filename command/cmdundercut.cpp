@@ -119,6 +119,7 @@ void UnderCut::setSelections(const slc::Messages &sources, const slc::Messages &
     auto sp = tls::convertToPick(m, *lf, project->getShapeHistory());
     sp.tag = indexTag(ftr::UnderCut::PrmTags::sourcePick, 0);
     project->connect(lf->getId(), feature->getId(), {sp.tag});
+    sourcePicks->setValue(sp);
     break; //should only be 1
   }
 

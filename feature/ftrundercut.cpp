@@ -21,19 +21,16 @@
 
 #include <osg/Switch>
 #include <osg/Geometry>
+#include <osg/Point>
 
 #include "globalutilities.h"
-// #include "annex/annseershape.h"
 #include "library/lbrplabel.h"
 #include "parameter/prmconstants.h"
 #include "parameter/prmparameter.h"
 #include "tools/occtools.h"
 #include "tools/featuretools.h"
 #include "tools/tlsosgtools.h"
-// #include "tools/idtools.h"
-// #include "feature/ftrshapecheck.h"
 #include "feature/ftrupdatepayload.h"
-// #include "feature/ftrinputtype.h"
 // #include "project/serial/generated/prjsrl_FIX_undercut.h"
 #include "feature/ftrundercut.h"
 
@@ -243,6 +240,7 @@ void Feature::updateModel(const UpdatePayload &pIn)
     geometry->setColorArray(colors);
     geometry->setColorBinding(osg::Geometry::BIND_OVERALL);
     geometry->addPrimitiveSet(new osg::DrawArrays(GL_POINTS, 0, points->size()));
+    geometry->getOrCreateStateSet()->setAttribute(new osg::Point(5.0));
     mainTransform->addChild(geometry);
     
     setSuccess();

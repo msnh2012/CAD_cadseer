@@ -597,6 +597,7 @@ cadseer_moc_hdrs = ['viewer/vwrwidget.h'
   , 'commandview/cmvselection.h'
   , 'commandview/cmvtable.h'
   , 'commandview/cmvtablewidgets.h'
+  , 'commandview/cmvundercut.h'
 ]
   
 cadseer_resources = ['resources.qrc']
