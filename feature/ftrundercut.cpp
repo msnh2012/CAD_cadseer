@@ -50,6 +50,7 @@ struct Feature::Stow
   osg::ref_ptr<lbr::PLabel> directionLabel{new lbr::PLabel(&direction)};
   osg::ref_ptr<lbr::PLabel> subdivisionLabel{new lbr::PLabel(&subdivision)};
   prm::Observer blockObserver{std::bind(&Feature::setModelDirty, &feature)};
+  osg::ref_ptr<osg::Geometry> pointGeometry;
   
   Stow(Feature &fIn)
   : feature(fIn)
@@ -86,6 +87,8 @@ struct Feature::Stow
     feature.overlaySwitch->addChild(directionTypeLabel.get());
     feature.overlaySwitch->addChild(directionLabel.get());
     feature.overlaySwitch->addChild(subdivisionLabel.get());
+    
+    prmActiveSync();
   }
   
   void prmActiveSync()
@@ -146,8 +149,10 @@ struct Feature::Stow
     if (gridLength < std::numeric_limits<float>::epsilon())
       return out;
     int projectionCount = std::pow(2, (subdivision.getInt()));
-    double projectionDistance = gridLength / std::pow(2, projectionCount);
-    osg::Vec3d rowStart = sphereIn.center() + (-gridX * gridLength / 2.0) + (-gridY * gridLength / 2.0); //lower left
+    double projectionDistance = gridLength / projectionCount;
+    osg::Vec3d rowStart = sphereIn.center(); //start at sphere center.
+    rowStart += -direction.getVector() * sphereIn.radius(); //move above geometry.
+    rowStart += (-gridX * gridLength / 2.0) + (-gridY * gridLength / 2.0); //move to lower left
     for (int row = 0; row <= projectionCount; ++row) // <= because we start at zero
     {
       for (int column = 0; column <= projectionCount; ++column) // <= because we start at zero.
@@ -235,13 +240,19 @@ void Feature::updateModel(const UpdatePayload &pIn)
     //temp just to test out grid construction.
     osg::Vec3Array *points = new osg::Vec3Array(gridPoints.begin(), gridPoints.end());
     osg::Vec4Array *colors = new osg::Vec4Array(); colors->push_back(osg::Vec4(1.0, 1.0, 1.0, 1.0));
-    osg::Geometry *geometry = new osg::Geometry();
-    geometry->setVertexArray(points);
-    geometry->setColorArray(colors);
-    geometry->setColorBinding(osg::Geometry::BIND_OVERALL);
-    geometry->addPrimitiveSet(new osg::DrawArrays(GL_POINTS, 0, points->size()));
-    geometry->getOrCreateStateSet()->setAttribute(new osg::Point(5.0));
-    mainTransform->addChild(geometry);
+    mainTransform->removeChild(stow->pointGeometry);
+    stow->pointGeometry = new osg::Geometry();
+    stow->pointGeometry->setVertexArray(points);
+    stow->pointGeometry->setColorArray(colors);
+    stow->pointGeometry->setColorBinding(osg::Geometry::BIND_OVERALL);
+    stow->pointGeometry->addPrimitiveSet(new osg::DrawArrays(GL_POINTS, 0, points->size()));
+    stow->pointGeometry->getOrCreateStateSet()->setAttribute(new osg::Point(5.0));
+    mainTransform->addChild(stow->pointGeometry);
+    
+    //set label locations
+    stow->directionTypeLabel->setMatrix(osg::Matrixd::translate(inputBound.center()));
+    stow->directionLabel->setMatrix(osg::Matrixd::translate(points->front()));
+    stow->subdivisionLabel->setMatrix(osg::Matrixd::translate(points->back()));
     
     setSuccess();
   }
