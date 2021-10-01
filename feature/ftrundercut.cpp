@@ -22,6 +22,7 @@
 #include <osg/Switch>
 #include <osg/Geometry>
 #include <osg/Point>
+#include <osgUtil/LineSegmentIntersector>
 
 #include "globalutilities.h"
 #include "library/lbrplabel.h"
@@ -31,6 +32,7 @@
 #include "tools/featuretools.h"
 #include "tools/tlsosgtools.h"
 #include "feature/ftrupdatepayload.h"
+#include "modelviz/mdvnodemaskdefs.h"
 // #include "project/serial/generated/prjsrl_FIX_undercut.h"
 #include "feature/ftrundercut.h"
 
@@ -51,6 +53,7 @@ struct Feature::Stow
   osg::ref_ptr<lbr::PLabel> subdivisionLabel{new lbr::PLabel(&subdivision)};
   prm::Observer blockObserver{std::bind(&Feature::setModelDirty, &feature)};
   osg::ref_ptr<osg::Geometry> pointGeometry;
+  osg::ref_ptr<osg::Geometry> intersectionGeometry;
   
   Stow(Feature &fIn)
   : feature(fIn)
@@ -233,26 +236,52 @@ void Feature::updateModel(const UpdatePayload &pIn)
       }
     }
     
-    const auto *inputTransform = sourceResolver.getFeature()->getMainTransform();
+    auto *inputTransform = sourceResolver.getFeature()->getMainTransform(); //accept isn't const
     const auto &inputBound = inputTransform->getBound();
     auto gridPoints = stow->buildGrid(inputBound);
+    std::ostringstream s; s << getTypeString() << " grid points: " << gridPoints.size() << std::endl;
+    lastUpdateLog += s.str();
     
     //temp just to test out grid construction.
-    osg::Vec3Array *points = new osg::Vec3Array(gridPoints.begin(), gridPoints.end());
+//     osg::Vec3Array *points = new osg::Vec3Array(gridPoints.begin(), gridPoints.end());
+//     osg::Vec4Array *colors = new osg::Vec4Array(); colors->push_back(osg::Vec4(1.0, 1.0, 1.0, 1.0));
+//     mainTransform->removeChild(stow->pointGeometry);
+//     stow->pointGeometry = new osg::Geometry();
+//     stow->pointGeometry->setVertexArray(points);
+//     stow->pointGeometry->setColorArray(colors);
+//     stow->pointGeometry->setColorBinding(osg::Geometry::BIND_OVERALL);
+//     stow->pointGeometry->addPrimitiveSet(new osg::DrawArrays(GL_POINTS, 0, points->size()));
+//     stow->pointGeometry->getOrCreateStateSet()->setAttribute(new osg::Point(5.0));
+//     mainTransform->addChild(stow->pointGeometry);
+    
+    osg::ref_ptr<osg::Vec3Array> intersectionPoints = new osg::Vec3Array();
+    for (const auto &startPoint : gridPoints)
+    {
+      auto endPoint = startPoint + stow->direction.getVector() * inputBound.radius() * 2.0;
+      //visitor keeps a ref_ptr of intersector so have to 'new' it.
+      auto *intersector = new osgUtil::LineSegmentIntersector(startPoint, endPoint);
+      osgUtil::IntersectionVisitor visitor(intersector);
+      visitor.setTraversalMask(~mdv::edge);
+      inputTransform->accept(visitor);
+      const auto &intersections = intersector->getIntersections();
+      if (intersections.empty())
+        continue;
+      intersectionPoints->push_back(intersections.begin()->getWorldIntersectPoint());
+    }
     osg::Vec4Array *colors = new osg::Vec4Array(); colors->push_back(osg::Vec4(1.0, 1.0, 1.0, 1.0));
-    mainTransform->removeChild(stow->pointGeometry);
-    stow->pointGeometry = new osg::Geometry();
-    stow->pointGeometry->setVertexArray(points);
-    stow->pointGeometry->setColorArray(colors);
-    stow->pointGeometry->setColorBinding(osg::Geometry::BIND_OVERALL);
-    stow->pointGeometry->addPrimitiveSet(new osg::DrawArrays(GL_POINTS, 0, points->size()));
-    stow->pointGeometry->getOrCreateStateSet()->setAttribute(new osg::Point(5.0));
-    mainTransform->addChild(stow->pointGeometry);
+    mainTransform->removeChild(stow->intersectionGeometry);
+    stow->intersectionGeometry = new osg::Geometry();
+    stow->intersectionGeometry->setVertexArray(intersectionPoints);
+    stow->intersectionGeometry->setColorArray(colors);
+    stow->intersectionGeometry->setColorBinding(osg::Geometry::BIND_OVERALL);
+    stow->intersectionGeometry->addPrimitiveSet(new osg::DrawArrays(GL_POINTS, 0, intersectionPoints->size()));
+    stow->intersectionGeometry->getOrCreateStateSet()->setAttribute(new osg::Point(5.0));
+    mainTransform->addChild(stow->intersectionGeometry);
     
     //set label locations
     stow->directionTypeLabel->setMatrix(osg::Matrixd::translate(inputBound.center()));
-    stow->directionLabel->setMatrix(osg::Matrixd::translate(points->front()));
-    stow->subdivisionLabel->setMatrix(osg::Matrixd::translate(points->back()));
+    stow->directionLabel->setMatrix(osg::Matrixd::translate(gridPoints.front()));
+    stow->subdivisionLabel->setMatrix(osg::Matrixd::translate(gridPoints.back()));
     
     setSuccess();
   }
