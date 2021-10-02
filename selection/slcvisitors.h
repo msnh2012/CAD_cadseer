@@ -50,6 +50,17 @@ namespace slc
     std::size_t mask;
   };
 
+  class ChildMaskVisitor : public osg::NodeVisitor
+  {
+  public:
+    ChildMaskVisitor(std::size_t maskIn);
+    void apply(osg::Node &nodeIn) override;
+    osg::Node *out = nullptr;
+    
+  protected:
+    std::size_t mask;
+  };
+
   class HighlightVisitor : public osg::NodeVisitor
   {
   public:

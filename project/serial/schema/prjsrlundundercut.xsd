@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xs:schema
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  xmlns:spt="http://www.cadseer.com/prj/srl/spt"
+  xmlns:und="http://www.cadseer.com/prj/srl/und"
+  targetNamespace="http://www.cadseer.com/prj/srl/und"
+>
+  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptparameter.xsd"/>
+  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptoverlay.xsd"/>
+  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptvectormath.xsd"/>
+  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptbase.xsd"/>
+
+<xs:complexType name="UnderCut">
+  <xs:sequence>
+    <xs:element name="base" type="spt:Base"/>
+    <xs:element name="sourcePick" type="spt:Parameter"/>
+    <xs:element name="directionType" type="spt:Parameter"/>
+    <xs:element name="directionPicks" type="spt:Parameter"/>
+    <xs:element name="direction" type="spt:Parameter"/>
+    <xs:element name="subdivision" type="spt:Parameter"/>
+    <xs:element name="directionTypeLabel" type="spt:PLabel"/>
+    <xs:element name="directionLabel" type="spt:PLabel"/>
+    <xs:element name="subdivisionLabel" type="spt:PLabel"/>
+    <xs:element name="intersectionPoints" type="spt:Vec3d" minOccurs="0" maxOccurs="unbounded"/>
+  </xs:sequence>
+</xs:complexType>
+
+<xs:element name="undercut" type="und:UnderCut"/>
+  
+</xs:schema> 

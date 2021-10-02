@@ -43,19 +43,16 @@ QIcon Feature::icon = QIcon(":/resources/images/constructionBase.svg"); //fix me
 struct Feature::Stow
 {
   Feature &feature;
+  prm::Parameter parameter{prm::Names::parameter, 1.0, prm::Tags::parameter};
+  prm::Observer observer{std::bind(&Feature::setModelDirty, &feature)};
+  
   ann::SeerShape sShape;
-  prm::Parameter parameter;
-  prm::Observer observer;
-  osg::ref_ptr<lbr::PLabel> label;
-  osg::ref_ptr<lbr::IPGroup> iLabel;
+  
+  osg::ref_ptr<lbr::PLabel> label{new lbr::PLabel(&parameter)};
+  osg::ref_ptr<lbr::IPGroup> iLabel{new lbr::IPGroup(&parameter)};
   
   Stow(Feature &fIn)
   : feature(fIn)
-  , sShape()
-  , parameter(prm::Names::parameter, 1.0, prm::Tags::parameter)
-  , observer(std::bind(&Feature::setModelDirty, &feature))
-  , label(new lbr::PLabel(&parameter))
-  , iLabel(new lbr::IPGroup(&parameter))
   {
     QStringList tStrings =
     {
@@ -68,6 +65,7 @@ struct Feature::Stow
     parameter.connectValue(std::bind(&Stow::prmActiveSync, this));
     parameter.connect(observer);
     feature.parameters.push_back(&parametr);
+    label->refresh();
     
     feature.annexes.insert(std::make_pair(ann::Type::SeerShape, &sShape));
     

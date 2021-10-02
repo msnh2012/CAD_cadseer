@@ -199,6 +199,7 @@ feature_sources = ['feature/ftrinputtype.cpp'
   , 'feature/ftrprimitive.cpp'
   , 'feature/ftrprism.cpp'
   , 'feature/ftrboolean.cpp'
+  , 'feature/ftrundercut.cpp'
   ]
   
 parameter_sources = ['parameter/prmparameter.cpp']
@@ -324,6 +325,7 @@ project_serial_sources = [
   , 'project/serial/generated/prjsrlfceface.cpp'
   , 'project/serial/generated/prjsrlflsfill.cpp'
   , 'project/serial/generated/prjsrlprsmprism.cpp'
+  , 'project/serial/generated/prjsrlundundercut.cpp'
 ]
   
 application_sources = ['application/appmainwindow.cpp'
@@ -398,6 +400,7 @@ command_sources = ['command/cmdmanager.cpp'
   , 'command/cmduntrim.cpp'
   , 'command/cmdface.cpp'
   , 'command/cmdfill.cpp'
+  , 'command/cmdundercut.cpp'
 ]
 
 commandview_sources = [
@@ -443,6 +446,7 @@ commandview_sources = [
   , 'commandview/cmvselection.cpp'
   , 'commandview/cmvtable.cpp'
   , 'commandview/cmvtablewidgets.cpp'
+  , 'commandview/cmvundercut.cpp'
 ]
   
 law_sources = ['law/lwfcue.cpp']
@@ -594,6 +598,7 @@ cadseer_moc_hdrs = ['viewer/vwrwidget.h'
   , 'commandview/cmvselection.h'
   , 'commandview/cmvtable.h'
   , 'commandview/cmvtablewidgets.h'
+  , 'commandview/cmvundercut.h'
 ]
   
 cadseer_resources = ['resources.qrc']

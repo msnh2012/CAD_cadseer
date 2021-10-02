@@ -389,6 +389,7 @@ void Manager::Stow::setAllMenu()
         constructionDie.commandIds().push_back(48);
         constructionDie.commandIds().push_back(49);
         constructionDie.commandIds().push_back(50);
+        constructionDie.commandIds().push_back(102);
         constructionBase.subMenus().push_back(constructionDie);
       }
       {
@@ -696,6 +697,7 @@ void Manager::Stow::setAllToolbars()
       entry.commandIds().push_back(48);
       entry.commandIds().push_back(49);
       entry.commandIds().push_back(50);
+      entry.commandIds().push_back(102);
       toolbar.entries().push_back(entry);
     }
     {
@@ -1828,5 +1830,15 @@ void Manager::Stow::setAllCommands()
     , QObject::tr("Creates A Primitive Prism Feature").toStdString() //whats this text
     , QObject::tr("Create A Prism").toStdString() // toolTipText
     , msg::Request | msg::Construct | msg::Prism
+  );
+  sc
+  (
+    102
+    , ":/resources/images/constructionUnderCut.svg"
+    , QObject::tr("Under Cut").toStdString() //icon text
+    , QObject::tr("Create An UnderCut").toStdString() //status text
+    , QObject::tr("Creates An UnderCut Feature").toStdString() //whats this text
+    , QObject::tr("Create An UnderCut").toStdString() // toolTipText
+    , msg::Request | msg::Construct | msg::UnderCut
   );
 }

@@ -103,6 +103,7 @@ namespace prj
     std::unique_ptr<ftr::Base> loadFace(const std::string &, std::size_t);
     std::unique_ptr<ftr::Base> loadFill(const std::string &, std::size_t);
     std::unique_ptr<ftr::Base> loadPrism(const std::string &, std::size_t);
+    std::unique_ptr<ftr::Base> loadUndercut(const std::string &, std::size_t);
   };
 }
 

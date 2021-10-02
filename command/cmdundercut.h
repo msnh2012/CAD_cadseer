@@ -1,6 +1,6 @@
 /*
  * CadSeer. Parametric Solid Modeling.
- * Copyright (C) %YEAR% Thomas S. Anderson blobfish.at.gmx.com
+ * Copyright (C) 2021 Thomas S. Anderson blobfish.at.gmx.com
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,36 +17,35 @@
  *
  */
 
-#ifndef CMD_%CLASSNAMEUPPERCASE%_H
-#define CMD_%CLASSNAMEUPPERCASE%_H
+#ifndef CMD_UNDERCUT_H
+#define CMD_UNDERCUT_H
 
 #include "command/cmdleafmanager.h"
 #include "command/cmdbase.h"
 
-namespace ftr{namespace %CLASSNAME%{class Feature};}
+namespace ftr{namespace UnderCut{class Feature;}}
 
 namespace cmd
 {
-  class %CLASSNAME% : public Base
+  class UnderCut : public Base
   {
   public:
-    ftr::%CLASSNAME%::Feature *feature = nullptr;
+    ftr::UnderCut::Feature *feature = nullptr;
     
-    %CLASSNAME%();
-    %CLASSNAME%(ftr::Base*);
-    ~%CLASSNAME%() override;
+    UnderCut();
+    UnderCut(ftr::Base*);
+    ~UnderCut() override;
     
-    std::string getCommandName() override{return "%CLASSNAME%";}
+    std::string getCommandName() override{return "UnderCut";}
     std::string getStatusMessage() override;
     void activate() override;
     void deactivate() override;
     
-    void setSelections(const slc::Messages&);
+    void setSelections(const slc::Messages&, const slc::Messages&);
     void localUpdate();
   private:
     cmd::LeafManager leafManager;
     void go();
-    bool isValidSelection(const slc::Message&);
   };
 }
-#endif // CMD_%CLASSNAMEUPPERCASE%_H
+#endif // CMD_UNDERCUT_H

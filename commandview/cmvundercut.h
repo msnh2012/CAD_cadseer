@@ -1,6 +1,6 @@
 /*
  * CadSeer. Parametric Solid Modeling.
- * Copyright (C) %YEAR% Thomas S. Anderson blobfish.at.gmx.com
+ * Copyright (C) 2021 Thomas S. Anderson blobfish.at.gmx.com
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,26 +17,26 @@
  *
  */
 
-#ifndef CMV_%CLASSNAMEUPPERCASE%_H
-#define CMV_%CLASSNAMEUPPERCASE%_H
+#ifndef CMV_UNDERCUT_H
+#define CMV_UNDERCUT_H
 
 #include <memory>
 
 #include "commandview/cmvbase.h"
 
-namespace cmd{class %CLASSNAME%;}
+namespace cmd{class UnderCut;}
 
 namespace cmv
 {
   /**
   * @todo write docs
   */
-  class %CLASSNAME% : public Base
+  class UnderCut : public Base
   {
     Q_OBJECT
   public:
-    %CLASSNAME%(cmd::%CLASSNAME%*);
-    ~%CLASSNAME%() override;
+    UnderCut(cmd::UnderCut*);
+    ~UnderCut() override;
   private Q_SLOTS:
     void modelChanged(const QModelIndex&, const QModelIndex&);
   private:
@@ -45,4 +45,4 @@ namespace cmv
   };
 }
 
-#endif // CMV_%CLASSNAMEUPPERCASE%_H
+#endif // CMV_UNDERCUT_H

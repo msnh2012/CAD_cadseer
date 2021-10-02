@@ -70,6 +70,21 @@ void ParentMaskVisitor::apply(osg::Node& nodeIn)
   traverse(nodeIn);
 }
 
+ChildMaskVisitor::ChildMaskVisitor(std::size_t maskIn)
+: NodeVisitor(osg::NodeVisitor::TRAVERSE_ACTIVE_CHILDREN)
+, mask(maskIn)
+{}
+
+void ChildMaskVisitor::apply(osg::Node& nodeIn)
+{
+  if(nodeIn.getNodeMask() == mask)
+  {
+    out = &nodeIn;
+    return; //no need to continue search.
+  }
+  traverse(nodeIn);
+}
+
 HighlightVisitor::HighlightVisitor(const std::vector< uuid >& idsIn, HighlightVisitor::Operation operationIn):
   NodeVisitor(osg::NodeVisitor::TRAVERSE_ALL_CHILDREN), ids(idsIn), operation(operationIn)
 {
