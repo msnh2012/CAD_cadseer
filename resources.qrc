@@ -92,6 +92,7 @@
     <file>resources/images/constructionUntrim.svg</file>
     <file>resources/images/constructionFace.svg</file>
     <file>resources/images/constructionFill.svg</file>
+    <file>resources/images/constructionUnderCut.svg</file>
     <file>resources/images/sketchPoint.svg</file>
     <file>resources/images/sketchLine.svg</file>
     <file>resources/images/sketchArc.svg</file>
