@@ -95,8 +95,6 @@ namespace prj
 
 #include "prjsrlsptseershape.h"
 
-#include "prjsrlsptpick.h"
-
 #include "prjsrlsptparameter.h"
 
 #include "prjsrlsptoverlay.h"
@@ -116,7 +114,7 @@ namespace prj
         public:
         // pick
         //
-        typedef ::prj::srl::spt::Pick PickType;
+        typedef ::prj::srl::spt::Parameter PickType;
         typedef ::xsd::cxx::tree::traits< PickType, char > PickTraits;
 
         const PickType&
@@ -251,7 +249,7 @@ namespace prj
         public:
         // pick
         //
-        typedef ::prj::srl::spt::Pick PickType;
+        typedef ::prj::srl::spt::Parameter PickType;
         typedef ::xsd::cxx::tree::traits< PickType, char > PickTraits;
 
         const PickType&
@@ -386,20 +384,20 @@ namespace prj
         public:
         // picks
         //
-        typedef ::prj::srl::spt::Pick PicksType;
-        typedef ::xsd::cxx::tree::sequence< PicksType > PicksSequence;
-        typedef PicksSequence::iterator PicksIterator;
-        typedef PicksSequence::const_iterator PicksConstIterator;
+        typedef ::prj::srl::spt::Parameter PicksType;
         typedef ::xsd::cxx::tree::traits< PicksType, char > PicksTraits;
 
-        const PicksSequence&
+        const PicksType&
         picks () const;
 
-        PicksSequence&
+        PicksType&
         picks ();
 
         void
-        picks (const PicksSequence& s);
+        picks (const PicksType& x);
+
+        void
+        picks (::std::unique_ptr< PicksType > p);
 
         // binormal
         //
@@ -437,10 +435,12 @@ namespace prj
 
         // Constructors.
         //
-        SweepBinormal (const BinormalType&,
+        SweepBinormal (const PicksType&,
+                       const BinormalType&,
                        const BinormalLabelType&);
 
-        SweepBinormal (::std::unique_ptr< BinormalType >,
+        SweepBinormal (::std::unique_ptr< PicksType >,
+                       ::std::unique_ptr< BinormalType >,
                        ::std::unique_ptr< BinormalLabelType >);
 
         SweepBinormal (const ::xercesc::DOMElement& e,
@@ -469,7 +469,7 @@ namespace prj
                ::xml_schema::Flags);
 
         protected:
-        PicksSequence picks_;
+        ::xsd::cxx::tree::one< PicksType > picks_;
         ::xsd::cxx::tree::one< BinormalType > binormal_;
         ::xsd::cxx::tree::one< BinormalLabelType > binormalLabel_;
       };
@@ -686,7 +686,7 @@ namespace prj
 
         // spine
         //
-        typedef ::prj::srl::spt::Pick SpineType;
+        typedef ::prj::srl::spt::Parameter SpineType;
         typedef ::xsd::cxx::tree::traits< SpineType, char > SpineTraits;
 
         const SpineType&
@@ -737,7 +737,7 @@ namespace prj
 
         // support
         //
-        typedef ::prj::srl::spt::Pick SupportType;
+        typedef ::prj::srl::spt::Parameter SupportType;
         typedef ::xsd::cxx::tree::traits< SupportType, char > SupportTraits;
 
         const SupportType&

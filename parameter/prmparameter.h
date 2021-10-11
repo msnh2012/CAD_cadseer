@@ -233,7 +233,7 @@ namespace prm
     void setConstant(bool constantIn);
     bool isExpressionLinkable() const {return expressionLinkable;} //!< if possible, not if it is linked.
     void setExpressionLinkable(bool vIn){expressionLinkable = vIn;} //!< don't use on something already linked.
-    bool isActive(){return active;}
+    bool isActive() const {return active;}
     void setActive(bool);
     const boost::uuids::uuid& getId() const {return id;}
     const std::type_info& getValueType() const; //!< compare return by: "getValueType() == typeid(std::string)"

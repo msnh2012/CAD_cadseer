@@ -159,6 +159,8 @@ void SeerShapeInfo::faceInfo(QTextStream &streamIn, const TopoDS_Shape &shapeIn)
     else
       streamIn << "    Is V periodic: False" << Qt::endl;
     streamIn << "    Surface type: " << gu::surfaceTypeStrings.at(surfaceAdaptor.GetType()) << Qt::endl;
+    streamIn << "    U Range: " << surfaceAdaptor.FirstUParameter() << "    "<< surfaceAdaptor.LastUParameter() << Qt::endl;
+    streamIn << "    V Range: " << surfaceAdaptor.FirstVParameter() << "    "<< surfaceAdaptor.LastVParameter() << Qt::endl;
     if (surfaceAdaptor.GetType() == GeomAbs_Plane)
     {
       gp_Pln plane = surfaceAdaptor.Plane();

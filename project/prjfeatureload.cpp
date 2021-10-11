@@ -678,7 +678,7 @@ std::unique_ptr<ftr::Base> FeatureLoad::loadSweep(const std::string &fileNameIn,
   auto ss = srl::swps::sweep(fileNameIn, flags);
   assert(ss);
   
-  auto sf = std::make_unique<ftr::Sweep>();
+  auto sf = std::make_unique<ftr::Sweep::Feature>();
   sf->getAnnex<ann::SeerShape>().setOCCTShape(shapeVector.at(shapeOffsetIn), featureId);
   sf->serialRead(*ss);
   

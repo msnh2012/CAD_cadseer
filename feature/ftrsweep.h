@@ -20,10 +20,10 @@
 #ifndef FTR_SWEEP_H
 #define FTR_SWEEP_H
 
-#include "feature/ftrpick.h"
 #include "feature/ftrbase.h"
 
 namespace ann{class SeerShape; class LawFunction;}
+namespace lwf{struct Cue;}
 namespace prj
 {
   namespace srl
@@ -38,185 +38,132 @@ namespace prj
     }
   }
 }
-namespace lbr{class PLabel;}
-namespace lwf{struct Cue;}
-namespace prm{struct Observer;}
 
 namespace ftr
 {
-  /*! @struct SweepProfile
-   * @brief value class to bundle a profile pick with options
-   */
-  struct SweepProfile
+  namespace Sweep
   {
-    SweepProfile();
-    SweepProfile(const Pick&);
-    SweepProfile(const Pick&, bool, bool);
-    SweepProfile(const prj::srl::swps::SweepProfile&);
-    ~SweepProfile();
-    prj::srl::swps::SweepProfile serialOut() const;
-    Pick pick;
-    std::shared_ptr<prm::Parameter> contact;
-    std::shared_ptr<prm::Parameter> correction;
-    osg::ref_ptr<lbr::PLabel> contactLabel;
-    osg::ref_ptr<lbr::PLabel> correctionLabel;
-  };
-  typedef std::vector<SweepProfile> SweepProfiles;
-  
-  /*! @struct SweepAuxilary
-   * @brief value class to exchange auxiliary data to and from dialog
-   */
-  struct SweepAuxiliary
-  {
-    SweepAuxiliary();
-    SweepAuxiliary(const Pick&);
-    SweepAuxiliary(const Pick&, bool, int);
-    SweepAuxiliary(const prj::srl::swps::SweepAuxiliary&);
-    ~SweepAuxiliary();
-    prj::srl::swps::SweepAuxiliary serialOut() const;
-    void serialIn(const prj::srl::swps::SweepAuxiliary&);
-    Pick pick;
-    std::shared_ptr<prm::Parameter> curvilinearEquivalence;
-    std::shared_ptr<prm::Parameter> contactType;
-    osg::ref_ptr<lbr::PLabel> curvilinearEquivalenceLabel;
-    osg::ref_ptr<lbr::PLabel> contactTypeLabel;
-  };
-  
-  struct SweepBinormal
-  {
-    SweepBinormal();
-    SweepBinormal(const Pick&);
-    SweepBinormal(const Picks&);
-    SweepBinormal(const osg::Vec3d&);
-    SweepBinormal(const Picks&, const osg::Vec3d&); //!< don't use. just initializer for constructor delegation
-    ~SweepBinormal();
-    prj::srl::swps::SweepBinormal serialOut() const;
-    void serialIn(const prj::srl::swps::SweepBinormal&);
-    Picks picks;
-    std::shared_ptr<prm::Parameter> binormal;
-    osg::ref_ptr<lbr::PLabel> binormalLabel;
-  };
-  
-  /*! @struct SweepData
-   * @brief value class to exchange sweep data to and from dialog
-   */
-  struct SweepData
-  {
-    Pick spine;
-    SweepProfiles profiles;
-    SweepAuxiliary auxiliary;
-    Pick support;
-    SweepBinormal binormal;
-    int trihedron;
-    int transition;
-    bool forceC1 = false;
-    bool solid = true;
-    bool useLaw = false;
-  };
-  
-  /*! @class Sweep
-   * @brief ref class for sweep feature
-   * @note only works with edges and wires. No sweeping of faces.
-   */
-  class Sweep : public Base
-  {
-  public:
-    constexpr static const char *spineTag = "spine";
-    constexpr static const char *profileTag = "profile";
-    constexpr static const char *auxiliaryTag = "auxiliary";
-    constexpr static const char *supportTag = "support";
-    constexpr static const char *binormalTag = "binormal";
+    namespace InputTags
+    {
+      inline constexpr std::string_view profile = "profile";
+      inline constexpr std::string_view binormal = "binormal";
+      inline constexpr std::string_view support = "support";
+      inline constexpr std::string_view auxiliary = "auxiliary";
+    }
+    /* Variable parameters like profiles won't be added to the parameter array.
+     * So they will only be accessible through typed feature.
+     */
+    namespace PrmTags
+    {
+      inline constexpr std::string_view none = "none";
+      inline constexpr std::string_view spine = "spine";
+      inline constexpr std::string_view profile = "profile";
+      inline constexpr std::string_view support = "support";
+      inline constexpr std::string_view trihedron = "trihedron";
+      inline constexpr std::string_view transition = "transition";
+      inline constexpr std::string_view forcec1 = "forcec1";
+      inline constexpr std::string_view solid = "solid";
+      inline constexpr std::string_view useLaw = "useLaw";
+      inline constexpr std::string_view auxPick = "auxPick";
+      inline constexpr std::string_view auxCurvilinear = "auxCurvilinear";
+      inline constexpr std::string_view auxContact = "auxContact";
+      inline constexpr std::string_view biPicks = "biPicks";
+      inline constexpr std::string_view biVector = "biVector";
+    }
     
-    Sweep();
-    ~Sweep() override;
+    /*! @struct Profile
+    * @brief value class to bundle a profile pick with options
+    */
+    struct Profile
+    {
+      Profile();
+      Profile(const prj::srl::swps::SweepProfile&);
+      Profile(const Profile&) = delete;
+      Profile& operator=(const Profile&) = delete;
+      Profile(Profile&&) noexcept = default;
+      Profile& operator=(Profile&&) noexcept = default;
+      ~Profile() noexcept;
+      prj::srl::swps::SweepProfile serialOut() const;
+      prm::Parameter pick;
+      prm::Parameter contact;
+      prm::Parameter correction;
+      osg::ref_ptr<lbr::PLabel> contactLabel;
+      osg::ref_ptr<lbr::PLabel> correctionLabel;
+    };
+    typedef std::list<Profile> Profiles;
     
-    void updateModel(const UpdatePayload&) override;
-    Type getType() const override {return Type::Sweep;}
-    const std::string& getTypeString() const override {return toString(Type::Sweep);}
-    const QIcon& getIcon() const override {return icon;}
-    Descriptor getDescriptor() const override {return Descriptor::Create;}
+    /*! @struct Auxilary
+    * @brief value class to exchange auxiliary data to and from dialog
+    */
+    struct Auxiliary
+    {
+      Auxiliary();
+      Auxiliary(const prj::srl::swps::SweepAuxiliary&);
+      Auxiliary(const Auxiliary&) = delete;
+      Auxiliary& operator=(const Auxiliary&) = delete;
+      Auxiliary(Auxiliary&&) noexcept = default;
+      Auxiliary& operator=(Auxiliary&&) noexcept = default;
+      ~Auxiliary() noexcept;
+      prj::srl::swps::SweepAuxiliary serialOut() const;
+      void serialIn(const prj::srl::swps::SweepAuxiliary&);
+      void setActive(bool);
+      prm::Parameter pick;
+      prm::Parameter curvilinearEquivalence;
+      prm::Parameter contactType;
+      osg::ref_ptr<lbr::PLabel> curvilinearEquivalenceLabel;
+      osg::ref_ptr<lbr::PLabel> contactTypeLabel;
+    };
     
-    void serialWrite(const boost::filesystem::path&) override;
-    void serialRead(const prj::srl::swps::Sweep&);
+    struct Binormal
+    {
+      Binormal();
+      Binormal(const Binormal&) = delete;
+      Binormal& operator=(const Binormal&) = delete;
+      Binormal(Binormal&&) noexcept = default;
+      Binormal& operator=(Binormal&&) noexcept = default;
+      ~Binormal() noexcept;
+      prj::srl::swps::SweepBinormal serialOut() const;
+      void serialIn(const prj::srl::swps::SweepBinormal&);
+      void setActive(bool);
+      prm::Parameter picks;
+      prm::Parameter vector;
+      osg::ref_ptr<lbr::PLabel> vectorLabel;
+    };
     
-    void setSweepData(const SweepData&);
-    SweepData getSweepData() const;
-    
-    
-    
-    
-    void setSpine(const Pick&);
-    void setProfiles(const SweepProfiles&);
-    void setAuxiliary(const SweepAuxiliary&); //sets trihedron value
-    void setSupport(const Pick&); //sets trihedron value
-    void setBinormal(const SweepBinormal&); //sets trihedron value
-    void setTrihedron(int);
-    void setTransition(int);
-    void setForceC1(bool);
-    void setSolid(bool);
-    void setUseLaw(bool);
-    void setLaw(const lwf::Cue&); //doesn't change useLaw
-    
-    const Pick& getSpine(){return spine;}
-    const SweepProfiles& getProfiles(){return profiles;}
-    const SweepAuxiliary& getAuxiliary(){return auxiliary;}
-    const Pick& getSupport(){return support;}
-    const SweepBinormal& getBinormal(){return binormal;}
-    
-    int getTrihedron();
-    int getTransition();
-    bool getForceC1();
-    bool getSolid();
-    bool getUseLaw();
-    
-    
-    //! remove associations between law and feature
-    void severLaw();
-    //! add associations between law and feature
-    void attachLaw();
-    //! when law structure changes we need to regenerate viz.
-    void regenerateLawViz();
-    //! just redraw law viz using scale.
-    void updateLawViz(double);
-    
-  private:
-    std::unique_ptr<ann::SeerShape> sShape;
-    std::unique_ptr<ann::LawFunction> lawFunction;
-    std::unique_ptr<prm::Parameter> trihedron;
-    std::unique_ptr<prm::Parameter> transition;
-    std::unique_ptr<prm::Parameter> forceC1;
-    std::unique_ptr<prm::Parameter> solid;
-    std::unique_ptr<prm::Parameter> useLaw;
-    std::unique_ptr<prm::Observer> prmObserver;
-    Pick spine;
-    SweepProfiles profiles;
-    SweepAuxiliary auxiliary;
-    Pick support;
-    SweepBinormal binormal;
-    
-    osg::ref_ptr<lbr::PLabel> trihedronLabel;
-    osg::ref_ptr<lbr::PLabel> transitionLabel;
-    osg::ref_ptr<lbr::PLabel> forceC1Label;
-    osg::ref_ptr<lbr::PLabel> solidLabel;
-    osg::ref_ptr<lbr::PLabel> useLawLabel;
-    osg::ref_ptr<osg::Switch> auxiliarySwitch;
-    osg::ref_ptr<osg::Switch> binormalSwitch;
-    osg::ref_ptr<osg::Switch> lawSwitch;
-    
-    boost::uuids::uuid solidId;
-    boost::uuids::uuid shellId;
-    boost::uuids::uuid firstFaceId;
-    boost::uuids::uuid lastFaceId;
-    std::map<boost::uuids::uuid, boost::uuids::uuid> outerWireMap; //!< map face id to wire id
-    typedef std::map<boost::uuids::uuid, std::vector<boost::uuids::uuid>> InstanceMap;
-    InstanceMap instanceMap; //for profile vertices and edges -> edges and face.
-    std::map<boost::uuids::uuid, boost::uuids::uuid> firstShapeMap; //faceId to edgeId for first shapes.
-    std::map<boost::uuids::uuid, boost::uuids::uuid> lastShapeMap; //faceId to edgeId for last shapes.
-    
-    static QIcon icon;
-    
-    void cleanTrihedron();
-  };
+    /*! @class Feature
+    * @brief ref class for sweep feature
+    * @note only works with edges and wires. No sweeping of faces.
+    */
+    class Feature : public Base
+    {
+    public:
+      Feature();
+      ~Feature() override;
+      
+      void updateModel(const UpdatePayload&) override;
+      Type getType() const override {return Type::Sweep;}
+      const std::string& getTypeString() const override {return toString(Type::Sweep);}
+      const QIcon& getIcon() const override {return icon;}
+      Descriptor getDescriptor() const override {return Descriptor::Create;}
+      
+      void serialWrite(const boost::filesystem::path&) override;
+      void serialRead(const prj::srl::swps::Sweep&);
+      
+      Profile& addProfile();
+      void removeProfile(int);
+      Profiles& getProfiles() const;
+      
+      Auxiliary& getAuxiliary() const;
+      
+      Binormal& getBinormal() const;
+
+      void setLaw(const lwf::Cue&); //doesn't change useLaw
+    private:
+      static QIcon icon;
+      struct Stow;
+      std::unique_ptr<Stow> stow;
+    };
+  }
 }
 
 #endif //FTR_SWEEP_H

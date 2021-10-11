@@ -75,6 +75,9 @@ bool Pick::operator==(const Pick &rhs) const
   if (isParameterType() && rhs.isParameterType())
     return isParameterEqual(rhs);
   
+  if (tag != rhs.tag)
+    return false;
+  
   return selectionType == rhs.selectionType;
 }
 

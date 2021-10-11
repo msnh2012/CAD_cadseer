@@ -105,6 +105,17 @@ struct %CLASSNAME%::Stow
 
 %CLASSNAME%::~%CLASSNAME%() = default;
 
+bool %CLASSNAME%::eventFilter(QObject *watched, QEvent *event)
+{
+  //installed on child widgets so we can dismiss persistent editors
+  if(event->type() == QEvent::FocusIn)
+  {
+    prmView->closeAllPersistentEditors();
+  }
+  
+  return QObject::eventFilter(watched, event);
+}
+
 void %CLASSNAME%::modelChanged(const QModelIndex &index, const QModelIndex&)
 {
   if (!index.isValid())

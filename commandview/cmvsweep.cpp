@@ -25,6 +25,8 @@
 #include <QLabel>
 #include <QComboBox>
 #include <QListWidget>
+#include <QAbstractListModel>
+#include <QListView>
 #include <QTimer>
 #include <QAction>
 #include <QCheckBox>
@@ -35,8 +37,12 @@
 #include "annex/annlawfunction.h"
 #include "message/msgmessage.h"
 #include "message/msgnode.h"
-#include "dialogs/dlgselectionbutton.h"
-#include "dialogs/dlgselectionlist.h"
+#include "message/msgsift.h"
+#include "parameter/prmconstants.h"
+#include "parameter/prmparameter.h"
+#include "commandview/cmvselectioncue.h"
+#include "commandview/cmvtable.h"
+#include "dialogs/dlgsplitterdecorated.h"
 #include "tools/featuretools.h"
 #include "tools/idtools.h"
 #include "law/lwfcue.h"
@@ -47,803 +53,403 @@
 
 using boost::uuids::uuid;
 
-class ListItem : public QListWidgetItem
+namespace
 {
-public:
-  ListItem(const QString &text) : QListWidgetItem(text){}
-  bool contact = false;
-  bool correction = false;
-};
-
-namespace cmv
-{
-  class SelectionList : public QListWidget
+  class ProfilesModel : public QAbstractListModel
   {
+  protected:
+    ftr::Sweep::Feature &feature;
   public:
-    SelectionList(QWidget *parent, dlg::SelectionButton *button)
-    : QListWidget(parent)
-    , sButton(button)
+    ProfilesModel(QObject *p, ftr::Sweep::Feature &fIn)
+    : QAbstractListModel(p)
+    , feature(fIn)
+    {}
+    
+    int rowCount(const QModelIndex& = QModelIndex()) const override
     {
-      this->setSelectionMode(QAbstractItemView::NoSelection);
-      connect(sButton, &dlg::SelectionButton::dirty, this, &SelectionList::populateList);
+      return feature.getProfiles().size();
     }
     
-    static QString makeShortString(const slc::Message &m)
+    QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override
     {
-      QString out = QString::fromStdString(gu::idToShortString(m.featureId));
-      if (!m.shapeId.is_nil())
-        out += ":" + QString::fromStdString(gu::idToShortString(m.shapeId));
-      return out;
+      if (!index.isValid())
+        return QVariant();
+      if (role == Qt::DisplayRole)
+        return tr("Profile");
+      return QVariant();
     }
     
-    static QString makeFullString(const slc::Message &m)
+    Qt::ItemFlags flags(const QModelIndex &index) const override
     {
-      QString out = QString::fromStdString(gu::idToString(m.featureId));
-      if (!m.shapeId.is_nil())
-        out += ":" + QString::fromStdString(gu::idToString(m.shapeId));
-      return out;
+      //works for both because we disable dropping on the master view
+      if (!index.isValid())
+        return Qt::NoItemFlags;
+      return Qt::ItemIsEnabled | Qt::ItemIsSelectable;
     }
     
-    void populateList()
+    /* JFC Qt! These functions take the start and a count.
+     * but the begin* functions take a start and a finish.
+     * Fail!
+     * 
+     */
+    bool removeRows(int row, int count, const QModelIndex &parent = QModelIndex()) override
     {
-      //take all widget items and pack into a map. list widget is empty
-      QMap<QString, QListWidgetItem*> map;
-      while(count())
-      {
-        map.insert(item(0)->statusTip(), item(0));
-        takeItem(0);
-      }
-      
-      for (const auto &m : sButton->getMessages())
-      {
-        QString idString = makeFullString(m);
-        auto it = map.find(idString);
-        if (it != map.end())
-        {
-          addItem(*it);
-          map.erase(it);
-        }
-        else
-        {
-          QString name = makeShortString(m);
-          ListItem *ni = new ListItem(name);
-          ni->setStatusTip(idString);
-          this->addItem(ni);
-        }
-      }
-      
-      //now we have to manually delete any remaining items in the map.
-      for (auto *v : map.values())
-        delete v;
-    }
-  private:
-    dlg::SelectionButton *sButton;
-  };
-  
-  class ProfilePage : public QWidget
-  {
-  public:
-    ProfilePage(Sweep *parent, dlg::SelectionButton *buttonIn)
-    : QWidget(parent)
-    , view(parent)
-    , button(buttonIn)
-    {
-      QSizePolicy adjust = sizePolicy();
-      adjust.setVerticalPolicy(QSizePolicy::Expanding);
-      setSizePolicy(adjust);
-      
-      list = new SelectionList(this, button);
-      contact = new QCheckBox(tr("Contact"), this);
-      correction = new QCheckBox(tr("Correction"), this);
-      lawCheck = new QCheckBox(tr("Use Law"), this);
-      lawCheck->setWhatsThis(tr("To Enable Or Disable The Law"));
-      contact->setDisabled(true);
-      correction->setDisabled(true);
-      lawCheck->setDisabled(true);
-      
-      list->setSelectionMode(QAbstractItemView::SingleSelection);
-      connect(list, &QListWidget::itemSelectionChanged, this, &ProfilePage::rowChanged);
-      connect(contact, &QCheckBox::toggled, this, &ProfilePage::contactSlot);
-      connect(correction, &QCheckBox::toggled, this, &ProfilePage::correctionSlot);
-      connect(lawCheck, &QPushButton::toggled, parent, &Sweep::lawCheckToggled);
-      
-      QVBoxLayout *lawLayout = new QVBoxLayout();
-      lawLayout->addWidget(contact);
-      lawLayout->addWidget(correction);
-      lawLayout->addWidget(lawCheck);
-//       lawLayout->addWidget(lawWidget);
-//       lawLayout->addStretch();
-//       lawLayout->addItem(new QSpacerItem(20, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
-      
-//       QHBoxLayout *checkLayout = new QHBoxLayout();
-//       checkLayout->addLayout(lawLayout);
-//       checkLayout->addStretch();
-      
-      QVBoxLayout *mainLayout = new QVBoxLayout();
-      mainLayout->setContentsMargins(0, 0, 0, 0);
-      mainLayout->addWidget(list);
-      mainLayout->addLayout(lawLayout);
-//       mainLayout->addStretch();
-//       mainLayout->addItem(new QSpacerItem(20, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
-      this->setLayout(mainLayout);
+      if (row + count - 1 >= static_cast<int>(feature.getProfiles().size()) || row < 0 || count < 1)
+        return false;
+      beginRemoveRows(parent, row, row + count -1);
+      feature.removeProfile(row);
+      endRemoveRows();
+      return true;
     }
     
-    void rowChanged()
+    bool insertRows(int row, int count, const QModelIndex &parent = QModelIndex()) override
     {
-      assert(this->isVisible());
-      if (!list->selectionModel()->hasSelection())
-      {
-        contact->setDisabled(true);
-        correction->setDisabled(true);
-        lawCheck->setDisabled(true);
-        return;
-      }
-      int index = list->selectionModel()->selectedRows().front().row();
-      
-      if (index < 0 || index >= list->count())
-        return;
-      button->highlightIndex(index);
-      
-      contact->setEnabled(true);
-      correction->setEnabled(true);
-      
-      //don't announce these check box changes
-      QSignalBlocker contactBlocker(contact);
-      QSignalBlocker correctionBlocker(correction);
-      
-      ListItem *item = dynamic_cast<ListItem*>(list->item(index));
-      assert(item);
-      if (item->contact)
-        contact->setChecked(true);
-      else
-        contact->setChecked(false);
-      if (item->correction)
-        correction->setChecked(true);
-      else
-        correction->setChecked(false);
-    }
-    
-    void contactSlot(bool state)
-    {
-      int index = list->currentRow();
-      if (index < 0 || index >= list->count())
-        return;
-      
-      ListItem *item = dynamic_cast<ListItem*>(list->item(index));
-      assert(item);
-      if (state)
-        item->contact = true;
-      else
-        item->contact = false;
-    }
-
-    void correctionSlot(bool state)
-    {
-      int index = list->currentRow();
-      if (index < 0 || index >= list->count())
-        return;
-      
-      ListItem *item = dynamic_cast<ListItem*>(list->item(index));
-      assert(item);
-      if (state)
-        item->correction = true;
-      else
-        item->correction = false;
-    }
-    
-    Sweep *view = nullptr;
-    dlg::SelectionButton *button;
-    SelectionList *list;
-    QCheckBox *contact;
-    QCheckBox *correction;
-    QCheckBox *lawCheck;
-  };
-  
-  class AuxiliaryPage : public QWidget
-  {
-  public:
-    AuxiliaryPage(QWidget *parent, dlg::SelectionButton *buttonIn)
-    : QWidget(parent)
-    , button(buttonIn)
-    {
-      list = new SelectionList(this, button);
-      curvilinearEquivalence = new QCheckBox(tr("Equal"), this);
-      curvilinearEquivalence->setWhatsThis(tr("Curvelinear Equivalence"));
-      curvilinearEquivalence->setChecked(true);
-      contactType = new QComboBox(this);
-      contactType->setWhatsThis(tr("Contact Type"));
-      QStringList tStrings =
-      {
-        QObject::tr("No Contact")
-        , QObject::tr("Contact")
-        , QObject::tr("Contact On Border")
-      };
-      contactType->addItems(tStrings);
-      
-      QVBoxLayout *mainLayout = new QVBoxLayout();
-      mainLayout->setContentsMargins(0, 0, 0, 0);
-      mainLayout->addWidget(list);
-      
-      QHBoxLayout *equalLayout = new QHBoxLayout();
-      equalLayout->addStretch();
-      equalLayout->addWidget(curvilinearEquivalence);
-      QHBoxLayout *contactLayout = new QHBoxLayout();
-      contactLayout->addStretch();
-      contactLayout->addWidget(contactType);
-      mainLayout->addLayout(equalLayout);
-      mainLayout->addLayout(contactLayout);
-      mainLayout->addStretch();
-      this->setLayout(mainLayout);
-    }
-    
-    dlg::SelectionButton *button;
-    SelectionList *list;
-    QCheckBox *curvilinearEquivalence;
-    QComboBox *contactType;
-  };
-  
-  struct Sweep::Stow
-  {
-    //qt pointers will be deleted by qt parents.
-    QComboBox *triBox;
-    QCheckBox *forceC1;
-    QCheckBox *solid;
-    QComboBox *transitionBox;
-    QButtonGroup *bGroup;
-    dlg::SelectionButton *spineButton;
-    dlg::SelectionButton *profilesButton;
-    dlg::SelectionButton *auxiliaryButton;
-    dlg::SelectionButton *supportButton;
-    dlg::SelectionButton *binormalButton;
-    QLabel *auxiliaryLabel;
-    QLabel *supportLabel;
-    QLabel *binormalLabel;
-//     QLabel *helpLabel;
-    QStackedWidget *stackedLists;
-    SelectionList *spineList;
-    ProfilePage *profilesList;
-    AuxiliaryPage *auxiliaryList;
-    SelectionList *supportList;
-    SelectionList *binormalList;
-    LawFunctionWidget *lawWidget;
-    
-    cmd::Sweep *command;
-    cmv::Sweep *view;
-    
-    Stow(cmd::Sweep *cIn, cmv::Sweep *vIn)
-    : command(cIn)
-    , view(vIn)
-    {
-      buildGui();
-      
-      QSettings &settings = app::instance()->getUserSettings();
-      settings.beginGroup("cmv::Sweep");
-      //load settings
-      settings.endGroup();
-      
-      loadFeatureData();
-      glue();
-      
-      QTimer::singleShot(0, spineButton, SLOT(setFocus()));
-      QTimer::singleShot(0, spineButton, &QPushButton::click);
-    }
-    
-    void buildGui()
-    {
-      //build trihedron combo box
-      triBox = new QComboBox(view); //defaults to no edit.
-      triBox->addItem(tr("Corrected Frenet"));
-      triBox->addItem(tr("Frenet"));
-      triBox->addItem(tr("Discrete"));
-      triBox->addItem(tr("Fixed"));
-      triBox->addItem(tr("Constant Binormal"));
-      triBox->addItem(tr("Support"));
-      triBox->addItem(tr("Auxiliary"));
-      
-      //build transition combo box
-      transitionBox = new QComboBox(view);
-      transitionBox->addItem(tr("Modified"));
-      transitionBox->addItem(tr("Right"));
-      transitionBox->addItem(tr("Round"));
-      transitionBox->setCurrentIndex(0);
-      
-      forceC1 = new QCheckBox(tr("Force C1"), view);
-      forceC1->setWhatsThis(tr("approximate a C1-continuous surface if a swept surface proved to be C0"));
-      solid = new QCheckBox(tr("Solid"), view);
-      solid->setWhatsThis(tr("Make a Solid"));
-      QHBoxLayout *optionsLayout = new QHBoxLayout();
-      optionsLayout->addWidget(solid);
-      optionsLayout->addStretch();
-      optionsLayout->addWidget(forceC1);
-      
-      //build help label and layout
-    //   stow->helpLabel = new QLabel(tr("Help"), this);
-    //   stow->helpLabel->setOpenExternalLinks(true);
-      QHBoxLayout *comboLayout = new QHBoxLayout();
-      comboLayout->addWidget(triBox);
-      comboLayout->addStretch();
-      comboLayout->addWidget(transitionBox);
-      
-      //build selection buttons.
-      QGridLayout *gl = new QGridLayout();
-      bGroup = new QButtonGroup(view);
-      QPixmap pmap = QPixmap(":resources/images/cursor.svg").scaled(32, 32, Qt::KeepAspectRatio);
-      slc::Mask mask
-        = slc::ObjectsEnabled
-        | slc::ObjectsSelectable
-        | slc::WiresEnabled
-        | slc::EdgesEnabled;
-      
-      QLabel *spineLabel = new QLabel(tr("Spine:"), view);
-      spineButton = new dlg::SelectionButton(pmap, QString(), view);
-      spineButton->isSingleSelection = true;
-      spineButton->mask = mask;
-      spineButton->statusPrompt = tr("Select 1 Spine");
-      gl->addWidget(spineLabel, 0, 0, Qt::AlignVCenter | Qt::AlignRight);
-      gl->addWidget(spineButton, 0, 1, Qt::AlignVCenter | Qt::AlignCenter);
-      bGroup->addButton(spineButton, 0);
-      
-      QLabel *profilesLabel = new QLabel(tr("Profiles:"), view);
-      profilesButton = new dlg::SelectionButton(pmap, QString(), view);
-      profilesButton->isSingleSelection = false;
-      profilesButton->mask = mask;
-      profilesButton->statusPrompt = tr("Select Profiles");
-      gl->addWidget(profilesLabel, 1, 0, Qt::AlignVCenter | Qt::AlignRight);
-      gl->addWidget(profilesButton, 1, 1, Qt::AlignVCenter | Qt::AlignCenter);
-      bGroup->addButton(profilesButton, 1);
-      
-      auxiliaryLabel = new QLabel(tr("Auxiliary:"), view);
-      auxiliaryButton = new dlg::SelectionButton(pmap, QString(), view);
-      auxiliaryButton->isSingleSelection = true;
-      auxiliaryButton->mask = mask;
-      auxiliaryButton->statusPrompt = tr("Select 1 Auxiliary Spine");
-      gl->addWidget(auxiliaryLabel, 2, 0, Qt::AlignVCenter | Qt::AlignRight);
-      gl->addWidget(auxiliaryButton, 2, 1, Qt::AlignVCenter | Qt::AlignCenter);
-      bGroup->addButton(auxiliaryButton, 2);
-      QString auxiliaryHelp(tr("Auxiliary spine. Only enabled in 'Auxiliary' mode"));
-      auxiliaryLabel->setWhatsThis(auxiliaryHelp);
-      auxiliaryButton->setWhatsThis(auxiliaryHelp);
-      
-      supportLabel = new QLabel(tr("Support:"), view);
-      supportButton = new dlg::SelectionButton(pmap, QString(), view);
-      supportButton->isSingleSelection = true;
-      supportButton->mask = slc::ShellsEnabled | slc::FacesEnabled | slc::FacesSelectable;
-      supportButton->statusPrompt = tr("Select 1 Support Spine");
-      gl->addWidget(supportLabel, 3, 0, Qt::AlignVCenter | Qt::AlignRight);
-      gl->addWidget(supportButton, 3, 1, Qt::AlignVCenter | Qt::AlignCenter);
-      bGroup->addButton(supportButton, 3);
-      QString supportHelp(tr("Support shape. Only enabled in 'Support' mode"));
-      supportLabel->setWhatsThis(supportHelp);
-      supportButton->setWhatsThis(supportHelp);
-      
-      binormalLabel = new QLabel(tr("Binormal:"), view);
-      binormalButton = new dlg::SelectionButton(pmap, QString(), view);
-      binormalButton->isSingleSelection = false;
-      binormalButton->mask
-        = slc::ObjectsBoth
-        | slc::FacesEnabled
-        | slc::EdgesEnabled
-        | slc::EndPointsEnabled
-        | slc::MidPointsEnabled
-        | slc::CenterPointsEnabled;
-      binormalButton->statusPrompt = tr("Select Binormal");
-      gl->addWidget(binormalLabel, 4, 0, Qt::AlignVCenter | Qt::AlignRight);
-      gl->addWidget(binormalButton, 4, 1, Qt::AlignVCenter | Qt::AlignCenter);
-      bGroup->addButton(binormalButton, 4);
-      QString binormalHelp(tr("Binormal shapes. Only enabled in 'Binormal' mode"));
-      binormalLabel->setWhatsThis(binormalHelp);
-      binormalButton->setWhatsThis(binormalHelp);
-      
-      QVBoxLayout *buttonLayout = new QVBoxLayout();
-      buttonLayout->addLayout(gl);
-      buttonLayout->addStretch();
-      
-      //disable these in default mode.
-      auxiliaryLabel->setDisabled(true);
-      auxiliaryButton->setDisabled(true);
-      supportLabel->setDisabled(true);
-      supportButton->setDisabled(true);
-      binormalLabel->setDisabled(true);
-      binormalButton->setDisabled(true);
-      
-      //build listWidgets
-      stackedLists = new QStackedWidget(view);
-      spineList = new SelectionList(view, spineButton);
-      profilesList = new ProfilePage(view, profilesButton);
-      auxiliaryList = new AuxiliaryPage(view, auxiliaryButton);
-      supportList = new SelectionList(view, supportButton);
-      binormalList = new SelectionList(view, binormalButton);
-      stackedLists->addWidget(spineList);
-      stackedLists->addWidget(profilesList);
-      stackedLists->addWidget(auxiliaryList);
-      stackedLists->addWidget(supportList);
-      stackedLists->addWidget(binormalList);
-      spineList->setWhatsThis(tr("List of spine selections"));
-      profilesList->setWhatsThis(tr("List of profile selections"));
-      auxiliaryList->setWhatsThis(tr("List of auxiliary selections"));
-      supportList->setWhatsThis(tr("List of support selections"));
-      binormalList->setWhatsThis(tr("List of binormal selections"));
-      
-      QHBoxLayout *selectionLayout = new QHBoxLayout();
-      selectionLayout->addLayout(buttonLayout);
-      selectionLayout->addWidget(stackedLists);
-      
-      lawWidget = new LawFunctionWidget(view);
-      lawWidget->setWhatsThis(tr("Modifies The Law"));
-      lawWidget->setVisible(false);
-      
-      view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-      
-      QVBoxLayout *mainLayout = new QVBoxLayout();
-      mainLayout->addLayout(comboLayout);
-      mainLayout->addLayout(optionsLayout);
-      mainLayout->addLayout(selectionLayout);
-      mainLayout->addItem(new QSpacerItem(20, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
-      mainLayout->addWidget(lawWidget, 255);
-      
-      view->setLayout(mainLayout);
-    }
-    
-    void loadFeatureData()
-    {
-      const ann::LawFunction &lfa = command->feature->getAnnex<ann::LawFunction>(ann::Type::LawFunction);
-      lawWidget->setCue(lfa.getCue());
-      
-      int triValue = command->feature->getTrihedron();
-      QTimer::singleShot(0, [this, triValue]() {triBox->setCurrentIndex(triValue);});
-      ftr::UpdatePayload payload = app::instance()->getProject()->getPayload(command->feature->getId());
-      
-      if (command->feature->getForceC1())
-        forceC1->setChecked(true);
-      if (command->feature->getSolid())
-        solid->setChecked(true);
-      transitionBox->setCurrentIndex(command->feature->getTransition());
-      QSignalBlocker lawCheckBlocker(profilesList->lawCheck);
-      profilesList->lawCheck->setChecked(command->feature->getUseLaw());
-      
-      tls::Resolver resolver(payload);
-      //spine
-      {
-        resolver.resolve(command->feature->getSpine());
-        if (resolver.getFeature())
-        {
-          spineButton->setMessages(resolver.convertToMessages());
-        }
-      }
-      
-      //profiles
-      {
-        slc::Messages buttonMessages;
-        for (const auto &p : command->feature->getProfiles())
-        {
-          resolver.resolve(p.pick);
-          if (resolver.getFeature())
-          {
-            auto profileMessages = resolver.convertToMessages();
-            //we have extra data so we build items and add to widget.
-            //we have to call addMessages after so selection list uses items we added.
-            for (const auto &m : profileMessages)
-            {
-              ListItem *ni = new ListItem(SelectionList::makeShortString(m));
-              ni->setStatusTip(SelectionList::makeFullString(m));
-              ni->contact = p.contact->getBool();
-              ni->correction = p.correction->getBool();
-              profilesList->list->addItem(ni);
-            }
-            buttonMessages.insert(buttonMessages.end(), profileMessages.begin(), profileMessages.end());
-          }
-        }
-        profilesButton->setMessages(buttonMessages);
-      }
-      
-      switch (triValue)
-      {
-        case 0:
-        case 1:
-        case 2:
-        case 3:
-          break;
-        case 4:
-        {
-          //binormal
-          for (const auto &p : command->feature->getBinormal().picks)
-          {
-            resolver.resolve(p);
-            if (resolver.getFeature())
-              binormalButton->addMessages(resolver.convertToMessages());
-              //no extra data so button should handle filling in widget data
-          }
-          break;
-        }
-        case 5:
-        {
-          //support
-          resolver.resolve(command->feature->getSupport());
-          if (resolver.getFeature())
-            supportButton->addMessages(resolver.convertToMessages());
-            //no extra data so button should handle filling in widget data
-          break;
-        }
-        case 6:
-        {
-          //auxiliary
-          resolver.resolve(command->feature->getAuxiliary().pick);
-          if (resolver.getFeature())
-          {
-            auxiliaryButton->addMessages(resolver.convertToMessages());
-            //there is only 1 auxiliary pick so we just store the data in the checkboxes
-            //not in the list widget items.
-            auxiliaryList->curvilinearEquivalence->setChecked(command->feature->getAuxiliary().curvilinearEquivalence->getBool());
-            auxiliaryList->contactType->setCurrentIndex(command->feature->getAuxiliary().contactType->getInt());
-          }
-          break;
-        }
-      }
-    }
-    
-    void glue()
-    {
-      //so we can connect signals/slots after loading feature data, so we don't trigger when initializing controls
-      connect(triBox, SIGNAL(currentIndexChanged(int)), view, SLOT(comboTriSlot(int)));
-      connect(transitionBox, SIGNAL(currentIndexChanged(int)), view, SLOT(comboTransitionSlot(int)));
-      connect(bGroup, SIGNAL(buttonToggled(QAbstractButton*, bool)), view, SLOT(buttonToggled(QAbstractButton*, bool)));
-      connect(spineButton, &dlg::SelectionButton::advance, view, &Sweep::advanceSlot);
-      connect(spineButton, &dlg::SelectionButton::dirty, view, &Sweep::spineSelectionDirtySlot);
-      connect(profilesButton, &dlg::SelectionButton::dirty, view, &Sweep::profileSelectionDirtySlot);
-      connect(auxiliaryButton, &dlg::SelectionButton::dirty, view, &Sweep::auxSelectionDirtySlot);
-      connect(binormalButton, &dlg::SelectionButton::dirty, view, &Sweep::binormalSelectionDirtySlot);
-      connect(supportButton, &dlg::SelectionButton::dirty, view, &Sweep::supportSelectionDirtySlot);
-      connect(solid, &QPushButton::toggled, view, &Sweep::solidCheckToggled);
-      connect(forceC1, &QPushButton::toggled, view, &Sweep::forceC1CheckToggled);
-      connect(auxiliaryList->curvilinearEquivalence, &QPushButton::toggled, view, &Sweep::auxCurvilinearToggled);
-      connect(auxiliaryList->contactType, SIGNAL(currentIndexChanged(int)), view, SLOT(auxCombo(int)));
-      connect(lawWidget, &LawFunctionWidget::lawIsDirty, view, &Sweep::lawDirtySlot);
-      connect(lawWidget, &LawFunctionWidget::valueChanged, view, &Sweep::lawValueChangedSlot);
-    }
-    
-    void goUpdate()
-    {
-      //start with the assumption of failure.
-      view->project->clearAllInputs(command->feature->getId());
-      
-      const auto &sms = spineButton->getMessages();
-      const auto &pms = profilesButton->getMessages();
-      int tri = triBox->currentIndex();
-      
-      cmd::Sweep::Profiles profiles;
-      int profileCount = -1;
-      for (const auto &m : pms)
-      {
-        profileCount++;
-        ListItem *item = dynamic_cast<ListItem*>(profilesList->list->item(profileCount));
-        assert(item);
-        profiles.push_back(cmd::Sweep::Profile(m, item->contact, item->correction));
-      }
-      
-      if (sms.empty() || profiles.empty())
-        return;
-      
-      if (tri >= 0 && tri <= 3)
-      {
-        command->setCommon(sms.front(), profiles, tri);
-      }
-      else if (tri == 4)
-      {
-        const auto &bnms = binormalButton->getMessages();
-        if (!bnms.empty())
-          command->setBinormal(sms.front(), profiles, bnms);
-      }
-      else if (tri == 5)
-      {
-        const auto &supportMsgs = supportButton->getMessages();
-        if (!supportMsgs.empty())
-          command->setSupport(sms.front(), profiles, supportMsgs.front());
-      }
-      else if (tri == 6)
-      {
-        const auto &ams = auxiliaryButton->getMessages();
-        if (!ams.empty())
-        {
-          cmd::Sweep::Auxiliary aux(ams.front(), auxiliaryList->curvilinearEquivalence->isChecked(), auxiliaryList->contactType->currentIndex());
-          command->setAuxiliary(sms.front(), profiles, aux);
-        }
-      }
-      
-      command->localUpdate();
+      if (row < 0 || row > static_cast<int>(feature.getProfiles().size()) || count < 1)
+        return false;
+      beginInsertRows(parent, row, row + count - 1);
+      feature.addProfile(); //ignore count we are just adding one at a time.
+      endInsertRows();
+      return true;
     }
   };
 }
 
 using namespace cmv;
 
+struct Sweep::Stow
+{
+  cmd::Sweep *command = nullptr;
+  cmv::Sweep *view = nullptr;
+  
+  ProfilesModel *profilesModel = nullptr;
+  QListView *profilesList = nullptr;
+  QStackedWidget *profilesStack = nullptr;
+  QAction *addProfileAction = nullptr;
+  QAction *removeProfileAction = nullptr;
+  
+  prm::Parameters parameters;
+  cmv::tbl::Model *prmModel = nullptr;
+  cmv::tbl::View *prmView = nullptr;
+  prm::Observer useLawObserver;
+  
+  dlg::SplitterDecorated *profileSplitter = nullptr;
+  dlg::SplitterDecorated *topSplitter = nullptr;
+  LawFunctionWidget *lawWidget;
+  bool isGlobalBoundarySelection = false;
+  
+  Stow(cmd::Sweep *cIn, cmv::Sweep *vIn)
+  : command(cIn)
+  , view(vIn)
+  {
+    parameters = command->feature->getParameters();
+    buildGui();
+    
+    profileSplitter->restoreSettings("cmv::Sweep::profileSplitter");
+    topSplitter->restoreSettings("cmv::Sweep::topSplitter");
+    
+    loadFeatureData();
+    glue();
+  }
+  
+  void buildGui()
+  {
+    QVBoxLayout *mainLayout = new QVBoxLayout();
+    view->setLayout(mainLayout);
+    clearContentMargins(view);
+    view->setSizePolicy(view->sizePolicy().horizontalPolicy(), QSizePolicy::Expanding);
+    
+    addProfileAction = new QAction(tr("Add Profile"), profilesList);
+    removeProfileAction = new QAction(tr("Remove Profile"), profilesList);
+    profilesModel = new ProfilesModel(view, *command->feature);
+    profilesList = new QListView(view);
+    profilesList->setModel(profilesModel);
+    profilesList->addAction(addProfileAction);
+    profilesList->addAction(removeProfileAction);
+    profilesList->setContextMenuPolicy(Qt::ActionsContextMenu);
+    profilesStack = new QStackedWidget(view);
+    profilesStack->setDisabled(true);
+    profileSplitter = new dlg::SplitterDecorated(view);
+    profileSplitter->setOrientation(Qt::Horizontal);
+    profileSplitter->setChildrenCollapsible(false);
+    profileSplitter->addWidget(profilesList);
+    profileSplitter->addWidget(profilesStack);
+    
+    prmModel = new tbl::Model(view, command->feature, parameters);
+    prmView = new tbl::View(view, prmModel, true);
+    
+    tbl::SelectionCue cue;
+    cue.singleSelection = true;
+    cue.mask = slc::None;
+    cue.statusPrompt = tr("Something");
+    cue.accrueEnabled = false;
+    
+    cue.mask = slc::ObjectsBoth | slc::WiresEnabled | slc::EdgesEnabled;
+    cue.statusPrompt = tr("Select One Spine");
+    prmModel->setCue(command->feature->getParameter(ftr::Sweep::PrmTags::spine), cue);
+    
+    cue.statusPrompt = tr("Select One Auxiliary Spine");
+    prmModel->setCue(command->feature->getParameter(ftr::Sweep::PrmTags::auxPick), cue);
+    
+    cue.mask = slc::ShellsEnabled | slc::FacesBoth;
+    cue.statusPrompt = tr("Select Support Face");
+    prmModel->setCue(command->feature->getParameter(ftr::Sweep::PrmTags::support), cue);
+    
+    cue.mask = slc::ObjectsBoth
+      | slc::FacesEnabled
+      | slc::EdgesEnabled
+      | slc::EndPointsEnabled
+      | slc::MidPointsEnabled
+      | slc::CenterPointsEnabled;
+    cue.statusPrompt = tr("Select Binormal");
+    prmModel->setCue(command->feature->getParameter(ftr::Sweep::PrmTags::biPicks), cue);
+    
+    lawWidget = new LawFunctionWidget(view);
+    lawWidget->setWhatsThis(tr("Modifies The Law"));
+    
+    topSplitter = new dlg::SplitterDecorated(view);
+    topSplitter->setOrientation(Qt::Vertical);
+    topSplitter->addWidget(profileSplitter);
+    topSplitter->addWidget(prmView);
+    topSplitter->addWidget(lawWidget);
+    mainLayout->addWidget(topSplitter);
+    
+    useLawChanged();
+  }
+  
+  void slcAdded(const msg::Message &mIn)
+  {
+    if
+    (
+      view->isHidden()
+      || !isGlobalBoundarySelection
+      || (mIn.getSLC().type != slc::Type::Object && mIn.getSLC().type != slc::Type::Wire && mIn.getSLC().type != slc::Type::Wire)
+    )
+    return;
+    
+    closeAllPersistentEditors();
+    profilesList->clearSelection();
+    if (profilesModel->insertRow(static_cast<int>(command->feature->getProfiles().size())))
+    {
+      auto &freshProfile(command->feature->getProfiles().back());
+      addProfileWidget(freshProfile);
+      auto *tblView = dynamic_cast<tbl::View*>(profilesStack->widget(profilesStack->count() - 1)); assert(tblView);
+      auto *tblModel =  dynamic_cast<tbl::Model*>(tblView->model()); assert(tblModel);
+      tblModel->mySetData(&freshProfile.pick, {mIn.getSLC()});
+      
+      QTimer::singleShot
+      (
+        0
+        , [&](){profilesList->selectionModel()->select(profilesModel->index(profilesModel->rowCount() - 1, 0), QItemSelectionModel::ClearAndSelect);}
+      );
+      useLawChanged();
+    }
+  }
+  
+  void addProfile()
+  {
+    closeAllPersistentEditors();
+    profilesList->clearSelection();
+    if (profilesModel->insertRow(static_cast<int>(command->feature->getProfiles().size())))
+    {
+      addProfileWidget(command->feature->getProfiles().back());
+      QTimer::singleShot
+      (
+        0
+        , [&](){profilesList->selectionModel()->select(profilesModel->index(profilesModel->rowCount() - 1, 0), QItemSelectionModel::ClearAndSelect);}
+      );
+      useLawChanged();
+    }
+  }
+  
+  void removeProfile()
+  {
+    closeAllPersistentEditors();
+    if (profilesList->selectionModel()->hasSelection())
+    {
+      auto index = profilesList->selectionModel()->selectedIndexes().front();
+      profilesList->selectionModel()->clearSelection();
+      auto *cw = dynamic_cast<tbl::View*>(profilesStack->widget(index.row()));
+      assert(cw);
+      profilesModel->removeRow(index.row());
+      profilesStack->removeWidget(cw);
+      cw->model()->deleteLater();
+      cw->deleteLater();
+      goPicks();
+      command->localUpdate();
+      useLawChanged();
+    }
+  }
+  
+  void addProfileWidget(ftr::Sweep::Profile &pIn)
+  {
+    prm::Parameters prms{&pIn.pick, &pIn.contact, &pIn.correction};
+    auto *lModel = new cmv::tbl::Model(profilesStack, command->feature, prms);
+    auto *lView = new tbl::View(profilesStack, lModel, true);
+    
+    tbl::SelectionCue cue;
+    cue.singleSelection = true;
+    cue.mask = slc::ObjectsBoth | slc::WiresEnabled | slc::EdgesEnabled;
+    cue.statusPrompt = tr("Select Profile");
+    cue.accrueEnabled = false;
+    lModel->setCue(&pIn.pick, cue);
+    
+    QObject::connect(lModel, &tbl::Model::dataChanged, view, &Sweep::profilesChanged);
+    QObject::connect(lView, &tbl::View::openingPersistent, [this](){this->closeAllPersistentEditors();});
+    QObject::connect(lView, &tbl::View::openingPersistent, [this](){this->stopGlobalBoundarySelection();});
+    lView->installEventFilter(view);
+    
+    profilesStack->addWidget(lView);
+  }
+  
+  void loadFeatureData()
+  {
+    const ann::LawFunction &lfa = command->feature->getAnnex<ann::LawFunction>(ann::Type::LawFunction);
+    lawWidget->setCue(lfa.getCue());
+    
+    for (auto &p : command->feature->getProfiles())
+      addProfileWidget(p);
+  }
+  
+  void useLawChanged()
+  {
+    const auto *lawPrm = command->feature->getParameter(ftr::Sweep::PrmTags::useLaw);
+    auto lawState = lawPrm->isActive() & lawPrm->getBool();
+    if (lawState)
+      lawWidget->setVisible(true);
+    else
+      lawWidget->setVisible(false);
+    prmView->updateHideInactive();
+  }
+  
+  void glue()
+  {
+    connect(prmModel, &tbl::Model::dataChanged, view, &Sweep::modelChanged);
+    connect(addProfileAction, &QAction::triggered, [this](){this->addProfile();});
+    connect(removeProfileAction, &QAction::triggered, [this](){this->removeProfile();});
+    connect(profilesList->selectionModel(), &QItemSelectionModel::selectionChanged, view, &Sweep::profileSelectionChanged);
+    connect(lawWidget, &LawFunctionWidget::lawIsDirty, view, &Sweep::lawDirtySlot);
+    connect(lawWidget, &LawFunctionWidget::valueChanged, view, &Sweep::lawValueChangedSlot);
+    auto *lawPrm = command->feature->getParameter(ftr::Sweep::PrmTags::useLaw);
+    useLawObserver.valueHandler = std::bind(&Stow::useLawChanged, this);
+    lawPrm->connect(useLawObserver);
+    connect(prmView, &tbl::View::openingPersistent, [this](){this->closeAllPersistentEditors();});
+    connect(prmView, &tbl::View::openingPersistent, [this](){this->stopGlobalBoundarySelection();});
+    profilesList->installEventFilter(view);
+    prmView->installEventFilter(view);
+    
+    view->sift->insert
+    (
+      msg::Response | msg::Post | msg::Selection | msg::Add
+      , std::bind(&Stow::slcAdded, this, std::placeholders::_1)
+    );
+  }
+  
+  std::vector<slc::Messages> getProfiles()
+  {
+    std::vector<slc::Messages> out;
+    
+    for (int index = 0; index < profilesStack->count(); ++index)
+    {
+      auto *aView = dynamic_cast<tbl::View*>(profilesStack->widget(index)); assert(aView);
+      auto *aModel = dynamic_cast<tbl::Model*>(aView->model()); assert(aModel);
+      out.push_back(aModel->getMessages(aModel->index(0,0)));
+    }
+    
+    return out;
+  }
+  
+  void closeAllPersistentEditors()
+  {
+    prmView->closePersistent();
+    for (int index = 0; index < profilesStack->count(); ++index)
+    {
+      auto *aView = dynamic_cast<tbl::View*>(profilesStack->widget(index)); assert(aView);
+      aView->closePersistent();
+    }
+  }
+  
+  void goPicks()
+  {
+    const auto &spine = prmModel->getMessages(command->feature->getParameter(ftr::Sweep::PrmTags::spine));
+    auto profiles = getProfiles();
+    int type = command->feature->getParameter(ftr::Sweep::PrmTags::trihedron)->getInt();
+    switch (type)
+    {
+      case 4: //constant bi normal.
+      {
+        const auto &biPicks = prmModel->getMessages(command->feature->getParameter(ftr::Sweep::PrmTags::biPicks));
+        command->setBinormal(spine, profiles, biPicks);
+        break;
+      }
+      case 5: //support
+      {
+        const auto &support = prmModel->getMessages(command->feature->getParameter(ftr::Sweep::PrmTags::support));
+        command->setSupport(spine, profiles, support);
+        break;
+      }
+      case 6: // auxiliary
+      {
+        const auto &aux = prmModel->getMessages(command->feature->getParameter(ftr::Sweep::PrmTags::auxPick));
+        command->setAuxiliary(spine, profiles, aux);
+        break;
+      }
+      default:
+      {
+        command->setCommon(spine, profiles);
+        break;
+      }
+    }
+  }
+  
+  void goUpdate()
+  {
+    command->localUpdate();
+    prmView->updateHideInactive();
+    view->node->sendBlocked(msg::buildStatusMessage(command->getStatusMessage()));
+    goGlobalBoundarySelection();
+  }
+  
+  void goGlobalBoundarySelection()
+  {
+    if (!isGlobalBoundarySelection)
+    {
+      isGlobalBoundarySelection = true;
+      view->goMaskDefault(); // note: we don't remember any selection mask changes the user makes.
+      view->node->sendBlocked(msg::buildStatusMessage(QObject::tr("Select New Profiles").toStdString()));
+      view->goSelectionToolbar();
+    }
+  }
+  
+  void stopGlobalBoundarySelection()
+  {
+    if (isGlobalBoundarySelection)
+    {
+      isGlobalBoundarySelection = false;
+      view->node->sendBlocked(msg::buildSelectionMask(slc::None));
+    }
+  }
+};
+
 Sweep::Sweep(cmd::Sweep *cIn)
 : Base("cmv::Sweep")
 , stow(new Stow(cIn, this))
-{}
+{
+  maskDefault = slc::ObjectsBoth | slc::WiresEnabled | slc::EdgesEnabled;
+  stow->goGlobalBoundarySelection();
+}
 
 Sweep::~Sweep() = default;
 
-void Sweep::advanceSlot()
+bool Sweep::eventFilter(QObject *watched, QEvent *event)
 {
-  QAbstractButton *cb = stow->bGroup->checkedButton();
-  if (!cb)
-    return;
-  if (cb == stow->spineButton)
-    stow->profilesButton->setChecked(true);
-}
-
-void Sweep::comboTriSlot(int indexIn)
-{
-  //we might have auxiliary or support buttons currently engaged.
-  //These might end up being disabled so we need to change
-  //selected button to profiles.
-  if (stow->auxiliaryButton->isChecked() || stow->supportButton->isChecked() || stow->binormalButton->isChecked())
-    stow->profilesButton->setChecked(true);
-  
-  //auxiliary and support buttons are relative to their modes.
-  //so assume they should be off and turn them back on in the
-  //appropriate case. Turning labels on and off also for better visual
-  stow->auxiliaryLabel->setDisabled(true);
-  stow->auxiliaryButton->setDisabled(true);
-  stow->supportLabel->setDisabled(true);
-  stow->supportButton->setDisabled(true);
-  stow->binormalLabel->setDisabled(true);
-  stow->binormalButton->setDisabled(true);
-  
-  switch (indexIn)
+  //installed on child widgets so we can dismiss persistent editors
+  if(event->type() == QEvent::FocusIn)
   {
-    case 0:
-      stow->triBox->setWhatsThis
-      (
-        tr
-        (
-          "<html><head/><body><p>Corrected Frenet: "
-          "Frenet with torsion minimization. This is the default. "
-          "</span></p></body></html>"
-        )
-      );
-//       stow->helpLabel->setText
-//       (
-//         tr
-//         (
-//           "<html><head/><body><p>"
-//           "<a href=\"https://en.wikipedia.org/wiki/Frenet%E2%80%93Serret_formulas\"> "
-//           "<span style=\" text-decoration: underline; color:#2980b9;\">Help</span></a></p></body></html>"
-//         )
-//       );
-      break;
-    case 4:
-      stow->binormalLabel->setEnabled(true);
-      stow->binormalButton->setEnabled(true);
-      stow->triBox->setWhatsThis(tr("<html><head/><body><p>Constant Binormal</p></body></html>"));
-      break;
-    case 5:
-      stow->supportLabel->setEnabled(true);
-      stow->supportButton->setEnabled(true);
-      stow->triBox->setWhatsThis(tr("<html><head/><body><p>Normal From Face Or Shell</p></body></html>"));
-      break;
-    case 6:
-      stow->auxiliaryLabel->setEnabled(true);
-      stow->auxiliaryButton->setEnabled(true);
-      stow->triBox->setWhatsThis(tr("<html><head/><body><p>Normal From Spine To Auxilary Spine</p></body></html>"));
-      break;
-    default:
-      stow->triBox->setWhatsThis(tr("<html><head/><body><p>Unknown</p></body></html>"));
+    stow->closeAllPersistentEditors();
+    stow->goGlobalBoundarySelection();
   }
   
-  stow->goUpdate();
-}
-
-void Sweep::comboTransitionSlot(int index)
-{
-  stow->command->feature->setTransition(index);
-  stow->goUpdate();
-}
-
-void Sweep::buttonToggled(QAbstractButton *bIn, bool bState)
-{
-  dlg::SelectionButton *sButton = qobject_cast<dlg::SelectionButton*>(bIn);
-  if (!sButton)
-    return;
-  
-  int bi = stow->bGroup->id(bIn);
-  assert (bi >= 0 && bi < stow->stackedLists->count());
-  if (bState)
-    stow->stackedLists->setCurrentIndex(bi);
-  
-  //enable the law check button if we are on profiles and have only 1 profile
-  if (bi == 1)
-  {
-    if (stow->profilesList->list->count() == 1)
-    {
-      stow->profilesList->lawCheck->setEnabled(true);
-      if (stow->profilesList->lawCheck->isChecked())
-        stow->lawWidget->setVisible(true);
-    }
-    else
-    {
-      stow->profilesList->lawCheck->setEnabled(false);
-      stow->lawWidget->setVisible(false);
-    }
-  }
-  else
-    stow->lawWidget->setVisible(false);
-}
-
-/* this needed so we can enable the 'use law' checkbox
- * when the profile count is 1.
- */
-void Sweep::profileSelectionDirtySlot()
-{
-  if (stow->profilesButton->getMessages().size() == 1)
-  {
-    stow->profilesList->lawCheck->setEnabled(true);
-    if (stow->profilesList->lawCheck->isChecked())
-        stow->lawWidget->setVisible(true);
-  }
-  else
-  {
-    stow->profilesList->lawCheck->setChecked(false);
-    stow->profilesList->lawCheck->setEnabled(false);
-    stow->lawWidget->setVisible(false);
-  }
-  
-  stow->goUpdate();
-}
-
-void Sweep::spineSelectionDirtySlot()
-{
-  stow->goUpdate();
-}
-
-void Sweep::auxSelectionDirtySlot()
-{
-  stow->goUpdate();
-}
-
-void Sweep::binormalSelectionDirtySlot()
-{
-  stow->goUpdate();
-}
-
-void Sweep::supportSelectionDirtySlot()
-{
-  stow->goUpdate();
-}
-
-void Sweep::lawCheckToggled(bool state)
-{
-  stow->lawWidget->setVisible(state);
-  stow->command->feature->setUseLaw(state);
-  stow->goUpdate();
-}
-
-void Sweep::lawChanged()
-{
-  stow->command->feature->setLaw(stow->lawWidget->getCue());
-  stow->goUpdate();
-}
-
-void Sweep::solidCheckToggled(bool state)
-{
-  stow->command->feature->setSolid(state);
-  stow->goUpdate();
-}
-
-void Sweep::forceC1CheckToggled(bool state)
-{
-  stow->command->feature->setForceC1(state);
-  stow->goUpdate();
-}
-
-void Sweep::auxCombo(int)
-{
-  stow->goUpdate();
-}
-
-void Sweep::auxCurvilinearToggled(bool)
-{
-  stow->goUpdate();
+  return QObject::eventFilter(watched, event);
 }
 
 void Sweep::lawDirtySlot()
@@ -866,6 +472,61 @@ void Sweep::lawValueChangedSlot()
     }
     (*fp) = (*wp);
   }
-  
   stow->goUpdate();
+}
+
+
+void Sweep::profilesChanged(const QModelIndex &index, const QModelIndex&)
+{
+  if (!index.isValid())
+    return;
+  
+  stow->goPicks();
+  stow->goUpdate();
+}
+
+void Sweep::profileSelectionChanged(const QItemSelection &selected, const QItemSelection&)
+{
+  stow->closeAllPersistentEditors();
+  node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  if (selected.indexes().isEmpty())
+  {
+    stow->profilesStack->setDisabled(true);
+  }
+  else
+  {
+    stow->profilesStack->setEnabled(true);
+    int row = selected.indexes().front().row();
+    stow->profilesStack->setCurrentIndex(row);
+    auto *tView = dynamic_cast<tbl::View*>(stow->profilesStack->widget(row)); assert(tView);
+    auto *tModel = dynamic_cast<tbl::Model*>(tView->model()); assert(tModel);
+    const auto &msgs = tModel->getMessages(tModel->index(0,0));
+    for (const auto &m : msgs)
+      node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Add, m));
+  }
+}
+
+void Sweep::modelChanged(const QModelIndex &index, const QModelIndex&)
+{
+  if (!index.isValid())
+    return;
+  
+  auto tag = stow->parameters.at(index.row())->getTag(); //tag of changed parameter.
+  if
+  (
+    tag == ftr::Sweep::PrmTags::spine
+    //note: profile changes come through the specialized list.
+    || tag == ftr::Sweep::PrmTags::support
+    || tag == ftr::Sweep::PrmTags::auxPick
+    || tag == ftr::Sweep::PrmTags::support
+    || tag == ftr::Sweep::PrmTags::biPicks
+  )
+  {
+    stow->goPicks();
+  }
+
+  stow->command->localUpdate();
+  stow->prmView->updateHideInactive();
+  node->sendBlocked(msg::buildStatusMessage(stow->command->getStatusMessage()));
+  stow->goGlobalBoundarySelection();
 }

@@ -7,7 +7,6 @@
   targetNamespace="http://www.cadseer.com/prj/srl/swps"
 >
   <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptseershape.xsd"/>
-  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptpick.xsd"/>
   <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptparameter.xsd"/>
   <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptoverlay.xsd"/>
   <xs:import namespace = "http://www.cadseer.com/prj/srl/lwfs" schemaLocation="prjsrllwfslawfunction.xsd"/>
@@ -15,7 +14,7 @@
 
   <xs:complexType name="SweepProfile">
     <xs:sequence>
-      <xs:element name="pick" type="spt:Pick"/>
+      <xs:element name="pick" type="spt:Parameter"/>
       <xs:element name="contact" type="spt:Parameter"/>
       <xs:element name="correction" type="spt:Parameter"/>
       <xs:element name="contactLabel" type="spt:PLabel"/>
@@ -25,7 +24,7 @@
 
   <xs:complexType name="SweepAuxiliary">
     <xs:sequence>
-      <xs:element name="pick" type="spt:Pick"/>
+      <xs:element name="pick" type="spt:Parameter"/>
       <xs:element name="curvilinearEquivalence" type="spt:Parameter"/>
       <xs:element name="contactType" type="spt:Parameter"/>
       <xs:element name="curvilinearEquivalenceLabel" type="spt:PLabel"/>
@@ -35,7 +34,7 @@
 
   <xs:complexType name="SweepBinormal">
     <xs:sequence>
-      <xs:element name="picks" type="spt:Pick" minOccurs="0" maxOccurs="unbounded"/>
+      <xs:element name="picks" type="spt:Parameter"/>
       <xs:element name="binormal" type="spt:Parameter"/>
       <xs:element name="binormalLabel" type="spt:PLabel"/>
     </xs:sequence>
@@ -58,10 +57,10 @@
       <xs:element name="forceC1" type="spt:Parameter"/>
       <xs:element name="solid" type="spt:Parameter"/>
       <xs:element name="useLaw" type="spt:Parameter"/>
-      <xs:element name="spine" type="spt:Pick"/>
+      <xs:element name="spine" type="spt:Parameter"/>
       <xs:element name="profiles" type="swps:SweepProfile" minOccurs="0" maxOccurs="unbounded"/>
       <xs:element name="auxiliary" type="swps:SweepAuxiliary"/>
-      <xs:element name="support" type="spt:Pick"/>
+      <xs:element name="support" type="spt:Parameter"/>
       <xs:element name="binormal" type="swps:SweepBinormal"/>
       <xs:element name="trihedronLabel" type="spt:PLabel"/>
       <xs:element name="transitionLabel" type="spt:PLabel"/>

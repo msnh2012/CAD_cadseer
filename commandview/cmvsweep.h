@@ -24,7 +24,7 @@
 
 #include "commandview/cmvbase.h"
 
-class QAbstractButton;
+class QItemSelection;
 
 namespace cmd{class Sweep;}
 
@@ -39,29 +39,17 @@ namespace cmv
   public:
     Sweep(cmd::Sweep*);
     ~Sweep() override;
-    void lawChanged();
+  protected:
+    bool eventFilter(QObject*, QEvent*) override;
   private:
     struct Stow;
     std::unique_ptr<Stow> stow;
-  public Q_SLOTS:
-    void lawCheckToggled(bool);
-    void auxCurvilinearToggled(bool);
-    void auxCombo(int);
   private Q_SLOTS:
-    void advanceSlot(); //!< move to next button in selection group.
-    void comboTriSlot(int); //!< selection changed in combobox
-    void comboTransitionSlot(int); //!< selection changed in combobox
-    void buttonToggled(QAbstractButton *, bool);
-    void profileSelectionDirtySlot();
-    void spineSelectionDirtySlot();
-    void solidCheckToggled(bool);
-    void forceC1CheckToggled(bool);
-    void auxSelectionDirtySlot();
-    void binormalSelectionDirtySlot();
-    void supportSelectionDirtySlot();
     void lawDirtySlot();
     void lawValueChangedSlot();
-    
+    void profilesChanged(const QModelIndex&, const QModelIndex&);
+    void profileSelectionChanged(const QItemSelection&, const QItemSelection&);
+    void modelChanged(const QModelIndex&, const QModelIndex&);
   };
 }
 

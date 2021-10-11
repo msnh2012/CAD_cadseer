@@ -600,9 +600,11 @@ void LawFunctionWidget::updateGui()
   stow->graphicsScene->resetSelection();
   stow->graphicsScene->clear();
   
+  qreal pointFactor = std::max(stow->graphicsScene->width(), stow->graphicsScene->height());
+  
   auto buildPoint = [&]() -> QGraphicsEllipseItem*
   {
-    float ps = 0.03; //point size
+    float ps = 0.03 * pointFactor; //point size
     QPen pointPen;
     pointPen.setWidthF(0.001);
     QBrush pointBrush(Qt::blue);

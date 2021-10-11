@@ -23,19 +23,15 @@
 #include "command/cmdleafmanager.h"
 #include "command/cmdbase.h"
 
-namespace ftr{class Sweep;}
+namespace ftr{namespace Sweep{class Feature;}}
 
 namespace cmd
 {
   class Sweep : public Base
   {
   public:
-    ftr::Sweep *feature = nullptr;
-    
-    using Profile = std::tuple<slc::Message, bool, bool>;
-    using Profiles = std::vector<Profile>;
-    
-    using Auxiliary = std::tuple<const slc::Message&, bool, int>;
+    using Profiles = std::vector<slc::Messages>;
+    ftr::Sweep::Feature *feature = nullptr;
     
     Sweep();
     Sweep(ftr::Base*);
@@ -46,15 +42,15 @@ namespace cmd
     void activate() override;
     void deactivate() override;
     
-    void setCommon(const slc::Message&, const Profiles&, int);
-    void setBinormal(const slc::Message&, const Profiles&, const slc::Messages&);
-    void setSupport(const slc::Message&, const Profiles&, const slc::Message&);
-    void setAuxiliary(const slc::Message&, const Profiles&, const Auxiliary&);
+    void setCommon(const slc::Messages&, const Profiles&);
+    void setBinormal(const slc::Messages&, const Profiles&, const slc::Messages&);
+    void setSupport(const slc::Messages&, const Profiles&, const slc::Messages&);
+    void setAuxiliary(const slc::Messages&, const Profiles&, const slc::Messages&);
     void localUpdate();
   private:
     cmd::LeafManager leafManager;
     void go();
-    void connectCommon(const slc::Message&, const Profiles&);
+    void connectCommon(const slc::Messages&, const Profiles&);
     bool isValidSelection(const slc::Message&);
   };
 }

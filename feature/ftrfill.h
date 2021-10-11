@@ -22,7 +22,6 @@
 
 #include <osg/ref_ptr>
 
-#include "feature/ftrpick.h"
 #include "feature/ftrbase.h"
 
 namespace prj{namespace srl{namespace fls{class Fill;}}}

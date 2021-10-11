@@ -37,6 +37,8 @@ namespace cmv
   public:
     %CLASSNAME%(cmd::%CLASSNAME%*);
     ~%CLASSNAME%() override;
+  protected:
+    bool eventFilter(QObject*, QEvent*) override;
   private Q_SLOTS:
     void modelChanged(const QModelIndex&, const QModelIndex&);
   private:

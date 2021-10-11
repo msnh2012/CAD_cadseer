@@ -57,49 +57,48 @@
 #include "project/serial/generated/prjsrlswpssweep.h"
 #include "feature/ftrsweep.h"
 
-using namespace ftr;
+using namespace ftr::Sweep;
 using boost::uuids::uuid;
 
-QIcon Sweep::icon = QIcon(":/resources/images/constructionSweep.svg");
+QIcon Feature::icon = QIcon(":/resources/images/constructionSweep.svg");
 
-SweepProfile::SweepProfile(): SweepProfile(Pick()){}
-SweepProfile::SweepProfile(const Pick &pIn): SweepProfile(pIn, false, false){}
-SweepProfile::SweepProfile(const Pick &pIn, bool contactIn, bool correctionIn)
-: pick(pIn)
-, contact(std::make_shared<prm::Parameter>(QObject::tr("Contact"), contactIn))
-, correction(std::make_shared<prm::Parameter>(QObject::tr("Correction"), correctionIn))
-, contactLabel(new lbr::PLabel(contact.get()))
-, correctionLabel(new lbr::PLabel(correction.get()))
+Profile::Profile()
+: pick(QObject::tr("Profile"), ftr::Picks(), PrmTags::profile)
+, contact(QObject::tr("Contact"), false, PrmTags::none)
+, correction(QObject::tr("Correction"), false, PrmTags::none)
+, contactLabel(new lbr::PLabel(&contact))
+, correctionLabel(new lbr::PLabel(&correction))
 {}
-SweepProfile::~SweepProfile(){}
-SweepProfile::SweepProfile(const prj::srl::swps::SweepProfile &pfIn) : SweepProfile()
+
+Profile::Profile(const prj::srl::swps::SweepProfile &pfIn) : Profile()
 {
   pick.serialIn(pfIn.pick());
-  contact->serialIn(pfIn.contact());
-  correction->serialIn(pfIn.correction());
+  contact.serialIn(pfIn.contact());
+  correction.serialIn(pfIn.correction());
   contactLabel->serialIn(pfIn.contactLabel());
   correctionLabel->serialIn(pfIn.correctionLabel());
 }
-prj::srl::swps::SweepProfile SweepProfile::serialOut() const
+
+Profile::~Profile() noexcept = default;
+
+prj::srl::swps::SweepProfile Profile::serialOut() const
 {
   return prj::srl::swps::SweepProfile
   (
     pick.serialOut()
-    , contact->serialOut()
-    , correction->serialOut()
+    , contact.serialOut()
+    , correction.serialOut()
     , contactLabel->serialOut()
     , correctionLabel->serialOut()
   );
 }
 
-SweepAuxiliary::SweepAuxiliary(): SweepAuxiliary(Pick()){}
-SweepAuxiliary::SweepAuxiliary(const Pick &pIn): SweepAuxiliary(pIn, false, 0){}
-SweepAuxiliary::SweepAuxiliary(const Pick &pIn, bool ceIn, int contactIn)
-: pick(pIn)
-, curvilinearEquivalence(std::make_shared<prm::Parameter>(QObject::tr("Curvelinear Equivalence"), ceIn))
-, contactType(std::make_shared<prm::Parameter>(QObject::tr("Contact Type"), contactIn))
-, curvilinearEquivalenceLabel(new lbr::PLabel(curvilinearEquivalence.get()))
-, contactTypeLabel(new lbr::PLabel(contactType.get()))
+Auxiliary::Auxiliary()
+: pick(QObject::tr("Auxiliary Picks"), ftr::Picks(), PrmTags::auxPick)
+, curvilinearEquivalence(QObject::tr("Curvelinear Equivalence"), false, PrmTags::auxCurvilinear)
+, contactType(QObject::tr("Contact Type"), 0, PrmTags::auxContact)
+, curvilinearEquivalenceLabel(new lbr::PLabel(&curvilinearEquivalence))
+, contactTypeLabel(new lbr::PLabel(&contactType))
 {
   QStringList tStrings =
   {
@@ -107,416 +106,380 @@ SweepAuxiliary::SweepAuxiliary(const Pick &pIn, bool ceIn, int contactIn)
     , QObject::tr("Contact")
     , QObject::tr("Contact On Border")
   };
-  contactType->setEnumeration(tStrings);
+  contactType.setEnumeration(tStrings);
+  contactTypeLabel->refresh();
 }
-SweepAuxiliary::SweepAuxiliary(const prj::srl::swps::SweepAuxiliary &auxIn)
+
+Auxiliary::Auxiliary(const prj::srl::swps::SweepAuxiliary &auxIn)
+:Auxiliary()
 {
   serialIn(auxIn);
 }
-SweepAuxiliary::~SweepAuxiliary(){}
-prj::srl::swps::SweepAuxiliary ftr::SweepAuxiliary::serialOut() const
+
+Auxiliary::~Auxiliary() noexcept = default;
+
+void Auxiliary::setActive(bool stateIn)
+{
+  pick.setActive(stateIn);
+  curvilinearEquivalence.setActive(stateIn);
+  contactType.setActive(stateIn);
+}
+
+prj::srl::swps::SweepAuxiliary Auxiliary::serialOut() const
 {
   return prj::srl::swps::SweepAuxiliary
   (
     pick.serialOut()
-    , curvilinearEquivalence->serialOut()
-    , contactType->serialOut()
+    , curvilinearEquivalence.serialOut()
+    , contactType.serialOut()
     , curvilinearEquivalenceLabel->serialOut()
     , contactTypeLabel->serialOut()
   );
 }
-void SweepAuxiliary::serialIn(const prj::srl::swps::SweepAuxiliary &auxIn)
+
+void Auxiliary::serialIn(const prj::srl::swps::SweepAuxiliary &auxIn)
 {
   pick.serialIn(auxIn.pick());
-  curvilinearEquivalence->serialIn(auxIn.curvilinearEquivalence());
-  contactType->serialIn(auxIn.contactType());
+  curvilinearEquivalence.serialIn(auxIn.curvilinearEquivalence());
+  contactType.serialIn(auxIn.contactType());
   curvilinearEquivalenceLabel->serialIn(auxIn.curvilinearEquivalenceLabel());
   contactTypeLabel->serialIn(auxIn.contactTypeLabel());
 }
 
-SweepBinormal::SweepBinormal()
-: SweepBinormal(Picks())
+Binormal::Binormal()
+: picks(QObject::tr("Binormal Picks"), ftr::Picks(), PrmTags::biPicks)
+, vector(QObject::tr("Vector"), osg::Vec3d(), PrmTags::biVector)
+, vectorLabel(new lbr::PLabel(&vector))
 {}
 
-SweepBinormal::SweepBinormal(const osg::Vec3d &vIn)
-: SweepBinormal(Picks(), vIn)
-{}
+Binormal::~Binormal() noexcept = default;
 
-SweepBinormal::SweepBinormal(const Picks &psIn)
-: SweepBinormal(psIn, osg::Vec3d(0.0, 0.0, 1.0))
-{}
-
-SweepBinormal::SweepBinormal(const Picks &psIn, const osg::Vec3d &vIn)
-: picks(psIn)
-, binormal(std::make_shared<prm::Parameter>(QObject::tr("Binormal"), vIn))
-, binormalLabel(new lbr::PLabel(binormal.get()))
-{}
-SweepBinormal::~SweepBinormal() = default;
-prj::srl::swps::SweepBinormal SweepBinormal::serialOut() const
+prj::srl::swps::SweepBinormal Binormal::serialOut() const
 {
   prj::srl::swps::SweepBinormal out
   (
-    binormal->serialOut()
-    , binormalLabel->serialOut()
+    picks.serialOut()
+    , vector.serialOut()
+    , vectorLabel->serialOut()
   );
-  for (const auto &p : picks)
-    out.picks().push_back(p);
-  
   return out;
 }
-void SweepBinormal::serialIn(const prj::srl::swps::SweepBinormal &bnIn)
+void Binormal::serialIn(const prj::srl::swps::SweepBinormal &bnIn)
 {
-  binormal->serialIn(bnIn.binormal());
-  binormalLabel->serialIn(bnIn.binormalLabel());
-  for (const auto &p : bnIn.picks())
-    picks.emplace_back(p);
+  picks.serialIn(bnIn.picks());
+  vector.serialIn(bnIn.binormal());
+  vectorLabel->serialIn(bnIn.binormalLabel());
 }
 
-Sweep::Sweep():
-Base()
-, sShape(std::make_unique<ann::SeerShape>())
-, lawFunction(std::make_unique<ann::LawFunction>())
-, trihedron(std::make_unique<prm::Parameter>(QObject::tr("Trihedron"), 0))
-, transition(std::make_unique<prm::Parameter>(QObject::tr("Transition"), 0))
-, forceC1(std::make_unique<prm::Parameter>(QObject::tr("Force C1"), false))
-, solid(std::make_unique<prm::Parameter>(QObject::tr("Solid"), false))
-, useLaw(std::make_unique<prm::Parameter>(QObject::tr("Use Law"), false))
-, prmObserver(std::make_unique<prm::Observer>(std::bind(&Sweep::setModelDirty, this)))
-, trihedronLabel(new lbr::PLabel(trihedron.get()))
-, transitionLabel(new lbr::PLabel(transition.get()))
-, forceC1Label(new lbr::PLabel(forceC1.get()))
-, solidLabel(new lbr::PLabel(solid.get()))
-, useLawLabel(new lbr::PLabel(useLaw.get()))
-, auxiliarySwitch(new osg::Switch())
-, binormalSwitch(new osg::Switch())
-, lawSwitch(new osg::Switch())
-, solidId(gu::createRandomId())
-, shellId(gu::createRandomId())
-, firstFaceId(gu::createRandomId())
-, lastFaceId(gu::createRandomId())
+void Binormal::setActive(bool stateIn)
+{
+  picks.setActive(stateIn);
+  if (stateIn && picks.getPicks().empty())
+    vector.setActive(true);
+  else
+    vector.setActive(false);
+}
+
+struct Feature::Stow
+{
+  Feature &feature;
+  
+  prm::Parameter spine{QObject::tr("Spine Pick"), ftr::Picks(), PrmTags::spine};
+  prm::Parameter support{QObject::tr("Support Pick"), ftr::Picks(), PrmTags::support};
+  prm::Parameter trihedron{QObject::tr("Trihedron"), 0, PrmTags::trihedron};
+  prm::Parameter transition{QObject::tr("Transition"), 0, PrmTags::transition};
+  prm::Parameter forceC1{QObject::tr("Force C1"), false, PrmTags::forcec1};
+  prm::Parameter solid{QObject::tr("Solid"), false, PrmTags::solid};
+  prm::Parameter useLaw{QObject::tr("Use Law"), false, PrmTags::useLaw};
+  prm::Observer prmObserver{std::bind(&Feature::setModelDirty, &feature)};
+  
+  Profiles profiles;
+  Auxiliary auxiliary;
+  Binormal binormal;
+  
+  ann::SeerShape sShape;
+  ann::LawFunction lawFunction;
+  
+  osg::ref_ptr<lbr::PLabel> trihedronLabel{new lbr::PLabel(&trihedron)};
+  osg::ref_ptr<lbr::PLabel> transitionLabel{new lbr::PLabel(&transition)};
+  osg::ref_ptr<lbr::PLabel> forceC1Label{new lbr::PLabel(&forceC1)};
+  osg::ref_ptr<lbr::PLabel> solidLabel{new lbr::PLabel(&solid)};
+  osg::ref_ptr<lbr::PLabel> useLawLabel{new lbr::PLabel(&useLaw)};
+  
+  osg::ref_ptr<osg::Switch> auxiliarySwitch{new osg::Switch()};
+  osg::ref_ptr<osg::Switch> binormalSwitch{new osg::Switch()};
+  osg::ref_ptr<osg::Switch> lawSwitch{new osg::Switch()};
+  
+  uuid solidId{gu::createRandomId()};
+  uuid shellId{gu::createRandomId()};
+  uuid firstFaceId{gu::createRandomId()};
+  uuid lastFaceId{gu::createRandomId()};
+  std::map<uuid, uuid> outerWireMap; //!< map face id to wire id
+  typedef std::map<uuid, std::vector<uuid>> InstanceMap;
+  InstanceMap instanceMap; //for profile vertices and edges -> edges and face.
+  std::map<uuid, uuid> firstShapeMap; //faceId to edgeId for first shapes.
+  std::map<uuid, uuid> lastShapeMap; //faceId to edgeId for last shapes.
+  
+  Stow() = delete;
+  Stow(Feature &fIn)
+  : feature(fIn)
+  {
+    spine.connectValue(std::bind(&Feature::setModelDirty, &feature));
+    feature.parameters.push_back(&spine);
+    
+    support.connectValue(std::bind(&Feature::setModelDirty, &feature));
+    feature.parameters.push_back(&support);
+    
+    QStringList tStrings =
+    {
+      QObject::tr("Corrected Frenet")
+      , QObject::tr("Frenet")
+      , QObject::tr("Discrete")
+      , QObject::tr("Fixed")
+      , QObject::tr("Constant Binormal")
+      , QObject::tr("Support")
+      , QObject::tr("Auxiliary")
+    };
+    trihedron.setEnumeration(tStrings);
+    trihedron.connectValue(std::bind(&Feature::setModelDirty, &feature));
+    trihedron.connectValue(std::bind(&Stow::prmActiveSync, this));
+    feature.parameters.push_back(&trihedron);
+    trihedronLabel->refresh();
+    
+    QStringList transStrings =
+    {
+      QObject::tr("Modified")
+      , QObject::tr("Right")
+      , QObject::tr("Round")
+    };
+    transition.setEnumeration(transStrings);
+    transition.connectValue(std::bind(&Feature::setModelDirty, &feature));
+    feature.parameters.push_back(&transition);
+    transitionLabel->refresh();
+    
+    forceC1.connectValue(std::bind(&Feature::setModelDirty, &feature));
+    feature.parameters.push_back(&forceC1);
+    
+    solid.connectValue(std::bind(&Feature::setModelDirty, &feature));
+    feature.parameters.push_back(&solid);
+    
+    useLaw.connectValue(std::bind(&Feature::setModelDirty, &feature));
+    useLaw.connectValue(std::bind(&Stow::prmActiveSync, this));
+    feature.parameters.push_back(&useLaw);
+    
+    auxiliary.pick.connectValue(std::bind(&Feature::setModelDirty, &feature));
+    feature.parameters.push_back(&auxiliary.pick);
+    
+    auxiliary.curvilinearEquivalence.connectValue(std::bind(&Feature::setModelDirty, &feature));
+    feature.parameters.push_back(&auxiliary.curvilinearEquivalence);
+    
+    auxiliary.contactType.connectValue(std::bind(&Feature::setModelDirty, &feature));
+    feature.parameters.push_back(&auxiliary.contactType);
+    
+    binormal.picks.connectValue(std::bind(&Feature::setModelDirty, &feature));
+    binormal.picks.connectValue(std::bind(&Stow::prmActiveSync, this));
+    feature.parameters.push_back(&binormal.picks);
+    
+    binormal.vector.connectValue(std::bind(&Feature::setModelDirty, &feature));
+    feature.parameters.push_back(&binormal.vector);
+    
+    feature.annexes.insert(std::make_pair(ann::Type::SeerShape, &sShape));
+    feature.annexes.insert(std::make_pair(ann::Type::LawFunction, &lawFunction));
+    
+    feature.overlaySwitch->addChild(trihedronLabel.get());
+    feature.overlaySwitch->addChild(transitionLabel.get());
+    feature.overlaySwitch->addChild(forceC1Label.get());
+    feature.overlaySwitch->addChild(solidLabel.get());
+    feature.overlaySwitch->addChild(useLawLabel.get());
+    feature.overlaySwitch->addChild(auxiliarySwitch.get());
+    feature.overlaySwitch->addChild(binormalSwitch.get());
+    feature.overlaySwitch->addChild(lawSwitch.get());
+    
+    attachLaw(); //we always keep a law attached even if we aren't using.
+    prmActiveSync();
+  }
+  
+  void prmActiveSync()
+  {
+    int triType = trihedron.getInt();
+    switch (triType)
+    {
+      case 4: //binormal
+      {
+        support.setActive(false);
+        auxiliary.setActive(false);
+        binormal.setActive(true);
+        break;
+      }
+      case 5: //support
+      {
+        support.setActive(true);
+        auxiliary.setActive(false);
+        binormal.setActive(false);
+        break;
+      }
+      case 6: //auxiliary
+      {
+        support.setActive(false);
+        auxiliary.setActive(true);
+        binormal.setActive(false);
+        break;
+      }
+      default:
+      {
+        support.setActive(false);
+        auxiliary.setActive(false);
+        binormal.setActive(false);
+        break;
+      }
+    }
+    
+    /* we still have to disable law parameters even though they are underneath
+     * the switch. If we don't then the command view will display them when
+     * not applicable.
+     */
+    lwf::Cue &lfc = lawFunction.getCue(); //no const because we are changing active state.
+    if (useLaw.getBool() && lfc.type != lwf::Type::none)
+    {
+      lawSwitch->setAllChildrenOn();
+      for (auto *p : lfc.getParameters())
+        p->setActive(true);
+    }
+    else
+    {
+      for (auto *p : lfc.getParameters())
+        p->setActive(false);
+      lawSwitch->setAllChildrenOff();
+    }
+    
+    if (profiles.size() == 1)
+      useLaw.setActive(true);
+    else
+      useLaw.setActive(false);
+  }
+  
+  void attachLaw()
+  {
+    lwf::Cue &lfc = lawFunction.getCue();
+    prm::Parameters prms = lfc.getParameters();
+    for (prm::Parameter *p : prms)
+    {
+      feature.parameters.push_back(p);
+      feature.parameters.back()->connectValue(std::bind(&Feature::setModelDirty, &feature));
+    }
+    regenerateLawViz();
+  }
+  
+  void severLaw() //should always be followed by an attachLaw call.
+  {
+    feature.overlaySwitch->removeChild(lawSwitch.get());
+    lawSwitch.release(); //plabels should be deleted and no longer referencing parameters
+    
+    lwf::Cue &lfc = lawFunction.getCue();
+    for (const prm::Parameter* p : lfc.getParameters())
+      feature.removeParameter(p);
+    //We don't really want to set to constant.
+    //this just deletes all parameters that might have been connected to the feature.
+    lfc.setConstant(1.0);
+  }
+  
+  void regenerateLawViz()
+  {
+    //save location for restore.
+    osg::Matrixd lp = osg::Matrixd::identity();
+    if (lawSwitch)
+    {
+      mdv::LawCallback *ocb = dynamic_cast<mdv::LawCallback*>(lawSwitch->getUpdateCallback());
+      if (ocb)
+        lp = ocb->getMatrix(lawSwitch.get());
+    }
+    
+//     feature.overlaySwitch->removeChild(lawSwitch.get());
+    lawSwitch = mdv::generate(lawFunction.getCue());
+    feature.overlaySwitch->addChild(lawSwitch.get());
+    
+    //restore position.
+    mdv::LawCallback *ncb = dynamic_cast<mdv::LawCallback*>(lawSwitch->getUpdateCallback());
+    if (!ncb)
+      return;
+    ncb->setMatrix(lp, lawSwitch.get());
+  }
+  
+  void updateLawViz(double scale)
+  {
+    mdv::LawCallback *cb = dynamic_cast<mdv::LawCallback*>(lawSwitch->getUpdateCallback());
+    if (!cb)
+      return;
+    cb->setScale(scale);
+    cb->setDirty(); //always make it dirty after a model update.
+  }
+};
+
+Feature::Feature()
+: Base()
+, stow(std::make_unique<Stow>(*this))
 {
   name = QObject::tr("Sweep");
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
-  
-  QStringList tStrings =
-  {
-    QObject::tr("Corrected Frenet")
-    , QObject::tr("Frenet")
-    , QObject::tr("Discrete")
-    , QObject::tr("Fixed")
-    , QObject::tr("Constant Binormal")
-    , QObject::tr("Support")
-    , QObject::tr("Auxiliary")
-  };
-  trihedron->setEnumeration(tStrings);
-  trihedron->connectValue(std::bind(&Sweep::setModelDirty, this));
-  parameters.push_back(trihedron.get());
-  
-  QStringList transStrings =
-  {
-    QObject::tr("Modified")
-    , QObject::tr("Right")
-    , QObject::tr("Round")
-  };
-  transition->setEnumeration(transStrings);
-  transition->connectValue(std::bind(&Sweep::setModelDirty, this));
-  parameters.push_back(transition.get());
-  
-  forceC1->connectValue(std::bind(&Sweep::setModelDirty, this));
-  parameters.push_back(forceC1.get());
-  
-  solid->connectValue(std::bind(&Sweep::setModelDirty, this));
-  parameters.push_back(solid.get());
-  
-  useLaw->connectValue(std::bind(&Sweep::setModelDirty, this));
-  parameters.push_back(useLaw.get());
-  
-  annexes.insert(std::make_pair(ann::Type::SeerShape, sShape.get()));
-  annexes.insert(std::make_pair(ann::Type::LawFunction, lawFunction.get()));
-  
-  overlaySwitch->addChild(trihedronLabel.get());
-  overlaySwitch->addChild(transitionLabel.get());
-  overlaySwitch->addChild(forceC1Label.get());
-  overlaySwitch->addChild(solidLabel.get());
-  overlaySwitch->addChild(useLawLabel.get());
-  overlaySwitch->addChild(auxiliarySwitch.get());
-  overlaySwitch->addChild(binormalSwitch.get());
-  overlaySwitch->addChild(lawSwitch.get());
 }
 
-Sweep::~Sweep(){}
+Feature::~Feature() = default;
 
-void Sweep::setSweepData(const SweepData &in)
+Profile& Feature::addProfile()
 {
-  //remove all current profile data.
-  for (const auto &p : profiles)
-  {
-    removeParameter(p.contact.get());
-    removeParameter(p.correction.get());
-    overlaySwitch->removeChild(p.contactLabel.get());
-    overlaySwitch->removeChild(p.correctionLabel.get());
-  }
-  //add new profile data.
-  profiles = in.profiles;
-  for (const auto &p : profiles)
-  {
-    p.contact->connectValue(std::bind(&Sweep::setModelDirty, this));
-    p.correction->connectValue(std::bind(&Sweep::setModelDirty, this));
-    parameters.push_back(p.contact.get());
-    parameters.push_back(p.correction.get());
-    overlaySwitch->addChild(p.contactLabel.get());
-    overlaySwitch->addChild(p.correctionLabel.get());
-  }
+  stow->profiles.emplace_back();
+  auto &p = stow->profiles.back();
   
-  //remove current auxiliary data.
-  removeParameter(auxiliary.curvilinearEquivalence.get());
-  removeParameter(auxiliary.contactType.get());
-  auxiliarySwitch->removeChild(auxiliary.curvilinearEquivalenceLabel.get());
-  auxiliarySwitch->removeChild(auxiliary.contactTypeLabel.get());
-  //add new auxiliary data.
-  auxiliary = in.auxiliary;
-  auxiliary.curvilinearEquivalence->connectValue(std::bind(&Sweep::setModelDirty, this));
-  auxiliary.contactType->connectValue(std::bind(&Sweep::setModelDirty, this));
-  parameters.push_back(auxiliary.curvilinearEquivalence.get());
-  parameters.push_back(auxiliary.contactType.get());
-  auxiliarySwitch->addChild(auxiliary.curvilinearEquivalenceLabel.get());
-  auxiliarySwitch->addChild(auxiliary.contactTypeLabel.get());
+  //not going to add these parameters to features general container. no point.
+  p.pick.connectValue(std::bind(&Feature::setModelDirty, this));
+  p.contact.connectValue(std::bind(&Feature::setModelDirty, this));
+  p.correction.connectValue(std::bind(&Feature::setModelDirty, this));
   
-  //remove current binormal data
-  removeParameter(binormal.binormal.get());
-  binormalSwitch->removeChild(binormal.binormalLabel.get());
-  //add new binormal data
-  binormal = in.binormal;
-  binormal.binormal->connectValue(std::bind(&Sweep::setModelDirty, this));
-  parameters.push_back(binormal.binormal.get());
-  binormalSwitch->addChild(binormal.binormalLabel.get());
+  overlaySwitch->addChild(p.contactLabel);
+  overlaySwitch->addChild(p.correctionLabel);
   
-  spine = in.spine;
-  support = in.support;
-  trihedron->setValue(in.trihedron); //no quiet so labels update.
-  transition->setValue(in.transition);
-  forceC1->setValue(in.forceC1);
-  solid->setValue(in.solid);
-  useLaw->setValue(in.useLaw);
+  stow->prmActiveSync();
+  
+  //adding profile itself shouldn't make the feature dirty.
+  return stow->profiles.back();
+}
+
+void Feature::removeProfile(int index)
+{
+  assert (index >=0 && index < static_cast<int>(stow->profiles.size()));
+  auto lit = stow->profiles.begin();
+  for (int i = 0; i < index; ++i, ++lit);
+  const auto &p = *lit;
+  overlaySwitch->removeChild(p.contactLabel);
+  overlaySwitch->removeChild(p.correctionLabel);
+  stow->profiles.erase(lit);
+  
+  stow->prmActiveSync();
   
   setModelDirty();
 }
 
-SweepData Sweep::getSweepData() const
+Profiles& Feature::getProfiles() const
 {
-  SweepData out;
-  
-  out.spine = spine;
-  out.profiles = profiles;
-  out.auxiliary = auxiliary;
-  out.support = support;
-  out.trihedron = trihedron->getInt();
-  out.transition = transition->getInt();
-  out.forceC1 = forceC1->getBool();
-  out.solid = solid->getBool();
-  out.useLaw = useLaw->getBool();
-  
-  return out;
+  return stow->profiles;
 }
 
-void Sweep::setSpine(const Pick &pickIn)
+void Feature::setLaw(const lwf::Cue &cIn)
 {
-  spine = pickIn;
+  stow->severLaw();
+  stow->lawFunction.setCue(cIn);
+  stow->attachLaw();
   setModelDirty();
 }
 
-void Sweep::setProfiles(const SweepProfiles &in)
-{
-  //remove all current profile data.
-  for (const auto &p : profiles)
-  {
-    removeParameter(p.contact.get());
-    removeParameter(p.correction.get());
-    overlaySwitch->removeChild(p.contactLabel.get());
-    overlaySwitch->removeChild(p.correctionLabel.get());
-  }
-  //add new profile data.
-  profiles = in;
-  for (const auto &p : profiles)
-  {
-    p.contact->connectValue(std::bind(&Sweep::setModelDirty, this));
-    p.correction->connectValue(std::bind(&Sweep::setModelDirty, this));
-    parameters.push_back(p.contact.get());
-    parameters.push_back(p.correction.get());
-    overlaySwitch->addChild(p.contactLabel.get());
-    overlaySwitch->addChild(p.correctionLabel.get());
-  }
-  
-  setModelDirty();
-}
-
-void Sweep::cleanTrihedron()
-{
-  int ct = trihedron->getInt();
-  if (ct == 4) //binormal
-  {
-    removeParameter(binormal.binormal.get());
-    binormalSwitch->removeChild(binormal.binormalLabel.get());
-  }
-  //support doesn't have any parameters
-  else if (ct == 6) //auxiliary
-  {
-    removeParameter(auxiliary.curvilinearEquivalence.get());
-    removeParameter(auxiliary.contactType.get());
-    auxiliarySwitch->removeChild(auxiliary.curvilinearEquivalenceLabel.get());
-    auxiliarySwitch->removeChild(auxiliary.contactTypeLabel.get());
-  }
-}
-
-void Sweep::setAuxiliary(const SweepAuxiliary &aIn)
-{
-  cleanTrihedron();
-  trihedron->setValue(6);
-  auxiliary = aIn;
-  
-  auxiliary.curvilinearEquivalence->connectValue(std::bind(&Sweep::setModelDirty, this));
-  auxiliary.contactType->connectValue(std::bind(&Sweep::setModelDirty, this));
-  parameters.push_back(auxiliary.curvilinearEquivalence.get());
-  parameters.push_back(auxiliary.contactType.get());
-  auxiliarySwitch->addChild(auxiliary.curvilinearEquivalenceLabel.get());
-  auxiliarySwitch->addChild(auxiliary.contactTypeLabel.get());
-  
-  setModelDirty();
-}
-
-void Sweep::setSupport(const Pick &sIn)
-{
-  cleanTrihedron();
-  trihedron->setValue(5);
-  support = sIn;
-  setModelDirty();
-}
-
-void Sweep::setBinormal(const SweepBinormal &bnIn)
-{
-  cleanTrihedron();
-  trihedron->setValue(4);
-  binormal = bnIn;
-  
-  binormal.binormal->connect(*prmObserver);
-  parameters.push_back(binormal.binormal.get());
-  binormalSwitch->addChild(binormal.binormalLabel.get());
-  
-  setModelDirty();
-}
-
-void Sweep::setTrihedron(int tIn)
-{
-  cleanTrihedron();
-  trihedron->setValue(tIn);
-}
-
-void Sweep::setTransition(int tIn)
-{
-  transition->setValue(tIn);
-}
-
-void Sweep::setForceC1(bool fIn)
-{
-  forceC1->setValue(fIn);
-}
-
-void Sweep::setSolid(bool sIn)
-{
-  solid->setValue(sIn);
-}
-
-void Sweep::setUseLaw(bool lIn)
-{
-  severLaw();
-  useLaw->setValue(lIn); //will trigger dirty if changes.
-  if (lIn)
-    attachLaw();
-}
-
-void Sweep::setLaw(const lwf::Cue &cIn)
-{
-  severLaw();
-  ann::LawFunction &alf = getAnnex<ann::LawFunction>(ann::Type::LawFunction);
-  alf.setCue(cIn);
-  attachLaw();
-  regenerateLawViz();
-  
-  setModelDirty();
-}
-
-int Sweep::getTrihedron(){return trihedron->getInt();}
-int Sweep::getTransition(){return transition->getInt();}
-bool Sweep::getForceC1(){return forceC1->getBool();}
-bool Sweep::getSolid(){return solid->getBool();}
-bool Sweep::getUseLaw(){return useLaw->getBool();}
-
-void Sweep::severLaw()
-{
-  const lwf::Cue &lfc = lawFunction->getCue();
-  
-  //remove law parameters from general parameter container.
-  //note this doesn't delete the parameters and they may still be 'connected' to feature.
-  //cue containers will need to be cleared to remove parameter to feature connection.
-  for (const prm::Parameter* p : lfc.getParameters())
-    removeParameter(p);
-  
-  /*TODO
-   * remove parameter labels from switch.
-   * clear parameter labels container.
-   * turn off law function visual switch.
-   * 
-   */
-}
-
-void Sweep::attachLaw()
-{
-  lwf::Cue &lfc = lawFunction->getCue();
-  
-  prm::Parameters prms = lfc.getParameters();
-  for (prm::Parameter *p : prms)
-  {
-    parameters.push_back(p);
-    parameters.back()->connectValue(std::bind(&Sweep::setModelDirty, this));
-  }
-}
-
-void Sweep::regenerateLawViz()
-{
-  //save location for restore.
-  osg::Matrixd lp = osg::Matrixd::identity();
-  mdv::LawCallback *ocb = dynamic_cast<mdv::LawCallback*>(lawSwitch->getUpdateCallback());
-  if (ocb)
-    lp = ocb->getMatrix(lawSwitch.get());
-  
-  overlaySwitch->removeChild(lawSwitch.get());
-  lawSwitch = mdv::generate(lawFunction->getCue());
-  overlaySwitch->addChild(lawSwitch.get());
-  
-  //restore position.
-  mdv::LawCallback *ncb = dynamic_cast<mdv::LawCallback*>(lawSwitch->getUpdateCallback());
-  if (!ncb)
-    return;
-  ncb->setMatrix(lp, lawSwitch.get());
-}
-
-void Sweep::updateLawViz(double scale)
-{
-  mdv::LawCallback *cb = dynamic_cast<mdv::LawCallback*>(lawSwitch->getUpdateCallback());
-  if (!cb)
-    return;
-  cb->setScale(scale);
-  cb->setDirty(); //always make it dirty after an model update.
-}
-
-void Sweep::updateModel(const UpdatePayload &pIn)
+void Feature::updateModel(const UpdatePayload &pIn)
 {
   setFailure();
   lastUpdateLog.clear();
-  sShape->reset();
+  stow->sShape.reset();
   try
   {
-    prm::ObserverBlocker block(*prmObserver);
+    prm::ObserverBlocker block(stow->prmObserver);
     
     if (isSkipped())
     {
@@ -568,9 +531,8 @@ void Sweep::updateModel(const UpdatePayload &pIn)
     {
       boost::optional<TopoDS_Wire> out;
       tls::Resolver resolver(pIn);
-      resolver.resolve(p);
-      if (!resolver.getFeature() || !resolver.getSeerShape())
-          throw std::runtime_error("invalid pick resolution");
+      if (!resolver.resolve(p) || !resolver.getSeerShape())
+        throw std::runtime_error("Invalid pick resolution");
       
       if (!slc::isShapeType(p.selectionType))
       {
@@ -607,32 +569,33 @@ void Sweep::updateModel(const UpdatePayload &pIn)
     };
     
     occt::BoundingBox globalBounder; //use this to place labels
-    TopoDS_Wire spineShape = getWire(spine);
+    if (stow->spine.getPicks().empty())
+      throw std::runtime_error("No Spine Picks");
+    TopoDS_Wire spineShape = getWire(stow->spine.getPicks().front());
     globalBounder.add(spineShape);
     
 //     occt::WireVector profileShapes;
     BRepFill_PipeShell sweeper(spineShape);
-    switch (trihedron->getInt())
+    switch (stow->trihedron.getInt())
     {
-      case 0:
+      case 0: // corrected frenet
         sweeper.Set(false);
         break;
-      case 1:
+      case 1: // frenet
         sweeper.Set(true);
         break;
-      case 2:
+      case 2: // discrete
         sweeper.SetDiscrete();
         break;
-      case 3:
+      case 3: //fixed
       {
         //I wasn't able to change results by varying the parameter.
         //thinking it is just there to satisfy the 'Set' overload.
         sweeper.Set(gp_Ax2());
         break;
       }
-      case 4:
+      case 4: //constant bi normal.
       {
-        //constant bi normal.
         auto getBinormalShape = [&](const Base &feature, const Pick &pick) -> TopoDS_Shape
         {
           TopoDS_Shape out;
@@ -661,37 +624,38 @@ void Sweep::updateModel(const UpdatePayload &pIn)
           return out;
         };
         
-        binormalSwitch->setAllChildrenOff();
-        if (binormal.picks.size() == 0)
+        const auto &bps = stow->binormal.picks.getPicks();
+        stow->binormalSwitch->setAllChildrenOff();
+        if (bps.size() == 0)
         {
-          binormalSwitch->setAllChildrenOn();
+          stow->binormalSwitch->setAllChildrenOn();
         }
-        else if (binormal.picks.size() == 1)
+        else if (bps.size() == 1)
         {
-          const Base &f0 = getFeature(std::string(binormalTag) + "0");
+          const Base &f0 = getFeature(bps.front().tag);
           if (f0.hasAnnex(ann::Type::SeerShape))
           {
-            TopoDS_Shape shape = getBinormalShape(f0, binormal.picks.at(0));
+            TopoDS_Shape shape = getBinormalShape(f0, bps.front());
             if (shape.IsNull())
               throw std::runtime_error("TopoDS_Shape is null for binormal pick");
             auto axis = occt::gleanAxis(shape);
             if (!axis.second)
               throw std::runtime_error("couldn't glean axis for binormal");
-            binormal.binormal->setValue(gu::toOsg(axis.first.Direction()));
+            stow->binormal.vector.setValue(gu::toOsg(axis.first.Direction()));
           }
           else
           {
             auto directionPrms = f0.getParameters(prm::Tags::Direction);
             if (!directionPrms.empty())
-              binormal.binormal->setValue(directionPrms.front()->getVector());
+              stow->binormal.vector.setValue(directionPrms.front()->getVector());
           }
         }
-        else if (binormal.picks.size() == 2)
+        else if (bps.size() == 2)
         {
           tls::Resolver resolver(pIn);
           auto getPoint = [&](int index) -> osg::Vec3d
           {
-            resolver.resolve(binormal.picks.at(index));
+            resolver.resolve(bps.at(index));
             auto thePoints = resolver.getPoints();
             if (thePoints.empty())
               throw std::runtime_error("couldn't resolve inn binormal getPoint");
@@ -705,8 +669,8 @@ void Sweep::updateModel(const UpdatePayload &pIn)
           
           if
           (
-            (!slc::isPointType(binormal.picks.at(0).selectionType))
-            || (!slc::isPointType(binormal.picks.at(1).selectionType))
+            (!slc::isPointType(bps.at(0).selectionType))
+            || (!slc::isPointType(bps.at(1).selectionType))
           )
             throw std::runtime_error("need points only for 2 binormal picks");
             
@@ -714,17 +678,19 @@ void Sweep::updateModel(const UpdatePayload &pIn)
           if (!pd.valid() || pd.length() < std::numeric_limits<float>::epsilon())
             throw std::runtime_error("invalid direction for 2 binormal picks");
           pd.normalize();
-          binormal.binormal->setValue(pd);
+          stow->binormal.vector.setValue(pd);
         }
         else
           throw std::runtime_error("unsupported number of binormal picks");
-        sweeper.Set(gp_Dir(gu::toOcc(binormal.binormal->getVector())));
+        sweeper.Set(gp_Dir(gu::toOcc(stow->binormal.vector.getVector())));
         break;
       }
-      case 5:
+      case 5: //support
       {
         tls::Resolver resolver(pIn);
-        auto rShapes = resolver.getShapes(support);
+        if (stow->support.getPicks().empty())
+          throw std::runtime_error("No support picks");
+        auto rShapes = resolver.getShapes(stow->support.getPicks().front());
         if (rShapes.empty())
           throw std::runtime_error("invalid support pick resolution");
         if (rShapes.size() > 1)
@@ -739,7 +705,6 @@ void Sweep::updateModel(const UpdatePayload &pIn)
         opencascade::handle<Geom_Surface> supportSurface = BRep_Tool::Surface(supportFace);
         if (supportSurface.IsNull())
           throw std::runtime_error("support surface is null");
-        
         
         //put spine on support shape. For now we are assuming that we have
         //1 spine edge and and one support face.
@@ -767,18 +732,21 @@ void Sweep::updateModel(const UpdatePayload &pIn)
         globalBounder.add(supportShape);
         break;
       }
-      case 6:
+      case 6: // auxiliary
       {
-        TopoDS_Wire wire = getWire(auxiliary.pick);
+        const auto &aps = stow->auxiliary.pick.getPicks();
+        if (aps.empty())
+          throw std::runtime_error("No auxiliary pick");
+        TopoDS_Wire wire = getWire(aps.front());
         if (!wire.IsNull())
         {
-          bool cle = auxiliary.curvilinearEquivalence->getBool();
-          BRepFill_TypeOfContact toc = static_cast<BRepFill_TypeOfContact>(auxiliary.contactType->getInt());
+          bool cle = stow->auxiliary.curvilinearEquivalence.getBool();
+          BRepFill_TypeOfContact toc = static_cast<BRepFill_TypeOfContact>(stow->auxiliary.contactType.getInt());
           sweeper.Set(wire, cle, toc);
           globalBounder.add(wire);
           occt::BoundingBox wb(wire);
-          auxiliary.curvilinearEquivalenceLabel->setMatrix(osg::Matrixd::translate(gu::toOsg(wb.getCorners().at(0))));
-          auxiliary.contactTypeLabel->setMatrix(osg::Matrixd::translate(gu::toOsg(wb.getCorners().at(6))));
+          stow->auxiliary.curvilinearEquivalenceLabel->setMatrix(osg::Matrixd::translate(gu::toOsg(wb.getCorners().at(0))));
+          stow->auxiliary.contactTypeLabel->setMatrix(osg::Matrixd::translate(gu::toOsg(wb.getCorners().at(6))));
         }
         else
           throw std::runtime_error("auxiliary spine wire is invalid");
@@ -787,20 +755,23 @@ void Sweep::updateModel(const UpdatePayload &pIn)
       default:
         sweeper.Set(false);
     }
-    sweeper.SetTransition(static_cast<BRepFill_TransitionStyle>(transition->getInt())); //default is BRepFill_Modified = 0
+    sweeper.SetTransition(static_cast<BRepFill_TransitionStyle>(stow->transition.getInt())); //default is BRepFill_Modified = 0
     occt::WireVector profileWires; //use for shape mapping
     std::vector<std::reference_wrapper<const ann::SeerShape>> seerShapeProfileRefs; //use for shape mapping
-    for (const auto &p : profiles)
+    for (const auto &p : stow->profiles)
     {
-      const Base &bf = getFeature(p.pick.tag);
+      if (p.pick.getPicks().empty())
+        continue;
+      
+      const Base &bf = getFeature(p.pick.getPicks().front().tag);
       const ann::SeerShape &ss = getSeerShape(bf);
-      TopoDS_Wire wire = getWire(p.pick);
+      TopoDS_Wire wire = getWire(p.pick.getPicks().front());
       seerShapeProfileRefs.push_back(ss);
       
       //this is temp.
-      if (profiles.size() == 1 && (useLaw->getBool()))
+      if (stow->profiles.size() == 1 && stow->useLaw.getBool() && stow->lawFunction.getCue().type != lwf::Type::none)
       {
-        lwf::Cue &lfc = lawFunction->getCue();
+        lwf::Cue &lfc = stow->lawFunction.getCue();
         lfc.smooth(); //need to smooth when changing parameters from PLabels.
         lfc.alignConstant(); //need to make sure boundary values consistent from PLabel edits.
         opencascade::handle<Law_Function> law = lfc.buildLawFunction();
@@ -812,15 +783,15 @@ void Sweep::updateModel(const UpdatePayload &pIn)
         //with composite law. Hence the following meaningless call.
         law->Value(0.5);
         
-        sweeper.SetLaw(wire, law, p.contact->getBool(), p.correction->getBool());
+        sweeper.SetLaw(wire, law, p.contact.getBool(), p.correction.getBool());
         
-        updateLawViz(globalBounder.getDiagonal());
-        lawSwitch->setAllChildrenOn();
+        stow->updateLawViz(globalBounder.getDiagonal());
+        stow->lawSwitch->setAllChildrenOn();
       }
       else
       {
-        sweeper.Add(wire, p.contact->getBool(), p.correction->getBool());
-        lawSwitch->setAllChildrenOff();
+        sweeper.Add(wire, p.contact.getBool(), p.correction.getBool());
+        stow->lawSwitch->setAllChildrenOff();
       }
       
       globalBounder.add(wire);
@@ -830,23 +801,23 @@ void Sweep::updateModel(const UpdatePayload &pIn)
       profileWires.push_back(wire);
     }
     
-    sweeper.SetForceApproxC1(forceC1->getBool());
+    sweeper.SetForceApproxC1(stow->forceC1.getBool());
     
     if (!sweeper.Build())
       throw std::runtime_error("Sweep operation failed");
     
-    if (solid->getBool())
+    if (stow->solid.getBool())
       sweeper.MakeSolid();
     
     ShapeCheck check(sweeper.Shape());
     if (!check.isValid())
       throw std::runtime_error("Shape check failed");
     
-    sShape->setOCCTShape(sweeper.Shape(), getId());
-    sShape->updateId(sShape->getRootOCCTShape(), this->getId());
-    sShape->setRootShapeId(this->getId());
-    if (!sShape->hasEvolveRecordOut(this->getId()))
-      sShape->insertEvolve(gu::createNilId(), this->getId());
+    stow->sShape.setOCCTShape(sweeper.Shape(), getId());
+    stow->sShape.updateId(stow->sShape.getRootOCCTShape(), this->getId());
+    stow->sShape.setRootShapeId(this->getId());
+    if (!stow->sShape.hasEvolveRecordOut(this->getId()))
+      stow->sShape.insertEvolve(gu::createNilId(), this->getId());
     
     /* Notes about sweeps generated method:
      * No entries for the spine. This might be a bug, because the occt code appears
@@ -1043,13 +1014,13 @@ void Sweep::updateModel(const UpdatePayload &pIn)
     auto getOutputId = [&](const uuid &inputId, std::size_t index) -> uuid
     {
       uuid outputId = gu::createNilId();
-      auto mapIt = instanceMap.find(inputId);
-      if (mapIt == instanceMap.end())
+      auto mapIt = stow->instanceMap.find(inputId);
+      if (mapIt == stow->instanceMap.end())
       {
         assert(index == 0);
         outputId = gu::createRandomId();
         std::vector<uuid> resultIds(1, outputId);
-        instanceMap.insert(std::make_pair(inputId, resultIds));
+        stow->instanceMap.insert(std::make_pair(inputId, resultIds));
       }
       else
       {
@@ -1080,9 +1051,9 @@ void Sweep::updateModel(const UpdatePayload &pIn)
           std::cout << "Warning: output id for vertex is nil in: " << BOOST_CURRENT_FUNCTION << std::endl;
           continue;
         }
-        sShape->updateId(rexp.Current(), outputId);
-        if (!sShape->hasEvolveRecordOut(outputId))
-          sShape->insertEvolve(gu::createNilId(), outputId);
+        stow->sShape.updateId(rexp.Current(), outputId);
+        if (!stow->sShape.hasEvolveRecordOut(outputId))
+          stow->sShape.insertEvolve(gu::createNilId(), outputId);
       }
     };
     
@@ -1131,9 +1102,9 @@ void Sweep::updateModel(const UpdatePayload &pIn)
             std::cout << "Warning: output id for edge is nil in: " << BOOST_CURRENT_FUNCTION << std::endl;
             continue;
           }
-          sShape->updateId(ex.Current(), outputId);
-          if (!sShape->hasEvolveRecordIn(inputId))
-            sShape->insertEvolve(inputId, outputId);
+          stow->sShape.updateId(ex.Current(), outputId);
+          if (!stow->sShape.hasEvolveRecordIn(inputId))
+            stow->sShape.insertEvolve(inputId, outputId);
         }
       }
       else
@@ -1181,14 +1152,14 @@ void Sweep::updateModel(const UpdatePayload &pIn)
     TopoDS_Wire lastWire;
     if (sweeper.FirstShape().ShapeType() == TopAbs_FACE && sweeper.LastShape().ShapeType() == TopAbs_FACE)
     {
-      sShape->updateId(sweeper.FirstShape(), firstFaceId);
-      if (!sShape->hasEvolveRecordOut(firstFaceId))
-        sShape->insertEvolve(gu::createNilId(), firstFaceId);
+      stow->sShape.updateId(sweeper.FirstShape(), stow->firstFaceId);
+      if (!stow->sShape.hasEvolveRecordOut(stow->firstFaceId))
+        stow->sShape.insertEvolve(gu::createNilId(), stow->firstFaceId);
       firstWire = BRepTools::OuterWire(TopoDS::Face(sweeper.FirstShape()));
       
-      sShape->updateId(sweeper.LastShape(), lastFaceId);
-      if (!sShape->hasEvolveRecordOut(lastFaceId))
-        sShape->insertEvolve(gu::createNilId(), lastFaceId);
+      stow->sShape.updateId(sweeper.LastShape(), stow->lastFaceId);
+      if (!stow->sShape.hasEvolveRecordOut(stow->lastFaceId))
+        stow->sShape.insertEvolve(gu::createNilId(), stow->lastFaceId);
       lastWire = BRepTools::OuterWire(TopoDS::Face(sweeper.LastShape()));
     }
     else if (sweeper.FirstShape().ShapeType() == TopAbs_WIRE && sweeper.LastShape().ShapeType() == TopAbs_WIRE)
@@ -1213,80 +1184,80 @@ void Sweep::updateModel(const UpdatePayload &pIn)
         BRepTools_WireExplorer we(wireIn);
         for (; we.More(); we.Next())
         {
-          auto parentFaces = sShape->useGetParentsOfType(we.Current(), TopAbs_FACE);
+          auto parentFaces = stow->sShape.useGetParentsOfType(we.Current(), TopAbs_FACE);
           for (const auto &pf : parentFaces)
           {
-            uuid pfid = sShape->findId(pf);
-            if (pfid.is_nil() || pfid == firstFaceId)
+            uuid pfid = stow->sShape.findId(pf);
+            if (pfid.is_nil() || pfid == stow->firstFaceId)
               continue;
             uuid freshId = getFirstLastId(pfid, mapId);
-            sShape->updateId(we.Current(), freshId);
-            if (!sShape->hasEvolveRecordOut(freshId))
-              sShape->insertEvolve(gu::createNilId(), freshId);
+            stow->sShape.updateId(we.Current(), freshId);
+            if (!stow->sShape.hasEvolveRecordOut(freshId))
+              stow->sShape.insertEvolve(gu::createNilId(), freshId);
             break;
           }
         }
       };
       
-      goMapEdge(firstWire, firstShapeMap);
-      goMapEdge(lastWire, lastShapeMap);
+      goMapEdge(firstWire, stow->firstShapeMap);
+      goMapEdge(lastWire, stow->lastShapeMap);
     }
     
     //now do outerwires from faces.
-    auto faces = sShape->useGetChildrenOfType(sShape->getRootOCCTShape(), TopAbs_FACE);
+    auto faces = stow->sShape.useGetChildrenOfType(stow->sShape.getRootOCCTShape(), TopAbs_FACE);
     for (const auto &f : faces)
     {
-      uuid fId = sShape->findId(f);
+      uuid fId = stow->sShape.findId(f);
       if (fId.is_nil())
         continue;
       uuid owId = gu::createNilId();
-      auto it = outerWireMap.find(fId);
-      if (it != outerWireMap.end())
+      auto it = stow->outerWireMap.find(fId);
+      if (it != stow->outerWireMap.end())
         owId = it->second;
       else
       {
         owId = gu::createRandomId();
-        outerWireMap.insert(std::make_pair(fId, owId));
+        stow->outerWireMap.insert(std::make_pair(fId, owId));
       }
-      if (!sShape->hasEvolveRecordOut(owId))
-        sShape->insertEvolve(gu::createNilId(), owId);
+      if (!stow->sShape.hasEvolveRecordOut(owId))
+        stow->sShape.insertEvolve(gu::createNilId(), owId);
       const TopoDS_Wire &ow = BRepTools::OuterWire(TopoDS::Face(f));
-      sShape->updateId(ow, owId);
+      stow->sShape.updateId(ow, owId);
     }
     
-    sShape->derivedMatch();
+    stow->sShape.derivedMatch();
     
     //update id for shell and solid. Note: we are not checking for multiple shells or solids.
-    for (const auto &s : sShape->getAllNilShapes())
+    for (const auto &s : stow->sShape.getAllNilShapes())
     {
       if (s.ShapeType() == TopAbs_SOLID)
-        sShape->updateId(s, solidId);
+        stow->sShape.updateId(s, stow->solidId);
       if (s.ShapeType() == TopAbs_SHELL)
-        sShape->updateId(s, shellId);
+        stow->sShape.updateId(s, stow->shellId);
     }
-    if (!sShape->hasEvolveRecordOut(solidId))
-      sShape->insertEvolve(gu::createNilId(), solidId);
-    if (!sShape->hasEvolveRecordOut(shellId))
-      sShape->insertEvolve(gu::createNilId(), shellId);
+    if (!stow->sShape.hasEvolveRecordOut(stow->solidId))
+      stow->sShape.insertEvolve(gu::createNilId(), stow->solidId);
+    if (!stow->sShape.hasEvolveRecordOut(stow->shellId))
+      stow->sShape.insertEvolve(gu::createNilId(), stow->shellId);
     
     //shapeMatch is useless. sweep never uses any of the original geometry.
     std::cout << std::endl;
-//     sShape->dumpShapeIdContainer(std::cout);
-    sShape->dumpNils("sweep feature");
-    sShape->dumpDuplicates("sweep feature");
-    sShape->ensureNoNils();
-    sShape->ensureNoDuplicates();
+//     stow->sShape.dumpShapeIdContainer(std::cout);
+    stow->sShape.dumpNils("sweep feature");
+    stow->sShape.dumpDuplicates("sweep feature");
+    stow->sShape.ensureNoNils();
+    stow->sShape.ensureNoDuplicates();
     
     const std::vector<gp_Pnt> &cornerPoints = globalBounder.getCorners();
-    transitionLabel->setMatrix(osg::Matrixd::translate(gu::toOsg(cornerPoints.at(4))));
-    trihedronLabel->setMatrix(osg::Matrixd::translate(gu::toOsg(globalBounder.getCenter())));
-    forceC1Label->setMatrix(osg::Matrixd::translate(gu::toOsg(cornerPoints.at(7))));
-    solidLabel->setMatrix(osg::Matrixd::translate(gu::toOsg(cornerPoints.at(5))));
-    useLawLabel->setMatrix(osg::Matrixd::translate(gu::toOsg(cornerPoints.at(6))));
-    if (trihedron->getInt() == 6)
-      auxiliarySwitch->setAllChildrenOn();
+    stow->transitionLabel->setMatrix(osg::Matrixd::translate(gu::toOsg(cornerPoints.at(4))));
+    stow->trihedronLabel->setMatrix(osg::Matrixd::translate(gu::toOsg(globalBounder.getCenter())));
+    stow->forceC1Label->setMatrix(osg::Matrixd::translate(gu::toOsg(cornerPoints.at(7))));
+    stow->solidLabel->setMatrix(osg::Matrixd::translate(gu::toOsg(cornerPoints.at(5))));
+    stow->useLawLabel->setMatrix(osg::Matrixd::translate(gu::toOsg(cornerPoints.at(6))));
+    if (stow->trihedron.getInt() == 6)
+      stow->auxiliarySwitch->setAllChildrenOn();
     else
-      auxiliarySwitch->setAllChildrenOff();
+      stow->auxiliarySwitch->setAllChildrenOff();
     
     setSuccess();
   }
@@ -1310,14 +1281,14 @@ void Sweep::updateModel(const UpdatePayload &pIn)
     std::cout << std::endl << lastUpdateLog;
 }
 
-void Sweep::serialWrite(const boost::filesystem::path &dIn)
+void Feature::serialWrite(const boost::filesystem::path &dIn)
 {
   osg::Matrixd m = osg::Matrixd::identity();
   double scale = 1.0;
-  mdv::LawCallback *ocb = dynamic_cast<mdv::LawCallback*>(lawSwitch->getUpdateCallback());
+  mdv::LawCallback *ocb = dynamic_cast<mdv::LawCallback*>(stow->lawSwitch->getUpdateCallback());
   if (ocb)
   {
-    m = ocb->getMatrix(lawSwitch.get());
+    m = ocb->getMatrix(stow->lawSwitch.get());
     scale = ocb->getScale();
   }
   prj::srl::spt::Matrixd mOut
@@ -1331,31 +1302,31 @@ void Sweep::serialWrite(const boost::filesystem::path &dIn)
   prj::srl::swps::Sweep so
   (
     Base::serialOut()
-    , sShape->serialOut()
-    , lawFunction->getCue().serialOut()
-    , trihedron->serialOut()
-    , transition->serialOut()
-    , forceC1->serialOut()
-    , solid->serialOut()
-    , useLaw->serialOut()
-    , spine.serialOut()
-    , auxiliary.serialOut()
-    , support.serialOut()
-    , binormal.serialOut()
-    , trihedronLabel->serialOut()
-    , transitionLabel->serialOut()
-    , forceC1Label->serialOut()
-    , solidLabel->serialOut()
-    , useLawLabel->serialOut()
+    , stow->sShape.serialOut()
+    , stow->lawFunction.getCue().serialOut()
+    , stow->trihedron.serialOut()
+    , stow->transition.serialOut()
+    , stow->forceC1.serialOut()
+    , stow->solid.serialOut()
+    , stow->useLaw.serialOut()
+    , stow->spine.serialOut()
+    , stow->auxiliary.serialOut()
+    , stow->support.serialOut()
+    , stow->binormal.serialOut()
+    , stow->trihedronLabel->serialOut()
+    , stow->transitionLabel->serialOut()
+    , stow->forceC1Label->serialOut()
+    , stow->solidLabel->serialOut()
+    , stow->useLawLabel->serialOut()
     , mOut
     , scale
-    , gu::idToString(solidId)
-    , gu::idToString(shellId)
-    , gu::idToString(firstFaceId)
-    , gu::idToString(lastFaceId)
+    , gu::idToString(stow->solidId)
+    , gu::idToString(stow->shellId)
+    , gu::idToString(stow->firstFaceId)
+    , gu::idToString(stow->lastFaceId)
   );
   
-  for (const auto &p : profiles)
+  for (const auto &p : stow->profiles)
     so.profiles().push_back(p.serialOut());
   
   auto serializeMap = [](const std::map<uuid, uuid> &map) -> prj::srl::spt::SeerShape::EvolveContainerSequence
@@ -1373,11 +1344,11 @@ void Sweep::serialWrite(const boost::filesystem::path &dIn)
     return out;
   };
   
-  so.outerWireMap() = serializeMap(outerWireMap);
-  so.firstShapeMap() = serializeMap(firstShapeMap);
-  so.lastShapeMap() = serializeMap(lastShapeMap);
+  so.outerWireMap() = serializeMap(stow->outerWireMap);
+  so.firstShapeMap() = serializeMap(stow->firstShapeMap);
+  so.lastShapeMap() = serializeMap(stow->lastShapeMap);
   
-  for (const auto &p : instanceMap)
+  for (const auto &p : stow->instanceMap)
   {
     prj::srl::swps::Instance instanceOut(gu::idToString(p.first));
     for (const auto &id : p.second)
@@ -1390,32 +1361,40 @@ void Sweep::serialWrite(const boost::filesystem::path &dIn)
   prj::srl::swps::sweep(stream, so, infoMap);
 }
 
-void Sweep::serialRead(const prj::srl::swps::Sweep &so)
+void Feature::serialRead(const prj::srl::swps::Sweep &so)
 {
   Base::serialIn(so.base());
-  sShape->serialIn(so.seerShape());
-  lawFunction->setCue(lwf::Cue(so.lawFunction()));
-  trihedron->serialIn(so.trihedron());
-  transition->serialIn(so.transition());
-  forceC1->serialIn(so.forceC1());
-  solid->serialIn(so.solid());
-  useLaw->serialIn(so.useLaw());
-  spine.serialIn(so.spine());
-  auxiliary.serialIn(so.auxiliary());
-  support.serialIn(so.support());
-  binormal.serialIn(so.binormal());
-  trihedronLabel->serialIn(so.trihedronLabel());
-  transitionLabel->serialIn(so.transitionLabel());
-  forceC1Label->serialIn(so.forceC1Label());
-  solidLabel->serialIn(so.solidLabel());
-  useLawLabel->serialIn(so.useLawLabel());
-  solidId = gu::stringToId(so.solidId());
-  shellId = gu::stringToId(so.shellId());
-  firstFaceId = gu::stringToId(so.firstFaceId());
-  lastFaceId = gu::stringToId(so.lastFaceId());
+  stow->sShape.serialIn(so.seerShape());
+  stow->trihedron.serialIn(so.trihedron());
+  stow->transition.serialIn(so.transition());
+  stow->forceC1.serialIn(so.forceC1());
+  stow->solid.serialIn(so.solid());
+  stow->useLaw.serialIn(so.useLaw());
+  stow->spine.serialIn(so.spine());
+  stow->auxiliary.serialIn(so.auxiliary());
+  stow->support.serialIn(so.support());
+  stow->binormal.serialIn(so.binormal());
+  stow->trihedronLabel->serialIn(so.trihedronLabel());
+  stow->transitionLabel->serialIn(so.transitionLabel());
+  stow->forceC1Label->serialIn(so.forceC1Label());
+  stow->solidLabel->serialIn(so.solidLabel());
+  stow->useLawLabel->serialIn(so.useLawLabel());
+  stow->solidId = gu::stringToId(so.solidId());
+  stow->shellId = gu::stringToId(so.shellId());
+  stow->firstFaceId = gu::stringToId(so.firstFaceId());
+  stow->lastFaceId = gu::stringToId(so.lastFaceId());
   
   for (const auto &p : so.profiles())
-    profiles.emplace_back(p);
+  {
+    auto &pro = stow->profiles.emplace_back(p);
+    
+    pro.pick.connectValue(std::bind(&Feature::setModelDirty, this));
+    pro.contact.connectValue(std::bind(&Feature::setModelDirty, this));
+    pro.correction.connectValue(std::bind(&Feature::setModelDirty, this));
+    
+    overlaySwitch->addChild(pro.contactLabel);
+    overlaySwitch->addChild(pro.correctionLabel);
+  }
   
   auto serializeMap = [](const prj::srl::spt::SeerShape::EvolveContainerSequence &container) -> std::map<uuid, uuid>
   {
@@ -1424,19 +1403,21 @@ void Sweep::serialRead(const prj::srl::swps::Sweep &so)
       out.insert(std::make_pair(gu::stringToId(r.idIn()), gu::stringToId(r.idOut())));
     return out;
   };
-  outerWireMap = serializeMap(so.outerWireMap());
-  firstShapeMap = serializeMap(so.firstShapeMap());
-  lastShapeMap = serializeMap(so.lastShapeMap());
+  stow->outerWireMap = serializeMap(so.outerWireMap());
+  stow->firstShapeMap = serializeMap(so.firstShapeMap());
+  stow->lastShapeMap = serializeMap(so.lastShapeMap());
   
   for (const auto &p : so.instanceMap())
   {
     std::vector<uuid> valuesIn;
     for (const auto &v : p.values())
       valuesIn.push_back(gu::stringToId(v));
-    instanceMap.insert(std::make_pair(gu::stringToId(p.key()), valuesIn));
+    stow->instanceMap.insert(std::make_pair(gu::stringToId(p.key()), valuesIn));
   }
   
-  regenerateLawViz();
+  stow->severLaw();
+  stow->lawFunction.setCue(lwf::Cue(so.lawFunction()));
+  stow->attachLaw();
   const auto &mIn = so.lawVizMatrix();
   osg::Matrixd m
   (
@@ -1445,17 +1426,11 @@ void Sweep::serialRead(const prj::srl::swps::Sweep &so)
     mIn.i2j0(), mIn.i2j1(), mIn.i2j2(), mIn.i2j3(),
     mIn.i3j0(), mIn.i3j1(), mIn.i3j2(), mIn.i3j3()
   );
-  mdv::LawCallback *ocb = dynamic_cast<mdv::LawCallback*>(lawSwitch->getUpdateCallback());
+  mdv::LawCallback *ocb = dynamic_cast<mdv::LawCallback*>(stow->lawSwitch->getUpdateCallback());
   if (ocb)
   {
-    ocb->setMatrix(m, lawSwitch.get());
+    ocb->setMatrix(m, stow->lawSwitch.get());
     ocb->setScale(so.lawVizScale());
   }
-  if (useLaw->getBool())
-  {
-    lawSwitch->setAllChildrenOn();
-    attachLaw();
-  }
-  else
-    lawSwitch->setAllChildrenOff();
+  stow->prmActiveSync();
 }

@@ -297,22 +297,28 @@ namespace prj
       // SweepBinormal
       // 
 
-      const SweepBinormal::PicksSequence& SweepBinormal::
+      const SweepBinormal::PicksType& SweepBinormal::
       picks () const
       {
-        return this->picks_;
+        return this->picks_.get ();
       }
 
-      SweepBinormal::PicksSequence& SweepBinormal::
+      SweepBinormal::PicksType& SweepBinormal::
       picks ()
       {
-        return this->picks_;
+        return this->picks_.get ();
       }
 
       void SweepBinormal::
-      picks (const PicksSequence& s)
+      picks (const PicksType& x)
       {
-        this->picks_ = s;
+        this->picks_.set (x);
+      }
+
+      void SweepBinormal::
+      picks (::std::unique_ptr< PicksType > x)
+      {
+        this->picks_.set (std::move (x));
       }
 
       const SweepBinormal::BinormalType& SweepBinormal::
@@ -1486,20 +1492,22 @@ namespace prj
       //
 
       SweepBinormal::
-      SweepBinormal (const BinormalType& binormal,
+      SweepBinormal (const PicksType& picks,
+                     const BinormalType& binormal,
                      const BinormalLabelType& binormalLabel)
       : ::xml_schema::Type (),
-        picks_ (this),
+        picks_ (picks, this),
         binormal_ (binormal, this),
         binormalLabel_ (binormalLabel, this)
       {
       }
 
       SweepBinormal::
-      SweepBinormal (::std::unique_ptr< BinormalType > binormal,
+      SweepBinormal (::std::unique_ptr< PicksType > picks,
+                     ::std::unique_ptr< BinormalType > binormal,
                      ::std::unique_ptr< BinormalLabelType > binormalLabel)
       : ::xml_schema::Type (),
-        picks_ (this),
+        picks_ (std::move (picks), this),
         binormal_ (std::move (binormal), this),
         binormalLabel_ (std::move (binormalLabel), this)
       {
@@ -1549,8 +1557,11 @@ namespace prj
             ::std::unique_ptr< PicksType > r (
               PicksTraits::create (i, f, this));
 
-            this->picks_.push_back (::std::move (r));
-            continue;
+            if (!picks_.present ())
+            {
+              this->picks_.set (::std::move (r));
+              continue;
+            }
           }
 
           // binormal
@@ -1582,6 +1593,13 @@ namespace prj
           }
 
           break;
+        }
+
+        if (!picks_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "picks",
+            "");
         }
 
         if (!binormal_.present ())
@@ -2945,16 +2963,13 @@ namespace prj
 
         // picks
         //
-        for (SweepBinormal::PicksConstIterator
-             b (i.picks ().begin ()), n (i.picks ().end ());
-             b != n; ++b)
         {
           ::xercesc::DOMElement& s (
             ::xsd::cxx::xml::dom::create_element (
               "picks",
               e));
 
-          s << *b;
+          s << i.picks ();
         }
 
         // binormal
