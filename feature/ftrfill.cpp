@@ -306,14 +306,20 @@ void Feature::updateModel(const UpdatePayload &pIn)
         throw std::runtime_error("couldn't fix shape");
     }
     
+    // Note: we lose most forward mapping because of shapefix
     stow->sShape.setOCCTShape(out, getId());
     stow->sShape.updateId(out, stow->faceId);
+    if (!stow->sShape.hasEvolveRecordOut(stow->faceId))
+      stow->sShape.insertEvolve(gu::createNilId(), stow->faceId);
     stow->sShape.updateId(BRepTools::OuterWire(out), stow->wireId);
+    if (!stow->sShape.hasEvolveRecordOut(stow->wireId))
+      stow->sShape.insertEvolve(gu::createNilId(), stow->wireId);
     for (const auto &s : stow->sShape.getAllShapes())
     {
       if (tempIds.has(s))
         stow->sShape.updateId(s, tempIds.find(s));
     }
+//     stow->sShape.dumpShapeIdContainer(std::cout);
     stow->sShape.ensureNoNils();
     stow->sShape.ensureNoDuplicates();
     
