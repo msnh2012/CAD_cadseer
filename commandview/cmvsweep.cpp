@@ -222,7 +222,7 @@ struct Sweep::Stow
     (
       view->isHidden()
       || !isGlobalBoundarySelection
-      || (mIn.getSLC().type != slc::Type::Object && mIn.getSLC().type != slc::Type::Wire && mIn.getSLC().type != slc::Type::Wire)
+      || (mIn.getSLC().type != slc::Type::Object && mIn.getSLC().type != slc::Type::Wire && mIn.getSLC().type != slc::Type::Edge)
     )
     return;
     

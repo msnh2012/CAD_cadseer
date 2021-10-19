@@ -34,6 +34,7 @@
 
 #include "globalutilities.h"
 #include "tools/idtools.h"
+#include "tools/occtools.h"
 #include "preferences/preferencesXML.h"
 #include "preferences/prfmanager.h"
 #include "project/serial/generated/prjsrlchmschamfer.h"
@@ -43,6 +44,7 @@
 #include "feature/ftrupdatepayload.h"
 #include "parameter/prmconstants.h"
 #include "parameter/prmparameter.h"
+#include "library/lbrplabel.h"
 #include "tools/featuretools.h"
 #include "feature/ftrchamfer.h"
 
@@ -51,22 +53,34 @@ using boost::uuids::uuid;
 
 QIcon Feature::icon = QIcon(":/resources/images/constructionChamfer.svg");
 
-Entry::Entry(const Entry &other, bool)
+Entry::Entry()
+: style(QObject::tr("Style"), 0, PrmTags::style)
+, edgePicks(QObject::tr("Edge Picks"), ftr::Picks(), PrmTags::edgePicks)
+, facePicks(QObject::tr("Face Picks"), ftr::Picks(), PrmTags::facePicks)
+, distance(prm::Names::Distance, prf::manager().rootPtr->features().chamfer().get().distance(), prm::Tags::Distance)
+, dist2Angle(QObject::tr("Distance 2 Or Angle"), distance.getDouble() + 0.1, PrmTags::dist2Angle)
+, styleLabel(new lbr::PLabel(&style))
+, distanceLabel(new lbr::PLabel(&distance))
+, dist2AngleLabel(new lbr::PLabel(&dist2Angle))
+, styleObserver(std::bind(&Entry::prmActiveSync, this))
 {
-  style = other.style;
-  if (other.parameter1)
+  QStringList styleStrings =
   {
-    parameter1 = std::make_shared<prm::Parameter>(*other.parameter1);
-    label1 = new lbr::PLabel(parameter1.get());
-  }
-  if (other.parameter2)
-  {
-    parameter2 = std::make_shared<prm::Parameter>(*other.parameter2);
-    label2 = new lbr::PLabel(parameter2.get());
-  }
-  edgePicks = other.edgePicks;
-  facePicks = other.facePicks;
+    QObject::tr("Symmetric")
+    , QObject::tr("Two Distances")
+    , QObject::tr("Distance Angle")
+  };
+  style.setEnumeration(styleStrings);
+  styleLabel->refresh();
+  style.connect(styleObserver);
+  
+  distance.setConstraint(prm::Constraint::buildNonZeroPositive());
+  //constraints on 2nd parameter are set in prmActiveSync
+  
+  prmActiveSync();
 }
+
+Entry::~Entry() noexcept = default;
 
 Entry::Entry(const prj::srl::chms::Entry &eIn) : Entry()
 {
@@ -77,207 +91,275 @@ prj::srl::chms::Entry Entry::serialOut() const
 {
   prj::srl::chms::Entry out
   (
-    static_cast<int>(style)
-    , parameter1->serialOut()
-    , label1->serialOut()
+    style.serialOut()
+    , edgePicks.serialOut()
+    , facePicks.serialOut()
+    , distance.serialOut()
+    , dist2Angle.serialOut()
+    , styleLabel->serialOut()
+    , distanceLabel->serialOut()
+    , dist2AngleLabel->serialOut()
   );
-  for(const auto &ep : edgePicks)
-    out.edgePicks().push_back(ep);
-  for(const auto &fp : facePicks)
-    out.facePicks().push_back(fp);
-  
-  if (parameter2)
-    out.parameter2() = parameter2->serialOut();
-  if (label2)
-    out.label2() = label2->serialOut();
-  
   return out;
 }
 
 void Entry::serialIn(const prj::srl::chms::Entry &eIn)
 {
-  style = static_cast<Style>(eIn.style());
-  parameter1 = std::make_shared<prm::Parameter>(eIn.parameter1());
-  label1 = new lbr::PLabel(parameter1.get());
-  label1->serialIn(eIn.label1());
-  prj::srl::chms::Entry::EdgePicksSequence edgePicksOut;
-  for (const auto &epi : eIn.edgePicks())
-    edgePicks.emplace_back(epi);
-  for (const auto &fpi : eIn.facePicks())
-    facePicks.emplace_back(fpi);
-  
-  if (eIn.parameter2().present())
-    parameter2 = std::make_shared<prm::Parameter>(eIn.parameter2().get());
-  if (eIn.label2().present() && parameter2)
+  style.serialIn(eIn.style());
+  edgePicks.serialIn(eIn.edgePicks());
+  facePicks.serialIn(eIn.facePicks());
+  distance.serialIn(eIn.distance());
+  dist2Angle.serialIn(eIn.dist2Angle());
+  styleLabel->serialIn(eIn.styleLabel());
+  distanceLabel->serialIn(eIn.distanceLabel());
+  dist2AngleLabel->serialIn(eIn.dist2AngleLabel());
+}
+
+prm::Parameters Entry::getParameters()
+{
+  return {&style, &edgePicks, &facePicks, &distance, &dist2Angle};
+}
+
+void Entry::prmActiveSync()
+{
+  //when switching between distance 2 and angle, it doesn't make any sense to try and use
+  //the existing values. so we just set back to chamfer default.
+  switch(style.getInt())
   {
-    label2 = new lbr::PLabel(parameter2.get());
-    label2->serialIn(eIn.label2().get());
+    case 0: //symmetric
+    {
+      dist2Angle.setActive(false);
+      facePicks.setActive(false);
+      facePicks.setValue(ftr::Pick());
+      break;
+    }
+    case 1: //2 distances
+    {
+      dist2Angle.setActive(true);
+      facePicks.setActive(true);
+      dist2Angle.setConstraint(prm::Constraint::buildNonZeroPositive());
+      dist2Angle.setValue(prf::manager().rootPtr->features().chamfer().get().distance()  + 0.1);
+      dist2Angle.setName(QObject::tr("Distance 2"));
+      dist2AngleLabel->refresh();
+      break;
+    }
+    case 2: //distance and angle
+    {
+      dist2Angle.setActive(true);
+      facePicks.setActive(true);
+      dist2Angle.setConstraint(prm::Constraint::buildNonZeroPositiveAngle());
+      dist2Angle.setValue(30.0);
+      dist2Angle.setName(QObject::tr("Angle"));
+      dist2AngleLabel->refresh();
+      break;
+    }
+    default:
+    {
+      assert(0); //unknown chamfer style
+      break;
+    }
   }
 }
 
-inline static std::shared_ptr<prm::Parameter> makeDistance()
+struct Feature::Stow
 {
-  return std::make_shared<prm::Parameter>
-  (
-    prm::Names::Distance
-    , prf::manager().rootPtr->features().chamfer().get().distance()
-    , prm::Tags::Distance
-  );
-}
+  Feature &feature;
+  
+  prm::Parameter mode{QObject::tr("Mode"), 0, PrmTags::mode};
+  
+  ann::SeerShape sShape;
+  
+  osg::ref_ptr<lbr::PLabel> modeLabel{new lbr::PLabel(&mode)};
+  
+  Entries entries;
+  std::map<uuid, uuid> shapeMap; //!< map edges or vertices to faces
+  
+  Stow() = delete;
+  Stow(Feature &fIn)
+  : feature(fIn)
+  {
+    QStringList modeStrings =
+    {
+      QObject::tr("Classic")
+      , QObject::tr("Throat")
+      , QObject::tr("Throat Penetration")
+    };
+    mode.setEnumeration(modeStrings);
+    mode.connectValue(std::bind(&Feature::setModelDirty, &feature));
+    mode.connectValue(std::bind(&Stow::prmActiveSync, this));
+    feature.parameters.push_back(&mode);
+    modeLabel->refresh();
+    
+    feature.annexes.insert(std::make_pair(ann::Type::SeerShape, &sShape));
+    
+    feature.overlaySwitch->addChild(modeLabel.get());
+    
+    prmActiveSync();
+  }
+  
+  void prmActiveSync()
+  {
+    int modeType = mode.getInt();
+    switch (modeType)
+    {
+      case 0: //classic
+      {
+        //classic supports all types so we don't need to do anything.
+        break;
+      }
+      case 1: //throat
+      {
+        //throat can only have symmetric, so change all entries to that.
+        for (auto &e : entries)
+        {
+          if (e.style.getInt() != 0)
+            e.style.setValue(0);
+        }
+        break;
+      }
+      case 2: //throat penetration
+      {
+        //throat penetration can only have two distances, so change all entries to that.
+        for (auto &e : entries)
+        {
+          if (e.style.getInt() != 1)
+            e.style.setValue(1);
+        }
+        break;
+      }
+      default:
+      {
+        assert(0); //unknown style
+        break;
+      }
+    }
+  }
+  
+  void attachEntry(Entry &eIn)
+  {
+    //not adding entry parameters to feature's general container.
+    eIn.distance.connectValue(std::bind(&Feature::setModelDirty, &feature));
+    eIn.dist2Angle.connectValue(std::bind(&Feature::setModelDirty, &feature));
+    
+    feature.overlaySwitch->addChild(eIn.styleLabel);
+    feature.overlaySwitch->addChild(eIn.distanceLabel);
+    feature.overlaySwitch->addChild(eIn.dist2AngleLabel);
+  }
+  
+  void detachEntry(Entry &eIn)
+  {
+    feature.overlaySwitch->removeChild(eIn.styleLabel);
+    feature.overlaySwitch->removeChild(eIn.distanceLabel);
+    feature.overlaySwitch->removeChild(eIn.dist2AngleLabel);
+  }
+  
+  //duplicated with blend.
+  void generatedMatch(BRepFilletAPI_MakeChamfer &chamferMakerIn, const ann::SeerShape &targetShapeIn)
+  {
+    std::vector<uuid> targetShapeIds = targetShapeIn.getAllShapeIds();
+    
+    for (const auto &cId : targetShapeIds)
+    {
+      const TopoDS_Shape &currentShape = targetShapeIn.findShape(cId);
+      TopTools_ListOfShape generated = chamferMakerIn.Generated(currentShape);
+      if (generated.IsEmpty())
+        continue;
+      if(generated.Extent() != 1)
+      {
+        std::ostringstream s; s << "Warning: more than one generated shape in chamfer::generatedMatch" << std::endl;
+        feature.lastUpdateLog += s.str();
+      }
+      const TopoDS_Shape &chamferFace = generated.First();
+      assert(!chamferFace.IsNull());
+      assert(chamferFace.ShapeType() == TopAbs_FACE);
+      
+      std::map<uuid, uuid>::iterator mapItFace;
+      bool dummy;
+      std::tie(mapItFace, dummy) = shapeMap.insert(std::make_pair(cId, gu::createRandomId()));
+      sShape.updateId(chamferFace, mapItFace->second);
+      if (dummy) //insertion took place.
+        sShape.insertEvolve(gu::createNilId(), mapItFace->second);
+      
+      //now look for outerwire for newly generated face.
+      //we use the generated face id to map to outer wire.
+      std::map<uuid, uuid>::iterator mapItWire;
+      std::tie(mapItWire, dummy) = shapeMap.insert(std::make_pair(mapItFace->second, gu::createRandomId()));
+      //now get the wire and update the result to id.
+      const TopoDS_Shape &chamferedFaceWire = BRepTools::OuterWire(TopoDS::Face(chamferFace));
+      sShape.updateId(chamferedFaceWire, mapItWire->second);
+      if (dummy) //insertion took place.
+        sShape.insertEvolve(gu::createNilId(), mapItWire->second);
+    }
+  }
+};
 
-Entry Entry::buildDefaultSymmetric()
-{
-  Entry out;
-  out.style = Style::Symmetric;
-  out.parameter1 = makeDistance();
-  out.parameter1->setConstraint(prm::Constraint::buildNonZeroPositive());
-  out.label1 = new lbr::PLabel(out.parameter1.get());
-  return out;
-}
-
-Entry Entry::buildDefaultTwoDistances()
-{
-  Entry out;
-  out.style = Style::TwoDistances;
-  out.parameter1 = makeDistance();
-  out.parameter1->setConstraint(prm::Constraint::buildNonZeroPositive());
-  out.label1 = new lbr::PLabel(out.parameter1.get());
-  out.parameter2 = makeDistance();
-  out.parameter2->setConstraint(prm::Constraint::buildNonZeroPositive());
-  out.label2 = new lbr::PLabel(out.parameter2.get());
-  return out;
-}
-
-Entry Entry::buildDefaultDistanceAngle()
-{
-  Entry out;
-  out.style = Style::DistanceAngle;
-  out.parameter1 = makeDistance();
-  out.parameter1->setConstraint(prm::Constraint::buildNonZeroPositive());
-  out.label1 = new lbr::PLabel(out.parameter1.get());
-  out.parameter2 = std::make_shared<prm::Parameter>
-  (
-    prm::Names::Angle
-    , 30.0
-    ,prm::Tags::Angle
-  ); //todo add angle to preferences.
-  out.parameter2->setConstraint(prm::Constraint::buildNonZeroPositiveAngle());
-  out.label2 = new lbr::PLabel(out.parameter2.get());
-  return out;
-}
-
-Feature::Feature() : Base(), sShape(std::make_unique<ann::SeerShape>())
+Feature::Feature()
+: Base()
+, stow(std::make_unique<Stow>(*this))
 {
   name = QObject::tr("Chamfer");
   mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
-  
-  annexes.insert(std::make_pair(ann::Type::SeerShape, sShape.get()));
 }
 
-Feature::~Feature(){}
+Feature::~Feature() = default;
 
-void Feature::setMode(Mode mIn)
+Entry& Feature::addSymmetric()
 {
-  for (const auto &e : entries)
-    detachEntry(e);
-  entries.clear();
-  mode = mIn;
-  setModelDirty();
+  int lMode = stow->mode.getInt();
+  assert(lMode == 0 || lMode == 1); //classic or throat
+  stow->entries.emplace_back();
+  stow->attachEntry(stow->entries.back());
+  // 'empty' entry shouldn't dirty feature.'
+  return stow->entries.back();
 }
 
-int Feature::addSymmetric()
+Entry& Feature::addTwoDistances()
 {
-  assert(mode == Mode::Classic || mode == Mode::Throat);
-  entries.push_back(Entry::buildDefaultSymmetric());
-  attachEntry(entries.back());
-  setModelDirty();
-  return static_cast<int>(entries.size()) - 1;
+  int lMode = stow->mode.getInt();
+  assert(lMode == 0 || lMode == 2); //classic or throat penetration
+  stow->entries.emplace_back();
+  stow->entries.back().style.setValue(1);
+  stow->attachEntry(stow->entries.back());
+  return stow->entries.back();
 }
 
-int Feature::addTwoDistances()
+Entry& Feature::addDistanceAngle()
 {
-  assert(mode == Mode::Classic || mode == Mode::ThroatPenetration);
-  entries.push_back(Entry::buildDefaultTwoDistances());
-  attachEntry(entries.back());
-  setModelDirty();
-  return static_cast<int>(entries.size()) - 1;
-}
-
-int Feature::addDistanceAngle()
-{
-  assert(mode == Mode::Classic);
-  entries.push_back(Entry::buildDefaultDistanceAngle());
-  attachEntry(entries.back());
-  setModelDirty();
-  return static_cast<int>(entries.size()) - 1;
+  assert(stow->mode.getInt() == 0); //classic only
+  stow->entries.emplace_back();
+  stow->entries.back().style.setValue(2);
+  stow->attachEntry(stow->entries.back());
+  return stow->entries.back();
 }
 
 void Feature::removeEntry(int index)
 {
-  assert(index >= 0 && index < static_cast<int>(entries.size()));
-  const auto &e = entries.at(index);
-  detachEntry(e);
-  entries.erase(entries.begin() + index);
+  assert(index >= 0 && index < static_cast<int>(stow->entries.size()));
+  auto it = stow->entries.begin();
+  for (int i = 0; i < index; ++i, ++it);
+  stow->detachEntry(*it);
+  stow->entries.erase(it);
   setModelDirty();
 }
 
-const Entry& Feature::getEntry(int index)
+Entry& Feature::getEntry(int index)
 {
-  assert(index >= 0 && index < static_cast<int>(entries.size()));
-  return entries.at(index);
+  assert(index >= 0 && index < static_cast<int>(stow->entries.size()));
+  auto it = stow->entries.begin();
+  for (int i = 0; i < index; ++i, ++it);
+  return *it;
 }
 
-void Feature::attachEntry(const Entry &eIn)
+Entries& Feature::getEntries()
 {
-  //assumes entry is already added to vector
-  auto setupParameter = [&](prm::Parameter *p)
-  {
-    p->connectValue(std::bind(&Feature::setModelDirty, this));
-    parameters.push_back(p);
-  };
-
-  if (eIn.parameter1)
-    setupParameter(eIn.parameter1.get());
-  if (eIn.parameter2)
-    setupParameter(eIn.parameter2.get());
-  if (eIn.label1)
-    overlaySwitch->addChild(eIn.label1.get());
-  if (eIn.label2)
-    overlaySwitch->addChild(eIn.label2.get());
-}
-
-void Feature::detachEntry(const Entry &eIn)
-{
-  if (eIn.parameter1)
-    removeParameter(eIn.parameter1.get());
-  if (eIn.parameter2)
-    removeParameter(eIn.parameter2.get());
-  if (eIn.label1)
-    overlaySwitch->removeChild(eIn.label1.get());
-  if (eIn.label2)
-    overlaySwitch->removeChild(eIn.label2.get());
-}
-
-void Feature::setEdgePicks(int index, const Picks &psIn)
-{
-  assert(index >= 0 && index < static_cast<int>(entries.size()));
-  entries.at(index).edgePicks = psIn;
-  setModelDirty();
-}
-
-void Feature::setFacePicks(int index, const Picks &psIn)
-{
-  assert(index >= 0 && index < static_cast<int>(entries.size()));
-  assert(entries.at(index).style != Style::Symmetric);
-  entries.at(index).facePicks = psIn;
-  setModelDirty();
+  return stow->entries;
 }
 
 void Feature::updateModel(const UpdatePayload &payloadIn)
 {
   setFailure();
   lastUpdateLog.clear();
-  sShape->reset();
+  stow->sShape.reset();
   try
   {
     std::vector<const Base*> targetFeatures = payloadIn.getFeatures(std::string());
@@ -291,13 +373,13 @@ void Feature::updateModel(const UpdatePayload &payloadIn)
       throw std::runtime_error("target seer shape is null");
     
     //setup failure state.
-    sShape->setOCCTShape(targetSeerShape.getRootOCCTShape(), getId());
-    sShape->shapeMatch(targetSeerShape);
-    sShape->uniqueTypeMatch(targetSeerShape);
-    sShape->outerWireMatch(targetSeerShape);
-    sShape->derivedMatch();
-    sShape->ensureNoNils();
-    sShape->ensureNoDuplicates();
+    stow->sShape.setOCCTShape(targetSeerShape.getRootOCCTShape(), getId());
+    stow->sShape.shapeMatch(targetSeerShape);
+    stow->sShape.uniqueTypeMatch(targetSeerShape);
+    stow->sShape.outerWireMatch(targetSeerShape);
+    stow->sShape.derivedMatch();
+    stow->sShape.ensureNoNils();
+    stow->sShape.ensureNoDuplicates();
     
     if (isSkipped())
     {
@@ -324,19 +406,24 @@ void Feature::updateModel(const UpdatePayload &payloadIn)
     tls::Resolver resolver(payloadIn);
     BRepFilletAPI_MakeChamfer chamferMaker(targetSeerShape.getRootOCCTShape());
     
-    chamferMaker.SetMode(static_cast<ChFiDS_ChamfMode>(mode));
-    for (const auto &e : entries)
+    //place model label at center of input shape.
+    occt::BoundingBox bb(targetSeerShape.getRootOCCTShape());
+    stow->modeLabel->setMatrix(osg::Matrixd::translate(gu::toOsg(bb.getCenter())));
+    
+    int lMode = stow->mode.getInt();
+    chamferMaker.SetMode(static_cast<ChFiDS_ChamfMode>(lMode));
+    for (const auto &e : stow->entries)
     {
-      if (mode == Mode::Throat && e.style != Style::Symmetric)
+      if (lMode == 1 && e.style.getInt() != 0) //throat
         throw std::runtime_error("Throat mode only uses symmetric style");
-      if (mode == Mode::ThroatPenetration && e.style != Style::TwoDistances)
+      if (lMode == 2 && e.style.getInt() != 1) //throat penetration
         throw std::runtime_error("Throat penetration mode only uses 2 distances style");
       //classic mode can use any style
       
-      if (e.style == Style::Symmetric)
+      if (e.style.getInt() == 0) //symmetric
       {
         bool labelDone = false;
-        for (const auto &ep : e.edgePicks)
+        for (const auto &ep : e.edgePicks.getPicks())
         {
           if (!resolver.resolve(ep))
             continue;
@@ -348,29 +435,31 @@ void Feature::updateModel(const UpdatePayload &payloadIn)
               lastUpdateLog += s.str();
               continue;
             }
-            chamferMaker.Add(e.parameter1->getDouble(), TopoDS::Edge(s));
+            chamferMaker.Add(e.distance.getDouble(), TopoDS::Edge(s));
             if (!labelDone)
             {
               labelDone = true;
-              e.label1->setMatrix(osg::Matrixd::translate(ep.getPoint(TopoDS::Edge(s))));
+              e.distanceLabel->setMatrix(osg::Matrixd::translate(ep.getPoint(TopoDS::Edge(s))));
+              auto loc = gu::toOsg(chamferMaker.FirstVertex(chamferMaker.Contour(TopoDS::Edge(s))));
+              e.styleLabel->setMatrix(osg::Matrixd::translate(loc));
             }
           }
         }
       }
-      else if (e.style == Style::TwoDistances || e.style == Style::DistanceAngle)
+      else if (e.style.getInt() == 1 || e.style.getInt() == 2) //two distances or distance and angle
       {
-        if (e.edgePicks.size() != e.facePicks.size())
+        if (e.edgePicks.getPicks().size() != e.facePicks.getPicks().size())
           throw std::runtime_error("need same number edges and faces for two distance chamfer");
         bool labelDone1 = false;
         bool labelDone2 = false;
-        for (std::size_t index = 0; index < e.edgePicks.size(); ++index)
+        for (std::size_t index = 0; index < e.edgePicks.getPicks().size(); ++index)
         {
           //we have to resolve multiple edges and faces
-          if (!resolver.resolve(e.edgePicks.at(index)))
+          if (!resolver.resolve(e.edgePicks.getPicks().at(index)))
             continue;
           std::vector<uuid> edgeIds = resolver.getResolvedIds();
           
-          if (!resolver.resolve(e.facePicks.at(index)))
+          if (!resolver.resolve(e.facePicks.getPicks().at(index)))
             continue;
           std::vector<uuid> faceIds = resolver.getResolvedIds();
           
@@ -379,22 +468,22 @@ void Feature::updateModel(const UpdatePayload &payloadIn)
           {
             const TopoDS_Edge &edge = TopoDS::Edge(targetSeerShape.getOCCTShape(p.first));
             const TopoDS_Face &face = TopoDS::Face(targetSeerShape.getOCCTShape(p.second));
-            if (e.style == Style::TwoDistances)
+            if (e.style.getInt() == 1) // 2 distances
             {
               chamferMaker.Add
               (
-                e.parameter1->getDouble()
-                , e.parameter2->getDouble()
+                e.distance.getDouble()
+                , e.dist2Angle.getDouble()
                 , edge
                 , face
               );
             }
-            else if (e.style == Style::DistanceAngle)
+            else if (e.style.getInt() == 2) //distance and angle
             {
               chamferMaker.AddDA
               (
-                e.parameter1->getDouble()
-                , osg::DegreesToRadians(e.parameter2->getDouble())
+                e.distance.getDouble()
+                , osg::DegreesToRadians(e.dist2Angle.getDouble())
                 , edge
                 , face
               );
@@ -402,12 +491,14 @@ void Feature::updateModel(const UpdatePayload &payloadIn)
             if (!labelDone1)
             {
               labelDone1 = true;
-              e.label1->setMatrix(osg::Matrixd::translate(e.facePicks.at(index).getPoint(face)));
+              e.distanceLabel->setMatrix(osg::Matrixd::translate(e.edgePicks.getPicks().at(index).getPoint(edge)));
+              auto loc = gu::toOsg(chamferMaker.FirstVertex(chamferMaker.Contour(edge)));
+              e.styleLabel->setMatrix(osg::Matrixd::translate(loc));
             }
             if (!labelDone2)
             {
               labelDone2 = true;
-              e.label2->setMatrix(osg::Matrixd::translate(e.edgePicks.at(index).getPoint(edge)));
+              e.dist2AngleLabel->setMatrix(osg::Matrixd::translate(e.facePicks.getPicks().at(index).getPoint(face)));
             }
           }
         }
@@ -420,17 +511,17 @@ void Feature::updateModel(const UpdatePayload &payloadIn)
     if (!check.isValid())
       throw std::runtime_error("shapeCheck failed");
 
-    sShape->setOCCTShape(chamferMaker.Shape(), getId());
-    sShape->shapeMatch(targetSeerShape);
-    sShape->uniqueTypeMatch(targetSeerShape);
-    sShape->modifiedMatch(chamferMaker, targetSeerShape);
-    generatedMatch(chamferMaker, targetSeerShape);
-    sShape->outerWireMatch(targetSeerShape);
-    sShape->derivedMatch();
-    sShape->dumpNils("chamfer feature"); //only if there are shapes with nil ids.
-    sShape->dumpDuplicates("chamfer feature");
-    sShape->ensureNoNils();
-    sShape->ensureNoDuplicates();
+    stow->sShape.setOCCTShape(chamferMaker.Shape(), getId());
+    stow->sShape.shapeMatch(targetSeerShape);
+    stow->sShape.uniqueTypeMatch(targetSeerShape);
+    stow->sShape.modifiedMatch(chamferMaker, targetSeerShape);
+    stow->generatedMatch(chamferMaker, targetSeerShape);
+    stow->sShape.outerWireMatch(targetSeerShape);
+    stow->sShape.derivedMatch();
+    stow->sShape.dumpNils("chamfer feature"); //only if there are shapes with nil ids.
+    stow->sShape.dumpDuplicates("chamfer feature");
+    stow->sShape.ensureNoNils();
+    stow->sShape.ensureNoDuplicates();
     
     setSuccess();
   }
@@ -454,83 +545,29 @@ void Feature::updateModel(const UpdatePayload &payloadIn)
     std::cout << std::endl << lastUpdateLog;
 }
 
-//duplicated with blend.
-void Feature::generatedMatch(BRepFilletAPI_MakeChamfer &chamferMakerIn, const ann::SeerShape &targetShapeIn)
-{
-  using boost::uuids::uuid;
-  
-  std::vector<uuid> targetShapeIds = targetShapeIn.getAllShapeIds();
-  
-  for (const auto &cId : targetShapeIds)
-  {
-    const TopoDS_Shape &currentShape = targetShapeIn.findShape(cId);
-    TopTools_ListOfShape generated = chamferMakerIn.Generated(currentShape);
-    if (generated.IsEmpty())
-      continue;
-    if(generated.Extent() != 1)
-    {
-      std::ostringstream s; s << "Warning: more than one generated shape in chamfer::generatedMatch" << std::endl;
-      lastUpdateLog += s.str();
-    }
-    const TopoDS_Shape &chamferFace = generated.First();
-    assert(!chamferFace.IsNull());
-    assert(chamferFace.ShapeType() == TopAbs_FACE);
-    
-    std::map<uuid, uuid>::iterator mapItFace;
-    bool dummy;
-    std::tie(mapItFace, dummy) = shapeMap.insert(std::make_pair(cId, gu::createRandomId()));
-    sShape->updateId(chamferFace, mapItFace->second);
-    if (dummy) //insertion took place.
-      sShape->insertEvolve(gu::createNilId(), mapItFace->second);
-    
-    //now look for outerwire for newly generated face.
-    //we use the generated face id to map to outer wire.
-    std::map<uuid, uuid>::iterator mapItWire;
-    std::tie(mapItWire, dummy) = shapeMap.insert(std::make_pair(mapItFace->second, gu::createRandomId()));
-    //now get the wire and update the result to id.
-    const TopoDS_Shape &chamferedFaceWire = BRepTools::OuterWire(TopoDS::Face(chamferFace));
-    sShape->updateId(chamferedFaceWire, mapItWire->second);
-    if (dummy) //insertion took place.
-      sShape->insertEvolve(gu::createNilId(), mapItWire->second);
-  }
-}
-
-void Feature::updateShapeMap(const boost::uuids::uuid &resolvedId, const ShapeHistory &pick)
-{
-  for (const auto &historyId : pick.getAllIds())
-  {
-    assert(shapeMap.count(historyId) < 2);
-    auto it = shapeMap.find(historyId);
-    if (it == shapeMap.end())
-      continue;
-    auto entry = std::make_pair(resolvedId, it->second);
-    shapeMap.erase(it);
-    shapeMap.insert(entry);
-  }
-}
-
 void Feature::serialWrite(const boost::filesystem::path &dIn)
 {
   namespace serial = prj::srl::chms;
-  serial::Chamfer::ShapeMapSequence shapeMapOut;
-  for (const auto &p : shapeMap)
-  {
-    serial::Chamfer::ShapeMapType eRecord
-    (
-      gu::idToString(p.first),
-      gu::idToString(p.second)
-    );
-    shapeMapOut.push_back(eRecord);
-  }
   
   serial::Chamfer chamferOut
   (
     Base::serialOut()
-    , sShape->serialOut()
-    , static_cast<int>(mode)
+    , stow->mode.serialOut()
+    , stow->sShape.serialOut()
+    , stow->modeLabel->serialOut()
   );
-  chamferOut.shapeMap() = shapeMapOut;
-  for (const auto &e : entries)
+  
+  for (const auto &p : stow->shapeMap)
+  {
+    serial::Chamfer::ShapeMapType eRecord
+    (
+      gu::idToString(p.first),
+     gu::idToString(p.second)
+    );
+    chamferOut.shapeMap().push_back(eRecord);
+  }
+  
+  for (const auto &e : stow->entries)
     chamferOut.entries().push_back(e.serialOut());
   
   xml_schema::NamespaceInfomap infoMap;
@@ -541,21 +578,18 @@ void Feature::serialWrite(const boost::filesystem::path &dIn)
 void Feature::serialRead(const prj::srl::chms::Chamfer &sChamferIn)
 {
   Base::serialIn(sChamferIn.base());
-  sShape->serialIn(sChamferIn.seerShape());
+  stow->mode.serialIn(sChamferIn.mode());
+  stow->sShape.serialIn(sChamferIn.seerShape());
+  stow->modeLabel->serialIn(sChamferIn.modeLabel());
   
-  shapeMap.clear();
+  stow->shapeMap.clear();
   for (const auto &sERecord : sChamferIn.shapeMap())
-  {
-    std::pair<uuid, uuid> record;
-    record.first = gu::stringToId(sERecord.idIn());
-    record.second = gu::stringToId(sERecord.idOut());
-    shapeMap.insert(record);
-  }
+    stow->shapeMap.insert(std::make_pair(gu::stringToId(sERecord.idIn()), gu::stringToId(sERecord.idOut())));
   
-  mode = static_cast<Mode>(sChamferIn.mode());
   for (const auto &e : sChamferIn.entries())
   {
-    entries.emplace_back(e);
-    attachEntry(entries.back());
+    stow->entries.emplace_back(e);
+    stow->attachEntry(stow->entries.back());
+    stow->entries.back().prmActiveSync();
   }
 }

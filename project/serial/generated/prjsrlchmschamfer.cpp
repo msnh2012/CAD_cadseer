@@ -67,148 +67,178 @@ namespace prj
         this->style_.set (x);
       }
 
-      const Entry::Parameter1Type& Entry::
-      parameter1 () const
-      {
-        return this->parameter1_.get ();
-      }
-
-      Entry::Parameter1Type& Entry::
-      parameter1 ()
-      {
-        return this->parameter1_.get ();
-      }
-
       void Entry::
-      parameter1 (const Parameter1Type& x)
+      style (::std::unique_ptr< StyleType > x)
       {
-        this->parameter1_.set (x);
+        this->style_.set (std::move (x));
       }
 
-      void Entry::
-      parameter1 (::std::unique_ptr< Parameter1Type > x)
-      {
-        this->parameter1_.set (std::move (x));
-      }
-
-      const Entry::Parameter2Optional& Entry::
-      parameter2 () const
-      {
-        return this->parameter2_;
-      }
-
-      Entry::Parameter2Optional& Entry::
-      parameter2 ()
-      {
-        return this->parameter2_;
-      }
-
-      void Entry::
-      parameter2 (const Parameter2Type& x)
-      {
-        this->parameter2_.set (x);
-      }
-
-      void Entry::
-      parameter2 (const Parameter2Optional& x)
-      {
-        this->parameter2_ = x;
-      }
-
-      void Entry::
-      parameter2 (::std::unique_ptr< Parameter2Type > x)
-      {
-        this->parameter2_.set (std::move (x));
-      }
-
-      const Entry::Label1Type& Entry::
-      label1 () const
-      {
-        return this->label1_.get ();
-      }
-
-      Entry::Label1Type& Entry::
-      label1 ()
-      {
-        return this->label1_.get ();
-      }
-
-      void Entry::
-      label1 (const Label1Type& x)
-      {
-        this->label1_.set (x);
-      }
-
-      void Entry::
-      label1 (::std::unique_ptr< Label1Type > x)
-      {
-        this->label1_.set (std::move (x));
-      }
-
-      const Entry::Label2Optional& Entry::
-      label2 () const
-      {
-        return this->label2_;
-      }
-
-      Entry::Label2Optional& Entry::
-      label2 ()
-      {
-        return this->label2_;
-      }
-
-      void Entry::
-      label2 (const Label2Type& x)
-      {
-        this->label2_.set (x);
-      }
-
-      void Entry::
-      label2 (const Label2Optional& x)
-      {
-        this->label2_ = x;
-      }
-
-      void Entry::
-      label2 (::std::unique_ptr< Label2Type > x)
-      {
-        this->label2_.set (std::move (x));
-      }
-
-      const Entry::EdgePicksSequence& Entry::
+      const Entry::EdgePicksType& Entry::
       edgePicks () const
       {
-        return this->edgePicks_;
+        return this->edgePicks_.get ();
       }
 
-      Entry::EdgePicksSequence& Entry::
+      Entry::EdgePicksType& Entry::
       edgePicks ()
       {
-        return this->edgePicks_;
+        return this->edgePicks_.get ();
       }
 
       void Entry::
-      edgePicks (const EdgePicksSequence& s)
+      edgePicks (const EdgePicksType& x)
       {
-        this->edgePicks_ = s;
+        this->edgePicks_.set (x);
       }
 
-      const Entry::FacePicksSequence& Entry::
+      void Entry::
+      edgePicks (::std::unique_ptr< EdgePicksType > x)
+      {
+        this->edgePicks_.set (std::move (x));
+      }
+
+      const Entry::FacePicksType& Entry::
       facePicks () const
       {
-        return this->facePicks_;
+        return this->facePicks_.get ();
       }
 
-      Entry::FacePicksSequence& Entry::
+      Entry::FacePicksType& Entry::
       facePicks ()
       {
-        return this->facePicks_;
+        return this->facePicks_.get ();
       }
 
       void Entry::
-      facePicks (const FacePicksSequence& s)
+      facePicks (const FacePicksType& x)
       {
-        this->facePicks_ = s;
+        this->facePicks_.set (x);
+      }
+
+      void Entry::
+      facePicks (::std::unique_ptr< FacePicksType > x)
+      {
+        this->facePicks_.set (std::move (x));
+      }
+
+      const Entry::DistanceType& Entry::
+      distance () const
+      {
+        return this->distance_.get ();
+      }
+
+      Entry::DistanceType& Entry::
+      distance ()
+      {
+        return this->distance_.get ();
+      }
+
+      void Entry::
+      distance (const DistanceType& x)
+      {
+        this->distance_.set (x);
+      }
+
+      void Entry::
+      distance (::std::unique_ptr< DistanceType > x)
+      {
+        this->distance_.set (std::move (x));
+      }
+
+      const Entry::Dist2AngleType& Entry::
+      dist2Angle () const
+      {
+        return this->dist2Angle_.get ();
+      }
+
+      Entry::Dist2AngleType& Entry::
+      dist2Angle ()
+      {
+        return this->dist2Angle_.get ();
+      }
+
+      void Entry::
+      dist2Angle (const Dist2AngleType& x)
+      {
+        this->dist2Angle_.set (x);
+      }
+
+      void Entry::
+      dist2Angle (::std::unique_ptr< Dist2AngleType > x)
+      {
+        this->dist2Angle_.set (std::move (x));
+      }
+
+      const Entry::StyleLabelType& Entry::
+      styleLabel () const
+      {
+        return this->styleLabel_.get ();
+      }
+
+      Entry::StyleLabelType& Entry::
+      styleLabel ()
+      {
+        return this->styleLabel_.get ();
+      }
+
+      void Entry::
+      styleLabel (const StyleLabelType& x)
+      {
+        this->styleLabel_.set (x);
+      }
+
+      void Entry::
+      styleLabel (::std::unique_ptr< StyleLabelType > x)
+      {
+        this->styleLabel_.set (std::move (x));
+      }
+
+      const Entry::DistanceLabelType& Entry::
+      distanceLabel () const
+      {
+        return this->distanceLabel_.get ();
+      }
+
+      Entry::DistanceLabelType& Entry::
+      distanceLabel ()
+      {
+        return this->distanceLabel_.get ();
+      }
+
+      void Entry::
+      distanceLabel (const DistanceLabelType& x)
+      {
+        this->distanceLabel_.set (x);
+      }
+
+      void Entry::
+      distanceLabel (::std::unique_ptr< DistanceLabelType > x)
+      {
+        this->distanceLabel_.set (std::move (x));
+      }
+
+      const Entry::Dist2AngleLabelType& Entry::
+      dist2AngleLabel () const
+      {
+        return this->dist2AngleLabel_.get ();
+      }
+
+      Entry::Dist2AngleLabelType& Entry::
+      dist2AngleLabel ()
+      {
+        return this->dist2AngleLabel_.get ();
+      }
+
+      void Entry::
+      dist2AngleLabel (const Dist2AngleLabelType& x)
+      {
+        this->dist2AngleLabel_.set (x);
+      }
+
+      void Entry::
+      dist2AngleLabel (::std::unique_ptr< Dist2AngleLabelType > x)
+      {
+        this->dist2AngleLabel_.set (std::move (x));
       }
 
 
@@ -239,6 +269,30 @@ namespace prj
         this->base_.set (std::move (x));
       }
 
+      const Chamfer::ModeType& Chamfer::
+      mode () const
+      {
+        return this->mode_.get ();
+      }
+
+      Chamfer::ModeType& Chamfer::
+      mode ()
+      {
+        return this->mode_.get ();
+      }
+
+      void Chamfer::
+      mode (const ModeType& x)
+      {
+        this->mode_.set (x);
+      }
+
+      void Chamfer::
+      mode (::std::unique_ptr< ModeType > x)
+      {
+        this->mode_.set (std::move (x));
+      }
+
       const Chamfer::SeerShapeType& Chamfer::
       seerShape () const
       {
@@ -263,6 +317,30 @@ namespace prj
         this->seerShape_.set (std::move (x));
       }
 
+      const Chamfer::ModeLabelType& Chamfer::
+      modeLabel () const
+      {
+        return this->modeLabel_.get ();
+      }
+
+      Chamfer::ModeLabelType& Chamfer::
+      modeLabel ()
+      {
+        return this->modeLabel_.get ();
+      }
+
+      void Chamfer::
+      modeLabel (const ModeLabelType& x)
+      {
+        this->modeLabel_.set (x);
+      }
+
+      void Chamfer::
+      modeLabel (::std::unique_ptr< ModeLabelType > x)
+      {
+        this->modeLabel_.set (std::move (x));
+      }
+
       const Chamfer::ShapeMapSequence& Chamfer::
       shapeMap () const
       {
@@ -279,24 +357,6 @@ namespace prj
       shapeMap (const ShapeMapSequence& s)
       {
         this->shapeMap_ = s;
-      }
-
-      const Chamfer::ModeType& Chamfer::
-      mode () const
-      {
-        return this->mode_.get ();
-      }
-
-      Chamfer::ModeType& Chamfer::
-      mode ()
-      {
-        return this->mode_.get ();
-      }
-
-      void Chamfer::
-      mode (const ModeType& x)
-      {
-        this->mode_.set (x);
       }
 
       const Chamfer::EntriesSequence& Chamfer::
@@ -333,31 +393,43 @@ namespace prj
 
       Entry::
       Entry (const StyleType& style,
-             const Parameter1Type& parameter1,
-             const Label1Type& label1)
+             const EdgePicksType& edgePicks,
+             const FacePicksType& facePicks,
+             const DistanceType& distance,
+             const Dist2AngleType& dist2Angle,
+             const StyleLabelType& styleLabel,
+             const DistanceLabelType& distanceLabel,
+             const Dist2AngleLabelType& dist2AngleLabel)
       : ::xml_schema::Type (),
         style_ (style, this),
-        parameter1_ (parameter1, this),
-        parameter2_ (this),
-        label1_ (label1, this),
-        label2_ (this),
-        edgePicks_ (this),
-        facePicks_ (this)
+        edgePicks_ (edgePicks, this),
+        facePicks_ (facePicks, this),
+        distance_ (distance, this),
+        dist2Angle_ (dist2Angle, this),
+        styleLabel_ (styleLabel, this),
+        distanceLabel_ (distanceLabel, this),
+        dist2AngleLabel_ (dist2AngleLabel, this)
       {
       }
 
       Entry::
-      Entry (const StyleType& style,
-             ::std::unique_ptr< Parameter1Type > parameter1,
-             ::std::unique_ptr< Label1Type > label1)
+      Entry (::std::unique_ptr< StyleType > style,
+             ::std::unique_ptr< EdgePicksType > edgePicks,
+             ::std::unique_ptr< FacePicksType > facePicks,
+             ::std::unique_ptr< DistanceType > distance,
+             ::std::unique_ptr< Dist2AngleType > dist2Angle,
+             ::std::unique_ptr< StyleLabelType > styleLabel,
+             ::std::unique_ptr< DistanceLabelType > distanceLabel,
+             ::std::unique_ptr< Dist2AngleLabelType > dist2AngleLabel)
       : ::xml_schema::Type (),
-        style_ (style, this),
-        parameter1_ (std::move (parameter1), this),
-        parameter2_ (this),
-        label1_ (std::move (label1), this),
-        label2_ (this),
-        edgePicks_ (this),
-        facePicks_ (this)
+        style_ (std::move (style), this),
+        edgePicks_ (std::move (edgePicks), this),
+        facePicks_ (std::move (facePicks), this),
+        distance_ (std::move (distance), this),
+        dist2Angle_ (std::move (dist2Angle), this),
+        styleLabel_ (std::move (styleLabel), this),
+        distanceLabel_ (std::move (distanceLabel), this),
+        dist2AngleLabel_ (std::move (dist2AngleLabel), this)
       {
       }
 
@@ -367,12 +439,13 @@ namespace prj
              ::xml_schema::Container* c)
       : ::xml_schema::Type (x, f, c),
         style_ (x.style_, f, this),
-        parameter1_ (x.parameter1_, f, this),
-        parameter2_ (x.parameter2_, f, this),
-        label1_ (x.label1_, f, this),
-        label2_ (x.label2_, f, this),
         edgePicks_ (x.edgePicks_, f, this),
-        facePicks_ (x.facePicks_, f, this)
+        facePicks_ (x.facePicks_, f, this),
+        distance_ (x.distance_, f, this),
+        dist2Angle_ (x.dist2Angle_, f, this),
+        styleLabel_ (x.styleLabel_, f, this),
+        distanceLabel_ (x.distanceLabel_, f, this),
+        dist2AngleLabel_ (x.dist2AngleLabel_, f, this)
       {
       }
 
@@ -382,12 +455,13 @@ namespace prj
              ::xml_schema::Container* c)
       : ::xml_schema::Type (e, f | ::xml_schema::Flags::base, c),
         style_ (this),
-        parameter1_ (this),
-        parameter2_ (this),
-        label1_ (this),
-        label2_ (this),
         edgePicks_ (this),
-        facePicks_ (this)
+        facePicks_ (this),
+        distance_ (this),
+        dist2Angle_ (this),
+        styleLabel_ (this),
+        distanceLabel_ (this),
+        dist2AngleLabel_ (this)
       {
         if ((f & ::xml_schema::Flags::base) == 0)
         {
@@ -410,65 +484,12 @@ namespace prj
           //
           if (n.name () == "style" && n.namespace_ ().empty ())
           {
+            ::std::unique_ptr< StyleType > r (
+              StyleTraits::create (i, f, this));
+
             if (!style_.present ())
             {
-              this->style_.set (StyleTraits::create (i, f, this));
-              continue;
-            }
-          }
-
-          // parameter1
-          //
-          if (n.name () == "parameter1" && n.namespace_ ().empty ())
-          {
-            ::std::unique_ptr< Parameter1Type > r (
-              Parameter1Traits::create (i, f, this));
-
-            if (!parameter1_.present ())
-            {
-              this->parameter1_.set (::std::move (r));
-              continue;
-            }
-          }
-
-          // parameter2
-          //
-          if (n.name () == "parameter2" && n.namespace_ ().empty ())
-          {
-            ::std::unique_ptr< Parameter2Type > r (
-              Parameter2Traits::create (i, f, this));
-
-            if (!this->parameter2_)
-            {
-              this->parameter2_.set (::std::move (r));
-              continue;
-            }
-          }
-
-          // label1
-          //
-          if (n.name () == "label1" && n.namespace_ ().empty ())
-          {
-            ::std::unique_ptr< Label1Type > r (
-              Label1Traits::create (i, f, this));
-
-            if (!label1_.present ())
-            {
-              this->label1_.set (::std::move (r));
-              continue;
-            }
-          }
-
-          // label2
-          //
-          if (n.name () == "label2" && n.namespace_ ().empty ())
-          {
-            ::std::unique_ptr< Label2Type > r (
-              Label2Traits::create (i, f, this));
-
-            if (!this->label2_)
-            {
-              this->label2_.set (::std::move (r));
+              this->style_.set (::std::move (r));
               continue;
             }
           }
@@ -480,8 +501,11 @@ namespace prj
             ::std::unique_ptr< EdgePicksType > r (
               EdgePicksTraits::create (i, f, this));
 
-            this->edgePicks_.push_back (::std::move (r));
-            continue;
+            if (!edgePicks_.present ())
+            {
+              this->edgePicks_.set (::std::move (r));
+              continue;
+            }
           }
 
           // facePicks
@@ -491,8 +515,81 @@ namespace prj
             ::std::unique_ptr< FacePicksType > r (
               FacePicksTraits::create (i, f, this));
 
-            this->facePicks_.push_back (::std::move (r));
-            continue;
+            if (!facePicks_.present ())
+            {
+              this->facePicks_.set (::std::move (r));
+              continue;
+            }
+          }
+
+          // distance
+          //
+          if (n.name () == "distance" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< DistanceType > r (
+              DistanceTraits::create (i, f, this));
+
+            if (!distance_.present ())
+            {
+              this->distance_.set (::std::move (r));
+              continue;
+            }
+          }
+
+          // dist2Angle
+          //
+          if (n.name () == "dist2Angle" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< Dist2AngleType > r (
+              Dist2AngleTraits::create (i, f, this));
+
+            if (!dist2Angle_.present ())
+            {
+              this->dist2Angle_.set (::std::move (r));
+              continue;
+            }
+          }
+
+          // styleLabel
+          //
+          if (n.name () == "styleLabel" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< StyleLabelType > r (
+              StyleLabelTraits::create (i, f, this));
+
+            if (!styleLabel_.present ())
+            {
+              this->styleLabel_.set (::std::move (r));
+              continue;
+            }
+          }
+
+          // distanceLabel
+          //
+          if (n.name () == "distanceLabel" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< DistanceLabelType > r (
+              DistanceLabelTraits::create (i, f, this));
+
+            if (!distanceLabel_.present ())
+            {
+              this->distanceLabel_.set (::std::move (r));
+              continue;
+            }
+          }
+
+          // dist2AngleLabel
+          //
+          if (n.name () == "dist2AngleLabel" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< Dist2AngleLabelType > r (
+              Dist2AngleLabelTraits::create (i, f, this));
+
+            if (!dist2AngleLabel_.present ())
+            {
+              this->dist2AngleLabel_.set (::std::move (r));
+              continue;
+            }
           }
 
           break;
@@ -505,17 +602,52 @@ namespace prj
             "");
         }
 
-        if (!parameter1_.present ())
+        if (!edgePicks_.present ())
         {
           throw ::xsd::cxx::tree::expected_element< char > (
-            "parameter1",
+            "edgePicks",
             "");
         }
 
-        if (!label1_.present ())
+        if (!facePicks_.present ())
         {
           throw ::xsd::cxx::tree::expected_element< char > (
-            "label1",
+            "facePicks",
+            "");
+        }
+
+        if (!distance_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "distance",
+            "");
+        }
+
+        if (!dist2Angle_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "dist2Angle",
+            "");
+        }
+
+        if (!styleLabel_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "styleLabel",
+            "");
+        }
+
+        if (!distanceLabel_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "distanceLabel",
+            "");
+        }
+
+        if (!dist2AngleLabel_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "dist2AngleLabel",
             "");
         }
       }
@@ -534,12 +666,13 @@ namespace prj
         {
           static_cast< ::xml_schema::Type& > (*this) = x;
           this->style_ = x.style_;
-          this->parameter1_ = x.parameter1_;
-          this->parameter2_ = x.parameter2_;
-          this->label1_ = x.label1_;
-          this->label2_ = x.label2_;
           this->edgePicks_ = x.edgePicks_;
           this->facePicks_ = x.facePicks_;
+          this->distance_ = x.distance_;
+          this->dist2Angle_ = x.dist2Angle_;
+          this->styleLabel_ = x.styleLabel_;
+          this->distanceLabel_ = x.distanceLabel_;
+          this->dist2AngleLabel_ = x.dist2AngleLabel_;
         }
 
         return *this;
@@ -555,26 +688,30 @@ namespace prj
 
       Chamfer::
       Chamfer (const BaseType& base,
+               const ModeType& mode,
                const SeerShapeType& seerShape,
-               const ModeType& mode)
+               const ModeLabelType& modeLabel)
       : ::xml_schema::Type (),
         base_ (base, this),
-        seerShape_ (seerShape, this),
-        shapeMap_ (this),
         mode_ (mode, this),
+        seerShape_ (seerShape, this),
+        modeLabel_ (modeLabel, this),
+        shapeMap_ (this),
         entries_ (this)
       {
       }
 
       Chamfer::
       Chamfer (::std::unique_ptr< BaseType > base,
+               ::std::unique_ptr< ModeType > mode,
                ::std::unique_ptr< SeerShapeType > seerShape,
-               const ModeType& mode)
+               ::std::unique_ptr< ModeLabelType > modeLabel)
       : ::xml_schema::Type (),
         base_ (std::move (base), this),
+        mode_ (std::move (mode), this),
         seerShape_ (std::move (seerShape), this),
+        modeLabel_ (std::move (modeLabel), this),
         shapeMap_ (this),
-        mode_ (mode, this),
         entries_ (this)
       {
       }
@@ -585,9 +722,10 @@ namespace prj
                ::xml_schema::Container* c)
       : ::xml_schema::Type (x, f, c),
         base_ (x.base_, f, this),
-        seerShape_ (x.seerShape_, f, this),
-        shapeMap_ (x.shapeMap_, f, this),
         mode_ (x.mode_, f, this),
+        seerShape_ (x.seerShape_, f, this),
+        modeLabel_ (x.modeLabel_, f, this),
+        shapeMap_ (x.shapeMap_, f, this),
         entries_ (x.entries_, f, this)
       {
       }
@@ -598,9 +736,10 @@ namespace prj
                ::xml_schema::Container* c)
       : ::xml_schema::Type (e, f | ::xml_schema::Flags::base, c),
         base_ (this),
-        seerShape_ (this),
-        shapeMap_ (this),
         mode_ (this),
+        seerShape_ (this),
+        modeLabel_ (this),
+        shapeMap_ (this),
         entries_ (this)
       {
         if ((f & ::xml_schema::Flags::base) == 0)
@@ -634,6 +773,20 @@ namespace prj
             }
           }
 
+          // mode
+          //
+          if (n.name () == "mode" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< ModeType > r (
+              ModeTraits::create (i, f, this));
+
+            if (!mode_.present ())
+            {
+              this->mode_.set (::std::move (r));
+              continue;
+            }
+          }
+
           // seerShape
           //
           if (n.name () == "seerShape" && n.namespace_ ().empty ())
@@ -648,6 +801,20 @@ namespace prj
             }
           }
 
+          // modeLabel
+          //
+          if (n.name () == "modeLabel" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< ModeLabelType > r (
+              ModeLabelTraits::create (i, f, this));
+
+            if (!modeLabel_.present ())
+            {
+              this->modeLabel_.set (::std::move (r));
+              continue;
+            }
+          }
+
           // shapeMap
           //
           if (n.name () == "shapeMap" && n.namespace_ ().empty ())
@@ -657,17 +824,6 @@ namespace prj
 
             this->shapeMap_.push_back (::std::move (r));
             continue;
-          }
-
-          // mode
-          //
-          if (n.name () == "mode" && n.namespace_ ().empty ())
-          {
-            if (!mode_.present ())
-            {
-              this->mode_.set (ModeTraits::create (i, f, this));
-              continue;
-            }
           }
 
           // entries
@@ -691,6 +847,13 @@ namespace prj
             "");
         }
 
+        if (!mode_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "mode",
+            "");
+        }
+
         if (!seerShape_.present ())
         {
           throw ::xsd::cxx::tree::expected_element< char > (
@@ -698,10 +861,10 @@ namespace prj
             "");
         }
 
-        if (!mode_.present ())
+        if (!modeLabel_.present ())
         {
           throw ::xsd::cxx::tree::expected_element< char > (
-            "mode",
+            "modeLabel",
             "");
         }
       }
@@ -720,9 +883,10 @@ namespace prj
         {
           static_cast< ::xml_schema::Type& > (*this) = x;
           this->base_ = x.base_;
-          this->seerShape_ = x.seerShape_;
-          this->shapeMap_ = x.shapeMap_;
           this->mode_ = x.mode_;
+          this->seerShape_ = x.seerShape_;
+          this->modeLabel_ = x.modeLabel_;
+          this->shapeMap_ = x.shapeMap_;
           this->entries_ = x.entries_;
         }
 
@@ -1042,78 +1206,81 @@ namespace prj
           s << i.style ();
         }
 
-        // parameter1
-        //
-        {
-          ::xercesc::DOMElement& s (
-            ::xsd::cxx::xml::dom::create_element (
-              "parameter1",
-              e));
-
-          s << i.parameter1 ();
-        }
-
-        // parameter2
-        //
-        if (i.parameter2 ())
-        {
-          ::xercesc::DOMElement& s (
-            ::xsd::cxx::xml::dom::create_element (
-              "parameter2",
-              e));
-
-          s << *i.parameter2 ();
-        }
-
-        // label1
-        //
-        {
-          ::xercesc::DOMElement& s (
-            ::xsd::cxx::xml::dom::create_element (
-              "label1",
-              e));
-
-          s << i.label1 ();
-        }
-
-        // label2
-        //
-        if (i.label2 ())
-        {
-          ::xercesc::DOMElement& s (
-            ::xsd::cxx::xml::dom::create_element (
-              "label2",
-              e));
-
-          s << *i.label2 ();
-        }
-
         // edgePicks
         //
-        for (Entry::EdgePicksConstIterator
-             b (i.edgePicks ().begin ()), n (i.edgePicks ().end ());
-             b != n; ++b)
         {
           ::xercesc::DOMElement& s (
             ::xsd::cxx::xml::dom::create_element (
               "edgePicks",
               e));
 
-          s << *b;
+          s << i.edgePicks ();
         }
 
         // facePicks
         //
-        for (Entry::FacePicksConstIterator
-             b (i.facePicks ().begin ()), n (i.facePicks ().end ());
-             b != n; ++b)
         {
           ::xercesc::DOMElement& s (
             ::xsd::cxx::xml::dom::create_element (
               "facePicks",
               e));
 
-          s << *b;
+          s << i.facePicks ();
+        }
+
+        // distance
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "distance",
+              e));
+
+          s << i.distance ();
+        }
+
+        // dist2Angle
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "dist2Angle",
+              e));
+
+          s << i.dist2Angle ();
+        }
+
+        // styleLabel
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "styleLabel",
+              e));
+
+          s << i.styleLabel ();
+        }
+
+        // distanceLabel
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "distanceLabel",
+              e));
+
+          s << i.distanceLabel ();
+        }
+
+        // dist2AngleLabel
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "dist2AngleLabel",
+              e));
+
+          s << i.dist2AngleLabel ();
         }
       }
 
@@ -1133,6 +1300,17 @@ namespace prj
           s << i.base ();
         }
 
+        // mode
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "mode",
+              e));
+
+          s << i.mode ();
+        }
+
         // seerShape
         //
         {
@@ -1142,6 +1320,17 @@ namespace prj
               e));
 
           s << i.seerShape ();
+        }
+
+        // modeLabel
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "modeLabel",
+              e));
+
+          s << i.modeLabel ();
         }
 
         // shapeMap
@@ -1156,17 +1345,6 @@ namespace prj
               e));
 
           s << *b;
-        }
-
-        // mode
-        //
-        {
-          ::xercesc::DOMElement& s (
-            ::xsd::cxx::xml::dom::create_element (
-              "mode",
-              e));
-
-          s << i.mode ();
         }
 
         // entries

@@ -92,8 +92,6 @@ namespace prj
 
 #include "prjsrlsptparameter.h"
 
-#include "prjsrlsptpick.h"
-
 #include "prjsrlsptoverlay.h"
 
 #include "prjsrlsptseershape.h"
@@ -111,7 +109,7 @@ namespace prj
         public:
         // style
         //
-        typedef ::xml_schema::Int StyleType;
+        typedef ::prj::srl::spt::Parameter StyleType;
         typedef ::xsd::cxx::tree::traits< StyleType, char > StyleTraits;
 
         const StyleType&
@@ -123,125 +121,147 @@ namespace prj
         void
         style (const StyleType& x);
 
-        // parameter1
-        //
-        typedef ::prj::srl::spt::Parameter Parameter1Type;
-        typedef ::xsd::cxx::tree::traits< Parameter1Type, char > Parameter1Traits;
-
-        const Parameter1Type&
-        parameter1 () const;
-
-        Parameter1Type&
-        parameter1 ();
-
         void
-        parameter1 (const Parameter1Type& x);
-
-        void
-        parameter1 (::std::unique_ptr< Parameter1Type > p);
-
-        // parameter2
-        //
-        typedef ::prj::srl::spt::Parameter Parameter2Type;
-        typedef ::xsd::cxx::tree::optional< Parameter2Type > Parameter2Optional;
-        typedef ::xsd::cxx::tree::traits< Parameter2Type, char > Parameter2Traits;
-
-        const Parameter2Optional&
-        parameter2 () const;
-
-        Parameter2Optional&
-        parameter2 ();
-
-        void
-        parameter2 (const Parameter2Type& x);
-
-        void
-        parameter2 (const Parameter2Optional& x);
-
-        void
-        parameter2 (::std::unique_ptr< Parameter2Type > p);
-
-        // label1
-        //
-        typedef ::prj::srl::spt::PLabel Label1Type;
-        typedef ::xsd::cxx::tree::traits< Label1Type, char > Label1Traits;
-
-        const Label1Type&
-        label1 () const;
-
-        Label1Type&
-        label1 ();
-
-        void
-        label1 (const Label1Type& x);
-
-        void
-        label1 (::std::unique_ptr< Label1Type > p);
-
-        // label2
-        //
-        typedef ::prj::srl::spt::PLabel Label2Type;
-        typedef ::xsd::cxx::tree::optional< Label2Type > Label2Optional;
-        typedef ::xsd::cxx::tree::traits< Label2Type, char > Label2Traits;
-
-        const Label2Optional&
-        label2 () const;
-
-        Label2Optional&
-        label2 ();
-
-        void
-        label2 (const Label2Type& x);
-
-        void
-        label2 (const Label2Optional& x);
-
-        void
-        label2 (::std::unique_ptr< Label2Type > p);
+        style (::std::unique_ptr< StyleType > p);
 
         // edgePicks
         //
-        typedef ::prj::srl::spt::Pick EdgePicksType;
-        typedef ::xsd::cxx::tree::sequence< EdgePicksType > EdgePicksSequence;
-        typedef EdgePicksSequence::iterator EdgePicksIterator;
-        typedef EdgePicksSequence::const_iterator EdgePicksConstIterator;
+        typedef ::prj::srl::spt::Parameter EdgePicksType;
         typedef ::xsd::cxx::tree::traits< EdgePicksType, char > EdgePicksTraits;
 
-        const EdgePicksSequence&
+        const EdgePicksType&
         edgePicks () const;
 
-        EdgePicksSequence&
+        EdgePicksType&
         edgePicks ();
 
         void
-        edgePicks (const EdgePicksSequence& s);
+        edgePicks (const EdgePicksType& x);
+
+        void
+        edgePicks (::std::unique_ptr< EdgePicksType > p);
 
         // facePicks
         //
-        typedef ::prj::srl::spt::Pick FacePicksType;
-        typedef ::xsd::cxx::tree::sequence< FacePicksType > FacePicksSequence;
-        typedef FacePicksSequence::iterator FacePicksIterator;
-        typedef FacePicksSequence::const_iterator FacePicksConstIterator;
+        typedef ::prj::srl::spt::Parameter FacePicksType;
         typedef ::xsd::cxx::tree::traits< FacePicksType, char > FacePicksTraits;
 
-        const FacePicksSequence&
+        const FacePicksType&
         facePicks () const;
 
-        FacePicksSequence&
+        FacePicksType&
         facePicks ();
 
         void
-        facePicks (const FacePicksSequence& s);
+        facePicks (const FacePicksType& x);
+
+        void
+        facePicks (::std::unique_ptr< FacePicksType > p);
+
+        // distance
+        //
+        typedef ::prj::srl::spt::Parameter DistanceType;
+        typedef ::xsd::cxx::tree::traits< DistanceType, char > DistanceTraits;
+
+        const DistanceType&
+        distance () const;
+
+        DistanceType&
+        distance ();
+
+        void
+        distance (const DistanceType& x);
+
+        void
+        distance (::std::unique_ptr< DistanceType > p);
+
+        // dist2Angle
+        //
+        typedef ::prj::srl::spt::Parameter Dist2AngleType;
+        typedef ::xsd::cxx::tree::traits< Dist2AngleType, char > Dist2AngleTraits;
+
+        const Dist2AngleType&
+        dist2Angle () const;
+
+        Dist2AngleType&
+        dist2Angle ();
+
+        void
+        dist2Angle (const Dist2AngleType& x);
+
+        void
+        dist2Angle (::std::unique_ptr< Dist2AngleType > p);
+
+        // styleLabel
+        //
+        typedef ::prj::srl::spt::PLabel StyleLabelType;
+        typedef ::xsd::cxx::tree::traits< StyleLabelType, char > StyleLabelTraits;
+
+        const StyleLabelType&
+        styleLabel () const;
+
+        StyleLabelType&
+        styleLabel ();
+
+        void
+        styleLabel (const StyleLabelType& x);
+
+        void
+        styleLabel (::std::unique_ptr< StyleLabelType > p);
+
+        // distanceLabel
+        //
+        typedef ::prj::srl::spt::PLabel DistanceLabelType;
+        typedef ::xsd::cxx::tree::traits< DistanceLabelType, char > DistanceLabelTraits;
+
+        const DistanceLabelType&
+        distanceLabel () const;
+
+        DistanceLabelType&
+        distanceLabel ();
+
+        void
+        distanceLabel (const DistanceLabelType& x);
+
+        void
+        distanceLabel (::std::unique_ptr< DistanceLabelType > p);
+
+        // dist2AngleLabel
+        //
+        typedef ::prj::srl::spt::PLabel Dist2AngleLabelType;
+        typedef ::xsd::cxx::tree::traits< Dist2AngleLabelType, char > Dist2AngleLabelTraits;
+
+        const Dist2AngleLabelType&
+        dist2AngleLabel () const;
+
+        Dist2AngleLabelType&
+        dist2AngleLabel ();
+
+        void
+        dist2AngleLabel (const Dist2AngleLabelType& x);
+
+        void
+        dist2AngleLabel (::std::unique_ptr< Dist2AngleLabelType > p);
 
         // Constructors.
         //
         Entry (const StyleType&,
-               const Parameter1Type&,
-               const Label1Type&);
+               const EdgePicksType&,
+               const FacePicksType&,
+               const DistanceType&,
+               const Dist2AngleType&,
+               const StyleLabelType&,
+               const DistanceLabelType&,
+               const Dist2AngleLabelType&);
 
-        Entry (const StyleType&,
-               ::std::unique_ptr< Parameter1Type >,
-               ::std::unique_ptr< Label1Type >);
+        Entry (::std::unique_ptr< StyleType >,
+               ::std::unique_ptr< EdgePicksType >,
+               ::std::unique_ptr< FacePicksType >,
+               ::std::unique_ptr< DistanceType >,
+               ::std::unique_ptr< Dist2AngleType >,
+               ::std::unique_ptr< StyleLabelType >,
+               ::std::unique_ptr< DistanceLabelType >,
+               ::std::unique_ptr< Dist2AngleLabelType >);
 
         Entry (const ::xercesc::DOMElement& e,
                ::xml_schema::Flags f = 0,
@@ -270,12 +290,13 @@ namespace prj
 
         protected:
         ::xsd::cxx::tree::one< StyleType > style_;
-        ::xsd::cxx::tree::one< Parameter1Type > parameter1_;
-        Parameter2Optional parameter2_;
-        ::xsd::cxx::tree::one< Label1Type > label1_;
-        Label2Optional label2_;
-        EdgePicksSequence edgePicks_;
-        FacePicksSequence facePicks_;
+        ::xsd::cxx::tree::one< EdgePicksType > edgePicks_;
+        ::xsd::cxx::tree::one< FacePicksType > facePicks_;
+        ::xsd::cxx::tree::one< DistanceType > distance_;
+        ::xsd::cxx::tree::one< Dist2AngleType > dist2Angle_;
+        ::xsd::cxx::tree::one< StyleLabelType > styleLabel_;
+        ::xsd::cxx::tree::one< DistanceLabelType > distanceLabel_;
+        ::xsd::cxx::tree::one< Dist2AngleLabelType > dist2AngleLabel_;
       };
 
       class Chamfer: public ::xml_schema::Type
@@ -298,6 +319,23 @@ namespace prj
         void
         base (::std::unique_ptr< BaseType > p);
 
+        // mode
+        //
+        typedef ::prj::srl::spt::Parameter ModeType;
+        typedef ::xsd::cxx::tree::traits< ModeType, char > ModeTraits;
+
+        const ModeType&
+        mode () const;
+
+        ModeType&
+        mode ();
+
+        void
+        mode (const ModeType& x);
+
+        void
+        mode (::std::unique_ptr< ModeType > p);
+
         // seerShape
         //
         typedef ::prj::srl::spt::SeerShape SeerShapeType;
@@ -315,6 +353,23 @@ namespace prj
         void
         seerShape (::std::unique_ptr< SeerShapeType > p);
 
+        // modeLabel
+        //
+        typedef ::prj::srl::spt::PLabel ModeLabelType;
+        typedef ::xsd::cxx::tree::traits< ModeLabelType, char > ModeLabelTraits;
+
+        const ModeLabelType&
+        modeLabel () const;
+
+        ModeLabelType&
+        modeLabel ();
+
+        void
+        modeLabel (const ModeLabelType& x);
+
+        void
+        modeLabel (::std::unique_ptr< ModeLabelType > p);
+
         // shapeMap
         //
         typedef ::prj::srl::spt::EvolveRecord ShapeMapType;
@@ -331,20 +386,6 @@ namespace prj
 
         void
         shapeMap (const ShapeMapSequence& s);
-
-        // mode
-        //
-        typedef ::xml_schema::Int ModeType;
-        typedef ::xsd::cxx::tree::traits< ModeType, char > ModeTraits;
-
-        const ModeType&
-        mode () const;
-
-        ModeType&
-        mode ();
-
-        void
-        mode (const ModeType& x);
 
         // entries
         //
@@ -366,12 +407,14 @@ namespace prj
         // Constructors.
         //
         Chamfer (const BaseType&,
+                 const ModeType&,
                  const SeerShapeType&,
-                 const ModeType&);
+                 const ModeLabelType&);
 
         Chamfer (::std::unique_ptr< BaseType >,
+                 ::std::unique_ptr< ModeType >,
                  ::std::unique_ptr< SeerShapeType >,
-                 const ModeType&);
+                 ::std::unique_ptr< ModeLabelType >);
 
         Chamfer (const ::xercesc::DOMElement& e,
                  ::xml_schema::Flags f = 0,
@@ -400,9 +443,10 @@ namespace prj
 
         protected:
         ::xsd::cxx::tree::one< BaseType > base_;
-        ::xsd::cxx::tree::one< SeerShapeType > seerShape_;
-        ShapeMapSequence shapeMap_;
         ::xsd::cxx::tree::one< ModeType > mode_;
+        ::xsd::cxx::tree::one< SeerShapeType > seerShape_;
+        ::xsd::cxx::tree::one< ModeLabelType > modeLabel_;
+        ShapeMapSequence shapeMap_;
         EntriesSequence entries_;
       };
     }

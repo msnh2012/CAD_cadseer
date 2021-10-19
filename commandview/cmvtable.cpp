@@ -641,46 +641,24 @@ void View::mouseDoubleClickEvent(QMouseEvent *event)
   QModelIndex index = indexAt(event->pos());
   if (index.isValid() && index.column() == 1)
   {
-    prm::Parameter *prm = static_cast<Model*>(model())->getParameter(index);
-    if (!prm->isConstant())
+    auto mask = Qt::ItemIsEnabled | Qt::ItemIsEditable; //Qt::ItemIsSelectable?
+    auto flags = model()->flags(index);
+    if ((flags & mask) == mask)
     {
-      //double click a link expression unlinks it.
-      auto &em = app::instance()->getProject()->getManager();
-      em.removeLink(prm->getId());
-//       return; //without return we go right into editing.
-    }
-    if (prm->getValueType() == typeid(ftr::Picks))
-    {
-      //pad the height for picks so we have room to grow and
-      //user isn't dealing with tiny scroll when editing
-      
-      double lowScale = 1.1;
-      double highScale = 4.0;
-      
-      int pickCount = static_cast<int>(prm->getPicks().size());
-      double scale = 1.0;
-      if (pickCount == 0)
-        scale = highScale;
-      else if (pickCount > 10)
-        scale = lowScale;
-      else
+      prm::Parameter *prm = static_cast<Model*>(model())->getParameter(index);
+      if (!prm->isConstant())
       {
-        // x is per item factor
-        // y is multiply pixel factor.
-        osg::Vec2d linear = (osg::Vec2d(10, lowScale) - osg::Vec2d(0, highScale));
-        linear.normalize();
-        scale = (linear * static_cast<double>(pickCount)).y() + highScale;
+        //double click a link expression unlinks it.
+        auto &em = app::instance()->getProject()->getManager();
+        em.removeLink(prm->getId());
+        //       return; //without return we go right into editing.
       }
-      
-      int height = rowHeight(index.row()) * scale;
-      height = std::max(10, height);
-      height = std::min(height, static_cast<int>(size().height() * 0.8)); //max at 80% of main table.
-      
-      setRowHeight(index.row(), height);
-      openingPersistent();
-      openPersistentEditor(index);
-      app::instance()->installEventFilter(this);
-      return;
+      if (prm->getValueType() == typeid(ftr::Picks))
+      {
+        setCurrentIndex(index);
+        goPersistentPick(index);
+        return;
+      }
     }
   }
   QTableView::mouseDoubleClickEvent(event);
@@ -805,6 +783,60 @@ void View::updateHideInactive()
     else
       hideRow(r);
   }
+}
+
+void View::openPersistent(const QModelIndex &index)
+{
+  if (!index.isValid())
+    return;
+  
+  auto mask = Qt::ItemIsEnabled | Qt::ItemIsEditable; //Qt::ItemIsSelectable?
+  auto flags = model()->flags(index);
+  if ((flags & mask) != mask)
+    return;
+  
+  setCurrentIndex(index);
+  prm::Parameter *prm = static_cast<Model*>(model())->getParameter(index);
+  if (prm->getValueType() == typeid(ftr::Picks))
+    goPersistentPick(index);
+  else
+    edit(index);
+}
+
+void View::goPersistentPick(const QModelIndex &index)
+{
+  assert(index.isValid());
+  openingPersistent();
+  prm::Parameter *prm = static_cast<Model*>(model())->getParameter(index);
+  assert(prm->getValueType() == typeid(ftr::Picks));
+
+  //pad the height for picks so we have room to grow and
+  //user isn't dealing with tiny scroll when editing
+  double lowScale = 1.1;
+  double highScale = 4.0;
+  int pickCount = static_cast<int>(prm->getPicks().size());
+  double scale = 1.0;
+  if (pickCount == 0)
+    scale = highScale;
+  else if (pickCount > 10)
+    scale = lowScale;
+  else
+  {
+    // x is per item factor
+    // y is multiply pixel factor.
+    osg::Vec2d linear = (osg::Vec2d(10, lowScale) - osg::Vec2d(0, highScale));
+    linear.normalize();
+    scale = (linear * static_cast<double>(pickCount)).y() + highScale;
+  }
+  
+  int height = rowHeight(index.row()) * scale;
+  height = std::max(10, height);
+  height = std::min(height, static_cast<int>(size().height() * 0.8)); //max at 80% of main table.
+  
+  setRowHeight(index.row(), height);
+  app::instance()->installEventFilter(this);
+    
+  openPersistentEditor(index);
 }
 
 void View::closePersistent(bool shouldCommit)

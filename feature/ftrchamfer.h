@@ -20,36 +20,30 @@
 #ifndef FTR_CHAMFER_H
 #define FTR_CHAMFER_H
 
-#include <map>
-
-#include "library/lbrplabel.h"
-#include "feature/ftrpick.h"
 #include "feature/ftrbase.h"
+#include "parameter/prmparameter.h"
 
-class BRepFilletAPI_MakeChamfer;
 namespace prj{namespace srl{namespace chms{class Chamfer; class Entry;}}}
-namespace ann{class SeerShape;}
+namespace lbr{class PLabel;}
 
 namespace ftr
 {
   namespace Chamfer
   {
-    constexpr static const char *edge = "edge";
-    constexpr static const char *face = "face";
-    
-    enum class Mode
+    namespace PrmTags
     {
-      Classic = 0
-      , Throat
-      , ThroatPenetration
-    };
+      inline constexpr std::string_view mode = "mode";
+      inline constexpr std::string_view style = "style";
+      inline constexpr std::string_view edgePicks = "edgePicks";
+      inline constexpr std::string_view facePicks = "facePicks";
+      inline constexpr std::string_view dist2Angle = "dist2Angle";
+    }
     
-    enum class Style
+    namespace InputTags
     {
-      Symmetric = 0
-      , TwoDistances
-      , DistanceAngle
-    };
+      inline constexpr std::string_view edge = "edge";
+      inline constexpr std::string_view face = "face";
+    }
     
     /*! @struct Entry
      *@brief describes chamfer options
@@ -59,26 +53,31 @@ namespace ftr
      */
     struct Entry
     {
-      Style style = Style::Symmetric;
-      std::shared_ptr<prm::Parameter> parameter1;
-      std::shared_ptr<prm::Parameter> parameter2;
-      osg::ref_ptr<lbr::PLabel> label1;
-      osg::ref_ptr<lbr::PLabel> label2;
-      Picks edgePicks;
-      Picks facePicks;
+      prm::Parameter style;
+      prm::Parameter edgePicks;
+      prm::Parameter facePicks;
+      prm::Parameter distance;
+      prm::Parameter dist2Angle;
+      osg::ref_ptr<lbr::PLabel> styleLabel;
+      osg::ref_ptr<lbr::PLabel> distanceLabel;
+      osg::ref_ptr<lbr::PLabel> dist2AngleLabel;
+      prm::Observer styleObserver;
       
-      Entry() = default;
-      Entry(const Entry&) = default;
-      Entry(const Entry&, bool); //makes new parameters with same ids.
+      Entry();
       Entry(const prj::srl::chms::Entry&);
+      Entry(const Entry&) = delete;
+      Entry& operator=(const Entry&) = delete;
+      Entry(Entry&&) noexcept = default;
+      Entry& operator=(Entry&&) noexcept = default;
+      ~Entry() noexcept;
       
       prj::srl::chms::Entry serialOut() const;
       void serialIn(const prj::srl::chms::Entry&);
       
-      static Entry buildDefaultSymmetric();
-      static Entry buildDefaultTwoDistances();
-      static Entry buildDefaultDistanceAngle();
+      prm::Parameters getParameters();
+      void prmActiveSync();
     };
+    using Entries = std::list<Entry>;
     
     /*! @class Feature
      * @brief chamfer feature
@@ -94,43 +93,26 @@ namespace ftr
     public:
       
       Feature();
-      virtual ~Feature() override;
-      virtual void updateModel(const UpdatePayload&) override;
-      virtual Type getType() const override {return Type::Chamfer;}
-      virtual const std::string& getTypeString() const override {return toString(Type::Chamfer);}
-      virtual const QIcon& getIcon() const override {return icon;}
-      virtual Descriptor getDescriptor() const override {return Descriptor::Alter;}
-      virtual void serialWrite(const boost::filesystem::path&) override;
+      ~Feature() override;
+      void updateModel(const UpdatePayload&) override;
+      Type getType() const override {return Type::Chamfer;}
+      const std::string& getTypeString() const override {return toString(Type::Chamfer);}
+      const QIcon& getIcon() const override {return icon;}
+      Descriptor getDescriptor() const override {return Descriptor::Alter;}
+      void serialWrite(const boost::filesystem::path&) override;
       void serialRead(const prj::srl::chms::Chamfer&);
       
-      Mode getMode(){return mode;}
-      void setMode(Mode); //!< entries will be cleared.
-      
-      int addSymmetric(); //!< assert on mode conflict
-      int addTwoDistances(); //!< assert on mode conflict
-      int addDistanceAngle(); //!< assert on mode conflict
+      Entry& addSymmetric(); //!< assert on mode conflict
+      Entry& addTwoDistances(); //!< assert on mode conflict
+      Entry& addDistanceAngle(); //!< assert on mode conflict
       void removeEntry(int); //!< assert on entry index
-      const std::vector<Entry>& getEntries(){return entries;}
-      const Entry& getEntry(int); //!< assert on entry index
-      
-      void setEdgePicks(int, const Picks&); //!< assert on entry index
-      void setFacePicks(int, const Picks&); //!< assert on entry index and style conflict
+      Entry& getEntry(int);
+      Entries& getEntries();
       
     private:
-      Mode mode = Mode::Classic;
-      std::vector<Entry> entries;
-      void attachEntry(const Entry&);
-      void detachEntry(const Entry&);
-      
-      void generatedMatch(BRepFilletAPI_MakeChamfer&, const ann::SeerShape &);
-      /*! now that we are 'resolving' picks we need to update the shapemap to ensure
-      * consistent id output of generated faces. duplicate function in blend.
-      */
-      void updateShapeMap(const boost::uuids::uuid&, const ShapeHistory &);
-      std::map<boost::uuids::uuid, boost::uuids::uuid> shapeMap; //!< map edges or vertices to faces
-      std::unique_ptr<ann::SeerShape> sShape;
-      
       static QIcon icon;
+      struct Stow;
+      std::unique_ptr<Stow> stow;
     };
   }
 }

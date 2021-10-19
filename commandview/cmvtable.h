@@ -120,6 +120,7 @@ namespace cmv
       ~View() override;
       
       void updateHideInactive();
+      void openPersistent(const QModelIndex&);
       void closePersistent(bool = true);
     Q_SIGNALS:
       void openingPersistent(); //signal emitted before
@@ -134,6 +135,7 @@ namespace cmv
       void selectionHasChanged(const QItemSelection&, const QItemSelection&);
     private:
       bool hideInactive = false;
+      void goPersistentPick(const QModelIndex&);
     };
   }
 }

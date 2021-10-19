@@ -67,7 +67,7 @@ Chamfer::~Chamfer() = default;
 
 std::string Chamfer::getStatusMessage()
 {
-  return QObject::tr("Select geometry for Chamfer feature").toStdString();
+  return QObject::tr("Select Geometry To Chamfer").toStdString();
 }
 
 void Chamfer::activate()
@@ -118,14 +118,6 @@ bool Chamfer::isValidSelection(const slc::Message &mIn)
   return true;
 }
 
-void Chamfer::setMode(int modeIn)
-{
-  assert(isActive);
-  project->clearAllInputs(feature->getId());
-  ftr::Chamfer::Mode newMode = static_cast<ftr::Chamfer::Mode>(modeIn);
-  feature->setMode(newMode); //this clears all entries.
-}
-
 void Chamfer::setSelectionData(const SelectionData &dataIn)
 {
   assert(dataIn.size() == feature->getEntries().size());
@@ -135,24 +127,26 @@ void Chamfer::setSelectionData(const SelectionData &dataIn)
   for (const auto &tup : dataIn)
   {
     ++index;
+    auto &entry = feature->getEntry(index);
+    
     ftr::Picks edgePicks;
     for (const auto &sm : std::get<0>(tup))
     {
       edgePicks.push_back(tls::convertToPick(sm, *project->findFeature(sm.featureId), project->getShapeHistory()));
-      edgePicks.back().tag = ftr::InputType::createIndexedTag(ftr::Chamfer::edge, edgePicks.size() - 1);
+      edgePicks.back().tag = indexTag(ftr::Chamfer::InputTags::edge, edgePicks.size() - 1);
       project->connect(sm.featureId, feature->getId(), {edgePicks.back().tag});
     }
-    feature->setEdgePicks(index, edgePicks);
-    if (feature->getEntries().at(index).style != ftr::Chamfer::Style::Symmetric)
+    entry.edgePicks.setValue(edgePicks);
+    if (entry.style.getInt() != 0) //not equal to symmetric
     {
       ftr::Picks facePicks;
       for (const auto &sm : std::get<1>(tup))
       {
         facePicks.push_back(tls::convertToPick(sm, *project->findFeature(sm.featureId), project->getShapeHistory()));
-        facePicks.back().tag = ftr::InputType::createIndexedTag(ftr::Chamfer::face, facePicks.size() - 1);
+        facePicks.back().tag = indexTag(ftr::Chamfer::InputTags::face, facePicks.size() - 1);
         project->connect(sm.featureId, feature->getId(), {facePicks.back().tag});
       }
-      feature->setFacePicks(index, facePicks);
+      entry.facePicks.setValue(facePicks);
     }
   }
 }
@@ -188,14 +182,13 @@ void Chamfer::go()
       feature = new ftr::Chamfer::Feature();
       project->addFeature(std::unique_ptr<ftr::Chamfer::Feature>(feature));
       feature->setColor(project->findFeature(targets.front().featureId)->getColor());
-      feature->setMode(ftr::Chamfer::Mode::Classic);
-      feature->addSymmetric();
+      auto &entry = feature->addSymmetric();
       setSelectionData({std::make_tuple(targets, slc::Messages())});
       created = true;
       node->sendBlocked(msg::buildHideThreeD(targets.front().featureId));
       node->sendBlocked(msg::buildHideOverlay(targets.front().featureId));
       node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
-      dlg::Parameter *pDialog = new dlg::Parameter(feature->getParameters().front(), feature->getId());
+      dlg::Parameter *pDialog = new dlg::Parameter(entry.getParameters().at(3), feature->getId());
       pDialog->show();
       pDialog->raise();
       pDialog->activateWindow();

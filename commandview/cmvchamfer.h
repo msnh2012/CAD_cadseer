@@ -37,16 +37,19 @@ namespace cmv
   public:
     Chamfer(cmd::Chamfer*);
     ~Chamfer() override;
+  protected:
+    bool eventFilter(QObject*, QEvent*) override;
   private Q_SLOTS:
-    void modeChangedSlot(int);
     void appendSymmetricSlot();
     void appendTwoDistancesSlot();
     void appendDistanceAngleSlot();
     void removeSlot();
-    void listSelectionChangedSlot();
-    void selectionChangedSlot();
-    void selectFirstStyleSlot();
-    void parameterChanged();
+    
+    void closeAllPersistent();
+    
+    void modelChanged(const QModelIndex&, const QModelIndex&);
+    void entryModelChanged(const QModelIndex&, const QModelIndex&);
+    void entrySelectionChanged();
   private:
     struct Stow;
     std::unique_ptr<Stow> stow;

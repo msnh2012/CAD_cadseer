@@ -33,7 +33,6 @@ namespace cmd
   class Chamfer : public Base
   {
   public:
-    //getting corruption using references for messages. Not sure why.
     using SelectionData = std::vector<std::tuple<slc::Messages, slc::Messages>>;
     ftr::Chamfer::Feature *feature = nullptr;
     
@@ -47,7 +46,6 @@ namespace cmd
     void deactivate() override;
     
     bool isValidSelection(const slc::Message&);
-    void setMode(int); //clear all entries.
     void setSelectionData(const SelectionData&);
     void localUpdate();
   private:

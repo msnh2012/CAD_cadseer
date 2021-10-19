@@ -7,29 +7,30 @@
 >
   
 <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptparameter.xsd"/>
-<xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptpick.xsd"/>
 <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptoverlay.xsd"/>
 <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptseershape.xsd"/>
 <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptbase.xsd"/>
 
 <xs:complexType name="Entry">
   <xs:sequence>
-    <xs:element name="style" type="xs:int"/>
-    <xs:element name="parameter1" type="spt:Parameter"/>
-    <xs:element name="parameter2" type="spt:Parameter" minOccurs="0"/>
-    <xs:element name="label1" type="spt:PLabel"/>
-    <xs:element name="label2" type="spt:PLabel" minOccurs="0"/>
-    <xs:element name="edgePicks" type="spt:Pick" minOccurs="0" maxOccurs="unbounded"/>
-    <xs:element name="facePicks" type="spt:Pick" minOccurs="0" maxOccurs="unbounded"/>
+    <xs:element name="style" type="spt:Parameter"/>
+    <xs:element name="edgePicks" type="spt:Parameter"/>
+    <xs:element name="facePicks" type="spt:Parameter"/>
+    <xs:element name="distance" type="spt:Parameter"/>
+    <xs:element name="dist2Angle" type="spt:Parameter"/>
+    <xs:element name="styleLabel" type="spt:PLabel"/>
+    <xs:element name="distanceLabel" type="spt:PLabel"/>
+    <xs:element name="dist2AngleLabel" type="spt:PLabel"/>
   </xs:sequence>
 </xs:complexType>
 
 <xs:complexType name="Chamfer">
   <xs:sequence>
     <xs:element name="base" type="spt:Base"/>
+    <xs:element name="mode" type="spt:Parameter"/>
     <xs:element name="seerShape" type="spt:SeerShape"/>
+    <xs:element name="modeLabel" type="spt:PLabel"/>
     <xs:element name="shapeMap" type="spt:EvolveRecord" minOccurs="0" maxOccurs="unbounded"/>
-    <xs:element name="mode" type="xs:int"/>
     <xs:element name="entries" type="chf:Entry" minOccurs="0" maxOccurs="unbounded"/>
   </xs:sequence>
 </xs:complexType>

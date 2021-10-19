@@ -27,147 +27,21 @@
 
 #include "application/appapplication.h"
 #include "project/prjproject.h"
-#include "dialogs/dlgselectionbutton.h"
-#include "dialogs/dlgselectionwidget.h"
-#include "commandview/cmvparameterwidgets.h"
+#include "message/msgmessage.h"
+#include "message/msgnode.h"
+#include "message/msgsift.h"
+#include "parameter/prmconstants.h"
 #include "parameter/prmparameter.h"
+#include "commandview/cmvselectioncue.h"
+#include "commandview/cmvtable.h"
+#include "commandview/cmvtablelist.h"
+#include "dialogs/dlgsplitterdecorated.h"
 #include "tools/featuretools.h"
 #include "feature/ftrchamfer.h"
 #include "command/cmdchamfer.h"
 #include "commandview/cmvchamfer.h"
 
 using boost::uuids::uuid;
-
-namespace
-{
-  class ChamferWidgetBase : public cmv::ParameterBase
-  {
-  public:
-    ChamferWidgetBase(QWidget *parent)
-    : ParameterBase(parent)
-    {}
-    
-    void activate(int index)
-    {
-      selectionWidget->activate(index);
-    }
-    
-    dlg::SelectionWidget *selectionWidget = nullptr;
-    cmv::ParameterWidget *parameterWidget = nullptr;
-  };
-  
-  class SymmetricWidget : public ChamferWidgetBase
-  {
-  public:
-    SymmetricWidget(const ftr::Chamfer::Entry& eIn, QWidget *parent)
-    : ChamferWidgetBase(parent)
-    {
-      assert(eIn.style == ::ftr::Chamfer::Style::Symmetric);
-      QVBoxLayout *layout = new QVBoxLayout();
-      layout->setContentsMargins(0, 0, 0, 0);
-      this->setLayout(layout);
-      
-      parameterWidget = new cmv::ParameterWidget(this, {eIn.parameter1.get()});
-      parameterWidget->setSizePolicy(parameterWidget->sizePolicy().horizontalPolicy(), QSizePolicy::Maximum);
-      layout->addWidget(parameterWidget);
-      connect(parameterWidget, &ParameterBase::prmValueChanged, this, &ParameterBase::prmValueChanged);
-      
-      std::vector<dlg::SelectionWidgetCue> cues;
-      dlg::SelectionWidgetCue cue;
-      cue.name = tr("Edges");
-      cue.singleSelection = false;
-      cue.showAccrueColumn = false;
-      cue.accrueDefault = slc::Accrue::Tangent;
-      cue.mask = slc::EdgesEnabled | slc::EdgesSelectable;
-      cue.statusPrompt = tr("Select Edges For Symmetric Chamfer");
-      cues.push_back(cue);
-      selectionWidget = new dlg::SelectionWidget(this, cues);
-      layout->addWidget(selectionWidget);
-    }
-  };
-
-  class TwoDistanceWidget : public ChamferWidgetBase
-  {
-  public:
-    TwoDistanceWidget(const ftr::Chamfer::Entry& eIn, QWidget *parent)
-    : ChamferWidgetBase(parent)
-    {
-      assert(eIn.style == ::ftr::Chamfer::Style::TwoDistances);
-      QVBoxLayout *layout = new QVBoxLayout();
-      layout->setContentsMargins(0, 0, 0, 0);
-      this->setLayout(layout);
-      
-      std::vector<prm::Parameter*> prms;
-      prms.push_back(eIn.parameter1.get());
-      prms.push_back(eIn.parameter2.get());
-      parameterWidget = new cmv::ParameterWidget(this, prms);
-      parameterWidget->setSizePolicy(parameterWidget->sizePolicy().horizontalPolicy(), QSizePolicy::Maximum);
-      layout->addWidget(parameterWidget);
-      connect(parameterWidget, &ParameterBase::prmValueChanged, this, &ParameterBase::prmValueChanged);
-      
-      std::vector<dlg::SelectionWidgetCue> cues;
-      dlg::SelectionWidgetCue cue;
-      
-      cue.name = tr("Edge");
-      cue.singleSelection = true;
-      cue.showAccrueColumn = false;
-      cue.accrueDefault = slc::Accrue::Tangent;
-      cue.mask = slc::EdgesEnabled | slc::EdgesSelectable;
-      cue.statusPrompt = tr("Select Edge For Two Distances Chamfer");
-      cues.push_back(cue);
-      
-      cue.name = tr("Face");
-      cue.mask = slc::FacesEnabled | slc::FacesSelectable;
-      cue.statusPrompt = tr("Select Face For Two Distances Chamfer");
-      cue.accrueDefault = slc::Accrue::None;
-      cues.push_back(cue);
-      
-      selectionWidget = new dlg::SelectionWidget(this, cues);
-      layout->addWidget(selectionWidget);
-    }
-  };
-  
-  class DistanceAngleWidget : public ChamferWidgetBase
-  {
-  public:
-    DistanceAngleWidget(const ftr::Chamfer::Entry& eIn, QWidget *parent)
-    : ChamferWidgetBase(parent)
-    {
-      assert(eIn.style == ::ftr::Chamfer::Style::DistanceAngle);
-      QVBoxLayout *layout = new QVBoxLayout();
-      layout->setContentsMargins(0, 0, 0, 0);
-      this->setLayout(layout);
-      
-      std::vector<prm::Parameter*> prms;
-      prms.push_back(eIn.parameter1.get());
-      prms.push_back(eIn.parameter2.get());
-      parameterWidget = new cmv::ParameterWidget(this, prms);
-      parameterWidget->setSizePolicy(parameterWidget->sizePolicy().horizontalPolicy(), QSizePolicy::Maximum);
-      layout->addWidget(parameterWidget);
-      connect(parameterWidget, &ParameterBase::prmValueChanged, this, &ParameterBase::prmValueChanged);
-      
-      std::vector<dlg::SelectionWidgetCue> cues;
-      dlg::SelectionWidgetCue cue;
-      
-      cue.name = tr("Edge");
-      cue.singleSelection = true;
-      cue.showAccrueColumn = false;
-      cue.accrueDefault = slc::Accrue::Tangent;
-      cue.mask = slc::EdgesEnabled | slc::EdgesSelectable;
-      cue.statusPrompt = tr("Select Edge For Distance Angle Chamfer");
-      cues.push_back(cue);
-      
-      cue.name = tr("Face");
-      cue.mask = slc::FacesEnabled | slc::FacesSelectable;
-      cue.statusPrompt = tr("Select Face For Distance Angle Chamfer");
-      cue.accrueDefault = slc::Accrue::None;
-      cues.push_back(cue);
-      
-      selectionWidget = new dlg::SelectionWidget(this, cues);
-      layout->addWidget(selectionWidget);
-    }
-  };
-}
 
 using namespace cmv;
 
@@ -176,314 +50,379 @@ struct Chamfer::Stow
   cmd::Chamfer *command;
   cmv::Chamfer *view;
   
-  QComboBox *modeCombo = nullptr;
-  QListWidget *styleList = nullptr;
+  prm::Parameters parameters;
+  tbl::Model *prmModel = nullptr;
+  tbl::View *prmView = nullptr;
+  dlg::SplitterDecorated *mainSplitter = nullptr;
+  TableList *tableList = nullptr;
+  
   QAction *addSymmetric = nullptr;
   QAction *addTwoDistances = nullptr;
   QAction *addDistanceAngle = nullptr;
   QAction *separator = nullptr;
   QAction *remove = nullptr;
-  QStackedWidget *stackedWidget = nullptr;
+  
+  bool isGlobalBoundarySelection = false;
   
   Stow(cmd::Chamfer *cIn, cmv::Chamfer *vIn)
   : command(cIn)
   , view(vIn)
   {
+    parameters = command->feature->getParameters();
     buildGui();
-    
-    QSettings &settings = app::instance()->getUserSettings();
-    settings.beginGroup("cmv::Chamfer");
-    //load settings
-    settings.endGroup();
     
     loadFeatureData();
     glue();
-    
-    if (styleList->count() > 0)
-    {
-      assert(styleList->count() == stackedWidget->count());
-      QTimer::singleShot(0, view, &Chamfer::selectFirstStyleSlot);
-//       styleList->item(0)->setSelected(true);
-//       styleList->setCurrentRow(0, QItemSelectionModel::Clear | QItemSelectionModel::SelectCurrent);
-//       ChamferWidgetBase *w = dynamic_cast<ChamferWidgetBase*>(stackedWidget->widget(0));
-//       assert(w);
-//       w->activate(0);
-    }
-    else
-    {
-      //create a default type of symmetric
-      QTimer::singleShot(0, view, &Chamfer::appendSymmetricSlot);
-    }
+    modeChanged();
+    tableList->setSelectedDelayed();
   }
   
   void buildGui()
   {
-    modeCombo = new QComboBox(view);
-    modeCombo->addItem(tr("Classic"));
-    modeCombo->addItem(tr("Throat"));
-    modeCombo->addItem(tr("Penetration"));
+    QVBoxLayout *mainLayout = new QVBoxLayout();
+    view->setLayout(mainLayout);
+    clearContentMargins(view);
+    view->setSizePolicy(view->sizePolicy().horizontalPolicy(), QSizePolicy::Expanding);
     
-    styleList = new QListWidget(view);
-    styleList->setSizePolicy(styleList->sizePolicy().horizontalPolicy(), QSizePolicy::Maximum);
-    styleList->setSelectionMode(QAbstractItemView::SingleSelection);
-    styleList->setSelectionBehavior(QAbstractItemView::SelectRows);
-    styleList->setContextMenuPolicy(Qt::ActionsContextMenu);
+    prmModel = new tbl::Model(view, command->feature, parameters);
+    prmView = new tbl::View(view, prmModel, true);
+    
     addSymmetric = new QAction(tr("Add Symmetric"), view);
     addTwoDistances = new QAction(tr("Add Two Distances"), view);
     addDistanceAngle = new QAction(tr("Add Distance Angle"), view);
     separator = new QAction(view);
     separator->setSeparator(true);
     remove = new QAction(tr("Remove"), view);
-    styleList->addAction(addSymmetric);
-    styleList->addAction(addTwoDistances);
-    styleList->addAction(addDistanceAngle);
-    styleList->addAction(separator);
-    styleList->addAction(remove);
     
-    stackedWidget = new QStackedWidget(view);
-    stackedWidget->setSizePolicy(stackedWidget->sizePolicy().horizontalPolicy(), QSizePolicy::Maximum);
-    stackedWidget->setDisabled(true);
+    tableList = new TableList(view, command->feature);
+    tableList->restoreSettings("cmv::Chamfer::TableList");
+    tableList->getListWidget()->addAction(addSymmetric);
+    tableList->getListWidget()->addAction(addTwoDistances);
+    tableList->getListWidget()->addAction(addDistanceAngle);
+    tableList->getListWidget()->addAction(separator);
+    tableList->getListWidget()->addAction(remove);
     
-    auto *layout = new QVBoxLayout();
-    view->setLayout(layout);
-    layout->addWidget(modeCombo);
-    layout->addWidget(styleList);
-    layout->addWidget(stackedWidget);
-    layout->addItem(new QSpacerItem(20, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
+    mainSplitter = new dlg::SplitterDecorated(view);
+    mainSplitter->setOrientation(Qt::Vertical);
+    mainSplitter->setChildrenCollapsible(false);
+    mainSplitter->addWidget(prmView);
+    mainSplitter->addWidget(tableList);
+    mainSplitter->restoreSettings("cmv::Chamfer::mainSplitter");
+    mainLayout->addWidget(mainSplitter);
   }
   
   void loadFeatureData()
   {
-    modeCombo->setCurrentIndex(static_cast<int>(command->feature->getMode()));
-    for (const auto &e : command->feature->getEntries())
-    {
-      ChamferWidgetBase *widget = appendEntry(e);
-      const auto &pl = view->project->getPayload(command->feature->getId());
-      tls::Resolver resolver(pl);
-      slc::Messages edgeAccumulator;
-      for (const auto &p : e.edgePicks)
-      {
-        if (!resolver.resolve(p))
-          continue;
-        auto jfc = resolver.convertToMessages();
-        edgeAccumulator.insert(edgeAccumulator.end(), jfc.begin(), jfc.end());
-      }
-      widget->selectionWidget->initializeButton(0, edgeAccumulator);
-      if (e.style == ::ftr::Chamfer::Style::Symmetric)
-        continue;
-      slc::Messages faceAccumulator;
-      for (const auto &p : e.facePicks)
-      {
-        if (!resolver.resolve(p))
-          continue;
-        auto jfc = resolver.convertToMessages();
-        faceAccumulator.insert(faceAccumulator.end(), jfc.begin(), jfc.end());
-      }
-      widget->selectionWidget->initializeButton(1, faceAccumulator);
-    }
+    for (auto &e : command->feature->getEntries())
+      appendEntry(e);
+  }
+  
+  void slcAdded(const msg::Message &mIn)
+  {
+    if
+    (
+      view->isHidden()
+      || !isGlobalBoundarySelection
+      || (mIn.getSLC().type != slc::Type::Edge)
+    )
+      return;
+      
+    stopGlobalBoundarySelection();
+    tableList->getListWidget()->clearSelection();
+    appendDefault(mIn.getSLC());
   }
   
   void glue()
   {
-    connect(modeCombo, SIGNAL(currentIndexChanged(int)), view, SLOT(modeChangedSlot(int)));
+    connect(prmModel, &tbl::Model::dataChanged, view, &Chamfer::modelChanged);
+    connect(prmView, &tbl::View::openingPersistent, view, &Chamfer::closeAllPersistent);
+    connect(prmView, &tbl::View::openingPersistent, [this](){this->stopGlobalBoundarySelection();});
+    
+    connect(tableList->getListWidget(), &QListWidget::itemSelectionChanged, view, &Chamfer::entrySelectionChanged);
+    
     connect(addSymmetric, &QAction::triggered, view, &Chamfer::appendSymmetricSlot);
     connect(addTwoDistances, &QAction::triggered, view, &Chamfer::appendTwoDistancesSlot);
     connect(addDistanceAngle, &QAction::triggered, view, &Chamfer::appendDistanceAngleSlot);
     connect(remove, &QAction::triggered, view, &Chamfer::removeSlot);
-    connect(styleList, &QListWidget::itemSelectionChanged, view, &Chamfer::listSelectionChangedSlot);
     
-    for (int index = 0; index < stackedWidget->count(); ++index)
-    {
-      auto *w = dynamic_cast<ChamferWidgetBase*>(stackedWidget->widget(index));
-      assert(w);
-      connect(w->selectionWidget->getButton(0), &dlg::SelectionButton::dirty, view, &Chamfer::selectionChangedSlot);
-      if (w->selectionWidget->getButtonCount() > 1)
-        connect(w->selectionWidget->getButton(1), &dlg::SelectionButton::dirty, view, &Chamfer::selectionChangedSlot);
-    }
+    view->sift->insert
+    (
+      msg::Response | msg::Post | msg::Selection | msg::Add
+      , std::bind(&Stow::slcAdded, this, std::placeholders::_1)
+    );
+    
+    prmView->installEventFilter(view);
+    tableList->getListWidget()->installEventFilter(view);
   }
   
   void modeChanged()
   {
-    while (stackedWidget->count() > 0)
+    int mode = command->feature->getParameter(ftr::Chamfer::PrmTags::mode)->getInt();
+    
+    switch (mode)
     {
-      auto *w = stackedWidget->widget(0);
-      stackedWidget->removeWidget(w);
-      delete w;
+      case 0: //classic
+      {
+        addSymmetric->setEnabled(true);
+        addTwoDistances->setEnabled(true);
+        addDistanceAngle->setEnabled(true);
+        break;
+      }
+      case 1: //throat
+      {
+        addSymmetric->setEnabled(true);
+        addTwoDistances->setEnabled(false);
+        addDistanceAngle->setEnabled(false);
+        break;
+      }
+      case 2: //throat penetration
+      {
+        addSymmetric->setEnabled(false);
+        addTwoDistances->setEnabled(true);
+        addDistanceAngle->setEnabled(false);
+        break;
+      }
+      default:
+      {
+        assert(0); //unknown chamfer mode.
+        break;
+      }
     }
-    styleList->clear();
-    //remove all actions
-    for (auto *a : styleList->actions())
-      styleList->removeAction(a);
-    if (modeCombo->currentIndex() == 0)
-    {
-      styleList->addAction(addSymmetric);
-      styleList->addAction(addTwoDistances);
-      styleList->addAction(addDistanceAngle);
-    }
-    else if (modeCombo->currentIndex() == 1)
-    {
-      styleList->addAction(addSymmetric);
-    }
-    else if (modeCombo->currentIndex() == 2)
-    {
-      styleList->addAction(addTwoDistances);
-    }
-    else
-      return;
-    styleList->addAction(separator);
-    styleList->addAction(remove);
-    command->setMode(modeCombo->currentIndex());
+    
+    /* the feature changes the styles to match the mode. That should happen before
+     * this. Now we should just have to update visibility of active widgets and
+     * rename the strings in list view.
+     */
+    tableList->updateHideInactive();
+    updateListNames();
   }
   
-  ChamferWidgetBase* appendEntry(const ftr::Chamfer::Entry &eIn)
+  /* different modes only accept certain styles. so we call here to append
+   * a style that is the default for the current mode.
+   */
+  void appendDefault(const slc::Message &mIn)
   {
-    if (eIn.style == ::ftr::Chamfer::Style::Symmetric)
+    
+    auto setEdge = [&]()
     {
-      styleList->addItem(tr("Symmetric"));
-      SymmetricWidget *sw = new SymmetricWidget(eIn, stackedWidget);
-      stackedWidget->addWidget(sw);
-      connect(sw, &ParameterBase::prmValueChanged, view, &Chamfer::parameterChanged);
-      return sw;
-    }
-    if (eIn.style == ::ftr::Chamfer::Style::TwoDistances)
+      auto *tm = tableList->getSelectedModel();
+      if (tm)
+        tm->mySetData(tm->getParameter(tm->index(1,0)), {mIn});
+    };
+    
+    int currentMode = command->feature->getParameter(ftr::Chamfer::PrmTags::mode)->getInt();
+    switch (currentMode)
     {
-      styleList->addItem(tr("Two Distances"));
-      TwoDistanceWidget *tdw = new TwoDistanceWidget(eIn, stackedWidget);
-      stackedWidget->addWidget(tdw);
-      connect(tdw, &ParameterBase::prmValueChanged, view, &Chamfer::parameterChanged);
-      return tdw;
+      case 0: //classic -> fall through
+      case 1: //throat
+      {
+        appendEntry(command->feature->addSymmetric());
+        tableList->setSelected();
+        setEdge();
+        auto *tv = tableList->getSelectedView();
+        if (tv)
+          QTimer::singleShot(0, [tv](){tv->openPersistent(tv->model()->index(1, 1));});
+        break;
+      }
+      case 2: //throat penetration
+      {
+        appendEntry(command->feature->addTwoDistances());
+        tableList->setSelected();
+        setEdge();
+        auto *tv = tableList->getSelectedView();
+        if (tv)
+          tv->openPersistentEditor(tv->model()->index(2, 1));
+        break;
+      }
+      default: //error
+      {
+        assert(0); // unknown chamfer mode
+        break;
+      }
     }
-    if (eIn.style == ::ftr::Chamfer::Style::DistanceAngle)
+  }
+  
+  void appendEntry(ftr::Chamfer::Entry &eIn)
+  {
+    auto tempPrms = eIn.getParameters();
+    int index = tableList->add(tempPrms.front()->adaptToQString(), tempPrms);
+    auto *pModel = tableList->getPrmModel(index); assert(pModel);
+    auto *pView = tableList->getPrmView(index); assert(pView);
     {
-      styleList->addItem(tr("Angle Distance"));
-      DistanceAngleWidget *daw = new DistanceAngleWidget(eIn, stackedWidget);
-      stackedWidget->addWidget(daw);
-      connect(daw, &ParameterBase::prmValueChanged, view, &Chamfer::parameterChanged);
-      return daw;
+      tbl::SelectionCue cue;
+      cue.singleSelection = false;
+      cue.mask = slc::EdgesBoth;
+      cue.statusPrompt = tr("Select Edge For Chamfer");
+      cue.accrueEnabled = false;
+      pModel->setCue(tempPrms.at(1), cue);
     }
-    assert(0); //unrecognized entry type.
-    return nullptr;
+    {
+      tbl::SelectionCue cue;
+      cue.singleSelection = false;
+      cue.mask = slc::FacesBoth;
+      cue.statusPrompt = tr("Select Reference Face");
+      cue.accrueEnabled = false;
+      pModel->setCue(tempPrms.at(2), cue);
+    }
+    
+    connect(pModel, &tbl::Model::dataChanged, view, &Chamfer::entryModelChanged);
+    connect(pView, &tbl::View::openingPersistent, view, &Chamfer::closeAllPersistent);
+    connect(pView, &tbl::View::openingPersistent, [this](){this->stopGlobalBoundarySelection();});
+    pView->installEventFilter(view);
   }
   
   void removeEntry()
   {
-    QList<QListWidgetItem *> items = styleList->selectedItems();
-    if (items.empty())
+    int ri = tableList->remove();
+    if (ri == -1)
       return;
-    assert(items.size() == 1);
-    if (items.size() != 1)
-      return;
-    int index = styleList->row(items.front());
-    delete styleList->takeItem(index);
-    auto *w = stackedWidget->widget(index);
-    stackedWidget->removeWidget(w);
-    delete w;
-    command->feature->removeEntry(index);
+    command->feature->removeEntry(ri);
+  }
+  
+  void updateListNames()
+  {
+    auto *lw = tableList->getListWidget();
+    for (int index = 0; index < tableList->count(); ++index)
+    {
+      auto *m = tableList->getPrmModel(index);
+      auto *prm = m->getParameter(m->index(0, 1));
+      lw->item(index)->setText(prm->adaptToQString());
+    }
   }
   
   void setSelection()
   {
     cmd::Chamfer::SelectionData data;
-    slc::Messages empty;
-    for (int index = 0; index < stackedWidget->count(); ++index)
+    for (int index = 0; index < tableList->count(); ++index)
     {
-      auto *w = dynamic_cast<ChamferWidgetBase*>(stackedWidget->widget(index));
-      assert(w);
-      if (w->selectionWidget->getButtonCount() == 1)
-      {
-        auto sels = std::make_tuple(w->selectionWidget->getButton(0)->getMessages(), empty);
-        data.push_back(sels);
-      }
-      else
-      {
-        auto sels = std::make_tuple(w->selectionWidget->getButton(0)->getMessages(), w->selectionWidget->getButton(1)->getMessages());
-        data.push_back(sels);
-      }
+      auto *model = tableList->getPrmModel(index); assert(model);
+      const auto &ePicks = model->getMessages(model->index(1, 0));
+      const auto &fPicks = model->getMessages(model->index(2, 0));
+      data.emplace_back(ePicks, fPicks);
     }
     command->setSelectionData(data);
+  }
+  
+  void goUpdate()
+  {
+    command->localUpdate();
+    goGlobalBoundarySelection();
+    //not sure why I have to delay the following call.
+    QTimer::singleShot(0, [this](){this->view->entrySelectionChanged();});
+  }
+  
+  void goGlobalBoundarySelection()
+  {
+    if (!isGlobalBoundarySelection)
+    {
+      isGlobalBoundarySelection = true;
+      view->goMaskDefault(); // note: we don't remember any selection mask changes the user makes.
+      view->node->sendBlocked(msg::buildStatusMessage(command->getStatusMessage()));
+      view->goSelectionToolbar();
+    }
+  }
+  
+  void stopGlobalBoundarySelection()
+  {
+    if (isGlobalBoundarySelection)
+    {
+      isGlobalBoundarySelection = false;
+      view->node->sendBlocked(msg::buildSelectionMask(slc::None));
+    }
   }
 };
 
 Chamfer::Chamfer(cmd::Chamfer *cIn)
 : Base("cmv::Chamfer")
 , stow(new Stow(cIn, this))
-{}
+{
+  maskDefault = slc::EdgesBoth;
+  stow->goGlobalBoundarySelection();
+}
 
 Chamfer::~Chamfer() = default;
 
-void Chamfer::modeChangedSlot(int)
+bool Chamfer::eventFilter(QObject *watched, QEvent *event)
 {
-  stow->modeChanged();
-  stow->command->localUpdate();
+  //installed on child widgets so we can dismiss persistent editors
+  if(event->type() == QEvent::FocusIn)
+  {
+    closeAllPersistent();
+    stow->goGlobalBoundarySelection();
+  }
+  
+  return QObject::eventFilter(watched, event);
 }
 
 void Chamfer::appendSymmetricSlot()
 {
-  ChamferWidgetBase* widget = stow->appendEntry(stow->command->feature->getEntry(stow->command->feature->addSymmetric()));
-  connect(widget->selectionWidget->getButton(0), &dlg::SelectionButton::dirty, this, &Chamfer::selectionChangedSlot);
-  stow->styleList->setCurrentRow(stow->styleList->count() - 1, QItemSelectionModel::Clear | QItemSelectionModel::SelectCurrent);
-  widget->activate(0);
+  stow->appendEntry(stow->command->feature->addSymmetric());
+  stow->tableList->setSelected();
 }
 
 void Chamfer::appendTwoDistancesSlot()
 {
-  ChamferWidgetBase* widget = stow->appendEntry(stow->command->feature->getEntry(stow->command->feature->addTwoDistances()));
-  connect(widget->selectionWidget->getButton(0), &dlg::SelectionButton::dirty, this, &Chamfer::selectionChangedSlot);
-  connect(widget->selectionWidget->getButton(1), &dlg::SelectionButton::dirty, this, &Chamfer::selectionChangedSlot);
-  stow->styleList->setCurrentRow(stow->styleList->count() - 1, QItemSelectionModel::Clear | QItemSelectionModel::SelectCurrent);
-  widget->activate(0);
+  stow->appendEntry(stow->command->feature->addTwoDistances());
+  stow->tableList->setSelected();
 }
 
 void Chamfer::appendDistanceAngleSlot()
 {
-  ChamferWidgetBase* widget = stow->appendEntry(stow->command->feature->getEntry(stow->command->feature->addDistanceAngle()));
-  connect(widget->selectionWidget->getButton(0), &dlg::SelectionButton::dirty, this, &Chamfer::selectionChangedSlot);
-  connect(widget->selectionWidget->getButton(1), &dlg::SelectionButton::dirty, this, &Chamfer::selectionChangedSlot);
-  stow->styleList->setCurrentRow(stow->styleList->count() - 1, QItemSelectionModel::Clear | QItemSelectionModel::SelectCurrent);
-  widget->activate(0);
+  stow->appendEntry(stow->command->feature->addDistanceAngle());
+  stow->tableList->setSelected();
 }
 
 void Chamfer::removeSlot()
 {
   stow->removeEntry();
-  stow->command->localUpdate();
-}
-
-void Chamfer::listSelectionChangedSlot()
-{
-  QList<QListWidgetItem *> items = stow->styleList->selectedItems();
-  if (items.empty())
-  {
-    stow->stackedWidget->setDisabled(true);
-    return;
-  }
-  assert(items.size() == 1);
-  if (items.size() != 1)
-  {
-    stow->stackedWidget->setDisabled(true);
-    return;
-  }
-  stow->stackedWidget->setEnabled(true);
-  int index = stow->styleList->row(items.front());
-  stow->stackedWidget->setCurrentIndex(index);
-  
-  ChamferWidgetBase* widget = dynamic_cast<ChamferWidgetBase*>(stow->stackedWidget->widget(index));
-  assert(widget);
-  widget->activate(0);
-}
-
-void Chamfer::selectionChangedSlot()
-{
   stow->setSelection();
-  stow->command->localUpdate();
+  stow->goUpdate();
 }
 
-void Chamfer::selectFirstStyleSlot()
+void Chamfer::closeAllPersistent()
 {
-  stow->styleList->setCurrentRow(0, QItemSelectionModel::Clear | QItemSelectionModel::SelectCurrent);
+  stow->prmView->closePersistent();
+  stow->tableList->closePersistent();
 }
 
-void Chamfer::parameterChanged()
+void Chamfer::modelChanged(const QModelIndex &index, const QModelIndex&)
 {
-  stow->command->localUpdate();
+  if (!index.isValid())
+    return;
+  
+  /* we only have the mode parameter in the main parameter array,
+   * so changing that is the only way we get here
+   */
+  stow->modeChanged();
+  stow->goUpdate();
+}
+
+void Chamfer::entryModelChanged(const QModelIndex &index, const QModelIndex&)
+{
+  if (!index.isValid())
+    return;
+  
+  const auto *eModel = dynamic_cast<const tbl::Model*>(index.model()); assert(eModel);
+  auto tag = eModel->getParameter(index)->getTag();
+  if (tag == ftr::Chamfer::PrmTags::edgePicks || tag == ftr::Chamfer::PrmTags::facePicks)
+    stow->setSelection();
+  if (tag == ftr::Chamfer::PrmTags::style)
+  {
+    stow->updateListNames();
+    stow->tableList->updateHideInactive();
+    stow->setSelection();
+  }
+  stow->goUpdate();
+}
+
+void Chamfer::entrySelectionChanged()
+{
+  /* We are able to highlight the entry geometry without turning
+   * off the global selection because of the use of 'sendBlocked'.
+   * It stops the selection messages from coming in.
+   */
+  closeAllPersistent();
+  node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  for (const auto &m : stow->tableList->getSelectedMessages())
+    node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Add, m));
 }
