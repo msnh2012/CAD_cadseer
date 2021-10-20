@@ -25,7 +25,8 @@
 #include "commandview/cmvbase.h"
 
 namespace osg{class Vec3d;}
-namespace dlg{class SelectionWidget;}
+
+namespace cmd{class MeasureLinear;}
 
 namespace cmv
 {
@@ -33,10 +34,13 @@ namespace cmv
   {
     Q_OBJECT
   public:
-    MeasureLinear();
+    MeasureLinear(cmd::MeasureLinear*);
     ~MeasureLinear() override;
   private:
-    dlg::SelectionWidget *selectionWidget = nullptr;
+    struct Stow;
+    std::unique_ptr<Stow> stow;
+    
+    
     
     void buildGui();
     void selectionDone(); //!< when second selection is made.

@@ -34,7 +34,7 @@ using namespace cmd;
 MeasureLinear::MeasureLinear()
 : Base()
 {
-  viewBase = std::make_unique<cmv::MeasureLinear>();
+  viewBase = std::make_unique<cmv::MeasureLinear>(this);
   shouldUpdate = false;
 }
 
