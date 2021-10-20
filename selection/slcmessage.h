@@ -34,15 +34,16 @@ namespace slc
 {
   struct Message
   {
-    Message();
+    Message() = default;
     Message(Mask);
-    slc::Type type;
-    slc::Accrue accrue;
-    ftr::Type featureType;
+    Message(const boost::uuids::uuid& fIdIn); //feature id
+    Type type = {Type::None};
+    Accrue accrue = {Accrue::None};
+    Mask selectionMask = {None};
+    ftr::Type featureType = {ftr::Type::Base};
     boost::uuids::uuid featureId;
     boost::uuids::uuid shapeId;
     osg::Vec3d pointLocation;
-    Mask selectionMask;
   };
   
   inline bool operator==(const Message& lhs, const Message& rhs)

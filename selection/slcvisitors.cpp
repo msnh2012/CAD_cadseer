@@ -149,7 +149,7 @@ id(idIn){}
 void PLODIdVisitor::apply(osg::Switch &switchIn)
 {
   //this filters the traversal to only feature id.
-  if (switchIn.getNodeMask() != mdv::object)
+  if (switchIn.getNodeMask() != mdv::object && switchIn.getNodeMask() != mdv::noIntersect)
     return;
   std::string uValue;
   switchIn.getUserValue<std::string>(gu::idAttributeTitle, uValue);

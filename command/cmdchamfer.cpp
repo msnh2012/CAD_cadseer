@@ -85,6 +85,8 @@ void Chamfer::activate()
     cmv::Message vm(viewBase.get(), viewBase->getPaneWidth());
     msg::Message out(msg::Mask(msg::Request | msg::Command | msg::View | msg::Show), vm);
     node->sendBlocked(out);
+    if (!isEdit.get())
+      node->sendBlocked(msg::buildSelectionFreeze(feature->getId()));
   }
   else
     sendDone();
@@ -104,6 +106,7 @@ void Chamfer::deactivate()
     project->hideAlterParents(feature->getId());
     node->sendBlocked(msg::buildShowThreeD(feature->getId()));
     node->sendBlocked(msg::buildShowOverlay(feature->getId()));
+    node->sendBlocked(msg::buildSelectionThaw(feature->getId()));
   }
   isActive = false;
 }

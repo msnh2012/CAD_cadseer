@@ -212,3 +212,21 @@ msg::Message msg::buildHideOverlay(const boost::uuids::uuid &idIn)
     , vwr::Message(idIn)
   );
 }
+
+msg::Message msg::buildSelectionFreeze(const boost::uuids::uuid &idIn)
+{
+  return msg::Message
+  (
+    msg::Request | msg::Selection | msg::Feature | msg::Freeze
+    , slc::Message(idIn)
+  );
+}
+
+msg::Message msg::buildSelectionThaw(const boost::uuids::uuid &idIn)
+{
+  return msg::Message
+  (
+    msg::Request | msg::Selection | msg::Feature | msg::Thaw
+    , slc::Message(idIn)
+  );
+}

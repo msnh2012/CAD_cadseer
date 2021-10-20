@@ -24,16 +24,16 @@
 
 using namespace slc;
 
-Message::Message() : Message(slc::None){}
-
 Message::Message(Mask mask)
-{
-  type = slc::Type::None;
-  featureType = ftr::Type::Base; //like empty
-  featureId = gu::createNilId();
-  shapeId = gu::createNilId();
-  selectionMask = mask;
-}
+: selectionMask(mask)
+, featureId(gu::createNilId())
+, shapeId(gu::createNilId())
+{}
+
+Message::Message(const boost::uuids::uuid &fIdIn)
+: featureId(fIdIn)
+, shapeId(gu::createNilId())
+{}
 
 bool slc::has(const slc::Messages& messagesIn, const slc::Message& messageIn)
 {
