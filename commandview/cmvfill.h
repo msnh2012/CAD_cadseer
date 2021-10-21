@@ -38,11 +38,13 @@ namespace cmv
   public:
     Fill(cmd::Fill*);
     ~Fill() override;
+  protected:
+    bool eventFilter(QObject*, QEvent*) override;
   private Q_SLOTS:
     void modelChanged(const QModelIndex&, const QModelIndex&);
     void boundaryAdded();
     void boundaryRemoved();
-    void boundarySelectionChanged(const QItemSelection&, const QItemSelection&);
+    void boundarySelectionChanged();
     void boundaryModelChanged(const QModelIndex&, const QModelIndex&);
     void openingPersistentEditor();
   private:

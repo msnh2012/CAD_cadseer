@@ -179,6 +179,13 @@ void TableList::setSelectedDelayed(int index)
   QTimer::singleShot(0, [this, index](){this->setSelected(index);});
 }
 
+void TableList::reselectDelayed()
+{
+  int index = getSelectedIndex();
+  stow->list->clearSelection();
+  setSelectedDelayed(index);
+}
+
 QListWidget* TableList::getListWidget() const
 {
   return stow->list;

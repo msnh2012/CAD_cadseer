@@ -55,6 +55,7 @@ namespace cmv
     void restoreSettings(const QString &nameIn); //for splitter location
     void setSelected(int=-1); //select item at index. -1 = last item.
     void setSelectedDelayed(int=-1); //queue select item
+    void reselectDelayed(); //clear selection and re-selects current selection.
     
     QListWidget* getListWidget() const;
     QStackedWidget* getStackedWidget() const;

@@ -59,6 +59,7 @@ Boundary::Boundary()
     , QObject::tr("G2")
   };
   continuity.setEnumeration(tStrings);
+  continuityLabel->refresh();
 }
 
 Boundary::~Boundary() noexcept = default;

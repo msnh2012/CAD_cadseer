@@ -35,6 +35,7 @@
 #include "dialogs/dlgsplitterdecorated.h"
 #include "commandview/cmvselectioncue.h"
 #include "commandview/cmvtable.h"
+#include "commandview/cmvtablelist.h"
 #include "tools/featuretools.h"
 #include "feature/ftrfill.h"
 #include "command/cmdfill.h"
@@ -53,8 +54,7 @@ struct Fill::Stow
   dlg::SplitterDecorated *boundarySplitter = nullptr;
   cmv::tbl::Model *prmModel = nullptr;
   cmv::tbl::View *prmView = nullptr;
-  QListWidget *boundaryList = nullptr;
-  QStackedWidget *boundaryStack = nullptr;
+  TableList *tableList = nullptr;
   QAction *addBoundaryAction = nullptr;
   QAction *removeBoundaryAction = nullptr;
   bool isGlobalBoundarySelection = true;
@@ -72,7 +72,7 @@ struct Fill::Stow
     glue();
     boundarySplitter->restoreSettings(QString::fromUtf8("Fill::BoundarySplitter"));
     mainSplitter->restoreSettings(QString::fromUtf8("Fill::MainSplitter"));
-    boundaryStack->setEnabled(false); //controlled by list selection.
+    tableList->setSelectedDelayed();
   }
   
   void buildGui()
@@ -110,35 +110,28 @@ struct Fill::Stow
     boundarySplitter->setOrientation(Qt::Horizontal);
     mainSplitter->addWidget(boundarySplitter);
     
-    boundaryList = new QListWidget(view);
-    boundaryList->setSelectionMode(QAbstractItemView::SingleSelection);
-    addBoundaryAction = new QAction(tr("Add Boundary"), boundaryList);
-    removeBoundaryAction = new QAction(tr("Remove Boundary"), boundaryList);
-    boundaryList->addActions({addBoundaryAction, removeBoundaryAction});
-    boundaryList->setContextMenuPolicy(Qt::ActionsContextMenu);
-    boundarySplitter->addWidget(boundaryList);
+    tableList = new TableList(view, command->feature);
+    tableList->restoreSettings("cmv::Fill::TableList");
     
-    boundaryStack = new QStackedWidget(view);
-    boundaryStack->setSizePolicy(boundaryStack->sizePolicy().horizontalPolicy(), QSizePolicy::Maximum);
-    boundarySplitter->addWidget(boundaryStack);
+    addBoundaryAction = new QAction(tr("Add Boundary"), tableList->getListWidget());
+    removeBoundaryAction = new QAction(tr("Remove Boundary"), tableList->getListWidget());
+    tableList->getListWidget()->addActions({addBoundaryAction, removeBoundaryAction});
+    boundarySplitter->addWidget(tableList);
   }
   
-  void addBoundary(ftr::Fill::Boundary &bIn)
+  int addBoundary(ftr::Fill::Boundary &bIn)
   {
     prm::Parameters prms = {&bIn.edgePick, &bIn.facePick, &bIn.continuity};
-    auto *tblModel = new tbl::Model(view, command->feature, prms);
-    auto *tblView = new tbl::View(view, tblModel, true);
-    connect(tblModel, &tbl::Model::dataChanged, view, &Fill::boundaryModelChanged);
-    connect(tblView, &tbl::View::openingPersistent, view, &Fill::openingPersistentEditor);
-    boundaryList->addItem(tr("Boundary"));
-    boundaryStack->addWidget(tblView);
+    int i = tableList->add(tr("Boundary"), prms);
+    connect(tableList->getPrmModel(i), &tbl::Model::dataChanged, view, &Fill::boundaryModelChanged);
+    connect(tableList->getPrmView(i), &tbl::View::openingPersistent, view, &Fill::openingPersistentEditor);
     {
       tbl::SelectionCue cue;
       cue.singleSelection = true;
       cue.mask = slc::EdgesBoth;
       cue.statusPrompt = tr("Select Edge For Boundary");
       cue.accrueEnabled = false;
-      tblModel->setCue(prms.at(0), cue);
+      tableList->getPrmModel(i)->setCue(prms.at(0), cue);
     }
     {
       tbl::SelectionCue cue;
@@ -146,8 +139,9 @@ struct Fill::Stow
       cue.mask = slc::FacesBoth;
       cue.statusPrompt = tr("Select Face For Constraint");
       cue.accrueEnabled = false;
-      tblModel->setCue(prms.at(1), cue);
+      tableList->getPrmModel(i)->setCue(prms.at(1), cue);
     }
+    return i;
   }
   
   void loadFeatureData()
@@ -162,7 +156,7 @@ struct Fill::Stow
     connect (addBoundaryAction, &QAction::triggered, view, &Fill::boundaryAdded);
     connect (removeBoundaryAction, &QAction::triggered, view, &Fill::boundaryRemoved);
     
-    connect (boundaryList->selectionModel(), &QItemSelectionModel::selectionChanged, view, &Fill::boundarySelectionChanged);
+    connect (tableList->getListWidget(), &QListWidget::itemSelectionChanged, view, &Fill::boundarySelectionChanged);
     connect (prmView, &tbl::View::openingPersistent, view, &Fill::openingPersistentEditor);
     
     view->sift->insert
@@ -170,13 +164,17 @@ struct Fill::Stow
       msg::Response | msg::Post | msg::Selection | msg::Add
       , std::bind(&Stow::slcAdded, this, std::placeholders::_1)
     );
+    
+    prmView->installEventFilter(view);
+    tableList->getListWidget()->installEventFilter(view);
   }
   
   void goGlobalBoundarySelection()
   {
     isGlobalBoundarySelection = true;
-    view->goMaskDefault(); // note: we don't remember any selection mask changes the user makes.
+    view->goMaskDefault();
     view->goSelectionToolbar();
+    view->node->sendBlocked(msg::buildStatusMessage(command->getStatusMessage()));
   }
   
   void stopGlobalBoundarySelection()
@@ -196,18 +194,13 @@ struct Fill::Stow
       return;
     
     auto &b = command->feature->addBoundary();
-    addBoundary(b);
-    auto *tblView = dynamic_cast<tbl::View*>(boundaryStack->widget(boundaryStack->count() - 1));
-    assert(tblView);
-    auto *tblModel =  dynamic_cast<tbl::Model*>(tblView->model());
-    assert(tblModel);
-    
+    int i = addBoundary(b);
+    tableList->setSelected(i);
+    auto *tblModel =  tableList->getPrmModel(i); assert(tblModel);
     if (mIn.getSLC().type == slc::Type::Face)
       tblModel->mySetData(&b.facePick, {mIn.getSLC()});
     else
       tblModel->mySetData(&b.edgePick, {mIn.getSLC()});
-    auto li = boundaryList->model()->index(boundaryList->count() - 1, 0);
-    boundaryList->selectionModel()->select(li, QItemSelectionModel::ClearAndSelect);
   }
   
   void goUpdate()
@@ -215,15 +208,15 @@ struct Fill::Stow
     cmd::Fill::Data data;
     //initial face and internal constraints.
     data.emplace_back(prmModel->getMessages(parameters.at(0)), prmModel->getMessages(parameters.at(1)));
-    for (int bIndex = 0; bIndex < boundaryStack->count(); ++bIndex)
+    for (int bIndex = 0; bIndex < tableList->count(); ++bIndex)
     {
-      auto *tblView = dynamic_cast<tbl::View*>(boundaryStack->widget(bIndex)); assert(tblView);
-      auto *tblModel = dynamic_cast<tbl::Model*>(tblView->model()); assert(tblModel);
+      auto *tblModel = tableList->getPrmModel(bIndex); assert(tblModel);
       data.emplace_back(tblModel->getMessages(tblModel->index(0, 0)), tblModel->getMessages(tblModel->index(1, 0)));
     }
     command->setSelections(data);
     command->localUpdate();
     goGlobalBoundarySelection();
+    tableList->reselectDelayed();
   }
 };
 
@@ -237,6 +230,19 @@ Fill::Fill(cmd::Fill *cIn)
 
 Fill::~Fill() = default;
 
+bool Fill::eventFilter(QObject *watched, QEvent *event)
+{
+  //installed on child widgets so we can dismiss persistent editors
+  if(event->type() == QEvent::FocusIn)
+  {
+    stow->prmView->closePersistent();
+    stow->tableList->closePersistent();
+    stow->goGlobalBoundarySelection();
+  }
+  
+  return QObject::eventFilter(watched, event);
+}
+
 void Fill::boundaryAdded()
 {
   stow->addBoundary(stow->command->feature->addBoundary());
@@ -245,46 +251,22 @@ void Fill::boundaryAdded()
 
 void Fill::boundaryRemoved()
 {
-  auto rows = stow->boundaryList->selectionModel()->selectedRows();
-  if (rows.empty())
+  int bIndex = stow->tableList->remove();
+  if (bIndex == -1)
     return;
-  
-  int bIndex = rows.front().row();
-  assert(bIndex >= 0 && bIndex < static_cast<int>(stow->command->feature->getBoundaries().size()));
-  
-  stow->boundaryList->clearSelection();
-  delete stow->boundaryList->item(bIndex);
-  auto *w = stow->boundaryStack->widget(bIndex);
-  stow->boundaryStack->removeWidget(w);
-  w->deleteLater();
-  
   stow->command->feature->removeBoundary(bIndex);
-  
   stow->goUpdate();
 }
 
-void Fill::boundarySelectionChanged(const QItemSelection &selected, const QItemSelection &deselected)
+void Fill::boundarySelectionChanged()
 {
   //close any persistent editors for initial and internal
   stow->prmView->closePersistent();
-  
-  //close any persistent editors on deselected.
-  for (const auto &i : deselected.indexes())
-  {
-    auto *t = dynamic_cast<tbl::View*>(stow->boundaryStack->widget(i.row()));
-    assert(t);
-    t->closePersistent();
-  }
-  
-  if (selected.indexes().isEmpty())
-  {
-    stow->boundaryStack->setEnabled(false);
-    stow->goGlobalBoundarySelection();
-    return;
-  }
-  stow->boundaryStack->setEnabled(true);
-  stow->boundaryStack->setCurrentIndex(selected.indexes().front().row());
+  stow->tableList->closePersistent();
   stow->goGlobalBoundarySelection();
+  node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  for (const auto &m : stow->tableList->getSelectedMessages())
+    node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Add, m));
 }
 
 void Fill::modelChanged(const QModelIndex &index, const QModelIndex&)
@@ -302,6 +284,7 @@ void Fill::boundaryModelChanged(const QModelIndex &index, const QModelIndex&)
   if (index.row() == 2) //continuity, simple update, no pick changes.
   {
     stow->command->localUpdate();
+    stow->tableList->reselectDelayed();
     return;
   }
   stow->goUpdate();
@@ -309,24 +292,13 @@ void Fill::boundaryModelChanged(const QModelIndex &index, const QModelIndex&)
    * then we can updateHideInactive.
    */
   if (index.row() == 1) //faces, show or hide continuity parameter.
-  {
-    auto *tblView = dynamic_cast<tbl::View*>(stow->boundaryStack->currentWidget());
-    assert(tblView);
-    tblView->updateHideInactive();
-  }
+    stow->tableList->updateHideInactive();
 }
 
 void Fill::openingPersistentEditor()
 {
   //close any open editors
   stow->prmView->closePersistent();
-  
-  for (int i = 0; i < stow->boundaryStack->count(); ++i)
-  {
-    auto *t = dynamic_cast<tbl::View*>(stow->boundaryStack->widget(i));
-    assert(t);
-    t->closePersistent();
-  }
-  
+  stow->tableList->closePersistent();
   stow->stopGlobalBoundarySelection();
 }
