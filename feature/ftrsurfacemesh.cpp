@@ -107,6 +107,7 @@ struct Feature::Stow
       case Inert:{
         csysDragger.draggerUpdate();
         csys.setActive(true);
+        source.setValue(ftr::Picks());
         source.setActive(false);
         break;}
       case Occt:{

@@ -46,7 +46,7 @@ namespace cmd
     virtual void deactivate() override;
     
     bool isValidSelection(const slc::Message&);
-    void setSelection(const slc::Message&);
+    void setSelection(const slc::Messages&);
     void localUpdate();
   private:
     cmd::LeafManager leafManager;

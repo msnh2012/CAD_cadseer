@@ -38,10 +38,9 @@ namespace cmv
     SurfaceMesh(cmd::SurfaceMesh*);
     ~SurfaceMesh() override;
   public Q_SLOTS:
-    void typeChanged(int);
-    void selectionChanged();
     void occtValueChanged();
     void netgenValueChanged();
+    void modelChanged(const QModelIndex&, const QModelIndex&);
   private:
     struct Stow;
     std::unique_ptr<Stow> stow;

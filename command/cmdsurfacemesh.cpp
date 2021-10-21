@@ -111,17 +111,19 @@ bool SurfaceMesh::isValidSelection(const slc::Message &mIn)
   return false;
 }
 
-void SurfaceMesh::setSelection(const slc::Message &mIn)
+void SurfaceMesh::setSelection(const slc::Messages &mIn)
 {
   assert(isActive);
   
   project->clearAllInputs(feature->getId());
-  if (isValidSelection(mIn))
+  if (mIn.empty())
+    return;
+  if (isValidSelection(mIn.front()))
   {
-    ftr::Pick p = tls::convertToPick(mIn, *project->findFeature(mIn.featureId), project->getShapeHistory());
+    ftr::Pick p = tls::convertToPick(mIn.front(), *project->findFeature(mIn.front().featureId), project->getShapeHistory());
     p.tag = indexTag(ftr::SurfaceMesh::Tags::Source, 0);
     feature->getParameter(ftr::SurfaceMesh::Tags::Source)->setValue(p);
-    project->connect(mIn.featureId, feature->getId(), {p.tag});
+    project->connect(mIn.front().featureId, feature->getId(), {p.tag});
   }
 }
 
@@ -142,7 +144,7 @@ void SurfaceMesh::go()
     auto m = slc::EventHandler::containerToMessage(c);
     if (isValidSelection(m))
     {
-      setSelection(m);
+      setSelection({m});
       node->sendBlocked(msg::buildHideThreeD(m.featureId));
       node->sendBlocked(msg::buildHideOverlay(m.featureId));
       break;

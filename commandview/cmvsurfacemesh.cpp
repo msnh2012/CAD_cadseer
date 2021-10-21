@@ -18,7 +18,6 @@
  */
 
 #include <QSettings>
-#include <QComboBox>
 #include <QLabel>
 #include <QStackedWidget>
 #include <QVBoxLayout>
@@ -28,9 +27,9 @@
 #include "application/appapplication.h"
 #include "project/prjproject.h"
 #include "message/msgnode.h"
-#include "dialogs/dlgselectionbutton.h"
-#include "dialogs/dlgselectionwidget.h"
-#include "feature/ftrinputtype.h"
+#include "parameter/prmparameter.h"
+#include "commandview/cmvselectioncue.h"
+#include "commandview/cmvtable.h"
 #include "tools/featuretools.h"
 #include "parameter/prmparameter.h"
 #include "dialogs/dlgnetgenparameters.h"
@@ -48,151 +47,103 @@ struct SurfaceMesh::Stow
   cmd::SurfaceMesh *command;
   cmv::SurfaceMesh *view;
   ftr::SurfaceMesh::Feature *feature;
+  prm::Parameters parameters;
+  tbl::Model *prmModel = nullptr;
+  tbl::View *prmView = nullptr;
   
-  QVBoxLayout *verticalLayout = nullptr;
-  QHBoxLayout *horizontalLayout = nullptr;
-  QLabel *mesherLabel = nullptr;
-  QComboBox *mesherCombo = nullptr;
-  QSpacerItem *horizontalSpacer = nullptr;
   QStackedWidget *parameterStacked = nullptr;
   dlg::OCCTParameters *occtPage = nullptr;
-  QVBoxLayout *occtPageLayout = nullptr;
   dlg::NetgenParameters *netgenPage = nullptr;
-  QVBoxLayout *netgenPageLayout = nullptr;
   QWidget *gmshPage = nullptr;
-  QVBoxLayout *gmshPageLayout = nullptr;
-  dlg::SelectionWidget *selectionWidget = nullptr;
   
   Stow(cmd::SurfaceMesh *cIn, cmv::SurfaceMesh *vIn)
   : command(cIn)
   , view(vIn)
   , feature(cIn->feature)
   {
+    parameters = feature->getParameters();
     buildGui();
-    
-    QSettings &settings = app::instance()->getUserSettings();
-    settings.beginGroup("cmv::SurfaceMesh");
-    //load settings
-    settings.endGroup();
-    
-    loadFeatureData();
+    syncStacked();
     glue();
-    selectionWidget->activate(0);
   }
   
   void buildGui()
   {
-    verticalLayout = new QVBoxLayout(view);
-    verticalLayout->setObjectName(QString::fromUtf8("verticalLayout"));
-    view->setLayout(verticalLayout);
+    QVBoxLayout *mainLayout = new QVBoxLayout();
+    view->setLayout(mainLayout);
+    clearContentMargins(view);
+    view->setSizePolicy(view->sizePolicy().horizontalPolicy(), QSizePolicy::Expanding);
     
-    mesherLabel = new QLabel(tr("Mesher:"), view);
-    mesherLabel->setObjectName(QString::fromUtf8("mesherLabel"));
-    mesherCombo = new QComboBox(view);
-    mesherCombo->addItem(tr("Inert"));
-    mesherCombo->addItem(tr("OCCT"));
-    mesherCombo->addItem(tr("Netgen"));
-    mesherCombo->addItem(tr("GMSH"));
-    
-    mesherCombo->setObjectName(QString::fromUtf8("mesherCombo"));
-    QHBoxLayout *comboHLayout = new QHBoxLayout();
-    comboHLayout->addWidget(mesherLabel);
-    comboHLayout->addWidget(mesherCombo);
-    comboHLayout->addStretch();
-    QVBoxLayout *comboVLayout = new QVBoxLayout();
-    comboVLayout->addLayout(comboHLayout);
-    
-    horizontalLayout = new QHBoxLayout();
-    horizontalLayout->setObjectName(QString::fromUtf8("horizontalLayout"));
-    horizontalLayout->addLayout(comboVLayout);
-    horizontalSpacer = new QSpacerItem(40, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
-    horizontalLayout->addItem(horizontalSpacer);
-    
-    dlg::SelectionWidgetCue cue;
-    cue.name.clear();
+    prmModel = new tbl::Model(view, command->feature, parameters);
+    tbl::SelectionCue cue;
     cue.singleSelection = true;
-    cue.showAccrueColumn = false;
-    cue.mask = slc::ObjectsEnabled | slc::ObjectsSelectable;
+    cue.mask = slc::ObjectsBoth;
     cue.statusPrompt = tr("Select Feature To Mesh");
-    selectionWidget = new dlg::SelectionWidget(view, std::vector<dlg::SelectionWidgetCue>(1, cue));
-    horizontalLayout->addWidget(selectionWidget);
-    verticalLayout->addLayout(horizontalLayout);
+    cue.accrueEnabled = false;
+    prmModel->setCue(parameters.at(2), cue);
+    prmView = new tbl::View(view, prmModel, true);
+    mainLayout->addWidget(prmView);
     
     parameterStacked = new QStackedWidget(view);
     parameterStacked->setObjectName(QString::fromUtf8("parameterStacked"));
+    
     QWidget *inertPage = new QWidget(parameterStacked); //empty
     inertPage->setObjectName(QString::fromUtf8("inertPage"));
     parameterStacked->addWidget(inertPage);
+    
     occtPage = new dlg::OCCTParameters(parameterStacked);
     occtPage->setObjectName(QString::fromUtf8("occtPage"));
+    clearContentMargins(occtPage);
     parameterStacked->addWidget(occtPage);
+    
+#ifdef NETGEN_PRESENT
     netgenPage = new dlg::NetgenParameters(parameterStacked);
     netgenPage->setObjectName(QString::fromUtf8("netgenPage"));
+    clearContentMargins(netgenPage);
     parameterStacked->addWidget(netgenPage);
+#else
+    parameterStacked->addWidget(new QLabel(tr("Netgen Not Present"), parameterStacked));
+#endif
+    
+#ifdef GMSH_PRESENT
     gmshPage = new QWidget(parameterStacked); //TODO
     gmshPage->setObjectName(QString::fromUtf8("gmshPage"));
+    clearContentMargins(gmshPage);
     parameterStacked->addWidget(gmshPage);
-    verticalLayout->addWidget(parameterStacked);
+#else
+    parameterStacked->addWidget(new QLabel(tr("Gmsh Not Present"), parameterStacked));
+#endif
+    
+    mainLayout->addWidget(parameterStacked);
   }
   
-  void loadFeatureData()
+  void syncStacked()
   {
-    auto setSelection = [&]()
-    {
-      const auto &picks = feature->getParameter(ftr::SurfaceMesh::Tags::Source)->getPicks();
-      if (!picks.empty())
-      {
-        auto pl = view->project->getPayload(feature->getId());
-        tls::Resolver resolver(pl);
-        if (resolver.resolve(picks.front()))
-          selectionWidget->getButton(0)->setMessages(resolver.convertToMessages());
-      }
-    };
-    
-    auto ct = static_cast<ftr::SurfaceMesh::MeshType>(feature->getParameter(ftr::SurfaceMesh::Tags::MeshType)->getInt());
-    if (ct == ftr::SurfaceMesh::Inert)
-    {
-      mesherCombo->setCurrentIndex(0);
-      parameterStacked->setCurrentIndex(0);
-      selectionWidget->hide();
-    }
-    else if (ct == ftr::SurfaceMesh::Occt)
-    {
-      occtPage->setOCCT(feature->getOcctParameters());
-      mesherCombo->setCurrentIndex(1);
-      parameterStacked->setCurrentIndex(1);
-      setSelection();
-    }
-    else if (ct == ftr::SurfaceMesh::MeshType::Netgen)
-    {
-#ifdef NETGEN_PRESENT
-      netgenPage->setParameters(feature->getNetgenParameters());
-      mesherCombo->setCurrentIndex(2);
-      parameterStacked->setCurrentIndex(2);
-      setSelection();
-#else
-      QTimer::singleShot(0, [this](){mesherCombo->setCurrentIndex(1);});
-      view->node->send(msg::buildStatusMessage(tr("Netgen Not Present, Switching to OCCT").toStdString(), 2.0));
-#endif
-    }
-    else if (ct == ftr::SurfaceMesh::Gmsh)
-    {
-#ifdef GMSH_PRESENT
-      //TODO fill in data for gmsh
-      feature->getType(); //dummy statement
-#else
-      QTimer::singleShot(0, [this](){mesherCombo->setCurrentIndex(1);});
-      view->node->send(msg::buildStatusMessage(tr("Gmsh Not Present, Switching to OCCT").toStdString(), 2.0));
-#endif
-    }
+    int t = feature->getParameter(ftr::SurfaceMesh::Tags::MeshType)->getInt();
+    assert(t >= 0 && t < parameterStacked->count());
+    parameterStacked->setCurrentIndex(t);
   }
   
   void glue()
   {
-    QObject::connect(mesherCombo, SIGNAL(currentIndexChanged(int)), view, SLOT(typeChanged(int)));
-    QObject::connect(selectionWidget->getButton(0), SIGNAL(dirty()), view, SLOT(selectionChanged()));
-    QObject::connect(occtPage, &dlg::OCCTParameters::dirty, view, &SurfaceMesh::occtValueChanged);
-    QObject::connect(netgenPage, &dlg::NetgenParameters::dirty, view, &SurfaceMesh::netgenValueChanged);
+    connect(prmModel, &tbl::Model::dataChanged, view, &SurfaceMesh::modelChanged);
+    connect(prmView, &tbl::View::openingPersistent, [this](){this->goPersistent();});
+    connect(prmView, &tbl::View::closingPersistent, [this](){this->stopPersistent();});
+    connect(occtPage, &dlg::OCCTParameters::dirty, view, &SurfaceMesh::occtValueChanged);
+#ifdef NETGEN_PRESENT
+    connect(netgenPage, &dlg::NetgenParameters::dirty, view, &SurfaceMesh::netgenValueChanged);
+#endif
+    //TODO Gmsh
+  }
+  
+  void goPersistent()
+  {
+    parameterStacked->setEnabled(false);
+  }
+  
+  void stopPersistent()
+  {
+    parameterStacked->setEnabled(true);
   }
 };
 
@@ -203,78 +154,34 @@ SurfaceMesh::SurfaceMesh(cmd::SurfaceMesh *cIn)
 
 SurfaceMesh::~SurfaceMesh() = default;
 
-void SurfaceMesh::typeChanged(int currentIndex)
-{
-  stow->parameterStacked->setCurrentIndex(currentIndex);
-  auto oldType = stow->feature->getParameter(ftr::SurfaceMesh::Tags::MeshType)->getInt();
-  assert(oldType >= 0 && oldType < stow->mesherCombo->count());
-  if (oldType == currentIndex)
-    return;
-  
-  slc::Message tm;
-  const auto &msgs = stow->selectionWidget->getMessages(0);
-  if (!msgs.empty())
-    tm = msgs.front();
-  stow->command->setSelection(tm);
-  
-  if (currentIndex == 0)
-  {
-    stow->selectionWidget->getButton(0)->setMessagesQuietly(std::vector<slc::Message>()); //clear any selection
-    stow->feature->getParameter(ftr::SurfaceMesh::Tags::MeshType)->setValue(static_cast<int>(ftr::SurfaceMesh::Inert));
-    stow->command->setSelection(slc::Message());
-    stow->selectionWidget->hide();
-  }
-  else if (currentIndex == 1)
-  {
-    stow->feature->setOcctParameters(stow->occtPage->getParameters());
-    stow->command->setSelection(tm);
-    stow->selectionWidget->show();
-  }
-  else if (currentIndex == 2)
-  {
-#ifdef NETGEN_PRESENT
-    stow->feature->setNetgenParameters(stow->netgenPage->getParameters());
-    stow->command->setSelection(tm);
-    stow->selectionWidget->show();
-#else
-    node->send(msg::buildStatusMessage(tr("Netgen Not Present, Reverting Type Change").toStdString(), 2.0));
-    QTimer::singleShot(0, [this, oldType](){stow->mesherCombo->setCurrentIndex(oldType);});
-#endif
-  }
-  else if (currentIndex == 3)
-  {
-#ifdef GMSH_PRESENT
-    //TODO set gmsh parameters.
-    stow->selectionWidget->show();
-#else
-    node->send(msg::buildStatusMessage(tr("Gmsh Not Present, Reverting Type Change").toStdString(), 2.0));
-    QTimer::singleShot(0, [this, oldType](){stow->mesherCombo->setCurrentIndex(oldType);});
-#endif
-  }
-  
-  stow->command->localUpdate();
-}
-
-void SurfaceMesh::selectionChanged()
-{
-  project->clearAllInputs(stow->feature->getId());
-  
-  const auto &msgs = stow->selectionWidget->getMessages(0);
-  if (!msgs.empty())
-  {
-    stow->command->setSelection(msgs.front());
-    stow->command->localUpdate();
-  }
-}
-
 void SurfaceMesh::occtValueChanged()
 {
   stow->feature->setOcctParameters(stow->occtPage->getParameters());
   stow->command->localUpdate();
+  node->sendBlocked(msg::buildStatusMessage(stow->command->getStatusMessage()));
 }
 
 void SurfaceMesh::netgenValueChanged()
 {
   stow->feature->setNetgenParameters(stow->netgenPage->getParameters());
   stow->command->localUpdate();
+  node->sendBlocked(msg::buildStatusMessage(stow->command->getStatusMessage()));
+}
+
+void SurfaceMesh::modelChanged(const QModelIndex &index, const QModelIndex&)
+{
+  if (!index.isValid())
+    return;
+  
+  prm::Parameter *changed = stow->parameters.at(index.row());
+  if (changed->getTag() == ftr::SurfaceMesh::Tags::Source)
+    stow->command->setSelection(stow->prmModel->getMessages(changed));
+  else if (changed->getTag() == ftr::SurfaceMesh::Tags::MeshType)
+  {
+    stow->command->setSelection(slc::Messages());
+    stow->prmView->updateHideInactive();
+    stow->syncStacked();
+  }
+  stow->command->localUpdate();
+  node->sendBlocked(msg::buildStatusMessage(stow->command->getStatusMessage()));
 }
