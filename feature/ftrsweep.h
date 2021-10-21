@@ -89,6 +89,8 @@ namespace ftr
       prm::Parameter correction;
       osg::ref_ptr<lbr::PLabel> contactLabel;
       osg::ref_ptr<lbr::PLabel> correctionLabel;
+      
+      prm::Parameters getParameters();
     };
     typedef std::list<Profile> Profiles;
     

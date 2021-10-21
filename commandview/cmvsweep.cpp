@@ -42,6 +42,7 @@
 #include "parameter/prmparameter.h"
 #include "commandview/cmvselectioncue.h"
 #include "commandview/cmvtable.h"
+#include "commandview/cmvtablelist.h"
 #include "dialogs/dlgsplitterdecorated.h"
 #include "tools/featuretools.h"
 #include "tools/idtools.h"
@@ -52,68 +53,6 @@
 #include "commandview/cmvsweep.h"
 
 using boost::uuids::uuid;
-
-namespace
-{
-  class ProfilesModel : public QAbstractListModel
-  {
-  protected:
-    ftr::Sweep::Feature &feature;
-  public:
-    ProfilesModel(QObject *p, ftr::Sweep::Feature &fIn)
-    : QAbstractListModel(p)
-    , feature(fIn)
-    {}
-    
-    int rowCount(const QModelIndex& = QModelIndex()) const override
-    {
-      return feature.getProfiles().size();
-    }
-    
-    QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override
-    {
-      if (!index.isValid())
-        return QVariant();
-      if (role == Qt::DisplayRole)
-        return tr("Profile");
-      return QVariant();
-    }
-    
-    Qt::ItemFlags flags(const QModelIndex &index) const override
-    {
-      //works for both because we disable dropping on the master view
-      if (!index.isValid())
-        return Qt::NoItemFlags;
-      return Qt::ItemIsEnabled | Qt::ItemIsSelectable;
-    }
-    
-    /* JFC Qt! These functions take the start and a count.
-     * but the begin* functions take a start and a finish.
-     * Fail!
-     * 
-     */
-    bool removeRows(int row, int count, const QModelIndex &parent = QModelIndex()) override
-    {
-      if (row + count - 1 >= static_cast<int>(feature.getProfiles().size()) || row < 0 || count < 1)
-        return false;
-      beginRemoveRows(parent, row, row + count -1);
-      feature.removeProfile(row);
-      endRemoveRows();
-      return true;
-    }
-    
-    bool insertRows(int row, int count, const QModelIndex &parent = QModelIndex()) override
-    {
-      if (row < 0 || row > static_cast<int>(feature.getProfiles().size()) || count < 1)
-        return false;
-      beginInsertRows(parent, row, row + count - 1);
-      feature.addProfile(); //ignore count we are just adding one at a time.
-      endInsertRows();
-      return true;
-    }
-  };
-}
-
 using namespace cmv;
 
 struct Sweep::Stow
@@ -121,9 +60,7 @@ struct Sweep::Stow
   cmd::Sweep *command = nullptr;
   cmv::Sweep *view = nullptr;
   
-  ProfilesModel *profilesModel = nullptr;
-  QListView *profilesList = nullptr;
-  QStackedWidget *profilesStack = nullptr;
+  TableList *profilesList = nullptr;
   QAction *addProfileAction = nullptr;
   QAction *removeProfileAction = nullptr;
   
@@ -132,7 +69,6 @@ struct Sweep::Stow
   cmv::tbl::View *prmView = nullptr;
   prm::Observer useLawObserver;
   
-  dlg::SplitterDecorated *profileSplitter = nullptr;
   dlg::SplitterDecorated *topSplitter = nullptr;
   LawFunctionWidget *lawWidget;
   bool isGlobalBoundarySelection = false;
@@ -143,12 +79,16 @@ struct Sweep::Stow
   {
     parameters = command->feature->getParameters();
     buildGui();
-    
-    profileSplitter->restoreSettings("cmv::Sweep::profileSplitter");
-    topSplitter->restoreSettings("cmv::Sweep::topSplitter");
-    
     loadFeatureData();
     glue();
+    topSplitter->restoreSettings("cmv::Sweep::topSplitter");
+    
+    //start into spine editing if it is empty.
+    const auto &msgs = prmModel->getMessages(command->feature->getParameter(ftr::Sweep::PrmTags::spine));
+    if (msgs.empty())
+      QTimer::singleShot(0, [this](){this->prmView->openPersistent(prmModel->index(0, 1));});
+    else
+      profilesList->setSelectedDelayed();
   }
   
   void buildGui()
@@ -158,21 +98,12 @@ struct Sweep::Stow
     clearContentMargins(view);
     view->setSizePolicy(view->sizePolicy().horizontalPolicy(), QSizePolicy::Expanding);
     
-    addProfileAction = new QAction(tr("Add Profile"), profilesList);
-    removeProfileAction = new QAction(tr("Remove Profile"), profilesList);
-    profilesModel = new ProfilesModel(view, *command->feature);
-    profilesList = new QListView(view);
-    profilesList->setModel(profilesModel);
-    profilesList->addAction(addProfileAction);
-    profilesList->addAction(removeProfileAction);
-    profilesList->setContextMenuPolicy(Qt::ActionsContextMenu);
-    profilesStack = new QStackedWidget(view);
-    profilesStack->setDisabled(true);
-    profileSplitter = new dlg::SplitterDecorated(view);
-    profileSplitter->setOrientation(Qt::Horizontal);
-    profileSplitter->setChildrenCollapsible(false);
-    profileSplitter->addWidget(profilesList);
-    profileSplitter->addWidget(profilesStack);
+    addProfileAction = new QAction(tr("Add Profile"), view);
+    removeProfileAction = new QAction(tr("Remove Profile"), view);
+    profilesList = new TableList(view, command->feature);
+    profilesList->restoreSettings("cmv::Sweep::TableList");
+    profilesList->getListWidget()->addAction(addProfileAction);
+    profilesList->getListWidget()->addAction(removeProfileAction);
     
     prmModel = new tbl::Model(view, command->feature, parameters);
     prmView = new tbl::View(view, prmModel, true);
@@ -208,8 +139,8 @@ struct Sweep::Stow
     
     topSplitter = new dlg::SplitterDecorated(view);
     topSplitter->setOrientation(Qt::Vertical);
-    topSplitter->addWidget(profileSplitter);
     topSplitter->addWidget(prmView);
+    topSplitter->addWidget(profilesList);
     topSplitter->addWidget(lawWidget);
     mainLayout->addWidget(topSplitter);
     
@@ -226,79 +157,52 @@ struct Sweep::Stow
     )
     return;
     
-    closeAllPersistentEditors();
-    profilesList->clearSelection();
-    if (profilesModel->insertRow(static_cast<int>(command->feature->getProfiles().size())))
-    {
-      auto &freshProfile(command->feature->getProfiles().back());
-      addProfileWidget(freshProfile);
-      auto *tblView = dynamic_cast<tbl::View*>(profilesStack->widget(profilesStack->count() - 1)); assert(tblView);
-      auto *tblModel =  dynamic_cast<tbl::Model*>(tblView->model()); assert(tblModel);
-      tblModel->mySetData(&freshProfile.pick, {mIn.getSLC()});
-      
-      QTimer::singleShot
-      (
-        0
-        , [&](){profilesList->selectionModel()->select(profilesModel->index(profilesModel->rowCount() - 1, 0), QItemSelectionModel::ClearAndSelect);}
-      );
-      useLawChanged();
-    }
+    auto &p = addProfile();
+    auto *tblModel = profilesList->getSelectedModel();
+    tblModel->mySetData(&p.pick, {mIn.getSLC()});
+    useLawChanged();
   }
   
-  void addProfile()
+  ftr::Sweep::Profile& addProfile()
   {
     closeAllPersistentEditors();
-    profilesList->clearSelection();
-    if (profilesModel->insertRow(static_cast<int>(command->feature->getProfiles().size())))
-    {
-      addProfileWidget(command->feature->getProfiles().back());
-      QTimer::singleShot
-      (
-        0
-        , [&](){profilesList->selectionModel()->select(profilesModel->index(profilesModel->rowCount() - 1, 0), QItemSelectionModel::ClearAndSelect);}
-      );
-      useLawChanged();
-    }
+    auto &freshProfile = command->feature->addProfile();
+    addProfileWidget(freshProfile);
+    profilesList->setSelected();
+    useLawChanged();
+    return freshProfile;
   }
   
   void removeProfile()
   {
     closeAllPersistentEditors();
-    if (profilesList->selectionModel()->hasSelection())
-    {
-      auto index = profilesList->selectionModel()->selectedIndexes().front();
-      profilesList->selectionModel()->clearSelection();
-      auto *cw = dynamic_cast<tbl::View*>(profilesStack->widget(index.row()));
-      assert(cw);
-      profilesModel->removeRow(index.row());
-      profilesStack->removeWidget(cw);
-      cw->model()->deleteLater();
-      cw->deleteLater();
-      goPicks();
-      command->localUpdate();
-      useLawChanged();
-    }
+    int i = profilesList->remove();
+    if (i == -1)
+      return;
+    command->feature->removeProfile(i);
+    goPicks();
+    command->localUpdate();
+    useLawChanged();
   }
   
   void addProfileWidget(ftr::Sweep::Profile &pIn)
   {
-    prm::Parameters prms{&pIn.pick, &pIn.contact, &pIn.correction};
-    auto *lModel = new cmv::tbl::Model(profilesStack, command->feature, prms);
-    auto *lView = new tbl::View(profilesStack, lModel, true);
+    prm::Parameters prms = pIn.getParameters();
+    int i = profilesList->add(tr("Profile"), prms);
+    auto *pModel = profilesList->getPrmModel(i); assert(pModel);
+    auto *pView = profilesList->getPrmView(i); assert(pView);
     
     tbl::SelectionCue cue;
     cue.singleSelection = true;
     cue.mask = slc::ObjectsBoth | slc::WiresEnabled | slc::EdgesEnabled;
     cue.statusPrompt = tr("Select Profile");
     cue.accrueEnabled = false;
-    lModel->setCue(&pIn.pick, cue);
+    pModel->setCue(&pIn.pick, cue);
     
-    QObject::connect(lModel, &tbl::Model::dataChanged, view, &Sweep::profilesChanged);
-    QObject::connect(lView, &tbl::View::openingPersistent, [this](){this->closeAllPersistentEditors();});
-    QObject::connect(lView, &tbl::View::openingPersistent, [this](){this->stopGlobalBoundarySelection();});
-    lView->installEventFilter(view);
-    
-    profilesStack->addWidget(lView);
+    QObject::connect(pModel, &tbl::Model::dataChanged, view, &Sweep::profilesChanged);
+    QObject::connect(pView, &tbl::View::openingPersistent, [this](){this->closeAllPersistentEditors();});
+    QObject::connect(pView, &tbl::View::openingPersistent, [this](){this->stopGlobalBoundarySelection();});
+    pView->installEventFilter(view);
   }
   
   void loadFeatureData()
@@ -326,7 +230,7 @@ struct Sweep::Stow
     connect(prmModel, &tbl::Model::dataChanged, view, &Sweep::modelChanged);
     connect(addProfileAction, &QAction::triggered, [this](){this->addProfile();});
     connect(removeProfileAction, &QAction::triggered, [this](){this->removeProfile();});
-    connect(profilesList->selectionModel(), &QItemSelectionModel::selectionChanged, view, &Sweep::profileSelectionChanged);
+    connect(profilesList->getListWidget(), &QListWidget::itemSelectionChanged, view, &Sweep::profileSelectionChanged);
     connect(lawWidget, &LawFunctionWidget::lawIsDirty, view, &Sweep::lawDirtySlot);
     connect(lawWidget, &LawFunctionWidget::valueChanged, view, &Sweep::lawValueChangedSlot);
     auto *lawPrm = command->feature->getParameter(ftr::Sweep::PrmTags::useLaw);
@@ -334,7 +238,7 @@ struct Sweep::Stow
     lawPrm->connect(useLawObserver);
     connect(prmView, &tbl::View::openingPersistent, [this](){this->closeAllPersistentEditors();});
     connect(prmView, &tbl::View::openingPersistent, [this](){this->stopGlobalBoundarySelection();});
-    profilesList->installEventFilter(view);
+    profilesList->getListWidget()->installEventFilter(view);
     prmView->installEventFilter(view);
     
     view->sift->insert
@@ -347,25 +251,18 @@ struct Sweep::Stow
   std::vector<slc::Messages> getProfiles()
   {
     std::vector<slc::Messages> out;
-    
-    for (int index = 0; index < profilesStack->count(); ++index)
+    for (int index = 0; index < profilesList->count(); ++index)
     {
-      auto *aView = dynamic_cast<tbl::View*>(profilesStack->widget(index)); assert(aView);
-      auto *aModel = dynamic_cast<tbl::Model*>(aView->model()); assert(aModel);
+      auto *aModel = profilesList->getPrmModel(index); assert(aModel);
       out.push_back(aModel->getMessages(aModel->index(0,0)));
     }
-    
     return out;
   }
   
   void closeAllPersistentEditors()
   {
     prmView->closePersistent();
-    for (int index = 0; index < profilesStack->count(); ++index)
-    {
-      auto *aView = dynamic_cast<tbl::View*>(profilesStack->widget(index)); assert(aView);
-      aView->closePersistent();
-    }
+    profilesList->closePersistent();
   }
   
   void goPicks()
@@ -407,6 +304,7 @@ struct Sweep::Stow
     prmView->updateHideInactive();
     view->node->sendBlocked(msg::buildStatusMessage(command->getStatusMessage()));
     goGlobalBoundarySelection();
+    profilesList->reselectDelayed();
   }
   
   void goGlobalBoundarySelection()
@@ -485,25 +383,12 @@ void Sweep::profilesChanged(const QModelIndex &index, const QModelIndex&)
   stow->goUpdate();
 }
 
-void Sweep::profileSelectionChanged(const QItemSelection &selected, const QItemSelection&)
+void Sweep::profileSelectionChanged()
 {
   stow->closeAllPersistentEditors();
   node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
-  if (selected.indexes().isEmpty())
-  {
-    stow->profilesStack->setDisabled(true);
-  }
-  else
-  {
-    stow->profilesStack->setEnabled(true);
-    int row = selected.indexes().front().row();
-    stow->profilesStack->setCurrentIndex(row);
-    auto *tView = dynamic_cast<tbl::View*>(stow->profilesStack->widget(row)); assert(tView);
-    auto *tModel = dynamic_cast<tbl::Model*>(tView->model()); assert(tModel);
-    const auto &msgs = tModel->getMessages(tModel->index(0,0));
-    for (const auto &m : msgs)
-      node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Add, m));
-  }
+  for (const auto &m : stow->profilesList->getSelectedMessages())
+    node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Add, m));
 }
 
 void Sweep::modelChanged(const QModelIndex &index, const QModelIndex&)
@@ -529,4 +414,5 @@ void Sweep::modelChanged(const QModelIndex &index, const QModelIndex&)
   stow->prmView->updateHideInactive();
   node->sendBlocked(msg::buildStatusMessage(stow->command->getStatusMessage()));
   stow->goGlobalBoundarySelection();
+  stow->profilesList->reselectDelayed();
 }

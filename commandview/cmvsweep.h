@@ -48,7 +48,7 @@ namespace cmv
     void lawDirtySlot();
     void lawValueChangedSlot();
     void profilesChanged(const QModelIndex&, const QModelIndex&);
-    void profileSelectionChanged(const QItemSelection&, const QItemSelection&);
+    void profileSelectionChanged();
     void modelChanged(const QModelIndex&, const QModelIndex&);
   };
 }

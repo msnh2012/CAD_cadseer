@@ -93,6 +93,11 @@ prj::srl::swps::SweepProfile Profile::serialOut() const
   );
 }
 
+prm::Parameters Profile::getParameters()
+{
+  return {&pick, &contact, &correction};
+}
+
 Auxiliary::Auxiliary()
 : pick(QObject::tr("Auxiliary Picks"), ftr::Picks(), PrmTags::auxPick)
 , curvilinearEquivalence(QObject::tr("Curvelinear Equivalence"), false, PrmTags::auxCurvilinear)
