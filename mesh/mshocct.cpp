@@ -86,19 +86,17 @@ static msh::srf::Stow generate(const TopoDS_Shape &shapeIn, const msh::prm::OCCT
     gp_Trsf transformation = location.Transformation();
     
     std::size_t offset = points.size();
-    const TColgp_Array1OfPnt& nodes = triangulation->Nodes();
-    for (int index(nodes.Lower()); index <= nodes.Upper(); ++index)
+    for (int index = 1; index < triangulation->NbNodes() + 1; ++index)
     {
-      gp_Pnt point = nodes.Value(index);
+      gp_Pnt point = triangulation->Node(index);
       point.Transform(transformation);
       points.emplace_back(msh::srf::Point(point.X(), point.Y(), point.Z()));
     }
     
-    const Poly_Array1OfTriangle& triangles = triangulation->Triangles();
-    for (int index(triangles.Lower()); index < triangles.Upper() + 1; ++index)
+    for (int index = 1; index < triangulation->NbTriangles() + 1; ++index)
     {
       int N1, N2, N3;
-      triangles(index).Get(N1, N2, N3);
+      triangulation->Triangle(index).Get(N1, N2, N3);
       std::vector<std::size_t> polygon;
       if (face.Orientation() == TopAbs_FORWARD)
       {

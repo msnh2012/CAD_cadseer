@@ -488,13 +488,12 @@ void ShapeGeometryBuilder::faceConstruct(const TopoDS_Face &faceIn)
   }
 
   //vertices.
-  const TColgp_Array1OfPnt& nodes = triangulation->Nodes();
   osg::Vec3Array *vertices = dynamic_cast<osg::Vec3Array *>(faceGeometry->getVertexArray());
   osg::Vec4Array *colors = dynamic_cast<osg::Vec4Array *>(faceGeometry->getColorArray());
   std::size_t offset = vertices->size();
-  for (int index(nodes.Lower()); index < nodes.Upper() + 1; ++index)
+  for (int index = 1; index < triangulation->NbNodes() + 1; ++index)
   {
-    gp_Pnt point = nodes.Value(index);
+    gp_Pnt point = triangulation->Node(index);
     if(!identity)
       point.Transform(transformation);
     vertices->push_back(osg::Vec3(point.X(), point.Y(), point.Z()));
@@ -505,16 +504,15 @@ void ShapeGeometryBuilder::faceConstruct(const TopoDS_Face &faceIn)
   //now that we are combining faces into one osg::Geometry, osgUtil SmoothingVisitor
   //wants to 'average' out normals across faces. so we go back to manual calculation
   //of surface normals.
-  const TColgp_Array1OfPnt2d &uvNodes = triangulation->UVNodes();
-  assert(nodes.Length() == uvNodes.Length());
+  assert(triangulation->HasUVNodes());
   osg::Vec3Array *normals = dynamic_cast<osg::Vec3Array *>(faceGeometry->getNormalArray());
   opencascade::handle<Geom_Surface> surface = BRep_Tool::Surface(faceIn);
   if (surface.IsNull())
     throw std::runtime_error("null surface in face construction");
-  for (int index(uvNodes.Lower()); index < uvNodes.Upper() + 1; ++index)
+  for (int index = 1; index < triangulation->NbNodes() + 1; ++index)
   {
     gp_Dir direction;
-    int result = GeomLib::NormEstim(surface, uvNodes.Value(index), Precision::Confusion(), direction);
+    int result = GeomLib::NormEstim(surface, triangulation->UVNode(index), Precision::Confusion(), direction);
     if (result != 0)
     {
       std::ostringstream stream;
@@ -528,14 +526,13 @@ void ShapeGeometryBuilder::faceConstruct(const TopoDS_Face &faceIn)
     normals->push_back(osg::Vec3(direction.X(), direction.Y(), direction.Z()));
   }
 
-  const Poly_Array1OfTriangle& triangles = triangulation->Triangles();
   osg::ref_ptr<osg::DrawElementsUInt> indices = new osg::DrawElementsUInt
     (GL_TRIANGLES, triangulation->NbTriangles() * 3);
 
-  for (int index(triangles.Lower()); index < triangles.Upper() + 1; ++index)
+  for (int index = 1; index < triangulation->NbTriangles() + 1; ++index)
   {
     int N1, N2, N3;
-    triangles(index).Get(N1, N2, N3);
+    triangulation->Triangle(index).Get(N1, N2, N3);
 
     int factor = (index - 1) * 3;
     if (!signalOrientation)
@@ -606,11 +603,10 @@ void ShapeGeometryBuilder::edgeConstruct(const TopoDS_Edge &edgeIn)
     }
     
     const TColStd_Array1OfInteger& indexes = segments->Nodes();
-    const TColgp_Array1OfPnt& nodes = triangulation->Nodes();
     indices->resizeElements(indexes.Length());
     for (int index(indexes.Lower()); index < indexes.Upper() + 1; ++index)
     {
-      gp_Pnt point = nodes(indexes(index));
+      gp_Pnt point = triangulation->Node(indexes(index));
       if(!identity)
         point.Transform(transformation);
       vertices->push_back(osg::Vec3(point.X(), point.Y(), point.Z()));
