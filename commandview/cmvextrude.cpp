@@ -24,8 +24,6 @@
 
 #include "application/appapplication.h"
 #include "project/prjproject.h"
-#include "dialogs/dlgselectionbutton.h"
-#include "dialogs/dlgselectionwidget.h"
 #include "message/msgmessage.h"
 #include "message/msgnode.h"
 #include "commandview/cmvparameterwidgets.h"
