@@ -86,6 +86,8 @@ void Blend::activate()
     cmv::Message vm(viewBase.get(), viewBase->getPaneWidth());
     msg::Message out(msg::Mask(msg::Request | msg::Command | msg::View | msg::Show), vm);
     node->sendBlocked(out);
+    if (!isEdit.get())
+      node->sendBlocked(msg::buildSelectionFreeze(feature->getId()));
   }
   else
     sendDone();
@@ -109,13 +111,6 @@ void Blend::deactivate()
   isActive = false;
 }
 
-void Blend::setType(int type)
-{
-  assert(type == 0 || type == 1);
-  auto t = static_cast<ftr::Blend::BlendType>(type);
-  feature->setBlendType(t);
-}
-
 bool Blend::isValidSelection(const slc::Message &mIn)
 {
   if (mIn.type != slc::Type::Edge)
@@ -129,74 +124,74 @@ bool Blend::isValidSelection(const slc::Message &mIn)
   return true;
 }
 
-void Blend::setConstantSelections(const std::vector<slc::Messages> &msgsIn)
-{
-  assert(isActive);
-  assert(msgsIn.size() == feature->getConstantBlends().size());
-  project->clearAllInputs(feature->getId());
-  
-  int index = -1;
-  for (const auto &msgs : msgsIn)
-  {
-    index++;
-    ftr::Picks currentPicks;
-    for (const auto &m : msgs)
-    {
-      if (!isValidSelection(m))
-        continue;
-      ftr::Pick pick = tls::convertToPick(m, *project->findFeature(m.featureId), project->getShapeHistory());
-      pick.tag = ftr::InputType::createIndexedTag(ftr::InputType::target, index);
-      currentPicks.push_back(pick);
-      project->connectInsert(m.featureId, feature->getId(), {currentPicks.back().tag});
-    }
-    feature->setConstantPicks(index, currentPicks);
-  }
-}
-
-/*! Setting of project connections and feature picks.
- * 
- * @param msgsIn Tuple consisting of a vector of messages for edges
- * and a vector of ftr::VariableEntry. All should belong to same body.
- */
-void Blend::setVariableSelections(const SelectionData &msgsIn)
+void Blend::setSelections(const std::vector<slc::Messages> &msgsIn)
 {
   assert(isActive);
   project->clearAllInputs(feature->getId());
-  feature->clearBlends();
   
-  if (std::get<0>(msgsIn).empty() || std::get<1>(msgsIn).empty())
-    return;
-  
-  //we know the edges passed in is not empty so get first edge and
-  //assign input feature and test for validity.
-  assert(project->hasFeature(std::get<0>(msgsIn).front().featureId));
-  const auto &inputFeature = *project->findFeature(std::get<0>(msgsIn).front().featureId);
-  assert(inputFeature.hasAnnex(ann::Type::SeerShape) && !inputFeature.getAnnex<ann::SeerShape>().isNull());
-  const auto &ssIn = inputFeature.getAnnex<ann::SeerShape>();
-  
-  int index = -1;
-  const auto &edges = std::get<0>(msgsIn);
-  for (const auto &edge : edges)
+  auto makePick = [&](const slc::Message &mIn, std::string_view tag, int index) -> ftr::Pick
   {
-    if (inputFeature.getId() != edge.featureId)
+    ftr::Pick pick = tls::convertToPick(mIn, *project->findFeature(mIn.featureId), project->getShapeHistory());
+    pick.tag = indexTag(tag, index);
+    project->connectInsert(mIn.featureId, feature->getId(), {pick.tag});
+    return pick;
+  };
+  
+  int localBlendType = feature->getParameter(ftr::Blend::PrmTags::blendType)->getInt();
+  switch(localBlendType)
+  {
+    case 0: //constant
     {
-      node->sendBlocked(msg::buildStatusMessage(QObject::tr("Filtering selected object on separate feature").toStdString(), 2.0));
-      continue;
+      assert(msgsIn.size() == feature->getConstants().size());
+      int index = -1;
+      for (const auto &msgs : msgsIn)
+      {
+        index++;
+        ftr::Picks currentPicks;
+        for (const auto &m : msgs)
+        {
+          if (!isValidSelection(m))
+            continue;
+          currentPicks.push_back(makePick(m, ftr::Blend::InputTags::constant, index));
+        }
+        feature->getConstant(index).contourPicks.setValue(currentPicks);
+      }
+      break;
     }
-    index++;
-    ftr::Pick pick = tls::convertToPick(edge, ssIn, project->getShapeHistory());
-    pick.tag = ftr::InputType::createIndexedTag(ftr::InputType::target, index);
-    feature->addOrCreateVariableBlend(pick);
-    project->connect(inputFeature.getId(), feature->getId(), {pick.tag});
-  }
-  
-  
-  for (auto entry : std::get<1>(msgsIn))
-  {
-    index++;
-    entry.pick.tag = ftr::InputType::createIndexedTag(ftr::InputType::target, index);
-    feature->addVariableEntry(entry);
-    project->connect(inputFeature.getId(), feature->getId(), {entry.pick.tag});
+    case 1: //variable
+    {
+      /* message front() is for the contour picks.
+       * the rest are for entries.
+       */
+      assert(!msgsIn.empty());
+      auto &variable = feature->getVariable();
+      assert(variable.entries.size() + 1 == msgsIn.size());
+      
+      ftr::Picks contourPicks;
+      auto it = msgsIn.begin();
+      for (auto it2 = it->begin(); it2 != it->end(); ++it2)
+      {
+        if (!isValidSelection(*it2))
+          continue;
+        contourPicks.push_back(makePick(*it2, ftr::Blend::InputTags::contourPick, std::distance(it->begin(), it2)));
+      }
+      variable.contourPicks.setValue(contourPicks);
+      
+      //onto the entries
+      auto entryIt = variable.entries.begin();
+      for (++it; it != msgsIn.end(); ++it, ++entryIt)
+      {
+        if (it->empty()) //should only have 1 pick for each entry.
+          continue;
+        entryIt->entryPick.setValue(makePick(it->front(), ftr::Blend::InputTags::entryPick, std::distance(variable.entries.begin(), entryIt)));
+      }
+      break;
+    }
+    default: //error
+    {
+      assert(0); //unknown blend type
+      break;
+    }
   }
 }
 
@@ -233,15 +228,13 @@ void Blend::go()
       feature = new ftr::Blend::Feature();
       project->addFeature(std::unique_ptr<ftr::Blend::Feature>(feature));
       feature->setColor(project->findFeature(targets.front().featureId)->getColor());
-      ftr::Blend::Constant simpleBlend;
-      simpleBlend.radius = ftr::Blend::buildRadiusParameter();
-      feature->addConstantBlend(simpleBlend);
-      setConstantSelections({targets});
+      auto &constant = feature->addConstant();
+      setSelections({targets});
       created = true;
       node->sendBlocked(msg::buildHideThreeD(targets.front().featureId));
       node->sendBlocked(msg::buildHideOverlay(targets.front().featureId));
       node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
-      dlg::Parameter *pDialog = new dlg::Parameter(feature->getParameters().front(), feature->getId());
+      dlg::Parameter *pDialog = new dlg::Parameter(&constant.radius, feature->getId());
       pDialog->show();
       pDialog->raise();
       pDialog->activateWindow();

@@ -69,9 +69,9 @@ namespace prj
   {
     namespace blns
     {
-      class SimpleBlend;
-      class VariableEntry;
-      class VariableBlend;
+      class Constant;
+      class Entry;
+      class Variable;
       class Blend;
     }
   }
@@ -94,8 +94,6 @@ namespace prj
 
 #include "prjsrlsptparameter.h"
 
-#include "prjsrlsptpick.h"
-
 #include "prjsrlsptoverlay.h"
 
 #include "prjsrlsptseershape.h"
@@ -108,25 +106,25 @@ namespace prj
   {
     namespace blns
     {
-      class SimpleBlend: public ::xml_schema::Type
+      class Constant: public ::xml_schema::Type
       {
         public:
-        // blendPicks
+        // contourPicks
         //
-        typedef ::prj::srl::spt::Pick BlendPicksType;
-        typedef ::xsd::cxx::tree::sequence< BlendPicksType > BlendPicksSequence;
-        typedef BlendPicksSequence::iterator BlendPicksIterator;
-        typedef BlendPicksSequence::const_iterator BlendPicksConstIterator;
-        typedef ::xsd::cxx::tree::traits< BlendPicksType, char > BlendPicksTraits;
+        typedef ::prj::srl::spt::Parameter ContourPicksType;
+        typedef ::xsd::cxx::tree::traits< ContourPicksType, char > ContourPicksTraits;
 
-        const BlendPicksSequence&
-        blendPicks () const;
+        const ContourPicksType&
+        contourPicks () const;
 
-        BlendPicksSequence&
-        blendPicks ();
+        ContourPicksType&
+        contourPicks ();
 
         void
-        blendPicks (const BlendPicksSequence& s);
+        contourPicks (const ContourPicksType& x);
+
+        void
+        contourPicks (::std::unique_ptr< ContourPicksType > p);
 
         // radius
         //
@@ -145,48 +143,50 @@ namespace prj
         void
         radius (::std::unique_ptr< RadiusType > p);
 
-        // plabel
+        // radiusLabel
         //
-        typedef ::prj::srl::spt::PLabel PlabelType;
-        typedef ::xsd::cxx::tree::traits< PlabelType, char > PlabelTraits;
+        typedef ::prj::srl::spt::PLabel RadiusLabelType;
+        typedef ::xsd::cxx::tree::traits< RadiusLabelType, char > RadiusLabelTraits;
 
-        const PlabelType&
-        plabel () const;
+        const RadiusLabelType&
+        radiusLabel () const;
 
-        PlabelType&
-        plabel ();
-
-        void
-        plabel (const PlabelType& x);
+        RadiusLabelType&
+        radiusLabel ();
 
         void
-        plabel (::std::unique_ptr< PlabelType > p);
+        radiusLabel (const RadiusLabelType& x);
+
+        void
+        radiusLabel (::std::unique_ptr< RadiusLabelType > p);
 
         // Constructors.
         //
-        SimpleBlend (const RadiusType&,
-                     const PlabelType&);
+        Constant (const ContourPicksType&,
+                  const RadiusType&,
+                  const RadiusLabelType&);
 
-        SimpleBlend (::std::unique_ptr< RadiusType >,
-                     ::std::unique_ptr< PlabelType >);
+        Constant (::std::unique_ptr< ContourPicksType >,
+                  ::std::unique_ptr< RadiusType >,
+                  ::std::unique_ptr< RadiusLabelType >);
 
-        SimpleBlend (const ::xercesc::DOMElement& e,
-                     ::xml_schema::Flags f = 0,
-                     ::xml_schema::Container* c = 0);
+        Constant (const ::xercesc::DOMElement& e,
+                  ::xml_schema::Flags f = 0,
+                  ::xml_schema::Container* c = 0);
 
-        SimpleBlend (const SimpleBlend& x,
-                     ::xml_schema::Flags f = 0,
-                     ::xml_schema::Container* c = 0);
+        Constant (const Constant& x,
+                  ::xml_schema::Flags f = 0,
+                  ::xml_schema::Container* c = 0);
 
-        virtual SimpleBlend*
+        virtual Constant*
         _clone (::xml_schema::Flags f = 0,
                 ::xml_schema::Container* c = 0) const;
 
-        SimpleBlend&
-        operator= (const SimpleBlend& x);
+        Constant&
+        operator= (const Constant& x);
 
         virtual 
-        ~SimpleBlend ();
+        ~Constant ();
 
         // Implementation.
         //
@@ -196,30 +196,47 @@ namespace prj
                ::xml_schema::Flags);
 
         protected:
-        BlendPicksSequence blendPicks_;
+        ::xsd::cxx::tree::one< ContourPicksType > contourPicks_;
         ::xsd::cxx::tree::one< RadiusType > radius_;
-        ::xsd::cxx::tree::one< PlabelType > plabel_;
+        ::xsd::cxx::tree::one< RadiusLabelType > radiusLabel_;
       };
 
-      class VariableEntry: public ::xml_schema::Type
+      class Entry: public ::xml_schema::Type
       {
         public:
-        // blendPick
+        // entryPick
         //
-        typedef ::prj::srl::spt::Pick BlendPickType;
-        typedef ::xsd::cxx::tree::traits< BlendPickType, char > BlendPickTraits;
+        typedef ::prj::srl::spt::Parameter EntryPickType;
+        typedef ::xsd::cxx::tree::traits< EntryPickType, char > EntryPickTraits;
 
-        const BlendPickType&
-        blendPick () const;
+        const EntryPickType&
+        entryPick () const;
 
-        BlendPickType&
-        blendPick ();
-
-        void
-        blendPick (const BlendPickType& x);
+        EntryPickType&
+        entryPick ();
 
         void
-        blendPick (::std::unique_ptr< BlendPickType > p);
+        entryPick (const EntryPickType& x);
+
+        void
+        entryPick (::std::unique_ptr< EntryPickType > p);
+
+        // radius
+        //
+        typedef ::prj::srl::spt::Parameter RadiusType;
+        typedef ::xsd::cxx::tree::traits< RadiusType, char > RadiusTraits;
+
+        const RadiusType&
+        radius () const;
+
+        RadiusType&
+        radius ();
+
+        void
+        radius (const RadiusType& x);
+
+        void
+        radius (::std::unique_ptr< RadiusType > p);
 
         // position
         //
@@ -238,39 +255,22 @@ namespace prj
         void
         position (::std::unique_ptr< PositionType > p);
 
-        // radius
+        // radiusLabel
         //
-        typedef ::prj::srl::spt::Parameter RadiusType;
-        typedef ::xsd::cxx::tree::traits< RadiusType, char > RadiusTraits;
+        typedef ::prj::srl::spt::PLabel RadiusLabelType;
+        typedef ::xsd::cxx::tree::traits< RadiusLabelType, char > RadiusLabelTraits;
 
-        const RadiusType&
-        radius () const;
+        const RadiusLabelType&
+        radiusLabel () const;
 
-        RadiusType&
-        radius ();
-
-        void
-        radius (const RadiusType& x);
+        RadiusLabelType&
+        radiusLabel ();
 
         void
-        radius (::std::unique_ptr< RadiusType > p);
-
-        // plabel
-        //
-        typedef ::prj::srl::spt::PLabel PlabelType;
-        typedef ::xsd::cxx::tree::traits< PlabelType, char > PlabelTraits;
-
-        const PlabelType&
-        plabel () const;
-
-        PlabelType&
-        plabel ();
+        radiusLabel (const RadiusLabelType& x);
 
         void
-        plabel (const PlabelType& x);
-
-        void
-        plabel (::std::unique_ptr< PlabelType > p);
+        radiusLabel (::std::unique_ptr< RadiusLabelType > p);
 
         // positionLabel
         //
@@ -291,35 +291,35 @@ namespace prj
 
         // Constructors.
         //
-        VariableEntry (const BlendPickType&,
-                       const PositionType&,
-                       const RadiusType&,
-                       const PlabelType&,
-                       const PositionLabelType&);
+        Entry (const EntryPickType&,
+               const RadiusType&,
+               const PositionType&,
+               const RadiusLabelType&,
+               const PositionLabelType&);
 
-        VariableEntry (::std::unique_ptr< BlendPickType >,
-                       ::std::unique_ptr< PositionType >,
-                       ::std::unique_ptr< RadiusType >,
-                       ::std::unique_ptr< PlabelType >,
-                       ::std::unique_ptr< PositionLabelType >);
+        Entry (::std::unique_ptr< EntryPickType >,
+               ::std::unique_ptr< RadiusType >,
+               ::std::unique_ptr< PositionType >,
+               ::std::unique_ptr< RadiusLabelType >,
+               ::std::unique_ptr< PositionLabelType >);
 
-        VariableEntry (const ::xercesc::DOMElement& e,
-                       ::xml_schema::Flags f = 0,
-                       ::xml_schema::Container* c = 0);
+        Entry (const ::xercesc::DOMElement& e,
+               ::xml_schema::Flags f = 0,
+               ::xml_schema::Container* c = 0);
 
-        VariableEntry (const VariableEntry& x,
-                       ::xml_schema::Flags f = 0,
-                       ::xml_schema::Container* c = 0);
+        Entry (const Entry& x,
+               ::xml_schema::Flags f = 0,
+               ::xml_schema::Container* c = 0);
 
-        virtual VariableEntry*
+        virtual Entry*
         _clone (::xml_schema::Flags f = 0,
                 ::xml_schema::Container* c = 0) const;
 
-        VariableEntry&
-        operator= (const VariableEntry& x);
+        Entry&
+        operator= (const Entry& x);
 
         virtual 
-        ~VariableEntry ();
+        ~Entry ();
 
         // Implementation.
         //
@@ -329,71 +329,73 @@ namespace prj
                ::xml_schema::Flags);
 
         protected:
-        ::xsd::cxx::tree::one< BlendPickType > blendPick_;
-        ::xsd::cxx::tree::one< PositionType > position_;
+        ::xsd::cxx::tree::one< EntryPickType > entryPick_;
         ::xsd::cxx::tree::one< RadiusType > radius_;
-        ::xsd::cxx::tree::one< PlabelType > plabel_;
+        ::xsd::cxx::tree::one< PositionType > position_;
+        ::xsd::cxx::tree::one< RadiusLabelType > radiusLabel_;
         ::xsd::cxx::tree::one< PositionLabelType > positionLabel_;
       };
 
-      class VariableBlend: public ::xml_schema::Type
+      class Variable: public ::xml_schema::Type
       {
         public:
-        // blendPicks
+        // contourPicks
         //
-        typedef ::prj::srl::spt::Pick BlendPicksType;
-        typedef ::xsd::cxx::tree::sequence< BlendPicksType > BlendPicksSequence;
-        typedef BlendPicksSequence::iterator BlendPicksIterator;
-        typedef BlendPicksSequence::const_iterator BlendPicksConstIterator;
-        typedef ::xsd::cxx::tree::traits< BlendPicksType, char > BlendPicksTraits;
+        typedef ::prj::srl::spt::Parameter ContourPicksType;
+        typedef ::xsd::cxx::tree::traits< ContourPicksType, char > ContourPicksTraits;
 
-        const BlendPicksSequence&
-        blendPicks () const;
+        const ContourPicksType&
+        contourPicks () const;
 
-        BlendPicksSequence&
-        blendPicks ();
+        ContourPicksType&
+        contourPicks ();
 
         void
-        blendPicks (const BlendPicksSequence& s);
-
-        // variableEntries
-        //
-        typedef ::prj::srl::blns::VariableEntry VariableEntriesType;
-        typedef ::xsd::cxx::tree::sequence< VariableEntriesType > VariableEntriesSequence;
-        typedef VariableEntriesSequence::iterator VariableEntriesIterator;
-        typedef VariableEntriesSequence::const_iterator VariableEntriesConstIterator;
-        typedef ::xsd::cxx::tree::traits< VariableEntriesType, char > VariableEntriesTraits;
-
-        const VariableEntriesSequence&
-        variableEntries () const;
-
-        VariableEntriesSequence&
-        variableEntries ();
+        contourPicks (const ContourPicksType& x);
 
         void
-        variableEntries (const VariableEntriesSequence& s);
+        contourPicks (::std::unique_ptr< ContourPicksType > p);
+
+        // entries
+        //
+        typedef ::prj::srl::blns::Entry EntriesType;
+        typedef ::xsd::cxx::tree::sequence< EntriesType > EntriesSequence;
+        typedef EntriesSequence::iterator EntriesIterator;
+        typedef EntriesSequence::const_iterator EntriesConstIterator;
+        typedef ::xsd::cxx::tree::traits< EntriesType, char > EntriesTraits;
+
+        const EntriesSequence&
+        entries () const;
+
+        EntriesSequence&
+        entries ();
+
+        void
+        entries (const EntriesSequence& s);
 
         // Constructors.
         //
-        VariableBlend ();
+        Variable (const ContourPicksType&);
 
-        VariableBlend (const ::xercesc::DOMElement& e,
-                       ::xml_schema::Flags f = 0,
-                       ::xml_schema::Container* c = 0);
+        Variable (::std::unique_ptr< ContourPicksType >);
 
-        VariableBlend (const VariableBlend& x,
-                       ::xml_schema::Flags f = 0,
-                       ::xml_schema::Container* c = 0);
+        Variable (const ::xercesc::DOMElement& e,
+                  ::xml_schema::Flags f = 0,
+                  ::xml_schema::Container* c = 0);
 
-        virtual VariableBlend*
+        Variable (const Variable& x,
+                  ::xml_schema::Flags f = 0,
+                  ::xml_schema::Container* c = 0);
+
+        virtual Variable*
         _clone (::xml_schema::Flags f = 0,
                 ::xml_schema::Container* c = 0) const;
 
-        VariableBlend&
-        operator= (const VariableBlend& x);
+        Variable&
+        operator= (const Variable& x);
 
         virtual 
-        ~VariableBlend ();
+        ~Variable ();
 
         // Implementation.
         //
@@ -403,8 +405,8 @@ namespace prj
                ::xml_schema::Flags);
 
         protected:
-        BlendPicksSequence blendPicks_;
-        VariableEntriesSequence variableEntries_;
+        ::xsd::cxx::tree::one< ContourPicksType > contourPicks_;
+        EntriesSequence entries_;
       };
 
       class Blend: public ::xml_schema::Type
@@ -427,6 +429,40 @@ namespace prj
         void
         base (::std::unique_ptr< BaseType > p);
 
+        // filletShape
+        //
+        typedef ::prj::srl::spt::Parameter FilletShapeType;
+        typedef ::xsd::cxx::tree::traits< FilletShapeType, char > FilletShapeTraits;
+
+        const FilletShapeType&
+        filletShape () const;
+
+        FilletShapeType&
+        filletShape ();
+
+        void
+        filletShape (const FilletShapeType& x);
+
+        void
+        filletShape (::std::unique_ptr< FilletShapeType > p);
+
+        // blendType
+        //
+        typedef ::prj::srl::spt::Parameter BlendTypeType;
+        typedef ::xsd::cxx::tree::traits< BlendTypeType, char > BlendTypeTraits;
+
+        const BlendTypeType&
+        blendType () const;
+
+        BlendTypeType&
+        blendType ();
+
+        void
+        blendType (const BlendTypeType& x);
+
+        void
+        blendType (::std::unique_ptr< BlendTypeType > p);
+
         // seerShape
         //
         typedef ::prj::srl::spt::SeerShape SeerShapeType;
@@ -444,33 +480,43 @@ namespace prj
         void
         seerShape (::std::unique_ptr< SeerShapeType > p);
 
-        // filletShape
+        // constants
         //
-        typedef ::xml_schema::Int FilletShapeType;
-        typedef ::xsd::cxx::tree::traits< FilletShapeType, char > FilletShapeTraits;
+        typedef ::prj::srl::blns::Constant ConstantsType;
+        typedef ::xsd::cxx::tree::sequence< ConstantsType > ConstantsSequence;
+        typedef ConstantsSequence::iterator ConstantsIterator;
+        typedef ConstantsSequence::const_iterator ConstantsConstIterator;
+        typedef ::xsd::cxx::tree::traits< ConstantsType, char > ConstantsTraits;
 
-        const FilletShapeType&
-        filletShape () const;
+        const ConstantsSequence&
+        constants () const;
 
-        FilletShapeType&
-        filletShape ();
+        ConstantsSequence&
+        constants ();
 
         void
-        filletShape (const FilletShapeType& x);
+        constants (const ConstantsSequence& s);
 
-        // blendType
+        // variable
         //
-        typedef ::xml_schema::Int BlendTypeType;
-        typedef ::xsd::cxx::tree::traits< BlendTypeType, char > BlendTypeTraits;
+        typedef ::prj::srl::blns::Variable VariableType;
+        typedef ::xsd::cxx::tree::optional< VariableType > VariableOptional;
+        typedef ::xsd::cxx::tree::traits< VariableType, char > VariableTraits;
 
-        const BlendTypeType&
-        blendType () const;
+        const VariableOptional&
+        variable () const;
 
-        BlendTypeType&
-        blendType ();
+        VariableOptional&
+        variable ();
 
         void
-        blendType (const BlendTypeType& x);
+        variable (const VariableType& x);
+
+        void
+        variable (const VariableOptional& x);
+
+        void
+        variable (::std::unique_ptr< VariableType > p);
 
         // shapeMap
         //
@@ -489,55 +535,17 @@ namespace prj
         void
         shapeMap (const ShapeMapSequence& s);
 
-        // simpleBlends
-        //
-        typedef ::prj::srl::blns::SimpleBlend SimpleBlendsType;
-        typedef ::xsd::cxx::tree::sequence< SimpleBlendsType > SimpleBlendsSequence;
-        typedef SimpleBlendsSequence::iterator SimpleBlendsIterator;
-        typedef SimpleBlendsSequence::const_iterator SimpleBlendsConstIterator;
-        typedef ::xsd::cxx::tree::traits< SimpleBlendsType, char > SimpleBlendsTraits;
-
-        const SimpleBlendsSequence&
-        simpleBlends () const;
-
-        SimpleBlendsSequence&
-        simpleBlends ();
-
-        void
-        simpleBlends (const SimpleBlendsSequence& s);
-
-        // variableBlend
-        //
-        typedef ::prj::srl::blns::VariableBlend VariableBlendType;
-        typedef ::xsd::cxx::tree::optional< VariableBlendType > VariableBlendOptional;
-        typedef ::xsd::cxx::tree::traits< VariableBlendType, char > VariableBlendTraits;
-
-        const VariableBlendOptional&
-        variableBlend () const;
-
-        VariableBlendOptional&
-        variableBlend ();
-
-        void
-        variableBlend (const VariableBlendType& x);
-
-        void
-        variableBlend (const VariableBlendOptional& x);
-
-        void
-        variableBlend (::std::unique_ptr< VariableBlendType > p);
-
         // Constructors.
         //
         Blend (const BaseType&,
-               const SeerShapeType&,
                const FilletShapeType&,
-               const BlendTypeType&);
+               const BlendTypeType&,
+               const SeerShapeType&);
 
         Blend (::std::unique_ptr< BaseType >,
-               ::std::unique_ptr< SeerShapeType >,
-               const FilletShapeType&,
-               const BlendTypeType&);
+               ::std::unique_ptr< FilletShapeType >,
+               ::std::unique_ptr< BlendTypeType >,
+               ::std::unique_ptr< SeerShapeType >);
 
         Blend (const ::xercesc::DOMElement& e,
                ::xml_schema::Flags f = 0,
@@ -566,12 +574,12 @@ namespace prj
 
         protected:
         ::xsd::cxx::tree::one< BaseType > base_;
-        ::xsd::cxx::tree::one< SeerShapeType > seerShape_;
         ::xsd::cxx::tree::one< FilletShapeType > filletShape_;
         ::xsd::cxx::tree::one< BlendTypeType > blendType_;
+        ::xsd::cxx::tree::one< SeerShapeType > seerShape_;
+        ConstantsSequence constants_;
+        VariableOptional variable_;
         ShapeMapSequence shapeMap_;
-        SimpleBlendsSequence simpleBlends_;
-        VariableBlendOptional variableBlend_;
       };
     }
   }
@@ -700,13 +708,13 @@ namespace prj
     namespace blns
     {
       void
-      operator<< (::xercesc::DOMElement&, const SimpleBlend&);
+      operator<< (::xercesc::DOMElement&, const Constant&);
 
       void
-      operator<< (::xercesc::DOMElement&, const VariableEntry&);
+      operator<< (::xercesc::DOMElement&, const Entry&);
 
       void
-      operator<< (::xercesc::DOMElement&, const VariableBlend&);
+      operator<< (::xercesc::DOMElement&, const Variable&);
 
       void
       operator<< (::xercesc::DOMElement&, const Blend&);

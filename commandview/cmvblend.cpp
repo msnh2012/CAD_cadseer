@@ -18,20 +18,10 @@
  */
 
 #include <QSettings>
-#include <QStandardItemModel>
 #include <QListWidget>
-#include <QTableWidget>
-#include <QTreeView>
-#include <QHeaderView>
-#include <QComboBox>
 #include <QAction>
-#include <QLabel>
-#include <QLineEdit>
 #include <QStackedWidget>
 #include <QVBoxLayout>
-#include <QHBoxLayout>
-#include <QDragMoveEvent>
-#include <QButtonGroup>
 #include <QTimer>
 
 #include <TopoDS.hxx>
@@ -42,14 +32,13 @@
 #include "annex/annseershape.h"
 #include "message/msgmessage.h"
 #include "message/msgnode.h"
-#include "dialogs/dlgselectionbutton.h"
-#include "dialogs/dlgselectionlist.h"
-#include "dialogs/dlgselectionwidget.h"
-#include "commandview/cmvparameterwidgets.h"
+#include "message/msgsift.h"
+#include "commandview/cmvselectioncue.h"
+#include "commandview/cmvtable.h"
+#include "commandview/cmvtablelist.h"
+#include "parameter/prmconstants.h"
 #include "parameter/prmparameter.h"
-#include "expressions/exprmanager.h"
 #include "tools/featuretools.h"
-#include "tools/idtools.h"
 #include "dialogs/dlgsplitterdecorated.h"
 #include "feature/ftrblend.h"
 #include "command/cmdblend.h"
@@ -59,365 +48,352 @@ using boost::uuids::uuid;
 
 namespace
 {
-  class ConstantPage : public QWidget
+  TopoDS_Edge getEdge(const slc::Message &pm)
   {
-  public:
-    cmv::Blend *view; //to connect signals and slots
-    cmv::ParameterTable *parameterTable = nullptr;
-    QStackedWidget *stacked = nullptr;
-    std::vector<dlg::SelectionWidget*> selectionWidgets;
-    QAction *addParameterAction = nullptr;
-    QAction *removeParameterAction = nullptr;
-    
-    explicit ConstantPage(cmv::Blend *viewIn)
-    : QWidget(viewIn)
-    , view(viewIn)
-    {
-      buildGui();
-    }
-    
-    const std::vector<dlg::SelectionWidget*>& getSelectionWidgets(){return selectionWidgets;}
-    
-    void buildGui()
-    {
-      QVBoxLayout *layout = new QVBoxLayout();
-      this->setLayout(layout);
-      
-      parameterTable = new cmv::ParameterTable(view);
-      layout->addWidget(parameterTable);
-      addParameterAction = new QAction(tr("Add Radius"), parameterTable);
-      parameterTable->addAction(addParameterAction);
-      connect(addParameterAction, &QAction::triggered, view, &cmv::Blend::addConstantBlend);
-      removeParameterAction = new QAction(tr("Remove"), parameterTable);
-      parameterTable->addAction(removeParameterAction);
-      connect(removeParameterAction, &QAction::triggered, view, &cmv::Blend::removeConstantBlend);
-      parameterTable->setContextMenuPolicy(Qt::ActionsContextMenu);
-      connect(parameterTable, &cmv::ParameterTable::selectionHasChanged, this, &ConstantPage::selectionChanged);
-      connect(parameterTable, &cmv::ParameterTable::prmValueChanged, view, &cmv::Blend::parameterChanged);
-      
-      stacked = new QStackedWidget(view);
-      layout->addWidget(stacked);
-    }
-    
-    void buildSelectionWidget()
-    {
-      dlg::SelectionWidgetCue cue;
-      cue.name = tr("Edges");
-      cue.singleSelection = false;
-      cue.showAccrueColumn = false;
-      cue.accrueDefault = slc::Accrue::Tangent;
-      cue.mask = slc::EdgesEnabled | slc::EdgesSelectable;
-      cue.statusPrompt = tr("Select Edges For Blend");
-      dlg::SelectionWidget *csw = new dlg::SelectionWidget(this, {cue});
-      csw->activate(0); //only 1 button per widget so just activate it.
-      selectionWidgets.push_back(csw);
-      stacked->addWidget(csw);
-      connect(csw->getButton(0), &dlg::SelectionButton::dirty, view, &cmv::Blend::constantSelectionDirty);
-    }
-    
-    void init(const std::vector<ftr::Blend::Constant> &bsIn, const ftr::UpdatePayload &plIn)
-    {
-      tls::Resolver resolver(plIn);
-      for (const auto &b : bsIn)
-      {
-        auto *cpp = b.radius.get(); //current parameter pointer
-        parameterTable->addParameter(cpp);
-        
-        buildSelectionWidget();
-        dlg::SelectionWidget *csw = selectionWidgets.back();
-        
-        slc::Messages edgeAccumulator;
-        for (const auto &p : b.picks)
-        {
-          if (!resolver.resolve(p))
-            continue;
-          auto jfc = resolver.convertToMessages();
-          edgeAccumulator.insert(edgeAccumulator.end(), jfc.begin(), jfc.end());
-        }
-        csw->initializeButton(0, edgeAccumulator);
-      }
-    }
-    
-    void addConstantBlend(const ftr::Blend::Constant &sbIn)
-    {
-      buildSelectionWidget();
-      parameterTable->addParameter(sbIn.radius.get());
-    }
-    
-    void removeConstantBlend(int index)
-    {
-      parameterTable->removeParameter(index);
-      
-      auto it = selectionWidgets.begin() + index;
-      selectionWidgets.erase(it);
-      delete *it;
-      
-      if (!selectionWidgets.empty())
-        parameterTable->setCurrentSelectedIndex(0);
-    }
-    
-    int getCurrentSelectionIndex()
-    {
-      return parameterTable->getCurrentSelectedIndex();
-    }
-    
-    void selectionChanged()
-    {
-      int index = parameterTable->getCurrentSelectedIndex();
-      if (index >= 0 && index < static_cast<int>(selectionWidgets.size()))
-      {
-        stacked->setEnabled(true);
-        stacked->setCurrentIndex(index);
-      }
-      else
-      {
-        stacked->setEnabled(false);
-      }
-    }
-    
-    std::vector<slc::Messages> getAllSelections()
-    {
-      std::vector<slc::Messages> out;
-      for (const auto *w : selectionWidgets)
-      {
-        const auto &msgs = w->getButton(0)->getMessages();
-        out.push_back(msgs);
-      }
-      return out;
-    }
-    
-    void clear() //removes all selections and parameters.
-    {
-      while (!selectionWidgets.empty())
-        removeConstantBlend(0);
-    }
-  };
-
-  class PointPage : public QWidget
-  {
-  public:
-    cmv::Blend *view = nullptr;
-    QButtonGroup *group = nullptr;
-    dlg::SelectionWidget *pointSelections = nullptr;
-    QStackedWidget *parameterStacked = nullptr;
-    std::vector<std::vector<std::shared_ptr<prm::Parameter>>> parameters;
-    
-    PointPage(cmv::Blend *parent, QButtonGroup *groupIn)
-    : QWidget(parent)
-    , view(parent)
-    , group(groupIn)
-    {
-      buildGui();
-    }
-    
-    void buildGui()
-    {
-      setContentsMargins(0, 0, 0, 0);
-      QVBoxLayout *layout = new QVBoxLayout();
-      layout->setContentsMargins(0, 0, 0, 0);
-      setLayout(layout);
-      setSizePolicy(sizePolicy().horizontalPolicy(), QSizePolicy::Maximum);
-      
-      dlg::SelectionWidgetCue cue;
-      std::vector<dlg::SelectionWidgetCue> cues;
-      
-      cue.name = tr("Points");
-      cue.singleSelection = false;
-      cue.showAccrueColumn = false;
-      cue.accrueDefault = slc::Accrue::Tangent;
-      cue.mask = slc::None | slc::EndPointsBoth | slc::NearestPointsEnabled | slc::MidPointsEnabled;
-      cue.statusPrompt = tr("Select Point to assign radius");
-      cues.push_back(cue);
-      pointSelections = new dlg::SelectionWidget(this, cues, group);
-      connect(pointSelections->getView(0), &dlg::SelectionView::dirty, this, &PointPage::pointSelectionChanged);
-      layout->addWidget(pointSelections);
-      
-      parameterStacked = new QStackedWidget(this);
-      parameterStacked->setEnabled(false);
-      parameterStacked->setSizePolicy(parameterStacked->sizePolicy().horizontalPolicy(), QSizePolicy::Maximum);
-      layout->addWidget(parameterStacked);
-    }
-    
-    void addSelection(const slc::Message &mIn)
-    {
-      pointSelections->getButton(0)->addMessage(mIn);
-    }
-    
-    void addSelection(const slc::Messages &msIn)
-    {
-      for (const auto &m : msIn)
-        addSelection(m);
-    }
-    
-    int addParameterPage(const std::vector<std::shared_ptr<prm::Parameter>> &paras)
-    {
-      parameters.push_back(paras);
-      auto *pt = new cmv::ParameterTable(this);
-      for (auto p : parameters.back())
-        pt->addParameter(p.get());
-      parameterStacked->addWidget(pt);
-      connect(pt, &cmv::ParameterBase::prmValueChanged, view, &cmv::Blend::parameterChanged);
-      return parameterStacked->count() - 1;
-    }
-    
-    void removeParameterPage(int index)
-    {
-      assert(index >= 0 && index < parameterStacked->count());
-      assert(index < static_cast<int>(parameters.size()));
-      delete parameterStacked->widget(index);
-      parameters.erase(parameters.begin() + index);
-      assert(static_cast<int>(parameters.size()) == parameterStacked->count());
-    }
-    
-    void pointSelectionChanged() //called when the selection inside qt view changes
-    {
-      int pointIndex = pointSelections->getView(0)->getSelectedIndex();
-      assert(pointIndex < parameterStacked->count());
-      if (pointIndex < 0)
-      {
-        parameterStacked->setEnabled(false);
-        return;
-      }
-      parameterStacked->setEnabled(true);
-      parameterStacked->setCurrentIndex(pointIndex);
-    }
-    
-    void clear()
-    {
-      while (parameterStacked->widget(0))
-        delete parameterStacked->widget(0);
-      pointSelections->getButton(0)->clear();
-      parameters.clear();
-    }
-  };
-
+    auto *inputFeature = app::instance()->getProject()->findFeature(pm.featureId);
+    assert(inputFeature);
+    const auto &iss = inputFeature->getAnnex<ann::SeerShape>();
+    assert(iss.hasId(pm.shapeId));
+    return TopoDS::Edge(iss.getOCCTShape(pm.shapeId));
+  }
+  
   class VariablePage : public QWidget
   {
   public:
-    cmv::Blend *view; //to connect signals and slots
-    dlg::SelectionWidget *edgeSelections = nullptr;
-    PointPage *pointPage = nullptr;
-    QButtonGroup *buttonGroup = nullptr;
-    QPushButton *dummyButton = nullptr; //hidden button to check to uncheck all other buttons.
+    cmv::Blend *view;
+    ftr::Blend::Feature &feature;
+    cmv::tbl::Model *mainModel = nullptr; //just has contour picks
+    cmv::tbl::View *mainView = nullptr;
+    dlg::SplitterDecorated *vSplitter;
+    cmv::TableList *entryList = nullptr;
+    QAction *removeEntry = nullptr;
     
-    explicit VariablePage(cmv::Blend *viewIn)
+    VariablePage(cmv::Blend *viewIn, ftr::Blend::Feature &fIn)
     : QWidget(viewIn)
     , view(viewIn)
+    , feature(fIn)
     {
       buildGui();
+      loadFeatureData();
       glue();
     }
     
     void buildGui()
     {
-      setContentsMargins(0, 0, 0, 0);
       QVBoxLayout *layout = new QVBoxLayout();
-      layout->setContentsMargins(0, 0, 0, 0);
       setLayout(layout);
-      setSizePolicy(sizePolicy().horizontalPolicy(), QSizePolicy::Maximum);
+      view->clearContentMargins(this);
       
-      buttonGroup = new QButtonGroup(this);
-      dummyButton = new QPushButton(this);
-      dummyButton->setCheckable(true);
-      dummyButton->setVisible(false);
-      buttonGroup->addButton(dummyButton);
-      
-      dlg::SelectionWidgetCue cue;
-      
-      cue.name = tr("Edges");
+      prm::Parameters mainPrms = {&feature.getVariable().contourPicks};
+      mainModel = new cmv::tbl::Model(view, &feature, mainPrms);
+      mainView = new cmv::tbl::View(view, mainModel, true);
+      cmv::tbl::SelectionCue cue;
       cue.singleSelection = false;
-      cue.showAccrueColumn = false;
-      cue.accrueDefault = slc::Accrue::Tangent;
-      cue.mask = slc::EdgesEnabled | slc::EdgesSelectable;
-      cue.statusPrompt = tr("Select Edge For Variable Blend");
-      edgeSelections = new dlg::SelectionWidget(this, {cue}, buttonGroup);
-      edgeSelections->setSizePolicy(edgeSelections->sizePolicy().horizontalPolicy(), QSizePolicy::Maximum);
-      layout->addWidget(edgeSelections);
+      cue.mask = slc::EdgesBoth;
+      cue.statusPrompt = tr("Select Edges For Variable Blend");
+      cue.forceTangentAccrue = true;
+      mainModel->setCue(mainPrms.at(0), cue);
       
-      pointPage = new PointPage(view, buttonGroup);
-      pointPage->setEnabled(false);
-      layout->addWidget(pointPage);
+      entryList = new cmv::TableList(view, &feature);
+      entryList->restoreSettings("cmv::Blend::entryList");
+      removeEntry = new QAction(tr("Remove"), entryList);
+      entryList->getListWidget()->addAction(removeEntry);
       
-      layout->addItem(new QSpacerItem(20, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
+      vSplitter = new dlg::SplitterDecorated(this);
+      vSplitter->setOrientation(Qt::Vertical);
+      vSplitter->setChildrenCollapsible(false);
+      vSplitter->addWidget(mainView);
+      vSplitter->addWidget(entryList);
+      vSplitter->restoreSettings("cmv::Blend::vSplitter");
+      layout->addWidget(vSplitter);
     }
     
-    void init(const ftr::Blend::Variable &vbIn, const ftr::UpdatePayload &plIn)
+    void loadFeatureData()
     {
-      tls::Resolver resolver(plIn);
+      entryList->clear();
+      for (auto &e : feature.getVariable().entries)
+        appendEntry(e);
+      //reconcile?
+    }
+    
+    cmv::tbl::Model* appendEntry(ftr::Blend::Entry &eIn)
+    {
+      auto tempPrms = eIn.getParameters();
+      int index = entryList->add(tempPrms.front()->getName(), tempPrms);
+      auto *pModel = entryList->getPrmModel(index); assert(pModel);
+      auto *pView = entryList->getPrmView(index); assert(pView);
+      cmv::tbl::SelectionCue cue;
+      cue.singleSelection = true;
+      cue.mask = slc::EndPointsBoth | slc::NearestPointsEnabled | slc::MidPointsEnabled; //edges some day.
+      cue.statusPrompt = tr("Select Point");
+      cue.accrueEnabled = false;
+      pModel->setCue(tempPrms.at(0), cue);
       
-      slc::Messages edgeMessages;
-      for (const auto &p : vbIn.picks)
-      {
-        if (!resolver.resolve(p))
-          continue;
-        slc::Messages temp = resolver.convertToMessages();
-        edgeMessages.insert(edgeMessages.end(), temp.begin(), temp.end());
-      }
-      edgeSelections->initializeButton(0, edgeMessages);
-      edgeSelections->activate(0);
+      connect(pModel, &cmv::tbl::Model::dataChanged, view, &cmv::Blend::variableEntriesChanged);
+      connect(pView, &cmv::tbl::View::openingPersistent, view, &cmv::Blend::closeAllPersistent);
+      pView->installEventFilter(view);
       
-      slc::Messages pointMessages;
-      for (const auto &entry : vbIn.entries)
-      {
-        if (!resolver.resolve(entry.pick))
-          continue; //warning?
-        slc::Messages temp = resolver.convertToMessages();
-        if (temp.empty())
-          continue; //warning?
-        pointMessages.push_back(temp.front());
-        
-        std::vector<std::shared_ptr<prm::Parameter>> params;
-        params.push_back(entry.radius);
-        if (temp.front().type != slc::Type::StartPoint && temp.front().type != slc::Type::EndPoint)
-        {
-          params.push_back(entry.position); //unused for vertices but build anyway.
-        }
-        pointPage->addParameterPage(params);
-      }
-      pointPage->pointSelections->initializeButton(0, pointMessages);
+      return pModel;
     }
     
     void glue()
     {
-      connect(edgeSelections->getView(0), &dlg::SelectionView::dirty, this, &VariablePage::edgeSelectionChanged);
-      connect(edgeSelections->getButton(0), &dlg::SelectionButton::toggled, this, &VariablePage::edgeButtonToggled);
-      connect(edgeSelections->getButton(0), &dlg::SelectionButton::selectionAdded, view, &cmv::Blend::variableEdgeAdded);
-      connect(edgeSelections->getButton(0), &dlg::SelectionButton::selectionRemoved, view, &cmv::Blend::variableEdgeRemoved);
-      connect(pointPage->pointSelections->getButton(0), &dlg::SelectionButton::selectionAdded, view, &cmv::Blend::variablePointAdded);
-      connect(pointPage->pointSelections->getButton(0), &dlg::SelectionButton::selectionRemoved, view, &cmv::Blend::variablePointRemoved);
+      connect(mainModel, &cmv::tbl::Model::dataChanged, view, &cmv::Blend::variableContoursChanged);
+      connect(mainView, &cmv::tbl::View::openingPersistent, view, &cmv::Blend::closeAllPersistent);
+      connect(entryList->getListWidget(), &QListWidget::itemSelectionChanged, view, &cmv::Blend::entriesSelectionChanged);
+      connect(removeEntry, &QAction::triggered, view, &cmv::Blend::removeEntry);
+      mainView->installEventFilter(view);
+      entryList->getListWidget()->installEventFilter(view);
     }
     
-    void uncheckAll()
+    void closePersistent()
     {
-      dummyButton->setChecked(true);
-    }
-    
-    void edgeSelectionChanged() //called when the selection inside qt view changes
-    {
-      int edgeIndex = edgeSelections->getView(0)->getSelectedIndex();
-      if (edgeIndex < 0)
-      {
-        pointPage->setEnabled(false);
-        return;
-      }
-      pointPage->setEnabled(true);
-      //we could activate the button on the point page but then the user
-      //can selected the individual edges for a visual of what he wants
-      //to edit. We will only auto active on a new contour being added.
-      pointPage->parameterStacked->setEnabled(false);
-    }
-    
-    void edgeButtonToggled(bool state)
-    {
-      if (state)
-        pointPage->setEnabled(false);
+      mainView->closePersistent();
+      entryList->closePersistent();
     }
     
     void clear()
     {
-      edgeSelections->getButton(0)->clear();
-      pointPage->setEnabled(false);
-      pointPage->clear();
+      //do we need to clear message for picks?
+      entryList->clear();
+    }
+    
+    std::vector<slc::Messages> getSelections()
+    {
+      std::vector<slc::Messages> out;
+      out.push_back(mainModel->getMessages(mainModel->index(0, 1)));
+      for (int i = 0; i < entryList->count(); ++i)
+        out.push_back(entryList->getMessages(i));
+      return out;
+    }
+    
+    slc::Messages getContourEnds(const slc::Message &em)
+    {
+      assert(em.type == slc::Type::Edge);
+      prj::Project *project = app::instance()->getProject(); assert(project);
+      ftr::Base *fIn = project->findFeature(em.featureId); assert(fIn);
+      assert(fIn->hasAnnex(ann::Type::SeerShape));
+      const ann::SeerShape &ssIn = fIn->getAnnex<ann::SeerShape>();
+      
+      const TopoDS_Shape &rootShape = ssIn.getRootOCCTShape();
+      BRepFilletAPI_MakeFillet blendMaker(rootShape);
+      blendMaker.Add(TopoDS::Edge(ssIn.getOCCTShape(em.shapeId)));
+      
+      //using set to ensure unique entries in case of periodic spine.
+      std::set<uuid> ids;
+      ids.insert(ssIn.findId(blendMaker.FirstVertex(1)));
+      ids.insert(ssIn.findId(blendMaker.LastVertex(1)));
+      
+      slc::Messages out;
+      for (const auto &id : ids)
+      {
+        ftr::Pick dummy;
+        dummy.selectionType = slc::Type::StartPoint;
+        dummy.shapeHistory = project->getShapeHistory().createDevolveHistory(id);
+        auto convertedMessages = tls::convertToMessage(dummy, fIn);
+        if (convertedMessages.empty())
+          continue;
+        out.push_back(convertedMessages.front()); //what if more than one?
+      }
+      return out;
+    }
+    
+    TopoDS_Vertex getVertex(const slc::Message &mIn)
+    {
+      assert(mIn.type == slc::Type::StartPoint || mIn.type == slc::Type::EndPoint);
+      
+      prj::Project *project = app::instance()->getProject(); assert(project);
+      ftr::Base *fIn = project->findFeature(mIn.featureId); assert(fIn);
+      assert(fIn->hasAnnex(ann::Type::SeerShape));
+      const ann::SeerShape &ssIn = fIn->getAnnex<ann::SeerShape>();
+      assert(ssIn.hasId(mIn.shapeId));
+      
+      if (mIn.type == slc::Type::StartPoint)
+        return TopoDS::Vertex(ssIn.getOCCTShape(ssIn.useGetStartVertex(mIn.shapeId)));
+      else if (mIn.type == slc::Type::EndPoint)
+        return TopoDS::Vertex(ssIn.getOCCTShape(ssIn.useGetEndVertex(mIn.shapeId)));
+      
+      return TopoDS_Vertex();
+    }
+    
+    occt::VertexVector getAllVertices()
+    {
+      occt::VertexVector out;
+      
+      for (int index = 0; index < entryList->count(); ++index)
+      {
+        auto msgs = entryList->getMessages(index);
+        if (msgs.empty())
+          continue;
+        //should be single selection.
+        if (msgs.front().type == slc::Type::StartPoint || msgs.front().type == slc::Type::EndPoint)
+          out.push_back(getVertex(msgs.front()));
+      }
+      
+      return out;
+    }
+    
+    //check whether we already have this selection.
+    bool isUnique(const slc::Message &mIn)
+    {
+      for (int index = 0; index < entryList->count(); ++index)
+      {
+        auto msgs = entryList->getMessages(index);
+        if (msgs.empty())
+          continue;
+        //should be single selection.
+        if (msgs.front() == mIn)
+          return false;
+      }
+      //the same vertex can be specified from different endpoint selections.
+      if (mIn.type == slc::Type::StartPoint || mIn.type == slc::Type::EndPoint)
+      {
+        auto vert = getVertex(mIn);
+        for (const auto &v : getAllVertices())
+        {
+          if (vert.IsSame(v))
+            return false;
+        }
+      }
+      return true;
+    }
+    
+    //makes sure we don't have duplicate vertices.
+    //and make sure all points belong to a spine.
+    //are going to enforce the spine have vertex ends defined.
+    //if not we can't automatically add endpoints because we don't know which is new or old.
+    //maybe when we add from global selection we add endpoints but not when we edit from table?
+    void reconcile()
+    {
+      slc::Messages contoursToRemove; //contours must be on same feature/body
+      std::vector<int> entriesToRemove;
+      const auto cslcs = mainModel->getMessages(mainModel->index(0, 1));
+      
+      if (cslcs.empty())
+      {
+        //remove all entries
+        for (int i = 0; i < entryList->count(); ++i)
+          entriesToRemove.push_back(i);
+      }
+      else
+      {
+        prj::Project *project = app::instance()->getProject(); assert(project);
+        ftr::Base *fIn = project->findFeature(cslcs.front().featureId); assert(fIn);
+        assert(fIn->hasAnnex(ann::Type::SeerShape));
+        const ann::SeerShape &ssIn = fIn->getAnnex<ann::SeerShape>();
+        const TopoDS_Shape &rootShape = ssIn.getRootOCCTShape();
+        
+        BRepFilletAPI_MakeFillet blendMaker(rootShape);
+        for (const auto &c : cslcs)
+        {
+          if (c.featureId != cslcs.front().featureId)
+          {
+            contoursToRemove.push_back(c);
+            continue;
+          }
+          blendMaker.Add(TopoDS::Edge(ssIn.getOCCTShape(c.shapeId)));
+        }
+        
+        occt::VertexVector vertices;
+        auto haveVertex = [&](const TopoDS_Vertex &vIn) -> bool
+        {
+          for (const auto &cv : vertices)
+          {
+            if (cv.IsSame(vIn))
+              return true;
+          }
+          vertices.push_back(vIn);
+          return false;
+        };
+        for (int index = 0; index < entryList->count(); ++index)
+        {
+          const auto &entrySelections = entryList->getMessages(index);
+          if (entrySelections.empty()) //only 0 or 1 selection.
+            continue;
+          const auto &s = entrySelections.front();
+          
+          auto isValidVertex = [&](const TopoDS_Vertex &vIn) -> bool
+          {
+            if (haveVertex(vIn))
+              return false;
+            for (int ci = 1; ci <= blendMaker.NbContours(); ++ci)
+            {
+              double p = blendMaker.RelativeAbscissa(ci, vIn);
+              if (!(p < 0.0))
+                return true;
+            }
+            return false;
+          };
+          
+          if (s.type == slc::Type::StartPoint || s.type == slc::Type::EndPoint)
+          {
+            if (!isValidVertex(getVertex(s)))
+              entriesToRemove.push_back(index);
+          }
+          else if (s.type == slc::Type::MidPoint || s.type == slc::Type::NearestPoint)
+          {
+            if (blendMaker.Contour(TopoDS::Edge(ssIn.getOCCTShape(s.shapeId))) == 0)
+              entriesToRemove.push_back(index);
+          }
+        }
+      }
+      
+      if (!contoursToRemove.empty())
+      {
+        slc::Messages currentContours = cslcs;
+        for (const auto &ctr : contoursToRemove)
+          slc::remove(currentContours, ctr);
+        mainModel->setMessages(mainModel->getParameter(mainModel->index(0, 1)), currentContours);
+      }
+      
+      if (!entriesToRemove.empty())
+      {
+        //reverse order so as not to screw up indexes by removing.
+        std::reverse(entriesToRemove.begin(), entriesToRemove.end());
+        for (int ei : entriesToRemove)
+        {
+          entryList->remove(ei);
+          feature.removeVariableEntry(ei);
+        }
+      }
+    }
+    
+    void addEntry(const slc::Message &pm) //point message
+    {
+      assert
+      (
+        pm.type == slc::Type::StartPoint
+        || pm.type == slc::Type::EndPoint
+        || pm.type == slc::Type::MidPoint
+        || pm.type == slc::Type::NearestPoint
+      );
+      
+      if (isUnique(pm))
+      {
+        auto &ftrEntry = feature.addVariableEntry();
+        auto *freshModel = appendEntry(ftrEntry);
+        freshModel->setMessages(&ftrEntry.entryPick, {pm});
+        if (pm.type == slc::Type::NearestPoint)
+        {
+          //we want to set the position parameter to the selected point.
+          double param = ftr::Pick::parameter(getEdge(pm), pm.pointLocation);
+          ftrEntry.position.setValue(param);
+        }
+        else if (pm.type == slc::Type::MidPoint)
+          ftrEntry.position.setValue(0.5);
+      }
+    }
+    
+    void addContour(const slc::Message &em) //edge message
+    {
+      auto picks = mainModel->getMessages(&feature.getVariable().contourPicks);
+      picks.push_back(em);
+      mainModel->setMessages(&feature.getVariable().contourPicks, picks);
+      auto endMsgs = getContourEnds(em);
+      for (const auto &msg : endMsgs)
+        addEntry(msg);
+      view->variableContoursChanged(mainModel->index(0, 1), QModelIndex());
+      entryList->setSelectedDelayed();
     }
   };
 }
@@ -429,378 +405,392 @@ struct Blend::Stow
   cmd::Blend *command;
   cmv::Blend *view;
   
-  QComboBox *typeCombo;
-  QComboBox *shapeCombo;
-  ConstantPage *cPage;
-  VariablePage *vPage;
-  QStackedWidget *stacked;
-//   QStandardItemModel *cModel;
-//   QTreeView *cView;
-//   VariableWidget *vWidget;
+  prm::Parameters parameters;
+  dlg::SplitterDecorated *mainSplitter = nullptr;
+  tbl::Model *prmModel = nullptr;
+  tbl::View *prmView = nullptr;
+  TableList *constantsList = nullptr;
+  QAction *removeConstant = nullptr;
+  VariablePage *vPage = nullptr;
+  QStackedWidget *stacked = nullptr;
+  bool isGlobalSelection = false;
   
   Stow(cmd::Blend *cIn, cmv::Blend *vIn)
   : command(cIn)
   , view(vIn)
   {
+    parameters = command->feature->getParameters();
     buildGui();
-    
-    QSettings &settings = app::instance()->getUserSettings();
-    settings.beginGroup("cmv::Blend");
-    //load settings
-    settings.endGroup();
     
     loadFeatureData();
     glue();
-//     selectionWidget->activate(0);
   }
   
   void buildGui()
   {
     QVBoxLayout *mainLayout = new QVBoxLayout();
     view->setLayout(mainLayout);
+    clearContentMargins(view);
+    view->setSizePolicy(view->sizePolicy().horizontalPolicy(), QSizePolicy::Expanding);
     
-    typeCombo = new QComboBox(view);
-    typeCombo->addItem(tr("Constant"));
-    typeCombo->addItem(tr("Variable"));
-    shapeCombo = new QComboBox(view);
-    shapeCombo->addItem(tr("Rational"));
-    shapeCombo->addItem(tr("QuasiAngular"));
-    shapeCombo->addItem(tr("Polynomial"));
-    QLabel *typeLabel = new QLabel(tr("Type:"), view);
-    QLabel *shapeLabel = new QLabel(tr("Shape:"), view);
-    QHBoxLayout *chl = new QHBoxLayout(); //combo horizontal layout.
-    chl->addWidget(typeLabel);
-    chl->addWidget(typeCombo);
-    chl->addStretch();
-    chl->addWidget(shapeLabel);
-    chl->addWidget(shapeCombo);
-    mainLayout->addLayout(chl);
+    prmModel = new tbl::Model(view, command->feature, parameters);
+    prmView = new tbl::View(view, prmModel, true);
     
     stacked = new QStackedWidget(view);
     stacked->setSizePolicy(stacked->sizePolicy().horizontalPolicy(), QSizePolicy::Maximum);
     
-    cPage = new ConstantPage(view);
-    stacked->addWidget(cPage);
+    constantsList = new TableList(view, command->feature);
+    constantsList->restoreSettings("cmv::Blend::contactList");
+    stacked->addWidget(constantsList);
     
-    vPage = new VariablePage(view);
+    removeConstant = new QAction(tr("Remove"), constantsList->getListWidget());
+    constantsList->getListWidget()->addAction(removeConstant);
+    
+    vPage = new VariablePage(view, *command->feature);
     stacked->addWidget(vPage);
     
-    mainLayout->addWidget(stacked);
-    mainLayout->addItem(new QSpacerItem(20, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
+    mainSplitter = new dlg::SplitterDecorated(view);
+    mainSplitter->setOrientation(Qt::Vertical);
+    mainSplitter->setChildrenCollapsible(false);
+    mainSplitter->addWidget(prmView);
+    mainSplitter->addWidget(stacked);
+    mainSplitter->restoreSettings("cmv::Blend::mainSplitter");
+    mainLayout->addWidget(mainSplitter);
+  }
+  
+  void slcAdded(const msg::Message &mIn)
+  {
+    if (view->isHidden() || !isGlobalSelection)
+      return;
+    
+    auto sm = mIn.getSLC();
+    stopGlobalSelection();
+    view->node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+    if (sm.type == slc::Type::Edge) //all edge selections are tangent.
+      sm.accrue = slc::Accrue::Tangent;
+
+    int type = command->feature->getParameter(ftr::Blend::PrmTags::blendType)->getInt();
+    if (type == 0) //constant
+    {
+      auto &c = command->feature->addConstant();
+      int index = addConstant(c);
+      constantsList->getPrmModel(index)->mySetData(&c.contourPicks, {sm}); //triggers update
+      constantsList->setSelected(index);
+      auto *v = constantsList->getPrmView(index);
+      if (v)
+        QTimer::singleShot(0, [v](){v->openPersistent(v->model()->index(0, 1));});
+    }
+    else if (type == 1) //variable
+    {
+      if (sm.type == slc::Type::Edge)
+        vPage->addContour(sm);
+      else
+      {
+        vPage->addEntry(sm);
+        int last = vPage->entryList->count() - 1;
+        if (last != -1)
+        {
+          // see Blend::variableEntriesChanged as to why we to set the selection
+          //of the entry list before call variableEntriesChanged.
+          vPage->entryList->setSelected(last);
+          auto *eModel = vPage->entryList->getPrmModel(last); assert(eModel);
+          view->variableEntriesChanged(eModel->index(0, 1), QModelIndex());
+          vPage->entryList->setSelectedDelayed();
+        }
+      }
+    }
+    else
+      assert(0); //unknown blend type.
+  }
+  
+  int addConstant(ftr::Blend::Constant &cIn)
+  {
+    auto prms = cIn.getParameters();
+    auto index = constantsList->add(tr("Constant"), prms);
+    
+    cmv::tbl::SelectionCue cue;
+    cue.singleSelection = false;
+    cue.mask = slc::EdgesBoth;
+    cue.statusPrompt = tr("Select Edges For Constant Blend");
+    cue.accrueEnabled = false;
+    cue.forceTangentAccrue = true;
+    cue.accrueDefault = slc::Accrue::Tangent;
+    constantsList->getPrmModel(index)->setCue(&cIn.contourPicks, cue);
+    
+    connect(constantsList->getPrmModel(index), &tbl::Model::dataChanged, view, &Blend::constantChanged);
+    connect(constantsList->getPrmView(index), &tbl::View::openingPersistent, view, &Blend::closeAllPersistent);
+    constantsList->getPrmView(index)->installEventFilter(view);
+    
+    return index;
   }
   
   void loadFeatureData()
   {
-    if (command->feature->getBlendType() == ftr::Blend::BlendType::Constant)
+    int type = command->feature->getParameter(ftr::Blend::PrmTags::blendType)->getInt();
+    switch (type)
     {
-      typeCombo->setCurrentIndex(0);
-      stacked->setCurrentIndex(0);
-      
-      //build a default blend if there is none.
-      if (command->feature->getConstantBlends().empty())
-        command->feature->addConstantBlend(ftr::Blend::Constant());
-      
-      cPage->init(command->feature->getConstantBlends(), view->project->getPayload(command->feature->getId()));
-    }
-    else 
-    {
-      typeCombo->setCurrentIndex(1);
-      stacked->setCurrentIndex(1);
-      if (command->feature->getVariableBlend())
-        vPage->init(*command->feature->getVariableBlend(), view->project->getPayload(command->feature->getId()));
+      case 0: //constant
+      {
+        auto &constants = command->feature->getConstants();
+        for (auto &c : constants)
+          addConstant(c);
+        stacked->setCurrentIndex(0);
+        constantsList->setSelectedDelayed();
+        break;
+      }
+      case 1: //variable
+      {
+        vPage->loadFeatureData();
+        stacked->setCurrentIndex(1);
+        break;
+      }
+      default:
+      {
+        assert(0); //unknown blend type
+        break;
+      }
     }
   }
   
   void glue()
   {
-    connect(typeCombo, qOverload<int>(&QComboBox::currentIndexChanged), view, &Blend::typeChanged);
+    connect(prmModel, &cmv::tbl::Model::dataChanged, view, &Blend::modelChanged);
+    connect(constantsList->getListWidget(), &QListWidget::itemSelectionChanged, view, &Blend::constantsSelectionChanged);
+    connect(removeConstant, &QAction::triggered, view, &Blend::removeConstant);
+    
+    view->sift->insert
+    (
+      msg::Response | msg::Post | msg::Selection | msg::Add
+      , std::bind(&Stow::slcAdded, this, std::placeholders::_1)
+    );
+    
+    prmView->installEventFilter(view);
+    constantsList->getListWidget()->installEventFilter(view);
   }
   
-  std::vector<ftr::Blend::VariableEntry> buildVariableEntries()
+  void modeChanged()
   {
-    std::vector<ftr::Blend::VariableEntry> out;
-    
-    const auto &ems = vPage->edgeSelections->getButton(0)->getMessages();
-    if (ems.empty())
-      return out;
-    auto inputFeatureId = ems.front().featureId;
-    assert(view->project->hasFeature(inputFeatureId));
-    const auto &inputFeature = *view->project->findFeature(inputFeatureId);
-    assert(inputFeature.hasAnnex(ann::Type::SeerShape) && !inputFeature.getAnnex<ann::SeerShape>().isNull());
-    
-    int edgeIndex = -1;
-    assert(vPage->pointPage->parameters.size() == vPage->pointPage->pointSelections->getButton(0)->getMessages().size());
-    for (const auto &ps : vPage->pointPage->pointSelections->getButton(0)->getMessages())
+    constantsList->clear();
+    vPage->clear();
+    int type = command->feature->getParameter(ftr::Blend::PrmTags::blendType)->getInt();
+    stacked->setCurrentIndex(type);
+  }
+  
+  void setSelections()
+  {
+    int type = command->feature->getParameter(ftr::Blend::PrmTags::blendType)->getInt();
+    switch (type)
     {
-      edgeIndex++;
-      if (ps.featureId != inputFeatureId)
+      case 0: //constant
       {
-        view->node->sendBlocked(msg::buildStatusMessage(QObject::tr("Variable entry from another body skipped").toStdString(), 2.0));
-        continue;
+        std::vector<slc::Messages> out;
+        for (int i = 0; i < constantsList->count(); ++i)
+          out.push_back(constantsList->getMessages(i));
+        command->setSelections(out);
+        break;
       }
-      ftr::Blend::VariableEntry ce;
-      ce.pick = tls::convertToPick(ps, inputFeature, view->project->getShapeHistory());
-      ce.radius = vPage->pointPage->parameters.at(edgeIndex).at(0);
-      if (vPage->pointPage->parameters.at(edgeIndex).size() > 1)
+      case 1: //variable
       {
-        ce.position = vPage->pointPage->parameters.at(edgeIndex).at(1);
-        ce.pick.u = ce.position->getDouble();
+        command->setSelections(vPage->getSelections());
+        vPage->entryList->updateHideInactive();
+        break;
+      }
+      default:
+      {
+        assert(0); //unknown blend type
+        break;
+      }
+    }
+  }
+  
+  void goGlobalSelection()
+  {
+    if (!isGlobalSelection)
+    {
+      isGlobalSelection = true;
+      view->goSelectionToolbar();
+      int type = command->feature->getParameter(ftr::Blend::PrmTags::blendType)->getInt();
+      if (type == 0) //constant
+      {
+        view->maskDefault = slc::EdgesBoth;
+        view->goMaskDefault();
+        view->node->sendBlocked(msg::buildStatusMessage(QObject::tr("Select Edge For Constant Blend").toStdString()));
+      }
+      else if (type == 1) //variable
+      {
+        if (command->feature->getVariable().contourPicks.getPicks().empty())
+        {
+          view->maskDefault = slc::EdgesBoth;
+          view->goMaskDefault();
+          view->node->sendBlocked(msg::buildStatusMessage(QObject::tr("Select Edge For Variable Blend").toStdString()));
+        }
+        else
+        {
+          view->maskDefault = slc::EndPointsBoth | slc::NearestPointsEnabled | slc::MidPointsEnabled;
+          view->goMaskDefault();
+          view->node->sendBlocked(msg::buildStatusMessage(QObject::tr("Select Point Constraint").toStdString()));
+        }
       }
       else
-        ce.position = ftr::Blend::buildPositionParameter();
-      out.push_back(ce);
+        assert(0); //unknown blend type.
     }
-    
-    return out;
+  }
+  
+  void stopGlobalSelection()
+  {
+    if (isGlobalSelection)
+    {
+      isGlobalSelection = false;
+      view->node->sendBlocked(msg::buildSelectionMask(slc::None));
+    }
   }
   
   void goLocalUpdate()
   {
-    if (typeCombo->currentIndex() == 1)
-    {
-      const auto &edgeMsgs = vPage->edgeSelections->getButton(0)->getMessages();
-      auto ves = buildVariableEntries();
-      command->setVariableSelections(std::make_tuple(edgeMsgs, ves));
-    }
-    
     command->localUpdate();
+    QTimer::singleShot(0, [this](){this->goGlobalSelection();});
   };
 };
 
 Blend::Blend(cmd::Blend *cIn)
 : Base("cmv::Blend")
 , stow(new Stow(cIn, this))
-{}
+{
+  stow->goGlobalSelection();
+}
 
 Blend::~Blend() = default;
 
-void Blend::addConstantBlend()
+bool Blend::eventFilter(QObject *watched, QEvent *event)
 {
-  assert(stow->typeCombo->currentIndex() == 0);
-  stow->command->feature->addConstantBlend(ftr::Blend::Constant());
-  const auto &sb = stow->command->feature->getConstantBlends().back();
-  stow->cPage->addConstantBlend(sb);
-//   stow->goLocalUpdate(); //shouldn't need to update until something is actually selected
+  if(event->type() == QEvent::FocusIn)
+  {
+    closeAllPersistent();
+    stow->goGlobalSelection();
+  }
+  
+  return QObject::eventFilter(watched, event);
 }
 
-void Blend::removeConstantBlend()
+void Blend::addConstant()
 {
-  assert(stow->typeCombo->currentIndex() == 0);
-  int selectedIndex = stow->cPage->getCurrentSelectionIndex();
+  assert(stow->command->feature->getParameter(ftr::Blend::PrmTags::blendType)->getInt() == 0);
+  auto &c = stow->command->feature->addConstant();
+  stow->addConstant(c);
+  //adding an empty constant doesn't require a call to update
+}
+
+void Blend::removeConstant()
+{
+  assert(stow->command->feature->getParameter(ftr::Blend::PrmTags::blendType)->getInt() == 0);
+  int selectedIndex = stow->constantsList->remove();
   if (selectedIndex == -1)
     return;
-  assert(selectedIndex >= 0 && selectedIndex < static_cast<int>(stow->command->feature->getConstantBlends().size()));
-  stow->command->feature->removeConstantBlend(selectedIndex);
-  stow->cPage->removeConstantBlend(selectedIndex);
+  stow->command->feature->removeConstant(selectedIndex);
+  stow->constantsList->reselectDelayed();
+  stow->setSelections();
   stow->goLocalUpdate();
 }
 
-void Blend::constantSelectionDirty()
+void Blend::closeAllPersistent()
 {
-  assert(stow->typeCombo->currentIndex() == 0);
-  stow->command->setConstantSelections(stow->cPage->getAllSelections());
-  stow->goLocalUpdate();
+  stow->stopGlobalSelection();
+  stow->prmView->closePersistent();
+  stow->constantsList->closePersistent();
+  stow->vPage->closePersistent();
 }
 
-void Blend::parameterChanged()
+void Blend::modelChanged(const QModelIndex &index, const QModelIndex&)
 {
-  stow->goLocalUpdate();
-  
-  //when we change a position parameter, the point on screen does not get updated.
-  //there is currently no support inside selection button for updating the message.
-  //ftr::Pick has a static method to convert edge parameters to osg::Vec3d
-}
-
-void Blend::typeChanged(int index)
-{
-  stow->stacked->setCurrentIndex(index);
-  stow->command->setType(index);
-  if (index == 0)
-  {
-    stow->vPage->clear();
-    stow->cPage->parameterTable->setCurrentSelectedIndex(index);
-  }
-  else if (index == 1)
-  {
-    stow->cPage->clear();
-    stow->vPage->edgeSelections->activate(0);
-  }
-  stow->goLocalUpdate();
-}
-
-void Blend::variableEdgeAdded(int index)
-{
-  const auto &edgeMsgs = stow->vPage->edgeSelections->getButton(0)->getMessages();
-  assert(index >= 0 && index < static_cast<int>(edgeMsgs.size()));
-  const auto *f = project->findFeature(edgeMsgs.at(index).featureId);
-  assert(f);
-  assert(f->hasAnnex(ann::Type::SeerShape) && !f->getAnnex<ann::SeerShape>().isNull());
-  const auto &ss = f->getAnnex<ann::SeerShape>();
-  auto vertIds = ftr::Blend::getSpineEnds(ss, edgeMsgs.at(index).shapeId);
-  std::optional<int> pointIndex;
-  for (const auto &id : vertIds)
-  {
-    //getSpineEnds tests for duplicate vertices(periodic).
-    //So we don't have any duplicates there but we could be
-    //duplicating a vertex from a previous edge selection.
-    //dlg::SelectionButton doesn't allow duplicate selections
-    //so we will take the size of the messages before, add the message
-    //take the size again and compare to determine if we need to add
-    //a new parameter page. This will keep the number of point
-    //selections in sync with the parameter pages.
-    //another goofy thing is how the selection of start/end/vertex points
-    //is handled. They are fictitious like other points so we select them
-    //from an edge. Going from a vertex to a selection point is cumbersome,
-    //so we will build a pick and use feature tools to do this.
-    
-    ftr::Pick dummy;
-    dummy.selectionType = slc::Type::StartPoint;
-    dummy.shapeHistory = project->getShapeHistory().createDevolveHistory(id);
-    auto convertedMessages = tls::convertToMessage(dummy, f);
-    if (convertedMessages.empty())
-    {
-      node->sendBlocked(msg::buildStatusMessage(QObject::tr("Couldn't convert pick to message in Blend::variableEdgeAdded").toStdString(), 2.0));
-      continue;
-    }
-    
-    std::size_t sizeBefore = stow->vPage->pointPage->pointSelections->getButton(0)->getMessages().size();
-    stow->vPage->pointPage->addSelection(convertedMessages.front());
-    if (sizeBefore == stow->vPage->pointPage->pointSelections->getButton(0)->getMessages().size())
-      continue; //selection was filtered out.
-    
-    std::vector<std::shared_ptr<prm::Parameter>> freshParameters;
-    freshParameters.push_back(ftr::Blend::buildRadiusParameter());
-    if (convertedMessages.front().type != slc::Type::StartPoint && convertedMessages.front().type != slc::Type::EndPoint)
-    {
-      freshParameters.push_back(ftr::Blend::buildPositionParameter()); //unused for vertices but build anyway.
-    }
-    int pi = stow->vPage->pointPage->addParameterPage(freshParameters);
-    if (!pointIndex)
-      pointIndex = pi;
-  }
-  stow->goLocalUpdate();
-  stow->vPage->edgeSelections->getView(0)->setSelectedIndex(index);
-  stow->vPage->pointPage->pointSelections->activate(0);
-  if (pointIndex)
-  {
-    //have to use timer because activate above is queued also.
-    int wtf = *pointIndex; //so I can capture by copy.
-    QTimer::singleShot(0, [this, wtf](){stow->vPage->pointPage->pointSelections->getView(0)->setSelectedIndex(wtf);});
-  }
-}
-
-void Blend::variableEdgeRemoved(int)
-{
-  const auto &edgeMsgs = stow->vPage->edgeSelections->getButton(0)->getMessages();
-  if (edgeMsgs.empty())
-  {
-    stow->vPage->pointPage->clear();
-    stow->goLocalUpdate();
+  if (!index.isValid())
     return;
-  }
   
-  //we have to reconcile constraint points with edges.
-  const auto *iFeature = project->findFeature(edgeMsgs.at(0).featureId);
-  assert(iFeature);
-  assert(iFeature->hasAnnex(ann::Type::SeerShape) && !iFeature->getAnnex<ann::SeerShape>().isNull());
-  const auto &ss = iFeature->getAnnex<ann::SeerShape>();
-
-  BRepFilletAPI_MakeFillet blendMaker(ss.getRootOCCTShape());
-  for (const auto &em : edgeMsgs)
-  {
-    if (em.featureId != iFeature->getId())
-    {
-      //we should be removing the edge, but I plan on restricting selection to prevent this situation.
-      node->sendBlocked(msg::buildStatusMessage(QObject::tr("Skipping edge not on solid").toStdString(), 2.0));
-      continue;
-    }
-    blendMaker.Add(TopoDS::Edge(ss.getOCCTShape(em.shapeId)));
-  }
-
-  auto isValidConstraint = [&](const slc::Message &cm) -> bool
-  {
-    for (int index = 1; index < blendMaker.NbContours() + 1; ++index)
-    {
-      assert(ss.hasId(cm.shapeId));
-      if (cm.type == slc::Type::StartPoint || cm.type == slc::Type::EndPoint)
-      {
-        TopoDS_Vertex v;
-        if (cm.type == slc::Type::StartPoint)
-          v = TopoDS::Vertex(ss.getOCCTShape(ss.useGetStartVertex(cm.shapeId)));
-        else
-          v = TopoDS::Vertex(ss.getOCCTShape(ss.useGetEndVertex(cm.shapeId)));
-        double p = blendMaker.RelativeAbscissa(index, v);
-        if (!(p < 0.0))
-          return true;
-      }
-      else if (cm.type == slc::Type::MidPoint || cm.type == slc::Type::NearestPoint)
-      {
-        if (blendMaker.Contour(TopoDS::Edge(ss.getOCCTShape(cm.shapeId))) != 0)
-          return true;
-      }
-    }
-    return false;
-  };  
-  
-  std::vector<int> indexesToRemove;
-  int index = -1;
-  for (const auto &pm : stow->vPage->pointPage->pointSelections->getButton(0)->getMessages())
-  {
-    index++;
-    if (pm.featureId != iFeature->getId())
-    {
-      indexesToRemove.push_back(index);
-      node->sendBlocked(msg::buildStatusMessage(QObject::tr("Removing constraint not on solid").toStdString(), 2.0));
-      continue;
-    }
-    if (!isValidConstraint(pm))
-      indexesToRemove.push_back(index);
-  }
-  std::reverse(indexesToRemove.begin(), indexesToRemove.end());
-  
-  for (auto itr : indexesToRemove)
-  {
-    stow->vPage->pointPage->pointSelections->getButton(0)->removeMessage(itr);
-    stow->vPage->pointPage->removeParameterPage(itr);
-  }
-  
+  auto tag = stow->prmModel->getParameter(index)->getTag();
+  if (tag == ftr::Blend::PrmTags::blendType)
+    stow->modeChanged();
+  stow->setSelections();
   stow->goLocalUpdate();
 }
 
-/* We have a fundamental problem. We have 'pick.u' describing position of a point.
- * Then we have the position parameter describing same point. The parameter should
- * be master after it is set from the initial pick. We have no method to keep the
- * visual point synced with the parameter.
+void Blend::constantChanged(const QModelIndex &index, const QModelIndex&)
+{
+  if (!index.isValid())
+    return;
+  const auto *m = dynamic_cast<const tbl::Model*>(index.model()); assert(m);
+  if (m->getParameter(index)->getTag() == ftr::Blend::PrmTags::contourPicks)
+    stow->setSelections();
+  stow->goLocalUpdate();
+}
+
+void Blend::constantsSelectionChanged()
+{
+  closeAllPersistent();
+  stow->goGlobalSelection();
+  node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  for (const auto &m : stow->constantsList->getSelectedMessages())
+    node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Add, m));
+}
+
+void Blend::variableContoursChanged(const QModelIndex &index, const QModelIndex&)
+{
+  if (!index.isValid())
+    return;
+  stow->vPage->reconcile();
+  stow->setSelections();
+  stow->goLocalUpdate();
+}
+
+/* ok we want to alter the nearest point selections to reflect the
+ * position parameter. Problem is index.model() is const so we can't
+ * do that here through that. So either we do a search through the 
+ * vpage entrylist to try and find the appropriate model or use the
+ * current selected model and require it's selection before changing
+ * parameters. We have chosen the second option and if the selection
+ * isn't correct then changes will go unnoticed in the GUI.
  */
-void Blend::variablePointAdded(int pointIndex)
+void Blend::variableEntriesChanged(const QModelIndex &index, const QModelIndex&)
 {
-  std::vector<std::shared_ptr<prm::Parameter>> freshParameters;
-  freshParameters.push_back(ftr::Blend::buildRadiusParameter());
-  const slc::Message &sm = stow->vPage->pointPage->pointSelections->getButton(0)->getMessages().at(pointIndex);
-  if (sm.type != slc::Type::StartPoint && sm.type != slc::Type::EndPoint)
+  if (!index.isValid())
+    return;
+  
+  auto *lm = stow->vPage->entryList->getSelectedModel();
+  if (!lm || lm != index.model()) //something behind the scenes.
+    return;
+  if (lm->getParameter(index)->getTag() == prm::Tags::Position)
   {
-    freshParameters.push_back(ftr::Blend::buildPositionParameter());
-    
-    //set the parameter to the point.
-    assert(project->hasFeature(sm.featureId));
-    const ftr::Base &inputFeature = *project->findFeature(sm.featureId);
-    assert(inputFeature.hasAnnex(ann::Type::SeerShape));
-    const ann::SeerShape &ss = inputFeature.getAnnex<ann::SeerShape>();
-    assert(!ss.isNull());
-    assert(ss.hasId(sm.shapeId));
-    const TopoDS_Shape &es = ss.getOCCTShape(sm.shapeId);
-    if (es.ShapeType() == TopAbs_EDGE)
-      freshParameters.back()->setValue(ftr::Pick::parameter(TopoDS::Edge(es), sm.pointLocation));
+    auto *pickPrm = lm->getParameter(lm->index(0, 1));
+    auto msgs = lm->getMessages(pickPrm);
+    if (!msgs.empty() && msgs.front().type == slc::Type::NearestPoint)
+    {
+      auto point = ftr::Pick::point(getEdge(msgs.front()), lm->getParameter(index)->getDouble());
+      msgs.front().pointLocation = point;
+      lm->setMessages(pickPrm, msgs);
+      stow->setSelections(); //setMessages doesn't trigger data changed so we need to set selection
+      stow->vPage->entryList->reselectDelayed();
+    }
   }
-  int index = stow->vPage->pointPage->addParameterPage(freshParameters);
-  
+  if (lm->getParameter(index)->getTag() == ftr::Blend::PrmTags::entryPick)
+    stow->setSelections();
   stow->goLocalUpdate();
-  
-  stow->vPage->pointPage->pointSelections->getView(0)->setSelectedIndex(index);
 }
 
-void Blend::variablePointRemoved(int index)
+void Blend::removeEntry()
 {
-  stow->vPage->pointPage->removeParameterPage(index);
-  stow->goLocalUpdate();
+  int index = stow->vPage->entryList->remove();
+  if (index != -1)
+  {
+    stow->command->feature->removeVariableEntry(index);
+    stow->vPage->entryList->reselectDelayed();
+    stow->setSelections();
+    stow->goLocalUpdate();
+  }
+}
+
+void Blend::entriesSelectionChanged()
+{
+  closeAllPersistent();
+  stow->goGlobalSelection();
+  node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Clear));
+  for (const auto &m : stow->vPage->entryList->getSelectedMessages())
+    node->sendBlocked(msg::Message(msg::Request | msg::Selection | msg::Add, m));
 }

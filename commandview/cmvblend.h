@@ -24,8 +24,6 @@
 
 #include "commandview/cmvbase.h"
 
-class QTableWidgetItem;
-
 namespace cmd{class Blend;}
 
 namespace cmv
@@ -39,19 +37,23 @@ namespace cmv
   public:
     Blend(cmd::Blend*);
     ~Blend() override;
-    
-    void addConstantBlend();
-    void removeConstantBlend();
-    void constantSelectionDirty();
-    void parameterChanged();
-    void typeChanged(int);
-    void variableEdgeAdded(int);
-    void variableEdgeRemoved(int);
-    void variablePointAdded(int);
-    void variablePointRemoved(int);
+  protected:
+    bool eventFilter(QObject*, QEvent*) override;
+  public Q_SLOTS:
+    void closeAllPersistent();
+    void modelChanged(const QModelIndex&, const QModelIndex&);
+    void constantChanged(const QModelIndex&, const QModelIndex&);
+    void constantsSelectionChanged();
+    void variableContoursChanged(const QModelIndex&, const QModelIndex&);
+    void variableEntriesChanged(const QModelIndex&, const QModelIndex&);
+    void removeEntry();
+    void entriesSelectionChanged();
   private:
     struct Stow;
     std::unique_ptr<Stow> stow;
+    
+    void addConstant();
+    void removeConstant();
   };
 }
 

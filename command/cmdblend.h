@@ -30,8 +30,6 @@ namespace cmd
   class Blend : public Base
   {
   public:
-    using SelectionData = std::tuple<slc::Messages, std::vector<ftr::Blend::VariableEntry>>;
-    
     ftr::Blend::Feature *feature = nullptr;
     
     Blend();
@@ -43,10 +41,8 @@ namespace cmd
     void activate() override;
     void deactivate() override;
     
-    void setType(int);
     bool isValidSelection(const slc::Message&);
-    void setConstantSelections(const std::vector<slc::Messages>&);
-    void setVariableSelections(const SelectionData&);
+    void setSelections(const std::vector<slc::Messages>&);
     void localUpdate();
     
   private:

@@ -25,48 +25,75 @@
 #include <osg/ref_ptr>
 
 #include "library/lbrplabel.h"
-#include "feature/ftrpick.h"
+#include "parameter/prmparameter.h"
 #include "feature/ftrbase.h"
 
-class ChFi3d_FilBuilder;
-class TopoDS_Edge;
-
-namespace prj{namespace srl{namespace blns{class Blend;}}}
+namespace prj{namespace srl{namespace blns
+{
+  class Blend;
+  class Constant;
+  class Variable;
+  class Entry;
+}}}
 namespace ann{class SeerShape;}
 namespace ftr
 {
-  class ShapeHistory;
-  
   namespace Blend
   {
-    enum class BlendType
+    namespace InputTags
     {
-      Constant = 0
-      , Variable
-    };
-    
-    enum class Shape
+      inline constexpr std::string_view constant = "constant";
+      inline constexpr std::string_view contourPick = "contourPick";
+      inline constexpr std::string_view entryPick = "entryPick";
+    }
+    namespace PrmTags
     {
-      Rational,
-      QuasiAngular,
-      Polynomial
-    };
+      inline constexpr std::string_view filletShape = "filletShape";
+      inline constexpr std::string_view blendType = "blendType";
+      inline constexpr std::string_view contourPicks = "contourPicks";
+      inline constexpr std::string_view entryPick = "entryPick";
+    }
     
     struct Constant
     {
-      Picks picks; //!< vector of picked objects
-      std::shared_ptr<prm::Parameter> radius; //!< parameter containing blend radius.
-      osg::ref_ptr<lbr::PLabel> label; //!< graphic icon
+      prm::Parameter contourPicks;
+      prm::Parameter radius;
+      osg::ref_ptr<lbr::PLabel> radiusLabel;
+      
+      Constant();
+      Constant(const prj::srl::blns::Constant&);
+      Constant(const Constant&) = delete;
+      Constant& operator=(const Constant&) = delete;
+      Constant(Constant&&) = delete;
+      Constant& operator=(Constant&&) = delete;
+      
+      prj::srl::blns::Constant serialOut() const;
+      
+      prm::Parameters getParameters();
     };
+    using Constants = std::list<Constant>;
 
-    struct VariableEntry
+    struct Entry
     {
-      Pick pick; //!< edge or vertex.
-      std::shared_ptr<prm::Parameter> position; //!< parameter along edge 0 to 1. ignored if vertex. maybe invalid
-      std::shared_ptr<prm::Parameter> radius; //!< value of blend.
-      osg::ref_ptr<lbr::PLabel> label; //!< graphic icon
+      prm::Parameter entryPick; //!< edge or vertex.
+      prm::Parameter radius; //!< value of blend.
+      prm::Parameter position; //!< parameter along edge 0 to 1. ignored if vertex. maybe invalid
+      osg::ref_ptr<lbr::PLabel> radiusLabel; //!< graphic icon
       osg::ref_ptr<lbr::PLabel> positionLabel; //!< graphic icon
+      
+      Entry();
+      Entry(const prj::srl::blns::Entry&);
+      Entry(const Entry&) = delete;
+      Entry& operator=(const Entry&) = delete;
+      Entry(const Entry&&) = delete;
+      Entry& operator=(Entry&&) = delete;
+      
+      prm::Parameters getParameters();
+      void prmActiveSync();
+      
+      prj::srl::blns::Entry serialOut() const;
     };
+    using Entries = std::list<Entry>;
 
     /*! @struct Variable
      * @brief Data for a variable blend
@@ -77,13 +104,18 @@ namespace ftr
      */
     struct Variable
     {
-      Picks picks; //!< pick object.
-      std::vector<VariableEntry> entries;
-    };
+      prm::Parameter contourPicks;
+      Entries entries;
       
-    std::shared_ptr<prm::Parameter> buildRadiusParameter();
-    std::shared_ptr<prm::Parameter> buildPositionParameter();
-    std::vector<boost::uuids::uuid> getSpineEnds(const ann::SeerShape&, const boost::uuids::uuid&);
+      Variable();
+      Variable(const Variable&) = delete;
+      Variable& operator=(const Variable&) = delete;
+      Variable(const Variable&&) = delete;
+      Variable& operator=(Variable&&) = delete;
+      
+      prj::srl::blns::Variable serialOut() const;
+      void serialIn(const prj::srl::blns::Variable&);
+    };
     
     class Feature : public Base
     {
@@ -92,22 +124,15 @@ namespace ftr
         Feature();
         ~Feature() override;
         
-        void setBlendType(BlendType); //!< will call clearBlends to reset data.
-        BlendType getBlendType() const {return blendType;}
+        Constant& addConstant();
+        void removeConstant(int);
+        Constants& getConstants() const;
+        Constant& getConstant(int) const;
         
-        void setShape(Shape sIn);
-        Shape getShape() const {return filletShape;}
-        
-        void clearBlends(); //remove all blend definitions
-        
-        void addConstantBlend(const Constant&); //assert on blend type.
-        void removeConstantBlend(int); //assert on blend type.
-        void setConstantPicks(int, const Picks&); //assert on blend type.
-        const std::vector<Constant>& getConstantBlends() const; //assert on blend type.
-        
-        void addOrCreateVariableBlend(const Pick&); //assert on blend type.
-        void addVariableEntry(const VariableEntry&);
-        const std::optional<Variable>& getVariableBlend() const; //!< notice optional return.
+        void setVariablePicks(const Picks&);
+        Entry& addVariableEntry();
+        void removeVariableEntry(int);
+        Variable& getVariable() const; //!< assert on blend type
         
         void updateModel(const UpdatePayload&) override;
         Type getType() const override {return Type::Blend;}
@@ -118,32 +143,9 @@ namespace ftr
         void serialRead(const prj::srl::blns::Blend&); //!<initializes this from serial. not virtual, type already known.
       
       private:
-        Shape filletShape = Shape::Rational;
-        BlendType blendType = BlendType::Constant;
-        
-        std::vector<Constant> constantBlends;
-        std::optional<Variable> variableBlend; 
-        
-        /*! used to map the edges that are blended away to the face generated.
-        * used to map new generated face to outer wire.
-        */ 
-        std::map<boost::uuids::uuid, boost::uuids::uuid> shapeMap; //!< map edges or vertices to faces
-        std::unique_ptr<ann::SeerShape> sShape;
-        
-        void match(ChFi3d_FilBuilder&, const ann::SeerShape &);
-        
-        /*! now that we are 'resolving' picks we need to update the shapemap to ensure
-        * consistant id output of generated faces.
-        */
-        void updateShapeMap(const boost::uuids::uuid&, const ShapeHistory &);
-        void ensureNoFaceNils();
-        void dumpInfo(ChFi3d_FilBuilder&, const ann::SeerShape&);
-        
-        //needed for serial in.
-        void addConstantBlendQuiet(const Constant&);
-        void wireEntry(VariableEntry&);
-        
         static QIcon icon;
+        struct Stow;
+        std::unique_ptr<Stow> stow;
     };
   }
 }

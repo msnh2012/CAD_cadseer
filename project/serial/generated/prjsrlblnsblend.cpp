@@ -46,237 +46,249 @@ namespace prj
   {
     namespace blns
     {
-      // SimpleBlend
+      // Constant
       // 
 
-      const SimpleBlend::BlendPicksSequence& SimpleBlend::
-      blendPicks () const
+      const Constant::ContourPicksType& Constant::
+      contourPicks () const
       {
-        return this->blendPicks_;
+        return this->contourPicks_.get ();
       }
 
-      SimpleBlend::BlendPicksSequence& SimpleBlend::
-      blendPicks ()
+      Constant::ContourPicksType& Constant::
+      contourPicks ()
       {
-        return this->blendPicks_;
+        return this->contourPicks_.get ();
       }
 
-      void SimpleBlend::
-      blendPicks (const BlendPicksSequence& s)
+      void Constant::
+      contourPicks (const ContourPicksType& x)
       {
-        this->blendPicks_ = s;
+        this->contourPicks_.set (x);
       }
 
-      const SimpleBlend::RadiusType& SimpleBlend::
+      void Constant::
+      contourPicks (::std::unique_ptr< ContourPicksType > x)
+      {
+        this->contourPicks_.set (std::move (x));
+      }
+
+      const Constant::RadiusType& Constant::
       radius () const
       {
         return this->radius_.get ();
       }
 
-      SimpleBlend::RadiusType& SimpleBlend::
+      Constant::RadiusType& Constant::
       radius ()
       {
         return this->radius_.get ();
       }
 
-      void SimpleBlend::
+      void Constant::
       radius (const RadiusType& x)
       {
         this->radius_.set (x);
       }
 
-      void SimpleBlend::
+      void Constant::
       radius (::std::unique_ptr< RadiusType > x)
       {
         this->radius_.set (std::move (x));
       }
 
-      const SimpleBlend::PlabelType& SimpleBlend::
-      plabel () const
+      const Constant::RadiusLabelType& Constant::
+      radiusLabel () const
       {
-        return this->plabel_.get ();
+        return this->radiusLabel_.get ();
       }
 
-      SimpleBlend::PlabelType& SimpleBlend::
-      plabel ()
+      Constant::RadiusLabelType& Constant::
+      radiusLabel ()
       {
-        return this->plabel_.get ();
+        return this->radiusLabel_.get ();
       }
 
-      void SimpleBlend::
-      plabel (const PlabelType& x)
+      void Constant::
+      radiusLabel (const RadiusLabelType& x)
       {
-        this->plabel_.set (x);
+        this->radiusLabel_.set (x);
       }
 
-      void SimpleBlend::
-      plabel (::std::unique_ptr< PlabelType > x)
+      void Constant::
+      radiusLabel (::std::unique_ptr< RadiusLabelType > x)
       {
-        this->plabel_.set (std::move (x));
+        this->radiusLabel_.set (std::move (x));
       }
 
 
-      // VariableEntry
+      // Entry
       // 
 
-      const VariableEntry::BlendPickType& VariableEntry::
-      blendPick () const
+      const Entry::EntryPickType& Entry::
+      entryPick () const
       {
-        return this->blendPick_.get ();
+        return this->entryPick_.get ();
       }
 
-      VariableEntry::BlendPickType& VariableEntry::
-      blendPick ()
+      Entry::EntryPickType& Entry::
+      entryPick ()
       {
-        return this->blendPick_.get ();
+        return this->entryPick_.get ();
       }
 
-      void VariableEntry::
-      blendPick (const BlendPickType& x)
+      void Entry::
+      entryPick (const EntryPickType& x)
       {
-        this->blendPick_.set (x);
+        this->entryPick_.set (x);
       }
 
-      void VariableEntry::
-      blendPick (::std::unique_ptr< BlendPickType > x)
+      void Entry::
+      entryPick (::std::unique_ptr< EntryPickType > x)
       {
-        this->blendPick_.set (std::move (x));
+        this->entryPick_.set (std::move (x));
       }
 
-      const VariableEntry::PositionType& VariableEntry::
+      const Entry::RadiusType& Entry::
+      radius () const
+      {
+        return this->radius_.get ();
+      }
+
+      Entry::RadiusType& Entry::
+      radius ()
+      {
+        return this->radius_.get ();
+      }
+
+      void Entry::
+      radius (const RadiusType& x)
+      {
+        this->radius_.set (x);
+      }
+
+      void Entry::
+      radius (::std::unique_ptr< RadiusType > x)
+      {
+        this->radius_.set (std::move (x));
+      }
+
+      const Entry::PositionType& Entry::
       position () const
       {
         return this->position_.get ();
       }
 
-      VariableEntry::PositionType& VariableEntry::
+      Entry::PositionType& Entry::
       position ()
       {
         return this->position_.get ();
       }
 
-      void VariableEntry::
+      void Entry::
       position (const PositionType& x)
       {
         this->position_.set (x);
       }
 
-      void VariableEntry::
+      void Entry::
       position (::std::unique_ptr< PositionType > x)
       {
         this->position_.set (std::move (x));
       }
 
-      const VariableEntry::RadiusType& VariableEntry::
-      radius () const
+      const Entry::RadiusLabelType& Entry::
+      radiusLabel () const
       {
-        return this->radius_.get ();
+        return this->radiusLabel_.get ();
       }
 
-      VariableEntry::RadiusType& VariableEntry::
-      radius ()
+      Entry::RadiusLabelType& Entry::
+      radiusLabel ()
       {
-        return this->radius_.get ();
+        return this->radiusLabel_.get ();
       }
 
-      void VariableEntry::
-      radius (const RadiusType& x)
+      void Entry::
+      radiusLabel (const RadiusLabelType& x)
       {
-        this->radius_.set (x);
+        this->radiusLabel_.set (x);
       }
 
-      void VariableEntry::
-      radius (::std::unique_ptr< RadiusType > x)
+      void Entry::
+      radiusLabel (::std::unique_ptr< RadiusLabelType > x)
       {
-        this->radius_.set (std::move (x));
+        this->radiusLabel_.set (std::move (x));
       }
 
-      const VariableEntry::PlabelType& VariableEntry::
-      plabel () const
-      {
-        return this->plabel_.get ();
-      }
-
-      VariableEntry::PlabelType& VariableEntry::
-      plabel ()
-      {
-        return this->plabel_.get ();
-      }
-
-      void VariableEntry::
-      plabel (const PlabelType& x)
-      {
-        this->plabel_.set (x);
-      }
-
-      void VariableEntry::
-      plabel (::std::unique_ptr< PlabelType > x)
-      {
-        this->plabel_.set (std::move (x));
-      }
-
-      const VariableEntry::PositionLabelType& VariableEntry::
+      const Entry::PositionLabelType& Entry::
       positionLabel () const
       {
         return this->positionLabel_.get ();
       }
 
-      VariableEntry::PositionLabelType& VariableEntry::
+      Entry::PositionLabelType& Entry::
       positionLabel ()
       {
         return this->positionLabel_.get ();
       }
 
-      void VariableEntry::
+      void Entry::
       positionLabel (const PositionLabelType& x)
       {
         this->positionLabel_.set (x);
       }
 
-      void VariableEntry::
+      void Entry::
       positionLabel (::std::unique_ptr< PositionLabelType > x)
       {
         this->positionLabel_.set (std::move (x));
       }
 
 
-      // VariableBlend
+      // Variable
       // 
 
-      const VariableBlend::BlendPicksSequence& VariableBlend::
-      blendPicks () const
+      const Variable::ContourPicksType& Variable::
+      contourPicks () const
       {
-        return this->blendPicks_;
+        return this->contourPicks_.get ();
       }
 
-      VariableBlend::BlendPicksSequence& VariableBlend::
-      blendPicks ()
+      Variable::ContourPicksType& Variable::
+      contourPicks ()
       {
-        return this->blendPicks_;
+        return this->contourPicks_.get ();
       }
 
-      void VariableBlend::
-      blendPicks (const BlendPicksSequence& s)
+      void Variable::
+      contourPicks (const ContourPicksType& x)
       {
-        this->blendPicks_ = s;
+        this->contourPicks_.set (x);
       }
 
-      const VariableBlend::VariableEntriesSequence& VariableBlend::
-      variableEntries () const
+      void Variable::
+      contourPicks (::std::unique_ptr< ContourPicksType > x)
       {
-        return this->variableEntries_;
+        this->contourPicks_.set (std::move (x));
       }
 
-      VariableBlend::VariableEntriesSequence& VariableBlend::
-      variableEntries ()
+      const Variable::EntriesSequence& Variable::
+      entries () const
       {
-        return this->variableEntries_;
+        return this->entries_;
       }
 
-      void VariableBlend::
-      variableEntries (const VariableEntriesSequence& s)
+      Variable::EntriesSequence& Variable::
+      entries ()
       {
-        this->variableEntries_ = s;
+        return this->entries_;
+      }
+
+      void Variable::
+      entries (const EntriesSequence& s)
+      {
+        this->entries_ = s;
       }
 
 
@@ -307,6 +319,54 @@ namespace prj
         this->base_.set (std::move (x));
       }
 
+      const Blend::FilletShapeType& Blend::
+      filletShape () const
+      {
+        return this->filletShape_.get ();
+      }
+
+      Blend::FilletShapeType& Blend::
+      filletShape ()
+      {
+        return this->filletShape_.get ();
+      }
+
+      void Blend::
+      filletShape (const FilletShapeType& x)
+      {
+        this->filletShape_.set (x);
+      }
+
+      void Blend::
+      filletShape (::std::unique_ptr< FilletShapeType > x)
+      {
+        this->filletShape_.set (std::move (x));
+      }
+
+      const Blend::BlendTypeType& Blend::
+      blendType () const
+      {
+        return this->blendType_.get ();
+      }
+
+      Blend::BlendTypeType& Blend::
+      blendType ()
+      {
+        return this->blendType_.get ();
+      }
+
+      void Blend::
+      blendType (const BlendTypeType& x)
+      {
+        this->blendType_.set (x);
+      }
+
+      void Blend::
+      blendType (::std::unique_ptr< BlendTypeType > x)
+      {
+        this->blendType_.set (std::move (x));
+      }
+
       const Blend::SeerShapeType& Blend::
       seerShape () const
       {
@@ -331,40 +391,52 @@ namespace prj
         this->seerShape_.set (std::move (x));
       }
 
-      const Blend::FilletShapeType& Blend::
-      filletShape () const
+      const Blend::ConstantsSequence& Blend::
+      constants () const
       {
-        return this->filletShape_.get ();
+        return this->constants_;
       }
 
-      Blend::FilletShapeType& Blend::
-      filletShape ()
+      Blend::ConstantsSequence& Blend::
+      constants ()
       {
-        return this->filletShape_.get ();
-      }
-
-      void Blend::
-      filletShape (const FilletShapeType& x)
-      {
-        this->filletShape_.set (x);
-      }
-
-      const Blend::BlendTypeType& Blend::
-      blendType () const
-      {
-        return this->blendType_.get ();
-      }
-
-      Blend::BlendTypeType& Blend::
-      blendType ()
-      {
-        return this->blendType_.get ();
+        return this->constants_;
       }
 
       void Blend::
-      blendType (const BlendTypeType& x)
+      constants (const ConstantsSequence& s)
       {
-        this->blendType_.set (x);
+        this->constants_ = s;
+      }
+
+      const Blend::VariableOptional& Blend::
+      variable () const
+      {
+        return this->variable_;
+      }
+
+      Blend::VariableOptional& Blend::
+      variable ()
+      {
+        return this->variable_;
+      }
+
+      void Blend::
+      variable (const VariableType& x)
+      {
+        this->variable_.set (x);
+      }
+
+      void Blend::
+      variable (const VariableOptional& x)
+      {
+        this->variable_ = x;
+      }
+
+      void Blend::
+      variable (::std::unique_ptr< VariableType > x)
+      {
+        this->variable_.set (std::move (x));
       }
 
       const Blend::ShapeMapSequence& Blend::
@@ -384,54 +456,6 @@ namespace prj
       {
         this->shapeMap_ = s;
       }
-
-      const Blend::SimpleBlendsSequence& Blend::
-      simpleBlends () const
-      {
-        return this->simpleBlends_;
-      }
-
-      Blend::SimpleBlendsSequence& Blend::
-      simpleBlends ()
-      {
-        return this->simpleBlends_;
-      }
-
-      void Blend::
-      simpleBlends (const SimpleBlendsSequence& s)
-      {
-        this->simpleBlends_ = s;
-      }
-
-      const Blend::VariableBlendOptional& Blend::
-      variableBlend () const
-      {
-        return this->variableBlend_;
-      }
-
-      Blend::VariableBlendOptional& Blend::
-      variableBlend ()
-      {
-        return this->variableBlend_;
-      }
-
-      void Blend::
-      variableBlend (const VariableBlendType& x)
-      {
-        this->variableBlend_.set (x);
-      }
-
-      void Blend::
-      variableBlend (const VariableBlendOptional& x)
-      {
-        this->variableBlend_ = x;
-      }
-
-      void Blend::
-      variableBlend (::std::unique_ptr< VariableBlendType > x)
-      {
-        this->variableBlend_.set (std::move (x));
-      }
     }
   }
 }
@@ -444,48 +468,50 @@ namespace prj
   {
     namespace blns
     {
-      // SimpleBlend
+      // Constant
       //
 
-      SimpleBlend::
-      SimpleBlend (const RadiusType& radius,
-                   const PlabelType& plabel)
+      Constant::
+      Constant (const ContourPicksType& contourPicks,
+                const RadiusType& radius,
+                const RadiusLabelType& radiusLabel)
       : ::xml_schema::Type (),
-        blendPicks_ (this),
+        contourPicks_ (contourPicks, this),
         radius_ (radius, this),
-        plabel_ (plabel, this)
+        radiusLabel_ (radiusLabel, this)
       {
       }
 
-      SimpleBlend::
-      SimpleBlend (::std::unique_ptr< RadiusType > radius,
-                   ::std::unique_ptr< PlabelType > plabel)
+      Constant::
+      Constant (::std::unique_ptr< ContourPicksType > contourPicks,
+                ::std::unique_ptr< RadiusType > radius,
+                ::std::unique_ptr< RadiusLabelType > radiusLabel)
       : ::xml_schema::Type (),
-        blendPicks_ (this),
+        contourPicks_ (std::move (contourPicks), this),
         radius_ (std::move (radius), this),
-        plabel_ (std::move (plabel), this)
+        radiusLabel_ (std::move (radiusLabel), this)
       {
       }
 
-      SimpleBlend::
-      SimpleBlend (const SimpleBlend& x,
-                   ::xml_schema::Flags f,
-                   ::xml_schema::Container* c)
+      Constant::
+      Constant (const Constant& x,
+                ::xml_schema::Flags f,
+                ::xml_schema::Container* c)
       : ::xml_schema::Type (x, f, c),
-        blendPicks_ (x.blendPicks_, f, this),
+        contourPicks_ (x.contourPicks_, f, this),
         radius_ (x.radius_, f, this),
-        plabel_ (x.plabel_, f, this)
+        radiusLabel_ (x.radiusLabel_, f, this)
       {
       }
 
-      SimpleBlend::
-      SimpleBlend (const ::xercesc::DOMElement& e,
-                   ::xml_schema::Flags f,
-                   ::xml_schema::Container* c)
+      Constant::
+      Constant (const ::xercesc::DOMElement& e,
+                ::xml_schema::Flags f,
+                ::xml_schema::Container* c)
       : ::xml_schema::Type (e, f | ::xml_schema::Flags::base, c),
-        blendPicks_ (this),
+        contourPicks_ (this),
         radius_ (this),
-        plabel_ (this)
+        radiusLabel_ (this)
       {
         if ((f & ::xml_schema::Flags::base) == 0)
         {
@@ -494,7 +520,7 @@ namespace prj
         }
       }
 
-      void SimpleBlend::
+      void Constant::
       parse (::xsd::cxx::xml::dom::parser< char >& p,
              ::xml_schema::Flags f)
       {
@@ -504,15 +530,18 @@ namespace prj
           const ::xsd::cxx::xml::qualified_name< char > n (
             ::xsd::cxx::xml::dom::name< char > (i));
 
-          // blendPicks
+          // contourPicks
           //
-          if (n.name () == "blendPicks" && n.namespace_ ().empty ())
+          if (n.name () == "contourPicks" && n.namespace_ ().empty ())
           {
-            ::std::unique_ptr< BlendPicksType > r (
-              BlendPicksTraits::create (i, f, this));
+            ::std::unique_ptr< ContourPicksType > r (
+              ContourPicksTraits::create (i, f, this));
 
-            this->blendPicks_.push_back (::std::move (r));
-            continue;
+            if (!contourPicks_.present ())
+            {
+              this->contourPicks_.set (::std::move (r));
+              continue;
+            }
           }
 
           // radius
@@ -529,21 +558,28 @@ namespace prj
             }
           }
 
-          // plabel
+          // radiusLabel
           //
-          if (n.name () == "plabel" && n.namespace_ ().empty ())
+          if (n.name () == "radiusLabel" && n.namespace_ ().empty ())
           {
-            ::std::unique_ptr< PlabelType > r (
-              PlabelTraits::create (i, f, this));
+            ::std::unique_ptr< RadiusLabelType > r (
+              RadiusLabelTraits::create (i, f, this));
 
-            if (!plabel_.present ())
+            if (!radiusLabel_.present ())
             {
-              this->plabel_.set (::std::move (r));
+              this->radiusLabel_.set (::std::move (r));
               continue;
             }
           }
 
           break;
+        }
+
+        if (!contourPicks_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "contourPicks",
+            "");
         }
 
         if (!radius_.present ())
@@ -553,95 +589,95 @@ namespace prj
             "");
         }
 
-        if (!plabel_.present ())
+        if (!radiusLabel_.present ())
         {
           throw ::xsd::cxx::tree::expected_element< char > (
-            "plabel",
+            "radiusLabel",
             "");
         }
       }
 
-      SimpleBlend* SimpleBlend::
+      Constant* Constant::
       _clone (::xml_schema::Flags f,
               ::xml_schema::Container* c) const
       {
-        return new class SimpleBlend (*this, f, c);
+        return new class Constant (*this, f, c);
       }
 
-      SimpleBlend& SimpleBlend::
-      operator= (const SimpleBlend& x)
+      Constant& Constant::
+      operator= (const Constant& x)
       {
         if (this != &x)
         {
           static_cast< ::xml_schema::Type& > (*this) = x;
-          this->blendPicks_ = x.blendPicks_;
+          this->contourPicks_ = x.contourPicks_;
           this->radius_ = x.radius_;
-          this->plabel_ = x.plabel_;
+          this->radiusLabel_ = x.radiusLabel_;
         }
 
         return *this;
       }
 
-      SimpleBlend::
-      ~SimpleBlend ()
+      Constant::
+      ~Constant ()
       {
       }
 
-      // VariableEntry
+      // Entry
       //
 
-      VariableEntry::
-      VariableEntry (const BlendPickType& blendPick,
-                     const PositionType& position,
-                     const RadiusType& radius,
-                     const PlabelType& plabel,
-                     const PositionLabelType& positionLabel)
+      Entry::
+      Entry (const EntryPickType& entryPick,
+             const RadiusType& radius,
+             const PositionType& position,
+             const RadiusLabelType& radiusLabel,
+             const PositionLabelType& positionLabel)
       : ::xml_schema::Type (),
-        blendPick_ (blendPick, this),
-        position_ (position, this),
+        entryPick_ (entryPick, this),
         radius_ (radius, this),
-        plabel_ (plabel, this),
+        position_ (position, this),
+        radiusLabel_ (radiusLabel, this),
         positionLabel_ (positionLabel, this)
       {
       }
 
-      VariableEntry::
-      VariableEntry (::std::unique_ptr< BlendPickType > blendPick,
-                     ::std::unique_ptr< PositionType > position,
-                     ::std::unique_ptr< RadiusType > radius,
-                     ::std::unique_ptr< PlabelType > plabel,
-                     ::std::unique_ptr< PositionLabelType > positionLabel)
+      Entry::
+      Entry (::std::unique_ptr< EntryPickType > entryPick,
+             ::std::unique_ptr< RadiusType > radius,
+             ::std::unique_ptr< PositionType > position,
+             ::std::unique_ptr< RadiusLabelType > radiusLabel,
+             ::std::unique_ptr< PositionLabelType > positionLabel)
       : ::xml_schema::Type (),
-        blendPick_ (std::move (blendPick), this),
-        position_ (std::move (position), this),
+        entryPick_ (std::move (entryPick), this),
         radius_ (std::move (radius), this),
-        plabel_ (std::move (plabel), this),
+        position_ (std::move (position), this),
+        radiusLabel_ (std::move (radiusLabel), this),
         positionLabel_ (std::move (positionLabel), this)
       {
       }
 
-      VariableEntry::
-      VariableEntry (const VariableEntry& x,
-                     ::xml_schema::Flags f,
-                     ::xml_schema::Container* c)
+      Entry::
+      Entry (const Entry& x,
+             ::xml_schema::Flags f,
+             ::xml_schema::Container* c)
       : ::xml_schema::Type (x, f, c),
-        blendPick_ (x.blendPick_, f, this),
-        position_ (x.position_, f, this),
+        entryPick_ (x.entryPick_, f, this),
         radius_ (x.radius_, f, this),
-        plabel_ (x.plabel_, f, this),
+        position_ (x.position_, f, this),
+        radiusLabel_ (x.radiusLabel_, f, this),
         positionLabel_ (x.positionLabel_, f, this)
       {
       }
 
-      VariableEntry::
-      VariableEntry (const ::xercesc::DOMElement& e,
-                     ::xml_schema::Flags f,
-                     ::xml_schema::Container* c)
+      Entry::
+      Entry (const ::xercesc::DOMElement& e,
+             ::xml_schema::Flags f,
+             ::xml_schema::Container* c)
       : ::xml_schema::Type (e, f | ::xml_schema::Flags::base, c),
-        blendPick_ (this),
-        position_ (this),
+        entryPick_ (this),
         radius_ (this),
-        plabel_ (this),
+        position_ (this),
+        radiusLabel_ (this),
         positionLabel_ (this)
       {
         if ((f & ::xml_schema::Flags::base) == 0)
@@ -651,7 +687,7 @@ namespace prj
         }
       }
 
-      void VariableEntry::
+      void Entry::
       parse (::xsd::cxx::xml::dom::parser< char >& p,
              ::xml_schema::Flags f)
       {
@@ -661,16 +697,30 @@ namespace prj
           const ::xsd::cxx::xml::qualified_name< char > n (
             ::xsd::cxx::xml::dom::name< char > (i));
 
-          // blendPick
+          // entryPick
           //
-          if (n.name () == "blendPick" && n.namespace_ ().empty ())
+          if (n.name () == "entryPick" && n.namespace_ ().empty ())
           {
-            ::std::unique_ptr< BlendPickType > r (
-              BlendPickTraits::create (i, f, this));
+            ::std::unique_ptr< EntryPickType > r (
+              EntryPickTraits::create (i, f, this));
 
-            if (!blendPick_.present ())
+            if (!entryPick_.present ())
             {
-              this->blendPick_.set (::std::move (r));
+              this->entryPick_.set (::std::move (r));
+              continue;
+            }
+          }
+
+          // radius
+          //
+          if (n.name () == "radius" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< RadiusType > r (
+              RadiusTraits::create (i, f, this));
+
+            if (!radius_.present ())
+            {
+              this->radius_.set (::std::move (r));
               continue;
             }
           }
@@ -689,30 +739,16 @@ namespace prj
             }
           }
 
-          // radius
+          // radiusLabel
           //
-          if (n.name () == "radius" && n.namespace_ ().empty ())
+          if (n.name () == "radiusLabel" && n.namespace_ ().empty ())
           {
-            ::std::unique_ptr< RadiusType > r (
-              RadiusTraits::create (i, f, this));
+            ::std::unique_ptr< RadiusLabelType > r (
+              RadiusLabelTraits::create (i, f, this));
 
-            if (!radius_.present ())
+            if (!radiusLabel_.present ())
             {
-              this->radius_.set (::std::move (r));
-              continue;
-            }
-          }
-
-          // plabel
-          //
-          if (n.name () == "plabel" && n.namespace_ ().empty ())
-          {
-            ::std::unique_ptr< PlabelType > r (
-              PlabelTraits::create (i, f, this));
-
-            if (!plabel_.present ())
-            {
-              this->plabel_.set (::std::move (r));
+              this->radiusLabel_.set (::std::move (r));
               continue;
             }
           }
@@ -734,17 +770,10 @@ namespace prj
           break;
         }
 
-        if (!blendPick_.present ())
+        if (!entryPick_.present ())
         {
           throw ::xsd::cxx::tree::expected_element< char > (
-            "blendPick",
-            "");
-        }
-
-        if (!position_.present ())
-        {
-          throw ::xsd::cxx::tree::expected_element< char > (
-            "position",
+            "entryPick",
             "");
         }
 
@@ -755,10 +784,17 @@ namespace prj
             "");
         }
 
-        if (!plabel_.present ())
+        if (!position_.present ())
         {
           throw ::xsd::cxx::tree::expected_element< char > (
-            "plabel",
+            "position",
+            "");
+        }
+
+        if (!radiusLabel_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "radiusLabel",
             "");
         }
 
@@ -770,62 +806,70 @@ namespace prj
         }
       }
 
-      VariableEntry* VariableEntry::
+      Entry* Entry::
       _clone (::xml_schema::Flags f,
               ::xml_schema::Container* c) const
       {
-        return new class VariableEntry (*this, f, c);
+        return new class Entry (*this, f, c);
       }
 
-      VariableEntry& VariableEntry::
-      operator= (const VariableEntry& x)
+      Entry& Entry::
+      operator= (const Entry& x)
       {
         if (this != &x)
         {
           static_cast< ::xml_schema::Type& > (*this) = x;
-          this->blendPick_ = x.blendPick_;
-          this->position_ = x.position_;
+          this->entryPick_ = x.entryPick_;
           this->radius_ = x.radius_;
-          this->plabel_ = x.plabel_;
+          this->position_ = x.position_;
+          this->radiusLabel_ = x.radiusLabel_;
           this->positionLabel_ = x.positionLabel_;
         }
 
         return *this;
       }
 
-      VariableEntry::
-      ~VariableEntry ()
+      Entry::
+      ~Entry ()
       {
       }
 
-      // VariableBlend
+      // Variable
       //
 
-      VariableBlend::
-      VariableBlend ()
+      Variable::
+      Variable (const ContourPicksType& contourPicks)
       : ::xml_schema::Type (),
-        blendPicks_ (this),
-        variableEntries_ (this)
+        contourPicks_ (contourPicks, this),
+        entries_ (this)
       {
       }
 
-      VariableBlend::
-      VariableBlend (const VariableBlend& x,
-                     ::xml_schema::Flags f,
-                     ::xml_schema::Container* c)
+      Variable::
+      Variable (::std::unique_ptr< ContourPicksType > contourPicks)
+      : ::xml_schema::Type (),
+        contourPicks_ (std::move (contourPicks), this),
+        entries_ (this)
+      {
+      }
+
+      Variable::
+      Variable (const Variable& x,
+                ::xml_schema::Flags f,
+                ::xml_schema::Container* c)
       : ::xml_schema::Type (x, f, c),
-        blendPicks_ (x.blendPicks_, f, this),
-        variableEntries_ (x.variableEntries_, f, this)
+        contourPicks_ (x.contourPicks_, f, this),
+        entries_ (x.entries_, f, this)
       {
       }
 
-      VariableBlend::
-      VariableBlend (const ::xercesc::DOMElement& e,
-                     ::xml_schema::Flags f,
-                     ::xml_schema::Container* c)
+      Variable::
+      Variable (const ::xercesc::DOMElement& e,
+                ::xml_schema::Flags f,
+                ::xml_schema::Container* c)
       : ::xml_schema::Type (e, f | ::xml_schema::Flags::base, c),
-        blendPicks_ (this),
-        variableEntries_ (this)
+        contourPicks_ (this),
+        entries_ (this)
       {
         if ((f & ::xml_schema::Flags::base) == 0)
         {
@@ -834,7 +878,7 @@ namespace prj
         }
       }
 
-      void VariableBlend::
+      void Variable::
       parse (::xsd::cxx::xml::dom::parser< char >& p,
              ::xml_schema::Flags f)
       {
@@ -844,54 +888,64 @@ namespace prj
           const ::xsd::cxx::xml::qualified_name< char > n (
             ::xsd::cxx::xml::dom::name< char > (i));
 
-          // blendPicks
+          // contourPicks
           //
-          if (n.name () == "blendPicks" && n.namespace_ ().empty ())
+          if (n.name () == "contourPicks" && n.namespace_ ().empty ())
           {
-            ::std::unique_ptr< BlendPicksType > r (
-              BlendPicksTraits::create (i, f, this));
+            ::std::unique_ptr< ContourPicksType > r (
+              ContourPicksTraits::create (i, f, this));
 
-            this->blendPicks_.push_back (::std::move (r));
-            continue;
+            if (!contourPicks_.present ())
+            {
+              this->contourPicks_.set (::std::move (r));
+              continue;
+            }
           }
 
-          // variableEntries
+          // entries
           //
-          if (n.name () == "variableEntries" && n.namespace_ ().empty ())
+          if (n.name () == "entries" && n.namespace_ ().empty ())
           {
-            ::std::unique_ptr< VariableEntriesType > r (
-              VariableEntriesTraits::create (i, f, this));
+            ::std::unique_ptr< EntriesType > r (
+              EntriesTraits::create (i, f, this));
 
-            this->variableEntries_.push_back (::std::move (r));
+            this->entries_.push_back (::std::move (r));
             continue;
           }
 
           break;
         }
+
+        if (!contourPicks_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "contourPicks",
+            "");
+        }
       }
 
-      VariableBlend* VariableBlend::
+      Variable* Variable::
       _clone (::xml_schema::Flags f,
               ::xml_schema::Container* c) const
       {
-        return new class VariableBlend (*this, f, c);
+        return new class Variable (*this, f, c);
       }
 
-      VariableBlend& VariableBlend::
-      operator= (const VariableBlend& x)
+      Variable& Variable::
+      operator= (const Variable& x)
       {
         if (this != &x)
         {
           static_cast< ::xml_schema::Type& > (*this) = x;
-          this->blendPicks_ = x.blendPicks_;
-          this->variableEntries_ = x.variableEntries_;
+          this->contourPicks_ = x.contourPicks_;
+          this->entries_ = x.entries_;
         }
 
         return *this;
       }
 
-      VariableBlend::
-      ~VariableBlend ()
+      Variable::
+      ~Variable ()
       {
       }
 
@@ -900,33 +954,33 @@ namespace prj
 
       Blend::
       Blend (const BaseType& base,
-             const SeerShapeType& seerShape,
              const FilletShapeType& filletShape,
-             const BlendTypeType& blendType)
+             const BlendTypeType& blendType,
+             const SeerShapeType& seerShape)
       : ::xml_schema::Type (),
         base_ (base, this),
-        seerShape_ (seerShape, this),
         filletShape_ (filletShape, this),
         blendType_ (blendType, this),
-        shapeMap_ (this),
-        simpleBlends_ (this),
-        variableBlend_ (this)
+        seerShape_ (seerShape, this),
+        constants_ (this),
+        variable_ (this),
+        shapeMap_ (this)
       {
       }
 
       Blend::
       Blend (::std::unique_ptr< BaseType > base,
-             ::std::unique_ptr< SeerShapeType > seerShape,
-             const FilletShapeType& filletShape,
-             const BlendTypeType& blendType)
+             ::std::unique_ptr< FilletShapeType > filletShape,
+             ::std::unique_ptr< BlendTypeType > blendType,
+             ::std::unique_ptr< SeerShapeType > seerShape)
       : ::xml_schema::Type (),
         base_ (std::move (base), this),
+        filletShape_ (std::move (filletShape), this),
+        blendType_ (std::move (blendType), this),
         seerShape_ (std::move (seerShape), this),
-        filletShape_ (filletShape, this),
-        blendType_ (blendType, this),
-        shapeMap_ (this),
-        simpleBlends_ (this),
-        variableBlend_ (this)
+        constants_ (this),
+        variable_ (this),
+        shapeMap_ (this)
       {
       }
 
@@ -936,12 +990,12 @@ namespace prj
              ::xml_schema::Container* c)
       : ::xml_schema::Type (x, f, c),
         base_ (x.base_, f, this),
-        seerShape_ (x.seerShape_, f, this),
         filletShape_ (x.filletShape_, f, this),
         blendType_ (x.blendType_, f, this),
-        shapeMap_ (x.shapeMap_, f, this),
-        simpleBlends_ (x.simpleBlends_, f, this),
-        variableBlend_ (x.variableBlend_, f, this)
+        seerShape_ (x.seerShape_, f, this),
+        constants_ (x.constants_, f, this),
+        variable_ (x.variable_, f, this),
+        shapeMap_ (x.shapeMap_, f, this)
       {
       }
 
@@ -951,12 +1005,12 @@ namespace prj
              ::xml_schema::Container* c)
       : ::xml_schema::Type (e, f | ::xml_schema::Flags::base, c),
         base_ (this),
-        seerShape_ (this),
         filletShape_ (this),
         blendType_ (this),
-        shapeMap_ (this),
-        simpleBlends_ (this),
-        variableBlend_ (this)
+        seerShape_ (this),
+        constants_ (this),
+        variable_ (this),
+        shapeMap_ (this)
       {
         if ((f & ::xml_schema::Flags::base) == 0)
         {
@@ -989,6 +1043,34 @@ namespace prj
             }
           }
 
+          // filletShape
+          //
+          if (n.name () == "filletShape" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< FilletShapeType > r (
+              FilletShapeTraits::create (i, f, this));
+
+            if (!filletShape_.present ())
+            {
+              this->filletShape_.set (::std::move (r));
+              continue;
+            }
+          }
+
+          // blendType
+          //
+          if (n.name () == "blendType" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< BlendTypeType > r (
+              BlendTypeTraits::create (i, f, this));
+
+            if (!blendType_.present ())
+            {
+              this->blendType_.set (::std::move (r));
+              continue;
+            }
+          }
+
           // seerShape
           //
           if (n.name () == "seerShape" && n.namespace_ ().empty ())
@@ -1003,24 +1085,27 @@ namespace prj
             }
           }
 
-          // filletShape
+          // constants
           //
-          if (n.name () == "filletShape" && n.namespace_ ().empty ())
+          if (n.name () == "constants" && n.namespace_ ().empty ())
           {
-            if (!filletShape_.present ())
-            {
-              this->filletShape_.set (FilletShapeTraits::create (i, f, this));
-              continue;
-            }
+            ::std::unique_ptr< ConstantsType > r (
+              ConstantsTraits::create (i, f, this));
+
+            this->constants_.push_back (::std::move (r));
+            continue;
           }
 
-          // blendType
+          // variable
           //
-          if (n.name () == "blendType" && n.namespace_ ().empty ())
+          if (n.name () == "variable" && n.namespace_ ().empty ())
           {
-            if (!blendType_.present ())
+            ::std::unique_ptr< VariableType > r (
+              VariableTraits::create (i, f, this));
+
+            if (!this->variable_)
             {
-              this->blendType_.set (BlendTypeTraits::create (i, f, this));
+              this->variable_.set (::std::move (r));
               continue;
             }
           }
@@ -1036,31 +1121,6 @@ namespace prj
             continue;
           }
 
-          // simpleBlends
-          //
-          if (n.name () == "simpleBlends" && n.namespace_ ().empty ())
-          {
-            ::std::unique_ptr< SimpleBlendsType > r (
-              SimpleBlendsTraits::create (i, f, this));
-
-            this->simpleBlends_.push_back (::std::move (r));
-            continue;
-          }
-
-          // variableBlend
-          //
-          if (n.name () == "variableBlend" && n.namespace_ ().empty ())
-          {
-            ::std::unique_ptr< VariableBlendType > r (
-              VariableBlendTraits::create (i, f, this));
-
-            if (!this->variableBlend_)
-            {
-              this->variableBlend_.set (::std::move (r));
-              continue;
-            }
-          }
-
           break;
         }
 
@@ -1068,13 +1128,6 @@ namespace prj
         {
           throw ::xsd::cxx::tree::expected_element< char > (
             "base",
-            "");
-        }
-
-        if (!seerShape_.present ())
-        {
-          throw ::xsd::cxx::tree::expected_element< char > (
-            "seerShape",
             "");
         }
 
@@ -1089,6 +1142,13 @@ namespace prj
         {
           throw ::xsd::cxx::tree::expected_element< char > (
             "blendType",
+            "");
+        }
+
+        if (!seerShape_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "seerShape",
             "");
         }
       }
@@ -1107,12 +1167,12 @@ namespace prj
         {
           static_cast< ::xml_schema::Type& > (*this) = x;
           this->base_ = x.base_;
-          this->seerShape_ = x.seerShape_;
           this->filletShape_ = x.filletShape_;
           this->blendType_ = x.blendType_;
+          this->seerShape_ = x.seerShape_;
+          this->constants_ = x.constants_;
+          this->variable_ = x.variable_;
           this->shapeMap_ = x.shapeMap_;
-          this->simpleBlends_ = x.simpleBlends_;
-          this->variableBlend_ = x.variableBlend_;
         }
 
         return *this;
@@ -1416,22 +1476,19 @@ namespace prj
     namespace blns
     {
       void
-      operator<< (::xercesc::DOMElement& e, const SimpleBlend& i)
+      operator<< (::xercesc::DOMElement& e, const Constant& i)
       {
         e << static_cast< const ::xml_schema::Type& > (i);
 
-        // blendPicks
+        // contourPicks
         //
-        for (SimpleBlend::BlendPicksConstIterator
-             b (i.blendPicks ().begin ()), n (i.blendPicks ().end ());
-             b != n; ++b)
         {
           ::xercesc::DOMElement& s (
             ::xsd::cxx::xml::dom::create_element (
-              "blendPicks",
+              "contourPicks",
               e));
 
-          s << *b;
+          s << i.contourPicks ();
         }
 
         // radius
@@ -1445,32 +1502,43 @@ namespace prj
           s << i.radius ();
         }
 
-        // plabel
+        // radiusLabel
         //
         {
           ::xercesc::DOMElement& s (
             ::xsd::cxx::xml::dom::create_element (
-              "plabel",
+              "radiusLabel",
               e));
 
-          s << i.plabel ();
+          s << i.radiusLabel ();
         }
       }
 
       void
-      operator<< (::xercesc::DOMElement& e, const VariableEntry& i)
+      operator<< (::xercesc::DOMElement& e, const Entry& i)
       {
         e << static_cast< const ::xml_schema::Type& > (i);
 
-        // blendPick
+        // entryPick
         //
         {
           ::xercesc::DOMElement& s (
             ::xsd::cxx::xml::dom::create_element (
-              "blendPick",
+              "entryPick",
               e));
 
-          s << i.blendPick ();
+          s << i.entryPick ();
+        }
+
+        // radius
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "radius",
+              e));
+
+          s << i.radius ();
         }
 
         // position
@@ -1484,26 +1552,15 @@ namespace prj
           s << i.position ();
         }
 
-        // radius
+        // radiusLabel
         //
         {
           ::xercesc::DOMElement& s (
             ::xsd::cxx::xml::dom::create_element (
-              "radius",
+              "radiusLabel",
               e));
 
-          s << i.radius ();
-        }
-
-        // plabel
-        //
-        {
-          ::xercesc::DOMElement& s (
-            ::xsd::cxx::xml::dom::create_element (
-              "plabel",
-              e));
-
-          s << i.plabel ();
+          s << i.radiusLabel ();
         }
 
         // positionLabel
@@ -1519,33 +1576,30 @@ namespace prj
       }
 
       void
-      operator<< (::xercesc::DOMElement& e, const VariableBlend& i)
+      operator<< (::xercesc::DOMElement& e, const Variable& i)
       {
         e << static_cast< const ::xml_schema::Type& > (i);
 
-        // blendPicks
+        // contourPicks
         //
-        for (VariableBlend::BlendPicksConstIterator
-             b (i.blendPicks ().begin ()), n (i.blendPicks ().end ());
-             b != n; ++b)
         {
           ::xercesc::DOMElement& s (
             ::xsd::cxx::xml::dom::create_element (
-              "blendPicks",
+              "contourPicks",
               e));
 
-          s << *b;
+          s << i.contourPicks ();
         }
 
-        // variableEntries
+        // entries
         //
-        for (VariableBlend::VariableEntriesConstIterator
-             b (i.variableEntries ().begin ()), n (i.variableEntries ().end ());
+        for (Variable::EntriesConstIterator
+             b (i.entries ().begin ()), n (i.entries ().end ());
              b != n; ++b)
         {
           ::xercesc::DOMElement& s (
             ::xsd::cxx::xml::dom::create_element (
-              "variableEntries",
+              "entries",
               e));
 
           s << *b;
@@ -1566,17 +1620,6 @@ namespace prj
               e));
 
           s << i.base ();
-        }
-
-        // seerShape
-        //
-        {
-          ::xercesc::DOMElement& s (
-            ::xsd::cxx::xml::dom::create_element (
-              "seerShape",
-              e));
-
-          s << i.seerShape ();
         }
 
         // filletShape
@@ -1601,6 +1644,43 @@ namespace prj
           s << i.blendType ();
         }
 
+        // seerShape
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "seerShape",
+              e));
+
+          s << i.seerShape ();
+        }
+
+        // constants
+        //
+        for (Blend::ConstantsConstIterator
+             b (i.constants ().begin ()), n (i.constants ().end ());
+             b != n; ++b)
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "constants",
+              e));
+
+          s << *b;
+        }
+
+        // variable
+        //
+        if (i.variable ())
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "variable",
+              e));
+
+          s << *i.variable ();
+        }
+
         // shapeMap
         //
         for (Blend::ShapeMapConstIterator
@@ -1613,32 +1693,6 @@ namespace prj
               e));
 
           s << *b;
-        }
-
-        // simpleBlends
-        //
-        for (Blend::SimpleBlendsConstIterator
-             b (i.simpleBlends ().begin ()), n (i.simpleBlends ().end ());
-             b != n; ++b)
-        {
-          ::xercesc::DOMElement& s (
-            ::xsd::cxx::xml::dom::create_element (
-              "simpleBlends",
-              e));
-
-          s << *b;
-        }
-
-        // variableBlend
-        //
-        if (i.variableBlend ())
-        {
-          ::xercesc::DOMElement& s (
-            ::xsd::cxx::xml::dom::create_element (
-              "variableBlend",
-              e));
-
-          s << *i.variableBlend ();
         }
       }
 

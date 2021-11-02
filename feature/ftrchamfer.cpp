@@ -238,6 +238,9 @@ struct Feature::Stow
   void attachEntry(Entry &eIn)
   {
     //not adding entry parameters to feature's general container.
+    eIn.style.connectValue(std::bind(&Feature::setModelDirty, &feature));
+    eIn.edgePicks.connectValue(std::bind(&Feature::setModelDirty, &feature));
+    eIn.facePicks.connectValue(std::bind(&Feature::setModelDirty, &feature));
     eIn.distance.connectValue(std::bind(&Feature::setModelDirty, &feature));
     eIn.dist2Angle.connectValue(std::bind(&Feature::setModelDirty, &feature));
     
