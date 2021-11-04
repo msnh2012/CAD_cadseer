@@ -641,19 +641,19 @@ void View::mouseDoubleClickEvent(QMouseEvent *event)
   QModelIndex index = indexAt(event->pos());
   if (index.isValid() && index.column() == 1)
   {
-    auto mask = Qt::ItemIsEnabled | Qt::ItemIsEditable; //Qt::ItemIsSelectable?
+    auto mask = Qt::ItemIsEnabled | Qt::ItemIsSelectable;
     auto flags = model()->flags(index);
     if ((flags & mask) == mask)
     {
       prm::Parameter *prm = static_cast<Model*>(model())->getParameter(index);
-      if (!prm->isConstant())
+      if (!prm->isConstant() && !(flags & Qt::ItemIsEditable))
       {
         //double click a link expression unlinks it.
         auto &em = app::instance()->getProject()->getManager();
         em.removeLink(prm->getId());
         //       return; //without return we go right into editing.
       }
-      if (prm->getValueType() == typeid(ftr::Picks))
+      if (prm->getValueType() == typeid(ftr::Picks) && (flags & Qt::ItemIsEditable))
       {
         setCurrentIndex(index);
         goPersistentPick(index);
