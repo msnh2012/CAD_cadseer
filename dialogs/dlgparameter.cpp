@@ -17,9 +17,8 @@
  *
  */
 
-#include <QLabel>
-#include <QHBoxLayout>
 #include <QVBoxLayout>
+
 #include "application/appapplication.h"
 #include "project/prjproject.h"
 #include "project/prjmessage.h"
@@ -30,102 +29,115 @@
 #include "message/msgsift.h"
 #include "preferences/preferencesXML.h"
 #include "preferences/prfmanager.h"
-#include "commandview/cmvparameterwidgets.h"
+#include "commandview/cmvtable.h"
 #include "dialogs/dlgwidgetgeometry.h"
 #include "dialogs/dlgparameter.h"
 
 using namespace dlg;
 
-Parameter::Parameter(prm::Parameter *parameterIn, const boost::uuids::uuid &idIn):
-  QDialog(app::instance()->getMainWindow()),
-  parameter(parameterIn)
-  , pObserver
-  (
-    new prm::Observer //widgets take care of themselves.
-    (
-      prm::Handler()
-      , prm::Handler()
-      , std::bind(&Parameter::activeHasChanged, this) //just edit dialog title
-    )
-  )
+struct Parameter::Stow
 {
-  assert(parameter);
+  dlg::Parameter *dialog = nullptr;
+  ftr::Base *feature = nullptr;
+  prm::Parameter *parameter = nullptr;
+  prm::Parameters parameters;
+  prm::Observer pObserver;
+  msg::Node node;
+  msg::Sift sift;
+  cmv::tbl::Model *model = nullptr;
+  cmv::tbl::View *view = nullptr;
   
-  feature = app::instance()->getProject()->findFeature(idIn);
-  assert(feature);
-  buildGui();
+  Stow(dlg::Parameter *dIn, ftr::Base *fIn, prm::Parameter *pIn)
+  : dialog(dIn)
+  , feature(fIn)
+  , parameter(pIn)
+  {
+    assert(dialog);
+    assert(feature);
+    assert(parameter);
+    
+    parameters.push_back(parameter);
+    
+    pObserver.activeHandler = std::bind(&Stow::activeHasChanged, this);
+    pIn->connect(pObserver);
+    
+    node.connect(msg::hub());
+    sift.name = "dlg::Parameter";
+    sift.insert
+    (
+      msg::Response | msg::Pre | msg::Remove | msg::Feature
+      , std::bind(&Stow::featureRemovedDispatched, this, std::placeholders::_1)
+    );
+    node.setHandler(std::bind(&msg::Sift::receive, &sift, std::placeholders::_1));
+    
+    buildGui();
+    activeHasChanged(); //just sets window title
+    connect(model, &cmv::tbl::Model::dataChanged, dialog, &Parameter::modelChanged);
+    
+    view->setCurrentIndex(model->index(0, 1));
+    view->edit(model->index(0, 1));
+  }
   
-  parameter->connect(*pObserver);
+  void buildGui()
+  {
+    QVBoxLayout *mainLayout = new QVBoxLayout(dialog);
+    dialog->setLayout(mainLayout);
+    
+    model = new cmv::tbl::Model(dialog, feature, parameters);
+    view = new cmv::tbl::View(dialog, model);
+    view->setMinimumHeight(10);
+    mainLayout->addWidget(view);
+  }
   
-  node = std::make_unique<msg::Node>();
-  node->connect(msg::hub());
-  sift = std::make_unique<msg::Sift>();
-  sift->name = "dlg::Parameter";
-  sift->insert
-  (
-    msg::Response | msg::Pre | msg::Remove | msg::Feature
-    , std::bind(&Parameter::featureRemovedDispatched, this, std::placeholders::_1)
-  );
-  node->setHandler(std::bind(&msg::Sift::receive, sift.get(), std::placeholders::_1));
+  void valueHasChanged()
+  {
+    std::ostringstream gitStream;
+    gitStream
+    << QObject::tr("Feature: ").toStdString() << feature->getName().toStdString()
+    << QObject::tr("    Parameter ").toStdString() << parameter->getName().toStdString()
+    << QObject::tr("    changed to: ").toStdString() << parameter->adaptToString();
+    node.sendBlocked(msg::buildGitMessage(gitStream.str()));
+    if (prf::manager().rootPtr->dragger().triggerUpdateOnFinish())
+      node.sendBlocked(msg::Mask(msg::Request | msg::Project | msg::Update));
+  }
   
+  void activeHasChanged()
+  {
+    //the widgets themselves enable disable accordingly
+    QString title = feature->getName() + ": ";
+    title += QString::fromStdString(parameter->getValueTypeString());
+    if (!parameter->isActive())
+      title += tr(" INACTIVE");
+    dialog->setWindowTitle(title);
+  }
+  
+  //constant state change doesn't matter to the dialog. The widget will act
+  //accordingly and we will get value changed message if applicable.
+  
+  void featureRemovedDispatched(const msg::Message &messageIn)
+  {
+    prj::Message pMessage = messageIn.getPRJ();
+    if(pMessage.feature->getId() == feature->getId())
+      dialog->reject();
+  }
+};
+
+Parameter::Parameter(prm::Parameter *parameterIn, const boost::uuids::uuid &idIn)
+: QDialog(app::instance()->getMainWindow())
+, stow(std::make_unique<Stow>(this, app::instance()->getProject()->findFeature(idIn), parameterIn))
+{
   WidgetGeometry *filter = new WidgetGeometry(this, "dlg::Parameter");
   this->installEventFilter(filter);
   
   this->setAttribute(Qt::WA_DeleteOnClose);
 }
 
-Parameter::~Parameter(){}
+Parameter::~Parameter() = default;
 
-void Parameter::buildGui()
+void Parameter::modelChanged(const QModelIndex &index, const QModelIndex&)
 {
-  QVBoxLayout *mainLayout = new QVBoxLayout(this);
+  if (!index.isValid())
+    return;
   
-  QHBoxLayout *editLayout = new QHBoxLayout();
-  QLabel *nameLabel = new QLabel(parameter->getName(), this);
-  editLayout->addWidget(nameLabel);
-  
-  editWidget = cmv::ParameterWidget::buildWidget(this, parameter);
-  connect(editWidget, &cmv::ParameterBase::prmValueChanged, this, &Parameter::valueHasChanged);
-  connect(editWidget, &cmv::ParameterBase::prmConstantChanged, this, &Parameter::constantHasChanged);
-  editLayout->addWidget(editWidget);
-  
-  mainLayout->addLayout(editLayout);
-  activeHasChanged(); //just sets window title
-}
-
-void Parameter::valueHasChanged()
-{
-  std::ostringstream gitStream;
-  gitStream
-    << QObject::tr("Feature: ").toStdString() << feature->getName().toStdString()
-    << QObject::tr("    Parameter ").toStdString() << parameter->getName().toStdString()
-    << QObject::tr("    changed to: ").toStdString() << parameter->adaptToString();
-  node->sendBlocked(msg::buildGitMessage(gitStream.str()));
-  if (prf::manager().rootPtr->dragger().triggerUpdateOnFinish())
-    node->sendBlocked(msg::Mask(msg::Request | msg::Project | msg::Update));
-}
-
-void Parameter::constantHasChanged()
-{
-  // no git messages here because the expression manager takes care of them.
-  if (parameter->isConstant() && prf::manager().rootPtr->dragger().triggerUpdateOnFinish())
-    node->sendBlocked(msg::Mask(msg::Request | msg::Project | msg::Update));
-}
-
-void Parameter::featureRemovedDispatched(const msg::Message &messageIn)
-{
-  prj::Message pMessage = messageIn.getPRJ();
-  if(pMessage.feature->getId() == feature->getId())
-    this->reject();
-}
-
-void Parameter::activeHasChanged()
-{
-  //the widgets themselves enable disable accordingly
-  
-  QString title = feature->getName() + ": ";
-  title += QString::fromStdString(parameter->getValueTypeString());
-  if (!parameter->isActive())
-    title += tr(" INACTIVE");
-  this->setWindowTitle(title);
+  stow->valueHasChanged();
 }

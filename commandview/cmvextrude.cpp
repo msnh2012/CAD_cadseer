@@ -26,7 +26,6 @@
 #include "project/prjproject.h"
 #include "message/msgmessage.h"
 #include "message/msgnode.h"
-#include "commandview/cmvparameterwidgets.h"
 #include "commandview/cmvselectioncue.h"
 #include "commandview/cmvtable.h"
 #include "parameter/prmconstants.h"

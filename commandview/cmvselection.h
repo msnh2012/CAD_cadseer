@@ -25,8 +25,6 @@
 #include <QAbstractTableModel>
 #include <QTableView>
 
-#include "commandview/cmvparameterbase.h"
-
 namespace slc{struct Message; typedef std::vector<Message> Messages;}
 namespace prm{class Parameter;}
 

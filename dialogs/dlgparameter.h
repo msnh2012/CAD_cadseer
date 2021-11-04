@@ -24,18 +24,9 @@
 
 #include <QDialog>
 
-class QKeyEvent;
-class QButton;
-class QEnterEvent;
-class QDropEvent;
-class QLabel;
-
 namespace boost{namespace uuids{struct uuid;}}
 
-namespace ftr{class Base;}
-namespace prm{class Parameter; struct Observer;}
-namespace msg{struct Message; struct Node; struct Sift;}
-namespace cmv{class ParameterBase;}
+namespace prm{class Parameter;}
 
 namespace dlg
 {
@@ -45,18 +36,11 @@ namespace dlg
   public:
     Parameter(prm::Parameter *parameterIn, const boost::uuids::uuid &idIn);
     ~Parameter() override;
-    prm::Parameter *parameter = nullptr;
-    cmv::ParameterBase *editWidget;
+  public Q_SLOTS:
+    void modelChanged(const QModelIndex&, const QModelIndex&);
   private:
-    void buildGui();
-    void valueHasChanged();
-    void constantHasChanged();
-    void activeHasChanged();
-    std::unique_ptr<prm::Observer> pObserver;
-    std::unique_ptr<msg::Node> node;
-    std::unique_ptr<msg::Sift> sift;
-    void featureRemovedDispatched(const msg::Message &);
-    ftr::Base *feature;
+    struct Stow;
+    std::unique_ptr<Stow> stow;
   };
 }
 
