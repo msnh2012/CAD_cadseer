@@ -193,7 +193,7 @@ struct Feature::Stow
     occt::WireVector wires; //so we can id them.
     occt::FaceVector faces; //so we can id them.
     osg::Vec3d topProjection(0.0, 0.0, lHeight);
-    TopoDS_Vertex apex = BRepBuilderAPI_MakeVertex(gp_Pnt(gu::toOcc(topProjection).XYZ()));
+    TopoDS_Vertex apex = BRepBuilderAPI_MakeVertex(gp_Pnt(gu::toOcc(topProjection * mtx).XYZ()));
     idHelper.insert(apexId, apex);
     
     auto addBottomVertex = [&](const osg::Vec3d &pIn)
