@@ -268,10 +268,21 @@ namespace occt
   /*! @brief Make a solid from a shell
    * 
    * @param shapeIn is the shell to make solid.
-   * @return a Face or Null if failed
+   * @return a Solid or Null if failed
    * @note return still needs a 'shape check'.
    */
   boost::optional<TopoDS_Solid> buildSolid(const TopoDS_Shape &shapeIn);
+  
+  
+  /*! @brief Tightens tolerance of types
+   * 
+   * @param sIn source shape of operation
+   * @param type type of sub shape to alter tolerances
+   * @return Status of the ShapeFix::SameParameter operation.
+   * @note With type equal to wire the tolerances of both edges
+   * and vertices will be modified.
+   */
+  bool tightenTolerance(TopoDS_Shape &sIn, TopAbs_ShapeEnum type = TopAbs_WIRE);
   
   class BoundingBox
   {
@@ -315,5 +326,6 @@ inline std::ostream& operator<<(std::ostream &st, const TopoDS_Shape &sh)
     << "    Shape type: " << occt::getShapeTypeString(sh);
   return st;
 }
+
 
 #endif // GU_OCCTOOLS_H

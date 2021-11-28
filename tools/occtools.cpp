@@ -56,6 +56,8 @@
 #include <IMeshTools_Parameters.hxx>
 #include <GeomLib_Tool.hxx>
 #include <ShapeAnalysis_FreeBoundsProperties.hxx>
+#include <ShapeFix.hxx>
+#include <ShapeFix_ShapeTolerance.hxx>
 
 #include "tools/occtools.h"
 
@@ -1038,4 +1040,11 @@ boost::optional<TopoDS_Solid> occt::buildSolid(const TopoDS_Shape &shapeIn)
     }
   }
   return boost::none;
+}
+
+bool occt::tightenTolerance(TopoDS_Shape &sIn, TopAbs_ShapeEnum type)
+{
+  ShapeFix_ShapeTolerance tighten;
+  tighten.SetTolerance(sIn, Precision::Confusion(), type);
+  return ShapeFix::SameParameter(sIn, false);
 }

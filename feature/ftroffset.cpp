@@ -317,6 +317,8 @@ void Feature::updateModel(const UpdatePayload &payloadIn)
       ShapeCheck check(workShape);
       if (!check.isValid())
         throw std::runtime_error("shapeCheck failed");
+      if (!occt::tightenTolerance(workShape))
+        throw std::runtime_error("tighten tolerances failed");
       
       stow->sShape.setOCCTShape(workShape, getId());
       stow->sShape.shapeMatch(tss);

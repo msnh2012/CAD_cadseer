@@ -236,11 +236,14 @@ void Feature::updateModel(const UpdatePayload &payloadIn)
     );
     operation.Check();
     
-    ShapeCheck check(operation.Shape());
+    TopoDS_Shape workShape = operation.Shape();
+    ShapeCheck check(workShape);
     if (!check.isValid())
       throw std::runtime_error("shapeCheck failed in hollow feature");
+    if (!occt::tightenTolerance(workShape))
+      throw std::runtime_error("tighten tolerances failed");
     
-    stow->sShape.setOCCTShape(operation.Shape(), getId());
+    stow->sShape.setOCCTShape(workShape, getId());
     stow->sShape.shapeMatch(tss);
     stow->sShape.uniqueTypeMatch(tss);
     stow->sShape.modifiedMatch(operation, tss);
