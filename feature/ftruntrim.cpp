@@ -149,6 +149,7 @@ void Feature::updateModel(const UpdatePayload &pIn)
     stow->sShape.derivedMatch();
     stow->sShape.ensureNoNils(); //just in case
     stow->sShape.ensureNoDuplicates(); //just in case
+    stow->sShape.ensureEvolve();
     
     if (isSkipped())
     {
@@ -372,6 +373,7 @@ void Feature::updateModel(const UpdatePayload &pIn)
     stow->sShape.dumpDuplicates(getTypeString());
     stow->sShape.ensureNoNils();
     stow->sShape.ensureNoDuplicates();
+    stow->sShape.ensureEvolve();
     
     setSuccess();
   }

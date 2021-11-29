@@ -374,6 +374,7 @@ void Feature::updateModel(const UpdatePayload &pIn)
     stow->sShape.dumpDuplicates("revolve feature");
     stow->sShape.ensureNoNils();
     stow->sShape.ensureNoDuplicates();
+    stow->sShape.ensureEvolve();
     
     stow->updateLabels(bb);
     setSuccess();

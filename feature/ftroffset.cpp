@@ -190,6 +190,7 @@ void Feature::updateModel(const UpdatePayload &payloadIn)
     stow->sShape.derivedMatch();
     stow->sShape.ensureNoNils();
     stow->sShape.ensureNoDuplicates();
+    stow->sShape.ensureEvolve();
     
     if (isSkipped())
     {
@@ -259,6 +260,7 @@ void Feature::updateModel(const UpdatePayload &payloadIn)
       stow->sShape.dumpDuplicates("offset feature");
       stow->sShape.ensureNoNils();
       stow->sShape.ensureNoDuplicates();
+      stow->sShape.ensureEvolve();
       
       occt::BoundingBox bb(builder.Shape());
       labelPosition = osg::Matrixd::translate(gu::toOsg(bb.getCenter()));
@@ -330,6 +332,7 @@ void Feature::updateModel(const UpdatePayload &payloadIn)
       stow->sShape.dumpDuplicates("offset feature");
       stow->sShape.ensureNoNils();
       stow->sShape.ensureNoDuplicates();
+      stow->sShape.ensureEvolve();
     }
     stow->distanceLabel->setMatrix(labelPosition);
     setSuccess();

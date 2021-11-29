@@ -437,6 +437,7 @@ void Feature::updateModel(const UpdatePayload &plIn)
     stow->updateIds();
     stow->primitive.sShape.ensureNoNils();
     stow->primitive.sShape.ensureNoDuplicates();
+    stow->primitive.sShape.ensureEvolve();
         
     mainTransform->setMatrix(osg::Matrixd::identity());
     setSuccess();

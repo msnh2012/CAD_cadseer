@@ -1252,6 +1252,7 @@ void Feature::updateModel(const UpdatePayload &pIn)
     stow->sShape.dumpDuplicates("sweep feature");
     stow->sShape.ensureNoNils();
     stow->sShape.ensureNoDuplicates();
+    stow->sShape.ensureEvolve();
     
     const std::vector<gp_Pnt> &cornerPoints = globalBounder.getCorners();
     stow->transitionLabel->setMatrix(osg::Matrixd::translate(gu::toOsg(cornerPoints.at(4))));

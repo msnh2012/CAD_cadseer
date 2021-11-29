@@ -1320,6 +1320,18 @@ void SeerShape::ensureNoDuplicates()
   }
 }
 
+void SeerShape::ensureEvolve()
+{
+  const auto &shapeIdlist = stow->shapeIds.get<ShapeIdRecord::ById>();
+  auto &evolveList = stow->evolves.get<EvolveRecord::ByOutId>();
+  for (const auto &record : shapeIdlist)
+  {
+    auto it = evolveList.find(record.id);
+    if (it == evolveList.end())
+      evolveList.insert({gu::createNilId(), record.id});
+  }
+}
+
 void SeerShape::faceEdgeMatch(const SeerShape &source)
 {
   occt::ShapeVector nilEdges;

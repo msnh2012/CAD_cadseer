@@ -187,6 +187,7 @@ void Feature::updateModel(const UpdatePayload &pIn)
     stow->sShape.derivedMatch();
     stow->sShape.dumpNils(getTypeString());
     stow->sShape.ensureNoNils();
+    stow->sShape.ensureEvolve();
     
     setSuccess();
   }

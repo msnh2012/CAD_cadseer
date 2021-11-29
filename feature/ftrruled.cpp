@@ -325,6 +325,7 @@ void Feature::updateModel(const UpdatePayload &pIn)
     stow->sShape.dumpNils("ruled");
     stow->sShape.ensureNoNils();
     stow->sShape.ensureNoDuplicates();
+    stow->sShape.ensureEvolve();
     setSuccess();
   }
   catch (const Standard_Failure &e)

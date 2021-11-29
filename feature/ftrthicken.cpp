@@ -293,6 +293,7 @@ void Feature::updateModel(const UpdatePayload &payloadIn)
     stow->sShape.derivedMatch();
     stow->sShape.ensureNoNils();
     stow->sShape.ensureNoDuplicates();
+    stow->sShape.ensureEvolve();
     
     if (isSkipped())
     {
@@ -348,6 +349,7 @@ void Feature::updateModel(const UpdatePayload &payloadIn)
     stow->sShape.dumpDuplicates("thicken feature");
     stow->sShape.ensureNoNils();
     stow->sShape.ensureNoDuplicates();
+    stow->sShape.ensureEvolve();
     
     occt::BoundingBox bb(builder.Shape());
     stow->distanceLabel->setMatrix(osg::Matrixd::translate(gu::toOsg(bb.getCenter())));

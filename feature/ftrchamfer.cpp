@@ -383,6 +383,7 @@ void Feature::updateModel(const UpdatePayload &payloadIn)
     stow->sShape.derivedMatch();
     stow->sShape.ensureNoNils();
     stow->sShape.ensureNoDuplicates();
+    stow->sShape.ensureEvolve();
     
     if (isSkipped())
     {
@@ -525,6 +526,7 @@ void Feature::updateModel(const UpdatePayload &payloadIn)
     stow->sShape.dumpDuplicates("chamfer feature");
     stow->sShape.ensureNoNils();
     stow->sShape.ensureNoDuplicates();
+    stow->sShape.ensureEvolve();
     
     setSuccess();
   }

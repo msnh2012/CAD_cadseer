@@ -323,6 +323,7 @@ void Feature::updateModel(const UpdatePayload &pIn)
 //     stow->sShape.dumpShapeIdContainer(std::cout);
     stow->sShape.ensureNoNils();
     stow->sShape.ensureNoDuplicates();
+    stow->sShape.ensureEvolve();
     
     setSuccess();
   }

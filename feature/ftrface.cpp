@@ -181,6 +181,7 @@ void Feature::updateModel(const UpdatePayload &pIn)
     stow->sShape.dumpDuplicates(getTypeString());
     stow->sShape.ensureNoNils();
     stow->sShape.ensureNoDuplicates();
+    stow->sShape.ensureEvolve();
     
     setSuccess();
   }

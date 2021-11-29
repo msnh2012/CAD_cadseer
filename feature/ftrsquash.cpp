@@ -222,6 +222,8 @@ void Squash::updateModel(const UpdatePayload &payloadIn)
         const TopoDS_Shape &ow = BRepTools::OuterWire(out);
         sShape->updateId(ow, wireId);
         sShape->ensureNoNils();
+        sShape->ensureEvolve();
+        sShape->ensureEvolve();
       }
       else
         setEdges();

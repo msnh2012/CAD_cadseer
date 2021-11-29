@@ -250,6 +250,7 @@ void Feature::updateModel(const UpdatePayload &payloadIn)
     stow->sShape.dumpDuplicates("sew feature");
     stow->sShape.ensureNoNils();
     stow->sShape.ensureNoDuplicates();
+    stow->sShape.ensureEvolve();
     
     setSuccess();
   }

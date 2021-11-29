@@ -825,6 +825,7 @@ void Feature::updateModel(const UpdatePayload &pIn)
     stow->sShape.dumpDuplicates("extrude feature");
     stow->sShape.ensureNoNils();
     stow->sShape.ensureNoDuplicates();
+    stow->sShape.ensureEvolve();
     
     setSuccess();
   }

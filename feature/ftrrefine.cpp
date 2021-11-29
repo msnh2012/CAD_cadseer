@@ -74,6 +74,7 @@ void Refine::updateModel(const UpdatePayload &payloadIn)
     sShape->derivedMatch();
     sShape->ensureNoNils(); //just in case
     sShape->ensureNoDuplicates(); //just in case
+    sShape->ensureEvolve();
     
     if (isSkipped())
     {
@@ -95,6 +96,7 @@ void Refine::updateModel(const UpdatePayload &payloadIn)
     sShape->dumpDuplicates("refine feature");
     sShape->ensureNoNils();
     sShape->ensureNoDuplicates();
+    sShape->ensureEvolve();
     
     setSuccess();
   }

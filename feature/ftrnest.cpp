@@ -221,6 +221,7 @@ void Nest::updateModel(const UpdatePayload &payloadIn)
     //No shape consistency yet.
     sShape->setOCCTShape(out, getId());
     sShape->ensureNoNils();
+    sShape->ensureEvolve();
     
     //update feed direction label. put at center of blank bounding box.
     feedDirectionLabel->setMatrix(osg::Matrixd::translate(gu::toOsg(bbox.getCenter())));

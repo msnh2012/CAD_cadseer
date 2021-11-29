@@ -188,6 +188,11 @@ namespace ann
     */
     void ensureNoDuplicates();
     
+    /*! Makes sure that every id in the shapeId container has an evolve record out.
+     * if one is not present one will be created with a nil id as in.
+    */
+    void ensureEvolve();
+    
     /*! a lot of occ routines when reporting generated, modified etc.., only deal with faces.
     * so here when an edge has no id but both faces do, we try to derived what the id of the old
     * edge is and assign it to the new edge. Have to be careful when 2 faces share more than 1 edge.
