@@ -223,12 +223,16 @@ void Feature::updateModel(const UpdatePayload &pIn)
       {
         stow->uvEdgeIds.push_back(gu::createRandomId());
         tempIds.insert(stow->uvEdgeIds.back(), e);
+        if (!stow->sShape.hasEvolveRecordOut(stow->uvEdgeIds.back()))
+          stow->sShape.insertEvolve(gu::createNilId(), stow->uvEdgeIds.back());
         uvEdgeIt = stow->uvEdgeIds.end(); //push_back might invalidate
         continue;
       }
       else
       {
         tempIds.insert(*uvEdgeIt, e);
+        if (!stow->sShape.hasEvolveRecordOut(*uvEdgeIt))
+          stow->sShape.insertEvolve(gu::createNilId(), *uvEdgeIt);
         uvEdgeIt++;
       }
     }

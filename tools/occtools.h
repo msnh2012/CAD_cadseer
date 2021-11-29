@@ -244,11 +244,12 @@ namespace occt
    */
   void moveShape(TopoDS_Shape &sIn, const gp_Vec &dir, double distance);
   
-  /*! @brief Accumulate unique child shapes.
+  /*! @brief Accumulate shape and unique child shapes.
    * 
    * @note this method ignores degenerate edges.
+   * The passed in shape is in the vector returned
    * @param sIn shape to explore
-   * @return vector of unique child shapes
+   * @return vector of shape and unique child shapes
    */
   ShapeVector mapShapes(const TopoDS_Shape &sIn);
   

@@ -99,9 +99,9 @@ void ImagePlane::go()
       node->sendBlocked(msg::buildStatusMessage(failMessage, 5.0));
       continue;
     }
-    project->addFeature(std::move(f));
-    f->setName(QString::fromStdString(copy.filename().string()));
-    f->setScale(viewer->getDiagonalLength() / 5.0);
+    auto *ipf = static_cast<ftr::ImagePlane*>(project->addFeature(std::move(f)));
+    ipf->setName(QString::fromStdString(copy.filename().string()));
+    ipf->setScale(viewer->getDiagonalLength() / 5.0);
     
     std::string successMessage = "ImagePlane created for: " + copy.filename().string();
     node->sendBlocked(msg::buildStatusMessage(successMessage, 5.0));

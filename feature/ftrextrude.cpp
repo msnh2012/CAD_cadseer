@@ -415,14 +415,27 @@ void Feature::updateModel(const UpdatePayload &pIn)
       
       for (const auto &cs : currentShapes)
       {
-        auto wareHouseIn = [&]()
+        auto forceEvolve = [&](Unit &unit)
         {
-          wareHouse.getOrCreate(cs, css->findId(cs));
-          for (const auto &ts : occt::mapShapes(cs))
-            wareHouse.getOrCreate(ts, css->findId(ts));
+          if (stow->sShape.hasEvolveRecordIn(unit.ids.back()))
+          {
+            unit.ids.emplace_back(stow->sShape.evolve(unit.ids.back()).front());
+          }
+          else
+          {
+            uuid freshId = gu::createRandomId();
+            unit.ids.emplace_back(freshId);
+            stow->sShape.insertEvolve(unit.ids.front(), unit.ids.back());
+          }
         };
         
-        auto t= cs.ShapeType();
+        auto wareHouseIn = [&]()
+        {
+          for (const auto &ts : occt::mapShapes(cs))
+            forceEvolve(wareHouse.getOrCreate(ts, css->findId(ts)));
+        };
+        
+        auto t = cs.ShapeType();
         if (t == TopAbs_SHELL || t == TopAbs_VERTEX)
         {
           profileShapes.push_back(cs);
@@ -439,7 +452,7 @@ void Feature::updateModel(const UpdatePayload &pIn)
           profileShapes.push_back(cs);
           wareHouseIn();
         }
-        else if (cs.ShapeType() == TopAbs_EDGE)
+        else if (t == TopAbs_EDGE)
         {
           edges.push_back(cs);
           wareHouseIn();
@@ -459,6 +472,8 @@ void Feature::updateModel(const UpdatePayload &pIn)
               auto result = stow->oWireMap.insert(std::make_pair(wireId, gu::createRandomId())).first;
               auto &u = wareHouse.getOrCreate(wireFace); //leave inId nil
               u.ids.emplace_back(result->second);
+              if (!stow->sShape.hasEvolveRecordOut(u.ids.back()))
+                stow->sShape.insertEvolve(gu::createNilId(), u.ids.back());
               if (!inferredFromFace)
               {
                 auto gleaned = occt::gleanAxis(wireFace);
@@ -704,6 +719,7 @@ void Feature::updateModel(const UpdatePayload &pIn)
     {
       assert(u.isValid());
       const auto &mappingId = u.ids.back(); //always map from outId.
+      assert(!mappingId.is_nil());
       
       if (!stow->sShape.hasShape(u.shapes.back()))
       {
