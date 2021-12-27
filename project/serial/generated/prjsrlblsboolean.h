@@ -91,6 +91,8 @@ namespace prj
 
 #include "prjsrlsptparameter.h"
 
+#include "prjsrlsptoverlay.h"
+
 #include "prjsrlsptseershape.h"
 
 #include "prjsrlsptintersectionmapping.h"
@@ -139,6 +141,23 @@ namespace prj
 
         void
         booleanType (::std::unique_ptr< BooleanTypeType > p);
+
+        // unify
+        //
+        typedef ::prj::srl::spt::Parameter UnifyType;
+        typedef ::xsd::cxx::tree::traits< UnifyType, char > UnifyTraits;
+
+        const UnifyType&
+        unify () const;
+
+        UnifyType&
+        unify ();
+
+        void
+        unify (const UnifyType& x);
+
+        void
+        unify (::std::unique_ptr< UnifyType > p);
 
         // picks
         //
@@ -191,19 +210,40 @@ namespace prj
         void
         intersectionMapper (::std::unique_ptr< IntersectionMapperType > p);
 
+        // unifyLabel
+        //
+        typedef ::prj::srl::spt::PLabel UnifyLabelType;
+        typedef ::xsd::cxx::tree::traits< UnifyLabelType, char > UnifyLabelTraits;
+
+        const UnifyLabelType&
+        unifyLabel () const;
+
+        UnifyLabelType&
+        unifyLabel ();
+
+        void
+        unifyLabel (const UnifyLabelType& x);
+
+        void
+        unifyLabel (::std::unique_ptr< UnifyLabelType > p);
+
         // Constructors.
         //
         Boolean (const BaseType&,
                  const BooleanTypeType&,
+                 const UnifyType&,
                  const PicksType&,
                  const SeerShapeType&,
-                 const IntersectionMapperType&);
+                 const IntersectionMapperType&,
+                 const UnifyLabelType&);
 
         Boolean (::std::unique_ptr< BaseType >,
                  ::std::unique_ptr< BooleanTypeType >,
+                 ::std::unique_ptr< UnifyType >,
                  ::std::unique_ptr< PicksType >,
                  ::std::unique_ptr< SeerShapeType >,
-                 ::std::unique_ptr< IntersectionMapperType >);
+                 ::std::unique_ptr< IntersectionMapperType >,
+                 ::std::unique_ptr< UnifyLabelType >);
 
         Boolean (const ::xercesc::DOMElement& e,
                  ::xml_schema::Flags f = 0,
@@ -233,9 +273,11 @@ namespace prj
         protected:
         ::xsd::cxx::tree::one< BaseType > base_;
         ::xsd::cxx::tree::one< BooleanTypeType > booleanType_;
+        ::xsd::cxx::tree::one< UnifyType > unify_;
         ::xsd::cxx::tree::one< PicksType > picks_;
         ::xsd::cxx::tree::one< SeerShapeType > seerShape_;
         ::xsd::cxx::tree::one< IntersectionMapperType > intersectionMapper_;
+        ::xsd::cxx::tree::one< UnifyLabelType > unifyLabel_;
       };
     }
   }

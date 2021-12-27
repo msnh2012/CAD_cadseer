@@ -7,6 +7,7 @@
 >
   
 <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptparameter.xsd"/>
+<xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptoverlay.xsd"/>
 <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptseershape.xsd"/>
 <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptintersectionmapping.xsd"/>
 <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptbase.xsd"/>
@@ -15,9 +16,11 @@
   <xs:sequence>
     <xs:element name="base" type="spt:Base"/>
     <xs:element name="booleanType" type="spt:Parameter"/>
+    <xs:element name="unify" type="spt:Parameter"/>
     <xs:element name="picks" type="spt:Parameter"/>
     <xs:element name="seerShape" type="spt:SeerShape"/>
     <xs:element name="intersectionMapper" type="spt:IntersectionMapper"/>
+    <xs:element name="unifyLabel" type="spt:PLabel"/>
   </xs:sequence>
 </xs:complexType>
 

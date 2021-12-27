@@ -28,6 +28,7 @@
 #include "annex/annintersectionmapper.h"
 #include "parameter/prmconstants.h"
 #include "parameter/prmparameter.h"
+#include "library/lbrplabel.h"
 #include "tools/occtools.h"
 #include "tools/featuretools.h"
 #include "feature/ftrbooleanoperation.h"
@@ -47,15 +48,14 @@ struct Feature::Stow
   Feature &feature;
   ann::SeerShape sShape;
   ann::IntersectionMapper iMapper;
-  prm::Parameter booleanType;
-  prm::Parameter picks;
+  prm::Parameter booleanType{QObject::tr("Boolean Type"), 0, PrmTags::booleanType};
+  prm::Parameter unify{QObject::tr("Unify"), true, PrmTags::unify};
+  prm::Parameter picks{QObject::tr("Picks"), ftr::Picks(), PrmTags::picks};
+  
+  osg::ref_ptr<lbr::PLabel> unifyLabel = new lbr::PLabel(&unify);
   
   Stow(Feature &fIn)
   : feature(fIn)
-  , sShape()
-  , iMapper()
-  , booleanType(QObject::tr("Boolean Type"), 0, PrmTags::booleanType)
-  , picks(QObject::tr("Picks"), ftr::Picks(), PrmTags::picks)
   {
     QStringList tStrings =
     {
@@ -67,11 +67,16 @@ struct Feature::Stow
     booleanType.connectValue(std::bind(&Feature::setModelDirty, &feature));
     feature.parameters.push_back(&booleanType);
     
+    unify.connectValue(std::bind(&Feature::setModelDirty, &feature));
+    feature.parameters.push_back(&unify);
+    
     picks.connectValue(std::bind(&Feature::setModelDirty, &feature));
     feature.parameters.push_back(&picks);
     
     feature.annexes.insert(std::make_pair(ann::Type::SeerShape, &sShape));
     feature.annexes.insert(std::make_pair(ann::Type::IntersectionMapper, &iMapper));
+    
+    feature.overlaySwitch->addChild(unifyLabel);
   }
 };
 
@@ -168,6 +173,9 @@ void Feature::updateModel(const UpdatePayload &payloadIn)
       throw std::runtime_error("Incorrect number of shapes");
     }
     
+    occt::BoundingBox bbox(targetOCCTShapes);
+    stow->unifyLabel->setMatrix(osg::Matrixd::translate(gu::toOsg(bbox.getCenter())));
+    
     BOPAlgo_Operation operation = BOPAlgo_Operation::BOPAlgo_UNKNOWN;
     switch (stow->booleanType.getInt())
     {
@@ -200,6 +208,8 @@ void Feature::updateModel(const UpdatePayload &payloadIn)
       setFailureState();
       throw std::runtime_error("OCC fuse failed");
     }
+    if (stow->unify.getBool())
+      fuser.SimplifyResult();
     ShapeCheck check(fuser.Shape());
     if (!check.isValid())
     {
@@ -251,9 +261,11 @@ void Feature::serialWrite(const boost::filesystem::path &dIn)
   (
     Base::serialOut()
     , stow->booleanType.serialOut()
+    , stow->unify.serialOut()
     , stow->picks.serialOut()
     , stow->sShape.serialOut()
     , stow->iMapper.serialOut()
+    , stow->unifyLabel->serialOut()
   );
   
   xml_schema::NamespaceInfomap infoMap;
@@ -265,7 +277,9 @@ void Feature::serialRead(const prj::srl::bls::Boolean &so)
 {
   Base::serialIn(so.base());
   stow->booleanType.serialIn(so.booleanType());
+  stow->unify.serialIn(so.unify());
   stow->picks.serialIn(so.picks());
   stow->sShape.serialIn(so.seerShape());
   stow->iMapper.serialIn(so.intersectionMapper());
+  stow->unifyLabel->serialIn(so.unifyLabel());
 }

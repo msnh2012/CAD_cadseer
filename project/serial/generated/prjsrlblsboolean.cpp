@@ -97,6 +97,30 @@ namespace prj
         this->booleanType_.set (std::move (x));
       }
 
+      const Boolean::UnifyType& Boolean::
+      unify () const
+      {
+        return this->unify_.get ();
+      }
+
+      Boolean::UnifyType& Boolean::
+      unify ()
+      {
+        return this->unify_.get ();
+      }
+
+      void Boolean::
+      unify (const UnifyType& x)
+      {
+        this->unify_.set (x);
+      }
+
+      void Boolean::
+      unify (::std::unique_ptr< UnifyType > x)
+      {
+        this->unify_.set (std::move (x));
+      }
+
       const Boolean::PicksType& Boolean::
       picks () const
       {
@@ -168,6 +192,30 @@ namespace prj
       {
         this->intersectionMapper_.set (std::move (x));
       }
+
+      const Boolean::UnifyLabelType& Boolean::
+      unifyLabel () const
+      {
+        return this->unifyLabel_.get ();
+      }
+
+      Boolean::UnifyLabelType& Boolean::
+      unifyLabel ()
+      {
+        return this->unifyLabel_.get ();
+      }
+
+      void Boolean::
+      unifyLabel (const UnifyLabelType& x)
+      {
+        this->unifyLabel_.set (x);
+      }
+
+      void Boolean::
+      unifyLabel (::std::unique_ptr< UnifyLabelType > x)
+      {
+        this->unifyLabel_.set (std::move (x));
+      }
     }
   }
 }
@@ -186,30 +234,38 @@ namespace prj
       Boolean::
       Boolean (const BaseType& base,
                const BooleanTypeType& booleanType,
+               const UnifyType& unify,
                const PicksType& picks,
                const SeerShapeType& seerShape,
-               const IntersectionMapperType& intersectionMapper)
+               const IntersectionMapperType& intersectionMapper,
+               const UnifyLabelType& unifyLabel)
       : ::xml_schema::Type (),
         base_ (base, this),
         booleanType_ (booleanType, this),
+        unify_ (unify, this),
         picks_ (picks, this),
         seerShape_ (seerShape, this),
-        intersectionMapper_ (intersectionMapper, this)
+        intersectionMapper_ (intersectionMapper, this),
+        unifyLabel_ (unifyLabel, this)
       {
       }
 
       Boolean::
       Boolean (::std::unique_ptr< BaseType > base,
                ::std::unique_ptr< BooleanTypeType > booleanType,
+               ::std::unique_ptr< UnifyType > unify,
                ::std::unique_ptr< PicksType > picks,
                ::std::unique_ptr< SeerShapeType > seerShape,
-               ::std::unique_ptr< IntersectionMapperType > intersectionMapper)
+               ::std::unique_ptr< IntersectionMapperType > intersectionMapper,
+               ::std::unique_ptr< UnifyLabelType > unifyLabel)
       : ::xml_schema::Type (),
         base_ (std::move (base), this),
         booleanType_ (std::move (booleanType), this),
+        unify_ (std::move (unify), this),
         picks_ (std::move (picks), this),
         seerShape_ (std::move (seerShape), this),
-        intersectionMapper_ (std::move (intersectionMapper), this)
+        intersectionMapper_ (std::move (intersectionMapper), this),
+        unifyLabel_ (std::move (unifyLabel), this)
       {
       }
 
@@ -220,9 +276,11 @@ namespace prj
       : ::xml_schema::Type (x, f, c),
         base_ (x.base_, f, this),
         booleanType_ (x.booleanType_, f, this),
+        unify_ (x.unify_, f, this),
         picks_ (x.picks_, f, this),
         seerShape_ (x.seerShape_, f, this),
-        intersectionMapper_ (x.intersectionMapper_, f, this)
+        intersectionMapper_ (x.intersectionMapper_, f, this),
+        unifyLabel_ (x.unifyLabel_, f, this)
       {
       }
 
@@ -233,9 +291,11 @@ namespace prj
       : ::xml_schema::Type (e, f | ::xml_schema::Flags::base, c),
         base_ (this),
         booleanType_ (this),
+        unify_ (this),
         picks_ (this),
         seerShape_ (this),
-        intersectionMapper_ (this)
+        intersectionMapper_ (this),
+        unifyLabel_ (this)
       {
         if ((f & ::xml_schema::Flags::base) == 0)
         {
@@ -282,6 +342,20 @@ namespace prj
             }
           }
 
+          // unify
+          //
+          if (n.name () == "unify" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< UnifyType > r (
+              UnifyTraits::create (i, f, this));
+
+            if (!unify_.present ())
+            {
+              this->unify_.set (::std::move (r));
+              continue;
+            }
+          }
+
           // picks
           //
           if (n.name () == "picks" && n.namespace_ ().empty ())
@@ -324,6 +398,20 @@ namespace prj
             }
           }
 
+          // unifyLabel
+          //
+          if (n.name () == "unifyLabel" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< UnifyLabelType > r (
+              UnifyLabelTraits::create (i, f, this));
+
+            if (!unifyLabel_.present ())
+            {
+              this->unifyLabel_.set (::std::move (r));
+              continue;
+            }
+          }
+
           break;
         }
 
@@ -338,6 +426,13 @@ namespace prj
         {
           throw ::xsd::cxx::tree::expected_element< char > (
             "booleanType",
+            "");
+        }
+
+        if (!unify_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "unify",
             "");
         }
 
@@ -361,6 +456,13 @@ namespace prj
             "intersectionMapper",
             "");
         }
+
+        if (!unifyLabel_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "unifyLabel",
+            "");
+        }
       }
 
       Boolean* Boolean::
@@ -378,9 +480,11 @@ namespace prj
           static_cast< ::xml_schema::Type& > (*this) = x;
           this->base_ = x.base_;
           this->booleanType_ = x.booleanType_;
+          this->unify_ = x.unify_;
           this->picks_ = x.picks_;
           this->seerShape_ = x.seerShape_;
           this->intersectionMapper_ = x.intersectionMapper_;
+          this->unifyLabel_ = x.unifyLabel_;
         }
 
         return *this;
@@ -710,6 +814,17 @@ namespace prj
           s << i.booleanType ();
         }
 
+        // unify
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "unify",
+              e));
+
+          s << i.unify ();
+        }
+
         // picks
         //
         {
@@ -741,6 +856,17 @@ namespace prj
               e));
 
           s << i.intersectionMapper ();
+        }
+
+        // unifyLabel
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "unifyLabel",
+              e));
+
+          s << i.unifyLabel ();
         }
       }
 

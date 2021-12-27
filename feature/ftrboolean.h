@@ -36,6 +36,7 @@ namespace ftr
     namespace PrmTags
     {
       inline constexpr std::string_view booleanType = "booleanType";
+      inline constexpr std::string_view unify = "unify";
       inline constexpr std::string_view picks = "picks";
     }
     
