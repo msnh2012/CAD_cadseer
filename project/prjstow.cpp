@@ -711,9 +711,9 @@ void Stow::dissolveFeatureDispatched(const msg::Message &mIn)
   
   //give new feature same visualization status as old.
   if (fb->isHiddenOverlay())
-    node.send(msg::buildHideOverlay(nf->getId()));
+    node.send(msg::buildHideOverlay(graph[nfv].feature->getId()));
   if (fb->isHidden3D())
-    node.send(msg::buildHideThreeD(nf->getId()));
+    node.send(msg::buildHideThreeD(graph[nfv].feature->getId()));
   
   //get children of original feature and setup graph edges from new inert feature.
   Vertex ov = findVertex(pm.featureIds.front());

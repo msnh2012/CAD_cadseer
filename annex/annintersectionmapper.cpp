@@ -1256,6 +1256,8 @@ void IntersectionMapper::go(const ftr::UpdatePayload &payloadIn, BOPAlgo_Builder
       
       for (const auto &cShape : parentShapes)
       {
+        if (!origins.IsBound(cShape))
+          continue; //had to add this for boolean with integrated unify same domain.
         for (const auto &sil : origins(cShape)) //sil = shape in list
         {
           for (const auto &ss : seerShapes)

@@ -49,7 +49,7 @@ struct Feature::Stow
   ann::SeerShape sShape;
   ann::IntersectionMapper iMapper;
   prm::Parameter booleanType{QObject::tr("Boolean Type"), 0, PrmTags::booleanType};
-  prm::Parameter unify{QObject::tr("Unify"), true, PrmTags::unify};
+  prm::Parameter unify{QObject::tr("Unify"), false, PrmTags::unify};
   prm::Parameter picks{QObject::tr("Picks"), ftr::Picks(), PrmTags::picks};
   
   osg::ref_ptr<lbr::PLabel> unifyLabel = new lbr::PLabel(&unify);
@@ -77,6 +77,11 @@ struct Feature::Stow
     feature.annexes.insert(std::make_pair(ann::Type::IntersectionMapper, &iMapper));
     
     feature.overlaySwitch->addChild(unifyLabel);
+    
+    //unification inside of boolean is buggy. Occt has problems
+    //and my intersection mapper breaks. So disable this for now
+    //and hopefully we can turn it on soon.
+    unify.setActive(false);
   }
 };
 
@@ -202,6 +207,7 @@ void Feature::updateModel(const UpdatePayload &payloadIn)
     }
     
     BooleanOperation fuser(targets, tools, operation);
+    fuser.SetNonDestructive(true);
     fuser.Build();
     if (!fuser.IsDone())
     {

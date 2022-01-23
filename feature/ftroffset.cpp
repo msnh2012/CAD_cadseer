@@ -245,11 +245,14 @@ void Feature::updateModel(const UpdatePayload &payloadIn)
       );
       if (!builder.IsDone())
         throw std::runtime_error(getErrorString(builder.MakeOffset()));
-      ShapeCheck check(builder.Shape());
+      TopoDS_Shape workShape = builder.Shape();
+      ShapeCheck check(workShape);
       if (!check.isValid())
         throw std::runtime_error("shapeCheck failed");
+      if (!occt::tightenTolerance(workShape))
+        throw std::runtime_error("tighten tolerances failed");
       
-      stow->sShape.setOCCTShape(builder.Shape(), getId());
+      stow->sShape.setOCCTShape(workShape, getId());
       stow->sShape.shapeMatch(*pr.getSeerShape());
       stow->sShape.uniqueTypeMatch(*pr.getSeerShape());
       stow->sShape.modifiedMatch(builder, *pr.getSeerShape());
@@ -262,7 +265,7 @@ void Feature::updateModel(const UpdatePayload &payloadIn)
       stow->sShape.ensureNoDuplicates();
       stow->sShape.ensureEvolve();
       
-      occt::BoundingBox bb(builder.Shape());
+      occt::BoundingBox bb(workShape);
       labelPosition = osg::Matrixd::translate(gu::toOsg(bb.getCenter()));
     }
     else

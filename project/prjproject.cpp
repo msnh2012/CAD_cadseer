@@ -238,8 +238,7 @@ void Project::addOCCShape(const TopoDS_Shape &shapeIn, std::string name)
   auto addShape = [&](const TopoDS_Shape &shapeIn, const std::string &nameIn)
   {
     auto inert = std::make_unique<ftr::Inert::Feature>(shapeIn);
-    inert->setName(QString::fromStdString(nameIn));
-    addFeature(std::move(inert));
+    addFeature(std::move(inert))->setName(QString::fromStdString(nameIn));
   };
   
   if (shapes.empty())

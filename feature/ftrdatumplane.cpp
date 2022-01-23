@@ -247,6 +247,7 @@ struct Feature::Stow
       case static_cast<int>(DPType::Constant):
         csysDragger.draggerUpdate();
         csys.setActive(true);
+        flip.setActive(false);
         autoSize.setValue(false);
         autoSize.setActive(false);
         size.setActive(true);
@@ -261,6 +262,7 @@ struct Feature::Stow
         break;
       case static_cast<int>(DPType::Linked):
         csys.setActive(false);
+        flip.setActive(true);
         autoSize.setValue(false);
         autoSize.setActive(false);
         size.setActive(true);
@@ -275,6 +277,7 @@ struct Feature::Stow
         break;
       case static_cast<int>(DPType::Offset):
         csys.setActive(false);
+        flip.setActive(true);
         autoSize.setActive(true);
         if (autoSize.getBool())
           size.setActive(false);
@@ -291,6 +294,7 @@ struct Feature::Stow
         break;
       case static_cast<int>(DPType::Center):
         csys.setActive(false);
+        flip.setActive(true);
         autoSize.setActive(true);
         if (autoSize.getBool())
           size.setActive(false);
@@ -307,6 +311,7 @@ struct Feature::Stow
         break;
       case static_cast<int>(DPType::AxisAngle):
         csys.setActive(false);
+        flip.setActive(true);
         autoSize.setActive(true);
         if (autoSize.getBool())
           size.setActive(false);
@@ -323,6 +328,7 @@ struct Feature::Stow
         break;
       case static_cast<int>(DPType::Average):
         csys.setActive(false);
+        flip.setActive(true);
         autoSize.setActive(true);
         if (autoSize.getBool())
           size.setActive(false);
@@ -339,6 +345,7 @@ struct Feature::Stow
         break;
       case static_cast<int>(DPType::Points):
         csys.setActive(false);
+        flip.setActive(true);
         autoSize.setActive(true);
         if (autoSize.getBool())
           size.setActive(false);
@@ -427,6 +434,18 @@ struct Feature::Stow
     return std::make_tuple(matrixOut, sizeOut);
   }
   
+  void goFlip()
+  {
+    if (flip.getBool())
+    {
+      osg::Matrixd cm = csys.getMatrix();
+      osg::Quat r(osg::PI, gu::getXVector(cm));
+      osg::Matrixd nm(cm.getRotate() * r);
+      nm.setTrans(cm.getTrans());
+      csys.setValue(nm);
+    }
+  }
+  
   void goUpdateConstant()
   {
     
@@ -445,6 +464,7 @@ struct Feature::Stow
 
     prm::ObserverBlocker block(dirtyObserver);
     csys.setValue(newSys);
+    goFlip();
   }
 
   void goUpdatePOffset(const UpdatePayload &pli)
@@ -462,6 +482,7 @@ struct Feature::Stow
     osg::Vec3d normal = gu::getZVector(faceSystem) * offset.getDouble();
     faceSystem.setTrans(faceSystem.getTrans() + normal);
     csys.setValue(faceSystem);
+    goFlip();
   }
 
   void goUpdatePCenter(const UpdatePayload &pli)
@@ -555,6 +576,7 @@ struct Feature::Stow
       throw std::runtime_error("PCenter: couldn't derive center datum");
     
     csys.setValue(newSystem.get());
+    goFlip();
   }
 
   void goUpdateAAngleP(const UpdatePayload &pli)
@@ -635,6 +657,7 @@ struct Feature::Stow
     if (!oOut)
       throw std::runtime_error("AAngleP: couldn't build CSys");
     csys.setValue(*oOut);
+    goFlip();
   }
 
   void goUpdateAverage3P(const UpdatePayload &pli)
@@ -717,6 +740,7 @@ struct Feature::Stow
     osg::Matrixd ns = osg::Matrixd::rotate(osg::Vec3d(0.0, 0.0, 1.0), averageNormal);
     ns.setTrans(to);
     csys.setValue(ns);
+    goFlip();
     cachedSize = tSize;
   }
 
@@ -759,6 +783,7 @@ struct Feature::Stow
     om->setTrans(center);
     
     csys.setValue(*om);
+    goFlip();
     const auto &p = points;
     const auto &c = center;
     cachedSize = std::max(std::max((p[0] - c).length(), (p[1] - c).length()), (p[2] - c).length());
@@ -829,15 +854,6 @@ void Feature::updateModel(const UpdatePayload &pli)
         throw::std::runtime_error("Unrecognized Datum Plane Type");
         break;
       }
-    }
-    
-    if (stow->flip.getBool())
-    {
-      osg::Matrixd cm = stow->csys.getMatrix();
-      osg::Quat r(osg::PI, gu::getXVector(cm));
-      osg::Matrixd nm(cm.getRotate() * r);
-      nm.setTrans(cm.getTrans());
-      stow->csys.setValue(nm);
     }
     
     if (stow->autoSize.getBool())
