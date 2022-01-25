@@ -333,6 +333,7 @@ void Manager::Stow::setAllMenu()
         constructionUtility.commandIds().push_back(35);
         constructionUtility.commandIds().push_back(36);
         constructionUtility.commandIds().push_back(40);
+        constructionUtility.commandIds().push_back(103);
         constructionBase.subMenus().push_back(constructionUtility);
       }
       {
@@ -592,6 +593,7 @@ void Manager::Stow::setAllToolbars()
       entry.commandIds().push_back(35);
       entry.commandIds().push_back(36);
       entry.commandIds().push_back(40);
+      entry.commandIds().push_back(103);
       toolbar.entries().push_back(entry);
     }
     {
@@ -1840,5 +1842,15 @@ void Manager::Stow::setAllCommands()
     , QObject::tr("Creates An UnderCut Feature").toStdString() //whats this text
     , QObject::tr("Create An UnderCut").toStdString() // toolTipText
     , msg::Request | msg::Construct | msg::UnderCut
+  );
+  sc
+  (
+    103
+    , ":/resources/images/constructionMutate.svg"
+    , QObject::tr("Mutate").toStdString() //icon text
+    , QObject::tr("Create A Mutate").toStdString() //status text
+    , QObject::tr("Creates A Mutate Feature").toStdString() //whats this text
+    , QObject::tr("Create A Mutate").toStdString() // toolTipText
+    , msg::Request | msg::Construct | msg::Mutate
   );
 }

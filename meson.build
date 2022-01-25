@@ -200,6 +200,7 @@ feature_sources = ['feature/ftrinputtype.cpp'
   , 'feature/ftrprism.cpp'
   , 'feature/ftrboolean.cpp'
   , 'feature/ftrundercut.cpp'
+  , 'feature/ftrmutate.cpp'
   ]
   
 parameter_sources = ['parameter/prmparameter.cpp']
@@ -323,6 +324,7 @@ project_serial_sources = [
   , 'project/serial/generated/prjsrlflsfill.cpp'
   , 'project/serial/generated/prjsrlprsmprism.cpp'
   , 'project/serial/generated/prjsrlundundercut.cpp'
+  , 'project/serial/generated/prjsrlmttsmutate.cpp'
 ]
   
 application_sources = ['application/appmainwindow.cpp'
@@ -398,6 +400,7 @@ command_sources = ['command/cmdmanager.cpp'
   , 'command/cmdface.cpp'
   , 'command/cmdfill.cpp'
   , 'command/cmdundercut.cpp'
+  , 'command/cmdmutate.cpp'
 ]
 
 commandview_sources = [
@@ -444,6 +447,7 @@ commandview_sources = [
   , 'commandview/cmvtablewidgets.cpp'
   , 'commandview/cmvundercut.cpp'
   , 'commandview/cmvtablelist.cpp'
+  , 'commandview/cmvmutate.cpp'
 ]
   
 law_sources = ['law/lwfcue.cpp']
@@ -591,6 +595,7 @@ cadseer_moc_hdrs = ['viewer/vwrwidget.h'
   , 'commandview/cmvtable.h'
   , 'commandview/cmvtablewidgets.h'
   , 'commandview/cmvundercut.h'
+  , 'commandview/cmvmutate.h'
   , 'commandview/cmvtablelist.h'
 ]
   

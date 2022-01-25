@@ -71,6 +71,7 @@
 #include "feature/ftrfill.h"
 #include "feature/ftrprism.h"
 #include "feature/ftrundercut.h"
+#include "feature/ftrmutate.h"
 #include "project/serial/generated/prjsrlbxsbox.h"
 #include "project/serial/generated/prjsrlblnsblend.h"
 #include "project/serial/generated/prjsrlchmschamfer.h"
@@ -119,6 +120,7 @@
 #include "project/serial/generated/prjsrlflsfill.h"
 #include "project/serial/generated/prjsrlprsmprism.h"
 #include "project/serial/generated/prjsrlundundercut.h"
+#include "project/serial/generated/prjsrlmttsmutate.h"
 
 #include "project/prjfeatureload.h"
 
@@ -193,6 +195,7 @@ FeatureLoad::FeatureLoad(const path& directoryIn, const TopoDS_Shape &masterShap
   functionMap.insert(std::make_pair(ftr::toString(ftr::Type::Fill), std::bind(&FeatureLoad::loadFill, this, std::placeholders::_1, std::placeholders::_2)));
   functionMap.insert(std::make_pair(ftr::toString(ftr::Type::Prism), std::bind(&FeatureLoad::loadPrism, this, std::placeholders::_1, std::placeholders::_2)));
   functionMap.insert(std::make_pair(ftr::toString(ftr::Type::UnderCut), std::bind(&FeatureLoad::loadUndercut, this, std::placeholders::_1, std::placeholders::_2)));
+  functionMap.insert(std::make_pair(ftr::toString(ftr::Type::Mutate), std::bind(&FeatureLoad::loadMutate, this, std::placeholders::_1, std::placeholders::_2)));
 }
 
 std::unique_ptr<ftr::Base> FeatureLoad::load(const std::string& idIn, const std::string& typeIn, std::size_t shapeOffsetIn)
@@ -784,6 +787,18 @@ std::unique_ptr<ftr::Base> FeatureLoad::loadUndercut(const std::string &fileName
   assert(ss);
   
   auto sf = std::make_unique<ftr::UnderCut::Feature>();
+  sf->serialRead(*ss);
+  
+  return sf;
+}
+
+std::unique_ptr<ftr::Base> FeatureLoad::loadMutate(const std::string &fileNameIn, std::size_t shapeOffsetIn)
+{
+  auto ss = srl::mtts::mutate(fileNameIn, flags);
+  assert(ss);
+  
+  auto sf = std::make_unique<ftr::Mutate::Feature>();
+  sf->getAnnex<ann::SeerShape>().setOCCTShape(shapeVector.at(shapeOffsetIn), featureId);
   sf->serialRead(*ss);
   
   return sf;

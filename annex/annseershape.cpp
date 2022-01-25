@@ -1175,6 +1175,10 @@ void SeerShape::modifiedMatch
       if(!hasShape(it.Value()))
         continue;
       
+      //don't over write root shape.
+      if (getRootOCCTShape().IsEqual(it.Value()))
+        continue;
+      
       uuid freshId = gu::createNilId();
       if (hasEvolveRecordIn(sourceRecord.id))
         freshId = evolve(sourceRecord.id).front(); //multiple returns?

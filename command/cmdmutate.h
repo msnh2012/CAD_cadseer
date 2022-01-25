@@ -1,6 +1,6 @@
 /*
  * CadSeer. Parametric Solid Modeling.
- * Copyright (C) %YEAR% Thomas S. Anderson blobfish.at.gmx.com
+ * Copyright (C) 2022 Thomas S. Anderson blobfish.at.gmx.com
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,36 +17,38 @@
  *
  */
 
-#ifndef CMD_%CLASSNAMEUPPERCASE%_H
-#define CMD_%CLASSNAMEUPPERCASE%_H
+#ifndef CMD_MUTATE_H
+#define CMD_MUTATE_H
 
 #include "command/cmdleafmanager.h"
 #include "command/cmdbase.h"
 
-namespace ftr{namespace %CLASSNAME%{class Feature;}}
+namespace ftr{namespace Mutate{class Feature;}}
 
 namespace cmd
 {
-  class %CLASSNAME% : public Base
+  class Mutate : public Base
   {
   public:
-    ftr::%CLASSNAME%::Feature *feature = nullptr;
+    ftr::Mutate::Feature *feature = nullptr;
     
-    %CLASSNAME%();
-    %CLASSNAME%(ftr::Base*);
-    ~%CLASSNAME%() override;
+    Mutate();
+    Mutate(ftr::Base*);
+    ~Mutate() override;
     
-    std::string getCommandName() override{return "%CLASSNAME%";}
+    std::string getCommandName() override{return "Mutate";}
     std::string getStatusMessage() override;
     void activate() override;
     void deactivate() override;
     
     void setSelections(const slc::Messages&);
+    void setCsys(const slc::Message&);
     void localUpdate();
   private:
     cmd::LeafManager leafManager;
     void go();
-    bool isValidSelection(const slc::Message&);
+    bool isValidShape(const slc::Message&);
+    bool isValidCSys(const slc::Message&);
   };
 }
-#endif // CMD_%CLASSNAMEUPPERCASE%_H
+#endif // CMD_MUTATE_H

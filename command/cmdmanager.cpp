@@ -96,6 +96,7 @@
 #include "command/cmdface.h"
 #include "command/cmdfill.h"
 #include "command/cmdundercut.h"
+#include "command/cmdmutate.h"
 #include "message/msgnode.h"
 #include "message/msgsift.h"
 #include "selection/slcmessage.h"
@@ -471,6 +472,11 @@ void Manager::setupDispatcher()
       (
         msg::Request | msg::Construct | msg::UnderCut
         , std::bind(&Manager::constructUnderCutDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
+        msg::Request | msg::Construct | msg::Mutate
+        , std::bind(&Manager::constructMutateDispatched, this, std::placeholders::_1)
       )
       , std::make_pair
       (
@@ -951,6 +957,11 @@ void Manager::constructUnderCutDispatched(const msg::Message&)
   addCommand(std::make_shared<UnderCut>());
 }
 
+void Manager::constructMutateDispatched(const msg::Message&)
+{
+  addCommand(std::make_shared<Mutate>());
+}
+
 void Manager::importDispatched(const msg::Message&)
 {
   addCommand(std::make_shared<Import>());
@@ -1178,6 +1189,11 @@ BasePtr editUnderCut(ftr::Base *feature)
   return std::make_shared<UnderCut>(feature);
 }
 
+BasePtr editMutate(ftr::Base *feature)
+{
+  return std::make_shared<Mutate>(feature);
+}
+
 void Manager::setupEditFunctionMap()
 {
   editFunctionMap.insert(std::make_pair(ftr::Type::Blend, std::bind(editBlend, std::placeholders::_1)));
@@ -1216,4 +1232,5 @@ void Manager::setupEditFunctionMap()
   editFunctionMap.insert(std::make_pair(ftr::Type::Face, std::bind(editFace, std::placeholders::_1)));
   editFunctionMap.insert(std::make_pair(ftr::Type::Fill, std::bind(editFill, std::placeholders::_1)));
   editFunctionMap.insert(std::make_pair(ftr::Type::UnderCut, std::bind(editUnderCut, std::placeholders::_1)));
+  editFunctionMap.insert(std::make_pair(ftr::Type::Mutate, std::bind(editMutate, std::placeholders::_1)));
 }

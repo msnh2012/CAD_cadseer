@@ -81,7 +81,8 @@ namespace ftr
     Face, //!< feature for creating a face. 
     Fill, //!< feature for creating a fill face. 
     Prism,
-    UnderCut
+    UnderCut,
+    Mutate
   };
   
   inline const static std::string& toString(Type typeIn)
@@ -141,7 +142,8 @@ namespace ftr
       {Type::Face, "Face"},
       {Type::Fill, "Fill"},
       {Type::Prism, "Prism"},
-      {Type::UnderCut, "UnderCut"}
+      {Type::UnderCut, "UnderCut"},
+      {Type::Mutate, "Mutate"}
     };
     
     assert(strings.count(typeIn) > 0);
