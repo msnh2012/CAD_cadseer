@@ -308,9 +308,6 @@ MainWindow::MainWindow(QWidget *parent)
 {
   this->setWindowIcon(QIcon(":/resources/images/cadSeer.svg"));
   
-  QVBoxLayout *mainLayout = new QVBoxLayout();
-  mainLayout->addWidget(stow->tabToolWidget);
-  
   stow->dagModel = new dag::Model(this);
   stow->dagView = new dag::View(this);
   stow->dagView->setScene(stow->dagModel);
