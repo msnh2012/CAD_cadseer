@@ -1,10 +1,11 @@
 # cadseer
 
-A parametric solid modeler.
+A parametric solid modeler. [Screen Shots](https://gitlab.com/blobfish/cadseer/-/wikis/screenshots)
 
 ## Getting Started
 
-[Building Cadseer](https://gitlab.com/blobfish/cadseer/wikis/developer#compilebuild)
+* [User](https://gitlab.com/blobfish/cadseer/-/wikis/user)
+* [Developer](https://gitlab.com/blobfish/cadseer/-/wikis/developer)
 
 ## Built With
 
