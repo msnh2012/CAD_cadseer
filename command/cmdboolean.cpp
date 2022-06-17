@@ -41,7 +41,7 @@ Boolean::Boolean(int tIn) //new feature
 {
   feature = new ftr::Boolean::Feature();
   project->addFeature(std::unique_ptr<ftr::Boolean::Feature>(feature));
-  assert(tIn >= 0 && tIn < 3);
+  assert(tIn >= 0 && tIn < 4);
   auto *typePrm = feature->getParameter(ftr::Boolean::PrmTags::booleanType);
   typePrm->setValue(tIn);
 

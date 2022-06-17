@@ -348,6 +348,7 @@ void Manager::Stow::setAllMenu()
         constructionBoolean.commandIds().push_back(29);
         constructionBoolean.commandIds().push_back(30);
         constructionBoolean.commandIds().push_back(31);
+        constructionBoolean.commandIds().push_back(104);
         constructionBase.subMenus().push_back(constructionBoolean);
       }
       {
@@ -622,6 +623,7 @@ void Manager::Stow::setAllToolbars()
       entry.commandIds().push_back(30);
       entry.commandIds().push_back(29);
       entry.commandIds().push_back(31);
+      entry.commandIds().push_back(104);
       toolbar.entries().push_back(entry);
     }
     {
@@ -1852,5 +1854,15 @@ void Manager::Stow::setAllCommands()
     , QObject::tr("Creates A Mutate Feature").toStdString() //whats this text
     , QObject::tr("Create A Mutate").toStdString() // toolTipText
     , msg::Request | msg::Construct | msg::Mutate
+  );
+  sc
+  (
+    104
+    , ":/resources/images/constructionSection.svg"
+    , QObject::tr("Section").toStdString() //icon text
+    , QObject::tr("Create A Section").toStdString() //status text
+    , QObject::tr("Creates A Section Feature").toStdString() //whats this text
+    , QObject::tr("Create A Section").toStdString() // toolTipText
+    , msg::Request | msg::Construct | msg::Section
   );
 }

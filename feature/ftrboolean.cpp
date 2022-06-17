@@ -62,6 +62,7 @@ struct Feature::Stow
       QObject::tr("Intersect")
       , QObject::tr("Subtract")
       , QObject::tr("Union")
+      , QObject::tr("Section")
     };
     booleanType.setEnumeration(tStrings);
     booleanType.connectValue(std::bind(&Feature::setModelDirty, &feature));
@@ -197,6 +198,11 @@ void Feature::updateModel(const UpdatePayload &payloadIn)
       case 2:
       {
         operation = BOPAlgo_FUSE;
+        break;
+      }
+      case 3:
+      {
+        operation = BOPAlgo_SECTION;
         break;
       }
       default:

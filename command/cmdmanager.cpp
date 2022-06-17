@@ -300,6 +300,11 @@ void Manager::setupDispatcher()
       )
       , std::make_pair
       (
+        msg::Request | msg::Construct | msg::Section
+        , std::bind(&Manager::constructBooleanDispatched, this, std::placeholders::_1)
+      )
+      , std::make_pair
+      (
         msg::Request | msg::Construct | msg::Offset
         , std::bind(&Manager::constructOffsetDispatched, this, std::placeholders::_1)
       )
@@ -751,6 +756,8 @@ void Manager::constructBooleanDispatched(const msg::Message &mIn)
     addCommand(std::make_shared<Boolean>(1));
   else if ((mIn.mask & msg::Union) != 0)
     addCommand(std::make_shared<Boolean>(2));
+  else if ((mIn.mask & msg::Section) != 0)
+    addCommand(std::make_shared<Boolean>(3));
 }
 
 void Manager::constructOffsetDispatched(const msg::Message&)
