@@ -109,28 +109,26 @@ void DatumAxis::go()
   assert(project);
   
   const slc::Containers &cs = eventHandler->getSelections();
-  if (cs.size() == 2 && slc::isPointType(cs.front().selectionType) && slc::isPointType(cs.back().selectionType))
+  
+  if (cs.size() == 2)
   {
+    auto t0 = cs.front().selectionType;
+    auto t1 = cs.back().selectionType;
     std::vector<slc::Message> msgs;
     msgs.push_back(slc::EventHandler::containerToMessage(cs.front()));
     msgs.push_back(slc::EventHandler::containerToMessage(cs.back()));
-    setToPoints(msgs);
-    feature->getParameter(prm::Tags::AutoSize)->setValue(true);
     node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
+    
+    if (slc::isPointType(t0) && slc::isPointType(t1))
+      setToPoints(msgs);
+    else if ((slc::isPointType(t0) && !slc::isPointType(t1)) || (slc::isPointType(t1) && !slc::isPointType(t0)))
+      setToPointNormal(msgs);
+    else
+      setToIntersection(msgs);
+    feature->getParameter(prm::Tags::AutoSize)->setValue(true);
     return;
   }
 
-  if (cs.size() == 2)
-  {
-    std::vector<slc::Message> msgs;
-    msgs.push_back(slc::EventHandler::containerToMessage(cs.front()));
-    msgs.push_back(slc::EventHandler::containerToMessage(cs.back()));
-    setToIntersection(msgs);
-    feature->getParameter(prm::Tags::AutoSize)->setValue(true);
-    node->send(msg::Message(msg::Request | msg::Selection | msg::Clear));
-    return;
-  }
-  
   if (cs.size() == 1)
   {
     if (cs.front().selectionType == slc::Type::Face || cs.front().selectionType == slc::Type::Edge)
@@ -271,6 +269,23 @@ void DatumAxis::setToGeometry(const slc::Messages &msIn)
   feature->getParameter(ftr::DatumAxis::Tags::Geometry)->setValue(pick);
   
   project->connectInsert(parent->getId(), feature->getId(), {pick.tag});
+}
+
+void DatumAxis::setToPointNormal(const slc::Messages &msIn)
+{
+  assert(isActive);
+  project->clearAllInputs(feature->getId());
+  feature->getParameter(ftr::DatumAxis::Tags::AxisType)->setValue(static_cast<int>(ftr::DatumAxis::PointNormal));
+  
+  ftr::Picks picks;
+  for (const auto &m : msIn)
+  {
+    const ftr::Base *parent = project->findFeature(m.featureId);
+    picks.push_back(tls::convertToPick(m, *parent, project->getShapeHistory()));
+    picks.back().tag = indexTag(ftr::DatumAxis::Tags::PointNormal, picks.size() - 1);
+    project->connect(parent->getId(), feature->getId(), {picks.back().tag});
+  }
+  feature->getParameter(ftr::DatumAxis::Tags::PointNormal)->setValue(picks);
 }
 
 void DatumAxis::localUpdate()

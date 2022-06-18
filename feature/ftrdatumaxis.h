@@ -36,7 +36,8 @@ namespace ftr
       Linked, //!< linked to axis of input feature csys. X, Y or Z.
       Points, //!< 2 points
       Intersection, //!< intersection of 2 planes.
-      Geometry //!< 1 pick of geometry. ie. cylindrical face.
+      Geometry, //!< 1 pick of geometry. ie. cylindrical face.
+      PointNormal //!< Through point normal to face
     };
     namespace Tags
     {
@@ -46,6 +47,7 @@ namespace ftr
       inline constexpr std::string_view Intersection = "Intersection";
       inline constexpr std::string_view Geometry = "Geometry";
       inline constexpr std::string_view LinkedAxis = "LinkedAxis"; //enum
+      inline constexpr std::string_view PointNormal = "PointNormal";
     }
     
     class Feature : public Base

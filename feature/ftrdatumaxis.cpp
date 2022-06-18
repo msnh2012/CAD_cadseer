@@ -57,51 +57,36 @@ QIcon Feature::icon = QIcon(":/resources/images/constructionDatumAxis.svg");
 struct Feature::Stow
 {
   Feature &feature;
-  prm::Parameter axisType;
-  prm::Parameter origin;
-  prm::Parameter direction;
-  prm::Parameter csys; //only used for dragger.
-  prm::Parameter autoSize;
-  prm::Parameter size;
-  prm::Parameter linkedAxis;
-  prm::Parameter linkedPicks;
-  prm::Parameter pointsPicks;
-  prm::Parameter intersectionPicks;
-  prm::Parameter geometryPicks;
-  prm::Observer sizeObserver;
-  prm::Observer prmObserver;
-  prm::Observer syncObserver;
-  ann::CSysDragger csysDragger; //!< for constant type
-  osg::ref_ptr<lbr::PLabel> originLabel;
-  osg::ref_ptr<lbr::PLabel> directionLabel;
-  osg::ref_ptr<lbr::PLabel> autoSizeLabel;
-  osg::ref_ptr<lbr::PLabel> sizeLabel;
-  osg::ref_ptr<mdv::DatumAxis> display;
-  double cachedSize; //!< always set by update when possible.
+  
+  prm::Parameter axisType{QObject::tr("Axis Type"), 0, Tags::AxisType};
+  prm::Parameter origin{prm::Names::Origin, osg::Vec3d(), prm::Tags::Origin};
+  prm::Parameter direction{prm::Names::Direction, osg::Vec3d(0.0, 0.0, 1.0), prm::Tags::Direction};
+  prm::Parameter csys{prm::Names::CSys, osg::Matrixd::identity(), prm::Tags::CSys}; //only used for dragger.
+  prm::Parameter autoSize{prm::Names::AutoSize, true, prm::Tags::AutoSize};
+  prm::Parameter size{prm::Names::Size, 20.0, prm::Tags::Size};
+  prm::Parameter linkedAxis{QObject::tr("Axis"), 0, Tags::LinkedAxis};
+  prm::Parameter linkedPicks{QObject::tr("Linked Picks"), ftr::Picks(), Tags::Linked};
+  prm::Parameter pointsPicks{QObject::tr("Point Picks"), ftr::Picks(), Tags::Points};
+  prm::Parameter intersectionPicks{QObject::tr("Intersection Picks"), ftr::Picks(), Tags::Intersection};
+  prm::Parameter geometryPicks{QObject::tr("Geometry Picks"), ftr::Picks(), Tags::Geometry};
+  prm::Parameter pointNormalPicks{QObject::tr("Point Normal Pick"), ftr::Picks(), Tags::PointNormal};
+  
+  prm::Observer sizeObserver{std::bind(&Feature::setVisualDirty, &feature)};
+  prm::Observer prmObserver{std::bind(&Feature::setModelDirty, &feature)};
+  prm::Observer syncObserver{std::bind(&Stow::prmActiveSync, this)};
+  
+  ann::CSysDragger csysDragger{&feature, &csys}; //!< for constant type
+  
+  osg::ref_ptr<lbr::PLabel> originLabel{new lbr::PLabel(&origin)};
+  osg::ref_ptr<lbr::PLabel> directionLabel{new lbr::PLabel(&direction)};
+  osg::ref_ptr<lbr::PLabel> autoSizeLabel{new lbr::PLabel(&autoSize)};
+  osg::ref_ptr<lbr::PLabel> sizeLabel{new lbr::PLabel(&size)};
+  osg::ref_ptr<mdv::DatumAxis> display{new mdv::DatumAxis()};
+  
+  double cachedSize{20.0}; //!< always set by update when possible.
   
   Stow(Feature &fIn)
   : feature(fIn)
-  , axisType(QObject::tr("Axis Type"), 0, Tags::AxisType)
-  , origin(prm::Names::Origin, osg::Vec3d(), prm::Tags::Origin)
-  , direction(prm::Names::Direction, osg::Vec3d(0.0, 0.0, 1.0), prm::Tags::Direction)
-  , csys(prm::Names::CSys, osg::Matrixd::identity(), prm::Tags::CSys)
-  , autoSize(prm::Names::AutoSize, true, prm::Tags::AutoSize)
-  , size(prm::Names::Size, 20.0, prm::Tags::Size)
-  , linkedAxis(QObject::tr("Axis"), 0, Tags::LinkedAxis)
-  , linkedPicks(QObject::tr("Linked Picks"), ftr::Picks(), Tags::Linked)
-  , pointsPicks(QObject::tr("Point Picks"), ftr::Picks(), Tags::Points)
-  , intersectionPicks(QObject::tr("Intersection Picks"), ftr::Picks(), Tags::Intersection)
-  , geometryPicks(QObject::tr("Geometry Picks"), ftr::Picks(), Tags::Geometry)
-  , sizeObserver(std::bind(&Feature::setVisualDirty, &feature))
-  , prmObserver(std::bind(&Feature::setModelDirty, &feature))
-  , syncObserver(std::bind(&Stow::prmActiveSync, this))
-  , csysDragger(&feature, &csys)
-  , originLabel(new lbr::PLabel(&origin))
-  , directionLabel(new lbr::PLabel(&direction))
-  , autoSizeLabel(new lbr::PLabel(&autoSize))
-  , sizeLabel(new lbr::PLabel(&size))
-  , display(new mdv::DatumAxis())
-  , cachedSize(20.0)
   {
     QStringList tStrings = //keep in sync with enum in header.
     {
@@ -111,6 +96,7 @@ struct Feature::Stow
       , QObject::tr("Points")
       , QObject::tr("Intersection")
       , QObject::tr("Geometry")
+      , QObject::tr("Point Normal")
     };
     axisType.setEnumeration(tStrings);
     axisType.connect(syncObserver);
@@ -153,6 +139,7 @@ struct Feature::Stow
     initPick(pointsPicks);
     initPick(intersectionPicks);
     initPick(geometryPicks);
+    initPick(pointNormalPicks);
     
     feature.annexes.insert(std::make_pair(ann::Type::CSysDragger, &csysDragger));
     feature.overlaySwitch->addChild(csysDragger.dragger.get());
@@ -194,6 +181,7 @@ struct Feature::Stow
         pointsPicks.setActive(false);
         intersectionPicks.setActive(false);
         geometryPicks.setActive(false);
+        pointNormalPicks.setActive(false);
         break;}
       case AxisType::Parameters:{
         origin.setActive(true);
@@ -207,6 +195,7 @@ struct Feature::Stow
         pointsPicks.setActive(false);
         intersectionPicks.setActive(false);
         geometryPicks.setActive(false);
+        pointNormalPicks.setActive(false);
         break;}
       case AxisType::Linked:{
         origin.setActive(false);
@@ -220,6 +209,7 @@ struct Feature::Stow
         pointsPicks.setActive(false);
         intersectionPicks.setActive(false);
         geometryPicks.setActive(false);
+        pointNormalPicks.setActive(false);
         break;}
       case AxisType::Points:{
         origin.setActive(false);
@@ -232,6 +222,7 @@ struct Feature::Stow
         pointsPicks.setActive(true);
         intersectionPicks.setActive(false);
         geometryPicks.setActive(false);
+        pointNormalPicks.setActive(false);
         break;}
       case AxisType::Intersection:{
         origin.setActive(false);
@@ -244,6 +235,7 @@ struct Feature::Stow
         pointsPicks.setActive(false);
         intersectionPicks.setActive(true);
         geometryPicks.setActive(false);
+        pointNormalPicks.setActive(false);
         break;}
       case AxisType::Geometry:{
         origin.setActive(false);
@@ -256,6 +248,20 @@ struct Feature::Stow
         pointsPicks.setActive(false);
         intersectionPicks.setActive(false);
         geometryPicks.setActive(true);
+        pointNormalPicks.setActive(false);
+        break;}
+      case AxisType::PointNormal:{
+        origin.setActive(false);
+        direction.setActive(false);
+        csys.setActive(false);
+        autoSize.setActive(true);
+        size.setActive(!autoSize.getBool());
+        linkedAxis.setActive(false);
+        linkedPicks.setActive(false);
+        pointsPicks.setActive(false);
+        intersectionPicks.setActive(false);
+        geometryPicks.setActive(false);
+        pointNormalPicks.setActive(true);
         break;}
     }
   }
@@ -441,6 +447,68 @@ struct Feature::Stow
       origin.setValue(gu::toOsg(proj.NearestPoint()));
   }
   
+  void goUpdatePointNormal(const UpdatePayload &pli)
+  {
+    const auto &cp = pointNormalPicks.getPicks();
+    if (cp.size() != 2)
+      throw std::runtime_error("point normal pick count should be 2");
+    tls::Resolver resolver(pli);
+    
+    std::optional<gp_Pnt> thePoint;
+    std::optional<TopoDS_Face> theFace;
+    for (const auto &p : cp)
+    {
+      if (!resolver.resolve(p)) continue;
+      auto points = resolver.getPoints();
+      if (!points.empty())
+      {
+        if (points.size() > 1)
+        {
+          std::ostringstream s; s << "WARNING. more than 1 point for point pick" << std::endl;
+          feature.lastUpdateLog += s.str();
+        }
+        thePoint = gp_Pnt(gu::toOcc(points.front()).XYZ());
+      }
+      else //not a point
+      {
+        auto fShapes = resolver.getShapes();
+        if (fShapes.empty()) continue;
+        if (fShapes.size() > 1)
+        {
+          std::ostringstream s; s << "WARNING. more than 1 face for face pick" << std::endl;
+          feature.lastUpdateLog += s.str();
+        }
+        auto faceShape = fShapes.front();
+        if (slc::isObjectType(p.selectionType))
+        {
+          assert(faceShape.ShapeType() == TopAbs_COMPOUND);
+          auto childFaces = resolver.getSeerShape()->useGetChildrenOfType(faceShape, TopAbs_FACE);
+          if (!childFaces.empty())
+            faceShape = childFaces.front();
+        }
+        else
+        {
+          if (faceShape.ShapeType() == TopAbs_FACE)
+            theFace = TopoDS::Face(faceShape);
+        }
+      }
+    }
+    
+    if (!thePoint) throw std::runtime_error("no point from picks");
+    if (!theFace) throw std::runtime_error("no face from picks");
+    
+    double u, v;
+    bool pResult;
+    std::tie(u, v, pResult) = occt::pointToParameter(*theFace, *thePoint);
+    if (!pResult) throw std::runtime_error("couldn't get parameters from face pick");
+    auto normal = occt::getNormal(*theFace, u, v);
+    
+    direction.setValue(gu::toOsg(normal));
+    origin.setValue(gu::toOsg(*thePoint));
+    occt::BoundingBox bb(*theFace);
+    cachedSize = bb.getDiagonal();
+  }
+  
   void setMainTransform()
   {
     //orient main transform to origin and direction.
@@ -507,6 +575,7 @@ void Feature::updateModel(const UpdatePayload &pli)
       case AxisType::Points: stow->goUpdatePoints(pli); break;
       case AxisType::Intersection: stow->goUpdateIntersection(pli); break;
       case AxisType::Geometry: stow->goUpdateGeometry(pli); break;
+      case AxisType::PointNormal: stow->goUpdatePointNormal(pli); break;
     }
     
     setSuccess();
@@ -579,6 +648,9 @@ void Feature::serialWrite(const boost::filesystem::path &dIn)
     case AxisType::Geometry:{
       dao.picks() = stow->geometryPicks.serialOut();
       break;}
+    case AxisType::PointNormal:{
+      dao.picks() = stow->pointNormalPicks.serialOut();
+      break;}
   }
   
   xml_schema::NamespaceInfomap infoMap;
@@ -624,6 +696,10 @@ void Feature::serialRead(const prj::srl::dtas::DatumAxis &dai)
     case AxisType::Geometry:{
       if (dai.picks())
         stow->geometryPicks.serialIn(dai.picks().get());
+      break;}
+    case AxisType::PointNormal:{
+      if (dai.picks())
+        stow->pointNormalPicks.serialIn(dai.picks().get());
       break;}
   }
   

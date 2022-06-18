@@ -50,6 +50,7 @@ namespace cmd
       void setToPoints(const std::vector<slc::Message>&);
       void setToIntersection(const std::vector<slc::Message>&);
       void setToGeometry(const std::vector<slc::Message>&);
+      void setToPointNormal(const std::vector<slc::Message>&);
       void localUpdate();
     private:
       void go();

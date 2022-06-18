@@ -103,6 +103,15 @@ struct DatumAxis::Stow
       cue.accrueEnabled = false;
       prmModel->setCue(ft->getParameter(ftr::DatumAxis::Tags::Geometry), cue);
     }
+    {
+      //point normal
+      tbl::SelectionCue cue;
+      cue.singleSelection = false;
+      cue.mask = slc::FacesBoth | slc::AllPointsEnabled | slc::EndPointsSelectable;
+      cue.statusPrompt = tr("Select 1 point and 1 face For normal Axis");
+      cue.accrueEnabled = false;
+      prmModel->setCue(ft->getParameter(ftr::DatumAxis::Tags::PointNormal), cue);
+    }
   }
 };
 
@@ -152,6 +161,10 @@ void DatumAxis::modelChanged(const QModelIndex &index, const QModelIndex&)
         const auto *p = ft->getParameter(FDA::Tags::Geometry);
         stow->command->setToGeometry(stow->prmModel->getMessages(p));
         break;}
+      case FDAT::PointNormal:{
+        const auto *p = ft->getParameter(FDA::Tags::PointNormal);
+        stow->command->setToPointNormal(stow->prmModel->getMessages(p));
+        break;}
     }
     stow->prmView->updateHideInactive();
   }
@@ -166,6 +179,8 @@ void DatumAxis::modelChanged(const QModelIndex &index, const QModelIndex&)
     stow->command->setToIntersection(stow->prmModel->getMessages(par));
   else if (par->getTag() == ftr::DatumAxis::Tags::Geometry)
     stow->command->setToGeometry(stow->prmModel->getMessages(par));
+  else if (par->getTag() == ftr::DatumAxis::Tags::PointNormal)
+    stow->command->setToPointNormal(stow->prmModel->getMessages(par));
   else if (par->getTag() == prm::Tags::AutoSize)
     stow->prmView->updateHideInactive();
   
