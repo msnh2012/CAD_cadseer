@@ -66,7 +66,7 @@ struct Sew::Stow
     
     tbl::SelectionCue cue;
     cue.singleSelection = false;
-    cue.mask = slc::ObjectsBoth | slc::ShellsEnabled | slc::FacesBoth;
+    cue.mask = slc::ObjectsBoth | slc::ShellsEnabled | slc::FacesBoth | slc::WiresEnabled | slc::EdgesEnabled;
     cue.statusPrompt = tr("Select Entities To Sew");
     cue.accrueEnabled = false;
     cue.forceTangentAccrue = false;

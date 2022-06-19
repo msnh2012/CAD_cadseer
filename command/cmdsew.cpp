@@ -115,6 +115,8 @@ bool Sew::isValidSelection(const slc::Message &mIn)
     (t != slc::Type::Object)
     && (t != slc::Type::Shell)
     && (t != slc::Type::Face)
+    && (t != slc::Type::Wire)
+    && (t != slc::Type::Edge)
   )
     return false;
   return true;

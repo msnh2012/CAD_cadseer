@@ -95,6 +95,8 @@ namespace prj
 
 #include "prjsrlsptseershape.h"
 
+#include "prjsrlsptintersectionmapping.h"
+
 namespace prj
 {
   namespace srl
@@ -155,6 +157,23 @@ namespace prj
         void
         seerShape (::std::unique_ptr< SeerShapeType > p);
 
+        // iMapper
+        //
+        typedef ::prj::srl::spt::IntersectionMapper IMapperType;
+        typedef ::xsd::cxx::tree::traits< IMapperType, char > IMapperTraits;
+
+        const IMapperType&
+        iMapper () const;
+
+        IMapperType&
+        iMapper ();
+
+        void
+        iMapper (const IMapperType& x);
+
+        void
+        iMapper (::std::unique_ptr< IMapperType > p);
+
         // solidId
         //
         typedef ::xml_schema::String SolidIdType;
@@ -195,19 +214,43 @@ namespace prj
         static const ShellIdType&
         shellId_default_value ();
 
+        // wireId
+        //
+        typedef ::xml_schema::String WireIdType;
+        typedef ::xsd::cxx::tree::traits< WireIdType, char > WireIdTraits;
+
+        const WireIdType&
+        wireId () const;
+
+        WireIdType&
+        wireId ();
+
+        void
+        wireId (const WireIdType& x);
+
+        void
+        wireId (::std::unique_ptr< WireIdType > p);
+
+        static const WireIdType&
+        wireId_default_value ();
+
         // Constructors.
         //
         Sew (const BaseType&,
              const PicksType&,
              const SeerShapeType&,
+             const IMapperType&,
              const SolidIdType&,
-             const ShellIdType&);
+             const ShellIdType&,
+             const WireIdType&);
 
         Sew (::std::unique_ptr< BaseType >,
              ::std::unique_ptr< PicksType >,
              ::std::unique_ptr< SeerShapeType >,
+             ::std::unique_ptr< IMapperType >,
              const SolidIdType&,
-             const ShellIdType&);
+             const ShellIdType&,
+             const WireIdType&);
 
         Sew (const ::xercesc::DOMElement& e,
              ::xml_schema::Flags f = 0,
@@ -238,10 +281,13 @@ namespace prj
         ::xsd::cxx::tree::one< BaseType > base_;
         ::xsd::cxx::tree::one< PicksType > picks_;
         ::xsd::cxx::tree::one< SeerShapeType > seerShape_;
+        ::xsd::cxx::tree::one< IMapperType > iMapper_;
         ::xsd::cxx::tree::one< SolidIdType > solidId_;
         static const SolidIdType solidId_default_value_;
         ::xsd::cxx::tree::one< ShellIdType > shellId_;
         static const ShellIdType shellId_default_value_;
+        ::xsd::cxx::tree::one< WireIdType > wireId_;
+        static const WireIdType wireId_default_value_;
       };
     }
   }

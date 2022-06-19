@@ -121,6 +121,30 @@ namespace prj
         this->seerShape_.set (std::move (x));
       }
 
+      const Sew::IMapperType& Sew::
+      iMapper () const
+      {
+        return this->iMapper_.get ();
+      }
+
+      Sew::IMapperType& Sew::
+      iMapper ()
+      {
+        return this->iMapper_.get ();
+      }
+
+      void Sew::
+      iMapper (const IMapperType& x)
+      {
+        this->iMapper_.set (x);
+      }
+
+      void Sew::
+      iMapper (::std::unique_ptr< IMapperType > x)
+      {
+        this->iMapper_.set (std::move (x));
+      }
+
       const Sew::SolidIdType& Sew::
       solidId () const
       {
@@ -180,6 +204,36 @@ namespace prj
       {
         return shellId_default_value_;
       }
+
+      const Sew::WireIdType& Sew::
+      wireId () const
+      {
+        return this->wireId_.get ();
+      }
+
+      Sew::WireIdType& Sew::
+      wireId ()
+      {
+        return this->wireId_.get ();
+      }
+
+      void Sew::
+      wireId (const WireIdType& x)
+      {
+        this->wireId_.set (x);
+      }
+
+      void Sew::
+      wireId (::std::unique_ptr< WireIdType > x)
+      {
+        this->wireId_.set (std::move (x));
+      }
+
+      const Sew::WireIdType& Sew::
+      wireId_default_value ()
+      {
+        return wireId_default_value_;
+      }
     }
   }
 }
@@ -201,18 +255,25 @@ namespace prj
       const Sew::ShellIdType Sew::shellId_default_value_ (
         "00000000-0000-0000-0000-000000000000");
 
+      const Sew::WireIdType Sew::wireId_default_value_ (
+        "00000000-0000-0000-0000-000000000000");
+
       Sew::
       Sew (const BaseType& base,
            const PicksType& picks,
            const SeerShapeType& seerShape,
+           const IMapperType& iMapper,
            const SolidIdType& solidId,
-           const ShellIdType& shellId)
+           const ShellIdType& shellId,
+           const WireIdType& wireId)
       : ::xml_schema::Type (),
         base_ (base, this),
         picks_ (picks, this),
         seerShape_ (seerShape, this),
+        iMapper_ (iMapper, this),
         solidId_ (solidId, this),
-        shellId_ (shellId, this)
+        shellId_ (shellId, this),
+        wireId_ (wireId, this)
       {
       }
 
@@ -220,14 +281,18 @@ namespace prj
       Sew (::std::unique_ptr< BaseType > base,
            ::std::unique_ptr< PicksType > picks,
            ::std::unique_ptr< SeerShapeType > seerShape,
+           ::std::unique_ptr< IMapperType > iMapper,
            const SolidIdType& solidId,
-           const ShellIdType& shellId)
+           const ShellIdType& shellId,
+           const WireIdType& wireId)
       : ::xml_schema::Type (),
         base_ (std::move (base), this),
         picks_ (std::move (picks), this),
         seerShape_ (std::move (seerShape), this),
+        iMapper_ (std::move (iMapper), this),
         solidId_ (solidId, this),
-        shellId_ (shellId, this)
+        shellId_ (shellId, this),
+        wireId_ (wireId, this)
       {
       }
 
@@ -239,8 +304,10 @@ namespace prj
         base_ (x.base_, f, this),
         picks_ (x.picks_, f, this),
         seerShape_ (x.seerShape_, f, this),
+        iMapper_ (x.iMapper_, f, this),
         solidId_ (x.solidId_, f, this),
-        shellId_ (x.shellId_, f, this)
+        shellId_ (x.shellId_, f, this),
+        wireId_ (x.wireId_, f, this)
       {
       }
 
@@ -252,8 +319,10 @@ namespace prj
         base_ (this),
         picks_ (this),
         seerShape_ (this),
+        iMapper_ (this),
         solidId_ (this),
-        shellId_ (this)
+        shellId_ (this),
+        wireId_ (this)
       {
         if ((f & ::xml_schema::Flags::base) == 0)
         {
@@ -314,6 +383,20 @@ namespace prj
             }
           }
 
+          // iMapper
+          //
+          if (n.name () == "iMapper" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< IMapperType > r (
+              IMapperTraits::create (i, f, this));
+
+            if (!iMapper_.present ())
+            {
+              this->iMapper_.set (::std::move (r));
+              continue;
+            }
+          }
+
           // solidId
           //
           if (n.name () == "solidId" && n.namespace_ ().empty ())
@@ -342,6 +425,20 @@ namespace prj
             }
           }
 
+          // wireId
+          //
+          if (n.name () == "wireId" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< WireIdType > r (
+              WireIdTraits::create (i, f, this));
+
+            if (!wireId_.present ())
+            {
+              this->wireId_.set (::std::move (r));
+              continue;
+            }
+          }
+
           break;
         }
 
@@ -366,6 +463,13 @@ namespace prj
             "");
         }
 
+        if (!iMapper_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "iMapper",
+            "");
+        }
+
         if (!solidId_.present ())
         {
           throw ::xsd::cxx::tree::expected_element< char > (
@@ -377,6 +481,13 @@ namespace prj
         {
           throw ::xsd::cxx::tree::expected_element< char > (
             "shellId",
+            "");
+        }
+
+        if (!wireId_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "wireId",
             "");
         }
       }
@@ -397,8 +508,10 @@ namespace prj
           this->base_ = x.base_;
           this->picks_ = x.picks_;
           this->seerShape_ = x.seerShape_;
+          this->iMapper_ = x.iMapper_;
           this->solidId_ = x.solidId_;
           this->shellId_ = x.shellId_;
+          this->wireId_ = x.wireId_;
         }
 
         return *this;
@@ -739,6 +852,17 @@ namespace prj
           s << i.seerShape ();
         }
 
+        // iMapper
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "iMapper",
+              e));
+
+          s << i.iMapper ();
+        }
+
         // solidId
         //
         {
@@ -759,6 +883,17 @@ namespace prj
               e));
 
           s << i.shellId ();
+        }
+
+        // wireId
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "wireId",
+              e));
+
+          s << i.wireId ();
         }
       }
 

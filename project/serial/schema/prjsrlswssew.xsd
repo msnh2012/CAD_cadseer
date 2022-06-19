@@ -7,14 +7,17 @@
   <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptbase.xsd"/>
   <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptparameter.xsd"/>
   <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptseershape.xsd"/>
+  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptintersectionmapping.xsd"/>
 
 <xs:complexType name="Sew">
   <xs:sequence>
     <xs:element name="base" type="spt:Base"/>
     <xs:element name="picks" type="spt:Parameter"/>
     <xs:element name="seerShape" type="spt:SeerShape"/>
+    <xs:element name="iMapper" type="spt:IntersectionMapper"/>
     <xs:element name="solidId" type="xs:string" default="00000000-0000-0000-0000-000000000000"/>
     <xs:element name="shellId" type="xs:string" default="00000000-0000-0000-0000-000000000000"/>
+    <xs:element name="wireId" type="xs:string" default="00000000-0000-0000-0000-000000000000"/>
   </xs:sequence>
 </xs:complexType>
 

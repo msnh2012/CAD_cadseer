@@ -713,6 +713,9 @@ void Feature::updateModel(const UpdatePayload &pIn)
     if (!extruder.IsDone())
       throw std::runtime_error("Extrusion operation failed");
     
+    ShapeCheck check(extruder.Shape());
+    if (!check.isValid()) throw std::runtime_error("shape check failed");
+    
     stow->sShape.setOCCTShape(extruder.Shape(), getId());
     
     for (const auto &u : wareHouse.units)

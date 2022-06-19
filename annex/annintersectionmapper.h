@@ -39,8 +39,8 @@ namespace ann
   public:
     IntersectionMapper();
     IntersectionMapper(const IntersectionMapper&) = delete;
-    virtual ~IntersectionMapper() override;
-    virtual Type getType(){return Type::IntersectionMapper;}
+    ~IntersectionMapper() override;
+    Type getType() override {return Type::IntersectionMapper;}
     
     prj::srl::spt::IntersectionMapper serialOut(); //serial rename
     void serialIn(const prj::srl::spt::IntersectionMapper&); //serial rename

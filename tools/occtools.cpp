@@ -58,6 +58,7 @@
 #include <ShapeAnalysis_FreeBoundsProperties.hxx>
 #include <ShapeFix.hxx>
 #include <ShapeFix_ShapeTolerance.hxx>
+#include <ShapeFix_Face.hxx>
 
 #include "tools/occtools.h"
 
@@ -1021,7 +1022,12 @@ TopoDS_Face occt::buildFace(WireVector &wv)
     if (fm.Error() != BRepBuilderAPI_FaceDone)
       return TopoDS_Face();
   }
-  return fm;
+  
+  //really difficult to correctly order and orient edges to create a valid
+  //wire for a face. Going to try the easy way here with shapefix.
+  ShapeFix_Face fixer(fm);
+  fixer.Perform();
+  return fixer.Face();
 }
 
 boost::optional<TopoDS_Solid> occt::buildSolid(const TopoDS_Shape &shapeIn)

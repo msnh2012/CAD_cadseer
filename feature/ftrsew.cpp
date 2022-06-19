@@ -23,6 +23,8 @@
 #include <BRepClass3d.hxx>
 #include <BRepBuilderAPI_Sewing.hxx>
 #include <BRep_Tool.hxx>
+#include <BOPAlgo_Builder.hxx> //used for sewing edges
+#include <BRep_Builder.hxx>
 
 #include <osg/Switch>
 
@@ -33,6 +35,7 @@
 #include "parameter/prmconstants.h"
 #include "parameter/prmparameter.h"
 #include "annex/annseershape.h"
+#include "annex/annintersectionmapper.h"
 #include "project/serial/generated/prjsrlswssew.h"
 #include "feature/ftrshapecheck.h"
 #include "feature/ftrupdatepayload.h"
@@ -49,8 +52,10 @@ struct Feature::Stow
   Feature &feature;
   prm::Parameter picks{prm::Names::Picks, ftr::Picks(), prm::Tags::Picks};
   ann::SeerShape sShape;
+  ann::IntersectionMapper iMapper; //TODO add to serial
   uuid solidId{gu::createRandomId()};
   uuid shellId{gu::createRandomId()};
+  uuid wireId{gu::createRandomId()}; //TODO add to serial
   
   Stow() = delete;
   Stow(Feature &fIn)
@@ -60,6 +65,7 @@ struct Feature::Stow
     feature.parameters.push_back(&picks);
     
     feature.annexes.insert(std::make_pair(ann::Type::SeerShape, &sShape));
+    feature.annexes.insert(std::make_pair(ann::Type::IntersectionMapper, &iMapper));
   }
   
   void assignSolidShell()
@@ -130,79 +136,14 @@ struct Feature::Stow
         goEvolve(builder.ModifiedSubShape(ts));
     }
   }
-};
-
-Feature::Feature()
-: Base()
-, stow(std::make_unique<Stow>(*this))
-{
-  name = QObject::tr("Sew");
-  mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
-}
-
-Feature::~Feature() = default;
-
-void Feature::updateModel(const UpdatePayload &payloadIn)
-{
-  setFailure();
-  lastUpdateLog.clear();
-  stow->sShape.reset();
-  try
+  
+  void goSewFaces(const occt::ShapeVector &faces, const std::vector<tls::Resolver> &resolvers)
   {
-    if (isSkipped())
-    {
-      setSuccess();
-      throw std::runtime_error("feature is skipped");
-    }
-    
-    const auto &picks = stow->picks.getPicks();
-    
-    tls::Resolver pr(payloadIn);
-    std::vector<std::reference_wrapper<const ann::SeerShape>> seerShapes;
-    occt::ShapeVector shapes;
-    for (const auto &p : picks)
-    {
-      if (!pr.resolve(p))
-      {
-        //just going to warn about resolution failure.
-        std::ostringstream s; s << "Warning: Pick resolution failure" << std::endl;
-        lastUpdateLog += s.str();
-        continue;
-      }
-      const ann::SeerShape *ss = pr.getSeerShape();
-      if (!ss)
-      {
-        std::ostringstream s; s << "Warning: No seershape from resolution" << std::endl;
-        lastUpdateLog += s.str();
-        continue;
-      }
-      occt::ShapeVector sv = pr.getShapes();
-      occt::ShapeVector cleaned;
-      //make sure we only have shells and faces.
-      for (auto s : sv)
-      {
-        if (s.ShapeType() == TopAbs_COMPOUND)
-          s = occt::getFirstNonCompound(s);
-        if (s.ShapeType() == TopAbs_SHELL || s.ShapeType() == TopAbs_FACE)
-          cleaned.push_back(s);
-      }
-      if (cleaned.empty())
-      {
-        std::ostringstream s; s << "Warning: No occt shapes from resolution" << std::endl;
-        lastUpdateLog += s.str();
-        continue;
-      }
-      seerShapes.push_back(*ss);
-      shapes.insert(shapes.end(), cleaned.begin(), cleaned.end());
-    }
-    if (shapes.empty())
-      throw std::runtime_error("No shapes to sew");
-    
     BRepBuilderAPI_Sewing builder(0.000001, true, true, true, false);
-    for (const auto &s : shapes)
+    for (const auto &s : faces)
       builder.Add(s);
     builder.Perform(); //Perform Sewing
-  //   builder.Dump();
+    //   builder.Dump();
     
     //sewing function is very liberal. Meaning that it really doesn't care if
     //faces are connected or not. It will put a dozen disconnected faces
@@ -236,15 +177,118 @@ void Feature::updateModel(const UpdatePayload &payloadIn)
     if (!check.isValid())
       throw std::runtime_error("shapeCheck failed");
     
-    stow->sShape.setOCCTShape(out, getId());
-    for (const auto &ss : seerShapes)
-      stow->sShape.shapeMatch(ss);
-//     stow->sShape.uniqueTypeMatch(ss);
-    stow->assignSolidShell();
-    for (const auto &ss : seerShapes)
-      stow->sewModifiedMatch(builder, ss);
-    for (const auto &ss : seerShapes)
-      stow->sShape.outerWireMatch(ss);
+    sShape.setOCCTShape(out, feature.getId());
+    for (const auto &r : resolvers)
+      sShape.shapeMatch(*r.getSeerShape());
+    //     stow->sShape.uniqueTypeMatch(ss);
+    assignSolidShell();
+    for (const auto &r : resolvers)
+      sewModifiedMatch(builder, *r.getSeerShape());
+  }
+  
+  void goSewEdges(const occt::ShapeVector &edges, const UpdatePayload &plIn)
+  {
+    BOPAlgo_Builder bop;
+    for (const auto &e : edges) bop.AddArgument(e);
+    bop.Perform();
+    TopoDS_Shape bopShape = bop.Shape();
+    if (bopShape.IsNull()) throw std::runtime_error("Null bop shape");
+    if (bopShape.ShapeType() != TopAbs_COMPOUND) throw std::runtime_error("Unexpected bop shape type");
+    occt::EdgeVector outEdges = occt::ShapeVectorCast(TopoDS::Compound(bopShape));
+    
+    BRep_Builder bldr;
+    TopoDS_Wire result;
+    bldr.MakeWire(result);
+    for (const auto &e : outEdges) bldr.Add(result, e);
+    
+    ShapeCheck check(result);
+    if (!check.isValid()) throw std::runtime_error("shape check failed");
+    
+    sShape.setOCCTShape(result, feature.getId());
+    iMapper.go(plIn, bop, sShape);
+    
+    //assign the wire id.
+    occt::ShapeVector wires = sShape.useGetChildrenOfType(sShape.getRootOCCTShape(), TopAbs_WIRE);
+    if (wires.empty()) throw std::runtime_error("No wire in result");
+    if (wires.size() > 1)
+    {
+      std::ostringstream s; s << "Warning: more than 1 wire" << std::endl;
+      feature.lastUpdateLog += s.str();
+    }
+    sShape.updateId(wires.front(), wireId);
+    if (!sShape.hasEvolveRecordOut(wireId))
+      sShape.insertEvolve(gu::createNilId(), wireId);
+  }
+};
+
+Feature::Feature()
+: Base()
+, stow(std::make_unique<Stow>(*this))
+{
+  name = QObject::tr("Sew");
+  mainSwitch->setUserValue<int>(gu::featureTypeAttributeTitle, static_cast<int>(getType()));
+}
+
+Feature::~Feature() = default;
+
+void Feature::updateModel(const UpdatePayload &payloadIn)
+{
+  setFailure();
+  lastUpdateLog.clear();
+  stow->sShape.reset();
+  try
+  {
+    if (isSkipped())
+    {
+      setSuccess();
+      throw std::runtime_error("feature is skipped");
+    }
+    
+    const auto &picks = stow->picks.getPicks();
+    std::vector<tls::Resolver> resolvers;
+    occt::ShapeVector faceShapes;
+    occt::ShapeVector edgeShapes;
+    for (const auto &p : picks)
+    {
+      auto &r = resolvers.emplace_back(payloadIn);
+      if (!r.resolve(p) || !r.getSeerShape() || r.getSeerShape()->isNull())
+      {
+        std::ostringstream s; s << "Warning: Pick resolution failure" << std::endl;
+        lastUpdateLog += s.str();
+        resolvers.pop_back();
+        continue;
+      }
+      occt::ShapeVector temp;
+      if (slc::isObjectType(p.selectionType))
+        temp = r.getSeerShape()->useGetNonCompoundChildren();
+      else
+        temp = r.getShapes();
+
+      //filter out any unsupported shapes.
+      for (auto s : temp)
+      {
+        if (s.ShapeType() == TopAbs_SHELL || s.ShapeType() == TopAbs_FACE)
+          faceShapes.push_back(s);
+        else if (s.ShapeType() == TopAbs_WIRE || s.ShapeType() == TopAbs_EDGE)
+          edgeShapes.push_back(s);
+      }
+    }
+    
+    if (!faceShapes.empty() && edgeShapes.empty())
+    {
+      stow->goSewFaces(faceShapes, resolvers);
+    }
+    else if (faceShapes.empty() && !edgeShapes.empty())
+    {
+      stow->goSewEdges(edgeShapes, payloadIn);
+      for (const auto &it : resolvers)
+        stow->sShape.shapeMatch(*it.getSeerShape());
+    }
+    else
+      throw std::runtime_error("Empty or incompatible shapes");
+    
+    for (const auto &r : resolvers)
+      stow->sShape.outerWireMatch(*r.getSeerShape());
     stow->sShape.derivedMatch();
     stow->sShape.dumpNils("sew feature");
     stow->sShape.dumpDuplicates("sew feature");
@@ -281,8 +325,10 @@ void Feature::serialWrite(const boost::filesystem::path &dIn)
     Base::serialOut()
     , stow->picks.serialOut()
     , stow->sShape.serialOut()
+    , stow->iMapper.serialOut()
     , gu::idToString(stow->solidId)
     , gu::idToString(stow->shellId)
+    , gu::idToString(stow->wireId)
   );
 
   xml_schema::NamespaceInfomap infoMap;
@@ -295,6 +341,8 @@ void Feature::serialRead(const prj::srl::sws::Sew &si)
   Base::serialIn(si.base());
   stow->picks.serialIn(si.picks());
   stow->sShape.serialIn(si.seerShape());
+  stow->iMapper.serialIn(si.iMapper());
   stow->solidId = gu::stringToId(si.solidId());
   stow->shellId = gu::stringToId(si.shellId());
+  stow->wireId = gu::stringToId(si.wireId());
 }
