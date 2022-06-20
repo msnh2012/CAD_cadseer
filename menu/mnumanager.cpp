@@ -1730,9 +1730,9 @@ void Manager::Stow::setAllCommands()
     91
     , ":/resources/images/constructionSew.svg"
     , QObject::tr("Sew").toStdString() //icon text
-    , QObject::tr("Sew Surfaces").toStdString() //status text
-    , QObject::tr("Sew Surfaces And Shells").toStdString() //whats this text
-    , QObject::tr("Sew Surfaces").toStdString() // toolTipText
+    , QObject::tr("Sew Surfaces Or Edges").toStdString() //status text
+    , QObject::tr("Sew Surfaces And Shells Or Edges And Wires").toStdString() //whats this text
+    , QObject::tr("Sew Surfaces Or Edges").toStdString() // toolTipText
     , msg::Request | msg::Construct | msg::Sew
   );
   sc

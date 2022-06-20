@@ -25,6 +25,7 @@
 #include <BRep_Tool.hxx>
 #include <BOPAlgo_Builder.hxx> //used for sewing edges
 #include <BRep_Builder.hxx>
+#include <ShapeFix_Wire.hxx>
 
 #include <osg/Switch>
 
@@ -196,10 +197,16 @@ struct Feature::Stow
     if (bopShape.ShapeType() != TopAbs_COMPOUND) throw std::runtime_error("Unexpected bop shape type");
     occt::EdgeVector outEdges = occt::ShapeVectorCast(TopoDS::Compound(bopShape));
     
+    //build the wire.
     BRep_Builder bldr;
     TopoDS_Wire result;
     bldr.MakeWire(result);
     for (const auto &e : outEdges) bldr.Add(result, e);
+    
+    //fix wire order and orientation
+    ShapeFix_Wire fixer(result, TopoDS_Face(), Precision::Confusion());
+    fixer.Perform();
+    result = fixer.Wire();
     
     ShapeCheck check(result);
     if (!check.isValid()) throw std::runtime_error("shape check failed");
