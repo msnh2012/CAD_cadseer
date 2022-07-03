@@ -568,6 +568,7 @@ void Visual::update()
   };
   
   data->cMap.setAllUnreferenced();
+  double constraintScale = 5000.0;
   for (const auto &c : solver.getConstraints())
   {
     auto record = data->cMap.getRecord(c.h);
@@ -601,7 +602,7 @@ void Visual::update()
         point1 += proj * 0.5;
       point1.z() = 0.002;
       p->setPosition(point1);
-      double s = lastSize / 500.0;
+      double s = lastSize / constraintScale;
       p->setScale(osg::Vec3d(s, s, s));
     }
     if
@@ -622,7 +623,7 @@ void Visual::update()
       osg::Vec3d point1 = convert(solver.findConstraint(record.get().handle).get().ptA);
       point1.z() = 0.002;
       p->setPosition(point1);
-      double s = lastSize / 500.0;
+      double s = lastSize / constraintScale;
       p->setScale(osg::Vec3d(s, s, s));
     }
     if (c.type == SLVS_C_ARC_LINE_TANGENT || c.type == SLVS_C_CURVE_CURVE_TANGENT || c.type == SLVS_C_CUBIC_LINE_TANGENT)
@@ -658,7 +659,7 @@ void Visual::update()
       
       placement.get().z() = 0.002;
       p->setPosition(placement.get());
-      double s = lastSize / 500.0;
+      double s = lastSize / constraintScale;
       p->setScale(osg::Vec3d(s, s, s));
     }
     if (c.type == SLVS_C_PT_PT_DISTANCE || c.type == SLVS_C_PT_LINE_DISTANCE)
@@ -682,7 +683,7 @@ void Visual::update()
       auto oc = solver.findConstraint(record.get().handle);
       assert(oc);
       
-      double s = lastSize / 1000.0;
+      double s = lastSize / constraintScale;
       osg::Vec3d scale(s, s, s);
       
       osg::Vec3d np0 = parameterPoint(oc.get().entityA, 0.9);
@@ -716,7 +717,7 @@ void Visual::update()
       auto oc = solver.findConstraint(record.get().handle);
       assert(oc);
       
-      double s = lastSize / 1000.0;
+      double s = lastSize / constraintScale;
       osg::Vec3d scale(s, s, s);
       
       osg::Vec3d np0 = convert(oc.get().ptA);
@@ -763,7 +764,7 @@ void Visual::update()
       auto oc = solver.findConstraint(record.get().handle);
       assert(oc);
       
-      double s = lastSize / 1000.0;
+      double s = lastSize / constraintScale;
       osg::Vec3d scale(s, s, s);
       t0->setScale(scale);
       t1->setScale(scale);
@@ -806,7 +807,7 @@ void Visual::update()
       auto oc = solver.findConstraint(record.get().handle);
       assert(oc);
       
-      double s = lastSize / 1000.0;
+      double s = lastSize / constraintScale;
       osg::Vec3d scale(s, s, s);
       
       osg::Vec3d np0 = parameterPoint(oc.get().entityA, 0.8);
