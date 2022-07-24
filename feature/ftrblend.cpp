@@ -621,6 +621,7 @@ void Feature::updateModel(const UpdatePayload &payloadIn)
     }
     else if (stow->blendType.getInt() == 1) //variable
     {
+      TopTools_MapOfShape needed, have, intersection;
       for (const auto &pick : stow->variable.contourPicks.getPicks())
       {
         resolver.resolve(pick);
@@ -634,6 +635,10 @@ void Feature::updateModel(const UpdatePayload &payloadIn)
           assert(!tempShape.IsNull());
           assert(tempShape.ShapeType() == TopAbs_EDGE); //TODO faces someday.
           bMaker.Add(TopoDS::Edge(tempShape));
+          int index = bMaker.Contains(TopoDS::Edge(tempShape));
+          if (index < 1) throw std::runtime_error("invalid contour index for added edge");
+          needed.Add(bMaker.FirstVertex(index));
+          needed.Add(bMaker.LastVertex(index));
         }
       }
       for (auto &e : stow->variable.entries)
@@ -664,6 +669,7 @@ void Feature::updateModel(const UpdatePayload &payloadIn)
             {
               if (!(bMaker.RelativeAbscissa(ci, v) < 0.0)) //tests if vertex is on contour
               {
+                have.Add(v);
                 bMaker.SetRadius(e.radius.getDouble(), ci, v);
                 if (!labelDone)
                 {
@@ -703,6 +709,9 @@ void Feature::updateModel(const UpdatePayload &payloadIn)
         }
         //TODO deal with edges.
       }
+      intersection.Intersection(needed, have);
+      if (needed.Size() != intersection.Size())
+        throw std::runtime_error("Spine end doesn't have radius set");
     }
     bMaker.Compute();
     if (!bMaker.IsDone())
