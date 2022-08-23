@@ -201,6 +201,7 @@ feature_sources = ['feature/ftrinputtype.cpp'
   , 'feature/ftrboolean.cpp'
   , 'feature/ftrundercut.cpp'
   , 'feature/ftrmutate.cpp'
+  , 'feature/ftrlawspine.cpp'
   ]
   
 parameter_sources = ['parameter/prmparameter.cpp']
@@ -325,6 +326,7 @@ project_serial_sources = [
   , 'project/serial/generated/prjsrlprsmprism.cpp'
   , 'project/serial/generated/prjsrlundundercut.cpp'
   , 'project/serial/generated/prjsrlmttsmutate.cpp'
+  , 'project/serial/generated/prjsrllwsplawspine.cpp'
 ]
   
 application_sources = ['application/appmainwindow.cpp'
@@ -401,6 +403,7 @@ command_sources = ['command/cmdmanager.cpp'
   , 'command/cmdfill.cpp'
   , 'command/cmdundercut.cpp'
   , 'command/cmdmutate.cpp'
+  , 'command/cmdlawspine.cpp'
 ]
 
 commandview_sources = [
@@ -448,9 +451,11 @@ commandview_sources = [
   , 'commandview/cmvundercut.cpp'
   , 'commandview/cmvtablelist.cpp'
   , 'commandview/cmvmutate.cpp'
+  , 'commandview/cmvlawspine.cpp'
+  , 'commandview/cmvdraglist.cpp'
 ]
   
-law_sources = ['law/lwfcue.cpp']
+law_sources = ['law/lwfcue.cpp', 'law/lwfvessel.cpp', 'law/lwfadapter.cpp']
 
 library_sources = ['library/lbrcirclebuilder.cpp'
   , 'library/lbrcircleprojector.cpp'
@@ -469,6 +474,7 @@ library_sources = ['library/lbrcirclebuilder.cpp'
   , 'library/lbrsketchlineardimension.cpp'
   , 'library/lbrangulardimension.cpp'
   , 'library/lbrcirclebuilderlod.cpp'
+  , 'library/lbrplabelgrid.cpp'
   , 'library/lbrdiameterdimension.cpp']
   
 viewer_sources = ['viewer/vwrwidget.cpp'
@@ -597,6 +603,8 @@ cadseer_moc_hdrs = ['viewer/vwrwidget.h'
   , 'commandview/cmvundercut.h'
   , 'commandview/cmvmutate.h'
   , 'commandview/cmvtablelist.h'
+  , 'commandview/cmvlawspine.h'
+  , 'commandview/cmvdraglist.h'
 ]
   
 cadseer_resources = ['resources.qrc']

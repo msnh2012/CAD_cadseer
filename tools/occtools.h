@@ -228,6 +228,24 @@ namespace occt
    */
   gp_Pnt parameterToPoint(const TopoDS_Face &fIn, double u, double v);
   
+  /*! @brief convert edge parameter to parameter in unit range
+   * @param[in] eIn edge
+   * @param[in] u parameter
+   * @return parameter in range [0,1]
+   * @details normalize parameter to unit range.
+   * result is clamped to valid range of edge.
+   */
+  double normalize(const TopoDS_Edge &eIn, double u);
+  
+  /*! @brief convert unit parameter to current edge parameter.
+   * @param[in] eIn edge
+   * @param[in] u parameter
+   * @return parameter in edge range
+   * @details convert unit parameter to current edge parameter.
+   * result is clamped to valid range of edge.
+   */
+  double deNormalize(const TopoDS_Edge &eIn, double u);
+  
   /*! @brief Copy shape at distance.
    * 
    * @param sIn shape to copy

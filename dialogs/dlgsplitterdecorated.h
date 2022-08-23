@@ -24,6 +24,17 @@
 
 namespace dlg
 {
+  /*! @class SplitterDecorated
+   * @brief A QSplitter with a visual cue to user.
+   * @details A QSplitter with a visual cue to user.
+   * Heads up! QSplitter incorporates the orientation into
+   * reading and writing of settings. So what can happen:
+   * Programmer forgets to set the orientation of the splitter
+   * before first run. Now the settings have the orientation
+   * and when the programmer sets the orientation it appears
+   * to have no affect as the settings read override the
+   * the orientation setting. Very confusing.
+   */
 class SplitterDecorated : public QSplitter
 {
   Q_OBJECT

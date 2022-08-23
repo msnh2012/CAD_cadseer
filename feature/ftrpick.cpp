@@ -27,6 +27,7 @@
 #include <BRepExtrema_DistShapeShape.hxx>
 
 #include "tools/idtools.h"
+#include "tools/occtools.h"
 #include "globalutilities.h"
 #include "project/serial/generated/prjsrlsptpick.h"
 #include "feature/ftrpick.h"
@@ -176,11 +177,7 @@ double Pick::parameter(const TopoDS_Edge &edgeIn, const osg::Vec3d &pointIn)
   
   double closestParameter;
   dist.ParOnEdgeS1(1, closestParameter);
-  
-  double firstP, lastP;
-  BRep_Tool::Curve(edgeIn, firstP, lastP);
-  //normalize parameter to 0 to 1.
-  return (closestParameter - firstP) / (lastP - firstP);
+  return occt::normalize(edgeIn, closestParameter);
 }
 
 /*! Calculate closest parameters
@@ -220,7 +217,7 @@ osg::Vec3d Pick::point(const TopoDS_Edge &edgeIn, double uIn)
 {
   double firstP, lastP;
   const Handle_Geom_Curve &curve = BRep_Tool::Curve(edgeIn, firstP, lastP);
-  double parameterOut = uIn * (lastP - firstP) + firstP;
+  double parameterOut = occt::deNormalize(edgeIn, uIn);
   gp_Pnt occPoint;
   curve->D0(parameterOut, occPoint);
   return gu::toOsg(occPoint);

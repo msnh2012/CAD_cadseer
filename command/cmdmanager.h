@@ -119,6 +119,7 @@ namespace cmd
     void constructPrismDispatched(const msg::Message&);
     void constructUnderCutDispatched(const msg::Message&);
     void constructMutateDispatched(const msg::Message&);
+    void constructLawSpineDispatched(const msg::Message&);
     void revisionDispatched(const msg::Message&);
     void importDispatched(const msg::Message&);
     void exportDispatched(const msg::Message&);

@@ -129,6 +129,20 @@ void PLabel::setShowName(bool freshValue)
   refresh();
 }
 
+void PLabel::setAuto(bool freshMode)
+{
+  if (freshMode)
+  {
+    autoTransform->setAutoRotateMode(osg::AutoTransform::ROTATE_TO_SCREEN);
+    autoTransform->setAutoScaleToScreen(true);
+  }
+  else
+  {
+    autoTransform->setAutoRotateMode(osg::AutoTransform::NO_ROTATION);
+    autoTransform->setAutoScaleToScreen(false);
+  }
+}
+
 void PLabel::refresh()
 {
   constantHasChanged();

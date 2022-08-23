@@ -218,6 +218,26 @@ namespace slc
     );
   }
   
+  inline bool isEndPointType(const Type typeIn)
+  {
+    return
+    (
+      (typeIn == Type::StartPoint) ||
+      (typeIn == Type::EndPoint)
+    );
+  }
+  
+  inline bool isParameterPointType(const Type typeIn)
+  {
+    return
+    (
+      (typeIn == Type::MidPoint) ||
+      (typeIn == Type::CenterPoint) ||
+      (typeIn == Type::QuadrantPoint) ||
+      (typeIn == Type::NearestPoint)
+    );
+  }
+  
   inline bool isObjectType(const Type typeIn)
   {
     return

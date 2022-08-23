@@ -796,6 +796,30 @@ gp_Pnt occt::parameterToPoint(const TopoDS_Face &fIn, double u, double v)
   return sa.Value(u, v).Transformed(sa.Trsf());
 }
 
+double occt::normalize(const TopoDS_Edge &eIn, double u)
+{
+  double p0, p1;
+  BRep_Tool::Range(eIn, p0, p1);
+  double range = p1 - p0;
+  assert(range > Precision::PConfusion());
+  if (range <= Precision::PConfusion()) return 0.0;
+  u = std::max(p0, u);
+  u = std::min(p1, u);
+  return (u - p0) / (p1 - p0);
+}
+
+double occt::deNormalize(const TopoDS_Edge &eIn, double u)
+{
+  u = std::max(0.0, u);
+  u = std::min(1.0, u);
+  double p0, p1;
+  BRep_Tool::Range(eIn, p0, p1);
+  double range = p1 - p0;
+  assert(range > Precision::PConfusion());
+  if (range <= Precision::PConfusion()) return 0.0;
+  return (p1 - p0) * u + p0;
+}
+
 BoundingBox::BoundingBox(){}
 
 BoundingBox::BoundingBox(const TopoDS_Shape &sIn) : sv({sIn}) {}

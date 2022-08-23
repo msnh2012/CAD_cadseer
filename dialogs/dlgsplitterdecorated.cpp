@@ -74,35 +74,35 @@ QSplitterHandle* SplitterDecorated::createHandle()
 
   if (orientation == Qt::Horizontal)
   {
-      for (int i=0;i<grips;++i)
-      {
-	  QFrame* line = new QFrame(out);
-	  line->setMinimumSize(gripWidth, gripLength);
-	  line->setMaximumSize(gripWidth, gripLength);
-	  line->setFrameShape(QFrame::VLine);
-	  line->setFrameShadow(QFrame::Sunken);
-	  layout->addWidget(line);
-      }
+    for (int i=0;i<grips;++i)
+    {
+      QFrame* line = new QFrame(out);
+      line->setMinimumSize(gripWidth, gripLength);
+      line->setMaximumSize(gripWidth, gripLength);
+      line->setFrameShape(QFrame::VLine);
+      line->setFrameShadow(QFrame::Sunken);
+      layout->addWidget(line);
+    }
   }
   else
   {
-      //this will center the vertical grip
-      //add a horizontal spacer
-      layout->addStretch();
-      //create the vertical grip
-      QVBoxLayout* vbox = new QVBoxLayout;
-      for (int i=0;i<grips;++i)
-      {
-	  QFrame* line = new QFrame(out);
-	  line->setMinimumSize(gripLength, gripWidth);
-	  line->setMaximumSize(gripLength, gripWidth);
-	  line->setFrameShape(QFrame::HLine);
-	  line->setFrameShadow(QFrame::Sunken);
-	  vbox->addWidget(line);
-      }
-      layout->addLayout(vbox);
-      //add another horizontal spacer
-      layout->addStretch();
+    //this will center the vertical grip
+    //add a horizontal spacer
+    layout->addStretch();
+    //create the vertical grip
+    QVBoxLayout* vbox = new QVBoxLayout;
+    for (int i=0;i<grips;++i)
+    {
+      QFrame* line = new QFrame(out);
+      line->setMinimumSize(gripLength, gripWidth);
+      line->setMaximumSize(gripLength, gripWidth);
+      line->setFrameShape(QFrame::HLine);
+      line->setFrameShadow(QFrame::Sunken);
+      vbox->addWidget(line);
+    }
+    layout->addLayout(vbox);
+    //add another horizontal spacer
+    layout->addStretch();
   }
   
   return out;

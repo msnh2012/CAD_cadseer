@@ -45,6 +45,7 @@ namespace lbr
     void setTextColor(); //!< linked is green and constant is blue.
     
     void setShowName(bool); //!< turns the display of the parameter name on or off.
+    void setAuto(bool); //!< turns on/off autoScale and autoRotate. defaults to on.
     void refresh(); //!< forces sync with parameter.
     
     prj::srl::spt::PLabel serialOut() const; //serial rename

@@ -363,6 +363,7 @@ void Manager::Stow::setAllMenu()
         constructionCurves.commandIds().push_back(41);
         constructionCurves.commandIds().push_back(42);
         constructionCurves.commandIds().push_back(96);
+        constructionCurves.commandIds().push_back(105);
         constructionBase.subMenus().push_back(constructionCurves);
       }
       {
@@ -652,6 +653,7 @@ void Manager::Stow::setAllToolbars()
       entry.commandIds().push_back(41);
       entry.commandIds().push_back(42);
       entry.commandIds().push_back(96);
+      entry.commandIds().push_back(105);
       toolbar.entries().push_back(entry);
     }
     {
@@ -1864,5 +1866,15 @@ void Manager::Stow::setAllCommands()
     , QObject::tr("Creates A Section Feature").toStdString() //whats this text
     , QObject::tr("Create A Section").toStdString() // toolTipText
     , msg::Request | msg::Construct | msg::Section
+  );
+  sc
+  (
+    105
+    , ":/resources/images/constructionLawSpine.svg"
+    , QObject::tr("Law Spine").toStdString() //icon text
+    , QObject::tr("Create A Law Spine").toStdString() //status text
+    , QObject::tr("Creates A Law Spine Feature").toStdString() //whats this text
+    , QObject::tr("Create A Law Spine").toStdString() // toolTipText
+    , msg::Request | msg::Construct | msg::LawSpine
   );
 }

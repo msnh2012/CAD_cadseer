@@ -178,6 +178,7 @@ namespace msg
     static const Mask UnderCut(Mask().set(                     134));//!< command
     static const Mask Mutate(Mask().set(                       135));//!< command
     static const Mask Section(Mask().set(                      136));//!< command
+    static const Mask LawSpine(Mask().set(                     137));//!< command
 
     struct Stow; // forward declare see message/variant.h
     struct Message

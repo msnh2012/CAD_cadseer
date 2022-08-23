@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xs:schema
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  xmlns:spt="http://www.cadseer.com/prj/srl/spt"
+  xmlns:lwsp="http://www.cadseer.com/prj/srl/lwsp"
+  targetNamespace="http://www.cadseer.com/prj/srl/lwsp"
+>
+  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptparameter.xsd"/>
+  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptoverlay.xsd"/>
+  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptseershape.xsd"/>
+  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptbase.xsd"/>
+  
+  <xs:complexType name="GraphNode">
+    <xs:sequence>
+      <xs:element name="parameter" type="spt:Parameter"/>
+      <xs:element name="pLabel" type="spt:PLabel" minOccurs="0" maxOccurs="1"/>
+      <xs:element name="location" type="spt:Vec3d" minOccurs="0" maxOccurs="1"/>
+    </xs:sequence>
+  </xs:complexType>
+  
+  <xs:complexType name="GraphEdge">
+    <xs:sequence>
+      <xs:element name="source" type="xs:int"/>
+      <xs:element name="target" type="xs:int"/>
+      <xs:element name="mask" type="xs:int"/>
+    </xs:sequence>
+  </xs:complexType>
+  
+  <xs:complexType name="Graph">
+    <xs:sequence>
+      <xs:element name="nodes" type="lwsp:GraphNode" minOccurs="0" maxOccurs="unbounded"/>
+      <xs:element name="edges" type="lwsp:GraphEdge" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+  
+  <xs:complexType name="Vessel">
+    <xs:sequence>
+      <xs:element name="periodic" type="xs:boolean"/>
+      <xs:element name="state" type="xs:int"/>
+      <xs:element name="graph" type="lwsp:Graph"/>
+      <xs:element name="laws" type="xs:int" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+      
+  <xs:complexType name="LawSpine">
+    <xs:sequence>
+      <xs:element name="base" type="spt:Base"/>
+      <xs:element name="seerShape" type="spt:SeerShape"/>
+      <xs:element name="spinePick" type="spt:Parameter"/>
+      <xs:element name="vessel" type="lwsp:Vessel"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:element name="lawspine" type="lwsp:LawSpine"/>
+  
+</xs:schema> 
