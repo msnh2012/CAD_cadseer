@@ -52,6 +52,8 @@ namespace ftr
       inline constexpr std::string_view blendType = "blendType";
       inline constexpr std::string_view contourPicks = "contourPicks";
       inline constexpr std::string_view entryPick = "entryPick";
+      inline constexpr std::string_view lawSpinePick = "lawSpinePick";
+      inline constexpr std::string_view lawEdgePick = "lawEdgePick";
     }
     
     struct Constant

@@ -23,10 +23,12 @@
 #include "application/appmainwindow.h"
 #include "project/prjproject.h"
 #include "selection/slceventhandler.h"
+#include "selection/slcmessage.h"
 #include "annex/annseershape.h"
 #include "message/msgnode.h"
 #include "parameter/prmparameter.h"
 #include "feature/ftrinputtype.h"
+#include "feature/ftrlawspine.h"
 #include "feature/ftrblend.h"
 #include "tools/featuretools.h"
 #include "dialogs/dlgparameter.h"
@@ -113,8 +115,8 @@ void Blend::deactivate()
 
 bool Blend::isValidSelection(const slc::Message &mIn)
 {
-  if (mIn.type != slc::Type::Edge)
-    return false;
+  if (mIn.featureType == ftr::Type::LawSpine) return true;
+  if (mIn.type != slc::Type::Edge) return false;
   
   ftr::Base *f = project->findFeature(mIn.featureId);
   assert(f);
@@ -133,7 +135,8 @@ void Blend::setSelections(const std::vector<slc::Messages> &msgsIn)
   {
     ftr::Pick pick = tls::convertToPick(mIn, *project->findFeature(mIn.featureId), project->getShapeHistory());
     pick.tag = indexTag(tag, index);
-    project->connectInsert(mIn.featureId, feature->getId(), {pick.tag});
+      project->connectInsert(mIn.featureId, feature->getId(), {pick.tag});
+      project->connect(mIn.featureId, feature->getId(), {pick.tag});
     return pick;
   };
   
@@ -153,6 +156,7 @@ void Blend::setSelections(const std::vector<slc::Messages> &msgsIn)
           if (!isValidSelection(m))
             continue;
           currentPicks.push_back(makePick(m, ftr::Blend::InputTags::constant, index));
+          project->connectInsert(m.featureId, feature->getId(), {currentPicks.back().tag});
         }
         feature->getConstant(index).contourPicks.setValue(currentPicks);
       }
@@ -174,6 +178,7 @@ void Blend::setSelections(const std::vector<slc::Messages> &msgsIn)
         if (!isValidSelection(*it2))
           continue;
         contourPicks.push_back(makePick(*it2, ftr::Blend::InputTags::contourPick, std::distance(it->begin(), it2)));
+        project->connectInsert(it2->featureId, feature->getId(), {contourPicks.back().tag});
       }
       variable.contourPicks.setValue(contourPicks);
       
@@ -183,7 +188,29 @@ void Blend::setSelections(const std::vector<slc::Messages> &msgsIn)
       {
         if (it->empty()) //should only have 1 pick for each entry.
           continue;
-        entryIt->entryPick.setValue(makePick(it->front(), ftr::Blend::InputTags::entryPick, std::distance(variable.entries.begin(), entryIt)));
+        auto cp = makePick(it->front(), ftr::Blend::InputTags::entryPick, std::distance(variable.entries.begin(), entryIt));
+        entryIt->entryPick.setValue({cp});
+        project->connectInsert(it->front().featureId, feature->getId(), {cp.tag});
+      }
+      break;
+    }
+    case 2: //law spine
+    {
+      if (msgsIn.size() != 1 || msgsIn.front().size() != 1 || msgsIn.front().front().featureType != ftr::Type::LawSpine) return;
+      auto pick = makePick(msgsIn.front().front(), ftr::Blend::PrmTags::lawSpinePick, 0);
+      feature->getParameter(ftr::Blend::PrmTags::lawSpinePick)->setValue({pick});
+      project->connect(msgsIn.front().front().featureId, feature->getId(), {pick.tag, ftr::InputType::sever});
+      
+      const ftr::LawSpine::Feature *lsf = dynamic_cast<ftr::LawSpine::Feature*>(project->findFeature(msgsIn.front().front().featureId));
+      assert(lsf);
+      const auto &lsp = lsf->getParameter(ftr::LawSpine::Tags::spinePick)->getPicks();
+      auto pl = project->getPayload(lsf->getId()).getFeatures("");
+      if (!lsp.empty() && !pl.empty())
+      {
+        auto pick = lsp.front();
+        pick.tag = indexTag(ftr::Blend::PrmTags::lawEdgePick, 0);
+        feature->getParameter(ftr::Blend::PrmTags::lawEdgePick)->setValue({pick});
+        project->connectInsert(pl.front()->getId(), feature->getId(), {pick.tag});
       }
       break;
     }
@@ -228,16 +255,28 @@ void Blend::go()
       feature = new ftr::Blend::Feature();
       project->addFeature(std::unique_ptr<ftr::Blend::Feature>(feature));
       feature->setColor(project->findFeature(targets.front().featureId)->getColor());
-      auto &constant = feature->addConstant();
+      
+      dlg::Parameter *pDialog = nullptr;
+      if (targets.size() == 1 && targets.front().featureType == ftr::Type::LawSpine)
+        feature->getParameter(ftr::Blend::PrmTags::blendType)->setValue(2);
+      else
+      {
+        auto &constant = feature->addConstant();
+        pDialog = new dlg::Parameter(&constant.radius, feature->getId());
+      }
+      
       setSelections({targets});
       created = true;
       node->sendBlocked(msg::buildHideThreeD(targets.front().featureId));
       node->sendBlocked(msg::buildHideOverlay(targets.front().featureId));
       node->sendBlocked(msg::Request | msg::DAG | msg::View | msg::Update);
-      dlg::Parameter *pDialog = new dlg::Parameter(&constant.radius, feature->getId());
-      pDialog->show();
-      pDialog->raise();
-      pDialog->activateWindow();
+      
+      if (pDialog)
+      {
+        pDialog->show();
+        pDialog->raise();
+        pDialog->activateWindow();
+      }
     }
   }
   

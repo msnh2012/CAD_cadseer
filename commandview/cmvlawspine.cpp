@@ -333,7 +333,7 @@ struct LawSpine::Stow
       if (!spEdge) return std::nullopt;
       if (ss.useGetStartVertex(*spEdge) == ss.findId(shape))
         out.selectionType = slc::Type::StartPoint;
-      if (ss.useGetEndVertex(*spEdge) == ss.findId(shape))
+      else if (ss.useGetEndVertex(*spEdge) == ss.findId(shape))
         out.selectionType = slc::Type::EndPoint;
       else {assert(0); return std::nullopt;} //WTF no vertex on spine shape?
     }

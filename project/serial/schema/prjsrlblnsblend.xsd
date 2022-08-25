@@ -41,6 +41,8 @@
     <xs:element name="base" type="spt:Base"/>
     <xs:element name="filletShape" type="spt:Parameter"/>
     <xs:element name="blendType" type="spt:Parameter"/>
+    <xs:element name="lawSpinePick" type="spt:Parameter"/>
+    <xs:element name="lawEdgePick" type="spt:Parameter"/>
     <xs:element name="seerShape" type="spt:SeerShape"/>
     <xs:element name="constants" type="blns:Constant" minOccurs="0" maxOccurs="unbounded"/>
     <xs:element name="variable" type="blns:Variable" minOccurs="0" maxOccurs="1"/>

@@ -51,6 +51,7 @@ namespace ftr
       
       void initVessel(); //put the vessel in a valid state.
       lwf::Vessel& getVessel(); //Make this an annex?
+      const lwf::Vessel& getVessel() const;
     private:
       static QIcon icon;
       struct Stow;

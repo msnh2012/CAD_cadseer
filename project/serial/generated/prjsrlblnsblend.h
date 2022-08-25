@@ -463,6 +463,40 @@ namespace prj
         void
         blendType (::std::unique_ptr< BlendTypeType > p);
 
+        // lawSpinePick
+        //
+        typedef ::prj::srl::spt::Parameter LawSpinePickType;
+        typedef ::xsd::cxx::tree::traits< LawSpinePickType, char > LawSpinePickTraits;
+
+        const LawSpinePickType&
+        lawSpinePick () const;
+
+        LawSpinePickType&
+        lawSpinePick ();
+
+        void
+        lawSpinePick (const LawSpinePickType& x);
+
+        void
+        lawSpinePick (::std::unique_ptr< LawSpinePickType > p);
+
+        // lawEdgePick
+        //
+        typedef ::prj::srl::spt::Parameter LawEdgePickType;
+        typedef ::xsd::cxx::tree::traits< LawEdgePickType, char > LawEdgePickTraits;
+
+        const LawEdgePickType&
+        lawEdgePick () const;
+
+        LawEdgePickType&
+        lawEdgePick ();
+
+        void
+        lawEdgePick (const LawEdgePickType& x);
+
+        void
+        lawEdgePick (::std::unique_ptr< LawEdgePickType > p);
+
         // seerShape
         //
         typedef ::prj::srl::spt::SeerShape SeerShapeType;
@@ -540,11 +574,15 @@ namespace prj
         Blend (const BaseType&,
                const FilletShapeType&,
                const BlendTypeType&,
+               const LawSpinePickType&,
+               const LawEdgePickType&,
                const SeerShapeType&);
 
         Blend (::std::unique_ptr< BaseType >,
                ::std::unique_ptr< FilletShapeType >,
                ::std::unique_ptr< BlendTypeType >,
+               ::std::unique_ptr< LawSpinePickType >,
+               ::std::unique_ptr< LawEdgePickType >,
                ::std::unique_ptr< SeerShapeType >);
 
         Blend (const ::xercesc::DOMElement& e,
@@ -576,6 +614,8 @@ namespace prj
         ::xsd::cxx::tree::one< BaseType > base_;
         ::xsd::cxx::tree::one< FilletShapeType > filletShape_;
         ::xsd::cxx::tree::one< BlendTypeType > blendType_;
+        ::xsd::cxx::tree::one< LawSpinePickType > lawSpinePick_;
+        ::xsd::cxx::tree::one< LawEdgePickType > lawEdgePick_;
         ::xsd::cxx::tree::one< SeerShapeType > seerShape_;
         ConstantsSequence constants_;
         VariableOptional variable_;

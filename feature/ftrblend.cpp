@@ -35,6 +35,8 @@
 #include <BRepBuilderAPI_MakeVertex.hxx>
 #include <BRep_Tool.hxx>
 #include <Geom_Curve.hxx>
+#include <Law_Function.hxx>
+#include <ChFiDS_FilSpine.hxx>
 
 #include <osg/Switch>
 #include "feature/ftrinputtype.h"
@@ -52,6 +54,8 @@
 #include "parameter/prmconstants.h"
 #include "parameter/prmparameter.h"
 #include "feature/ftrupdatepayload.h"
+#include "law/lwfvessel.h"
+#include "feature/ftrlawspine.h"
 #include "feature/ftrblend.h"
 
 using boost::uuids::uuid;
@@ -172,6 +176,8 @@ struct Feature::Stow
   
   prm::Parameter filletShape{QObject::tr("Fillet Shape"), 0, PrmTags::filletShape};
   prm::Parameter blendType{QObject::tr("Blend Type"), 0, PrmTags::blendType};
+  prm::Parameter lawSpinePick{QObject::tr("Law Spine"), ftr::Picks(), PrmTags::lawSpinePick};
+  prm::Parameter lawEdgePick{QObject::tr("Law Edge"), ftr::Picks(), PrmTags::lawEdgePick};
   
   ann::SeerShape sShape;
   
@@ -205,6 +211,7 @@ struct Feature::Stow
     {
       QObject::tr("Constant")
       , QObject::tr("Variable")
+      , QObject::tr("Law Spine")
     };
     blendType.setEnumeration(typeStrings);
     blendType.connectValue(std::bind(&Feature::setModelDirty, &feature));
@@ -213,9 +220,15 @@ struct Feature::Stow
     blendTypeLabel->refresh();
     feature.overlaySwitch->addChild(blendTypeLabel);
     
+    lawSpinePick.connectValue(std::bind(&Feature::setModelDirty, &feature));
+    feature.parameters.push_back(&lawSpinePick);
+    lawEdgePick.connectValue(std::bind(&Feature::setModelDirty, &feature));
+    feature.parameters.push_back(&lawEdgePick);
+    
     feature.annexes.insert(std::make_pair(ann::Type::SeerShape, &sShape));
     
     variable.contourPicks.connectValue(std::bind(&Feature::setModelDirty, &feature));
+    prmActiveSync();
   }
   
   void clearBlends()
@@ -225,7 +238,7 @@ struct Feature::Stow
     constants.clear();
     
     detachVariable();
-    variable.contourPicks.setValue(ftr::Pick());
+    variable.contourPicks.setValue(ftr::Picks());
     variable.entries.clear();
   }
   
@@ -272,6 +285,13 @@ struct Feature::Stow
   void prmActiveSync()
   {
     clearBlends();
+    
+    //we never enable lawEdgePick. derived from lawSpinePick in command.
+    lawEdgePick.setActive(false);
+    if (blendType.getInt() == 2)
+      lawSpinePick.setActive(true);
+    else
+      lawSpinePick.setActive(false);
   }
   
   /* matching by interogating the ChFi3d_FilBuilder objects generated and modified methods.
@@ -387,24 +407,6 @@ struct Feature::Stow
       if (blendMakerIn.Generated(currentShape).Extent() > 0)
         std::cout << "   generated type is: " << 
         occt::getShapeTypeString(blendMakerIn.Generated(currentShape).First()) << std::endl;
-    }
-  }
-  
-  /* do we want this? I don't think so. I think it is from a time when I thought
-   * I could use shape history to carry ids forward. Same problem I had with 
-   * intersection mapping
-   */
-  void updateShapeMap(const boost::uuids::uuid &resolvedId, const ShapeHistory &pick)
-  {
-    for (const auto &historyId : pick.getAllIds())
-    {
-      assert(shapeMap.count(historyId) < 2);
-      auto it = shapeMap.find(historyId);
-      if (it == shapeMap.end())
-        continue;
-      auto entry = std::make_pair(resolvedId, it->second);
-      shapeMap.erase(it);
-      shapeMap.insert(entry);
     }
   }
   
@@ -543,54 +545,77 @@ void Feature::updateModel(const UpdatePayload &payloadIn)
   stow->sShape.reset();
   try
   {
-    std::vector<const Base*> features = payloadIn.getFeatures(std::string());
-    if (features.empty())
-      throw std::runtime_error("no input features");
-    boost::optional<uuid> fId;
-    for (const auto *f : features)
+    // on error, find first feature and seershape and assign this seershape.
+    auto bail = [&](std::string_view message)
     {
-      if (!fId)
+      std::vector<const Base*> features = payloadIn.getFeatures(std::string());
+      const Base *firstFeature = nullptr;
+      for (const auto *f : features)
       {
-        fId = f->getId();
-        continue;
+        if (f->getType() == ftr::Type::LawSpine) continue; //we allow law spines that are different features
+        firstFeature = f;
+        break;
       }
-      if (fId.get() != fId)
-        throw std::runtime_error("Different feature ids for inputs");
-    }
-    if (!features.front()->hasAnnex(ann::Type::SeerShape))
-      throw std::runtime_error("no seer shape in parent");
-    const ann::SeerShape &targetSeerShape = features.front()->getAnnex<ann::SeerShape>();
-    if (targetSeerShape.isNull())
-      throw std::runtime_error("target seer shape is null");
-    
-    //parent is good. Set up seershape in case of failure.
-    stow->sShape.setOCCTShape(targetSeerShape.getRootOCCTShape(), getId());
-    stow->sShape.shapeMatch(targetSeerShape);
-    stow->sShape.uniqueTypeMatch(targetSeerShape);
-    stow->sShape.outerWireMatch(targetSeerShape);
-    stow->sShape.derivedMatch();
-    stow->sShape.ensureNoNils();
-    stow->sShape.ensureNoDuplicates();
-    stow->sShape.ensureEvolve();
+      if (firstFeature && firstFeature->hasAnnex(ann::Type::SeerShape))
+      {
+        const ann::SeerShape &targetSeerShape = features.front()->getAnnex<ann::SeerShape>();
+        if (!targetSeerShape.isNull())
+        {
+          stow->sShape.setOCCTShape(targetSeerShape.getRootOCCTShape(), getId());
+          stow->sShape.shapeMatch(targetSeerShape);
+          stow->sShape.uniqueTypeMatch(targetSeerShape);
+          stow->sShape.outerWireMatch(targetSeerShape);
+          stow->sShape.derivedMatch();
+          stow->sShape.ensureNoNils();
+          stow->sShape.ensureNoDuplicates();
+          stow->sShape.ensureEvolve();
+        }
+      }
+      throw std::runtime_error(message.data());
+    };
     
     if (isSkipped())
     {
       setSuccess();
-      throw std::runtime_error("feature is skipped");
+      bail("feature is skipped");
     }
     
-    //place shape label and type label.
-    occt::BoundingBox bb(targetSeerShape.getRootOCCTShape());
-    auto points = bb.getCorners();
-    auto corner0 = gu::toOsg(points.at(0));
-    auto projection = gu::toOsg(points.at(6)) - corner0;
-    stow->filletShapeLabel->setMatrix(osg::Matrixd::translate(corner0 + projection / 3.0));
-    stow->blendTypeLabel->setMatrix(osg::Matrixd::translate(corner0 + projection * 2.0 / 3.0));
+    auto placeLabels = [&](const TopoDS_Shape &sIn)
+    {
+      occt::BoundingBox bb(sIn);
+      auto points = bb.getCorners();
+      auto corner0 = gu::toOsg(points.at(0));
+      auto projection = gu::toOsg(points.at(6)) - corner0;
+      stow->filletShapeLabel->setMatrix(osg::Matrixd::translate(corner0 + projection / 3.0));
+      stow->blendTypeLabel->setMatrix(osg::Matrixd::translate(corner0 + projection * 2.0 / 3.0));
+    };
     
-    ChFi3d_FilBuilder bMaker(targetSeerShape.getRootOCCTShape());
-    bMaker.SetFilletShape(static_cast<ChFi3d_FilletShape>(stow->filletShape.getInt()));
+    std::unique_ptr<ChFi3d_FilBuilder> bMaker;
+    const ann::SeerShape *targetSeerShape = nullptr;
+    std::optional<uuid> solidSheetId;
+    auto goBlendMaker = [&](const ann::SeerShape *ssIn, const uuid &edgeIdIn)
+    {
+      assert(ssIn->hasId(edgeIdIn));
+      auto parents = ssIn->useGetParentsOfType(edgeIdIn, TopAbs_SOLID);
+      if (parents.empty()) parents = ssIn->useGetParentsOfType(edgeIdIn, TopAbs_SHELL);
+      if (parents.empty()) bail("Can't find solid or shell parent from edge");
+      if (!bMaker) //all valid or none valid
+      {
+        solidSheetId = parents.front();
+        targetSeerShape = ssIn;
+        const auto &occShape = targetSeerShape->getOCCTShape(*solidSheetId);
+        placeLabels(occShape);
+        bMaker = std::make_unique<ChFi3d_FilBuilder>(occShape);
+      }
+      else //make sure subsequent edges belong to same shape.
+      {
+        assert(targetSeerShape); assert(solidSheetId);
+        if (targetSeerShape != ssIn) bail("Edges from different seer shapes");
+        if (solidSheetId != parents.front()) bail("Edges from different occt shapes");
+      }
+    };
+    
     tls::Resolver resolver(payloadIn);
-    
     if (stow->blendType.getInt() == 0) //constants
     {
       for (const auto &constantBlend : stow->constants)
@@ -598,17 +623,15 @@ void Feature::updateModel(const UpdatePayload &payloadIn)
         bool labelDone = false; //set label position to first pick.
         for (const auto &pick : constantBlend.contourPicks.getPicks())
         {
-          resolver.resolve(pick);
+          if (!resolver.resolve(pick)) continue; //just skip? no fail?
           for (const auto &resultId : resolver.getResolvedIds())
           {
-            if (resultId.is_nil())
-              continue;
-            stow->updateShapeMap(resultId, pick.shapeHistory);
-            assert(targetSeerShape.hasId(resultId)); //project history out of sync with seershape.
-            TopoDS_Shape tempShape = targetSeerShape.getOCCTShape(resultId);
+            assert(!resultId.is_nil());
+            goBlendMaker(resolver.getSeerShape(), resultId);
+            TopoDS_Shape tempShape = targetSeerShape->getOCCTShape(resultId);
             assert(!tempShape.IsNull());
             assert(tempShape.ShapeType() == TopAbs_EDGE);
-            bMaker.Add(constantBlend.radius.getDouble(), TopoDS::Edge(tempShape));
+            bMaker->Add(constantBlend.radius.getDouble(), TopoDS::Edge(tempShape));
             //update location of parameter label.
             if (!labelDone)
             {
@@ -624,36 +647,31 @@ void Feature::updateModel(const UpdatePayload &payloadIn)
       TopTools_MapOfShape needed, have, intersection;
       for (const auto &pick : stow->variable.contourPicks.getPicks())
       {
-        resolver.resolve(pick);
+        if (!resolver.resolve(pick)) continue;
         for (const auto &resultId : resolver.getResolvedIds())
         {
-          if (resultId.is_nil())
-              continue;
-          stow->updateShapeMap(resultId, pick.shapeHistory);
-          assert(targetSeerShape.hasId(resultId)); //project history out of sync with seershape.
-          TopoDS_Shape tempShape = targetSeerShape.getOCCTShape(resultId);
+          assert(!resultId.is_nil());
+          goBlendMaker(resolver.getSeerShape(), resultId);
+          TopoDS_Shape tempShape = targetSeerShape->getOCCTShape(resultId);
           assert(!tempShape.IsNull());
           assert(tempShape.ShapeType() == TopAbs_EDGE); //TODO faces someday.
-          bMaker.Add(TopoDS::Edge(tempShape));
-          int index = bMaker.Contains(TopoDS::Edge(tempShape));
-          if (index < 1) throw std::runtime_error("invalid contour index for added edge");
-          needed.Add(bMaker.FirstVertex(index));
-          needed.Add(bMaker.LastVertex(index));
+          bMaker->Add(TopoDS::Edge(tempShape));
+          int index = bMaker->Contains(TopoDS::Edge(tempShape));
+          if (index < 1) bail("invalid contour index for added edge");
+          needed.Add(bMaker->FirstVertex(index));
+          needed.Add(bMaker->LastVertex(index));
         }
       }
       for (auto &e : stow->variable.entries)
       {
         bool labelDone = false;
         const auto &ePicks = e.entryPick.getPicks();
-        if (ePicks.empty() || !resolver.resolve(ePicks.front()))
-          continue;
+        if (ePicks.empty() || !resolver.resolve(ePicks.front())) continue;
         for (const auto &resultId : resolver.getResolvedIds())
         {
-          if (resultId.is_nil())
-            continue;
-          const TopoDS_Shape &blendShape = targetSeerShape.getOCCTShape(resultId);
-          if (blendShape.IsNull())
-            continue;
+          assert(!resultId.is_nil());
+          const TopoDS_Shape &blendShape = targetSeerShape->getOCCTShape(resultId);
+          if (blendShape.IsNull()) continue;
           if
           (
             (
@@ -665,12 +683,12 @@ void Feature::updateModel(const UpdatePayload &payloadIn)
           {
             const TopoDS_Vertex &v = TopoDS::Vertex(blendShape);
             //set radius on all applicable edges.
-            for (int ci = 1; ci < bMaker.NbElements() + 1; ++ci)
+            for (int ci = 1; ci < bMaker->NbElements() + 1; ++ci)
             {
-              if (!(bMaker.RelativeAbscissa(ci, v) < 0.0)) //tests if vertex is on contour
+              if (!(bMaker->RelativeAbscissa(ci, v) < 0.0)) //tests if vertex is on contour
               {
                 have.Add(v);
-                bMaker.SetRadius(e.radius.getDouble(), ci, v);
+                bMaker->SetRadius(e.radius.getDouble(), ci, v);
                 if (!labelDone)
                 {
                   e.radiusLabel->setMatrix(osg::Matrixd::translate(gu::toOsg(v)));
@@ -690,14 +708,14 @@ void Feature::updateModel(const UpdatePayload &payloadIn)
           {
             const TopoDS_Edge &edge = TopoDS::Edge(blendShape);
             int ei;
-            int ci = bMaker.Contains(edge, ei);
+            int ci = bMaker->Contains(edge, ei);
             if (ci > 0)
             {
               double p = e.position.getDouble();
               //TODO Do I really need to do this?
 //               e.entryPick.getPicks().front().u = p; //keep pick in sync with parameter. we use pick.u in dialog.
               gp_XY pair(p, e.radius.getDouble());
-              bMaker.SetRadius(pair, ci, ei);
+              bMaker->SetRadius(pair, ci, ei);
             }
             if (!labelDone)
             {
@@ -710,22 +728,46 @@ void Feature::updateModel(const UpdatePayload &payloadIn)
         //TODO deal with edges.
       }
       intersection.Intersection(needed, have);
-      if (needed.Size() != intersection.Size())
-        throw std::runtime_error("Spine end doesn't have radius set");
+      if (needed.Size() != intersection.Size()) bail("Spine end doesn't have radius set");
     }
-    bMaker.Compute();
-    if (!bMaker.IsDone())
-      throw std::runtime_error("blendMaker failed");
-    ShapeCheck check(bMaker.Shape());
-    if (!check.isValid())
-      throw std::runtime_error("shapeCheck failed");
+    else if (stow->blendType.getInt() == 2) // law spine
+    {
+      opencascade::handle<Law_Function> lawFunction;
+      const auto &spinePicks = stow->lawSpinePick.getPicks();
+      if (spinePicks.empty()) bail("No law spine");
+      if (!resolver.resolve(spinePicks.front())) bail("Couldn't resolve spine pick");
+      const auto &lawSpine = dynamic_cast<const ftr::LawSpine::Feature&>(*resolver.getFeature());
+      if (lawSpine.isModelDirty()) bail("Law spine is out of date");
+      lawFunction = lawSpine.getVessel().buildLawFunction();
+      
+      const auto &edgePicks = stow->lawEdgePick.getPicks();
+      if (edgePicks.empty()) bail("No law edge");
+      if (!resolver.resolve(edgePicks.front())) bail("Couldn't resolve edge pick");
+      const auto &edgeIds = resolver.getResolvedIds();
+      if (edgeIds.empty()) bail("No law edge ids from resolver");
+      
+      goBlendMaker(resolver.getSeerShape(), edgeIds.front());
+      TopoDS_Shape tempShape = targetSeerShape->getOCCTShape(edgeIds.front());
+      assert(!tempShape.IsNull());
+      assert(tempShape.ShapeType() == TopAbs_EDGE);
+      bMaker->Add(TopoDS::Edge(tempShape));
+      opencascade::handle<ChFiDS_FilSpine> SSpine = dynamic_cast<ChFiDS_FilSpine*>(bMaker->Value(1).get());
+      assert(SSpine);
+      SSpine->SetRadius(lawFunction, 0);
+    }
+    if (!bMaker) bail("Invalid blend maker");
+    bMaker->SetFilletShape(static_cast<ChFi3d_FilletShape>(stow->filletShape.getInt()));
+    bMaker->Compute();
+    if (!bMaker->IsDone()) bail("blendMaker failed");
+    ShapeCheck check(bMaker->Shape());
+    if (!check.isValid()) bail("shapeCheck failed");
     
-    stow->sShape.setOCCTShape(bMaker.Shape(), getId());
-    stow->sShape.shapeMatch(targetSeerShape);
-    stow->sShape.uniqueTypeMatch(targetSeerShape);
-    stow->match(bMaker, targetSeerShape);
+    stow->sShape.setOCCTShape(bMaker->Shape(), getId());
+    stow->sShape.shapeMatch(*targetSeerShape);
+    stow->sShape.uniqueTypeMatch(*targetSeerShape);
+    stow->match(*bMaker, *targetSeerShape);
     stow->ensureNoFaceNils(); //hack see notes in function.
-    stow->sShape.outerWireMatch(targetSeerShape);
+    stow->sShape.outerWireMatch(*targetSeerShape);
     stow->sShape.derivedMatch();
     stow->sShape.dumpNils("blend feature");
     stow->sShape.dumpDuplicates("blend feature");
@@ -764,6 +806,8 @@ void Feature::serialWrite(const boost::filesystem::path &dIn)
     Base::serialOut()
     , stow->filletShape.serialOut()
     , stow->blendType.serialOut()
+    , stow->lawSpinePick.serialOut()
+    , stow->lawEdgePick.serialOut()
     , stow->sShape.serialOut()
   );
   
@@ -778,6 +822,10 @@ void Feature::serialWrite(const boost::filesystem::path &dIn)
     case 1: //variable
     {
       blendOut.variable() = stow->variable.serialOut();
+      break;
+    }
+    case 2: //law spine
+    {
       break;
     }
     default:
@@ -809,7 +857,8 @@ void Feature::serialRead(const prj::srl::blns::Blend& sBlendIn)
   Base::serialIn(sBlendIn.base());
   stow->filletShape.serialIn(sBlendIn.filletShape());
   stow->blendType.serialIn(sBlendIn.blendType());
-  
+  stow->lawSpinePick.serialIn(sBlendIn.lawSpinePick());
+  stow->lawEdgePick.serialIn(sBlendIn.lawEdgePick());
   stow->sShape.serialIn(sBlendIn.seerShape());
   
   switch (stow->blendType.getInt())
@@ -828,6 +877,11 @@ void Feature::serialRead(const prj::srl::blns::Blend& sBlendIn)
       assert(sBlendIn.variable());
       stow->variable.serialIn(sBlendIn.variable().get());
       stow->attachVariable();
+      break;
+    }
+    case 2: //lawspine
+    {
+      //do nothing special.
       break;
     }
     default:

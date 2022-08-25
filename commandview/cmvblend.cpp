@@ -436,6 +436,14 @@ struct Blend::Stow
     prmModel = new tbl::Model(view, command->feature, parameters);
     prmView = new tbl::View(view, prmModel, true);
     
+    //set selection cue for law spine.
+    cmv::tbl::SelectionCue cue;
+    cue.singleSelection = true;
+    cue.mask = slc::ObjectsBoth;
+    cue.statusPrompt = tr("Select Law Spine Feature");
+    cue.accrueEnabled = false;
+    prmModel->setCue(command->feature->getParameter(ftr::Blend::PrmTags::lawSpinePick), cue);
+    
     stacked = new QStackedWidget(view);
     stacked->setSizePolicy(stacked->sizePolicy().horizontalPolicy(), QSizePolicy::Maximum);
     
@@ -448,6 +456,9 @@ struct Blend::Stow
     
     vPage = new VariablePage(view, *command->feature);
     stacked->addWidget(vPage);
+    
+    //empty widget for law spine.
+    stacked->addWidget(new QWidget(view));
     
     mainSplitter = new dlg::SplitterDecorated(view);
     mainSplitter->setOrientation(Qt::Vertical);
@@ -499,6 +510,10 @@ struct Blend::Stow
         }
       }
     }
+    else if (type == 2) //law spine
+    {
+      //no global selection for law spine
+    }
     else
       assert(0); //unknown blend type.
   }
@@ -544,6 +559,11 @@ struct Blend::Stow
         stacked->setCurrentIndex(1);
         break;
       }
+      case 2: //law spine
+      {
+        stacked->setCurrentIndex(2);
+        break;
+      }
       default:
       {
         assert(0); //unknown blend type
@@ -574,6 +594,7 @@ struct Blend::Stow
     vPage->clear();
     int type = command->feature->getParameter(ftr::Blend::PrmTags::blendType)->getInt();
     stacked->setCurrentIndex(type);
+    prmView->updateHideInactive();
   }
   
   void setSelections()
@@ -593,6 +614,14 @@ struct Blend::Stow
       {
         command->setSelections(vPage->getSelections());
         vPage->entryList->updateHideInactive();
+        break;
+      }
+      case 2: //law spine
+      {
+        const auto *spinePickPrm = command->feature->getParameter(ftr::Blend::PrmTags::lawSpinePick);
+        assert(spinePickPrm);
+        const auto &msgs = prmModel->getMessages(spinePickPrm);
+        command->setSelections({msgs});
         break;
       }
       default:
@@ -630,6 +659,11 @@ struct Blend::Stow
           view->goMaskDefault();
           view->node->sendBlocked(msg::buildStatusMessage(QObject::tr("Select Point Constraint").toStdString()));
         }
+      }
+      else if (type == 2) //law spine
+      {
+        //no global selection for law spine.
+        QTimer::singleShot(0, [this](){this->stopGlobalSelection();});
       }
       else
         assert(0); //unknown blend type.

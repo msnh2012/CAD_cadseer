@@ -210,6 +210,7 @@ void Feature::initVessel()
 }
 
 lwf::Vessel& Feature::getVessel(){return stow->vessel;}
+const lwf::Vessel& Feature::getVessel() const {return stow->vessel;}
 
 void Feature::serialWrite(const boost::filesystem::path &dIn)
 {

@@ -367,6 +367,54 @@ namespace prj
         this->blendType_.set (std::move (x));
       }
 
+      const Blend::LawSpinePickType& Blend::
+      lawSpinePick () const
+      {
+        return this->lawSpinePick_.get ();
+      }
+
+      Blend::LawSpinePickType& Blend::
+      lawSpinePick ()
+      {
+        return this->lawSpinePick_.get ();
+      }
+
+      void Blend::
+      lawSpinePick (const LawSpinePickType& x)
+      {
+        this->lawSpinePick_.set (x);
+      }
+
+      void Blend::
+      lawSpinePick (::std::unique_ptr< LawSpinePickType > x)
+      {
+        this->lawSpinePick_.set (std::move (x));
+      }
+
+      const Blend::LawEdgePickType& Blend::
+      lawEdgePick () const
+      {
+        return this->lawEdgePick_.get ();
+      }
+
+      Blend::LawEdgePickType& Blend::
+      lawEdgePick ()
+      {
+        return this->lawEdgePick_.get ();
+      }
+
+      void Blend::
+      lawEdgePick (const LawEdgePickType& x)
+      {
+        this->lawEdgePick_.set (x);
+      }
+
+      void Blend::
+      lawEdgePick (::std::unique_ptr< LawEdgePickType > x)
+      {
+        this->lawEdgePick_.set (std::move (x));
+      }
+
       const Blend::SeerShapeType& Blend::
       seerShape () const
       {
@@ -956,11 +1004,15 @@ namespace prj
       Blend (const BaseType& base,
              const FilletShapeType& filletShape,
              const BlendTypeType& blendType,
+             const LawSpinePickType& lawSpinePick,
+             const LawEdgePickType& lawEdgePick,
              const SeerShapeType& seerShape)
       : ::xml_schema::Type (),
         base_ (base, this),
         filletShape_ (filletShape, this),
         blendType_ (blendType, this),
+        lawSpinePick_ (lawSpinePick, this),
+        lawEdgePick_ (lawEdgePick, this),
         seerShape_ (seerShape, this),
         constants_ (this),
         variable_ (this),
@@ -972,11 +1024,15 @@ namespace prj
       Blend (::std::unique_ptr< BaseType > base,
              ::std::unique_ptr< FilletShapeType > filletShape,
              ::std::unique_ptr< BlendTypeType > blendType,
+             ::std::unique_ptr< LawSpinePickType > lawSpinePick,
+             ::std::unique_ptr< LawEdgePickType > lawEdgePick,
              ::std::unique_ptr< SeerShapeType > seerShape)
       : ::xml_schema::Type (),
         base_ (std::move (base), this),
         filletShape_ (std::move (filletShape), this),
         blendType_ (std::move (blendType), this),
+        lawSpinePick_ (std::move (lawSpinePick), this),
+        lawEdgePick_ (std::move (lawEdgePick), this),
         seerShape_ (std::move (seerShape), this),
         constants_ (this),
         variable_ (this),
@@ -992,6 +1048,8 @@ namespace prj
         base_ (x.base_, f, this),
         filletShape_ (x.filletShape_, f, this),
         blendType_ (x.blendType_, f, this),
+        lawSpinePick_ (x.lawSpinePick_, f, this),
+        lawEdgePick_ (x.lawEdgePick_, f, this),
         seerShape_ (x.seerShape_, f, this),
         constants_ (x.constants_, f, this),
         variable_ (x.variable_, f, this),
@@ -1007,6 +1065,8 @@ namespace prj
         base_ (this),
         filletShape_ (this),
         blendType_ (this),
+        lawSpinePick_ (this),
+        lawEdgePick_ (this),
         seerShape_ (this),
         constants_ (this),
         variable_ (this),
@@ -1067,6 +1127,34 @@ namespace prj
             if (!blendType_.present ())
             {
               this->blendType_.set (::std::move (r));
+              continue;
+            }
+          }
+
+          // lawSpinePick
+          //
+          if (n.name () == "lawSpinePick" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< LawSpinePickType > r (
+              LawSpinePickTraits::create (i, f, this));
+
+            if (!lawSpinePick_.present ())
+            {
+              this->lawSpinePick_.set (::std::move (r));
+              continue;
+            }
+          }
+
+          // lawEdgePick
+          //
+          if (n.name () == "lawEdgePick" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< LawEdgePickType > r (
+              LawEdgePickTraits::create (i, f, this));
+
+            if (!lawEdgePick_.present ())
+            {
+              this->lawEdgePick_.set (::std::move (r));
               continue;
             }
           }
@@ -1145,6 +1233,20 @@ namespace prj
             "");
         }
 
+        if (!lawSpinePick_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "lawSpinePick",
+            "");
+        }
+
+        if (!lawEdgePick_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "lawEdgePick",
+            "");
+        }
+
         if (!seerShape_.present ())
         {
           throw ::xsd::cxx::tree::expected_element< char > (
@@ -1169,6 +1271,8 @@ namespace prj
           this->base_ = x.base_;
           this->filletShape_ = x.filletShape_;
           this->blendType_ = x.blendType_;
+          this->lawSpinePick_ = x.lawSpinePick_;
+          this->lawEdgePick_ = x.lawEdgePick_;
           this->seerShape_ = x.seerShape_;
           this->constants_ = x.constants_;
           this->variable_ = x.variable_;
@@ -1642,6 +1746,28 @@ namespace prj
               e));
 
           s << i.blendType ();
+        }
+
+        // lawSpinePick
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "lawSpinePick",
+              e));
+
+          s << i.lawSpinePick ();
+        }
+
+        // lawEdgePick
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "lawEdgePick",
+              e));
+
+          s << i.lawEdgePick ();
         }
 
         // seerShape
