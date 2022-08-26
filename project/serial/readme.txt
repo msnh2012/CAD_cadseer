@@ -84,7 +84,6 @@ xsdcxx cxx-tree --std c++11 --generate-serialization --type-naming ucc --hxx-suf
 xsdcxx cxx-tree --std c++11 --generate-serialization --type-naming ucc --hxx-suffix .h --cxx-suffix .cpp --guard-prefix PRJ_SRL_SFMS --extern-xml-schema ../../../xmlbase.xsd ../schema/prjsrlsfmssurfacemesh.xsd
 xsdcxx cxx-tree --std c++11 --generate-serialization --type-naming ucc --hxx-suffix .h --cxx-suffix .cpp --guard-prefix PRJ_SRL_SMFS --extern-xml-schema ../../../xmlbase.xsd ../schema/prjsrlsmfssurfacemeshfill.xsd
 xsdcxx cxx-tree --std c++11 --generate-serialization --type-naming ucc --hxx-suffix .h --cxx-suffix .cpp --guard-prefix PRJ_SRL_SRMS --extern-xml-schema ../../../xmlbase.xsd ../schema/prjsrlsrmssurfaceremesh.xsd
-xsdcxx cxx-tree --std c++11 --generate-serialization --type-naming ucc --hxx-suffix .h --cxx-suffix .cpp --guard-prefix PRJ_SRL_LWFS --extern-xml-schema ../../../xmlbase.xsd ../schema/prjsrllwfslawfunction.xsd
 xsdcxx cxx-tree --std c++11 --generate-serialization --type-naming ucc --hxx-suffix .h --cxx-suffix .cpp --guard-prefix PRJ_SRL_SWPS --extern-xml-schema ../../../xmlbase.xsd ../schema/prjsrlswpssweep.xsd
 xsdcxx cxx-tree --std c++11 --generate-serialization --type-naming ucc --hxx-suffix .h --cxx-suffix .cpp --guard-prefix PRJ_SRL_THKS --extern-xml-schema ../../../xmlbase.xsd ../schema/prjsrlthksthicken.xsd
 xsdcxx cxx-tree --std c++11 --generate-serialization --type-naming ucc --hxx-suffix .h --cxx-suffix .cpp --guard-prefix PRJ_SRL_THDS --extern-xml-schema ../../../xmlbase.xsd ../schema/prjsrlthdsthread.xsd

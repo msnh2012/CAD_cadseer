@@ -126,9 +126,8 @@ modelviz_sources = ['modelviz/mdvbase.cpp'
   , 'modelviz/mdvhiddenlineeffect.cpp'
   , 'modelviz/mdvhiddenlinetechnique.cpp'
   , 'modelviz/mdvdatumaxis.cpp'
-  , 'modelviz/mdvsurfacemesh.cpp'
-  , 'modelviz/mdvlawfunction.cpp'
-  , 'modelviz/mdvdatumsystem.cpp']
+  , 'modelviz/mdvdatumsystem.cpp'
+  , 'modelviz/mdvsurfacemesh.cpp']
   
 gesture_sources = ['gesture/gsnhandler.cpp'
   , 'gesture/gsnnode.cpp'
@@ -212,8 +211,7 @@ annex_sources = ['annex/annbase.cpp'
   , 'annex/annintersectionmapper.cpp'
   , 'annex/anninstancemapper.cpp'
   , 'annex/annshapeidhelper.cpp'
-  , 'annex/annsurfacemesh.cpp'
-  , 'annex/annlawfunction.cpp']
+  , 'annex/annsurfacemesh.cpp']
   
 expression_sources = ['expressions/exprmanager.cpp'
   , 'expressions/exprwidget.cpp'
@@ -310,7 +308,6 @@ project_serial_sources = [
   , 'project/serial/generated/prjsrlsfmssurfacemesh.cpp'
   , 'project/serial/generated/prjsrlsmfssurfacemeshfill.cpp'
   , 'project/serial/generated/prjsrlsrmssurfaceremesh.cpp'
-  , 'project/serial/generated/prjsrllwfslawfunction.cpp'
   , 'project/serial/generated/prjsrlswpssweep.cpp'
   , 'project/serial/generated/prjsrlthksthicken.cpp'
   , 'project/serial/generated/prjsrlthdsthread.cpp'
@@ -426,7 +423,6 @@ commandview_sources = [
   , 'commandview/cmvprimitive.cpp'
   , 'commandview/cmvsketch.cpp'
   , 'commandview/cmvsweep.cpp'
-  , 'commandview/cmvlawfunctionwidget.cpp'
   , 'commandview/cmvmappcurve.cpp'
   , 'commandview/cmvsurfacemesh.cpp'
   , 'commandview/cmvboolean.cpp'
@@ -455,7 +451,7 @@ commandview_sources = [
   , 'commandview/cmvdraglist.cpp'
 ]
   
-law_sources = ['law/lwfcue.cpp', 'law/lwfvessel.cpp', 'law/lwfadapter.cpp']
+law_sources = ['law/lwfvessel.cpp', 'law/lwfadapter.cpp']
 
 library_sources = ['library/lbrcirclebuilder.cpp'
   , 'library/lbrcircleprojector.cpp'
@@ -578,7 +574,6 @@ cadseer_moc_hdrs = ['viewer/vwrwidget.h'
   , 'commandview/cmvprimitive.h'
   , 'commandview/cmvsketch.h'
   , 'commandview/cmvsweep.h'
-  , 'commandview/cmvlawfunctionwidget.h'
   , 'commandview/cmvmappcurve.h'
   , 'commandview/cmvsurfacemesh.h'
   , 'commandview/cmvboolean.h'
