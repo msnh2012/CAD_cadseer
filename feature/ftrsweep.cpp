@@ -27,11 +27,7 @@
 #include <BRepTools.hxx>
 #include <TopExp_Explorer.hxx>
 #include <gp_Ax2.hxx>
-#include <Law_Constant.hxx>
-#include <Law_Linear.hxx>
-#include <Law_Interpol.hxx>
-#include <Law_S.hxx>
-#include <Law_Composite.hxx>
+#include <Law_Function.hxx>
 #include <TColStd_HArray1OfReal.hxx> //ProjectCurveOnSurface needs this? occt 7.3
 #include <ShapeConstruct_ProjectCurveOnSurface.hxx>
 #include <BRep_Tool.hxx>
@@ -41,10 +37,7 @@
 
 #include "globalutilities.h"
 #include "annex/annseershape.h"
-#include "annex/annlawfunction.h"
-#include "law/lwfcue.h"
 #include "library/lbrplabel.h"
-#include "modelviz/mdvlawfunction.h"
 #include "parameter/prmconstants.h"
 #include "parameter/prmparameter.h"
 #include "tools/occtools.h"
@@ -54,6 +47,8 @@
 #include "feature/ftrupdatepayload.h"
 #include "feature/ftrinputtype.h"
 #include "feature/ftrdatumaxis.h"
+#include "law/lwfvessel.h"
+#include "feature/ftrlawspine.h"
 #include "project/serial/generated/prjsrlswpssweep.h"
 #include "feature/ftrsweep.h"
 
@@ -195,7 +190,6 @@ struct Feature::Stow
   prm::Parameter transition{QObject::tr("Transition"), 0, PrmTags::transition};
   prm::Parameter forceC1{QObject::tr("Force C1"), false, PrmTags::forcec1};
   prm::Parameter solid{QObject::tr("Solid"), false, PrmTags::solid};
-  prm::Parameter useLaw{QObject::tr("Use Law"), false, PrmTags::useLaw};
   prm::Observer prmObserver{std::bind(&Feature::setModelDirty, &feature)};
   
   Profiles profiles;
@@ -203,17 +197,14 @@ struct Feature::Stow
   Binormal binormal;
   
   ann::SeerShape sShape;
-  ann::LawFunction lawFunction;
   
   osg::ref_ptr<lbr::PLabel> trihedronLabel{new lbr::PLabel(&trihedron)};
   osg::ref_ptr<lbr::PLabel> transitionLabel{new lbr::PLabel(&transition)};
   osg::ref_ptr<lbr::PLabel> forceC1Label{new lbr::PLabel(&forceC1)};
   osg::ref_ptr<lbr::PLabel> solidLabel{new lbr::PLabel(&solid)};
-  osg::ref_ptr<lbr::PLabel> useLawLabel{new lbr::PLabel(&useLaw)};
   
   osg::ref_ptr<osg::Switch> auxiliarySwitch{new osg::Switch()};
   osg::ref_ptr<osg::Switch> binormalSwitch{new osg::Switch()};
-  osg::ref_ptr<osg::Switch> lawSwitch{new osg::Switch()};
   
   uuid solidId{gu::createRandomId()};
   uuid shellId{gu::createRandomId()};
@@ -268,10 +259,6 @@ struct Feature::Stow
     solid.connectValue(std::bind(&Feature::setModelDirty, &feature));
     feature.parameters.push_back(&solid);
     
-    useLaw.connectValue(std::bind(&Feature::setModelDirty, &feature));
-    useLaw.connectValue(std::bind(&Stow::prmActiveSync, this));
-    feature.parameters.push_back(&useLaw);
-    
     auxiliary.pick.connectValue(std::bind(&Feature::setModelDirty, &feature));
     feature.parameters.push_back(&auxiliary.pick);
     
@@ -289,18 +276,14 @@ struct Feature::Stow
     feature.parameters.push_back(&binormal.vector);
     
     feature.annexes.insert(std::make_pair(ann::Type::SeerShape, &sShape));
-    feature.annexes.insert(std::make_pair(ann::Type::LawFunction, &lawFunction));
     
     feature.overlaySwitch->addChild(trihedronLabel.get());
     feature.overlaySwitch->addChild(transitionLabel.get());
     feature.overlaySwitch->addChild(forceC1Label.get());
     feature.overlaySwitch->addChild(solidLabel.get());
-    feature.overlaySwitch->addChild(useLawLabel.get());
     feature.overlaySwitch->addChild(auxiliarySwitch.get());
     feature.overlaySwitch->addChild(binormalSwitch.get());
-    feature.overlaySwitch->addChild(lawSwitch.get());
     
-    attachLaw(); //we always keep a law attached even if we aren't using.
     prmActiveSync();
   }
   
@@ -338,85 +321,6 @@ struct Feature::Stow
         break;
       }
     }
-    
-    /* we still have to disable law parameters even though they are underneath
-     * the switch. If we don't then the command view will display them when
-     * not applicable.
-     */
-    lwf::Cue &lfc = lawFunction.getCue(); //no const because we are changing active state.
-    if (useLaw.getBool() && lfc.type != lwf::Type::none)
-    {
-      lawSwitch->setAllChildrenOn();
-      for (auto *p : lfc.getParameters())
-        p->setActive(true);
-    }
-    else
-    {
-      for (auto *p : lfc.getParameters())
-        p->setActive(false);
-      lawSwitch->setAllChildrenOff();
-    }
-    
-    if (profiles.size() == 1)
-      useLaw.setActive(true);
-    else
-      useLaw.setActive(false);
-  }
-  
-  void attachLaw()
-  {
-    lwf::Cue &lfc = lawFunction.getCue();
-    prm::Parameters prms = lfc.getParameters();
-    for (prm::Parameter *p : prms)
-    {
-      feature.parameters.push_back(p);
-      feature.parameters.back()->connectValue(std::bind(&Feature::setModelDirty, &feature));
-    }
-    regenerateLawViz();
-  }
-  
-  void severLaw() //should always be followed by an attachLaw call.
-  {
-    feature.overlaySwitch->removeChild(lawSwitch.get());
-    lawSwitch.release(); //plabels should be deleted and no longer referencing parameters
-    
-    lwf::Cue &lfc = lawFunction.getCue();
-    for (const prm::Parameter* p : lfc.getParameters())
-      feature.removeParameter(p);
-    //We don't really want to set to constant.
-    //this just deletes all parameters that might have been connected to the feature.
-    lfc.setConstant(1.0);
-  }
-  
-  void regenerateLawViz()
-  {
-    //save location for restore.
-    osg::Matrixd lp = osg::Matrixd::identity();
-    if (lawSwitch)
-    {
-      mdv::LawCallback *ocb = dynamic_cast<mdv::LawCallback*>(lawSwitch->getUpdateCallback());
-      if (ocb)
-        lp = ocb->getMatrix(lawSwitch.get());
-    }
-    
-//     feature.overlaySwitch->removeChild(lawSwitch.get());
-    lawSwitch = mdv::generate(lawFunction.getCue());
-    feature.overlaySwitch->addChild(lawSwitch.get());
-    
-    //restore position.
-    mdv::LawCallback *ncb = dynamic_cast<mdv::LawCallback*>(lawSwitch->getUpdateCallback());
-    if (!ncb)
-      return;
-    ncb->setMatrix(lp, lawSwitch.get());
-  }
-  
-  void updateLawViz(double scale)
-  {
-    mdv::LawCallback *cb = dynamic_cast<mdv::LawCallback*>(lawSwitch->getUpdateCallback());
-    if (!cb)
-      return;
-    cb->setScale(scale);
-    cb->setDirty(); //always make it dirty after a model update.
   }
 };
 
@@ -443,8 +347,6 @@ Profile& Feature::addProfile()
   overlaySwitch->addChild(p.contactLabel);
   overlaySwitch->addChild(p.correctionLabel);
   
-  stow->prmActiveSync();
-  
   //adding profile itself shouldn't make the feature dirty.
   return stow->profiles.back();
 }
@@ -459,22 +361,12 @@ void Feature::removeProfile(int index)
   overlaySwitch->removeChild(p.correctionLabel);
   stow->profiles.erase(lit);
   
-  stow->prmActiveSync();
-  
   setModelDirty();
 }
 
 Profiles& Feature::getProfiles() const
 {
   return stow->profiles;
-}
-
-void Feature::setLaw(const lwf::Cue &cIn)
-{
-  stow->severLaw();
-  stow->lawFunction.setCue(cIn);
-  stow->attachLaw();
-  setModelDirty();
 }
 
 void Feature::updateModel(const UpdatePayload &pIn)
@@ -495,51 +387,42 @@ void Feature::updateModel(const UpdatePayload &pIn)
     auto getFeature = [&](const std::string& tagIn) -> const Base&
     {
       std::vector<const Base*> tfs = pIn.getFeatures(tagIn);
-      if (tfs.size() != 1)
-        throw std::runtime_error("wrong number of parents");
+      if (tfs.size() != 1) throw std::runtime_error("wrong number of parents");
       return *(tfs.front());
     };
     
     auto getSeerShape = [&](const Base &bfIn) -> const ann::SeerShape&
     {
-      if (!bfIn.hasAnnex(ann::Type::SeerShape))
-        throw std::runtime_error("parent doesn't have seer shape.");
+      if (!bfIn.hasAnnex(ann::Type::SeerShape)) throw std::runtime_error("parent doesn't have seer shape.");
       const ann::SeerShape &tss = bfIn.getAnnex<ann::SeerShape>();
-      if (tss.isNull())
-        throw std::runtime_error("target seer shape is null");
+      if (tss.isNull()) throw std::runtime_error("target seer shape is null");
       return tss;
     };
     
     auto isValidShape = [](const TopoDS_Shape &sIn)
     {
-      if (sIn.ShapeType() == TopAbs_WIRE || sIn.ShapeType() == TopAbs_EDGE)
-        return true;
+      if (sIn.ShapeType() == TopAbs_WIRE || sIn.ShapeType() == TopAbs_EDGE)  return true;
       return false;
     };
     
     auto ensureWire = [](const TopoDS_Shape &sIn) -> TopoDS_Wire
     {
-      if (sIn.ShapeType() == TopAbs_WIRE)
-        return TopoDS::Wire(sIn);
+      if (sIn.ShapeType() == TopAbs_WIRE) return TopoDS::Wire(sIn);
       if (sIn.ShapeType() == TopAbs_EDGE)
       {
         BRepBuilderAPI_MakeWire wm(TopoDS::Edge(sIn));
-        if (!wm.IsDone())
-          throw std::runtime_error("couldn't create wire from edge");
+        if (!wm.IsDone()) throw std::runtime_error("couldn't create wire from edge");
         return wm.Wire();
       }
       
       throw std::runtime_error("unsupported shape type in ensureWire");
     };
     
-    auto getWire = [&](const Pick &p) -> TopoDS_Wire
+    tls::Resolver resolver(pIn);
+    auto getWire = [&]() -> TopoDS_Wire
     {
-      boost::optional<TopoDS_Wire> out;
-      tls::Resolver resolver(pIn);
-      if (!resolver.resolve(p) || !resolver.getSeerShape())
-        throw std::runtime_error("Invalid pick resolution");
-      
-      if (!slc::isShapeType(p.selectionType))
+      std::optional<TopoDS_Wire> out;
+      if (!slc::isShapeType(resolver.getPick().selectionType))
       {
         auto shapes = resolver.getSeerShape()->useGetNonCompoundChildren();
         if (shapes.empty())
@@ -556,30 +439,41 @@ void Feature::updateModel(const UpdatePayload &pIn)
       else
       {
         auto rShapes = resolver.getShapes();
-        if (rShapes.empty())
-          throw std::runtime_error("no shapes from pick resolution");
+        if (rShapes.empty()) throw std::runtime_error("no shapes from pick resolution");
         if (rShapes.size() > 1)
         {
           std::ostringstream s; s << "Warning more than 1 resolved shape. Using first" << std::endl;
           lastUpdateLog += s.str();
         }
-        if (!isValidShape(rShapes.front()))
-          throw std::runtime_error("invalid shape from resolve");
+        if (!isValidShape(rShapes.front())) throw std::runtime_error("invalid shape from resolve");
         out = ensureWire(rShapes.front());
       }
       
-      if (!out)
-        throw std::runtime_error("couldn't get wire");
-      return out.get();
+      if (!out) throw std::runtime_error("couldn't get wire");
+      return *out;
+    };
+    
+    TopoDS_Wire spineShape;
+    opencascade::handle<Law_Function> law;
+    auto setSpine = [&](const ftr::Pick &pickIn)
+    {
+      if (!resolver.resolve(pickIn)) throw std::runtime_error("couldn't resolve spine pick");
+      spineShape = getWire();
+      if (slc::isObjectType(pickIn.selectionType) && resolver.getFeature()->getType() == ftr::Type::LawSpine)
+      {
+        const auto *lawSpineFeature = dynamic_cast<const ftr::LawSpine::Feature*>(resolver.getFeature());
+        assert(lawSpineFeature);
+        const auto &vessel = lawSpineFeature->getVessel();
+        if (!vessel.isValid()) throw std::runtime_error("Invalid law spine");
+        law = lawSpineFeature->getVessel().buildLawFunction();
+      }
     };
     
     occt::BoundingBox globalBounder; //use this to place labels
-    if (stow->spine.getPicks().empty())
-      throw std::runtime_error("No Spine Picks");
-    TopoDS_Wire spineShape = getWire(stow->spine.getPicks().front());
+    if (stow->spine.getPicks().empty()) throw std::runtime_error("No Spine Picks");
+    setSpine(stow->spine.getPicks().front());
     globalBounder.add(spineShape);
     
-//     occt::WireVector profileShapes;
     BRepFill_PipeShell sweeper(spineShape);
     switch (stow->trihedron.getInt())
     {
@@ -615,10 +509,8 @@ void Feature::updateModel(const UpdatePayload &pIn)
           }
           else
           {
-            tls::Resolver resolver(pIn);
             auto rShapes = resolver.getShapes(pick);
-            if (rShapes.empty())
-              throw std::runtime_error("couldn't resolve binormal 1st pick");
+            if (rShapes.empty()) throw std::runtime_error("couldn't resolve binormal 1st pick");
             if (rShapes.size() > 1)
             {
               std::ostringstream s; s << "Warning more than 1 resolved pick for binormal. Using first" << std::endl;
@@ -657,13 +549,10 @@ void Feature::updateModel(const UpdatePayload &pIn)
         }
         else if (bps.size() == 2)
         {
-          tls::Resolver resolver(pIn);
           auto getPoint = [&](int index) -> osg::Vec3d
           {
-            resolver.resolve(bps.at(index));
-            auto thePoints = resolver.getPoints();
-            if (thePoints.empty())
-              throw std::runtime_error("couldn't resolve inn binormal getPoint");
+            auto thePoints = resolver.getPoints(bps.at(index));
+            if (thePoints.empty()) throw std::runtime_error("empty binormal points");
             if (thePoints.size() > 1)
             {
               std::ostringstream s; s << "Warning more than 1 resolved binormal point. Using first" << std::endl;
@@ -692,12 +581,9 @@ void Feature::updateModel(const UpdatePayload &pIn)
       }
       case 5: //support
       {
-        tls::Resolver resolver(pIn);
-        if (stow->support.getPicks().empty())
-          throw std::runtime_error("No support picks");
+        if (stow->support.getPicks().empty()) throw std::runtime_error("No support picks");
         auto rShapes = resolver.getShapes(stow->support.getPicks().front());
-        if (rShapes.empty())
-          throw std::runtime_error("invalid support pick resolution");
+        if (rShapes.empty()) throw std::runtime_error("invalid support pick resolution");
         if (rShapes.size() > 1)
         {
           std::ostringstream s; s << "Warning more than 1 resolved support pick. Using first" << std::endl;
@@ -708,8 +594,7 @@ void Feature::updateModel(const UpdatePayload &pIn)
           throw std::runtime_error("invalid shape type for support");
         const TopoDS_Face &supportFace = TopoDS::Face(supportShape);
         opencascade::handle<Geom_Surface> supportSurface = BRep_Tool::Surface(supportFace);
-        if (supportSurface.IsNull())
-          throw std::runtime_error("support surface is null");
+        if (supportSurface.IsNull()) throw std::runtime_error("support surface is null");
         
         //put spine on support shape. For now we are assuming that we have
         //1 spine edge and and one support face.
@@ -740,9 +625,9 @@ void Feature::updateModel(const UpdatePayload &pIn)
       case 6: // auxiliary
       {
         const auto &aps = stow->auxiliary.pick.getPicks();
-        if (aps.empty())
-          throw std::runtime_error("No auxiliary pick");
-        TopoDS_Wire wire = getWire(aps.front());
+        if (aps.empty()) throw std::runtime_error("No auxiliary pick");
+        if (!resolver.resolve(aps.front())) throw std::runtime_error("Can't resolve auxiliary spine pick");
+        TopoDS_Wire wire = getWire();
         if (!wire.IsNull())
         {
           bool cle = stow->auxiliary.curvilinearEquivalence.getBool();
@@ -765,38 +650,25 @@ void Feature::updateModel(const UpdatePayload &pIn)
     std::vector<std::reference_wrapper<const ann::SeerShape>> seerShapeProfileRefs; //use for shape mapping
     for (const auto &p : stow->profiles)
     {
-      if (p.pick.getPicks().empty())
-        continue;
-      
+      if (p.pick.getPicks().empty()) continue;
+      if (!resolver.resolve(p.pick.getPicks().front())) throw std::runtime_error("Can't resolve profile pick.");
+      TopoDS_Wire wire = getWire();
       const Base &bf = getFeature(p.pick.getPicks().front().tag);
       const ann::SeerShape &ss = getSeerShape(bf);
-      TopoDS_Wire wire = getWire(p.pick.getPicks().front());
       seerShapeProfileRefs.push_back(ss);
       
-      //this is temp.
-      if (stow->profiles.size() == 1 && stow->useLaw.getBool() && stow->lawFunction.getCue().type != lwf::Type::none)
-      {
-        lwf::Cue &lfc = stow->lawFunction.getCue();
-        lfc.smooth(); //need to smooth when changing parameters from PLabels.
-        lfc.alignConstant(); //need to make sure boundary values consistent from PLabel edits.
-        opencascade::handle<Law_Function> law = lfc.buildLawFunction();
-        //must be a bug in how the bounds work in composite law.
-        //Law_Composite::Prepare calculates the bounds and is called from several other public functions.
-        //However, it is not called in Law_Composite::Bounds. I am getting and 'infinite boundary'
-        //error from sweep and I am assuming it is calling 'Bounds' before prepare has been called.
-        //by calling the Law_Composite::Value the bounds get calculated and now sweep will succeed
-        //with composite law. Hence the following meaningless call.
-        law->Value(0.5);
-        
-        sweeper.SetLaw(wire, law, p.contact.getBool(), p.correction.getBool());
-        
-        stow->updateLawViz(globalBounder.getDiagonal());
-        stow->lawSwitch->setAllChildrenOn();
-      }
+      if (law.IsNull())
+        sweeper.Add(wire, p.contact.getBool(), p.correction.getBool());
       else
       {
-        sweeper.Add(wire, p.contact.getBool(), p.correction.getBool());
-        stow->lawSwitch->setAllChildrenOff();
+        if (stow->profiles.size() == 1)
+          sweeper.SetLaw(wire, law, p.contact.getBool(), p.correction.getBool());
+        else
+        {
+          sweeper.Add(wire, p.contact.getBool(), p.correction.getBool());
+          std::ostringstream s; s << "Multiple profiles override law" << std::endl;
+          lastUpdateLog += s.str();
+        }
       }
       
       globalBounder.add(wire);
@@ -807,12 +679,8 @@ void Feature::updateModel(const UpdatePayload &pIn)
     }
     
     sweeper.SetForceApproxC1(stow->forceC1.getBool());
-    
-    if (!sweeper.Build())
-      throw std::runtime_error("Sweep operation failed");
-    
-    if (stow->solid.getBool())
-      sweeper.MakeSolid();
+    if (!sweeper.Build()) throw std::runtime_error("Sweep operation failed");
+    if (stow->solid.getBool()) sweeper.MakeSolid();
     
     ShapeCheck check(sweeper.Shape());
     if (!check.isValid())
@@ -1259,7 +1127,6 @@ void Feature::updateModel(const UpdatePayload &pIn)
     stow->trihedronLabel->setMatrix(osg::Matrixd::translate(gu::toOsg(globalBounder.getCenter())));
     stow->forceC1Label->setMatrix(osg::Matrixd::translate(gu::toOsg(cornerPoints.at(7))));
     stow->solidLabel->setMatrix(osg::Matrixd::translate(gu::toOsg(cornerPoints.at(5))));
-    stow->useLawLabel->setMatrix(osg::Matrixd::translate(gu::toOsg(cornerPoints.at(6))));
     if (stow->trihedron.getInt() == 6)
       stow->auxiliarySwitch->setAllChildrenOn();
     else
@@ -1289,32 +1156,14 @@ void Feature::updateModel(const UpdatePayload &pIn)
 
 void Feature::serialWrite(const boost::filesystem::path &dIn)
 {
-  osg::Matrixd m = osg::Matrixd::identity();
-  double scale = 1.0;
-  mdv::LawCallback *ocb = dynamic_cast<mdv::LawCallback*>(stow->lawSwitch->getUpdateCallback());
-  if (ocb)
-  {
-    m = ocb->getMatrix(stow->lawSwitch.get());
-    scale = ocb->getScale();
-  }
-  prj::srl::spt::Matrixd mOut
-  (
-    m(0,0), m(0,1), m(0,2), m(0,3),
-    m(1,0), m(1,1), m(1,2), m(1,3),
-    m(2,0), m(2,1), m(2,2), m(2,3),
-    m(3,0), m(3,1), m(3,2), m(3,3)
-  );
-  
   prj::srl::swps::Sweep so
   (
     Base::serialOut()
     , stow->sShape.serialOut()
-    , stow->lawFunction.getCue().serialOut()
     , stow->trihedron.serialOut()
     , stow->transition.serialOut()
     , stow->forceC1.serialOut()
     , stow->solid.serialOut()
-    , stow->useLaw.serialOut()
     , stow->spine.serialOut()
     , stow->auxiliary.serialOut()
     , stow->support.serialOut()
@@ -1323,9 +1172,6 @@ void Feature::serialWrite(const boost::filesystem::path &dIn)
     , stow->transitionLabel->serialOut()
     , stow->forceC1Label->serialOut()
     , stow->solidLabel->serialOut()
-    , stow->useLawLabel->serialOut()
-    , mOut
-    , scale
     , gu::idToString(stow->solidId)
     , gu::idToString(stow->shellId)
     , gu::idToString(stow->firstFaceId)
@@ -1375,7 +1221,6 @@ void Feature::serialRead(const prj::srl::swps::Sweep &so)
   stow->transition.serialIn(so.transition());
   stow->forceC1.serialIn(so.forceC1());
   stow->solid.serialIn(so.solid());
-  stow->useLaw.serialIn(so.useLaw());
   stow->spine.serialIn(so.spine());
   stow->auxiliary.serialIn(so.auxiliary());
   stow->support.serialIn(so.support());
@@ -1384,7 +1229,6 @@ void Feature::serialRead(const prj::srl::swps::Sweep &so)
   stow->transitionLabel->serialIn(so.transitionLabel());
   stow->forceC1Label->serialIn(so.forceC1Label());
   stow->solidLabel->serialIn(so.solidLabel());
-  stow->useLawLabel->serialIn(so.useLawLabel());
   stow->solidId = gu::stringToId(so.solidId());
   stow->shellId = gu::stringToId(so.shellId());
   stow->firstFaceId = gu::stringToId(so.firstFaceId());
@@ -1421,22 +1265,5 @@ void Feature::serialRead(const prj::srl::swps::Sweep &so)
     stow->instanceMap.insert(std::make_pair(gu::stringToId(p.key()), valuesIn));
   }
   
-  stow->severLaw();
-  stow->lawFunction.setCue(lwf::Cue(so.lawFunction()));
-  stow->attachLaw();
-  const auto &mIn = so.lawVizMatrix();
-  osg::Matrixd m
-  (
-    mIn.i0j0(), mIn.i0j1(), mIn.i0j2(), mIn.i0j3(),
-    mIn.i1j0(), mIn.i1j1(), mIn.i1j2(), mIn.i1j3(),
-    mIn.i2j0(), mIn.i2j1(), mIn.i2j2(), mIn.i2j3(),
-    mIn.i3j0(), mIn.i3j1(), mIn.i3j2(), mIn.i3j3()
-  );
-  mdv::LawCallback *ocb = dynamic_cast<mdv::LawCallback*>(stow->lawSwitch->getUpdateCallback());
-  if (ocb)
-  {
-    ocb->setMatrix(m, stow->lawSwitch.get());
-    ocb->setScale(so.lawVizScale());
-  }
   stow->prmActiveSync();
 }

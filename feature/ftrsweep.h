@@ -22,8 +22,8 @@
 
 #include "feature/ftrbase.h"
 
-namespace ann{class SeerShape; class LawFunction;}
-namespace lwf{struct Cue;}
+namespace ann{class SeerShape;}
+namespace lbr{class PLabel;}
 namespace prj
 {
   namespace srl
@@ -158,8 +158,6 @@ namespace ftr
       Auxiliary& getAuxiliary() const;
       
       Binormal& getBinormal() const;
-
-      void setLaw(const lwf::Cue&); //doesn't change useLaw
     private:
       static QIcon icon;
       struct Stow;

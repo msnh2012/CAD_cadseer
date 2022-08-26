@@ -99,8 +99,6 @@ namespace prj
 
 #include "prjsrlsptoverlay.h"
 
-#include "prjsrllwfslawfunction.h"
-
 #include "prjsrlsptbase.h"
 
 namespace prj
@@ -582,23 +580,6 @@ namespace prj
         void
         seerShape (::std::unique_ptr< SeerShapeType > p);
 
-        // lawFunction
-        //
-        typedef ::prj::srl::lwfs::Cue LawFunctionType;
-        typedef ::xsd::cxx::tree::traits< LawFunctionType, char > LawFunctionTraits;
-
-        const LawFunctionType&
-        lawFunction () const;
-
-        LawFunctionType&
-        lawFunction ();
-
-        void
-        lawFunction (const LawFunctionType& x);
-
-        void
-        lawFunction (::std::unique_ptr< LawFunctionType > p);
-
         // trihedron
         //
         typedef ::prj::srl::spt::Parameter TrihedronType;
@@ -666,23 +647,6 @@ namespace prj
 
         void
         solid (::std::unique_ptr< SolidType > p);
-
-        // useLaw
-        //
-        typedef ::prj::srl::spt::Parameter UseLawType;
-        typedef ::xsd::cxx::tree::traits< UseLawType, char > UseLawTraits;
-
-        const UseLawType&
-        useLaw () const;
-
-        UseLawType&
-        useLaw ();
-
-        void
-        useLaw (const UseLawType& x);
-
-        void
-        useLaw (::std::unique_ptr< UseLawType > p);
 
         // spine
         //
@@ -837,54 +801,6 @@ namespace prj
         void
         solidLabel (::std::unique_ptr< SolidLabelType > p);
 
-        // useLawLabel
-        //
-        typedef ::prj::srl::spt::PLabel UseLawLabelType;
-        typedef ::xsd::cxx::tree::traits< UseLawLabelType, char > UseLawLabelTraits;
-
-        const UseLawLabelType&
-        useLawLabel () const;
-
-        UseLawLabelType&
-        useLawLabel ();
-
-        void
-        useLawLabel (const UseLawLabelType& x);
-
-        void
-        useLawLabel (::std::unique_ptr< UseLawLabelType > p);
-
-        // lawVizMatrix
-        //
-        typedef ::prj::srl::spt::Matrixd LawVizMatrixType;
-        typedef ::xsd::cxx::tree::traits< LawVizMatrixType, char > LawVizMatrixTraits;
-
-        const LawVizMatrixType&
-        lawVizMatrix () const;
-
-        LawVizMatrixType&
-        lawVizMatrix ();
-
-        void
-        lawVizMatrix (const LawVizMatrixType& x);
-
-        void
-        lawVizMatrix (::std::unique_ptr< LawVizMatrixType > p);
-
-        // lawVizScale
-        //
-        typedef ::xml_schema::Double LawVizScaleType;
-        typedef ::xsd::cxx::tree::traits< LawVizScaleType, char, ::xsd::cxx::tree::schema_type::double_ > LawVizScaleTraits;
-
-        const LawVizScaleType&
-        lawVizScale () const;
-
-        LawVizScaleType&
-        lawVizScale ();
-
-        void
-        lawVizScale (const LawVizScaleType& x);
-
         // solidId
         //
         typedef ::xml_schema::String SolidIdType;
@@ -1025,12 +941,10 @@ namespace prj
         //
         Sweep (const BaseType&,
                const SeerShapeType&,
-               const LawFunctionType&,
                const TrihedronType&,
                const TransitionType&,
                const ForceC1Type&,
                const SolidType&,
-               const UseLawType&,
                const SpineType&,
                const AuxiliaryType&,
                const SupportType&,
@@ -1039,9 +953,6 @@ namespace prj
                const TransitionLabelType&,
                const ForceC1LabelType&,
                const SolidLabelType&,
-               const UseLawLabelType&,
-               const LawVizMatrixType&,
-               const LawVizScaleType&,
                const SolidIdType&,
                const ShellIdType&,
                const FirstFaceIdType&,
@@ -1049,12 +960,10 @@ namespace prj
 
         Sweep (::std::unique_ptr< BaseType >,
                ::std::unique_ptr< SeerShapeType >,
-               ::std::unique_ptr< LawFunctionType >,
                ::std::unique_ptr< TrihedronType >,
                ::std::unique_ptr< TransitionType >,
                ::std::unique_ptr< ForceC1Type >,
                ::std::unique_ptr< SolidType >,
-               ::std::unique_ptr< UseLawType >,
                ::std::unique_ptr< SpineType >,
                ::std::unique_ptr< AuxiliaryType >,
                ::std::unique_ptr< SupportType >,
@@ -1063,9 +972,6 @@ namespace prj
                ::std::unique_ptr< TransitionLabelType >,
                ::std::unique_ptr< ForceC1LabelType >,
                ::std::unique_ptr< SolidLabelType >,
-               ::std::unique_ptr< UseLawLabelType >,
-               ::std::unique_ptr< LawVizMatrixType >,
-               const LawVizScaleType&,
                const SolidIdType&,
                const ShellIdType&,
                const FirstFaceIdType&,
@@ -1099,12 +1005,10 @@ namespace prj
         protected:
         ::xsd::cxx::tree::one< BaseType > base_;
         ::xsd::cxx::tree::one< SeerShapeType > seerShape_;
-        ::xsd::cxx::tree::one< LawFunctionType > lawFunction_;
         ::xsd::cxx::tree::one< TrihedronType > trihedron_;
         ::xsd::cxx::tree::one< TransitionType > transition_;
         ::xsd::cxx::tree::one< ForceC1Type > forceC1_;
         ::xsd::cxx::tree::one< SolidType > solid_;
-        ::xsd::cxx::tree::one< UseLawType > useLaw_;
         ::xsd::cxx::tree::one< SpineType > spine_;
         ProfilesSequence profiles_;
         ::xsd::cxx::tree::one< AuxiliaryType > auxiliary_;
@@ -1114,9 +1018,6 @@ namespace prj
         ::xsd::cxx::tree::one< TransitionLabelType > transitionLabel_;
         ::xsd::cxx::tree::one< ForceC1LabelType > forceC1Label_;
         ::xsd::cxx::tree::one< SolidLabelType > solidLabel_;
-        ::xsd::cxx::tree::one< UseLawLabelType > useLawLabel_;
-        ::xsd::cxx::tree::one< LawVizMatrixType > lawVizMatrix_;
-        ::xsd::cxx::tree::one< LawVizScaleType > lawVizScale_;
         ::xsd::cxx::tree::one< SolidIdType > solidId_;
         ::xsd::cxx::tree::one< ShellIdType > shellId_;
         ::xsd::cxx::tree::one< FirstFaceIdType > firstFaceId_;

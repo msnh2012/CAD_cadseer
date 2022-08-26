@@ -9,7 +9,6 @@
   <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptseershape.xsd"/>
   <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptparameter.xsd"/>
   <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptoverlay.xsd"/>
-  <xs:import namespace = "http://www.cadseer.com/prj/srl/lwfs" schemaLocation="prjsrllwfslawfunction.xsd"/>
   <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptbase.xsd"/>
 
   <xs:complexType name="SweepProfile">
@@ -51,12 +50,10 @@
     <xs:sequence>
       <xs:element name="base" type="spt:Base"/>
       <xs:element name="seerShape" type="spt:SeerShape"/>
-      <xs:element name="lawFunction" type="lwfs:Cue"/>
       <xs:element name="trihedron" type="spt:Parameter"/>
       <xs:element name="transition" type="spt:Parameter"/>
       <xs:element name="forceC1" type="spt:Parameter"/>
       <xs:element name="solid" type="spt:Parameter"/>
-      <xs:element name="useLaw" type="spt:Parameter"/>
       <xs:element name="spine" type="spt:Parameter"/>
       <xs:element name="profiles" type="swps:SweepProfile" minOccurs="0" maxOccurs="unbounded"/>
       <xs:element name="auxiliary" type="swps:SweepAuxiliary"/>
@@ -66,9 +63,6 @@
       <xs:element name="transitionLabel" type="spt:PLabel"/>
       <xs:element name="forceC1Label" type="spt:PLabel"/>
       <xs:element name="solidLabel" type="spt:PLabel"/>
-      <xs:element name="useLawLabel" type="spt:PLabel"/>
-      <xs:element name="lawVizMatrix" type="spt:Matrixd"/>
-      <xs:element name="lawVizScale" type="xs:double"/>
       <xs:element name="solidId" type="xs:string"/>
       <xs:element name="shellId" type="xs:string"/>
       <xs:element name="firstFaceId" type="xs:string"/>

@@ -34,7 +34,6 @@
 
 #include "application/appapplication.h"
 #include "project/prjproject.h"
-#include "annex/annlawfunction.h"
 #include "message/msgmessage.h"
 #include "message/msgnode.h"
 #include "message/msgsift.h"
@@ -46,8 +45,6 @@
 #include "dialogs/dlgsplitterdecorated.h"
 #include "tools/featuretools.h"
 #include "tools/idtools.h"
-#include "law/lwfcue.h"
-#include "commandview/cmvlawfunctionwidget.h"
 #include "feature/ftrsweep.h"
 #include "command/cmdsweep.h"
 #include "commandview/cmvsweep.h"
@@ -67,10 +64,8 @@ struct Sweep::Stow
   prm::Parameters parameters;
   cmv::tbl::Model *prmModel = nullptr;
   cmv::tbl::View *prmView = nullptr;
-  prm::Observer useLawObserver;
   
   dlg::SplitterDecorated *topSplitter = nullptr;
-  LawFunctionWidget *lawWidget;
   bool isGlobalBoundarySelection = false;
   
   Stow(cmd::Sweep *cIn, cmv::Sweep *vIn)
@@ -134,17 +129,11 @@ struct Sweep::Stow
     cue.statusPrompt = tr("Select Binormal");
     prmModel->setCue(command->feature->getParameter(ftr::Sweep::PrmTags::biPicks), cue);
     
-    lawWidget = new LawFunctionWidget(view);
-    lawWidget->setWhatsThis(tr("Modifies The Law"));
-    
     topSplitter = new dlg::SplitterDecorated(view);
     topSplitter->setOrientation(Qt::Vertical);
     topSplitter->addWidget(prmView);
     topSplitter->addWidget(profilesList);
-    topSplitter->addWidget(lawWidget);
     mainLayout->addWidget(topSplitter);
-    
-    useLawChanged();
   }
   
   void slcAdded(const msg::Message &mIn)
@@ -160,7 +149,6 @@ struct Sweep::Stow
     auto &p = addProfile();
     auto *tblModel = profilesList->getSelectedModel();
     tblModel->mySetData(&p.pick, {mIn.getSLC()});
-    useLawChanged();
   }
   
   ftr::Sweep::Profile& addProfile()
@@ -169,7 +157,6 @@ struct Sweep::Stow
     auto &freshProfile = command->feature->addProfile();
     addProfileWidget(freshProfile);
     profilesList->setSelected();
-    useLawChanged();
     return freshProfile;
   }
   
@@ -182,7 +169,6 @@ struct Sweep::Stow
     command->feature->removeProfile(i);
     goPicks();
     command->localUpdate();
-    useLawChanged();
   }
   
   void addProfileWidget(ftr::Sweep::Profile &pIn)
@@ -207,22 +193,8 @@ struct Sweep::Stow
   
   void loadFeatureData()
   {
-    const ann::LawFunction &lfa = command->feature->getAnnex<ann::LawFunction>(ann::Type::LawFunction);
-    lawWidget->setCue(lfa.getCue());
-    
     for (auto &p : command->feature->getProfiles())
       addProfileWidget(p);
-  }
-  
-  void useLawChanged()
-  {
-    const auto *lawPrm = command->feature->getParameter(ftr::Sweep::PrmTags::useLaw);
-    auto lawState = lawPrm->isActive() & lawPrm->getBool();
-    if (lawState)
-      lawWidget->setVisible(true);
-    else
-      lawWidget->setVisible(false);
-    prmView->updateHideInactive();
   }
   
   void glue()
@@ -231,11 +203,6 @@ struct Sweep::Stow
     connect(addProfileAction, &QAction::triggered, [this](){this->addProfile();});
     connect(removeProfileAction, &QAction::triggered, [this](){this->removeProfile();});
     connect(profilesList->getListWidget(), &QListWidget::itemSelectionChanged, view, &Sweep::profileSelectionChanged);
-    connect(lawWidget, &LawFunctionWidget::lawIsDirty, view, &Sweep::lawDirtySlot);
-    connect(lawWidget, &LawFunctionWidget::valueChanged, view, &Sweep::lawValueChangedSlot);
-    auto *lawPrm = command->feature->getParameter(ftr::Sweep::PrmTags::useLaw);
-    useLawObserver.valueHandler = std::bind(&Stow::useLawChanged, this);
-    lawPrm->connect(useLawObserver);
     connect(prmView, &tbl::View::openingPersistent, [this](){this->closeAllPersistentEditors();});
     connect(prmView, &tbl::View::openingPersistent, [this](){this->stopGlobalBoundarySelection();});
     profilesList->getListWidget()->installEventFilter(view);
@@ -350,30 +317,6 @@ bool Sweep::eventFilter(QObject *watched, QEvent *event)
   return QObject::eventFilter(watched, event);
 }
 
-void Sweep::lawDirtySlot()
-{
-  stow->command->feature->setLaw(stow->lawWidget->getCue());
-  stow->goUpdate();
-}
-
-void Sweep::lawValueChangedSlot()
-{
-  //this is goofy. law cue in law widget is a copy so widget doesn't change
-  //parameters in the actual feature. So we have to sync by parameter ids.
-  for (const prm::Parameter *wp : stow->lawWidget->getCue().getParameters())
-  {
-    prm::Parameter *fp = stow->command->feature->getParameter(wp->getId());
-    if (!fp)
-    {
-      std::cout << "WARNING: law widget cue parameter doesn't exist in feature" << std::endl;
-      continue;
-    }
-    (*fp) = (*wp);
-  }
-  stow->goUpdate();
-}
-
-
 void Sweep::profilesChanged(const QModelIndex &index, const QModelIndex&)
 {
   if (!index.isValid())
@@ -393,8 +336,7 @@ void Sweep::profileSelectionChanged()
 
 void Sweep::modelChanged(const QModelIndex &index, const QModelIndex&)
 {
-  if (!index.isValid())
-    return;
+  if (!index.isValid()) return;
   
   auto tag = stow->parameters.at(index.row())->getTag(); //tag of changed parameter.
   if

@@ -45,8 +45,6 @@ namespace cmv
     struct Stow;
     std::unique_ptr<Stow> stow;
   private Q_SLOTS:
-    void lawDirtySlot();
-    void lawValueChangedSlot();
     void profilesChanged(const QModelIndex&, const QModelIndex&);
     void profileSelectionChanged();
     void modelChanged(const QModelIndex&, const QModelIndex&);

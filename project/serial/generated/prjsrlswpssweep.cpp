@@ -467,30 +467,6 @@ namespace prj
         this->seerShape_.set (std::move (x));
       }
 
-      const Sweep::LawFunctionType& Sweep::
-      lawFunction () const
-      {
-        return this->lawFunction_.get ();
-      }
-
-      Sweep::LawFunctionType& Sweep::
-      lawFunction ()
-      {
-        return this->lawFunction_.get ();
-      }
-
-      void Sweep::
-      lawFunction (const LawFunctionType& x)
-      {
-        this->lawFunction_.set (x);
-      }
-
-      void Sweep::
-      lawFunction (::std::unique_ptr< LawFunctionType > x)
-      {
-        this->lawFunction_.set (std::move (x));
-      }
-
       const Sweep::TrihedronType& Sweep::
       trihedron () const
       {
@@ -585,30 +561,6 @@ namespace prj
       solid (::std::unique_ptr< SolidType > x)
       {
         this->solid_.set (std::move (x));
-      }
-
-      const Sweep::UseLawType& Sweep::
-      useLaw () const
-      {
-        return this->useLaw_.get ();
-      }
-
-      Sweep::UseLawType& Sweep::
-      useLaw ()
-      {
-        return this->useLaw_.get ();
-      }
-
-      void Sweep::
-      useLaw (const UseLawType& x)
-      {
-        this->useLaw_.set (x);
-      }
-
-      void Sweep::
-      useLaw (::std::unique_ptr< UseLawType > x)
-      {
-        this->useLaw_.set (std::move (x));
       }
 
       const Sweep::SpineType& Sweep::
@@ -819,72 +771,6 @@ namespace prj
       solidLabel (::std::unique_ptr< SolidLabelType > x)
       {
         this->solidLabel_.set (std::move (x));
-      }
-
-      const Sweep::UseLawLabelType& Sweep::
-      useLawLabel () const
-      {
-        return this->useLawLabel_.get ();
-      }
-
-      Sweep::UseLawLabelType& Sweep::
-      useLawLabel ()
-      {
-        return this->useLawLabel_.get ();
-      }
-
-      void Sweep::
-      useLawLabel (const UseLawLabelType& x)
-      {
-        this->useLawLabel_.set (x);
-      }
-
-      void Sweep::
-      useLawLabel (::std::unique_ptr< UseLawLabelType > x)
-      {
-        this->useLawLabel_.set (std::move (x));
-      }
-
-      const Sweep::LawVizMatrixType& Sweep::
-      lawVizMatrix () const
-      {
-        return this->lawVizMatrix_.get ();
-      }
-
-      Sweep::LawVizMatrixType& Sweep::
-      lawVizMatrix ()
-      {
-        return this->lawVizMatrix_.get ();
-      }
-
-      void Sweep::
-      lawVizMatrix (const LawVizMatrixType& x)
-      {
-        this->lawVizMatrix_.set (x);
-      }
-
-      void Sweep::
-      lawVizMatrix (::std::unique_ptr< LawVizMatrixType > x)
-      {
-        this->lawVizMatrix_.set (std::move (x));
-      }
-
-      const Sweep::LawVizScaleType& Sweep::
-      lawVizScale () const
-      {
-        return this->lawVizScale_.get ();
-      }
-
-      Sweep::LawVizScaleType& Sweep::
-      lawVizScale ()
-      {
-        return this->lawVizScale_.get ();
-      }
-
-      void Sweep::
-      lawVizScale (const LawVizScaleType& x)
-      {
-        this->lawVizScale_.set (x);
       }
 
       const Sweep::SolidIdType& Sweep::
@@ -1756,12 +1642,10 @@ namespace prj
       Sweep::
       Sweep (const BaseType& base,
              const SeerShapeType& seerShape,
-             const LawFunctionType& lawFunction,
              const TrihedronType& trihedron,
              const TransitionType& transition,
              const ForceC1Type& forceC1,
              const SolidType& solid,
-             const UseLawType& useLaw,
              const SpineType& spine,
              const AuxiliaryType& auxiliary,
              const SupportType& support,
@@ -1770,9 +1654,6 @@ namespace prj
              const TransitionLabelType& transitionLabel,
              const ForceC1LabelType& forceC1Label,
              const SolidLabelType& solidLabel,
-             const UseLawLabelType& useLawLabel,
-             const LawVizMatrixType& lawVizMatrix,
-             const LawVizScaleType& lawVizScale,
              const SolidIdType& solidId,
              const ShellIdType& shellId,
              const FirstFaceIdType& firstFaceId,
@@ -1780,12 +1661,10 @@ namespace prj
       : ::xml_schema::Type (),
         base_ (base, this),
         seerShape_ (seerShape, this),
-        lawFunction_ (lawFunction, this),
         trihedron_ (trihedron, this),
         transition_ (transition, this),
         forceC1_ (forceC1, this),
         solid_ (solid, this),
-        useLaw_ (useLaw, this),
         spine_ (spine, this),
         profiles_ (this),
         auxiliary_ (auxiliary, this),
@@ -1795,9 +1674,6 @@ namespace prj
         transitionLabel_ (transitionLabel, this),
         forceC1Label_ (forceC1Label, this),
         solidLabel_ (solidLabel, this),
-        useLawLabel_ (useLawLabel, this),
-        lawVizMatrix_ (lawVizMatrix, this),
-        lawVizScale_ (lawVizScale, this),
         solidId_ (solidId, this),
         shellId_ (shellId, this),
         firstFaceId_ (firstFaceId, this),
@@ -1812,12 +1688,10 @@ namespace prj
       Sweep::
       Sweep (::std::unique_ptr< BaseType > base,
              ::std::unique_ptr< SeerShapeType > seerShape,
-             ::std::unique_ptr< LawFunctionType > lawFunction,
              ::std::unique_ptr< TrihedronType > trihedron,
              ::std::unique_ptr< TransitionType > transition,
              ::std::unique_ptr< ForceC1Type > forceC1,
              ::std::unique_ptr< SolidType > solid,
-             ::std::unique_ptr< UseLawType > useLaw,
              ::std::unique_ptr< SpineType > spine,
              ::std::unique_ptr< AuxiliaryType > auxiliary,
              ::std::unique_ptr< SupportType > support,
@@ -1826,9 +1700,6 @@ namespace prj
              ::std::unique_ptr< TransitionLabelType > transitionLabel,
              ::std::unique_ptr< ForceC1LabelType > forceC1Label,
              ::std::unique_ptr< SolidLabelType > solidLabel,
-             ::std::unique_ptr< UseLawLabelType > useLawLabel,
-             ::std::unique_ptr< LawVizMatrixType > lawVizMatrix,
-             const LawVizScaleType& lawVizScale,
              const SolidIdType& solidId,
              const ShellIdType& shellId,
              const FirstFaceIdType& firstFaceId,
@@ -1836,12 +1707,10 @@ namespace prj
       : ::xml_schema::Type (),
         base_ (std::move (base), this),
         seerShape_ (std::move (seerShape), this),
-        lawFunction_ (std::move (lawFunction), this),
         trihedron_ (std::move (trihedron), this),
         transition_ (std::move (transition), this),
         forceC1_ (std::move (forceC1), this),
         solid_ (std::move (solid), this),
-        useLaw_ (std::move (useLaw), this),
         spine_ (std::move (spine), this),
         profiles_ (this),
         auxiliary_ (std::move (auxiliary), this),
@@ -1851,9 +1720,6 @@ namespace prj
         transitionLabel_ (std::move (transitionLabel), this),
         forceC1Label_ (std::move (forceC1Label), this),
         solidLabel_ (std::move (solidLabel), this),
-        useLawLabel_ (std::move (useLawLabel), this),
-        lawVizMatrix_ (std::move (lawVizMatrix), this),
-        lawVizScale_ (lawVizScale, this),
         solidId_ (solidId, this),
         shellId_ (shellId, this),
         firstFaceId_ (firstFaceId, this),
@@ -1872,12 +1738,10 @@ namespace prj
       : ::xml_schema::Type (x, f, c),
         base_ (x.base_, f, this),
         seerShape_ (x.seerShape_, f, this),
-        lawFunction_ (x.lawFunction_, f, this),
         trihedron_ (x.trihedron_, f, this),
         transition_ (x.transition_, f, this),
         forceC1_ (x.forceC1_, f, this),
         solid_ (x.solid_, f, this),
-        useLaw_ (x.useLaw_, f, this),
         spine_ (x.spine_, f, this),
         profiles_ (x.profiles_, f, this),
         auxiliary_ (x.auxiliary_, f, this),
@@ -1887,9 +1751,6 @@ namespace prj
         transitionLabel_ (x.transitionLabel_, f, this),
         forceC1Label_ (x.forceC1Label_, f, this),
         solidLabel_ (x.solidLabel_, f, this),
-        useLawLabel_ (x.useLawLabel_, f, this),
-        lawVizMatrix_ (x.lawVizMatrix_, f, this),
-        lawVizScale_ (x.lawVizScale_, f, this),
         solidId_ (x.solidId_, f, this),
         shellId_ (x.shellId_, f, this),
         firstFaceId_ (x.firstFaceId_, f, this),
@@ -1908,12 +1769,10 @@ namespace prj
       : ::xml_schema::Type (e, f | ::xml_schema::Flags::base, c),
         base_ (this),
         seerShape_ (this),
-        lawFunction_ (this),
         trihedron_ (this),
         transition_ (this),
         forceC1_ (this),
         solid_ (this),
-        useLaw_ (this),
         spine_ (this),
         profiles_ (this),
         auxiliary_ (this),
@@ -1923,9 +1782,6 @@ namespace prj
         transitionLabel_ (this),
         forceC1Label_ (this),
         solidLabel_ (this),
-        useLawLabel_ (this),
-        lawVizMatrix_ (this),
-        lawVizScale_ (this),
         solidId_ (this),
         shellId_ (this),
         firstFaceId_ (this),
@@ -1976,20 +1832,6 @@ namespace prj
             if (!seerShape_.present ())
             {
               this->seerShape_.set (::std::move (r));
-              continue;
-            }
-          }
-
-          // lawFunction
-          //
-          if (n.name () == "lawFunction" && n.namespace_ ().empty ())
-          {
-            ::std::unique_ptr< LawFunctionType > r (
-              LawFunctionTraits::create (i, f, this));
-
-            if (!lawFunction_.present ())
-            {
-              this->lawFunction_.set (::std::move (r));
               continue;
             }
           }
@@ -2046,20 +1888,6 @@ namespace prj
             if (!solid_.present ())
             {
               this->solid_.set (::std::move (r));
-              continue;
-            }
-          }
-
-          // useLaw
-          //
-          if (n.name () == "useLaw" && n.namespace_ ().empty ())
-          {
-            ::std::unique_ptr< UseLawType > r (
-              UseLawTraits::create (i, f, this));
-
-            if (!useLaw_.present ())
-            {
-              this->useLaw_.set (::std::move (r));
               continue;
             }
           }
@@ -2187,45 +2015,6 @@ namespace prj
             }
           }
 
-          // useLawLabel
-          //
-          if (n.name () == "useLawLabel" && n.namespace_ ().empty ())
-          {
-            ::std::unique_ptr< UseLawLabelType > r (
-              UseLawLabelTraits::create (i, f, this));
-
-            if (!useLawLabel_.present ())
-            {
-              this->useLawLabel_.set (::std::move (r));
-              continue;
-            }
-          }
-
-          // lawVizMatrix
-          //
-          if (n.name () == "lawVizMatrix" && n.namespace_ ().empty ())
-          {
-            ::std::unique_ptr< LawVizMatrixType > r (
-              LawVizMatrixTraits::create (i, f, this));
-
-            if (!lawVizMatrix_.present ())
-            {
-              this->lawVizMatrix_.set (::std::move (r));
-              continue;
-            }
-          }
-
-          // lawVizScale
-          //
-          if (n.name () == "lawVizScale" && n.namespace_ ().empty ())
-          {
-            if (!lawVizScale_.present ())
-            {
-              this->lawVizScale_.set (LawVizScaleTraits::create (i, f, this));
-              continue;
-            }
-          }
-
           // solidId
           //
           if (n.name () == "solidId" && n.namespace_ ().empty ())
@@ -2343,13 +2132,6 @@ namespace prj
             "");
         }
 
-        if (!lawFunction_.present ())
-        {
-          throw ::xsd::cxx::tree::expected_element< char > (
-            "lawFunction",
-            "");
-        }
-
         if (!trihedron_.present ())
         {
           throw ::xsd::cxx::tree::expected_element< char > (
@@ -2375,13 +2157,6 @@ namespace prj
         {
           throw ::xsd::cxx::tree::expected_element< char > (
             "solid",
-            "");
-        }
-
-        if (!useLaw_.present ())
-        {
-          throw ::xsd::cxx::tree::expected_element< char > (
-            "useLaw",
             "");
         }
 
@@ -2441,27 +2216,6 @@ namespace prj
             "");
         }
 
-        if (!useLawLabel_.present ())
-        {
-          throw ::xsd::cxx::tree::expected_element< char > (
-            "useLawLabel",
-            "");
-        }
-
-        if (!lawVizMatrix_.present ())
-        {
-          throw ::xsd::cxx::tree::expected_element< char > (
-            "lawVizMatrix",
-            "");
-        }
-
-        if (!lawVizScale_.present ())
-        {
-          throw ::xsd::cxx::tree::expected_element< char > (
-            "lawVizScale",
-            "");
-        }
-
         if (!solidId_.present ())
         {
           throw ::xsd::cxx::tree::expected_element< char > (
@@ -2506,12 +2260,10 @@ namespace prj
           static_cast< ::xml_schema::Type& > (*this) = x;
           this->base_ = x.base_;
           this->seerShape_ = x.seerShape_;
-          this->lawFunction_ = x.lawFunction_;
           this->trihedron_ = x.trihedron_;
           this->transition_ = x.transition_;
           this->forceC1_ = x.forceC1_;
           this->solid_ = x.solid_;
-          this->useLaw_ = x.useLaw_;
           this->spine_ = x.spine_;
           this->profiles_ = x.profiles_;
           this->auxiliary_ = x.auxiliary_;
@@ -2521,9 +2273,6 @@ namespace prj
           this->transitionLabel_ = x.transitionLabel_;
           this->forceC1Label_ = x.forceC1Label_;
           this->solidLabel_ = x.solidLabel_;
-          this->useLawLabel_ = x.useLawLabel_;
-          this->lawVizMatrix_ = x.lawVizMatrix_;
-          this->lawVizScale_ = x.lawVizScale_;
           this->solidId_ = x.solidId_;
           this->shellId_ = x.shellId_;
           this->firstFaceId_ = x.firstFaceId_;
@@ -3053,17 +2802,6 @@ namespace prj
           s << i.seerShape ();
         }
 
-        // lawFunction
-        //
-        {
-          ::xercesc::DOMElement& s (
-            ::xsd::cxx::xml::dom::create_element (
-              "lawFunction",
-              e));
-
-          s << i.lawFunction ();
-        }
-
         // trihedron
         //
         {
@@ -3106,17 +2844,6 @@ namespace prj
               e));
 
           s << i.solid ();
-        }
-
-        // useLaw
-        //
-        {
-          ::xercesc::DOMElement& s (
-            ::xsd::cxx::xml::dom::create_element (
-              "useLaw",
-              e));
-
-          s << i.useLaw ();
         }
 
         // spine
@@ -3219,39 +2946,6 @@ namespace prj
               e));
 
           s << i.solidLabel ();
-        }
-
-        // useLawLabel
-        //
-        {
-          ::xercesc::DOMElement& s (
-            ::xsd::cxx::xml::dom::create_element (
-              "useLawLabel",
-              e));
-
-          s << i.useLawLabel ();
-        }
-
-        // lawVizMatrix
-        //
-        {
-          ::xercesc::DOMElement& s (
-            ::xsd::cxx::xml::dom::create_element (
-              "lawVizMatrix",
-              e));
-
-          s << i.lawVizMatrix ();
-        }
-
-        // lawVizScale
-        //
-        {
-          ::xercesc::DOMElement& s (
-            ::xsd::cxx::xml::dom::create_element (
-              "lawVizScale",
-              e));
-
-          s << ::xml_schema::AsDouble(i.lawVizScale ());
         }
 
         // solidId
