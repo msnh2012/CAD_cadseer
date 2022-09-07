@@ -22,41 +22,42 @@
 
 #include "feature/ftrbase.h"
 
-class BRepTools_History;
-
-namespace ann{class SeerShape;}
 namespace prj{namespace srl{namespace rfns{class Refine;}}}
 
 namespace ftr
 {
-  /**
-  * @todo write docs
-  */
-  class Refine : public Base
+  namespace Refine
   {
-  public:
-    Refine();
-    virtual ~Refine() override;
-    
-    virtual void updateModel(const UpdatePayload&) override;
-    virtual Type getType() const override {return Type::Refine;}
-    virtual const std::string& getTypeString() const override {return toString(Type::Refine);}
-    virtual const QIcon& getIcon() const override {return icon;}
-    virtual Descriptor getDescriptor() const override {return Descriptor::Alter;}
-    virtual void serialWrite(const boost::filesystem::path&) override;
-    void serialRead(const prj::srl::rfns::Refine&);
-    
-  protected:
-    std::unique_ptr<ann::SeerShape> sShape;
-    /*! used to map new geometry to old geometry.
-     */ 
-    std::map<boost::uuids::uuid, boost::uuids::uuid> shapeMap;
-    
-    void historyMatch(const BRepTools_History& , const ann::SeerShape&);
-    
-  private:
-    static QIcon icon;
-  };
+    namespace PrmTags
+    {
+      inline constexpr std::string_view unifyFaces = "unifyFace";
+      inline constexpr std::string_view unifyEdges = "unifyEdges";
+      inline constexpr std::string_view concatBSplines = "concatBSplines";
+      inline constexpr std::string_view tightenFaces = "tightenFace";
+      inline constexpr std::string_view tightenEdges = "tightenEdges";
+      inline constexpr std::string_view tightenVertices = "tightenVertices";
+      inline constexpr std::string_view sameParameter = "sameParameter";
+    }
+    class Feature : public Base
+    {
+    public:
+      Feature();
+      ~Feature() override;
+      
+      void updateModel(const UpdatePayload&) override;
+      Type getType() const override {return Type::Refine;}
+      const std::string& getTypeString() const override {return toString(Type::Refine);}
+      const QIcon& getIcon() const override {return icon;}
+      Descriptor getDescriptor() const override {return Descriptor::Alter;}
+      void serialWrite(const boost::filesystem::path&) override;
+      void serialRead(const prj::srl::rfns::Refine&);
+      
+    private:
+      static QIcon icon;
+      struct Stow;
+      std::unique_ptr<Stow> stow;
+    };
+  }
 }
 
 #endif // FTR_REFINE_H

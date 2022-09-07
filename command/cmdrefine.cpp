@@ -52,15 +52,12 @@ void Refine::go()
   const slc::Containers &containers = eventHandler->getSelections();
   for (const auto &c : containers)
   {
-    if (c.selectionType != slc::Type::Object)
-      continue;
-    
+    if (c.selectionType != slc::Type::Object) continue;
     ftr::Base *bf = project->findFeature(c.featureId);
-    if (!bf->hasAnnex(ann::Type::SeerShape))
-      continue;
+    if (!bf->hasAnnex(ann::Type::SeerShape)) continue;
     
-    auto *refine = new ftr::Refine();
-    project->addFeature(std::unique_ptr<ftr::Refine>(refine));
+    auto refine = new ftr::Refine::Feature();
+    project->addFeature(std::unique_ptr<ftr::Refine::Feature>(refine));
     project->connectInsert(c.featureId, refine->getId(), ftr::InputType{ftr::InputType::target});
     created = true;
     

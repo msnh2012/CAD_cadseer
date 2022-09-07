@@ -447,7 +447,7 @@ std::unique_ptr<ftr::Base> FeatureLoad::loadRefine(const std::string &fileNameIn
   auto sr = srl::rfns::refine(fileNameIn, flags);
   assert(sr);
   
-  auto freshRefine = std::make_unique<ftr::Refine>();
+  auto freshRefine = std::make_unique<ftr::Refine::Feature>();
   freshRefine->getAnnex<ann::SeerShape>().setOCCTShape(shapeVector.at(shapeOffsetIn), featureId);
   freshRefine->serialRead(*sr);
   

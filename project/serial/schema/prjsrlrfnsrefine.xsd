@@ -5,14 +5,35 @@
   xmlns:rfns="http://www.cadseer.com/prj/srl/rfns"
   targetNamespace="http://www.cadseer.com/prj/srl/rfns"
 >
+  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptparameter.xsd"/>
+  <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptoverlay.xsd"/>
   <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptseershape.xsd"/>
   <xs:import namespace = "http://www.cadseer.com/prj/srl/spt" schemaLocation="prjsrlsptbase.xsd"/>
 
   <xs:complexType name="Refine">
     <xs:sequence>
       <xs:element name="base" type="spt:Base"/>
-      <xs:element name="seerShape" type="spt:SeerShape"/>
+      <xs:element name="sShape" type="spt:SeerShape"/>
       <xs:element name="shapeMap" type="spt:EvolveRecord" minOccurs="0" maxOccurs="unbounded"/>
+      
+      <xs:element name="unifyFaces" type="spt:Parameter"/>
+      <xs:element name="unifyEdges" type="spt:Parameter"/>
+      <xs:element name="concatBSplines" type="spt:Parameter"/>
+      <xs:element name="tightenFaces" type="spt:Parameter"/>
+      <xs:element name="tightenEdges" type="spt:Parameter"/>
+      <xs:element name="tightenVertices" type="spt:Parameter"/>
+      <xs:element name="sameParameter" type="spt:Parameter"/>
+      
+      <xs:element name="unifyFacesLabel" type="spt:PLabel"/>
+      <xs:element name="unifyEdgesLabel" type="spt:PLabel"/>
+      <xs:element name="concatBSplinesLabel" type="spt:PLabel"/>
+      <xs:element name="tightenFacesLabel" type="spt:PLabel"/>
+      <xs:element name="tightenEdgesLabel" type="spt:PLabel"/>
+      <xs:element name="tightenVerticesLabel" type="spt:PLabel"/>
+      <xs:element name="sameParameterLabel" type="spt:PLabel"/>
+      
+      <xs:element name="gridLocation" type="spt:Vec3d"/>
+      
     </xs:sequence>
   </xs:complexType>
 

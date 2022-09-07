@@ -73,28 +73,28 @@ namespace prj
         this->base_.set (std::move (x));
       }
 
-      const Refine::SeerShapeType& Refine::
-      seerShape () const
+      const Refine::SShapeType& Refine::
+      sShape () const
       {
-        return this->seerShape_.get ();
+        return this->sShape_.get ();
       }
 
-      Refine::SeerShapeType& Refine::
-      seerShape ()
+      Refine::SShapeType& Refine::
+      sShape ()
       {
-        return this->seerShape_.get ();
-      }
-
-      void Refine::
-      seerShape (const SeerShapeType& x)
-      {
-        this->seerShape_.set (x);
+        return this->sShape_.get ();
       }
 
       void Refine::
-      seerShape (::std::unique_ptr< SeerShapeType > x)
+      sShape (const SShapeType& x)
       {
-        this->seerShape_.set (std::move (x));
+        this->sShape_.set (x);
+      }
+
+      void Refine::
+      sShape (::std::unique_ptr< SShapeType > x)
+      {
+        this->sShape_.set (std::move (x));
       }
 
       const Refine::ShapeMapSequence& Refine::
@@ -114,6 +114,366 @@ namespace prj
       {
         this->shapeMap_ = s;
       }
+
+      const Refine::UnifyFacesType& Refine::
+      unifyFaces () const
+      {
+        return this->unifyFaces_.get ();
+      }
+
+      Refine::UnifyFacesType& Refine::
+      unifyFaces ()
+      {
+        return this->unifyFaces_.get ();
+      }
+
+      void Refine::
+      unifyFaces (const UnifyFacesType& x)
+      {
+        this->unifyFaces_.set (x);
+      }
+
+      void Refine::
+      unifyFaces (::std::unique_ptr< UnifyFacesType > x)
+      {
+        this->unifyFaces_.set (std::move (x));
+      }
+
+      const Refine::UnifyEdgesType& Refine::
+      unifyEdges () const
+      {
+        return this->unifyEdges_.get ();
+      }
+
+      Refine::UnifyEdgesType& Refine::
+      unifyEdges ()
+      {
+        return this->unifyEdges_.get ();
+      }
+
+      void Refine::
+      unifyEdges (const UnifyEdgesType& x)
+      {
+        this->unifyEdges_.set (x);
+      }
+
+      void Refine::
+      unifyEdges (::std::unique_ptr< UnifyEdgesType > x)
+      {
+        this->unifyEdges_.set (std::move (x));
+      }
+
+      const Refine::ConcatBSplinesType& Refine::
+      concatBSplines () const
+      {
+        return this->concatBSplines_.get ();
+      }
+
+      Refine::ConcatBSplinesType& Refine::
+      concatBSplines ()
+      {
+        return this->concatBSplines_.get ();
+      }
+
+      void Refine::
+      concatBSplines (const ConcatBSplinesType& x)
+      {
+        this->concatBSplines_.set (x);
+      }
+
+      void Refine::
+      concatBSplines (::std::unique_ptr< ConcatBSplinesType > x)
+      {
+        this->concatBSplines_.set (std::move (x));
+      }
+
+      const Refine::TightenFacesType& Refine::
+      tightenFaces () const
+      {
+        return this->tightenFaces_.get ();
+      }
+
+      Refine::TightenFacesType& Refine::
+      tightenFaces ()
+      {
+        return this->tightenFaces_.get ();
+      }
+
+      void Refine::
+      tightenFaces (const TightenFacesType& x)
+      {
+        this->tightenFaces_.set (x);
+      }
+
+      void Refine::
+      tightenFaces (::std::unique_ptr< TightenFacesType > x)
+      {
+        this->tightenFaces_.set (std::move (x));
+      }
+
+      const Refine::TightenEdgesType& Refine::
+      tightenEdges () const
+      {
+        return this->tightenEdges_.get ();
+      }
+
+      Refine::TightenEdgesType& Refine::
+      tightenEdges ()
+      {
+        return this->tightenEdges_.get ();
+      }
+
+      void Refine::
+      tightenEdges (const TightenEdgesType& x)
+      {
+        this->tightenEdges_.set (x);
+      }
+
+      void Refine::
+      tightenEdges (::std::unique_ptr< TightenEdgesType > x)
+      {
+        this->tightenEdges_.set (std::move (x));
+      }
+
+      const Refine::TightenVerticesType& Refine::
+      tightenVertices () const
+      {
+        return this->tightenVertices_.get ();
+      }
+
+      Refine::TightenVerticesType& Refine::
+      tightenVertices ()
+      {
+        return this->tightenVertices_.get ();
+      }
+
+      void Refine::
+      tightenVertices (const TightenVerticesType& x)
+      {
+        this->tightenVertices_.set (x);
+      }
+
+      void Refine::
+      tightenVertices (::std::unique_ptr< TightenVerticesType > x)
+      {
+        this->tightenVertices_.set (std::move (x));
+      }
+
+      const Refine::SameParameterType& Refine::
+      sameParameter () const
+      {
+        return this->sameParameter_.get ();
+      }
+
+      Refine::SameParameterType& Refine::
+      sameParameter ()
+      {
+        return this->sameParameter_.get ();
+      }
+
+      void Refine::
+      sameParameter (const SameParameterType& x)
+      {
+        this->sameParameter_.set (x);
+      }
+
+      void Refine::
+      sameParameter (::std::unique_ptr< SameParameterType > x)
+      {
+        this->sameParameter_.set (std::move (x));
+      }
+
+      const Refine::UnifyFacesLabelType& Refine::
+      unifyFacesLabel () const
+      {
+        return this->unifyFacesLabel_.get ();
+      }
+
+      Refine::UnifyFacesLabelType& Refine::
+      unifyFacesLabel ()
+      {
+        return this->unifyFacesLabel_.get ();
+      }
+
+      void Refine::
+      unifyFacesLabel (const UnifyFacesLabelType& x)
+      {
+        this->unifyFacesLabel_.set (x);
+      }
+
+      void Refine::
+      unifyFacesLabel (::std::unique_ptr< UnifyFacesLabelType > x)
+      {
+        this->unifyFacesLabel_.set (std::move (x));
+      }
+
+      const Refine::UnifyEdgesLabelType& Refine::
+      unifyEdgesLabel () const
+      {
+        return this->unifyEdgesLabel_.get ();
+      }
+
+      Refine::UnifyEdgesLabelType& Refine::
+      unifyEdgesLabel ()
+      {
+        return this->unifyEdgesLabel_.get ();
+      }
+
+      void Refine::
+      unifyEdgesLabel (const UnifyEdgesLabelType& x)
+      {
+        this->unifyEdgesLabel_.set (x);
+      }
+
+      void Refine::
+      unifyEdgesLabel (::std::unique_ptr< UnifyEdgesLabelType > x)
+      {
+        this->unifyEdgesLabel_.set (std::move (x));
+      }
+
+      const Refine::ConcatBSplinesLabelType& Refine::
+      concatBSplinesLabel () const
+      {
+        return this->concatBSplinesLabel_.get ();
+      }
+
+      Refine::ConcatBSplinesLabelType& Refine::
+      concatBSplinesLabel ()
+      {
+        return this->concatBSplinesLabel_.get ();
+      }
+
+      void Refine::
+      concatBSplinesLabel (const ConcatBSplinesLabelType& x)
+      {
+        this->concatBSplinesLabel_.set (x);
+      }
+
+      void Refine::
+      concatBSplinesLabel (::std::unique_ptr< ConcatBSplinesLabelType > x)
+      {
+        this->concatBSplinesLabel_.set (std::move (x));
+      }
+
+      const Refine::TightenFacesLabelType& Refine::
+      tightenFacesLabel () const
+      {
+        return this->tightenFacesLabel_.get ();
+      }
+
+      Refine::TightenFacesLabelType& Refine::
+      tightenFacesLabel ()
+      {
+        return this->tightenFacesLabel_.get ();
+      }
+
+      void Refine::
+      tightenFacesLabel (const TightenFacesLabelType& x)
+      {
+        this->tightenFacesLabel_.set (x);
+      }
+
+      void Refine::
+      tightenFacesLabel (::std::unique_ptr< TightenFacesLabelType > x)
+      {
+        this->tightenFacesLabel_.set (std::move (x));
+      }
+
+      const Refine::TightenEdgesLabelType& Refine::
+      tightenEdgesLabel () const
+      {
+        return this->tightenEdgesLabel_.get ();
+      }
+
+      Refine::TightenEdgesLabelType& Refine::
+      tightenEdgesLabel ()
+      {
+        return this->tightenEdgesLabel_.get ();
+      }
+
+      void Refine::
+      tightenEdgesLabel (const TightenEdgesLabelType& x)
+      {
+        this->tightenEdgesLabel_.set (x);
+      }
+
+      void Refine::
+      tightenEdgesLabel (::std::unique_ptr< TightenEdgesLabelType > x)
+      {
+        this->tightenEdgesLabel_.set (std::move (x));
+      }
+
+      const Refine::TightenVerticesLabelType& Refine::
+      tightenVerticesLabel () const
+      {
+        return this->tightenVerticesLabel_.get ();
+      }
+
+      Refine::TightenVerticesLabelType& Refine::
+      tightenVerticesLabel ()
+      {
+        return this->tightenVerticesLabel_.get ();
+      }
+
+      void Refine::
+      tightenVerticesLabel (const TightenVerticesLabelType& x)
+      {
+        this->tightenVerticesLabel_.set (x);
+      }
+
+      void Refine::
+      tightenVerticesLabel (::std::unique_ptr< TightenVerticesLabelType > x)
+      {
+        this->tightenVerticesLabel_.set (std::move (x));
+      }
+
+      const Refine::SameParameterLabelType& Refine::
+      sameParameterLabel () const
+      {
+        return this->sameParameterLabel_.get ();
+      }
+
+      Refine::SameParameterLabelType& Refine::
+      sameParameterLabel ()
+      {
+        return this->sameParameterLabel_.get ();
+      }
+
+      void Refine::
+      sameParameterLabel (const SameParameterLabelType& x)
+      {
+        this->sameParameterLabel_.set (x);
+      }
+
+      void Refine::
+      sameParameterLabel (::std::unique_ptr< SameParameterLabelType > x)
+      {
+        this->sameParameterLabel_.set (std::move (x));
+      }
+
+      const Refine::GridLocationType& Refine::
+      gridLocation () const
+      {
+        return this->gridLocation_.get ();
+      }
+
+      Refine::GridLocationType& Refine::
+      gridLocation ()
+      {
+        return this->gridLocation_.get ();
+      }
+
+      void Refine::
+      gridLocation (const GridLocationType& x)
+      {
+        this->gridLocation_.set (x);
+      }
+
+      void Refine::
+      gridLocation (::std::unique_ptr< GridLocationType > x)
+      {
+        this->gridLocation_.set (std::move (x));
+      }
     }
   }
 }
@@ -131,21 +491,81 @@ namespace prj
 
       Refine::
       Refine (const BaseType& base,
-              const SeerShapeType& seerShape)
+              const SShapeType& sShape,
+              const UnifyFacesType& unifyFaces,
+              const UnifyEdgesType& unifyEdges,
+              const ConcatBSplinesType& concatBSplines,
+              const TightenFacesType& tightenFaces,
+              const TightenEdgesType& tightenEdges,
+              const TightenVerticesType& tightenVertices,
+              const SameParameterType& sameParameter,
+              const UnifyFacesLabelType& unifyFacesLabel,
+              const UnifyEdgesLabelType& unifyEdgesLabel,
+              const ConcatBSplinesLabelType& concatBSplinesLabel,
+              const TightenFacesLabelType& tightenFacesLabel,
+              const TightenEdgesLabelType& tightenEdgesLabel,
+              const TightenVerticesLabelType& tightenVerticesLabel,
+              const SameParameterLabelType& sameParameterLabel,
+              const GridLocationType& gridLocation)
       : ::xml_schema::Type (),
         base_ (base, this),
-        seerShape_ (seerShape, this),
-        shapeMap_ (this)
+        sShape_ (sShape, this),
+        shapeMap_ (this),
+        unifyFaces_ (unifyFaces, this),
+        unifyEdges_ (unifyEdges, this),
+        concatBSplines_ (concatBSplines, this),
+        tightenFaces_ (tightenFaces, this),
+        tightenEdges_ (tightenEdges, this),
+        tightenVertices_ (tightenVertices, this),
+        sameParameter_ (sameParameter, this),
+        unifyFacesLabel_ (unifyFacesLabel, this),
+        unifyEdgesLabel_ (unifyEdgesLabel, this),
+        concatBSplinesLabel_ (concatBSplinesLabel, this),
+        tightenFacesLabel_ (tightenFacesLabel, this),
+        tightenEdgesLabel_ (tightenEdgesLabel, this),
+        tightenVerticesLabel_ (tightenVerticesLabel, this),
+        sameParameterLabel_ (sameParameterLabel, this),
+        gridLocation_ (gridLocation, this)
       {
       }
 
       Refine::
       Refine (::std::unique_ptr< BaseType > base,
-              ::std::unique_ptr< SeerShapeType > seerShape)
+              ::std::unique_ptr< SShapeType > sShape,
+              ::std::unique_ptr< UnifyFacesType > unifyFaces,
+              ::std::unique_ptr< UnifyEdgesType > unifyEdges,
+              ::std::unique_ptr< ConcatBSplinesType > concatBSplines,
+              ::std::unique_ptr< TightenFacesType > tightenFaces,
+              ::std::unique_ptr< TightenEdgesType > tightenEdges,
+              ::std::unique_ptr< TightenVerticesType > tightenVertices,
+              ::std::unique_ptr< SameParameterType > sameParameter,
+              ::std::unique_ptr< UnifyFacesLabelType > unifyFacesLabel,
+              ::std::unique_ptr< UnifyEdgesLabelType > unifyEdgesLabel,
+              ::std::unique_ptr< ConcatBSplinesLabelType > concatBSplinesLabel,
+              ::std::unique_ptr< TightenFacesLabelType > tightenFacesLabel,
+              ::std::unique_ptr< TightenEdgesLabelType > tightenEdgesLabel,
+              ::std::unique_ptr< TightenVerticesLabelType > tightenVerticesLabel,
+              ::std::unique_ptr< SameParameterLabelType > sameParameterLabel,
+              ::std::unique_ptr< GridLocationType > gridLocation)
       : ::xml_schema::Type (),
         base_ (std::move (base), this),
-        seerShape_ (std::move (seerShape), this),
-        shapeMap_ (this)
+        sShape_ (std::move (sShape), this),
+        shapeMap_ (this),
+        unifyFaces_ (std::move (unifyFaces), this),
+        unifyEdges_ (std::move (unifyEdges), this),
+        concatBSplines_ (std::move (concatBSplines), this),
+        tightenFaces_ (std::move (tightenFaces), this),
+        tightenEdges_ (std::move (tightenEdges), this),
+        tightenVertices_ (std::move (tightenVertices), this),
+        sameParameter_ (std::move (sameParameter), this),
+        unifyFacesLabel_ (std::move (unifyFacesLabel), this),
+        unifyEdgesLabel_ (std::move (unifyEdgesLabel), this),
+        concatBSplinesLabel_ (std::move (concatBSplinesLabel), this),
+        tightenFacesLabel_ (std::move (tightenFacesLabel), this),
+        tightenEdgesLabel_ (std::move (tightenEdgesLabel), this),
+        tightenVerticesLabel_ (std::move (tightenVerticesLabel), this),
+        sameParameterLabel_ (std::move (sameParameterLabel), this),
+        gridLocation_ (std::move (gridLocation), this)
       {
       }
 
@@ -155,8 +575,23 @@ namespace prj
               ::xml_schema::Container* c)
       : ::xml_schema::Type (x, f, c),
         base_ (x.base_, f, this),
-        seerShape_ (x.seerShape_, f, this),
-        shapeMap_ (x.shapeMap_, f, this)
+        sShape_ (x.sShape_, f, this),
+        shapeMap_ (x.shapeMap_, f, this),
+        unifyFaces_ (x.unifyFaces_, f, this),
+        unifyEdges_ (x.unifyEdges_, f, this),
+        concatBSplines_ (x.concatBSplines_, f, this),
+        tightenFaces_ (x.tightenFaces_, f, this),
+        tightenEdges_ (x.tightenEdges_, f, this),
+        tightenVertices_ (x.tightenVertices_, f, this),
+        sameParameter_ (x.sameParameter_, f, this),
+        unifyFacesLabel_ (x.unifyFacesLabel_, f, this),
+        unifyEdgesLabel_ (x.unifyEdgesLabel_, f, this),
+        concatBSplinesLabel_ (x.concatBSplinesLabel_, f, this),
+        tightenFacesLabel_ (x.tightenFacesLabel_, f, this),
+        tightenEdgesLabel_ (x.tightenEdgesLabel_, f, this),
+        tightenVerticesLabel_ (x.tightenVerticesLabel_, f, this),
+        sameParameterLabel_ (x.sameParameterLabel_, f, this),
+        gridLocation_ (x.gridLocation_, f, this)
       {
       }
 
@@ -166,8 +601,23 @@ namespace prj
               ::xml_schema::Container* c)
       : ::xml_schema::Type (e, f | ::xml_schema::Flags::base, c),
         base_ (this),
-        seerShape_ (this),
-        shapeMap_ (this)
+        sShape_ (this),
+        shapeMap_ (this),
+        unifyFaces_ (this),
+        unifyEdges_ (this),
+        concatBSplines_ (this),
+        tightenFaces_ (this),
+        tightenEdges_ (this),
+        tightenVertices_ (this),
+        sameParameter_ (this),
+        unifyFacesLabel_ (this),
+        unifyEdgesLabel_ (this),
+        concatBSplinesLabel_ (this),
+        tightenFacesLabel_ (this),
+        tightenEdgesLabel_ (this),
+        tightenVerticesLabel_ (this),
+        sameParameterLabel_ (this),
+        gridLocation_ (this)
       {
         if ((f & ::xml_schema::Flags::base) == 0)
         {
@@ -200,16 +650,16 @@ namespace prj
             }
           }
 
-          // seerShape
+          // sShape
           //
-          if (n.name () == "seerShape" && n.namespace_ ().empty ())
+          if (n.name () == "sShape" && n.namespace_ ().empty ())
           {
-            ::std::unique_ptr< SeerShapeType > r (
-              SeerShapeTraits::create (i, f, this));
+            ::std::unique_ptr< SShapeType > r (
+              SShapeTraits::create (i, f, this));
 
-            if (!seerShape_.present ())
+            if (!sShape_.present ())
             {
-              this->seerShape_.set (::std::move (r));
+              this->sShape_.set (::std::move (r));
               continue;
             }
           }
@@ -225,6 +675,216 @@ namespace prj
             continue;
           }
 
+          // unifyFaces
+          //
+          if (n.name () == "unifyFaces" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< UnifyFacesType > r (
+              UnifyFacesTraits::create (i, f, this));
+
+            if (!unifyFaces_.present ())
+            {
+              this->unifyFaces_.set (::std::move (r));
+              continue;
+            }
+          }
+
+          // unifyEdges
+          //
+          if (n.name () == "unifyEdges" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< UnifyEdgesType > r (
+              UnifyEdgesTraits::create (i, f, this));
+
+            if (!unifyEdges_.present ())
+            {
+              this->unifyEdges_.set (::std::move (r));
+              continue;
+            }
+          }
+
+          // concatBSplines
+          //
+          if (n.name () == "concatBSplines" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< ConcatBSplinesType > r (
+              ConcatBSplinesTraits::create (i, f, this));
+
+            if (!concatBSplines_.present ())
+            {
+              this->concatBSplines_.set (::std::move (r));
+              continue;
+            }
+          }
+
+          // tightenFaces
+          //
+          if (n.name () == "tightenFaces" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< TightenFacesType > r (
+              TightenFacesTraits::create (i, f, this));
+
+            if (!tightenFaces_.present ())
+            {
+              this->tightenFaces_.set (::std::move (r));
+              continue;
+            }
+          }
+
+          // tightenEdges
+          //
+          if (n.name () == "tightenEdges" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< TightenEdgesType > r (
+              TightenEdgesTraits::create (i, f, this));
+
+            if (!tightenEdges_.present ())
+            {
+              this->tightenEdges_.set (::std::move (r));
+              continue;
+            }
+          }
+
+          // tightenVertices
+          //
+          if (n.name () == "tightenVertices" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< TightenVerticesType > r (
+              TightenVerticesTraits::create (i, f, this));
+
+            if (!tightenVertices_.present ())
+            {
+              this->tightenVertices_.set (::std::move (r));
+              continue;
+            }
+          }
+
+          // sameParameter
+          //
+          if (n.name () == "sameParameter" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< SameParameterType > r (
+              SameParameterTraits::create (i, f, this));
+
+            if (!sameParameter_.present ())
+            {
+              this->sameParameter_.set (::std::move (r));
+              continue;
+            }
+          }
+
+          // unifyFacesLabel
+          //
+          if (n.name () == "unifyFacesLabel" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< UnifyFacesLabelType > r (
+              UnifyFacesLabelTraits::create (i, f, this));
+
+            if (!unifyFacesLabel_.present ())
+            {
+              this->unifyFacesLabel_.set (::std::move (r));
+              continue;
+            }
+          }
+
+          // unifyEdgesLabel
+          //
+          if (n.name () == "unifyEdgesLabel" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< UnifyEdgesLabelType > r (
+              UnifyEdgesLabelTraits::create (i, f, this));
+
+            if (!unifyEdgesLabel_.present ())
+            {
+              this->unifyEdgesLabel_.set (::std::move (r));
+              continue;
+            }
+          }
+
+          // concatBSplinesLabel
+          //
+          if (n.name () == "concatBSplinesLabel" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< ConcatBSplinesLabelType > r (
+              ConcatBSplinesLabelTraits::create (i, f, this));
+
+            if (!concatBSplinesLabel_.present ())
+            {
+              this->concatBSplinesLabel_.set (::std::move (r));
+              continue;
+            }
+          }
+
+          // tightenFacesLabel
+          //
+          if (n.name () == "tightenFacesLabel" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< TightenFacesLabelType > r (
+              TightenFacesLabelTraits::create (i, f, this));
+
+            if (!tightenFacesLabel_.present ())
+            {
+              this->tightenFacesLabel_.set (::std::move (r));
+              continue;
+            }
+          }
+
+          // tightenEdgesLabel
+          //
+          if (n.name () == "tightenEdgesLabel" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< TightenEdgesLabelType > r (
+              TightenEdgesLabelTraits::create (i, f, this));
+
+            if (!tightenEdgesLabel_.present ())
+            {
+              this->tightenEdgesLabel_.set (::std::move (r));
+              continue;
+            }
+          }
+
+          // tightenVerticesLabel
+          //
+          if (n.name () == "tightenVerticesLabel" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< TightenVerticesLabelType > r (
+              TightenVerticesLabelTraits::create (i, f, this));
+
+            if (!tightenVerticesLabel_.present ())
+            {
+              this->tightenVerticesLabel_.set (::std::move (r));
+              continue;
+            }
+          }
+
+          // sameParameterLabel
+          //
+          if (n.name () == "sameParameterLabel" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< SameParameterLabelType > r (
+              SameParameterLabelTraits::create (i, f, this));
+
+            if (!sameParameterLabel_.present ())
+            {
+              this->sameParameterLabel_.set (::std::move (r));
+              continue;
+            }
+          }
+
+          // gridLocation
+          //
+          if (n.name () == "gridLocation" && n.namespace_ ().empty ())
+          {
+            ::std::unique_ptr< GridLocationType > r (
+              GridLocationTraits::create (i, f, this));
+
+            if (!gridLocation_.present ())
+            {
+              this->gridLocation_.set (::std::move (r));
+              continue;
+            }
+          }
+
           break;
         }
 
@@ -235,10 +895,115 @@ namespace prj
             "");
         }
 
-        if (!seerShape_.present ())
+        if (!sShape_.present ())
         {
           throw ::xsd::cxx::tree::expected_element< char > (
-            "seerShape",
+            "sShape",
+            "");
+        }
+
+        if (!unifyFaces_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "unifyFaces",
+            "");
+        }
+
+        if (!unifyEdges_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "unifyEdges",
+            "");
+        }
+
+        if (!concatBSplines_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "concatBSplines",
+            "");
+        }
+
+        if (!tightenFaces_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "tightenFaces",
+            "");
+        }
+
+        if (!tightenEdges_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "tightenEdges",
+            "");
+        }
+
+        if (!tightenVertices_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "tightenVertices",
+            "");
+        }
+
+        if (!sameParameter_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "sameParameter",
+            "");
+        }
+
+        if (!unifyFacesLabel_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "unifyFacesLabel",
+            "");
+        }
+
+        if (!unifyEdgesLabel_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "unifyEdgesLabel",
+            "");
+        }
+
+        if (!concatBSplinesLabel_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "concatBSplinesLabel",
+            "");
+        }
+
+        if (!tightenFacesLabel_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "tightenFacesLabel",
+            "");
+        }
+
+        if (!tightenEdgesLabel_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "tightenEdgesLabel",
+            "");
+        }
+
+        if (!tightenVerticesLabel_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "tightenVerticesLabel",
+            "");
+        }
+
+        if (!sameParameterLabel_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "sameParameterLabel",
+            "");
+        }
+
+        if (!gridLocation_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_element< char > (
+            "gridLocation",
             "");
         }
       }
@@ -257,8 +1022,23 @@ namespace prj
         {
           static_cast< ::xml_schema::Type& > (*this) = x;
           this->base_ = x.base_;
-          this->seerShape_ = x.seerShape_;
+          this->sShape_ = x.sShape_;
           this->shapeMap_ = x.shapeMap_;
+          this->unifyFaces_ = x.unifyFaces_;
+          this->unifyEdges_ = x.unifyEdges_;
+          this->concatBSplines_ = x.concatBSplines_;
+          this->tightenFaces_ = x.tightenFaces_;
+          this->tightenEdges_ = x.tightenEdges_;
+          this->tightenVertices_ = x.tightenVertices_;
+          this->sameParameter_ = x.sameParameter_;
+          this->unifyFacesLabel_ = x.unifyFacesLabel_;
+          this->unifyEdgesLabel_ = x.unifyEdgesLabel_;
+          this->concatBSplinesLabel_ = x.concatBSplinesLabel_;
+          this->tightenFacesLabel_ = x.tightenFacesLabel_;
+          this->tightenEdgesLabel_ = x.tightenEdgesLabel_;
+          this->tightenVerticesLabel_ = x.tightenVerticesLabel_;
+          this->sameParameterLabel_ = x.sameParameterLabel_;
+          this->gridLocation_ = x.gridLocation_;
         }
 
         return *this;
@@ -577,15 +1357,15 @@ namespace prj
           s << i.base ();
         }
 
-        // seerShape
+        // sShape
         //
         {
           ::xercesc::DOMElement& s (
             ::xsd::cxx::xml::dom::create_element (
-              "seerShape",
+              "sShape",
               e));
 
-          s << i.seerShape ();
+          s << i.sShape ();
         }
 
         // shapeMap
@@ -600,6 +1380,171 @@ namespace prj
               e));
 
           s << *b;
+        }
+
+        // unifyFaces
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "unifyFaces",
+              e));
+
+          s << i.unifyFaces ();
+        }
+
+        // unifyEdges
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "unifyEdges",
+              e));
+
+          s << i.unifyEdges ();
+        }
+
+        // concatBSplines
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "concatBSplines",
+              e));
+
+          s << i.concatBSplines ();
+        }
+
+        // tightenFaces
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "tightenFaces",
+              e));
+
+          s << i.tightenFaces ();
+        }
+
+        // tightenEdges
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "tightenEdges",
+              e));
+
+          s << i.tightenEdges ();
+        }
+
+        // tightenVertices
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "tightenVertices",
+              e));
+
+          s << i.tightenVertices ();
+        }
+
+        // sameParameter
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "sameParameter",
+              e));
+
+          s << i.sameParameter ();
+        }
+
+        // unifyFacesLabel
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "unifyFacesLabel",
+              e));
+
+          s << i.unifyFacesLabel ();
+        }
+
+        // unifyEdgesLabel
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "unifyEdgesLabel",
+              e));
+
+          s << i.unifyEdgesLabel ();
+        }
+
+        // concatBSplinesLabel
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "concatBSplinesLabel",
+              e));
+
+          s << i.concatBSplinesLabel ();
+        }
+
+        // tightenFacesLabel
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "tightenFacesLabel",
+              e));
+
+          s << i.tightenFacesLabel ();
+        }
+
+        // tightenEdgesLabel
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "tightenEdgesLabel",
+              e));
+
+          s << i.tightenEdgesLabel ();
+        }
+
+        // tightenVerticesLabel
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "tightenVerticesLabel",
+              e));
+
+          s << i.tightenVerticesLabel ();
+        }
+
+        // sameParameterLabel
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "sameParameterLabel",
+              e));
+
+          s << i.sameParameterLabel ();
+        }
+
+        // gridLocation
+        //
+        {
+          ::xercesc::DOMElement& s (
+            ::xsd::cxx::xml::dom::create_element (
+              "gridLocation",
+              e));
+
+          s << i.gridLocation ();
         }
       }
 

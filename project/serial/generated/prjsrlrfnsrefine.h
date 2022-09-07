@@ -89,6 +89,10 @@ namespace prj
 
 #include <xsd/cxx/xml/dom/parsing-header.hxx>
 
+#include "prjsrlsptparameter.h"
+
+#include "prjsrlsptoverlay.h"
+
 #include "prjsrlsptseershape.h"
 
 #include "prjsrlsptbase.h"
@@ -119,22 +123,22 @@ namespace prj
         void
         base (::std::unique_ptr< BaseType > p);
 
-        // seerShape
+        // sShape
         //
-        typedef ::prj::srl::spt::SeerShape SeerShapeType;
-        typedef ::xsd::cxx::tree::traits< SeerShapeType, char > SeerShapeTraits;
+        typedef ::prj::srl::spt::SeerShape SShapeType;
+        typedef ::xsd::cxx::tree::traits< SShapeType, char > SShapeTraits;
 
-        const SeerShapeType&
-        seerShape () const;
+        const SShapeType&
+        sShape () const;
 
-        SeerShapeType&
-        seerShape ();
-
-        void
-        seerShape (const SeerShapeType& x);
+        SShapeType&
+        sShape ();
 
         void
-        seerShape (::std::unique_ptr< SeerShapeType > p);
+        sShape (const SShapeType& x);
+
+        void
+        sShape (::std::unique_ptr< SShapeType > p);
 
         // shapeMap
         //
@@ -153,13 +157,298 @@ namespace prj
         void
         shapeMap (const ShapeMapSequence& s);
 
+        // unifyFaces
+        //
+        typedef ::prj::srl::spt::Parameter UnifyFacesType;
+        typedef ::xsd::cxx::tree::traits< UnifyFacesType, char > UnifyFacesTraits;
+
+        const UnifyFacesType&
+        unifyFaces () const;
+
+        UnifyFacesType&
+        unifyFaces ();
+
+        void
+        unifyFaces (const UnifyFacesType& x);
+
+        void
+        unifyFaces (::std::unique_ptr< UnifyFacesType > p);
+
+        // unifyEdges
+        //
+        typedef ::prj::srl::spt::Parameter UnifyEdgesType;
+        typedef ::xsd::cxx::tree::traits< UnifyEdgesType, char > UnifyEdgesTraits;
+
+        const UnifyEdgesType&
+        unifyEdges () const;
+
+        UnifyEdgesType&
+        unifyEdges ();
+
+        void
+        unifyEdges (const UnifyEdgesType& x);
+
+        void
+        unifyEdges (::std::unique_ptr< UnifyEdgesType > p);
+
+        // concatBSplines
+        //
+        typedef ::prj::srl::spt::Parameter ConcatBSplinesType;
+        typedef ::xsd::cxx::tree::traits< ConcatBSplinesType, char > ConcatBSplinesTraits;
+
+        const ConcatBSplinesType&
+        concatBSplines () const;
+
+        ConcatBSplinesType&
+        concatBSplines ();
+
+        void
+        concatBSplines (const ConcatBSplinesType& x);
+
+        void
+        concatBSplines (::std::unique_ptr< ConcatBSplinesType > p);
+
+        // tightenFaces
+        //
+        typedef ::prj::srl::spt::Parameter TightenFacesType;
+        typedef ::xsd::cxx::tree::traits< TightenFacesType, char > TightenFacesTraits;
+
+        const TightenFacesType&
+        tightenFaces () const;
+
+        TightenFacesType&
+        tightenFaces ();
+
+        void
+        tightenFaces (const TightenFacesType& x);
+
+        void
+        tightenFaces (::std::unique_ptr< TightenFacesType > p);
+
+        // tightenEdges
+        //
+        typedef ::prj::srl::spt::Parameter TightenEdgesType;
+        typedef ::xsd::cxx::tree::traits< TightenEdgesType, char > TightenEdgesTraits;
+
+        const TightenEdgesType&
+        tightenEdges () const;
+
+        TightenEdgesType&
+        tightenEdges ();
+
+        void
+        tightenEdges (const TightenEdgesType& x);
+
+        void
+        tightenEdges (::std::unique_ptr< TightenEdgesType > p);
+
+        // tightenVertices
+        //
+        typedef ::prj::srl::spt::Parameter TightenVerticesType;
+        typedef ::xsd::cxx::tree::traits< TightenVerticesType, char > TightenVerticesTraits;
+
+        const TightenVerticesType&
+        tightenVertices () const;
+
+        TightenVerticesType&
+        tightenVertices ();
+
+        void
+        tightenVertices (const TightenVerticesType& x);
+
+        void
+        tightenVertices (::std::unique_ptr< TightenVerticesType > p);
+
+        // sameParameter
+        //
+        typedef ::prj::srl::spt::Parameter SameParameterType;
+        typedef ::xsd::cxx::tree::traits< SameParameterType, char > SameParameterTraits;
+
+        const SameParameterType&
+        sameParameter () const;
+
+        SameParameterType&
+        sameParameter ();
+
+        void
+        sameParameter (const SameParameterType& x);
+
+        void
+        sameParameter (::std::unique_ptr< SameParameterType > p);
+
+        // unifyFacesLabel
+        //
+        typedef ::prj::srl::spt::PLabel UnifyFacesLabelType;
+        typedef ::xsd::cxx::tree::traits< UnifyFacesLabelType, char > UnifyFacesLabelTraits;
+
+        const UnifyFacesLabelType&
+        unifyFacesLabel () const;
+
+        UnifyFacesLabelType&
+        unifyFacesLabel ();
+
+        void
+        unifyFacesLabel (const UnifyFacesLabelType& x);
+
+        void
+        unifyFacesLabel (::std::unique_ptr< UnifyFacesLabelType > p);
+
+        // unifyEdgesLabel
+        //
+        typedef ::prj::srl::spt::PLabel UnifyEdgesLabelType;
+        typedef ::xsd::cxx::tree::traits< UnifyEdgesLabelType, char > UnifyEdgesLabelTraits;
+
+        const UnifyEdgesLabelType&
+        unifyEdgesLabel () const;
+
+        UnifyEdgesLabelType&
+        unifyEdgesLabel ();
+
+        void
+        unifyEdgesLabel (const UnifyEdgesLabelType& x);
+
+        void
+        unifyEdgesLabel (::std::unique_ptr< UnifyEdgesLabelType > p);
+
+        // concatBSplinesLabel
+        //
+        typedef ::prj::srl::spt::PLabel ConcatBSplinesLabelType;
+        typedef ::xsd::cxx::tree::traits< ConcatBSplinesLabelType, char > ConcatBSplinesLabelTraits;
+
+        const ConcatBSplinesLabelType&
+        concatBSplinesLabel () const;
+
+        ConcatBSplinesLabelType&
+        concatBSplinesLabel ();
+
+        void
+        concatBSplinesLabel (const ConcatBSplinesLabelType& x);
+
+        void
+        concatBSplinesLabel (::std::unique_ptr< ConcatBSplinesLabelType > p);
+
+        // tightenFacesLabel
+        //
+        typedef ::prj::srl::spt::PLabel TightenFacesLabelType;
+        typedef ::xsd::cxx::tree::traits< TightenFacesLabelType, char > TightenFacesLabelTraits;
+
+        const TightenFacesLabelType&
+        tightenFacesLabel () const;
+
+        TightenFacesLabelType&
+        tightenFacesLabel ();
+
+        void
+        tightenFacesLabel (const TightenFacesLabelType& x);
+
+        void
+        tightenFacesLabel (::std::unique_ptr< TightenFacesLabelType > p);
+
+        // tightenEdgesLabel
+        //
+        typedef ::prj::srl::spt::PLabel TightenEdgesLabelType;
+        typedef ::xsd::cxx::tree::traits< TightenEdgesLabelType, char > TightenEdgesLabelTraits;
+
+        const TightenEdgesLabelType&
+        tightenEdgesLabel () const;
+
+        TightenEdgesLabelType&
+        tightenEdgesLabel ();
+
+        void
+        tightenEdgesLabel (const TightenEdgesLabelType& x);
+
+        void
+        tightenEdgesLabel (::std::unique_ptr< TightenEdgesLabelType > p);
+
+        // tightenVerticesLabel
+        //
+        typedef ::prj::srl::spt::PLabel TightenVerticesLabelType;
+        typedef ::xsd::cxx::tree::traits< TightenVerticesLabelType, char > TightenVerticesLabelTraits;
+
+        const TightenVerticesLabelType&
+        tightenVerticesLabel () const;
+
+        TightenVerticesLabelType&
+        tightenVerticesLabel ();
+
+        void
+        tightenVerticesLabel (const TightenVerticesLabelType& x);
+
+        void
+        tightenVerticesLabel (::std::unique_ptr< TightenVerticesLabelType > p);
+
+        // sameParameterLabel
+        //
+        typedef ::prj::srl::spt::PLabel SameParameterLabelType;
+        typedef ::xsd::cxx::tree::traits< SameParameterLabelType, char > SameParameterLabelTraits;
+
+        const SameParameterLabelType&
+        sameParameterLabel () const;
+
+        SameParameterLabelType&
+        sameParameterLabel ();
+
+        void
+        sameParameterLabel (const SameParameterLabelType& x);
+
+        void
+        sameParameterLabel (::std::unique_ptr< SameParameterLabelType > p);
+
+        // gridLocation
+        //
+        typedef ::prj::srl::spt::Vec3d GridLocationType;
+        typedef ::xsd::cxx::tree::traits< GridLocationType, char > GridLocationTraits;
+
+        const GridLocationType&
+        gridLocation () const;
+
+        GridLocationType&
+        gridLocation ();
+
+        void
+        gridLocation (const GridLocationType& x);
+
+        void
+        gridLocation (::std::unique_ptr< GridLocationType > p);
+
         // Constructors.
         //
         Refine (const BaseType&,
-                const SeerShapeType&);
+                const SShapeType&,
+                const UnifyFacesType&,
+                const UnifyEdgesType&,
+                const ConcatBSplinesType&,
+                const TightenFacesType&,
+                const TightenEdgesType&,
+                const TightenVerticesType&,
+                const SameParameterType&,
+                const UnifyFacesLabelType&,
+                const UnifyEdgesLabelType&,
+                const ConcatBSplinesLabelType&,
+                const TightenFacesLabelType&,
+                const TightenEdgesLabelType&,
+                const TightenVerticesLabelType&,
+                const SameParameterLabelType&,
+                const GridLocationType&);
 
         Refine (::std::unique_ptr< BaseType >,
-                ::std::unique_ptr< SeerShapeType >);
+                ::std::unique_ptr< SShapeType >,
+                ::std::unique_ptr< UnifyFacesType >,
+                ::std::unique_ptr< UnifyEdgesType >,
+                ::std::unique_ptr< ConcatBSplinesType >,
+                ::std::unique_ptr< TightenFacesType >,
+                ::std::unique_ptr< TightenEdgesType >,
+                ::std::unique_ptr< TightenVerticesType >,
+                ::std::unique_ptr< SameParameterType >,
+                ::std::unique_ptr< UnifyFacesLabelType >,
+                ::std::unique_ptr< UnifyEdgesLabelType >,
+                ::std::unique_ptr< ConcatBSplinesLabelType >,
+                ::std::unique_ptr< TightenFacesLabelType >,
+                ::std::unique_ptr< TightenEdgesLabelType >,
+                ::std::unique_ptr< TightenVerticesLabelType >,
+                ::std::unique_ptr< SameParameterLabelType >,
+                ::std::unique_ptr< GridLocationType >);
 
         Refine (const ::xercesc::DOMElement& e,
                 ::xml_schema::Flags f = 0,
@@ -188,8 +477,23 @@ namespace prj
 
         protected:
         ::xsd::cxx::tree::one< BaseType > base_;
-        ::xsd::cxx::tree::one< SeerShapeType > seerShape_;
+        ::xsd::cxx::tree::one< SShapeType > sShape_;
         ShapeMapSequence shapeMap_;
+        ::xsd::cxx::tree::one< UnifyFacesType > unifyFaces_;
+        ::xsd::cxx::tree::one< UnifyEdgesType > unifyEdges_;
+        ::xsd::cxx::tree::one< ConcatBSplinesType > concatBSplines_;
+        ::xsd::cxx::tree::one< TightenFacesType > tightenFaces_;
+        ::xsd::cxx::tree::one< TightenEdgesType > tightenEdges_;
+        ::xsd::cxx::tree::one< TightenVerticesType > tightenVertices_;
+        ::xsd::cxx::tree::one< SameParameterType > sameParameter_;
+        ::xsd::cxx::tree::one< UnifyFacesLabelType > unifyFacesLabel_;
+        ::xsd::cxx::tree::one< UnifyEdgesLabelType > unifyEdgesLabel_;
+        ::xsd::cxx::tree::one< ConcatBSplinesLabelType > concatBSplinesLabel_;
+        ::xsd::cxx::tree::one< TightenFacesLabelType > tightenFacesLabel_;
+        ::xsd::cxx::tree::one< TightenEdgesLabelType > tightenEdgesLabel_;
+        ::xsd::cxx::tree::one< TightenVerticesLabelType > tightenVerticesLabel_;
+        ::xsd::cxx::tree::one< SameParameterLabelType > sameParameterLabel_;
+        ::xsd::cxx::tree::one< GridLocationType > gridLocation_;
       };
     }
   }
