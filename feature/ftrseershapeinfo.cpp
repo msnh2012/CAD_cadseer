@@ -212,12 +212,21 @@ void SeerShapeInfo::wireInfo(QTextStream &streamIn, const TopoDS_Shape&)
 void SeerShapeInfo::edgeInfo(QTextStream &streamIn, const TopoDS_Shape &shapeIn)
 {
     assert(shapeIn.ShapeType() == TopAbs_EDGE);
-    BRepAdaptor_Curve curveAdaptor(TopoDS::Edge(shapeIn));
+    const auto &edge = TopoDS::Edge(shapeIn);
+    BRepAdaptor_Curve curveAdaptor(edge);
+    
+    auto boolText = [&](bool value) -> QString
+    {
+      if (value) return QObject::tr("True");
+      return QObject::tr("False");
+    };
     
     streamIn << qSetRealNumberPrecision(12) << Qt::fixed
     << "    Shape type: edge" << Qt::endl
-    << "    Tolerance Brep_Tool: " << BRep_Tool::Tolerance(TopoDS::Edge(shapeIn)) << Qt::endl
+    << "    Tolerance Brep_Tool: " << BRep_Tool::Tolerance(edge) << Qt::endl
     << "    Tolerance BRepAdaptor_Curve: " << curveAdaptor.Tolerance() << Qt::endl
+    << "    Same parameter flag: " << boolText(BRep_Tool::SameParameter(edge)) << Qt::endl
+    << "    Same range flag: " << boolText(BRep_Tool::SameRange(edge)) << Qt::endl
     << "    Curve type: " << gu::curveTypeStrings.at(curveAdaptor.GetType()) << Qt::endl;
     
     if (curveAdaptor.GetType() == GeomAbs_Line)
