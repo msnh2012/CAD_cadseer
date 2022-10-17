@@ -339,6 +339,11 @@ struct Feature::Stow
     osg::Vec3d y = z ^ vtc; y.normalize();
     osg::Vec3d x = y ^ z; x.normalize();
     osg::Vec3d o = gu::toOsg(bb.getCenter());
+    if (reverse.getBool())
+    {
+      z = -z;
+      y = -y;
+    }
     osg::Matrixd m
     (
       x.x(), x.y(), x.z(), 0.0,
