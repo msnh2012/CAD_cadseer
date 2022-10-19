@@ -178,6 +178,11 @@ void Preferences::initialize()
     ui->threadLeftHandedBox->setCurrentIndex(1);
   ui->torusRadius1Edit->setText(QString().setNum(manager->rootPtr->features().torus().get().radius1()));
   ui->torusRadius2Edit->setText(QString().setNum(manager->rootPtr->features().torus().get().radius2()));
+  
+  ui->wheelZoomFactorSpinbox->setValue(manager->rootPtr->input().get().mouse().get().wheelZoomFactor().get());
+  ui->spaceballSensitivityOverallSpinbox->setValue(manager->rootPtr->input().get().spaceball().get().overallSensitivity().get());
+  ui->spaceballSensitivityTranslationsSpinbox->setValue(manager->rootPtr->input().get().spaceball().get().translationsSensitivity().get());
+  ui->spaceballSensitivityRotationsSpinbox->setValue(manager->rootPtr->input().get().spaceball().get().rotationsSensitivity().get());
 }
 
 void Preferences::accept()
@@ -185,6 +190,7 @@ void Preferences::accept()
   try
   {
     updateVisual();
+    updateInput();
     updateDragger();
     updateProject();
     updateGesture();
@@ -313,6 +319,14 @@ void Preferences::updateVisual()
   }
   
   manager->rootPtr->visual().display().samples() = ui->samplesLineEdit->text().toDouble();
+}
+
+void Preferences::updateInput()
+{
+  manager->rootPtr->input().get().mouse().get().wheelZoomFactor().get() = ui->wheelZoomFactorSpinbox->value();
+  manager->rootPtr->input()->spaceball()->overallSensitivity().get() = ui->spaceballSensitivityOverallSpinbox->value();
+  manager->rootPtr->input()->spaceball()->translationsSensitivity().get() = ui->spaceballSensitivityTranslationsSpinbox->value();
+  manager->rootPtr->input()->spaceball()->rotationsSensitivity().get() = ui->spaceballSensitivityRotationsSpinbox->value();
 }
 
 void Preferences::updateDragger()

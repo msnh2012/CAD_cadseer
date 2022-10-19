@@ -47,6 +47,7 @@ namespace dlg
     void initialize();
     void setupFeatureSplitter();
     void updateVisual();
+    void updateInput();
     void updateDragger();
     void updateProject();
     void updateGesture();

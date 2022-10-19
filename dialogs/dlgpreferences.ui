@@ -126,7 +126,7 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>780</width>
+            <width>779</width>
             <height>576</height>
            </rect>
           </property>
@@ -721,6 +721,272 @@
           </layout>
          </widget>
         </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="inputTab">
+      <attribute name="title">
+       <string>Input</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="verticalLayout_27">
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_8">
+         <item>
+          <widget class="QGroupBox" name="inputMouseGroup">
+           <property name="title">
+            <string>Mouse</string>
+           </property>
+           <layout class="QGridLayout" name="gridLayout_25">
+            <item row="0" column="0">
+             <widget class="QLabel" name="wheelZoomFactorLabel">
+              <property name="toolTip">
+               <string>Sensitivity of wheel zoom</string>
+              </property>
+              <property name="statusTip">
+               <string>Sensitivity of wheel zoom</string>
+              </property>
+              <property name="whatsThis">
+               <string>Controls the sensitivity of mouse wheel zoom in the 3d view</string>
+              </property>
+              <property name="text">
+               <string>Wheel Zoom Factor</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="1">
+             <widget class="QDoubleSpinBox" name="wheelZoomFactorSpinbox">
+              <property name="toolTip">
+               <string>Sensitivity of wheel zoom</string>
+              </property>
+              <property name="statusTip">
+               <string>Sensitivity of wheel zoom</string>
+              </property>
+              <property name="whatsThis">
+               <string>Controls the sensitivity of mouse wheel zoom in the 3d view</string>
+              </property>
+              <property name="decimals">
+               <number>1</number>
+              </property>
+              <property name="minimum">
+               <double>0.100000000000000</double>
+              </property>
+              <property name="maximum">
+               <double>10.000000000000000</double>
+              </property>
+              <property name="singleStep">
+               <double>0.100000000000000</double>
+              </property>
+              <property name="stepType">
+               <enum>QAbstractSpinBox::DefaultStepType</enum>
+              </property>
+              <property name="value">
+               <double>1.000000000000000</double>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
+          <spacer name="horizontalSpacer">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_9">
+         <item>
+          <widget class="QGroupBox" name="inputSpaceballGroup">
+           <property name="title">
+            <string>Spaceball</string>
+           </property>
+           <property name="flat">
+            <bool>false</bool>
+           </property>
+           <layout class="QGridLayout" name="gridLayout_26">
+            <item row="0" column="0">
+             <widget class="QLabel" name="spaceballSensitivityOverallLabel">
+              <property name="toolTip">
+               <string>Overall Sensitivity</string>
+              </property>
+              <property name="statusTip">
+               <string>Overall Sensitivity</string>
+              </property>
+              <property name="whatsThis">
+               <string>Factor applied to all spaceball transformations</string>
+              </property>
+              <property name="text">
+               <string>Overall Sensitivity</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="1">
+             <widget class="QDoubleSpinBox" name="spaceballSensitivityOverallSpinbox">
+              <property name="toolTip">
+               <string>Overall Sensitivity</string>
+              </property>
+              <property name="statusTip">
+               <string>Overall Sensitivity</string>
+              </property>
+              <property name="whatsThis">
+               <string>Factor applied to all spaceball transformations</string>
+              </property>
+              <property name="decimals">
+               <number>1</number>
+              </property>
+              <property name="minimum">
+               <double>0.100000000000000</double>
+              </property>
+              <property name="maximum">
+               <double>10.000000000000000</double>
+              </property>
+              <property name="singleStep">
+               <double>0.100000000000000</double>
+              </property>
+              <property name="value">
+               <double>1.000000000000000</double>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="0">
+             <widget class="QLabel" name="spaceballSensitivityTranslationsLabel">
+              <property name="toolTip">
+               <string>Translation Sensitivity</string>
+              </property>
+              <property name="statusTip">
+               <string>Translation Sensitivity</string>
+              </property>
+              <property name="whatsThis">
+               <string>Factor applied to all spaceball translations</string>
+              </property>
+              <property name="text">
+               <string>Translation Sensitivity</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="1">
+             <widget class="QDoubleSpinBox" name="spaceballSensitivityTranslationsSpinbox">
+              <property name="toolTip">
+               <string>Translation Sensitivity</string>
+              </property>
+              <property name="statusTip">
+               <string>Translationl Sensitivity</string>
+              </property>
+              <property name="whatsThis">
+               <string>Factor applied to all spaceball translations</string>
+              </property>
+              <property name="decimals">
+               <number>1</number>
+              </property>
+              <property name="minimum">
+               <double>0.100000000000000</double>
+              </property>
+              <property name="maximum">
+               <double>10.000000000000000</double>
+              </property>
+              <property name="singleStep">
+               <double>0.100000000000000</double>
+              </property>
+              <property name="value">
+               <double>1.000000000000000</double>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="0">
+             <widget class="QLabel" name="spaceballSensitivityRotationsLabel">
+              <property name="toolTip">
+               <string>Rotation Sensitivity</string>
+              </property>
+              <property name="statusTip">
+               <string>Rotation Sensitivity</string>
+              </property>
+              <property name="whatsThis">
+               <string>Factor applied to all spaceball rotations</string>
+              </property>
+              <property name="text">
+               <string>Rotation Sensitivity</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="1">
+             <widget class="QDoubleSpinBox" name="spaceballSensitivityRotationsSpinbox">
+              <property name="toolTip">
+               <string>Rotation Sensitivity</string>
+              </property>
+              <property name="statusTip">
+               <string>Rotation Sensitivity</string>
+              </property>
+              <property name="whatsThis">
+               <string>Factor applied to all spaceball rotations</string>
+              </property>
+              <property name="decimals">
+               <number>1</number>
+              </property>
+              <property name="minimum">
+               <double>0.100000000000000</double>
+              </property>
+              <property name="maximum">
+               <double>10.000000000000000</double>
+              </property>
+              <property name="singleStep">
+               <double>0.100000000000000</double>
+              </property>
+              <property name="value">
+               <double>1.000000000000000</double>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
+          <spacer name="horizontalSpacer_2">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <spacer name="verticalSpacer_23">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>235</height>
+          </size>
+         </property>
+        </spacer>
        </item>
       </layout>
      </widget>

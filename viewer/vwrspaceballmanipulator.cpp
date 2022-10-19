@@ -238,7 +238,7 @@ bool SpaceballManipulator::handleMouse(const osgGA::GUIEventAdapter& ea, osgGA::
   if ((currentStateMask & ControlKey).none())
     return false;
   
-  //left button
+  //left button. Rotations
   static double rotationFactor = 0.0;
   if (ea.getButton() == EA::LEFT_MOUSE_BUTTON)
   {
@@ -260,18 +260,33 @@ bool SpaceballManipulator::handleMouse(const osgGA::GUIEventAdapter& ea, osgGA::
     }
   }
   
-  //middle button
+  //middle button. Nothing.
   if (ea.getButton() == EA::MIDDLE_MOUSE_BUTTON)
   {
     if (ea.getEventType() == EA::PUSH)
     {
       currentStateMask |= MiddleButton;
-      lastScreenPoint = osg::Vec2f(ea.getX(), ea.getY());
       return true;
     }
     if (ea.getEventType() == EA::RELEASE)
     {
       currentStateMask &= ~MiddleButton;
+      return true;
+    }
+  }
+  
+  //right button. Pan
+  if (ea.getButton() == EA::RIGHT_MOUSE_BUTTON)
+  {
+    if (ea.getEventType() == EA::PUSH)
+    {
+      currentStateMask |= RightButton;
+      lastScreenPoint = osg::Vec2f(ea.getX(), ea.getY());
+      return true;
+    }
+    if (ea.getEventType() == EA::RELEASE)
+    {
+      currentStateMask &= ~RightButton;
       return true;
     }
   }
@@ -288,7 +303,7 @@ bool SpaceballManipulator::handleMouse(const osgGA::GUIEventAdapter& ea, osgGA::
       
     getProjectionData();
     
-    static const double scrollFactor = 0.1;
+    double scrollFactor = 0.05 * prf::manager().rootPtr->input().get().mouse().get().wheelZoomFactor().get();
     double directionFactor = 1.0; //assume scroll down.
     
     //establish 2 screen points. 1 will be viewport center and the other
@@ -427,7 +442,7 @@ void SpaceballManipulator::getViewData()
 
 void SpaceballManipulator::goOrtho(const vwr::SpaceballOSGEvent *event)
 {
-    const auto &sensi = prf::manager().rootPtr->visual().spaceballSensitivity().get();
+    const auto &sensi = prf::manager().rootPtr->input()->spaceball().get();
   
     osg::Vec3d newEye, newCenter, newUp;
     newEye = spaceEye;
@@ -441,7 +456,7 @@ void SpaceballManipulator::goOrtho(const vwr::SpaceballOSGEvent *event)
     //derive motion factor.
     double gauge = std::min(projectionData.width(), projectionData.height()) / 512.0;
 
-    double rotateFactor = .0002 * sensi.overall() * sensi.rotations();
+    double rotateFactor = .0002 * sensi.overallSensitivity().get() * sensi.rotationsSensitivity().get();
     osg::Quat rx, ry, rz;
     rx.makeRotate(event->rotationX * rotateFactor, viewData.x);
     ry.makeRotate(event->rotationY * rotateFactor * -1.0, viewData.y);
@@ -451,12 +466,12 @@ void SpaceballManipulator::goOrtho(const vwr::SpaceballOSGEvent *event)
     tempEye = rx * ry * rz * tempEye;
     newEye = tempEye + rotationPoint;
 
-    double transFactor = gauge * .05 * sensi.overall() * sensi.translations();
+    double transFactor = gauge * .05 * sensi.overallSensitivity().get() * sensi.translationsSensitivity().get();
     osg::Vec3d transVec = viewData.x * (event->translationX * transFactor) +
             viewData.y * (event->translationY * transFactor * -1.0);//don't move z
     newEye = transVec + newEye;
     newCenter = transVec + newCenter;
-    scaleView(event->translationZ * -.0001 * sensi.overall() * sensi.translations());
+    scaleView(event->translationZ * -.0001 * sensi.overallSensitivity().get() * sensi.translationsSensitivity().get());
 
     //ortho views want to stay outside of model boundary.
     double camDistance = (camSphere.center() - newEye).length();
@@ -504,7 +519,7 @@ osg::Vec3d SpaceballManipulator::projectToBound(const osg::Vec3d &eye, osg::Vec3
 
 void SpaceballManipulator::goPerspective(const vwr::SpaceballOSGEvent *event)
 {
-    const auto &sensi = prf::manager().rootPtr->visual().spaceballSensitivity().get();
+    const auto &sensi = prf::manager().rootPtr->input()->spaceball().get();
   
     osg::Vec3d newEye, newCenter, newUp;
     newEye = spaceEye;
@@ -520,7 +535,7 @@ void SpaceballManipulator::goPerspective(const vwr::SpaceballOSGEvent *event)
     if (projectionData.aspectRatio > 1)
         gauge *= projectionData.aspectRatio;
 
-    double rotateFactor = gauge * 0.000004 * sensi.overall() * sensi.rotations();
+    double rotateFactor = gauge * 0.000004 * sensi.overallSensitivity().get() * sensi.rotationsSensitivity().get();
     osg::Quat rx, ry, rz;
     rx.makeRotate(event->rotationX * rotateFactor, viewData.x);
     ry.makeRotate(event->rotationY * rotateFactor * -1.0, viewData.y);
@@ -530,7 +545,7 @@ void SpaceballManipulator::goPerspective(const vwr::SpaceballOSGEvent *event)
     tempEye = rx * ry * rz * tempEye;
     newEye = tempEye + rotationPoint;
 
-    double transFactor = gauge * .0002 * sensi.overall() * sensi.translations();
+    double transFactor = gauge * .0002 * sensi.overallSensitivity().get() * sensi.translationsSensitivity().get();
     osg::Vec3d transVec = viewData.x * (event->translationX * transFactor) +
             viewData.y * (event->translationY * transFactor * -1.0) +
             viewData.z * (event->translationZ * transFactor);

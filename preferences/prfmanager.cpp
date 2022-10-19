@@ -91,7 +91,7 @@ Manager::Manager()
     
   assert(rootPtr);
   ensureDefaults();
-  saveConfig(); //ensure may set values so lets right them out.
+  saveConfig(); //ensure may set values so lets write them out.
   ok = true;
 }
 
@@ -183,7 +183,7 @@ bool Manager::readConfig()
 
 void Manager::setSpaceballButton(int number, unsigned int commandId)
 {
-  auto &buttons = rootPtr->hotKeys().spaceballButtons().array();
+  auto &buttons = rootPtr->hotKeys().spaceballButtons();
   
   auto it = buttons.begin();
   for (; it != buttons.end(); ++it)
@@ -200,7 +200,7 @@ void Manager::setSpaceballButton(int number, unsigned int commandId)
 
 unsigned int Manager::getSpaceballButton(int number) const
 {
-  const auto &buttons = rootPtr->hotKeys().spaceballButtons().array();
+  const auto &buttons = rootPtr->hotKeys().spaceballButtons();
   
   auto it = buttons.begin();
   for (; it != buttons.end(); ++it)
@@ -214,7 +214,7 @@ unsigned int Manager::getSpaceballButton(int number) const
 
 void Manager::setHotKey(int number, unsigned int commandId)
 {
-  auto &keys = rootPtr->hotKeys().hotKeyEntries().array();
+  auto &keys = rootPtr->hotKeys().hotKeyEntries();
   
   auto it = keys.begin();
   for (; it != keys.end(); ++it)
@@ -231,7 +231,7 @@ void Manager::setHotKey(int number, unsigned int commandId)
 
 unsigned int Manager::getHotKey(int number) const
 {
-  const auto &keys = rootPtr->hotKeys().hotKeyEntries().array();
+  const auto &keys = rootPtr->hotKeys().hotKeyEntries();
   
   for (const auto &k : keys)
   {
@@ -445,25 +445,12 @@ void Manager::ensureDefaults()
   if (!rootPtr->visual().mesh().logLOD().present())
     rootPtr->visual().mesh().logLOD() = prf::Mesh::logLOD_default_value();
   
-  if (!rootPtr->visual().spaceballSensitivity().present())
-  {
-    prf::SpaceballSensitivity sbs
-    (
-      prf::SpaceballSensitivity::overall_default_value()
-      , prf::SpaceballSensitivity::translations_default_value()
-      , prf::SpaceballSensitivity::rotations_default_value()
-    );
-    rootPtr->visual().spaceballSensitivity() = sbs;
-  }
-  else
-  {
-    auto &sbs = rootPtr->visual().spaceballSensitivity().get();
-    
-    if (sbs.overall() < 0.1 || sbs.overall() > 10.0)
-      sbs.overall() = prf::SpaceballSensitivity::overall_default_value();
-    if (sbs.translations() < 0.1 || sbs.translations() > 10.0)
-      sbs.translations() = prf::SpaceballSensitivity::translations_default_value();
-    if (sbs.rotations() < 0.1 || sbs.rotations() > 10.0)
-      sbs.rotations() = prf::SpaceballSensitivity::rotations_default_value();
-  }
+  //input
+  if (!rootPtr->input()) rootPtr->input() = prf::Input();
+  if (!rootPtr->input().get().mouse()) rootPtr->input().get().mouse() = prf::Mouse();
+  if (!rootPtr->input().get().mouse().get().wheelZoomFactor()) rootPtr->input().get().mouse().get().wheelZoomFactor() = prf::Mouse::wheelZoomFactor_default_value();
+  if (!rootPtr->input().get().spaceball()) rootPtr->input().get().spaceball() = prf::Spaceball();
+  if (!rootPtr->input()->spaceball()->overallSensitivity()) rootPtr->input()->spaceball()->overallSensitivity() = prf::Spaceball::overallSensitivity_default_value();
+  if (!rootPtr->input()->spaceball()->translationsSensitivity()) rootPtr->input()->spaceball()->translationsSensitivity() = prf::Spaceball::translationsSensitivity_default_value();
+  if (!rootPtr->input()->spaceball()->rotationsSensitivity()) rootPtr->input()->spaceball()->rotationsSensitivity() = prf::Spaceball::rotationsSensitivity_default_value();
 }

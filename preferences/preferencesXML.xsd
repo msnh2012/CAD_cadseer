@@ -6,16 +6,23 @@
     <xs:minExclusive value="0.0"/>
   </xs:restriction>
 </xs:simpleType>
+  
+<xs:simpleType name="Factor">
+  <xs:restriction base="xs:double">
+    <xs:minInclusive value="0.1"/>
+    <xs:maxInclusive value="10.0"/>
+  </xs:restriction>
+</xs:simpleType>
 
 <xs:complexType name="LODEntry">
-  <xs:all>
+  <xs:sequence>
     <xs:element name="linearFactor" type="DecPositive"/>
     <xs:element name="angularFactor" type="DecPositive"/>
-  </xs:all>
+  </xs:sequence>
 </xs:complexType>
 
 <xs:complexType name="LOD">
-  <xs:all>
+  <xs:sequence>
     <!-- first partition is always 0.0 -->
     <xs:element name="partition00" type="xs:double"/>
     <xs:element name="LODEntry01" type="LODEntry"/>
@@ -25,16 +32,16 @@
     <xs:element name="LODEntry03" type="LODEntry"/>
     <xs:element name="partition03" type="DecPositive"/>
     <!-- last partition is always float::Max -->
-  </xs:all>
+  </xs:sequence>
 </xs:complexType>
 
 <xs:complexType name="Mesh">
-  <xs:all>
+  <xs:sequence>
     <xs:element name="linearDeflection" type="DecPositive" default="1.0"/>
     <xs:element name="angularDeflection" type="DecPositive" default="120.0"/>
     <xs:element name="lod" type="LOD" minOccurs="0" maxOccurs="1"/>
     <xs:element name="logLOD" type="xs:boolean" minOccurs="0" maxOccurs="1" default="false"/>
-  </xs:all>
+  </xs:sequence>
 </xs:complexType>
 
 <xs:simpleType name="RenderStyle">
@@ -46,54 +53,66 @@
 </xs:simpleType>
 
 <xs:complexType name="Display">
-  <xs:all>
+  <xs:sequence>
     <xs:element name="showHiddenLines" type="xs:boolean" default="false"/>
     <xs:element name="showCurrentSystem" type="xs:boolean" default="true"/>
     <xs:element name="renderStyle" type="RenderStyle" default="fill" minOccurs="0" maxOccurs="1"/>
     <xs:element name="samples" type="xs:int" default="0" minOccurs="0" maxOccurs="1"/>
-  </xs:all>
-</xs:complexType>
-
-<xs:complexType name="SpaceballSensitivity">
-  <xs:all>
-    <xs:element name="overall" type="xs:double" default="1.0"/>
-    <xs:element name="translations" type="xs:double" default="1.0"/>
-    <xs:element name="rotations" type="xs:double" default="1.0"/>
-  </xs:all>
+  </xs:sequence>
 </xs:complexType>
 
 <xs:complexType name="Visual">
-  <xs:all>
+  <xs:sequence>
     <xs:element name="mesh" type="Mesh"/>
     <xs:element name="display" type="Display"/>
-    <xs:element name="spaceballSensitivity" type="SpaceballSensitivity" minOccurs="0" maxOccurs="1"/>
-  </xs:all>
+  </xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="Mouse">
+  <xs:sequence>
+    <xs:element name="wheelZoomFactor" type="Factor" default="1.0" minOccurs="0" maxOccurs="1"/>
+  </xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="Spaceball">
+  <xs:sequence>
+    <xs:element name="overallSensitivity" type="Factor" default="1.0" minOccurs="0" maxOccurs="1"/>
+    <xs:element name="translationsSensitivity" type="Factor" default="1.0" minOccurs="0" maxOccurs="1"/>
+    <xs:element name="rotationsSensitivity" type="Factor" default="1.0" minOccurs="0" maxOccurs="1"/>
+  </xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="Input">
+  <xs:sequence>
+    <xs:element name="mouse" type="Mouse" minOccurs="0" maxOccurs="1"/>
+    <xs:element name="spaceball" type="Spaceball" minOccurs="0" maxOccurs="1"/>
+  </xs:sequence>
 </xs:complexType>
 
 <xs:complexType name="Dragger">
-  <xs:all>
+  <xs:sequence>
     <xs:element name="triggerUpdateOnFinish" type="xs:boolean" default="false"/>
     <xs:element name="linearIncrement" type="DecPositive" default="1.0"/>
     <xs:element name="angularIncrement" type="DecPositive" default="15.0"/>
-  </xs:all>
+  </xs:sequence>
 </xs:complexType>
 
 <xs:complexType name="InteractiveParameter">
-  <xs:all>
+  <xs:sequence>
     <xs:element name="characterSize" type="DecPositive" default="20.0"/>
     <xs:element name="arrowWidth" type="DecPositive" default="10.0"/>
     <xs:element name="arrowHeight" type="DecPositive" default="20.0"/>
-  </xs:all>
+  </xs:sequence>
 </xs:complexType>
 
 <xs:complexType name="Gesture">
-  <xs:all>
+  <xs:sequence>
     <xs:element name="animationSeconds" type="DecPositive" default="1.0"/>
     <xs:element name="iconRadius" type="xs:int" default="32"/>
     <xs:element name="includeAngle" type="xs:int" default="90"/>
     <xs:element name="spreadFactor" type="DecPositive" default="0.10"/>
     <xs:element name="sprayFactor" type="DecPositive" default="1.0"/>
-  </xs:all>
+  </xs:sequence>
 </xs:complexType>
 
 <xs:complexType name="RecentProjects">
@@ -103,148 +122,136 @@
 </xs:complexType>
 
 <xs:complexType name="Project">
-  <xs:all>
+  <xs:sequence>
     <xs:element name="basePath" type="xs:string"/>
     <xs:element name="gitName" type="xs:string"/>
     <xs:element name="gitEmail" type="xs:string"/>
     <xs:element name="recentProjects" type="RecentProjects"/>
     <xs:element name="lastDirectory" type="xs:string" minOccurs="0" maxOccurs="1"/>
-  </xs:all>
+  </xs:sequence>
 </xs:complexType>
 
 <xs:complexType name="SpaceballButton">
-  <xs:all>
+  <xs:sequence>
     <xs:element name="number" type="xs:int"/>
     <xs:element name="commandId" type="xs:unsignedInt"/>
-  </xs:all>
-</xs:complexType>
-
-<xs:complexType name="SpaceballButtons">
-  <xs:sequence minOccurs="0" maxOccurs="unbounded">
-    <xs:element name="array" type="SpaceballButton"/>
   </xs:sequence>
 </xs:complexType>
 
 <xs:complexType name="HotKeyEntry">
-  <xs:all>
+  <xs:sequence>
     <xs:element name="number" type="xs:int"/>
     <xs:element name="commandId" type="xs:unsignedInt"/>
-  </xs:all>
-</xs:complexType>
-
-<xs:complexType name="HotKeyEntries">
-  <xs:sequence minOccurs="0" maxOccurs="unbounded">
-    <xs:element name="array" type="HotKeyEntry"/>
   </xs:sequence>
 </xs:complexType>
 
 <xs:complexType name="HotKeys">
-  <xs:all>
-    <xs:element name="spaceballButtons" type="SpaceballButtons"/>
-    <xs:element name="hotKeyEntries" type="HotKeyEntries"/>
-  </xs:all>
+  <xs:sequence>
+    <xs:element name="spaceballButtons" type="SpaceballButton" minOccurs="0" maxOccurs="unbounded"/>
+    <xs:element name="hotKeyEntries" type="HotKeyEntry" minOccurs="0" maxOccurs="unbounded"/>
+  </xs:sequence>
 </xs:complexType>
 
 <xs:complexType name="Blend">
-  <xs:all>
+  <xs:sequence>
     <xs:element name="radius" type="xs:double" default="2.0"/>
-  </xs:all>
+  </xs:sequence>
 </xs:complexType>
 
 <xs:complexType name="Box">
-  <xs:all>
+  <xs:sequence>
     <xs:element name="length" type="xs:double" default="10.0"/>
     <xs:element name="width" type="xs:double" default="10.0"/>
     <xs:element name="height" type="xs:double" default="10.0"/>
-  </xs:all>
+  </xs:sequence>
 </xs:complexType>
 
 <xs:complexType name="Oblong">
-  <xs:all>
+  <xs:sequence>
     <xs:element name="length" type="xs:double" default="10.0"/>
     <xs:element name="width" type="xs:double" default="4.0"/>
     <xs:element name="height" type="xs:double" default="2.0"/>
-  </xs:all>
+  </xs:sequence>
 </xs:complexType>
 
 <xs:complexType name="Chamfer">
-  <xs:all>
+  <xs:sequence>
     <xs:element name="distance" type="xs:double" default="2.0"/>
-  </xs:all>
+  </xs:sequence>
 </xs:complexType>
 
 <xs:complexType name="Cone">
-  <xs:all>
+  <xs:sequence>
     <xs:element name="radius1" type="xs:double" default="10.0"/>
     <xs:element name="radius2" type="xs:double" default="0.0"/>
     <xs:element name="height" type="xs:double" default="10.0"/>
-  </xs:all>
+  </xs:sequence>
 </xs:complexType>
 
 <xs:complexType name="Cylinder">
-  <xs:all>
+  <xs:sequence>
     <xs:element name="radius" type="xs:double" default="5.0"/>
     <xs:element name="height" type="xs:double" default="10.0"/>
-  </xs:all>
+  </xs:sequence>
 </xs:complexType>
 
 <xs:complexType name="DatumPlane">
-  <xs:all>
+  <xs:sequence>
     <xs:element name="offset" type="xs:double" default="1.0"/>
-  </xs:all>
+  </xs:sequence>
 </xs:complexType>
 
 <xs:complexType name="Draft">
-  <xs:all>
+  <xs:sequence>
     <xs:element name="angle" type="xs:double" default="15.0"/>
-  </xs:all>
+  </xs:sequence>
 </xs:complexType>
 
 <xs:complexType name="Dieset">
-  <xs:all>
+  <xs:sequence>
     <xs:element name="lengthPadding" type="xs:double" default="6.0"/>
     <xs:element name="widthPadding" type="xs:double" default="200.0"/>
-  </xs:all>
+  </xs:sequence>
 </xs:complexType>
 
 <xs:complexType name="Hollow">
-  <xs:all>
+  <xs:sequence>
     <xs:element name="offset" type="xs:double" default="1.0"/>
-  </xs:all>
+  </xs:sequence>
 </xs:complexType>
 
 <xs:complexType name="Nest">
-  <xs:all>
+  <xs:sequence>
     <xs:element name="gap" type="xs:double" default="6.0"/>
-  </xs:all>
+  </xs:sequence>
 </xs:complexType>
 
 <xs:complexType name="Quote">
-  <xs:all>
+  <xs:sequence>
     <xs:element name="templateSheet" type="xs:string" default=""/>
-  </xs:all>
+  </xs:sequence>
 </xs:complexType>
 
 <xs:complexType name="Sphere">
-  <xs:all>
+  <xs:sequence>
     <xs:element name="radius" type="xs:double" default="5.0"/>
-  </xs:all>
+  </xs:sequence>
 </xs:complexType>
 
 <xs:complexType name="Squash">
-  <xs:all>
+  <xs:sequence>
     <xs:element name="granularity" type="xs:int" default="3"/>
-  </xs:all>
+  </xs:sequence>
 </xs:complexType>
 
 <xs:complexType name="Strip">
-  <xs:all>
+  <xs:sequence>
     <xs:element name="gap" type="xs:double" default="6.0"/>
-  </xs:all>
+  </xs:sequence>
 </xs:complexType>
 
 <xs:complexType name="Thread">
-  <xs:all>
+  <xs:sequence>
     <xs:element name="diameter" type="xs:double" default="10.0"/>
     <xs:element name="pitch" type="xs:double" default="1.5"/>
     <xs:element name="length" type="xs:double" default="15.0"/>
@@ -252,18 +259,18 @@
     <xs:element name="internal" type="xs:boolean" default="false"/>
     <xs:element name="fake" type="xs:boolean" default="true"/>
     <xs:element name="leftHanded" type="xs:boolean" default="false"/>
-  </xs:all>
+  </xs:sequence>
 </xs:complexType>
 
 <xs:complexType name="Torus">
-  <xs:all>
+  <xs:sequence>
     <xs:element name="radius1" type="xs:double" default="10.0"/>
     <xs:element name="radius2" type="xs:double" default="2.0"/>
-  </xs:all>
+  </xs:sequence>
 </xs:complexType>
 
 <xs:complexType name="Features">
-  <xs:all>
+  <xs:sequence>
     <xs:element name="blend" type="Blend"  minOccurs="0" maxOccurs="1"/>
     <xs:element name="box" type="Box"  minOccurs="0" maxOccurs="1"/>
     <xs:element name="oblong" type="Oblong"  minOccurs="0" maxOccurs="1"/>
@@ -281,7 +288,7 @@
     <xs:element name="strip" type="Strip"  minOccurs="0" maxOccurs="1"/>
     <xs:element name="thread" type="Thread"  minOccurs="0" maxOccurs="1"/>
     <xs:element name="torus" type="Torus"  minOccurs="0" maxOccurs="1"/>
-  </xs:all>
+  </xs:sequence>
 </xs:complexType>
 
 <xs:complexType name="Menu">
@@ -291,8 +298,9 @@
 </xs:complexType>
 
 <xs:complexType name="Root">
-  <xs:all>
+  <xs:sequence>
     <xs:element name="visual" type="Visual"/>
+    <xs:element name="input" type="Input" minOccurs="0" maxOccurs="1"/>
     <xs:element name="dragger" type="Dragger"/>
     <xs:element name="interactiveParameter" type="InteractiveParameter"/>
     <xs:element name="gesture" type="Gesture"/>
@@ -300,7 +308,7 @@
     <xs:element name="hotKeys" type="HotKeys"/>
     <xs:element name="features" type="Features"/>
     <xs:element name="menu" type="Menu" minOccurs="0"/>
-  </xs:all>
+  </xs:sequence>
 </xs:complexType>
 
 <xs:element name="root" type="Root"/>

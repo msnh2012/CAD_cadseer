@@ -46,6 +46,10 @@ namespace prf
   // 
 
 
+  // Factor
+  // 
+
+
   // LODEntry
   // 
 
@@ -551,82 +555,6 @@ namespace prf
   }
 
 
-  // SpaceballSensitivity
-  // 
-
-  const SpaceballSensitivity::OverallType& SpaceballSensitivity::
-  overall () const
-  {
-    return this->overall_.get ();
-  }
-
-  SpaceballSensitivity::OverallType& SpaceballSensitivity::
-  overall ()
-  {
-    return this->overall_.get ();
-  }
-
-  void SpaceballSensitivity::
-  overall (const OverallType& x)
-  {
-    this->overall_.set (x);
-  }
-
-  SpaceballSensitivity::OverallType SpaceballSensitivity::
-  overall_default_value ()
-  {
-    return OverallType (1.0);
-  }
-
-  const SpaceballSensitivity::TranslationsType& SpaceballSensitivity::
-  translations () const
-  {
-    return this->translations_.get ();
-  }
-
-  SpaceballSensitivity::TranslationsType& SpaceballSensitivity::
-  translations ()
-  {
-    return this->translations_.get ();
-  }
-
-  void SpaceballSensitivity::
-  translations (const TranslationsType& x)
-  {
-    this->translations_.set (x);
-  }
-
-  SpaceballSensitivity::TranslationsType SpaceballSensitivity::
-  translations_default_value ()
-  {
-    return TranslationsType (1.0);
-  }
-
-  const SpaceballSensitivity::RotationsType& SpaceballSensitivity::
-  rotations () const
-  {
-    return this->rotations_.get ();
-  }
-
-  SpaceballSensitivity::RotationsType& SpaceballSensitivity::
-  rotations ()
-  {
-    return this->rotations_.get ();
-  }
-
-  void SpaceballSensitivity::
-  rotations (const RotationsType& x)
-  {
-    this->rotations_.set (x);
-  }
-
-  SpaceballSensitivity::RotationsType SpaceballSensitivity::
-  rotations_default_value ()
-  {
-    return RotationsType (1.0);
-  }
-
-
   // Visual
   // 
 
@@ -678,34 +606,220 @@ namespace prf
     this->display_.set (std::move (x));
   }
 
-  const Visual::SpaceballSensitivityOptional& Visual::
-  spaceballSensitivity () const
+
+  // Mouse
+  // 
+
+  const Mouse::WheelZoomFactorOptional& Mouse::
+  wheelZoomFactor () const
   {
-    return this->spaceballSensitivity_;
+    return this->wheelZoomFactor_;
   }
 
-  Visual::SpaceballSensitivityOptional& Visual::
-  spaceballSensitivity ()
+  Mouse::WheelZoomFactorOptional& Mouse::
+  wheelZoomFactor ()
   {
-    return this->spaceballSensitivity_;
+    return this->wheelZoomFactor_;
   }
 
-  void Visual::
-  spaceballSensitivity (const SpaceballSensitivityType& x)
+  void Mouse::
+  wheelZoomFactor (const WheelZoomFactorType& x)
   {
-    this->spaceballSensitivity_.set (x);
+    this->wheelZoomFactor_.set (x);
   }
 
-  void Visual::
-  spaceballSensitivity (const SpaceballSensitivityOptional& x)
+  void Mouse::
+  wheelZoomFactor (const WheelZoomFactorOptional& x)
   {
-    this->spaceballSensitivity_ = x;
+    this->wheelZoomFactor_ = x;
   }
 
-  void Visual::
-  spaceballSensitivity (::std::unique_ptr< SpaceballSensitivityType > x)
+  void Mouse::
+  wheelZoomFactor (::std::unique_ptr< WheelZoomFactorType > x)
   {
-    this->spaceballSensitivity_.set (std::move (x));
+    this->wheelZoomFactor_.set (std::move (x));
+  }
+
+  Mouse::WheelZoomFactorType Mouse::
+  wheelZoomFactor_default_value ()
+  {
+    return WheelZoomFactorType (1.0);
+  }
+
+
+  // Spaceball
+  // 
+
+  const Spaceball::OverallSensitivityOptional& Spaceball::
+  overallSensitivity () const
+  {
+    return this->overallSensitivity_;
+  }
+
+  Spaceball::OverallSensitivityOptional& Spaceball::
+  overallSensitivity ()
+  {
+    return this->overallSensitivity_;
+  }
+
+  void Spaceball::
+  overallSensitivity (const OverallSensitivityType& x)
+  {
+    this->overallSensitivity_.set (x);
+  }
+
+  void Spaceball::
+  overallSensitivity (const OverallSensitivityOptional& x)
+  {
+    this->overallSensitivity_ = x;
+  }
+
+  void Spaceball::
+  overallSensitivity (::std::unique_ptr< OverallSensitivityType > x)
+  {
+    this->overallSensitivity_.set (std::move (x));
+  }
+
+  Spaceball::OverallSensitivityType Spaceball::
+  overallSensitivity_default_value ()
+  {
+    return OverallSensitivityType (1.0);
+  }
+
+  const Spaceball::TranslationsSensitivityOptional& Spaceball::
+  translationsSensitivity () const
+  {
+    return this->translationsSensitivity_;
+  }
+
+  Spaceball::TranslationsSensitivityOptional& Spaceball::
+  translationsSensitivity ()
+  {
+    return this->translationsSensitivity_;
+  }
+
+  void Spaceball::
+  translationsSensitivity (const TranslationsSensitivityType& x)
+  {
+    this->translationsSensitivity_.set (x);
+  }
+
+  void Spaceball::
+  translationsSensitivity (const TranslationsSensitivityOptional& x)
+  {
+    this->translationsSensitivity_ = x;
+  }
+
+  void Spaceball::
+  translationsSensitivity (::std::unique_ptr< TranslationsSensitivityType > x)
+  {
+    this->translationsSensitivity_.set (std::move (x));
+  }
+
+  Spaceball::TranslationsSensitivityType Spaceball::
+  translationsSensitivity_default_value ()
+  {
+    return TranslationsSensitivityType (1.0);
+  }
+
+  const Spaceball::RotationsSensitivityOptional& Spaceball::
+  rotationsSensitivity () const
+  {
+    return this->rotationsSensitivity_;
+  }
+
+  Spaceball::RotationsSensitivityOptional& Spaceball::
+  rotationsSensitivity ()
+  {
+    return this->rotationsSensitivity_;
+  }
+
+  void Spaceball::
+  rotationsSensitivity (const RotationsSensitivityType& x)
+  {
+    this->rotationsSensitivity_.set (x);
+  }
+
+  void Spaceball::
+  rotationsSensitivity (const RotationsSensitivityOptional& x)
+  {
+    this->rotationsSensitivity_ = x;
+  }
+
+  void Spaceball::
+  rotationsSensitivity (::std::unique_ptr< RotationsSensitivityType > x)
+  {
+    this->rotationsSensitivity_.set (std::move (x));
+  }
+
+  Spaceball::RotationsSensitivityType Spaceball::
+  rotationsSensitivity_default_value ()
+  {
+    return RotationsSensitivityType (1.0);
+  }
+
+
+  // Input
+  // 
+
+  const Input::MouseOptional& Input::
+  mouse () const
+  {
+    return this->mouse_;
+  }
+
+  Input::MouseOptional& Input::
+  mouse ()
+  {
+    return this->mouse_;
+  }
+
+  void Input::
+  mouse (const MouseType& x)
+  {
+    this->mouse_.set (x);
+  }
+
+  void Input::
+  mouse (const MouseOptional& x)
+  {
+    this->mouse_ = x;
+  }
+
+  void Input::
+  mouse (::std::unique_ptr< MouseType > x)
+  {
+    this->mouse_.set (std::move (x));
+  }
+
+  const Input::SpaceballOptional& Input::
+  spaceball () const
+  {
+    return this->spaceball_;
+  }
+
+  Input::SpaceballOptional& Input::
+  spaceball ()
+  {
+    return this->spaceball_;
+  }
+
+  void Input::
+  spaceball (const SpaceballType& x)
+  {
+    this->spaceball_.set (x);
+  }
+
+  void Input::
+  spaceball (const SpaceballOptional& x)
+  {
+    this->spaceball_ = x;
+  }
+
+  void Input::
+  spaceball (::std::unique_ptr< SpaceballType > x)
+  {
+    this->spaceball_.set (std::move (x));
   }
 
 
@@ -1225,28 +1339,6 @@ namespace prf
   }
 
 
-  // SpaceballButtons
-  // 
-
-  const SpaceballButtons::ArraySequence& SpaceballButtons::
-  array () const
-  {
-    return this->array_;
-  }
-
-  SpaceballButtons::ArraySequence& SpaceballButtons::
-  array ()
-  {
-    return this->array_;
-  }
-
-  void SpaceballButtons::
-  array (const ArraySequence& s)
-  {
-    this->array_ = s;
-  }
-
-
   // HotKeyEntry
   // 
 
@@ -1287,77 +1379,43 @@ namespace prf
   }
 
 
-  // HotKeyEntries
-  // 
-
-  const HotKeyEntries::ArraySequence& HotKeyEntries::
-  array () const
-  {
-    return this->array_;
-  }
-
-  HotKeyEntries::ArraySequence& HotKeyEntries::
-  array ()
-  {
-    return this->array_;
-  }
-
-  void HotKeyEntries::
-  array (const ArraySequence& s)
-  {
-    this->array_ = s;
-  }
-
-
   // HotKeys
   // 
 
-  const HotKeys::SpaceballButtonsType& HotKeys::
+  const HotKeys::SpaceballButtonsSequence& HotKeys::
   spaceballButtons () const
   {
-    return this->spaceballButtons_.get ();
+    return this->spaceballButtons_;
   }
 
-  HotKeys::SpaceballButtonsType& HotKeys::
+  HotKeys::SpaceballButtonsSequence& HotKeys::
   spaceballButtons ()
   {
-    return this->spaceballButtons_.get ();
+    return this->spaceballButtons_;
   }
 
   void HotKeys::
-  spaceballButtons (const SpaceballButtonsType& x)
+  spaceballButtons (const SpaceballButtonsSequence& s)
   {
-    this->spaceballButtons_.set (x);
+    this->spaceballButtons_ = s;
   }
 
-  void HotKeys::
-  spaceballButtons (::std::unique_ptr< SpaceballButtonsType > x)
-  {
-    this->spaceballButtons_.set (std::move (x));
-  }
-
-  const HotKeys::HotKeyEntriesType& HotKeys::
+  const HotKeys::HotKeyEntriesSequence& HotKeys::
   hotKeyEntries () const
   {
-    return this->hotKeyEntries_.get ();
+    return this->hotKeyEntries_;
   }
 
-  HotKeys::HotKeyEntriesType& HotKeys::
+  HotKeys::HotKeyEntriesSequence& HotKeys::
   hotKeyEntries ()
   {
-    return this->hotKeyEntries_.get ();
+    return this->hotKeyEntries_;
   }
 
   void HotKeys::
-  hotKeyEntries (const HotKeyEntriesType& x)
+  hotKeyEntries (const HotKeyEntriesSequence& s)
   {
-    this->hotKeyEntries_.set (x);
-  }
-
-  void HotKeys::
-  hotKeyEntries (::std::unique_ptr< HotKeyEntriesType > x)
-  {
-    this->hotKeyEntries_.set (std::move (x));
+    this->hotKeyEntries_ = s;
   }
 
 
@@ -2772,6 +2830,36 @@ namespace prf
     this->visual_.set (std::move (x));
   }
 
+  const Root::InputOptional& Root::
+  input () const
+  {
+    return this->input_;
+  }
+
+  Root::InputOptional& Root::
+  input ()
+  {
+    return this->input_;
+  }
+
+  void Root::
+  input (const InputType& x)
+  {
+    this->input_.set (x);
+  }
+
+  void Root::
+  input (const InputOptional& x)
+  {
+    this->input_ = x;
+  }
+
+  void Root::
+  input (::std::unique_ptr< InputType > x)
+  {
+    this->input_.set (std::move (x));
+  }
+
   const Root::DraggerType& Root::
   dragger () const
   {
@@ -3002,6 +3090,60 @@ namespace prf
 
   DecPositive::
   ~DecPositive ()
+  {
+  }
+
+  // Factor
+  //
+
+  Factor::
+  Factor (const ::xml_schema::Double& _xsd_Double_base)
+  : ::xsd::cxx::tree::fundamental_base< ::xml_schema::Double, char, ::xml_schema::SimpleType, ::xsd::cxx::tree::schema_type::double_ > (_xsd_Double_base)
+  {
+  }
+
+  Factor::
+  Factor (const Factor& x,
+          ::xml_schema::Flags f,
+          ::xml_schema::Container* c)
+  : ::xsd::cxx::tree::fundamental_base< ::xml_schema::Double, char, ::xml_schema::SimpleType, ::xsd::cxx::tree::schema_type::double_ > (x, f, c)
+  {
+  }
+
+  Factor::
+  Factor (const ::xercesc::DOMElement& e,
+          ::xml_schema::Flags f,
+          ::xml_schema::Container* c)
+  : ::xsd::cxx::tree::fundamental_base< ::xml_schema::Double, char, ::xml_schema::SimpleType, ::xsd::cxx::tree::schema_type::double_ > (e, f, c)
+  {
+  }
+
+  Factor::
+  Factor (const ::xercesc::DOMAttr& a,
+          ::xml_schema::Flags f,
+          ::xml_schema::Container* c)
+  : ::xsd::cxx::tree::fundamental_base< ::xml_schema::Double, char, ::xml_schema::SimpleType, ::xsd::cxx::tree::schema_type::double_ > (a, f, c)
+  {
+  }
+
+  Factor::
+  Factor (const ::std::string& s,
+          const ::xercesc::DOMElement* e,
+          ::xml_schema::Flags f,
+          ::xml_schema::Container* c)
+  : ::xsd::cxx::tree::fundamental_base< ::xml_schema::Double, char, ::xml_schema::SimpleType, ::xsd::cxx::tree::schema_type::double_ > (s, e, f, c)
+  {
+  }
+
+  Factor* Factor::
+  _clone (::xml_schema::Flags f,
+          ::xml_schema::Container* c) const
+  {
+    return new class Factor (*this, f, c);
+  }
+
+  Factor::
+  ~Factor ()
   {
   }
 
@@ -3758,141 +3900,6 @@ namespace prf
   {
   }
 
-  // SpaceballSensitivity
-  //
-
-  SpaceballSensitivity::
-  SpaceballSensitivity (const OverallType& overall,
-                        const TranslationsType& translations,
-                        const RotationsType& rotations)
-  : ::xml_schema::Type (),
-    overall_ (overall, this),
-    translations_ (translations, this),
-    rotations_ (rotations, this)
-  {
-  }
-
-  SpaceballSensitivity::
-  SpaceballSensitivity (const SpaceballSensitivity& x,
-                        ::xml_schema::Flags f,
-                        ::xml_schema::Container* c)
-  : ::xml_schema::Type (x, f, c),
-    overall_ (x.overall_, f, this),
-    translations_ (x.translations_, f, this),
-    rotations_ (x.rotations_, f, this)
-  {
-  }
-
-  SpaceballSensitivity::
-  SpaceballSensitivity (const ::xercesc::DOMElement& e,
-                        ::xml_schema::Flags f,
-                        ::xml_schema::Container* c)
-  : ::xml_schema::Type (e, f | ::xml_schema::Flags::base, c),
-    overall_ (this),
-    translations_ (this),
-    rotations_ (this)
-  {
-    if ((f & ::xml_schema::Flags::base) == 0)
-    {
-      ::xsd::cxx::xml::dom::parser< char > p (e, true, false, false);
-      this->parse (p, f);
-    }
-  }
-
-  void SpaceballSensitivity::
-  parse (::xsd::cxx::xml::dom::parser< char >& p,
-         ::xml_schema::Flags f)
-  {
-    for (; p.more_content (); p.next_content (false))
-    {
-      const ::xercesc::DOMElement& i (p.cur_element ());
-      const ::xsd::cxx::xml::qualified_name< char > n (
-        ::xsd::cxx::xml::dom::name< char > (i));
-
-      // overall
-      //
-      if (n.name () == "overall" && n.namespace_ ().empty ())
-      {
-        if (!overall_.present ())
-        {
-          this->overall_.set (OverallTraits::create (i, f, this));
-          continue;
-        }
-      }
-
-      // translations
-      //
-      if (n.name () == "translations" && n.namespace_ ().empty ())
-      {
-        if (!translations_.present ())
-        {
-          this->translations_.set (TranslationsTraits::create (i, f, this));
-          continue;
-        }
-      }
-
-      // rotations
-      //
-      if (n.name () == "rotations" && n.namespace_ ().empty ())
-      {
-        if (!rotations_.present ())
-        {
-          this->rotations_.set (RotationsTraits::create (i, f, this));
-          continue;
-        }
-      }
-
-      break;
-    }
-
-    if (!overall_.present ())
-    {
-      throw ::xsd::cxx::tree::expected_element< char > (
-        "overall",
-        "");
-    }
-
-    if (!translations_.present ())
-    {
-      throw ::xsd::cxx::tree::expected_element< char > (
-        "translations",
-        "");
-    }
-
-    if (!rotations_.present ())
-    {
-      throw ::xsd::cxx::tree::expected_element< char > (
-        "rotations",
-        "");
-    }
-  }
-
-  SpaceballSensitivity* SpaceballSensitivity::
-  _clone (::xml_schema::Flags f,
-          ::xml_schema::Container* c) const
-  {
-    return new class SpaceballSensitivity (*this, f, c);
-  }
-
-  SpaceballSensitivity& SpaceballSensitivity::
-  operator= (const SpaceballSensitivity& x)
-  {
-    if (this != &x)
-    {
-      static_cast< ::xml_schema::Type& > (*this) = x;
-      this->overall_ = x.overall_;
-      this->translations_ = x.translations_;
-      this->rotations_ = x.rotations_;
-    }
-
-    return *this;
-  }
-
-  SpaceballSensitivity::
-  ~SpaceballSensitivity ()
-  {
-  }
-
   // Visual
   //
 
@@ -3901,8 +3908,7 @@ namespace prf
           const DisplayType& display)
   : ::xml_schema::Type (),
     mesh_ (mesh, this),
-    display_ (display, this),
-    spaceballSensitivity_ (this)
+    display_ (display, this)
   {
   }
 
@@ -3911,8 +3917,7 @@ namespace prf
           ::std::unique_ptr< DisplayType > display)
   : ::xml_schema::Type (),
     mesh_ (std::move (mesh), this),
-    display_ (std::move (display), this),
-    spaceballSensitivity_ (this)
+    display_ (std::move (display), this)
   {
   }
 
@@ -3922,8 +3927,7 @@ namespace prf
           ::xml_schema::Container* c)
   : ::xml_schema::Type (x, f, c),
     mesh_ (x.mesh_, f, this),
-    display_ (x.display_, f, this),
-    spaceballSensitivity_ (x.spaceballSensitivity_, f, this)
+    display_ (x.display_, f, this)
   {
   }
 
@@ -3933,8 +3937,7 @@ namespace prf
           ::xml_schema::Container* c)
   : ::xml_schema::Type (e, f | ::xml_schema::Flags::base, c),
     mesh_ (this),
-    display_ (this),
-    spaceballSensitivity_ (this)
+    display_ (this)
   {
     if ((f & ::xml_schema::Flags::base) == 0)
     {
@@ -3981,20 +3984,6 @@ namespace prf
         }
       }
 
-      // spaceballSensitivity
-      //
-      if (n.name () == "spaceballSensitivity" && n.namespace_ ().empty ())
-      {
-        ::std::unique_ptr< SpaceballSensitivityType > r (
-          SpaceballSensitivityTraits::create (i, f, this));
-
-        if (!this->spaceballSensitivity_)
-        {
-          this->spaceballSensitivity_.set (::std::move (r));
-          continue;
-        }
-      }
-
       break;
     }
 
@@ -4028,7 +4017,6 @@ namespace prf
       static_cast< ::xml_schema::Type& > (*this) = x;
       this->mesh_ = x.mesh_;
       this->display_ = x.display_;
-      this->spaceballSensitivity_ = x.spaceballSensitivity_;
     }
 
     return *this;
@@ -4036,6 +4024,315 @@ namespace prf
 
   Visual::
   ~Visual ()
+  {
+  }
+
+  // Mouse
+  //
+
+  Mouse::
+  Mouse ()
+  : ::xml_schema::Type (),
+    wheelZoomFactor_ (this)
+  {
+  }
+
+  Mouse::
+  Mouse (const Mouse& x,
+         ::xml_schema::Flags f,
+         ::xml_schema::Container* c)
+  : ::xml_schema::Type (x, f, c),
+    wheelZoomFactor_ (x.wheelZoomFactor_, f, this)
+  {
+  }
+
+  Mouse::
+  Mouse (const ::xercesc::DOMElement& e,
+         ::xml_schema::Flags f,
+         ::xml_schema::Container* c)
+  : ::xml_schema::Type (e, f | ::xml_schema::Flags::base, c),
+    wheelZoomFactor_ (this)
+  {
+    if ((f & ::xml_schema::Flags::base) == 0)
+    {
+      ::xsd::cxx::xml::dom::parser< char > p (e, true, false, false);
+      this->parse (p, f);
+    }
+  }
+
+  void Mouse::
+  parse (::xsd::cxx::xml::dom::parser< char >& p,
+         ::xml_schema::Flags f)
+  {
+    for (; p.more_content (); p.next_content (false))
+    {
+      const ::xercesc::DOMElement& i (p.cur_element ());
+      const ::xsd::cxx::xml::qualified_name< char > n (
+        ::xsd::cxx::xml::dom::name< char > (i));
+
+      // wheelZoomFactor
+      //
+      if (n.name () == "wheelZoomFactor" && n.namespace_ ().empty ())
+      {
+        ::std::unique_ptr< WheelZoomFactorType > r (
+          WheelZoomFactorTraits::create (i, f, this));
+
+        if (!this->wheelZoomFactor_)
+        {
+          this->wheelZoomFactor_.set (::std::move (r));
+          continue;
+        }
+      }
+
+      break;
+    }
+  }
+
+  Mouse* Mouse::
+  _clone (::xml_schema::Flags f,
+          ::xml_schema::Container* c) const
+  {
+    return new class Mouse (*this, f, c);
+  }
+
+  Mouse& Mouse::
+  operator= (const Mouse& x)
+  {
+    if (this != &x)
+    {
+      static_cast< ::xml_schema::Type& > (*this) = x;
+      this->wheelZoomFactor_ = x.wheelZoomFactor_;
+    }
+
+    return *this;
+  }
+
+  Mouse::
+  ~Mouse ()
+  {
+  }
+
+  // Spaceball
+  //
+
+  Spaceball::
+  Spaceball ()
+  : ::xml_schema::Type (),
+    overallSensitivity_ (this),
+    translationsSensitivity_ (this),
+    rotationsSensitivity_ (this)
+  {
+  }
+
+  Spaceball::
+  Spaceball (const Spaceball& x,
+             ::xml_schema::Flags f,
+             ::xml_schema::Container* c)
+  : ::xml_schema::Type (x, f, c),
+    overallSensitivity_ (x.overallSensitivity_, f, this),
+    translationsSensitivity_ (x.translationsSensitivity_, f, this),
+    rotationsSensitivity_ (x.rotationsSensitivity_, f, this)
+  {
+  }
+
+  Spaceball::
+  Spaceball (const ::xercesc::DOMElement& e,
+             ::xml_schema::Flags f,
+             ::xml_schema::Container* c)
+  : ::xml_schema::Type (e, f | ::xml_schema::Flags::base, c),
+    overallSensitivity_ (this),
+    translationsSensitivity_ (this),
+    rotationsSensitivity_ (this)
+  {
+    if ((f & ::xml_schema::Flags::base) == 0)
+    {
+      ::xsd::cxx::xml::dom::parser< char > p (e, true, false, false);
+      this->parse (p, f);
+    }
+  }
+
+  void Spaceball::
+  parse (::xsd::cxx::xml::dom::parser< char >& p,
+         ::xml_schema::Flags f)
+  {
+    for (; p.more_content (); p.next_content (false))
+    {
+      const ::xercesc::DOMElement& i (p.cur_element ());
+      const ::xsd::cxx::xml::qualified_name< char > n (
+        ::xsd::cxx::xml::dom::name< char > (i));
+
+      // overallSensitivity
+      //
+      if (n.name () == "overallSensitivity" && n.namespace_ ().empty ())
+      {
+        ::std::unique_ptr< OverallSensitivityType > r (
+          OverallSensitivityTraits::create (i, f, this));
+
+        if (!this->overallSensitivity_)
+        {
+          this->overallSensitivity_.set (::std::move (r));
+          continue;
+        }
+      }
+
+      // translationsSensitivity
+      //
+      if (n.name () == "translationsSensitivity" && n.namespace_ ().empty ())
+      {
+        ::std::unique_ptr< TranslationsSensitivityType > r (
+          TranslationsSensitivityTraits::create (i, f, this));
+
+        if (!this->translationsSensitivity_)
+        {
+          this->translationsSensitivity_.set (::std::move (r));
+          continue;
+        }
+      }
+
+      // rotationsSensitivity
+      //
+      if (n.name () == "rotationsSensitivity" && n.namespace_ ().empty ())
+      {
+        ::std::unique_ptr< RotationsSensitivityType > r (
+          RotationsSensitivityTraits::create (i, f, this));
+
+        if (!this->rotationsSensitivity_)
+        {
+          this->rotationsSensitivity_.set (::std::move (r));
+          continue;
+        }
+      }
+
+      break;
+    }
+  }
+
+  Spaceball* Spaceball::
+  _clone (::xml_schema::Flags f,
+          ::xml_schema::Container* c) const
+  {
+    return new class Spaceball (*this, f, c);
+  }
+
+  Spaceball& Spaceball::
+  operator= (const Spaceball& x)
+  {
+    if (this != &x)
+    {
+      static_cast< ::xml_schema::Type& > (*this) = x;
+      this->overallSensitivity_ = x.overallSensitivity_;
+      this->translationsSensitivity_ = x.translationsSensitivity_;
+      this->rotationsSensitivity_ = x.rotationsSensitivity_;
+    }
+
+    return *this;
+  }
+
+  Spaceball::
+  ~Spaceball ()
+  {
+  }
+
+  // Input
+  //
+
+  Input::
+  Input ()
+  : ::xml_schema::Type (),
+    mouse_ (this),
+    spaceball_ (this)
+  {
+  }
+
+  Input::
+  Input (const Input& x,
+         ::xml_schema::Flags f,
+         ::xml_schema::Container* c)
+  : ::xml_schema::Type (x, f, c),
+    mouse_ (x.mouse_, f, this),
+    spaceball_ (x.spaceball_, f, this)
+  {
+  }
+
+  Input::
+  Input (const ::xercesc::DOMElement& e,
+         ::xml_schema::Flags f,
+         ::xml_schema::Container* c)
+  : ::xml_schema::Type (e, f | ::xml_schema::Flags::base, c),
+    mouse_ (this),
+    spaceball_ (this)
+  {
+    if ((f & ::xml_schema::Flags::base) == 0)
+    {
+      ::xsd::cxx::xml::dom::parser< char > p (e, true, false, false);
+      this->parse (p, f);
+    }
+  }
+
+  void Input::
+  parse (::xsd::cxx::xml::dom::parser< char >& p,
+         ::xml_schema::Flags f)
+  {
+    for (; p.more_content (); p.next_content (false))
+    {
+      const ::xercesc::DOMElement& i (p.cur_element ());
+      const ::xsd::cxx::xml::qualified_name< char > n (
+        ::xsd::cxx::xml::dom::name< char > (i));
+
+      // mouse
+      //
+      if (n.name () == "mouse" && n.namespace_ ().empty ())
+      {
+        ::std::unique_ptr< MouseType > r (
+          MouseTraits::create (i, f, this));
+
+        if (!this->mouse_)
+        {
+          this->mouse_.set (::std::move (r));
+          continue;
+        }
+      }
+
+      // spaceball
+      //
+      if (n.name () == "spaceball" && n.namespace_ ().empty ())
+      {
+        ::std::unique_ptr< SpaceballType > r (
+          SpaceballTraits::create (i, f, this));
+
+        if (!this->spaceball_)
+        {
+          this->spaceball_.set (::std::move (r));
+          continue;
+        }
+      }
+
+      break;
+    }
+  }
+
+  Input* Input::
+  _clone (::xml_schema::Flags f,
+          ::xml_schema::Container* c) const
+  {
+    return new class Input (*this, f, c);
+  }
+
+  Input& Input::
+  operator= (const Input& x)
+  {
+    if (this != &x)
+    {
+      static_cast< ::xml_schema::Type& > (*this) = x;
+      this->mouse_ = x.mouse_;
+      this->spaceball_ = x.spaceball_;
+    }
+
+    return *this;
+  }
+
+  Input::
+  ~Input ()
   {
   }
 
@@ -4910,88 +5207,6 @@ namespace prf
   {
   }
 
-  // SpaceballButtons
-  //
-
-  SpaceballButtons::
-  SpaceballButtons ()
-  : ::xml_schema::Type (),
-    array_ (this)
-  {
-  }
-
-  SpaceballButtons::
-  SpaceballButtons (const SpaceballButtons& x,
-                    ::xml_schema::Flags f,
-                    ::xml_schema::Container* c)
-  : ::xml_schema::Type (x, f, c),
-    array_ (x.array_, f, this)
-  {
-  }
-
-  SpaceballButtons::
-  SpaceballButtons (const ::xercesc::DOMElement& e,
-                    ::xml_schema::Flags f,
-                    ::xml_schema::Container* c)
-  : ::xml_schema::Type (e, f | ::xml_schema::Flags::base, c),
-    array_ (this)
-  {
-    if ((f & ::xml_schema::Flags::base) == 0)
-    {
-      ::xsd::cxx::xml::dom::parser< char > p (e, true, false, false);
-      this->parse (p, f);
-    }
-  }
-
-  void SpaceballButtons::
-  parse (::xsd::cxx::xml::dom::parser< char >& p,
-         ::xml_schema::Flags f)
-  {
-    for (; p.more_content (); p.next_content (false))
-    {
-      const ::xercesc::DOMElement& i (p.cur_element ());
-      const ::xsd::cxx::xml::qualified_name< char > n (
-        ::xsd::cxx::xml::dom::name< char > (i));
-
-      // array
-      //
-      if (n.name () == "array" && n.namespace_ ().empty ())
-      {
-        ::std::unique_ptr< ArrayType > r (
-          ArrayTraits::create (i, f, this));
-
-        this->array_.push_back (::std::move (r));
-        continue;
-      }
-
-      break;
-    }
-  }
-
-  SpaceballButtons* SpaceballButtons::
-  _clone (::xml_schema::Flags f,
-          ::xml_schema::Container* c) const
-  {
-    return new class SpaceballButtons (*this, f, c);
-  }
-
-  SpaceballButtons& SpaceballButtons::
-  operator= (const SpaceballButtons& x)
-  {
-    if (this != &x)
-    {
-      static_cast< ::xml_schema::Type& > (*this) = x;
-      this->array_ = x.array_;
-    }
-
-    return *this;
-  }
-
-  SpaceballButtons::
-  ~SpaceballButtons ()
-  {
-  }
-
   // HotKeyEntry
   //
 
@@ -5104,106 +5319,14 @@ namespace prf
   {
   }
 
-  // HotKeyEntries
-  //
-
-  HotKeyEntries::
-  HotKeyEntries ()
-  : ::xml_schema::Type (),
-    array_ (this)
-  {
-  }
-
-  HotKeyEntries::
-  HotKeyEntries (const HotKeyEntries& x,
-                 ::xml_schema::Flags f,
-                 ::xml_schema::Container* c)
-  : ::xml_schema::Type (x, f, c),
-    array_ (x.array_, f, this)
-  {
-  }
-
-  HotKeyEntries::
-  HotKeyEntries (const ::xercesc::DOMElement& e,
-                 ::xml_schema::Flags f,
-                 ::xml_schema::Container* c)
-  : ::xml_schema::Type (e, f | ::xml_schema::Flags::base, c),
-    array_ (this)
-  {
-    if ((f & ::xml_schema::Flags::base) == 0)
-    {
-      ::xsd::cxx::xml::dom::parser< char > p (e, true, false, false);
-      this->parse (p, f);
-    }
-  }
-
-  void HotKeyEntries::
-  parse (::xsd::cxx::xml::dom::parser< char >& p,
-         ::xml_schema::Flags f)
-  {
-    for (; p.more_content (); p.next_content (false))
-    {
-      const ::xercesc::DOMElement& i (p.cur_element ());
-      const ::xsd::cxx::xml::qualified_name< char > n (
-        ::xsd::cxx::xml::dom::name< char > (i));
-
-      // array
-      //
-      if (n.name () == "array" && n.namespace_ ().empty ())
-      {
-        ::std::unique_ptr< ArrayType > r (
-          ArrayTraits::create (i, f, this));
-
-        this->array_.push_back (::std::move (r));
-        continue;
-      }
-
-      break;
-    }
-  }
-
-  HotKeyEntries* HotKeyEntries::
-  _clone (::xml_schema::Flags f,
-          ::xml_schema::Container* c) const
-  {
-    return new class HotKeyEntries (*this, f, c);
-  }
-
-  HotKeyEntries& HotKeyEntries::
-  operator= (const HotKeyEntries& x)
-  {
-    if (this != &x)
-    {
-      static_cast< ::xml_schema::Type& > (*this) = x;
-      this->array_ = x.array_;
-    }
-
-    return *this;
-  }
-
-  HotKeyEntries::
-  ~HotKeyEntries ()
-  {
-  }
-
   // HotKeys
   //
 
   HotKeys::
-  HotKeys (const SpaceballButtonsType& spaceballButtons,
-           const HotKeyEntriesType& hotKeyEntries)
+  HotKeys ()
   : ::xml_schema::Type (),
-    spaceballButtons_ (spaceballButtons, this),
-    hotKeyEntries_ (hotKeyEntries, this)
-  {
-  }
-
-  HotKeys::
-  HotKeys (::std::unique_ptr< SpaceballButtonsType > spaceballButtons,
-           ::std::unique_ptr< HotKeyEntriesType > hotKeyEntries)
-  : ::xml_schema::Type (),
-    spaceballButtons_ (std::move (spaceballButtons), this),
-    hotKeyEntries_ (std::move (hotKeyEntries), this)
+    spaceballButtons_ (this),
+    hotKeyEntries_ (this)
   {
   }
 
@@ -5249,11 +5372,8 @@ namespace prf
         ::std::unique_ptr< SpaceballButtonsType > r (
           SpaceballButtonsTraits::create (i, f, this));
 
-        if (!spaceballButtons_.present ())
-        {
-          this->spaceballButtons_.set (::std::move (r));
-          continue;
-        }
+        this->spaceballButtons_.push_back (::std::move (r));
+        continue;
       }
 
       // hotKeyEntries
@@ -5263,28 +5383,11 @@ namespace prf
         ::std::unique_ptr< HotKeyEntriesType > r (
           HotKeyEntriesTraits::create (i, f, this));
 
-        if (!hotKeyEntries_.present ())
-        {
-          this->hotKeyEntries_.set (::std::move (r));
-          continue;
-        }
+        this->hotKeyEntries_.push_back (::std::move (r));
+        continue;
       }
 
       break;
-    }
-
-    if (!spaceballButtons_.present ())
-    {
-      throw ::xsd::cxx::tree::expected_element< char > (
-        "spaceballButtons",
-        "");
-    }
-
-    if (!hotKeyEntries_.present ())
-    {
-      throw ::xsd::cxx::tree::expected_element< char > (
-        "hotKeyEntries",
-        "");
     }
   }
 
@@ -7655,6 +7758,7 @@ namespace prf
         const FeaturesType& features)
   : ::xml_schema::Type (),
     visual_ (visual, this),
+    input_ (this),
     dragger_ (dragger, this),
     interactiveParameter_ (interactiveParameter, this),
     gesture_ (gesture, this),
@@ -7675,6 +7779,7 @@ namespace prf
         ::std::unique_ptr< FeaturesType > features)
   : ::xml_schema::Type (),
     visual_ (std::move (visual), this),
+    input_ (this),
     dragger_ (std::move (dragger), this),
     interactiveParameter_ (std::move (interactiveParameter), this),
     gesture_ (std::move (gesture), this),
@@ -7691,6 +7796,7 @@ namespace prf
         ::xml_schema::Container* c)
   : ::xml_schema::Type (x, f, c),
     visual_ (x.visual_, f, this),
+    input_ (x.input_, f, this),
     dragger_ (x.dragger_, f, this),
     interactiveParameter_ (x.interactiveParameter_, f, this),
     gesture_ (x.gesture_, f, this),
@@ -7707,6 +7813,7 @@ namespace prf
         ::xml_schema::Container* c)
   : ::xml_schema::Type (e, f | ::xml_schema::Flags::base, c),
     visual_ (this),
+    input_ (this),
     dragger_ (this),
     interactiveParameter_ (this),
     gesture_ (this),
@@ -7742,6 +7849,20 @@ namespace prf
         if (!visual_.present ())
         {
           this->visual_.set (::std::move (r));
+          continue;
+        }
+      }
+
+      // input
+      //
+      if (n.name () == "input" && n.namespace_ ().empty ())
+      {
+        ::std::unique_ptr< InputType > r (
+          InputTraits::create (i, f, this));
+
+        if (!this->input_)
+        {
+          this->input_.set (::std::move (r));
           continue;
         }
       }
@@ -7911,6 +8032,7 @@ namespace prf
     {
       static_cast< ::xml_schema::Type& > (*this) = x;
       this->visual_ = x.visual_;
+      this->input_ = x.input_;
       this->dragger_ = x.dragger_;
       this->interactiveParameter_ = x.interactiveParameter_;
       this->gesture_ = x.gesture_;
@@ -8228,6 +8350,25 @@ namespace prf
   }
 
   void
+  operator<< (::xercesc::DOMElement& e, const Factor& i)
+  {
+    e << static_cast< const ::xsd::cxx::tree::fundamental_base< ::xml_schema::Double, char, ::xml_schema::SimpleType, ::xsd::cxx::tree::schema_type::double_ >& > (i);
+  }
+
+  void
+  operator<< (::xercesc::DOMAttr& a, const Factor& i)
+  {
+    a << static_cast< const ::xsd::cxx::tree::fundamental_base< ::xml_schema::Double, char, ::xml_schema::SimpleType, ::xsd::cxx::tree::schema_type::double_ >& > (i);
+  }
+
+  void
+  operator<< (::xml_schema::ListStream& l,
+              const Factor& i)
+  {
+    l << static_cast< const ::xsd::cxx::tree::fundamental_base< ::xml_schema::Double, char, ::xml_schema::SimpleType, ::xsd::cxx::tree::schema_type::double_ >& > (i);
+  }
+
+  void
   operator<< (::xercesc::DOMElement& e, const LODEntry& i)
   {
     e << static_cast< const ::xml_schema::Type& > (i);
@@ -8462,45 +8603,6 @@ namespace prf
   }
 
   void
-  operator<< (::xercesc::DOMElement& e, const SpaceballSensitivity& i)
-  {
-    e << static_cast< const ::xml_schema::Type& > (i);
-
-    // overall
-    //
-    {
-      ::xercesc::DOMElement& s (
-        ::xsd::cxx::xml::dom::create_element (
-          "overall",
-          e));
-
-      s << ::xml_schema::AsDouble(i.overall ());
-    }
-
-    // translations
-    //
-    {
-      ::xercesc::DOMElement& s (
-        ::xsd::cxx::xml::dom::create_element (
-          "translations",
-          e));
-
-      s << ::xml_schema::AsDouble(i.translations ());
-    }
-
-    // rotations
-    //
-    {
-      ::xercesc::DOMElement& s (
-        ::xsd::cxx::xml::dom::create_element (
-          "rotations",
-          e));
-
-      s << ::xml_schema::AsDouble(i.rotations ());
-    }
-  }
-
-  void
   operator<< (::xercesc::DOMElement& e, const Visual& i)
   {
     e << static_cast< const ::xml_schema::Type& > (i);
@@ -8526,17 +8628,95 @@ namespace prf
 
       s << i.display ();
     }
+  }
 
-    // spaceballSensitivity
+  void
+  operator<< (::xercesc::DOMElement& e, const Mouse& i)
+  {
+    e << static_cast< const ::xml_schema::Type& > (i);
+
+    // wheelZoomFactor
     //
-    if (i.spaceballSensitivity ())
+    if (i.wheelZoomFactor ())
     {
       ::xercesc::DOMElement& s (
         ::xsd::cxx::xml::dom::create_element (
-          "spaceballSensitivity",
+          "wheelZoomFactor",
           e));
 
-      s << *i.spaceballSensitivity ();
+      s << *i.wheelZoomFactor ();
+    }
+  }
+
+  void
+  operator<< (::xercesc::DOMElement& e, const Spaceball& i)
+  {
+    e << static_cast< const ::xml_schema::Type& > (i);
+
+    // overallSensitivity
+    //
+    if (i.overallSensitivity ())
+    {
+      ::xercesc::DOMElement& s (
+        ::xsd::cxx::xml::dom::create_element (
+          "overallSensitivity",
+          e));
+
+      s << *i.overallSensitivity ();
+    }
+
+    // translationsSensitivity
+    //
+    if (i.translationsSensitivity ())
+    {
+      ::xercesc::DOMElement& s (
+        ::xsd::cxx::xml::dom::create_element (
+          "translationsSensitivity",
+          e));
+
+      s << *i.translationsSensitivity ();
+    }
+
+    // rotationsSensitivity
+    //
+    if (i.rotationsSensitivity ())
+    {
+      ::xercesc::DOMElement& s (
+        ::xsd::cxx::xml::dom::create_element (
+          "rotationsSensitivity",
+          e));
+
+      s << *i.rotationsSensitivity ();
+    }
+  }
+
+  void
+  operator<< (::xercesc::DOMElement& e, const Input& i)
+  {
+    e << static_cast< const ::xml_schema::Type& > (i);
+
+    // mouse
+    //
+    if (i.mouse ())
+    {
+      ::xercesc::DOMElement& s (
+        ::xsd::cxx::xml::dom::create_element (
+          "mouse",
+          e));
+
+      s << *i.mouse ();
+    }
+
+    // spaceball
+    //
+    if (i.spaceball ())
+    {
+      ::xercesc::DOMElement& s (
+        ::xsd::cxx::xml::dom::create_element (
+          "spaceball",
+          e));
+
+      s << *i.spaceball ();
     }
   }
 
@@ -8790,26 +8970,6 @@ namespace prf
   }
 
   void
-  operator<< (::xercesc::DOMElement& e, const SpaceballButtons& i)
-  {
-    e << static_cast< const ::xml_schema::Type& > (i);
-
-    // array
-    //
-    for (SpaceballButtons::ArrayConstIterator
-         b (i.array ().begin ()), n (i.array ().end ());
-         b != n; ++b)
-    {
-      ::xercesc::DOMElement& s (
-        ::xsd::cxx::xml::dom::create_element (
-          "array",
-          e));
-
-      s << *b;
-    }
-  }
-
-  void
   operator<< (::xercesc::DOMElement& e, const HotKeyEntry& i)
   {
     e << static_cast< const ::xml_schema::Type& > (i);
@@ -8838,50 +8998,36 @@ namespace prf
   }
 
   void
-  operator<< (::xercesc::DOMElement& e, const HotKeyEntries& i)
-  {
-    e << static_cast< const ::xml_schema::Type& > (i);
-
-    // array
-    //
-    for (HotKeyEntries::ArrayConstIterator
-         b (i.array ().begin ()), n (i.array ().end ());
-         b != n; ++b)
-    {
-      ::xercesc::DOMElement& s (
-        ::xsd::cxx::xml::dom::create_element (
-          "array",
-          e));
-
-      s << *b;
-    }
-  }
-
-  void
   operator<< (::xercesc::DOMElement& e, const HotKeys& i)
   {
     e << static_cast< const ::xml_schema::Type& > (i);
 
     // spaceballButtons
     //
+    for (HotKeys::SpaceballButtonsConstIterator
+         b (i.spaceballButtons ().begin ()), n (i.spaceballButtons ().end ());
+         b != n; ++b)
     {
       ::xercesc::DOMElement& s (
         ::xsd::cxx::xml::dom::create_element (
           "spaceballButtons",
           e));
 
-      s << i.spaceballButtons ();
+      s << *b;
     }
 
     // hotKeyEntries
     //
+    for (HotKeys::HotKeyEntriesConstIterator
+         b (i.hotKeyEntries ().begin ()), n (i.hotKeyEntries ().end ());
+         b != n; ++b)
     {
       ::xercesc::DOMElement& s (
         ::xsd::cxx::xml::dom::create_element (
           "hotKeyEntries",
           e));
 
-      s << i.hotKeyEntries ();
+      s << *b;
     }
   }
 
@@ -9580,6 +9726,18 @@ namespace prf
           e));
 
       s << i.visual ();
+    }
+
+    // input
+    //
+    if (i.input ())
+    {
+      ::xercesc::DOMElement& s (
+        ::xsd::cxx::xml::dom::create_element (
+          "input",
+          e));
+
+      s << *i.input ();
     }
 
     // dragger

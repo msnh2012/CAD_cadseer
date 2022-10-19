@@ -37,7 +37,7 @@ static const StateMask MiddleButton(StateMask().set(2));
 static const StateMask RightButton(StateMask().set(3));
 
 static const StateMask Rotate(ControlKey | LeftButton);
-static const StateMask Pan(ControlKey | MiddleButton);
+static const StateMask Pan(ControlKey | RightButton);
 
 class SpaceballManipulator : public osgGA::StandardManipulator
 {
